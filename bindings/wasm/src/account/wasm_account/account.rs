@@ -276,18 +276,18 @@ impl WasmAccount {
   }
 
   /// If the document has a `RevocationBitmap` service identified by `fragment`,
-  /// revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+  /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, fragment: String, credentialIndices: UOneOrManyNumber) -> PromiseVoid {
+  pub fn revoke_credentials(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
-      let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+      let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
       account
         .as_ref()
         .borrow_mut()
-        .revoke_credentials(&fragment, credentials_indices.as_slice())
+        .revoke_credentials(&fragment, indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -296,18 +296,18 @@ impl WasmAccount {
   }
 
   /// If the document has a `RevocationBitmap` service identified by `fragment`,
-  /// unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+  /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(&mut self, fragment: String, credentialIndices: UOneOrManyNumber) -> PromiseVoid {
+  pub fn unrevoke_credentials(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
-      let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+      let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
       account
         .as_ref()
         .borrow_mut()
-        .unrevoke_credentials(&fragment, credentials_indices.as_slice())
+        .unrevoke_credentials(&fragment, indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -328,8 +328,8 @@ impl WasmAccount {
     public_key: Vec<u8>,
   ) -> PromiseEncryptedData {
     let account = self.0.clone();
-    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
-    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.0;
+    let cek_algorithm: CekAlgorithm = cek_algorithm.0.clone();
     let public_key: PublicKey = public_key.to_vec().into();
 
     future_to_promise(async move {
@@ -364,8 +364,8 @@ impl WasmAccount {
   ) -> PromiseData {
     let account = self.0.clone();
     let data: EncryptedData = data.0.clone();
-    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
-    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.0;
+    let cek_algorithm: CekAlgorithm = cek_algorithm.0.clone();
 
     future_to_promise(async move {
       let data: Vec<u8> = account

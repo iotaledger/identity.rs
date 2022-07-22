@@ -27,13 +27,13 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "4e7db070a05321c4bd7579acdcc74436865235c0" # develop branch, 2022-07-11
+rev = "2a35c7affe15034fd1b82884966269882bffb23b" # develop branch, 2022-07-18
 features = ["tls"]
 default-features = false
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
-iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en"] }
+iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
@@ -46,3 +46,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 # Brings `AliasId` from iota-client into the public API of this crate.
 alias-id = []
+default = ["revocation-bitmap"]
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity_did/revocation-bitmap"]

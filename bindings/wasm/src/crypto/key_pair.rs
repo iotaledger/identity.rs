@@ -21,7 +21,6 @@ struct JsonData {
 // =============================================================================
 
 #[wasm_bindgen(inspectable, js_name = KeyPair)]
-#[derive(Clone, Debug)]
 pub struct WasmKeyPair(pub(crate) KeyPair);
 
 #[wasm_bindgen(js_class = KeyPair)]

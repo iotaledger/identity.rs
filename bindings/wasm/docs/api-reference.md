@@ -128,7 +128,8 @@ with a DID subject.</p>
 <p>See: <a href="https://www.w3.org/TR/did-core/#services">https://www.w3.org/TR/did-core/#services</a></p>
 </dd>
 <dt><a href="#Signature">Signature</a></dt>
-<dd></dd>
+<dd><p>A digital signature.</p>
+</dd>
 <dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
 <dd><p>A test suite for the <code>Storage</code> interface.</p>
 <p>This module contains a set of tests that a correct storage implementation
@@ -197,9 +198,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -223,7 +224,9 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -237,16 +240,14 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.revokeCredentials(fragment, credentialIndices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.revokeCredentials(fragment, indices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.unrevokeCredentials(fragment, indices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+createService"></a>
 
@@ -259,6 +260,20 @@ Adds a new Service to the DID Document.
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
 
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -269,6 +284,17 @@ Adds a new verification method to the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -403,29 +429,29 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+revokeCredentials"></a>
 
-### account.revokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.revokeCredentials(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
 If the document has a `RevocationBitmap` service identified by `fragment`,
-revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+revoke all specified `indices`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
 | fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Account+unrevokeCredentials"></a>
 
-### account.unrevokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.unrevokeCredentials(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
 If the document has a `RevocationBitmap` service identified by `fragment`,
-unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+unrevoke all specified `indices`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
 | fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Account+encryptData"></a>
 
@@ -461,30 +487,16 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
-<a name="Account+attachMethodRelationships"></a>
+<a name="Account+deleteMethod"></a>
 
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
+| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -518,17 +530,6 @@ Sets the controllers of the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -602,7 +603,7 @@ Agreement information used as the input for the concat KDF.
         * [.privInfo()](#AgreementInfo+privInfo) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#AgreementInfo+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromJSON(json_value)](#AgreementInfo.fromJSON) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+        * [.fromJSON(json)](#AgreementInfo.fromJSON) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
 
 <a name="new_AgreementInfo_new"></a>
 
@@ -644,19 +645,19 @@ Returns a copy of `privInfo'
 <a name="AgreementInfo+toJSON"></a>
 
 ### agreementInfo.toJSON() ⇒ <code>any</code>
-Serializes `AgreementInfo` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
 <a name="AgreementInfo.fromJSON"></a>
 
-### AgreementInfo.fromJSON(json_value) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
-Deserializes `AgreementInfo` from a JSON object.
+### AgreementInfo.fromJSON(json) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>AgreementInfo</code>](#AgreementInfo)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="AutoSave"></a>
 
@@ -670,12 +671,12 @@ Deserializes `AgreementInfo` from a JSON object.
         * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
         * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
         * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
-        * [.fromJSON(json_value)](#AutoSave.fromJSON) ⇒ [<code>AutoSave</code>](#AutoSave)
+        * [.fromJSON(json)](#AutoSave.fromJSON) ⇒ [<code>AutoSave</code>](#AutoSave)
 
 <a name="AutoSave+toJSON"></a>
 
 ### autoSave.toJSON() ⇒ <code>any</code>
-Serializes `AutoSave` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.never"></a>
@@ -703,14 +704,14 @@ Save after every N actions.
 
 <a name="AutoSave.fromJSON"></a>
 
-### AutoSave.fromJSON(json_value) ⇒ [<code>AutoSave</code>](#AutoSave)
-Deserializes `AutoSave` from a JSON object.
+### AutoSave.fromJSON(json) ⇒ [<code>AutoSave</code>](#AutoSave)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="CekAlgorithm"></a>
 
@@ -725,12 +726,12 @@ Supported algorithms used to determine and potentially encrypt the content encry
     * _static_
         * [.EcdhEs(agreement)](#CekAlgorithm.EcdhEs) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
         * [.EcdhEsA256Kw(agreement)](#CekAlgorithm.EcdhEsA256Kw) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-        * [.fromJSON(json_value)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+        * [.fromJSON(json)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 
 <a name="CekAlgorithm+toJSON"></a>
 
 ### cekAlgorithm.toJSON() ⇒ <code>any</code>
-Serializes `CekAlgorithm` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 <a name="CekAlgorithm.EcdhEs"></a>
@@ -757,14 +758,14 @@ Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
 
 <a name="CekAlgorithm.fromJSON"></a>
 
-### CekAlgorithm.fromJSON(json_value) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-Deserializes `CekAlgorithm` from a JSON object.
+### CekAlgorithm.fromJSON(json) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="ChainState"></a>
 
@@ -774,25 +775,32 @@ Deserializes `CekAlgorithm` from a JSON object.
 * [ChainState](#ChainState)
     * _instance_
         * [.toJSON()](#ChainState+toJSON) ⇒ <code>any</code>
+        * [.clone()](#ChainState+clone) ⇒ [<code>ChainState</code>](#ChainState)
     * _static_
-        * [.fromJSON(json_value)](#ChainState.fromJSON) ⇒ [<code>ChainState</code>](#ChainState)
+        * [.fromJSON(json)](#ChainState.fromJSON) ⇒ [<code>ChainState</code>](#ChainState)
 
 <a name="ChainState+toJSON"></a>
 
 ### chainState.toJSON() ⇒ <code>any</code>
-Serializes a `ChainState` object as a JSON object.
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+<a name="ChainState+clone"></a>
+
+### chainState.clone() ⇒ [<code>ChainState</code>](#ChainState)
+Deep clones the object.
 
 **Kind**: instance method of [<code>ChainState</code>](#ChainState)  
 <a name="ChainState.fromJSON"></a>
 
-### ChainState.fromJSON(json_value) ⇒ [<code>ChainState</code>](#ChainState)
-Deserializes a JSON object as `ChainState`.
+### ChainState.fromJSON(json) ⇒ [<code>ChainState</code>](#ChainState)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>ChainState</code>](#ChainState)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="Client"></a>
 
@@ -1073,7 +1081,7 @@ Returns a copy of the miscellaneous properties on the `Credential`.
 <a name="Credential+toJSON"></a>
 
 ### credential.toJSON() ⇒ <code>any</code>
-Serializes a `Credential` to a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+clone"></a>
@@ -1097,7 +1105,7 @@ Returns the base type.
 <a name="Credential.fromJSON"></a>
 
 ### Credential.fromJSON(json) ⇒ [<code>Credential</code>](#Credential)
-Deserializes a `Credential` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Credential</code>](#Credential)  
 
@@ -1136,7 +1144,7 @@ Throws an error if any of the options are invalid.
 <a name="CredentialValidationOptions+toJSON"></a>
 
 ### credentialValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes a `CredentialValidationOptions` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 <a name="CredentialValidationOptions+clone"></a>
@@ -1154,7 +1162,7 @@ Creates a new `CredentialValidationOptions` with defaults.
 <a name="CredentialValidationOptions.fromJSON"></a>
 
 ### CredentialValidationOptions.fromJSON(json) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Deserializes a `CredentialValidationOptions` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 
@@ -1335,7 +1343,7 @@ Fails if the issuer field is not a valid DID.
         * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
     * _static_
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
-        * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
+        * [.fromJSON(json)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
 
@@ -1398,7 +1406,7 @@ Returns the `DID` as a string.
 <a name="DID+toJSON"></a>
 
 ### did.toJSON() ⇒ <code>any</code>
-Serializes a `DID` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+clone"></a>
@@ -1420,14 +1428,14 @@ Parses a `DID` from the input string.
 
 <a name="DID.fromJSON"></a>
 
-### DID.fromJSON(json_value) ⇒ [<code>DID</code>](#DID)
-Deserializes a JSON object as `DID`.
+### DID.fromJSON(json) ⇒ [<code>DID</code>](#DID)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>DID</code>](#DID)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="DIDUrl"></a>
 
@@ -1450,6 +1458,7 @@ Deserializes a JSON object as `DID`.
         * [.clone()](#DIDUrl+clone) ⇒ [<code>DIDUrl</code>](#DIDUrl)
     * _static_
         * [.parse(input)](#DIDUrl.parse) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.fromJSON(json)](#DIDUrl.fromJSON) ⇒ [<code>DIDUrl</code>](#DIDUrl)
 
 <a name="DIDUrl+did"></a>
 
@@ -1542,7 +1551,7 @@ Returns the `DIDUrl` as a string.
 <a name="DIDUrl+toJSON"></a>
 
 ### didUrl.toJSON() ⇒ <code>any</code>
-Serializes a `DIDUrl` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+clone"></a>
@@ -1561,6 +1570,17 @@ Parses a `DIDUrl` from the input string.
 | Param | Type |
 | --- | --- |
 | input | <code>string</code> | 
+
+<a name="DIDUrl.fromJSON"></a>
+
+### DIDUrl.fromJSON(json) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="DiffChainHistory"></a>
 
@@ -1630,10 +1650,10 @@ Defines the difference between two DID `Document`s' JSON representations.
         * ~~[.setPreviousMessageId(message_id)](#DiffMessage+setPreviousMessageId)~~
         * ~~[.proof()](#DiffMessage+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>~~
         * ~~[.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)~~
-        * ~~[.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>~~
+        * [.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>
         * [.clone()](#DiffMessage+clone) ⇒ [<code>DiffMessage</code>](#DiffMessage)
     * _static_
-        * ~~[.fromJSON(json)](#DiffMessage.fromJSON) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
+        * [.fromJSON(json)](#DiffMessage.fromJSON) ⇒ [<code>DiffMessage</code>](#DiffMessage)
 
 <a name="DiffMessage+id"></a>
 
@@ -1727,10 +1747,8 @@ with the given Document.
 
 <a name="DiffMessage+toJSON"></a>
 
-### ~~diffMessage.toJSON() ⇒ <code>any</code>~~
-***Deprecated***
-
-Serializes a `DiffMessage` as a JSON object.
+### diffMessage.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+clone"></a>
@@ -1741,10 +1759,8 @@ Deep clones the object.
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage.fromJSON"></a>
 
-### ~~DiffMessage.fromJSON(json) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
-***Deprecated***
-
-Deserializes a `DiffMessage` from a JSON object.
+### DiffMessage.fromJSON(json) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>DiffMessage</code>](#DiffMessage)  
 
@@ -1798,8 +1814,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.revokeCredentials(serviceQuery, credentialIndices)](#Document+revokeCredentials)
-        * [.unrevokeCredentials(serviceQuery, credentialIndices)](#Document+unrevokeCredentials)
+        * [.revokeCredentials(serviceQuery, indices)](#Document+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, indices)](#Document+unrevokeCredentials)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -2280,34 +2296,34 @@ Returns a copy of the proof.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+revokeCredentials"></a>
 
-### document.revokeCredentials(serviceQuery, credentialIndices)
+### document.revokeCredentials(serviceQuery, indices)
 If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+revoke all specified `indices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+unrevokeCredentials"></a>
 
-### document.unrevokeCredentials(serviceQuery, credentialIndices)
+### document.unrevokeCredentials(serviceQuery, indices)
 If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+unrevoke all specified `indices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+toJSON"></a>
 
 ### document.toJSON() ⇒ <code>any</code>
-Serializes a `Document` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+clone"></a>
@@ -2374,7 +2390,7 @@ This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
 <a name="Document.fromJSON"></a>
 
 ### Document.fromJSON(json) ⇒ [<code>Document</code>](#Document)
-Deserializes a `Document` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
@@ -2441,7 +2457,7 @@ NOTE: clones the data.
 <a name="DocumentHistory+toJSON"></a>
 
 ### documentHistory.toJSON() ⇒ <code>any</code>
-Serializes `DocumentHistory` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+clone"></a>
@@ -2453,7 +2469,7 @@ Deep clones the object.
 <a name="DocumentHistory.fromJSON"></a>
 
 ### DocumentHistory.fromJSON(json) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-Deserializes `DocumentHistory` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>DocumentHistory</code>](#DocumentHistory)  
 
@@ -2469,10 +2485,14 @@ Additional attributes related to an IOTA DID Document.
 **Kind**: global class  
 
 * [DocumentMetadata](#DocumentMetadata)
-    * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
-    * [.created()](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-    * [.updated()](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-    * [.clone()](#DocumentMetadata+clone) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
+    * _instance_
+        * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
+        * [.created()](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.updated()](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.toJSON()](#DocumentMetadata+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DocumentMetadata+clone) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
+    * _static_
+        * [.fromJSON(json)](#DocumentMetadata.fromJSON) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
 
 <a name="DocumentMetadata+previousMessageId"></a>
 
@@ -2490,12 +2510,29 @@ Returns a copy of the timestamp of when the DID document was created.
 Returns a copy of the timestamp of the last DID document update.
 
 **Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata+toJSON"></a>
+
+### documentMetadata.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="DocumentMetadata+clone"></a>
 
 ### documentMetadata.clone() ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
 Deep clones the object.
 
 **Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata.fromJSON"></a>
+
+### DocumentMetadata.fromJSON(json) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Duration"></a>
 
 ## Duration
@@ -2517,7 +2554,7 @@ A span of time.
 <a name="Duration+toJSON"></a>
 
 ### duration.toJSON() ⇒ <code>any</code>
-Serializes a `Duration` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Duration</code>](#Duration)  
 <a name="Duration.seconds"></a>
@@ -2578,7 +2615,7 @@ Create a new `Duration` with the given number of weeks.
 <a name="Duration.fromJSON"></a>
 
 ### Duration.fromJSON(json) ⇒ [<code>Duration</code>](#Duration)
-Deserializes a `Duration` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -2665,7 +2702,7 @@ The structure returned after encrypting data
         * [.tag()](#EncryptedData+tag) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromJSON(json_value)](#EncryptedData.fromJSON) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+        * [.fromJSON(json)](#EncryptedData.fromJSON) ⇒ [<code>EncryptedData</code>](#EncryptedData)
 
 <a name="EncryptedData+nonce"></a>
 
@@ -2694,19 +2731,19 @@ Returns a copy of the tag
 <a name="EncryptedData+toJSON"></a>
 
 ### encryptedData.toJSON() ⇒ <code>any</code>
-Serializes `EncryptedData` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
 <a name="EncryptedData.fromJSON"></a>
 
-### EncryptedData.fromJSON(json_value) ⇒ [<code>EncryptedData</code>](#EncryptedData)
-Deserializes `EncryptedData` from a JSON object.
+### EncryptedData.fromJSON(json) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>EncryptedData</code>](#EncryptedData)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="EncryptionAlgorithm"></a>
 
@@ -2721,7 +2758,7 @@ Supported content encryption algorithms.
         * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
         * [.A256GCM()](#EncryptionAlgorithm.A256GCM) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
-        * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+        * [.fromJSON(json)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
 
 <a name="EncryptionAlgorithm+keyLength"></a>
 
@@ -2732,7 +2769,7 @@ Returns the length of the cipher's key.
 <a name="EncryptionAlgorithm+toJSON"></a>
 
 ### encryptionAlgorithm.toJSON() ⇒ <code>any</code>
-Serializes `EncryptionAlgorithm` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 <a name="EncryptionAlgorithm.A256GCM"></a>
@@ -2743,14 +2780,14 @@ AES GCM using 256-bit key.
 **Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 <a name="EncryptionAlgorithm.fromJSON"></a>
 
-### EncryptionAlgorithm.fromJSON(json_value) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
-Deserializes `EncryptionAlgorithm` from a JSON object.
+### EncryptionAlgorithm.fromJSON(json) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="ExplorerUrl"></a>
 
@@ -2762,10 +2799,12 @@ Deserializes `EncryptionAlgorithm` from a JSON object.
         * [.messageUrl(message_id)](#ExplorerUrl+messageUrl) ⇒ <code>string</code>
         * [.resolverUrl(did)](#ExplorerUrl+resolverUrl) ⇒ <code>string</code>
         * [.toString()](#ExplorerUrl+toString) ⇒ <code>string</code>
+        * [.toJSON()](#ExplorerUrl+toJSON) ⇒ <code>any</code>
     * _static_
         * [.parse(url)](#ExplorerUrl.parse) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
         * [.mainnet()](#ExplorerUrl.mainnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
         * [.devnet()](#ExplorerUrl.devnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+        * [.fromJSON(json)](#ExplorerUrl.fromJSON) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
 
 <a name="ExplorerUrl+messageUrl"></a>
 
@@ -2797,6 +2836,12 @@ E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
 
 ### explorerUrl.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="ExplorerUrl+toJSON"></a>
+
+### explorerUrl.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
 <a name="ExplorerUrl.parse"></a>
 
 ### ExplorerUrl.parse(url) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
@@ -2823,6 +2868,17 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="ExplorerUrl.fromJSON"></a>
+
+### ExplorerUrl.fromJSON(json) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -2889,11 +2945,11 @@ The string representation of that location can be obtained via `canonicalRepr`.
     * _instance_
         * [.canonical()](#KeyLocation+canonical) ⇒ <code>string</code>
         * [.keyType()](#KeyLocation+keyType) ⇒ <code>number</code>
-        * [.toJSON()](#KeyLocation+toJSON) ⇒ <code>any</code>
         * [.toString()](#KeyLocation+toString) ⇒ <code>string</code>
+        * [.toJSON()](#KeyLocation+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromVerificationMethod(method)](#KeyLocation.fromVerificationMethod) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-        * [.fromJSON(json_value)](#KeyLocation.fromJSON) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+        * [.fromJSON(json)](#KeyLocation.fromJSON) ⇒ [<code>KeyLocation</code>](#KeyLocation)
 
 <a name="new_KeyLocation_new"></a>
 
@@ -2922,15 +2978,15 @@ This should be used as the representation for storage keys.
 Returns a copy of the key type of the key location.
 
 **Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+toJSON"></a>
-
-### keyLocation.toJSON() ⇒ <code>any</code>
-Serializes `KeyLocation` as a JSON object.
-
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyLocation+toString"></a>
 
 ### keyLocation.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+toJSON"></a>
+
+### keyLocation.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
 **Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyLocation.fromVerificationMethod"></a>
 
@@ -2945,14 +3001,14 @@ Obtain the location of a verification method's key in storage.
 
 <a name="KeyLocation.fromJSON"></a>
 
-### KeyLocation.fromJSON(json_value) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Deserializes a JSON object into a `KeyLocation`.
+### KeyLocation.fromJSON(json) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="KeyPair"></a>
 
@@ -3067,12 +3123,12 @@ Deserializes a `KeyPair` object from a JSON object.
         * [.GenerateX25519()](#MethodContent.GenerateX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
         * [.PrivateX25519(privateKey)](#MethodContent.PrivateX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
         * [.PublicX25519(publicKey)](#MethodContent.PublicX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
-        * [.fromJSON(json_value)](#MethodContent.fromJSON) ⇒ [<code>MethodContent</code>](#MethodContent)
+        * [.fromJSON(json)](#MethodContent.fromJSON) ⇒ [<code>MethodContent</code>](#MethodContent)
 
 <a name="MethodContent+toJSON"></a>
 
 ### methodContent.toJSON() ⇒ <code>any</code>
-Serializes `MethodContent` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>MethodContent</code>](#MethodContent)  
 <a name="MethodContent.GenerateEd25519"></a>
@@ -3141,14 +3197,14 @@ NOTE: the method will be unable to be used for key exchange without a private ke
 
 <a name="MethodContent.fromJSON"></a>
 
-### MethodContent.fromJSON(json_value) ⇒ [<code>MethodContent</code>](#MethodContent)
-Deserializes `MethodContent` from a JSON object.
+### MethodContent.fromJSON(json) ⇒ [<code>MethodContent</code>](#MethodContent)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="MethodData"></a>
 
@@ -3182,7 +3238,7 @@ represented as a vector of bytes.
 <a name="MethodData+toJSON"></a>
 
 ### methodData.toJSON() ⇒ <code>any</code>
-Serializes a `MethodData` object as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+clone"></a>
@@ -3216,7 +3272,7 @@ Creates a new `MethodData` variant with Multibase-encoded content.
 <a name="MethodData.fromJSON"></a>
 
 ### MethodData.fromJSON(json) ⇒ [<code>MethodData</code>](#MethodData)
-Deserializes a `MethodData` object from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodData</code>](#MethodData)  
 
@@ -3254,7 +3310,7 @@ Returns the `MethodScope` as a string.
 <a name="MethodScope+toJSON"></a>
 
 ### methodScope.toJSON() ⇒ <code>any</code>
-Serializes a `MethodScope` object as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
 <a name="MethodScope+clone"></a>
@@ -3290,7 +3346,7 @@ Deep clones the object.
 <a name="MethodScope.fromJSON"></a>
 
 ### MethodScope.fromJSON(json) ⇒ [<code>MethodScope</code>](#MethodScope)
-Deserializes a `MethodScope` object from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
 
@@ -3307,24 +3363,24 @@ Supported verification method types.
 
 * [MethodType](#MethodType)
     * _instance_
-        * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
         * [.toString()](#MethodType+toString) ⇒ <code>string</code>
+        * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
         * [.clone()](#MethodType+clone) ⇒ [<code>MethodType</code>](#MethodType)
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
-<a name="MethodType+toJSON"></a>
-
-### methodType.toJSON() ⇒ <code>any</code>
-Serializes a `MethodType` object as a JSON object.
-
-**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+toString"></a>
 
 ### methodType.toString() ⇒ <code>string</code>
 Returns the `MethodType` as a string.
+
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType+toJSON"></a>
+
+### methodType.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+clone"></a>
@@ -3344,7 +3400,7 @@ Deep clones the object.
 <a name="MethodType.fromJSON"></a>
 
 ### MethodType.fromJSON(json) ⇒ [<code>MethodType</code>](#MethodType)
-Deserializes a `MethodType` object from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 
@@ -3389,7 +3445,7 @@ Returns a copy of the node URL of the Tangle network.
 <a name="Network+toJSON"></a>
 
 ### network.toJSON() ⇒ <code>any</code>
-Serializes a `Network` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Network</code>](#Network)  
 <a name="Network+clone"></a>
@@ -3422,7 +3478,7 @@ Errors if the name is invalid.
 <a name="Network.fromJSON"></a>
 
 ### Network.fromJSON(json) ⇒ [<code>Network</code>](#Network)
-Deserializes a `Network` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Network</code>](#Network)  
 
@@ -3521,7 +3577,7 @@ Returns a copy of the miscellaneous properties on the `Presentation`.
 <a name="Presentation+toJSON"></a>
 
 ### presentation.toJSON() ⇒ <code>any</code>
-Serializes a `Presentation` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+clone"></a>
@@ -3545,7 +3601,7 @@ Returns the base type.
 <a name="Presentation.fromJSON"></a>
 
 ### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
-Deserializes a `Presentation` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Presentation</code>](#Presentation)  
 
@@ -3584,7 +3640,7 @@ Throws an error if any of the options are invalid.
 <a name="PresentationValidationOptions+toJSON"></a>
 
 ### presentationValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes a `PresentationValidationOptions` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 <a name="PresentationValidationOptions+clone"></a>
@@ -3602,7 +3658,7 @@ Creates a new `PresentationValidationOptions` with defaults.
 <a name="PresentationValidationOptions.fromJSON"></a>
 
 ### PresentationValidationOptions.fromJSON(json) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Deserializes a `PresentationValidationOptions` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 
@@ -3782,7 +3838,7 @@ Purpose for which the proof was generated.
 <a name="Proof+toJSON"></a>
 
 ### proof.toJSON() ⇒ <code>any</code>
-Serializes a `Proof` to a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Proof</code>](#Proof)  
 <a name="Proof+clone"></a>
@@ -3794,7 +3850,7 @@ Deep clones the object.
 <a name="Proof.fromJSON"></a>
 
 ### Proof.fromJSON(json) ⇒ [<code>Proof</code>](#Proof)
-Deserializes a `Proof` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Proof</code>](#Proof)  
 
@@ -3813,9 +3869,11 @@ See `IProofOptions`.
 * [ProofOptions](#ProofOptions)
     * [new ProofOptions(options)](#new_ProofOptions_new)
     * _instance_
+        * [.toJSON()](#ProofOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#ProofOptions+clone) ⇒ [<code>ProofOptions</code>](#ProofOptions)
     * _static_
         * [.default()](#ProofOptions.default) ⇒ [<code>ProofOptions</code>](#ProofOptions)
+        * [.fromJSON(json)](#ProofOptions.fromJSON) ⇒ [<code>ProofOptions</code>](#ProofOptions)
 
 <a name="new_ProofOptions_new"></a>
 
@@ -3829,6 +3887,12 @@ Throws an error if any of the options are invalid.
 | --- | --- |
 | options | <code>IProofOptions</code> | 
 
+<a name="ProofOptions+toJSON"></a>
+
+### proofOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>ProofOptions</code>](#ProofOptions)  
 <a name="ProofOptions+clone"></a>
 
 ### proofOptions.clone() ⇒ [<code>ProofOptions</code>](#ProofOptions)
@@ -3841,6 +3905,17 @@ Deep clones the object.
 Creates a new `ProofOptions` with default options.
 
 **Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
+<a name="ProofOptions.fromJSON"></a>
+
+### ProofOptions.fromJSON(json) ⇒ [<code>ProofOptions</code>](#ProofOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="ProofPurpose"></a>
 
 ## ProofPurpose
@@ -3862,7 +3937,7 @@ See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 <a name="ProofPurpose+toJSON"></a>
 
 ### proofPurpose.toJSON() ⇒ <code>any</code>
-Serializes a `ProofPurpose` to a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
 <a name="ProofPurpose+clone"></a>
@@ -3888,7 +3963,7 @@ See https://www.w3.org/TR/did-core/#authentication
 <a name="ProofPurpose.fromJSON"></a>
 
 ### ProofPurpose.fromJSON(json) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Deserializes a `ProofPurpose` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
 
@@ -3939,7 +4014,7 @@ Returns a copy of the message `nonce`.
 <a name="Receipt+toJSON"></a>
 
 ### receipt.toJSON() ⇒ <code>any</code>
-Serializes a `Receipt` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Receipt</code>](#Receipt)  
 <a name="Receipt+clone"></a>
@@ -3951,7 +4026,7 @@ Deep clones the object.
 <a name="Receipt.fromJSON"></a>
 
 ### Receipt.fromJSON(json) ⇒ [<code>Receipt</code>](#Receipt)
-Deserializes a `Receipt` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Receipt</code>](#Receipt)  
 
@@ -4062,7 +4137,7 @@ Sets the integration chain message id.
 <a name="ResolvedDocument+toJSON"></a>
 
 ### resolvedDocument.toJSON() ⇒ <code>any</code>
-Serializes a `Document` object as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
 <a name="ResolvedDocument+clone"></a>
@@ -4074,7 +4149,7 @@ Deep clones the object.
 <a name="ResolvedDocument.fromJSON"></a>
 
 ### ResolvedDocument.fromJSON(json) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
-Deserializes a `Document` object from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
 
@@ -4398,7 +4473,7 @@ See: https://www.w3.org/TR/did-core/#services
         * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
         * [.clone()](#Service+clone) ⇒ [<code>Service</code>](#Service)
     * _static_
-        * [.fromJSON(value)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
+        * [.fromJSON(json)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
 
 <a name="new_Service_new"></a>
 
@@ -4435,7 +4510,7 @@ Returns a copy of the custom properties on the `Service`.
 <a name="Service+toJSON"></a>
 
 ### service.toJSON() ⇒ <code>any</code>
-Serializes a `Service` object as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+clone"></a>
@@ -4446,18 +4521,20 @@ Deep clones the object.
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service.fromJSON"></a>
 
-### Service.fromJSON(value) ⇒ [<code>Service</code>](#Service)
-Deserializes a `Service` object from a JSON object.
+### Service.fromJSON(json) ⇒ [<code>Service</code>](#Service)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Service</code>](#Service)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="Signature"></a>
 
 ## Signature
+A digital signature.
+
 **Kind**: global class  
 
 * [Signature](#Signature)
@@ -4466,7 +4543,7 @@ Deserializes a `Service` object from a JSON object.
         * [.asBytes()](#Signature+asBytes) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromJSON(json_value)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
+        * [.fromJSON(json)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
 
 <a name="new_Signature_new"></a>
 
@@ -4487,19 +4564,19 @@ Returns a copy of the signature as a `UInt8Array`.
 <a name="Signature+toJSON"></a>
 
 ### signature.toJSON() ⇒ <code>any</code>
-Serializes a `Signature` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature.fromJSON"></a>
 
-### Signature.fromJSON(json_value) ⇒ [<code>Signature</code>](#Signature)
-Deserializes a JSON object as `Signature`.
+### Signature.fromJSON(json) ⇒ [<code>Signature</code>](#Signature)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Signature</code>](#Signature)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="StorageTestSuite"></a>
 
@@ -4659,7 +4736,7 @@ Returns `null` if the operation leads to a timestamp not in the valid range for 
 <a name="Timestamp+toJSON"></a>
 
 ### timestamp.toJSON() ⇒ <code>any</code>
-Serializes a `Timestamp` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp.parse"></a>
@@ -4682,7 +4759,7 @@ Creates a new `Timestamp` with the current date and time.
 <a name="Timestamp.fromJSON"></a>
 
 ### Timestamp.fromJSON(json) ⇒ [<code>Timestamp</code>](#Timestamp)
-Deserializes a `Timestamp` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
 
@@ -4706,7 +4783,7 @@ Deserializes a `Timestamp` from a JSON object.
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
         * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
     * _static_
-        * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
 
@@ -4759,7 +4836,7 @@ Returns a copy of the `VerificationMethod` public key data.
 <a name="VerificationMethod+toJSON"></a>
 
 ### verificationMethod.toJSON() ⇒ <code>any</code>
-Serializes a `VerificationMethod` object as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+clone"></a>
@@ -4770,14 +4847,14 @@ Deep clones the object.
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod.fromJSON"></a>
 
-### VerificationMethod.fromJSON(value) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Deserializes a `VerificationMethod` object from a JSON object.
+### VerificationMethod.fromJSON(json) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="VerifierOptions"></a>
 
@@ -4811,7 +4888,7 @@ Throws an error if any of the options are invalid.
 <a name="VerifierOptions+toJSON"></a>
 
 ### verifierOptions.toJSON() ⇒ <code>any</code>
-Serializes a `VerifierOptions` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="VerifierOptions+clone"></a>
@@ -4829,7 +4906,7 @@ Creates a new `VerifierOptions` with default options.
 <a name="VerifierOptions.fromJSON"></a>
 
 ### VerifierOptions.fromJSON(json) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Deserializes a `VerifierOptions` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
 
@@ -4984,13 +5061,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 

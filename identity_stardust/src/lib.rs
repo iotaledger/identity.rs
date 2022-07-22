@@ -7,7 +7,7 @@
 pub use self::error::Error;
 pub use self::error::Result;
 
-pub use stardust_document::StardustDocument;
+pub use document::*;
 pub use state_metadata::*;
 
 pub use did::StardustDID;
@@ -16,5 +16,6 @@ pub use network::NetworkName;
 mod did;
 mod error;
 mod network;
-mod stardust_document;
+mod document;
+mod error;
 mod state_metadata;

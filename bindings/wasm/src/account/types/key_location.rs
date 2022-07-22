@@ -18,7 +18,6 @@ use crate::error::WasmResult;
 /// situations like these.
 ///
 /// The string representation of that location can be obtained via `canonicalRepr`.
-#[derive(Debug)]
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
 pub struct WasmKeyLocation(pub(crate) KeyLocation);
 
@@ -54,24 +53,14 @@ impl WasmKeyLocation {
     self.0.key_type.into()
   }
 
-  /// Serializes `KeyLocation` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a JSON object into a `KeyLocation`.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json_value: JsValue) -> Result<WasmKeyLocation> {
-    json_value.into_serde().map(Self).wasm_result()
-  }
-
   #[wasm_bindgen(js_name = toString)]
   #[allow(clippy::inherent_to_string)]
   pub fn to_string(&self) -> String {
     self.0.to_string()
   }
 }
+
+impl_wasm_json!(WasmKeyLocation, KeyLocation);
 
 impl From<WasmKeyLocation> for KeyLocation {
   fn from(wasm_key_location: WasmKeyLocation) -> Self {

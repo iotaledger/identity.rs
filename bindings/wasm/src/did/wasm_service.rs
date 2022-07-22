@@ -70,20 +70,9 @@ impl WasmService {
   pub fn properties(&self) -> Result<MapStringAny> {
     MapStringAny::try_from(self.0.properties())
   }
-
-  /// Serializes a `Service` object as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Service` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(value: &JsValue) -> Result<WasmService> {
-    value.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmService, Service);
 impl_wasm_clone!(WasmService, Service);
 
 impl From<IotaService> for WasmService {
