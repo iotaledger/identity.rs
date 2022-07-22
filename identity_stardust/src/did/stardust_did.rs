@@ -30,8 +30,6 @@ pub type StardustDIDUrl = DIDUrl<StardustDID>;
 // The length of an AliasID, which is a BLAKE2b-256 hash (32-bytes).
 const TAG_BYTES_LEN: usize = 32;
 
-const TAG_CHARS_LEN: usize = "0x".len() + 2 * TAG_BYTES_LEN;
-
 /// A DID conforming to the IOTA UTXO DID method specification.
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
