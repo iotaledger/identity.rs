@@ -79,6 +79,16 @@ impl StardustDID {
     CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_core)
   }
 
+  /// Creates a new placeholder [`StardustDID`] with the given network name.
+  pub fn placeholder(network_name: NetworkName) -> Self {
+    Self::new(&[0; 32], network_name)
+  }
+
+  #[cfg(feature = "alias-id")]
+  pub fn from_alias_id(alias_id: AliasId, network_name: NetworkName) -> Self {
+    Self::new(&alias_id, network_name)
+  }
+
   // Check if the tag matches a potential alias_id
   fn check_tag_str(tag: &str) -> Result<()> {
     prefix_hex::decode::<[u8; TAG_BYTES_LEN]>(tag)
@@ -91,18 +101,19 @@ impl StardustDID {
   // E.g.
   // - `"did:stardust:main:123" -> "did:stardust:123"` is normalized
   // - `"did:stardust:dev:123" -> "did:stardust:dev:123"` is unchanged
+  // TODO: Remove the lint once this bug in clippy has been fixed. Without to_owned a mutable reference will be aliased.
+  #[allow(clippy::unnecessary_to_owned)]
   fn normalize(mut did: CoreDID) -> CoreDID {
-    let mut segments_iter = did.method_id().split(':');
-    let normalized_id_string: Option<String> = match (segments_iter.next(), segments_iter.next()) {
-      (Some(network), Some(tag)) => (network == Self::DEFAULT_NETWORK.as_ref()).then_some(tag.to_owned()),
-      _ => None,
-    };
-    if let Some(tag) = normalized_id_string {
+    let method_id = did.method_id();
+    let (network, tag) = Self::denormalized_components(method_id);
+    if tag.len() == method_id.len() || network != NetworkName::DEFAULT_STR {
       did
-        .set_method_id(tag)
-        .expect("the extracted normalized tag should satisfy the DID Core specification");
+    } else {
+      did
+        .set_method_id(tag.to_owned())
+        .expect("normalizing a valid CoreDID should be Ok");
+      did
     }
-    did
   }
 
   /// Checks if the given `DID` has a valid [`StardustDID`] network name.
@@ -111,7 +122,7 @@ impl StardustDID {
   ///
   /// Returns `Err` if the input is not a valid network name according to the [`StardustDID`] method specification.
   pub fn check_network<D: DID>(did: &D) -> Result<()> {
-    let network_name = Self::denormalize_str(did.method_id()).0;
+    let network_name = Self::denormalized_components(did.method_id()).0;
     NetworkName::validate_network_name(network_name).map_err(|_| DIDError::Other("invalid network name"))
   }
 
@@ -147,7 +158,7 @@ impl StardustDID {
   /// Returns `Err` if the input does not have a [`StardustDID`] compliant method id.
   // TODO: Is it correct to also validate the network here? The current IOTA DID method does NOT do that.
   pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
-    let (network, tag) = Self::denormalize_str(did.method_id());
+    let (network, tag) = Self::denormalized_components(did.method_id());
     NetworkName::validate_network_name(network)
       .map_err(|_| DIDError::InvalidMethodId)
       .and_then(|_| Self::check_tag_str(tag))
@@ -163,12 +174,13 @@ impl StardustDID {
 
   /// Returns the Tangle `network` name of the `DID`.
   pub fn network_str(&self) -> &str {
-    Self::denormalize_str(self.method_id()).0
+    Self::denormalized_components(self.method_id()).0
   }
 
   // foo:bar -> (foo,bar)
   // foo -> (NetworkName::DEFAULT_STR, foo)
-  fn denormalize_str(input: &str) -> (&str, &str) {
+  #[inline(always)]
+  fn denormalized_components(input: &str) -> (&str, &str) {
     input
       .find(':')
       .map(|idx| input.split_at(idx))
@@ -178,14 +190,26 @@ impl StardustDID {
 
   /// Returns the unique Tangle tag of the `DID`.
   pub fn tag(&self) -> &str {
-    Self::denormalize_str(self.method_id()).1
+    Self::denormalized_components(self.method_id()).1
   }
 
-  /// Change the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
-  pub fn with_network(mut self, network: NetworkName) -> Self {
-    let new_method_id: String = format!("{}:{}", network, self.tag());
+  #[cfg(feature = "alias-id")]
+  /// Returns the [`AliasId`] corresponding to this [`StardustDID`].
+  pub fn alias_id(&self) -> AliasId {
+    AliasId::from_str(self.tag())
+      .unwrap_or_else(|_| panic!("A {} DID should always provide a valid AliasId", StardustDID::METHOD))
+  }
+
+  /// Set the network name of this [`StardustDID`].
+  pub fn set_network_name(&mut self, name: NetworkName) {
+    let new_method_id: String = format!("{}:{}", name, self.tag());
     // unwrap is fine as we are only replacing the network
     self.0.set_method_id(new_method_id).unwrap();
+  }
+
+  /// Replace the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
+  pub fn with_network_name(mut self, name: NetworkName) -> Self {
+    self.set_network_name(name);
     self
   }
 }
@@ -283,45 +307,6 @@ impl From<StardustDID> for String {
   }
 }
 
-impl From<AliasId> for StardustDID {
-  /// Transforms an [`AliasId`] to a [`StardustDID`].
-  ///
-  /// # Network
-  /// The [`StardustDID`] constructed from this method is assumed to be associated with the default network,
-  /// whenever that is not the case one should follow this up with calling [`StardustDID::with_network`].  
-  fn from(id: AliasId) -> Self {
-    let did_str = format!("did:{}:{}", StardustDID::METHOD, id);
-    Self::parse(did_str).unwrap_or_else(|_| {
-      panic!(
-        "transforming an AliasId to a {} DID should be infallible",
-        StardustDID::METHOD
-      )
-    })
-  }
-}
-
-impl From<StardustDID> for AliasId {
-  fn from(did: StardustDID) -> Self {
-    Self::from_str(did.tag()).unwrap_or_else(|_| {
-      panic!(
-        "the tag of a {} DID should always parse to an AliasId",
-        StardustDID::METHOD
-      )
-    })
-  }
-}
-
-impl From<&StardustDID> for AliasId {
-  fn from(did: &StardustDID) -> Self {
-    Self::from_str(did.tag()).unwrap_or_else(|_| {
-      panic!(
-        "the tag of a {} DID should always parse to an AliasId",
-        StardustDID::METHOD
-      )
-    })
-  }
-}
-
 impl TryFrom<CoreDID> for StardustDID {
   type Error = DIDError;
   fn try_from(value: CoreDID) -> std::result::Result<Self, Self::Error> {
@@ -366,7 +351,7 @@ mod tests {
 
   use super::*;
 
-  const INITIAL_ALIAS_ID: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+  const INITIAL_ALIAS_ID_STR: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   // ===========================================================================================================================
   // Reusable constants and statics
@@ -398,7 +383,7 @@ mod tests {
     let valid_strings: Vec<String> = VALID_NETWORK_NAMES
       .iter()
       .flat_map(|network| {
-        [VALID_ALIAS_ID_STR, INITIAL_ALIAS_ID]
+        [VALID_ALIAS_ID_STR, INITIAL_ALIAS_ID_STR]
           .iter()
           .map(move |tag| network_tag_to_did(network, tag))
       })
@@ -539,6 +524,26 @@ mod tests {
   // ===========================================================================================================================
 
   #[test]
+  fn placeholder_produces_a_did_with_expected_string_representation() {
+    assert_eq!(
+      StardustDID::placeholder(Default::default()).as_str(),
+      format!("did:{}:{}", StardustDID::METHOD, INITIAL_ALIAS_ID_STR)
+    );
+
+    for name in VALID_NETWORK_NAMES
+      .iter()
+      .filter(|name| *name != &NetworkName::DEFAULT_STR)
+    {
+      let network_name: NetworkName = NetworkName::try_from(*name).unwrap();
+      let did: StardustDID = StardustDID::placeholder(network_name);
+      assert_eq!(
+        did.as_str(),
+        format!("did:{}:{}:{}", StardustDID::METHOD, name, INITIAL_ALIAS_ID_STR)
+      );
+    }
+  }
+
+  #[test]
   fn normalization_in_constructors() {
     let did_with_default_network_string: String = format!(
       "did:{}:{}:{}",
@@ -601,8 +606,23 @@ mod tests {
       ));
     };
 
-    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(INITIAL_ALIAS_ID_STR);
     execute_assertions(VALID_ALIAS_ID_STR);
+  }
+
+  #[cfg(feature = "alias-id")]
+  #[test]
+  fn alias_id_roundtrip() {
+    let execute_assertions = |id: &str, network_name: &str| {
+      let alias_id: AliasId = AliasId::from_str(id).unwrap();
+      let network_name: NetworkName = NetworkName::try_from(network_name.to_string()).unwrap();
+      assert_eq!(StardustDID::from_alias_id(alias_id, network_name).alias_id(), alias_id);
+    };
+
+    for name in VALID_NETWORK_NAMES {
+      execute_assertions(VALID_ALIAS_ID_STR, name);
+      execute_assertions(INITIAL_ALIAS_ID_STR, name);
+    }
   }
 
   // ===========================================================================================================================
@@ -637,13 +657,25 @@ mod tests {
 
   proptest! {
     #[test]
-    fn property_based_alias_id_roundtrip(alias_id in arbitrary_alias_id()) {
+    fn property_based_alias_id_string_representation_roundtrip(alias_id in arbitrary_alias_id()) {
       for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
         assert_eq!(
           AliasId::from_str(StardustDID::new(&alias_id, network_name).tag()).unwrap(),
           alias_id
         );
+      }
     }
+  }
+
+  #[cfg(feature = "alias-id")]
+  proptest! {
+    #[test]
+    fn property_based_alias_id_roundtrip(alias_id in arbitrary_alias_id()) {
+      for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
+        assert_eq!(
+          StardustDID::from_alias_id(alias_id, network_name).alias_id(), alias_id
+        );
+      }
     }
   }
 
@@ -703,6 +735,18 @@ mod tests {
     }
   }
 
+  fn arbitrary_delimiter_mixed_in_prefix_hex() -> impl Strategy<Value = String> {
+    proptest::string::string_regex("0x([a-f]|[:]|[0-9])*").expect("regex should be ok")
+  }
+
+  proptest! {
+    #[test]
+    fn invalid_hex_mixed_with_delimiter(tag in arbitrary_delimiter_mixed_in_prefix_hex()) {
+      let did: String = format!("did:{}:{}", StardustDID::METHOD, tag);
+      assert!(StardustDID::parse(did).is_err());
+    }
+  }
+
   // ===========================================================================================================================
   // Test getters
   // ===========================================================================================================================
@@ -730,7 +774,7 @@ mod tests {
       assert_eq!(did.network_str(), "custom");
     };
 
-    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(INITIAL_ALIAS_ID_STR);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -762,8 +806,28 @@ mod tests {
         .unwrap();
       assert_eq!(did.tag(), valid_alias_id);
     };
-    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(INITIAL_ALIAS_ID_STR);
     execute_assertions(VALID_ALIAS_ID_STR);
+  }
+
+  // ===========================================================================================================================
+  // Test setters
+  // ===========================================================================================================================
+
+  #[test]
+  fn replace_network_name() {
+    for did in VALID_STARDUST_DID_STRINGS.iter() {
+      let mut stardust_did: StardustDID = StardustDID::parse(did).unwrap();
+      for name in VALID_NETWORK_NAMES {
+        let old_tag: String = stardust_did.tag().to_string();
+        let network_name: NetworkName = NetworkName::try_from(name).unwrap();
+        let transfromed: StardustDID = stardust_did.clone().with_network_name(network_name.clone());
+        stardust_did.set_network_name(network_name);
+        assert_eq!(transfromed, stardust_did);
+        assert_eq!(old_tag, stardust_did.tag());
+        assert_eq!(stardust_did.network_str(), name);
+      }
+    }
   }
 
   // ===========================================================================================================================
@@ -838,7 +902,7 @@ mod tests {
       ))
       .is_ok());
     };
-    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(INITIAL_ALIAS_ID_STR);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -857,7 +921,7 @@ mod tests {
       assert_eq!(did_url.query(), Some("diff=true"));
       assert_eq!(did_url.fragment(), Some("foo"));
     };
-    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(INITIAL_ALIAS_ID_STR);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 }
