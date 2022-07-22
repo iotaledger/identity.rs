@@ -13,7 +13,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = ExplorerUrl)]
-#[derive(Clone, Debug)]
 pub struct WasmExplorerUrl(ExplorerUrl);
 
 #[wasm_bindgen(js_class = ExplorerUrl)]
@@ -65,6 +64,8 @@ impl WasmExplorerUrl {
     self.0.to_string()
   }
 }
+
+impl_wasm_json!(WasmExplorerUrl, ExplorerUrl);
 
 impl From<WasmExplorerUrl> for ExplorerUrl {
   fn from(other: WasmExplorerUrl) -> Self {

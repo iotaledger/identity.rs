@@ -30,6 +30,7 @@ impl WasmProofOptions {
   }
 }
 
+impl_wasm_json!(WasmProofOptions, ProofOptions);
 impl_wasm_clone!(WasmProofOptions, ProofOptions);
 
 impl From<ProofOptions> for WasmProofOptions {

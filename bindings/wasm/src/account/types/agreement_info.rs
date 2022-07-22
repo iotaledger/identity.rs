@@ -2,17 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::account_storage::AgreementInfo;
-use serde::Deserialize;
-use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 /// Agreement information used as the input for the concat KDF.
-#[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = AgreementInfo, inspectable)]
-pub struct WasmAgreementInfo(AgreementInfo);
+pub struct WasmAgreementInfo(pub(crate) AgreementInfo);
 
 #[wasm_bindgen(js_class = AgreementInfo)]
 impl WasmAgreementInfo {
@@ -45,19 +39,9 @@ impl WasmAgreementInfo {
   pub fn priv_info(&self) -> Vec<u8> {
     self.0.priv_info.clone()
   }
-
-  /// Serializes `AgreementInfo` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes `AgreementInfo` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json_value: JsValue) -> Result<WasmAgreementInfo> {
-    json_value.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmAgreementInfo, AgreementInfo);
 
 impl From<WasmAgreementInfo> for AgreementInfo {
   fn from(wasm_agreement_info: WasmAgreementInfo) -> Self {

@@ -328,8 +328,8 @@ impl WasmAccount {
     public_key: Vec<u8>,
   ) -> PromiseEncryptedData {
     let account = self.0.clone();
-    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
-    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.0;
+    let cek_algorithm: CekAlgorithm = cek_algorithm.0.clone();
     let public_key: PublicKey = public_key.to_vec().into();
 
     future_to_promise(async move {
@@ -364,8 +364,8 @@ impl WasmAccount {
   ) -> PromiseData {
     let account = self.0.clone();
     let data: EncryptedData = data.0.clone();
-    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
-    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.0;
+    let cek_algorithm: CekAlgorithm = cek_algorithm.0.clone();
 
     future_to_promise(async move {
       let data: Vec<u8> = account

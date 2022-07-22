@@ -2,17 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::account_storage::EncryptionAlgorithm;
-use serde::Deserialize;
-use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 /// Supported content encryption algorithms.
-#[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = EncryptionAlgorithm, inspectable)]
-pub struct WasmEncryptionAlgorithm(EncryptionAlgorithm);
+pub struct WasmEncryptionAlgorithm(pub(crate) EncryptionAlgorithm);
 
 #[wasm_bindgen(js_class = EncryptionAlgorithm)]
 impl WasmEncryptionAlgorithm {
@@ -27,19 +21,9 @@ impl WasmEncryptionAlgorithm {
   pub fn key_length(&self) -> usize {
     self.0.key_length()
   }
-
-  /// Serializes `EncryptionAlgorithm` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes `EncryptionAlgorithm` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json_value: JsValue) -> Result<WasmEncryptionAlgorithm> {
-    json_value.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmEncryptionAlgorithm, EncryptionAlgorithm);
 
 impl From<WasmEncryptionAlgorithm> for EncryptionAlgorithm {
   fn from(wasm_encryption_algorithm: WasmEncryptionAlgorithm) -> Self {
