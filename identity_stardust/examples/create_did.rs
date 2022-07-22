@@ -1,6 +1,7 @@
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
+use iota_client::block::address::Address;
 use iota_client::block::output::feature::IssuerFeature;
 use iota_client::block::output::feature::MetadataFeature;
 use iota_client::block::output::feature::SenderFeature;
@@ -14,7 +15,7 @@ use iota_client::block::output::BasicOutputBuilder;
 use iota_client::block::output::ByteCostConfig;
 use iota_client::block::output::Feature;
 use iota_client::block::output::Output;
-use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
+use iota_client::node_api::indexer::query_parameters::QueryParameter;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
@@ -31,6 +32,9 @@ use identity_stardust::StardustVerificationMethod;
 // reconstruct.    Use a holder struct like Holder { AliasOutput, StardustDocument } with convenience functions?
 // 5) Inferred fields such as the controller and governor need to reflect in the (JSON) Document but excluded from the
 // StardustDocument serialization when published.    Handle with a separate `pack` function like before?
+
+static FAUCET_URL: &str = "http://localhost:8091";
+static PRIVATE_TESTNET_BECH32_HRP: &str = "tst";
 
 /// Demonstrate how to embed a DID Document in an Alias Output.
 ///
@@ -67,13 +71,10 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-  let address_bech32 = address.to_bech32("tst");
+  let address_bech32 = address.to_bech32(PRIVATE_TESTNET_BECH32_HRP);
   println!("Wallet address: {address_bech32}");
 
-  //println!("INTERACTION REQUIRED: request faucet funds to the above wallet from {faucet_manual}");
-  let faucet_auto = format!("{faucet_endpoint}/api/enqueue");
-  iota_client::request_funds_from_faucet(&faucet_auto, &address_bech32).await?;
-  tokio::time::sleep(std::time::Duration::from_secs(120)).await;
+  request_faucet_funds(&client, address).await;
 
   // ===========================================================================
   // Step 2: Create and publish a DID Document in an Alias Output.
@@ -225,4 +226,49 @@ async fn main() -> anyhow::Result<()> {
   client.consolidate_funds(&secret_manager, 0, 0..1).await?;
 
   Ok(())
+}
+
+/// Request funds from a faucet for the given address.
+///
+/// Returns when the funds were granted to the address.
+async fn request_faucet_funds(client: &Client, address: Address) {
+  let address_bech32 = address.to_bech32(PRIVATE_TESTNET_BECH32_HRP);
+
+  let faucet_funds_request_url = format!("{FAUCET_URL}/api/enqueue");
+
+  iota_client::request_funds_from_faucet(faucet_funds_request_url.as_str(), &address_bech32)
+    .await
+    .unwrap();
+
+  loop {
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+
+    let balance = get_address_balance(client, &address_bech32).await;
+    println!("{address_bech32} balance is {balance}");
+    if balance > 0 {
+      break;
+    }
+  }
+}
+
+async fn get_address_balance(client: &Client, address: &str) -> u64 {
+  let output_ids = client
+    .basic_output_ids(vec![
+      QueryParameter::Address(address.to_owned()),
+      QueryParameter::HasExpirationCondition(false),
+      QueryParameter::HasTimelockCondition(false),
+      QueryParameter::HasStorageReturnCondition(false),
+    ])
+    .await
+    .unwrap();
+
+  let outputs_responses = client.get_outputs(output_ids).await.unwrap();
+
+  let mut total_amount = 0;
+  for output_response in outputs_responses {
+    let output = Output::try_from(&output_response.output).unwrap();
+    total_amount += output.amount();
+  }
+
+  total_amount
 }
