@@ -46,7 +46,6 @@ static PRIVATE_TESTNET_BECH32_HRP: &str = "tst";
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   let endpoint = "http://localhost:14265";
-  let faucet_endpoint = "http://localhost:8091";
   // let endpoint = "https://api.alphanet.iotaledger.net";
   let faucet_manual = "https://faucet.alphanet.iotaledger.net";
 

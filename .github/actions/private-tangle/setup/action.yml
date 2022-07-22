@@ -11,3 +11,13 @@ runs:
         sudo ./cleanup.sh
         sudo ./bootstrap.sh
         sudo ./run.sh -d
+    - name: Wait for the database to start
+      shell: bash
+      run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- localhost:14265/health -- echo "Database is up"
+      env:
+        WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3
+    - name: Wait for the database to start
+      shell: bash
+      run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- localhost:8091/api/info -- echo "Database is up"
+      env:
+        WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3
