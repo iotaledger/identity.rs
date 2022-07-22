@@ -8,7 +8,7 @@ use core::fmt::Formatter;
 use core::str::FromStr;
 
 use identity_core::common::KeyComparable;
-use iota_client::bee_block::output::AliasId;
+use iota_client::block::output::AliasId;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -341,10 +341,10 @@ impl KeyComparable for StardustDID {
 #[cfg(test)]
 mod tests {
 
-  use iota_client::bee_block::output::AliasId;
-  use iota_client::bee_block::output::OutputId;
-  use iota_client::bee_block::output::OUTPUT_INDEX_RANGE;
-  use iota_client::bee_block::payload::transaction::TransactionId;
+  use iota_client::block::output::AliasId;
+  use iota_client::block::output::OutputId;
+  use iota_client::block::output::OUTPUT_INDEX_RANGE;
+  use iota_client::block::payload::transaction::TransactionId;
   use once_cell::sync::Lazy;
   use proptest::strategy::Strategy;
   use proptest::*;
