@@ -22,11 +22,6 @@ use crate::NetworkName;
 
 pub type Result<T> = std::result::Result<T, DIDError>;
 
-/// A DID URL conforming to the IOTA Stardust DID method specification.
-///
-/// See [`DIDUrl`].
-pub type StardustDIDUrl = DIDUrl<StardustDID>;
-
 // The length of an AliasID, which is a BLAKE2b-256 hash (32-bytes).
 const TAG_BYTES_LEN: usize = 32;
 
@@ -48,7 +43,6 @@ impl StardustDID {
   pub const METHOD: &'static str = "stardust";
 
   /// The default Tangle network (`"main"`).
-  // TODO: Change to use `NetworkName` once that has been ported.
   pub const DEFAULT_NETWORK: NetworkName = NetworkName(Cow::Borrowed(NetworkName::DEFAULT_STR));
 
   /// Converts an owned [`CoreDID`] to a [`StardustDID`].
@@ -63,6 +57,18 @@ impl StardustDID {
   }
 
   /// Constructs a new [`StardustDID`] from a byte representation of the tag and the given network name.
+  ///
+  /// See also [`StardustDID::placeholder`].
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// # use identity_did::did::DID;
+  /// # use identity_stardust::NetworkName;
+  /// # use identity_stardust::StardustDID;
+  /// #
+  /// let placeholder = StardustDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
+  /// assert_eq!(placeholder.as_str(), "did:stardust:smr:0x0101010101010101010101010101010101010101010101010101010101010101");
   pub fn new(bytes: &[u8; 32], network_name: &NetworkName) -> Self {
     let tag = prefix_hex::encode(bytes);
     let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, tag);
@@ -80,13 +86,18 @@ impl StardustDID {
   }
 
   /// Creates a new placeholder [`StardustDID`] with the given network name.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// # use identity_did::did::DID;
+  /// # use identity_stardust::NetworkName;
+  /// # use identity_stardust::StardustDID;
+  /// #
+  /// let placeholder = StardustDID::placeholder(&NetworkName::try_from("smr").unwrap());
+  /// assert_eq!(placeholder.as_str(), "did:stardust:smr:0x0000000000000000000000000000000000000000000000000000000000000000");
   pub fn placeholder(network_name: &NetworkName) -> Self {
     Self::new(&[0; 32], network_name)
-  }
-
-  #[cfg(feature = "alias-id")]
-  pub fn from_alias_id(alias_id: AliasId, network_name: NetworkName) -> Self {
-    Self::new(&alias_id, network_name)
   }
 
   // Check if the tag matches a potential alias_id
@@ -235,7 +246,8 @@ impl DID for StardustDID {
     self.0.into_string()
   }
 
-  /// Creates a new [`StardustDIDUrl`] by joining with a relative DID Url string.
+  // TODO: Link [`StardustDIDUrl`] after `document` has been refactored to use the types in this module.
+  /// Creates a new DIDUrl by joining with a relative DID Url string.
   ///
   /// # Errors
   ///
@@ -808,6 +820,12 @@ mod tests {
   // Test DIDUrl
   // ===========================================================================================================================
 
+  // TODO: Move `StardustDIDUrl` out of this test module once the `document` module gets refactored to use the types
+  // from this module.
+  /// A DID URL conforming to the IOTA Stardust UTXO DID method specification.
+  ///
+  /// See [`DIDUrl`].
+  type StardustDIDUrl = DIDUrl<StardustDID>;
   #[test]
   fn test_parse_did_url_valid() {
     let execute_assertions = |valid_alias_id: &str| {

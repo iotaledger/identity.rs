@@ -3,4 +3,5 @@
 
 mod stardust_did;
 pub use stardust_did::StardustDID;
-pub use stardust_did::StardustDIDUrl;
+// TODO: Uncomment once the `document` module gets refactored to use the types from this module.
+//pub use stardust_did::StardustDIDUrl;
