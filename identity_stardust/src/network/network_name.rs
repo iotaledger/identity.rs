@@ -18,7 +18,7 @@ use crate::error::Result;
 /// Network name compliant with the [`crate::StardustDID`] method specification.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
-pub struct NetworkName(Cow<'static, str>);
+pub struct NetworkName(pub(crate) Cow<'static, str>);
 
 impl NetworkName {
   pub(crate) const MAX_LENGTH: usize = 6;
@@ -44,17 +44,6 @@ impl NetworkName {
           && name.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit())
       })
       .ok_or(Error::InvalidNetworkName)
-  }
-
-  /// Creates a [`NetworkName`] representing the main network.  
-  pub const fn main() -> Self {
-    Self(Cow::Borrowed(Self::DEFAULT_STR))
-  }
-}
-
-impl Default for NetworkName {
-  fn default() -> Self {
-    Self::main()
   }
 }
 

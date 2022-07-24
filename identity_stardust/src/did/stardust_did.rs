@@ -6,9 +6,9 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
+use std::borrow::Cow;
 
 use identity_core::common::KeyComparable;
-use iota_client::block::output::AliasId;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -49,7 +49,7 @@ impl StardustDID {
 
   /// The default Tangle network (`"main"`).
   // TODO: Change to use `NetworkName` once that has been ported.
-  pub const DEFAULT_NETWORK: NetworkName = NetworkName::main();
+  pub const DEFAULT_NETWORK: NetworkName = NetworkName(Cow::Borrowed(NetworkName::DEFAULT_STR));
 
   /// Converts an owned [`CoreDID`] to a [`StardustDID`].
   ///
@@ -63,9 +63,9 @@ impl StardustDID {
   }
 
   /// Constructs a new [`StardustDID`] from a byte representation of the tag and the given network name.
-  pub fn new<T: Into<NetworkName>>(bytes: &[u8; 32], network_name: T) -> Self {
-    let alias_id = AliasId::from(*bytes);
-    let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name.into(), alias_id);
+  pub fn new(bytes: &[u8; 32], network_name: &NetworkName) -> Self {
+    let tag = prefix_hex::encode(bytes);
+    let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, tag);
 
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }
@@ -80,7 +80,7 @@ impl StardustDID {
   }
 
   /// Creates a new placeholder [`StardustDID`] with the given network name.
-  pub fn placeholder(network_name: NetworkName) -> Self {
+  pub fn placeholder(network_name: &NetworkName) -> Self {
     Self::new(&[0; 32], network_name)
   }
 
@@ -156,7 +156,6 @@ impl StardustDID {
   /// # Errors
   ///
   /// Returns `Err` if the input does not have a [`StardustDID`] compliant method id.
-  // TODO: Is it correct to also validate the network here? The current IOTA DID method does NOT do that.
   pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
     let (network, tag) = Self::denormalized_components(did.method_id());
     NetworkName::validate_network_name(network)
@@ -178,6 +177,7 @@ impl StardustDID {
   }
 
   // foo:bar -> (foo,bar)
+  // foo:bar:baz -> (foo, bar:baz)
   // foo -> (NetworkName::DEFAULT_STR, foo)
   #[inline(always)]
   fn denormalized_components(input: &str) -> (&str, &str) {
@@ -191,13 +191,6 @@ impl StardustDID {
   /// Returns the unique Tangle tag of the `DID`.
   pub fn tag(&self) -> &str {
     Self::denormalized_components(self.method_id()).1
-  }
-
-  #[cfg(feature = "alias-id")]
-  /// Returns the [`AliasId`] corresponding to this [`StardustDID`].
-  pub fn alias_id(&self) -> AliasId {
-    AliasId::from_str(self.tag())
-      .unwrap_or_else(|_| panic!("A {} DID should always provide a valid AliasId", StardustDID::METHOD))
   }
 
   /// Set the network name of this [`StardustDID`].
@@ -526,7 +519,7 @@ mod tests {
   #[test]
   fn placeholder_produces_a_did_with_expected_string_representation() {
     assert_eq!(
-      StardustDID::placeholder(Default::default()).as_str(),
+      StardustDID::placeholder(&NetworkName::try_from(NetworkName::DEFAULT_STR).unwrap()).as_str(),
       format!("did:{}:{}", StardustDID::METHOD, INITIAL_ALIAS_ID_STR)
     );
 
@@ -535,7 +528,7 @@ mod tests {
       .filter(|name| *name != &NetworkName::DEFAULT_STR)
     {
       let network_name: NetworkName = NetworkName::try_from(*name).unwrap();
-      let did: StardustDID = StardustDID::placeholder(network_name);
+      let did: StardustDID = StardustDID::placeholder(&network_name);
       assert_eq!(
         did.as_str(),
         format!("did:{}:{}:{}", StardustDID::METHOD, name, INITIAL_ALIAS_ID_STR)
@@ -650,7 +643,7 @@ mod tests {
     fn property_based_new(bytes in proptest::prelude::any::<[u8;32]>()) {
       for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
         // check that this does not panic
-        StardustDID::new(&bytes, network_name);
+        StardustDID::new(&bytes, &network_name);
       }
     }
   }
@@ -660,20 +653,8 @@ mod tests {
     fn property_based_alias_id_string_representation_roundtrip(alias_id in arbitrary_alias_id()) {
       for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
         assert_eq!(
-          AliasId::from_str(StardustDID::new(&alias_id, network_name).tag()).unwrap(),
+          AliasId::from_str(StardustDID::new(&alias_id, &network_name).tag()).unwrap(),
           alias_id
-        );
-      }
-    }
-  }
-
-  #[cfg(feature = "alias-id")]
-  proptest! {
-    #[test]
-    fn property_based_alias_id_roundtrip(alias_id in arbitrary_alias_id()) {
-      for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
-        assert_eq!(
-          StardustDID::from_alias_id(alias_id, network_name).alias_id(), alias_id
         );
       }
     }
