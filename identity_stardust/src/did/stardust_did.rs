@@ -193,16 +193,11 @@ impl StardustDID {
     Self::denormalized_components(self.method_id()).1
   }
 
-  /// Set the network name of this [`StardustDID`].
-  pub fn set_network_name(&mut self, name: NetworkName) {
+  /// Replace the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
+  pub fn with_network_name(mut self, name: NetworkName) -> Self {
     let new_method_id: String = format!("{}:{}", name, self.tag());
     // unwrap is fine as we are only replacing the network
     self.0.set_method_id(new_method_id).unwrap();
-  }
-
-  /// Replace the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
-  pub fn with_network_name(mut self, name: NetworkName) -> Self {
-    self.set_network_name(name);
     self
   }
 }
@@ -798,15 +793,13 @@ mod tests {
   #[test]
   fn replace_network_name() {
     for did in VALID_STARDUST_DID_STRINGS.iter() {
-      let mut stardust_did: StardustDID = StardustDID::parse(did).unwrap();
+      let stardust_did: StardustDID = StardustDID::parse(did).unwrap();
       for name in VALID_NETWORK_NAMES {
         let old_tag: String = stardust_did.tag().to_string();
         let network_name: NetworkName = NetworkName::try_from(name).unwrap();
         let transfromed: StardustDID = stardust_did.clone().with_network_name(network_name.clone());
-        stardust_did.set_network_name(network_name);
-        assert_eq!(transfromed, stardust_did);
-        assert_eq!(old_tag, stardust_did.tag());
-        assert_eq!(stardust_did.network_str(), name);
+        assert_eq!(old_tag, transfromed.tag());
+        assert_eq!(transfromed.network_str(), name);
       }
     }
   }

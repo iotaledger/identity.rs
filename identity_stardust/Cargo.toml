@@ -44,8 +44,6 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-# Brings `AliasId` from iota-client into the public API of this crate.
-alias-id = []
 default = ["revocation-bitmap"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap"]
