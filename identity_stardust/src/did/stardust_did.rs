@@ -182,7 +182,7 @@ impl StardustDID {
     Self::check_validity(did).is_ok()
   }
 
-  /// Returns the Tangle `network` name of the `DID`.
+  /// Returns the IOTA `network` name of the `DID`.
   pub fn network_str(&self) -> &str {
     Self::denormalized_components(self.method_id()).0
   }
