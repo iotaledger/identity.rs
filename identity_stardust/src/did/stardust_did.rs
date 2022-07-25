@@ -346,21 +346,17 @@ impl KeyComparable for StardustDID {
 
 #[cfg(test)]
 mod tests {
-  use iota_client::block::output::AliasId;
-  use iota_client::block::output::OutputId;
-  use iota_client::block::output::OUTPUT_INDEX_RANGE;
-  use iota_client::block::payload::transaction::TransactionId;
   use once_cell::sync::Lazy;
   use proptest::strategy::Strategy;
   use proptest::*;
 
   use super::*;
 
-  const INITIAL_ALIAS_ID_STR: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
   // ===========================================================================================================================
   // Reusable constants and statics
   // ===========================================================================================================================
+
+  const PLACEHOLDER_TAG: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   // obtained AliasID from a valid OutputID string
   // output_id copied from https://github.com/iotaledger/bee/blob/30cab4f02e9f5d72ffe137fd9eb09723b4f0fdb6/bee-block/tests/output_id.rs
@@ -396,7 +392,7 @@ mod tests {
     let valid_strings: Vec<String> = VALID_NETWORK_NAMES
       .iter()
       .flat_map(|network| {
-        [VALID_ALIAS_ID_STR, INITIAL_ALIAS_ID_STR]
+        [VALID_ALIAS_ID_STR, PLACEHOLDER_TAG]
           .iter()
           .map(move |tag| network_tag_to_did(network, tag))
       })
@@ -542,7 +538,7 @@ mod tests {
   fn placeholder_produces_a_did_with_expected_string_representation() {
     assert_eq!(
       StardustDID::placeholder(&NetworkName::try_from(StardustDID::DEFAULT_NETWORK).unwrap()).as_str(),
-      format!("did:{}:{}", StardustDID::METHOD, INITIAL_ALIAS_ID_STR)
+      format!("did:{}:{}", StardustDID::METHOD, PLACEHOLDER_TAG)
     );
 
     for name in VALID_NETWORK_NAMES
@@ -553,7 +549,7 @@ mod tests {
       let did: StardustDID = StardustDID::placeholder(&network_name);
       assert_eq!(
         did.as_str(),
-        format!("did:{}:{}:{}", StardustDID::METHOD, name, INITIAL_ALIAS_ID_STR)
+        format!("did:{}:{}:{}", StardustDID::METHOD, name, PLACEHOLDER_TAG)
       );
     }
   }
@@ -620,7 +616,7 @@ mod tests {
       ));
     };
 
-    execute_assertions(INITIAL_ALIAS_ID_STR);
+    execute_assertions(PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -628,14 +624,20 @@ mod tests {
   // Test constructors with randomly generated input
   // ===========================================================================================================================
 
-  fn arbitrary_alias_id() -> impl Strategy<Value = AliasId> {
-    (proptest::prelude::any::<[u8; 32]>(), OUTPUT_INDEX_RANGE).prop_map(|(bytes, idx)| {
-      let transaction_id: TransactionId = TransactionId::new(bytes);
-      let output_id: OutputId = OutputId::new(transaction_id, idx).unwrap();
-      AliasId::from(output_id)
-    })
+  #[cfg(feature = "iota-client")]
+  fn arbitrary_alias_id() -> impl Strategy<Value = iota_client::block::output::AliasId> {
+    (
+      proptest::prelude::any::<[u8; 32]>(),
+      iota_client::block::output::OUTPUT_INDEX_RANGE,
+    )
+      .prop_map(|(bytes, idx)| {
+        let transaction_id = iota_client::block::payload::transaction::TransactionId::new(bytes);
+        let output_id = iota_client::block::output::OutputId::new(transaction_id, idx).unwrap();
+        iota_client::block::output::AliasId::from(output_id)
+      })
   }
 
+  #[cfg(feature = "iota-client")]
   proptest! {
     #[test]
     fn property_based_valid_parse(alias_id in arbitrary_alias_id()) {
@@ -644,6 +646,7 @@ mod tests {
     }
   }
 
+  #[cfg(feature = "iota-client")]
   proptest! {
     #[test]
     fn property_based_new(bytes in proptest::prelude::any::<[u8;32]>()) {
@@ -654,12 +657,13 @@ mod tests {
     }
   }
 
+  #[cfg(feature = "iota-client")]
   proptest! {
     #[test]
     fn property_based_alias_id_string_representation_roundtrip(alias_id in arbitrary_alias_id()) {
       for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
         assert_eq!(
-          AliasId::from_str(StardustDID::new(&alias_id, &network_name).tag()).unwrap(),
+          iota_client::block::output::AliasId::from_str(StardustDID::new(&alias_id, &network_name).tag()).unwrap(),
           alias_id
         );
       }
@@ -761,7 +765,7 @@ mod tests {
       assert_eq!(did.network_str(), "custom");
     };
 
-    execute_assertions(INITIAL_ALIAS_ID_STR);
+    execute_assertions(PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -793,7 +797,7 @@ mod tests {
         .unwrap();
       assert_eq!(did.tag(), valid_alias_id);
     };
-    execute_assertions(INITIAL_ALIAS_ID_STR);
+    execute_assertions(PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -869,7 +873,7 @@ mod tests {
       ))
       .is_ok());
     };
-    execute_assertions(INITIAL_ALIAS_ID_STR);
+    execute_assertions(PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -888,7 +892,7 @@ mod tests {
       assert_eq!(did_url.query(), Some("diff=true"));
       assert_eq!(did_url.fragment(), Some("foo"));
     };
-    execute_assertions(INITIAL_ALIAS_ID_STR);
+    execute_assertions(PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 }

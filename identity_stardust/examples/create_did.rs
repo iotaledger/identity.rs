@@ -1,25 +1,31 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::str::FromStr;
+
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
-use iota_client::block::output::feature::IssuerFeature;
-use iota_client::block::output::feature::MetadataFeature;
-use iota_client::block::output::feature::SenderFeature;
-use iota_client::block::output::unlock_condition::AddressUnlockCondition;
-use iota_client::block::output::unlock_condition::GovernorAddressUnlockCondition;
-use iota_client::block::output::unlock_condition::StateControllerAddressUnlockCondition;
-use iota_client::block::output::unlock_condition::UnlockCondition;
 use iota_client::block::output::AliasId;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::block::output::BasicOutputBuilder;
 use iota_client::block::output::ByteCostConfig;
 use iota_client::block::output::Feature;
+use iota_client::block::output::feature::IssuerFeature;
+use iota_client::block::output::feature::MetadataFeature;
+use iota_client::block::output::feature::SenderFeature;
 use iota_client::block::output::Output;
+use iota_client::block::output::unlock_condition::AddressUnlockCondition;
+use iota_client::block::output::unlock_condition::GovernorAddressUnlockCondition;
+use iota_client::block::output::unlock_condition::StateControllerAddressUnlockCondition;
+use iota_client::block::output::unlock_condition::UnlockCondition;
+use iota_client::Client;
 use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
-use iota_client::Client;
 
 use identity_stardust::NetworkName;
+use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustVerificationMethod;
 
@@ -120,7 +126,7 @@ async fn main() -> anyhow::Result<()> {
   let _ = client.retry_until_included(&block1.id(), None, None).await?;
 
   // Infer DID from the Alias Output block.
-  let did = StardustDocument::did_from_block(&block1, &network_hrp)?;
+  let did: StardustDID = StardustDocument::did_from_block(&block1, &network_hrp)?;
   println!("DID: {did}");
 
   // ===========================================================================
@@ -129,8 +135,8 @@ async fn main() -> anyhow::Result<()> {
   // iota.rs indexer example:
   // https://github.com/iotaledger/iota.rs/blob/f945ccf326829a418334942ae9cf53b8fab3dbe5/examples/indexer.rs
 
-  // Extract Alias ID from DID.
-  let alias_id: AliasId = StardustDocument::did_to_alias_id(&did)?;
+  // Extract Alias ID from the DID tag.
+  let alias_id: AliasId = AliasId::from_str(did.tag())?;
   println!("Alias ID: {alias_id}");
 
   // Query Indexer INX Plugin for the Output of the Alias ID.
