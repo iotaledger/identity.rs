@@ -234,7 +234,7 @@ impl NapiStronghold {
     Ok(data.into_iter().map(u32::from).collect())
   }
 
-  /// Returns the value stored by the identity specified by `did`.
+  /// Returns the blob stored by the identity specified by `did`.
   #[napi]
   pub async fn blob_get(&self, did: &NapiDid) -> Result<Option<Vec<u32>>> {
     self
@@ -245,7 +245,7 @@ impl NapiStronghold {
       .map(|opt_value| opt_value.map(|value| value.into_iter().map(u32::from).collect()))
   }
 
-  /// Stores an arbitrary value for the identity specified by `did`.
+  /// Stores an arbitrary blob for the identity specified by `did`.
   #[napi]
   pub async fn blob_set(&self, did: &NapiDid, blob: Vec<u32>) -> Result<()> {
     let blob: Vec<u8> = blob.try_into_bytes()?;
