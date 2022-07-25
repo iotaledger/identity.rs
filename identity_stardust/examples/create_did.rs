@@ -147,7 +147,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Output: {output:?}");
 
   // The resolved DID Document replaces the placeholder DID with the correct one.
-  let resolved_document = StardustDocument::deserialize_from_output(&did, &output)?;
+  let resolved_document = StardustDocument::unpack_from_output(&did, &output)?;
   println!("Resolved Document: {resolved_document:#}");
 
   let alias_output = match output {
