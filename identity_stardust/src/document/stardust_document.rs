@@ -308,7 +308,7 @@ mod stardust_document_iota_client {
     /// cannot be inferred from the [`Output`]. It also indicates the network, which is not
     /// encoded in the `AliasId` alone.
     // TODO: remove? Is `unpack` sufficient?
-    pub fn deserialize_from_output(did: &StardustDID, output: &Output) -> Result<StardustDocument> {
+    pub fn unpack_from_output(did: &StardustDID, output: &Output) -> Result<StardustDocument> {
       let document: &[u8] = match output {
         Output::Alias(alias_output) => alias_output.state_metadata(),
         _ => return Err(Error::InvalidStateMetadata("not an alias output")),
