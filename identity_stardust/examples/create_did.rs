@@ -19,6 +19,7 @@ use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+use identity_stardust::NetworkName;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustVerificationMethod;
 
@@ -44,6 +45,7 @@ async fn main() -> anyhow::Result<()> {
   // let endpoint = "http://localhost:14265";
   let endpoint = "https://api.alphanet.iotaledger.net";
   let faucet_manual = "https://faucet.alphanet.iotaledger.net";
+  let network_hrp = NetworkName::try_from(SHIMMER_TESTNET_BECH32_HRP)?; // "rms"
 
   // ===========================================================================
   // Step 1: Create or load your wallet.
@@ -66,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-  let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
+  let address_bech32 = address.to_bech32(network_hrp.as_ref());
   println!("Wallet address: {address_bech32}");
 
   println!("INTERACTION REQUIRED: request faucet funds to the above wallet from {faucet_manual}");
@@ -79,10 +81,10 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // Create an empty DID Document.
-  // All new Stardust DID Documents initially use a placeholder DID,
-  // "did:stardust:0x00000000000000000000000000000000".
-
-  let document: StardustDocument = StardustDocument::new();
+  //
+  // All new Stardust DID Documents initially use a placeholder DID for the network,
+  // "did:stardust:rms:0x0000000000000000000000000000000000000000000000000000000000000000".
+  let document: StardustDocument = StardustDocument::new(&network_hrp);
 
   println!("DID Document {:#}", document);
 
@@ -118,7 +120,7 @@ async fn main() -> anyhow::Result<()> {
   let _ = client.retry_until_included(&block1.id(), None, None).await?;
 
   // Infer DID from the Alias Output block.
-  let did = StardustDocument::did_from_block(&block1)?;
+  let did = StardustDocument::did_from_block(&block1, &network_hrp)?;
   println!("DID: {did}");
 
   // ===========================================================================

@@ -12,8 +12,6 @@ pub enum Error {
   CredError(#[from] identity_credential::Error),
   #[error("{0}")]
   InvalidDID(#[from] identity_did::did::DIDError),
-  #[error("invalid network name")]
-  InvalidNetworkName,
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]
@@ -21,6 +19,8 @@ pub enum Error {
   #[error("{0}")]
   BeeError(#[from] iota_client::block::Error),
 
+  #[error("invalid network name")]
+  InvalidNetworkName,
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]

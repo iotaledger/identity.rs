@@ -4,6 +4,7 @@
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
+use std::ops::Deref;
 use std::str::FromStr;
 
 use identity_core::common::Object;
@@ -15,11 +16,6 @@ use identity_core::crypto::GetSignature;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
-use identity_core::utils::Base;
-use identity_core::utils::BaseEncoding;
-use identity_did::did::CoreDID;
-use identity_did::did::DIDUrl;
-use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::document::Document;
 use identity_did::service::Service;
@@ -40,20 +36,13 @@ use iota_client::block::Block;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::did::StardustDIDUrl;
 use crate::document::stardust_document_metadata::StardustDocumentMetadata;
 use crate::error::Result;
 use crate::state_metadata::StateMetadataEncoding;
-use crate::state_metadata::PLACEHOLDER_DID;
+use crate::NetworkName;
+use crate::StardustDID;
 use crate::StateMetadataDocument;
-
-// TODO: replace with StardustDID struct.
-type StardustDID = CoreDID;
-
-/// A DID URL conforming to the IOTA DID method specification.
-///
-/// See [`DIDUrl`].
-// TODO: move to `did` module.
-pub type StardustDIDUrl = DIDUrl<StardustDID>;
 
 /// A [`VerificationMethod`] adhering to the IOTA DID method specification.
 pub type StardustVerificationMethod = VerificationMethod<StardustDID, Object>;
@@ -80,10 +69,12 @@ impl StardustDocument {
   // Constructors
   // ===========================================================================
 
-  /// Constructs an empty DID Document with a [`StardustDocument::placeholder_did`] identifier.
+  /// Constructs an empty DID Document with a [`StardustDID::placeholder`] identifier
+  /// for the given `network`.
   // TODO: always take Option<NetworkName> or `new_with_options` for a particular network?
-  pub fn new() -> Self {
-    Self::new_with_id(Self::placeholder_did().clone())
+  // TODO: store the network in the serialized state metadata? Currently it's lost during packing.
+  pub fn new(network: &NetworkName) -> Self {
+    Self::new_with_id(StardustDID::placeholder(network))
   }
 
   /// Constructs an empty DID Document with the given identifier.
@@ -100,13 +91,6 @@ impl StardustDocument {
   // ===========================================================================
   // Properties
   // ===========================================================================
-
-  /// Returns the placeholder DID of newly constructed DID Documents,
-  /// `"did:0:0"`.
-  // TODO: generalise to take network name?
-  pub fn placeholder_did() -> &'static StardustDID {
-    &PLACEHOLDER_DID
-  }
 
   /// Returns the DID document identifier.
   pub fn id(&self) -> &StardustDID {
@@ -314,29 +298,17 @@ impl StardustDocument {
   /// cannot be inferred from the [`Output`]. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
   pub fn unpack(did: &StardustDID, state_metadata: &[u8]) -> Result<StardustDocument> {
-    StateMetadataDocument::unpack(state_metadata).map(|doc| doc.into_stardust_document(did))
-  }
-
-  /// Constructs a DID from an Alias ID.
-  ///
-  /// Uses the hex-encoding of the Alias ID as the DID tag.
-  // TODO: pass in optional network? Feature-gate to avoid iota-client hard dependency?
-  pub fn alias_id_to_did(id: &AliasId) -> Result<StardustDID> {
-    // Manually encode to hex to avoid 0x prefix.
-    let hex: String = BaseEncoding::encode(id.as_slice(), Base::Base16Lower);
-    StardustDID::parse(format!("did:stardust:{hex}")).map_err(Into::into)
+    StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_stardust_document(did))
   }
 
   pub fn did_to_alias_id(did: &StardustDID) -> Result<AliasId> {
-    // TODO: just use 0x in the tag as well?
-    // Prepend 0x manually.
-    AliasId::from_str(&format!("0x{}", did.method_id())).map_err(Into::into)
+    AliasId::from_str(did.tag()).map_err(Into::into)
   }
 
   // TODO: can hopefully remove if the publishing logic is wrapped.
-  pub fn did_from_block(block: &Block) -> Result<StardustDID> {
+  pub fn did_from_block(block: &Block, network: &NetworkName) -> Result<StardustDID> {
     let id: AliasId = AliasId::from(get_alias_output_id_from_payload(block.payload().unwrap()));
-    Self::alias_id_to_did(&id)
+    Ok(StardustDID::new(id.deref(), network))
   }
 
   /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
@@ -454,12 +426,6 @@ impl From<(StardustCoreDocument, StardustDocumentMetadata)> for StardustDocument
   }
 }
 
-impl Default for StardustDocument {
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
 impl Display for StardustDocument {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.fmt_json(f)
@@ -472,18 +438,20 @@ impl TryMethod for StardustDocument {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
+  use identity_did::did::DID;
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
 
+  use super::*;
+
   fn valid_did() -> StardustDID {
-    "did:stardust:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    "did:stardust:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       .parse()
       .unwrap()
   }
@@ -520,8 +488,12 @@ mod tests {
   #[test]
   fn test_new() {
     // VALID new().
-    let doc1: StardustDocument = StardustDocument::new();
-    assert_eq!(doc1.id(), StardustDocument::placeholder_did());
+    let network: NetworkName = NetworkName::try_from("test").unwrap();
+    let placeholder: StardustDID = StardustDID::placeholder(&network);
+    let doc1: StardustDocument = StardustDocument::new(&network);
+    assert_eq!(doc1.id().network_str(), network.as_ref());
+    assert_eq!(doc1.id().tag(), placeholder.tag());
+    assert_eq!(doc1.id(), &placeholder);
     assert_eq!(doc1.methods().count(), 0);
     assert!(doc1.service().is_empty());
 
@@ -565,7 +537,7 @@ mod tests {
       properties
     }
 
-    let mut document: StardustDocument = StardustDocument::new();
+    let mut document: StardustDocument = StardustDocument::new_with_id(valid_did());
 
     // Try sign using each type of verification relationship.
     for scope in [
@@ -624,7 +596,7 @@ mod tests {
   #[test]
   fn test_services() {
     // VALID: add one service.
-    let mut document: StardustDocument = StardustDocument::new();
+    let mut document: StardustDocument = StardustDocument::new_with_id(valid_did());
     let url1: StardustDIDUrl = document.id().to_url().join("#linked-domain").unwrap();
     let service1: StardustService = Service::from_json(&format!(
       r#"{{
@@ -743,7 +715,7 @@ mod tests {
 
   #[test]
   fn test_json_fieldnames() {
-    let document: StardustDocument = StardustDocument::new();
+    let document: StardustDocument = StardustDocument::new_with_id(valid_did());
     let serialization: String = document.to_json().unwrap();
     assert_eq!(
       serialization,

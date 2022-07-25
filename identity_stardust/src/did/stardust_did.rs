@@ -6,21 +6,26 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
-use identity_core::common::KeyComparable;
-use serde::Deserialize;
-use serde::Serialize;
 
+use identity_core::common::KeyComparable;
 use identity_did::did::BaseDIDUrl;
 use identity_did::did::CoreDID;
 use identity_did::did::DIDError;
 use identity_did::did::DIDUrl;
 use identity_did::did::DID;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::NetworkName;
 
 pub type Result<T> = std::result::Result<T, DIDError>;
 
-// The length of an AliasID, which is a BLAKE2b-256 hash (32-bytes).
+/// A DID URL conforming to the IOTA Stardust UTXO DID method specification.
+///
+/// See [`DIDUrl`].
+pub type StardustDIDUrl = DIDUrl<StardustDID>;
+
+// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
 const TAG_BYTES_LEN: usize = 32;
 
 /// A DID conforming to the IOTA UTXO DID method specification.
@@ -43,18 +48,12 @@ impl StardustDID {
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
 
-  /// Converts an owned [`CoreDID`] to a [`StardustDID`].
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input does not conform to the [`StardustDID`] specification.
-  pub fn try_from_core(did: CoreDID) -> Result<Self> {
-    Self::check_validity(&did)?;
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
 
-    Ok(Self(Self::normalize(did)))
-  }
-
-  /// Constructs a new [`StardustDID`] from a byte representation of the tag and the given network name.
+  /// Constructs a new [`StardustDID`] from a byte representation of the tag and the given
+  /// network name.
   ///
   /// See also [`StardustDID::placeholder`].
   ///
@@ -74,15 +73,6 @@ impl StardustDID {
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }
 
-  /// Parses an [`StardustDID`] from the given `input`.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input does not conform to the [`StardustDID`] specification.
-  pub fn parse(input: impl AsRef<str>) -> Result<Self> {
-    CoreDID::parse(input).and_then(Self::try_from_core)
-  }
-
   /// Creates a new placeholder [`StardustDID`] with the given network name.
   ///
   /// # Example
@@ -98,18 +88,108 @@ impl StardustDID {
     Self::new(&[0; 32], network_name)
   }
 
-  // Check if the tag matches a potential alias_id
-  fn check_tag_str(tag: &str) -> Result<()> {
+  /// Parses an [`StardustDID`] from the given `input`.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the input does not conform to the [`StardustDID`] specification.
+  pub fn parse(input: impl AsRef<str>) -> Result<Self> {
+    CoreDID::parse(input).and_then(Self::try_from_core)
+  }
+
+  /// Converts a [`CoreDID`] to a [`StardustDID`].
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the input does not conform to the [`StardustDID`] specification.
+  pub fn try_from_core(did: CoreDID) -> Result<Self> {
+    Self::check_validity(&did)?;
+
+    Ok(Self(Self::normalize(did)))
+  }
+
+  // ===========================================================================
+  // Properties
+  // ===========================================================================
+
+  /// Returns the IOTA `network` name of the `DID`.
+  pub fn network_str(&self) -> &str {
+    Self::denormalized_components(self.method_id()).0
+  }
+
+  /// Returns the tag of the `DID`, which is a hex-encoded Alias ID.
+  pub fn tag(&self) -> &str {
+    Self::denormalized_components(self.method_id()).1
+  }
+
+  // ===========================================================================
+  // Validation
+  // ===========================================================================
+
+  /// Checks if the given `DID` is syntactically valid according to the [`StardustDID`] method specification.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the input is not a syntactically valid [`StardustDID`].
+  pub fn check_validity<D: DID>(did: &D) -> Result<()> {
+    Self::check_method(did)
+      .and_then(|_| Self::check_tag(did))
+      .and_then(|_| Self::check_network(did))
+  }
+
+  /// Returns a `bool` indicating if the given `DID` is valid according to the
+  /// [`StardustDID`] method specification.
+  ///
+  /// Equivalent to `StardustDID::check_validity(did).is_ok()`.
+  pub fn is_valid(did: &CoreDID) -> bool {
+    Self::check_validity(did).is_ok()
+  }
+
+  // ===========================================================================
+  // Helpers
+  // ===========================================================================
+
+  /// Checks if the given `DID` has a valid [`StardustDID`] `method` (i.e. `"stardust"`).
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the input represents another method.
+  // TODO: Change the naming in the docs once we remove the code for the current IOTA method.
+  fn check_method<D: DID>(did: &D) -> Result<()> {
+    (did.method() == Self::METHOD)
+      .then_some(())
+      .ok_or(DIDError::InvalidMethodName)
+  }
+
+  /// Checks if the given `DID` has a valid [`StardustDID`] `method_id`.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the input does not have a [`StardustDID`] compliant method id.
+  fn check_tag<D: DID>(did: &D) -> Result<()> {
+    let (_, tag) = Self::denormalized_components(did.method_id());
+
+    // Implicitly catches if there are too many segments (:) in the DID too.
     prefix_hex::decode::<[u8; TAG_BYTES_LEN]>(tag)
       .map_err(|_| DIDError::InvalidMethodId)
       .map(|_| ())
   }
 
-  // Normalizes the DID `method_id` by removing the default network segment if present.
-  //
-  // E.g.
-  // - `"did:stardust:main:123" -> "did:stardust:123"` is normalized
-  // - `"did:stardust:dev:123" -> "did:stardust:dev:123"` is unchanged
+  /// Checks if the given `DID` has a valid [`StardustDID`] network name.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the input is not a valid network name according to the [`StardustDID`] method specification.
+  fn check_network<D: DID>(did: &D) -> Result<()> {
+    let (network_name, _) = Self::denormalized_components(did.method_id());
+    NetworkName::validate_network_name(network_name).map_err(|_| DIDError::Other("invalid network name"))
+  }
+
+  /// Normalizes the DID `method_id` by removing the default network segment if present.
+  ///
+  /// E.g.
+  /// - `"did:stardust:main:123" -> "did:stardust:123"` is normalized
+  /// - `"did:stardust:dev:123" -> "did:stardust:dev:123"` is unchanged
   // TODO: Remove the lint once this bug in clippy has been fixed. Without to_owned a mutable reference will be aliased.
   #[allow(clippy::unnecessary_to_owned)]
   fn normalize(mut did: CoreDID) -> CoreDID {
@@ -125,62 +205,6 @@ impl StardustDID {
     }
   }
 
-  /// Checks if the given `DID` has a valid [`StardustDID`] network name.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input is not a valid network name according to the [`StardustDID`] method specification.
-  pub fn check_network<D: DID>(did: &D) -> Result<()> {
-    let network_name = Self::denormalized_components(did.method_id()).0;
-    NetworkName::validate_network_name(network_name).map_err(|_| DIDError::Other("invalid network name"))
-  }
-
-  /// Checks if the given `DID` is syntactically valid according to the [`StardustDID`] method specification.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input is not a syntactically valid [`StardustDID`].
-  pub fn check_validity<D: DID>(did: &D) -> Result<()> {
-    Self::check_method(did).and_then(|_| Self::check_method_id(did))
-  }
-
-  /// Checks if the given `DID` has a valid [`StardustDID`] `method` (i.e. `"stardust"`).
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input represents another method.
-  // TODO: Change the naming in the docs once we remove the code for the current IOTA method.
-  pub fn check_method<D: DID>(did: &D) -> Result<()> {
-    (did.method() == Self::METHOD)
-      .then_some(())
-      .ok_or(DIDError::InvalidMethodName)
-  }
-
-  /// Checks if the given `DID` has a valid [`StardustDID`] `method_id`.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input does not have a [`StardustDID`] compliant method id.
-  pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
-    let (network, tag) = Self::denormalized_components(did.method_id());
-    NetworkName::validate_network_name(network)
-      .map_err(|_| DIDError::InvalidMethodId)
-      .and_then(|_| Self::check_tag_str(tag))
-  }
-
-  /// Returns a `bool` indicating if the given `DID` is valid according to the
-  /// [`StardustDID`] method specification.
-  ///
-  /// Equivalent to `Self::check_validity(did).is_ok()`.
-  pub fn is_valid(did: &CoreDID) -> bool {
-    Self::check_validity(did).is_ok()
-  }
-
-  /// Returns the IOTA `network` name of the `DID`.
-  pub fn network_str(&self) -> &str {
-    Self::denormalized_components(self.method_id()).0
-  }
-
   /// foo:bar -> (foo,bar)
   /// foo:bar:baz -> (foo, bar:baz)
   /// foo -> (StardustDID::DEFAULT_NETWORK.as_ref(), foo)
@@ -192,19 +216,6 @@ impl StardustDID {
       .map(|(network, tail)| (network, &tail[1..]))
       // Self::DEFAULT_NETWORK is built from a static reference so unwrapping is fine
       .unwrap_or((Self::DEFAULT_NETWORK, input))
-  }
-
-  /// Returns the unique tag of the `DID`.
-  pub fn tag(&self) -> &str {
-    Self::denormalized_components(self.method_id()).1
-  }
-
-  /// Replace the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
-  pub fn with_network_name(mut self, name: NetworkName) -> Self {
-    let new_method_id: String = format!("{}:{}", name, self.tag());
-    // unwrap is fine as we are only replacing the network
-    self.0.set_method_id(new_method_id).unwrap();
-    self
   }
 }
 
@@ -335,7 +346,6 @@ impl KeyComparable for StardustDID {
 
 #[cfg(test)]
 mod tests {
-
   use iota_client::block::output::AliasId;
   use iota_client::block::output::OutputId;
   use iota_client::block::output::OUTPUT_INDEX_RANGE;
@@ -378,10 +388,6 @@ mod tests {
     "foo42",
     "bar123",
     "42foo",
-  ];
-
-  const INVALID_NETWORK_NAMES: [&str; 10] = [
-    "Main", "fOo", "deV", "féta", "", "  ", "foo ", " foo", "1234567", "foobar0",
   ];
 
   static VALID_STARDUST_DID_STRINGS: Lazy<Vec<String>> = Lazy::new(|| {
@@ -456,6 +462,9 @@ mod tests {
 
     let mut check_network_executed: bool = false;
 
+    const INVALID_NETWORK_NAMES: [&str; 10] = [
+      "Main", "fOo", "deV", "féta", "", "  ", "foo ", " foo", "1234567", "foobar0",
+    ];
     for network_name in INVALID_NETWORK_NAMES {
       let did_string: String = format!(
         "did:method:{}:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
@@ -478,11 +487,11 @@ mod tests {
   }
 
   #[test]
-  fn valid_check_method_id() {
+  fn valid_check_tag() {
     for input in VALID_STARDUST_DID_STRINGS.iter() {
       let did_core: CoreDID = CoreDID::parse(input).unwrap();
       assert!(
-        StardustDID::check_method_id(&did_core).is_ok(),
+        StardustDID::check_tag(&did_core).is_ok(),
         "test: valid_check_method_id failed on input {}",
         input
       );
@@ -495,15 +504,13 @@ mod tests {
     let did_other_core: CoreDID = CoreDID::parse(&did_other_string).unwrap();
     let did_other_with_network_core: CoreDID = CoreDID::parse(&did_other_with_network).unwrap();
 
-    assert!(StardustDID::check_method_id(&did_other_core).is_ok());
-    assert!(StardustDID::check_method_id(&did_other_with_network_core).is_ok());
+    assert!(StardustDID::check_tag(&did_other_core).is_ok());
+    assert!(StardustDID::check_tag(&did_other_with_network_core).is_ok());
   }
 
   #[test]
-  fn invalid_check_method_id() {
+  fn invalid_check_tag() {
     let invalid_method_id_strings = [
-      // Invalid network name
-      format!("did:method:1234567:{}", VALID_ALIAS_ID_STR),
       // Too many segments
       format!("did:method:main:test:{}", VALID_ALIAS_ID_STR),
       // Tag is not prefixed
@@ -519,10 +526,11 @@ mod tests {
 
     for input in invalid_method_id_strings {
       let did_core: CoreDID = CoreDID::parse(input).unwrap();
-      assert!(matches!(
-        StardustDID::check_method_id(&did_core),
-        Err(DIDError::InvalidMethodId)
-      ));
+      assert!(
+        matches!(StardustDID::check_tag(&did_core), Err(DIDError::InvalidMethodId)),
+        "{}",
+        did_core
+      );
     }
   }
 
@@ -590,7 +598,7 @@ mod tests {
       // invalid network name (exceeded six characters)
       assert!(matches!(
         StardustDID::parse(format!("did:{}:1234567:{}", StardustDID::METHOD, valid_alias_id)),
-        Err(DIDError::InvalidMethodId)
+        Err(DIDError::Other(_))
       ));
 
       // invalid network name (contains non ascii character é)
@@ -790,33 +798,9 @@ mod tests {
   }
 
   // ===========================================================================================================================
-  // Test setters
-  // ===========================================================================================================================
-
-  #[test]
-  fn replace_network_name() {
-    for did in VALID_STARDUST_DID_STRINGS.iter() {
-      let stardust_did: StardustDID = StardustDID::parse(did).unwrap();
-      for name in VALID_NETWORK_NAMES {
-        let old_tag: String = stardust_did.tag().to_string();
-        let network_name: NetworkName = NetworkName::try_from(name).unwrap();
-        let transfromed: StardustDID = stardust_did.clone().with_network_name(network_name.clone());
-        assert_eq!(old_tag, transfromed.tag());
-        assert_eq!(transfromed.network_str(), name);
-      }
-    }
-  }
-
-  // ===========================================================================================================================
   // Test DIDUrl
   // ===========================================================================================================================
 
-  // TODO: Move `StardustDIDUrl` out of this test module once the `document` module gets refactored to use the types
-  // from this module.
-  /// A DID URL conforming to the IOTA Stardust UTXO DID method specification.
-  ///
-  /// See [`DIDUrl`].
-  type StardustDIDUrl = DIDUrl<StardustDID>;
   #[test]
   fn test_parse_did_url_valid() {
     let execute_assertions = |valid_alias_id: &str| {
