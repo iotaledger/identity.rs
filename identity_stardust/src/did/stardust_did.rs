@@ -67,8 +67,8 @@ impl StardustDID {
   /// # use identity_stardust::NetworkName;
   /// # use identity_stardust::StardustDID;
   /// #
-  /// let placeholder = StardustDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
-  /// assert_eq!(placeholder.as_str(), "did:stardust:smr:0x0101010101010101010101010101010101010101010101010101010101010101");
+  /// let did = StardustDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
+  /// assert_eq!(did.as_str(), "did:stardust:smr:0x0101010101010101010101010101010101010101010101010101010101010101");
   pub fn new(bytes: &[u8; 32], network_name: &NetworkName) -> Self {
     let tag = prefix_hex::encode(bytes);
     let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, tag);
