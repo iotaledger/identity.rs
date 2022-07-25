@@ -28,13 +28,13 @@ use identity_did::verification::VerificationMethod;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::did::StardustDIDUrl;
-use crate::document::stardust_document_metadata::StardustDocumentMetadata;
 use crate::error::Result;
-use crate::state_metadata::StateMetadataEncoding;
 use crate::NetworkName;
 use crate::StardustDID;
+use crate::StardustDIDUrl;
+use crate::StardustDocumentMetadata;
 use crate::StateMetadataDocument;
+use crate::StateMetadataEncoding;
 
 /// A [`VerificationMethod`] adhering to the IOTA DID method specification.
 pub type StardustVerificationMethod = VerificationMethod<StardustDID, Object>;
@@ -296,8 +296,9 @@ impl StardustDocument {
 
 #[cfg(feature = "iota-client")]
 mod stardust_document_iota_client {
-  use crate::Error;
   use iota_client::block::output::Output;
+
+  use crate::Error;
 
   use super::*;
 
