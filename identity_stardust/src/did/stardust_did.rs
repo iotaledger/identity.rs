@@ -43,7 +43,7 @@ impl StardustDID {
   pub const METHOD: &'static str = "stardust";
 
   /// The default Tangle network (`"main"`).
-  pub const DEFAULT_NETWORK: NetworkName = NetworkName(Cow::Borrowed(NetworkName::DEFAULT_STR));
+  pub const DEFAULT_NETWORK: NetworkName = NetworkName(Cow::Borrowed("main"));
 
   /// Converts an owned [`CoreDID`] to a [`StardustDID`].
   ///
@@ -117,7 +117,7 @@ impl StardustDID {
   fn normalize(mut did: CoreDID) -> CoreDID {
     let method_id = did.method_id();
     let (network, tag) = Self::denormalized_components(method_id);
-    if tag.len() == method_id.len() || network != NetworkName::DEFAULT_STR {
+    if tag.len() == method_id.len() || network != Self::DEFAULT_NETWORK.as_ref() {
       did
     } else {
       did
@@ -189,14 +189,14 @@ impl StardustDID {
 
   /// foo:bar -> (foo,bar)
   /// foo:bar:baz -> (foo, bar:baz)
-  /// foo -> (NetworkName::DEFAULT_STR, foo)
+  /// foo -> (StardustDID::DEFAULT_NETWORK.as_ref(), foo)
   #[inline(always)]
   fn denormalized_components(input: &str) -> (&str, &str) {
     input
       .find(':')
       .map(|idx| input.split_at(idx))
       .map(|(network, tail)| (network, &tail[1..]))
-      .unwrap_or((NetworkName::DEFAULT_STR, input))
+      .unwrap_or((Self::DEFAULT_NETWORK.as_ref(), input))
   }
 
   /// Returns the unique tag of the `DID`.
@@ -526,13 +526,13 @@ mod tests {
   #[test]
   fn placeholder_produces_a_did_with_expected_string_representation() {
     assert_eq!(
-      StardustDID::placeholder(&NetworkName::try_from(NetworkName::DEFAULT_STR).unwrap()).as_str(),
+      StardustDID::placeholder(&NetworkName::try_from(StardustDID::DEFAULT_NETWORK.as_ref()).unwrap()).as_str(),
       format!("did:{}:{}", StardustDID::METHOD, INITIAL_ALIAS_ID_STR)
     );
 
     for name in VALID_NETWORK_NAMES
       .iter()
-      .filter(|name| *name != &NetworkName::DEFAULT_STR)
+      .filter(|name| *name != &StardustDID::DEFAULT_NETWORK.as_ref())
     {
       let network_name: NetworkName = NetworkName::try_from(*name).unwrap();
       let did: StardustDID = StardustDID::placeholder(&network_name);
@@ -761,7 +761,7 @@ mod tests {
       let did: StardustDID = format!(
         "did:{}:{}:{}",
         StardustDID::METHOD,
-        NetworkName::DEFAULT_STR,
+        StardustDID::DEFAULT_NETWORK.as_ref(),
         valid_alias_id
       )
       .parse()
