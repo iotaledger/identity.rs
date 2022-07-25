@@ -47,7 +47,7 @@ use crate::state_metadata::PLACEHOLDER_DID;
 use crate::StateMetadataDocument;
 
 // TODO: replace with StardustDID struct.
-type StardustDID = CoreDID;
+pub(crate) type StardustDID = CoreDID;
 
 /// A DID URL conforming to the IOTA DID method specification.
 ///
