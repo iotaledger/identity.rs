@@ -187,9 +187,9 @@ impl StardustDID {
     Self::denormalized_components(self.method_id()).0
   }
 
-  // foo:bar -> (foo,bar)
-  // foo:bar:baz -> (foo, bar:baz)
-  // foo -> (NetworkName::DEFAULT_STR, foo)
+  /// foo:bar -> (foo,bar)
+  /// foo:bar:baz -> (foo, bar:baz)
+  /// foo -> (NetworkName::DEFAULT_STR, foo)
   #[inline(always)]
   fn denormalized_components(input: &str) -> (&str, &str) {
     input
