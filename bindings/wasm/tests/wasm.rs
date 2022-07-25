@@ -273,7 +273,7 @@ fn test_did_serde() {
   // Check WasmDID deserialization.
   {
     let wasm_did: WasmDID = WasmDID::from(expected.clone());
-    let de: IotaDID = wasm_did.to_json().into_serde().unwrap();
+    let de: IotaDID = wasm_did.to_json().unwrap().into_serde().unwrap();
     assert_eq!(de, expected);
   }
 
@@ -305,7 +305,7 @@ fn test_sign_document() {
   let document1: WasmDocument = WasmDocument::new(&keypair1, None, None).unwrap();
 
   // Replace the default signing method.
-  let mut document2: WasmDocument = document1.clone();
+  let mut document2: WasmDocument = document1.deep_clone();
   let keypair2: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let method: WasmVerificationMethod = WasmVerificationMethod::new(
     &document2.id(),

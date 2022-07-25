@@ -15,7 +15,6 @@ use crate::error::WasmResult;
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more `DiffMessages`.
 #[wasm_bindgen(js_name = ResolvedDocument, inspectable)]
-#[derive(Clone, Debug)]
 pub struct WasmResolvedDocument(pub(crate) ResolvedIotaDocument);
 
 #[wasm_bindgen]
@@ -116,24 +115,9 @@ impl WasmResolvedDocument {
     self.0.integration_message_id = message_id;
     Ok(())
   }
-
-  // ===========================================================================
-  // JSON
-  // ===========================================================================
-
-  /// Serializes a `Document` object as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Document` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmResolvedDocument> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmResolvedDocument, ResolvedDocument);
 impl_wasm_clone!(WasmResolvedDocument, ResolvedDocument);
 
 impl From<ResolvedIotaDocument> for WasmResolvedDocument {

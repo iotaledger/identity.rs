@@ -4,12 +4,8 @@
 use identity_iota::did::MethodType;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 /// Supported verification method types.
 #[wasm_bindgen(js_name = MethodType, inspectable)]
-#[derive(Clone, Debug)]
 pub struct WasmMethodType(pub(crate) MethodType);
 
 #[wasm_bindgen(js_class = MethodType)]
@@ -24,18 +20,6 @@ impl WasmMethodType {
     WasmMethodType(MethodType::X25519KeyAgreementKey2019)
   }
 
-  /// Serializes a `MethodType` object as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `MethodType` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmMethodType> {
-    json.into_serde().map(Self).wasm_result()
-  }
-
   /// Returns the `MethodType` as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
@@ -44,6 +28,9 @@ impl WasmMethodType {
     self.0.to_string()
   }
 }
+
+impl_wasm_json!(WasmMethodType, MethodType);
+impl_wasm_clone!(WasmMethodType, MethodType);
 
 impl From<WasmMethodType> for MethodType {
   fn from(wasm_method_type: WasmMethodType) -> Self {
@@ -56,5 +43,3 @@ impl From<MethodType> for WasmMethodType {
     WasmMethodType(method_type)
   }
 }
-
-impl_wasm_clone!(WasmMethodType, MethodType);

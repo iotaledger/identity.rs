@@ -9,7 +9,6 @@ use crate::error::WasmResult;
 
 /// Supported verification method data formats.
 #[wasm_bindgen(js_name = MethodData, inspectable)]
-#[derive(Clone, Debug)]
 pub struct WasmMethodData(pub(crate) MethodData);
 
 #[wasm_bindgen(js_class = MethodData)]
@@ -37,19 +36,10 @@ impl WasmMethodData {
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     self.0.try_decode().wasm_result()
   }
-
-  /// Serializes a `MethodData` object as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `MethodData` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmMethodData> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmMethodData, MethodData);
+impl_wasm_clone!(WasmMethodData, MethodData);
 
 impl From<WasmMethodData> for MethodData {
   fn from(data: WasmMethodData) -> Self {
@@ -62,5 +52,3 @@ impl From<MethodData> for WasmMethodData {
     WasmMethodData(data)
   }
 }
-
-impl_wasm_clone!(WasmMethodData, MethodData);

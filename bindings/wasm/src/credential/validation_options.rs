@@ -15,7 +15,6 @@ use crate::error::WasmResult;
 
 /// Options to declare validation criteria when validating credentials.
 #[wasm_bindgen(js_name = CredentialValidationOptions)]
-#[derive(Clone)]
 pub struct WasmCredentialValidationOptions(pub(crate) CredentialValidationOptions);
 
 #[wasm_bindgen(js_class = CredentialValidationOptions)]
@@ -34,20 +33,9 @@ impl WasmCredentialValidationOptions {
   pub fn default() -> WasmCredentialValidationOptions {
     WasmCredentialValidationOptions::from(CredentialValidationOptions::default())
   }
-
-  /// Serializes a `CredentialValidationOptions` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `CredentialValidationOptions` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmCredentialValidationOptions> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmCredentialValidationOptions, CredentialValidationOptions);
 impl_wasm_clone!(WasmCredentialValidationOptions, CredentialValidationOptions);
 
 impl From<CredentialValidationOptions> for WasmCredentialValidationOptions {
@@ -64,7 +52,6 @@ impl From<WasmCredentialValidationOptions> for CredentialValidationOptions {
 
 /// Options to declare validation criteria when validating presentation.
 #[wasm_bindgen(js_name = PresentationValidationOptions)]
-#[derive(Clone)]
 pub struct WasmPresentationValidationOptions(pub(crate) PresentationValidationOptions);
 
 #[wasm_bindgen(js_class = PresentationValidationOptions)]
@@ -83,20 +70,9 @@ impl WasmPresentationValidationOptions {
   pub fn default() -> WasmPresentationValidationOptions {
     WasmPresentationValidationOptions::from(PresentationValidationOptions::default())
   }
-
-  /// Serializes a `PresentationValidationOptions` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `PresentationValidationOptions` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmPresentationValidationOptions> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmPresentationValidationOptions, PresentationValidationOptions);
 impl_wasm_clone!(WasmPresentationValidationOptions, PresentationValidationOptions);
 
 impl From<PresentationValidationOptions> for WasmPresentationValidationOptions {
@@ -114,7 +90,7 @@ impl From<WasmPresentationValidationOptions> for PresentationValidationOptions {
 /// Controls validation behaviour when checking whether or not a credential has been revoked by its
 /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
 #[wasm_bindgen(js_name = StatusCheck)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
+#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr)]
 #[repr(u8)]
 pub enum WasmStatusCheck {
   /// Validate the status if supported, reject any unsupported

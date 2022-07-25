@@ -103,24 +103,9 @@ impl WasmDiffMessage {
   pub fn merge(&self, document: &WasmDocument) -> Result<WasmDocument> {
     self.0.merge(&document.0).map(WasmDocument).wasm_result()
   }
-
-  /// Serializes a `DiffMessage` as a JSON object.
-  ///
-  /// @deprecated since 0.5.0, diff chain features are slated for removal.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `DiffMessage` from a JSON object.
-  ///
-  /// @deprecated since 0.5.0, diff chain features are slated for removal.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmDiffMessage> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmDiffMessage, DiffMessage);
 impl_wasm_clone!(WasmDiffMessage, DiffMessage);
 
 impl From<DiffMessage> for WasmDiffMessage {

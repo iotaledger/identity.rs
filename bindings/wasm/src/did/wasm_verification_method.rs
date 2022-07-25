@@ -14,7 +14,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
-#[derive(Clone, Debug, PartialEq)]
 pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 
 #[wasm_bindgen(js_class = VerificationMethod)]
@@ -62,20 +61,9 @@ impl WasmVerificationMethod {
   pub fn data(&self) -> WasmMethodData {
     WasmMethodData::from(self.0.data().clone())
   }
-
-  /// Serializes a `VerificationMethod` object as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `VerificationMethod` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(value: &JsValue) -> Result<WasmVerificationMethod> {
-    value.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmVerificationMethod, VerificationMethod);
 impl_wasm_clone!(WasmVerificationMethod, VerificationMethod);
 
 impl From<IotaVerificationMethod> for WasmVerificationMethod {

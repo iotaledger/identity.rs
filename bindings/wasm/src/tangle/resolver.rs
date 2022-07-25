@@ -10,6 +10,8 @@ use identity_iota::client::ClientBuilder;
 use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::client::Resolver;
 use identity_iota::client::ResolverBuilder;
+use identity_iota::credential::Presentation;
+use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::credential::PresentationValidator;
 use identity_iota::credential::ValidatorDocument;
 use identity_iota::iota_core::IotaDID;
@@ -261,8 +263,8 @@ impl WasmResolver {
     let issuers: Option<Vec<IotaDocument>> = issuers.map(|js| js.into_serde().wasm_result()).transpose()?;
 
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
-    let presentation: WasmPresentation = presentation.clone();
-    let options: WasmPresentationValidationOptions = options.clone();
+    let presentation: Presentation = presentation.0.clone();
+    let options: PresentationValidationOptions = options.0.clone();
 
     let promise: Promise = future_to_promise(async move {
       let issuer_refs: Option<Vec<&dyn ValidatorDocument>> = issuers
@@ -270,8 +272,8 @@ impl WasmResolver {
         .map(|issuers| issuers.iter().map(ValidatorDocument::as_validator).collect());
       resolver
         .verify_presentation(
-          &presentation.0,
-          &options.0,
+          &presentation,
+          &options,
           fail_fast.into(),
           holder.as_ref().map(ValidatorDocument::as_validator),
           issuer_refs.as_deref(),

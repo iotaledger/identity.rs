@@ -17,7 +17,6 @@ use crate::error::WasmResult;
 
 /// A DID Document's history and current state.
 #[wasm_bindgen(js_name = DocumentHistory, inspectable)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WasmDocumentHistory(DocumentHistory);
 
 // Workaround for Typescript type annotations on async function returns and arrays.
@@ -107,20 +106,9 @@ impl WasmDocumentHistory {
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayString>()
   }
-
-  /// Serializes `DocumentHistory` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes `DocumentHistory` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmDocumentHistory> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmDocumentHistory, DocumentHistory);
 impl_wasm_clone!(WasmDocumentHistory, DocumentHistory);
 
 impl From<DocumentHistory> for WasmDocumentHistory {
@@ -130,12 +118,10 @@ impl From<DocumentHistory> for WasmDocumentHistory {
 }
 
 #[wasm_bindgen(inspectable)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IntegrationChainHistory(ChainHistory<ResolvedIotaDocument>);
 
 /// @deprecated since 0.5.0, diff chain features are slated for removal.
 #[wasm_bindgen(inspectable)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiffChainHistory(ChainHistory<DiffMessage>);
 
 #[wasm_bindgen]

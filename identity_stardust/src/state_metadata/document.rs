@@ -11,7 +11,9 @@ use serde::Serialize;
 
 use crate::error::Result;
 use crate::Error;
+use crate::StardustCoreDocument;
 use crate::StardustDocument;
+use crate::StardustDocumentMetadata;
 
 use super::StateMetadataEncoding;
 use super::StateMetadataVersion;
@@ -21,15 +23,21 @@ pub(crate) static PLACEHOLDER_DID: Lazy<CoreDID> = Lazy::new(|| CoreDID::parse("
 /// Magic bytes used to mark DID documents.
 const DID_MARKER: &[u8] = b"DID";
 
-/// The DID document as it is contained in the state metadata of an alias output.
+/// Intermediate representation of the DID document as it is contained in the state metadata of
+/// an Alias Output.
+///
+/// DID instances in the document are replaced by the `PLACEHOLDER_DID`.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub(crate) struct StateMetadataDocument(CoreDocument);
+pub(crate) struct StateMetadataDocument {
+  document: CoreDocument,
+  metadata: StardustDocumentMetadata,
+}
 
 impl StateMetadataDocument {
   /// Transforms the document into a [`StardustDocument`] by replacing all placeholders with `original_did`.
   pub fn into_stardust_document(self, original_did: &CoreDID) -> StardustDocument {
-    let core_doc: CoreDocument = self.0;
-    let core_document: CoreDocument = core_doc.map(
+    let Self { document, metadata } = self;
+    let core_document: StardustCoreDocument = document.map(
       // Replace placeholder identifiers.
       |did| {
         if did == PLACEHOLDER_DID.as_ref() {
@@ -41,7 +49,7 @@ impl StateMetadataDocument {
       // Do not modify properties.
       |o| o,
     );
-    StardustDocument(core_document)
+    StardustDocument::from((core_document, metadata))
   }
 
   /// Pack a [`StateMetadataDocument`] into bytes, suitable for inclusion in
@@ -107,9 +115,9 @@ impl From<StardustDocument> for StateMetadataDocument {
   /// Transforms a [`StardustDocument`] into its state metadata representation by replacing all
   /// occurrences of its did with a placeholder.
   fn from(document: StardustDocument) -> Self {
-    let core_document: CoreDocument = CoreDocument::from(document);
-    let id: CoreDID = core_document.id().clone();
-    let core_doc: CoreDocument = core_document.map(
+    let StardustDocument { document, metadata } = document;
+    let id: CoreDID = document.id().clone();
+    let core_document: CoreDocument = document.map(
       // Replace self-referential identifiers with a placeholder, but not others.
       |did| {
         if did == id {
@@ -121,96 +129,98 @@ impl From<StardustDocument> for StateMetadataDocument {
       // Do not modify properties.
       |o| o,
     );
-    StateMetadataDocument(core_doc)
+    StateMetadataDocument {
+      document: core_document,
+      metadata,
+    }
   }
 }
 
 #[cfg(test)]
 mod tests {
+  use identity_core::common::Object;
   use identity_core::common::OneOrSet;
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_did::did::CoreDID;
+  use identity_did::did::DID;
   use identity_did::verification::MethodScope;
 
   use crate::state_metadata::PLACEHOLDER_DID;
   use crate::StardustDocument;
+  use crate::StardustService;
+  use crate::StardustVerificationMethod;
   use crate::StateMetadataDocument;
   use crate::StateMetadataEncoding;
 
   struct TestSetup {
     document: StardustDocument,
-    original_did: CoreDID,
-    other_did: CoreDID,
+    did_self: CoreDID,
+    did_foreign: CoreDID,
   }
 
   fn test_document() -> TestSetup {
-    let original_did =
+    let did_self =
       CoreDID::parse("did:stardust:8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
-    let other_did =
+    let did_foreign =
       CoreDID::parse("did:stardust:71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
 
-    let mut document: StardustDocument = StardustDocument::new();
-    document.tmp_set_id(original_did.clone());
-
+    let mut document: StardustDocument = StardustDocument::new_with_id(did_self.clone());
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
-      .tmp_add_verification_method(
-        document.tmp_id().clone(),
-        &keypair,
-        "#did-self",
+      .insert_method(
+        StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
         MethodScope::VerificationMethod,
       )
       .unwrap();
 
-    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let keypair_foreign: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
-      .tmp_add_verification_method(
-        other_did.clone(),
-        &keypair,
-        "#did-foreign",
+      .insert_method(
+        StardustVerificationMethod::new(
+          did_foreign.clone(),
+          keypair_foreign.type_(),
+          keypair_foreign.public(),
+          "did-foreign",
+        )
+        .unwrap(),
         MethodScope::authentication(),
       )
       .unwrap();
 
-    document
-      .tmp_add_service(
-        document.tmp_id().clone(),
-        "#my-service",
-        "RevocationList2030",
-        identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/xyzabc").unwrap()),
-      )
-      .unwrap();
+    assert!(document.insert_service(
+      StardustService::builder(Object::new())
+        .id(document.id().to_url().join("#my-service").unwrap())
+        .type_("RevocationList2022")
+        .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
+        .build()
+        .unwrap()
+    ));
+
+    assert!(document.insert_service(
+      StardustService::builder(Object::new())
+        .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
+        .type_("RevocationList2022")
+        .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
+        .build()
+        .unwrap()
+    ));
 
     document
-      .tmp_add_service(
-        other_did.clone(),
-        "#my-foreign-service",
-        "RevocationList2030",
-        identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/0xf4c42e9da").unwrap()),
-      )
-      .unwrap();
-
-    document
-      .0
       .also_known_as_mut()
       .append(Url::parse("did:example:abc").unwrap());
-
     document
-      .0
       .also_known_as_mut()
       .append(Url::parse("did:example:xyz").unwrap());
 
-    let mut controllers = OneOrSet::new_one(other_did.clone());
-    (&mut controllers).append(original_did.clone());
-    let mut controllers = Some(controllers);
-    std::mem::swap(&mut controllers, document.0.controller_mut());
+    let controllers = OneOrSet::try_from(vec![did_foreign.clone(), did_self.clone()]).unwrap();
+    *document.core_document_mut().controller_mut() = Some(controllers);
 
     TestSetup {
       document,
-      original_did,
-      other_did,
+      did_self,
+      did_foreign,
     }
   }
 
@@ -218,15 +228,15 @@ mod tests {
   fn test_transformation_roundtrip() {
     let TestSetup {
       document,
-      original_did,
-      other_did,
+      did_self,
+      did_foreign,
     } = test_document();
 
     let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document.clone());
 
     assert_eq!(
       state_metadata_doc
-        .0
+        .document
         .resolve_method("#did-self", None)
         .unwrap()
         .id()
@@ -236,29 +246,29 @@ mod tests {
 
     assert_eq!(
       state_metadata_doc
-        .0
+        .document
         .resolve_method("#did-foreign", None)
         .unwrap()
         .id()
         .did(),
-      &other_did
+      &did_foreign
     );
 
     assert_eq!(
       state_metadata_doc
-        .0
+        .document
         .service()
         .iter()
         .find(|service| service.id().fragment().unwrap() == "my-foreign-service")
         .unwrap()
         .id()
         .did(),
-      &other_did
+      &did_foreign
     );
 
     assert_eq!(
       state_metadata_doc
-        .0
+        .document
         .service()
         .iter()
         .find(|service| service.id().fragment().unwrap() == "my-service")
@@ -268,11 +278,11 @@ mod tests {
       PLACEHOLDER_DID.as_ref()
     );
 
-    let controllers = state_metadata_doc.0.controller().unwrap();
-    assert_eq!(controllers.get(0).unwrap(), &other_did);
+    let controllers = state_metadata_doc.document.controller().unwrap();
+    assert_eq!(controllers.get(0).unwrap(), &did_foreign);
     assert_eq!(controllers.get(1).unwrap(), PLACEHOLDER_DID.as_ref());
 
-    let stardust_document = state_metadata_doc.into_stardust_document(&original_did);
+    let stardust_document = state_metadata_doc.into_stardust_document(&did_self);
 
     assert_eq!(stardust_document, document);
   }
@@ -282,11 +292,9 @@ mod tests {
     let TestSetup { document, .. } = test_document();
 
     let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
-
     let packed_bytes: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
 
     let unpacked_doc = StateMetadataDocument::unpack(&packed_bytes).unwrap();
-
     assert_eq!(state_metadata_doc, unpacked_doc);
   }
 }
