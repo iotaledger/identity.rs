@@ -610,21 +610,6 @@ mod tests {
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
-  #[cfg(feature = "alias-id")]
-  #[test]
-  fn alias_id_roundtrip() {
-    let execute_assertions = |id: &str, network_name: &str| {
-      let alias_id: AliasId = AliasId::from_str(id).unwrap();
-      let network_name: NetworkName = NetworkName::try_from(network_name.to_string()).unwrap();
-      assert_eq!(StardustDID::from_alias_id(alias_id, network_name).alias_id(), alias_id);
-    };
-
-    for name in VALID_NETWORK_NAMES {
-      execute_assertions(VALID_ALIAS_ID_STR, name);
-      execute_assertions(INITIAL_ALIAS_ID_STR, name);
-    }
-  }
-
   // ===========================================================================================================================
   // Test constructors with randomly generated input
   // ===========================================================================================================================
