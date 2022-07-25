@@ -23,7 +23,6 @@ pub struct NetworkName(pub(crate) Cow<'static, str>);
 impl NetworkName {
   pub(crate) const MAX_LENGTH: usize = 6;
   pub(crate) const DEFAULT_STR: &'static str = "main";
-  // Names of networks maintained by the IF that the stardust UTXO based DID method should support
 
   /// Creates a new [`NetworkName`] if the name passes validation.
   pub fn try_from<T>(name: T) -> Result<Self>
