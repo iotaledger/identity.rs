@@ -137,10 +137,6 @@ impl StardustDID {
 
   /// Checks if the given `DID` is syntactically valid according to the [`StardustDID`] method specification.
   ///
-  ///
-  ///  This function does NOT check whether the `did-method-specific-id` corresponds to a Blake2b-256 hash of an
-  ///  `OutputID`, despite this being a requirement for the [`StardustDID`] method specification.
-  ///
   /// # Errors
   ///
   /// Returns `Err` if the input is not a syntactically valid [`StardustDID`].
