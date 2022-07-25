@@ -466,7 +466,7 @@ mod tests {
     }
     assert!(
       check_network_executed,
-      "test: invalid_check_network never executes `StardustDID::check_network`"
+      "StardustDID::check_network` should have been executed"
     );
   }
 
