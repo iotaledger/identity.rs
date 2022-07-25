@@ -445,7 +445,7 @@ mod tests {
     // name is in conflict with the DID Core spec itself then proceed to the next network name.
 
     // Ensure that this test is robust to changes in the supplied list of network names, i.e. fail if none of the
-    // network names can be contained in a generic DIDCore.
+    // network names can be contained in a generic CoreDID.
 
     let mut check_network_executed: bool = false;
 
