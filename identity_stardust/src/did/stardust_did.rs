@@ -6,11 +6,11 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
-use std::borrow::Cow;
-
 use identity_core::common::KeyComparable;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
+use std::borrow::Cow;
 
 use identity_did::did::BaseDIDUrl;
 use identity_did::did::CoreDID;
@@ -19,6 +19,8 @@ use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 
 use crate::NetworkName;
+
+const DEFAULT_STARDUST_NETWORK_NAME: &'static str = "main";
 
 pub type Result<T> = std::result::Result<T, DIDError>;
 
@@ -43,7 +45,8 @@ impl StardustDID {
   pub const METHOD: &'static str = "stardust";
 
   /// The default Tangle network (`"main"`).
-  pub const DEFAULT_NETWORK: NetworkName = NetworkName(Cow::Borrowed("main"));
+  pub const DEFAULT_NETWORK: Lazy<NetworkName> =
+    Lazy::new(|| NetworkName::try_from(Cow::Borrowed(DEFAULT_STARDUST_NETWORK_NAME)).unwrap());
 
   /// Converts an owned [`CoreDID`] to a [`StardustDID`].
   ///
@@ -196,7 +199,8 @@ impl StardustDID {
       .find(':')
       .map(|idx| input.split_at(idx))
       .map(|(network, tail)| (network, &tail[1..]))
-      .unwrap_or((Self::DEFAULT_NETWORK.as_ref(), input))
+      // Self::DEFAULT_NETWORK is built from a static reference so unwrapping is fine
+      .unwrap_or((Self::DEFAULT_NETWORK.as_static_str().unwrap(), input))
   }
 
   /// Returns the unique tag of the `DID`.
@@ -526,7 +530,8 @@ mod tests {
   #[test]
   fn placeholder_produces_a_did_with_expected_string_representation() {
     assert_eq!(
-      StardustDID::placeholder(&NetworkName::try_from(StardustDID::DEFAULT_NETWORK.as_ref()).unwrap()).as_str(),
+      StardustDID::placeholder(&NetworkName::try_from(StardustDID::DEFAULT_NETWORK.as_static_str().unwrap()).unwrap())
+        .as_str(),
       format!("did:{}:{}", StardustDID::METHOD, INITIAL_ALIAS_ID_STR)
     );
 
@@ -548,7 +553,7 @@ mod tests {
     let did_with_default_network_string: String = format!(
       "did:{}:{}:{}",
       StardustDID::METHOD,
-      StardustDID::DEFAULT_NETWORK,
+      StardustDID::DEFAULT_NETWORK.as_ref(),
       VALID_ALIAS_ID_STR
     );
     let expected_normalization_string_representation: String =

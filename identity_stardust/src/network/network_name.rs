@@ -18,7 +18,7 @@ use crate::error::Result;
 /// Network name compliant with the [`crate::StardustDID`] method specification.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
-pub struct NetworkName(pub(crate) Cow<'static, str>);
+pub struct NetworkName(Cow<'static, str>);
 
 impl NetworkName {
   pub const MAX_LENGTH: usize = 6;
@@ -42,6 +42,39 @@ impl NetworkName {
           && name.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit())
       })
       .ok_or(Error::InvalidNetworkName)
+  }
+
+  /// Represent the [`NetworkName`] as a static reference if possible
+  ///
+  /// # Examples
+  /// ```
+  /// # use identity_stardust::NetworkName;
+  /// # use std::borrow::Cow;
+  ///
+  /// let MAIN: &'static str = "main";
+  /// assert_eq!(
+  ///   NetworkName::try_from(MAIN)
+  ///     .ok()
+  ///     .and_then(|this| this.as_static_str()),
+  ///   Some(MAIN)
+  /// );
+  /// ```
+  ///
+  /// ```
+  /// # use identity_stardust::NetworkName;
+  /// # use std::borrow::Cow;
+  ///
+  /// assert!(NetworkName::try_from(Cow::Owned("other".into()))
+  ///   .unwrap()
+  ///   .as_static_str()
+  ///   .is_none());
+  /// ```
+  pub fn as_static_str(&self) -> Option<&'static str> {
+    if let Cow::Borrowed(value) = self.0 {
+      Some(value)
+    } else {
+      None
+    }
   }
 }
 
