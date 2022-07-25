@@ -223,7 +223,9 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -241,8 +243,6 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -259,6 +259,20 @@ Adds a new Service to the DID Document.
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
 
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -269,6 +283,17 @@ Adds a new verification method to the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -460,31 +485,6 @@ Returns the decrypted text.
 | encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteMethod"></a>
 

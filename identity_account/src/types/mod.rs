@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use self::identity_setup::*;
-pub use self::identity_state::*;
+pub(crate) use self::identity_state::IdentityState;
 pub use self::identity_updater::*;
 pub use self::method_content::*;
 

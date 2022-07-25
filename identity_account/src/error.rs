@@ -39,9 +39,6 @@ pub enum Error {
   /// Caused by reaching an invalid state for the identity.
   #[error("invalid identity state: {0}")]
   InvalidIdentityState(String),
-  /// Caused by an error when serialing or deserialing IdentityState.
-  #[error("serialization error: {0}")]
-  SerializationError(String, #[source] serde_json::Error),
 }
 
 impl From<identity_did::did::DIDError> for Error {

@@ -48,7 +48,7 @@ type MemVault = HashMap<KeyLocation, KeyPair>;
 pub struct MemStore {
   // Controls whether to print the storages content when debugging.
   expand: bool,
-  data: Shared<HashMap<IotaDID, Vec<u8>>>,
+  blobs: Shared<HashMap<IotaDID, Vec<u8>>>,
   vaults: Shared<Vaults>,
 }
 
@@ -57,7 +57,7 @@ impl MemStore {
   pub fn new() -> Self {
     Self {
       expand: false,
-      data: Shared::new(HashMap::new()),
+      blobs: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
     }
   }
@@ -123,7 +123,7 @@ impl Storage for MemStore {
     // so we only need to do work if the DID still exists.
     // The return value signals whether the DID was actually removed during this operation.
     if self.vaults.write()?.remove(did).is_some() {
-      let _ = self.data.write()?.remove(did);
+      let _ = self.blobs.write()?.remove(did);
       Ok(true)
     } else {
       Ok(false)
@@ -370,16 +370,16 @@ impl Storage for MemStore {
     }
   }
 
-  async fn blob_set(&self, did: &IotaDID, value: &[u8]) -> Result<()> {
+  async fn blob_set(&self, did: &IotaDID, value: Vec<u8>) -> Result<()> {
     // Set the arbitrary value for the given DID.
-    self.data.write()?.insert(did.clone(), value.to_vec());
+    self.blobs.write()?.insert(did.clone(), value);
 
     Ok(())
   }
 
   async fn blob_get(&self, did: &IotaDID) -> Result<Option<Vec<u8>>> {
     // Lookup the value stored of the given DID.
-    self.data.read().map(|data| data.get(did).cloned())
+    self.blobs.read().map(|data| data.get(did).cloned())
   }
 
   async fn flush_changes(&self) -> Result<()> {
@@ -509,7 +509,7 @@ impl Debug for MemStore {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     if self.expand {
       f.debug_struct("MemStore")
-        .field("data", &self.data)
+        .field("blobs", &self.blobs)
         .field("vaults", &self.vaults)
         .finish()
     } else {

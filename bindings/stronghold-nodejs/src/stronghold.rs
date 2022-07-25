@@ -247,9 +247,9 @@ impl NapiStronghold {
 
   /// Stores an arbitrary value for the identity specified by `did`.
   #[napi]
-  pub async fn blob_set(&self, did: &NapiDid, value: Vec<u32>) -> Result<()> {
-    let value: Vec<u8> = value.try_into_bytes()?;
-    self.0.blob_set(&did.0, &value).await.napi_result()
+  pub async fn blob_set(&self, did: &NapiDid, blob: Vec<u32>) -> Result<()> {
+    let blob: Vec<u8> = blob.try_into_bytes()?;
+    self.0.blob_set(&did.0, blob).await.napi_result()
   }
 
   /// Persists any unsaved changes.

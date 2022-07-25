@@ -21,7 +21,6 @@ log = { version = "0.4", default-features = false }
 paste = { version = "1.0" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-serde_json = { version = "1.0", default-features = false }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
 

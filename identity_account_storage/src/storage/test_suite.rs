@@ -6,6 +6,8 @@ use function_name::named;
 use rand::distributions::DistString;
 use rand::rngs::OsRng;
 
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
@@ -396,11 +398,11 @@ impl StorageTestSuite {
 
     let expected_document: IotaDocument = IotaDocument::from_verification_method(method).unwrap();
     storage
-      .blob_set(&did, &serde_json::to_vec(&expected_document).unwrap())
+      .blob_set(&did, expected_document.to_json_vec().unwrap())
       .await
       .context("blob_set returned an error")?;
     let value: Option<Vec<u8>> = storage.blob_get(&did).await.context("blob_get returned an error")?;
-    let document: IotaDocument = serde_json::from_slice(&value.unwrap()).unwrap();
+    let document: IotaDocument = IotaDocument::from_json_slice(&value.unwrap()).unwrap();
     ensure_eq!(
       expected_document,
       document,
@@ -410,11 +412,11 @@ impl StorageTestSuite {
     let mut expected_chain_state: ChainState = ChainState::new();
     expected_chain_state.set_last_integration_message_id(MessageId::new([0xff; 32]));
     storage
-      .blob_set(&did, &serde_json::to_vec(&expected_chain_state).unwrap())
+      .blob_set(&did, expected_chain_state.to_json_vec().unwrap())
       .await
       .context("blob_set returned an error")?;
     let value: Option<Vec<u8>> = storage.blob_get(&did).await.context("blob_get returned an error")?;
-    let chain_state: ChainState = serde_json::from_slice(&value.unwrap()).unwrap();
+    let chain_state: ChainState = ChainState::from_json_slice(&value.unwrap()).unwrap();
     ensure_eq!(
       expected_chain_state,
       chain_state,
@@ -446,7 +448,7 @@ impl StorageTestSuite {
     expected_chain_state.set_last_integration_message_id(MessageId::new([0xff; 32]));
 
     storage
-      .blob_set(&did, &serde_json::to_vec(&expected_chain_state).unwrap())
+      .blob_set(&did, expected_chain_state.to_json_vec().unwrap())
       .await
       .context("chain_state_set returned an error")?;
 

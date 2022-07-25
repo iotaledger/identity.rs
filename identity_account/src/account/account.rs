@@ -12,6 +12,8 @@ use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
@@ -128,8 +130,7 @@ where
 
     // Ensure the identity exists in storage
     let identity_state_bytes: Vec<u8> = setup.storage.blob_get(&did).await?.ok_or(Error::IdentityNotFound)?;
-    let identity_state: IdentityState = serde_json::from_slice(&identity_state_bytes)
-      .map_err(|e| Error::SerializationError("unable to deserialize state".to_owned(), e))?;
+    let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
     let chain_state: ChainState = identity_state
       .chain_state()?
       .ok_or_else(|| Error::InvalidIdentityState("missing chain state".to_owned()))?;
@@ -326,8 +327,7 @@ where
       .blob_get(self.did())
       .await?
       .ok_or(Error::IdentityNotFound)?;
-    let identity_state: IdentityState = serde_json::from_slice(&identity_state_bytes)
-      .map_err(|e| Error::SerializationError("unable to deserialize state".to_owned(), e))?;
+    let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
 
     identity_state
       .document()?
@@ -421,14 +421,7 @@ where
 
   async fn store_state(&self) -> Result<()> {
     let identity_state: IdentityState = IdentityState::new(Some(&self.document), Some(&self.chain_state))?;
-    self
-      .storage
-      .blob_set(
-        self.did(),
-        &serde_json::to_vec(&identity_state)
-          .map_err(|e| Error::SerializationError("unable to serialize state".to_owned(), e))?,
-      )
-      .await?;
+    self.storage.blob_set(self.did(), identity_state.to_json_vec()?).await?;
 
     self.save(false).await?;
 

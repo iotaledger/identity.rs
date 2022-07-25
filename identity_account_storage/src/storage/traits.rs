@@ -149,10 +149,10 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     private_key: &KeyLocation,
   ) -> Result<Vec<u8>>;
 
-  /// Stores an arbitrary value for the identity specified by `did`.
-  async fn blob_set(&self, did: &IotaDID, value: &[u8]) -> Result<()>;
+  /// Stores an arbitrary blob for the identity specified by `did`.
+  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> Result<()>;
 
-  /// Returns the value stored by the identity specified by `did`.
+  /// Returns the blob stored by the identity specified by `did`.
   async fn blob_get(&self, did: &IotaDID) -> Result<Option<Vec<u8>>>;
 
   /// Persists any unsaved changes.

@@ -40,10 +40,6 @@ extern "C" {
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
   pub type PromiseSignature;
-  #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined>")]
-  pub type PromiseOptionChainState;
-  #[wasm_bindgen(typescript_type = "Promise<Document | undefined>")]
-  pub type PromiseOptionDocument;
   #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
   pub type PromiseKeyLocation;
   #[wasm_bindgen(typescript_type = "Promise<Array<DID>>")]
@@ -55,7 +51,7 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromiseData;
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array | undefined>")]
-  pub type PromiseBytes;
+  pub type PromiseOptionBytes;
 }
 
 #[wasm_bindgen]
@@ -110,9 +106,9 @@ extern "C" {
     private_key: WasmKeyLocation,
   ) -> Uint8Array;
   #[wasm_bindgen(method, js_name = blobGet)]
-  pub fn blob_get(this: &WasmStorage, did: WasmDID) -> PromiseBytes;
+  pub fn blob_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionBytes;
   #[wasm_bindgen(method, js_name = blobSet)]
-  pub fn blob_set(this: &WasmStorage, did: WasmDID, value: Vec<u8>) -> PromiseVoid;
+  pub fn blob_set(this: &WasmStorage, did: WasmDID, blob: Vec<u8>) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseVoid;
 }
@@ -291,8 +287,8 @@ impl Storage for WasmStorage {
     Ok(Some(value))
   }
 
-  async fn blob_set(&self, did: &IotaDID, value: &[u8]) -> AccountStorageResult<()> {
-    let promise: Promise = Promise::resolve(&self.blob_set(did.clone().into(), value.to_vec()));
+  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> AccountStorageResult<()> {
+    let promise: Promise = Promise::resolve(&self.blob_set(did.clone().into(), blob));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
@@ -389,11 +385,11 @@ interface Storage {
    */
   dataDecrypt: (did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;
 
-  /** Returns the value stored by the identity specified by `did`. */
+  /** Returns the blob stored by the identity specified by `did`. */
   blobGet: (did: DID) => Promise<Uint8Array | undefined>;
 
-  /** Stores an arbitrary value for the identity specified by `did`. */
-  blobSet: (did: DID, value: Uint8Array) => Promise<void>;
+  /** Stores an arbitrary blob for the identity specified by `did`. */
+  blobSet: (did: DID, blob: Uint8Array) => Promise<void>;
 
   /** Persists any unsaved changes. */
   flushChanges: () => Promise<void>;

@@ -50,7 +50,7 @@ static INDEX_CLIENT_PATH: &str = "$index";
 // The key in the index store that contains the serialized index.
 // This happens to be the same as the client path, but for explicitness we define them separately.
 static INDEX_STORE_KEY: &str = INDEX_CLIENT_PATH;
-static STORE_KEY: &str = "$store";
+static BLOB_STORE_KEY: &str = "$blob";
 // The static identifier for vaults inside clients.
 static VAULT_PATH: &[u8; 6] = b"$vault";
 
@@ -374,12 +374,12 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn blob_set(&self, did: &IotaDID, value: &[u8]) -> Result<()> {
+  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> Result<()> {
     self.mutate_client(did, |client| {
       let store: Store = client.store();
 
       store
-        .insert(STORE_KEY.as_bytes().to_vec(), value.to_vec(), None)
+        .insert(BLOB_STORE_KEY.as_bytes().to_vec(), blob, None)
         .map(|_| ())
         .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
     })
@@ -389,7 +389,7 @@ impl Storage for Stronghold {
     let client: Client = self.client(&ClientPath::from(did))?;
     let store: Store = client.store();
     let data: Option<Vec<u8>> = store
-      .get(STORE_KEY.as_bytes())
+      .get(BLOB_STORE_KEY.as_bytes())
       .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
     Ok(data)
   }

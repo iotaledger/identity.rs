@@ -11,13 +11,13 @@ export class MemStore implements Storage {
     // referential equality for object keys, and thus a primitive type needs to be used instead.
 
     // The map from DIDs to state.
-    private _state: Map<string, Uint8Array>;
-    // The map from DIDs to vaults.
+    private _blobs: Map<string, Uint8Array>;
+    // Map of DID state blobs.
     private _vaults: Map<string, Map<string, KeyPair>>;
 
     /** Creates a new, empty `MemStore` instance. */
     constructor() {
-        this._state = new Map();
+        this._blobs = new Map();
         this._vaults = new Map();
     }
 
@@ -64,7 +64,7 @@ export class MemStore implements Storage {
         // so we only need to do work if the DID still exists.
         // The return value signals whether the DID was actually removed during this operation.
         if (this._vaults.has(did.toString())) {
-            this._state.delete(did.toString());
+            this._blobs.delete(did.toString());
             this._vaults.delete(did.toString());
             return true;
         }
@@ -195,12 +195,12 @@ export class MemStore implements Storage {
 
     public async blobGet(did: DID): Promise<Uint8Array | undefined> {
         // Lookup the state of the given DID.
-        return this._state.get(did.toString());
+        return this._blobs.get(did.toString());
     }
 
     public async blobSet(did: DID, value: Uint8Array): Promise<void> {
         // Set the state of the given DID.
-        this._state.set(did.toString(), value);
+        this._blobs.set(did.toString(), value);
     }
 
     public async flushChanges(): Promise<void> {
