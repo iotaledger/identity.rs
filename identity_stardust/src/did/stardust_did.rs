@@ -7,10 +7,8 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
 use identity_core::common::KeyComparable;
-use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
-use std::borrow::Cow;
 
 use identity_did::did::BaseDIDUrl;
 use identity_did::did::CoreDID;
@@ -19,8 +17,6 @@ use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 
 use crate::NetworkName;
-
-const DEFAULT_STARDUST_NETWORK_NAME: &'static str = "main";
 
 pub type Result<T> = std::result::Result<T, DIDError>;
 
@@ -45,8 +41,7 @@ impl StardustDID {
   pub const METHOD: &'static str = "stardust";
 
   /// The default Tangle network (`"main"`).
-  pub const DEFAULT_NETWORK: Lazy<NetworkName> =
-    Lazy::new(|| NetworkName::try_from(Cow::Borrowed(DEFAULT_STARDUST_NETWORK_NAME)).unwrap());
+  pub const DEFAULT_NETWORK: &'static str = "main";
 
   /// Converts an owned [`CoreDID`] to a [`StardustDID`].
   ///
@@ -120,7 +115,7 @@ impl StardustDID {
   fn normalize(mut did: CoreDID) -> CoreDID {
     let method_id = did.method_id();
     let (network, tag) = Self::denormalized_components(method_id);
-    if tag.len() == method_id.len() || network != Self::DEFAULT_NETWORK.as_ref() {
+    if tag.len() == method_id.len() || network != Self::DEFAULT_NETWORK {
       did
     } else {
       did
@@ -200,7 +195,7 @@ impl StardustDID {
       .map(|idx| input.split_at(idx))
       .map(|(network, tail)| (network, &tail[1..]))
       // Self::DEFAULT_NETWORK is built from a static reference so unwrapping is fine
-      .unwrap_or((Self::DEFAULT_NETWORK.as_static_str().unwrap(), input))
+      .unwrap_or((Self::DEFAULT_NETWORK, input))
   }
 
   /// Returns the unique tag of the `DID`.
@@ -373,8 +368,20 @@ mod tests {
 
   // Rules are: at least one character, at most six characters and may only contain digits and/or lowercase ascii
   // characters.
-  const VALID_NETWORK_NAMES: [&str; 12] = [
-    "main", "dev", "smr", "rms", "test", "foo", "foobar", "123456", "0", "foo42", "bar123", "42foo",
+  const VALID_NETWORK_NAMES: [&str; 13] = [
+    StardustDID::DEFAULT_NETWORK,
+    "main",
+    "dev",
+    "smr",
+    "rms",
+    "test",
+    "foo",
+    "foobar",
+    "123456",
+    "0",
+    "foo42",
+    "bar123",
+    "42foo",
   ];
 
   const INVALID_NETWORK_NAMES: [&str; 10] = [
@@ -530,14 +537,13 @@ mod tests {
   #[test]
   fn placeholder_produces_a_did_with_expected_string_representation() {
     assert_eq!(
-      StardustDID::placeholder(&NetworkName::try_from(StardustDID::DEFAULT_NETWORK.as_static_str().unwrap()).unwrap())
-        .as_str(),
+      StardustDID::placeholder(&NetworkName::try_from(StardustDID::DEFAULT_NETWORK).unwrap()).as_str(),
       format!("did:{}:{}", StardustDID::METHOD, INITIAL_ALIAS_ID_STR)
     );
 
     for name in VALID_NETWORK_NAMES
       .iter()
-      .filter(|name| *name != &StardustDID::DEFAULT_NETWORK.as_ref())
+      .filter(|name| *name != &StardustDID::DEFAULT_NETWORK)
     {
       let network_name: NetworkName = NetworkName::try_from(*name).unwrap();
       let did: StardustDID = StardustDID::placeholder(&network_name);
@@ -553,7 +559,7 @@ mod tests {
     let did_with_default_network_string: String = format!(
       "did:{}:{}:{}",
       StardustDID::METHOD,
-      StardustDID::DEFAULT_NETWORK.as_ref(),
+      StardustDID::DEFAULT_NETWORK,
       VALID_ALIAS_ID_STR
     );
     let expected_normalization_string_representation: String =
@@ -733,7 +739,7 @@ mod tests {
       let did: StardustDID = format!("did:{}:{}", StardustDID::METHOD, valid_alias_id)
         .parse()
         .unwrap();
-      assert_eq!(did.network_str(), StardustDID::DEFAULT_NETWORK.as_ref());
+      assert_eq!(did.network_str(), StardustDID::DEFAULT_NETWORK);
 
       let did: StardustDID = format!("did:{}:dev:{}", StardustDID::METHOD, valid_alias_id)
         .parse()
@@ -766,7 +772,7 @@ mod tests {
       let did: StardustDID = format!(
         "did:{}:{}:{}",
         StardustDID::METHOD,
-        StardustDID::DEFAULT_NETWORK.as_ref(),
+        StardustDID::DEFAULT_NETWORK,
         valid_alias_id
       )
       .parse()

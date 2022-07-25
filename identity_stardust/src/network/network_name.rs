@@ -43,39 +43,6 @@ impl NetworkName {
       })
       .ok_or(Error::InvalidNetworkName)
   }
-
-  /// Represent the [`NetworkName`] as a static reference if possible
-  ///
-  /// # Examples
-  /// ```
-  /// # use identity_stardust::NetworkName;
-  /// # use std::borrow::Cow;
-  ///
-  /// let MAIN: &'static str = "main";
-  /// assert_eq!(
-  ///   NetworkName::try_from(MAIN)
-  ///     .ok()
-  ///     .and_then(|this| this.as_static_str()),
-  ///   Some(MAIN)
-  /// );
-  /// ```
-  ///
-  /// ```
-  /// # use identity_stardust::NetworkName;
-  /// # use std::borrow::Cow;
-  ///
-  /// assert!(NetworkName::try_from(Cow::Owned("other".into()))
-  ///   .unwrap()
-  ///   .as_static_str()
-  ///   .is_none());
-  /// ```
-  pub fn as_static_str(&self) -> Option<&'static str> {
-    if let Cow::Borrowed(value) = self.0 {
-      Some(value)
-    } else {
-      None
-    }
-  }
 }
 
 impl AsRef<str> for NetworkName {
