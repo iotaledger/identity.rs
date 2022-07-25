@@ -199,7 +199,7 @@ impl StardustDID {
       .unwrap_or((NetworkName::DEFAULT_STR, input))
   }
 
-  /// Returns the unique Tangle tag of the `DID`.
+  /// Returns the unique tag of the `DID`.
   pub fn tag(&self) -> &str {
     Self::denormalized_components(self.method_id()).1
   }
