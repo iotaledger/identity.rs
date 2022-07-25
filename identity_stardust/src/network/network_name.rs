@@ -21,7 +21,7 @@ use crate::error::Result;
 pub struct NetworkName(pub(crate) Cow<'static, str>);
 
 impl NetworkName {
-  pub(crate) const MAX_LENGTH: usize = 6;
+  pub const MAX_LENGTH: usize = 6;
   pub(crate) const DEFAULT_STR: &'static str = "main";
 
   /// Creates a new [`NetworkName`] if the name passes validation.
