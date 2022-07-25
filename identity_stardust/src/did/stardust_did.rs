@@ -219,6 +219,56 @@ impl StardustDID {
   }
 }
 
+#[cfg(feature = "iota-client")]
+mod stardust_did_iota_client {
+  use std::ops::Deref;
+
+  use iota_client::block::output::AliasId;
+  use iota_client::block::output::Output;
+  use iota_client::block::output::OutputId;
+  use iota_client::block::payload::transaction::TransactionEssence;
+  use iota_client::block::payload::Payload;
+  use iota_client::block::Block;
+
+  use super::*;
+
+  impl StardustDID {
+    /// Extracts an Alias ID from a published block and returns a new DID from it.
+    ///
+    /// NOTE: if there are multiple Alias Outputs in the payload, this uses the first one.
+    // TODO: can hopefully remove from public API if the publishing logic is wrapped.
+    pub fn from_block(block: &Block, network: &NetworkName) -> crate::Result<StardustDID> {
+      let payload: &Payload = block.payload().ok_or(DIDError::Other("block missing payload"))?;
+      // TODO: improve error handling messages.
+      let output_id: OutputId = get_alias_output_id_from_payload(payload)?;
+      let id: AliasId = AliasId::from(output_id);
+      Ok(StardustDID::new(id.deref(), network))
+    }
+  }
+
+  // helper function to get the output id for the first alias output
+  // TODO: improve error handling
+  fn get_alias_output_id_from_payload(payload: &Payload) -> crate::Result<OutputId> {
+    match payload {
+      Payload::Transaction(tx_payload) => {
+        let TransactionEssence::Regular(regular) = tx_payload.essence();
+        for (index, output) in regular.outputs().iter().enumerate() {
+          if let Output::Alias(_) = output {
+            return Ok(OutputId::new(
+              tx_payload.id(),
+              index
+                .try_into()
+                .map_err(|_| DIDError::Other("output index exceeds u16"))?,
+            )?);
+          }
+        }
+        Err(DIDError::Other("no alias output in transaction essence"))?
+      }
+      _ => Err(DIDError::Other("not a transaction payload"))?,
+    }
+  }
+}
+
 impl DID for StardustDID {
   /// Returns the [`StardustDID`] scheme. See [`DID::SCHEME`].
   fn scheme(&self) -> &'static str {

@@ -44,6 +44,7 @@ impl StateMetadataDocument {
         if did == PLACEHOLDER_DID.as_ref() {
           Ok(original_did.clone())
         } else {
+          // TODO: wrap error?
           StardustDID::try_from_core(did)
         }
       },

@@ -31,9 +31,9 @@ use serde::Serialize;
 use crate::did::StardustDIDUrl;
 use crate::document::stardust_document_metadata::StardustDocumentMetadata;
 use crate::error::Result;
+use crate::state_metadata::StateMetadataEncoding;
 use crate::NetworkName;
 use crate::StardustDID;
-use crate::state_metadata::StateMetadataEncoding;
 use crate::StateMetadataDocument;
 
 /// A [`VerificationMethod`] adhering to the IOTA DID method specification.
@@ -162,7 +162,7 @@ impl StardustDocument {
   // ===========================================================================
 
   /// Returns an iterator over all [`StardustVerificationMethod`] in the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item=&StardustVerificationMethod> {
+  pub fn methods(&self) -> impl Iterator<Item = &StardustVerificationMethod> {
     self.document.methods()
   }
 
@@ -223,8 +223,8 @@ impl StardustDocument {
     query: Q,
     scope: Option<MethodScope>,
   ) -> Option<&mut StardustVerificationMethod>
-    where
-      Q: Into<DIDUrlQuery<'query>>,
+  where
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.document.resolve_method_mut(query, scope)
   }
@@ -256,9 +256,9 @@ impl StardustDocument {
     method_query: Q,
     options: ProofOptions,
   ) -> Result<()>
-    where
-      X: Serialize + SetSignature + TryMethod,
-      Q: Into<DIDUrlQuery<'query>>,
+  where
+    X: Serialize + SetSignature + TryMethod,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .signer(private_key)
@@ -296,24 +296,12 @@ impl StardustDocument {
 
 #[cfg(feature = "iota-client")]
 mod stardust_document_iota_client {
-  use std::ops::Deref;
-
-  use iota_client::block::Block;
-  use iota_client::block::output::AliasId;
+  use crate::Error;
   use iota_client::block::output::Output;
-  use iota_client::block::output::OutputId;
-  use iota_client::block::payload::Payload;
-  use iota_client::block::payload::transaction::TransactionEssence;
 
   use super::*;
 
   impl StardustDocument {
-    // TODO: can hopefully remove if the publishing logic is wrapped.
-    pub fn did_from_block(block: &Block, network: &NetworkName) -> Result<StardustDID> {
-      let id: AliasId = AliasId::from(get_alias_output_id_from_payload(block.payload().unwrap()));
-      Ok(StardustDID::new(id.deref(), network))
-    }
-
     /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
     ///
     /// NOTE: `did` is required since it is omitted from the serialized DID Document and
@@ -323,26 +311,9 @@ mod stardust_document_iota_client {
     pub fn deserialize_from_output(did: &StardustDID, output: &Output) -> Result<StardustDocument> {
       let document: &[u8] = match output {
         Output::Alias(alias_output) => alias_output.state_metadata(),
-        _ => panic!("not an alias output"),
+        _ => return Err(Error::InvalidStateMetadata("not an alias output")),
       };
       Self::unpack(did, document)
-    }
-  }
-
-  // helper function to get the output id for the first alias output
-  // TODO: error handling
-  fn get_alias_output_id_from_payload(payload: &Payload) -> OutputId {
-    match payload {
-      Payload::Transaction(tx_payload) => {
-        let TransactionEssence::Regular(regular) = tx_payload.essence();
-        for (index, output) in regular.outputs().iter().enumerate() {
-          if let Output::Alias(_alias_output) = output {
-            return OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap();
-          }
-        }
-        panic!("No alias output in transaction essence")
-      }
-      _ => panic!("No tx payload"),
     }
   }
 }
@@ -357,8 +328,8 @@ impl Document for StardustDocument {
   }
 
   fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
-    where
-      Q: Into<DIDUrlQuery<'query>>,
+  where
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.document.resolve_service(query)
   }
@@ -368,15 +339,15 @@ impl Document for StardustDocument {
     query: Q,
     scope: Option<MethodScope>,
   ) -> Option<&VerificationMethod<Self::D, Self::U>>
-    where
-      Q: Into<DIDUrlQuery<'query>>,
+  where
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.document.resolve_method(query, scope)
   }
 
   fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_did::Result<()>
-    where
-      X: Serialize + GetSignature + ?Sized,
+  where
+    X: Serialize + GetSignature + ?Sized,
   {
     self.document.verify_data(data, options)
   }
@@ -395,8 +366,8 @@ mod iota_document_revocation {
     /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
     /// service identified by `service_query`, revoke all specified `indices`.
     pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
-      where
-        Q: Into<DIDUrlQuery<'query>>,
+    where
+      Q: Into<DIDUrlQuery<'query>>,
     {
       self
         .core_document_mut()
@@ -407,8 +378,8 @@ mod iota_document_revocation {
     /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
     /// service with an id by `service_query`, unrevoke all specified `indices`.
     pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
-      where
-        Q: Into<DIDUrlQuery<'query>>,
+    where
+      Q: Into<DIDUrlQuery<'query>>,
     {
       self
         .core_document_mut()
@@ -561,7 +532,7 @@ mod tests {
         key_new.public(),
         method_fragment.as_str(),
       )
-        .unwrap();
+      .unwrap();
       document.insert_method(method_new, scope).unwrap();
 
       // Sign and verify data.
@@ -610,7 +581,7 @@ mod tests {
     }}"#,
       url1
     ))
-      .unwrap();
+    .unwrap();
     document.insert_service(service1.clone());
     assert_eq!(1, document.service().len());
     assert_eq!(document.resolve_service(&url1), Some(&service1));
@@ -629,7 +600,7 @@ mod tests {
     }}"#,
       url2
     ))
-      .unwrap();
+    .unwrap();
     document.insert_service(service2.clone());
     assert_eq!(2, document.service().len());
     assert_eq!(document.resolve_service(&url2), Some(&service2));
@@ -647,7 +618,7 @@ mod tests {
     }}"#,
       url1
     ))
-      .unwrap();
+    .unwrap();
     assert!(!document.insert_service(duplicate.clone()));
     assert_eq!(2, document.service().len());
     let resolved: &StardustService = document.resolve_service(&url1).unwrap();
@@ -674,7 +645,7 @@ mod tests {
       keypair1.public(),
       "test-0",
     )
-      .unwrap();
+    .unwrap();
     original_doc
       .insert_method(method1, MethodScope::capability_invocation())
       .unwrap();
