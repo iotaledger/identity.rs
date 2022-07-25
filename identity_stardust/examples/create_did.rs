@@ -136,7 +136,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Output ID: {alias_output_id}");
   let response = client.get_output(&alias_output_id).await?;
   let output = Output::try_from(&response.output)?;
-  println!("Output: {output:?}");
+  println!("xOutput: {output:?}");
 
   // The resolved DID Document replaces the placeholder DID with the correct one.
   let resolved_document = StardustDocument::deserialize_from_output(&did, &output)?;
