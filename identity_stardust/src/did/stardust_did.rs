@@ -568,7 +568,6 @@ mod tests {
   }
 
   #[test]
-
   fn parse_invalid() {
     let execute_assertions = |valid_alias_id: &str| {
       assert!(matches!(
