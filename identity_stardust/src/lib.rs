@@ -11,6 +11,12 @@ pub use document::*;
 pub use state_metadata::*;
 
 mod client;
+pub use did::StardustDID;
+// TODO: Uncomment once `document` has been refactored to use the types from the `did` module in this crate.
+// pub use did::StardustDIDUrl;
+pub use network::NetworkName;
+mod did;
 mod document;
 mod error;
+mod network;
 mod state_metadata;

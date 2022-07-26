@@ -15,10 +15,8 @@ use napi_derive::napi;
 
 use crate::error::NapiResult;
 use crate::types::NapiCekAlgorithm;
-use crate::types::NapiChainState;
 use crate::types::NapiDid;
 use crate::types::NapiDidLocation;
-use crate::types::NapiDocument;
 use crate::types::NapiEncryptedData;
 use crate::types::NapiEncryptionAlgorithm;
 use crate::types::NapiKeyLocation;
@@ -236,38 +234,22 @@ impl NapiStronghold {
     Ok(data.into_iter().map(u32::from).collect())
   }
 
-  /// Returns the chain state of the identity specified by `did`.
+  /// Returns the blob stored by the identity specified by `did`.
   #[napi]
-  pub async fn chain_state_get(&self, did: &NapiDid) -> Result<Option<NapiChainState>> {
+  pub async fn blob_get(&self, did: &NapiDid) -> Result<Option<Vec<u32>>> {
     self
       .0
-      .chain_state_get(&did.0)
+      .blob_get(&did.0)
       .await
       .napi_result()
-      .map(|opt_chain_state| opt_chain_state.map(|chain_state| chain_state.into()))
+      .map(|opt_value| opt_value.map(|value| value.into_iter().map(u32::from).collect()))
   }
 
-  /// Set the chain state of the identity specified by `did`.
+  /// Stores an arbitrary blob for the identity specified by `did`.
   #[napi]
-  pub async fn chain_state_set(&self, did: &NapiDid, chain_state: &NapiChainState) -> Result<()> {
-    self.0.chain_state_set(&did.0, &chain_state.0).await.napi_result()
-  }
-
-  /// Returns the document of the identity specified by `did`.
-  #[napi]
-  pub async fn document_get(&self, did: &NapiDid) -> Result<Option<NapiDocument>> {
-    self
-      .0
-      .document_get(&did.0)
-      .await
-      .napi_result()
-      .map(|opt_document| opt_document.map(|doc| doc.into()))
-  }
-
-  /// Sets a new state for the identity specified by `did`.
-  #[napi]
-  pub async fn document_set(&self, did: &NapiDid, state: &NapiDocument) -> Result<()> {
-    self.0.document_set(&did.0, &state.0).await.napi_result()
+  pub async fn blob_set(&self, did: &NapiDid, blob: Vec<u32>) -> Result<()> {
+    let blob: Vec<u8> = blob.try_into_bytes()?;
+    self.0.blob_set(&did.0, blob).await.napi_result()
   }
 
   /// Persists any unsaved changes.
