@@ -29,98 +29,7 @@ pub trait StardustClientExt: Sync {
     StardustClient::from(self.client())
       .publish_outputs(secret_manager, alias_outputs)
       .await
-
-    // let block: Block = self
-    //   .client()
-    //   .block()
-    //   .with_secret_manager(secret_manager)
-    //   .with_outputs(outputs)
-    //   .expect("TODO")
-    //   .finish()
-    //   .await
-    //   .expect("TODO");
-
-    // let _ = self
-    //   .client()
-    //   .retry_until_included(&block.id(), None, None)
-    //   .await
-    //   .map_err(Error::ClientError)?;
-
-    // // TODO: Document panics.
-    // let alias_output_id_from_payload = |payload: &Payload| -> OutputId {
-    //   match payload {
-    //     Payload::Transaction(tx_payload) => {
-    //       let TransactionEssence::Regular(regular) = tx_payload.essence();
-    //       for (index, output) in regular.outputs().iter().enumerate() {
-    //         if let Output::Alias(_alias_output) = output {
-    //           return OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap();
-    //         }
-    //       }
-    //       panic!("No alias output in transaction essence")
-    //     }
-    //     _ => panic!("the payload should contain a transaction"),
-    //   }
-    // };
-
-    // let alias_id: AliasId = AliasId::from(alias_output_id_from_payload(
-    //   block.payload().expect("the block should contain a payload"),
-    // ));
-
-    // let did: CoreDID = StardustDocument::alias_id_to_did(&alias_id)?;
-
-    // Ok(StardustDocument(document.0.map(|_| did.clone(), |o| o)))
   }
-
-  // /// Consumes the alias output identified by the DID in `document` and creates a new one with `document`.
-  // ///
-  // /// The state controller address of the alias output must be `address`, which must be managed by
-  // /// `secret_manager`.
-  // /// If the new document is larger than the old one, the required storage deposit might increase.
-  // async fn publish_update(
-  //   &self,
-  //   address: Address,
-  //   secret_manager: &SecretManager,
-  //   document: StardustDocument,
-  // ) -> Result<()> {
-  //   let byte_cost_config: ByteCostConfig = StardustClient::from(self.client()).get_byte_cost_config().await?;
-
-  //   let alias_id: AliasId = StardustDocument::did_to_alias_id(document.0.id())?;
-  //   let output_id: OutputId = self
-  //     .client()
-  //     .alias_output_id(alias_id)
-  //     .await
-  //     .map_err(Error::ClientError)?;
-
-  //   let output_response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
-  //   let output: Output = Output::try_from(&output_response.output).map_err(OutputError::ConversionError)?;
-
-  //   // TODO: Unnecessary step?
-  //   // let resolved: StardustDocument = StardustDocument::deserialize_from_output(&alias_id, &output)?;
-
-  //   let alias_output: AliasOutput = if let Output::Alias(alias_output) = output {
-  //     alias_output
-  //   } else {
-  //     return Err(Error::OutputError(OutputError::NotAnAliasOutput));
-  //   };
-
-  //   let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
-  //     // Update storage deposit if size changes.
-  //     .with_minimum_storage_deposit(byte_cost_config)
-  //     // State controller updates increment the state index.
-  //     .with_state_index(alias_output.state_index() + 1);
-
-  //   if alias_output.alias_id().is_null() {
-  //     alias_output_builder = alias_output_builder.with_alias_id(alias_id);
-  //   }
-
-  //   let updated_alias_output: Output = alias_output_builder.finish_output().map_err(OutputError::BuildError)?;
-
-  //   let _ = StardustClient::from(self.client())
-  //     .publish_output(secret_manager, updated_alias_output)
-  //     .await?;
-
-  //   Ok(())
-  // }
 
   async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
     // TODO: Fix me.
@@ -211,6 +120,7 @@ impl<'client> StardustClient<'client> {
   }
 
   async fn publish_outputs(&self, secret_manager: &SecretManager, alias_outputs: Vec<Output>) -> Result<Block> {
+    
     let block: Block = self
       .client
       .block()
@@ -228,6 +138,8 @@ impl<'client> StardustClient<'client> {
       .await
       .map_err(Error::ClientError)?;
 
+    println!("block published with id\n{}", block.id());
+
     Ok(block)
   }
 }
@@ -238,9 +150,12 @@ mod tests {
   use identity_core::common::Timestamp;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
+  use identity_did::document::Document;
   use identity_did::verification::MethodData;
+  use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
+  use iota_client::api_types::responses::OutputResponse;
   use iota_client::block::address::Address;
   use iota_client::block::output::feature::IssuerFeature;
   use iota_client::block::output::feature::MetadataFeature;
@@ -248,10 +163,12 @@ mod tests {
   use iota_client::block::output::unlock_condition::GovernorAddressUnlockCondition;
   use iota_client::block::output::unlock_condition::StateControllerAddressUnlockCondition;
   use iota_client::block::output::AliasId;
+  use iota_client::block::output::AliasOutput;
   use iota_client::block::output::AliasOutputBuilder;
   use iota_client::block::output::ByteCostConfig;
   use iota_client::block::output::Feature;
   use iota_client::block::output::Output;
+  use iota_client::block::output::OutputId;
   use iota_client::block::output::UnlockCondition;
   use iota_client::block::Block;
   use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
@@ -261,6 +178,7 @@ mod tests {
   use iota_client::secret::SecretManager;
   use iota_client::Client;
 
+  use crate::error::OutputError;
   use crate::Error;
   use crate::StardustCoreDocument;
   use crate::StardustDID;
@@ -270,8 +188,8 @@ mod tests {
   use super::StardustClientExt;
 
   // TODO: Change to private tangle in CI; detect CI via env var?.
-  static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
-  static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+  static ENDPOINT: &str = "https://api.alphanet.iotaledger.net/";
+  static FAUCET_URL: &str = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
   fn generate_method(controller: &CoreDID, fragment: &str) -> VerificationMethod {
     VerificationMethod::builder(Default::default())
@@ -401,9 +319,12 @@ mod tests {
       .unwrap()
   }
 
-  async fn publish_document(client: impl StardustClientExt) -> crate::error::Result<StardustDocument> {
-    let document = generate_document(&valid_did());
-    let (address, secret_manager) = get_address_with_funds(client.client()).await;
+  async fn publish_document(
+    client: impl StardustClientExt,
+    document: StardustDocument,
+    address: Address,
+    secret_manager: &SecretManager,
+  ) -> crate::error::Result<StardustDocument> {
     let output = alias_output(client.client(), address, &document).await;
 
     let block: Block = client.publish_outputs(&secret_manager, vec![output]).await?;
@@ -425,7 +346,80 @@ mod tests {
   #[tokio::test]
   async fn test_publish_resolve() {
     let client: Client = client();
-    let document = publish_document(&client).await.unwrap();
+    let (address, secret_manager) = get_address_with_funds(&client).await;
+    let document = generate_document(&valid_did());
+    let document = publish_document(&client, document, address, &secret_manager)
+      .await
+      .unwrap();
+    let resolved = client.resolve(document.id()).await.unwrap();
+
+    assert_eq!(document, resolved);
+  }
+
+  async fn publish_update(
+    client: &Client,
+    document: StardustDocument,
+    secret_manager: &SecretManager,
+  ) -> crate::error::Result<()> {
+    let byte_cost_config: ByteCostConfig = client.get_byte_cost_config().await.map_err(Error::ClientError)?;
+
+    let alias_id: AliasId = StardustDocument::did_to_alias_id(document.id())?;
+    let output_id: OutputId = client.alias_output_id(alias_id).await.map_err(Error::ClientError)?;
+
+    let output_response: OutputResponse = client.get_output(&output_id).await.map_err(Error::ClientError)?;
+    let output: Output = Output::try_from(&output_response.output).map_err(OutputError::ConversionError)?;
+
+    let alias_output: AliasOutput = if let Output::Alias(alias_output) = output {
+      alias_output
+    } else {
+      return Err(Error::OutputError(OutputError::NotAnAliasOutput));
+    };
+
+    let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
+      // Update storage deposit if size changes.
+      .with_minimum_storage_deposit(byte_cost_config)
+      // State controller updates increment the state index.
+      .with_state_index(alias_output.state_index() + 1)
+      .with_state_metadata(document.pack()?);
+
+    if alias_output.alias_id().is_null() {
+      alias_output_builder = alias_output_builder.with_alias_id(alias_id);
+    }
+
+    let updated_alias_output: Output = alias_output_builder.finish_output().map_err(OutputError::BuildError)?;
+
+    let _ = client
+      .publish_outputs(secret_manager, vec![updated_alias_output])
+      .await?;
+
+    Ok(())
+  }
+
+  #[tokio::test]
+  async fn test_publish_update() {
+    let client: Client = client();
+    let (address, secret_manager) = get_address_with_funds(&client).await;
+    let document = generate_document(&valid_did());
+    let mut document = publish_document(&client, document, address, &secret_manager)
+      .await
+      .unwrap();
+
+    let method_url = document
+      .resolve_method("#key-1", Some(MethodScope::VerificationMethod))
+      .unwrap()
+      .id()
+      .to_owned();
+    document
+      .attach_method_relationship(
+        &method_url,
+        identity_did::verification::MethodRelationship::Authentication,
+      )
+      .unwrap();
+
+    publish_update(&client, document.clone(), &secret_manager)
+      .await
+      .unwrap();
+
     let resolved = client.resolve(document.id()).await.unwrap();
 
     assert_eq!(document, resolved);
