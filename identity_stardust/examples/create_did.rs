@@ -19,7 +19,6 @@ use iota_client::block::output::BasicOutputBuilder;
 use iota_client::block::output::ByteCostConfig;
 use iota_client::block::output::Feature;
 use iota_client::block::output::Output;
-use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
@@ -51,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
   // let endpoint = "http://localhost:14265";
   let endpoint = "https://api.alphanet.iotaledger.net";
   let faucet_manual = "https://faucet.alphanet.iotaledger.net";
-  let network_hrp = NetworkName::try_from(SHIMMER_TESTNET_BECH32_HRP)?; // "rms"
+  let network_name = NetworkName::try_from("alpha")?;
 
   // ===========================================================================
   // Step 1: Create or load your wallet.
@@ -73,8 +72,13 @@ async fn main() -> anyhow::Result<()> {
     .with_node_sync_disabled()
     .finish()?;
 
+  // Get the Bech32 human-readable part (HRP) of the protocol.
+  // E.g. "rms" for the Shimmer testnet.
+  let node_info = client.get_info().await?;
+  let network_hrp = node_info.node_info.protocol.bech32_hrp;
+
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-  let address_bech32 = address.to_bech32(network_hrp.as_ref());
+  let address_bech32 = address.to_bech32(network_hrp);
   println!("Wallet address: {address_bech32}");
 
   println!("INTERACTION REQUIRED: request faucet funds to the above wallet from {faucet_manual}");
@@ -90,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
   //
   // All new Stardust DID Documents initially use a placeholder DID for the network,
   // "did:stardust:rms:0x0000000000000000000000000000000000000000000000000000000000000000".
-  let document: StardustDocument = StardustDocument::new(&network_hrp);
+  let document: StardustDocument = StardustDocument::new(&network_name);
 
   println!("DID Document {:#}", document);
 
@@ -126,7 +130,7 @@ async fn main() -> anyhow::Result<()> {
   let _ = client.retry_until_included(&block1.id(), None, None).await?;
 
   // Infer DID from the Alias Output block.
-  let did: StardustDID = StardustDID::from_block(&block1, &network_hrp)?;
+  let did: StardustDID = StardustDID::from_block(&block1, &network_name)?;
   println!("DID: {did}");
 
   // ===========================================================================
