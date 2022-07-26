@@ -5,7 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use identity_iota::account_storage::CekAlgorithm;
-use identity_iota::account_storage::ChainState;
 use identity_iota::account_storage::EncryptedData;
 use identity_iota::account_storage::EncryptionAlgorithm;
 use identity_iota::account_storage::Error as AccountStorageError;
@@ -17,7 +16,6 @@ use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::PublicKey;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::NetworkName;
-use identity_iota::prelude::IotaDocument;
 use identity_iota::prelude::KeyType;
 use js_sys::Array;
 use js_sys::Promise;
@@ -26,7 +24,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
-use crate::account::identity::WasmChainState;
 use crate::account::types::WasmCekAlgorithm;
 use crate::account::types::WasmEncryptedData;
 use crate::account::types::WasmEncryptionAlgorithm;
@@ -35,7 +32,6 @@ use crate::common::PromiseBool;
 use crate::common::PromiseVoid;
 use crate::crypto::WasmKeyType;
 use crate::did::WasmDID;
-use crate::did::WasmDocument;
 use crate::error::JsValueResult;
 
 #[wasm_bindgen]
@@ -44,10 +40,6 @@ extern "C" {
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
   pub type PromiseSignature;
-  #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined>")]
-  pub type PromiseOptionChainState;
-  #[wasm_bindgen(typescript_type = "Promise<Document | undefined>")]
-  pub type PromiseOptionDocument;
   #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
   pub type PromiseKeyLocation;
   #[wasm_bindgen(typescript_type = "Promise<Array<DID>>")]
@@ -58,6 +50,8 @@ extern "C" {
   pub type PromiseEncryptedData;
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromiseData;
+  #[wasm_bindgen(typescript_type = "Promise<Uint8Array | undefined>")]
+  pub type PromiseOptionBytes;
 }
 
 #[wasm_bindgen]
@@ -111,14 +105,10 @@ extern "C" {
     cek_algorithm: WasmCekAlgorithm,
     private_key: WasmKeyLocation,
   ) -> Uint8Array;
-  #[wasm_bindgen(method, js_name = chainStateGet)]
-  pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
-  #[wasm_bindgen(method, js_name = chainStateSet)]
-  pub fn chain_state_set(this: &WasmStorage, did: WasmDID, chain_state: WasmChainState) -> PromiseVoid;
-  #[wasm_bindgen(method, js_name = documentGet)]
-  pub fn document_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionDocument;
-  #[wasm_bindgen(method, js_name = documentSet)]
-  pub fn document_set(this: &WasmStorage, did: WasmDID, document: WasmDocument) -> PromiseVoid;
+  #[wasm_bindgen(method, js_name = blobGet)]
+  pub fn blob_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionBytes;
+  #[wasm_bindgen(method, js_name = blobSet)]
+  pub fn blob_set(this: &WasmStorage, did: WasmDID, blob: Vec<u8>) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseVoid;
 }
@@ -286,40 +276,19 @@ impl Storage for WasmStorage {
     Ok(data)
   }
 
-  async fn chain_state_get(&self, did: &IotaDID) -> AccountStorageResult<Option<ChainState>> {
-    let promise: Promise = Promise::resolve(&self.chain_state_get(did.clone().into()));
+  async fn blob_get(&self, did: &IotaDID) -> AccountStorageResult<Option<Vec<u8>>> {
+    let promise: Promise = Promise::resolve(&self.blob_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.to_account_error()?;
     if js_value.is_null() || js_value.is_undefined() {
       return Ok(None);
     }
-    let chain_state: ChainState = js_value
-      .into_serde()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
-    Ok(Some(chain_state))
+    let value: Vec<u8> = uint8array_to_bytes(js_value)?;
+    Ok(Some(value))
   }
 
-  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> AccountStorageResult<()> {
-    let promise: Promise = Promise::resolve(&self.chain_state_set(did.clone().into(), chain_state.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
-  }
-
-  async fn document_get(&self, did: &IotaDID) -> AccountStorageResult<Option<IotaDocument>> {
-    let promise: Promise = Promise::resolve(&self.document_get(did.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.to_account_error()?;
-    if js_value.is_null() || js_value.is_undefined() {
-      return Ok(None);
-    }
-    let document: IotaDocument = js_value
-      .into_serde()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
-    Ok(Some(document))
-  }
-
-  async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> AccountStorageResult<()> {
-    let promise: Promise = Promise::resolve(&self.document_set(did.clone().into(), document.clone().into()));
+  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> AccountStorageResult<()> {
+    let promise: Promise = Promise::resolve(&self.blob_set(did.clone().into(), blob));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
@@ -416,17 +385,11 @@ interface Storage {
    */
   dataDecrypt: (did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;
 
-  /** Returns the chain state of the identity specified by `did`. */
-  chainStateGet: (did: DID) => Promise<ChainState | undefined>;
+  /** Returns the blob stored by the identity specified by `did`. */
+  blobGet: (did: DID) => Promise<Uint8Array | undefined>;
 
-  /** Set the chain state of the identity specified by `did`. */
-  chainStateSet: (did: DID, chainState: ChainState) => Promise<void>;
-
-  /** Returns the document of the identity specified by `did`. */
-  documentGet: (did: DID) => Promise<Document | undefined>;
-
-  /** Sets a new state for the identity specified by `did`. */
-  documentSet: (did: DID, document: Document) => Promise<void>;
+  /** Stores an arbitrary blob for the identity specified by `did`. */
+  blobSet: (did: DID, blob: Uint8Array) => Promise<void>;
 
   /** Persists any unsaved changes. */
   flushChanges: () => Promise<void>;

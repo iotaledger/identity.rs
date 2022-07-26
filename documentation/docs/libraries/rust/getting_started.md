@@ -10,8 +10,8 @@ keywords:
 
 ## Requirements
 
-- [Rust](https://www.rust-lang.org/) (>= 1.60)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.60)
+- [Rust](https://www.rust-lang.org/) (>= 1.62)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.62)
 
 ## Include the Library
 

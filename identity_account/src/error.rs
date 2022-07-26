@@ -36,6 +36,9 @@ pub enum Error {
   /// Caused by verification methods without fragments.
   #[error("method missing fragment")]
   MethodMissingFragment,
+  /// Caused by reaching an invalid state for the identity.
+  #[error("invalid identity state: {0}")]
+  InvalidIdentityState(String),
 }
 
 impl From<identity_did::did::DIDError> for Error {
