@@ -249,22 +249,25 @@ mod stardust_did_iota_client {
   // helper function to get the output id for the first alias output
   // TODO: improve error handling
   fn get_alias_output_id_from_payload(payload: &Payload) -> crate::Result<OutputId> {
-    match payload {
-      Payload::Transaction(tx_payload) => {
-        let TransactionEssence::Regular(regular) = tx_payload.essence();
-        for (index, output) in regular.outputs().iter().enumerate() {
-          if let Output::Alias(_) = output {
-            return Ok(OutputId::new(
-              tx_payload.id(),
-              index
-                .try_into()
-                .map_err(|_| DIDError::Other("output index exceeds u16"))?,
-            )?);
-          }
-        }
+    if let Payload::Transaction(tx_payload) = payload {
+      let TransactionEssence::Regular(regular) = tx_payload.essence();
+      if let Some((index, _)) = regular
+        .outputs()
+        .iter()
+        .enumerate()
+        .find(|(_, item)| matches!(item, Output::Alias(_)))
+      {
+        Ok(OutputId::new(
+          tx_payload.id(),
+          index
+            .try_into()
+            .map_err(|_| DIDError::Other("output index exceeds u16"))?,
+        )?)
+      } else {
         Err(DIDError::Other("no alias output in transaction essence"))?
       }
-      _ => Err(DIDError::Other("not a transaction payload"))?,
+    } else {
+      Err(DIDError::Other("not a transaction payload"))?
     }
   }
 }
