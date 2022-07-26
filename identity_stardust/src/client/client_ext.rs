@@ -5,8 +5,6 @@ use std::borrow::Cow;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::output::AliasId;
 use iota_client::block::output::Output;
@@ -17,6 +15,7 @@ use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+use crate::error::OutputError;
 use crate::error::Result;
 use crate::Error;
 use crate::NetworkName;
@@ -49,77 +48,49 @@ pub trait StardustClientExt: Sync {
   }
 
   async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
-    // TODO: Fix me.
-    let alias_id = AliasId::from_str(&format!("0x{}", did.method_id()))?;
+    let alias_id: AliasId = AliasId::from_str(did.tag())?;
 
     let output_id: OutputId = self
       .client()
       .alias_output_id(alias_id)
       .await
-      .map_err(Error::ClientError)
-      .unwrap();
-    let response: OutputResponse = self
-      .client()
-      .get_output(&output_id)
-      .await
-      .map_err(Error::ClientError)
-      .unwrap();
-    let output: Output = Output::try_from(&response.output)
-      .map_err(iota_client::Error::from)
-      .map_err(Error::ClientError)
-      .unwrap();
+      .map_err(Error::ClientError)?;
+    let response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
+    let output: Output =
+      Output::try_from(&response.output).map_err(|err| Error::OutputError(OutputError::ConversionError(err)))?;
 
-    // TODO: Deduplicate?
-    let network_hrp = self
-      .client()
-      .get_network_info()
-      .await
-      .map_err(Error::ClientError)?
-      .bech32_hrp
-      .ok_or(Error::InvalidNetworkName)?;
+    let network_hrp: String = get_network_hrp(self.client()).await?;
 
-    let did: StardustDID = StardustDID::new(
-      alias_id.deref(),
-      &NetworkName::try_from(Cow::from(network_hrp.clone()))?,
-    );
+    let did: StardustDID = StardustDID::new(alias_id.deref(), &NetworkName::try_from(Cow::from(network_hrp))?);
 
     StardustDocument::unpack_from_output(&did, &output)
   }
 
   async fn documents_from_block(&self, block: &Block) -> Result<Vec<StardustDocument>> {
+    let network_hrp: String = get_network_hrp(self.client()).await?;
     let mut documents = Vec::new();
-    let network_hrp = self
-      .client()
-      .get_network_info()
-      .await
-      .map_err(Error::ClientError)?
-      .bech32_hrp
-      .ok_or(Error::InvalidNetworkName)?;
 
-    match block.payload().expect("TODO") {
-      Payload::Transaction(tx_payload) => {
-        let TransactionEssence::Regular(regular) = tx_payload.essence();
+    if let Some(Payload::Transaction(tx_payload)) = block.payload() {
+      let TransactionEssence::Regular(regular) = tx_payload.essence();
 
-        for (index, output) in regular.outputs().iter().enumerate() {
-          if let Output::Alias(alias_output) = output {
-            let alias_id = if alias_output.alias_id().is_null() {
-              AliasId::from(OutputId::new(
-                tx_payload.id(),
-                index.try_into().expect("the output count should not exceed u16"),
-              )?)
-            } else {
-              alias_output.alias_id().to_owned()
-            };
+      for (index, output) in regular.outputs().iter().enumerate() {
+        if let Output::Alias(alias_output) = output {
+          let alias_id = if alias_output.alias_id().is_null() {
+            AliasId::from(OutputId::new(
+              tx_payload.id(),
+              index.try_into().expect("the output count should not exceed u16"),
+            )?)
+          } else {
+            alias_output.alias_id().to_owned()
+          };
 
-            let did: StardustDID = StardustDID::new(
-              alias_id.deref(),
-              &NetworkName::try_from(Cow::from(network_hrp.clone()))?,
-            );
-            documents.push(StardustDocument::unpack(&did, alias_output.state_metadata())?);
-          }
+          let did: StardustDID = StardustDID::new(
+            alias_id.deref(),
+            &NetworkName::try_from(Cow::from(network_hrp.clone()))?,
+          );
+          documents.push(StardustDocument::unpack(&did, alias_output.state_metadata())?);
         }
       }
-      _ => (),
     }
 
     Ok(documents)
@@ -127,19 +98,16 @@ pub trait StardustClientExt: Sync {
 
   fn alias_ids_from_payload(payload: &Payload) -> Result<Vec<AliasId>> {
     let mut alias_ids = Vec::new();
-    match payload {
-      Payload::Transaction(tx_payload) => {
-        let TransactionEssence::Regular(regular) = tx_payload.essence();
-        for (index, output) in regular.outputs().iter().enumerate() {
-          if let Output::Alias(_) = output {
-            alias_ids.push(AliasId::from(OutputId::new(
-              tx_payload.id(),
-              index.try_into().expect("the output count should not exceed u16"),
-            )?));
-          }
+    if let Payload::Transaction(tx_payload) = payload {
+      let TransactionEssence::Regular(regular) = tx_payload.essence();
+      for (index, output) in regular.outputs().iter().enumerate() {
+        if let Output::Alias(_) = output {
+          alias_ids.push(AliasId::from(OutputId::new(
+            tx_payload.id(),
+            index.try_into().expect("the output count should not exceed u16"),
+          )?));
         }
       }
-      _ => (),
     }
     Ok(alias_ids)
   }
@@ -157,11 +125,20 @@ impl StardustClientExt for &Client {
   }
 }
 
+async fn get_network_hrp(client: &Client) -> Result<String> {
+  client
+    .get_network_info()
+    .await
+    .map_err(Error::ClientError)?
+    .bech32_hrp
+    .ok_or(Error::InvalidNetworkName)
+}
+
 #[cfg(test)]
 mod tests {
   use std::str::FromStr;
 
-use identity_core::common::Object;
+  use identity_core::common::Object;
   use identity_core::common::Timestamp;
   use identity_did::did::DID;
   use identity_did::document::Document;
