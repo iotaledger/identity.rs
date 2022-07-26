@@ -39,7 +39,7 @@ static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /// Demonstrate how to embed a DID Document in an Alias Output.
-pub async fn run() -> anyhow::Result<(Client, SecretManager, StardustDocument)> {
+pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDocument)> {
   // Create a new DID Document.
   let did: StardustDID = StardustDID::placeholder(
     &NetworkName::try_from(SHIMMER_TESTNET_BECH32_HRP).expect("HRP should be a valid network name"),
@@ -97,6 +97,7 @@ pub async fn run() -> anyhow::Result<(Client, SecretManager, StardustDocument)> 
 
   Ok((
     client,
+    address,
     secret_manager,
     documents
       .into_iter()

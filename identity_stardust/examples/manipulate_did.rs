@@ -18,12 +18,16 @@ use iota_client::Client;
 
 mod create_did2;
 
+/// Demonstrate how to modify a DID document in an existing alias output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an alias output for us to modify.
-  let (client, secret_manager, mut document): (Client, SecretManager, StardustDocument) = create_did2::run().await?;
+  let (client, _, secret_manager, mut document): (Client, _, SecretManager, StardustDocument) =
+    create_did2::run().await?;
 
   // Modify the document.
+  // Here we modify the document we just published.
+  // Alternatively, we can resolve the latest document and modify that.
   document.attach_method_relationship(
     &document.id().to_url().join("#key-1")?,
     identity_did::verification::MethodRelationship::CapabilityDelegation,
@@ -32,7 +36,6 @@ async fn main() -> anyhow::Result<()> {
   // Convert the DID into an AliasId to retrieve the output.
   let alias_id: AliasId = AliasId::from_str(document.id().tag())?;
   let output_id: OutputId = client.alias_output_id(alias_id).await?;
-
   let output_response: OutputResponse = client.get_output(&output_id).await?;
   let output: Output = Output::try_from(&output_response.output)?;
 
@@ -47,11 +50,11 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new builder based on the previous output.
   let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
-    // Update storage deposit if size changes.
+    // Recalculates the required storage deposit if necessary.
     .with_minimum_storage_deposit(rent_structure)
-    // State controller updates increment the state index.
+    // State updates require us to increment the state index.
     .with_state_index(alias_output.state_index() + 1)
-    // Set the packed updated document which overwrites the previous one.
+    // Set the updated document which overwrites the previous one.
     .with_state_metadata(document.pack()?);
 
   // Set the alias id if it's not yet set.
