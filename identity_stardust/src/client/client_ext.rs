@@ -22,10 +22,15 @@ use crate::NetworkName;
 use crate::StardustDID;
 use crate::StardustDocument;
 
+/// An extension trait for a [`Client`] that provides helper functions publication and resolution of
+/// DID documents in Alias Outputs.
 #[async_trait::async_trait]
 pub trait StardustClientExt: Sync {
+  /// Returns a reference to a [`Client`].
   fn client(&self) -> &Client;
 
+  /// Publish the given `alias_outputs` with the provided `secret_manager`
+  /// and returns the block they were published in.
   async fn publish_outputs(&self, secret_manager: &SecretManager, alias_outputs: Vec<Output>) -> Result<Block> {
     let block: Block = self
       .client()
@@ -47,6 +52,7 @@ pub trait StardustClientExt: Sync {
     Ok(block)
   }
 
+  /// Resolve a [`StardustDID`] to a [`StardustDocument`].
   async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
     let alias_id: AliasId = AliasId::from_str(did.tag())?;
 
@@ -66,6 +72,7 @@ pub trait StardustClientExt: Sync {
     StardustDocument::unpack_from_output(&did, &output)
   }
 
+  /// Returns all DID documents of the Alias Outputs contained in the payload's transaction, if any.
   async fn documents_from_block(&self, block: &Block) -> Result<Vec<StardustDocument>> {
     let network_hrp: String = get_network_hrp(self.client()).await?;
     let mut documents = Vec::new();
@@ -96,6 +103,7 @@ pub trait StardustClientExt: Sync {
     Ok(documents)
   }
 
+  /// Returns all alias ids of the Alias Outputs contained in the payload's transaction, if any.
   fn alias_ids_from_payload(payload: &Payload) -> Result<Vec<AliasId>> {
     let mut alias_ids = Vec::new();
     if let Payload::Transaction(tx_payload) = payload {
@@ -125,6 +133,7 @@ impl StardustClientExt for &Client {
   }
 }
 
+/// Get the BECH32 HRP from the client's network.
 async fn get_network_hrp(client: &Client) -> Result<String> {
   client
     .get_network_info()
