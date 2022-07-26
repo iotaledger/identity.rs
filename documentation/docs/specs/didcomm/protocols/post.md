@@ -31,9 +31,9 @@ Allows the sending of a single message with arbitrary data. Multiple [post](#pos
 
 ### Interaction
 
-<div style={{textAlign: 'center'}}>
-
 ![PostDiagram](/img/didcomm/post.drawio.svg)
+
+<div style={{textAlign: 'center'}}>
 
 <sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
 
