@@ -58,7 +58,7 @@ async fn main() -> anyhow::Result<()> {
     .with_state_metadata(document.pack()?);
 
   // Set the alias id if it's not yet set.
-  // This is only necessary for the first update to an existing alias output.
+  // This is only necessary on the first update to an existing alias output.
   if alias_output.alias_id().is_null() {
     alias_output_builder = alias_output_builder.with_alias_id(alias_id);
   }
