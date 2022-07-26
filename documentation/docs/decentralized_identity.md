@@ -10,6 +10,8 @@ keywords:
 ---
 # Introduction to Decentralized Identity
 
+![IOTA Decentralized Identity](/img/Banner/banner_decentralized_identity.svg)
+
 Decentralized Identity or Self-Sovereign Identity (SSI) defines a new method for identity management and authentication. It removes the centralized aspects and puts the Identity subject in full control over its own identity. Decentralized Identity provides a solution for the increasing amount of database breaches, the lack of trust in any digital setting, and the increasingly difficult to comply with privacy legislation, such as GDPR.
 
 There are three levels of privacy when interacting on the internet: full privacy, verifiable identities, and pseudonymity. With full privacy, neither parties, nor observers, can identify the interacting parties. With verifiable identities, parties can trust each other because they can both provide proof about their identities. With pseudonymity, both parties recognize each other through a pseudonymous identifier. Pseudonymity is the default setting of the internet. However, data harvesting platforms, like
