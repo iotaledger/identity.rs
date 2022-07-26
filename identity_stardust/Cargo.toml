@@ -33,12 +33,13 @@ git = "https://github.com/iotaledger/iota.rs"
 rev = "dafcba0703928ccce58dd1a78a121c150bb9e26c" # develop branch, 2022-07-25
 features = ["tls"]
 default-features = false
+optional = true
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
 iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -47,6 +48,8 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap"]
+default = ["iota-client", "revocation-bitmap"]
+# Enables the iota-client dependency and associated helper functions.
+iota-client = ["dep:iota-client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap"]

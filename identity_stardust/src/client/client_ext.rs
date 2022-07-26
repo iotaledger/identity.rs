@@ -22,7 +22,6 @@ use crate::Error;
 use crate::NetworkName;
 use crate::StardustDID;
 use crate::StardustDocument;
-use crate::TmpStardustDID;
 
 #[async_trait::async_trait]
 pub trait StardustClientExt: Sync {
@@ -49,7 +48,7 @@ pub trait StardustClientExt: Sync {
     Ok(block)
   }
 
-  async fn resolve(&self, did: &TmpStardustDID) -> Result<StardustDocument> {
+  async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
     // TODO: Fix me.
     let alias_id = AliasId::from_str(&format!("0x{}", did.method_id()))?;
 
@@ -70,11 +69,24 @@ pub trait StardustClientExt: Sync {
       .map_err(Error::ClientError)
       .unwrap();
 
-    let did = StardustDocument::alias_id_to_did(&alias_id)?;
-    StardustDocument::deserialize_from_output(&did, &output)
+    // TODO: Deduplicate?
+    let network_hrp = self
+      .client()
+      .get_network_info()
+      .await
+      .map_err(Error::ClientError)?
+      .bech32_hrp
+      .ok_or(Error::InvalidNetworkName)?;
+
+    let did: StardustDID = StardustDID::new(
+      alias_id.deref(),
+      &NetworkName::try_from(Cow::from(network_hrp.clone()))?,
+    );
+
+    StardustDocument::unpack_from_output(&did, &output)
   }
 
-  async fn documents_from_block(&self, block: Block) -> Result<Vec<StardustDocument>> {
+  async fn documents_from_block(&self, block: &Block) -> Result<Vec<StardustDocument>> {
     let mut documents = Vec::new();
     let network_hrp = self
       .client()
@@ -103,7 +115,6 @@ pub trait StardustClientExt: Sync {
               alias_id.deref(),
               &NetworkName::try_from(Cow::from(network_hrp.clone()))?,
             );
-            let did = CoreDID::from(did);
             documents.push(StardustDocument::unpack(&did, alias_output.state_metadata())?);
           }
         }
@@ -148,9 +159,10 @@ impl StardustClientExt for &Client {
 
 #[cfg(test)]
 mod tests {
-  use identity_core::common::Object;
+  use std::str::FromStr;
+
+use identity_core::common::Object;
   use identity_core::common::Timestamp;
-  use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::Document;
   use identity_did::verification::MethodData;
@@ -185,9 +197,10 @@ mod tests {
   use crate::error::OutputError;
   use crate::Error;
   use crate::StardustCoreDocument;
+  use crate::StardustDID;
   use crate::StardustDocument;
   use crate::StardustDocumentMetadata;
-  use crate::TmpStardustDID;
+  use crate::StardustVerificationMethod;
 
   use super::StardustClientExt;
 
@@ -197,7 +210,7 @@ mod tests {
   static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
   static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
-  fn generate_method(controller: &CoreDID, fragment: &str) -> VerificationMethod {
+  fn generate_method(controller: &StardustDID, fragment: &str) -> StardustVerificationMethod {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
@@ -207,7 +220,7 @@ mod tests {
       .unwrap()
   }
 
-  fn generate_document(id: &TmpStardustDID) -> StardustDocument {
+  fn generate_document(id: &StardustDID) -> StardustDocument {
     let mut metadata: StardustDocumentMetadata = StardustDocumentMetadata::new();
     metadata.created = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
     metadata.updated = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
@@ -319,8 +332,8 @@ mod tests {
       .unwrap()
   }
 
-  fn valid_did() -> TmpStardustDID {
-    "did:stardust:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  fn valid_did() -> StardustDID {
+    "did:stardust:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       .parse()
       .unwrap()
   }
@@ -335,20 +348,15 @@ mod tests {
 
     let block: Block = client.publish_outputs(&secret_manager, vec![output]).await?;
 
-    let alias_ids = <Client as StardustClientExt>::alias_ids_from_payload(
-      block.payload().expect("the block we published should have a payload"),
-    )?;
+    let documents: Vec<StardustDocument> = client.documents_from_block(&block).await?;
 
-    let alias_id = alias_ids.get(0).expect("there should be at least one alias output");
-    let new_did = StardustDocument::alias_id_to_did(&alias_id)?;
-
-    // TODO: Add StardustDocument::map instead?
-    let document = StardustDocument {
-      document: document.document.map(|_| new_did.clone(), |o| o),
-      metadata: document.metadata,
-    };
-
-    Ok((block, document))
+    Ok((
+      block,
+      documents
+        .into_iter()
+        .next()
+        .expect("there should be at least one document"),
+    ))
   }
 
   #[tokio::test]
@@ -371,7 +379,7 @@ mod tests {
   ) -> crate::error::Result<Block> {
     let rent_structure: RentStructure = client.get_rent_structure().await.map_err(Error::ClientError)?;
 
-    let alias_id: AliasId = StardustDocument::did_to_alias_id(document.id())?;
+    let alias_id: AliasId = AliasId::from_str(document.id().tag())?;
     let output_id: OutputId = client.alias_output_id(alias_id).await.map_err(Error::ClientError)?;
 
     let output_response: OutputResponse = client.get_output(&output_id).await.map_err(Error::ClientError)?;

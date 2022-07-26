@@ -1,6 +1,12 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::str::FromStr;
+
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
+use iota_client::block::output::RentStructure;
 use iota_client::block::output::feature::IssuerFeature;
 use iota_client::block::output::feature::MetadataFeature;
 use iota_client::block::output::feature::SenderFeature;
@@ -13,12 +19,12 @@ use iota_client::block::output::AliasOutputBuilder;
 use iota_client::block::output::BasicOutputBuilder;
 use iota_client::block::output::Feature;
 use iota_client::block::output::Output;
-use iota_client::block::output::RentStructure;
-use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+use identity_stardust::NetworkName;
+use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustVerificationMethod;
 
@@ -44,6 +50,7 @@ async fn main() -> anyhow::Result<()> {
   // let endpoint = "http://localhost:14265";
   let endpoint = "https://api.alphanet.iotaledger.net";
   let faucet_manual = "https://faucet.alphanet.iotaledger.net";
+  let network_name = NetworkName::try_from("alpha")?;
 
   // ===========================================================================
   // Step 1: Create or load your wallet.
@@ -65,8 +72,13 @@ async fn main() -> anyhow::Result<()> {
     .with_node_sync_disabled()
     .finish()?;
 
+  // Get the Bech32 human-readable part (HRP) of the protocol.
+  // E.g. "rms" for the Shimmer testnet.
+  let node_info = client.get_info().await?;
+  let network_hrp = node_info.node_info.protocol.bech32_hrp;
+
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-  let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
+  let address_bech32 = address.to_bech32(network_hrp);
   println!("Wallet address: {address_bech32}");
 
   println!("INTERACTION REQUIRED: request faucet funds to the above wallet from {faucet_manual}");
@@ -79,10 +91,10 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // Create an empty DID Document.
-  // All new Stardust DID Documents initially use a placeholder DID,
-  // "did:stardust:0x00000000000000000000000000000000".
-
-  let document: StardustDocument = StardustDocument::new();
+  //
+  // All new Stardust DID Documents initially use a placeholder DID for the network,
+  // "did:stardust:rms:0x0000000000000000000000000000000000000000000000000000000000000000".
+  let document: StardustDocument = StardustDocument::new(&network_name);
 
   println!("DID Document {:#}", document);
 
@@ -118,7 +130,7 @@ async fn main() -> anyhow::Result<()> {
   let _ = client.retry_until_included(&block1.id(), None, None).await?;
 
   // Infer DID from the Alias Output block.
-  let did = StardustDocument::did_from_block(&block1)?;
+  let did: StardustDID = StardustDID::from_block(&block1, &network_name)?;
   println!("DID: {did}");
 
   // ===========================================================================
@@ -127,8 +139,8 @@ async fn main() -> anyhow::Result<()> {
   // iota.rs indexer example:
   // https://github.com/iotaledger/iota.rs/blob/f945ccf326829a418334942ae9cf53b8fab3dbe5/examples/indexer.rs
 
-  // Extract Alias ID from DID.
-  let alias_id: AliasId = StardustDocument::did_to_alias_id(&did)?;
+  // Extract Alias ID from the DID tag.
+  let alias_id: AliasId = AliasId::from_str(did.tag())?;
   println!("Alias ID: {alias_id}");
 
   // Query Indexer INX Plugin for the Output of the Alias ID.
@@ -139,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
   println!("xOutput: {output:?}");
 
   // The resolved DID Document replaces the placeholder DID with the correct one.
-  let resolved_document = StardustDocument::deserialize_from_output(&did, &output)?;
+  let resolved_document = StardustDocument::unpack_from_output(&did, &output)?;
   println!("Resolved Document: {resolved_document:#}");
 
   let alias_output = match output {
