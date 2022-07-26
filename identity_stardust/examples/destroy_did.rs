@@ -15,14 +15,14 @@ use iota_client::block::output::UnlockCondition;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-mod create_did2;
+mod create_did;
 
 /// Demonstrate how to destroy an existing DID in an alias output, reclaiming the stored deposit.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an alias output for us to modify.
   let (client, address, secret_manager, document): (Client, Address, SecretManager, StardustDocument) =
-    create_did2::run().await?;
+    create_did::run().await?;
 
   // Get the latest output id for the alias.
   let alias_id: AliasId = AliasId::from_str(document.id().tag())?;

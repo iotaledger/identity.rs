@@ -323,7 +323,7 @@ mod tests {
   ) -> crate::error::Result<(Block, StardustDocument)> {
     let output = alias_output(client.client(), address, &document).await;
 
-    let block: Block = client.publish_outputs(&secret_manager, vec![output]).await?;
+    let block: Block = client.publish_outputs(secret_manager, vec![output]).await?;
 
     let documents: Vec<StardustDocument> = client.documents_from_block(&block).await?;
 

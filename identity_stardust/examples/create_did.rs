@@ -163,6 +163,7 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
   Ok(total_amount)
 }
 
+#[allow(dead_code)]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   run().await.map(|_| ())
