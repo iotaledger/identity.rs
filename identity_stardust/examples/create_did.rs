@@ -11,9 +11,9 @@ use iota_client::block::output::unlock_condition::UnlockCondition;
 use iota_client::block::output::AliasId;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::block::output::BasicOutputBuilder;
-use iota_client::block::output::ByteCostConfig;
 use iota_client::block::output::Feature;
 use iota_client::block::output::Output;
+use iota_client::block::output::RentStructure;
 use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
@@ -87,8 +87,8 @@ async fn main() -> anyhow::Result<()> {
   println!("DID Document {:#}", document);
 
   // Create a new Alias Output with the DID Document as state metadata.
-  let byte_cost_config: ByteCostConfig = client.get_byte_cost_config().await?;
-  let alias_output: Output = AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, AliasId::null())?
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
+  let alias_output: Output = AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())?
     .with_state_index(0)
     .with_foundry_counter(0)
     .with_state_metadata(document.pack()?)
@@ -163,10 +163,10 @@ async fn main() -> anyhow::Result<()> {
   updated_document.insert_method(method, MethodScope::authentication())?;
 
   // Update the Alias Output to contain an explicit Alias ID, and the updated DID Document.
-  let byte_cost_config: ByteCostConfig = client.get_byte_cost_config().await?;
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
   let updated_alias_output = AliasOutputBuilder::from(&alias_output)
     // Set the deposit to the new minimum covering the increased size of the DID Document.
-    .with_minimum_storage_deposit(byte_cost_config)
+    .with_minimum_storage_deposit(rent_structure)
     // Set the explicit Alias ID.
     .with_alias_id(alias_id)
     // Set the updated DID Document.

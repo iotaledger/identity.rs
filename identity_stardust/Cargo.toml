@@ -18,17 +18,19 @@ identity_core = { version = "=0.6.0", path = "../identity_core", default-feature
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 
+# TODO: Temporarily set before networks are upgraded, remove later.
+bee-api-types = "=1.0.0-beta.2"
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.4", default-features = false }
-serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+serde = { version = "1", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "2a35c7affe15034fd1b82884966269882bffb23b" # develop branch, 2022-07-18
+rev = "dafcba0703928ccce58dd1a78a121c150bb9e26c" # develop branch, 2022-07-25
 features = ["tls"]
 default-features = false
 
