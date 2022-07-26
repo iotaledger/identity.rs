@@ -26,9 +26,9 @@ Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) ty
 
 ### Interaction
 
-<div style={{textAlign: 'center'}}>
-
 ![RevocationOptionsDiagram](/img/didcomm/revocation-options.drawio.svg)
+
+<div style={{textAlign: 'center'}}>
 
 <sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
 
