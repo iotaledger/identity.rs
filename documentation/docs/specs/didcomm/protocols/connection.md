@@ -34,9 +34,9 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 
 ### Interaction
 
-<div style={{textAlign: 'center'}}>
-
 ![ConnectionDiagram](/img/didcomm/connection.drawio.svg)
+
+<div style={{textAlign: 'center'}}>
 
 <sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
 
