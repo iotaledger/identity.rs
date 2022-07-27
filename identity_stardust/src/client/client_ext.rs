@@ -103,10 +103,7 @@ pub trait StardustClientExt: Sync {
       alias_output_builder = alias_output_builder.with_alias_id(alias_id);
     }
 
-    alias_output_builder
-      .finish()
-      .map_err(OutputError::BuildError)
-      .map_err(Into::into)
+    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
   /// Publish the given `alias_outputs` with the provided `secret_manager`
@@ -247,7 +244,6 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
 
 #[cfg(test)]
 mod tests {
-
   use identity_core::common::Object;
   use identity_core::common::Timestamp;
   use identity_did::did::DID;

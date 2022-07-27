@@ -27,20 +27,20 @@ pub enum Error {
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]
   RevocationError(#[source] identity_did::Error),
+  #[cfg(feature = "iota-client")]
   #[error("{0}")]
   OutputError(#[from] OutputError),
+  #[cfg(feature = "iota-client")]
   #[error("alias output build error")]
   AliasOutputBuildError(#[source] iota_client::block::Error),
 }
 
 /// Errors when converting outputs from DTOs, or when creating or unwrapping outputs.
+#[cfg(feature = "iota-client")]
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum OutputError {
   #[error("not an alias output")]
   NotAnAliasOutput,
   #[error("error while converting DTO to an output")]
   ConversionError(#[source] iota_client::block::DtoError),
-  // TODO: Might not be needed since AliasOutputBuildError exists.
-  #[error("error while building an output")]
-  BuildError(#[source] iota_client::block::Error),
 }
