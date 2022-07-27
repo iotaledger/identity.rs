@@ -15,7 +15,6 @@ use identity_stardust::StardustVerificationMethod;
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::Output;
-use iota_client::block::output::RentStructure;
 use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::crypto::keys::bip39;
 use iota_client::node_api::indexer::query_parameters::QueryParameter;
@@ -56,11 +55,8 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
   // Get an address with funds from the testnet faucet.
   let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
 
-  // Get the current byte costs for outputs.
-  let rent_structure: RentStructure = client.get_rent_structure().await?;
-
   // Construct an alias output containing the `document` and whose state and governance is controlled by `address`.
-  let alias_output: AliasOutput = client.new_did(address, document, rent_structure)?;
+  let alias_output: AliasOutput = client.new_did(address, document, None).await?;
 
   // Publish the output and get the published document.
   let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await?;

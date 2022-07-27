@@ -41,19 +41,25 @@ pub trait StardustClientExt: Sync {
   /// Returns a reference to a [`Client`].
   fn client(&self) -> &Client;
 
-  /// Creates a new DID in an Alias Output from the given `document`.
+  /// Create a new DID in an Alias Output from the given `document`.
   ///
   /// The alias output's state and governance will be controlled by `address`.
-  ///
-  /// The returned alias output can be further customized before publication, if desired.
+  /// The returned Alias Output can be further customized before publication, if desired.
+  /// If the `rent_structure` is not provided, it will be fetched from the node.
   ///
   /// This method does not modify the on-ledger state.
-  fn new_did(
+  async fn new_did(
     &self,
     address: Address,
     document: StardustDocument,
-    rent_structure: RentStructure,
+    rent_structure: Option<RentStructure>,
   ) -> Result<AliasOutput> {
+    let rent_structure: RentStructure = if let Some(inner) = rent_structure {
+      inner
+    } else {
+      self.client().get_rent_structure().await.map_err(Error::ClientError)?
+    };
+
     AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())
       .map_err(Error::AliasOutputBuildError)
       .unwrap()
@@ -77,13 +83,19 @@ pub trait StardustClientExt: Sync {
   /// Returns the updated alias output for further customization and publication.
   ///
   /// This method does not modify the on-ledger state.
-  async fn update_did(&self, document: StardustDocument, rent_structure: RentStructure) -> Result<AliasOutput> {
+  async fn update_did(&self, document: StardustDocument, rent_structure: Option<RentStructure>) -> Result<AliasOutput> {
     let alias_id: AliasId = AliasId::from_str(document.id().tag())?;
     let output_id: OutputId = self
       .client()
       .alias_output_id(alias_id)
       .await
       .map_err(Error::ClientError)?;
+
+    let rent_structure: RentStructure = if let Some(inner) = rent_structure {
+      inner
+    } else {
+      self.client().get_rent_structure().await.map_err(Error::ClientError)?
+    };
 
     let output_response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
     let output: Output = Output::try_from(&output_response.output).map_err(OutputError::ConversionError)?;
@@ -396,9 +408,8 @@ mod tests {
     let client: Client = client();
     let (address, secret_manager) = get_address_with_funds(&client).await;
     let document = generate_document(&valid_did());
-    let rent_structure: RentStructure = client.get_rent_structure().await.map_err(Error::ClientError).unwrap();
 
-    let output = client.new_did(address, document, rent_structure).unwrap();
+    let output = client.new_did(address, document, None).await.unwrap();
 
     let document = client.publish_did(&secret_manager, output).await.unwrap();
 
@@ -438,7 +449,8 @@ mod tests {
     let rent_structure: RentStructure = client.get_rent_structure().await.map_err(Error::ClientError).unwrap();
 
     let output = client
-      .new_did(address, initial_document, rent_structure.clone())
+      .new_did(address, initial_document, Some(rent_structure.clone()))
+      .await
       .unwrap();
 
     let mut document = client.publish_did(&secret_manager, output).await.unwrap();
@@ -457,7 +469,7 @@ mod tests {
       .unwrap();
 
     // Resolve the latest output and update it with the given document.
-    let alias_output: AliasOutput = client.update_did(document, rent_structure).await.unwrap();
+    let alias_output: AliasOutput = client.update_did(document, Some(rent_structure)).await.unwrap();
 
     // Publish the output.
     let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await.unwrap();

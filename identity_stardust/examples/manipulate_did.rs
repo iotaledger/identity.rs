@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_did::did::DID;
+use identity_did::verification::MethodRelationship;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 use iota_client::block::output::AliasOutput;
-use iota_client::block::output::RentStructure;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
@@ -23,14 +23,11 @@ async fn main() -> anyhow::Result<()> {
   // Alternatively, we can resolve the latest document and modify that.
   document.attach_method_relationship(
     &document.id().to_url().join("#key-1")?,
-    identity_did::verification::MethodRelationship::CapabilityDelegation,
+    MethodRelationship::CapabilityDelegation,
   )?;
 
-  // Get the current byte costs for outputs.
-  let rent_structure: RentStructure = client.get_rent_structure().await?;
-
   // Resolve the latest output and update it with the given document.
-  let alias_output: AliasOutput = client.update_did(document, rent_structure).await?;
+  let alias_output: AliasOutput = client.update_did(document, None).await?;
 
   // Publish the output.
   let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await?;
