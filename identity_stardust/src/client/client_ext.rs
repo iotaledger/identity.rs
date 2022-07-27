@@ -133,16 +133,11 @@ pub trait StardustClientExt: Sync {
       .await
       .map_err(Error::ClientError)?;
 
-    // TODO: Should we return the block returned from this?
-    let blocks = self
+    let _ = self
       .client()
       .retry_until_included(&block.id(), None, None)
       .await
       .map_err(Error::ClientError)?;
-
-    println!("eq {}", block == blocks[0].1);
-    println!("block\n{block:?}");
-    println!("block2\n{:?}", blocks[0].1);
 
     Ok(
       documents_from_block(self.client(), &block)
@@ -281,6 +276,7 @@ mod tests {
   use iota_client::secret::SecretManager;
   use iota_client::Client;
 
+  use crate::client::client_ext::get_network_hrp;
   use crate::Error;
   use crate::StardustCoreDocument;
   use crate::StardustDID;
@@ -404,7 +400,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_publish_resolve() {
+  async fn test_client_publish_resolve() {
     let client: Client = client();
     let (address, secret_manager) = get_address_with_funds(&client).await;
     let document = generate_document(&valid_did());
@@ -418,31 +414,8 @@ mod tests {
     assert_eq!(document, resolved);
   }
 
-  // fn output_ids_from_block(block: Block) -> Vec<OutputId> {
-  //   if let Payload::Transaction(tx) = block.payload().unwrap() {
-  //     let TransactionEssence::Regular(regular) = tx.essence();
-  //     let mut output_ids = Vec::new();
-  //     for (index, output) in regular.outputs().iter().enumerate() {
-  //       if let Output::Alias(_) = output {
-  //         output_ids.push(OutputId::new(tx.id(), index.try_into().unwrap()).unwrap());
-  //       }
-  //     }
-  //     output_ids
-  //   } else {
-  //     panic!("not a tx payload")
-  //   }
-  // }
-
-  // async fn assert_spent_status(client: &Client, output_id: OutputId, is_spent: bool) {
-  //   let metadata = client.get_output_metadata(&output_id).await.unwrap();
-  //   assert_eq!(
-  //     metadata.is_spent, is_spent,
-  //     "expected {output_id} to have is_spent: {is_spent}"
-  //   );
-  // }
-
   #[tokio::test]
-  async fn test_publish_update() {
+  async fn test_client_publish_update() {
     let client: Client = client();
     let (address, secret_manager) = get_address_with_funds(&client).await;
     let initial_document = generate_document(&valid_did());
@@ -477,11 +450,36 @@ mod tests {
     let resolved = client.resolve(document.id()).await.unwrap();
 
     assert_eq!(document, resolved);
+  }
 
-    // let original_block_ids = output_ids_from_block(original_block);
-    // let update_block_ids = output_ids_from_block(update_block);
+  #[tokio::test]
+  async fn test_client_delete() {
+    let client: Client = client();
+    let network_hrp: String = get_network_hrp(&client).await.unwrap();
 
-    // assert_spent_status(&client, original_block_ids[0], true).await;
-    // assert_spent_status(&client, update_block_ids[0], false).await;
+    let (address, secret_manager) = get_address_with_funds(&client).await;
+    let address_bech32: String = address.to_bech32(network_hrp);
+    let initial_balance: u64 = get_address_balance(&client, &address_bech32).await;
+
+    let initial_document = generate_document(&valid_did());
+
+    let output = client.new_did(address, initial_document, None).await.unwrap();
+
+    let document: StardustDocument = client.publish_did(&secret_manager, output).await.unwrap();
+
+    client
+      .delete_did(&secret_manager, address, document.id())
+      .await
+      .unwrap();
+
+    client.consolidate_funds(&secret_manager, 0, 0..1).await.unwrap();
+
+    let balance: u64 = get_address_balance(&client, &address_bech32).await;
+
+    assert_eq!(initial_balance, balance);
+
+    let err = client.resolve(document.id()).await.unwrap_err();
+
+    println!("{err:?}");
   }
 }
