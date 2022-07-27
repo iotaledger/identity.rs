@@ -170,6 +170,16 @@ pub trait StardustClientExt: Sync {
 
   /// Resolve a [`StardustDID`] to a [`StardustDocument`].
   async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
+    // TODO: Replace usage of HRP with network_id -> network_name mapping?
+    let network_hrp: String = get_network_hrp(self.client()).await?;
+
+    if did.network_str() != network_hrp.as_str() {
+      return Err(Error::NetworkMismatch {
+        expected: did.network_str().to_owned(),
+        actual: network_hrp,
+      });
+    }
+
     let alias_id: AliasId = AliasId::from_str(did.tag())?;
 
     let output_id: OutputId = self
@@ -181,11 +191,7 @@ pub trait StardustClientExt: Sync {
     let output: Output =
       Output::try_from(&response.output).map_err(|err| Error::OutputError(OutputError::ConversionError(err)))?;
 
-    let network_hrp: String = get_network_hrp(self.client()).await?;
-
-    let did: StardustDID = StardustDID::new(alias_id.deref(), &NetworkName::try_from(Cow::from(network_hrp))?);
-
-    StardustDocument::unpack_from_output(&did, &output)
+    StardustDocument::unpack_from_output(did, &output)
   }
 }
 
