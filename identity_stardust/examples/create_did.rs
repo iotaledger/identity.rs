@@ -1,28 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Object;
-use identity_core::common::Timestamp;
 use identity_did::did::DID;
 use identity_did::verification::MethodData;
+use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
+use identity_stardust::Error;
+use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
-use identity_stardust::StardustCoreDocument;
-use identity_stardust::StardustDocumentMetadata;
+use identity_stardust::StardustDocument;
+use identity_stardust::StardustVerificationMethod;
+
 use iota_client::block::address::Address;
-use iota_client::block::output::feature::IssuerFeature;
-use iota_client::block::output::feature::MetadataFeature;
-use iota_client::block::output::feature::SenderFeature;
-use iota_client::block::output::unlock_condition::GovernorAddressUnlockCondition;
-use iota_client::block::output::unlock_condition::StateControllerAddressUnlockCondition;
-use iota_client::block::output::unlock_condition::UnlockCondition;
-use iota_client::block::output::AliasId;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::block::output::Feature;
+use iota_client::block::output::AliasOutput;
 use iota_client::block::output::Output;
 use iota_client::block::output::RentStructure;
-use iota_client::block::Block;
 use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::crypto::keys::bip39;
 use iota_client::node_api::indexer::query_parameters::QueryParameter;
@@ -30,80 +23,51 @@ use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-use identity_stardust::NetworkName;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustVerificationMethod;
-
 static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /// Demonstrate how to embed a DID Document in an Alias Output.
 pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDocument)> {
-  // Create a new DID Document.
-  let did: StardustDID = StardustDID::placeholder(
-    &NetworkName::try_from(SHIMMER_TESTNET_BECH32_HRP).expect("HRP should be a valid network name"),
-  );
+  // Create a client and an address with funds from the testnet faucet.
+  let client: Client = Client::builder().with_primary_node(ENDPOINT, None)?.finish()?;
+
+  // Get the BECH32 HRP identifier of the network.
+  let network_bech32_hrp: NetworkName = client
+    .get_network_info()
+    .await?
+    .bech32_hrp
+    .ok_or(Error::InvalidNetworkName)
+    .and_then(NetworkName::try_from)?;
+
+  // Create a new document with a placeholder DID and add a verification method.
+  // The placeholder will be replaced during publication, since the DID is derived from the id of the output
+  // that creates the alias output.
+  let mut document: StardustDocument = StardustDocument::new(&network_bech32_hrp);
 
   let method: StardustVerificationMethod = VerificationMethod::builder(Default::default())
-    .id(did.to_url().join("#key-1")?)
-    .controller(did.clone())
+    .id(document.id().to_url().join("#key-1")?)
+    .controller(document.id().clone())
     .type_(MethodType::Ed25519VerificationKey2018)
     .data(MethodData::new_multibase(b"#key-1"))
     .build()?;
 
-  let mut metadata: StardustDocumentMetadata = StardustDocumentMetadata::new();
-  metadata.created = Some(Timestamp::now_utc());
-  metadata.updated = Some(Timestamp::now_utc());
+  document.insert_method(method, MethodScope::VerificationMethod)?;
 
-  let document: StardustCoreDocument = StardustCoreDocument::builder(Object::default())
-    .id(did.clone())
-    .controller(did.clone())
-    .verification_method(method)
-    .build()?;
-
-  let document: StardustDocument = StardustDocument::from((document, metadata));
-
-  // Create a client and an address with funds from the testnet faucet.
-  let client: Client = Client::builder()
-    .with_node(ENDPOINT)?
-    .with_node_sync_disabled()
-    .finish()?;
-
+  // Get an address with funds from the testnet faucet.
   let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
 
-  // Create an alias output and include the DID document in its metadata.
+  // Get the current byte costs for outputs.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
-  let output: Output = AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())?
-    .with_state_index(0)
-    .with_foundry_counter(0)
-    .with_state_metadata(document.pack()?)
-    .add_feature(Feature::Sender(SenderFeature::new(address)))
-    .add_feature(Feature::Metadata(MetadataFeature::new(vec![1, 2, 3])?))
-    .add_immutable_feature(Feature::Issuer(IssuerFeature::new(address)))
-    .add_unlock_condition(UnlockCondition::StateControllerAddress(
-      StateControllerAddressUnlockCondition::new(address),
-    ))
-    .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
-      address,
-    )))
-    .finish_output()?;
+
+  // Construct an alias output containing the `document` and whose state and governance is controlled by `address`.
+  let alias_output: AliasOutput = client.new_did(address, document, rent_structure)?;
 
   // Publish the output and get the published document.
-  let block: Block = client.publish_outputs(&secret_manager, vec![output]).await?;
-  let documents: Vec<StardustDocument> = client.documents_from_block(&block).await?;
+  let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await?;
 
-  println!("Published DID document: {:#?}", documents[0]);
+  println!("Published DID document: {:#?}", document);
 
-  Ok((
-    client,
-    address,
-    secret_manager,
-    documents
-      .into_iter()
-      .next()
-      .expect("documents should contain exactly one document"),
-  ))
+  Ok((client, address, secret_manager, document))
 }
 
 async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, SecretManager)> {
