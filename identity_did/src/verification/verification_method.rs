@@ -16,6 +16,7 @@ use identity_core::crypto::PublicKey;
 
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
+use crate::did::ToDIDUrl;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;

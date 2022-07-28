@@ -566,7 +566,7 @@ mod account_revocation {
   use super::Account;
   use crate::account::PublishOptions;
   use crate::Result;
-  use identity_did::did::DID;
+  use identity_did::did::ToDIDUrl;
   use identity_iota_client::tangle::Client;
   use identity_iota_client::tangle::SharedPtr;
   use identity_iota_core::did::IotaDIDUrl;

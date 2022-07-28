@@ -16,7 +16,7 @@ use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_did::did::DID;
+use identity_did::did::ToDIDUrl;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
 use identity_did::utils::Queryable;

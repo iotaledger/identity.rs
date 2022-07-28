@@ -15,7 +15,6 @@ use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
 use crate::did::DIDError;
-use crate::did::DIDUrl;
 
 pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryFrom<BaseDIDUrl> {
   const SCHEME: &'static str = BaseDIDUrl::SCHEME;
@@ -55,20 +54,6 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
 
   /// Consumes the [`DID`] and returns its serialization.
   fn into_string(self) -> String;
-
-  /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
-  /// fragment to this [`DID`].
-  ///
-  /// See [`DIDUrl::join`].
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
-  where
-    Self: Sized;
-
-  /// Clones the [`DID`] into a [`DIDUrl`] of the same method.
-  fn to_url(&self) -> DIDUrl<Self>;
-
-  /// Converts the [`DID`] into a [`DIDUrl`] of the same method.
-  fn into_url(self) -> DIDUrl<Self>;
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize, serde::Serialize)]
@@ -165,18 +150,6 @@ impl DID for CoreDID {
 
   fn into_string(self) -> String {
     self.0.into_string()
-  }
-
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError> {
-    DIDUrl::new(self, None).join(value)
-  }
-
-  fn to_url(&self) -> DIDUrl<Self> {
-    DIDUrl::new(self.clone(), None)
-  }
-
-  fn into_url(self) -> DIDUrl<Self> {
-    DIDUrl::new(self, None)
   }
 }
 

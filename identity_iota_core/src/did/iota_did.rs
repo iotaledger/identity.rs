@@ -241,23 +241,6 @@ impl DID for IotaDID {
   fn into_string(self) -> String {
     self.0.into_string()
   }
-
-  /// Creates a new [`IotaDIDUrl`] by joining with a relative DID Url string.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if any base or relative DID segments are invalid.
-  fn join(self, segment: impl AsRef<str>) -> std::result::Result<DIDUrl<Self>, DIDError> {
-    self.into_url().join(segment)
-  }
-
-  fn to_url(&self) -> DIDUrl<Self> {
-    DIDUrl::new(self.clone(), None)
-  }
-
-  fn into_url(self) -> DIDUrl<Self> {
-    DIDUrl::new(self, None)
-  }
 }
 
 impl Display for IotaDID {
