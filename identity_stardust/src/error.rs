@@ -30,19 +30,12 @@ pub enum Error {
   #[error("credential revocation error")]
   RevocationError(#[source] identity_did::Error),
   #[cfg(feature = "iota-client")]
-  #[error("{0}")]
-  OutputError(#[from] OutputError),
-  #[cfg(feature = "iota-client")]
   #[error("alias output build error")]
   AliasOutputBuildError(#[source] iota_client::block::Error),
-}
-
-/// Errors when converting outputs from DTOs, or when creating or unwrapping outputs.
-#[cfg(feature = "iota-client")]
-#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
-pub enum OutputError {
+  #[cfg(feature = "iota-client")]
   #[error("not an alias output")]
   NotAnAliasOutput,
+  #[cfg(feature = "iota-client")]
   #[error("error while converting DTO to an output")]
-  ConversionError(#[source] iota_client::block::DtoError),
+  OutputConversionError(#[source] iota_client::block::DtoError),
 }

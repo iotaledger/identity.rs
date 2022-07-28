@@ -27,7 +27,6 @@ use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-use crate::error::OutputError;
 use crate::error::Result;
 use crate::Error;
 use crate::NetworkName;
@@ -92,12 +91,12 @@ pub trait StardustClientExt: Sync {
       .map_err(Error::ClientError)?;
 
     let output_response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
-    let output: Output = Output::try_from(&output_response.output).map_err(OutputError::ConversionError)?;
+    let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
 
     let alias_output: AliasOutput = if let Output::Alias(alias_output) = output {
       alias_output
     } else {
-      return Err(Error::OutputError(OutputError::NotAnAliasOutput));
+      return Err(Error::NotAnAliasOutput);
     };
 
     let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
@@ -151,7 +150,7 @@ pub trait StardustClientExt: Sync {
     let alias_id: AliasId = AliasId::from_str(did.tag())?;
     let output_id: OutputId = client.alias_output_id(alias_id).await?;
     let output_response: OutputResponse = client.get_output(&output_id).await?;
-    let output: Output = Output::try_from(&output_response.output).map_err(OutputError::ConversionError)?;
+    let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
 
     let basic_output = BasicOutputBuilder::new_with_amount(output.amount())?
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
@@ -188,8 +187,7 @@ pub trait StardustClientExt: Sync {
       .await
       .map_err(Error::ClientError)?;
     let response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
-    let output: Output =
-      Output::try_from(&response.output).map_err(|err| Error::OutputError(OutputError::ConversionError(err)))?;
+    let output: Output = Output::try_from(&response.output).map_err(Error::OutputConversionError)?;
 
     StardustDocument::unpack_from_output(did, &output)
   }
