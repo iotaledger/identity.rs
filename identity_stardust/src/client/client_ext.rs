@@ -61,8 +61,7 @@ pub trait StardustClientExt: Sync {
     };
 
     AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())
-      .map_err(Error::AliasOutputBuildError)
-      .unwrap()
+      .map_err(Error::AliasOutputBuildError)?
       .with_state_index(0)
       .with_foundry_counter(0)
       .with_state_metadata(document.pack()?)
@@ -397,7 +396,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_client_publish_resolve() {
+  async fn test_client_publish_and_resolve() {
     let client: Client = client();
     let (address, secret_manager) = get_address_with_funds(&client).await;
     let document = generate_document(&valid_did());
@@ -476,12 +475,15 @@ mod tests {
 
     client.consolidate_funds(&secret_manager, 0, 0..1).await.unwrap();
 
+    // It takes time for the deletion to propagate.
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+
+    let error = client.resolve(document.id()).await.unwrap_err();
+
+    assert!(matches!(error, Error::ClientError(iota_client::Error::NotFound)));
+
     let balance: u64 = get_address_balance(&client, &address_bech32).await;
 
     assert_eq!(initial_balance, balance);
-
-    let err = client.resolve(document.id()).await.unwrap_err();
-
-    println!("{err:?}");
   }
 }
