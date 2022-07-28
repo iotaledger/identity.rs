@@ -198,9 +198,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -223,7 +223,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -248,17 +247,7 @@ publishing to the Tangle.
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -530,6 +519,17 @@ Sets the controllers of the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -1332,9 +1332,13 @@ Fails if the issuer field is not a valid DID.
 * [DID](#DID)
     * [new DID(public_key, network)](#new_DID_new)
     * _instance_
-        * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.network()](#DID+network) ⇒ [<code>Network</code>](#Network)
+        * [.networkStr()](#DID+networkStr) ⇒ <code>string</code>
         * [.tag()](#DID+tag) ⇒ <code>string</code>
+        * [.scheme()](#DID+scheme) ⇒ <code>string</code>
+        * [.authority()](#DID+authority) ⇒ <code>string</code>
+        * [.method()](#DID+method) ⇒ <code>string</code>
+        * [.methodId()](#DID+methodId) ⇒ <code>string</code>
         * [.join(segment)](#DID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toUrl()](#DID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
@@ -1356,22 +1360,62 @@ Creates a new `DID` from a public key.
 | public_key | <code>Uint8Array</code> | 
 | network | <code>string</code> \| <code>undefined</code> | 
 
-<a name="DID+networkName"></a>
-
-### did.networkName ⇒ <code>string</code>
-Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+network"></a>
 
 ### did.network() ⇒ [<code>Network</code>](#Network)
-Returns the IOTA tangle network of the `DID`.
+Returns the Tangle network of the `DID`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+networkStr"></a>
+
+### did.networkStr() ⇒ <code>string</code>
+Returns the Tangle network name of the `DID`.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+tag"></a>
 
 ### did.tag() ⇒ <code>string</code>
 Returns a copy of the unique tag of the `DID`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+scheme"></a>
+
+### did.scheme() ⇒ <code>string</code>
+Returns the `DID` scheme.
+
+E.g.
+- `"did:example:12345678" -> "did"`
+- `"did:iota:main:12345678" -> "did"`
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+authority"></a>
+
+### did.authority() ⇒ <code>string</code>
+Returns the `DID` authority: the method name and method-id.
+
+E.g.
+- `"did:example:12345678" -> "example:12345678"`
+- `"did:iota:main:12345678" -> "iota:main:12345678"`
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+method"></a>
+
+### did.method() ⇒ <code>string</code>
+Returns the `DID` method name.
+
+E.g.
+- `"did:example:12345678" -> "example"`
+- `"did:iota:main:12345678" -> "iota"`
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+methodId"></a>
+
+### did.methodId() ⇒ <code>string</code>
+Returns the `DID` method-specific ID.
+
+E.g.
+- `"did:example:12345678" -> "12345678"`
+- `"did:iota:main:12345678" -> "main:12345678"`
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+join"></a>
@@ -5061,13 +5105,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

@@ -51,7 +51,7 @@ fn test_did() {
   let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let did = WasmDID::new(&key.public(), None).unwrap();
 
-  assert_eq!(did.network_name(), "main");
+  assert_eq!(did.network_str(), "main");
 
   let parsed = WasmDID::parse(&did.to_string()).unwrap();
 
@@ -60,7 +60,7 @@ fn test_did() {
   let base58 = WasmDID::new(&key.public(), Some("dev".to_owned())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
-  assert_eq!(base58.network_name(), "dev");
+  assert_eq!(base58.network_str(), "dev");
 }
 
 #[wasm_bindgen_test]
@@ -93,7 +93,7 @@ fn test_did_url() {
 fn test_document_new() {
   let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
-  assert_eq!(document.id().network_name(), "main");
+  assert_eq!(document.id().network_str(), "main");
   assert!(document.default_signing_method().is_ok());
 }
 
@@ -261,7 +261,7 @@ fn test_document_network() {
   let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
 
-  assert_eq!(document.id().network_name(), "dev");
+  assert_eq!(document.id().network_str(), "dev");
 }
 
 #[wasm_bindgen_test]
