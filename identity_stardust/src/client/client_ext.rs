@@ -80,22 +80,17 @@ pub trait StardustClientExt: Sync {
 
   /// Resolves the alias output associated to the DID in `document` and updates it with that document.
   ///
-  /// Returns the updated alias output for further customization and publication.
+  /// Returns the updated alias output for further customization and publication. The storage deposit
+  /// on the output is unchanged. If the size of the document increased, the amount has to be increased.
   ///
   /// This method does not modify the on-ledger state.
-  async fn update_did(&self, document: StardustDocument, rent_structure: Option<RentStructure>) -> Result<AliasOutput> {
+  async fn update_did(&self, document: StardustDocument) -> Result<AliasOutput> {
     let alias_id: AliasId = AliasId::from_str(document.id().tag())?;
     let output_id: OutputId = self
       .client()
       .alias_output_id(alias_id)
       .await
       .map_err(Error::ClientError)?;
-
-    let rent_structure: RentStructure = if let Some(inner) = rent_structure {
-      inner
-    } else {
-      self.client().get_rent_structure().await.map_err(Error::ClientError)?
-    };
 
     let output_response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
     let output: Output = Output::try_from(&output_response.output).map_err(OutputError::ConversionError)?;
@@ -107,7 +102,6 @@ pub trait StardustClientExt: Sync {
     };
 
     let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
-      .with_minimum_storage_deposit(rent_structure)
       .with_state_index(alias_output.state_index() + 1)
       .with_state_metadata(document.pack()?);
 
@@ -267,6 +261,7 @@ mod tests {
   use identity_did::verification::VerificationMethod;
   use iota_client::block::address::Address;
   use iota_client::block::output::AliasOutput;
+  use iota_client::block::output::AliasOutputBuilder;
   use iota_client::block::output::Output;
   use iota_client::block::output::RentStructure;
   use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
@@ -350,9 +345,6 @@ mod tests {
     (address, secret_manager)
   }
 
-  /// Request funds from a faucet for the given address.
-  ///
-  /// Returns when the funds were granted to the address.
   async fn request_faucet_funds(client: &Client, address: Address) {
     let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
 
@@ -360,15 +352,20 @@ mod tests {
       .await
       .unwrap();
 
-    loop {
-      tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    tokio::time::timeout(std::time::Duration::from_secs(45), async {
+      loop {
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
-      let balance = get_address_balance(client, &address_bech32).await;
-      println!("{address_bech32} balance is {balance}");
-      if balance > 0 {
-        break;
+        let balance = get_address_balance(client, &address_bech32).await;
+        if balance > 0 {
+          break;
+        }
       }
-    }
+      Ok::<(), anyhow::Error>(())
+    })
+    .await
+    .unwrap()
+    .unwrap();
   }
 
   async fn get_address_balance(client: &Client, address: &str) -> u64 {
@@ -441,10 +438,15 @@ mod tests {
       )
       .unwrap();
 
-    // Resolve the latest output and update it with the given document.
-    let alias_output: AliasOutput = client.update_did(document, Some(rent_structure)).await.unwrap();
+    let alias_output: AliasOutput = client.update_did(document).await.unwrap();
 
-    // Publish the output.
+    let rent_structure = client.get_rent_structure().await.unwrap();
+
+    let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
+      .with_minimum_storage_deposit(rent_structure)
+      .finish()
+      .unwrap();
+
     let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await.unwrap();
 
     let resolved = client.resolve(document.id()).await.unwrap();

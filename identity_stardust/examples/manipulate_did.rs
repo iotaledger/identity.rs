@@ -6,6 +6,7 @@ use identity_did::verification::MethodRelationship;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 use iota_client::block::output::AliasOutput;
+use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
@@ -27,7 +28,13 @@ async fn main() -> anyhow::Result<()> {
   )?;
 
   // Resolve the latest output and update it with the given document.
-  let alias_output: AliasOutput = client.update_did(document, None).await?;
+  let alias_output: AliasOutput = client.update_did(document).await?;
+
+  let rent_structure = client.get_rent_structure().await?;
+
+  let alias_output = AliasOutputBuilder::from(&alias_output)
+    .with_minimum_storage_deposit(rent_structure)
+    .finish()?;
 
   // Publish the output.
   let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await?;
