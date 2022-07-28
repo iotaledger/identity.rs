@@ -54,13 +54,27 @@ fn test_did() {
   assert_eq!(did.network_str(), "main");
 
   let parsed = WasmDID::parse(&did.to_string()).unwrap();
-
   assert_eq!(did.to_string(), parsed.to_string());
 
   let base58 = WasmDID::new(&key.public(), Some("dev".to_owned())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network_str(), "dev");
+}
+
+#[wasm_bindgen_test]
+fn test_did_methods() {
+  let tag = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
+  let did_str = format!("did:iota:dev:{tag}");
+  let did = WasmDID::parse(&did_str).unwrap();
+
+  assert_eq!(did.to_string(), did_str);
+  assert_eq!(did.tag(), tag);
+  assert_eq!(did.network_str(), "dev");
+  assert_eq!(did.scheme(), "did");
+  assert_eq!(did.method(), "iota");
+  assert_eq!(did.method_id(), format!("dev:{tag}"));
+  assert_eq!(did.authority(), format!("iota:dev:{tag}"));
 }
 
 #[wasm_bindgen_test]
