@@ -281,10 +281,12 @@ mod tests {
   use super::StardustClientExt;
 
   // TODO: Change to private tangle in CI; detect CI via env var?.
-  // static ENDPOINT: &str = "https://api.alphanet.iotaledger.net/";
-  // static FAUCET_URL: &str = "https://faucet.alphanet.iotaledger.net/api/enqueue";
-  static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
-  static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+  // TODO: Change to shimmer testnet after bee-api-types and nodes agree again.
+  // Somehow linked to this: https://github.com/iotaledger/tips/pull/57#discussion_r921955443.
+  static ENDPOINT: &str = "https://api.alphanet.iotaledger.net/";
+  static FAUCET_URL: &str = "https://faucet.alphanet.iotaledger.net/api/enqueue";
+  // static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
+  // static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
   fn generate_method(controller: &StardustDID, fragment: &str) -> StardustVerificationMethod {
     VerificationMethod::builder(Default::default())

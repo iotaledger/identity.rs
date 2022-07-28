@@ -23,7 +23,7 @@ pub enum Error {
   BlockError(#[from] iota_client::block::Error),
   #[error("invalid network name")]
   InvalidNetworkName,
-  #[error("cannot resolve a `{expected}` DID on network `{actual}`")]
+  #[error("unable to resolve a `{expected}` DID on network `{actual}`")]
   NetworkMismatch { expected: String, actual: String },
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
