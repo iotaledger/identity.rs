@@ -8,17 +8,19 @@ keywords = ["iota", "tangle", "stardust", "identity"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
+rust-version = "1.62"
 description = "An IOTA Ledger integration for the identity.rs library."
-
 [workspace]
 
 [dependencies]
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
-once_cell = { version = "1.13", default-features = false }
+once_cell = { version = "1", default-features = false, features = ["std"] }
+prefix-hex = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
@@ -28,12 +30,13 @@ git = "https://github.com/iotaledger/iota.rs"
 rev = "2a35c7affe15034fd1b82884966269882bffb23b" # develop branch, 2022-07-18
 features = ["tls"]
 default-features = false
+optional = true
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
 iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -42,6 +45,8 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap"]
+default = ["iota-client", "revocation-bitmap"]
+# Enables the iota-client dependency and associated helper functions.
+iota-client = ["dep:iota-client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap"]

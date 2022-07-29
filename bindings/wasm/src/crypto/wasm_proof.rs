@@ -7,8 +7,6 @@ use wasm_bindgen::JsValue;
 
 use crate::common::WasmTimestamp;
 use crate::crypto::WasmProofPurpose;
-use crate::error::Result;
-use crate::error::WasmResult;
 
 /// A digital signature.
 ///
@@ -65,20 +63,9 @@ impl WasmProof {
   pub fn purpose(&self) -> Option<WasmProofPurpose> {
     self.0.purpose.map(WasmProofPurpose::from)
   }
-
-  /// Serializes a `Proof` to a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Proof` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmProof> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmProof, Proof);
 impl_wasm_clone!(WasmProof, Proof);
 
 impl From<Proof> for WasmProof {

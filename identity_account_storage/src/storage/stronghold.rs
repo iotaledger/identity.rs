@@ -14,7 +14,6 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::X25519;
 use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
 use iota_stronghold::procedures;
 use iota_stronghold::procedures::ProcedureError;
@@ -32,7 +31,6 @@ use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::identity::ChainState;
 use crate::storage::Storage;
 use crate::stronghold::ClientOperation;
 use crate::stronghold::ClientPath;
@@ -52,8 +50,7 @@ static INDEX_CLIENT_PATH: &str = "$index";
 // The key in the index store that contains the serialized index.
 // This happens to be the same as the client path, but for explicitness we define them separately.
 static INDEX_STORE_KEY: &str = INDEX_CLIENT_PATH;
-static CHAIN_STATE_STORE_KEY: &str = "$chain_state";
-static DOCUMENT_STORE_KEY: &str = "$document";
+static BLOB_STORE_KEY: &str = "$blob";
 // The static identifier for vaults inside clients.
 static VAULT_PATH: &[u8; 6] = b"$vault";
 
@@ -377,58 +374,24 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
-    let client: Client = self.client(&ClientPath::from(did))?;
-    let store: Store = client.store();
-
-    let data: Option<Vec<u8>> = store
-      .get(CHAIN_STATE_STORE_KEY.as_bytes())
-      .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
-
-    match data {
-      None => return Ok(None),
-      Some(data) => Ok(Some(ChainState::from_json_slice(&data)?)),
-    }
-  }
-
-  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
-    let json: Vec<u8> = chain_state.to_json_vec()?;
-
+  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> Result<()> {
     self.mutate_client(did, |client| {
       let store: Store = client.store();
 
       store
-        .insert(CHAIN_STATE_STORE_KEY.as_bytes().to_vec(), json, None)
+        .insert(BLOB_STORE_KEY.as_bytes().to_vec(), blob, None)
         .map(|_| ())
         .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
     })
   }
 
-  async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
+  async fn blob_get(&self, did: &IotaDID) -> Result<Option<Vec<u8>>> {
     let client: Client = self.client(&ClientPath::from(did))?;
     let store: Store = client.store();
-
     let data: Option<Vec<u8>> = store
-      .get(DOCUMENT_STORE_KEY.as_bytes())
+      .get(BLOB_STORE_KEY.as_bytes())
       .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
-
-    match data {
-      None => return Ok(None),
-      Some(data) => Ok(Some(IotaDocument::from_json_slice(&data)?)),
-    }
-  }
-
-  async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
-    let json: Vec<u8> = document.to_json_vec()?;
-
-    self.mutate_client(did, |client| {
-      let store: Store = client.store();
-
-      store
-        .insert(DOCUMENT_STORE_KEY.as_bytes().to_vec(), json, None)
-        .map(|_| ())
-        .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
-    })
+    Ok(data)
   }
 
   async fn flush_changes(&self) -> Result<()> {

@@ -102,13 +102,13 @@ jobs:
         with:
           # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
           command: build
-          args: --workspace --tests --examples --release
+          args: --workspace --tests --examples --all-features --release
 
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --all-features --release
+          args: --workspace --all-features --release
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -116,7 +116,7 @@ jobs:
         run: |
           cargo read-manifest --manifest-path ./examples/Cargo.toml | \
           jq -r '.targets[].name' | \
-          parallel -k -j 4 --retries 3 cargo run --example {} --release
+          parallel -k -j 4 --retries 3 cargo run --example {} --all-features --release
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
@@ -159,7 +159,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --manifest-path ./identity_stardust/Cargo.toml --workspace --tests --examples --release
+          args: --manifest-path ./identity_stardust/Cargo.toml --workspace --tests --examples --all-features --release
 
       - name: Start private tangle
         uses: './.github/actions/private-tangle/setup'
@@ -168,7 +168,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --manifest-path ./identity_stardust/Cargo.toml --all --all-features --release
+          args: --manifest-path ./identity_stardust/Cargo.toml --workspace --all-features --release
       
       - name: Run Rust examples
         working-directory: identity_stardust

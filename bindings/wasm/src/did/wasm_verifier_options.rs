@@ -10,7 +10,6 @@ use crate::error::WasmResult;
 /// Holds additional proof verification options.
 /// See `IVerifierOptions`.
 #[wasm_bindgen(js_name = VerifierOptions, inspectable)]
-#[derive(Clone, Debug)]
 pub struct WasmVerifierOptions(pub(crate) VerifierOptions);
 
 #[wasm_bindgen(js_class = VerifierOptions)]
@@ -29,19 +28,10 @@ impl WasmVerifierOptions {
   pub fn default() -> WasmVerifierOptions {
     WasmVerifierOptions(VerifierOptions::default())
   }
-
-  /// Serializes a `VerifierOptions` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `VerifierOptions` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmVerifierOptions> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmVerifierOptions, VerifierOptions);
+impl_wasm_clone!(WasmVerifierOptions, VerifierOptions);
 
 impl From<VerifierOptions> for WasmVerifierOptions {
   fn from(options: VerifierOptions) -> Self {
@@ -54,8 +44,6 @@ impl From<WasmVerifierOptions> for VerifierOptions {
     options.0
   }
 }
-
-impl_wasm_clone!(WasmVerifierOptions, VerifierOptions);
 
 /// Duck-typed interface to allow creating `VerifierOptions` easily.
 #[wasm_bindgen]

@@ -12,6 +12,8 @@ use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
@@ -32,6 +34,7 @@ use serde::Serialize;
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
 use crate::types::IdentitySetup;
+use crate::types::IdentityState;
 use crate::types::IdentityUpdater;
 use crate::updates::create_identity;
 use crate::updates::Update;
@@ -126,12 +129,14 @@ where
     }
 
     // Ensure the identity exists in storage
-    let document: IotaDocument = setup.storage.document_get(&did).await?.ok_or(Error::IdentityNotFound)?;
-    let chain_state: ChainState = setup
-      .storage
-      .chain_state_get(&did)
-      .await?
-      .ok_or(Error::IdentityNotFound)?;
+    let identity_state_bytes: Vec<u8> = setup.storage.blob_get(&did).await?.ok_or(Error::IdentityNotFound)?;
+    let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
+    let chain_state: ChainState = identity_state
+      .chain_state()?
+      .ok_or_else(|| Error::InvalidIdentityState("missing chain state".to_owned()))?;
+    let document: IotaDocument = identity_state
+      .document()?
+      .ok_or_else(|| Error::InvalidIdentityState("missing document".to_owned()))?;
 
     Self::with_setup(setup, chain_state, document).await
   }
@@ -316,12 +321,17 @@ where
     // TODO: An account always holds a valid identity,
     // so if None is returned, that's a broken invariant.
     // This should be mapped to a fatal error in the future.
-    self
+    let identity_state_bytes: Vec<u8> = self
       .storage()
       .deref()
-      .document_get(self.did())
+      .blob_get(self.did())
       .await?
-      .ok_or(Error::IdentityNotFound)
+      .ok_or(Error::IdentityNotFound)?;
+    let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
+
+    identity_state
+      .document()?
+      .ok_or_else(|| Error::InvalidIdentityState("document not found".to_owned()))
   }
 
   pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {
@@ -410,8 +420,8 @@ where
   }
 
   async fn store_state(&self) -> Result<()> {
-    self.storage.document_set(self.did(), &self.document).await?;
-    self.storage.chain_state_set(self.did(), self.chain_state()).await?;
+    let identity_state: IdentityState = IdentityState::new(Some(&self.document), Some(&self.chain_state))?;
+    self.storage.blob_set(self.did(), identity_state.to_json_vec()?).await?;
 
     self.save(false).await?;
 

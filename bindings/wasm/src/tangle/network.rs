@@ -47,20 +47,9 @@ impl WasmNetwork {
   pub fn to_string(&self) -> String {
     self.0.name_str().to_owned()
   }
-
-  /// Serializes a `Network` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Network` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmNetwork> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmNetwork, Network);
 impl_wasm_clone!(WasmNetwork, Network);
 
 impl From<WasmNetwork> for Network {

@@ -1,4 +1,4 @@
-import { NapiStronghold, NapiDid, NapiKeyLocation, NapiChainState, NapiDocument, NapiKeyType, NapiDidLocation, NapiEncryptedData, NapiEncryptionAlgorithm, NapiCekAlgorithm } from '../napi-dist/napi';
+import { NapiStronghold, NapiDid, NapiKeyLocation, NapiKeyType, NapiDidLocation, NapiEncryptedData, NapiEncryptionAlgorithm, NapiCekAlgorithm } from '../napi-dist/napi';
 import { DID, KeyLocation, Signature, ChainState, Storage, KeyType, Document, EncryptedData, EncryptionAlgorithm, CekAlgorithm } from "@iota/identity-wasm/node";
 
 export class Stronghold implements Storage {
@@ -115,38 +115,20 @@ export class Stronghold implements Storage {
         return Uint8Array.from(decryptedData);
     }
 
-    public async chainStateGet(did: DID): Promise<ChainState | undefined> {
+    public async blobGet(did: DID): Promise<Uint8Array | undefined> {
         const napiDID: NapiDid = NapiDid.fromJSON(did.toJSON());
-        const napiChainState: NapiChainState | undefined = await this.napiStronghold.chainStateGet(napiDID);
+        const value: number[] | undefined = await this.napiStronghold.blobGet(napiDID);
 
-        if (napiChainState) {
-            return ChainState.fromJSON(napiChainState.toJSON())
+        if (value) {
+            return Uint8Array.from(value)
         } else {
             return undefined;
         }
     }
 
-    public async chainStateSet(did: DID, chainState: ChainState): Promise<void> {
+    public async blobSet(did: DID, value: Uint8Array): Promise<void> {
         const napiDID: NapiDid = NapiDid.fromJSON(did.toJSON());
-        const napiChainState: NapiChainState = NapiChainState.fromJSON(chainState.toJSON());
-        return this.napiStronghold.chainStateSet(napiDID, napiChainState);
-    }
-
-    public async documentGet(did: DID): Promise<Document | undefined> {
-        const napiDID: NapiDid = NapiDid.fromJSON(did.toJSON());
-        const napiDocument: NapiDocument | undefined = await this.napiStronghold.documentGet(napiDID);
-
-        if (napiDocument) {
-            return Document.fromJSON(napiDocument.toJSON())
-        } else {
-            return undefined;
-        }
-    }
-
-    public async documentSet(did: DID, document: Document): Promise<void> {
-        const napiDID: NapiDid = NapiDid.fromJSON(did.toJSON());
-        const napiDocument: NapiDocument = NapiDocument.fromJSON(document.toJSON());
-        return this.napiStronghold.documentSet(napiDID, napiDocument);
+        return this.napiStronghold.blobSet(napiDID, Array.from(value));
     }
 
     public async flushChanges() {

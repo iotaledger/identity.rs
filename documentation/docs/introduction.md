@@ -11,7 +11,7 @@ keywords:
 
 # IOTA Identity Framework Guide
 
-![IOTA Identity](https://github.com/iotaledger/identity.rs/raw/dev/.meta/identity_banner.png)
+![IOTA Identity](/img/Banner/banner_identity.svg)
 
 The IOTA Identity framework implements the most common standards and patterns for Decentralized Identity in both a DLT agnostic and `iota` method specification manner. It is designed to work for Identity for People, Organizations, Things, and Objects acting as a unifying-layer of trust between everyone and everything.
 

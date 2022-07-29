@@ -4,12 +4,17 @@
 #![forbid(unsafe_code)]
 #![allow(clippy::upper_case_acronyms)]
 
+pub use did::StardustDID;
+pub use did::StardustDIDUrl;
+pub use document::*;
+pub use network::NetworkName;
+pub use state_metadata::*;
+
 pub use self::error::Error;
 pub use self::error::Result;
 
-pub use document::*;
-pub use state_metadata::*;
-
+mod did;
 mod document;
 mod error;
+mod network;
 mod state_metadata;

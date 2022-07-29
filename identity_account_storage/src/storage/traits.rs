@@ -9,11 +9,9 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
 
 use crate::error::Result;
-use crate::identity::ChainState;
 #[cfg(feature = "encryption")]
 use crate::types::CekAlgorithm;
 #[cfg(feature = "encryption")]
@@ -151,17 +149,11 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     private_key: &KeyLocation,
   ) -> Result<Vec<u8>>;
 
-  /// Returns the chain state of the identity specified by `did`.
-  async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>>;
+  /// Stores an arbitrary blob for the identity specified by `did`.
+  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> Result<()>;
 
-  /// Set the chain state of the identity specified by `did`.
-  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()>;
-
-  /// Returns the [`IotaDocument`] of the identity specified by `did`.
-  async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>>;
-
-  /// Sets a new state for the identity specified by `did`.
-  async fn document_set(&self, did: &IotaDID, state: &IotaDocument) -> Result<()>;
+  /// Returns the blob stored by the identity specified by `did`.
+  async fn blob_get(&self, did: &IotaDID) -> Result<Option<Vec<u8>>>;
 
   /// Persists any unsaved changes.
   async fn flush_changes(&self) -> Result<()>;
