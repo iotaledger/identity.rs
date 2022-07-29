@@ -150,14 +150,15 @@ async fn main() -> anyhow::Result<()> {
   let output = Output::try_from(&response.output)?;
   println!("xOutput: {output:?}");
 
-  // The resolved DID Document replaces the placeholder DID with the correct one.
-  let resolved_document = StardustDocument::unpack_from_output(&did, &output)?;
-  println!("Resolved Document: {resolved_document:#}");
+  let alias_output = if let Output::Alias(alias_output) = output {
+    alias_output
+  } else {
+    return Err(identity_stardust::Error::NotAnAliasOutput(alias_output_id).into());
+  };
 
-  let alias_output = match output {
-    Output::Alias(output) => Ok(output),
-    _ => Err(anyhow::anyhow!("not an alias output")),
-  }?;
+  // The resolved DID Document replaces the placeholder DID with the correct one.
+  let resolved_document = StardustDocument::unpack_from_output(&did, &alias_output)?;
+  println!("Resolved Document: {resolved_document:#}");
 
   // ===========================================================================
   // Step 4: Publish an updated Alias Output. (optional)

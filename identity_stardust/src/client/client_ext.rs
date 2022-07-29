@@ -83,21 +83,7 @@ pub trait StardustClientExt: Sync {
   ///
   /// This method does not modify the on-ledger state.
   async fn update_did(&self, document: StardustDocument) -> Result<AliasOutput> {
-    let alias_id: AliasId = AliasId::from_str(document.id().tag())?;
-    let output_id: OutputId = self
-      .client()
-      .alias_output_id(alias_id)
-      .await
-      .map_err(Error::ClientError)?;
-
-    let output_response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
-    let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
-
-    let alias_output: AliasOutput = if let Output::Alias(alias_output) = output {
-      alias_output
-    } else {
-      return Err(Error::NotAnAliasOutput);
-    };
+    let (alias_id, _, alias_output) = resolve_alias_output(self.client(), document.id()).await?;
 
     let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
       .with_state_index(alias_output.state_index() + 1)
@@ -142,17 +128,16 @@ pub trait StardustClientExt: Sync {
 
   /// Consume the Alias Output containing the given `did`, sending its tokens to a new Basic Output
   /// unlockable by `address`.
-  /// WARNING: This destroys the DID Document and the Alias Output and renders the DID permanently unrecoverable.
-  // TODO: Return one of (), Block, Output or OutputId?
+  ///
+  /// # WARNING
+  ///
+  /// This destroys the DID Document and the Alias Output and renders the DID permanently unrecoverable.
   async fn delete_did(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
-    let client = self.client();
+    let client: &Client = self.client();
 
-    let alias_id: AliasId = AliasId::from_str(did.tag())?;
-    let output_id: OutputId = client.alias_output_id(alias_id).await?;
-    let output_response: OutputResponse = client.get_output(&output_id).await?;
-    let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
+    let (_, output_id, alias_output) = resolve_alias_output(client, did).await?;
 
-    let basic_output = BasicOutputBuilder::new_with_amount(output.amount())?
+    let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())?
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
       .finish_output()?;
 
@@ -168,6 +153,10 @@ pub trait StardustClientExt: Sync {
   }
 
   /// Resolve a [`StardustDID`] to a [`StardustDocument`].
+  ///
+  /// # Errors
+  ///
+  /// Returns an [`NotFound`](iota_client::Error::NotFound) if the associated alias output wasn't found.
   async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
     // TODO: Replace usage of HRP with network_id -> network_name mapping?
     let network_hrp: String = get_network_hrp(self.client()).await?;
@@ -179,17 +168,9 @@ pub trait StardustClientExt: Sync {
       });
     }
 
-    let alias_id: AliasId = AliasId::from_str(did.tag())?;
+    let (_, _, alias_output) = resolve_alias_output(self.client(), did).await?;
 
-    let output_id: OutputId = self
-      .client()
-      .alias_output_id(alias_id)
-      .await
-      .map_err(Error::ClientError)?;
-    let response: OutputResponse = self.client().get_output(&output_id).await.map_err(Error::ClientError)?;
-    let output: Output = Output::try_from(&response.output).map_err(Error::OutputConversionError)?;
-
-    StardustDocument::unpack_from_output(did, &output)
+    StardustDocument::unpack_from_output(did, &alias_output)
   }
 }
 
@@ -244,6 +225,20 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
   }
 
   Ok(documents)
+}
+
+/// Resolve a did into an alias output and the associated identifiers.
+async fn resolve_alias_output(client: &Client, did: &StardustDID) -> Result<(AliasId, OutputId, AliasOutput)> {
+  let alias_id: AliasId = AliasId::from_str(did.tag())?;
+  let output_id: OutputId = client.alias_output_id(alias_id).await?;
+  let output_response: OutputResponse = client.get_output(&output_id).await?;
+  let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
+
+  if let Output::Alias(alias_output) = output {
+    Ok((alias_id, output_id, alias_output))
+  } else {
+    Err(Error::NotAnAliasOutput(output_id))
+  }
 }
 
 #[cfg(test)]

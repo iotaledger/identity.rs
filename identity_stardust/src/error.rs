@@ -33,8 +33,8 @@ pub enum Error {
   #[error("alias output build error")]
   AliasOutputBuildError(#[source] iota_client::block::Error),
   #[cfg(feature = "iota-client")]
-  #[error("not an alias output")]
-  NotAnAliasOutput,
+  #[error("output with id `{0}` is not an alias output")]
+  NotAnAliasOutput(iota_client::block::output::OutputId),
   #[cfg(feature = "iota-client")]
   #[error("error while converting DTO to an output")]
   OutputConversionError(#[source] iota_client::block::DtoError),
