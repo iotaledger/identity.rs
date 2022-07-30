@@ -17,16 +17,15 @@ use wasm_bindgen::prelude::*;
 #[macro_use]
 mod macros;
 
-#[macro_use]
-pub mod error;
-
 pub mod account;
 pub mod chain;
 pub mod common;
 pub mod credential;
 pub mod crypto;
 pub mod did;
+pub mod error;
 pub mod revocation;
+pub mod stardust;
 pub mod tangle;
 
 /// Initializes the console error panic hook for better error messages

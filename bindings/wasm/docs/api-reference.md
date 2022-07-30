@@ -34,9 +34,11 @@ the configuration of previously built accounts.</p>
 <dt><a href="#CredentialValidator">CredentialValidator</a></dt>
 <dd></dd>
 <dt><a href="#DID">DID</a></dt>
-<dd></dd>
+<dd><p>A DID conforming to the IOTA DID method specification.</p>
+</dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
-<dd></dd>
+<dd><p>A DID URL conforming to the IOTA DID method specification.</p>
+</dd>
 <dt><del><a href="#DiffChainHistory">DiffChainHistory</a></del></dt>
 <dd></dd>
 <dt><del><a href="#DiffMessage">DiffMessage</a></del></dt>
@@ -130,6 +132,12 @@ with a DID subject.</p>
 <dt><a href="#Signature">Signature</a></dt>
 <dd><p>A digital signature.</p>
 </dd>
+<dt><a href="#StardustDID">StardustDID</a></dt>
+<dd><p>A DID conforming to the IOTA UTXO DID method specification.</p>
+</dd>
+<dt><a href="#StardustDIDUrl">StardustDIDUrl</a></dt>
+<dd><p>A DID URL conforming to the IOTA Stardust UTXO DID method specification.</p>
+</dd>
 <dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
 <dd><p>A test suite for the <code>Storage</code> interface.</p>
 <p>This module contains a set of tests that a correct storage implementation
@@ -198,9 +206,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -1327,6 +1335,8 @@ Fails if the issuer field is not a valid DID.
 <a name="DID"></a>
 
 ## DID
+A DID conforming to the IOTA DID method specification.
+
 **Kind**: global class  
 
 * [DID](#DID)
@@ -1342,6 +1352,8 @@ Fails if the issuer field is not a valid DID.
         * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
         * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
     * _static_
+        * [.METHOD](#DID.METHOD) ⇒ <code>string</code>
+        * [.DEFAULT_NETWORK](#DID.DEFAULT_NETWORK) ⇒ <code>string</code>
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
         * [.fromJSON(json)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
@@ -1415,6 +1427,18 @@ Serializes this to a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID.METHOD"></a>
+
+### DID.METHOD ⇒ <code>string</code>
+The IOTA DID method name (`"iota"`).
+
+**Kind**: static property of [<code>DID</code>](#DID)  
+<a name="DID.DEFAULT_NETWORK"></a>
+
+### DID.DEFAULT\_NETWORK ⇒ <code>string</code>
+The default Tangle network (`"main"`).
+
+**Kind**: static property of [<code>DID</code>](#DID)  
 <a name="DID.parse"></a>
 
 ### DID.parse(input) ⇒ [<code>DID</code>](#DID)
@@ -1440,6 +1464,8 @@ Deserializes an instance from a JSON object.
 <a name="DIDUrl"></a>
 
 ## DIDUrl
+A DID URL conforming to the IOTA DID method specification.
+
 **Kind**: global class  
 
 * [DIDUrl](#DIDUrl)
@@ -4578,6 +4604,336 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StardustDID"></a>
+
+## StardustDID
+A DID conforming to the IOTA UTXO DID method specification.
+
+**Kind**: global class  
+
+* [StardustDID](#StardustDID)
+    * [new StardustDID(bytes, network)](#new_StardustDID_new)
+    * _instance_
+        * [.networkStr()](#StardustDID+networkStr) ⇒ <code>string</code>
+        * [.tag()](#StardustDID+tag) ⇒ <code>string</code>
+        * [.scheme()](#StardustDID+scheme) ⇒ <code>string</code>
+        * [.authority()](#StardustDID+authority) ⇒ <code>string</code>
+        * [.method()](#StardustDID+method) ⇒ <code>string</code>
+        * [.methodId()](#StardustDID+methodId) ⇒ <code>string</code>
+        * [.join(segment)](#StardustDID+join) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+        * [.toUrl()](#StardustDID+toUrl) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+        * [.intoUrl()](#StardustDID+intoUrl) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+        * [.toString()](#StardustDID+toString) ⇒ <code>string</code>
+        * [.toJSON()](#StardustDID+toJSON) ⇒ <code>any</code>
+        * [.clone()](#StardustDID+clone) ⇒ [<code>StardustDID</code>](#StardustDID)
+    * _static_
+        * [.METHOD](#StardustDID.METHOD) ⇒ <code>string</code>
+        * [.DEFAULT_NETWORK](#StardustDID.DEFAULT_NETWORK) ⇒ <code>string</code>
+        * [.placeholder(network)](#StardustDID.placeholder) ⇒ [<code>StardustDID</code>](#StardustDID)
+        * [.parse(input)](#StardustDID.parse) ⇒ [<code>StardustDID</code>](#StardustDID)
+        * [.fromJSON(json)](#StardustDID.fromJSON) ⇒ [<code>StardustDID</code>](#StardustDID)
+
+<a name="new_StardustDID_new"></a>
+
+### new StardustDID(bytes, network)
+Constructs a new `StardustDID` from a byte representation of the tag and the given
+network name.
+
+See also [placeholder](#StardustDID.placeholder).
+
+
+| Param | Type |
+| --- | --- |
+| bytes | <code>Uint8Array</code> | 
+| network | <code>string</code> | 
+
+<a name="StardustDID+networkStr"></a>
+
+### did.networkStr() ⇒ <code>string</code>
+Returns the Tangle network name of the `StardustDID`.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+tag"></a>
+
+### did.tag() ⇒ <code>string</code>
+Returns a copy of the unique tag of the `StardustDID`.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+scheme"></a>
+
+### did.scheme() ⇒ <code>string</code>
+Returns the `DID` scheme.
+
+E.g.
+- `"did:example:12345678" -> "did"`
+- `"did:iota:main:12345678" -> "did"`
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+authority"></a>
+
+### did.authority() ⇒ <code>string</code>
+Returns the `DID` authority: the method name and method-id.
+
+E.g.
+- `"did:example:12345678" -> "example:12345678"`
+- `"did:iota:main:12345678" -> "iota:main:12345678"`
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+method"></a>
+
+### did.method() ⇒ <code>string</code>
+Returns the `DID` method name.
+
+E.g.
+- `"did:example:12345678" -> "example"`
+- `"did:iota:main:12345678" -> "iota"`
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+methodId"></a>
+
+### did.methodId() ⇒ <code>string</code>
+Returns the `DID` method-specific ID.
+
+E.g.
+- `"did:example:12345678" -> "12345678"`
+- `"did:iota:main:12345678" -> "main:12345678"`
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+join"></a>
+
+### did.join(segment) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Construct a new `DIDUrl` by joining with a relative DID Url string.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="StardustDID+toUrl"></a>
+
+### did.toUrl() ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Clones the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+intoUrl"></a>
+
+### did.intoUrl() ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Converts the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+toString"></a>
+
+### did.toString() ⇒ <code>string</code>
+Returns the `DID` as a string.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+toJSON"></a>
+
+### did.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID+clone"></a>
+
+### did.clone() ⇒ [<code>StardustDID</code>](#StardustDID)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID.METHOD"></a>
+
+### StardustDID.METHOD ⇒ <code>string</code>
+The IOTA UTXO DID method name (`"stardust"`).
+
+**Kind**: static property of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID.DEFAULT_NETWORK"></a>
+
+### StardustDID.DEFAULT\_NETWORK ⇒ <code>string</code>
+The default Tangle network (`"main"`).
+
+**Kind**: static property of [<code>StardustDID</code>](#StardustDID)  
+<a name="StardustDID.placeholder"></a>
+
+### StardustDID.placeholder(network) ⇒ [<code>StardustDID</code>](#StardustDID)
+Creates a new placeholder [`StardustDID`] with the given network name.
+
+E.g. `did:stardust:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
+
+**Kind**: static method of [<code>StardustDID</code>](#StardustDID)  
+
+| Param | Type |
+| --- | --- |
+| network | <code>string</code> | 
+
+<a name="StardustDID.parse"></a>
+
+### StardustDID.parse(input) ⇒ [<code>StardustDID</code>](#StardustDID)
+Parses a `StardustDID` from the input string.
+
+**Kind**: static method of [<code>StardustDID</code>](#StardustDID)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="StardustDID.fromJSON"></a>
+
+### StardustDID.fromJSON(json) ⇒ [<code>StardustDID</code>](#StardustDID)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>StardustDID</code>](#StardustDID)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="StardustDIDUrl"></a>
+
+## StardustDIDUrl
+A DID URL conforming to the IOTA Stardust UTXO DID method specification.
+
+**Kind**: global class  
+
+* [StardustDIDUrl](#StardustDIDUrl)
+    * _instance_
+        * [.did()](#StardustDIDUrl+did) ⇒ [<code>StardustDID</code>](#StardustDID)
+        * [.urlStr()](#StardustDIDUrl+urlStr) ⇒ <code>string</code>
+        * [.fragment()](#StardustDIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setFragment(value)](#StardustDIDUrl+setFragment)
+        * [.path()](#StardustDIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setPath(value)](#StardustDIDUrl+setPath)
+        * [.query()](#StardustDIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setQuery(value)](#StardustDIDUrl+setQuery)
+        * [.join(segment)](#StardustDIDUrl+join) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+        * [.toString()](#StardustDIDUrl+toString) ⇒ <code>string</code>
+        * [.toJSON()](#StardustDIDUrl+toJSON) ⇒ <code>any</code>
+        * [.clone()](#StardustDIDUrl+clone) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+    * _static_
+        * [.parse(input)](#StardustDIDUrl.parse) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+        * [.fromJSON(json)](#StardustDIDUrl.fromJSON) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+
+<a name="StardustDIDUrl+did"></a>
+
+### stardustDIDUrl.did() ⇒ [<code>StardustDID</code>](#StardustDID)
+Return a copy of the `StardustDID` section of the `StardustDIDUrl`.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl+urlStr"></a>
+
+### stardustDIDUrl.urlStr() ⇒ <code>string</code>
+Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl+fragment"></a>
+
+### stardustDIDUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `StardustDIDUrl` method fragment, if any. Excludes the leading '#'.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl+setFragment"></a>
+
+### stardustDIDUrl.setFragment(value)
+Sets the `fragment` component of the `StardustDIDUrl`.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="StardustDIDUrl+path"></a>
+
+### stardustDIDUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `StardustDIDUrl` path.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl+setPath"></a>
+
+### stardustDIDUrl.setPath(value)
+Sets the `path` component of the `StardustDIDUrl`.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="StardustDIDUrl+query"></a>
+
+### stardustDIDUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `StardustDIDUrl` method query, if any. Excludes the leading '?'.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl+setQuery"></a>
+
+### stardustDIDUrl.setQuery(value)
+Sets the `query` component of the `StardustDIDUrl`.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="StardustDIDUrl+join"></a>
+
+### stardustDIDUrl.join(segment) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Append a string representing a path, query, and/or fragment, returning a new `StardustDIDUrl`.
+
+Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
+segment and any following segments in order of path, query, then fragment.
+
+I.e.
+- joining a path will clear the query and fragment.
+- joining a query will clear the fragment.
+- joining a fragment will only overwrite the fragment.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="StardustDIDUrl+toString"></a>
+
+### stardustDIDUrl.toString() ⇒ <code>string</code>
+Returns the `StardustDIDUrl` as a string.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl+toJSON"></a>
+
+### stardustDIDUrl.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl+clone"></a>
+
+### stardustDIDUrl.clone() ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+<a name="StardustDIDUrl.parse"></a>
+
+### StardustDIDUrl.parse(input) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Parses a `StardustDIDUrl` from the input string.
+
+**Kind**: static method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="StardustDIDUrl.fromJSON"></a>
+
+### StardustDIDUrl.fromJSON(json) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="StorageTestSuite"></a>
 
 ## StorageTestSuite
@@ -5061,13 +5417,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

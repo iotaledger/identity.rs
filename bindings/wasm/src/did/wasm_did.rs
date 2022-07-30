@@ -10,12 +10,26 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::WasmNetwork;
 
+/// A DID conforming to the IOTA DID method specification.
+///
 /// @typicalname did
 #[wasm_bindgen(js_name = DID, inspectable)]
 pub struct WasmDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = DID)]
 impl WasmDID {
+  /// The IOTA DID method name (`"iota"`).
+  #[wasm_bindgen(getter = METHOD)]
+  pub fn static_method() -> String {
+    IotaDID::METHOD.to_owned()
+  }
+
+  /// The default Tangle network (`"main"`).
+  #[wasm_bindgen(getter = DEFAULT_NETWORK)]
+  pub fn static_default_network() -> String {
+    IotaDID::DEFAULT_NETWORK.to_owned()
+  }
+
   /// Creates a new `DID` from a public key.
   #[wasm_bindgen(constructor)]
   pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
