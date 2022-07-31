@@ -130,7 +130,7 @@ impl WasmStardustDocument {
     MapStringAny::try_from(self.0.properties())
   }
 
-  /// Adds a custom property to the DID Document.
+  /// Sets a custom property in the DID Document.
   /// If the value is set to `null`, the custom property will be removed.
   ///
   /// ### WARNING
@@ -433,6 +433,22 @@ impl WasmStardustDocument {
   pub fn set_metadata_updated(&mut self, timestamp: OptionTimestamp) -> Result<()> {
     let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
     self.0.metadata.updated = timestamp;
+    Ok(())
+  }
+
+  /// Sets a custom property in the document metadata.
+  /// If the value is set to `null`, the custom property will be removed.
+  #[wasm_bindgen(js_name = setMetadataPropertyUnchecked)]
+  pub fn set_metadata_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
+    let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
+    match value {
+      Some(value) => {
+        self.0.metadata.properties.insert(key, value);
+      }
+      None => {
+        self.0.metadata.properties.remove(&key);
+      }
+    }
     Ok(())
   }
 
