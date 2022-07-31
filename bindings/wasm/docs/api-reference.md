@@ -138,6 +138,11 @@ with a DID subject.</p>
 <dt><a href="#StardustDIDUrl">StardustDIDUrl</a></dt>
 <dd><p>A DID URL conforming to the IOTA Stardust UTXO DID method specification.</p>
 </dd>
+<dt><a href="#StardustDocument">StardustDocument</a></dt>
+<dd></dd>
+<dt><a href="#StardustDocumentMetadata">StardustDocumentMetadata</a></dt>
+<dd><p>Additional attributes related to an IOTA DID Document.</p>
+</dd>
 <dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
 <dd><p>A test suite for the <code>Storage</code> interface.</p>
 <p>This module contains a set of tests that a correct storage implementation
@@ -209,6 +214,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -1900,7 +1907,7 @@ Use `null` to remove all controllers.
 <a name="Document+controller"></a>
 
 ### document.controller() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
-Returns a list of document controllers.
+Returns a copy of the list of document controllers.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+setAlsoKnownAs"></a>
@@ -1917,7 +1924,7 @@ Sets the `alsoKnownAs` property in the DID document.
 <a name="Document+alsoKnownAs"></a>
 
 ### document.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a set of the document's `alsoKnownAs`.
+Returns a copy of the document's `alsoKnownAs` set.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+setPropertyUnchecked"></a>
@@ -2512,18 +2519,15 @@ Additional attributes related to an IOTA DID Document.
 
 * [DocumentMetadata](#DocumentMetadata)
     * _instance_
-        * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
         * [.created()](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.updated()](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.previousMessageId()](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
+        * [.properties()](#DocumentMetadata+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#DocumentMetadata+toJSON) ⇒ <code>any</code>
         * [.clone()](#DocumentMetadata+clone) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
     * _static_
         * [.fromJSON(json)](#DocumentMetadata.fromJSON) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
 
-<a name="DocumentMetadata+previousMessageId"></a>
-
-### documentMetadata.previousMessageId ⇒ <code>string</code>
-**Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="DocumentMetadata+created"></a>
 
 ### documentMetadata.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
@@ -2534,6 +2538,18 @@ Returns a copy of the timestamp of when the DID document was created.
 
 ### documentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Returns a copy of the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata+previousMessageId"></a>
+
+### documentMetadata.previousMessageId() ⇒ <code>string</code>
+Returns a copy of the previous message identifier.
+
+**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata+properties"></a>
+
+### documentMetadata.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom metadata properties.
 
 **Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="DocumentMetadata+toJSON"></a>
@@ -4507,7 +4523,7 @@ See: https://www.w3.org/TR/did-core/#services
 
 | Param | Type |
 | --- | --- |
-| service | <code>IService</code> | 
+| service | <code>IIotaService</code> | 
 
 <a name="Service+id"></a>
 
@@ -4929,6 +4945,414 @@ Parses a `StardustDIDUrl` from the input string.
 Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>StardustDIDUrl</code>](#StardustDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="StardustDocument"></a>
+
+## StardustDocument
+**Kind**: global class  
+
+* [StardustDocument](#StardustDocument)
+    * [new StardustDocument(network)](#new_StardustDocument_new)
+    * _instance_
+        * [.id()](#StardustDocument+id) ⇒ [<code>StardustDID</code>](#StardustDID)
+        * [.controller()](#StardustDocument+controller) ⇒ [<code>Array.&lt;StardustDID&gt;</code>](#StardustDID)
+        * [.alsoKnownAs()](#StardustDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.setAlsoKnownAs(urls)](#StardustDocument+setAlsoKnownAs)
+        * [.properties()](#StardustDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#StardustDocument+setPropertyUnchecked)
+        * [.removeService(did)](#StardustDocument+removeService) ⇒ <code>boolean</code>
+        * [.removeMethod(did)](#StardustDocument+removeMethod)
+        * [.attachMethodRelationship(did_url, relationship)](#StardustDocument+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(did_url, relationship)](#StardustDocument+detachMethodRelationship) ⇒ <code>boolean</code>
+        * [.signCredential(credential, privateKey, methodQuery, options)](#StardustDocument+signCredential) ⇒ [<code>Credential</code>](#Credential)
+        * [.signPresentation(presentation, privateKey, methodQuery, options)](#StardustDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
+        * [.signData(data, privateKey, methodQuery, options)](#StardustDocument+signData) ⇒ <code>any</code>
+        * [.verifyData(data, options)](#StardustDocument+verifyData) ⇒ <code>boolean</code>
+        * [.pack()](#StardustDocument+pack) ⇒ <code>Uint8Array</code>
+        * [.pack_with_encoding(encoding)](#StardustDocument+pack_with_encoding) ⇒ <code>Uint8Array</code>
+        * [.metadata()](#StardustDocument+metadata) ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
+        * [.metadataCreated()](#StardustDocument+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.setMetadataCreated(timestamp)](#StardustDocument+setMetadataCreated)
+        * [.metadataUpdated()](#StardustDocument+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.setMetadataUpdated(timestamp)](#StardustDocument+setMetadataUpdated)
+        * [.revokeCredentials(serviceQuery, indices)](#StardustDocument+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, indices)](#StardustDocument+unrevokeCredentials)
+        * [.toJSON()](#StardustDocument+toJSON) ⇒ <code>any</code>
+        * [.clone()](#StardustDocument+clone) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+    * _static_
+        * [.newWithId(id)](#StardustDocument.newWithId) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+        * [.unpack(did, stateMetadata)](#StardustDocument.unpack) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+        * [.fromJSON(json)](#StardustDocument.fromJSON) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+
+<a name="new_StardustDocument_new"></a>
+
+### new StardustDocument(network)
+Constructs an empty DID Document with a [placeholder](#StardustDID.placeholder) identifier
+for the given `network`.
+
+
+| Param | Type |
+| --- | --- |
+| network | <code>string</code> | 
+
+<a name="StardustDocument+id"></a>
+
+### stardustDocument.id() ⇒ [<code>StardustDID</code>](#StardustDID)
+Returns a copy of the DID Document `id`.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+controller"></a>
+
+### stardustDocument.controller() ⇒ [<code>Array.&lt;StardustDID&gt;</code>](#StardustDID)
+Returns a copy of the list of document controllers.
+
+NOTE: controllers are determined by the `state_controller` unlock condition of the output
+during resolution and are omitted when publishing.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+alsoKnownAs"></a>
+
+### stardustDocument.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the document's `alsoKnownAs` set.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+setAlsoKnownAs"></a>
+
+### stardustDocument.setAlsoKnownAs(urls)
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
+
+<a name="StardustDocument+properties"></a>
+
+### stardustDocument.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom DID Document properties.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+setPropertyUnchecked"></a>
+
+### stardustDocument.setPropertyUnchecked(key, value)
+Adds a custom property to the DID Document.
+If the value is set to `null`, the custom property will be removed.
+
+### WARNING
+This method can overwrite existing properties like `id` and result in an invalid document.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="StardustDocument+removeService"></a>
+
+### stardustDocument.removeService(did) ⇒ <code>boolean</code>
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
+
+Returns `true` if a service was removed.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
+
+<a name="StardustDocument+removeMethod"></a>
+
+### stardustDocument.removeMethod(did)
+Removes all references to the specified Verification Method.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
+
+<a name="StardustDocument+attachMethodRelationship"></a>
+
+### stardustDocument.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+Attaches the relationship to the given method, if the method exists.
+
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| did_url | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
+| relationship | <code>number</code> | 
+
+<a name="StardustDocument+detachMethodRelationship"></a>
+
+### stardustDocument.detachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| did_url | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
+| relationship | <code>number</code> | 
+
+<a name="StardustDocument+signCredential"></a>
+
+### stardustDocument.signCredential(credential, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
+Creates a signature for the given `Credential` with the specified DID Document
+Verification Method.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
+
+<a name="StardustDocument+signPresentation"></a>
+
+### stardustDocument.signPresentation(presentation, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
+Creates a signature for the given `Presentation` with the specified DID Document
+Verification Method.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
+
+<a name="StardustDocument+signData"></a>
+
+### stardustDocument.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
+Creates a signature for the given `data` with the specified DID Document
+Verification Method.
+
+NOTE: use `signSelf` or `signDocument` for DID Documents.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
+
+<a name="StardustDocument+verifyData"></a>
+
+### stardustDocument.verifyData(data, options) ⇒ <code>boolean</code>
+Verifies the authenticity of `data` using the target verification method.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="StardustDocument+pack"></a>
+
+### stardustDocument.pack() ⇒ <code>Uint8Array</code>
+Serializes the document for inclusion in an Alias Output's state metadata
+with the default [`StateMetadataEncoding`].
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+pack_with_encoding"></a>
+
+### stardustDocument.pack\_with\_encoding(encoding) ⇒ <code>Uint8Array</code>
+Serializes the document for inclusion in an Alias Output's state metadata.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| encoding | <code>number</code> | 
+
+<a name="StardustDocument+metadata"></a>
+
+### stardustDocument.metadata() ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
+Returns a copy of the metadata associated with this document.
+
+NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
+`metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+metadataCreated"></a>
+
+### stardustDocument.metadataCreated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of when the DID document was created.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+setMetadataCreated"></a>
+
+### stardustDocument.setMetadataCreated(timestamp)
+Sets the timestamp of when the DID document was created.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+
+<a name="StardustDocument+metadataUpdated"></a>
+
+### stardustDocument.metadataUpdated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+setMetadataUpdated"></a>
+
+### stardustDocument.setMetadataUpdated(timestamp)
+Sets the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+
+<a name="StardustDocument+revokeCredentials"></a>
+
+### stardustDocument.revokeCredentials(serviceQuery, indices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+revoke all specified `indices`.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| serviceQuery | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="StardustDocument+unrevokeCredentials"></a>
+
+### stardustDocument.unrevokeCredentials(serviceQuery, indices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+unrevoke all specified `indices`.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| serviceQuery | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="StardustDocument+toJSON"></a>
+
+### stardustDocument.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+clone"></a>
+
+### stardustDocument.clone() ⇒ [<code>StardustDocument</code>](#StardustDocument)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument.newWithId"></a>
+
+### StardustDocument.newWithId(id) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+Constructs an empty DID Document with the given identifier.
+
+**Kind**: static method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| id | [<code>StardustDID</code>](#StardustDID) | 
+
+<a name="StardustDocument.unpack"></a>
+
+### StardustDocument.unpack(did, stateMetadata) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+Deserializes the document from the state metadata bytes of an Alias Output.
+
+NOTE: `did` is required since it is omitted from the serialized DID Document and
+cannot be inferred from the state metadata. It also indicates the network, which is not
+encoded in the `AliasId` alone.
+
+**Kind**: static method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>StardustDID</code>](#StardustDID) | 
+| stateMetadata | <code>Uint8Array</code> | 
+
+<a name="StardustDocument.fromJSON"></a>
+
+### StardustDocument.fromJSON(json) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="StardustDocumentMetadata"></a>
+
+## StardustDocumentMetadata
+Additional attributes related to an IOTA DID Document.
+
+**Kind**: global class  
+
+* [StardustDocumentMetadata](#StardustDocumentMetadata)
+    * _instance_
+        * [.created()](#StardustDocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.updated()](#StardustDocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.properties()](#StardustDocumentMetadata+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#StardustDocumentMetadata+toJSON) ⇒ <code>any</code>
+        * [.clone()](#StardustDocumentMetadata+clone) ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
+    * _static_
+        * [.fromJSON(json)](#StardustDocumentMetadata.fromJSON) ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
+
+<a name="StardustDocumentMetadata+created"></a>
+
+### stardustDocumentMetadata.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of when the DID document was created.
+
+**Kind**: instance method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
+<a name="StardustDocumentMetadata+updated"></a>
+
+### stardustDocumentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
+<a name="StardustDocumentMetadata+properties"></a>
+
+### stardustDocumentMetadata.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom metadata properties.
+
+**Kind**: instance method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
+<a name="StardustDocumentMetadata+toJSON"></a>
+
+### stardustDocumentMetadata.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
+<a name="StardustDocumentMetadata+clone"></a>
+
+### stardustDocumentMetadata.clone() ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
+<a name="StardustDocumentMetadata.fromJSON"></a>
+
+### StardustDocumentMetadata.fromJSON(json) ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
 
 | Param | Type |
 | --- | --- |
@@ -5424,6 +5848,10 @@ Return after the first error occurs.
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

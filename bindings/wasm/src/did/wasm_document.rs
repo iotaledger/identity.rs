@@ -23,21 +23,23 @@ use identity_iota::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use crate::account::wasm_account::UOneOrManyNumber;
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
+use crate::common::OptionOneOrManyString;
+use crate::common::OptionTimestamp;
+use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmProof;
 use crate::crypto::WasmProofOptions;
-use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::RefMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
+use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
 use crate::did::WasmService;
@@ -108,7 +110,7 @@ impl WasmDocument {
   /// Note: Duplicates will be ignored.
   /// Use `null` to remove all controllers.
   #[wasm_bindgen(js_name = setController)]
-  pub fn set_controller(&mut self, controllers: &UOneOrManyDID) -> Result<()> {
+  pub fn set_controller(&mut self, controllers: &OptionOneOrManyDID) -> Result<()> {
     let controllers: Option<OneOrMany<IotaDID>> = controllers.into_serde().wasm_result()?;
     let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers.map(OneOrMany::into_vec) {
       if controllers.is_empty() {
@@ -123,7 +125,7 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns a list of document controllers.
+  /// Returns a copy of the list of document controllers.
   #[wasm_bindgen]
   pub fn controller(&self) -> ArrayDID {
     match self.0.controller() {
@@ -140,7 +142,7 @@ impl WasmDocument {
 
   /// Sets the `alsoKnownAs` property in the DID document.
   #[wasm_bindgen(js_name = setAlsoKnownAs)]
-  pub fn set_also_known_as(&mut self, urls: &UOneOrManyUrl) -> Result<()> {
+  pub fn set_also_known_as(&mut self, urls: &OptionOneOrManyString) -> Result<()> {
     let urls: Option<OneOrMany<String>> = urls.into_serde().wasm_result()?;
     let mut urls_set: OrderedSet<Url> = OrderedSet::new();
     if let Some(urls) = urls {
@@ -152,7 +154,7 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns a set of the document's `alsoKnownAs`.
+  /// Returns a copy of the document's `alsoKnownAs` set.
   #[wasm_bindgen(js_name = alsoKnownAs)]
   pub fn also_known_as(&self) -> ArrayString {
     self
@@ -187,11 +189,7 @@ impl WasmDocument {
   /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
   pub fn properties(&mut self) -> Result<MapStringAny> {
-    let properties_map = js_sys::Map::new();
-    for (key, value) in self.0.properties().iter() {
-      properties_map.set(&JsValue::from(key), &JsValue::from_serde(&value).wasm_result()?);
-    }
-    Ok(properties_map.unchecked_into::<MapStringAny>())
+    MapStringAny::try_from(self.0.properties())
   }
 
   // ===========================================================================
@@ -681,11 +679,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
   pub type UDIDUrlQuery;
 
-  #[wasm_bindgen(typescript_type = "string | string[] | null")]
-  pub type UOneOrManyUrl;
-
   #[wasm_bindgen(typescript_type = "DID | DID[] | null")]
-  pub type UOneOrManyDID;
+  pub type OptionOneOrManyDID;
 
   #[wasm_bindgen(typescript_type = "DID[]")]
   pub type ArrayDID;
@@ -695,7 +690,4 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   pub type ArrayVerificationMethods;
-
-  #[wasm_bindgen(typescript_type = "Timestamp | undefined")]
-  pub type OptionTimestamp;
 }

@@ -271,7 +271,6 @@ impl StardustDocument {
   // ===========================================================================
   // Publishing
   // ===========================================================================
-  // TODO: clean up and feature-gate certain methods to avoid hard dependency on iota-client?
 
   /// Serializes the document for inclusion in an Alias Output's state metadata
   /// with the default [`StateMetadataEncoding`].
