@@ -72,8 +72,8 @@ impl WasmDID {
 
   /// Construct a new `DIDUrl` by joining with a relative DID Url string.
   #[wasm_bindgen]
-  pub fn join(self, segment: &str) -> Result<WasmDIDUrl> {
-    self.0.join(segment).wasm_result().map(WasmDIDUrl)
+  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
+    self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
   /// Clones the `DID` into a `DIDUrl`.
@@ -82,7 +82,7 @@ impl WasmDID {
     WasmDIDUrl::from(self.0.to_url())
   }
 
-  /// Converts the `DID` into a `DIDUrl`.
+  /// Converts the `DID` into a `DIDUrl`, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
   pub fn into_url(self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.into_url())

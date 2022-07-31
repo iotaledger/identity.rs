@@ -27,10 +27,10 @@ impl WasmStardustService {
   pub fn new(service: IStardustService) -> Result<WasmStardustService> {
     let id: StardustDIDUrl = service.id().into_serde().wasm_result()?;
 
-    let i_service: &IService = service.as_ref();
+    let base_service: &IService = service.as_ref();
     let types: OneOrMany<String> = service.type_().into_serde().wasm_result()?;
-    let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&i_service.service_endpoint())?;
-    let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&i_service.properties())?;
+    let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&base_service.service_endpoint())?;
+    let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&base_service.properties())?;
 
     StardustService::builder(properties.unwrap_or_default())
       .id(id)

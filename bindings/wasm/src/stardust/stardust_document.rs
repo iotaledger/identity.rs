@@ -126,7 +126,7 @@ impl WasmStardustDocument {
 
   /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
-  pub fn properties(&mut self) -> Result<MapStringAny> {
+  pub fn properties(&self) -> Result<MapStringAny> {
     MapStringAny::try_from(self.0.properties())
   }
 
