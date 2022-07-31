@@ -143,6 +143,9 @@ with a DID subject.</p>
 <dt><a href="#StardustDocumentMetadata">StardustDocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
+<dt><a href="#StardustService">StardustService</a></dt>
+<dd><p>A <code>Service</code> adhering to the IOTA UTXO DID method specification.</p>
+</dd>
 <dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
 <dd><p>A test suite for the <code>Storage</code> interface.</p>
 <p>This module contains a set of tests that a correct storage implementation
@@ -211,11 +214,11 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -4964,7 +4967,10 @@ Deserializes an instance from a JSON object.
         * [.setAlsoKnownAs(urls)](#StardustDocument+setAlsoKnownAs)
         * [.properties()](#StardustDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.setPropertyUnchecked(key, value)](#StardustDocument+setPropertyUnchecked)
+        * [.service()](#StardustDocument+service) ⇒ [<code>Array.&lt;StardustService&gt;</code>](#StardustService)
+        * [.insertService(service)](#StardustDocument+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#StardustDocument+removeService) ⇒ <code>boolean</code>
+        * [.resolveService(query)](#StardustDocument+resolveService) ⇒ [<code>StardustService</code>](#StardustService) \| <code>undefined</code>
         * [.removeMethod(did)](#StardustDocument+removeMethod)
         * [.attachMethodRelationship(did_url, relationship)](#StardustDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(did_url, relationship)](#StardustDocument+detachMethodRelationship) ⇒ <code>boolean</code>
@@ -4973,7 +4979,7 @@ Deserializes an instance from a JSON object.
         * [.signData(data, privateKey, methodQuery, options)](#StardustDocument+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#StardustDocument+verifyData) ⇒ <code>boolean</code>
         * [.pack()](#StardustDocument+pack) ⇒ <code>Uint8Array</code>
-        * [.pack_with_encoding(encoding)](#StardustDocument+pack_with_encoding) ⇒ <code>Uint8Array</code>
+        * [.packWithEncoding(encoding)](#StardustDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
         * [.metadata()](#StardustDocument+metadata) ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
         * [.metadataCreated()](#StardustDocument+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.setMetadataCreated(timestamp)](#StardustDocument+setMetadataCreated)
@@ -5053,10 +5059,29 @@ This method can overwrite existing properties like `id` and result in an invalid
 | key | <code>string</code> | 
 | value | <code>any</code> | 
 
+<a name="StardustDocument+service"></a>
+
+### stardustDocument.service() ⇒ [<code>Array.&lt;StardustService&gt;</code>](#StardustService)
+Return a set of all [StardustServices](#StardustService) in the document.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+insertService"></a>
+
+### stardustDocument.insertService(service) ⇒ <code>boolean</code>
+Add a new [StardustService](#StardustService) to the document.
+
+Returns `true` if the service was added.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>StardustService</code>](#StardustService) | 
+
 <a name="StardustDocument+removeService"></a>
 
 ### stardustDocument.removeService(did) ⇒ <code>boolean</code>
-Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
+Remove a [StardustService](#StardustService) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 Returns `true` if a service was removed.
 
@@ -5065,6 +5090,18 @@ Returns `true` if a service was removed.
 | Param | Type |
 | --- | --- |
 | did | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
+
+<a name="StardustDocument+resolveService"></a>
+
+### stardustDocument.resolveService(query) ⇒ [<code>StardustService</code>](#StardustService) \| <code>undefined</code>
+Returns the first [StardustService](#StardustService) with an `id` property matching the provided `query`,
+if present.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
 
 <a name="StardustDocument+removeMethod"></a>
 
@@ -5167,12 +5204,12 @@ Verifies the authenticity of `data` using the target verification method.
 
 ### stardustDocument.pack() ⇒ <code>Uint8Array</code>
 Serializes the document for inclusion in an Alias Output's state metadata
-with the default [`StateMetadataEncoding`].
+with the default [StateMetadataEncoding](#StateMetadataEncoding).
 
 **Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
-<a name="StardustDocument+pack_with_encoding"></a>
+<a name="StardustDocument+packWithEncoding"></a>
 
-### stardustDocument.pack\_with\_encoding(encoding) ⇒ <code>Uint8Array</code>
+### stardustDocument.packWithEncoding(encoding) ⇒ <code>Uint8Array</code>
 Serializes the document for inclusion in an Alias Output's state metadata.
 
 **Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
@@ -5353,6 +5390,80 @@ Deep clones the object.
 Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="StardustService"></a>
+
+## StardustService
+A `Service` adhering to the IOTA UTXO DID method specification.
+
+**Kind**: global class  
+
+* [StardustService](#StardustService)
+    * [new StardustService(service)](#new_StardustService_new)
+    * _instance_
+        * [.id()](#StardustService+id) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+        * [.type()](#StardustService+type) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.serviceEndpoint()](#StardustService+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+        * [.properties()](#StardustService+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#StardustService+toJSON) ⇒ <code>any</code>
+        * [.clone()](#StardustService+clone) ⇒ [<code>StardustService</code>](#StardustService)
+    * _static_
+        * [.fromJSON(json)](#StardustService.fromJSON) ⇒ [<code>StardustService</code>](#StardustService)
+
+<a name="new_StardustService_new"></a>
+
+### new StardustService(service)
+
+| Param | Type |
+| --- | --- |
+| service | <code>IStardustService</code> | 
+
+<a name="StardustService+id"></a>
+
+### stardustService.id() ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Returns a copy of the `Service` id.
+
+**Kind**: instance method of [<code>StardustService</code>](#StardustService)  
+<a name="StardustService+type"></a>
+
+### stardustService.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the `Service` type.
+
+**Kind**: instance method of [<code>StardustService</code>](#StardustService)  
+<a name="StardustService+serviceEndpoint"></a>
+
+### stardustService.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Returns a copy of the `Service` endpoint.
+
+**Kind**: instance method of [<code>StardustService</code>](#StardustService)  
+<a name="StardustService+properties"></a>
+
+### stardustService.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom properties on the `Service`.
+
+**Kind**: instance method of [<code>StardustService</code>](#StardustService)  
+<a name="StardustService+toJSON"></a>
+
+### stardustService.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>StardustService</code>](#StardustService)  
+<a name="StardustService+clone"></a>
+
+### stardustService.clone() ⇒ [<code>StardustService</code>](#StardustService)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StardustService</code>](#StardustService)  
+<a name="StardustService.fromJSON"></a>
+
+### StardustService.fromJSON(json) ⇒ [<code>StardustService</code>](#StardustService)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>StardustService</code>](#StardustService)  
 
 | Param | Type |
 | --- | --- |
@@ -5841,10 +5952,6 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -5852,6 +5959,10 @@ Return after the first error occurs.
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 

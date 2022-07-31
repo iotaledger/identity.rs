@@ -34,6 +34,7 @@ use crate::error::WasmResult;
 use crate::stardust::WasmStardustDID;
 use crate::stardust::WasmStardustDIDUrl;
 use crate::stardust::WasmStardustDocumentMetadata;
+use crate::stardust::WasmStardustService;
 use crate::stardust::WasmStateMetadataEncoding;
 
 // =============================================================================
@@ -147,29 +148,29 @@ impl WasmStardustDocument {
   // Services
   // ===========================================================================
 
-  // /// Return a set of all {@link Service Services} in the document.
-  // #[wasm_bindgen]
-  // pub fn service(&self) -> ArrayService {
-  //   self
-  //     .0
-  //     .service()
-  //     .iter()
-  //     .cloned()
-  //     .map(WasmService)
-  //     .map(JsValue::from)
-  //     .collect::<js_sys::Array>()
-  //     .unchecked_into::<ArrayService>()
-  // }
-  //
-  // /// Add a new {@link Service} to the document.
-  // ///
-  // /// Returns `true` if the service was added.
-  // #[wasm_bindgen(js_name = insertService)]
-  // pub fn insert_service(&mut self, service: &WasmService) -> bool {
-  //   self.0.insert_service(service.0.clone())
-  // }
+  /// Return a set of all {@link StardustService StardustServices} in the document.
+  #[wasm_bindgen]
+  pub fn service(&self) -> ArrayStardustService {
+    self
+      .0
+      .service()
+      .iter()
+      .cloned()
+      .map(WasmStardustService)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayStardustService>()
+  }
 
-  /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
+  /// Add a new {@link StardustService} to the document.
+  ///
+  /// Returns `true` if the service was added.
+  #[wasm_bindgen(js_name = insertService)]
+  pub fn insert_service(&mut self, service: &WasmStardustService) -> bool {
+    self.0.insert_service(service.0.clone())
+  }
+
+  /// Remove a {@link StardustService} identified by the given {@link DIDUrl} from the document.
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
@@ -177,13 +178,17 @@ impl WasmStardustDocument {
     self.0.remove_service(&did.0)
   }
 
-  // /// Returns the first {@link Service} with an `id` property matching the provided `query`,
-  // /// if present.
-  // #[wasm_bindgen(js_name = resolveService)]
-  // pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
-  //   let service_query: String = query.into_serde().ok()?;
-  //   self.0.resolve_service(&service_query).cloned().map(WasmService::from)
-  // }
+  /// Returns the first {@link StardustService} with an `id` property matching the provided `query`,
+  /// if present.
+  #[wasm_bindgen(js_name = resolveService)]
+  pub fn resolve_service(&self, query: &UStardustDIDUrlQuery) -> Option<WasmStardustService> {
+    let service_query: String = query.into_serde().ok()?;
+    self
+      .0
+      .resolve_service(&service_query)
+      .cloned()
+      .map(WasmStardustService::from)
+  }
 
   // ===========================================================================
   // Verification Methods
@@ -486,8 +491,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "StardustDID[]")]
   pub type ArrayStardustDID;
 
-  // #[wasm_bindgen(typescript_type = "Service[]")]
-  // pub type ArrayService;
+  #[wasm_bindgen(typescript_type = "StardustService[]")]
+  pub type ArrayStardustService;
   //
   // #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   // pub type ArrayVerificationMethods;
