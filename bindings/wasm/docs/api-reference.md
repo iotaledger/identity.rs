@@ -174,6 +174,8 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -220,8 +222,6 @@ This variant is the default used if no other variant is specified when construct
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -244,8 +244,8 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
@@ -280,6 +280,17 @@ Adds a new Service to the DID Document.
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
 
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -293,17 +304,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -1418,7 +1418,7 @@ Clones the `DID` into a `DIDUrl`.
 <a name="DID+intoUrl"></a>
 
 ### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Converts the `DID` into a `DIDUrl`.
+Converts the `DID` into a `DIDUrl`, consuming it.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+toString"></a>
@@ -1851,6 +1851,7 @@ Deserializes an instance from a JSON object.
         * [.setMetadataUpdated(timestamp)](#Document+setMetadataUpdated)
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
+        * [.setMetadataPropertyUnchecked(key, value)](#Document+setMetadataPropertyUnchecked)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
         * [.revokeCredentials(serviceQuery, indices)](#Document+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#Document+unrevokeCredentials)
@@ -2324,6 +2325,19 @@ Sets the previous integration chain message id.
 | Param | Type |
 | --- | --- |
 | value | <code>string</code> | 
+
+<a name="Document+setMetadataPropertyUnchecked"></a>
+
+### document.setMetadataPropertyUnchecked(key, value)
+Sets a custom property in the document metadata.
+If the value is set to `null`, the custom property will be removed.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
 
 <a name="Document+proof"></a>
 
@@ -4739,7 +4753,7 @@ Clones the `DID` into a `DIDUrl`.
 <a name="StardustDID+intoUrl"></a>
 
 ### did.intoUrl() ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
-Converts the `DID` into a `DIDUrl`.
+Converts the `DID` into a `DIDUrl`, consuming it.
 
 **Kind**: instance method of [<code>StardustDID</code>](#StardustDID)  
 <a name="StardustDID+toString"></a>
@@ -4989,6 +5003,7 @@ Deserializes an instance from a JSON object.
         * [.setMetadataCreated(timestamp)](#StardustDocument+setMetadataCreated)
         * [.metadataUpdated()](#StardustDocument+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.setMetadataUpdated(timestamp)](#StardustDocument+setMetadataUpdated)
+        * [.setMetadataPropertyUnchecked(key, value)](#StardustDocument+setMetadataPropertyUnchecked)
         * [.revokeCredentials(serviceQuery, indices)](#StardustDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#StardustDocument+unrevokeCredentials)
         * [.toJSON()](#StardustDocument+toJSON) ⇒ <code>any</code>
@@ -5050,7 +5065,7 @@ Returns a copy of the custom DID Document properties.
 <a name="StardustDocument+setPropertyUnchecked"></a>
 
 ### stardustDocument.setPropertyUnchecked(key, value)
-Adds a custom property to the DID Document.
+Sets a custom property in the DID Document.
 If the value is set to `null`, the custom property will be removed.
 
 ### WARNING
@@ -5296,6 +5311,19 @@ Sets the timestamp of the last DID document update.
 | Param | Type |
 | --- | --- |
 | timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+
+<a name="StardustDocument+setMetadataPropertyUnchecked"></a>
+
+### stardustDocument.setMetadataPropertyUnchecked(key, value)
+Sets a custom property in the document metadata.
+If the value is set to `null`, the custom property will be removed.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
 
 <a name="StardustDocument+revokeCredentials"></a>
 
@@ -5999,6 +6027,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -6084,10 +6116,6 @@ Return after the first error occurs.
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
