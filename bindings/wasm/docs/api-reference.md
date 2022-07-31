@@ -146,6 +146,8 @@ with a DID subject.</p>
 <dt><a href="#StardustService">StardustService</a></dt>
 <dd><p>A <code>Service</code> adhering to the IOTA UTXO DID method specification.</p>
 </dd>
+<dt><a href="#StardustVerificationMethod">StardustVerificationMethod</a></dt>
+<dd></dd>
 <dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
 <dd><p>A test suite for the <code>Storage</code> interface.</p>
 <p>This module contains a set of tests that a correct storage implementation
@@ -214,11 +216,11 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -262,9 +264,9 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, indices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+createService"></a>
@@ -505,6 +507,17 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -526,17 +539,6 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+setController"></a>
 
@@ -1829,8 +1831,8 @@ Deserializes an instance from a JSON object.
         * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
-        * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
+        * [.attachMethodRelationship(didUrl, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(didUrl, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(credential, privateKey, methodQuery, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
@@ -2005,7 +2007,7 @@ Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Docum
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope)
-Adds a new Verification Method to the DID Document.
+Adds a new `method` to the document in the given `scope`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -2037,10 +2039,9 @@ Throws an error if no signing method is present.
 <a name="Document+resolveMethod"></a>
 
 ### document.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
-Returns a copy of the first `VerificationMethod` with an `id` property
-matching the provided `query`.
-
-Throws an error if the method is not found.
+Returns a copy of the first verification method with an `id` property
+matching the provided `query` and the verification relationship
+specified by `scope`, if present.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -2062,7 +2063,7 @@ Attempts to resolve the given method query into a method capable of signing a do
 
 <a name="Document+attachMethodRelationship"></a>
 
-### document.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+### document.attachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
 Attaches the relationship to the given method, if the method exists.
 
 Note: The method needs to be in the set of verification methods,
@@ -2072,19 +2073,19 @@ so it cannot be an embedded one.
 
 | Param | Type |
 | --- | --- |
-| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="Document+detachMethodRelationship"></a>
 
-### document.detachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+### document.detachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
 Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
@@ -4971,9 +4972,12 @@ Deserializes an instance from a JSON object.
         * [.insertService(service)](#StardustDocument+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#StardustDocument+removeService) ⇒ <code>boolean</code>
         * [.resolveService(query)](#StardustDocument+resolveService) ⇒ [<code>StardustService</code>](#StardustService) \| <code>undefined</code>
+        * [.methods()](#StardustDocument+methods) ⇒ [<code>Array.&lt;StardustVerificationMethod&gt;</code>](#StardustVerificationMethod)
+        * [.insertMethod(method, scope)](#StardustDocument+insertMethod)
         * [.removeMethod(did)](#StardustDocument+removeMethod)
-        * [.attachMethodRelationship(did_url, relationship)](#StardustDocument+attachMethodRelationship) ⇒ <code>boolean</code>
-        * [.detachMethodRelationship(did_url, relationship)](#StardustDocument+detachMethodRelationship) ⇒ <code>boolean</code>
+        * [.resolveMethod(query, scope)](#StardustDocument+resolveMethod) ⇒ [<code>StardustVerificationMethod</code>](#StardustVerificationMethod) \| <code>undefined</code>
+        * [.attachMethodRelationship(didUrl, relationship)](#StardustDocument+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(didUrl, relationship)](#StardustDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signCredential(credential, privateKey, methodQuery, options)](#StardustDocument+signCredential) ⇒ [<code>Credential</code>](#Credential)
         * [.signPresentation(presentation, privateKey, methodQuery, options)](#StardustDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, privateKey, methodQuery, options)](#StardustDocument+signData) ⇒ <code>any</code>
@@ -5062,7 +5066,7 @@ This method can overwrite existing properties like `id` and result in an invalid
 <a name="StardustDocument+service"></a>
 
 ### stardustDocument.service() ⇒ [<code>Array.&lt;StardustService&gt;</code>](#StardustService)
-Return a set of all [StardustServices](#StardustService) in the document.
+Return a set of all [StardustService](#StardustService) in the document.
 
 **Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
 <a name="StardustDocument+insertService"></a>
@@ -5103,6 +5107,24 @@ if present.
 | --- | --- |
 | query | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
 
+<a name="StardustDocument+methods"></a>
+
+### stardustDocument.methods() ⇒ [<code>Array.&lt;StardustVerificationMethod&gt;</code>](#StardustVerificationMethod)
+Returns a list of all [StardustVerificationMethod](#StardustVerificationMethod) in the DID Document.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+insertMethod"></a>
+
+### stardustDocument.insertMethod(method, scope)
+Adds a new `method` to the document in the given `scope`.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| method | [<code>StardustVerificationMethod</code>](#StardustVerificationMethod) | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
+
 <a name="StardustDocument+removeMethod"></a>
 
 ### stardustDocument.removeMethod(did)
@@ -5114,9 +5136,23 @@ Removes all references to the specified Verification Method.
 | --- | --- |
 | did | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
 
+<a name="StardustDocument+resolveMethod"></a>
+
+### stardustDocument.resolveMethod(query, scope) ⇒ [<code>StardustVerificationMethod</code>](#StardustVerificationMethod) \| <code>undefined</code>
+Returns a copy of the first verification method with an `id` property
+matching the provided `query` and the verification relationship
+specified by `scope`, if present.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>StardustDIDUrl</code>](#StardustDIDUrl) \| <code>string</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+
 <a name="StardustDocument+attachMethodRelationship"></a>
 
-### stardustDocument.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+### stardustDocument.attachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
 Attaches the relationship to the given method, if the method exists.
 
 Note: The method needs to be in the set of verification methods,
@@ -5126,19 +5162,19 @@ so it cannot be an embedded one.
 
 | Param | Type |
 | --- | --- |
-| did_url | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
+| didUrl | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="StardustDocument+detachMethodRelationship"></a>
 
-### stardustDocument.detachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+### stardustDocument.detachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
 Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
 
 | Param | Type |
 | --- | --- |
-| did_url | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
+| didUrl | [<code>StardustDIDUrl</code>](#StardustDIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="StardustDocument+signCredential"></a>
@@ -5469,6 +5505,95 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StardustVerificationMethod"></a>
+
+## StardustVerificationMethod
+**Kind**: global class  
+
+* [StardustVerificationMethod](#StardustVerificationMethod)
+    * [new StardustVerificationMethod(did, keyType, publicKey, fragment)](#new_StardustVerificationMethod_new)
+    * _instance_
+        * [.id()](#StardustVerificationMethod+id) ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+        * [.controller()](#StardustVerificationMethod+controller) ⇒ [<code>StardustDID</code>](#StardustDID)
+        * [.setController(did)](#StardustVerificationMethod+setController)
+        * [.type()](#StardustVerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.data()](#StardustVerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.toJSON()](#StardustVerificationMethod+toJSON) ⇒ <code>any</code>
+        * [.clone()](#StardustVerificationMethod+clone) ⇒ [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)
+    * _static_
+        * [.fromJSON(json)](#StardustVerificationMethod.fromJSON) ⇒ [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)
+
+<a name="new_StardustVerificationMethod_new"></a>
+
+### new StardustVerificationMethod(did, keyType, publicKey, fragment)
+Creates a new `StardustVerificationMethod` from the given `did` and public key.
+
+
+| Param | Type |
+| --- | --- |
+| did | [<code>StardustDID</code>](#StardustDID) | 
+| keyType | <code>number</code> | 
+| publicKey | <code>Uint8Array</code> | 
+| fragment | <code>string</code> | 
+
+<a name="StardustVerificationMethod+id"></a>
+
+### stardustVerificationMethod.id() ⇒ [<code>StardustDIDUrl</code>](#StardustDIDUrl)
+Returns a reference to the `StardustVerificationMethod` id.
+
+**Kind**: instance method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+<a name="StardustVerificationMethod+controller"></a>
+
+### stardustVerificationMethod.controller() ⇒ [<code>StardustDID</code>](#StardustDID)
+Returns a copy of the `controller` `DID` of the `StardustVerificationMethod`.
+
+**Kind**: instance method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+<a name="StardustVerificationMethod+setController"></a>
+
+### stardustVerificationMethod.setController(did)
+Sets the `controller` `DID` of the `StardustVerificationMethod`.
+
+**Kind**: instance method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>StardustDID</code>](#StardustDID) | 
+
+<a name="StardustVerificationMethod+type"></a>
+
+### stardustVerificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
+Returns a copy of the `StardustVerificationMethod` type.
+
+**Kind**: instance method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+<a name="StardustVerificationMethod+data"></a>
+
+### stardustVerificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
+Returns a copy of the `StardustVerificationMethod` public key data.
+
+**Kind**: instance method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+<a name="StardustVerificationMethod+toJSON"></a>
+
+### stardustVerificationMethod.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+<a name="StardustVerificationMethod+clone"></a>
+
+### stardustVerificationMethod.clone() ⇒ [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+<a name="StardustVerificationMethod.fromJSON"></a>
+
+### StardustVerificationMethod.fromJSON(json) ⇒ [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>StardustVerificationMethod</code>](#StardustVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="StorageTestSuite"></a>
 
 ## StorageTestSuite
@@ -5664,11 +5789,11 @@ Deserializes an instance from a JSON object.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(did, key_type, public_key, fragment)](#new_VerificationMethod_new)
+    * [new VerificationMethod(did, keyType, publicKey, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller()](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
-        * [.SetController(did)](#VerificationMethod+SetController)
+        * [.setController(did)](#VerificationMethod+setController)
         * [.type()](#VerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
         * [.data()](#VerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
@@ -5678,33 +5803,33 @@ Deserializes an instance from a JSON object.
 
 <a name="new_VerificationMethod_new"></a>
 
-### new VerificationMethod(did, key_type, public_key, fragment)
-Creates a new `VerificationMethod` object from the given `did` and public key.
+### new VerificationMethod(did, keyType, publicKey, fragment)
+Creates a new `VerificationMethod` from the given `did` and public key.
 
 
 | Param | Type |
 | --- | --- |
 | did | [<code>DID</code>](#DID) | 
-| key_type | <code>number</code> | 
-| public_key | <code>Uint8Array</code> | 
+| keyType | <code>number</code> | 
+| publicKey | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
 
 ### verificationMethod.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Returns a copy of the `id` `DIDUrl` of the `VerificationMethod` object.
+Returns a copy of the `id` `DIDUrl` of the `VerificationMethod`.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+controller"></a>
 
 ### verificationMethod.controller() ⇒ [<code>DID</code>](#DID)
-Returns a copy of the `controller` `DID` of the `VerificationMethod` object.
+Returns a copy of the `controller` `DID` of the `VerificationMethod`.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod+SetController"></a>
+<a name="VerificationMethod+setController"></a>
 
-### verificationMethod.SetController(did)
-Sets the `controller` `DID` of the `VerificationMethod` object.
+### verificationMethod.setController(did)
+Sets the `controller` `DID` of the `VerificationMethod`.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -5952,6 +6077,10 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -5959,10 +6088,6 @@ Return after the first error occurs.
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
-**Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 

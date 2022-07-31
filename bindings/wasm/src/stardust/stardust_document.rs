@@ -11,9 +11,11 @@ use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
 use identity_iota::did::Document;
+use identity_iota::did::MethodScope;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
+use identity_stardust::StardustVerificationMethod;
 use identity_stardust::StateMetadataEncoding;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -27,7 +29,9 @@ use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
+use crate::did::RefMethodScope;
 use crate::did::WasmMethodRelationship;
+use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -35,6 +39,7 @@ use crate::stardust::WasmStardustDID;
 use crate::stardust::WasmStardustDIDUrl;
 use crate::stardust::WasmStardustDocumentMetadata;
 use crate::stardust::WasmStardustService;
+use crate::stardust::WasmStardustVerificationMethod;
 use crate::stardust::WasmStateMetadataEncoding;
 
 // =============================================================================
@@ -148,7 +153,7 @@ impl WasmStardustDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all {@link StardustService StardustServices} in the document.
+  /// Return a set of all {@link StardustService} in the document.
   #[wasm_bindgen]
   pub fn service(&self) -> ArrayStardustService {
     self
@@ -194,26 +199,25 @@ impl WasmStardustDocument {
   // Verification Methods
   // ===========================================================================
 
-  // /// Returns a list of all {@link VerificationMethod} in the DID Document.
-  // #[wasm_bindgen]
-  // pub fn methods(&self) -> ArrayVerificationMethods {
-  //   self
-  //     .0
-  //     .methods()
-  //     .cloned()
-  //     .map(WasmVerificationMethod::from)
-  //     .map(JsValue::from)
-  //     .collect::<js_sys::Array>()
-  //     .unchecked_into::<ArrayVerificationMethods>()
-  // }
-  //
-  // /// Adds a new Verification Method to the DID Document.
-  // #[wasm_bindgen(js_name = insertMethod)]
-  // pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-  //   self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
-  //   Ok(())
-  // }
-  //
+  /// Returns a list of all {@link StardustVerificationMethod} in the DID Document.
+  #[wasm_bindgen]
+  pub fn methods(&self) -> ArrayStardustVerificationMethods {
+    self
+      .0
+      .methods()
+      .cloned()
+      .map(WasmStardustVerificationMethod::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayStardustVerificationMethods>()
+  }
+
+  /// Adds a new `method` to the document in the given `scope`.
+  #[wasm_bindgen(js_name = insertMethod)]
+  pub fn insert_method(&mut self, method: &WasmStardustVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
+    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
+    Ok(())
+  }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
@@ -221,56 +225,50 @@ impl WasmStardustDocument {
     self.0.remove_method(&did.0).wasm_result()
   }
 
-  // /// Returns a copy of the first `VerificationMethod` with an `id` property
-  // /// matching the provided `query`.
-  // ///
-  // /// Throws an error if the method is not found.
-  // #[wasm_bindgen(js_name = resolveMethod)]
-  // pub fn resolve_method(
-  //   &self,
-  //   query: &UDIDUrlQuery,
-  //   scope: Option<RefMethodScope>,
-  // ) -> Result<Option<WasmVerificationMethod>> {
-  //   let method_query: String = query.into_serde().wasm_result()?;
-  //   let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
-  //
-  //   let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
-  //     self.0.resolve_method(&method_query, Some(scope))
-  //   } else {
-  //     self.0.resolve_method(&method_query, None)
-  //   };
-  //   match method {
-  //     None => Ok(None),
-  //     Some(method) => Ok(Some(WasmVerificationMethod(method.clone()))),
-  //   }
-  // }
+  /// Returns a copy of the first verification method with an `id` property
+  /// matching the provided `query` and the verification relationship
+  /// specified by `scope`, if present.
+  #[wasm_bindgen(js_name = resolveMethod)]
+  pub fn resolve_method(
+    &self,
+    query: &UStardustDIDUrlQuery,
+    scope: Option<RefMethodScope>,
+  ) -> Result<Option<WasmStardustVerificationMethod>> {
+    let method_query: String = query.into_serde().wasm_result()?;
+    let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
+
+    let method: Option<&StardustVerificationMethod> = self.0.resolve_method(&method_query, method_scope);
+    Ok(method.cloned().map(WasmStardustVerificationMethod))
+  }
 
   /// Attaches the relationship to the given method, if the method exists.
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = attachMethodRelationship)]
   pub fn attach_method_relationship(
     &mut self,
-    did_url: &WasmStardustDIDUrl,
+    didUrl: &WasmStardustDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
-      .attach_method_relationship(&did_url.0, relationship.into())
+      .attach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
     &mut self,
-    did_url: &WasmStardustDIDUrl,
+    didUrl: &WasmStardustDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
-      .detach_method_relationship(&did_url.0, relationship.into())
+      .detach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
 
@@ -485,15 +483,12 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "StardustDIDUrl | string")]
   pub type UStardustDIDUrlQuery;
 
-  // #[wasm_bindgen(typescript_type = "StardustDID | StardustDID[] | null")]
-  // pub type OptionOneOrManyStardustDID;
-
   #[wasm_bindgen(typescript_type = "StardustDID[]")]
   pub type ArrayStardustDID;
 
   #[wasm_bindgen(typescript_type = "StardustService[]")]
   pub type ArrayStardustService;
-  //
-  // #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
-  // pub type ArrayVerificationMethods;
+
+  #[wasm_bindgen(typescript_type = "StardustVerificationMethod[]")]
+  pub type ArrayStardustVerificationMethods;
 }

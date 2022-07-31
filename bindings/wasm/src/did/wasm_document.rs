@@ -250,7 +250,7 @@ impl WasmDocument {
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayVerificationMethods>()
   }
-  /// Adds a new Verification Method to the DID Document.
+  /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
     self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
@@ -277,10 +277,9 @@ impl WasmDocument {
       .wasm_result()
   }
 
-  /// Returns a copy of the first `VerificationMethod` with an `id` property
-  /// matching the provided `query`.
-  ///
-  /// Throws an error if the method is not found.
+  /// Returns a copy of the first verification method with an `id` property
+  /// matching the provided `query` and the verification relationship
+  /// specified by `scope`, if present.
   #[wasm_bindgen(js_name = resolveMethod)]
   pub fn resolve_method(
     &self,
@@ -290,15 +289,8 @@ impl WasmDocument {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
-      self.0.resolve_method(&method_query, Some(scope))
-    } else {
-      self.0.resolve_method(&method_query, None)
-    };
-    match method {
-      None => Ok(None),
-      Some(method) => Ok(Some(WasmVerificationMethod(method.clone()))),
-    }
+    let method: Option<&IotaVerificationMethod> = self.0.resolve_method(&method_query, method_scope);
+    Ok(method.cloned().map(WasmVerificationMethod))
   }
 
   /// Attempts to resolve the given method query into a method capable of signing a document update.
@@ -314,28 +306,30 @@ impl WasmDocument {
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = attachMethodRelationship)]
   pub fn attach_method_relationship(
     &mut self,
-    did_url: &WasmDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
-      .attach_method_relationship(&did_url.0, relationship.into())
+      .attach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
     &mut self,
-    did_url: &WasmDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
-      .detach_method_relationship(&did_url.0, relationship.into())
+      .detach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
 
