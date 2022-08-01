@@ -14,12 +14,14 @@ use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_core::crypto::EcdsaSecp256k1;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::GetSignature;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
+use identity_core::crypto::Secp256k1;
 use identity_core::crypto::Verifier;
 
 use crate::did::CoreDID;
@@ -749,8 +751,10 @@ where
       MethodType::X25519KeyAgreementKey2019 => {
         return Err(Error::InvalidMethodType);
       }
+      MethodType::EcdsaSecp256k1Signature2019 => {
+        EcdsaSecp256k1::<Secp256k1>::verify_signature(data, &public_key)?;
+      }
     }
-
     Ok(())
   }
 }

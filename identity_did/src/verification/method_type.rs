@@ -13,6 +13,7 @@ use crate::error::Result;
 pub enum MethodType {
   Ed25519VerificationKey2018,
   X25519KeyAgreementKey2019,
+  EcdsaSecp256k1Signature2019,
 }
 
 impl MethodType {
@@ -20,6 +21,7 @@ impl MethodType {
     match self {
       Self::Ed25519VerificationKey2018 => "Ed25519VerificationKey2018",
       Self::X25519KeyAgreementKey2019 => "X25519KeyAgreementKey2019",
+      Self::EcdsaSecp256k1Signature2019 => "EcdsaSecp256k1Signature2019",
     }
   }
 }
@@ -37,6 +39,7 @@ impl FromStr for MethodType {
     match string {
       "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
       "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
+      "EcdsaSecp256k1Signature2019" => Ok(Self::EcdsaSecp256k1Signature2019),
       _ => Err(Error::UnknownMethodType),
     }
   }
@@ -53,6 +56,7 @@ mod tests {
     for method_type in [
       MethodType::Ed25519VerificationKey2018,
       MethodType::X25519KeyAgreementKey2019,
+      MethodType::EcdsaSecp256k1Signature2019,
     ] {
       let ser: Value = serde_json::to_value(&method_type).unwrap();
       assert_eq!(ser.as_str().unwrap(), method_type.as_str());

@@ -90,7 +90,7 @@ impl KeyPair {
         (public, private)
       }
       KeyType::Secp256k1 => {
-        let sk: libsecp256k1::SecretKey = secp256k1_private_try_from_bytes(&private_key_bytes)?;
+        let sk: libsecp256k1::SecretKey = secp256k1_private_try_from_bytes(private_key_bytes)?;
         let pk: libsecp256k1::PublicKey = libsecp256k1::PublicKey::from_secret_key(&sk);
 
         let private: PrivateKey = sk.serialize().to_vec().into();

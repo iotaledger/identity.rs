@@ -95,29 +95,29 @@ pub mod iota_core {
   pub use identity_iota_core::try_construct_did;
 }
 
-#[cfg(feature = "account")]
-#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
-pub mod account {
-  //! Secure storage for Decentralized Identifiers
-
-  pub use identity_account::account::*;
-  pub use identity_account::error::*;
-  pub use identity_account::types::*;
-  pub use identity_account::updates::*;
-}
-
-#[cfg(feature = "account")]
-#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
-pub mod account_storage {
-  //! Storage Trait and Types definitions
-
-  pub use identity_account_storage::crypto::*;
-  pub use identity_account_storage::error::*;
-  pub use identity_account_storage::identity::*;
-  pub use identity_account_storage::storage::*;
-  pub use identity_account_storage::types::*;
-  pub use identity_account_storage::utils::*;
-}
+// #[cfg(feature = "account")]
+// #[cfg_attr(docsrs, doc(cfg(feature = "account")))]
+// pub mod account {
+//   //! Secure storage for Decentralized Identifiers
+//
+//   pub use identity_account::account::*;
+//   pub use identity_account::error::*;
+//   pub use identity_account::types::*;
+//   pub use identity_account::updates::*;
+// }
+//
+// #[cfg(feature = "account")]
+// #[cfg_attr(docsrs, doc(cfg(feature = "account")))]
+// pub mod account_storage {
+//   //! Storage Trait and Types definitions
+//
+//   pub use identity_account_storage::crypto::*;
+//   pub use identity_account_storage::error::*;
+//   pub use identity_account_storage::identity::*;
+//   pub use identity_account_storage::storage::*;
+//   pub use identity_account_storage::types::*;
+//   pub use identity_account_storage::utils::*;
+// }
 
 // #[cfg(feature = "comm")]
 // #[cfg_attr(docsrs, doc(cfg(feature = "comm")))]

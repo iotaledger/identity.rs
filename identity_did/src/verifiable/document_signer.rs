@@ -3,19 +3,21 @@
 
 use serde::Serialize;
 
-use crate::did::CoreDID;
-use crate::did::DID;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
+use identity_core::crypto::EcdsaSecp256k1;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofPurpose;
+use identity_core::crypto::Secp256k1;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 
+use crate::did::CoreDID;
+use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::utils::DIDUrlQuery;
 use crate::verification::MethodType;
@@ -133,6 +135,9 @@ where
       }
       MethodType::X25519KeyAgreementKey2019 => {
         return Err(Error::InvalidMethodType);
+      }
+      MethodType::EcdsaSecp256k1Signature2019 => {
+        EcdsaSecp256k1::<Secp256k1>::create_signature(that, method_uri, self.private.as_ref(), self.options.clone())?;
       }
     }
     Ok(())

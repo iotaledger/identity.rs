@@ -213,6 +213,10 @@ where
         builder = builder.type_(MethodType::X25519KeyAgreementKey2019);
         builder = builder.data(MethodData::new_multibase(public_key));
       }
+      KeyType::Secp256k1 => {
+        builder = builder.type_(MethodType::EcdsaSecp256k1Signature2019);
+        builder = builder.data(MethodData::new_multibase(public_key));
+      }
     }
     builder.build()
   }

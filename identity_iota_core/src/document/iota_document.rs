@@ -14,6 +14,7 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_core::crypto::EcdsaSecp256k1;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::GetSignature;
 use identity_core::crypto::GetSignatureMut;
@@ -23,6 +24,7 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::Proof;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::Secp256k1;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 use identity_did::document::CoreDocument;
@@ -77,7 +79,10 @@ impl TryMethod for IotaDocument {
 
 impl IotaDocument {
   // Method types allowed to sign a DID document update.
-  pub const UPDATE_METHOD_TYPES: &'static [MethodType] = &[MethodType::Ed25519VerificationKey2018];
+  pub const UPDATE_METHOD_TYPES: &'static [MethodType] = &[
+    MethodType::Ed25519VerificationKey2018,
+    MethodType::EcdsaSecp256k1Signature2019,
+  ];
   pub const DEFAULT_METHOD_FRAGMENT: &'static str = "sign-0";
 
   /// Creates a new DID Document from the given [`KeyPair`].
@@ -95,8 +100,8 @@ impl IotaDocument {
   /// # use identity_core::crypto::{KeyPair, KeyType};
   /// # use identity_iota_core::document::IotaDocument;
   /// #
-  /// // Create a DID Document from a new Ed25519 keypair.
-  /// let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
+  /// // Create a DID Document from a new Secp256k1 keypair.
+  /// let keypair = KeyPair::new(KeyType::Secp256k1).unwrap();
   /// let document = IotaDocument::new(&keypair).unwrap();
   /// ```
   pub fn new(keypair: &KeyPair) -> Result<Self> {
@@ -123,8 +128,8 @@ impl IotaDocument {
   /// # use identity_iota_core::document::IotaDocument;
   /// # use identity_iota_core::tangle::Network;
   /// #
-  /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
-  /// let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
+  /// // Create a new DID Document for the devnet from a new Secp256k1 keypair.
+  /// let keypair = KeyPair::new(KeyType::Secp256k1).unwrap();
   /// let document =
   ///   IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key"))
   ///     .unwrap();
@@ -431,6 +436,10 @@ impl IotaDocument {
           "X25519KeyAgreementKey2019 cannot sign documents",
           None,
         ));
+      }
+      MethodType::EcdsaSecp256k1Signature2019 => {
+        EcdsaSecp256k1::<Secp256k1>::create_signature(self, method_id, private_key.as_ref(), ProofOptions::default())
+          .map_err(|err| Error::DocumentSignError("Secp256k1 signature failed", Some(err)))?;
       }
     }
 
@@ -785,7 +794,7 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::EcdsaSecp256k1Signature2019)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
@@ -977,7 +986,7 @@ mod tests {
 
   #[test]
   fn test_sign_self() {
-    let keypair: KeyPair = generate_testkey();
+    let keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert!(document.verify_document(&document).is_err());
 
@@ -998,7 +1007,7 @@ mod tests {
     assert!(document.verify_document(&document).is_err());
 
     // Add a new capability invocation method directly
-    let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let new_keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let new_method: IotaVerificationMethod = IotaVerificationMethod::new(
       document.id().clone(),
       new_keypair.type_(),
@@ -1027,7 +1036,7 @@ mod tests {
 
     // Add a new signing method from a controller DID Document with the SAME FRAGMENT
     // as the default signing method.
-    let controller_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let controller_keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let controller_did: IotaDID = IotaDID::new(controller_keypair.public().as_ref()).unwrap();
     let controller_method: IotaVerificationMethod = IotaVerificationMethod::new(
       controller_did,
@@ -1091,7 +1100,7 @@ mod tests {
     // INVALID - try sign using a random private key.
     {
       let (mut document, _) = generate_document();
-      let random_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let random_keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
       document
         .sign_self(
           random_keypair.private(),
@@ -1111,7 +1120,7 @@ mod tests {
     ] {
       let (mut document, _) = generate_document();
       // Add a new method unable to sign the document.
-      let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let keypair_new: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
       let method_new: IotaVerificationMethod = IotaVerificationMethod::new(
         document.id().clone(),
         keypair_new.type_(),
@@ -1154,7 +1163,7 @@ mod tests {
       let key1: KeyPair = generate_testkey();
       let mut doc1: IotaDocument = IotaDocument::new(&key1).unwrap();
       // Add a new verification relationship.
-      let key2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let key2: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::new(doc1.id().clone(), key2.type_(), key2.public(), method_fragment.as_str()).unwrap();
@@ -1196,7 +1205,7 @@ mod tests {
   #[test]
   fn test_diff_properties() {
     // Ensure custom fields added to properties are retained by diffs.
-    let key1: KeyPair = generate_testkey();
+    let key1: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let doc1: IotaDocument = IotaDocument::new(&key1).unwrap();
     let message_id: MessageId = MessageId::new([3_u8; 32]);
 
@@ -1339,7 +1348,7 @@ mod tests {
       MethodScope::VerificationMethod,
     ] {
       // Add a new method.
-      let key_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let key_new: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
       let method_new: IotaVerificationMethod = IotaVerificationMethod::new(
         document.id().clone(),
@@ -1385,7 +1394,7 @@ mod tests {
 
   #[test]
   fn test_root_document() {
-    let keypair: KeyPair = generate_testkey();
+    let keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert!(IotaDocument::verify_root_document(&document).is_err());
 
@@ -1403,7 +1412,7 @@ mod tests {
   #[test]
   fn test_root_document_invalid() {
     fn generate_root_document() -> (IotaDocument, KeyPair) {
-      let keypair: KeyPair = generate_testkey();
+      let keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
       (IotaDocument::new(&keypair).unwrap(), keypair)
     }
 
@@ -1431,7 +1440,7 @@ mod tests {
     {
       let (document, keypair) = generate_root_document();
       // Replace the base58 encoded public key with that of a different key.
-      let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let new_keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
       let b58_old = BaseEncoding::encode_base58(keypair.public());
       let b58_new = BaseEncoding::encode_base58(new_keypair.public());
       let doc_json_modified = document.to_string().replace(&b58_old, &b58_new);
@@ -1451,7 +1460,7 @@ mod tests {
     {
       let (mut document, _) = generate_root_document();
       // Add a new method able to sign the document.
-      let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let keypair_new: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
       let method_new: IotaVerificationMethod = IotaVerificationMethod::new(
         document.id().clone(),
         keypair_new.type_(),
@@ -1525,7 +1534,7 @@ mod tests {
     );
 
     // Adding a new capability invocation method still returns the original method.
-    let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let new_keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let new_method: IotaVerificationMethod = IotaVerificationMethod::new(
       document.id().clone(),
       new_keypair.type_(),
@@ -1645,13 +1654,13 @@ mod tests {
 
   #[test]
   fn test_document_equality() {
-    let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let keypair1: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let original_doc: IotaDocument = IotaDocument::new_with_options(&keypair1, None, Some("test-0")).unwrap();
 
     let mut doc1 = original_doc.clone();
 
     // Update the key material of the existing verification method test-0.
-    let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let keypair2: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
@@ -1667,7 +1676,7 @@ mod tests {
     assert_ne!(original_doc, doc1);
 
     let mut doc2 = doc1.clone();
-    let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let keypair3: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
     let method3: IotaVerificationMethod =
       IotaVerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 
