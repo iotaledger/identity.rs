@@ -18,12 +18,12 @@ impl WasmCoreDID {
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid [`DID`].
+  /// Returns `Err` if the input is not a valid [`CoreDID`].
   pub fn parse(input: &str) -> Result<WasmCoreDID> {
     CoreDID::parse(input).wasm_result().map(Self)
   }
 
-  /// Returns the `DID` as a string.
+  /// Returns the `CoreDID` as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {

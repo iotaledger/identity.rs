@@ -10,19 +10,19 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::WasmNetwork;
 
-/// @typicalname did
+/// @typicalname did conforming to the IOTA DID method specification.
 #[wasm_bindgen(js_name = IotaDID, inspectable)]
 pub struct WasmIotaDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = IotaDID)]
 impl WasmIotaDID {
-  /// Creates a new `DID` from a public key.
+  /// Creates a new `IotaDID` from a public key.
   #[wasm_bindgen(constructor)]
   pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmIotaDID> {
     Self::from_public_key(public_key, network)
   }
 
-  /// Creates a new `DID` from an arbitrary public key.
+  /// Creates a new `IotaDID` from an arbitrary public key.
   fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmIotaDID> {
     let did = if let Some(network) = network {
       IotaDID::new_with_network(public_key, network)
@@ -32,25 +32,25 @@ impl WasmIotaDID {
     did.wasm_result().map(Self)
   }
 
-  /// Parses a `DID` from the input string.
+  /// Parses a `IotaDID` from the input string.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmIotaDID> {
     IotaDID::parse(input).wasm_result().map(Self)
   }
 
-  /// Returns the IOTA tangle network of the `DID`.
+  /// Returns the IOTA tangle network of the `IotaDID`.
   #[wasm_bindgen]
   pub fn network(&self) -> Result<WasmNetwork> {
     self.0.network().map(Into::into).wasm_result()
   }
 
-  /// Returns the IOTA tangle network of the `DID`.
+  /// Returns the IOTA tangle network of the `IotaDID`.
   #[wasm_bindgen(getter = networkName)]
   pub fn network_name(&self) -> String {
     self.0.network_str().into()
   }
 
-  /// Returns a copy of the unique tag of the `DID`.
+  /// Returns a copy of the unique tag of the `IotaDID`.
   #[wasm_bindgen]
   pub fn tag(&self) -> String {
     self.0.tag().into()
@@ -62,19 +62,19 @@ impl WasmIotaDID {
     self.0.join(segment).wasm_result().map(WasmDIDUrl)
   }
 
-  /// Clones the `DID` into a `DIDUrl`.
+  /// Clones the `IotaDID` into a `DIDUrl`.
   #[wasm_bindgen(js_name = toUrl)]
   pub fn to_url(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.to_url())
   }
 
-  /// Converts the `DID` into a `DIDUrl`.
+  /// Converts the `IotaDID` into a `DIDUrl`.
   #[wasm_bindgen(js_name = intoUrl)]
   pub fn into_url(self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.into_url())
   }
 
-  /// Returns the `DID` as a string.
+  /// Returns the `IotaDID` as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
