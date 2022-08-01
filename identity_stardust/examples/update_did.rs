@@ -24,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Resolve the latest state of the document.
   // Technically this is equivalent to the document above.
-  let mut document: StardustDocument = client.resolve(document.id()).await?;
+  let mut document: StardustDocument = client.resolve_did(document.id()).await?;
 
   // Attach a new method relationship to the existing method.
   document.attach_method_relationship(

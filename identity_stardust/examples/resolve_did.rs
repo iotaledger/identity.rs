@@ -12,7 +12,7 @@ mod create_did;
 async fn main() -> anyhow::Result<()> {
   let (client, _, _, document): (Client, _, _, StardustDocument) = create_did::run().await?;
 
-  let resolved_doc: StardustDocument = client.resolve(document.id()).await?;
+  let resolved_doc: StardustDocument = client.resolve_did(document.id()).await?;
 
   assert_eq!(resolved_doc, document);
 

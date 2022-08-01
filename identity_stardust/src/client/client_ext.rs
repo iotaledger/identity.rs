@@ -77,12 +77,11 @@ pub trait StardustClientExt: Sync {
       .map_err(Error::AliasOutputBuildError)
   }
 
-  /// Resolves the Alias Output associated to the DID in `document` and updates it with that document.
+  /// Returns the updated alias output for further customization and publication. The storage deposit
+  /// on the output is unchanged. If the size of the document increased, the amount must be increased manually.
   ///
-  /// Returns the updated Alias Output for further customization and publication. The storage deposit
-  /// on the output is unchanged. If the size of the document increased, the amount has to be increased.
-  ///
-  /// NOTE: this does *not* publish the Alias Output. See [`publish_did_output`](StardustClientExt::publish_did_output).
+  /// NOTE: this does *not* publish the updated Alias Output. See
+  /// [`publish_did_output`](StardustClientExt::publish_did_output).
   async fn update_did(&self, document: StardustDocument) -> Result<AliasOutput> {
     let (alias_id, _, alias_output) = resolve_alias_output(self.client(), document.id()).await?;
 
@@ -121,7 +120,7 @@ pub trait StardustClientExt: Sync {
     Ok(())
   }
 
-  /// Publish the given `alias_outputs` with the provided `secret_manager`
+  /// Publish the given `alias_output` with the provided `secret_manager`
   /// and returns the block they were published in.
   ///
   /// Needs to be called by the state controller of the Alias Output.
@@ -144,11 +143,13 @@ pub trait StardustClientExt: Sync {
   }
 
   /// Consume the Alias Output containing the given `did`, sending its tokens to a new Basic Output
-  /// unlockable by `address`. May only be called by the governor address of the Alias Output.
+  /// unlockable by `address`.
+  ///
+  /// Note that only the governor of an Alias Output is allowed to destroy it.
   ///
   /// # WARNING
   ///
-  /// This destroys the DID Document and the Alias Output, and renders the DID permanently unrecoverable.
+  /// This destroys the DID Document and the Alias Output and renders the DID permanently unrecoverable.
   async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
     let client: &Client = self.client();
 
@@ -173,9 +174,9 @@ pub trait StardustClientExt: Sync {
   ///
   /// # Errors
   ///
-  /// - Returns an [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output wasn't found.
+  /// - Returns a [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output wasn't found.
   /// - Returns a [`DeactivatedDID`](Error::DeactivatedDID) error if the Alias Output's state metadata is empty.
-  async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
+  async fn resolve_did(&self, did: &StardustDID) -> Result<StardustDocument> {
     // TODO: Replace usage of HRP with some better network naming approach.
     let network_hrp: String = get_network_hrp(self.client()).await?;
 
@@ -195,7 +196,10 @@ pub trait StardustClientExt: Sync {
     }
   }
 
-  /// Returns the network name of the connected node, which is the BECH32 HRP of the network.
+  /// Returns the network name of the connected node, which is the
+  /// BECH32 human-readable part (HRP) of the network.
+  ///
+  /// For the IOTA main network this is `iota` and for the Shimmer network it is `smr`.
   async fn network_name(&self) -> Result<NetworkName> {
     self
       .client()
@@ -219,6 +223,8 @@ impl StardustClientExt for &Client {
   }
 }
 
+/// Publishes an `alias_output`.
+/// Returns the block that the output was included in.
 async fn publish_output(client: &Client, secret_manager: &SecretManager, alias_output: AliasOutput) -> Result<Block> {
   let block: Block = client
     .block()
@@ -325,12 +331,10 @@ mod tests {
   use super::StardustClientExt;
 
   // TODO: Change to private tangle in CI; detect CI via env var?.
-  // TODO: Change to shimmer testnet after bee-api-types and nodes agree again.
-  // Somehow linked to this: https://github.com/iotaledger/tips/pull/57#discussion_r921955443.
-  static ENDPOINT: &str = "https://api.alphanet.iotaledger.net/";
-  static FAUCET_URL: &str = "https://faucet.alphanet.iotaledger.net/api/enqueue";
-  // static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
-  // static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+  // static ENDPOINT: &str = "https://api.alphanet.iotaledger.net/";
+  // static FAUCET_URL: &str = "https://faucet.alphanet.iotaledger.net/api/enqueue";
+  static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
+  static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
   fn generate_method(controller: &StardustDID, fragment: &str) -> StardustVerificationMethod {
     VerificationMethod::builder(Default::default())
@@ -451,7 +455,7 @@ mod tests {
 
     let document = client.publish_did_output(&secret_manager, output).await.unwrap();
 
-    let resolved = client.resolve(document.id()).await.unwrap();
+    let resolved = client.resolve_did(document.id()).await.unwrap();
 
     assert_eq!(document, resolved);
   }
@@ -494,7 +498,7 @@ mod tests {
 
     let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await.unwrap();
 
-    let resolved = client.resolve(document.id()).await.unwrap();
+    let resolved = client.resolve_did(document.id()).await.unwrap();
 
     assert_eq!(document, resolved);
   }
@@ -524,7 +528,7 @@ mod tests {
     // It takes time for the deletion to propagate.
     tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 
-    let error = client.resolve(document.id()).await.unwrap_err();
+    let error = client.resolve_did(document.id()).await.unwrap_err();
 
     assert!(matches!(error, Error::ClientError(iota_client::Error::NotFound)));
 
@@ -553,7 +557,7 @@ mod tests {
     // It takes time for the deactivation to propagate.
     tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 
-    let error = client.resolve(document.id()).await.unwrap_err();
+    let error = client.resolve_did(document.id()).await.unwrap_err();
 
     assert!(matches!(error, crate::Error::DeactivatedDID(_)));
 
@@ -562,6 +566,6 @@ mod tests {
     let alias_output = client.update_did(document).await.unwrap();
     client.publish_did_output(&secret_manager, alias_output).await.unwrap();
 
-    client.resolve(&did).await.unwrap();
+    client.resolve_did(&did).await.unwrap();
   }
 }
