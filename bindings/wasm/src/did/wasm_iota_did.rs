@@ -10,7 +10,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::WasmNetwork;
 
-/// @typicalname did conforming to the IOTA DID method specification.
+/// A DID URL conforming to the IOTA DID method specification.
 #[wasm_bindgen(js_name = IotaDID, inspectable)]
 pub struct WasmIotaDID(pub(crate) IotaDID);
 

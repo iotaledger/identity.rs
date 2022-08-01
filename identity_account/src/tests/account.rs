@@ -645,7 +645,7 @@ async fn test_storage_index() {
     let account1_did: IotaDID = account1.did().to_owned();
     account1.delete_identity().await.unwrap();
 
-    assert!(!account2.storage().did_exists(&account1_did.as_ref()).await.unwrap());
+    assert!(!account2.storage().did_exists(account1_did.as_ref()).await.unwrap());
     assert!(account2.storage().did_exists(account2.did().as_ref()).await.unwrap());
     assert_eq!(account2.storage().did_list().await.unwrap().len(), 1);
   }

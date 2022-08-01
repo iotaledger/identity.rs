@@ -8,7 +8,7 @@ use crate::did::WasmIotaDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// @typicalname did
+/// A Decentralized Identifier (DID).
 #[wasm_bindgen(js_name = CoreDID, inspectable)]
 pub struct WasmCoreDID(pub(crate) CoreDID);
 

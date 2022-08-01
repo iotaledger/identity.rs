@@ -27,7 +27,8 @@ the configuration of previously built accounts.</p>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
 <dt><a href="#CoreDID">CoreDID</a></dt>
-<dd></dd>
+<dd><p>A Decentralized Identifier (DID).</p>
+</dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
@@ -66,7 +67,8 @@ the configuration of previously built accounts.</p>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#IotaDID">IotaDID</a></dt>
-<dd></dd>
+<dd><p>A DID URL conforming to the IOTA DID method specification.</p>
+</dd>
 <dt><a href="#KeyLocation">KeyLocation</a></dt>
 <dd><p>The storage location of a verification method key.</p>
 <p>A key is uniquely identified by the fragment and a hash of its public key.
@@ -952,6 +954,8 @@ Creates a new `Client` with the given settings.
 <a name="CoreDID"></a>
 
 ## CoreDID
+A Decentralized Identifier (DID).
+
 **Kind**: global class  
 
 * [CoreDID](#CoreDID)
@@ -965,19 +969,19 @@ Creates a new `Client` with the given settings.
 
 <a name="CoreDID+toString"></a>
 
-### did.toString() ⇒ <code>string</code>
-Returns the `DID` as a string.
+### coreDID.toString() ⇒ <code>string</code>
+Returns the `CoreDID` as a string.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+toJSON"></a>
 
-### did.toJSON() ⇒ <code>any</code>
+### coreDID.toJSON() ⇒ <code>any</code>
 Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+clone"></a>
 
-### did.clone() ⇒ [<code>CoreDID</code>](#CoreDID)
+### coreDID.clone() ⇒ [<code>CoreDID</code>](#CoreDID)
 Deep clones the object.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
@@ -988,7 +992,7 @@ Parses a [`CoreDID`] from the given `input`.
 
 # Errors
 
-Returns `Err` if the input is not a valid [`DID`].
+Returns `Err` if the input is not a valid [`CoreDID`].
 
 **Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
 
@@ -2875,6 +2879,8 @@ Deserializes from a JSON object.
 <a name="IotaDID"></a>
 
 ## IotaDID
+A DID URL conforming to the IOTA DID method specification.
+
 **Kind**: global class  
 
 * [IotaDID](#IotaDID)
@@ -2896,7 +2902,7 @@ Deserializes from a JSON object.
 <a name="new_IotaDID_new"></a>
 
 ### new IotaDID(public_key, network)
-Creates a new `DID` from a public key.
+Creates a new `IotaDID` from a public key.
 
 
 | Param | Type |
@@ -2906,25 +2912,25 @@ Creates a new `DID` from a public key.
 
 <a name="IotaDID+networkName"></a>
 
-### did.networkName ⇒ <code>string</code>
-Returns the IOTA tangle network of the `DID`.
+### iotaDID.networkName ⇒ <code>string</code>
+Returns the IOTA tangle network of the `IotaDID`.
 
 **Kind**: instance property of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+network"></a>
 
-### did.network() ⇒ [<code>Network</code>](#Network)
-Returns the IOTA tangle network of the `DID`.
+### iotaDID.network() ⇒ [<code>Network</code>](#Network)
+Returns the IOTA tangle network of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+tag"></a>
 
-### did.tag() ⇒ <code>string</code>
-Returns a copy of the unique tag of the `DID`.
+### iotaDID.tag() ⇒ <code>string</code>
+Returns a copy of the unique tag of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+join"></a>
 
-### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+### iotaDID.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
 Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -2935,38 +2941,38 @@ Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 <a name="IotaDID+toUrl"></a>
 
-### did.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Clones the `DID` into a `DIDUrl`.
+### iotaDID.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Clones the `IotaDID` into a `DIDUrl`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+intoUrl"></a>
 
-### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Converts the `DID` into a `DIDUrl`.
+### iotaDID.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Converts the `IotaDID` into a `DIDUrl`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+toString"></a>
 
-### did.toString() ⇒ <code>string</code>
-Returns the `DID` as a string.
+### iotaDID.toString() ⇒ <code>string</code>
+Returns the `IotaDID` as a string.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+toJSON"></a>
 
-### did.toJSON() ⇒ <code>any</code>
+### iotaDID.toJSON() ⇒ <code>any</code>
 Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+clone"></a>
 
-### did.clone() ⇒ [<code>IotaDID</code>](#IotaDID)
+### iotaDID.clone() ⇒ [<code>IotaDID</code>](#IotaDID)
 Deep clones the object.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID.parse"></a>
 
 ### IotaDID.parse(input) ⇒ [<code>IotaDID</code>](#IotaDID)
-Parses a `DID` from the input string.
+Parses a `IotaDID` from the input string.
 
 **Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
 
