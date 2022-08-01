@@ -172,6 +172,17 @@ pub trait StardustClientExt: Sync {
 
     StardustDocument::unpack_from_output(did, &alias_output)
   }
+
+  /// Returns the network name of the connected node, which is the BECH32 HRP of the network.
+  async fn network_name(&self) -> Result<NetworkName> {
+    self
+      .client()
+      .get_network_info()
+      .await?
+      .bech32_hrp
+      .ok_or(Error::InvalidNetworkName)
+      .and_then(NetworkName::try_from)
+  }
 }
 
 impl StardustClientExt for Client {

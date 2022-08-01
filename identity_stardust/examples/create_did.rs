@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
 use identity_did::did::DID;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
@@ -31,24 +33,17 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
   let client: Client = Client::builder().with_primary_node(ENDPOINT, None)?.finish()?;
 
   // Get the BECH32 HRP identifier of the network.
-  let network_bech32_hrp: NetworkName = client
-    .get_network_info()
-    .await?
-    .bech32_hrp
-    .ok_or(Error::InvalidNetworkName)
-    .and_then(NetworkName::try_from)?;
+  let network_name: NetworkName = client.network_name().await?;
 
   // Create a new document with a placeholder DID and add a verification method.
   // The placeholder will be replaced during publication, since the DID is derived from the id of the output
   // that creates the alias output.
-  let mut document: StardustDocument = StardustDocument::new(&network_bech32_hrp);
+  let mut document: StardustDocument = StardustDocument::new(&network_name);
 
-  let method: StardustVerificationMethod = VerificationMethod::builder(Default::default())
-    .id(document.id().to_url().join("#key-1")?)
-    .controller(document.id().clone())
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .data(MethodData::new_multibase(b"#key-1"))
-    .build()?;
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+
+  let method: StardustVerificationMethod =
+    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
 
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
@@ -67,7 +62,7 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
 }
 
 async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, SecretManager)> {
-  let keypair = identity_core::crypto::KeyPair::new(identity_core::crypto::KeyType::Ed25519)?;
+  let keypair = identity_core::crypto::KeyPair::new(KeyType::Ed25519)?;
   let mnemonic =
     iota_client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
       .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
