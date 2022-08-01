@@ -3,12 +3,7 @@
 
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
-use identity_did::did::DID;
-use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
-use identity_did::verification::MethodType;
-use identity_did::verification::VerificationMethod;
-use identity_stardust::Error;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
