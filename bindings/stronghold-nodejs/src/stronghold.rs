@@ -7,7 +7,7 @@ use identity_account_storage::types::EncryptedData;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_iota_core::did::IotaDID;
+use identity_did::did::CoreDID;
 use identity_iota_core::tangle::NetworkName;
 use napi::bindgen_prelude::Error;
 use napi::Result;
@@ -15,7 +15,7 @@ use napi_derive::napi;
 
 use crate::error::NapiResult;
 use crate::types::NapiCekAlgorithm;
-use crate::types::NapiDid;
+use crate::types::NapiCoreDid;
 use crate::types::NapiDidLocation;
 use crate::types::NapiEncryptedData;
 use crate::types::NapiEncryptionAlgorithm;
@@ -79,7 +79,7 @@ impl NapiStronghold {
       None => None,
     };
 
-    let (did, location): (IotaDID, KeyLocation) = self
+    let (did, location): (CoreDID, KeyLocation) = self
       .0
       .did_create(network, fragment.as_ref(), private_key)
       .await
@@ -94,19 +94,19 @@ impl NapiStronghold {
   ///
   /// Returns `true` if the did and its associated data was removed, `false` if nothing was done.
   #[napi]
-  pub async fn did_purge(&self, did: &NapiDid) -> Result<bool> {
+  pub async fn did_purge(&self, did: &NapiCoreDid) -> Result<bool> {
     self.0.did_purge(&did.0).await.napi_result()
   }
 
   /// Returns `true` if `did` exists in the list of stored DIDs.
   #[napi]
-  pub async fn did_exists(&self, did: &NapiDid) -> Result<bool> {
+  pub async fn did_exists(&self, did: &NapiCoreDid) -> Result<bool> {
     self.0.did_exists(&did.0).await.napi_result()
   }
 
   /// Returns the list of stored DIDs.
   #[napi]
-  pub async fn did_list(&self) -> Result<Vec<NapiDid>> {
+  pub async fn did_list(&self) -> Result<Vec<NapiCoreDid>> {
     Ok(
       self
         .0
@@ -114,7 +114,7 @@ impl NapiStronghold {
         .await
         .napi_result()?
         .into_iter()
-        .map(NapiDid)
+        .map(NapiCoreDid)
         .collect(),
     )
   }
@@ -122,7 +122,12 @@ impl NapiStronghold {
   /// Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
   /// and returns the location of the newly generated key.
   #[napi]
-  pub async fn key_generate(&self, did: &NapiDid, key_type: NapiKeyType, fragment: String) -> Result<NapiKeyLocation> {
+  pub async fn key_generate(
+    &self,
+    did: &NapiCoreDid,
+    key_type: NapiKeyType,
+    fragment: String,
+  ) -> Result<NapiKeyLocation> {
     let location: KeyLocation = self
       .0
       .key_generate(&did.0, key_type.into(), fragment.as_ref())
@@ -136,14 +141,14 @@ impl NapiStronghold {
   ///
   /// If a key at `location` exists, it is overwritten.
   #[napi]
-  pub async fn key_insert(&self, did: &NapiDid, location: &NapiKeyLocation, private_key: Vec<u32>) -> Result<()> {
+  pub async fn key_insert(&self, did: &NapiCoreDid, location: &NapiKeyLocation, private_key: Vec<u32>) -> Result<()> {
     let private_key: PrivateKey = private_key.try_into_bytes()?.into();
     self.0.key_insert(&did.0, &location.0, private_key).await.napi_result()
   }
 
   /// Retrieves the public key from `location`.
   #[napi]
-  pub async fn key_public(&self, did: &NapiDid, location: &NapiKeyLocation) -> Result<Vec<u32>> {
+  pub async fn key_public(&self, did: &NapiCoreDid, location: &NapiKeyLocation) -> Result<Vec<u32>> {
     let public_key: PublicKey = self.0.key_public(&did.0, &location.0).await.napi_result()?;
     let public_key: Vec<u8> = public_key.as_ref().to_vec();
     Ok(public_key.into_iter().map(u32::from).collect())
@@ -155,13 +160,13 @@ impl NapiStronghold {
   ///
   /// Returns `true` if it removed the key, `false` if nothing was done.
   #[napi]
-  pub async fn key_delete(&self, did: &NapiDid, location: &NapiKeyLocation) -> Result<bool> {
+  pub async fn key_delete(&self, did: &NapiCoreDid, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_delete(&did.0, &location.0).await.napi_result()
   }
 
   /// Signs `data` with the private key at the specified `location`.
   #[napi]
-  pub async fn key_sign(&self, did: &NapiDid, location: &NapiKeyLocation, data: Vec<u32>) -> Result<NapiSignature> {
+  pub async fn key_sign(&self, did: &NapiCoreDid, location: &NapiKeyLocation, data: Vec<u32>) -> Result<NapiSignature> {
     let data: Vec<u8> = data.try_into_bytes()?;
     self
       .0
@@ -173,7 +178,7 @@ impl NapiStronghold {
 
   /// Returns `true` if a key exists at the specified `location`.
   #[napi]
-  pub async fn key_exists(&self, did: &NapiDid, location: &NapiKeyLocation) -> Result<bool> {
+  pub async fn key_exists(&self, did: &NapiCoreDid, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
   }
 
@@ -183,7 +188,7 @@ impl NapiStronghold {
   #[napi]
   pub async fn data_encrypt(
     &self,
-    did: &NapiDid,
+    did: &NapiCoreDid,
     plaintext: Vec<u32>,
     associated_data: Vec<u32>,
     encryption_algorithm: &NapiEncryptionAlgorithm,
@@ -214,7 +219,7 @@ impl NapiStronghold {
   #[napi]
   pub async fn data_decrypt(
     &self,
-    did: &NapiDid,
+    did: &NapiCoreDid,
     data: &NapiEncryptedData,
     encryption_algorithm: &NapiEncryptionAlgorithm,
     cek_algorithm: &NapiCekAlgorithm,
@@ -236,7 +241,7 @@ impl NapiStronghold {
 
   /// Returns the blob stored by the identity specified by `did`.
   #[napi]
-  pub async fn blob_get(&self, did: &NapiDid) -> Result<Option<Vec<u32>>> {
+  pub async fn blob_get(&self, did: &NapiCoreDid) -> Result<Option<Vec<u32>>> {
     self
       .0
       .blob_get(&did.0)
@@ -247,7 +252,7 @@ impl NapiStronghold {
 
   /// Stores an arbitrary blob for the identity specified by `did`.
   #[napi]
-  pub async fn blob_set(&self, did: &NapiDid, blob: Vec<u32>) -> Result<()> {
+  pub async fn blob_set(&self, did: &NapiCoreDid, blob: Vec<u32>) -> Result<()> {
     let blob: Vec<u8> = blob.try_into_bytes()?;
     self.0.blob_set(&did.0, blob).await.napi_result()
   }

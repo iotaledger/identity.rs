@@ -12,6 +12,7 @@ use identity_account_storage::storage::Stronghold;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::ProofOptions;
+use identity_did::did::CoreDID;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
 use identity_iota_client::chain::DocumentChain;
@@ -625,27 +626,27 @@ async fn test_storage_index() {
       .await
       .unwrap();
 
-    let index: Vec<IotaDID> = account1.storage().did_list().await.unwrap();
+    let index: Vec<CoreDID> = account1.storage().did_list().await.unwrap();
 
     assert_eq!(index.len(), 1);
-    assert!(index.contains(account1.did()));
+    assert!(index.contains(account1.did().as_ref()));
 
     let account2: Account = Account::create_identity(setup, IdentitySetup::default()).await.unwrap();
 
-    let index: Vec<IotaDID> = account2.storage().did_list().await.unwrap();
+    let index: Vec<CoreDID> = account2.storage().did_list().await.unwrap();
 
     assert_eq!(index.len(), 2);
-    assert!(index.contains(account1.did()));
-    assert!(index.contains(account2.did()));
+    assert!(index.contains(account1.did().as_ref()));
+    assert!(index.contains(account2.did().as_ref()));
 
-    assert!(account2.storage().did_exists(account1.did()).await.unwrap());
-    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
+    assert!(account2.storage().did_exists(account1.did().as_ref()).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did().as_ref()).await.unwrap());
 
     let account1_did: IotaDID = account1.did().to_owned();
     account1.delete_identity().await.unwrap();
 
-    assert!(!account2.storage().did_exists(&account1_did).await.unwrap());
-    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
+    assert!(!account2.storage().did_exists(&account1_did.as_ref()).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did().as_ref()).await.unwrap());
     assert_eq!(account2.storage().did_list().await.unwrap().len(), 1);
   }
 }

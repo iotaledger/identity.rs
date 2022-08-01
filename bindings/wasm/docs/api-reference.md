@@ -26,14 +26,14 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
+<dt><a href="#CoreDID">CoreDID</a></dt>
+<dd></dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
 <dd><p>Options to declare validation criteria when validating credentials.</p>
 </dd>
 <dt><a href="#CredentialValidator">CredentialValidator</a></dt>
-<dd></dd>
-<dt><a href="#DID">DID</a></dt>
 <dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd></dd>
@@ -64,6 +64,8 @@ the configuration of previously built accounts.</p>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
+<dd></dd>
+<dt><a href="#IotaDID">IotaDID</a></dt>
 <dd></dd>
 <dt><a href="#KeyLocation">KeyLocation</a></dt>
 <dd><p>The storage location of a verification method key.</p>
@@ -198,9 +200,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -227,7 +229,7 @@ publishing to the Tangle.
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
+    * [.did()](#Account+did) ⇒ [<code>IotaDID</code>](#IotaDID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
     * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
@@ -298,8 +300,8 @@ Detaches the given relationship from the given method, if the method exists.
 
 <a name="Account+did"></a>
 
-### account.did() ⇒ [<code>DID</code>](#DID)
-Returns the [DID](#DID) of the managed identity.
+### account.did() ⇒ [<code>IotaDID</code>](#IotaDID)
+Returns the [DID](DID) of the managed identity.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+autopublish"></a>
@@ -570,7 +572,7 @@ The identity must exist in the configured `Storage`.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) | 
+| did | [<code>IotaDID</code>](#IotaDID) | 
 
 <a name="AccountBuilder+createIdentity"></a>
 
@@ -906,7 +908,7 @@ Fetch the DID document specified by the given `DID`.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>string</code> | 
 
 <a name="Client+resolveHistory"></a>
 
@@ -917,7 +919,7 @@ Returns the message history of the given DID.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>string</code> | 
 
 <a name="Client+resolveDiffHistory"></a>
 
@@ -946,6 +948,64 @@ Creates a new `Client` with the given settings.
 | Param | Type |
 | --- | --- |
 | config | <code>IClientConfig</code> | 
+
+<a name="CoreDID"></a>
+
+## CoreDID
+**Kind**: global class  
+
+* [CoreDID](#CoreDID)
+    * _instance_
+        * [.toString()](#CoreDID+toString) ⇒ <code>string</code>
+        * [.toJSON()](#CoreDID+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CoreDID+clone) ⇒ [<code>CoreDID</code>](#CoreDID)
+    * _static_
+        * [.parse(input)](#CoreDID.parse) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.fromJSON(json)](#CoreDID.fromJSON) ⇒ [<code>CoreDID</code>](#CoreDID)
+
+<a name="CoreDID+toString"></a>
+
+### did.toString() ⇒ <code>string</code>
+Returns the `DID` as a string.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+toJSON"></a>
+
+### did.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+clone"></a>
+
+### did.clone() ⇒ [<code>CoreDID</code>](#CoreDID)
+Deep clones the object.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID.parse"></a>
+
+### CoreDID.parse(input) ⇒ [<code>CoreDID</code>](#CoreDID)
+Parses a [`CoreDID`] from the given `input`.
+
+# Errors
+
+Returns `Err` if the input is not a valid [`DID`].
+
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="CoreDID.fromJSON"></a>
+
+### CoreDID.fromJSON(json) ⇒ [<code>CoreDID</code>](#CoreDID)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="Credential"></a>
 
@@ -1183,7 +1243,7 @@ Deserializes an instance from a JSON object.
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
     * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
-    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>DID</code>](#DID)
+    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>IotaDID</code>](#IotaDID)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1311,7 +1371,7 @@ Only supports `BitmapRevocation2022`.
 
 <a name="CredentialValidator.extractIssuer"></a>
 
-### CredentialValidator.extractIssuer(credential) ⇒ [<code>DID</code>](#DID)
+### CredentialValidator.extractIssuer(credential) ⇒ [<code>IotaDID</code>](#IotaDID)
 Utility for extracting the issuer field of a `Credential` as a DID.
 
 ### Errors
@@ -1324,119 +1384,6 @@ Fails if the issuer field is not a valid DID.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 
-<a name="DID"></a>
-
-## DID
-**Kind**: global class  
-
-* [DID](#DID)
-    * [new DID(public_key, network)](#new_DID_new)
-    * _instance_
-        * [.networkName](#DID+networkName) ⇒ <code>string</code>
-        * [.network()](#DID+network) ⇒ [<code>Network</code>](#Network)
-        * [.tag()](#DID+tag) ⇒ <code>string</code>
-        * [.join(segment)](#DID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.toUrl()](#DID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.toString()](#DID+toString) ⇒ <code>string</code>
-        * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
-        * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
-    * _static_
-        * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
-        * [.fromJSON(json)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
-
-<a name="new_DID_new"></a>
-
-### new DID(public_key, network)
-Creates a new `DID` from a public key.
-
-
-| Param | Type |
-| --- | --- |
-| public_key | <code>Uint8Array</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
-<a name="DID+networkName"></a>
-
-### did.networkName ⇒ <code>string</code>
-Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)  
-<a name="DID+network"></a>
-
-### did.network() ⇒ [<code>Network</code>](#Network)
-Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+tag"></a>
-
-### did.tag() ⇒ <code>string</code>
-Returns a copy of the unique tag of the `DID`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+join"></a>
-
-### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Construct a new `DIDUrl` by joining with a relative DID Url string.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| segment | <code>string</code> | 
-
-<a name="DID+toUrl"></a>
-
-### did.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Clones the `DID` into a `DIDUrl`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+intoUrl"></a>
-
-### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Converts the `DID` into a `DIDUrl`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+toString"></a>
-
-### did.toString() ⇒ <code>string</code>
-Returns the `DID` as a string.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+toJSON"></a>
-
-### did.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+clone"></a>
-
-### did.clone() ⇒ [<code>DID</code>](#DID)
-Deep clones the object.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID.parse"></a>
-
-### DID.parse(input) ⇒ [<code>DID</code>](#DID)
-Parses a `DID` from the input string.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="DID.fromJSON"></a>
-
-### DID.fromJSON(json) ⇒ [<code>DID</code>](#DID)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="DIDUrl"></a>
 
 ## DIDUrl
@@ -1444,7 +1391,7 @@ Deserializes an instance from a JSON object.
 
 * [DIDUrl](#DIDUrl)
     * _instance_
-        * [.did()](#DIDUrl+did) ⇒ [<code>DID</code>](#DID)
+        * [.did()](#DIDUrl+did) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.urlStr()](#DIDUrl+urlStr) ⇒ <code>string</code>
         * [.fragment()](#DIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
         * [.setFragment(value)](#DIDUrl+setFragment)
@@ -1462,7 +1409,7 @@ Deserializes an instance from a JSON object.
 
 <a name="DIDUrl+did"></a>
 
-### didUrl.did() ⇒ [<code>DID</code>](#DID)
+### didUrl.did() ⇒ [<code>IotaDID</code>](#IotaDID)
 Return a copy of the `DID` section of the `DIDUrl`.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
@@ -1641,8 +1588,8 @@ Defines the difference between two DID `Document`s' JSON representations.
 
 * ~~[DiffMessage](#DiffMessage)~~
     * _instance_
-        * ~~[.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)~~
-        * ~~[.did()](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)~~
+        * ~~[.id()](#DiffMessage+id) ⇒ [<code>IotaDID</code>](#IotaDID)~~
+        * ~~[.did()](#DiffMessage+did) ⇒ [<code>IotaDID</code>](#IotaDID)~~
         * ~~[.diff()](#DiffMessage+diff) ⇒ <code>string</code>~~
         * ~~[.messageId()](#DiffMessage+messageId) ⇒ <code>string</code>~~
         * ~~[.setMessageId(message_id)](#DiffMessage+setMessageId)~~
@@ -1657,7 +1604,7 @@ Defines the difference between two DID `Document`s' JSON representations.
 
 <a name="DiffMessage+id"></a>
 
-### ~~diffMessage.id() ⇒ [<code>DID</code>](#DID)~~
+### ~~diffMessage.id() ⇒ [<code>IotaDID</code>](#IotaDID)~~
 ***Deprecated***
 
 Returns the DID of the associated DID Document.
@@ -1667,7 +1614,7 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+did"></a>
 
-### ~~diffMessage.did() ⇒ [<code>DID</code>](#DID)~~
+### ~~diffMessage.did() ⇒ [<code>IotaDID</code>](#IotaDID)~~
 ***Deprecated***
 
 Returns a copy of the DID of the associated DID Document.
@@ -1776,9 +1723,9 @@ Deserializes an instance from a JSON object.
 * [Document](#Document)
     * [new Document(keypair, network, fragment)](#new_Document_new)
     * _instance_
-        * [.id()](#Document+id) ⇒ [<code>DID</code>](#DID)
+        * [.id()](#Document+id) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.setController(controllers)](#Document+setController)
-        * [.controller()](#Document+controller) ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+        * [.controller()](#Document+controller) ⇒ <code>Array.&lt;DID&gt;</code>
         * [.setAlsoKnownAs(urls)](#Document+setAlsoKnownAs)
         * [.alsoKnownAs()](#Document+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setPropertyUnchecked(key, value)](#Document+setPropertyUnchecked)
@@ -1853,7 +1800,7 @@ Arguments:
 
 <a name="Document+id"></a>
 
-### document.id() ⇒ [<code>DID</code>](#DID)
+### document.id() ⇒ [<code>IotaDID</code>](#IotaDID)
 Returns a copy of the DID Document `id`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1869,11 +1816,11 @@ Use `null` to remove all controllers.
 
 | Param | Type |
 | --- | --- |
-| controllers | [<code>DID</code>](#DID) \| [<code>Array.&lt;DID&gt;</code>](#DID) \| <code>null</code> | 
+| controllers | <code>DID</code> \| <code>Array.&lt;DID&gt;</code> \| <code>null</code> | 
 
 <a name="Document+controller"></a>
 
-### document.controller() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+### document.controller() ⇒ <code>Array.&lt;DID&gt;</code>
 Returns a list of document controllers.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -2830,7 +2777,7 @@ E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>string</code> | 
 
 <a name="ExplorerUrl+toString"></a>
 
@@ -2920,6 +2867,119 @@ Serializes as a JSON object.
 Deserializes from a JSON object.
 
 **Kind**: static method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="IotaDID"></a>
+
+## IotaDID
+**Kind**: global class  
+
+* [IotaDID](#IotaDID)
+    * [new IotaDID(public_key, network)](#new_IotaDID_new)
+    * _instance_
+        * [.networkName](#IotaDID+networkName) ⇒ <code>string</code>
+        * [.network()](#IotaDID+network) ⇒ [<code>Network</code>](#Network)
+        * [.tag()](#IotaDID+tag) ⇒ <code>string</code>
+        * [.join(segment)](#IotaDID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.toUrl()](#IotaDID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.intoUrl()](#IotaDID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.toString()](#IotaDID+toString) ⇒ <code>string</code>
+        * [.toJSON()](#IotaDID+toJSON) ⇒ <code>any</code>
+        * [.clone()](#IotaDID+clone) ⇒ [<code>IotaDID</code>](#IotaDID)
+    * _static_
+        * [.parse(input)](#IotaDID.parse) ⇒ [<code>IotaDID</code>](#IotaDID)
+        * [.fromJSON(json)](#IotaDID.fromJSON) ⇒ [<code>IotaDID</code>](#IotaDID)
+
+<a name="new_IotaDID_new"></a>
+
+### new IotaDID(public_key, network)
+Creates a new `DID` from a public key.
+
+
+| Param | Type |
+| --- | --- |
+| public_key | <code>Uint8Array</code> | 
+| network | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IotaDID+networkName"></a>
+
+### did.networkName ⇒ <code>string</code>
+Returns the IOTA tangle network of the `DID`.
+
+**Kind**: instance property of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+network"></a>
+
+### did.network() ⇒ [<code>Network</code>](#Network)
+Returns the IOTA tangle network of the `DID`.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+tag"></a>
+
+### did.tag() ⇒ <code>string</code>
+Returns a copy of the unique tag of the `DID`.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+join"></a>
+
+### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Construct a new `DIDUrl` by joining with a relative DID Url string.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="IotaDID+toUrl"></a>
+
+### did.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Clones the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+intoUrl"></a>
+
+### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Converts the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toString"></a>
+
+### did.toString() ⇒ <code>string</code>
+Returns the `DID` as a string.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toJSON"></a>
+
+### did.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+clone"></a>
+
+### did.clone() ⇒ [<code>IotaDID</code>](#IotaDID)
+Deep clones the object.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID.parse"></a>
+
+### IotaDID.parse(input) ⇒ [<code>IotaDID</code>](#IotaDID)
+Parses a `DID` from the input string.
+
+**Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="IotaDID.fromJSON"></a>
+
+### IotaDID.fromJSON(json) ⇒ [<code>IotaDID</code>](#IotaDID)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
 
 | Param | Type |
 | --- | --- |
@@ -3675,7 +3735,7 @@ Deserializes an instance from a JSON object.
     * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
-    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>DID</code>](#DID)
+    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>IotaDID</code>](#IotaDID)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -3750,7 +3810,7 @@ Validates the semantic structure of the `Presentation`.
 
 <a name="PresentationValidator.extractHolder"></a>
 
-### PresentationValidator.extractHolder(presentation) ⇒ [<code>DID</code>](#DID)
+### PresentationValidator.extractHolder(presentation) ⇒ [<code>IotaDID</code>](#IotaDID)
 Utility for extracting the holder field of a `Presentation` as a DID.
 
 ### Errors
@@ -4202,7 +4262,7 @@ Fetches the `Document` of the given `DID`.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>string</code> | 
 
 <a name="Resolver+resolveHistory"></a>
 
@@ -4213,7 +4273,7 @@ Fetches the `DocumentHistory` of the given `DID`.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>string</code> | 
 
 <a name="Resolver+resolveDiffHistory"></a>
 
@@ -4776,7 +4836,7 @@ Deserializes an instance from a JSON object.
     * [new VerificationMethod(did, key_type, public_key, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.controller()](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
+        * [.controller()](#VerificationMethod+controller) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.SetController(did)](#VerificationMethod+SetController)
         * [.type()](#VerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
         * [.data()](#VerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
@@ -4793,7 +4853,7 @@ Creates a new `VerificationMethod` object from the given `did` and public key.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) | 
+| did | [<code>IotaDID</code>](#IotaDID) | 
 | key_type | <code>number</code> | 
 | public_key | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 
@@ -4806,7 +4866,7 @@ Returns a copy of the `id` `DIDUrl` of the `VerificationMethod` object.
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+controller"></a>
 
-### verificationMethod.controller() ⇒ [<code>DID</code>](#DID)
+### verificationMethod.controller() ⇒ [<code>IotaDID</code>](#IotaDID)
 Returns a copy of the `controller` `DID` of the `VerificationMethod` object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -4819,7 +4879,7 @@ Sets the `controller` `DID` of the `VerificationMethod` object.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) | 
+| did | [<code>IotaDID</code>](#IotaDID) | 
 
 <a name="VerificationMethod+type"></a>
 
@@ -5061,13 +5121,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

@@ -49,7 +49,7 @@ async fn test_mutate_client_persists_client_into_snapshot() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
 
   stronghold
-    .mutate_client(&did, |client| {
+    .mutate_client(&did.clone().into(), |client| {
       let vault: ClientVault = client.vault(b"vault");
 
       vault
@@ -83,7 +83,7 @@ async fn test_incorrect_password_returns_error() {
   let location: &KeyLocation = &random_key_location();
 
   stronghold
-    .mutate_client(&did, |client| {
+    .mutate_client(&did.into(), |client| {
       client
         .execute_procedure(GenerateKey {
           ty: procedures::KeyType::Ed25519,

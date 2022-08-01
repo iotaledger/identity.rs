@@ -51,5 +51,8 @@
   },
   "peerDependencies": {
     "@iota/identity-wasm": "0.6.0"
+  },
+  "dependencies": {
+    "@iota/identity-stronghold-nodejs": "^0.6.0"
   }
 }

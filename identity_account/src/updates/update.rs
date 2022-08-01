@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_did::did::CoreDID;
 use log::debug;
 use log::trace;
 
@@ -55,7 +56,7 @@ pub(crate) async fn create_identity(
   let public_key: PublicKey = store.key_public(&did, &location).await?;
 
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
+    IotaVerificationMethod::new(did.clone().try_into()?, KeyType::Ed25519, &public_key, fragment)?;
 
   let document = IotaDocument::from_verification_method(method)?;
 
@@ -119,16 +120,15 @@ impl Update {
 
         // Generate or extract the private key and/or retrieve the public key.
         let key_type: KeyType = content.key_type();
-
         let public: PublicKey = match content {
           MethodContent::GenerateEd25519 | MethodContent::GenerateX25519 => {
-            let location: KeyLocation = storage.key_generate(did, key_type, fragment.name()).await?;
-            storage.key_public(did, &location).await?
+            let location: KeyLocation = storage.key_generate(did.as_ref(), key_type, fragment.name()).await?;
+            storage.key_public(did.as_ref(), &location).await?
           }
           MethodContent::PrivateEd25519(private_key) | MethodContent::PrivateX25519(private_key) => {
             let location: KeyLocation =
-              insert_method_secret(storage, did, key_type, fragment.name(), private_key).await?;
-            storage.key_public(did, &location).await?
+              insert_method_secret(storage, did.as_ref(), key_type, fragment.name(), private_key).await?;
+            storage.key_public(did.as_ref(), &location).await?
           }
           MethodContent::PublicEd25519(public_key) => public_key,
           MethodContent::PublicX25519(public_key) => public_key,
@@ -248,7 +248,7 @@ impl Update {
 
 async fn insert_method_secret(
   store: &dyn Storage,
-  did: &IotaDID,
+  did: &CoreDID,
   key_type: KeyType,
   fragment: &str,
   private_key: PrivateKey,

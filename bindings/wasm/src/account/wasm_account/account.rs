@@ -35,8 +35,8 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::PromiseResolvedDocument;
-use crate::did::WasmDID;
 use crate::did::WasmDocument;
+use crate::did::WasmIotaDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -54,8 +54,8 @@ pub struct WasmAccount(pub(crate) Rc<RefCell<AccountRc>>);
 impl WasmAccount {
   /// Returns the {@link DID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
-  pub fn did(&self) -> WasmDID {
-    WasmDID::from(self.0.borrow().did().clone())
+  pub fn did(&self) -> WasmIotaDID {
+    WasmIotaDID::from(self.0.borrow().did().clone())
   }
 
   /// Returns whether auto-publish is enabled.

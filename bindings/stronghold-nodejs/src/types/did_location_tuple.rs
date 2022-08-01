@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_account_storage::types::KeyLocation;
-use identity_iota_core::did::IotaDID;
+use identity_did::did::CoreDID;
 use napi::Result;
 use napi_derive::napi;
 
 use crate::error::NapiResult;
-use crate::types::NapiDid;
+use crate::types::NapiCoreDid;
 use crate::types::NapiKeyLocation;
 
 /// Workaround for lack of tuple support in Napi.
 #[derive(serde::Serialize, serde::Deserialize)]
 struct DIDLocation {
-  did: IotaDID,
+  did: CoreDID,
   location: KeyLocation,
 }
 
@@ -23,8 +23,8 @@ pub struct NapiDidLocation(DIDLocation);
 #[napi]
 impl NapiDidLocation {
   #[napi]
-  pub fn did(&self) -> NapiDid {
-    NapiDid(self.0.did.clone())
+  pub fn did(&self) -> NapiCoreDid {
+    NapiCoreDid(self.0.did.clone())
   }
 
   #[napi(js_name = keyLocation)]
@@ -45,8 +45,8 @@ impl NapiDidLocation {
   }
 }
 
-impl From<(IotaDID, KeyLocation)> for NapiDidLocation {
-  fn from(tuple: (IotaDID, KeyLocation)) -> Self {
+impl From<(CoreDID, KeyLocation)> for NapiDidLocation {
+  fn from(tuple: (CoreDID, KeyLocation)) -> Self {
     Self(DIDLocation {
       did: tuple.0,
       location: tuple.1,

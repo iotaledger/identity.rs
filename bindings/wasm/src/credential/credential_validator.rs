@@ -15,7 +15,7 @@ use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
 use crate::did::ArrayDocumentOrResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
-use crate::did::WasmDID;
+use crate::did::WasmIotaDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -139,8 +139,8 @@ impl WasmCredentialValidator {
   ///
   /// Fails if the issuer field is not a valid DID.
   #[wasm_bindgen(js_name = extractIssuer)]
-  pub fn extract_issuer(credential: &WasmCredential) -> Result<WasmDID> {
+  pub fn extract_issuer(credential: &WasmCredential) -> Result<WasmIotaDID> {
     let did: IotaDID = CredentialValidator::extract_issuer(&credential.0).wasm_result()?;
-    Ok(WasmDID::from(did))
+    Ok(WasmIotaDID::from(did))
   }
 }

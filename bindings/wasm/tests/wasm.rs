@@ -13,7 +13,7 @@ use wasm_bindgen_test::*;
 use identity_wasm::common::WasmTimestamp;
 use identity_wasm::crypto::WasmKeyPair;
 use identity_wasm::crypto::WasmKeyType;
-use identity_wasm::did::WasmDID;
+use identity_wasm::did::WasmIotaDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
 use identity_wasm::did::WasmMethodScope;
@@ -49,15 +49,15 @@ fn test_js_error_from_wasm_error() {
 #[wasm_bindgen_test]
 fn test_did() {
   let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let did = WasmDID::new(&key.public(), None).unwrap();
+  let did = WasmIotaDID::new(&key.public(), None).unwrap();
 
   assert_eq!(did.network_name(), "main");
 
-  let parsed = WasmDID::parse(&did.to_string()).unwrap();
+  let parsed = WasmIotaDID::parse(&did.to_string()).unwrap();
 
   assert_eq!(did.to_string(), parsed.to_string());
 
-  let base58 = WasmDID::new(&key.public(), Some("dev".to_owned())).unwrap();
+  let base58 = WasmIotaDID::new(&key.public(), Some("dev".to_owned())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network_name(), "dev");
@@ -67,7 +67,7 @@ fn test_did() {
 fn test_did_url() {
   // Base DID Url
   let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let did = WasmDID::new(&key.public(), None).unwrap();
+  let did = WasmIotaDID::new(&key.public(), None).unwrap();
   let did_url = did.to_url();
 
   assert_eq!(did.to_string(), did_url.to_string());
@@ -272,7 +272,7 @@ fn test_did_serde() {
 
   // Check WasmDID deserialization.
   {
-    let wasm_did: WasmDID = WasmDID::from(expected.clone());
+    let wasm_did: WasmIotaDID = WasmIotaDID::from(expected.clone());
     let de: IotaDID = wasm_did.to_json().unwrap().into_serde().unwrap();
     assert_eq!(de, expected);
   }

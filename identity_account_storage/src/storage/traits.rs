@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_iota_core::did::IotaDID;
+use identity_did::did::CoreDID;
 use identity_iota_core::tangle::NetworkName;
 
 use crate::error::Result;
@@ -82,45 +82,45 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,
-  ) -> Result<(IotaDID, KeyLocation)>;
+  ) -> Result<(CoreDID, KeyLocation)>;
 
   /// Removes the keys and any other state for the given `did`.
   ///
   /// This operation is idempotent: it does not fail if the given `did` does not (or no longer) exist.
   ///
   /// Returns `true` if the did and its associated data was removed, `false` if nothing was done.
-  async fn did_purge(&self, did: &IotaDID) -> Result<bool>;
+  async fn did_purge(&self, did: &CoreDID) -> Result<bool>;
 
   /// Returns `true` if `did` exists in the list of stored DIDs.
-  async fn did_exists(&self, did: &IotaDID) -> Result<bool>;
+  async fn did_exists(&self, did: &CoreDID) -> Result<bool>;
 
   /// Returns the list of stored DIDs.
-  async fn did_list(&self) -> Result<Vec<IotaDID>>;
+  async fn did_list(&self) -> Result<Vec<CoreDID>>;
 
   /// Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
   /// and returns the location of the newly generated key.
-  async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation>;
+  async fn key_generate(&self, did: &CoreDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation>;
 
   /// Inserts a private key at the specified `location`.
   ///
   /// If a key at `location` exists, it is overwritten.
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
+  async fn key_insert(&self, did: &CoreDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
 
   /// Retrieves the public key from `location`.
-  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
+  async fn key_public(&self, did: &CoreDID, location: &KeyLocation) -> Result<PublicKey>;
 
   /// Deletes the key at `location`.
   ///
   /// This operation is idempotent: it does not fail if the key does not exist.
   ///
   /// Returns `true` if it removed the key, `false` if nothing was done.
-  async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
+  async fn key_delete(&self, did: &CoreDID, location: &KeyLocation) -> Result<bool>;
 
   /// Signs `data` with the private key at the specified `location`.
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
+  async fn key_sign(&self, did: &CoreDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
 
   /// Returns `true` if a key exists at the specified `location`.
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
+  async fn key_exists(&self, did: &CoreDID, location: &KeyLocation) -> Result<bool>;
 
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
@@ -128,7 +128,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   #[cfg(feature = "encryption")]
   async fn data_encrypt(
     &self,
-    did: &IotaDID,
+    did: &CoreDID,
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: &EncryptionAlgorithm,
@@ -142,7 +142,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   #[cfg(feature = "encryption")]
   async fn data_decrypt(
     &self,
-    did: &IotaDID,
+    did: &CoreDID,
     data: EncryptedData,
     encryption_algorithm: &EncryptionAlgorithm,
     cek_algorithm: &CekAlgorithm,
@@ -150,10 +150,10 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   ) -> Result<Vec<u8>>;
 
   /// Stores an arbitrary blob for the identity specified by `did`.
-  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> Result<()>;
+  async fn blob_set(&self, did: &CoreDID, blob: Vec<u8>) -> Result<()>;
 
   /// Returns the blob stored by the identity specified by `did`.
-  async fn blob_get(&self, did: &IotaDID) -> Result<Option<Vec<u8>>>;
+  async fn blob_get(&self, did: &CoreDID) -> Result<Option<Vec<u8>>>;
 
   /// Persists any unsaved changes.
   async fn flush_changes(&self) -> Result<()>;

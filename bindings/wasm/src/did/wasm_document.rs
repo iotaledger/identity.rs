@@ -34,10 +34,10 @@ use crate::crypto::WasmProof;
 use crate::crypto::WasmProofOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::RefMethodScope;
-use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
+use crate::did::WasmIotaDID;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
 use crate::did::WasmService;
@@ -99,8 +99,8 @@ impl WasmDocument {
 
   /// Returns a copy of the DID Document `id`.
   #[wasm_bindgen]
-  pub fn id(&self) -> WasmDID {
-    WasmDID(self.0.id().clone())
+  pub fn id(&self) -> WasmIotaDID {
+    WasmIotaDID(self.0.id().clone())
   }
 
   /// Sets the controllers of the DID Document.
@@ -130,7 +130,7 @@ impl WasmDocument {
       Some(controllers) => controllers
         .iter()
         .cloned()
-        .map(WasmDID::from)
+        .map(WasmIotaDID::from)
         .map(JsValue::from)
         .collect::<js_sys::Array>()
         .unchecked_into::<ArrayDID>(),
