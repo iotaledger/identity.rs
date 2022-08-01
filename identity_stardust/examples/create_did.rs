@@ -49,7 +49,7 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
   let alias_output: AliasOutput = client.new_did(address, document, None).await?;
 
   // Publish the output and get the published document.
-  let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await?;
+  let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
 
   println!("Published DID document: {:#?}", document);
 

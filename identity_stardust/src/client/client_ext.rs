@@ -100,7 +100,11 @@ pub trait StardustClientExt: Sync {
   /// and returns the block they were published in.
   ///
   /// This method modifies the on-ledger state.
-  async fn publish_did(&self, secret_manager: &SecretManager, alias_output: AliasOutput) -> Result<StardustDocument> {
+  async fn publish_did_output(
+    &self,
+    secret_manager: &SecretManager,
+    alias_output: AliasOutput,
+  ) -> Result<StardustDocument> {
     let block: Block = self
       .client()
       .block()
@@ -409,7 +413,7 @@ mod tests {
 
     let output = client.new_did(address, document, None).await.unwrap();
 
-    let document = client.publish_did(&secret_manager, output).await.unwrap();
+    let document = client.publish_did_output(&secret_manager, output).await.unwrap();
 
     let resolved = client.resolve(document.id()).await.unwrap();
 
@@ -428,7 +432,7 @@ mod tests {
       .await
       .unwrap();
 
-    let mut document = client.publish_did(&secret_manager, output).await.unwrap();
+    let mut document = client.publish_did_output(&secret_manager, output).await.unwrap();
 
     let method_url = document
       .resolve_method("#key-1", Some(MethodScope::VerificationMethod))
@@ -452,7 +456,7 @@ mod tests {
       .finish()
       .unwrap();
 
-    let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await.unwrap();
+    let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await.unwrap();
 
     let resolved = client.resolve(document.id()).await.unwrap();
 
@@ -472,7 +476,7 @@ mod tests {
 
     let output = client.new_did(address, initial_document, None).await.unwrap();
 
-    let document: StardustDocument = client.publish_did(&secret_manager, output).await.unwrap();
+    let document: StardustDocument = client.publish_did_output(&secret_manager, output).await.unwrap();
 
     client
       .delete_did(&secret_manager, address, document.id())

@@ -37,7 +37,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the output.
-  let document: StardustDocument = client.publish_did(&secret_manager, alias_output).await?;
+  let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
 
   println!("Published updated DID Document: {:#?}", document);
 
