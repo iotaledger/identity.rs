@@ -8,6 +8,8 @@ use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
 use crate::crypto::key::ed25519::ed25519_private_try_from_bytes;
+use crate::crypto::key::secp256k1::secp256k1_private_try_from_bytes;
+use crate::crypto::key::secp256k1::Secp256k1;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
@@ -46,6 +48,16 @@ impl KeyPair {
         let public: PublicKey = public.to_bytes().to_vec().into();
         (public, private)
       }
+      KeyType::Secp256k1 => {
+        let mut bs = [0u8; Secp256k1::PRIVATE_KEY_LENGTH];
+        crypto::utils::rand::fill(&mut bs)?;
+        let sk: libsecp256k1::SecretKey = secp256k1_private_try_from_bytes(&bs)?;
+        let pk: libsecp256k1::PublicKey = libsecp256k1::PublicKey::from_secret_key(&sk);
+
+        let private: PrivateKey = sk.serialize().to_vec().into();
+        let public: PublicKey = pk.serialize_compressed().to_vec().into();
+        (public, private)
+      }
     };
 
     Ok(Self { type_, public, private })
@@ -75,6 +87,14 @@ impl KeyPair {
 
         let private: PrivateKey = private_key.to_bytes().to_vec().into();
         let public: PublicKey = public_key.to_bytes().to_vec().into();
+        (public, private)
+      }
+      KeyType::Secp256k1 => {
+        let sk: libsecp256k1::SecretKey = secp256k1_private_try_from_bytes(&private_key_bytes)?;
+        let pk: libsecp256k1::PublicKey = libsecp256k1::PublicKey::from_secret_key(&sk);
+
+        let private: PrivateKey = sk.serialize().to_vec().into();
+        let public: PublicKey = pk.serialize_compressed().to_vec().into();
         (public, private)
       }
     };
@@ -147,8 +167,16 @@ mod tests {
   }
 
   #[test]
+  fn test_new_secp256k1() {
+    let keypair: KeyPair = KeyPair::new(KeyType::Secp256k1).unwrap();
+    assert_eq!(keypair.type_(), KeyType::Secp256k1);
+    assert_eq!(keypair.public().as_ref().len(), 33);
+    assert_eq!(keypair.private().as_ref().len(), 32);
+  }
+
+  #[test]
   fn test_try_from_private_key_bytes() {
-    for key_type in [KeyType::Ed25519, KeyType::X25519] {
+    for key_type in [KeyType::Ed25519, KeyType::X25519, KeyType::Secp256k1] {
       let keypair: KeyPair = KeyPair::new(key_type).unwrap();
       let reconstructed: KeyPair = KeyPair::try_from_private_key_bytes(key_type, keypair.private.as_ref()).unwrap();
       assert_eq!(keypair.private.as_ref(), reconstructed.private.as_ref());

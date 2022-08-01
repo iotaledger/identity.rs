@@ -18,6 +18,8 @@ pub enum KeyType {
   Ed25519,
   /// An `X25519` cryptographic key.
   X25519,
+  /// An `Secp256k1` cryptographic key.
+  Secp256k1,
 }
 
 impl KeyType {
@@ -26,6 +28,7 @@ impl KeyType {
     match self {
       Self::Ed25519 => "Ed25519",
       Self::X25519 => "X25519",
+      Self::Secp256k1 => "Secp256k1",
     }
   }
 }
@@ -34,12 +37,14 @@ impl FromStr for KeyType {
   type Err = Error;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
-    if string.eq_ignore_ascii_case("Ed25519") {
+    if string.eq_ignore_ascii_case(Self::Ed25519.as_str()) {
       Ok(Self::Ed25519)
-    } else if string.eq_ignore_ascii_case("X25519") {
+    } else if string.eq_ignore_ascii_case(Self::X25519.as_str()) {
       Ok(Self::X25519)
+    } else if string.eq_ignore_ascii_case(Self::Secp256k1.as_str()) {
+      Ok(Self::Secp256k1)
     } else {
-      Err(Error::InvalidKeyFormat)
+      Err(Error::InvalidKeyFormat(format!("unrecognised KeyType - '{string}'")))
     }
   }
 }
@@ -58,7 +63,7 @@ mod tests {
 
   #[test]
   fn test_key_type_serde() {
-    for key_type in [KeyType::Ed25519, KeyType::X25519] {
+    for key_type in [KeyType::Ed25519, KeyType::X25519, KeyType::Secp256k1] {
       let ser: Value = serde_json::to_value(&key_type).unwrap();
       assert_eq!(ser.as_str().unwrap(), key_type.as_str());
       let de: KeyType = serde_json::from_value(ser.clone()).unwrap();
