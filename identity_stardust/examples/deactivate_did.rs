@@ -13,26 +13,20 @@ mod create_did;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
-  let (client, address, secret_manager, document): (Client, Address, SecretManager, StardustDocument) =
+  let (client, _, secret_manager, document): (Client, Address, SecretManager, StardustDocument) =
     create_did::run().await?;
 
-  // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.
-  // This operation is *not* reversible.
-  // Deletion can only be done by the governor of the Alias Output.
-  client
-    .delete_did_output(&secret_manager, address, document.id())
-    .await?;
+  // Deactivate the DID by publishing an empty document.
+  // This process can be reversed since the Alias Output is not destroyed.
+  client.deactivate_did_output(&secret_manager, document.id()).await?;
 
   // Wait for the node to index the new state.
   tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
-  // Attempting to resolve a delete DID results in a `NotFound` error.
+  // Attempting to resolve a deactivated DID results in a `DeactivatedDID` error.
   let error = client.resolve(document.id()).await.unwrap_err();
 
-  assert!(matches!(
-    error,
-    identity_stardust::Error::ClientError(iota_client::Error::NotFound)
-  ));
+  assert!(matches!(error, identity_stardust::Error::DeactivatedDID(_)));
 
   Ok(())
 }

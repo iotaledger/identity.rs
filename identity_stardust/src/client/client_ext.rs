@@ -47,7 +47,7 @@ pub trait StardustClientExt: Sync {
   /// `rent_structure`, which will be fetched from the node if not provided.
   /// The returned Alias Output can be further customized before publication, if desired.
   ///
-  /// NOTE: this does *not* publish the Alias Output. See [publish_did](StardustClientExt::publish_did).
+  /// NOTE: this does *not* publish the Alias Output. See [`publish_did_output`](StardustClientExt::publish_did_output).
   async fn new_did(
     &self,
     address: Address,
@@ -82,7 +82,7 @@ pub trait StardustClientExt: Sync {
   /// Returns the updated Alias Output for further customization and publication. The storage deposit
   /// on the output is unchanged. If the size of the document increased, the amount has to be increased.
   ///
-  /// This method does not modify the on-ledger state.
+  /// NOTE: this does *not* publish the Alias Output. See [`publish_did_output`](StardustClientExt::publish_did_output).
   async fn update_did(&self, document: StardustDocument) -> Result<AliasOutput> {
     let (alias_id, _, alias_output) = resolve_alias_output(self.client(), document.id()).await?;
 
@@ -97,8 +97,34 @@ pub trait StardustClientExt: Sync {
     alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
+  /// Resolves the Alias Output associated to the `did`, removes the DID document,
+  /// and publishes the output. This effectively deactivates the DID.
+  /// Deactivating does not destroy the output. Hence, a deactivated DID can be
+  /// re-activated by updating the contained document.
+  ///
+  /// The storage deposit on the output is left unchanged.
+  async fn deactivate_did_output(&self, secret_manager: &SecretManager, did: &StardustDID) -> Result<()> {
+    let (alias_id, _, alias_output) = resolve_alias_output(self.client(), did).await?;
+
+    let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
+      .with_state_index(alias_output.state_index() + 1)
+      .with_state_metadata(Vec::new());
+
+    if alias_output.alias_id().is_null() {
+      alias_output_builder = alias_output_builder.with_alias_id(alias_id);
+    }
+
+    let alias_output: AliasOutput = alias_output_builder.finish().map_err(Error::AliasOutputBuildError)?;
+
+    let _ = publish_output(self.client(), secret_manager, alias_output).await?;
+
+    Ok(())
+  }
+
   /// Publish the given `alias_outputs` with the provided `secret_manager`
   /// and returns the block they were published in.
+  ///
+  /// Needs to be called by the state controller of the Alias Output.
   ///
   /// This method modifies the on-ledger state.
   async fn publish_did_output(
@@ -106,21 +132,7 @@ pub trait StardustClientExt: Sync {
     secret_manager: &SecretManager,
     alias_output: AliasOutput,
   ) -> Result<StardustDocument> {
-    let block: Block = self
-      .client()
-      .block()
-      .with_secret_manager(secret_manager)
-      .with_outputs(vec![alias_output.into()])
-      .map_err(Error::ClientError)?
-      .finish()
-      .await
-      .map_err(Error::ClientError)?;
-
-    let _ = self
-      .client()
-      .retry_until_included(&block.id(), None, None)
-      .await
-      .map_err(Error::ClientError)?;
+    let block: Block = publish_output(self.client(), secret_manager, alias_output).await?;
 
     Ok(
       documents_from_block(self.client(), &block)
@@ -132,12 +144,12 @@ pub trait StardustClientExt: Sync {
   }
 
   /// Consume the Alias Output containing the given `did`, sending its tokens to a new Basic Output
-  /// unlockable by `address`.
+  /// unlockable by `address`. May only be called by the governor address of the Alias Output.
   ///
   /// # WARNING
   ///
-  /// This destroys the DID Document and the Alias Output and renders the DID permanently unrecoverable.
-  async fn delete_did(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
+  /// This destroys the DID Document and the Alias Output, and renders the DID permanently unrecoverable.
+  async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
     let client: &Client = self.client();
 
     let (_, output_id, alias_output) = resolve_alias_output(client, did).await?;
@@ -161,9 +173,10 @@ pub trait StardustClientExt: Sync {
   ///
   /// # Errors
   ///
-  /// Returns an [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output wasn't found.
+  /// - Returns an [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output wasn't found.
+  /// - Returns a [`DeactivatedDID`](Error::DeactivatedDID) error if the Alias Output's state metadata is empty.
   async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
-    // TODO: Replace usage of HRP with network_id -> network_name mapping?
+    // TODO: Replace usage of HRP with some better network naming approach.
     let network_hrp: String = get_network_hrp(self.client()).await?;
 
     if did.network_str() != network_hrp.as_str() {
@@ -175,7 +188,11 @@ pub trait StardustClientExt: Sync {
 
     let (_, _, alias_output) = resolve_alias_output(self.client(), did).await?;
 
-    StardustDocument::unpack_from_output(did, &alias_output)
+    if alias_output.state_metadata().is_empty() {
+      Err(Error::DeactivatedDID(did.to_owned()))
+    } else {
+      StardustDocument::unpack_from_output(did, &alias_output)
+    }
   }
 
   /// Returns the network name of the connected node, which is the BECH32 HRP of the network.
@@ -200,6 +217,24 @@ impl StardustClientExt for &Client {
   fn client(&self) -> &Client {
     self
   }
+}
+
+async fn publish_output(client: &Client, secret_manager: &SecretManager, alias_output: AliasOutput) -> Result<Block> {
+  let block: Block = client
+    .block()
+    .with_secret_manager(secret_manager)
+    .with_outputs(vec![alias_output.into()])
+    .map_err(Error::ClientError)?
+    .finish()
+    .await
+    .map_err(Error::ClientError)?;
+
+  let _ = client
+    .retry_until_included(&block.id(), None, None)
+    .await
+    .map_err(Error::ClientError)?;
+
+  Ok(block)
 }
 
 /// Get the BECH32 HRP from the client's network.
@@ -480,7 +515,7 @@ mod tests {
     let document: StardustDocument = client.publish_did_output(&secret_manager, output).await.unwrap();
 
     client
-      .delete_did(&secret_manager, address, document.id())
+      .delete_did_output(&secret_manager, address, document.id())
       .await
       .unwrap();
 
@@ -496,5 +531,37 @@ mod tests {
     let balance: u64 = get_address_balance(&client, &address_bech32).await;
 
     assert_eq!(initial_balance, balance);
+  }
+
+  #[tokio::test]
+  async fn test_client_deactivate_and_reactivate() {
+    let client: Client = client();
+
+    let (address, secret_manager) = get_address_with_funds(&client).await;
+
+    let initial_document = generate_document(&valid_did());
+
+    let output = client.new_did(address, initial_document, None).await.unwrap();
+
+    let document: StardustDocument = client.publish_did_output(&secret_manager, output).await.unwrap();
+
+    client
+      .deactivate_did_output(&secret_manager, document.id())
+      .await
+      .unwrap();
+
+    // It takes time for the deactivation to propagate.
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+
+    let error = client.resolve(document.id()).await.unwrap_err();
+
+    assert!(matches!(error, crate::Error::DeactivatedDID(_)));
+
+    let did = document.id().to_owned();
+    // Re-activate DID.
+    let alias_output = client.update_did(document).await.unwrap();
+    client.publish_did_output(&secret_manager, alias_output).await.unwrap();
+
+    client.resolve(&did).await.unwrap();
   }
 }
