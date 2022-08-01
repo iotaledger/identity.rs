@@ -246,7 +246,7 @@ mod stardust_did_iota_client {
     }
   }
 
-  // helper function to get the output id for the first alias output
+  // helper function to get the output id for the first Alias Output
   // TODO: improve error handling
   fn get_alias_output_id_from_payload(payload: &Payload) -> crate::Result<OutputId> {
     if let Payload::Transaction(tx_payload) = payload {

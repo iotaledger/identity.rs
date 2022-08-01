@@ -7,7 +7,7 @@ use iota_client::Client;
 
 mod create_did;
 
-/// Demonstrate how to resolve an existing DID in an alias output.
+/// Demonstrate how to resolve an existing DID in an Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   let (client, _, _, document): (Client, _, _, StardustDocument) = create_did::run().await?;

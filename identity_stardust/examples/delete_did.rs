@@ -9,10 +9,10 @@ use iota_client::Client;
 
 mod create_did;
 
-/// Demonstrate how to destroy an existing DID in an alias output, reclaiming the stored deposit.
+/// Demonstrate how to destroy an existing DID in an Alias Output, reclaiming the stored deposit.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // Create a new DID in an alias output for us to modify.
+  // Create a new DID in an Alias Output for us to modify.
   let (client, address, secret_manager, document): (Client, Address, SecretManager, StardustDocument) =
     create_did::run().await?;
 

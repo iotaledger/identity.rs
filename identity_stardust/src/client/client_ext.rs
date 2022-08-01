@@ -40,13 +40,14 @@ pub trait StardustClientExt: Sync {
   /// Returns a reference to a [`Client`].
   fn client(&self) -> &Client;
 
-  /// Create a new DID in an Alias Output from the given `document`.
+  /// Create a DID with a new Alias Output containing the given `document`.
   ///
-  /// The alias output's state and governance will be controlled by `address`.
+  /// The `address` will be set as the state controller and governor unlock conditions.
+  /// The minimum required token deposit amount will be set according to the given
+  /// `rent_structure`, which will be fetched from the node if not provided.
   /// The returned Alias Output can be further customized before publication, if desired.
-  /// If the `rent_structure` is not provided, it will be fetched from the node.
   ///
-  /// This method does not modify the on-ledger state.
+  /// NOTE: this does *not* publish the Alias Output. See [publish_did](StardustClientExt::publish_did).
   async fn new_did(
     &self,
     address: Address,
@@ -76,9 +77,9 @@ pub trait StardustClientExt: Sync {
       .map_err(Error::AliasOutputBuildError)
   }
 
-  /// Resolves the alias output associated to the DID in `document` and updates it with that document.
+  /// Resolves the Alias Output associated to the DID in `document` and updates it with that document.
   ///
-  /// Returns the updated alias output for further customization and publication. The storage deposit
+  /// Returns the updated Alias Output for further customization and publication. The storage deposit
   /// on the output is unchanged. If the size of the document increased, the amount has to be increased.
   ///
   /// This method does not modify the on-ledger state.
@@ -160,7 +161,7 @@ pub trait StardustClientExt: Sync {
   ///
   /// # Errors
   ///
-  /// Returns an [`NotFound`](iota_client::Error::NotFound) if the associated alias output wasn't found.
+  /// Returns an [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output wasn't found.
   async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
     // TODO: Replace usage of HRP with network_id -> network_name mapping?
     let network_hrp: String = get_network_hrp(self.client()).await?;
@@ -242,7 +243,7 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
   Ok(documents)
 }
 
-/// Resolve a did into an alias output and the associated identifiers.
+/// Resolve a did into an Alias Output and the associated identifiers.
 async fn resolve_alias_output(client: &Client, did: &StardustDID) -> Result<(AliasId, OutputId, AliasOutput)> {
   let alias_id: AliasId = AliasId::from_str(did.tag())?;
   let output_id: OutputId = client.alias_output_id(alias_id).await?;

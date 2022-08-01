@@ -32,20 +32,24 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
 
   // Create a new document with a placeholder DID and add a verification method.
   // The placeholder will be replaced during publication, since the DID is derived from the id of the output
-  // that creates the alias output.
+  // that creates the Alias Output.
   let mut document: StardustDocument = StardustDocument::new(&network_name);
 
+  // Create a new key pair that we'll use to create a verification method.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
+  // Create a new verification method based on the previously created key pair.
   let method: StardustVerificationMethod =
     StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
 
+  // Insert the method into the document.
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
   // Get an address with funds from the testnet faucet.
   let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
 
-  // Construct an alias output containing the `document` and whose state and governance is controlled by `address`.
+  // Construct an Alias Output containing the DID document, with `address` set as both the state controller and
+  // governor.
   let alias_output: AliasOutput = client.new_did(address, document, None).await?;
 
   // Publish the output and get the published document.
@@ -56,6 +60,7 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
   Ok((client, address, secret_manager, document))
 }
 
+/// Creates a new address and SecretManager with funds from the testnet faucet.
 async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, SecretManager)> {
   let keypair = identity_core::crypto::KeyPair::new(KeyType::Ed25519)?;
   let mnemonic =
@@ -71,6 +76,7 @@ async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, Sec
   Ok((address, secret_manager))
 }
 
+/// Requests funds from the testnet faucet for the given `address`.
 async fn request_faucet_funds(client: &Client, address: Address) -> anyhow::Result<()> {
   let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
 
@@ -92,6 +98,7 @@ async fn request_faucet_funds(client: &Client, address: Address) -> anyhow::Resu
   Ok(())
 }
 
+/// Returns the balance of the given bech32-encoded `address`.
 async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u64> {
   let output_ids = client
     .basic_output_ids(vec![
