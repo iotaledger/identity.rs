@@ -17,7 +17,7 @@ pub enum Error {
   DIDUpdateError(#[source] iota_client::error::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID resolution failed")]
-  ResolutionError(#[source] iota_client::error::Error),
+  DIDResolutionError(#[source] iota_client::error::Error),
   #[cfg(feature = "iota-client")]
   #[error("{0}")]
   BasicOutputBuildError(#[source] iota_client::block::Error),

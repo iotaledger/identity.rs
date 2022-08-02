@@ -22,10 +22,11 @@ use iota_client::Client;
 static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
-/// Demonstrate how to embed a DID Document in an Alias Output.
+/// Demonstrate how to create a DID Document and publish it in a new Alias Output.
 pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDocument)> {
   // Create a client and an address with funds from the testnet faucet.
   let client: Client = Client::builder().with_primary_node(ENDPOINT, None)?.finish()?;
+  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
 
   // Get the BECH32 HRP identifier of the network.
   let network_name: NetworkName = client.network_name().await?;
@@ -44,9 +45,6 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
 
   // Insert the method into the document.
   document.insert_method(method, MethodScope::VerificationMethod)?;
-
-  // Get an address with funds from the testnet faucet.
-  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
 
   // Construct an Alias Output containing the DID document, with `address` set as both the state controller and
   // governor.

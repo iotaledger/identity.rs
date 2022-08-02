@@ -3,6 +3,7 @@
 
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
+use iota_client::block::output::AliasOutput;
 use iota_client::Client;
 
 mod ex0_create_did;
@@ -18,6 +19,11 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(resolved_doc, document);
 
   println!("Resolved DID Document: {resolved_doc:#?}");
+
+  // We can also resolve the Alias Output directly.
+  let alias_output: AliasOutput = client.resolve_did_output(document.id()).await?;
+
+  println!("The Alias Output holds {} tokens", alias_output.amount());
 
   Ok(())
 }

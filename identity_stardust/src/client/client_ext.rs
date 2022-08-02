@@ -214,7 +214,7 @@ pub trait StardustClientExt: Sync {
 
     if alias_output.state_metadata().is_empty() {
       let mut empty_document: StardustDocument = StardustDocument::new_with_id(did.to_owned());
-      empty_document.metadata.deactivated = true;
+      empty_document.metadata.deactivated = Some(true);
 
       Ok(empty_document)
     } else {
@@ -229,7 +229,7 @@ pub trait StardustClientExt: Sync {
   ///
   /// - Returns a [`NetworkMismatch`](Error::NetworkMismatch) error if the DID's and the client's network do not match.
   /// - Returns a [`NotFound`](iota_client::Error::NotFound) error if the associated Alias Output wasn't found.
-  async fn resolve_alias_output(&self, did: &StardustDID) -> Result<AliasOutput> {
+  async fn resolve_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
     let network_hrp: String = get_network_hrp(self.client()).await?;
 
     if did.network_str() != network_hrp.as_str() {
@@ -290,7 +290,7 @@ async fn get_network_hrp(client: &Client) -> Result<String> {
   client
     .get_network_info()
     .await
-    .map_err(Error::ResolutionError)?
+    .map_err(Error::DIDResolutionError)?
     .bech32_hrp
     .ok_or_else(|| Error::InvalidNetworkName("".to_owned()))
 }
@@ -334,8 +334,11 @@ async fn resolve_alias_output(client: &Client, did: &StardustDID) -> Result<(Ali
   let tag_bytes: [u8; StardustDID::TAG_BYTES_LEN] =
     prefix_hex::decode(did.tag()).map_err(|_| DIDError::InvalidMethodId)?;
   let alias_id: AliasId = AliasId::new(tag_bytes);
-  let output_id: OutputId = client.alias_output_id(alias_id).await.map_err(Error::ResolutionError)?;
-  let output_response: OutputResponse = client.get_output(&output_id).await.map_err(Error::ResolutionError)?;
+  let output_id: OutputId = client
+    .alias_output_id(alias_id)
+    .await
+    .map_err(Error::DIDResolutionError)?;
+  let output_response: OutputResponse = client.get_output(&output_id).await.map_err(Error::DIDResolutionError)?;
   let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
 
   if let Output::Alias(alias_output) = output {
@@ -577,7 +580,7 @@ mod tests {
 
     let error = client.resolve_did(document.id()).await.unwrap_err();
 
-    assert!(matches!(error, Error::ResolutionError(iota_client::Error::NotFound)));
+    assert!(matches!(error, Error::DIDResolutionError(iota_client::Error::NotFound)));
 
     let balance: u64 = get_address_balance(&client, &address_bech32).await;
 

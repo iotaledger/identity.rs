@@ -19,6 +19,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Deactivate the DID by publishing an empty document.
   // This process can be reversed since the Alias Output is not destroyed.
+  // Deactivation can only be done by the state controller of the Alias Output.
   client.deactivate_did_output(&secret_manager, document.id()).await?;
 
   // Wait for the node to index the new state.
@@ -28,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
   // where the metadata's `deactivated` field is `true`.
   let deactivated_document: StardustDocument = client.resolve_did(document.id()).await?;
 
-  assert!(deactivated_document.metadata.deactivated);
+  assert!(matches!(deactivated_document.metadata.deactivated, Some(true)));
 
   // Re-activate the DID by publishing a valid document.
   let alias_output: AliasOutput = client.update_did(document.clone()).await?;
