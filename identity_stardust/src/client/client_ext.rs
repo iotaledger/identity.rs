@@ -562,7 +562,7 @@ mod tests {
 
     let error = client.resolve_did(document.id()).await.unwrap_err();
 
-    assert!(matches!(error, Error::DIDUpdateError(iota_client::Error::NotFound)));
+    assert!(matches!(error, Error::ResolutionError(iota_client::Error::NotFound)));
 
     let balance: u64 = get_address_balance(&client, &address_bech32).await;
 
