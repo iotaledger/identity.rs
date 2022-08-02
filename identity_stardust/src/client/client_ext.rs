@@ -3,8 +3,8 @@
 
 use std::borrow::Cow;
 use std::ops::Deref;
-use std::str::FromStr;
 
+use identity_did::did::DIDError;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::output::feature::IssuerFeature;
@@ -27,6 +27,7 @@ use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+use crate::did::TAG_BYTES_LEN;
 use crate::error::Result;
 use crate::Error;
 use crate::NetworkName;
@@ -57,7 +58,11 @@ pub trait StardustClientExt: Sync {
     let rent_structure: RentStructure = if let Some(inner) = rent_structure {
       inner
     } else {
-      self.client().get_rent_structure().await.map_err(Error::ClientError)?
+      self
+        .client()
+        .get_rent_structure()
+        .await
+        .map_err(Error::DIDUpdateError)?
     };
 
     AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())
@@ -155,17 +160,22 @@ pub trait StardustClientExt: Sync {
 
     let (_, output_id, alias_output) = resolve_alias_output(client, did).await?;
 
-    let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())?
+    let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())
+      .map_err(Error::BasicOutputBuildError)?
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-      .finish_output()?;
+      .finish_output()
+      .map_err(Error::BasicOutputBuildError)?;
 
     client
       .block()
       .with_secret_manager(secret_manager)
-      .with_input(output_id.into())?
-      .with_outputs(vec![basic_output])?
+      .with_input(output_id.into())
+      .map_err(Error::DIDUpdateError)?
+      .with_outputs(vec![basic_output])
+      .map_err(Error::DIDUpdateError)?
       .finish()
-      .await?;
+      .await
+      .map_err(Error::DIDUpdateError)?;
 
     Ok(())
   }
@@ -201,13 +211,7 @@ pub trait StardustClientExt: Sync {
   ///
   /// For the IOTA main network this is `iota` and for the Shimmer network it is `smr`.
   async fn network_name(&self) -> Result<NetworkName> {
-    self
-      .client()
-      .get_network_info()
-      .await?
-      .bech32_hrp
-      .ok_or(Error::InvalidNetworkName)
-      .and_then(NetworkName::try_from)
+    get_network_hrp(self.client()).await.and_then(NetworkName::try_from)
   }
 }
 
@@ -230,15 +234,15 @@ async fn publish_output(client: &Client, secret_manager: &SecretManager, alias_o
     .block()
     .with_secret_manager(secret_manager)
     .with_outputs(vec![alias_output.into()])
-    .map_err(Error::ClientError)?
+    .map_err(Error::DIDUpdateError)?
     .finish()
     .await
-    .map_err(Error::ClientError)?;
+    .map_err(Error::DIDUpdateError)?;
 
   let _ = client
     .retry_until_included(&block.id(), None, None)
     .await
-    .map_err(Error::ClientError)?;
+    .map_err(Error::DIDUpdateError)?;
 
   Ok(block)
 }
@@ -248,7 +252,7 @@ async fn get_network_hrp(client: &Client) -> Result<String> {
   client
     .get_network_info()
     .await
-    .map_err(Error::ClientError)?
+    .map_err(Error::ResolutionError)?
     .bech32_hrp
     .ok_or(Error::InvalidNetworkName)
 }
@@ -264,10 +268,13 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
     for (index, output) in regular.outputs().iter().enumerate() {
       if let Output::Alias(alias_output) = output {
         let alias_id = if alias_output.alias_id().is_null() {
-          AliasId::from(OutputId::new(
-            tx_payload.id(),
-            index.try_into().expect("the output count should not exceed u16"),
-          )?)
+          AliasId::from(
+            OutputId::new(
+              tx_payload.id(),
+              index.try_into().expect("the output count should not exceed u16"),
+            )
+            .expect("the index of any output in a RegularTransactionEssence should be a valid OutputIndex"),
+          )
         } else {
           alias_output.alias_id().to_owned()
         };
@@ -286,9 +293,10 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
 
 /// Resolve a did into an Alias Output and the associated identifiers.
 async fn resolve_alias_output(client: &Client, did: &StardustDID) -> Result<(AliasId, OutputId, AliasOutput)> {
-  let alias_id: AliasId = AliasId::from_str(did.tag())?;
-  let output_id: OutputId = client.alias_output_id(alias_id).await?;
-  let output_response: OutputResponse = client.get_output(&output_id).await?;
+  let tag_bytes: [u8; TAG_BYTES_LEN] = prefix_hex::decode(did.tag()).map_err(|_| DIDError::InvalidMethodId)?;
+  let alias_id: AliasId = AliasId::new(tag_bytes);
+  let output_id: OutputId = client.alias_output_id(alias_id).await.map_err(Error::ResolutionError)?;
+  let output_response: OutputResponse = client.get_output(&output_id).await.map_err(Error::ResolutionError)?;
   let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
 
   if let Output::Alias(alias_output) = output {
@@ -465,7 +473,7 @@ mod tests {
     let client: Client = client();
     let (address, secret_manager) = get_address_with_funds(&client).await;
     let initial_document = generate_document(&valid_did());
-    let rent_structure: RentStructure = client.get_rent_structure().await.map_err(Error::ClientError).unwrap();
+    let rent_structure: RentStructure = client.get_rent_structure().await.unwrap();
 
     let output = client
       .new_did(address, initial_document, Some(rent_structure.clone()))
@@ -530,7 +538,7 @@ mod tests {
 
     let error = client.resolve_did(document.id()).await.unwrap_err();
 
-    assert!(matches!(error, Error::ClientError(iota_client::Error::NotFound)));
+    assert!(matches!(error, Error::DIDUpdateError(iota_client::Error::NotFound)));
 
     let balance: u64 = get_address_balance(&client, &address_bech32).await;
 

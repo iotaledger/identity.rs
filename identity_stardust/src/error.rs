@@ -18,11 +18,14 @@ pub enum Error {
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
   #[cfg(feature = "iota-client")]
-  #[error("{0}")]
-  ClientError(#[from] iota_client::error::Error),
+  #[error("DID update failed")]
+  DIDUpdateError(#[source] iota_client::error::Error),
+  #[cfg(feature = "iota-client")]
+  #[error("DID resolution failed")]
+  ResolutionError(#[source] iota_client::error::Error),
   #[cfg(feature = "iota-client")]
   #[error("{0}")]
-  BlockError(#[from] iota_client::block::Error),
+  BasicOutputBuildError(#[source] iota_client::block::Error),
   #[error("invalid network name")]
   InvalidNetworkName,
   #[error("unable to resolve a `{expected}` DID on network `{actual}`")]
@@ -40,6 +43,6 @@ pub enum Error {
   #[error("output with id `{0}` is not an alias output")]
   NotAnAliasOutput(iota_client::block::output::OutputId),
   #[cfg(feature = "iota-client")]
-  #[error("error while converting DTO to an output")]
+  #[error("converting a DTO to an output failed")]
   OutputConversionError(#[source] iota_client::block::DtoError),
 }

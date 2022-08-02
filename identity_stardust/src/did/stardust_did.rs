@@ -26,7 +26,7 @@ pub type Result<T> = std::result::Result<T, DIDError>;
 pub type StardustDIDUrl = DIDUrl<StardustDID>;
 
 // The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
-const TAG_BYTES_LEN: usize = 32;
+pub(crate) const TAG_BYTES_LEN: usize = 32;
 
 /// A DID conforming to the IOTA UTXO DID method specification.
 ///
@@ -216,59 +216,6 @@ impl StardustDID {
       .map(|(network, tail)| (network, &tail[1..]))
       // Self::DEFAULT_NETWORK is built from a static reference so unwrapping is fine
       .unwrap_or((Self::DEFAULT_NETWORK, input))
-  }
-}
-
-#[cfg(feature = "iota-client")]
-mod stardust_did_iota_client {
-  use std::ops::Deref;
-
-  use iota_client::block::output::AliasId;
-  use iota_client::block::output::Output;
-  use iota_client::block::output::OutputId;
-  use iota_client::block::payload::transaction::TransactionEssence;
-  use iota_client::block::payload::Payload;
-  use iota_client::block::Block;
-
-  use super::*;
-
-  impl StardustDID {
-    /// Extracts an Alias ID from a published block and returns a new DID from it.
-    ///
-    /// NOTE: if there are multiple Alias Outputs in the payload, this uses the first one.
-    // TODO: can hopefully remove from public API if the publishing logic is wrapped.
-    pub fn from_block(block: &Block, network: &NetworkName) -> crate::Result<StardustDID> {
-      let payload: &Payload = block.payload().ok_or(DIDError::Other("block missing payload"))?;
-      // TODO: improve error handling messages.
-      let output_id: OutputId = get_alias_output_id_from_payload(payload)?;
-      let id: AliasId = AliasId::from(output_id);
-      Ok(StardustDID::new(id.deref(), network))
-    }
-  }
-
-  // helper function to get the output id for the first Alias Output
-  // TODO: improve error handling
-  fn get_alias_output_id_from_payload(payload: &Payload) -> crate::Result<OutputId> {
-    if let Payload::Transaction(tx_payload) = payload {
-      let TransactionEssence::Regular(regular) = tx_payload.essence();
-      if let Some((index, _)) = regular
-        .outputs()
-        .iter()
-        .enumerate()
-        .find(|(_, item)| matches!(item, Output::Alias(_)))
-      {
-        Ok(OutputId::new(
-          tx_payload.id(),
-          index
-            .try_into()
-            .map_err(|_| DIDError::Other("output index exceeds u16"))?,
-        )?)
-      } else {
-        Err(DIDError::Other("no alias output in transaction essence"))?
-      }
-    } else {
-      Err(DIDError::Other("not a transaction payload"))?
-    }
   }
 }
 
