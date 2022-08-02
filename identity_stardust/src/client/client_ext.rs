@@ -55,7 +55,7 @@ pub trait StardustClientExt: Sync {
   ///
   /// - Returns an [`Error::DIDUpdateError`] when retrieving the `RentStructure` fails.
   /// - Returns an [`Error::AliasOutputBuildError`] when building the Alias Output fails.
-  async fn new_did(
+  async fn new_did_output(
     &self,
     address: Address,
     document: StardustDocument,
@@ -97,7 +97,7 @@ pub trait StardustClientExt: Sync {
   /// # Errors
   ///
   /// Returns `Err` when failing to resolve the DID contained in `document`.
-  async fn update_did(&self, document: StardustDocument) -> Result<AliasOutput> {
+  async fn update_did_output(&self, document: StardustDocument) -> Result<AliasOutput> {
     let (alias_id, _, alias_output) = resolve_alias_output(self.client(), document.id()).await?;
 
     let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)

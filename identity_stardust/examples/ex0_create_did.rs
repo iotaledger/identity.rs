@@ -48,7 +48,7 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
 
   // Construct an Alias Output containing the DID document, with `address` set as both the state controller and
   // governor.
-  let alias_output: AliasOutput = client.new_did(address, document, None).await?;
+  let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
   // Publish the output and get the published document.
   let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;

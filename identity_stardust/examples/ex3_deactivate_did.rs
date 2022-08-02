@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
   assert!(matches!(deactivated_document.metadata.deactivated, Some(true)));
 
   // Re-activate the DID by publishing a valid document.
-  let alias_output: AliasOutput = client.update_did(document.clone()).await?;
+  let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
   client.publish_did_output(&secret_manager, alias_output).await?;
 
   // Resolve the republished document.

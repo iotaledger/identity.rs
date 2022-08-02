@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
   assert!(document.insert_service(service));
 
   // Resolve the latest output and update it with the given document.
-  let alias_output: AliasOutput = client.update_did(document.clone()).await?;
+  let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
 
   // Obtain the current byte costs and increase the required storage deposit
   // since the amount of stored bytes increased.
