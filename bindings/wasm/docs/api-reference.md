@@ -1354,9 +1354,13 @@ A DID conforming to the IOTA DID method specification.
 * [DID](#DID)
     * [new DID(public_key, network)](#new_DID_new)
     * _instance_
-        * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.network()](#DID+network) ⇒ [<code>Network</code>](#Network)
+        * [.networkStr()](#DID+networkStr) ⇒ <code>string</code>
         * [.tag()](#DID+tag) ⇒ <code>string</code>
+        * [.scheme()](#DID+scheme) ⇒ <code>string</code>
+        * [.authority()](#DID+authority) ⇒ <code>string</code>
+        * [.method()](#DID+method) ⇒ <code>string</code>
+        * [.methodId()](#DID+methodId) ⇒ <code>string</code>
         * [.join(segment)](#DID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toUrl()](#DID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
@@ -1380,22 +1384,62 @@ Creates a new `DID` from a public key.
 | public_key | <code>Uint8Array</code> | 
 | network | <code>string</code> \| <code>undefined</code> | 
 
-<a name="DID+networkName"></a>
-
-### did.networkName ⇒ <code>string</code>
-Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+network"></a>
 
 ### did.network() ⇒ [<code>Network</code>](#Network)
-Returns the IOTA tangle network of the `DID`.
+Returns the Tangle network of the `DID`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+networkStr"></a>
+
+### did.networkStr() ⇒ <code>string</code>
+Returns the Tangle network name of the `DID`.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+tag"></a>
 
 ### did.tag() ⇒ <code>string</code>
 Returns a copy of the unique tag of the `DID`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+scheme"></a>
+
+### did.scheme() ⇒ <code>string</code>
+Returns the `DID` scheme.
+
+E.g.
+- `"did:example:12345678" -> "did"`
+- `"did:iota:main:12345678" -> "did"`
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+authority"></a>
+
+### did.authority() ⇒ <code>string</code>
+Returns the `DID` authority: the method name and method-id.
+
+E.g.
+- `"did:example:12345678" -> "example:12345678"`
+- `"did:iota:main:12345678" -> "iota:main:12345678"`
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+method"></a>
+
+### did.method() ⇒ <code>string</code>
+Returns the `DID` method name.
+
+E.g.
+- `"did:example:12345678" -> "example"`
+- `"did:iota:main:12345678" -> "iota"`
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+methodId"></a>
+
+### did.methodId() ⇒ <code>string</code>
+Returns the `DID` method-specific ID.
+
+E.g.
+- `"did:example:12345678" -> "12345678"`
+- `"did:iota:main:12345678" -> "main:12345678"`
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+join"></a>

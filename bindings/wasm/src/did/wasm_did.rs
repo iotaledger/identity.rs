@@ -30,6 +30,10 @@ impl WasmDID {
     IotaDID::DEFAULT_NETWORK.to_owned()
   }
 
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+
   /// Creates a new `DID` from a public key.
   #[wasm_bindgen(constructor)]
   pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
@@ -52,22 +56,70 @@ impl WasmDID {
     IotaDID::parse(input).wasm_result().map(Self)
   }
 
-  /// Returns the IOTA tangle network of the `DID`.
+  // ===========================================================================
+  // Properties
+  // ===========================================================================
+
+  /// Returns the Tangle network of the `DID`.
   #[wasm_bindgen]
   pub fn network(&self) -> Result<WasmNetwork> {
     self.0.network().map(Into::into).wasm_result()
   }
 
-  /// Returns the IOTA tangle network of the `DID`.
-  #[wasm_bindgen(getter = networkName)]
-  pub fn network_name(&self) -> String {
-    self.0.network_str().into()
+  /// Returns the Tangle network name of the `DID`.
+  #[wasm_bindgen(js_name = networkStr)]
+  pub fn network_str(&self) -> String {
+    self.0.network_str().to_owned()
   }
 
   /// Returns a copy of the unique tag of the `DID`.
   #[wasm_bindgen]
   pub fn tag(&self) -> String {
-    self.0.tag().into()
+    self.0.tag().to_owned()
+  }
+
+  // ===========================================================================
+  // DID trait
+  // ===========================================================================
+
+  /// Returns the `DID` scheme.
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "did"`
+  /// - `"did:iota:main:12345678" -> "did"`
+  #[wasm_bindgen]
+  pub fn scheme(&self) -> String {
+    self.0.scheme().to_owned()
+  }
+
+  /// Returns the `DID` authority: the method name and method-id.
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "example:12345678"`
+  /// - `"did:iota:main:12345678" -> "iota:main:12345678"`
+  #[wasm_bindgen]
+  pub fn authority(&self) -> String {
+    self.0.authority().to_owned()
+  }
+
+  /// Returns the `DID` method name.
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "example"`
+  /// - `"did:iota:main:12345678" -> "iota"`
+  #[wasm_bindgen]
+  pub fn method(&self) -> String {
+    self.0.method().to_owned()
+  }
+
+  /// Returns the `DID` method-specific ID.
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "12345678"`
+  /// - `"did:iota:main:12345678" -> "main:12345678"`
+  #[wasm_bindgen(js_name = methodId)]
+  pub fn method_id(&self) -> String {
+    self.0.method_id().to_owned()
   }
 
   /// Construct a new `DIDUrl` by joining with a relative DID Url string.
