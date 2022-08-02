@@ -32,7 +32,7 @@ pub trait Document {
     Q: Into<DIDUrlQuery<'query>>;
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
-  /// provided `query` and the verification relationship specified by `scope` if present.
+  /// provided `query` and the verification relationship specified by `scope`, if present.
   fn resolve_method<'query, 'me, Q>(
     &'me self,
     query: Q,

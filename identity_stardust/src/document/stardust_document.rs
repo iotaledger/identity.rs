@@ -36,16 +36,16 @@ use crate::StardustDocumentMetadata;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
-/// A [`VerificationMethod`] adhering to the IOTA DID method specification.
+/// A [`VerificationMethod`] adhering to the IOTA UTXO DID method specification.
 pub type StardustVerificationMethod = VerificationMethod<StardustDID, Object>;
 
-/// A [`Service`] adhering to the IOTA DID method specification.
+/// A [`Service`] adhering to the IOTA UTXO DID method specification.
 pub type StardustService = Service<StardustDID, Object>;
 
-/// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
+/// A [`CoreDocument`] whose fields adhere to the IOTA UTXO DID method specification.
 pub type StardustCoreDocument = CoreDocument<StardustDID>;
 
-/// A DID Document adhering to the IOTA DID method specification.
+/// A DID Document adhering to the IOTA UTXO DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -271,7 +271,6 @@ impl StardustDocument {
   // ===========================================================================
   // Publishing
   // ===========================================================================
-  // TODO: clean up and feature-gate certain methods to avoid hard dependency on iota-client?
 
   /// Serializes the document for inclusion in an Alias Output's state metadata
   /// with the default [`StateMetadataEncoding`].

@@ -31,6 +31,7 @@ use crate::account::types::WasmCekAlgorithm;
 use crate::account::types::WasmEncryptedData;
 use crate::account::types::WasmEncryptionAlgorithm;
 use crate::common::PromiseVoid;
+use crate::common::UOneOrManyNumber;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
@@ -466,10 +467,4 @@ impl From<WasmPublishOptions> for PublishOptions {
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Account>")]
   pub type PromiseAccount;
-}
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "number | number[]")]
-  pub type UOneOrManyNumber;
 }
