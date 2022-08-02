@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::StardustDID;
-
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
@@ -31,8 +29,6 @@ pub enum Error {
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]
   RevocationError(#[source] identity_did::Error),
-  #[error("DID `{0}` is deactivated")]
-  DeactivatedDID(StardustDID),
   #[cfg(feature = "iota-client")]
   #[error("alias output build error")]
   AliasOutputBuildError(#[source] iota_client::block::Error),

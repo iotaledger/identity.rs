@@ -4,6 +4,7 @@
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 use iota_client::block::address::Address;
+use iota_client::block::output::AliasOutput;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
@@ -23,10 +24,20 @@ async fn main() -> anyhow::Result<()> {
   // Wait for the node to index the new state.
   tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
-  // Attempting to resolve a deactivated DID results in a `DeactivatedDID` error.
-  let error = client.resolve_did(document.id()).await.unwrap_err();
+  // Attempting to resolve a deactivated DID results in an document
+  // where the metadata's `deactivated` field is `true`.
+  let deactivated_document: StardustDocument = client.resolve_did(document.id()).await?;
 
-  assert!(matches!(error, identity_stardust::Error::DeactivatedDID(_)));
+  assert!(deactivated_document.metadata.deactivated);
+
+  // Re-activate the DID by publishing a valid document.
+  let alias_output: AliasOutput = client.update_did(document.clone()).await?;
+  client.publish_did_output(&secret_manager, alias_output).await?;
+
+  // Resolve the republished document.
+  let resolved_document: StardustDocument = client.resolve_did(document.id()).await?;
+
+  assert_eq!(document, resolved_document);
 
   Ok(())
 }

@@ -200,7 +200,6 @@ pub trait StardustClientExt: Sync {
   ///
   /// - Returns a [`NetworkMismatch`](Error::NetworkMismatch) error if the DID's and the client's network do not match.
   /// - Returns a [`NotFound`](iota_client::Error::NotFound) error if the associated Alias Output wasn't found.
-  /// - Returns a [`DeactivatedDID`](Error::DeactivatedDID) error if the Alias Output's state metadata is empty.
   async fn resolve_did(&self, did: &StardustDID) -> Result<StardustDocument> {
     let network_hrp: String = get_network_hrp(self.client()).await?;
 
@@ -214,7 +213,10 @@ pub trait StardustClientExt: Sync {
     let (_, _, alias_output) = resolve_alias_output(self.client(), did).await?;
 
     if alias_output.state_metadata().is_empty() {
-      Err(Error::DeactivatedDID(did.to_owned()))
+      let mut empty_document: StardustDocument = StardustDocument::new_with_id(did.to_owned());
+      empty_document.metadata.deactivated = true;
+
+      Ok(empty_document)
     } else {
       let document: &[u8] = alias_output.state_metadata();
       StardustDocument::unpack(did, document)
@@ -580,37 +582,5 @@ mod tests {
     let balance: u64 = get_address_balance(&client, &address_bech32).await;
 
     assert_eq!(initial_balance, balance);
-  }
-
-  #[tokio::test]
-  async fn test_client_deactivate_and_reactivate() {
-    let client: Client = client();
-
-    let (address, secret_manager) = get_address_with_funds(&client).await;
-
-    let initial_document = generate_document(&valid_did());
-
-    let output = client.new_did(address, initial_document, None).await.unwrap();
-
-    let document: StardustDocument = client.publish_did_output(&secret_manager, output).await.unwrap();
-
-    client
-      .deactivate_did_output(&secret_manager, document.id())
-      .await
-      .unwrap();
-
-    // It takes time for the deactivation to propagate.
-    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-
-    let error = client.resolve_did(document.id()).await.unwrap_err();
-
-    assert!(matches!(error, crate::Error::DeactivatedDID(_)));
-
-    let did = document.id().to_owned();
-    // Re-activate DID.
-    let alias_output = client.update_did(document).await.unwrap();
-    client.publish_did_output(&secret_manager, alias_output).await.unwrap();
-
-    client.resolve_did(&did).await.unwrap();
   }
 }
