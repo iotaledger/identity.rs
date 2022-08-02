@@ -7,7 +7,6 @@ use std::ops::Deref;
 use identity_did::did::DIDError;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
-use iota_client::block::output::feature::IssuerFeature;
 use iota_client::block::output::feature::SenderFeature;
 use iota_client::block::output::unlock_condition::AddressUnlockCondition;
 use iota_client::block::output::unlock_condition::GovernorAddressUnlockCondition;
@@ -77,7 +76,6 @@ pub trait StardustClientExt: Sync {
       .with_foundry_counter(0)
       .with_state_metadata(document.pack()?)
       .add_feature(Feature::Sender(SenderFeature::new(address)))
-      .add_immutable_feature(Feature::Issuer(IssuerFeature::new(address)))
       .add_unlock_condition(UnlockCondition::StateControllerAddress(
         StateControllerAddressUnlockCondition::new(address),
       ))
