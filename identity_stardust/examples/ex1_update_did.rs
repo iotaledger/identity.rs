@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
   assert!(document.insert_service(service));
 
   // Resolve the latest output and update it with the given document.
-  let alias_output: AliasOutput = client.update_did(document).await?;
+  let alias_output: AliasOutput = client.update_did(document.clone()).await?;
 
   // Obtain the current byte costs and increase the required storage deposit
   // since the amount of stored bytes increased.
@@ -52,9 +52,11 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the output.
-  let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let resolved_document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
 
-  println!("Published updated DID Document: {:#?}", document);
+  assert_eq!(document, resolved_document);
+
+  println!("Published updated DID Document: {:#?}", resolved_document);
 
   Ok(())
 }

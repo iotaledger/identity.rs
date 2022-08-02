@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_stardust::Error;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 use iota_client::block::address::Address;
@@ -27,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
   tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
   // Attempting to resolve a deleted DID results in a `NotFound` error.
-  let error = client.resolve_did(document.id()).await.unwrap_err();
+  let error: Error = client.resolve_did(document.id()).await.unwrap_err();
 
   assert!(matches!(
     error,
