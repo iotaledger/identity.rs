@@ -35,6 +35,8 @@ use crate::StardustDocument;
 
 /// An extension trait for a [`Client`] that provides helper functions publication and resolution of
 /// DID documents in Alias Outputs.
+///
+/// This trait is only meant to be used rather than implemented.
 #[async_trait::async_trait]
 pub trait StardustClientExt: Sync {
   /// Returns a reference to a [`Client`].
