@@ -25,9 +25,6 @@ pub type Result<T> = std::result::Result<T, DIDError>;
 /// See [`DIDUrl`].
 pub type StardustDIDUrl = DIDUrl<StardustDID>;
 
-// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
-pub(crate) const TAG_BYTES_LEN: usize = 32;
-
 /// A DID conforming to the IOTA UTXO DID method specification.
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
@@ -47,6 +44,9 @@ impl StardustDID {
 
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
+
+  // The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
+  pub(crate) const TAG_BYTES_LEN: usize = 32;
 
   // ===========================================================================
   // Constructors
@@ -170,7 +170,7 @@ impl StardustDID {
     let (_, tag) = Self::denormalized_components(did.method_id());
 
     // Implicitly catches if there are too many segments (:) in the DID too.
-    prefix_hex::decode::<[u8; TAG_BYTES_LEN]>(tag)
+    prefix_hex::decode::<[u8; Self::TAG_BYTES_LEN]>(tag)
       .map_err(|_| DIDError::InvalidMethodId)
       .map(|_| ())
   }

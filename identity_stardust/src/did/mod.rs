@@ -3,6 +3,5 @@
 
 pub use stardust_did::StardustDID;
 pub use stardust_did::StardustDIDUrl;
-pub(crate) use stardust_did::TAG_BYTES_LEN;
 
 mod stardust_did;

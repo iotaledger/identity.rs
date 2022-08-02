@@ -27,7 +27,6 @@ use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-use crate::did::TAG_BYTES_LEN;
 use crate::error::Result;
 use crate::Error;
 use crate::NetworkName;
@@ -254,7 +253,7 @@ async fn get_network_hrp(client: &Client) -> Result<String> {
     .await
     .map_err(Error::ResolutionError)?
     .bech32_hrp
-    .ok_or(Error::InvalidNetworkName)
+    .ok_or_else(|| Error::InvalidNetworkName("".to_owned()))
 }
 
 /// Returns all DID documents of the Alias Outputs contained in the payload's transaction, if any.
@@ -293,7 +292,8 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
 
 /// Resolve a did into an Alias Output and the associated identifiers.
 async fn resolve_alias_output(client: &Client, did: &StardustDID) -> Result<(AliasId, OutputId, AliasOutput)> {
-  let tag_bytes: [u8; TAG_BYTES_LEN] = prefix_hex::decode(did.tag()).map_err(|_| DIDError::InvalidMethodId)?;
+  let tag_bytes: [u8; StardustDID::TAG_BYTES_LEN] =
+    prefix_hex::decode(did.tag()).map_err(|_| DIDError::InvalidMethodId)?;
   let alias_id: AliasId = AliasId::new(tag_bytes);
   let output_id: OutputId = client.alias_output_id(alias_id).await.map_err(Error::ResolutionError)?;
   let output_response: OutputResponse = client.get_output(&output_id).await.map_err(Error::ResolutionError)?;

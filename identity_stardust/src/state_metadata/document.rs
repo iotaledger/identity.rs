@@ -58,7 +58,7 @@ impl StateMetadataDocument {
   /// an Alias Output's state metadata, according to the given `encoding`.
   pub fn pack(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
     let encoded_message_data: Vec<u8> = match encoding {
-      StateMetadataEncoding::Json => self.to_json_vec()?,
+      StateMetadataEncoding::Json => self.to_json_vec().map_err(Error::SerializationError)?,
     };
 
     // Prepend flags.
@@ -97,7 +97,7 @@ impl StateMetadataDocument {
     ))?;
 
     match encoding {
-      StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(inner).map_err(Into::into),
+      StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(inner).map_err(Error::SerializationError),
     }
   }
 }
