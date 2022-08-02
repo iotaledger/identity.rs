@@ -309,9 +309,11 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
           AliasId::from(
             OutputId::new(
               tx_payload.id(),
-              index.try_into().expect("the output count should not exceed u16"),
+              index
+                .try_into()
+                .map_err(|_| Error::OutputIdConversionError(format!("the output index {index} must fit into a u16")))?,
             )
-            .expect("the index of any output in a RegularTransactionEssence should be a valid OutputIndex"),
+            .map_err(|err| Error::OutputIdConversionError(err.to_string()))?,
           )
         } else {
           alias_output.alias_id().to_owned()

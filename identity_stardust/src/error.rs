@@ -38,4 +38,6 @@ pub enum Error {
   #[cfg(feature = "iota-client")]
   #[error("converting a DTO to an output failed")]
   OutputConversionError(#[source] iota_client::block::DtoError),
+  #[error("conversion to an OutputId failed: {0}")]
+  OutputIdConversionError(String),
 }
