@@ -185,10 +185,10 @@ pub trait StardustClientExt: Sync {
   ///
   /// # Errors
   ///
-  /// - Returns a [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output wasn't found.
+  /// - Returns a [`NetworkMismatch`](Error::NetworkMismatch) error if the DID's and the client's network do not match.
+  /// - Returns a [`NotFound`](iota_client::Error::NotFound) error if the associated Alias Output wasn't found.
   /// - Returns a [`DeactivatedDID`](Error::DeactivatedDID) error if the Alias Output's state metadata is empty.
   async fn resolve_did(&self, did: &StardustDID) -> Result<StardustDocument> {
-    // TODO: Replace usage of HRP with some better network naming approach.
     let network_hrp: String = get_network_hrp(self.client()).await?;
 
     if did.network_str() != network_hrp.as_str() {
@@ -205,6 +205,27 @@ pub trait StardustClientExt: Sync {
     } else {
       StardustDocument::unpack_from_output(did, &alias_output)
     }
+  }
+
+  /// Resolve a [`StardustDID`] to an [`AliasOutput`].
+  ///
+  /// # Errors
+  ///
+  /// - Returns a [`NetworkMismatch`](Error::NetworkMismatch) error if the DID's and the client's network do not match.
+  /// - Returns a [`NotFound`](iota_client::Error::NotFound) error if the associated Alias Output wasn't found.
+  async fn resolve_alias_output(&self, did: &StardustDID) -> Result<AliasOutput> {
+    let network_hrp: String = get_network_hrp(self.client()).await?;
+
+    if did.network_str() != network_hrp.as_str() {
+      return Err(Error::NetworkMismatch {
+        expected: did.network_str().to_owned(),
+        actual: network_hrp,
+      });
+    }
+
+    resolve_alias_output(self.client(), did)
+      .await
+      .map(|(_, _, alias_output)| alias_output)
   }
 
   /// Returns the network name of the connected node, which is the
