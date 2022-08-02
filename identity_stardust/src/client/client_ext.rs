@@ -33,8 +33,8 @@ use crate::NetworkName;
 use crate::StardustDID;
 use crate::StardustDocument;
 
-/// An extension trait for a [`Client`] that provides helper functions publication and resolution of
-/// DID documents in Alias Outputs.
+/// An extension trait for a [`Client`] that provides helper functions for publication
+/// and resolution of DID documents in Alias Outputs.
 ///
 /// This trait is only meant to be used rather than implemented.
 #[async_trait::async_trait]
@@ -83,7 +83,7 @@ pub trait StardustClientExt: Sync {
       .map_err(Error::AliasOutputBuildError)
   }
 
-  /// Returns the updated alias output for further customization and publication. The storage deposit
+  /// Returns the updated Alias Output for further customization and publication. The storage deposit
   /// on the output is unchanged. If the size of the document increased, the amount must be increased manually.
   ///
   /// NOTE: this does *not* publish the updated Alias Output. See
@@ -203,7 +203,8 @@ pub trait StardustClientExt: Sync {
     if alias_output.state_metadata().is_empty() {
       Err(Error::DeactivatedDID(did.to_owned()))
     } else {
-      StardustDocument::unpack_from_output(did, &alias_output)
+      let document: &[u8] = alias_output.state_metadata();
+      StardustDocument::unpack(did, document)
     }
   }
 

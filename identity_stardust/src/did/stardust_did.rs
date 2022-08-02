@@ -252,8 +252,7 @@ impl DID for StardustDID {
     self.0.into_string()
   }
 
-  // TODO: Link [`StardustDIDUrl`] after `document` has been refactored to use the types in this module.
-  /// Creates a new DIDUrl by joining with a relative DID Url string.
+  /// Creates a new [`DIDUrl`](crate::StardustDIDUrl) by joining with a relative DID Url string.
   ///
   /// # Errors
   ///

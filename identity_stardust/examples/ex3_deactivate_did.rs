@@ -9,7 +9,7 @@ use iota_client::Client;
 
 mod ex0_create_did;
 
-/// Demonstrate how to destroy an existing DID in an Alias Output, reclaiming the stored deposit.
+/// Demonstrate how to deactivate a DID in an Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
