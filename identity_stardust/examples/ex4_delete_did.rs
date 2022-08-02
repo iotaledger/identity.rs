@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
   // Wait for the node to index the new state.
   tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
-  // Attempting to resolve a delete DID results in a `NotFound` error.
+  // Attempting to resolve a deleted DID results in a `NotFound` error.
   let error = client.resolve_did(document.id()).await.unwrap_err();
 
   assert!(matches!(

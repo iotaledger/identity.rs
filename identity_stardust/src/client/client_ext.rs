@@ -50,6 +50,11 @@ pub trait StardustClientExt: Sync {
   /// The returned Alias Output can be further customized before publication, if desired.
   ///
   /// NOTE: this does *not* publish the Alias Output. See [`publish_did_output`](StardustClientExt::publish_did_output).
+  ///
+  /// # Errors
+  ///
+  /// - Returns an [`Error::DIDUpdateError`] when retrieving the `RentStructure` fails.
+  /// - Returns an [`Error::AliasOutputBuildError`] when building the Alias Output fails.
   async fn new_did(
     &self,
     address: Address,
@@ -88,6 +93,10 @@ pub trait StardustClientExt: Sync {
   ///
   /// NOTE: this does *not* publish the updated Alias Output. See
   /// [`publish_did_output`](StardustClientExt::publish_did_output).
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` when failing to resolve the DID contained in `document`.
   async fn update_did(&self, document: StardustDocument) -> Result<AliasOutput> {
     let (alias_id, _, alias_output) = resolve_alias_output(self.client(), document.id()).await?;
 
@@ -108,6 +117,10 @@ pub trait StardustClientExt: Sync {
   /// re-activated by updating the contained document.
   ///
   /// The storage deposit on the output is left unchanged.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` when failing to resolve the `did`.
   async fn deactivate_did_output(&self, secret_manager: &SecretManager, did: &StardustDID) -> Result<()> {
     let (alias_id, _, alias_output) = resolve_alias_output(self.client(), did).await?;
 
