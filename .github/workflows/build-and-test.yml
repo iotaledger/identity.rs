@@ -167,6 +167,15 @@ jobs:
           command: test
           args: --manifest-path ./identity_stardust/Cargo.toml --workspace --all-features --release
 
+      - name: Run Stardust Rust examples
+        # run examples only on ubuntu for now
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo read-manifest --manifest-path ./identity_stardust/Cargo.toml | \
+          jq -r '.targets[].name' | \
+          awk '$1 ~ /ex.*/' | \
+          parallel -k -j 4 --retries 3 cargo run --example {} --all-features --release
+
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
