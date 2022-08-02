@@ -174,7 +174,7 @@ jobs:
           cargo read-manifest --manifest-path ./identity_stardust/Cargo.toml | \
           jq -r '.targets[].name' | \
           awk '$1 ~ /ex.*/' | \
-          parallel -k -j 4 --retries 3 cargo run --example {} --all-features --release
+          parallel -k -j 4 --retries 3 cargo run --manifest-path ./identity_stardust/Cargo.toml --example {} --all-features --release
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
