@@ -19,17 +19,10 @@ pub struct StardustDocumentMetadata {
   pub created: Option<Timestamp>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub updated: Option<Timestamp>,
-  #[serde(skip_serializing_if = "is_none_or_false")]
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub deactivated: Option<bool>,
   #[serde(flatten)]
   pub properties: Object,
-}
-
-fn is_none_or_false(value: &Option<bool>) -> bool {
-  match value {
-    Some(true) => false,
-    Some(false) | None => true,
-  }
 }
 
 impl StardustDocumentMetadata {
@@ -40,7 +33,7 @@ impl StardustDocumentMetadata {
     Self {
       created: Some(now),
       updated: Some(now),
-      deactivated: Some(false),
+      deactivated: None,
       properties: Object::default(),
     }
   }
