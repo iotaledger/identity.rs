@@ -269,7 +269,7 @@ impl StardustDocument {
   }
 
   // ===========================================================================
-  // Publishing
+  // Packing
   // ===========================================================================
 
   /// Serializes the document for inclusion in an Alias Output's state metadata
@@ -290,31 +290,6 @@ impl StardustDocument {
   /// encoded in the `AliasId` alone.
   pub fn unpack(did: &StardustDID, state_metadata: &[u8]) -> Result<StardustDocument> {
     StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_stardust_document(did))
-  }
-}
-
-#[cfg(feature = "iota-client")]
-mod stardust_document_iota_client {
-  use iota_client::block::output::Output;
-
-  use crate::Error;
-
-  use super::*;
-
-  impl StardustDocument {
-    /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
-    ///
-    /// NOTE: `did` is required since it is omitted from the serialized DID Document and
-    /// cannot be inferred from the [`Output`]. It also indicates the network, which is not
-    /// encoded in the `AliasId` alone.
-    // TODO: remove? Is `unpack` sufficient?
-    pub fn unpack_from_output(did: &StardustDID, output: &Output) -> Result<StardustDocument> {
-      let document: &[u8] = match output {
-        Output::Alias(alias_output) => alias_output.state_metadata(),
-        _ => return Err(Error::InvalidStateMetadata("not an alias output")),
-      };
-      Self::unpack(did, document)
-    }
   }
 }
 

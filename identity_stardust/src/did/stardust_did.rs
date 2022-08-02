@@ -25,9 +25,6 @@ pub type Result<T> = std::result::Result<T, DIDError>;
 /// See [`DIDUrl`].
 pub type StardustDIDUrl = DIDUrl<StardustDID>;
 
-// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
-const TAG_BYTES_LEN: usize = 32;
-
 /// A DID conforming to the IOTA UTXO DID method specification.
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
@@ -47,6 +44,9 @@ impl StardustDID {
 
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
+
+  // The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
+  pub(crate) const TAG_BYTES_LEN: usize = 32;
 
   // ===========================================================================
   // Constructors
@@ -170,7 +170,7 @@ impl StardustDID {
     let (_, tag) = Self::denormalized_components(did.method_id());
 
     // Implicitly catches if there are too many segments (:) in the DID too.
-    prefix_hex::decode::<[u8; TAG_BYTES_LEN]>(tag)
+    prefix_hex::decode::<[u8; Self::TAG_BYTES_LEN]>(tag)
       .map_err(|_| DIDError::InvalidMethodId)
       .map(|_| ())
   }
@@ -219,59 +219,6 @@ impl StardustDID {
   }
 }
 
-#[cfg(feature = "iota-client")]
-mod stardust_did_iota_client {
-  use std::ops::Deref;
-
-  use iota_client::block::output::AliasId;
-  use iota_client::block::output::Output;
-  use iota_client::block::output::OutputId;
-  use iota_client::block::payload::transaction::TransactionEssence;
-  use iota_client::block::payload::Payload;
-  use iota_client::block::Block;
-
-  use super::*;
-
-  impl StardustDID {
-    /// Extracts an Alias ID from a published block and returns a new DID from it.
-    ///
-    /// NOTE: if there are multiple Alias Outputs in the payload, this uses the first one.
-    // TODO: can hopefully remove from public API if the publishing logic is wrapped.
-    pub fn from_block(block: &Block, network: &NetworkName) -> crate::Result<StardustDID> {
-      let payload: &Payload = block.payload().ok_or(DIDError::Other("block missing payload"))?;
-      // TODO: improve error handling messages.
-      let output_id: OutputId = get_alias_output_id_from_payload(payload)?;
-      let id: AliasId = AliasId::from(output_id);
-      Ok(StardustDID::new(id.deref(), network))
-    }
-  }
-
-  // helper function to get the output id for the first alias output
-  // TODO: improve error handling
-  fn get_alias_output_id_from_payload(payload: &Payload) -> crate::Result<OutputId> {
-    if let Payload::Transaction(tx_payload) = payload {
-      let TransactionEssence::Regular(regular) = tx_payload.essence();
-      if let Some((index, _)) = regular
-        .outputs()
-        .iter()
-        .enumerate()
-        .find(|(_, item)| matches!(item, Output::Alias(_)))
-      {
-        Ok(OutputId::new(
-          tx_payload.id(),
-          index
-            .try_into()
-            .map_err(|_| DIDError::Other("output index exceeds u16"))?,
-        )?)
-      } else {
-        Err(DIDError::Other("no alias output in transaction essence"))?
-      }
-    } else {
-      Err(DIDError::Other("not a transaction payload"))?
-    }
-  }
-}
-
 impl DID for StardustDID {
   /// Returns the [`StardustDID`] scheme. See [`DID::SCHEME`].
   fn scheme(&self) -> &'static str {
@@ -305,8 +252,7 @@ impl DID for StardustDID {
     self.0.into_string()
   }
 
-  // TODO: Link [`StardustDIDUrl`] after `document` has been refactored to use the types in this module.
-  /// Creates a new DIDUrl by joining with a relative DID Url string.
+  /// Creates a new [`DIDUrl`](crate::StardustDIDUrl) by joining with a relative DID Url string.
   ///
   /// # Errors
   ///
