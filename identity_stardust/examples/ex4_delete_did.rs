@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
 
   assert!(matches!(
     error,
-    identity_stardust::Error::DIDUpdateError(iota_client::Error::NotFound)
+    identity_stardust::Error::DIDResolutionError(iota_client::Error::NotFound)
   ));
 
   Ok(())
