@@ -5,12 +5,12 @@ use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 use iota_client::Client;
 
-mod create_did;
+mod ex0_create_did;
 
 /// Demonstrate how to resolve an existing DID in an Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  let (client, _, _, document): (Client, _, _, StardustDocument) = create_did::run().await?;
+  let (client, _, _, document): (Client, _, _, StardustDocument) = ex0_create_did::run().await?;
 
   let resolved_doc: StardustDocument = client.resolve_did(document.id()).await?;
 

@@ -14,13 +14,14 @@ use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-mod create_did;
+mod ex0_create_did;
 
 /// Demonstrate how to modify a DID document in an existing Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
-  let (client, _, secret_manager, document): (Client, _, SecretManager, StardustDocument) = create_did::run().await?;
+  let (client, _, secret_manager, document): (Client, _, SecretManager, StardustDocument) =
+    ex0_create_did::run().await?;
 
   // Resolve the latest state of the document.
   // Technically this is equivalent to the document above.
