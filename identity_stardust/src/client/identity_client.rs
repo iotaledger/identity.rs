@@ -31,7 +31,7 @@ impl TryFrom<&StardustDID> for AliasId {
 }
 
 /// Helper functions necessary for the [`StardustIdentityClient`] trait.
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 pub trait StardustIdentityClientBase {
   /// Return the Bech32 human-readable part (HRP) of the network.
   ///
@@ -50,7 +50,7 @@ pub trait StardustIdentityClientBase {
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
 /// provided for [`StardustIdentityClientBase`] implementers.
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 pub trait StardustIdentityClient: StardustIdentityClientBase {
   /// Create a DID with a new Alias Output containing the given `document`.
   ///

@@ -29,9 +29,9 @@ pub enum Error {
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]
   RevocationError(#[source] identity_did::Error),
-  #[cfg(feature = "iota-client")]
+  #[cfg(feature = "client")]
   #[error("alias output build error")]
-  AliasOutputBuildError(#[source] iota_client::block::Error),
+  AliasOutputBuildError(#[source] bee_block::Error),
   #[cfg(feature = "iota-client")]
   #[error("output with id `{0}` is not an alias output")]
   NotAnAliasOutput(iota_client::block::output::OutputId),

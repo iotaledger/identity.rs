@@ -31,7 +31,7 @@ use crate::StardustIdentityClientBase;
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 pub trait StardustClientExt: StardustIdentityClientBase {
   /// Publish the given `alias_output` with the provided `secret_manager`
   /// and returns the block they were published in.
@@ -70,7 +70,7 @@ pub trait StardustClientExt: StardustIdentityClientBase {
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl StardustClientExt for Client {
   /// Publish the given `alias_output` with the provided `secret_manager`
   /// and returns the block they were published in.
@@ -161,7 +161,7 @@ impl StardustClientExt for Client {
   }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl StardustIdentityClientBase for Client {
   async fn get_network_hrp(&self) -> Result<String> {
     self
