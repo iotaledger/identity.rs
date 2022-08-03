@@ -7,7 +7,6 @@ use identity_iota::did::RevocationBitmap;
 use identity_iota::did::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
 
-use crate::did::service_endpoint_to_js_value;
 use crate::did::UServiceEndpoint;
 use crate::error::Result;
 use crate::error::WasmError;
@@ -65,7 +64,7 @@ impl WasmRevocationBitmap {
   /// Return the bitmap as a data url embedded in a service endpoint.
   #[wasm_bindgen(js_name = toEndpoint)]
   pub fn to_enpdoint(&self) -> Result<UServiceEndpoint> {
-    Ok(service_endpoint_to_js_value(&self.0.to_endpoint().wasm_result()?))
+    self.0.to_endpoint().map(UServiceEndpoint::from).wasm_result()
   }
 
   /// Construct a `RevocationBitmap` from a data `url`.

@@ -1,78 +1,81 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::did::DIDError;
 use identity_iota::did::DID;
-use identity_iota::iota_core::IotaDID;
+use identity_stardust::NetworkName;
+use identity_stardust::StardustDID;
 use wasm_bindgen::prelude::*;
 
-use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::WasmNetwork;
+use crate::stardust::WasmStardustDIDUrl;
 
-/// A DID conforming to the IOTA DID method specification.
+/// A DID conforming to the IOTA UTXO DID method specification.
 ///
 /// @typicalname did
-#[wasm_bindgen(js_name = DID, inspectable)]
-pub struct WasmDID(pub(crate) IotaDID);
+#[wasm_bindgen(js_name = StardustDID, inspectable)]
+pub struct WasmStardustDID(pub(crate) StardustDID);
 
-#[wasm_bindgen(js_class = DID)]
-impl WasmDID {
-  /// The IOTA DID method name (`"iota"`).
+#[wasm_bindgen(js_class = StardustDID)]
+impl WasmStardustDID {
+  /// The IOTA UTXO DID method name (`"stardust"`).
+  // TODO: This will be changed to `iota` in the future.
   #[wasm_bindgen(getter = METHOD)]
   pub fn static_method() -> String {
-    IotaDID::METHOD.to_owned()
+    StardustDID::METHOD.to_owned()
   }
 
   /// The default Tangle network (`"main"`).
   #[wasm_bindgen(getter = DEFAULT_NETWORK)]
   pub fn static_default_network() -> String {
-    IotaDID::DEFAULT_NETWORK.to_owned()
+    StardustDID::DEFAULT_NETWORK.to_owned()
   }
 
   // ===========================================================================
   // Constructors
   // ===========================================================================
 
-  /// Creates a new `DID` from a public key.
+  /// Constructs a new `StardustDID` from a byte representation of the tag and the given
+  /// network name.
+  ///
+  /// See also {@link StardustDID.placeholder}.
   #[wasm_bindgen(constructor)]
-  pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
-    Self::from_public_key(public_key, network)
+  pub fn new(bytes: &[u8], network: String) -> Result<WasmStardustDID> {
+    let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
+    let tag_bytes: &[u8; 32] = bytes
+      .try_into()
+      .map_err(|_| DIDError::Other("invalid bytes length for StardustDID tag, expected 32"))
+      .wasm_result()?;
+    Ok(Self::from(StardustDID::new(tag_bytes, &network_name)))
   }
 
-  /// Creates a new `DID` from an arbitrary public key.
-  fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
-    let did = if let Some(network) = network {
-      IotaDID::new_with_network(public_key, network)
-    } else {
-      IotaDID::new(public_key)
-    };
-    did.wasm_result().map(Self)
-  }
-
-  /// Parses a `DID` from the input string.
+  /// Creates a new placeholder [`StardustDID`] with the given network name.
+  ///
+  /// E.g. `did:stardust:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
   #[wasm_bindgen]
-  pub fn parse(input: &str) -> Result<WasmDID> {
-    IotaDID::parse(input).wasm_result().map(Self)
+  pub fn placeholder(network: String) -> Result<WasmStardustDID> {
+    let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
+    Ok(Self::from(StardustDID::placeholder(&network_name)))
+  }
+
+  /// Parses a `StardustDID` from the input string.
+  #[wasm_bindgen]
+  pub fn parse(input: &str) -> Result<WasmStardustDID> {
+    StardustDID::parse(input).map(Self).wasm_result()
   }
 
   // ===========================================================================
   // Properties
   // ===========================================================================
 
-  /// Returns the Tangle network of the `DID`.
-  #[wasm_bindgen]
-  pub fn network(&self) -> Result<WasmNetwork> {
-    self.0.network().map(Into::into).wasm_result()
-  }
-
-  /// Returns the Tangle network name of the `DID`.
+  /// Returns the Tangle network name of the `StardustDID`.
   #[wasm_bindgen(js_name = networkStr)]
   pub fn network_str(&self) -> String {
     self.0.network_str().to_owned()
   }
 
-  /// Returns a copy of the unique tag of the `DID`.
+  /// Returns a copy of the unique tag of the `StardustDID`.
   #[wasm_bindgen]
   pub fn tag(&self) -> String {
     self.0.tag().to_owned()
@@ -124,20 +127,20 @@ impl WasmDID {
 
   /// Construct a new `DIDUrl` by joining with a relative DID Url string.
   #[wasm_bindgen]
-  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
-    self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
+  pub fn join(&self, segment: &str) -> Result<WasmStardustDIDUrl> {
+    self.0.clone().join(segment).wasm_result().map(WasmStardustDIDUrl)
   }
 
   /// Clones the `DID` into a `DIDUrl`.
   #[wasm_bindgen(js_name = toUrl)]
-  pub fn to_url(&self) -> WasmDIDUrl {
-    WasmDIDUrl::from(self.0.to_url())
+  pub fn to_url(&self) -> WasmStardustDIDUrl {
+    WasmStardustDIDUrl::from(self.0.to_url())
   }
 
   /// Converts the `DID` into a `DIDUrl`, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
-  pub fn into_url(self) -> WasmDIDUrl {
-    WasmDIDUrl::from(self.0.into_url())
+  pub fn into_url(self) -> WasmStardustDIDUrl {
+    WasmStardustDIDUrl::from(self.0.into_url())
   }
 
   /// Returns the `DID` as a string.
@@ -148,28 +151,11 @@ impl WasmDID {
   }
 }
 
-impl_wasm_json!(WasmDID, DID);
-impl_wasm_clone!(WasmDID, DID);
+impl_wasm_json!(WasmStardustDID, StardustDID);
+impl_wasm_clone!(WasmStardustDID, StardustDID);
 
-impl From<IotaDID> for WasmDID {
-  fn from(did: IotaDID) -> Self {
+impl From<StardustDID> for WasmStardustDID {
+  fn from(did: StardustDID) -> Self {
     Self(did)
-  }
-}
-
-/// Duck-typed union to pass either a string or WasmDID as a parameter.
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "DID | string")]
-  pub type UWasmDID;
-}
-
-impl TryFrom<UWasmDID> for IotaDID {
-  type Error = JsValue;
-
-  fn try_from(did: UWasmDID) -> std::result::Result<Self, Self::Error> {
-    // Parse rather than going through serde directly to return proper error types.
-    let json: String = did.into_serde().wasm_result()?;
-    IotaDID::parse(&json).wasm_result()
   }
 }

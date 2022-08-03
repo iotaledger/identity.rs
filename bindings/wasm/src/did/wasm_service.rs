@@ -25,11 +25,13 @@ pub struct WasmService(pub(crate) IotaService);
 #[wasm_bindgen(js_class = Service)]
 impl WasmService {
   #[wasm_bindgen(constructor)]
-  pub fn new(service: IService) -> Result<WasmService> {
+  pub fn new(service: IIotaService) -> Result<WasmService> {
     let id: IotaDIDUrl = service.id().into_serde().wasm_result()?;
+
+    let base_service: &IService = service.as_ref();
     let types: OneOrMany<String> = service.type_().into_serde().wasm_result()?;
-    let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&service.service_endpoint())?;
-    let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&service.properties())?;
+    let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&base_service.service_endpoint())?;
+    let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&base_service.properties())?;
 
     IotaService::builder(properties.unwrap_or_default())
       .id(id)
@@ -62,7 +64,7 @@ impl WasmService {
   /// Returns a copy of the `Service` endpoint.
   #[wasm_bindgen(js_name = serviceEndpoint)]
   pub fn service_endpoint(&self) -> UServiceEndpoint {
-    service_endpoint_to_js_value(self.0.service_endpoint())
+    UServiceEndpoint::from(self.0.service_endpoint())
   }
 
   /// Returns a copy of the custom properties on the `Service`.
@@ -81,29 +83,37 @@ impl From<IotaService> for WasmService {
   }
 }
 
-pub(crate) fn service_endpoint_to_js_value(endpoint: &ServiceEndpoint) -> UServiceEndpoint {
-  match endpoint {
-    // string
-    ServiceEndpoint::One(url) => JsValue::from_str(url.as_str()).unchecked_into::<UServiceEndpoint>(),
-    // string[]
-    ServiceEndpoint::Set(set) => set
-      .iter()
-      .map(|url| JsValue::from_str(url.as_str()))
-      .collect::<js_sys::Array>()
-      .unchecked_into::<UServiceEndpoint>(),
-    // Map<string, string[]>
-    ServiceEndpoint::Map(map) => {
-      let js_map: js_sys::Map = js_sys::Map::new();
-      for (key, urls) in map.into_iter() {
-        js_map.set(
-          &JsValue::from_str(key.as_str()),
-          &urls
-            .iter()
-            .map(|url| JsValue::from_str(url.as_str()))
-            .collect::<js_sys::Array>(),
-        );
+impl From<ServiceEndpoint> for UServiceEndpoint {
+  fn from(endpoint: ServiceEndpoint) -> Self {
+    UServiceEndpoint::from(&endpoint)
+  }
+}
+
+impl From<&ServiceEndpoint> for UServiceEndpoint {
+  fn from(endpoint: &ServiceEndpoint) -> Self {
+    match endpoint {
+      // string
+      ServiceEndpoint::One(url) => JsValue::from_str(url.as_str()).unchecked_into::<UServiceEndpoint>(),
+      // string[]
+      ServiceEndpoint::Set(set) => set
+        .iter()
+        .map(|url| JsValue::from_str(url.as_str()))
+        .collect::<js_sys::Array>()
+        .unchecked_into::<UServiceEndpoint>(),
+      // Map<string, string[]>
+      ServiceEndpoint::Map(map) => {
+        let js_map: js_sys::Map = js_sys::Map::new();
+        for (key, urls) in map.into_iter() {
+          js_map.set(
+            &JsValue::from_str(key.as_str()),
+            &urls
+              .iter()
+              .map(|url| JsValue::from_str(url.as_str()))
+              .collect::<js_sys::Array>(),
+          );
+        }
+        js_map.unchecked_into::<UServiceEndpoint>()
       }
-      js_map.unchecked_into::<UServiceEndpoint>()
     }
   }
 }
@@ -116,11 +126,31 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IService")]
-  pub type IService;
+  #[wasm_bindgen(typescript_type = "IIotaService", extends = IService)]
+  pub type IIotaService;
 
   #[wasm_bindgen(method, getter)]
-  pub fn id(this: &IService) -> JsValue;
+  pub fn id(this: &IIotaService) -> JsValue;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_IOTA_SERVICE: &'static str = r#"
+/**
+ * Holds options to create a new `IotaService`.
+ */
+interface IIotaService extends IService {
+    /**
+     * Identifier of the service.
+     *
+     * Must be a valid DIDUrl with a fragment.
+     */
+    readonly id: DIDUrl | string;
+}"#;
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "IService")]
+  pub type IService;
 
   #[wasm_bindgen(method, getter, js_name = type)]
   pub fn type_(this: &IService) -> JsValue;
@@ -135,16 +165,9 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const I_SERVICE: &'static str = r#"
 /**
- * Holds options to create a new `Service`.
+ * Base `Service` properties.
  */
 interface IService {
-    /**
-     * Identifier of the service.
-     *
-     * Must be a valid DIDUrl with a fragment.
-     */
-    readonly id: DIDUrl | string;
-
     /**
      * Type of service.
      *

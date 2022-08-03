@@ -23,21 +23,23 @@ use identity_iota::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use crate::account::wasm_account::UOneOrManyNumber;
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
+use crate::common::OptionOneOrManyString;
+use crate::common::OptionTimestamp;
+use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmProof;
 use crate::crypto::WasmProofOptions;
-use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::RefMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
+use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
 use crate::did::WasmService;
@@ -108,7 +110,7 @@ impl WasmDocument {
   /// Note: Duplicates will be ignored.
   /// Use `null` to remove all controllers.
   #[wasm_bindgen(js_name = setController)]
-  pub fn set_controller(&mut self, controllers: &UOneOrManyDID) -> Result<()> {
+  pub fn set_controller(&mut self, controllers: &OptionOneOrManyDID) -> Result<()> {
     let controllers: Option<OneOrMany<IotaDID>> = controllers.into_serde().wasm_result()?;
     let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers.map(OneOrMany::into_vec) {
       if controllers.is_empty() {
@@ -123,7 +125,7 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns a list of document controllers.
+  /// Returns a copy of the list of document controllers.
   #[wasm_bindgen]
   pub fn controller(&self) -> ArrayDID {
     match self.0.controller() {
@@ -140,7 +142,7 @@ impl WasmDocument {
 
   /// Sets the `alsoKnownAs` property in the DID document.
   #[wasm_bindgen(js_name = setAlsoKnownAs)]
-  pub fn set_also_known_as(&mut self, urls: &UOneOrManyUrl) -> Result<()> {
+  pub fn set_also_known_as(&mut self, urls: &OptionOneOrManyString) -> Result<()> {
     let urls: Option<OneOrMany<String>> = urls.into_serde().wasm_result()?;
     let mut urls_set: OrderedSet<Url> = OrderedSet::new();
     if let Some(urls) = urls {
@@ -152,7 +154,7 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns a set of the document's `alsoKnownAs`.
+  /// Returns a copy of the document's `alsoKnownAs` set.
   #[wasm_bindgen(js_name = alsoKnownAs)]
   pub fn also_known_as(&self) -> ArrayString {
     self
@@ -186,12 +188,8 @@ impl WasmDocument {
 
   /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
-  pub fn properties(&mut self) -> Result<MapStringAny> {
-    let properties_map = js_sys::Map::new();
-    for (key, value) in self.0.properties().iter() {
-      properties_map.set(&JsValue::from(key), &JsValue::from_serde(&value).wasm_result()?);
-    }
-    Ok(properties_map.unchecked_into::<MapStringAny>())
+  pub fn properties(&self) -> Result<MapStringAny> {
+    MapStringAny::try_from(self.0.properties())
   }
 
   // ===========================================================================
@@ -252,7 +250,7 @@ impl WasmDocument {
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayVerificationMethods>()
   }
-  /// Adds a new Verification Method to the DID Document.
+  /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
     self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
@@ -279,10 +277,9 @@ impl WasmDocument {
       .wasm_result()
   }
 
-  /// Returns a copy of the first `VerificationMethod` with an `id` property
-  /// matching the provided `query`.
-  ///
-  /// Throws an error if the method is not found.
+  /// Returns a copy of the first verification method with an `id` property
+  /// matching the provided `query` and the verification relationship
+  /// specified by `scope`, if present.
   #[wasm_bindgen(js_name = resolveMethod)]
   pub fn resolve_method(
     &self,
@@ -292,15 +289,8 @@ impl WasmDocument {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
-      self.0.resolve_method(&method_query, Some(scope))
-    } else {
-      self.0.resolve_method(&method_query, None)
-    };
-    match method {
-      None => Ok(None),
-      Some(method) => Ok(Some(WasmVerificationMethod(method.clone()))),
-    }
+    let method: Option<&IotaVerificationMethod> = self.0.resolve_method(&method_query, method_scope);
+    Ok(method.cloned().map(WasmVerificationMethod))
   }
 
   /// Attempts to resolve the given method query into a method capable of signing a document update.
@@ -316,28 +306,30 @@ impl WasmDocument {
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = attachMethodRelationship)]
   pub fn attach_method_relationship(
     &mut self,
-    did_url: &WasmDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
-      .attach_method_relationship(&did_url.0, relationship.into())
+      .attach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
     &mut self,
-    did_url: &WasmDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
-      .detach_method_relationship(&did_url.0, relationship.into())
+      .detach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
 
@@ -632,6 +624,22 @@ impl WasmDocument {
     Ok(())
   }
 
+  /// Sets a custom property in the document metadata.
+  /// If the value is set to `null`, the custom property will be removed.
+  #[wasm_bindgen(js_name = setMetadataPropertyUnchecked)]
+  pub fn set_metadata_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
+    let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
+    match value {
+      Some(value) => {
+        self.0.metadata.properties.insert(key, value);
+      }
+      None => {
+        self.0.metadata.properties.remove(&key);
+      }
+    }
+    Ok(())
+  }
+
   /// Returns a copy of the proof.
   #[wasm_bindgen]
   pub fn proof(&self) -> Option<WasmProof> {
@@ -681,11 +689,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
   pub type UDIDUrlQuery;
 
-  #[wasm_bindgen(typescript_type = "string | string[] | null")]
-  pub type UOneOrManyUrl;
-
   #[wasm_bindgen(typescript_type = "DID | DID[] | null")]
-  pub type UOneOrManyDID;
+  pub type OptionOneOrManyDID;
 
   #[wasm_bindgen(typescript_type = "DID[]")]
   pub type ArrayDID;
@@ -695,7 +700,4 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   pub type ArrayVerificationMethods;
-
-  #[wasm_bindgen(typescript_type = "Timestamp | undefined")]
-  pub type OptionTimestamp;
 }

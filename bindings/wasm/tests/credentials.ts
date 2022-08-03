@@ -181,7 +181,6 @@ describe('CredentialValidator, PresentationValidator', function () {
                 degreeType: "BachelorDegree",
                 GPA: "4.0"
             };
-            console.log(issuerDID.toString());
             const credential = new Credential({
                 id: "https://example.edu/credentials/3732",
                 type: "UniversityDegreeCredential",
