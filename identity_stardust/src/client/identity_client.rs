@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_did::did::DIDError;
+
 use crate::block::address::Address;
 use crate::block::output::feature::SenderFeature;
 use crate::block::output::unlock_condition::GovernorAddressUnlockCondition;
@@ -12,8 +14,6 @@ use crate::block::output::Feature;
 use crate::block::output::OutputId;
 use crate::block::output::RentStructure;
 use crate::block::output::UnlockCondition;
-use identity_did::did::DIDError;
-
 use crate::Error;
 use crate::NetworkName;
 use crate::Result;
@@ -30,16 +30,16 @@ impl TryFrom<&StardustDID> for AliasId {
   }
 }
 
-/// Helper functions necessary for the [`StardustIdentityClient`] trait.
+/// Helper functions necessary for the [`StardustIdentityClientExt`] trait.
 #[async_trait::async_trait(?Send)]
-pub trait StardustIdentityClientBase {
+pub trait StardustIdentityClient {
   /// Return the Bech32 human-readable part (HRP) of the network.
   ///
   /// E.g. "iota", "atoi", "smr", "rms".
   async fn get_network_hrp(&self) -> Result<String>;
 
-  /// Fetch the latest version of an Alias Output by its identifier.
-  async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)>;
+  /// Resolve an Alias identifier, returning its latest [`OutputId`] and [`AliasOutput`].
+  async fn get_alias_output(&self, alias_id: AliasId) -> Result<(OutputId, AliasOutput)>;
 
   /// Return the rent structure of the network, indicating the byte costs for outputs.
   async fn get_rent_structure(&self) -> Result<RentStructure>;
@@ -49,9 +49,9 @@ pub trait StardustIdentityClientBase {
 /// and resolution of DID documents in Alias Outputs.
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
-/// provided for [`StardustIdentityClientBase`] implementers.
+/// provided for [`StardustIdentityClient`] implementers.
 #[async_trait::async_trait(?Send)]
-pub trait StardustIdentityClient: StardustIdentityClientBase {
+pub trait StardustIdentityClientExt: StardustIdentityClient {
   /// Create a DID with a new Alias Output containing the given `document`.
   ///
   /// The `address` will be set as the state controller and governor unlock conditions.
@@ -162,11 +162,11 @@ pub trait StardustIdentityClient: StardustIdentityClientBase {
   }
 }
 
-impl<T> StardustIdentityClient for T where T: StardustIdentityClientBase {}
+impl<T> StardustIdentityClientExt for T where T: StardustIdentityClient {}
 
 pub(super) async fn validate_network<T>(client: &T, did: &StardustDID) -> Result<()>
 where
-  T: StardustIdentityClientBase + ?Sized,
+  T: StardustIdentityClient + ?Sized,
 {
   let network_hrp: String = client.get_network_hrp().await?;
   if did.network_str() != network_hrp.as_str() {

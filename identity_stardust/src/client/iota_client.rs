@@ -27,12 +27,12 @@ use crate::NetworkName;
 use crate::StardustDID;
 use crate::StardustDocument;
 use crate::StardustIdentityClient;
-use crate::StardustIdentityClientBase;
+use crate::StardustIdentityClientExt;
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
 #[async_trait::async_trait(?Send)]
-pub trait StardustClientExt: StardustIdentityClientBase {
+pub trait StardustClientExt: StardustIdentityClient {
   /// Publish the given `alias_output` with the provided `secret_manager`
   /// and returns the block they were published in.
   ///
@@ -162,7 +162,7 @@ impl StardustClientExt for Client {
 }
 
 #[async_trait::async_trait(?Send)]
-impl StardustIdentityClientBase for Client {
+impl StardustIdentityClient for Client {
   async fn get_network_hrp(&self) -> Result<String> {
     self
       .get_network_info()

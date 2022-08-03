@@ -5,7 +5,7 @@ use iota_client::block::output::AliasOutput;
 use iota_client::Client;
 
 use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClient;
+use identity_stardust::StardustIdentityClientExt;
 
 mod ex0_create_did;
 

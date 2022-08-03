@@ -143,6 +143,10 @@ with a DID subject.</p>
 <dt><a href="#StardustDocumentMetadata">StardustDocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
+<dt><a href="#StardustIdentityClientExt">StardustIdentityClientExt</a></dt>
+<dd><p>An extension interface that provides helper functions for publication
+and resolution of DID documents in Alias Outputs.</p>
+</dd>
 <dt><a href="#StardustService">StardustService</a></dt>
 <dd><p>A <code>Service</code> adhering to the IOTA UTXO DID method specification.</p>
 </dd>
@@ -172,9 +176,7 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -220,7 +222,9 @@ This variant is the default used if no other variant is specified when construct
 </dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -244,8 +248,8 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
@@ -264,9 +268,9 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, indices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+createService"></a>
@@ -279,17 +283,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -304,6 +297,17 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -507,17 +511,6 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -539,6 +532,17 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+setController"></a>
 
@@ -5503,6 +5507,83 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StardustIdentityClientExt"></a>
+
+## StardustIdentityClientExt
+An extension interface that provides helper functions for publication
+and resolution of DID documents in Alias Outputs.
+
+**Kind**: global class  
+
+* [StardustIdentityClientExt](#StardustIdentityClientExt)
+    * [.newDidOutput(client, addressKind, addressHex, document, rentStructure)](#StardustIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.updateDidOutput(client, document)](#StardustIdentityClientExt.updateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.resolveDid(client, did)](#StardustIdentityClientExt.resolveDid) ⇒ [<code>Promise.&lt;StardustDocument&gt;</code>](#StardustDocument)
+    * [.resolveDidOutput(client, did)](#StardustIdentityClientExt.resolveDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+
+<a name="StardustIdentityClientExt.newDidOutput"></a>
+
+### StardustIdentityClientExt.newDidOutput(client, addressKind, addressHex, document, rentStructure) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Create a DID with a new Alias Output containing the given `document`.
+
+The `address` will be set as the state controller and governor unlock conditions.
+The minimum required token deposit amount will be set according to the given
+`rent_structure`, which will be fetched from the node if not provided.
+The returned Alias Output can be further customised before publication, if desired.
+
+NOTE: this does *not* publish the Alias Output.
+
+**Kind**: static method of [<code>StardustIdentityClientExt</code>](#StardustIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IStardustIdentityClient</code> | 
+| addressKind | <code>number</code> | 
+| addressHex | <code>string</code> | 
+| document | [<code>StardustDocument</code>](#StardustDocument) | 
+| rentStructure | <code>IRent</code> \| <code>undefined</code> | 
+
+<a name="StardustIdentityClientExt.updateDidOutput"></a>
+
+### StardustIdentityClientExt.updateDidOutput(client, document) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Fetches the associated Alias Output and updates it with `document` in its state metadata.
+The storage deposit on the output is left unchanged. If the size of the document increased,
+the amount should be increased manually.
+
+NOTE: this does *not* publish the updated Alias Output.
+
+**Kind**: static method of [<code>StardustIdentityClientExt</code>](#StardustIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IStardustIdentityClient</code> | 
+| document | [<code>StardustDocument</code>](#StardustDocument) | 
+
+<a name="StardustIdentityClientExt.resolveDid"></a>
+
+### StardustIdentityClientExt.resolveDid(client, did) ⇒ [<code>Promise.&lt;StardustDocument&gt;</code>](#StardustDocument)
+Resolve a [StardustDocument](#StardustDocument). Returns an empty, deactivated document if the state metadata
+of the Alias Output is empty.
+
+**Kind**: static method of [<code>StardustIdentityClientExt</code>](#StardustIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IStardustIdentityClient</code> | 
+| did | [<code>StardustDID</code>](#StardustDID) | 
+
+<a name="StardustIdentityClientExt.resolveDidOutput"></a>
+
+### StardustIdentityClientExt.resolveDidOutput(client, did) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Fetches the `IAliasOutput` associated with the given DID.
+
+**Kind**: static method of [<code>StardustIdentityClientExt</code>](#StardustIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IStardustIdentityClient</code> | 
+| did | [<code>StardustDID</code>](#StardustDID) | 
+
 <a name="StardustService"></a>
 
 ## StardustService
@@ -6067,13 +6148,9 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="DIDMessageEncoding"></a>
+<a name="MethodRelationship"></a>
 
-## DIDMessageEncoding
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
+## MethodRelationship
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -6157,9 +6234,13 @@ Return after the first error occurs.
 
 ## KeyType
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
+<a name="DIDMessageEncoding"></a>
 
-## MethodRelationship
+## DIDMessageEncoding
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

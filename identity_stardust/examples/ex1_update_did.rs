@@ -13,7 +13,7 @@ use iota_client::Client;
 
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClient;
+use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustService;
 
 mod ex0_create_did;

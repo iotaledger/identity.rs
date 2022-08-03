@@ -18,7 +18,7 @@ use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClient;
-use identity_stardust::StardustIdentityClientBase;
+use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustVerificationMethod;
 
 static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
