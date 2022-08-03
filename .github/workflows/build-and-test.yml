@@ -156,19 +156,13 @@ jobs:
           os: ${{matrix.os}}
 
       - name: Build Stardust
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --manifest-path ./identity_stardust/Cargo.toml --workspace --tests --examples --all-features --release
+        run: cargo build --manifest-path ./identity_stardust/Cargo.toml --workspace --tests --examples --all-features --release 
 
       - name: Start private tangle
         uses: './.github/actions/private-tangle/setup'
 
       - name: Run Stardust tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path ./identity_stardust/Cargo.toml --workspace --all-features --release
+        run: cargo test --manifest-path ./identity_stardust/Cargo.toml --workspace --all-features --release
       
       - name: Run Stardust Rust examples
         # run examples only on ubuntu for now
@@ -177,7 +171,7 @@ jobs:
           cargo read-manifest --manifest-path ./identity_stardust/Cargo.toml | \
           jq -r '.targets[].name' | \
           awk '$1 ~ /ex.*/' | \
-          parallel -k -j 2 --retries 3 --delay 10 cargo run --manifest-path ./identity_stardust/Cargo.toml --example {} --all-features --release
+          parallel -k -j 4 --retries 3 --delay 10 cargo run --manifest-path ./identity_stardust/Cargo.toml --example {} --all-features --release
 
       - name: Tear down private tangle
         if: always()
