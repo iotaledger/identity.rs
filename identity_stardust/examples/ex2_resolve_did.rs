@@ -14,7 +14,7 @@ mod ex0_create_did;
 async fn main() -> anyhow::Result<()> {
   let (client, _, _, document): (Client, _, _, StardustDocument) = ex0_create_did::run().await?;
 
-  // Obtains the Alias Output and extracts the contained document.
+  // Resolve the associated Alias Output and extract the DID document from it.
   let resolved_doc: StardustDocument = client.resolve_did(document.id()).await?;
 
   assert_eq!(resolved_doc, document);

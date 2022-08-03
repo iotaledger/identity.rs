@@ -125,13 +125,7 @@ pub trait StardustIdentityClient: StardustIdentityClientBase {
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
   /// - [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output was not found.
   async fn resolve_did(&self, did: &StardustDID) -> Result<StardustDocument> {
-    let network_hrp: String = self.get_network_hrp().await?;
-    if did.network_str() != network_hrp.as_str() {
-      return Err(Error::NetworkMismatch {
-        expected: did.network_str().to_owned(),
-        actual: network_hrp,
-      });
-    }
+    validate_network(self, did).await?;
 
     let id: AliasId = AliasId::try_from(did)?;
     let (_, alias_output) = self.get_alias_output(id).await?;
@@ -153,14 +147,7 @@ pub trait StardustIdentityClient: StardustIdentityClientBase {
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
   /// - [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output was not found.
   async fn resolve_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
-    let network_hrp: String = self.get_network_hrp().await?;
-
-    if did.network_str() != network_hrp.as_str() {
-      return Err(Error::NetworkMismatch {
-        expected: did.network_str().to_owned(),
-        actual: network_hrp,
-      });
-    }
+    validate_network(self, did).await?;
 
     let id: AliasId = AliasId::try_from(did)?;
     self.get_alias_output(id).await.map(|(_, alias_output)| alias_output)
@@ -176,3 +163,17 @@ pub trait StardustIdentityClient: StardustIdentityClientBase {
 }
 
 impl<T> StardustIdentityClient for T where T: StardustIdentityClientBase {}
+
+pub(super) async fn validate_network<T>(client: &T, did: &StardustDID) -> Result<()>
+where
+  T: StardustIdentityClientBase + ?Sized,
+{
+  let network_hrp: String = client.get_network_hrp().await?;
+  if did.network_str() != network_hrp.as_str() {
+    return Err(Error::NetworkMismatch {
+      expected: did.network_str().to_owned(),
+      actual: network_hrp,
+    });
+  };
+  Ok(())
+}

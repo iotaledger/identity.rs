@@ -20,6 +20,7 @@ use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+use crate::client::identity_client::validate_network;
 use crate::error::Result;
 use crate::Error;
 use crate::NetworkName;
@@ -105,6 +106,8 @@ impl StardustClientExt for Client {
   ///
   /// Returns `Err` when failing to resolve the `did`.
   async fn deactivate_did_output(&self, secret_manager: &SecretManager, did: &StardustDID) -> Result<()> {
+    validate_network(self, did).await?;
+
     let alias_id: AliasId = AliasId::try_from(did)?;
     let (_, alias_output) = self.get_alias_output(alias_id).await?;
 
@@ -132,6 +135,8 @@ impl StardustClientExt for Client {
   ///
   /// This destroys the Alias Output and DID document, rendering the DID permanently unrecoverable.
   async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
+    validate_network(self, did).await?;
+
     let alias_id: AliasId = AliasId::try_from(did)?;
     let (output_id, alias_output) = self.get_alias_output(alias_id).await?;
 
