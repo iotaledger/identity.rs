@@ -170,15 +170,6 @@ jobs:
           command: test
           args: --manifest-path ./identity_stardust/Cargo.toml --workspace --all-features --release
       
-      - name: Run Rust examples
-        working-directory: identity_stardust
-        run: |
-          cargo run --example create_did --release
-
-      - name: Tear down private tangle
-        if: always()
-        uses: './.github/actions/private-tangle/tear-down'
-
       - name: Run Stardust Rust examples
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
@@ -187,6 +178,10 @@ jobs:
           jq -r '.targets[].name' | \
           awk '$1 ~ /ex.*/' | \
           parallel -k -j 4 --retries 3 cargo run --manifest-path ./identity_stardust/Cargo.toml --example {} --all-features --release
+
+      - name: Tear down private tangle
+        if: always()
+        uses: './.github/actions/private-tangle/tear-down'
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'

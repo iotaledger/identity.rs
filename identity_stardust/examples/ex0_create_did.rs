@@ -19,8 +19,9 @@ use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
-static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+static ENDPOINT: &str = "http://localhost:14265"; // "https://api.testnet.shimmer.network/";
+static FAUCET_URL: &str = "http://localhost:8091"; //"https://faucet.testnet.shimmer.network/api/enqueue";
+static PRIVATE_TESTNET_BECH32_HRP: &str = "tst";
 
 /// Demonstrate how to create a DID Document and publish it in a new Alias Output.
 pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDocument)> {
@@ -76,7 +77,7 @@ async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, Sec
 
 /// Requests funds from the testnet faucet for the given `address`.
 async fn request_faucet_funds(client: &Client, address: Address) -> anyhow::Result<()> {
-  let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
+  let address_bech32 = address.to_bech32(PRIVATE_TESTNET_BECH32_HRP); // address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
 
   iota_client::request_funds_from_faucet(FAUCET_URL, &address_bech32).await?;
 
