@@ -1,12 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_stardust::Error;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDocument;
 use iota_client::block::address::Address;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+
+use identity_stardust::Error;
+use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDocument;
+use identity_stardust::StardustIdentityClient;
 
 mod ex0_create_did;
 

@@ -4,20 +4,21 @@
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustVerificationMethod;
-
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::Output;
-use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::crypto::keys::bip39;
 use iota_client::node_api::indexer::query_parameters::QueryParameter;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+
+use identity_stardust::NetworkName;
+use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDocument;
+use identity_stardust::StardustIdentityClient;
+use identity_stardust::StardustIdentityClientBase;
+use identity_stardust::StardustVerificationMethod;
 
 static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
@@ -68,15 +69,15 @@ async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, Sec
   let secret_manager = SecretManager::Mnemonic(MnemonicSecretManager::try_from_mnemonic(&mnemonic)?);
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-
-  request_faucet_funds(client, address).await?;
+  let network_hrp = client.get_network_hrp().await?;
+  request_faucet_funds(client, address, &network_hrp).await?;
 
   Ok((address, secret_manager))
 }
 
 /// Requests funds from the testnet faucet for the given `address`.
-async fn request_faucet_funds(client: &Client, address: Address) -> anyhow::Result<()> {
-  let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
+async fn request_faucet_funds(client: &Client, address: Address, network_hrp: &str) -> anyhow::Result<()> {
+  let address_bech32 = address.to_bech32(network_hrp);
 
   iota_client::request_funds_from_faucet(FAUCET_URL, &address_bech32).await?;
 

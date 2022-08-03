@@ -6,13 +6,15 @@ use identity_core::json;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::verification::MethodRelationship;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustService;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+
+use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDocument;
+use identity_stardust::StardustIdentityClient;
+use identity_stardust::StardustService;
 
 mod ex0_create_did;
 
