@@ -81,9 +81,9 @@ async fn request_faucet_funds(client: &Client, address: Address) -> anyhow::Resu
 
   iota_client::request_funds_from_faucet(FAUCET_URL, &address_bech32).await?;
 
-  tokio::time::timeout(std::time::Duration::from_secs(30), async {
+  tokio::time::timeout(std::time::Duration::from_secs(120), async {
     loop {
-      tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+      tokio::time::sleep(std::time::Duration::from_secs(20)).await;
 
       let balance = get_address_balance(client, &address_bech32).await?;
       if balance > 0 {
