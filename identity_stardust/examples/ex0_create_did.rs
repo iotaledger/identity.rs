@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
@@ -27,7 +28,9 @@ static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDocument)> {
   // Create a client and an address with funds from the testnet faucet.
   let client: Client = Client::builder().with_primary_node(ENDPOINT, None)?.finish()?;
-  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
+  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client)
+    .await
+    .context("failed to get address with funds")?;
 
   // Get the BECH32 HRP identifier of the network.
   let network_name: NetworkName = client.network_name().await?;
@@ -70,7 +73,9 @@ async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, Sec
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
   let network_hrp = client.get_network_hrp().await?;
-  request_faucet_funds(client, address, &network_hrp).await?;
+  request_faucet_funds(client, address, &network_hrp)
+    .await
+    .context("failed to request faucet funds")?;
 
   Ok((address, secret_manager))
 }
@@ -81,18 +86,21 @@ async fn request_faucet_funds(client: &Client, address: Address, network_hrp: &s
 
   iota_client::request_funds_from_faucet(FAUCET_URL, &address_bech32).await?;
 
-  tokio::time::timeout(std::time::Duration::from_secs(30), async {
+  tokio::time::timeout(std::time::Duration::from_secs(45), async {
     loop {
       tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
-      let balance = get_address_balance(client, &address_bech32).await?;
+      let balance = get_address_balance(client, &address_bech32)
+        .await
+        .context("failed to get address balance")?;
       if balance > 0 {
         break;
       }
     }
     Ok::<(), anyhow::Error>(())
   })
-  .await??;
+  .await
+  .context("maximum timeout exceeded")??;
 
   Ok(())
 }
@@ -122,5 +130,8 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
 #[allow(dead_code)]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  run().await.map(|_| ())
+  run().await.map(|_| ()).map_err(|err| {
+    eprintln!("ex0_create_did error: {:#}", err);
+    err
+  })
 }
