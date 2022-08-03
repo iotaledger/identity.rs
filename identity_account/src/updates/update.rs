@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_account_storage::types::DIDType;
 use identity_did::did::CoreDID;
 use log::debug;
 use log::trace;
@@ -51,7 +52,9 @@ pub(crate) async fn create_identity(
       .map_err(|err| UpdateError::InvalidMethodContent(err.to_string()))?;
   };
 
-  let (did, location) = store.did_create(network.clone(), fragment, setup.private_key).await?;
+  let (did, location) = store
+    .did_create(DIDType::IotaDID, network.clone(), fragment, setup.private_key)
+    .await?;
 
   let public_key: PublicKey = store.key_public(&did, &location).await?;
 

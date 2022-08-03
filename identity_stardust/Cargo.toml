@@ -17,6 +17,7 @@ identity_core = { version = "=0.6.0", path = "../identity_core", default-feature
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 
+async-trait = { version = "0.1.56", default-features = false, optional = true }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
@@ -27,7 +28,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "2a35c7affe15034fd1b82884966269882bffb23b" # develop branch, 2022-07-18
+rev = "a582bfa882793fe21db2055c4f7878ebc531877a" # develop branch, 2022-07-27
 features = ["tls"]
 default-features = false
 optional = true
@@ -47,6 +48,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 default = ["iota-client", "revocation-bitmap"]
 # Enables the iota-client dependency and associated helper functions.
-iota-client = ["dep:iota-client"]
+iota-client = ["dep:iota-client", "dep:async-trait"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap"]

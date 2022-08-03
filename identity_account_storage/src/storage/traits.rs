@@ -14,6 +14,7 @@ use identity_iota_core::tangle::NetworkName;
 use crate::error::Result;
 #[cfg(feature = "encryption")]
 use crate::types::CekAlgorithm;
+use crate::types::DIDType;
 #[cfg(feature = "encryption")]
 use crate::types::EncryptedData;
 #[cfg(feature = "encryption")]
@@ -70,7 +71,7 @@ mod storage_sub_trait {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
-  /// Creates a new identity for the given `network`.
+  /// Creates a new identity of type `DIDType` for the given `network`.
   ///
   /// - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
   /// - Returns an error if the DID already exists.
@@ -79,6 +80,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Returns the generated DID and the location at which the key was stored.
   async fn did_create(
     &self,
+    did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,

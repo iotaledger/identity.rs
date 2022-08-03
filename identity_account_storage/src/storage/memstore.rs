@@ -32,6 +32,7 @@ use crate::error::Result;
 use crate::storage::Storage;
 #[cfg(feature = "encryption")]
 use crate::types::CekAlgorithm;
+use crate::types::DIDType;
 #[cfg(feature = "encryption")]
 use crate::types::EncryptedData;
 #[cfg(feature = "encryption")]
@@ -80,6 +81,7 @@ impl MemStore {
 impl Storage for MemStore {
   async fn did_create(
     &self,
+    _did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,

@@ -18,34 +18,35 @@ pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 
 #[wasm_bindgen(js_class = VerificationMethod)]
 impl WasmVerificationMethod {
-  /// Creates a new `VerificationMethod` object from the given `did` and public key.
+  /// Creates a new `VerificationMethod` from the given `did` and public key.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(constructor)]
   pub fn new(
     did: &WasmIotaDID,
-    key_type: WasmKeyType,
-    public_key: Vec<u8>,
+    keyType: WasmKeyType,
+    publicKey: Vec<u8>,
     fragment: String,
   ) -> Result<WasmVerificationMethod> {
-    let public_key: PublicKey = PublicKey::from(public_key);
-    IotaVerificationMethod::new(did.0.clone(), key_type.into(), &public_key, &fragment)
+    let public_key: PublicKey = PublicKey::from(publicKey);
+    IotaVerificationMethod::new(did.0.clone(), keyType.into(), &public_key, &fragment)
       .map(Self)
       .wasm_result()
   }
 
-  /// Returns a copy of the `id` `DIDUrl` of the `VerificationMethod` object.
+  /// Returns a copy of the `id` `DIDUrl` of the `VerificationMethod`.
   #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }
 
-  /// Returns a copy of the `controller` `DID` of the `VerificationMethod` object.
+  /// Returns a copy of the `controller` `DID` of the `VerificationMethod`.
   #[wasm_bindgen]
   pub fn controller(&self) -> WasmIotaDID {
     WasmIotaDID::from(self.0.controller().clone())
   }
 
   /// Sets the `controller` `DID` of the `VerificationMethod` object.
-  #[wasm_bindgen(js_name = SetController)]
+  #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, did: &WasmIotaDID) {
     *self.0.controller_mut() = did.0.clone();
   }

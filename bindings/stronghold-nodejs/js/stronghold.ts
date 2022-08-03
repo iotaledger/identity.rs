@@ -1,5 +1,5 @@
-import { NapiStronghold, NapiCoreDid, NapiKeyLocation, NapiKeyType, NapiDidLocation, NapiEncryptedData, NapiEncryptionAlgorithm, NapiCekAlgorithm } from '../napi-dist/napi';
-import { CoreDID, KeyLocation, Signature, Storage, KeyType, EncryptedData, EncryptionAlgorithm, CekAlgorithm } from "@iota/identity-wasm/node";
+import { NapiStronghold, NapiCoreDid, NapiDIDType, NapiKeyLocation, NapiKeyType, NapiDidLocation, NapiEncryptedData, NapiEncryptionAlgorithm, NapiCekAlgorithm } from '../napi-dist/napi';
+import { CoreDID, DIDType, KeyLocation, Signature, Storage, KeyType, EncryptedData, EncryptionAlgorithm, CekAlgorithm } from "@iota/identity-wasm/node";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
@@ -16,13 +16,22 @@ export class Stronghold implements Storage {
         return stronghold
     }
 
-    public async didCreate(network: string, fragment: string, private_key?: Uint8Array): Promise<[CoreDID, KeyLocation]> {
+    public async didCreate(didType: DIDType, network: string, fragment: string, private_key?: Uint8Array): Promise<[CoreDID, KeyLocation]> {
         let optPrivateKey = undefined;
         if (private_key) {
             optPrivateKey = Array.from(private_key)
         }
 
-        const napiDidLocation: NapiDidLocation = await this.napiStronghold.didCreate(network, fragment, optPrivateKey);
+        let napiDIDType: NapiDIDType | undefined = undefined;
+        switch (didType) {
+            case DIDType.IotaDID:
+                napiDIDType = NapiDIDType.IotaDID;
+                break;
+            default:
+                throw new Error("unexpected did type");
+        }
+
+        const napiDidLocation: NapiDidLocation = await this.napiStronghold.didCreate(napiDIDType, network, fragment, optPrivateKey);
 
         const did: CoreDID = CoreDID.fromJSON(napiDidLocation.did().toJSON());
         const location: KeyLocation = KeyLocation.fromJSON(napiDidLocation.keyLocation().toJSON());

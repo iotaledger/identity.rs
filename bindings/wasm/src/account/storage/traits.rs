@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use identity_iota::account_storage::CekAlgorithm;
+use identity_iota::account_storage::DIDType;
 use identity_iota::account_storage::EncryptedData;
 use identity_iota::account_storage::EncryptionAlgorithm;
 use identity_iota::account_storage::Error as AccountStorageError;
@@ -25,6 +26,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::types::WasmCekAlgorithm;
+use crate::account::types::WasmDIDType;
 use crate::account::types::WasmEncryptedData;
 use crate::account::types::WasmEncryptionAlgorithm;
 use crate::account::types::WasmKeyLocation;
@@ -62,6 +64,7 @@ extern "C" {
   #[wasm_bindgen(method, js_name = didCreate)]
   pub fn did_create(
     this: &WasmStorage,
+    did_type: WasmDIDType,
     network: &str,
     fragment: &str,
     private_key: Option<Vec<u8>>,
@@ -133,6 +136,7 @@ impl Debug for WasmStorage {
 impl Storage for WasmStorage {
   async fn did_create(
     &self,
+    did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,
@@ -143,7 +147,7 @@ impl Storage for WasmStorage {
       key_bytes
     });
 
-    let promise: Promise = Promise::resolve(&self.did_create(network.as_ref(), fragment, private_key));
+    let promise: Promise = Promise::resolve(&self.did_create(did_type.into(), network.as_ref(), fragment, private_key));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let did_location_tuple: js_sys::Array = js_sys::Array::from(&result.to_account_error()?);
     let mut did_location_tuple: js_sys::ArrayIter = did_location_tuple.iter();
@@ -336,14 +340,14 @@ Other operations on the list are `did_exists` and `did_list`.
 
 See the `MemStore` example for a test implementation. */
 interface Storage {
-  /** Creates a new identity for the given `network`.
+  /** Creates a new identity of type `DIDType` for the given `network`.
 
    - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
    - Returns an error if the DID already exists.
    - Adds the newly created DID to a list which can be accessed via `did_list`.
 
    Returns the generated DID and the location at which the key was stored. */
-  didCreate: (network: string, fragment: string, privateKey?: Uint8Array) => Promise<[CoreDID, KeyLocation]>;
+  didCreate: (didType: DIDType, network: string, fragment: string, privateKey?: Uint8Array) => Promise<[CoreDID, KeyLocation]>;
 
   /** Removes the keys and any other state for the given `did`.
 

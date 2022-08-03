@@ -41,7 +41,7 @@ impl NetworkName {
           && (name.len() <= Self::MAX_LENGTH)
           && name.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit())
       })
-      .ok_or(Error::InvalidNetworkName)
+      .ok_or_else(|| Error::InvalidNetworkName(name.to_owned()))
   }
 }
 

@@ -41,6 +41,7 @@ use crate::stronghold::StrongholdError;
 use crate::stronghold::VaultOperation;
 use crate::types::AgreementInfo;
 use crate::types::CekAlgorithm;
+use crate::types::DIDType;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
@@ -60,6 +61,7 @@ static VAULT_PATH: &[u8; 6] = b"$vault";
 impl Storage for Stronghold {
   async fn did_create(
     &self,
+    _did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,

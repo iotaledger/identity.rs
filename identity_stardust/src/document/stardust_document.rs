@@ -36,16 +36,16 @@ use crate::StardustDocumentMetadata;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
-/// A [`VerificationMethod`] adhering to the IOTA DID method specification.
+/// A [`VerificationMethod`] adhering to the IOTA UTXO DID method specification.
 pub type StardustVerificationMethod = VerificationMethod<StardustDID, Object>;
 
-/// A [`Service`] adhering to the IOTA DID method specification.
+/// A [`Service`] adhering to the IOTA UTXO DID method specification.
 pub type StardustService = Service<StardustDID, Object>;
 
-/// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
+/// A [`CoreDocument`] whose fields adhere to the IOTA UTXO DID method specification.
 pub type StardustCoreDocument = CoreDocument<StardustDID>;
 
-/// A DID Document adhering to the IOTA DID method specification.
+/// A DID Document adhering to the IOTA UTXO DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -269,9 +269,8 @@ impl StardustDocument {
   }
 
   // ===========================================================================
-  // Publishing
+  // Packing
   // ===========================================================================
-  // TODO: clean up and feature-gate certain methods to avoid hard dependency on iota-client?
 
   /// Serializes the document for inclusion in an Alias Output's state metadata
   /// with the default [`StateMetadataEncoding`].
@@ -291,31 +290,6 @@ impl StardustDocument {
   /// encoded in the `AliasId` alone.
   pub fn unpack(did: &StardustDID, state_metadata: &[u8]) -> Result<StardustDocument> {
     StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_stardust_document(did))
-  }
-}
-
-#[cfg(feature = "iota-client")]
-mod stardust_document_iota_client {
-  use iota_client::block::output::Output;
-
-  use crate::Error;
-
-  use super::*;
-
-  impl StardustDocument {
-    /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
-    ///
-    /// NOTE: `did` is required since it is omitted from the serialized DID Document and
-    /// cannot be inferred from the [`Output`]. It also indicates the network, which is not
-    /// encoded in the `AliasId` alone.
-    // TODO: remove? Is `unpack` sufficient?
-    pub fn unpack_from_output(did: &StardustDID, output: &Output) -> Result<StardustDocument> {
-      let document: &[u8] = match output {
-        Output::Alias(alias_output) => alias_output.state_metadata(),
-        _ => return Err(Error::InvalidStateMetadata("not an alias output")),
-      };
-      Self::unpack(did, document)
-    }
   }
 }
 

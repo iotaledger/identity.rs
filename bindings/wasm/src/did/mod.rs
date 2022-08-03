@@ -20,7 +20,7 @@ pub use self::wasm_resolved_document::DocumentOrResolvedDocument;
 pub use self::wasm_resolved_document::PromiseArrayResolvedDocument;
 pub use self::wasm_resolved_document::PromiseResolvedDocument;
 pub use self::wasm_resolved_document::WasmResolvedDocument;
-pub(crate) use self::wasm_service::service_endpoint_to_js_value;
+pub use self::wasm_service::IService;
 pub use self::wasm_service::UServiceEndpoint;
 pub use self::wasm_service::WasmService;
 pub use self::wasm_verification_method::WasmVerificationMethod;

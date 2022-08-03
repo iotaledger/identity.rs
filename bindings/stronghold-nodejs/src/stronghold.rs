@@ -16,6 +16,7 @@ use napi_derive::napi;
 use crate::error::NapiResult;
 use crate::types::NapiCekAlgorithm;
 use crate::types::NapiCoreDid;
+use crate::types::NapiDIDType;
 use crate::types::NapiDidLocation;
 use crate::types::NapiEncryptedData;
 use crate::types::NapiEncryptionAlgorithm;
@@ -69,6 +70,7 @@ impl NapiStronghold {
   #[napi]
   pub async fn did_create(
     &self,
+    did_type: NapiDIDType,
     network: String,
     fragment: String,
     private_key: Option<Vec<u32>>,
@@ -81,7 +83,7 @@ impl NapiStronghold {
 
     let (did, location): (CoreDID, KeyLocation) = self
       .0
-      .did_create(network, fragment.as_ref(), private_key)
+      .did_create(did_type.into(), network, fragment.as_ref(), private_key)
       .await
       .napi_result()?;
 

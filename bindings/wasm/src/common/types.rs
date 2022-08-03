@@ -20,6 +20,12 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
+
+  #[wasm_bindgen(typescript_type = "number | number[]")]
+  pub type UOneOrManyNumber;
+
+  #[wasm_bindgen(typescript_type = "string | string[] | null")]
+  pub type OptionOneOrManyString;
 }
 
 impl TryFrom<Object> for MapStringAny {
