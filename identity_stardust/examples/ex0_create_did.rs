@@ -20,7 +20,7 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 
 static ENDPOINT: &str = "http://localhost:14265"; // "https://api.testnet.shimmer.network/";
-static FAUCET_URL: &str = "http://localhost:8091"; //"https://faucet.testnet.shimmer.network/api/enqueue";
+static FAUCET_URL: &str = "http://localhost:8091/api/enqueue"; //"https://faucet.testnet.shimmer.network/api/enqueue";
 static PRIVATE_TESTNET_BECH32_HRP: &str = "tst";
 
 /// Demonstrate how to create a DID Document and publish it in a new Alias Output.
@@ -83,7 +83,7 @@ async fn request_faucet_funds(client: &Client, address: Address) -> anyhow::Resu
 
   tokio::time::timeout(std::time::Duration::from_secs(120), async {
     loop {
-      tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+      tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
       let balance = get_address_balance(client, &address_bech32).await?;
       if balance > 0 {
