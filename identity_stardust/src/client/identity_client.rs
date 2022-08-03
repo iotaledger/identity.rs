@@ -1,17 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::address::Address;
-use bee_block::output::feature::SenderFeature;
-use bee_block::output::unlock_condition::GovernorAddressUnlockCondition;
-use bee_block::output::unlock_condition::StateControllerAddressUnlockCondition;
-use bee_block::output::AliasId;
-use bee_block::output::AliasOutput;
-use bee_block::output::AliasOutputBuilder;
-use bee_block::output::Feature;
-use bee_block::output::OutputId;
-use bee_block::output::RentStructure;
-use bee_block::output::UnlockCondition;
+use crate::block::address::Address;
+use crate::block::output::feature::SenderFeature;
+use crate::block::output::unlock_condition::GovernorAddressUnlockCondition;
+use crate::block::output::unlock_condition::StateControllerAddressUnlockCondition;
+use crate::block::output::AliasId;
+use crate::block::output::AliasOutput;
+use crate::block::output::AliasOutputBuilder;
+use crate::block::output::Feature;
+use crate::block::output::OutputId;
+use crate::block::output::RentStructure;
+use crate::block::output::UnlockCondition;
 use identity_did::did::DIDError;
 
 use crate::Error;

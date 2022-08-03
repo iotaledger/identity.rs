@@ -40,4 +40,7 @@ pub enum Error {
   OutputConversionError(#[source] iota_client::block::DtoError),
   #[error("conversion to an OutputId failed: {0}")]
   OutputIdConversionError(String),
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+  #[error("JavaScript function threw an exception: {0}")]
+  JsError(String),
 }

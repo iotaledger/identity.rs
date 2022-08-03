@@ -4,22 +4,22 @@
 use std::ops::Deref;
 
 use iota_client::api_types::responses::OutputResponse;
-use iota_client::block::address::Address;
-use iota_client::block::output::unlock_condition::AddressUnlockCondition;
-use iota_client::block::output::AliasId;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::block::output::BasicOutputBuilder;
-use iota_client::block::output::Output;
-use iota_client::block::output::OutputId;
-use iota_client::block::output::RentStructure;
-use iota_client::block::output::UnlockCondition;
-use iota_client::block::payload::transaction::TransactionEssence;
-use iota_client::block::payload::Payload;
-use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+use crate::block::address::Address;
+use crate::block::output::unlock_condition::AddressUnlockCondition;
+use crate::block::output::AliasId;
+use crate::block::output::AliasOutput;
+use crate::block::output::AliasOutputBuilder;
+use crate::block::output::BasicOutputBuilder;
+use crate::block::output::Output;
+use crate::block::output::OutputId;
+use crate::block::output::RentStructure;
+use crate::block::output::UnlockCondition;
+use crate::block::payload::transaction::TransactionEssence;
+use crate::block::payload::Payload;
+use crate::block::Block;
 use crate::client::identity_client::validate_network;
 use crate::error::Result;
 use crate::Error;

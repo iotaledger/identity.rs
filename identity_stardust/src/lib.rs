@@ -4,6 +4,10 @@
 #![forbid(unsafe_code)]
 #![allow(clippy::upper_case_acronyms)]
 
+/// Re-export the `bee_block` crate for implementer convenience.
+#[cfg(feature = "client")]
+pub use bee_block as block;
+
 #[cfg(feature = "client")]
 pub use client::*;
 pub use did::StardustDID;
