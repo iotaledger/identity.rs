@@ -10,7 +10,7 @@ use identity_did::{
 };
 #[async_trait]
 pub trait Resolve {
-  type D: for<'a> TryFrom<&'a str> + DID;
+  type D: for<'a> TryFrom<CoreDID> + DID;
   type DOC: Document<D = Self::D>;
 
   /// Fetch the associated DID Document from the given DID.
@@ -18,10 +18,11 @@ pub trait Resolve {
 }
 
 #[async_trait]
-trait ResolveDynamic: private::Sealed {
-  async fn resolve_dynamic(&self, did: &str) -> Result<Box<dyn ValidatorDocument>>;
+pub(super) trait ResolveDynamic: private::Sealed {
+  async fn resolve_dynamic(&self, did: CoreDID) -> Result<Box<dyn ValidatorDocument>>;
 }
 
+// TODO: Is Sealed necessary here, it is only available to the super module and not the public API ...
 mod private {
   use super::Resolve;
   pub trait Sealed {}
@@ -35,11 +36,11 @@ where
   T::DOC: Send + Sync + 'static,
   T::D: Send + Sync + 'static,
 {
-  async fn resolve_dynamic(&self, did: &str) -> Result<Box<dyn ValidatorDocument>> {
+  async fn resolve_dynamic(&self, did: CoreDID) -> Result<Box<dyn ValidatorDocument>> {
     // TODO: Consider improving error handling.
     let parsed_did: <T as Resolve>::D = did.try_into().map_err(|_| {
       Error::DIDSyntaxError(identity_did::did::DIDError::Other(
-        "failed to parse did during resolution",
+        "failed to convert DID during resolution",
       ))
     })?;
 

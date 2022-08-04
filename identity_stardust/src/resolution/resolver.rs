@@ -1,27 +1,26 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use identity_credential::{
   credential::Credential,
   presentation::Presentation,
-  validator::{FailFast, PresentationValidationOptions, PresentationValidator},
+  validator::{CredentialValidator, FailFast, PresentationValidationOptions, PresentationValidator},
 };
 use identity_did::{
-  did::DID,
+  did::{CoreDID, DID},
   document::{CoreDocument, Document},
 };
 use serde::Serialize;
 
-use crate::Result;
+use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::Resolve;
+use super::{resolve::ResolveDynamic, Resolve};
 
-pub struct TBA;
 pub struct Resolver {
-  delegates: HashMap<String, Box<dyn ValidatorDocument>>,
+  delegates: HashMap<String, Box<dyn ResolveDynamic>>,
 }
 
 impl Resolver {
@@ -32,17 +31,32 @@ impl Resolver {
     todo!()
   }
 
+  //TODO: Improve error handling.
+  // TODO: Finish implementation. 
   pub async fn resolve_presentation_issuers<U, V>(
     &self,
     presentation: &Presentation<U, V>,
   ) -> Result<Vec<Box<dyn ValidatorDocument>>> {
-    todo!()
-  }
+    // Extract unique issuers.
+    //TODO: Improve error handling.
+    let issuers: HashSet<CoreDID> = presentation
+      .verifiable_credential
+      .iter()
+      .map(|credential| {
+        CredentialValidator::extract_issuer::<CoreDID, V>(credential).map_err(|_| Error::CredentialValidationError)
+      })
+      .collect::<Result<_>>()?;
 
-  pub async fn resolve_presentation_issuers_core<U, V>(
-    &self,
-    presentation: &Presentation<U, V>,
-  ) -> Result<Vec<CoreDocument>> {
+    if issuers
+      .iter()
+      .any(|issuer| !self.delegates.contains_key(issuer.method()))
+    {
+      // The presentation contains did's whose methods are not attached to this Resolver.
+      // TODO: Find a much better error!
+      return Err(Error::CredentialValidationError);
+    }
+    // Resolve issuers concurrently.
+    //futures::future::try_join_all(issuers.iter().map(|issuer| self.delegates[issuer.method()].resolve_dynamic()).collect::<Vec<_>>()).await
     todo!()
   }
 
@@ -53,27 +67,24 @@ impl Resolver {
     todo!()
   }
 
-  pub async fn resolve_presentation_holder_core<U, V>(
-    &self,
-    presentation: &Presentation<U, V>,
-  ) -> Result<CoreDocument> {
-    todo!()
-  }
-
   /// Fetches the DID Document of the issuer on a [`Credential`].
   ///
   /// # Errors
   ///
-  /// Errors if the issuer URL is not a valid [`IotaDID`] or DID resolution fails.
+  /// Errors if the issuer URL cannot be parsed to a DID with a method resolver attached, or resolution itself fails.
+  // TODO: Improve errors!
   pub async fn resolve_credential_issuer<U: Serialize>(
     &self,
     credential: &Credential<U>,
   ) -> Result<Box<dyn ValidatorDocument>> {
-    todo!()
-  }
-
-  pub async fn resolve_credential_issuer_core<U: Serialize>(&self, credential: &Credential<U>) -> Result<CoreDocument> {
-    todo!()
+    let issuer_did: CoreDID =
+      CredentialValidator::extract_issuer(credential).map_err(|_| Error::CredentialValidationError)?;
+    // TODO: This is a terrible error to throw here. Fix that!
+    let method_resolver = self
+      .delegates
+      .get(issuer_did.method())
+      .ok_or(Error::CredentialValidationError)?;
+    method_resolver.resolve_dynamic(issuer_did).await
   }
 
   /// Verifies a [`Presentation`].
