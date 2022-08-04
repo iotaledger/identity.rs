@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 
 use identity_credential::{
+  credential::Credential,
   presentation::Presentation,
   validator::{FailFast, PresentationValidationOptions, PresentationValidator},
 };
@@ -16,9 +17,11 @@ use serde::Serialize;
 use crate::Result;
 use identity_credential::validator::ValidatorDocument;
 
+use super::Resolve;
+
 pub struct TBA;
 pub struct Resolver {
-  delegates: HashMap<String, TBA>,
+  delegates: HashMap<String, Box<dyn ValidatorDocument>>,
 }
 
 impl Resolver {
@@ -57,6 +60,38 @@ impl Resolver {
     todo!()
   }
 
+  /// Fetches the DID Document of the issuer on a [`Credential`].
+  ///
+  /// # Errors
+  ///
+  /// Errors if the issuer URL is not a valid [`IotaDID`] or DID resolution fails.
+  pub async fn resolve_credential_issuer<U: Serialize>(
+    &self,
+    credential: &Credential<U>,
+  ) -> Result<Box<dyn ValidatorDocument>> {
+    todo!()
+  }
+
+  pub async fn resolve_credential_issuer_core<U: Serialize>(&self, credential: &Credential<U>) -> Result<CoreDocument> {
+    todo!()
+  }
+
+  /// Verifies a [`Presentation`].
+  ///
+  /// # Important
+  /// See [`PresentationValidator::validate`](PresentationValidator::validate()) for information about which properties
+  /// get validated and what is expected of the optional arguments `holder` and `issuer`.
+  ///
+  /// # Resolution
+  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+  /// If you already have up-to-date versions of these DID Documents, you may want
+  /// to use [`PresentationValidator::validate`].
+  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`].
+  ///
+  /// # Errors
+  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+  /// Otherwise, errors from validating the presentation and its credentials will be returned
+  /// according to the `fail_fast` parameter.
   pub async fn verify_presentation<U: Serialize, V: Serialize>(
     &self,
     presentation: &Presentation<U, V>,

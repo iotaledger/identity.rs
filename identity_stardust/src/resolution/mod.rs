@@ -2,3 +2,4 @@
 // SPDX-License-Identifier: Apache-2.0
 mod resolve;
 mod resolver;
+pub use resolve::Resolve;
