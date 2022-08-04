@@ -40,4 +40,8 @@ pub enum Error {
   OutputConversionError(#[source] iota_client::block::DtoError),
   #[error("conversion to an OutputId failed: {0}")]
   OutputIdConversionError(String),
+  //TODO: Should this be feature gated?
+  /// Caused by one or more failures when validating a presentation.
+  #[error("presentation validation failed")]
+  PresentationValidationError(#[from] identity_credential::validator::CompoundPresentationValidationError),
 }

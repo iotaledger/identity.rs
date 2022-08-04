@@ -58,6 +58,7 @@ mod private {
 
   impl<T> Sealed for T where T: Document {}
   impl Sealed for &dyn ValidatorDocument {}
+  impl Sealed for Box<dyn ValidatorDocument> {}
 
   /// Object-safe trait workaround to satisfy the trait bounds
   /// [`serde::Serialize`] + [`GetSignature`].
@@ -90,6 +91,27 @@ impl ValidatorDocument for &dyn ValidatorDocument {
     query: identity_did::utils::DIDUrlQuery<'_>,
   ) -> identity_did::Result<RevocationBitmap> {
     (*self).resolve_revocation_bitmap(query)
+  }
+}
+
+impl ValidatorDocument for Box<dyn ValidatorDocument> {
+  fn did_str(&self) -> &str {
+    let reference: &dyn ValidatorDocument = self.as_ref();
+    reference.did_str()
+  }
+
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+    let reference: &dyn ValidatorDocument = self.as_ref();
+    reference.verify_data(data, options)
+  }
+
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_did::utils::DIDUrlQuery<'_>,
+  ) -> identity_did::Result<RevocationBitmap> {
+    let reference: &dyn ValidatorDocument = self.as_ref();
+    reference.resolve_revocation_bitmap(query)
   }
 }
 

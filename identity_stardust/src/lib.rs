@@ -21,4 +21,5 @@ mod did;
 mod document;
 mod error;
 mod network;
+mod resolution;
 mod state_metadata;
