@@ -3,5 +3,5 @@
 mod resolve;
 mod resolver;
 pub use resolve::Resolve;
-use resolve::ResolveDynamic;
+pub use resolve::ResolveValidator;
 pub use resolver::Resolver;

@@ -40,11 +40,10 @@ pub enum Error {
   OutputConversionError(#[source] iota_client::block::DtoError),
   #[error("conversion to an OutputId failed: {0}")]
   OutputIdConversionError(String),
-  /// Caused by one or more failures when validating a credential.
-  #[error("credential validation failed")]
-  //TODO: Improve error
-  CredentialValidationError,
   /// Caused by one or more failures when validating a presentation.
   #[error("presentation validation failed")]
   PresentationValidationError(#[from] identity_credential::validator::CompoundPresentationValidationError),
+  //TODO: IMPROVE ERROR
+  #[error("{0}")]
+  ResolutionProblem(String),
 }

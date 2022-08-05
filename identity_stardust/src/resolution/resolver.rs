@@ -1,8 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::{HashMap, HashSet};
+use std::{
+  any::Any,
+  collections::{HashMap, HashSet},
+};
 
+use futures::FutureExt;
 use identity_credential::{
   credential::Credential,
   presentation::Presentation,
@@ -17,22 +21,37 @@ use serde::Serialize;
 use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::{resolve::ResolveDynamic, Resolve};
+use super::{
+  resolve::{ResolveValidator, ValidatorDocumentExt},
+  Resolve,
+};
 
 pub struct Resolver {
-  delegates: HashMap<String, Box<dyn ResolveDynamic>>,
+  method_map: HashMap<String, Box<dyn ResolveValidator>>,
 }
 
 impl Resolver {
-  pub fn resolve<Doc, D>(did: D) -> Result<Doc>
+  //TODO: Improve error handling.
+  pub async fn resolve<DOC, D>(&self, did: &D) -> Result<DOC>
   where
-    Doc: Document<D = D>,
+    DOC: Document<D = D> + 'static,
+    D: DID,
   {
-    todo!()
+    let delegate = self
+      .method_map
+      .get(did.method())
+      .ok_or(Error::ResolutionProblem("did method not supported".into()))?;
+
+    let validator_doc = delegate.resolve_validator(did.as_str()).await?;
+
+    validator_doc
+      .into_any()
+      .downcast::<DOC>()
+      .map(|boxed| *boxed)
+      .map_err(|_| Error::ResolutionProblem("failed to convert the resolved document to the desired type".into()))
   }
 
   //TODO: Improve error handling.
-  // TODO: Finish implementation. 
   pub async fn resolve_presentation_issuers<U, V>(
     &self,
     presentation: &Presentation<U, V>,
@@ -43,21 +62,38 @@ impl Resolver {
       .verifiable_credential
       .iter()
       .map(|credential| {
-        CredentialValidator::extract_issuer::<CoreDID, V>(credential).map_err(|_| Error::CredentialValidationError)
+        CredentialValidator::extract_issuer::<CoreDID, V>(credential)
+          .map_err(|_| Error::ResolutionProblem("Failed to parse the issuer's did from a credential".into()))
       })
       .collect::<Result<_>>()?;
 
-    if issuers
+    if let Some(unsupported_method) = issuers
       .iter()
-      .any(|issuer| !self.delegates.contains_key(issuer.method()))
+      .find(|issuer| !self.method_map.contains_key(issuer.method()))
+      .map(|issuer| issuer.method())
     {
       // The presentation contains did's whose methods are not attached to this Resolver.
       // TODO: Find a much better error!
-      return Err(Error::CredentialValidationError);
+      return Err(Error::ResolutionProblem(format!(
+        "the presentation contains a credential issued with the following unsupported did method: {}",
+        unsupported_method
+      )));
     }
     // Resolve issuers concurrently.
-    //futures::future::try_join_all(issuers.iter().map(|issuer| self.delegates[issuer.method()].resolve_dynamic()).collect::<Vec<_>>()).await
-    todo!()
+    let validator_documents: Vec<Box<dyn ValidatorDocumentExt>> = futures::future::try_join_all(
+      issuers
+        .iter()
+        .map(|issuer| self.method_map[issuer.method()].resolve_validator(issuer.as_str()))
+        .collect::<Vec<_>>(),
+    )
+    .await?;
+
+    Ok(
+      validator_documents
+        .into_iter()
+        .map(|extension| extension.into_validator_document())
+        .collect(),
+    )
   }
 
   pub async fn resolve_presentation_holder<U, V>(
@@ -77,14 +113,19 @@ impl Resolver {
     &self,
     credential: &Credential<U>,
   ) -> Result<Box<dyn ValidatorDocument>> {
-    let issuer_did: CoreDID =
-      CredentialValidator::extract_issuer(credential).map_err(|_| Error::CredentialValidationError)?;
+    let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
+      .map_err(|_| Error::ResolutionProblem("failed to parse the issuer's did".into()))?;
     // TODO: This is a terrible error to throw here. Fix that!
     let method_resolver = self
-      .delegates
+      .method_map
       .get(issuer_did.method())
-      .ok_or(Error::CredentialValidationError)?;
-    method_resolver.resolve_dynamic(issuer_did).await
+      .ok_or(Error::ResolutionProblem(
+        "the issuer's did method is not supported".into(),
+      ))?;
+    method_resolver
+      .resolve_validator(&issuer_did.as_str())
+      .await
+      .map(|this| this.into_validator_document())
   }
 
   /// Verifies a [`Presentation`].
