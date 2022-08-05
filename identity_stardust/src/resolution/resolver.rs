@@ -1,12 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-  any::Any,
-  collections::{HashMap, HashSet},
-};
+use std::collections::{HashMap, HashSet};
 
-use futures::FutureExt;
 use identity_credential::{
   credential::Credential,
   presentation::Presentation,
@@ -14,17 +10,14 @@ use identity_credential::{
 };
 use identity_did::{
   did::{CoreDID, DID},
-  document::{CoreDocument, Document},
+  document::Document,
 };
 use serde::Serialize;
 
 use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::{
-  resolve::{ResolveValidator, ValidatorDocumentExt},
-  Resolve,
-};
+use super::resolve::ResolveValidator;
 
 pub struct Resolver {
   method_map: HashMap<String, Box<dyn ResolveValidator>>,

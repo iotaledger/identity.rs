@@ -1,19 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{any::Any, str::FromStr};
+use std::any::Any;
 
 use crate::{Error, Result};
 use async_trait::async_trait;
-use identity_credential::{
-  credential::Credential,
-  presentation::Presentation,
-  validator::{CredentialValidator, PresentationValidator, ValidatorDocument},
-};
-use identity_did::{
-  did::{CoreDID, DIDError, DID},
-  document::{CoreDocument, Document},
-};
+use identity_credential::validator::ValidatorDocument;
+use identity_did::{did::DID, document::Document};
 #[async_trait]
 pub trait Resolve {
   type D: for<'a> TryFrom<&'a str> + DID;
