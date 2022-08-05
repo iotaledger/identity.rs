@@ -6,7 +6,10 @@ use std::any::Any;
 use crate::{Error, Result};
 use async_trait::async_trait;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::{did::DID, document::Document};
+use identity_did::{
+  did::{CoreDID, DID},
+  document::{CoreDocument, Document},
+};
 #[async_trait]
 /// A trait for resolving DID documents adhering to a given DID method.
 pub trait MethodBoundResolver {
@@ -18,6 +21,9 @@ pub trait MethodBoundResolver {
 
   /// The supported did method.
   fn method() -> String;
+
+  /// Like [`Self::resolve`](Self::resolve), but operates with [`CoreDID`] and [`CoreDocument`] instead.
+  async fn resolve_core(&self, did: &CoreDID) -> Result<CoreDocument>;
 }
 
 /// Helper trait for downcasting [`ValidatorDocuments`](ValidatorDocument) to concrete [`Documents`](Document).
