@@ -206,3 +206,9 @@ impl Resolver {
       .map(|value| value.into_validator_document())
   }
 }
+
+impl Default for Resolver {
+  fn default() -> Self {
+    Self::new()
+  }
+}
