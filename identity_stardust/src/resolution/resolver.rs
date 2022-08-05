@@ -33,7 +33,7 @@ impl Resolver {
     let delegate = self
       .method_map
       .get(did.method())
-      .ok_or(Error::ResolutionProblem("did method not supported".into()))?;
+      .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
 
     let validator_doc = delegate.resolve_validator(did.as_str()).await?;
 
@@ -161,7 +161,7 @@ impl Resolver {
     let delegate = self
       .method_map
       .get(did.method())
-      .ok_or(Error::ResolutionProblem("did method not supported".into()))?;
+      .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
 
     delegate
       .resolve_validator(did.as_str())
