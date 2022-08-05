@@ -22,8 +22,9 @@ use identity_credential::validator::ValidatorDocument;
 
 use super::method_bound_resolver::ValidatorDocumentResolver;
 
-/// Resolves DID documents corresponding to multiple methods.  
-/// provides convenience functions for resolving DID Documents associated with
+/// Convenience type for resolving did documents from different did methods.   
+///  
+/// Also provides functions for resolving DID Documents associated with
 /// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
 ///
 /// # Configuration
