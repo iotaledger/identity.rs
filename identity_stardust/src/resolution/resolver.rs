@@ -20,8 +20,16 @@ use serde::Serialize;
 use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::resolve::ValidatorDocumentResolver;
+use super::method_bound_resolver::ValidatorDocumentResolver;
 
+/// Resolves DID documents corresponding to multiple methods.  
+/// provides convenience functions for resolving DID Documents associated with
+/// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
+///
+/// # Configuration
+/// The resolver will only be able to resolve did documents corresponding to a certain method after it has been
+/// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver` trait](super::MethodBoundResolver) for your client
+/// and then attaching it with [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
 pub struct Resolver {
   method_map: HashMap<String, Arc<dyn ValidatorDocumentResolver>>,
 }
