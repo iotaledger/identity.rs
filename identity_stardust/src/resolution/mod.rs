@@ -2,6 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 mod resolve;
 mod resolver;
-pub use resolve::Resolve;
-pub use resolve::ResolveValidator;
+pub use resolve::MethodBoundResolver;
+pub use resolve::ValidatorDocumentResolver;
 pub use resolver::Resolver;

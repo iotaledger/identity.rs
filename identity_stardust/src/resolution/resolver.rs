@@ -1,7 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::{HashMap, HashSet};
+use std::{
+  collections::{HashMap, HashSet},
+  sync::Arc,
+};
 
 use identity_credential::{
   credential::Credential,
@@ -17,13 +20,36 @@ use serde::Serialize;
 use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::resolve::ResolveValidator;
+use super::resolve::ValidatorDocumentResolver;
 
 pub struct Resolver {
-  method_map: HashMap<String, Box<dyn ResolveValidator>>,
+  method_map: HashMap<String, Arc<dyn ValidatorDocumentResolver>>,
 }
 
 impl Resolver {
+  /// Constructs a new [`Resolver`].
+  pub fn new() -> Self {
+    Self {
+      method_map: HashMap::new(),
+    }
+  }
+
+  /// Attach a [`ValidatorDocumentResolver`] to this resolver. If the resolver has previously been configured to handle the same DID method
+  /// the new handler will replace the previous which will then returned from this method, otherwise `None` is returned.
+  #[must_use]
+  pub fn attach_method_handler(
+    &mut self,
+    handler: Arc<dyn ValidatorDocumentResolver>,
+  ) -> Option<Arc<dyn ValidatorDocumentResolver>> {
+    self.method_map.insert(handler.method(), handler)
+  }
+
+  /// Fetches the DID Document of the given DID.
+  ///
+  ///
+  /// # Errors
+  /// Errors if the resolver has not been configured to handle the method corresponding to the given did, resolution fails, or the
+  /// resolved document is of another type than the specified [`Document`] implementor.  
   //TODO: Improve error handling.
   pub async fn resolve<DOC, D>(&self, did: &D) -> Result<DOC>
   where
@@ -44,7 +70,13 @@ impl Resolver {
       .map_err(|_| Error::ResolutionProblem("failed to convert the resolved document to the desired type".into()))
   }
 
-  //TODO: Improve error handling.
+  /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
+  /// Issuer documents are returned in arbitrary order.
+  ///
+  /// # Errors
+  ///
+  /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or resolution fails.
+  // TODO: Improve error handling.
   pub async fn resolve_presentation_issuers<U, V>(
     &self,
     presentation: &Presentation<U, V>,
@@ -82,6 +114,11 @@ impl Resolver {
     .await
   }
 
+  /// Fetches the DID Document of the holder of a [`Presentation`].
+  ///
+  /// # Errors
+  ///
+  /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or DID resolution fails.
   //TODO: Improve error handling
   pub async fn resolve_presentation_holder<U, V>(
     &self,
@@ -96,7 +133,7 @@ impl Resolver {
   ///
   /// # Errors
   ///
-  /// Errors if the issuer URL cannot be parsed to a DID with a method resolver attached, or resolution itself fails.
+  /// Errors if the issuer URL cannot be parsed to a DID with a method supported by the resolver, or resolution fails.
   // TODO: Improve errors!
   pub async fn resolve_credential_issuer<U: Serialize>(
     &self,
