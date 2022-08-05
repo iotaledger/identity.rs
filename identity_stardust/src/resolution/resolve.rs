@@ -1,11 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::any::Any;
+use std::{any::Any, str::FromStr};
 
 use crate::{Error, Result};
 use async_trait::async_trait;
-use identity_credential::validator::ValidatorDocument;
+use identity_credential::{
+  credential::Credential,
+  presentation::Presentation,
+  validator::{CredentialValidator, PresentationValidator, ValidatorDocument},
+};
 use identity_did::{
   did::{CoreDID, DIDError, DID},
   document::{CoreDocument, Document},
@@ -61,7 +65,7 @@ where
 {
   async fn resolve_validator(&self, did: &str) -> Result<Box<dyn ValidatorDocumentExt>> {
     // TODO: Consider improving error handling.
-    let parsed_did: <T as Resolve>::D = did.try_into().map_err(|_| {
+    let parsed_did: <T as Resolve>::D = did.parse().map_err(|_| {
       Error::DIDSyntaxError(identity_did::did::DIDError::Other(
         "failed to convert DID during resolution",
       ))

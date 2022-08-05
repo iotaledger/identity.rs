@@ -80,30 +80,26 @@ impl Resolver {
       )));
     }
     // Resolve issuers concurrently.
-    let validator_documents: Vec<Box<dyn ValidatorDocumentExt>> = futures::future::try_join_all(
+    futures::future::try_join_all(
       issuers
         .iter()
-        .map(|issuer| self.method_map[issuer.method()].resolve_validator(issuer.as_str()))
+        .map(|issuer| self.resolve_validator_document(issuer))
         .collect::<Vec<_>>(),
     )
-    .await?;
-
-    Ok(
-      validator_documents
-        .into_iter()
-        .map(|extension| extension.into_validator_document())
-        .collect(),
-    )
+    .await
   }
 
+  //TODO: Improve error handling
   pub async fn resolve_presentation_holder<U, V>(
     &self,
     presentation: &Presentation<U, V>,
   ) -> Result<Box<dyn ValidatorDocument>> {
-    todo!()
+    let holder: CoreDID = PresentationValidator::extract_holder(presentation)
+      .map_err(|error| Error::ResolutionProblem(error.to_string()))?;
+    self.resolve_validator_document(&holder).await
   }
 
-  /// Fetches the DID Document of the issuer on a [`Credential`].
+  /// Fetches the DID Document of the issuer of a [`Credential`].
   ///
   /// # Errors
   ///
@@ -115,17 +111,7 @@ impl Resolver {
   ) -> Result<Box<dyn ValidatorDocument>> {
     let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
       .map_err(|_| Error::ResolutionProblem("failed to parse the issuer's did".into()))?;
-    // TODO: This is a terrible error to throw here. Fix that!
-    let method_resolver = self
-      .method_map
-      .get(issuer_did.method())
-      .ok_or(Error::ResolutionProblem(
-        "the issuer's did method is not supported".into(),
-      ))?;
-    method_resolver
-      .resolve_validator(&issuer_did.as_str())
-      .await
-      .map(|this| this.into_validator_document())
+    self.resolve_validator_document(&issuer_did).await
   }
 
   /// Verifies a [`Presentation`].
@@ -176,5 +162,17 @@ impl Resolver {
       }
     }
     .map_err(Into::into)
+  }
+
+  async fn resolve_validator_document(&self, did: &CoreDID) -> Result<Box<dyn ValidatorDocument>> {
+    let delegate = self
+      .method_map
+      .get(did.method())
+      .ok_or(Error::ResolutionProblem("did method not supported".into()))?;
+
+    delegate
+      .resolve_validator(did.as_str())
+      .await
+      .map(|value| value.into_validator_document())
   }
 }
