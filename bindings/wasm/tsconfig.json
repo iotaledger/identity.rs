@@ -2,10 +2,13 @@
     "compilerOptions": {
       "declaration": true,
       "strict": true,
-      "esModuleInterop": true
+      "esModuleInterop": true,
+      "declarationMap": true
     },
     "exclude": [
+      "build",
       "node_modules",
-      "dist"
+      "node",
+      "web"
     ]
 }

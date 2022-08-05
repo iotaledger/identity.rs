@@ -2,27 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    AccountBuilder,
-    ExplorerUrl,
-    Storage,
-    IStardustIdentityClient,
-    DID,
-    KeyLocation,
-    KeyPair,
-    KeyType, StardustDocument, StardustDID, StardustIdentityClientExt, IStardustIdentityClientExt
+    StardustDocument,
 } from '../../node';
-import {ALIAS_OUTPUT_TYPE} from "@iota/iota.js/src/models/outputs/IAliasOutput";
 
+import {IAliasOutput, SingleNodeClient, IndexerPluginClient, IRent, INodeInfo} from '@iota/iota.js';
 
-import {IAliasOutput, IRent, SingleNodeClient, IndexerPluginClient, IClient} from '@iota/iota.js';
-
-import "./iclient.ext";
-
-// TODO: StardustClientExt helper functions for publishing, deactivation, and deletion.
-
-// declare module '@iota/iota.js' {
-//     export interface IClient extends IStardustIdentityClientExt {}
-// }
+import {StardustIdentityClient} from "./stardust_identity_client";
 
 
 import {
@@ -32,8 +17,6 @@ import {
     ED25519_ADDRESS_TYPE,
     IUTXOInput,
     IOutputsResponse,
-    INftOutput,
-    NFT_OUTPUT_TYPE,
     ITransactionEssence,
     serializeOutput,
     ISignatureUnlock,
@@ -53,9 +36,10 @@ import { Bip32Path, Blake2b, Ed25519 } from "@iota/crypto.js";
 import { randomBytes } from "node:crypto";
 import fetch from "node-fetch";
 
-const EXPLORER = "https://explorer.testnet.iotaledger.net/alphanet";
-const API_ENDPOINT = "https://api.testnet.iotaledger.net/";
-const FAUCET = "https://faucet.testnet.iotaledger.net/api/enqueue"
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+const EXPLORER = "https://explorer.alphanet.iotaledger.net/alphanet";
+const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
+const FAUCET = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
 // In this example we set up a hot wallet, fund it with tokens from the faucet and let it mint an NFT to our address.
 async function run() {
@@ -63,118 +47,113 @@ async function run() {
     // const client = new SingleNodeClient(API_ENDPOINT, {powProvider: new LocalPowProvider()});
     // Neon localPoW is blazingly fast, but you need rust toolchain to build
     const client = new SingleNodeClient(API_ENDPOINT, {powProvider: new NeonPowProvider()});
-    const iclient: IClient = client;
-    const network = await iclient.getNetworkHrp();
-
-    // Fetch basic info from node
-    const nodeInfo = await client.info();
+    const didClient = new StardustIdentityClient(client);
+    const protocolInfo = await client.protocolInfo();
+    const network: string = protocolInfo.bech32Hrp;
 
     // Now it's time to set up an account for this demo which we are going to use to mint nft and send it to the target address.
-    console.log("Sender Address:")
+    console.log("Sender Address:");
     const [walletAddressHex, walletAddressBech32, walletKeyPair] = await setUpHotWallet(network, true);
 
     // Fetch outputId with funds to be used as input
     const indexerPluginClient = new IndexerPluginClient(client);
 
     const document = new StardustDocument(network);
-    const aliasOutput = await iclient.newDidOutput(0, walletAddressHex, document);
+    const aliasOutput: IAliasOutput = await didClient.newDidOutput(ED25519_ADDRESS_TYPE, walletAddressHex, document);
+    console.log("AliasOutput", JSON.stringify(aliasOutput, null, 4));
 
     // Indexer returns outputIds of matching outputs. We are only interested in the first one coming from the faucet.
-    // const outputId = await fetchAndWaitForBasicOutput(walletAddressBech32, indexerPluginClient);
-    // console.log("OutputId: ", outputId);
-    //
-    // // Fetch the output itself
-    // const resp = await client.output(outputId);
-    // const consumedOutput = resp.output;
-    // console.log("To be consumed output: ", consumedOutput);
-    //
-    // // Prepare inputs to the tx
-    // const input:IUTXOInput = TransactionHelper.inputFromOutputId(outputId);
-    // console.log("Input: ", input);
-    //
-    // // Create the outputs, that is an NFT output
-    // let aliasOutput: IAliasOutput = client.newDidOutput()
-    //
+    const outputId = await fetchAndWaitForBasicOutput(walletAddressBech32, indexerPluginClient);
+    console.log("OutputId: ", outputId);
+
+    // Fetch the output itself
+    const resp = await client.output(outputId);
+    const consumedOutput = resp.output;
+    console.log("To be consumed output: ", consumedOutput);
+
+    // Prepare inputs to the tx
+    const input:IUTXOInput = TransactionHelper.inputFromOutputId(outputId);
+    console.log("Input: ", input);
+
     // // Calculate required storage
-    // let requiredStorageDeposit = TransactionHelper.getStorageDeposit(nftOutput, nodeInfo.protocol.rentStructure);
+    // const rentStructure: IRent = await didClient.getRentStructure();
+    // let requiredStorageDeposit = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure);
     // console.log("Required Storage Deposit of the NFT output: ", requiredStorageDeposit);
     //
     // // Prepare Tx essence
     // // We are going to mint the NFT to an address the user defined in the beginning
     // // We could put only requiredStorageDepoist into the nft output, but hey, we have free tokens so top it up with all we have.
     // // nftOutput.amount = requiredStorageDeposit.toString()
-    // nftOutput.amount = consumedOutput.amount;
+    // aliasOutput.amount = consumedOutput.amount;
     //
-    // // InputsCommitment calculation
-    // const inputsCommitmentHasher = new Blake2b(Blake2b.SIZE_256); // blake2b hasher
-    // // Step 1: sort inputs lexicographically basedon serialized bytes
-    // //       -> we have only 1 input, no need to
-    // // Step 2: Loop over list of inputs (the actual output objects they reference).
-    // //   SubStep 2a: Calculate hash of serialized output
-    // const outputHasher = new Blake2b(Blake2b.SIZE_256);
-    // const w = new WriteStream();
-    // serializeOutput(w, consumedOutput);
-    // const consumedOutputBytes = w.finalBytes();
-    // outputHasher.update(consumedOutputBytes);
-    // const outputHash = outputHasher.final();
-    //
-    // //   SubStep 2b: add each output hash to buffer
-    // inputsCommitmentHasher.update(outputHash);
-    //
-    // // Step 3: Calculate Sum from buffer
-    // const inputsCommitment = Converter.bytesToHex(inputsCommitmentHasher.final(), true);
-    //
-    // // Figure out networkId from networkName
-    // const currentNetworkId = TransactionHelper.networkIdFromNetworkName(nodeInfo.protocol.networkName);
-    //
-    // // Creating Transaction Essence
-    // const txEssence: ITransactionEssence = {
-    //     type: TRANSACTION_ESSENCE_TYPE,
-    //     networkId: currentNetworkId,
-    //     inputs: [ input],
-    //     outputs: [nftOutput], // outputs don't have to be sorted anymore!!!
-    //     inputsCommitment:  inputsCommitment,
-    // };
-    //
-    // // Calculating Transaction Essence Hash (to be signed in signature unlocks)
-    // const essenceHash = TransactionHelper.getTransactionEssenceHash(txEssence);
-    //
-    // // We unlock only one output, so there will be one unlock with signature
-    // let unlock: ISignatureUnlock = {
-    //     type: SIGNATURE_UNLOCK_TYPE,
-    //     signature: {
-    //         type: ED25519_SIGNATURE_TYPE,
-    //         publicKey: Converter.bytesToHex(walletKeyPair.publicKey, true),
-    //         signature: Converter.bytesToHex(Ed25519.sign(walletKeyPair.privateKey, essenceHash), true)
-    //     }
-    // };
-    //
-    // // Constructing Transaction Payload
-    // const txPayload : ITransactionPayload = {
-    //     type: TRANSACTION_PAYLOAD_TYPE,
-    //     essence: txEssence,
-    //     unlocks: [unlock]
-    // };
-    //
-    // // Getting parents for the block
-    // let parentsResponse = await client.tips();
-    // let parents = parentsResponse.tips;
-    //
-    // // Constructing block that holds the transaction
-    // let block: IBlock = {
-    //     protocolVersion: DEFAULT_PROTOCOL_VERSION,
-    //     parents: parents,
-    //     payload: txPayload,
-    //     nonce: "0"
-    // };
-    //
-    // // LocalPoW is so slow and simpe threaded that it may happen that by the time you push the msg to the node,
-    // // it is alsready below max depth (parents), or will need to be promoted...
-    // // alternatively, connect to a node with remotePoW enabled
-    // const blockId = await client.blockSubmit(block);
-    //
-    // console.log("Submitted blockId is: ", blockId);
-    // console.log("Check out the transaction at ", EXPLORER+"/block/"+blockId);
+    // InputsCommitment calculation
+    const inputsCommitmentHasher = new Blake2b(Blake2b.SIZE_256); // blake2b hasher
+    // Step 1: sort inputs lexicographically basedon serialized bytes
+    //       -> we have only 1 input, no need to
+    // Step 2: Loop over list of inputs (the actual output objects they reference).
+    //   SubStep 2a: Calculate hash of serialized output
+    const outputHasher = new Blake2b(Blake2b.SIZE_256);
+    const w = new WriteStream();
+    serializeOutput(w, consumedOutput);
+    const consumedOutputBytes = w.finalBytes();
+    outputHasher.update(consumedOutputBytes);
+    const outputHash = outputHasher.final();
+
+    // SubStep 2b: add each output hash to buffer
+    inputsCommitmentHasher.update(outputHash);
+
+    // Step 3: Calculate Sum from buffer
+    const inputsCommitment = Converter.bytesToHex(inputsCommitmentHasher.final(), true);
+
+    // Creating Transaction Essence
+    const txEssence: ITransactionEssence = {
+        type: TRANSACTION_ESSENCE_TYPE,
+        networkId: protocolInfo.networkId,
+        inputs: [input],
+        outputs: [aliasOutput],
+        inputsCommitment:  inputsCommitment,
+    };
+
+    // Calculating Transaction Essence Hash (to be signed in signature unlocks)
+    const essenceHash = TransactionHelper.getTransactionEssenceHash(txEssence);
+
+    // We unlock only one output, so there will be one unlock with signature
+    let unlock: ISignatureUnlock = {
+        type: SIGNATURE_UNLOCK_TYPE,
+        signature: {
+            type: ED25519_SIGNATURE_TYPE,
+            publicKey: Converter.bytesToHex(walletKeyPair.publicKey, true),
+            signature: Converter.bytesToHex(Ed25519.sign(walletKeyPair.privateKey, essenceHash), true)
+        }
+    };
+
+    // Constructing Transaction Payload
+    const txPayload : ITransactionPayload = {
+        type: TRANSACTION_PAYLOAD_TYPE,
+        essence: txEssence,
+        unlocks: [unlock]
+    };
+
+    // Getting parents for the block
+    let parentsResponse = await client.tips();
+    let parents = parentsResponse.tips;
+
+    // Constructing block that holds the transaction
+    let block: IBlock = {
+        protocolVersion: DEFAULT_PROTOCOL_VERSION,
+        parents: parents,
+        payload: txPayload,
+        nonce: "0"
+    };
+
+    // LocalPoW is so slow and simpe threaded that it may happen that by the time you push the msg to the node,
+    // it is alsready below max depth (parents), or will need to be promoted...
+    // alternatively, connect to a node with remotePoW enabled
+    const blockId = await client.blockSubmit(block);
+    // TODO: retryUntilIncluded...
+
+    console.log("Submitted blockId is: ", blockId);
+    console.log("Check out the transaction at ", EXPLORER+"/block/"+blockId);
 }
 
 run()
@@ -228,9 +207,10 @@ async function requestFundsFromFaucet(addressBech32: string) {
         if (response.status === 202) {
             errorMessage = "OK";
         } else if (response.status === 429) {
-            errorMessage = "Too many requests. Please, try again later.";
+            errorMessage = "too many requests, please try again later.";
         } else {
             data = await response.json();
+            // @ts-ignore
             errorMessage = data.error.message;
         }
     } catch (error) {
@@ -238,7 +218,7 @@ async function requestFundsFromFaucet(addressBech32: string) {
     }
 
     if (errorMessage != "OK") {
-        throw new Error(`Didn't manage to get funds from faucet: ${errorMessage}`);
+        throw new Error(`failed to get funds from faucet: ${errorMessage}`);
     }
 }
 

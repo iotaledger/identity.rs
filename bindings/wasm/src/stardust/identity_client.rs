@@ -4,10 +4,12 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use identity_stardust::block::output::dto::AliasOutputDto;
 use identity_stardust::block::output::AliasId;
 use identity_stardust::block::output::AliasOutput;
 use identity_stardust::block::output::OutputId;
 use identity_stardust::block::output::RentStructure;
+use identity_stardust::block::output::RentStructureBuilder;
 use identity_stardust::StardustIdentityClient;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -65,23 +67,30 @@ impl StardustIdentityClient for WasmStardustIdentityClient {
       .map_err(|err| {
         identity_stardust::Error::JsError(format!("get_alias_output failed to deserialize OutputId: {}", err))
       })?;
-    let alias_output: AliasOutput = iter
+    let alias_dto: AliasOutputDto = iter
       .next()
       .ok_or_else(|| identity_stardust::Error::JsError("get_alias_output expected a tuple of size 2".to_owned()))?
       .into_serde()
       .map_err(|err| {
-        identity_stardust::Error::JsError(format!("get_alias_output failed to deserialize AliasOutput: {}", err))
+        identity_stardust::Error::JsError(format!(
+          "get_alias_output failed to deserialize AliasOutputDto: {}",
+          err
+        ))
       })?;
+    let alias_output = AliasOutput::try_from(&alias_dto).map_err(|err| {
+      identity_stardust::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+    })?;
     Ok((output_id, alias_output))
   }
 
   async fn get_rent_structure(&self) -> Result<RentStructure, identity_stardust::Error> {
-    let promise: Promise = Promise::resolve(&WasmStardustIdentityClient::get_network_hrp(self));
+    let promise: Promise = Promise::resolve(&WasmStardustIdentityClient::get_rent_structure(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let rent_structure: RentStructure = result.to_stardust_error()?.into_serde().map_err(|err| {
-      identity_stardust::Error::JsError(format!("get_rent_structure failed to deserialize String: {}", err))
-    })?;
-    Ok(rent_structure)
+    let rent_structure: RentStructureBuilder = result
+      .to_stardust_error()?
+      .into_serde()
+      .map_err(|err| identity_stardust::Error::JsError(format!("get_rent_structure failed to deserialize: {}", err)))?;
+    Ok(rent_structure.finish())
   }
 }
 

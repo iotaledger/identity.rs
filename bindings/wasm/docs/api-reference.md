@@ -176,8 +176,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -220,6 +218,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
@@ -268,9 +268,9 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, indices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+createService"></a>
@@ -511,6 +511,17 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -532,17 +543,6 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+setController"></a>
 
@@ -6148,10 +6148,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -6229,6 +6225,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="KeyType"></a>
 
