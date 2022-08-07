@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::any::Any;
+
 use identity_core::crypto::GetSignature;
 use identity_did::did::DID;
 use identity_did::document::Document;
@@ -29,6 +31,12 @@ pub trait ValidatorDocument: Sealed {
 
   /// Returns the string identifier of the DID Document.
   fn did_str(&self) -> &str;
+
+  /// Helper method to upcast to an [`Any`] trait object.
+  /// The intended use case is to enable downcasting to a concrete [`Document`].
+  fn into_any(self: Box<Self>) -> Box<dyn Any>
+  where
+    Self: 'static;
 
   /// Verifies the signature of the provided data against the DID Document.
   ///
@@ -85,6 +93,13 @@ impl ValidatorDocument for &dyn ValidatorDocument {
     (*self).verify_data(data, options)
   }
 
+  fn into_any(self: Box<Self>) -> Box<dyn Any>
+  where
+    Self: 'static,
+  {
+    self
+  }
+
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(
     &self,
@@ -98,6 +113,13 @@ impl ValidatorDocument for Box<dyn ValidatorDocument> {
   fn did_str(&self) -> &str {
     let reference: &dyn ValidatorDocument = self.as_ref();
     reference.did_str()
+  }
+
+  fn into_any(self: Box<Self>) -> Box<dyn Any>
+  where
+    Self: 'static,
+  {
+    self
   }
 
   fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
@@ -125,6 +147,13 @@ where
 
   fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
     self.verify_data(data, options).map_err(Into::into)
+  }
+
+  fn into_any(self: Box<Self>) -> Box<dyn Any>
+  where
+    Self: 'static,
+  {
+    self
   }
 
   #[cfg(feature = "revocation-bitmap")]

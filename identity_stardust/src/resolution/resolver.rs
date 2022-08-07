@@ -20,7 +20,7 @@ use serde::Serialize;
 use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::method_bound_resolver::ValidatorDocumentResolver;
+use super::method_bound_resolver::InteroperableResolver;
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
@@ -32,7 +32,7 @@ use super::method_bound_resolver::ValidatorDocumentResolver;
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver` trait](super::MethodBoundResolver) for your client
 /// and then attaching it with [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
 pub struct Resolver {
-  method_map: HashMap<String, Arc<dyn ValidatorDocumentResolver>>,
+  method_map: HashMap<String, Arc<dyn InteroperableResolver>>,
 }
 
 impl Resolver {
@@ -48,8 +48,8 @@ impl Resolver {
   #[must_use]
   pub fn attach_method_handler(
     &mut self,
-    handler: Arc<dyn ValidatorDocumentResolver>,
-  ) -> Option<Arc<dyn ValidatorDocumentResolver>> {
+    handler: Arc<dyn InteroperableResolver>,
+  ) -> Option<Arc<dyn InteroperableResolver>> {
     self.method_map.insert(handler.method(), handler)
   }
 
@@ -209,10 +209,7 @@ impl Resolver {
       .get(did.method())
       .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
 
-    delegate
-      .resolve_validator(did.as_str())
-      .await
-      .map(|value| value.into_validator_document())
+    delegate.resolve_validator(did.as_str()).await
   }
 }
 
