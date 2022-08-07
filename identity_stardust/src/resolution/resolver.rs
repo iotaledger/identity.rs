@@ -20,7 +20,7 @@ use serde::Serialize;
 use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::method_bound_resolver::InteroperableResolver;
+use super::method_bound_resolver::AbstractResolutionHandler;
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
@@ -32,7 +32,7 @@ use super::method_bound_resolver::InteroperableResolver;
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver` trait](super::MethodBoundResolver) for your client
 /// and then attaching it with [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
 pub struct Resolver {
-  method_map: HashMap<String, Arc<dyn InteroperableResolver>>,
+  method_map: HashMap<String, Arc<dyn AbstractResolutionHandler>>,
 }
 
 impl Resolver {
@@ -48,8 +48,8 @@ impl Resolver {
   #[must_use]
   pub fn attach_method_handler(
     &mut self,
-    handler: Arc<dyn InteroperableResolver>,
-  ) -> Option<Arc<dyn InteroperableResolver>> {
+    handler: Arc<dyn AbstractResolutionHandler>,
+  ) -> Option<Arc<dyn AbstractResolutionHandler>> {
     self.method_map.insert(handler.method(), handler)
   }
 

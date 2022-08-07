@@ -4,10 +4,7 @@
 use crate::{Error, Result};
 use async_trait::async_trait;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::{
-  did::{CoreDID, DID},
-  document::{CoreDocument, Document},
-};
+use identity_did::{did::DID, document::Document};
 #[async_trait]
 /// A trait for resolving DID documents adhering to a given DID method.
 pub trait ResolutionHandler {
@@ -19,26 +16,23 @@ pub trait ResolutionHandler {
 
   /// The supported did method.
   fn method() -> String;
-
-  /// Like [`Self::resolve`](Self::resolve), but operates with [`CoreDID`] and [`CoreDocument`] instead.
-  async fn resolve_core(&self, did: &CoreDID) -> Result<CoreDocument>;
 }
 
 #[async_trait]
-pub trait InteroperableResolver: private::Sealed {
+pub trait AbstractResolutionHandler: private::Sealed {
   async fn resolve_validator(&self, did: &str) -> Result<Box<dyn ValidatorDocument>>;
   fn method(&self) -> String;
 }
 
 mod private {
-  use super::InteroperableResolver;
+  use super::AbstractResolutionHandler;
 
   pub trait Sealed {}
-  impl<T> Sealed for T where T: InteroperableResolver {}
+  impl<T> Sealed for T where T: AbstractResolutionHandler {}
 }
 
 #[async_trait]
-impl<T> InteroperableResolver for T
+impl<T> AbstractResolutionHandler for T
 where
   T: ResolutionHandler + Send + Sync,
   T::DOC: Send + Sync + 'static,
