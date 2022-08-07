@@ -20,7 +20,8 @@ use serde::Serialize;
 use crate::{Error, Result};
 use identity_credential::validator::ValidatorDocument;
 
-use super::method_bound_resolver::AbstractResolutionHandler;
+use super::AbstractResolverDelegate;
+ 
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
