@@ -285,10 +285,18 @@ impl StardustDocument {
 
   /// Deserializes the document from the state metadata bytes of an Alias Output.
   ///
+  /// If `allow_empty` is true, this will return an empty DID document marked as `deactivated`
+  /// if `state_metadata` is empty.
+  ///
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
-  pub fn unpack(did: &StardustDID, state_metadata: &[u8]) -> Result<StardustDocument> {
+  pub fn unpack(did: &StardustDID, state_metadata: &[u8], allow_empty: bool) -> Result<StardustDocument> {
+    if state_metadata.is_empty() && allow_empty {
+      let mut empty_document = StardustDocument::new_with_id(did.clone());
+      empty_document.metadata.deactivated = Some(true);
+      return Ok(empty_document);
+    }
     StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_stardust_document(did))
   }
 }

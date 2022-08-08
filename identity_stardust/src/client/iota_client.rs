@@ -11,7 +11,6 @@ use crate::block::address::Address;
 use crate::block::output::unlock_condition::AddressUnlockCondition;
 use crate::block::output::AliasId;
 use crate::block::output::AliasOutput;
-use crate::block::output::AliasOutputBuilder;
 use crate::block::output::BasicOutputBuilder;
 use crate::block::output::Output;
 use crate::block::output::OutputId;
@@ -33,10 +32,12 @@ use crate::StardustIdentityClientExt;
 /// and deletion of DID documents in Alias Outputs.
 #[async_trait::async_trait(?Send)]
 pub trait StardustClientExt: StardustIdentityClient {
-  /// Publish the given `alias_output` with the provided `secret_manager`
-  /// and returns the block they were published in.
+  /// Publish the given `alias_output` with the provided `secret_manager`, and returns
+  /// the DID document extracted from the published block.
   ///
-  /// Needs to be called by the state controller of the Alias Output.
+  /// Note that only the state controller of an Alias Output is allowed to update its state.
+  /// This will attempt to move tokens to or from the state controller address to match
+  /// the storage deposit amount specified on `alias_output`.
   ///
   /// This method modifies the on-ledger state.
   async fn publish_did_output(
@@ -44,18 +45,6 @@ pub trait StardustClientExt: StardustIdentityClient {
     secret_manager: &SecretManager,
     alias_output: AliasOutput,
   ) -> Result<StardustDocument>;
-
-  /// Resolves the Alias Output associated to the `did`, removes the DID document,
-  /// and publishes the output. This effectively deactivates the DID.
-  /// Deactivating does not destroy the output. Hence, a deactivated DID can be
-  /// re-activated by updating the contained document.
-  ///
-  /// The storage deposit on the output is left unchanged.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` when failing to resolve the `did`.
-  async fn deactivate_did_output(&self, secret_manager: &SecretManager, did: &StardustDID) -> Result<()>;
 
   /// Destroy the Alias Output containing the given `did`, sending its tokens to a new Basic Output
   /// unlockable by `address`.
@@ -72,12 +61,6 @@ pub trait StardustClientExt: StardustIdentityClient {
 /// and deletion of DID documents in Alias Outputs.
 #[async_trait::async_trait(?Send)]
 impl StardustClientExt for Client {
-  /// Publish the given `alias_output` with the provided `secret_manager`
-  /// and returns the block they were published in.
-  ///
-  /// Needs to be called by the state controller of the Alias Output.
-  ///
-  /// This method modifies the on-ledger state.
   async fn publish_did_output(
     &self,
     secret_manager: &SecretManager,
@@ -98,47 +81,6 @@ impl StardustClientExt for Client {
       ))
   }
 
-  /// Resolves the Alias Output associated to the `did`, removes the DID document,
-  /// and publishes the output. This effectively deactivates the DID.
-  /// Deactivating does not destroy the output. Hence, a deactivated DID can be
-  /// re-activated by updating the contained document.
-  ///
-  /// The storage deposit on the output is left unchanged.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` when failing to resolve the `did`.
-  async fn deactivate_did_output(&self, secret_manager: &SecretManager, did: &StardustDID) -> Result<()> {
-    validate_network(self, did).await?;
-
-    let alias_id: AliasId = AliasId::try_from(did)?;
-    let (_, alias_output) = self.get_alias_output(alias_id).await?;
-
-    let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
-      .with_state_index(alias_output.state_index() + 1)
-      .with_state_metadata(Vec::new());
-
-    if alias_output.alias_id().is_null() {
-      alias_output_builder = alias_output_builder.with_alias_id(alias_id);
-    }
-
-    let alias_output: AliasOutput = alias_output_builder.finish().map_err(Error::AliasOutputBuildError)?;
-
-    let _ = publish_output(self, secret_manager, alias_output)
-      .await
-      .map_err(|err| Error::DIDUpdateError("deactivate_did_output: publish failed", Some(err)))?;
-
-    Ok(())
-  }
-
-  /// Destroy the Alias Output containing the given `did`, sending its tokens to a new Basic Output
-  /// unlockable by `address`.
-  ///
-  /// Note that only the governor of an Alias Output is allowed to destroy it.
-  ///
-  /// # WARNING
-  ///
-  /// This destroys the Alias Output and DID document, rendering the DID permanently unrecoverable.
   async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
     validate_network(self, did).await?;
 
@@ -243,7 +185,7 @@ async fn documents_from_block(network: &NetworkName, block: &Block) -> Result<Ve
         };
 
         let did: StardustDID = StardustDID::new(alias_id.deref(), network);
-        documents.push(StardustDocument::unpack(&did, alias_output.state_metadata())?);
+        documents.push(StardustDocument::unpack(&did, alias_output.state_metadata(), true)?);
       }
     }
   }

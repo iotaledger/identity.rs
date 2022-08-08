@@ -31,7 +31,7 @@ impl TryFrom<&StardustDID> for AliasId {
 }
 
 /// Helper functions necessary for the [`StardustIdentityClientExt`] trait.
-#[async_trait::async_trait(?Send)]
+#[async_trait::async_trait(? Send)]
 pub trait StardustIdentityClient {
   /// Return the Bech32 human-readable part (HRP) of the network.
   ///
@@ -50,7 +50,7 @@ pub trait StardustIdentityClient {
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
 /// provided for [`StardustIdentityClient`] implementers.
-#[async_trait::async_trait(?Send)]
+#[async_trait::async_trait(? Send)]
 pub trait StardustIdentityClientExt: StardustIdentityClient {
   /// Create a DID with a new Alias Output containing the given `document`.
   ///
@@ -117,6 +117,33 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
     alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
+  /// Removes the DID document from the state metadata of its Alias Output,
+  /// effectively deactivating it. The storage deposit on the output is left unchanged,
+  /// and should be reallocated manually.
+  ///
+  /// Deactivating does not destroy the output. Hence, it can be re-activated by publishing
+  /// an update containing a DID document.
+  ///
+  /// NOTE: this does *not* publish the updated Alias Output.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` when failing to resolve the `did`.
+  async fn deactivate_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
+    let alias_id: AliasId = AliasId::try_from(did)?;
+    let (_, alias_output) = self.get_alias_output(alias_id).await?;
+
+    let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
+      .with_state_index(alias_output.state_index() + 1)
+      .with_state_metadata(Vec::new());
+
+    if alias_output.alias_id().is_null() {
+      alias_output_builder = alias_output_builder.with_alias_id(alias_id);
+    }
+
+    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
+  }
+
   /// Resolve a [`StardustDocument`]. Returns an empty, deactivated document if the state metadata
   /// of the Alias Output is empty.
   ///
@@ -130,14 +157,8 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
     let id: AliasId = AliasId::try_from(did)?;
     let (_, alias_output) = self.get_alias_output(id).await?;
 
-    if alias_output.state_metadata().is_empty() {
-      let mut empty_document: StardustDocument = StardustDocument::new_with_id(did.to_owned());
-      empty_document.metadata.deactivated = Some(true);
-      Ok(empty_document)
-    } else {
-      let document: &[u8] = alias_output.state_metadata();
-      StardustDocument::unpack(did, document)
-    }
+    let document: &[u8] = alias_output.state_metadata();
+    StardustDocument::unpack(did, document, true)
   }
 
   /// Fetches the [`AliasOutput`] associated with the given DID.
