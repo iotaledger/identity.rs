@@ -27,7 +27,7 @@ static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /// Demonstrate how to create a DID Document and publish it in a new Alias Output.
 pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDocument)> {
-  // Create a client and an address with funds from the testnet faucet.
+  // Create a client and a wallet address with funds from the testnet faucet.
   let client: Client = Client::builder().with_primary_node(ENDPOINT, None)?.finish()?;
   let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client)
     .await
@@ -36,7 +36,7 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
 
-  // Create a new document with a placeholder DID.
+  // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
   let mut document: StardustDocument = StardustDocument::new(&network_name);
 
@@ -51,7 +51,7 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
   println!("Alias Output: {}", alias_output.to_json_pretty()?);
 
-  // Publish the output and get the published DID document.
+  // Publish the Alias Output and get the published DID document.
   let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Published DID document: {:#}", document);
 

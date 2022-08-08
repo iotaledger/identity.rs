@@ -218,13 +218,13 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -5520,7 +5520,7 @@ and resolution of DID documents in Alias Outputs.
 **Kind**: global class  
 
 * [StardustIdentityClientExt](#StardustIdentityClientExt)
-    * [.newDidOutput(client, addressType, addressHex, document, rentStructure)](#StardustIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.newDidOutput(client, address, document, rentStructure)](#StardustIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
     * [.updateDidOutput(client, document)](#StardustIdentityClientExt.updateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
     * [.deactivateDidOutput(client, did)](#StardustIdentityClientExt.deactivateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
     * [.resolveDid(client, did)](#StardustIdentityClientExt.resolveDid) ⇒ [<code>Promise.&lt;StardustDocument&gt;</code>](#StardustDocument)
@@ -5528,7 +5528,7 @@ and resolution of DID documents in Alias Outputs.
 
 <a name="StardustIdentityClientExt.newDidOutput"></a>
 
-### StardustIdentityClientExt.newDidOutput(client, addressType, addressHex, document, rentStructure) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+### StardustIdentityClientExt.newDidOutput(client, address, document, rentStructure) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
 Create a DID with a new Alias Output containing the given `document`.
 
 The `address` will be set as the state controller and governor unlock conditions.
@@ -5543,8 +5543,7 @@ NOTE: this does *not* publish the Alias Output.
 | Param | Type |
 | --- | --- |
 | client | <code>IStardustIdentityClient</code> | 
-| addressType | <code>number</code> | 
-| addressHex | <code>string</code> | 
+| address | <code>AddressTypes</code> | 
 | document | [<code>StardustDocument</code>](#StardustDocument) | 
 | rentStructure | <code>IRent</code> \| <code>undefined</code> | 
 
@@ -6250,10 +6249,6 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
@@ -6265,6 +6260,10 @@ Return after the first error occurs.
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

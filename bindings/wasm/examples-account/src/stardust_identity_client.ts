@@ -1,16 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    IStardustIdentityClient,
-    IStardustIdentityClientExt,
-    StardustDID,
-    StardustDocument,
-    StardustIdentityClientExt
-} from '../../node';
+import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from '../../node';
 
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
+    AddressTypes,
     ALIAS_OUTPUT_TYPE,
     BASIC_OUTPUT_TYPE,
     Bech32Helper,
@@ -42,8 +37,11 @@ import {
 import {Converter, WriteStream} from "@iota/util.js";
 import {Blake2b, Ed25519} from "@iota/crypto.js";
 
+const PUBLISH_RETRY_INTERVAL_MS: number = 5000;
+const PUBLISH_RETRY_MAX_ATTEMPTS: number = 20;
+
 /** Provides operations for IOTA UTXO DID Documents with Alias Outputs. */
-export class StardustIdentityClient implements IStardustIdentityClient, IStardustIdentityClientExt {
+export class StardustIdentityClient implements IStardustIdentityClient {
     client: IClient;
     indexer: IndexerPluginClient;
 
@@ -81,26 +79,63 @@ export class StardustIdentityClient implements IStardustIdentityClient, IStardus
         return nodeInfo.protocol.rentStructure;
     }
 
-    async newDidOutput(addressType: number, addressHex: string, document: StardustDocument, rentStructure?: IRent): Promise<IAliasOutput> {
-        return await StardustIdentityClientExt.newDidOutput(this, addressType, addressHex, document, rentStructure);
+    /** Create a DID with a new Alias Output containing the given `document`.
+     *
+     * The `address` will be set as the state controller and governor unlock conditions.
+     * The minimum required token deposit amount will be set according to the given
+     * `rent_structure`, which will be fetched from the node if not provided.
+     * The returned Alias Output can be further customised before publication, if desired.
+     *
+     * NOTE: this does *not* publish the Alias Output.
+     */
+    async newDidOutput(address: AddressTypes, document: StardustDocument, rentStructure?: IRent): Promise<IAliasOutput> {
+        return await StardustIdentityClientExt.newDidOutput(this, address, document, rentStructure);
     }
 
+    /** Fetches the associated Alias Output and updates it with `document` in its state metadata.
+     * The storage deposit on the output is left unchanged. If the size of the document increased,
+     * the amount should be increased manually.
+     *
+     * NOTE: this does *not* publish the updated Alias Output.
+     */
     async updateDidOutput(document: StardustDocument): Promise<IAliasOutput> {
         return await StardustIdentityClientExt.updateDidOutput(this, document);
     }
 
+    /** Removes the DID document from the state metadata of its Alias Output,
+     * effectively deactivating it. The storage deposit on the output is left unchanged,
+     * and should be reallocated manually.
+     *
+     * Deactivating does not destroy the output. Hence, it can be re-activated by publishing
+     * an update containing a DID document.
+     *
+     * NOTE: this does *not* publish the updated Alias Output.
+     */
     async deactivateDidOutput(did: StardustDID): Promise<IAliasOutput> {
         return await StardustIdentityClientExt.deactivateDidOutput(this, did);
     }
 
+    /** Resolve a {@link StardustDocument}. Returns an empty, deactivated document if the state
+     * metadata of the Alias Output is empty.
+     */
     async resolveDid(did: StardustDID): Promise<StardustDocument> {
         return await StardustIdentityClientExt.resolveDid(this, did);
     }
 
+    /** Fetches the Alias Output associated with the given DID. */
     async resolveDidOutput(did: StardustDID): Promise<IAliasOutput> {
         return await StardustIdentityClientExt.resolveDidOutput(this, did);
     }
 
+    /** Publish the given `aliasOutput` with the provided `walletKeyPair`, and returns
+     * the DID document extracted from the published block.
+     *
+     * Note that only the state controller of an Alias Output is allowed to update its state.
+     * This will attempt to move tokens to or from the state controller address to match
+     * the storage deposit amount specified on `aliasOutput`.
+     *
+     * This method modifies the on-ledger state.
+     */
     async publishDidOutput(walletKeyPair: IKeyPair, aliasOutput: IAliasOutput): Promise<StardustDocument> {
         const networkHrp = await this.getNetworkHrp();
 
@@ -163,56 +198,66 @@ export class StardustIdentityClient implements IStardustIdentityClient, IStardus
             outputs.push(walletOutput);
         }
 
-        // Compute transaction essence from outputs.
+        // Construct transaction essence and block.
         const essence: ITransactionEssence = await prepareTransactionEssence(this.client, consumedOutputs, outputs);
-
-        // Compute Transaction Essence Hash (to be signed in signature unlocks).
-        const essenceHash = TransactionHelper.getTransactionEssenceHash(essence);
-
-        // We unlock only one output, so there will be one unlock with signature.
-        let unlock: ISignatureUnlock = {
-            type: SIGNATURE_UNLOCK_TYPE,
-            signature: {
-                type: ED25519_SIGNATURE_TYPE,
-                publicKey: Converter.bytesToHex(walletKeyPair.publicKey, true),
-                signature: Converter.bytesToHex(Ed25519.sign(walletKeyPair.privateKey, essenceHash), true)
-            }
-        };
-
-        // Constructing Transaction Payload.
-        const txPayload: ITransactionPayload = {
-            type: TRANSACTION_PAYLOAD_TYPE,
-            essence: essence,
-            unlocks: [unlock]
-        };
-
-        // Get parents for the block proof-of-work.
-        let parentsResponse = await this.client.tips();
-        let parents = parentsResponse.tips;
-
-        // Construct block containing the transaction.
-        let block: IBlock = {
-            protocolVersion: DEFAULT_PROTOCOL_VERSION,
-            parents: parents,
-            payload: txPayload,
-            nonce: "0"
-        };
+        const block: IBlock = await prepareBlock(this.client, walletKeyPair, essence);
 
         // Extract document with computed AliasId.
-        const documents = extractDocumentsFromPayload(networkHrp, txPayload);
+        const documents = extractDocumentsFromBlock(networkHrp, block);
         if (documents.length < 1) {
             throw new Error("publishDidOutput: no DID document in transaction payload, aborting publishing");
         }
 
         // Publish the block.
         const blockId = await this.client.blockSubmit(block);
-        await retryUntilIncluded(this.client, blockId, 5000, 20);
+        await retryUntilIncluded(this.client, blockId, PUBLISH_RETRY_INTERVAL_MS, PUBLISH_RETRY_MAX_ATTEMPTS);
 
         // Checked for non-zero length above.
         return documents[0];
     }
 
-    /// TODO: helper functions for deletion.
+    /** Destroy the Alias Output containing the given `did`, sending its tokens to a new Basic Output
+     * unlockable by the given address.
+     *
+     * Note that only the governor of an Alias Output is allowed to destroy it.
+     *
+     * ### WARNING
+     *
+     * This destroys the Alias Output and DID document, rendering them permanently unrecoverable.
+     */
+    async deleteDidOutput(address: AddressTypes, walletKeyPair: IKeyPair, did: StardustDID) {
+        const networkHrp = await this.getNetworkHrp();
+        if (networkHrp !== did.networkStr()) {
+            throw new Error("deleteDidOutput: DID network mismatch, client expected `" + networkHrp + "`, DID network is `" + did.networkStr() + "`");
+        }
+
+        const aliasId: string = did.tag();
+        const [outputId, aliasOutput] = await this.getAliasOutput(aliasId);
+
+        // Send funds to the address.
+        const fundsOutput: IBasicOutput = {
+            type: BASIC_OUTPUT_TYPE,
+            amount: aliasOutput.amount,
+            nativeTokens: aliasOutput.nativeTokens,
+            unlockConditions: [
+                {
+                    type: ADDRESS_UNLOCK_CONDITION_TYPE,
+                    address: address
+                }
+            ],
+            features: []
+        };
+
+        // Construct transaction essence and block.
+        const consumedOutputs: [string, OutputTypes][] = [[outputId, aliasOutput]];
+        const outputs: OutputTypes[] = [fundsOutput];
+        const essence: ITransactionEssence = await prepareTransactionEssence(this.client, consumedOutputs, outputs);
+        const block: IBlock = await prepareBlock(this.client, walletKeyPair, essence);
+
+        // Publish the block.
+        const blockId = await this.client.blockSubmit(block);
+        await retryUntilIncluded(this.client, blockId, PUBLISH_RETRY_INTERVAL_MS, PUBLISH_RETRY_MAX_ATTEMPTS);
+    }
 }
 
 async function prepareTransactionEssence(client: IClient, consumedOutputs: [string, OutputTypes][], outputs: OutputTypes[]): Promise<ITransactionEssence> {
@@ -247,6 +292,41 @@ async function prepareTransactionEssence(client: IClient, consumedOutputs: [stri
         outputs,
         inputsCommitment,
     }
+}
+
+/** Constructs and signs a block to publish the given transaction essence. */
+async function prepareBlock(client: IClient, walletKeyPair: IKeyPair, essence: ITransactionEssence): Promise<IBlock> {
+    // Compute Transaction Essence Hash (to be signed in signature unlocks).
+    const essenceHash = TransactionHelper.getTransactionEssenceHash(essence);
+
+    // We unlock only one output, so there will be one unlock with signature.
+    let unlock: ISignatureUnlock = {
+        type: SIGNATURE_UNLOCK_TYPE,
+        signature: {
+            type: ED25519_SIGNATURE_TYPE,
+            publicKey: Converter.bytesToHex(walletKeyPair.publicKey, true),
+            signature: Converter.bytesToHex(Ed25519.sign(walletKeyPair.privateKey, essenceHash), true)
+        }
+    };
+
+    // Constructing Transaction Payload.
+    const txPayload: ITransactionPayload = {
+        type: TRANSACTION_PAYLOAD_TYPE,
+        essence: essence,
+        unlocks: [unlock]
+    };
+
+    // Get parents for the block proof-of-work.
+    let parentsResponse = await client.tips();
+    let parents = parentsResponse.tips;
+
+    // Construct block containing the transaction.
+    return {
+        protocolVersion: DEFAULT_PROTOCOL_VERSION,
+        parents: parents,
+        payload: txPayload,
+        nonce: "0"
+    };
 }
 
 /** Promotes or re-attaches the given block id until it's included (referenced by a milestone).
@@ -288,8 +368,13 @@ async function retryUntilIncluded(client: IClient, blockId: string, intervalMs: 
 }
 
 /** Extract all DID documents of the Alias Outputs contained in a transaction payload, if any. */
-function extractDocumentsFromPayload(networkHrp: string, payload: ITransactionPayload): StardustDocument[] {
+function extractDocumentsFromBlock(networkHrp: string, block: IBlock): StardustDocument[] {
     const documents: StardustDocument[] = [];
+
+    if (block.payload === undefined || block.payload?.type !== TRANSACTION_PAYLOAD_TYPE) {
+        throw new Error("failed to extract documents from block, transaction payload missing or wrong type");
+    }
+    const payload: ITransactionPayload = block.payload;
 
     // Compute TransactionId.
     const transactionPayloadHash: Uint8Array = TransactionHelper.getTransactionPayloadHash(payload);

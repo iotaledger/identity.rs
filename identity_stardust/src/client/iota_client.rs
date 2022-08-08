@@ -53,7 +53,7 @@ pub trait StardustClientExt: StardustIdentityClient {
   ///
   /// # WARNING
   ///
-  /// This destroys the Alias Output and DID document, rendering the DID permanently unrecoverable.
+  /// This destroys the Alias Output and DID document, rendering them permanently unrecoverable.
   async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()>;
 }
 
@@ -88,6 +88,7 @@ impl StardustClientExt for Client {
 
     let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())
       .map_err(Error::BasicOutputBuildError)?
+      .with_native_tokens(alias_output.native_tokens().clone())
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
       .finish_output()
       .map_err(Error::BasicOutputBuildError)?;

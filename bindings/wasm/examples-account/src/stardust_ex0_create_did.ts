@@ -8,7 +8,7 @@ import {
     ED25519_ADDRESS_TYPE,
     Ed25519Address,
     Ed25519Seed,
-    IAliasOutput,
+    IAliasOutput, IEd25519Address,
     SingleNodeClient,
 } from '@iota/iota.js';
 
@@ -25,7 +25,7 @@ const FAUCET = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
 // In this example we set up a hot wallet, fund it with tokens from the faucet and let it mint an NFT to our address.
 async function run() {
-    // Allow self-signed TLS certificates from nodes when running in Node.js.
+    // Allow self-signed TLS certificates when running in Node.js.
     // WARNING: this is generally insecure and should not be done in production.
     if (typeof process !== 'undefined' && process.release.name === 'node') {
         process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
@@ -49,7 +49,7 @@ async function run() {
     console.log("\tAddress Ed25519", walletAddressHex);
     console.log("\tAddress Bech32", walletAddressBech32);
 
-    // Create a new document with a placeholder DID.
+    // Create a new DID document with a placeholder DID.
     // The DID will be derived from the Alias Id of the Alias Output after publishing.
     const document = new StardustDocument(networkHrp);
 
@@ -60,9 +60,14 @@ async function run() {
 
     // Construct an Alias Output containing the DID document, with the wallet address
     // set as both the state controller and governor.
-    const aliasOutput: IAliasOutput = await didClient.newDidOutput(ED25519_ADDRESS_TYPE, walletAddressHex, document);
+    const address: IEd25519Address = {
+        type: ED25519_ADDRESS_TYPE,
+        pubKeyHash: walletAddressHex
+    };
+    const aliasOutput: IAliasOutput = await didClient.newDidOutput(address, document);
     console.log("Alias Output:", JSON.stringify(aliasOutput, null, 2));
 
+    // Publish the Alias Output and get the published DID document.
     const published = await didClient.publishDidOutput(walletKeyPair, aliasOutput);
     console.log("Published DID document:", JSON.stringify(published, null, 2));
 }
