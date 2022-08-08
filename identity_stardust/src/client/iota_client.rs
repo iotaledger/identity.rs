@@ -71,8 +71,7 @@ impl StardustClientExt for Client {
       .map_err(|err| Error::DIDUpdateError("publish_did_output: publish failed", Some(err)))?;
     let network: NetworkName = self.network_name().await?;
 
-    documents_from_block(&network, &block)
-      .await?
+    extract_documents_from_block(&network, &block)?
       .into_iter()
       .next()
       .ok_or(Error::DIDUpdateError(
@@ -162,7 +161,7 @@ async fn publish_output(
 }
 
 /// Returns all DID documents of the Alias Outputs contained in the payload's transaction, if any.
-async fn documents_from_block(network: &NetworkName, block: &Block) -> Result<Vec<StardustDocument>> {
+fn extract_documents_from_block(network: &NetworkName, block: &Block) -> Result<Vec<StardustDocument>> {
   let mut documents = Vec::new();
 
   if let Some(Payload::Transaction(tx_payload)) = block.payload() {
