@@ -8,22 +8,25 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 
 use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 
 mod ex0_create_did;
 
-/// Demonstrate how to deactivate a DID in an Alias Output.
+/// Demonstrates how to deactivate a DID in an Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
-  let (client, _, secret_manager, document): (Client, Address, SecretManager, StardustDocument) =
-    ex0_create_did::run().await?;
+  let (client, _, secret_manager, did): (Client, Address, SecretManager, StardustDID) = ex0_create_did::run().await?;
+
+  // Resolve the latest state of the DID document.
+  let document: StardustDocument = client.resolve_did(&did).await?;
 
   // Deactivate the DID by publishing an empty document.
   // This process can be reversed since the Alias Output is not destroyed.
   // Deactivation can only be done by the state controller of the Alias Output.
-  let deactivated_output: AliasOutput = client.deactivate_did_output(document.id()).await?;
+  let deactivated_output: AliasOutput = client.deactivate_did_output(&did).await?;
 
   // Optional: reduce and reclaim the storage deposit, sending the tokens to the state controller.
   let rent_structure = client.get_rent_structure().await?;
@@ -37,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Attempting to resolve a deactivated DID returns an empty DID document
   // with its `deactivated` metadata field set to `true`.
-  let deactivated_document: StardustDocument = client.resolve_did(document.id()).await?;
+  let deactivated_document: StardustDocument = client.resolve_did(&did).await?;
   println!("Deactivated DID document: {:#}", deactivated_document);
   assert_eq!(deactivated_document.metadata.deactivated, Some(true));
 
@@ -52,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
   client.publish_did_output(&secret_manager, reactivated_output).await?;
 
   // Resolve the reactivated DID document.
-  let reactivated_document: StardustDocument = client.resolve_did(document.id()).await?;
+  let reactivated_document: StardustDocument = client.resolve_did(&did).await?;
   assert_eq!(document, reactivated_document);
   assert!(!reactivated_document.metadata.deactivated.unwrap_or_default());
 
