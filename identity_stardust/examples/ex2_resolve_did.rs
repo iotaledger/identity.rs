@@ -16,14 +16,11 @@ async fn main() -> anyhow::Result<()> {
 
   // Resolve the associated Alias Output and extract the DID document from it.
   let resolved_doc: StardustDocument = client.resolve_did(document.id()).await?;
-
-  assert_eq!(resolved_doc, document);
-
   println!("Resolved DID Document: {resolved_doc:#?}");
+  assert_eq!(resolved_doc, document);
 
   // We can also resolve the Alias Output directly.
   let alias_output: AliasOutput = client.resolve_did_output(document.id()).await?;
-
   println!("The Alias Output holds {} tokens", alias_output.amount());
 
   Ok(())

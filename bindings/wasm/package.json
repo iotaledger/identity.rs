@@ -81,6 +81,9 @@
   "peerDependencies": {
     "@iota/iota.js": "^1.9.0-stardust.23"
   },
+  "optionalDependencies": {
+    "@iota/pow-neon.js": "^1.9.0-stardust.4"
+  },
   "engines": {
     "node": ">=16"
   }

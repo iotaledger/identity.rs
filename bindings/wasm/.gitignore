@@ -6,10 +6,10 @@ Cargo.lock
 node_modules/
 
 # Build artifacts
-wasm-web/
+wasm-web/*
 !wasm-web/index.ts
 !wasm-web/stardust_identity_client.ts
-wasm-node/
+wasm-node/*
 !wasm-node/index.ts
 !wasm-node/stardust_identity_client.ts
 web/

@@ -55,10 +55,8 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the output.
   let resolved_document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
-
+  println!("Updated DID Document: {:#}", resolved_document);
   assert_eq!(document, resolved_document);
-
-  println!("Published updated DID Document: {:#?}", resolved_document);
 
   Ok(())
 }
