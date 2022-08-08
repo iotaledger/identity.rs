@@ -5058,7 +5058,7 @@ Deserializes an instance from a JSON object.
         * [.clone()](#StardustDocument+clone) ⇒ [<code>StardustDocument</code>](#StardustDocument)
     * _static_
         * [.newWithId(id)](#StardustDocument.newWithId) ⇒ [<code>StardustDocument</code>](#StardustDocument)
-        * [.unpack(did, stateMetadata)](#StardustDocument.unpack) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+        * [.unpack(did, stateMetadata, allowEmpty)](#StardustDocument.unpack) ⇒ [<code>StardustDocument</code>](#StardustDocument)
         * [.fromJSON(json)](#StardustDocument.fromJSON) ⇒ [<code>StardustDocument</code>](#StardustDocument)
 
 <a name="new_StardustDocument_new"></a>
@@ -5424,8 +5424,11 @@ Constructs an empty DID Document with the given identifier.
 
 <a name="StardustDocument.unpack"></a>
 
-### StardustDocument.unpack(did, stateMetadata) ⇒ [<code>StardustDocument</code>](#StardustDocument)
+### StardustDocument.unpack(did, stateMetadata, allowEmpty) ⇒ [<code>StardustDocument</code>](#StardustDocument)
 Deserializes the document from the state metadata bytes of an Alias Output.
+
+If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
+if `stateMetadata` is empty.
 
 NOTE: `did` is required since it is omitted from the serialized DID Document and
 cannot be inferred from the state metadata. It also indicates the network, which is not
@@ -5437,6 +5440,7 @@ encoded in the `AliasId` alone.
 | --- | --- |
 | did | [<code>StardustDID</code>](#StardustDID) | 
 | stateMetadata | <code>Uint8Array</code> | 
+| allowEmpty | <code>boolean</code> | 
 
 <a name="StardustDocument.fromJSON"></a>
 
@@ -5516,14 +5520,15 @@ and resolution of DID documents in Alias Outputs.
 **Kind**: global class  
 
 * [StardustIdentityClientExt](#StardustIdentityClientExt)
-    * [.newDidOutput(client, addressKind, addressHex, document, rentStructure)](#StardustIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.newDidOutput(client, addressType, addressHex, document, rentStructure)](#StardustIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
     * [.updateDidOutput(client, document)](#StardustIdentityClientExt.updateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.deactivateDidOutput(client, did)](#StardustIdentityClientExt.deactivateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
     * [.resolveDid(client, did)](#StardustIdentityClientExt.resolveDid) ⇒ [<code>Promise.&lt;StardustDocument&gt;</code>](#StardustDocument)
     * [.resolveDidOutput(client, did)](#StardustIdentityClientExt.resolveDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
 
 <a name="StardustIdentityClientExt.newDidOutput"></a>
 
-### StardustIdentityClientExt.newDidOutput(client, addressKind, addressHex, document, rentStructure) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+### StardustIdentityClientExt.newDidOutput(client, addressType, addressHex, document, rentStructure) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
 Create a DID with a new Alias Output containing the given `document`.
 
 The `address` will be set as the state controller and governor unlock conditions.
@@ -5538,7 +5543,7 @@ NOTE: this does *not* publish the Alias Output.
 | Param | Type |
 | --- | --- |
 | client | <code>IStardustIdentityClient</code> | 
-| addressKind | <code>number</code> | 
+| addressType | <code>number</code> | 
 | addressHex | <code>string</code> | 
 | document | [<code>StardustDocument</code>](#StardustDocument) | 
 | rentStructure | <code>IRent</code> \| <code>undefined</code> | 
@@ -5558,6 +5563,25 @@ NOTE: this does *not* publish the updated Alias Output.
 | --- | --- |
 | client | <code>IStardustIdentityClient</code> | 
 | document | [<code>StardustDocument</code>](#StardustDocument) | 
+
+<a name="StardustIdentityClientExt.deactivateDidOutput"></a>
+
+### StardustIdentityClientExt.deactivateDidOutput(client, did) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Removes the DID document from the state metadata of its Alias Output,
+effectively deactivating it. The storage deposit on the output is left unchanged,
+and should be reallocated manually.
+
+Deactivating does not destroy the output. Hence, it can be re-activated by publishing
+an update containing a DID document.
+
+NOTE: this does *not* publish the updated Alias Output.
+
+**Kind**: static method of [<code>StardustIdentityClientExt</code>](#StardustIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IStardustIdentityClient</code> | 
+| did | [<code>StardustDID</code>](#StardustDID) | 
 
 <a name="StardustIdentityClientExt.resolveDid"></a>
 

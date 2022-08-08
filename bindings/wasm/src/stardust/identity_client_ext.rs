@@ -3,12 +3,16 @@
 
 use std::str::FromStr;
 
-use identity_stardust::block::address::{Address, AliasAddress, Ed25519Address, NftAddress};
+use identity_stardust::block::address::Address;
+use identity_stardust::block::address::AliasAddress;
+use identity_stardust::block::address::Ed25519Address;
+use identity_stardust::block::address::NftAddress;
 use identity_stardust::block::output::dto::AliasOutputDto;
 use identity_stardust::block::output::AliasOutput;
 use identity_stardust::block::output::RentStructure;
+use identity_stardust::StardustDID;
+use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
-use identity_stardust::{StardustDID, StardustDocument};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -17,7 +21,8 @@ use wasm_bindgen_futures::future_to_promise;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::stardust::identity_client::WasmStardustIdentityClient;
-use crate::stardust::{WasmStardustDID, WasmStardustDocument};
+use crate::stardust::WasmStardustDID;
+use crate::stardust::WasmStardustDocument;
 
 // `IAliasOutput` and `IRent` are external interfaces from iota.js.
 // See the custom TypeScript section in `identity_client.rs` for the import statement.
@@ -100,6 +105,33 @@ impl WasmStardustIdentityClientExt {
     let document: StardustDocument = document.0.clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = StardustIdentityClientExt::update_did_output(&client, document)
+        .await
+        .wasm_result()?;
+      // Use DTO for correct serialization.
+      let dto: AliasOutputDto = AliasOutputDto::from(&output);
+      JsValue::from_serde(&dto).wasm_result()
+    });
+
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseAliasOutput>())
+  }
+
+  /// Removes the DID document from the state metadata of its Alias Output,
+  /// effectively deactivating it. The storage deposit on the output is left unchanged,
+  /// and should be reallocated manually.
+  ///
+  /// Deactivating does not destroy the output. Hence, it can be re-activated by publishing
+  /// an update containing a DID document.
+  ///
+  /// NOTE: this does *not* publish the updated Alias Output.
+  #[wasm_bindgen(js_name = deactivateDidOutput)]
+  pub fn deactivate_did_output(
+    client: WasmStardustIdentityClient,
+    did: &WasmStardustDID,
+  ) -> Result<PromiseAliasOutput> {
+    let did: StardustDID = did.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      let output: AliasOutput = StardustIdentityClientExt::deactivate_did_output(&client, &did)
         .await
         .wasm_result()?;
       // Use DTO for correct serialization.

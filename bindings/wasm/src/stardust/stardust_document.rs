@@ -382,18 +382,19 @@ impl WasmStardustDocument {
 
   /// Deserializes the document from the state metadata bytes of an Alias Output.
   ///
+  /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
+  /// if `stateMetadata` is empty.
+  ///
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
   #[wasm_bindgen]
-  pub fn unpack(did: &WasmStardustDID, stateMetadata: &[u8]) -> Result<WasmStardustDocument> {
-    StardustDocument::unpack(&did.0, stateMetadata)
+  pub fn unpack(did: &WasmStardustDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmStardustDocument> {
+    StardustDocument::unpack(&did.0, stateMetadata, allowEmpty)
       .map(WasmStardustDocument)
       .wasm_result()
   }
-
-  // TODO: unpack_from_output/unpackFromOutput ? Feature-gated method, do we need an equivalent?
 
   // ===========================================================================
   // Metadata
