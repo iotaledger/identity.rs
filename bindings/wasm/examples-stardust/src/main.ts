@@ -3,6 +3,7 @@
 
 import {createIdentity} from "./ex0_create_did";
 import {updateIdentity} from "./ex1_update_did";
+import {resolveIdentity} from "./ex2_resolve_did";
 
 async function main() {
     // Extract example name.
@@ -16,6 +17,8 @@ async function main() {
             return await createIdentity();
         case "ex1_update_did":
             return await updateIdentity();
+        case "ex2_resolve_did":
+            return await resolveIdentity();
         default:
             throw "Unknown example name: '" + argument + "'";
     }

@@ -1,6 +1,5 @@
 ![banner](./../../../.meta/identity_banner.png)
 
-
 ## IOTA Identity UTXO Examples
 
 The following code examples demonstrate how to use the IOTA Identity Wasm bindings in JavaScript/TypeScript.
@@ -10,29 +9,34 @@ The examples are written in TypeScript and can be run with Node.js.
 ### Node.js
 
 Install the dependencies:
+
 ```bash
 npm install
 ```
 
 Build the bindings:
+
 ```bash
 npm run build
 ```
 
 Then, run an example using:
+
 ```bash
 npm run example:stardust -- <example-name>
 ```
 
 For instance, to run the `ex0_create_did` example execute:
+
 ```bash
 npm run example:stardust -- create_did
 ```
 
-| #   | Name                                    | Details                                                            |
-|-----|-----------------------------------------|--------------------------------------------------------------------|
-| 0   | [ex0_create_did](src/ex0_create_did.ts) | How to create a DID Document and publish it in a new Alias Output. |
-| 1   | [ex1_update_did](src/ex1_update_did.ts) | How to update a DID document in an existing Alias Output.          |
+| #   | Name                                      | Details                                                             |
+|-----|-------------------------------------------|---------------------------------------------------------------------|
+| 0   | [ex0_create_did](src/ex0_create_did.ts)   | How to create a DID Document and publish it in a new Alias Output.  |
+| 1   | [ex1_update_did](src/ex1_update_did.ts)   | How to update a DID document in an existing Alias Output.           |
+| 2   | [ex2_resolve_did](src/ex2_resolve_did.ts) | How to resolve an existing DID in an Alias Output.                  |
 
 ## Browser
 
