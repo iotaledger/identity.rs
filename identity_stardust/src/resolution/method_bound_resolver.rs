@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
-use std::pin::Pin;
+use std::{pin::Pin, sync::Arc};
 
 use crate::{Error, Result};
 use async_trait::async_trait;
@@ -10,8 +10,8 @@ use identity_credential::validator::ValidatorDocument;
 use identity_did::{did::DID, document::Document};
 use iota_client::block::output::Output;
 #[async_trait]
-/// A trait for resolving DID documents adhering to a given DID method.
-pub trait ResolutionHandler<D>: Clone
+/// A parameterized trait for handling resolution of DID Documents using a specified DID method.
+pub trait ResolutionHandler<D>
 where
   D: DID + for<'a> TryFrom<&'a str> + Send + 'static,
 {
@@ -23,30 +23,15 @@ where
   /// The supported did method.
   fn method() -> String;
 
-  fn abstract_delegate(self) -> AbstractResolverDelegate
-  where
-    Self: Sized,
-  {
-    let method = Self::method();
-    AbstractResolverDelegate {
-      method,
-      handler: Box::new(|input: &str| {
-        Box::pin({
-          let did: D = D::try_from(input)
-            .map_err(|_| Error::ResolutionProblem("failed to parse did".into()))
-            .unwrap();
-          Self::Output::default()
-        })
-      }),
-    }
-  }
-
-  fn into_delegate(self) -> ResolverDelegate<Self::Output>
+  /// This method enables registering the [`ResolutionHandler`] with a dynamic [`Resolver`] (see [`Resolver::<ValidatorDocument>::attach_handler](super::Resolver::<ValidatorDocument>::attach_handler)).
+  ///
+  /// The method can be called, but it is not possible to name the output type by design, hence one cannot overwrite this default method.
+  fn into_delegate(self: Arc<Self>) -> DynamicResolverDelegate
   where
     Self: Sized + 'static,
   {
     let method = Self::method();
-    ResolverDelegate {
+    DynamicResolverDelegate {
       method,
       handler: Box::new(move |input: &str| {
         let self_clone = self.clone();
@@ -54,21 +39,50 @@ where
           let did: D = D::try_from(input)
             .map_err(|_| Error::ResolutionProblem("failed to parse did".into()))
             .unwrap();
-          self_clone.resolve(&did).await.unwrap()
+          let resolved_doc = self_clone.resolve(&did).await.unwrap();
+          Box::new(resolved_doc) as Box<dyn ValidatorDocument>
+        })
+      }),
+    }
+  }
+
+  /// This method enables registering the [`ResolutionHandler`] with a typed [`Resolver`].
+  ///
+  /// The method cannot be overwritten and is only intended to be called internally (by [`Resolver::attach_handler`](super::Resolver::attach_handler)).
+  fn into_typed_delegate<T>(self: Arc<Self>) -> TypedResolverDelegate<T>
+  where
+    Self: Sized + 'static,
+    T: From<Self::Output> + Send + Document,
+  {
+    let method = Self::method();
+    TypedResolverDelegate {
+      method,
+      handler: Box::new(move |input: &str| {
+        let self_clone = self.clone();
+        Box::pin(async move {
+          let did: D = D::try_from(input)
+            .map_err(|_| Error::ResolutionProblem("failed to parse did".into()))
+            .unwrap();
+          let resolved = self_clone.resolve(&did).await.unwrap();
+          T::from(resolved)
         })
       }),
     }
   }
 }
 
-pub struct ResolverDelegate<DOC: Document + Send + 'static> {
+/// Intermediary type used internally by [`Resolver`::attach_handler](super::Resolver::attach_handler).
+///
+/// This type cannot be named.
+pub struct TypedResolverDelegate<DOC: Document + Send + 'static> {
   pub(super) method: String,
   pub(super) handler: Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = DOC> + 'r>>>,
 }
 
-pub struct AbstractResolverDelegate {
+/// Type passed to ...
+pub struct DynamicResolverDelegate {
   pub(super) method: String,
-  pub(super) handler: Box<dyn Fn(&str) -> Pin<Box<dyn ValidatorDocument>>>,
+  pub(super) handler: Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Box<dyn ValidatorDocument>> + 'r>>>,
 }
 
 /*
