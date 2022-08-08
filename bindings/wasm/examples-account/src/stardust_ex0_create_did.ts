@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {StardustDocument} from '../../node';
+import {KeyPair, KeyType, MethodScope, StardustDocument, StardustVerificationMethod} from '../../node';
 
 import {
     Bech32Helper,
@@ -14,45 +14,60 @@ import {
 
 import {StardustIdentityClient} from "./stardust_identity_client";
 import {Converter} from "@iota/util.js";
-import {NeonPowProvider} from "@iota/pow-neon.js";
 import {Bip32Path} from "@iota/crypto.js";
 import {randomBytes} from "node:crypto";
 import fetch from "node-fetch";
+import {NeonPowProvider} from "@iota/pow-neon.js";
 
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 const EXPLORER = "https://explorer.alphanet.iotaledger.net/alphanet";
 const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
 const FAUCET = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
 // In this example we set up a hot wallet, fund it with tokens from the faucet and let it mint an NFT to our address.
 async function run() {
-    // LocalPoW is extremely slow and only runs in 1 thread...
-    // const client = new SingleNodeClient(API_ENDPOINT, {powProvider: new LocalPowProvider()});
-    // Neon localPoW is blazingly fast, but you need rust toolchain to build
-    const client = new SingleNodeClient(API_ENDPOINT, {powProvider: new NeonPowProvider()});
-    const didClient = new StardustIdentityClient(client);
-    const protocolInfo = await client.protocolInfo();
-    const network: string = protocolInfo.bech32Hrp;
+    // Allow self-signed TLS certificates from nodes when running in Node.js.
+    // WARNING: this is generally insecure and should not be done in production.
+    if (typeof process !== 'undefined' && process.release.name === 'node') {
+        process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+    }
 
-    // Now it's time to set up an account for this demo which we are going to use to mint nft and send it to the target address.
+    // Local proof-of-work in JavaScript is single-threaded and extremely slow!
+    // Install and use a faster package if possible.
+    // const powProvider = new LocalPowProvider();
+    // const powProvider = new WasmPowProvider(); // @iota/pow-wasm.js: multi-threaded but requires Node.js.
+    const powProvider = new NeonPowProvider(); // @iota/pow-neon.js: fastest but requires Node.js and Rust.
+
+    const client = new SingleNodeClient(API_ENDPOINT, {powProvider});
+    const didClient = new StardustIdentityClient(client);
+
+    // Get the Bech32 human-readable part (HRP) of the network.
+    const networkHrp: string = await didClient.getNetworkHrp();
+
+    // Create a new wallet and request funds for it from the faucet (only works on test networks).
     console.log("Sender Address:");
-    const [walletAddressHex, walletAddressBech32, walletKeyPair] = await setUpHotWallet(network, true);
+    const [walletAddressHex, walletAddressBech32, walletKeyPair] = await setUpHotWallet(networkHrp, true);
     console.log("\tAddress Ed25519", walletAddressHex);
     console.log("\tAddress Bech32", walletAddressBech32);
 
-    const document = new StardustDocument(network);
-    const aliasOutput: IAliasOutput = await didClient.newDidOutput(ED25519_ADDRESS_TYPE, walletAddressHex, document);
-    console.log("AliasOutput", JSON.stringify(aliasOutput, null, 4));
+    // Create a new document with a placeholder DID.
+    // The DID will be derived from the Alias Id of the Alias Output after publishing.
+    const document = new StardustDocument(networkHrp);
 
+    // Insert a new Ed25519 verification method in the DID document.
+    let keypair = new KeyPair(KeyType.Ed25519);
+    let method = new StardustVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
+    document.insertMethod(method, MethodScope.VerificationMethod());
+
+    // Construct an Alias Output containing the DID document, with the wallet address
+    // set as both the state controller and governor.
+    const aliasOutput: IAliasOutput = await didClient.newDidOutput(ED25519_ADDRESS_TYPE, walletAddressHex, document);
+    console.log("Alias Output:", JSON.stringify(aliasOutput, null, 2));
 
     const published = await didClient.publishDidOutput(walletKeyPair, aliasOutput);
-    console.log("Published DID document: ", published);
+    console.log("Published DID document:", JSON.stringify(published, null, 2));
 }
 
-run()
-    .then(() => console.log("Done"))
-    .catch(err => console.error(err));
-
+/** Generate a new Ed25519 wallet address and optionally fund it from the faucet API. */
 async function setUpHotWallet(hrp: string, fund: boolean = false) {
     // Generate a random seed
     const walletEd25519Seed = new Ed25519Seed(randomBytes(32));
@@ -81,7 +96,7 @@ async function setUpHotWallet(hrp: string, fund: boolean = false) {
     return [walletAddressHex, walletAddressBech32, walletKeyPair] as const;
 }
 
-// Requests frunds from the faucet via API
+/** Request tokens from the faucet API. */
 async function requestFundsFromFaucet(addressBech32: string) {
     const requestObj = JSON.stringify({address: addressBech32});
     let errorMessage, data;
@@ -111,3 +126,6 @@ async function requestFundsFromFaucet(addressBech32: string) {
         throw new Error(`failed to get funds from faucet: ${errorMessage}`);
     }
 }
+
+run()
+    .catch(err => console.error(err));

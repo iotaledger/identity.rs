@@ -275,7 +275,7 @@ async function retryUntilIncluded(client: IClient, blockId: string, intervalMs: 
             // Only promote or re-attach the latest attachment of the block.
             if (index == blockIds.length - 1) {
                 if (metadata.shouldPromote) {
-                    const _promoted = await promote(client, currentBlockId);
+                    await promote(client, currentBlockId);
                 } else if (metadata.shouldReattach) {
                     const reattached = await reattach(client, currentBlockId);
                     // Only track new reattached blocks; promoted blocks are empty and just attempt to confirm the
