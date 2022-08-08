@@ -12,7 +12,7 @@ import {
     ProofOptions,
     Storage,
     VerifierOptions
-} from './../../node/identity_wasm.js';
+} from './../../node';
 
 /**
  * This example demonstrates how to issue and sign Verifiable Credentials using the account.

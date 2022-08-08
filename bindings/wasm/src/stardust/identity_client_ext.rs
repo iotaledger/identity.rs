@@ -151,7 +151,7 @@ const I_STARDUST_IDENTITY_CLIENT_EXT: &'static str = r#"
 /** An extension interface that provides helper functions for publication
   * and resolution of DID documents in Alias Outputs.
   */
-interface IStardustIdentityClientExt extends IStardustIdentityClient {
+export interface IStardustIdentityClientExt extends IStardustIdentityClient {
   /** Create a DID with a new Alias Output containing the given `document`.
     *
     * The `address` will be set as the state controller and governor unlock conditions.

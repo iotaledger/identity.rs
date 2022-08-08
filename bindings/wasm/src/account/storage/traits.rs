@@ -325,7 +325,7 @@ Other operations on the list are `did_exists` and `did_list`.
 # Implementation example
 
 See the `MemStore` example for a test implementation. */
-interface Storage {
+export interface Storage {
   /** Creates a new identity for the given `network`.
 
    - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.

@@ -3,11 +3,10 @@
 
 import {
     StardustDocument,
+    StardustIdentityClient,
 } from '../../node';
 
 import {IAliasOutput, SingleNodeClient, IndexerPluginClient, IRent, INodeInfo} from '@iota/iota.js';
-
-import {StardustIdentityClient} from "./stardust_identity_client";
 
 
 import {
@@ -31,7 +30,7 @@ import {
     AddressTypes
 } from "@iota/iota.js";
 import { Converter, WriteStream } from "@iota/util.js";
-import { NeonPowProvider } from "@iota/pow-neon.js";
+// import { NeonPowProvider } from "@iota/pow-neon.js";
 import { Bip32Path, Blake2b, Ed25519 } from "@iota/crypto.js";
 import { randomBytes } from "node:crypto";
 import fetch from "node-fetch";
@@ -42,11 +41,11 @@ const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
 const FAUCET = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
 // In this example we set up a hot wallet, fund it with tokens from the faucet and let it mint an NFT to our address.
-async function run() {
+export async function run() {
     // LocalPoW is extremely slow and only runs in 1 thread...
     // const client = new SingleNodeClient(API_ENDPOINT, {powProvider: new LocalPowProvider()});
     // Neon localPoW is blazingly fast, but you need rust toolchain to build
-    const client = new SingleNodeClient(API_ENDPOINT, {powProvider: new NeonPowProvider()});
+    const client = new SingleNodeClient(API_ENDPOINT); // const client = new SingleNodeClient(API_ENDPOINT, {powProvider: new NeonPowProvider()});
     const didClient = new StardustIdentityClient(client);
     const protocolInfo = await client.protocolInfo();
     const network: string = protocolInfo.bech32Hrp;

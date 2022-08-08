@@ -3,7 +3,7 @@ const fs = require('fs')
 const { lintAll } = require('./lints')
 const generatePackage = require('./utils/generatePackage');
 
-const RELEASE_FOLDER = path.join(__dirname, '../web/');
+const RELEASE_FOLDER = path.join(__dirname, '../wasm-web/');
 const entryFilePath = path.join(RELEASE_FOLDER, 'identity_wasm.js');
 const entryFile = fs.readFileSync(entryFilePath).toString();
 

@@ -7,7 +7,7 @@ import {
     StardustDID,
     StardustDocument,
     StardustIdentityClientExt
-} from '../../node';
+} from './identity_wasm';
 import {ALIAS_OUTPUT_TYPE, IAliasOutput, IClient, IndexerPluginClient, IRent} from '@iota/iota.js';
 
 /** Provides operations for IOTA UTXO DID Documents with Alias Outputs. */

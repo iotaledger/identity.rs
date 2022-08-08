@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { DID, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, StorageTestSuite, EncryptionAlgorithm, CekAlgorithm, EncryptedData } from '../../node/identity_wasm.js';
+import { DID, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, StorageTestSuite, EncryptionAlgorithm, CekAlgorithm, EncryptedData } from '../../node';
 
 /** An insecure, in-memory `Storage` implementation that serves as an example.
 This can be passed to the `AccountBuilder` to create accounts with this as the storage. */

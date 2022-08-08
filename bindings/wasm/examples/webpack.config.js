@@ -13,7 +13,7 @@ const serverConfig = {
         function ({ context, request }, callback) {
             if (/^@iota\/identity-wasm$/.test(request)) {
                 // Externalize to a commonjs module
-                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
+                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node'));
             }
 
             // Continue without externalizing the import
@@ -37,7 +37,7 @@ const serverTestConfig = {
         function ({ context, request }, callback) {
             if (/^@iota\/identity-wasm$/.test(request)) {
                 // Externalize to a commonjs module
-                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
+                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node'));
             }
 
             // Continue without externalizing the import
@@ -63,7 +63,7 @@ const clientConfig = {
     },
     resolve: {
         alias: {
-            '@iota/identity-wasm': path.resolve(__dirname, '../web/identity_wasm.js'),
+            '@iota/identity-wasm': path.resolve(__dirname, '../web'),
         },
     },
     plugins: [

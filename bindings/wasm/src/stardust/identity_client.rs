@@ -98,7 +98,7 @@ impl StardustIdentityClient for WasmStardustIdentityClient {
 const I_STARDUST_IDENTITY_CLIENT: &'static str = r#"
 import { IAliasOutput, IRent } from '@iota/iota.js';
 /** Helper functions necessary for the `StardustIdentityClientExt` trait. */
-interface IStardustIdentityClient {
+export interface IStardustIdentityClient {
   /**
    * Return the Bech32 human-readable part (HRP) of the network.
    *

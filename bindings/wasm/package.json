@@ -11,8 +11,8 @@
   },
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown",
-    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ./build/node",
-    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir web && node ./build/web",
+    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir wasm-node && node ./build/node && rollup -c rollup.config.node.js",
+    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir wasm-web && node ./build/web && rollup -c rollup.config.web.js",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/identity_wasm_bg.wasm -o web/identity_wasm_bg.wasm",
     "build:docs": "node ./build/docs",
@@ -52,6 +52,8 @@
     "node/*"
   ],
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-typescript": "^8.3.4",
     "@types/mocha": "^9.1.0",
     "concurrently": "^7.0.0",
     "copy-webpack-plugin": "^7.0.0",
@@ -60,6 +62,9 @@
     "http-server": "^14.1.0",
     "jsdoc-to-markdown": "^7.1.1",
     "mocha": "^9.2.0",
+    "rollup": "^2.77.2",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-dts": "^4.2.2",
     "ts-mocha": "^9.0.2",
     "ts-node": "^10.4.0",
     "txm": "^8.0.1",
@@ -74,8 +79,7 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/iota.js": "^1.9.0-stardust.23",
-    "@iota/pow-neon.js": "^1.9.0-stardust.4"
+    "@iota/iota.js": "^1.9.0-stardust.23"
   },
   "engines": {
     "node": ">=16"

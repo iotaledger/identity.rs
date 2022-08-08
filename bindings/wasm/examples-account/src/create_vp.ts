@@ -17,7 +17,7 @@ import {
     Storage,
     MethodContent,
     Network
-} from './../../node/identity_wasm.js';
+} from './../../node';
 
 /**
  This example shows how to create a Verifiable Presentation and validate it.
