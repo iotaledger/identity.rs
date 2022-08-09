@@ -5051,6 +5051,8 @@ Deserializes an instance from a JSON object.
         * [.setMetadataCreated(timestamp)](#StardustDocument+setMetadataCreated)
         * [.metadataUpdated()](#StardustDocument+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.setMetadataUpdated(timestamp)](#StardustDocument+setMetadataUpdated)
+        * [.metadataDeactivated()](#StardustDocument+metadataDeactivated) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.setMetadataDeactivated(deactivated)](#StardustDocument+setMetadataDeactivated)
         * [.setMetadataPropertyUnchecked(key, value)](#StardustDocument+setMetadataPropertyUnchecked)
         * [.revokeCredentials(serviceQuery, indices)](#StardustDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#StardustDocument+unrevokeCredentials)
@@ -5360,6 +5362,23 @@ Sets the timestamp of the last DID document update.
 | --- | --- |
 | timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
 
+<a name="StardustDocument+metadataDeactivated"></a>
+
+### stardustDocument.metadataDeactivated() ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns a copy of the deactivated status of the DID document.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+<a name="StardustDocument+setMetadataDeactivated"></a>
+
+### stardustDocument.setMetadataDeactivated(deactivated)
+Sets the deactivated status of the DID document.
+
+**Kind**: instance method of [<code>StardustDocument</code>](#StardustDocument)  
+
+| Param | Type |
+| --- | --- |
+| deactivated | <code>boolean</code> \| <code>undefined</code> | 
+
 <a name="StardustDocument+setMetadataPropertyUnchecked"></a>
 
 ### stardustDocument.setMetadataPropertyUnchecked(key, value)
@@ -5464,6 +5483,7 @@ Additional attributes related to an IOTA DID Document.
     * _instance_
         * [.created()](#StardustDocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.updated()](#StardustDocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.deactivated()](#StardustDocumentMetadata+deactivated) ⇒ <code>boolean</code> \| <code>undefined</code>
         * [.properties()](#StardustDocumentMetadata+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#StardustDocumentMetadata+toJSON) ⇒ <code>any</code>
         * [.clone()](#StardustDocumentMetadata+clone) ⇒ [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)
@@ -5480,6 +5500,12 @@ Returns a copy of the timestamp of when the DID document was created.
 
 ### stardustDocumentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Returns a copy of the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
+<a name="StardustDocumentMetadata+deactivated"></a>
+
+### stardustDocumentMetadata.deactivated() ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns a copy of the deactivated status of the DID document.
 
 **Kind**: instance method of [<code>StardustDocumentMetadata</code>](#StardustDocumentMetadata)  
 <a name="StardustDocumentMetadata+properties"></a>

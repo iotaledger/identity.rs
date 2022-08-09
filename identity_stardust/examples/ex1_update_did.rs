@@ -55,9 +55,8 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the updated Alias Output.
-  let resolved_document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
-  println!("Updated DID document: {:#}", resolved_document);
-  assert_eq!(document, resolved_document);
+  let updated: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  println!("Updated DID document: {:#}", updated);
 
   Ok(())
 }

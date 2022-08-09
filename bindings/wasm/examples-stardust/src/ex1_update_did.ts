@@ -36,6 +36,6 @@ export async function updateIdentity() {
     aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
 
     // Publish the output.
-    let updatedDocument: StardustDocument = await didClient.publishDidOutput(walletKeyPair, aliasOutput);
-    console.log("Updated DID document:", JSON.stringify(updatedDocument, null, 2));
+    const updated: StardustDocument = await didClient.publishDidOutput(walletKeyPair, aliasOutput);
+    console.log("Updated DID document:", JSON.stringify(updated, null, 2));
 }
