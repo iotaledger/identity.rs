@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from '../web';
+import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from './identity_wasm';
 
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
