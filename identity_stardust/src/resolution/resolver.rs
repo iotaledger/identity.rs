@@ -17,10 +17,10 @@ use identity_did::{
 };
 use serde::Serialize;
 
-use crate::{Error, Result};
+use crate::{Error, Result, ResolutionHandler};
 use identity_credential::validator::ValidatorDocument;
 
-use super::AbstractResolverDelegate;
+use super::resolver_delegate::{ResolverDelegate, AsyncFnPtr}; 
  
 
 /// Convenience type for resolving did documents from different did methods.   
@@ -32,11 +32,13 @@ use super::AbstractResolverDelegate;
 /// The resolver will only be able to resolve did documents corresponding to a certain method after it has been
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver` trait](super::MethodBoundResolver) for your client
 /// and then attaching it with [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
-pub struct Resolver {
-  method_map: HashMap<String, Arc<dyn AbstractResolutionHandler>>,
+pub struct Resolver<DOC: ValidatorDocument> {
+  method_map: HashMap<String, AsyncFnPtr<Result<DOC>>>,
 }
 
-impl Resolver {
+impl<DOC> Resolver<DOC> 
+where DOC: ValidatorDocument
+{
   /// Constructs a new [`Resolver`].
   pub fn new() -> Self {
     Self {
@@ -44,41 +46,50 @@ impl Resolver {
     }
   }
 
-  /// Attach a [`ValidatorDocumentResolver`] to this resolver. If the resolver has previously been configured to handle the same DID method
-  /// the new handler will replace the previous which will then returned from this method, otherwise `None` is returned.
-  #[must_use]
-  pub fn attach_method_handler(
+  /// Constructs a new [`Resolver`] that operates with DID Documents abstractly. 
+  pub fn new_dynamic() -> Resolver<Box<dyn ValidatorDocument>> {
+    Resolver::<Box<dyn ValidatorDocument>>::new()
+  }
+
+  /// Attach a [`ResolverHandler`] to this resolver. If the resolver has previously been configured to handle the same DID method
+  /// the new handler will replace the previous. 
+  pub fn attach_method_handler<D,R>(
     &mut self,
-    handler: Arc<dyn AbstractResolutionHandler>,
-  ) -> Option<Arc<dyn AbstractResolutionHandler>> {
-    self.method_map.insert(handler.method(), handler)
-  }
-
-  /// Fetches the DID Document of the given DID.
-  ///
-  ///
-  /// # Errors
-  /// Errors if the resolver has not been configured to handle the method corresponding to the given did, resolution fails, or the
-  /// resolved document is of another type than the specified [`Document`] implementor.  
-  //TODO: Improve error handling.
-  pub async fn resolve<DOC, D>(&self, did: &D) -> Result<DOC>
-  where
-    DOC: Document<D = D> + 'static,
-    D: DID,
+    handler: Arc<R>,
+  )
+  where D: DID + Send + for<'r> TryFrom<&'r str> + 'static, 
+  R: ResolutionHandler<D>,
+  DOC: From<<R as ResolutionHandler<D>>::Resolved>
   {
-    let delegate = self
-      .method_map
-      .get(did.method())
-      .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
-
-    let validator_doc = delegate.resolve_validator(did.as_str()).await?;
-
-    validator_doc
-      .into_any()
-      .downcast::<DOC>()
-      .map(|boxed| *boxed)
-      .map_err(|_| Error::ResolutionProblem("failed to convert the resolved document to the desired type".into()))
+    // Box<dyn Validator> cannot implement From<DOC: Document> and ValidatorDocument due to the orphan rule, 
+    // but it must implement ValidatorDocument in order to be used in PresentationValidator::validate
+    // hence we need this workaround for now.   
+      if std::any::TypeId::of::<DOC>() == std::any::TypeId::of::<Box<dyn ValidatorDocument>>() {
+        let ResolverDelegate::<DOC> { 
+          method, handler
+        } =  ResolverDelegate::new(handler, |document| 
+          Box::new(document) as Box<dyn ValidatorDocument> );
+        self.method_map.insert(method, handler);
+    } else {
+      let ResolverDelegate::<DOC> { 
+        method, handler
+      } =  ResolverDelegate::new(handler, Into::into); 
+      self.method_map.insert(method, handler);
+    }; 
+    
   }
+
+  /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
+  ///
+  /// If this Resolver was constructed by the [`Resolver::new_dynamic`](Resolver::new_dynamic()) method, one may also want to consider [`Resolver::resolve_as`](Resolver::<Box<dyn ValidatorDocument>>::resolve_as()). 
+  /// 
+  /// # Errors
+  /// Errors if the resolver has not been configured to handle the method corresponding to the given did or the resolution process itself fails.  
+  //TODO: Improve error handling.
+  pub async fn resolve<D: DID>(did: &D) -> Result<DOC> {
+    todo!()
+  }
+
 
   /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
   /// Issuer documents are returned in arbitrary order.
@@ -90,7 +101,7 @@ impl Resolver {
   pub async fn resolve_presentation_issuers<U, V>(
     &self,
     presentation: &Presentation<U, V>,
-  ) -> Result<Vec<Box<dyn ValidatorDocument>>> {
+  ) -> Result<Vec<DOC>> {
     // Extract unique issuers.
     //TODO: Improve error handling.
     let issuers: HashSet<CoreDID> = presentation
@@ -118,7 +129,7 @@ impl Resolver {
     futures::future::try_join_all(
       issuers
         .iter()
-        .map(|issuer| self.resolve_validator_document(issuer))
+        .map(|issuer| self.resolve_validator_document(issuer.method(), issuer.as_str()))
         .collect::<Vec<_>>(),
     )
     .await
@@ -133,10 +144,10 @@ impl Resolver {
   pub async fn resolve_presentation_holder<U, V>(
     &self,
     presentation: &Presentation<U, V>,
-  ) -> Result<Box<dyn ValidatorDocument>> {
+  ) -> Result<DOC> {
     let holder: CoreDID = PresentationValidator::extract_holder(presentation)
       .map_err(|error| Error::ResolutionProblem(error.to_string()))?;
-    self.resolve_validator_document(&holder).await
+    self.resolve_validator_document(&holder.method(), holder.as_str()).await
   }
 
   /// Fetches the DID Document of the issuer of a [`Credential`].
@@ -148,10 +159,10 @@ impl Resolver {
   pub async fn resolve_credential_issuer<U: Serialize>(
     &self,
     credential: &Credential<U>,
-  ) -> Result<Box<dyn ValidatorDocument>> {
+  ) -> Result<DOC> {
     let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
       .map_err(|_| Error::ResolutionProblem("failed to parse the issuer's did".into()))?;
-    self.resolve_validator_document(&issuer_did).await
+    self.resolve_validator_document(&issuer_did.method(), issuer_did.as_str()).await
   }
 
   /// Verifies a [`Presentation`].
@@ -164,34 +175,42 @@ impl Resolver {
   /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
   /// If you already have up-to-date versions of these DID Documents, you may want
   /// to use [`PresentationValidator::validate`].
-  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`].
+  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`]. Note that 
+  /// DID Documents of a certain method can only be resolved if the resolver has been configured handle this method.
+  /// See [Self::attach_method_handler].
   ///
   /// # Errors
   /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
   /// Otherwise, errors from validating the presentation and its credentials will be returned
   /// according to the `fail_fast` parameter.
-  pub async fn verify_presentation<U: Serialize, V: Serialize>(
+  pub async fn verify_presentation<U, V, HDOC, IDOC>(
     &self,
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
-    holder: Option<&dyn ValidatorDocument>,
-    issuers: Option<&[&dyn ValidatorDocument]>,
-  ) -> Result<()> {
+    holder: Option<&HDOC>,
+    issuers: Option<&[IDOC]>,
+  ) -> Result<()> 
+  where 
+  U: Serialize, 
+  V: Serialize,
+  HDOC: ValidatorDocument, 
+  IDOC: ValidatorDocument, 
+  {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
-        PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
+        PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
       }
       (Some(holder), None) => {
-        let issuers: Vec<Box<dyn ValidatorDocument>> = self.resolve_presentation_issuers(presentation).await?;
-        PresentationValidator::validate(presentation, &holder, issuers.as_slice(), options, fail_fast)
+        let issuers: Vec<DOC> = self.resolve_presentation_issuers(presentation).await?;
+        PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
       }
       (None, Some(issuers)) => {
         let holder = self.resolve_presentation_holder(presentation).await?;
         PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
       }
       (None, None) => {
-        let (holder, issuers): (Box<dyn ValidatorDocument>, Vec<Box<dyn ValidatorDocument>>) =
+        let (holder, issuers): (DOC, Vec<DOC>) =
           futures::future::try_join(
             self.resolve_presentation_holder(presentation),
             self.resolve_presentation_issuers(presentation),
@@ -204,18 +223,41 @@ impl Resolver {
     .map_err(Into::into)
   }
 
-  async fn resolve_validator_document(&self, did: &CoreDID) -> Result<Box<dyn ValidatorDocument>> {
+  async fn resolve_validator_document(&self, method: &str, did: &str) -> Result<DOC> {
+    let delegate = self
+      .method_map
+      .get(method)
+      .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
+
+    delegate(did).await
+  }
+}
+impl Resolver<Box<dyn ValidatorDocument>> {
+
+  /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
+  ///
+  ///
+  /// # Errors
+  /// Errors if the resolver has not been configured to handle the method corresponding to the given did, the resolution process itself fails, or the
+  /// resolved document is of another type than the specified [`Document`] implementer.  
+  //TODO: Improve error handling.
+  pub async fn resolve_as<DOCUMENT, D>(&self, did: &D) -> Result<DOCUMENT>
+  where
+    D: DID,
+    DOCUMENT: Document + 'static, 
+  {
     let delegate = self
       .method_map
       .get(did.method())
       .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
 
-    delegate.resolve_validator(did.as_str()).await
+    let validator_doc = delegate(did.as_str()).await?;
+
+    validator_doc
+      .into_any()
+      .downcast::<DOCUMENT>()
+      .map(|boxed| *boxed)
+      .map_err(|_| Error::ResolutionProblem("failed to convert the resolved document to the desired type".into()))
   }
 }
 
-impl Default for Resolver {
-  fn default() -> Self {
-    Self::new()
-  }
-}
