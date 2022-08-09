@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {KeyPair, KeyType, MethodScope, StardustDocument, StardustVerificationMethod} from '../../node';
+import {KeyPair, KeyType, MethodScope, StardustDocument, StardustVerificationMethod, StardustIdentityClient} from '../../node';
 
 import {
     Bech32Helper,
@@ -10,14 +10,14 @@ import {
     Ed25519Seed,
     IAliasOutput, IEd25519Address,
     SingleNodeClient,
+    LocalPowProvider,
 } from '@iota/iota.js';
 
-import {StardustIdentityClient} from "./stardust_identity_client";
 import {Converter} from "@iota/util.js";
 import {Bip32Path} from "@iota/crypto.js";
 import {randomBytes} from "node:crypto";
 import fetch from "node-fetch";
-import {NeonPowProvider} from "@iota/pow-neon.js";
+// import {NeonPowProvider} from "@iota/pow-neon.js";
 
 const EXPLORER = "https://explorer.alphanet.iotaledger.net/alphanet";
 const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
@@ -33,9 +33,9 @@ async function run() {
 
     // Local proof-of-work in JavaScript is single-threaded and extremely slow!
     // Install and use a faster package if possible.
-    // const powProvider = new LocalPowProvider();
+    const powProvider = new LocalPowProvider();
     // const powProvider = new WasmPowProvider(); // @iota/pow-wasm.js: multi-threaded but requires Node.js.
-    const powProvider = new NeonPowProvider(); // @iota/pow-neon.js: fastest but requires Node.js and Rust.
+    // const powProvider = new NeonPowProvider(); // @iota/pow-neon.js: fastest but requires Node.js and Rust.
 
     const client = new SingleNodeClient(API_ENDPOINT, {powProvider});
     const didClient = new StardustIdentityClient(client);
