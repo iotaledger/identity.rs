@@ -12,7 +12,7 @@ use identity_stardust::StardustIdentityClientExt;
 
 mod ex0_create_did;
 
-/// Demonstrate how to delete an existing DID in an Alias Output, reclaiming the stored deposit.
+/// Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.

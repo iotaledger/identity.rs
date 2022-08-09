@@ -50,7 +50,7 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDI
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
-  println!("Alias Output: {}", alias_output.to_json_pretty()?);
+  println!("Alias Output: {}", alias_output.to_json()?);
 
   // Publish the Alias Output and get the published DID document.
   let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;

@@ -5,6 +5,7 @@ import {createIdentity} from "./ex0_create_did";
 import {updateIdentity} from "./ex1_update_did";
 import {resolveIdentity} from "./ex2_resolve_did";
 import {deactivateIdentity} from "./ex3_deactivate_did";
+import {deleteIdentity} from "./ex4_delete_did";
 
 async function main() {
     // Extract example name.
@@ -22,6 +23,8 @@ async function main() {
             return await resolveIdentity();
         case "ex3_deactivate_did":
             return await deactivateIdentity();
+        case "ex4_delete_did":
+            return await deleteIdentity();
         default:
             throw "Unknown example name: '" + argument + "'";
     }
