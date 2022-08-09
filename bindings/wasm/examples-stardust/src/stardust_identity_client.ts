@@ -43,6 +43,7 @@ import {
     promote,
     reattach,
     REFERENCE_UNLOCK_TYPE,
+    serializeAddress,
     serializeOutput,
     SIGNATURE_UNLOCK_TYPE,
     STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE,
@@ -182,11 +183,16 @@ export class StardustIdentityClient implements IStardustIdentityClient {
         // Get the wallet address, which is the Blake2b-256 digest of the public key.
         const walletEd25519Address = new Ed25519Address(walletKeyPair.publicKey);
         const walletAddress = walletEd25519Address.toAddress();
-        if (consumeAmount > BigInt(0)) {
+
+        // Note: reclaiming funds from an Alias Output may cause a dust output with insufficient storage deposit,
+        // so we consume a Basic Output with sufficient funds and merge it with the remainder tokens when
+        // consumeAmount is zero and there is a remainder.
+        if (consumeAmount > BigInt(0) || (consumeAmount === BigInt(0) && remainderAmount > BigInt(0))) {
             // Get tokens from wallet.
             const walletAddressBech32 = Bech32Helper.toBech32(ED25519_ADDRESS_TYPE, walletAddress, networkHrp);
             const walletOutput: [string, IBasicOutput] = await fetchBasicOutputWithAmount(walletAddressBech32, consumeAmount, this);
             // Mark any excess funds for return.
+            // Special case: if consumeAmount is zero, this returns the full amount (to prevent a dust output).
             if (BigInt(walletOutput[1].amount) > consumeAmount) {
                 remainderAmount = remainderAmount + BigInt(walletOutput[1].amount) - consumeAmount;
             }
@@ -225,6 +231,7 @@ export class StardustIdentityClient implements IStardustIdentityClient {
             }
         }
 
+        // Check input and output totals match.
         let totalConsumed: bigint = BigInt(0);
         let totalOutput: bigint = BigInt(0);
         for (const consumedOutput of consumedOutputs) {
@@ -238,7 +245,7 @@ export class StardustIdentityClient implements IStardustIdentityClient {
         }
 
         // Construct block.
-        const sortedConsumedOutputs = await sortConsumedOutputs(this.client, consumedOutputs);
+        const sortedConsumedOutputs = sortConsumedOutputs(consumedOutputs, outputs);
         const essence: ITransactionEssence = await prepareTransactionEssence(this.client, sortedConsumedOutputs, outputs);
         const payload: ITransactionPayload = await signTransactionPayload(this, walletKeyPair, sortedConsumedOutputs, outputs, essence);
         const block: IBlock = await prepareBlock(this.client, payload);
@@ -292,7 +299,7 @@ export class StardustIdentityClient implements IStardustIdentityClient {
         // Construct block.
         const consumedOutputs: [string, OutputTypes][] = [[outputId, aliasOutput]];
         const outputs: OutputTypes[] = [fundsOutput];
-        const sortedConsumedOutputs = await sortConsumedOutputs(this.client, consumedOutputs);
+        const sortedConsumedOutputs = sortConsumedOutputs(consumedOutputs, outputs);
         const essence: ITransactionEssence = await prepareTransactionEssence(this.client, sortedConsumedOutputs, outputs);
         const payload: ITransactionPayload = await signTransactionPayload(this, walletKeyPair, sortedConsumedOutputs, outputs, essence);
         const block: IBlock = await prepareBlock(this.client, payload);
@@ -303,28 +310,39 @@ export class StardustIdentityClient implements IStardustIdentityClient {
     }
 }
 
-/** Sort inputs lexicographically by transaction id bytes and output index. */
-async function sortConsumedOutputs(client: IClient, consumedOutputs: [string, OutputTypes][]): Promise<[string, OutputTypes][]> {
-    const toSort: [string, OutputTypes, Uint8Array, number][] = [];
-    for(const consumedOutput of consumedOutputs) {
-        const outputMetadata: IOutputMetadataResponse = await client.outputMetadata(consumedOutput[0]);
-        toSort.push([consumedOutput[0], consumedOutput[1], Converter.hexToBytes(outputMetadata.transactionId), outputMetadata.outputIndex]);
+/** Sort inputs so those with Ed25519 address unlock conditions are first.
+ *  This is important and assumed to be the order when preparing the unlocks during signing.
+ *
+ *  Also appends the relevant unlock address to each input.
+ */
+function sortConsumedOutputs(consumedOutputs: [string, OutputTypes][], outputs: OutputTypes[]): [string, OutputTypes, AddressTypes][] {
+    const toSort: [string, OutputTypes, AddressTypes, Uint8Array][] = [];
+    for (const consumedOutput of consumedOutputs) {
+        const unlockAddress: AddressTypes = extractUnlockConditionAddress(consumedOutput[0], consumedOutput[1], outputs);
+
+        // Sort key is the packed bytes of the address, cannot use string comparison for this.
+        const w = new WriteStream();
+        serializeAddress(w, unlockAddress);
+        const addressBytes: Uint8Array = w.finalBytes();
+
+        toSort.push([consumedOutput[0], consumedOutput[1], unlockAddress, addressBytes]);
     }
+    // Sort inputs so Ed25519 address unlocks are first.
     const sorted = toSort.sort((a, b) => {
-        if (a[2] < b[2]) {
+        if (a[3] < b[3]) {
             return -1;
-        } else if (a[2] > b[2]) {
+        } else if (a[3] > b[3]) {
             return 1;
         } else {
-            return a[3] - b[3];
+            return 0;
         }
     })
     return sorted.map((value, _index, _array) => {
-        return [value[0], value[1]]
+        return [value[0], value[1], value[2]]
     });
 }
 
-async function prepareTransactionEssence(client: IClient, consumedOutputs: [string, OutputTypes][], outputs: OutputTypes[]): Promise<ITransactionEssence> {
+async function prepareTransactionEssence(client: IClient, consumedOutputs: [string, OutputTypes, AddressTypes][], outputs: OutputTypes[]): Promise<ITransactionEssence> {
     const inputs: IUTXOInput[] = [];
     for (const consumedOutput of consumedOutputs) {
         const input: IUTXOInput = TransactionHelper.inputFromOutputId(consumedOutput[0]);
@@ -418,8 +436,17 @@ function extractUnlockConditionAddress(outputId: string, consumedOutput: OutputT
             }
             break;
         }
+        case NFT_OUTPUT_TYPE: {
+            // NftOutput must have an AddressUnlockCondition.
+            for (const condition of consumedOutput.unlockConditions) {
+                if (condition.type == ADDRESS_UNLOCK_CONDITION_TYPE) {
+                    unlockAddress = condition.address;
+                }
+            }
+            break;
+        }
         default: {
-            throw new Error("extractUnlockConditionAddress: unknown output type " + consumedOutput.type);
+            throw new Error("extractUnlockConditionAddress: unknown output type");
         }
     }
     if (unlockAddress === null) {
@@ -435,7 +462,7 @@ function extractUnlockConditionAddress(outputId: string, consumedOutput: OutputT
  *  This is derived from the `iota.rs` implementation.
  *  https://github.com/iotaledger/iota.rs/blob/8e8715cc4fd863d6c68ddaea046891b4641654c6/src/secret/mod.rs#L288
  */
-async function signTransactionPayload(didClient: StardustIdentityClient, walletKeyPair: IKeyPair, consumedOutputs: [string, OutputTypes][], outputs: OutputTypes[], essence: ITransactionEssence): Promise<ITransactionPayload> {
+async function signTransactionPayload(didClient: StardustIdentityClient, walletKeyPair: IKeyPair, consumedOutputs: [string, OutputTypes, AddressTypes][], outputs: OutputTypes[], essence: ITransactionEssence): Promise<ITransactionPayload> {
     const unlocks: UnlockTypes[] = [];
     const unlockAddressesMap = new Map<string, number>();
 
@@ -461,15 +488,12 @@ async function signTransactionPayload(didClient: StardustIdentityClient, walletK
     const essenceHash = TransactionHelper.getTransactionEssenceHash(essence);
 
     for (let index = 0; index < consumedOutputs.length; index += 1) {
-        const [outputId, consumedOutput] = consumedOutputs[index];
+        const [outputId, consumedOutput, inputAddress] = consumedOutputs[index];
         // Don't need to unlock spent outputs?
         const metadataResponse: IOutputMetadataResponse = await didClient.client.outputMetadata(outputId);
         if (metadataResponse.isSpent) {
             continue;
         }
-
-        // Extract the address needed to unlock the input.
-        const inputAddress: AddressTypes = await extractUnlockConditionAddress(outputId, consumedOutput, outputs);
 
         // Check if we already added an unlock for this address.
         const unlockIndex: number | undefined = unlockAddressesMap.get(addressMapKey(inputAddress));
@@ -508,7 +532,7 @@ async function signTransactionPayload(didClient: StardustIdentityClient, walletK
             // We can only sign Ed25519 addresses and the map needs to contain the Alias or NFT
             // address already at this point, because the reference index needs to be lower
             // than the current block index
-            // TODO: check this, likely to be a false assumption depending on order of inputs?
+            // NOTE: this ordering is ensured by `sortConsumedOutputs`.
             if (inputAddress.type !== ED25519_ADDRESS_TYPE) {
                 throw new Error("signTransactionPayload: missing input with Ed25519 unlock condition");
             }
@@ -695,15 +719,14 @@ function extractDocumentsFromBlock(networkHrp: string, block: IBlock): StardustD
  *  amount (to try to avoid creating an output below the dust threshold).
  */
 async function fetchBasicOutputWithAmount(addressBech32: string, minAmount: bigint, didClient: StardustIdentityClient): Promise<[string, IBasicOutput]> {
-    // Fetch all Basic Output ids from indexer plugin.
+    // Fetch Basic Output ids on this address from indexer plugin.
     let outputsResponse: IOutputsResponse = {ledgerIndex: 0, cursor: "", pageSize: "", items: []};
     let maxTries = 5;
     let tries = 0;
-    while (outputsResponse.items.length == 0) {
-        if (tries > maxTries) {
-            break;
-        }
+    while (outputsResponse.items.length == 0 && tries < maxTries) {
         tries++;
+
+        // Basic Outputs with no special conditions.
         outputsResponse = await didClient.indexer.outputs({
             addressBech32: addressBech32,
             hasStorageReturnCondition: false,

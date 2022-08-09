@@ -3,7 +3,7 @@
 
 import {StardustDocument} from '../../node';
 
-import {IAliasOutput, IRent, TransactionHelper,} from '@iota/iota.js';
+import {IAliasOutput, IRent, TransactionHelper} from '@iota/iota.js';
 import {createIdentity} from "./ex0_create_did";
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
@@ -18,11 +18,10 @@ export async function deactivateIdentity() {
     // This process can be reversed since the Alias Output is not destroyed.
     // Deactivation may only be performed by the state controller of the Alias Output.
     let deactivatedOutput: IAliasOutput = await didClient.deactivateDidOutput(did);
-    console.log("Deactivated Alias Output:", JSON.stringify(deactivatedOutput, null, 2));
 
     // Optional: reduce and reclaim the storage deposit, sending the tokens to the state controller.
     const rentStructure: IRent = await didClient.getRentStructure();
-    // deactivatedOutput.amount = TransactionHelper.getStorageDeposit(deactivatedOutput, rentStructure).toString();
+    deactivatedOutput.amount = TransactionHelper.getStorageDeposit(deactivatedOutput, rentStructure).toString();
 
     // Publish the deactivated DID document.
     await didClient.publishDidOutput(walletKeyPair, deactivatedOutput);
@@ -42,7 +41,7 @@ export async function deactivateIdentity() {
     let reactivatedOutput: IAliasOutput = await didClient.updateDidOutput(document);
 
     // Increase the storage deposit to the minimum again, if it was reclaimed during deactivation.
-    // reactivatedOutput.amount = TransactionHelper.getStorageDeposit(reactivatedOutput, rentStructure).toString();
+    reactivatedOutput.amount = TransactionHelper.getStorageDeposit(reactivatedOutput, rentStructure).toString();
     await didClient.publishDidOutput(walletKeyPair, reactivatedOutput);
 
     // Resolve the reactivated DID document.
@@ -50,9 +49,4 @@ export async function deactivateIdentity() {
     if (reactivated.metadataDeactivated() === true) {
         throw new Error("Failed to reactivate DID document");
     }
-
-    // TODO: update publishDidOuput to consolidate Basic Outputs automatically, to prevent cases where
-    //       the reclaimed Basic Output amount is insufficient to cover the storage cost.
-
-    // TODO: remove created, updated timestamps from unpacked StardustDocuments... for deactivated documents.
 }

@@ -1,9 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {StardustDocument} from '../../node';
-
-import {ED25519_ADDRESS_TYPE, IAliasOutput, IEd25519Address, IRent, TransactionHelper,} from '@iota/iota.js';
+import {ED25519_ADDRESS_TYPE, IEd25519Address} from '@iota/iota.js';
 import {createIdentity} from "./ex0_create_did";
 import {Converter} from "@iota/util.js";
 
