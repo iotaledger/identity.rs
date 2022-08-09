@@ -37,8 +37,8 @@ async function run() {
     // const powProvider = new WasmPowProvider(); // @iota/pow-wasm.js: multi-threaded but requires Node.js.
     const powProvider = new NeonPowProvider(); // @iota/pow-neon.js: fastest but requires Node.js and Rust.
 
-    // Fetch outputId with funds to be used as input
-    const indexerPluginClient = new IndexerPluginClient(client);
+    const client = new SingleNodeClient(API_ENDPOINT, {powProvider});
+    const didClient = new StardustIdentityClient(client);
 
     // Get the Bech32 human-readable part (HRP) of the network.
     const networkHrp: string = await didClient.getNetworkHrp();
