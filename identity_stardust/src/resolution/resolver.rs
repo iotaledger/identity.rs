@@ -33,7 +33,7 @@ use super::resolver_delegate::{ResolverDelegate, AsyncFnPtr};
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver` trait](super::MethodBoundResolver) for your client
 /// and then attaching it with [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
 pub struct Resolver<DOC: ValidatorDocument> {
-  method_map: HashMap<String, AsyncFnPtr<Result<DOC>>>,
+  method_map: HashMap<String, AsyncFnPtr<str, Result<DOC>>>,
 }
 
 impl<DOC> Resolver<DOC> 
@@ -52,31 +52,21 @@ where DOC: ValidatorDocument
   }
 
   /// Attach a [`ResolverHandler`] to this resolver. If the resolver has previously been configured to handle the same DID method
-  /// the new handler will replace the previous. 
+  /// the new handler will replace the previous.  
   pub fn attach_method_handler<D,R>(
     &mut self,
     handler: Arc<R>,
   )
   where D: DID + Send + for<'r> TryFrom<&'r str> + 'static, 
-  R: ResolutionHandler<D>,
-  DOC: From<<R as ResolutionHandler<D>>::Resolved>
+  R: ResolutionHandler<D> + 'static,
+  DOC: From<<R as ResolutionHandler<D>>::Resolved> + 'static, 
   {
-    // Box<dyn Validator> cannot implement From<DOC: Document> and ValidatorDocument due to the orphan rule, 
-    // but it must implement ValidatorDocument in order to be used in PresentationValidator::validate
-    // hence we need this workaround for now.   
-      if std::any::TypeId::of::<DOC>() == std::any::TypeId::of::<Box<dyn ValidatorDocument>>() {
-        let ResolverDelegate::<DOC> { 
-          method, handler
-        } =  ResolverDelegate::new(handler, |document| 
-          Box::new(document) as Box<dyn ValidatorDocument> );
-        self.method_map.insert(method, handler);
-    } else {
+
       let ResolverDelegate::<DOC> { 
         method, handler
       } =  ResolverDelegate::new(handler, Into::into); 
       self.method_map.insert(method, handler);
-    }; 
-    
+     
   }
 
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
@@ -129,7 +119,7 @@ where DOC: ValidatorDocument
     futures::future::try_join_all(
       issuers
         .iter()
-        .map(|issuer| self.resolve_validator_document(issuer.method(), issuer.as_str()))
+        .map(|issuer| self.delegate_resolution(issuer.method(), issuer.as_str()))
         .collect::<Vec<_>>(),
     )
     .await
@@ -147,7 +137,7 @@ where DOC: ValidatorDocument
   ) -> Result<DOC> {
     let holder: CoreDID = PresentationValidator::extract_holder(presentation)
       .map_err(|error| Error::ResolutionProblem(error.to_string()))?;
-    self.resolve_validator_document(&holder.method(), holder.as_str()).await
+    self.delegate_resolution(&holder.method(), holder.as_str()).await
   }
 
   /// Fetches the DID Document of the issuer of a [`Credential`].
@@ -162,7 +152,7 @@ where DOC: ValidatorDocument
   ) -> Result<DOC> {
     let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
       .map_err(|_| Error::ResolutionProblem("failed to parse the issuer's did".into()))?;
-    self.resolve_validator_document(&issuer_did.method(), issuer_did.as_str()).await
+    self.delegate_resolution(&issuer_did.method(), issuer_did.as_str()).await
   }
 
   /// Verifies a [`Presentation`].
@@ -223,7 +213,7 @@ where DOC: ValidatorDocument
     .map_err(Into::into)
   }
 
-  async fn resolve_validator_document(&self, method: &str, did: &str) -> Result<DOC> {
+  async fn delegate_resolution(&self, method: &str, did: &str) -> Result<DOC> {
     let delegate = self
       .method_map
       .get(method)
@@ -241,7 +231,7 @@ impl Resolver<Box<dyn ValidatorDocument>> {
   /// Errors if the resolver has not been configured to handle the method corresponding to the given did, the resolution process itself fails, or the
   /// resolved document is of another type than the specified [`Document`] implementer.  
   //TODO: Improve error handling.
-  pub async fn resolve_as<DOCUMENT, D>(&self, did: &D) -> Result<DOCUMENT>
+  pub async fn resolve_to<DOCUMENT, D>(&self, did: &D) -> Result<DOCUMENT>
   where
     D: DID,
     DOCUMENT: Document + 'static, 
@@ -258,6 +248,23 @@ impl Resolver<Box<dyn ValidatorDocument>> {
       .downcast::<DOCUMENT>()
       .map(|boxed| *boxed)
       .map_err(|_| Error::ResolutionProblem("failed to convert the resolved document to the desired type".into()))
+  }
+
+  /// Attach a [`ResolverHandler`] to this resolver. If the resolver has previously been configured to handle the same DID method
+  /// the new handler will replace the previous.  
+  pub fn attach_method_handler_unconstrained<D,R>(
+    &mut self,
+    handler: Arc<R>,
+  )
+  where D: DID + Send + for<'r> TryFrom<&'r str> + 'static, 
+  R: ResolutionHandler<D> + 'static,
+  {
+
+      let ResolverDelegate::<Box<dyn ValidatorDocument>> { 
+        method, handler
+      } =  ResolverDelegate::new(handler, |resolved| Box::new(resolved) as Box<dyn ValidatorDocument>); 
+      self.method_map.insert(method, handler);
+     
   }
 }
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
+use std::borrow::Borrow;
 
 use identity_core::crypto::GetSignature;
 use identity_did::did::DID;
@@ -84,6 +85,7 @@ mod private {
   }
 }
 
+/*
 impl ValidatorDocument for &dyn ValidatorDocument {
   fn did_str(&self) -> &str {
     (*self).did_str()
@@ -108,7 +110,9 @@ impl ValidatorDocument for &dyn ValidatorDocument {
     (*self).resolve_revocation_bitmap(query)
   }
 }
+*/
 
+/* 
 impl ValidatorDocument for Box<dyn ValidatorDocument> {
   fn did_str(&self) -> &str {
     let reference: &dyn ValidatorDocument = self.as_ref();
@@ -137,7 +141,42 @@ impl ValidatorDocument for Box<dyn ValidatorDocument> {
   }
 }
 
-impl<DOC> ValidatorDocument for DOC
+*/
+impl<DOC> From<DOC> for Box<dyn ValidatorDocument> where DOC: Document + 'static {
+  fn from(document: DOC) -> Self {
+      Box::new(document)
+  }
+}
+
+trait ValidatorRef {
+  type Ref: ValidatorDocument + ?Sized;
+
+  fn validator_ref(&self) -> &Self::Ref; 
+}
+
+impl<DOC> ValidatorRef for DOC where DOC: Document {
+  type Ref = DOC;
+  fn validator_ref(&self) -> &Self::Ref {
+      &self
+  }
+}
+
+impl ValidatorRef for Box<dyn ValidatorDocument> {
+  type Ref = dyn ValidatorDocument;
+  fn validator_ref(&self) -> &Self::Ref {
+      self.as_ref()
+  }
+}
+
+impl<'a> ValidatorRef for &'a dyn ValidatorDocument {
+  type Ref = dyn ValidatorDocument + 'a;
+  fn validator_ref(&self) -> &Self::Ref {
+      self.borrow()
+  }
+}
+
+
+impl<DOC> ValidatorDocument for DOC 
 where
   DOC: Document,
 {

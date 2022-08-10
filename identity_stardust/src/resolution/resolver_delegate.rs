@@ -8,7 +8,7 @@ use identity_credential::validator::ValidatorDocument;
 use identity_did::did::DID;
 use std::{pin::Pin, sync::Arc};
 
-pub(super) type AsyncFnPtr<T> = Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output =T> + 'r>>>;
+pub(super) type AsyncFnPtr<S,T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output =T> + 'r>>>;
 
 /// Intermediary type used to register a [`ResolutionHandler`](super::ResolutionHandler) with a [`Resolver`](super::Resolver).
 ///
@@ -16,7 +16,7 @@ pub(super) type AsyncFnPtr<T> = Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Futur
 /// delegate resolution to when encountering did's of the corresponding method.
 pub(super) struct ResolverDelegate<DOC: ValidatorDocument> {
   pub(super) method: String,
-  pub(super) handler: AsyncFnPtr<Result<DOC>>,
+  pub(super) handler: AsyncFnPtr<str, Result<DOC>>,
 }
 
 impl<DOC: ValidatorDocument + 'static> ResolverDelegate<DOC> {
