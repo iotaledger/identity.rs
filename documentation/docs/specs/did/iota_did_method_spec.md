@@ -16,7 +16,7 @@ keywords:
 
 ## Abstract
 
-The IOTA DID Method Specification describes a method of implementing the [Decentralized Identifiers](https://www.w3.org/TR/did-core/) (DID) standard on the [IOTA Tangle](https://iota.org), a Distributed Ledger Technology (DLT). It conforms to the [DID specifications v1.0](https://www.w3.org/TR/did-core/) and describes how to publish DID Document Create, Read, Update and Delete (CRUD) operations using UTXO on the IOTA Shimmer network with the Stardust update.
+The IOTA DID Method Specification describes a method of implementing the [Decentralized Identifiers](https://www.w3.org/TR/did-core/) (DID) standard on the [IOTA Tangle](https://iota.org), a Distributed Ledger Technology (DLT). It conforms to the [DID specification v1.0](https://www.w3.org/TR/did-core/) and describes how to perform Create, Read, Update and Delete (CRUD) operations for IOTA DID Documents using unspent transaction outputs ([UTXO](https://wiki.iota.org/IOTA-2.0-Research-Specifications/5.1UTXO)) on the IOTA and [Shimmer](https://shimmer.network/) networks, introduced with the [Stardust upgrade](https://blog.shimmer.network/stardust-upgrade-in-a-nutshell/).
 
 ## Introduction
 
@@ -29,14 +29,14 @@ Blockchain | Tangle
 
 ![Blockchain bottleneck](/img/blockchain-bottleneck.gif) | ![Tangle Bottleneck](/img/tangle-bottleneck.gif)
 
-## UTXO and Stardust
+## UTXO Ledger
 
-The unspent transaction output ([UTXO](https://wiki.iota.org/IOTA-2.0-Research-Specifications/5.1UTXO)) model defines a ledger state where outputs are created by a transaction consuming outputs of previous transactions as inputs. Stardust introduced multiple output types including Basic Output for value transactions, NFT Output for storing NFTs on layer 1, and Alias Output mainly designed for smart contract support.
+The unspent transaction output ([UTXO](https://wiki.iota.org/IOTA-2.0-Research-Specifications/5.1UTXO)) model defines a ledger state where outputs are created by a transaction consuming outputs of previous transactions as inputs. IOTA and Shimmer have several output types, the relevant ones for the IOTA DID Method are: Basic Outputs for value transactions, and Alias Outputs.
 
 All types of outputs must hold a minimum amount of IOTA coins in order to be stored on the ledger. For some output types that can hold data, for instance the Alias Output, the amount of IOTA coins held by the output must cover the byte cost of the data stored. This helps to control the ledger size from growing uncontrollably while guaranteeing the data is indefinitely stored on the ledger which is important for resolving DID Documents.
 This deposit is fully refundable and can be reclaimed when the output is destroyed.
 
-Data saved in an output and covered by byte cost deposit will be saved in *all* nodes of the shimmer network and can be accessed by any node in the network.
+Data saved in an output and covered by the storage deposit will be stored in *all* nodes on the network and can be retrieved from any node. This provides strong guarantees for any data stored in the ledger.
 
 ![Outputs](/img/utxo.png)
 
@@ -44,10 +44,10 @@ Data saved in an output and covered by byte cost deposit will be saved in *all* 
 
 ### Alias Output
 
-The [Alias Output](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.md#alias-output) is a specific implementation of the UTXO state machine. It includes specific properties including:
+The [Alias Output](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.md#alias-output) is a specific implementation of the [UTXO state machine](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.md#chain-constraint-in-utxo). Some of its relevant properties are:
 
 * **Amount**: the amount of IOTA coins held by the output.
-* **Alias ID**: 32 Byte Array, a unique identifier of the alias, which is the BLAKE2b-256 hash
+* **Alias ID**: 32 byte array, a unique identifier of the alias, which is the BLAKE2b-256 hash
   of the Output ID that created it.
 * **State Index**: A counter that must increase by 1 every time the alias is state transitioned.
 * **State Metadata**: Metadata that can only be changed by the state controller. A leading uint16 denotes its length.
@@ -57,11 +57,11 @@ The [Alias Output](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0
 
 Consuming an Alias Output in a transaction means that the alias is transformed into the next state. The current state is defined as the consumed alias output, while the next state is defined as the **alias output with the same explicit `AliasID` on the output side**. There are two types of transitions: `state transition` and `governance transition`.
 
-All outputs include an `Unlock Conditions` property. This feature defines how the output can be unlocked and spent. For the Alias Output there's two types of controllers that can be set as Unlock Conditions, state and governor controllers. Each of these controllers can be either an Ed25519 Address, Alias Address or an NFT Address. An Alias Output can have at most one of each controller.
+All outputs include an `Unlock Conditions` property. This feature defines how the output can be unlocked and spent. The Alias Output supports two types of controllers that can be set as unlock conditions: the state controller and governor. Each of these can be either an Ed25519 Address, Alias Address or an NFT Address. An Alias Output can have at most one of each unlock condition.
 
-The state controller is responsible for a state transition. It is identified by an incremented `State Index` and can change the fields `IOTA Amount`, `State Index`, `State Metadata` among other properties.
+The state controller is responsible for a state transition. It is identified by an incremented `State Index` and can change the fields `Amount`, `State Index`, `State Metadata` among other properties.
 
-The governor controller, on the other hand, is responsible for a governance transition indicated by an unchanged `State Index`. A governance transition can change the Addresses of state and governor controllers. It also allows a transition to an empty state resulting in destroying the Alias Output.
+The governor, on the other hand, is responsible for a governance transition indicated by an unchanged `State Index`. A governance transition can change the addresses of the state controller and governor. It also allows destroying the Alias Output by consuming it.
 
 ## DID Method Name
 
@@ -107,7 +107,7 @@ did:iota:0xe4edef97da1257e83cbeb49159cfdd2da6ac971ac447f233f8439cf29376ebfe
 The IOTA tag references an `Alias ID` identitfying the Alias Output where the DID Document is stored.
 The tag will not be known before the generation of the DID. It will be assigned when the Alias Output is created.
 
-### Anatomy of serialized document
+### Anatomy of the State Metadata
 
 In the `Metadata` of the Alias Output must be a JSON document containing two properties:
 
@@ -140,9 +140,9 @@ In the `Metadata` of the Alias Output must be a JSON document containing two pro
 
 ## Controllers
 
-As of now, only one state and one governance controller can be set for an Alias Output. Multiple controller support can be done by future updates.
+As of now, only one state controller and one governor can be set for an Alias Output. Support for multiple controllers may be possible depending on future updates of the protocol.
 
-A state controller can directly update the DID Document and the amount of IOTA coins held by the Output, but it can't destroy the output. A governor controller, one the other hand, can indirectly update the DID Document by updating the state controller. It also can destroy the output by having a governance transition to the empty state.
+A state controller can directly update the DID Document and the amount of coins held by the Alias Output, but it cannot destroy the output. A governor controller, one the other hand, can indirectly update the DID Document by updating the state controller. It can also destroy the output by performing a governance transition to the empty state.
 
 ## CRUD Operations
 
@@ -160,7 +160,7 @@ In order to read the latest DID document associated with a DID, the Alias Output
 must be queried using the `Alias ID`. This can be done using an [inx indexer](https://github.com/iotaledger/inx-indexer)
 which normal nodes usually include by default.
 
-### Updating DID Document
+### Update
 
 Updating can be achieved by a state transition of the Alias Output. A state controller can update the
 `State Metadata` in the Alias Output which reflects in updating the DID Document.
