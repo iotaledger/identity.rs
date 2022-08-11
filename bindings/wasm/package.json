@@ -68,6 +68,7 @@
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-copy-merge": "^0.3.5",
     "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-rewrite": "^0.0.4",
     "ts-mocha": "^9.0.2",
     "ts-node": "^10.4.0",
     "txm": "^8.0.1",

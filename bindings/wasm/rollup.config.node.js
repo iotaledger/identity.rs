@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import dts from "rollup-plugin-dts";
 import copy from 'rollup-plugin-copy-merge'
 import path from 'path';
+import rewrite from 'rollup-plugin-rewrite'
 
 export default [
     {
@@ -23,6 +24,19 @@ export default [
                 //esModuleInterop: true,
             }),
             commonjs({ transformMixedEsModules: true }),
+            rewrite({
+                find: /require\('.\/identity_wasm.js'\)/mg,
+                replace: () => `require('./')`,
+            }),
+        ],
+    },
+    {
+        input: 'wasm-node/stardust_identity_client.js',
+        output: {
+            file: 'wasm-node/stardust_identity_client.js',
+            format: 'cjs',
+        },
+        plugins: [
             copy({
                 targets: [
                     { src: 'wasm-node/identity_wasm_bg.wasm', dest: 'node' },
@@ -41,7 +55,7 @@ export default [
     },
     // {
     //     // path to your declaration files root
-    //     input: './node/index.d.ts',
+    //     input: './node/identity_wasm.d.ts',
     //     output: [{ file: 'node/index.d.ts', format: 'es' }],
     //     plugins: [dts()],
     // },
