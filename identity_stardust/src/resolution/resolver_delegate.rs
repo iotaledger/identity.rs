@@ -4,7 +4,7 @@
 use super::ResolutionHandler;
 use crate::{Error, Result};
 use core::future::Future;
-use identity_credential::validator::ValidatorBorrow;
+use identity_credential::validator::BorrowValidator;
 use identity_did::did::DID;
 use std::{pin::Pin, sync::Arc};
 
@@ -14,12 +14,12 @@ pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Futu
 ///
 /// Consists of the DID Method encoded as a string and a collectable asynchronous function pointer that the [`Resolver`] will
 /// delegate resolution to when encountering did's of the corresponding method.
-pub(super) struct ResolverDelegate<DOC: ValidatorBorrow> {
+pub(super) struct ResolverDelegate<DOC: BorrowValidator> {
   pub(super) method: String,
   pub(super) handler: AsyncFnPtr<str, Result<DOC>>,
 }
 
-impl<DOC: ValidatorBorrow + 'static> ResolverDelegate<DOC> {
+impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
   /// Constructor
   ///
   /// Converts a [`ResolutionHandler`] into a collectable asynchronous function pointer. The `output` transformer is used to

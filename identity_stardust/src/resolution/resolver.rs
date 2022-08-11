@@ -10,7 +10,7 @@ use identity_credential::{
   credential::Credential,
   presentation::Presentation,
   validator::{
-    CredentialValidator, FailFast, PresentationValidationOptions, PresentationValidator, ValidatorBorrow,
+    BorrowValidator, CredentialValidator, FailFast, PresentationValidationOptions, PresentationValidator,
     ValidatorDocument,
   },
 };
@@ -35,14 +35,14 @@ use super::resolver_delegate::{AsyncFnPtr, ResolverDelegate};
 /// and then attaching it with [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
 pub struct Resolver<DOC = Box<dyn ValidatorDocument>>
 where
-  DOC: ValidatorBorrow,
+  DOC: BorrowValidator,
 {
   method_map: HashMap<String, AsyncFnPtr<str, Result<DOC>>>,
 }
 
 impl<DOC> Resolver<DOC>
 where
-  DOC: ValidatorBorrow,
+  DOC: BorrowValidator,
 {
   /// Constructs a new [`Resolver`].
   pub fn new() -> Self {
@@ -173,8 +173,8 @@ where
   where
     U: Serialize,
     V: Serialize,
-    HDOC: ValidatorBorrow + ?Sized,
-    IDOC: ValidatorBorrow,
+    HDOC: BorrowValidator + ?Sized,
+    IDOC: BorrowValidator,
   {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
@@ -233,7 +233,7 @@ impl Resolver<Box<dyn ValidatorDocument>> {
   }
 }
 
-impl<DOC: ValidatorBorrow> Default for Resolver<DOC> {
+impl<DOC: BorrowValidator> Default for Resolver<DOC> {
   fn default() -> Self {
     Self::new()
   }

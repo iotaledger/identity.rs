@@ -150,36 +150,36 @@ where
 /// are important then in that case one should not consider these trait bounds equivalent.
 ///
 ///
-pub trait ValidatorBorrow: private::Sealed {
+pub trait BorrowValidator: private::Sealed {
   /// The concrete ValidatorDocument one may borrow.  
-  type Ref: ValidatorDocument + ?Sized;
+  type BorrowedValidator: ValidatorDocument + ?Sized;
   /// Hands out a borrowed representative capable of calling the methods of [`ValidatorDocument`].
-  fn borrow_validator(&self) -> &Self::Ref;
+  fn borrow_validator(&self) -> &Self::BorrowedValidator;
 }
 
-impl<DOC> ValidatorBorrow for DOC
+impl<DOC> BorrowValidator for DOC
 where
   DOC: Document,
 {
-  type Ref = DOC;
+  type BorrowedValidator = DOC;
   /// Equivalent to: `<Self as Borrow<Self>>::borrow(self)`.
-  fn borrow_validator(&self) -> &Self::Ref {
+  fn borrow_validator(&self) -> &Self::BorrowedValidator {
     <Self as Borrow<Self>>::borrow(self)
   }
 }
 
-impl ValidatorBorrow for Box<dyn ValidatorDocument> {
-  type Ref = dyn ValidatorDocument;
+impl BorrowValidator for Box<dyn ValidatorDocument> {
+  type BorrowedValidator = dyn ValidatorDocument;
   /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
-  fn borrow_validator(&self) -> &Self::Ref {
+  fn borrow_validator(&self) -> &Self::BorrowedValidator {
     <Self as Borrow<dyn ValidatorDocument>>::borrow(self)
   }
 }
 
-impl<'a> ValidatorBorrow for &'a dyn ValidatorDocument {
-  type Ref = dyn ValidatorDocument + 'a;
+impl<'a> BorrowValidator for &'a dyn ValidatorDocument {
+  type BorrowedValidator = dyn ValidatorDocument + 'a;
   /// Equivalent to: `<Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
-  fn borrow_validator(&self) -> &Self::Ref {
+  fn borrow_validator(&self) -> &Self::BorrowedValidator {
     <Self as Borrow<dyn ValidatorDocument>>::borrow(self)
   }
 }
