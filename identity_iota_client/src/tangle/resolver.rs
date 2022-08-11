@@ -503,6 +503,19 @@ mod tests {
     )
     .is_ok());
 
+    /*
+    let issuer_iota_box: Box<dyn ValidatorDocument> = Box::new(issuer_iota_doc.clone());
+    let issuer_core_box: Box<dyn ValidatorDocument> = Box::new(issuer_core_doc.clone());
+    assert!(PresentationValidator::validate(
+      &presentation,
+      &subject_doc,
+      &[issuer_iota_box, issuer_core_box],
+      &presentation_validation_options,
+      FailFast::FirstError,
+    )
+    .is_ok());
+    */
+
     // INVALID: wrong holder fails.
     assert!(PresentationValidator::validate(
       &presentation,

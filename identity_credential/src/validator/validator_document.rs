@@ -85,98 +85,7 @@ mod private {
   }
 }
 
-/*
-impl ValidatorDocument for &dyn ValidatorDocument {
-  fn did_str(&self) -> &str {
-    (*self).did_str()
-  }
-
-  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
-    (*self).verify_data(data, options)
-  }
-
-  fn into_any(self: Box<Self>) -> Box<dyn Any>
-  where
-    Self: 'static,
-  {
-    self
-  }
-
-  #[cfg(feature = "revocation-bitmap")]
-  fn resolve_revocation_bitmap(
-    &self,
-    query: identity_did::utils::DIDUrlQuery<'_>,
-  ) -> identity_did::Result<RevocationBitmap> {
-    (*self).resolve_revocation_bitmap(query)
-  }
-}
-*/
-
-/* 
-impl ValidatorDocument for Box<dyn ValidatorDocument> {
-  fn did_str(&self) -> &str {
-    let reference: &dyn ValidatorDocument = self.as_ref();
-    reference.did_str()
-  }
-
-  fn into_any(self: Box<Self>) -> Box<dyn Any>
-  where
-    Self: 'static,
-  {
-    self
-  }
-
-  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
-    let reference: &dyn ValidatorDocument = self.as_ref();
-    reference.verify_data(data, options)
-  }
-
-  #[cfg(feature = "revocation-bitmap")]
-  fn resolve_revocation_bitmap(
-    &self,
-    query: identity_did::utils::DIDUrlQuery<'_>,
-  ) -> identity_did::Result<RevocationBitmap> {
-    let reference: &dyn ValidatorDocument = self.as_ref();
-    reference.resolve_revocation_bitmap(query)
-  }
-}
-
-*/
-impl<DOC> From<DOC> for Box<dyn ValidatorDocument> where DOC: Document + 'static {
-  fn from(document: DOC) -> Self {
-      Box::new(document)
-  }
-}
-
-trait ValidatorRef {
-  type Ref: ValidatorDocument + ?Sized;
-
-  fn validator_ref(&self) -> &Self::Ref; 
-}
-
-impl<DOC> ValidatorRef for DOC where DOC: Document {
-  type Ref = DOC;
-  fn validator_ref(&self) -> &Self::Ref {
-      &self
-  }
-}
-
-impl ValidatorRef for Box<dyn ValidatorDocument> {
-  type Ref = dyn ValidatorDocument;
-  fn validator_ref(&self) -> &Self::Ref {
-      self.as_ref()
-  }
-}
-
-impl<'a> ValidatorRef for &'a dyn ValidatorDocument {
-  type Ref = dyn ValidatorDocument + 'a;
-  fn validator_ref(&self) -> &Self::Ref {
-      self.borrow()
-  }
-}
-
-
-impl<DOC> ValidatorDocument for DOC 
+impl<DOC> ValidatorDocument for DOC
 where
   DOC: Document,
 {
@@ -206,5 +115,62 @@ where
         "revocation bitmap service not found",
       ))
       .and_then(RevocationBitmap::try_from)
+  }
+}
+
+/// Trait implemented by types capable of handing out a borrow implementing [`ValidatorDocument`].
+///
+/// NOTE: this is a sealed trait and its methods are not intended to be called externally or implemented manually.
+/// A blanket implementation is provided for the [`Document`] trait, which can be implemented
+/// instead to be compatible. Any changes to this trait will be considered non-breaking.
+///
+/// # Necessity (why not just use [`ValidatorDocument`]?)
+///
+/// This trait was introduced in order to achieve both of the following :
+/// 1. Enable passing [`Box<dyn ValidatorDocument`] and `&`[Box<dyn ValidatorDocument>]` to the [`PresentationValidator`](crate::validator::PresentationValidator).
+/// 2. Provide a blanket implementation for converting any [`Document`] implementor into [`Box<dyn ValidatorDocument>`] via the [`Into`] trait.  
+///
+/// The first of the two points can be achieved by implementing `ValidatorDocument` directly for [`Box<dyn ValidatorDocument>`], but then
+/// the second point will not be achievable because of the [Orphan rules](https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules).
+///   
+/// In terms of abstract functionality requiring this trait bound is essentially equivalent to the following constraints:
+/// T: Borrow<U>,
+/// U: ValidatorDocument  
+/// thus reducing the number of necessary generic parameters in methods and frees the caller from
+/// having to use turbofish to declare the concrete type of U. If the exact details of `U` (beyond equivalence of `Eq`, `Ord` and `Hash`)
+/// are important then in that case one should not consider these trait bounds equivalent.
+///
+///
+pub trait ValidatorBorrow: private::Sealed {
+  /// The concrete ValidatorDocument one may borrow.  
+  type Ref: ValidatorDocument + ?Sized;
+  /// Hands out a borrowed representative capable of calling the methods of [`ValidatorDocument`].
+  fn borrow_validator(&self) -> &Self::Ref;
+}
+
+impl<DOC> ValidatorBorrow for DOC
+where
+  DOC: Document,
+{
+  type Ref = DOC;
+  /// Equivalent to: `<Self as Borrow<Self>>::borrow(&self)`.
+  fn borrow_validator(&self) -> &Self::Ref {
+    <Self as Borrow<Self>>::borrow(&self)
+  }
+}
+
+impl ValidatorBorrow for Box<dyn ValidatorDocument> {
+  type Ref = dyn ValidatorDocument;
+  /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(&self)`.
+  fn borrow_validator(&self) -> &Self::Ref {
+    <Self as Borrow<dyn ValidatorDocument>>::borrow(&self)
+  }
+}
+
+impl<'a> ValidatorBorrow for &'a dyn ValidatorDocument {
+  type Ref = dyn ValidatorDocument + 'a;
+  /// Equivalent to: `<Self as Borrow<dyn ValidatorDocument>>::borrow(&self)`.
+  fn borrow_validator(&self) -> &Self::Ref {
+    <Self as Borrow<dyn ValidatorDocument>>::borrow(&self)
   }
 }
