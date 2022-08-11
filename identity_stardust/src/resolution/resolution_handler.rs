@@ -21,4 +21,3 @@ where
   /// The returned string is expected to match the `did-method-name` when parsing DIDs of the method this handler requires.
   fn method() -> String;
 }
-

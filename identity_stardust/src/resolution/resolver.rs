@@ -9,7 +9,10 @@ use std::{
 use identity_credential::{
   credential::Credential,
   presentation::Presentation,
-  validator::{CredentialValidator, FailFast, PresentationValidationOptions, PresentationValidator, ValidatorDocument, ValidatorBorrow},
+  validator::{
+    CredentialValidator, FailFast, PresentationValidationOptions, PresentationValidator, ValidatorBorrow,
+    ValidatorDocument,
+  },
 };
 use identity_did::{
   did::{CoreDID, DID},
@@ -17,10 +20,9 @@ use identity_did::{
 };
 use serde::Serialize;
 
-use crate::{Error, Result, ResolutionHandler};
+use crate::{Error, ResolutionHandler, Result};
 
-use super::resolver_delegate::{ResolverDelegate, AsyncFnPtr}; 
- 
+use super::resolver_delegate::{AsyncFnPtr, ResolverDelegate};
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
@@ -31,14 +33,16 @@ use super::resolver_delegate::{ResolverDelegate, AsyncFnPtr};
 /// The resolver will only be able to resolve did documents corresponding to a certain method after it has been
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver` trait](super::MethodBoundResolver) for your client
 /// and then attaching it with [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
-pub struct Resolver<DOC = Box<dyn ValidatorDocument>> 
-where DOC: ValidatorBorrow
+pub struct Resolver<DOC = Box<dyn ValidatorDocument>>
+where
+  DOC: ValidatorBorrow,
 {
   method_map: HashMap<String, AsyncFnPtr<str, Result<DOC>>>,
 }
 
-impl<DOC> Resolver<DOC> 
-where DOC: ValidatorBorrow
+impl<DOC> Resolver<DOC>
+where
+  DOC: ValidatorBorrow,
 {
   /// Constructs a new [`Resolver`].
   pub fn new() -> Self {
@@ -47,39 +51,33 @@ where DOC: ValidatorBorrow
     }
   }
 
-  /// Constructs a new [`Resolver`] that operates with DID Documents abstractly. 
+  /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
   pub fn new_dynamic() -> Resolver<Box<dyn ValidatorDocument>> {
     Resolver::<Box<dyn ValidatorDocument>>::new()
   }
 
   /// Attach a [`ResolverHandler`] to this resolver. If the resolver has previously been configured to handle the same DID method
   /// the new handler will replace the previous.  
-  pub fn attach_method_handler<D,R>(
-    &mut self,
-    handler: Arc<R>,
-  )
-  where D: DID + Send + for<'r> TryFrom<&'r str> + 'static, 
-  R: ResolutionHandler<D> + 'static,
-  DOC: From<<R as ResolutionHandler<D>>::Resolved> + 'static, 
+  pub fn attach_method_handler<D, R>(&mut self, handler: Arc<R>)
+  where
+    D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
+    R: ResolutionHandler<D> + 'static,
+    DOC: From<<R as ResolutionHandler<D>>::Resolved> + 'static,
   {
-      let ResolverDelegate::<DOC> { 
-        method, handler
-      } =  ResolverDelegate::new(handler); 
-      self.method_map.insert(method, handler);
-     
+    let ResolverDelegate::<DOC> { method, handler } = ResolverDelegate::new(handler);
+    self.method_map.insert(method, handler);
   }
 
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
   ///
-  /// If this Resolver was constructed by the [`Resolver::new_dynamic`](Resolver::new_dynamic()) method, one may also want to consider [`Resolver::resolve_to`](Resolver::<Box<dyn ValidatorDocument>>::resolve_to()). 
-  /// 
+  /// If this Resolver was constructed by the [`Resolver::new_dynamic`](Resolver::new_dynamic()) method, one may also want to consider [`Resolver::resolve_to`](Resolver::<Box<dyn ValidatorDocument>>::resolve_to()).
+  ///
   /// # Errors
   /// Errors if the resolver has not been configured to handle the method corresponding to the given did or the resolution process itself fails.  
   //TODO: Improve error handling.
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
     self.delegate_resolution(did.method(), did.as_str()).await
   }
-
 
   /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
   /// Issuer documents are returned in arbitrary order.
@@ -88,10 +86,7 @@ where DOC: ValidatorBorrow
   ///
   /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or resolution fails.
   // TODO: Improve error handling.
-  pub async fn resolve_presentation_issuers<U, V>(
-    &self,
-    presentation: &Presentation<U, V>,
-  ) -> Result<Vec<DOC>> {
+  pub async fn resolve_presentation_issuers<U, V>(&self, presentation: &Presentation<U, V>) -> Result<Vec<DOC>> {
     // Extract unique issuers.
     //TODO: Improve error handling.
     let issuers: HashSet<CoreDID> = presentation
@@ -131,13 +126,10 @@ where DOC: ValidatorBorrow
   ///
   /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or DID resolution fails.
   //TODO: Improve error handling
-  pub async fn resolve_presentation_holder<U, V>(
-    &self,
-    presentation: &Presentation<U, V>,
-  ) -> Result<DOC> {
+  pub async fn resolve_presentation_holder<U, V>(&self, presentation: &Presentation<U, V>) -> Result<DOC> {
     let holder: CoreDID = PresentationValidator::extract_holder(presentation)
       .map_err(|error| Error::ResolutionProblem(error.to_string()))?;
-    self.delegate_resolution(&holder.method(), holder.as_str()).await
+    self.delegate_resolution(holder.method(), holder.as_str()).await
   }
 
   /// Fetches the DID Document of the issuer of a [`Credential`].
@@ -146,13 +138,10 @@ where DOC: ValidatorBorrow
   ///
   /// Errors if the issuer URL cannot be parsed to a DID with a method supported by the resolver, or resolution fails.
   // TODO: Improve errors!
-  pub async fn resolve_credential_issuer<U: Serialize>(
-    &self,
-    credential: &Credential<U>,
-  ) -> Result<DOC> {
+  pub async fn resolve_credential_issuer<U: Serialize>(&self, credential: &Credential<U>) -> Result<DOC> {
     let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
       .map_err(|_| Error::ResolutionProblem("failed to parse the issuer's did".into()))?;
-    self.delegate_resolution(&issuer_did.method(), issuer_did.as_str()).await
+    self.delegate_resolution(issuer_did.method(), issuer_did.as_str()).await
   }
 
   /// Verifies a [`Presentation`].
@@ -165,7 +154,7 @@ where DOC: ValidatorBorrow
   /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
   /// If you already have up-to-date versions of these DID Documents, you may want
   /// to use [`PresentationValidator::validate`].
-  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`]. Note that 
+  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`]. Note that
   /// DID Documents of a certain method can only be resolved if the resolver has been configured handle this method.
   /// See [Self::attach_method_handler].
   ///
@@ -180,12 +169,12 @@ where DOC: ValidatorBorrow
     fail_fast: FailFast,
     holder: Option<&HDOC>,
     issuers: Option<&[IDOC]>,
-  ) -> Result<()> 
-  where 
-  U: Serialize, 
-  V: Serialize,
-  HDOC: ValidatorBorrow + ?Sized, 
-  IDOC: ValidatorBorrow, 
+  ) -> Result<()>
+  where
+    U: Serialize,
+    V: Serialize,
+    HDOC: ValidatorBorrow + ?Sized,
+    IDOC: ValidatorBorrow,
   {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
@@ -200,12 +189,11 @@ where DOC: ValidatorBorrow
         PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
       }
       (None, None) => {
-        let (holder, issuers): (DOC, Vec<DOC>) =
-          futures::future::try_join(
-            self.resolve_presentation_holder(presentation),
-            self.resolve_presentation_issuers(presentation),
-          )
-          .await?;
+        let (holder, issuers): (DOC, Vec<DOC>) = futures::future::try_join(
+          self.resolve_presentation_holder(presentation),
+          self.resolve_presentation_issuers(presentation),
+        )
+        .await?;
 
         PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
       }
@@ -223,7 +211,6 @@ where DOC: ValidatorBorrow
   }
 }
 impl Resolver<Box<dyn ValidatorDocument>> {
-
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
   ///
   ///
@@ -234,7 +221,7 @@ impl Resolver<Box<dyn ValidatorDocument>> {
   pub async fn resolve_to<DOCUMENT, D>(&self, did: &D) -> Result<DOCUMENT>
   where
     D: DID,
-    DOCUMENT: Document + 'static, 
+    DOCUMENT: Document + 'static,
   {
     let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
 
@@ -246,3 +233,8 @@ impl Resolver<Box<dyn ValidatorDocument>> {
   }
 }
 
+impl<DOC: ValidatorBorrow> Default for Resolver<DOC> {
+  fn default() -> Self {
+    Self::new()
+  }
+}

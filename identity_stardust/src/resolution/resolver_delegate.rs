@@ -4,11 +4,11 @@
 use super::ResolutionHandler;
 use crate::{Error, Result};
 use core::future::Future;
-use identity_credential::validator::{ValidatorDocument, ValidatorBorrow};
-use identity_did::{did::DID, document::Document};
+use identity_credential::validator::ValidatorBorrow;
+use identity_did::did::DID;
 use std::{pin::Pin, sync::Arc};
 
-pub(super) type AsyncFnPtr<S,T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output =T> + 'r>>>;
+pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 
 /// Intermediary type used to register a [`ResolutionHandler`](super::ResolutionHandler) with a [`Resolver`](super::Resolver).
 ///
@@ -29,7 +29,7 @@ impl<DOC: ValidatorBorrow + 'static> ResolverDelegate<DOC> {
   where
     D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
     R: ResolutionHandler<D> + 'static,
-    <R as ResolutionHandler<D>>::Resolved: Into<DOC>
+    <R as ResolutionHandler<D>>::Resolved: Into<DOC>,
   {
     let method = R::method();
     ResolverDelegate {
