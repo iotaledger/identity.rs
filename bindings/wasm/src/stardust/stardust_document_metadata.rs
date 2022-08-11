@@ -28,6 +28,12 @@ impl WasmStardustDocumentMetadata {
     self.0.updated.map(WasmTimestamp::from)
   }
 
+  /// Returns a copy of the deactivated status of the DID document.
+  #[wasm_bindgen]
+  pub fn deactivated(&self) -> Option<bool> {
+    self.0.deactivated
+  }
+
   /// Returns a copy of the custom metadata properties.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {

@@ -21,10 +21,12 @@
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "example:account": "ts-node ./examples-account/src/node.ts",
+    "example:stardust": "ts-node ./examples-stardust/src/main.ts",
     "test": "npm run test:unit && npm run test:unit:node && npm run test:examples",
-    "test:examples": "concurrently -g --timings \"npm:test:node\" \"npm:test:account:node\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
+    "test:examples": "concurrently -g --timings \"npm:test:node\" \"npm:test:account:node\" \"npm:test:stardust\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
     "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:account:node": "ts-mocha ./examples-account/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
+    "test:stardust": "ts-mocha ./examples-stardust/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/integration -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
@@ -80,7 +82,7 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/iota.js": "^1.9.0-stardust.23"
+    "@iota/iota.js": "^1.9.0-stardust.24"
   },
   "optionalDependencies": {
     "@iota/pow-neon.js": "^1.9.0-stardust.4"

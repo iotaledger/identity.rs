@@ -1,14 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {KeyPair, KeyType, MethodScope, StardustDocument, StardustVerificationMethod, StardustIdentityClient} from '../../node';
+import {KeyPair, KeyType, MethodScope, StardustDID, StardustDocument, StardustIdentityClient, StardustVerificationMethod} from '../../node';
 
 import {
     Bech32Helper,
     ED25519_ADDRESS_TYPE,
     Ed25519Address,
     Ed25519Seed,
-    IAliasOutput, IEd25519Address,
+    IAliasOutput,
+    IEd25519Address,
+    IKeyPair,
     SingleNodeClient,
     LocalPowProvider,
 } from '@iota/iota.js';
@@ -23,8 +25,13 @@ const EXPLORER = "https://explorer.alphanet.iotaledger.net/alphanet";
 const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
 const FAUCET = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
-// In this example we set up a hot wallet, fund it with tokens from the faucet and let it mint an NFT to our address.
-export async function run() {
+/** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
+export async function createIdentity(): Promise<{
+    didClient: StardustIdentityClient,
+    walletAddress: Ed25519Address,
+    walletKeyPair: IKeyPair,
+    did: StardustDID
+}> {
     // Allow self-signed TLS certificates when running in Node.js.
     // WARNING: this is generally insecure and should not be done in production.
     if (typeof process !== 'undefined' && process.release.name === 'node') {
@@ -45,7 +52,9 @@ export async function run() {
 
     // Create a new wallet and request funds for it from the faucet (only works on test networks).
     console.log("Sender Address:");
-    const [walletAddressHex, walletAddressBech32, walletKeyPair] = await setUpHotWallet(networkHrp, true);
+    const [walletAddress, walletKeyPair] = await setUpHotWallet(networkHrp, true);
+    const walletAddressHex: string = Converter.bytesToHex(walletAddress.toAddress(), true);
+    const walletAddressBech32: string = Bech32Helper.toBech32(ED25519_ADDRESS_TYPE, walletAddress.toAddress(), networkHrp);
     console.log("\tAddress Ed25519", walletAddressHex);
     console.log("\tAddress Bech32", walletAddressBech32);
 
@@ -70,10 +79,12 @@ export async function run() {
     // Publish the Alias Output and get the published DID document.
     const published = await didClient.publishDidOutput(walletKeyPair, aliasOutput);
     console.log("Published DID document:", JSON.stringify(published, null, 2));
+
+    return {didClient, walletAddress, walletKeyPair, did: published.id()};
 }
 
 /** Generate a new Ed25519 wallet address and optionally fund it from the faucet API. */
-async function setUpHotWallet(hrp: string, fund: boolean = false) {
+async function setUpHotWallet(networkHrp: string, fund: boolean = false): Promise<[Ed25519Address, IKeyPair]> {
     // Generate a random seed
     const walletEd25519Seed = new Ed25519Seed(randomBytes(32));
 
@@ -89,16 +100,14 @@ async function setUpHotWallet(hrp: string, fund: boolean = false) {
     // Get the wallet address, which is the Blake2b-256 digest of the public key.
     const walletEd25519Address = new Ed25519Address(walletKeyPair.publicKey);
     const walletAddress = walletEd25519Address.toAddress();
-    const walletAddressHex = Converter.bytesToHex(walletAddress, true);
-
-    let walletAddressBech32 = Bech32Helper.toBech32(ED25519_ADDRESS_TYPE, walletAddress, hrp);
+    let walletAddressBech32 = Bech32Helper.toBech32(ED25519_ADDRESS_TYPE, walletAddress, networkHrp);
 
     // We also top up the address by asking funds from the faucet.
     if (fund) {
         await requestFundsFromFaucet(walletAddressBech32);
     }
 
-    return [walletAddressHex, walletAddressBech32, walletKeyPair] as const;
+    return [walletEd25519Address, walletKeyPair];
 }
 
 /** Request tokens from the faucet API. */
@@ -131,6 +140,3 @@ async function requestFundsFromFaucet(addressBech32: string) {
         throw new Error(`failed to get funds from faucet: ${errorMessage}`);
     }
 }
-
-run()
-    .catch(err => console.error(err));

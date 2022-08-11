@@ -2,6 +2,7 @@ import typescript from '@rollup/plugin-typescript';
 import commonjs from '@rollup/plugin-commonjs';
 import dts from "rollup-plugin-dts";
 import copy from 'rollup-plugin-copy-merge'
+import path from 'path';
 
 export default [
     {
@@ -12,14 +13,14 @@ export default [
         },
         treeshake: false,
         // TODO: should we also externalize @iota/iota.js and node-fetch?
-        external: ['util', 'fs', 'path'], // so it's not included
+        external: [path.resolve( __dirname, 'wasm-node/identity_wasm.js' ),], // so it's not included
         plugins: [
             typescript({
                 rootDir: 'wasm-node',
                 outDir: 'wasm-node',
                 // module: 'commonjs',
                 moduleResolution: 'node',
-                esModuleInterop: true,
+                //esModuleInterop: true,
             }),
             commonjs({ transformMixedEsModules: true }),
             copy({

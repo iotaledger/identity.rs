@@ -294,6 +294,8 @@ impl StardustDocument {
   pub fn unpack(did: &StardustDID, state_metadata: &[u8], allow_empty: bool) -> Result<StardustDocument> {
     if state_metadata.is_empty() && allow_empty {
       let mut empty_document = StardustDocument::new_with_id(did.clone());
+      empty_document.metadata.created = None;
+      empty_document.metadata.updated = None;
       empty_document.metadata.deactivated = Some(true);
       return Ok(empty_document);
     }
@@ -663,6 +665,24 @@ mod tests {
   }
 
   #[test]
+  fn test_unpack_empty() {
+    // VALID: unpack empty, deactivated document.
+    let did: StardustDID = valid_did();
+    let empty: &[u8] = &[];
+    let document: StardustDocument = StardustDocument::unpack(&did, empty, true).unwrap();
+    assert_eq!(document.id(), &did);
+    assert_eq!(document.metadata.deactivated, Some(true));
+
+    // Ensure no other fields are injected.
+    // TODO: update this when controller/governor fields are added?
+    let json: String = format!("{{\"doc\":{{\"id\":\"{did}\"}},\"meta\":{{\"deactivated\":true}}}}");
+    assert_eq!(document.to_json().unwrap(), json);
+
+    // INVALID: reject empty document.
+    assert!(StardustDocument::unpack(&did, empty, false).is_err());
+  }
+
+  #[test]
   fn test_json_roundtrip() {
     let document: StardustDocument = generate_document(&valid_did());
 
@@ -673,6 +693,7 @@ mod tests {
 
   #[test]
   fn test_json_fieldnames() {
+    // Changing the serialization is a breaking change!
     let document: StardustDocument = StardustDocument::new_with_id(valid_did());
     let serialization: String = document.to_json().unwrap();
     assert_eq!(

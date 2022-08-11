@@ -17,6 +17,7 @@ use iota_client::Client;
 
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClient;
 use identity_stardust::StardustIdentityClientExt;
@@ -25,8 +26,8 @@ use identity_stardust::StardustVerificationMethod;
 static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
-/// Demonstrate how to create a DID Document and publish it in a new Alias Output.
-pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDocument)> {
+/// Demonstrates how to create a DID Document and publish it in a new Alias Output.
+pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDID)> {
   // Create a client and a wallet address with funds from the testnet faucet.
   let client: Client = Client::builder().with_primary_node(ENDPOINT, None)?.finish()?;
   let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client)
@@ -49,13 +50,13 @@ pub async fn run() -> anyhow::Result<(Client, Address, SecretManager, StardustDo
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
-  println!("Alias Output: {}", alias_output.to_json_pretty()?);
+  println!("Alias Output: {}", alias_output.to_json()?);
 
   // Publish the Alias Output and get the published DID document.
   let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Published DID document: {:#}", document);
 
-  Ok((client, address, secret_manager, document))
+  Ok((client, address, secret_manager, document.id().clone()))
 }
 
 /// Creates a new address and SecretManager with funds from the testnet faucet.
@@ -101,7 +102,7 @@ async fn request_faucet_funds(client: &Client, address: Address, network_hrp: &s
   Ok(())
 }
 
-/// Returns the balance of the given bech32-encoded `address`.
+/// Returns the balance of the given Bech32-encoded `address`.
 async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u64> {
   let output_ids = client
     .basic_output_ids(vec![

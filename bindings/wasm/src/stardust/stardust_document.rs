@@ -437,6 +437,18 @@ impl WasmStardustDocument {
     Ok(())
   }
 
+  /// Returns a copy of the deactivated status of the DID document.
+  #[wasm_bindgen(js_name = metadataDeactivated)]
+  pub fn metadata_deactivated(&self) -> Option<bool> {
+    self.0.metadata.deactivated
+  }
+
+  /// Sets the deactivated status of the DID document.
+  #[wasm_bindgen(js_name = setMetadataDeactivated)]
+  pub fn set_metadata_deactivated(&mut self, deactivated: Option<bool>) {
+    self.0.metadata.deactivated = deactivated;
+  }
+
   /// Sets a custom property in the document metadata.
   /// If the value is set to `null`, the custom property will be removed.
   #[wasm_bindgen(js_name = setMetadataPropertyUnchecked)]
