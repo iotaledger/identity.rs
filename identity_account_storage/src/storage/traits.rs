@@ -71,13 +71,13 @@ mod storage_sub_trait {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
-  /// Creates a new identity of type `DIDType` for the given `network`.
+  /// Creates a new identity of the type declared in `did_type` for the given `network`.
   ///
   /// - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
   /// - Returns an error if the DID already exists.
   /// - Adds the newly created DID to a list which can be accessed via [`Storage::did_list`].
   ///
-  /// Returns the generated DID and the location at which the key was stored.
+  /// Returns the generated DID represented as a [`CoreDID`] and the location at which the key was stored.
   async fn did_create(
     &self,
     did_type: DIDType,

@@ -61,7 +61,7 @@ static VAULT_PATH: &[u8; 6] = b"$vault";
 impl Storage for Stronghold {
   async fn did_create(
     &self,
-    _did_type: DIDType,
+    did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,
@@ -84,9 +84,13 @@ impl Storage for Stronghold {
 
     let public_key: PublicKey = retrieve_public_key(&tmp_client, &tmp_location)?;
 
-    let did: CoreDID = IotaDID::new_with_network(public_key.as_ref(), network)
-      .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?
-      .into();
+    let did: CoreDID = {
+      match did_type {
+        DIDType::IotaDID => IotaDID::new_with_network(public_key.as_ref(), network)
+          .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?
+          .into(),
+      }
+    };
 
     // =============================
     // ADD DID TO INDEX

@@ -81,7 +81,7 @@ impl MemStore {
 impl Storage for MemStore {
   async fn did_create(
     &self,
-    _did_type: DIDType,
+    did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,
@@ -99,9 +99,13 @@ impl Storage for MemStore {
     let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
 
     // Next we use the public key to derive the initial DID.
-    let did: CoreDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
-      .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?
-      .into();
+    let did: CoreDID = {
+      match did_type {
+        DIDType::IotaDID => IotaDID::new_with_network(keypair.public().as_ref(), network)
+          .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?
+          .into(),
+      }
+    };
 
     // Obtain exclusive access to the vaults.
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
