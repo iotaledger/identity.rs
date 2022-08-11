@@ -22,29 +22,3 @@ where
   fn method() -> String;
 }
 
-/*
-#[async_trait]
-impl<T> AbstractResolutionHandler for T
-where
-  T: ResolutionHandler + Send + Sync,
-  T::DOC: Send + Sync + 'static,
-  T::D: Send + Sync + 'static,
-{
-  async fn resolve_validator(&self, did: &str) -> Result<Box<dyn ValidatorDocument>> {
-    // TODO: Consider improving error handling.
-    let parsed_did: <T as ResolutionHandler>::D = did.parse().map_err(|_| {
-      Error::DIDSyntaxError(identity_did::did::DIDError::Other(
-        "failed to convert DID during resolution",
-      ))
-    })?;
-
-    let doc = self.resolve(&parsed_did).await?;
-
-    Ok(Box::new(doc))
-  }
-
-  fn method(&self) -> String {
-    <T as ResolutionHandler>::method()
-  }
-}
-*/

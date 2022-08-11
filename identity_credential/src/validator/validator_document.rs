@@ -118,6 +118,15 @@ where
   }
 }
 
+impl<DOC> From<DOC> for Box<dyn ValidatorDocument>
+where
+  DOC: Document + 'static,
+{
+  fn from(document: DOC) -> Self {
+    Box::new(document)
+  }
+}
+
 /// Trait implemented by types capable of handing out a borrow implementing [`ValidatorDocument`].
 ///
 /// NOTE: this is a sealed trait and its methods are not intended to be called externally or implemented manually.
@@ -153,24 +162,24 @@ where
   DOC: Document,
 {
   type Ref = DOC;
-  /// Equivalent to: `<Self as Borrow<Self>>::borrow(&self)`.
+  /// Equivalent to: `<Self as Borrow<Self>>::borrow(self)`.
   fn borrow_validator(&self) -> &Self::Ref {
-    <Self as Borrow<Self>>::borrow(&self)
+    <Self as Borrow<Self>>::borrow(self)
   }
 }
 
 impl ValidatorBorrow for Box<dyn ValidatorDocument> {
   type Ref = dyn ValidatorDocument;
-  /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(&self)`.
+  /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
   fn borrow_validator(&self) -> &Self::Ref {
-    <Self as Borrow<dyn ValidatorDocument>>::borrow(&self)
+    <Self as Borrow<dyn ValidatorDocument>>::borrow(self)
   }
 }
 
 impl<'a> ValidatorBorrow for &'a dyn ValidatorDocument {
   type Ref = dyn ValidatorDocument + 'a;
-  /// Equivalent to: `<Self as Borrow<dyn ValidatorDocument>>::borrow(&self)`.
+  /// Equivalent to: `<Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
   fn borrow_validator(&self) -> &Self::Ref {
-    <Self as Borrow<dyn ValidatorDocument>>::borrow(&self)
+    <Self as Borrow<dyn ValidatorDocument>>::borrow(self)
   }
 }

@@ -4,8 +4,8 @@
 use super::ResolutionHandler;
 use crate::{Error, Result};
 use core::future::Future;
-use identity_credential::validator::ValidatorDocument;
-use identity_did::did::DID;
+use identity_credential::validator::{ValidatorDocument, ValidatorBorrow};
+use identity_did::{did::DID, document::Document};
 use std::{pin::Pin, sync::Arc};
 
 pub(super) type AsyncFnPtr<S,T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output =T> + 'r>>>;
@@ -14,24 +14,22 @@ pub(super) type AsyncFnPtr<S,T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Futur
 ///
 /// Consists of the DID Method encoded as a string and a collectable asynchronous function pointer that the [`Resolver`] will
 /// delegate resolution to when encountering did's of the corresponding method.
-pub(super) struct ResolverDelegate<DOC: ValidatorDocument> {
+pub(super) struct ResolverDelegate<DOC: ValidatorBorrow> {
   pub(super) method: String,
   pub(super) handler: AsyncFnPtr<str, Result<DOC>>,
 }
 
-impl<DOC: ValidatorDocument + 'static> ResolverDelegate<DOC> {
+impl<DOC: ValidatorBorrow + 'static> ResolverDelegate<DOC> {
   /// Constructor
   ///
   /// Converts a [`ResolutionHandler`] into a collectable asynchronous function pointer. The `output` transformer is used to
   /// transform the [resolved document](ResolutionHandler::Resolved) to any desired document type.
-  ///  
-  /// The trait bounds on F cover both the desired cases: <T as From>::from and |doc| {Box::new(doc) as Box<dyn ValidatorDocument>}
   // TODO: Improve error handling.
-  pub(super) fn new<D, R, F>(handler: Arc<R>, output_transformer: F) -> Self
+  pub(super) fn new<D, R>(handler: Arc<R>) -> Self
   where
     D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
     R: ResolutionHandler<D> + 'static,
-    F: Fn(<R as ResolutionHandler<D>>::Resolved) -> DOC + Copy + 'static,
+    <R as ResolutionHandler<D>>::Resolved: Into<DOC>
   {
     let method = R::method();
     ResolverDelegate {
@@ -42,7 +40,7 @@ impl<DOC: ValidatorDocument + 'static> ResolverDelegate<DOC> {
           let did: D = D::try_from(input).map_err(|_| Error::ResolutionProblem("failed to parse did".into()))?;
 
           let resolved = value_clone.resolve(&did).await?;
-          Ok(output_transformer(resolved))
+          Ok(resolved.into())
         })
       }),
     }
