@@ -24,7 +24,7 @@ const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
 const FAUCET = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
 // In this example we set up a hot wallet, fund it with tokens from the faucet and let it mint an NFT to our address.
-async function run() {
+export async function run() {
     // Allow self-signed TLS certificates when running in Node.js.
     // WARNING: this is generally insecure and should not be done in production.
     if (typeof process !== 'undefined' && process.release.name === 'node') {
