@@ -489,7 +489,6 @@ mod tests {
     )
     .is_ok());
 
-    /*
     let issuer_iota_box: Box<dyn ValidatorDocument> = Box::new(issuer_stardust_doc.clone());
     let issuer_core_box: Box<dyn ValidatorDocument> = Box::new(issuer_core_doc.clone());
     assert!(PresentationValidator::validate(
@@ -500,7 +499,6 @@ mod tests {
       FailFast::FirstError,
     )
     .is_ok());
-    */
 
     // INVALID: wrong holder fails.
     assert!(PresentationValidator::validate(
