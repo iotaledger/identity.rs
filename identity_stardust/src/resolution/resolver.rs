@@ -266,29 +266,22 @@ mod tests {
   use identity_did::document::CoreDocument;
   use identity_did::verifiable::VerifierOptions;
   use identity_did::verification::MethodScope;
-use identity_did::verification::VerificationMethod;
-  use crate::StardustDID;
-  use crate::StardustDocument;
-  use crate::StardustVerificationMethod; 
+  use identity_did::verification::VerificationMethod;
+
   use super::*;
-
-
+  use crate::StardustDocument;
+  use crate::StardustVerificationMethod;
 
   fn generate_stardust_document(keypair: &KeyPair) -> StardustDocument {
     let mut document: StardustDocument = StardustDocument::new_with_id(
       "did:stardust:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    .parse()
-    .unwrap()
-  );
-    let method: StardustVerificationMethod = StardustVerificationMethod::new(
-      document.id().clone(),
-      keypair.type_(),
-      keypair.public(),
-      "issuerKey"
-    ).unwrap();
-    document.insert_method(method, MethodScope::VerificationMethod);
-    document 
-
+        .parse()
+        .unwrap(),
+    );
+    let method: StardustVerificationMethod =
+      StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "issuerKey").unwrap();
+    document.insert_method(method, MethodScope::VerificationMethod).unwrap();
+    document
   }
 
   fn generate_core_document() -> (CoreDocument, KeyPair) {
@@ -342,10 +335,10 @@ use identity_did::verification::VerificationMethod;
 
   // Convenience struct for setting up tests.
   struct MixedTestSetup {
-    // Issuer of credential_iota.
+    // Issuer of credential_stardust.
     issuer_stardust_doc: StardustDocument,
     issuer_stardust_key: KeyPair,
-    credential_iota: Credential,
+    credential_stardust: Credential,
     // Issuer of credential_core.
     issuer_core_doc: CoreDocument,
     issuer_core_key: KeyPair,
@@ -363,17 +356,17 @@ use identity_did::verification::VerificationMethod;
         (generate_stardust_document(&keypair), keypair)
       };
       let (subject_doc, subject_key) = generate_core_document();
-      let credential_iota = generate_credential(issuer_stardust_doc.id().as_str(), subject_doc.id().as_str());
+      let credential_stardust = generate_credential(issuer_stardust_doc.id().as_str(), subject_doc.id().as_str());
 
       let (issuer_core_doc, issuer_core_key) = generate_core_document();
       let credential_core = generate_credential(issuer_core_doc.id().as_str(), subject_doc.id().as_str());
 
       Self {
-        issuer_stardust_doc: issuer_stardust_doc,
+        issuer_stardust_doc,
         issuer_stardust_key,
         subject_doc,
         subject_key,
-        credential_iota,
+        credential_stardust,
         issuer_core_doc,
         issuer_core_key,
         credential_core,
@@ -384,9 +377,9 @@ use identity_did::verification::VerificationMethod;
     fn new_with_signed_credentials() -> Self {
       let mut setup = Self::new();
       let MixedTestSetup {
-        issuer_stardust_doc: ref issuer_stardust_doc,
+        ref issuer_stardust_doc,
         ref issuer_stardust_key,
-        ref mut credential_iota,
+        ref mut credential_stardust,
         ref issuer_core_doc,
         ref issuer_core_key,
         ref mut credential_core,
@@ -394,10 +387,11 @@ use identity_did::verification::VerificationMethod;
       } = setup;
 
       issuer_stardust_doc
-      .signer(issuer_stardust_key.private()) 
-      .options(ProofOptions::default())
-      .method(issuer_stardust_doc.methods().next().unwrap().id())
-      .sign(credential_iota).unwrap();
+        .signer(issuer_stardust_key.private())
+        .options(ProofOptions::default())
+        .method(issuer_stardust_doc.methods().next().unwrap().id())
+        .sign(credential_stardust)
+        .unwrap();
 
       issuer_core_doc
         .signer(issuer_core_key.private())
@@ -413,7 +407,7 @@ use identity_did::verification::VerificationMethod;
   async fn test_resolver_verify_presentation_mixed() {
     let MixedTestSetup {
       issuer_stardust_doc,
-      credential_iota,
+      credential_stardust,
       issuer_core_doc,
       credential_core,
       subject_doc,
@@ -422,8 +416,10 @@ use identity_did::verification::VerificationMethod;
     } = MixedTestSetup::new_with_signed_credentials();
 
     // Subject signs the presentation.
-    let mut presentation =
-      generate_presentation(subject_doc.id().as_str(), [credential_iota, credential_core].to_vec());
+    let mut presentation = generate_presentation(
+      subject_doc.id().as_str(),
+      [credential_stardust, credential_core].to_vec(),
+    );
     let challenge: String = "475a7984-1bb5-4c4c-a56f-822bccd46441".to_owned();
     subject_doc
       .signer(subject_key.private())
@@ -433,7 +429,7 @@ use identity_did::verification::VerificationMethod;
       .unwrap();
 
     // VALID: resolver supports presentations with issuers from different DID Methods.
-    let resolver: Resolver = Resolver::default(); 
+    let resolver: Resolver = Resolver::default();
     assert!(resolver
       .verify_presentation(
         &presentation,
@@ -451,8 +447,8 @@ use identity_did::verification::VerificationMethod;
   #[test]
   fn test_validate_presentation_mixed() {
     let MixedTestSetup {
-      issuer_stardust_doc: issuer_stardust_doc,
-      credential_iota,
+      issuer_stardust_doc,
+      credential_stardust,
       issuer_core_doc,
       credential_core,
       subject_doc,
@@ -461,8 +457,10 @@ use identity_did::verification::VerificationMethod;
     } = MixedTestSetup::new_with_signed_credentials();
 
     // Subject signs the presentation.
-    let mut presentation =
-      generate_presentation(subject_doc.id().as_str(), [credential_iota, credential_core].to_vec());
+    let mut presentation = generate_presentation(
+      subject_doc.id().as_str(),
+      [credential_stardust, credential_core].to_vec(),
+    );
     let challenge: String = "475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned();
     subject_doc
       .signer(subject_key.private())
@@ -567,8 +565,8 @@ use identity_did::verification::VerificationMethod;
   #[test]
   fn test_validate_credential_mixed() {
     let MixedTestSetup {
-      issuer_stardust_doc: issuer_stardust_doc,
-      credential_iota,
+      issuer_stardust_doc,
+      credential_stardust,
       issuer_core_doc,
       credential_core,
       subject_doc,
@@ -579,13 +577,23 @@ use identity_did::verification::VerificationMethod;
       .latest_issuance_date(Timestamp::now_utc());
 
     // VALID: credential validation works for issuers with different DID Methods.
-    assert!(CredentialValidator::validate(&credential_iota, &issuer_stardust_doc, &options, FailFast::FirstError).is_ok());
+    assert!(CredentialValidator::validate(
+      &credential_stardust,
+      &issuer_stardust_doc,
+      &options,
+      FailFast::FirstError
+    )
+    .is_ok());
     assert!(CredentialValidator::validate(&credential_core, &issuer_core_doc, &options, FailFast::FirstError).is_ok());
 
     // INVALID: wrong issuer fails.
-    assert!(CredentialValidator::validate(&credential_iota, &issuer_core_doc, &options, FailFast::FirstError).is_err());
-    assert!(CredentialValidator::validate(&credential_iota, &subject_doc, &options, FailFast::FirstError).is_err());
-    assert!(CredentialValidator::validate(&credential_core, &issuer_stardust_doc, &options, FailFast::FirstError).is_err());
+    assert!(
+      CredentialValidator::validate(&credential_stardust, &issuer_core_doc, &options, FailFast::FirstError).is_err()
+    );
+    assert!(CredentialValidator::validate(&credential_stardust, &subject_doc, &options, FailFast::FirstError).is_err());
+    assert!(
+      CredentialValidator::validate(&credential_core, &issuer_stardust_doc, &options, FailFast::FirstError).is_err()
+    );
     assert!(CredentialValidator::validate(&credential_core, &subject_doc, &options, FailFast::FirstError).is_err());
   }
 }
