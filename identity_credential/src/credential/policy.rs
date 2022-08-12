@@ -9,7 +9,7 @@ use identity_core::common::Url;
 /// a [`Credential`][crate::credential::Credential] or [`Presentation`][crate::presentation::Presentation].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#terms-of-use)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Policy {
   /// The instance id of the credential terms-of-use.
   #[serde(skip_serializing_if = "Option::is_none")]

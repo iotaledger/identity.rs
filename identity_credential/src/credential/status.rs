@@ -7,7 +7,7 @@ use identity_core::common::Url;
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#status)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Status<T = Object> {
   /// A Url identifying the credential status.
   pub id: Url,

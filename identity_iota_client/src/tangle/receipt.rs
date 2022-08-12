@@ -9,7 +9,7 @@ use identity_iota_core::tangle::Message;
 use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::Network;
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Receipt {
   network: Network,
   #[serde(rename = "messageId")]

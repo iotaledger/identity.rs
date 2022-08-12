@@ -61,7 +61,7 @@ pub type IotaCoreDocument = CoreDocument<IotaDID>;
 /// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This extends [`CoreDocument`].
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct IotaDocument {
   #[serde(rename = "doc")]
   pub(crate) document: IotaCoreDocument,
