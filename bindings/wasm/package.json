@@ -76,10 +76,8 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/iota.js": "^1.9.0-stardust.24"
-  },
-  "optionalDependencies": {
-    "@iota/pow-neon.js": "^1.9.0-stardust.4"
+    "@iota/client": "^3.0.0-alpha.6",
+    "@iota/types": "^1.0.0-beta.11"
   },
   "engines": {
     "node": ">=16"

@@ -116,11 +116,9 @@ impl StardustClientExt for Client {
 impl StardustIdentityClient for Client {
   async fn get_network_hrp(&self) -> Result<String> {
     self
-      .get_network_info()
+      .get_bech32_hrp()
       .await
-      .map_err(Error::DIDResolutionError)?
-      .bech32_hrp
-      .ok_or_else(|| Error::InvalidNetworkName("".to_owned()))
+      .map_err(Error::DIDResolutionError)
   }
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {

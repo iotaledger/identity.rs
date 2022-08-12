@@ -96,7 +96,7 @@ impl StardustIdentityClient for WasmStardustIdentityClient {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_STARDUST_IDENTITY_CLIENT: &'static str = r#"
-import { IAliasOutput, IRent } from '@iota/iota.js';
+import { IAliasOutput, IRent } from '@iota/types';
 /** Helper interface necessary for `StardustIdentityClientExt`. */
 interface IStardustIdentityClient {
   /**

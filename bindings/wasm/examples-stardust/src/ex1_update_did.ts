@@ -9,7 +9,7 @@ import {createIdentity} from "./ex0_create_did";
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
     // Creates a new wallet and identity (see "ex0_create_did" example).
-    const {didClient, walletKeyPair, did} = await createIdentity();
+    const {didClient, secretManager, did} = await createIdentity();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.
@@ -36,6 +36,6 @@ export async function updateIdentity() {
     aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
 
     // Publish the output.
-    const updated: StardustDocument = await didClient.publishDidOutput(walletKeyPair, aliasOutput);
+    const updated: StardustDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
     console.log("Updated DID document:", JSON.stringify(updated, null, 2));
 }
