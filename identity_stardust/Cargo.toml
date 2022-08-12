@@ -25,10 +25,11 @@ prefix-hex = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
+pretty_env_logger = "*"
 
 [dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "a582bfa882793fe21db2055c4f7878ebc531877a" # develop branch, 2022-07-27
+git = "https://github.com/Thoralf-M/iota.rs"
+rev = "349e89640051f8691e5e7942f716723a342b18cd"
 features = ["tls"]
 default-features = false
 optional = true
