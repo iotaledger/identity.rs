@@ -370,6 +370,12 @@ impl From<StardustDocument> for StardustCoreDocument {
   }
 }
 
+impl From<StardustDocument> for CoreDocument {
+  fn from(document: StardustDocument) -> Self {
+    document.document.map(Into::into, |id| id)
+  }
+}
+
 impl From<(StardustCoreDocument, StardustDocumentMetadata)> for StardustDocument {
   fn from((document, metadata): (StardustCoreDocument, StardustDocumentMetadata)) -> Self {
     Self { document, metadata }
