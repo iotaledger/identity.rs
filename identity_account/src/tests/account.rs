@@ -539,7 +539,7 @@ async fn test_account_sync_diff_msg_update() {
         .await
         .unwrap();
       client
-        .publish_diff(&*account.chain_state().last_integration_message_id(), &diff_msg)
+        .publish_diff(account.chain_state().last_integration_message_id(), &diff_msg)
         .await
         .unwrap();
       let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();

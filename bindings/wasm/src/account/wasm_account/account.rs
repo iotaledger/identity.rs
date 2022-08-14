@@ -53,7 +53,7 @@ pub struct WasmAccount(pub(crate) Rc<RefCell<AccountRc>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  /// Returns did of the managed identity.
+  /// Returns the {@link IotaDID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmIotaDID {
     WasmIotaDID::from(self.0.borrow().did().clone())

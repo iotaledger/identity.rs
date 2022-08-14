@@ -325,7 +325,7 @@ Detaches the given relationship from the given method, if the method exists.
 <a name="Account+did"></a>
 
 ### account.did() ⇒ [<code>IotaDID</code>](#IotaDID)
-Returns the [DID](DID) of the managed identity.
+Returns the [IotaDID](#IotaDID) of the managed identity.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+autopublish"></a>

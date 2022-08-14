@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg(feature = "derive")]
+#![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(unused_variables)]
 #![allow(deprecated)]
 
@@ -9,39 +10,39 @@ use identity_diff::Diff;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq)]
+#[derive(Diff, Debug, Clone, PartialEq)]
 pub enum StructEnum {
   A { x: usize },
   B { y: usize },
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq)]
+#[derive(Diff, Debug, Clone, PartialEq)]
 pub enum UnitEnum {
   A,
   B,
   C,
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq)]
+#[derive(Diff, Debug, Clone, PartialEq)]
 pub enum TupleEnum {
   A(usize),
   B(String),
   C(usize, usize),
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Diff, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MixedEnum {
   A,
   B(usize),
   C { y: String },
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq)]
+#[derive(Diff, Debug, Clone, PartialEq)]
 pub enum NestedEnum {
   Nest(InnerEnum),
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq)]
+#[derive(Diff, Debug, Clone, PartialEq)]
 pub enum InnerEnum {
   Inner { y: InnerStruct },
 }
@@ -53,7 +54,7 @@ impl Default for InnerEnum {
     }
   }
 }
-#[derive(Diff, Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Diff, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum TestOpt {
   Inner(Option<usize>),
   InnerS { a: Option<String> },
@@ -65,12 +66,12 @@ impl Default for TestOpt {
   }
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Diff, Debug, Clone, PartialEq, Default)]
 pub struct InnerStruct {
   y: usize,
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq)]
+#[derive(Diff, Debug, Clone, PartialEq)]
 pub enum EnumWithGeneric<T, S>
 where
   T: Clone + Default,
@@ -80,7 +81,7 @@ where
   B(S),
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq)]
+#[derive(Diff, Debug, Clone, PartialEq)]
 pub enum IgnoreEnum {
   A {
     #[diff(should_ignore)]
@@ -90,7 +91,7 @@ pub enum IgnoreEnum {
   B(#[diff(should_ignore)] String, usize),
 }
 
-#[derive(Diff, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Diff, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[diff(from_into)]
 #[serde(untagged)]
 pub enum IntoFrom {
