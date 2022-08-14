@@ -18,7 +18,7 @@ use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Subject;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::BorrowValidator;
-use identity_credential::validator::CredentialValidationOptions;
+
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::SubjectHolderRelationship;
@@ -30,9 +30,7 @@ use identity_did::verifiable::VerifierOptions;
 use identity_did::verification::MethodScope;
 use identity_did::verification::VerificationMethod;
 
-use crate::resolution::ResolutionHandler;
 use crate::resolution::Resolver;
-use crate::StardustDID;
 
 use crate::StardustDocument;
 use crate::StardustVerificationMethod;
@@ -178,12 +176,9 @@ async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator>(
   challenge: String,
   resolver: Resolver<DOC>,
 ) {
-  let holder_doc = resolver
-    .resolve_presentation_holder(&signed_presentation)
-    .await
-    .unwrap();
+  let holder_doc = resolver.resolve_presentation_holder(signed_presentation).await.unwrap();
   let issuer_docs = resolver
-    .resolve_presentation_issuers(&signed_presentation)
+    .resolve_presentation_issuers(signed_presentation)
     .await
     .unwrap();
 
@@ -193,13 +188,13 @@ async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator>(
       let issuers: Option<&[DOC]> = pass_issuers_as_arg.then_some(&issuer_docs);
       assert!(resolver
         .verify_presentation(
-          &signed_presentation,
+          signed_presentation,
           &PresentationValidationOptions::new()
             .presentation_verifier_options(VerifierOptions::new().challenge(challenge.clone()))
             .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
           FailFast::FirstError,
-          holder.as_deref(),
-          issuers.as_deref()
+          holder,
+          issuers
         )
         .await
         .is_ok());
@@ -254,6 +249,6 @@ where
   let mut resolver: Resolver<DOC> = Resolver::new();
   resolver.attach_method_handler::<_, _>(foo_client);
   resolver.attach_method_handler::<TestDID<0>, _>(bar_client.clone());
-  resolver.attach_method_handler::<TestDID<1>, _>(bar_client.clone());
+  resolver.attach_method_handler::<TestDID<1>, _>(bar_client);
   resolver
 }

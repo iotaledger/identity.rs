@@ -6,7 +6,7 @@ use crate::{Error, Result};
 use core::future::Future;
 use identity_credential::validator::BorrowValidator;
 use identity_did::did::DID;
-use std::{fmt::Debug, pin::Pin, sync::Arc};
+use std::{pin::Pin, sync::Arc};
 
 pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 
