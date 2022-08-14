@@ -12,6 +12,8 @@ wasm-web/*
 wasm-node/*
 !wasm-node/index.ts
 !wasm-node/stardust_identity_client.ts
+!wasm-node/tsconfig.json
+!wasm-node/webpack.config.json
 web/
 node/
 pkg/
