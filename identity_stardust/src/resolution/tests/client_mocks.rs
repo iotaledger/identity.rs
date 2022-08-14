@@ -97,7 +97,7 @@ impl ResolutionHandler<StardustDID> for FooClient {
 impl<const NUMBER: u8> ResolutionHandler<TestDID<NUMBER>> for BarClient {
   type Resolved = CoreDocument;
   fn method() -> String {
-    TestDID::<0>::method_name()
+    TestDID::<NUMBER>::method_name()
   }
   async fn resolve(&self, did: &TestDID<NUMBER>) -> crate::Result<CoreDocument> {
     self

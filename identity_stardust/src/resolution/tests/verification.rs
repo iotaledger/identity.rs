@@ -239,19 +239,21 @@ async fn test_verify_presentation_mixed() {
     cache: vec![issuer_core_doc, subject_doc],
   });
 
-  let mut resolver_core: Resolver<CoreDocument> = Resolver::new();
-
-  resolver_core.attach_method_handler::<_, _>(foo_client.clone());
-  resolver_core.attach_method_handler::<TestDID<0>, _>(bar_client.clone());
-  resolver_core.attach_method_handler::<TestDID<1>, _>(bar_client.clone());
-
-  let mut resolver_dynamic: Resolver = Resolver::new();
-
-  resolver_dynamic.attach_method_handler::<_, _>(foo_client);
-  resolver_dynamic.attach_method_handler::<TestDID<0>, _>(bar_client.clone());
-  resolver_dynamic.attach_method_handler::<TestDID<1>, _>(bar_client);
-
   // verify presentation with the two resolvers
+  let resolver_core: Resolver<CoreDocument> = setup_resolver::<CoreDocument>(foo_client.clone(), bar_client.clone());
+  let resolver_dynamic: Resolver = setup_resolver::<Box<dyn ValidatorDocument>>(foo_client.clone(), bar_client);
+
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_core).await;
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_dynamic).await;
+}
+
+fn setup_resolver<DOC>(foo_client: Arc<FooClient>, bar_client: Arc<BarClient>) -> Resolver<DOC>
+where
+  DOC: BorrowValidator + From<CoreDocument> + From<StardustDocument> + 'static,
+{
+  let mut resolver: Resolver<DOC> = Resolver::new();
+  resolver.attach_method_handler::<_, _>(foo_client);
+  resolver.attach_method_handler::<TestDID<0>, _>(bar_client.clone());
+  resolver.attach_method_handler::<TestDID<1>, _>(bar_client.clone());
+  resolver
 }

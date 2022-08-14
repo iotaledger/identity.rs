@@ -6,7 +6,7 @@ use crate::{Error, Result};
 use core::future::Future;
 use identity_credential::validator::BorrowValidator;
 use identity_did::did::DID;
-use std::{pin::Pin, sync::Arc};
+use std::{fmt::Debug, pin::Pin, sync::Arc};
 
 pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 
@@ -32,12 +32,14 @@ impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
     <R as ResolutionHandler<D>>::Resolved: Into<DOC>,
   {
     let method = R::method();
+    dbg!(&method);
     ResolverDelegate {
       method,
       handler: Box::new(move |input: &str| {
         let value_clone = handler.clone();
         Box::pin(async move {
-          let did: D = D::try_from(input).map_err(|_| Error::ResolutionProblem("failed to parse did".into()))?;
+          let did: D =
+            D::try_from(input).map_err(|_| Error::ResolutionProblem(format!("failed to parse did: {}", input)))?;
 
           let resolved = value_clone.resolve(&did).await?;
           Ok(resolved.into())
