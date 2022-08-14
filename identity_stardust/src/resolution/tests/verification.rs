@@ -103,15 +103,15 @@ fn generate_presentation(holder: &str, credentials: Vec<Credential>) -> Presenta
 
 // Convenience struct for setting up tests.
 struct MixedTestSetup {
-  // Issuer of credential_stardust.
+  // Issuer of credential_stardust (did method: StardustDID::METHOD = "stardust"). 
   issuer_stardust_doc: StardustDocument,
   issuer_stardust_key: KeyPair,
   credential_stardust: Credential,
-  // Issuer of credential_core.
+  // Issuer of credential_core (did method: TestDID::<1>() = "test1").
   issuer_core_doc: CoreDocument,
   issuer_core_key: KeyPair,
   credential_core: Credential,
-  // Subject of both credentials.
+  // Subject of both credentials (did method: TestDID::<0>() = "test0").
   subject_doc: CoreDocument,
   subject_key: KeyPair,
 }
@@ -182,6 +182,8 @@ async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator>(
     .await
     .unwrap();
 
+  // check that verification works regardless of whether we first resolve and then pass holder/issuers to the method or if resolution of missing documents is 
+  // done internally.  
   for pass_holder_as_arg in [true, false] {
     for pass_issuers_as_arg in [true, false] {
       let holder: Option<&DOC> = pass_holder_as_arg.then_some(&holder_doc);
@@ -203,7 +205,12 @@ async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator>(
 }
 
 #[tokio::test]
-async fn test_verify_presentation_mixed() {
+/// Tests verifying a presentation under the following circumstances: 
+/// The subjects's did method: test0 
+/// issuer_stardust's did method: stardust 
+/// issuer_core's did method: test1 
+/// Verify the presentation with both Resolver<CoreDocument> and the dynamic resolver (Resolver<Box<dyn ValidatorDocument>>).
+async fn test_verify_presentation() {
   let MixedTestSetup {
     issuer_stardust_doc,
     credential_stardust,
@@ -234,8 +241,9 @@ async fn test_verify_presentation_mixed() {
     cache: vec![issuer_core_doc, subject_doc],
   });
 
-  // verify presentation with the two resolvers
+  // Check that verification works with the resolver converting all resolved documents to CoreDocument. 
   let resolver_core: Resolver<CoreDocument> = setup_resolver::<CoreDocument>(foo_client.clone(), bar_client.clone());
+  // Check that verification works with the resolver converting all resolved documents to the boxed trait object Box<dyn ValidatorDocument>. 
   let resolver_dynamic: Resolver = setup_resolver::<Box<dyn ValidatorDocument>>(foo_client.clone(), bar_client);
 
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_core).await;
@@ -251,4 +259,108 @@ where
   resolver.attach_method_handler::<TestDID<0>, _>(bar_client.clone());
   resolver.attach_method_handler::<TestDID<1>, _>(bar_client);
   resolver
+}
+
+#[tokio::test]
+async fn verify_presentation_dynamic_resolver_core_documents() {
+  let MixedTestSetup {
+    issuer_stardust_doc,
+    credential_stardust,
+    issuer_core_doc,
+    credential_core,
+    subject_doc,
+    subject_key,
+    ..
+  } = MixedTestSetup::new_with_signed_credentials();
+
+  // Subject signs the presentation.
+  let mut presentation = generate_presentation(
+    subject_doc.id().as_str(),
+    [credential_stardust, credential_core].to_vec(),
+  );
+  let challenge: String = "475a7984-1bb5-4c4c-a56f-822bccd46441".to_owned();
+  subject_doc
+    .signer(subject_key.private())
+    .options(ProofOptions::new().challenge(challenge.clone()))
+    .method(subject_doc.methods().next().unwrap().id())
+    .sign(&mut presentation)
+    .unwrap();
+
+  
+    let resolver: Resolver<Box<dyn ValidatorDocument>> = Resolver::new_dynamic(); 
+
+    let issuers: Vec<&dyn ValidatorDocument> = vec![issuer_stardust_doc.as_validator(), issuer_core_doc.as_validator()]; 
+
+    assert!(resolver
+      .verify_presentation(
+        &presentation,
+        &PresentationValidationOptions::new()
+          .presentation_verifier_options(VerifierOptions::new().challenge(challenge.clone()))
+          .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
+        FailFast::FirstError,
+        Some(&subject_doc),
+        Some(&issuers)
+      )
+      .await
+      .is_ok());
+
+      let resolver: Resolver<CoreDocument> = Resolver::new(); 
+
+      assert!(resolver
+        .verify_presentation(
+          &presentation,
+          &PresentationValidationOptions::new()
+            .presentation_verifier_options(VerifierOptions::new().challenge(challenge.clone()))
+            .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
+          FailFast::FirstError,
+          Some(&subject_doc),
+          Some(&issuers)
+        )
+        .await
+        .is_ok());
+
+        let issuers: Vec<CoreDocument> = vec![issuer_stardust_doc.into(), issuer_core_doc.into()];
+        
+        assert!(resolver
+          .verify_presentation(
+            &presentation,
+            &PresentationValidationOptions::new()
+              .presentation_verifier_options(VerifierOptions::new().challenge(challenge.clone()))
+              .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
+            FailFast::FirstError,
+            Some(&subject_doc),
+            Some(&issuers)
+          )
+          .await
+          .is_ok());
+
+
+          assert!(resolver
+            .verify_presentation(
+              &presentation,
+              &PresentationValidationOptions::new()
+                .presentation_verifier_options(VerifierOptions::new().challenge(challenge.clone()))
+                .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
+              FailFast::FirstError,
+              Some(&subject_doc.as_validator()),
+              Some(&issuers)
+            )
+            .await
+            .is_ok());
+
+          let resolver: Resolver<Box<dyn ValidatorDocument>> = Resolver::new();
+
+          assert!(resolver
+            .verify_presentation(
+              &presentation,
+              &PresentationValidationOptions::new()
+                .presentation_verifier_options(VerifierOptions::new().challenge(challenge.clone()))
+                .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
+              FailFast::FirstError,
+              Some(&subject_doc.as_validator()),
+              Some(&issuers)
+            )
+            .await
+            .is_ok());
+                    
 }
