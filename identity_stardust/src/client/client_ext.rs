@@ -178,7 +178,7 @@ pub trait StardustClientExt: Sync {
       .finish_output()
       .map_err(Error::BasicOutputBuildError)?;
 
-    client
+    let block: Block = client
       .block()
       .with_secret_manager(secret_manager)
       .with_input(output_id.into())
@@ -186,6 +186,11 @@ pub trait StardustClientExt: Sync {
       .with_outputs(vec![basic_output])
       .map_err(Error::DIDUpdateError)?
       .finish()
+      .await
+      .map_err(Error::DIDUpdateError)?;
+
+    let _ = client
+      .retry_until_included(&block.id(), None, None)
       .await
       .map_err(Error::DIDUpdateError)?;
 
