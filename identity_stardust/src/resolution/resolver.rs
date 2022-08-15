@@ -51,7 +51,6 @@ where
     }
   }
 
-
   /// Attach a [`ResolverHandler`] to this resolver. If the resolver has previously been configured to handle the same DID method
   /// the new handler will replace the previous.  
   pub fn attach_method_handler<D, R>(&mut self, handler: Arc<R>)
@@ -233,10 +232,10 @@ impl Resolver<Box<dyn ValidatorDocument>> {
       .map_err(|_| Error::ResolutionProblem("failed to convert the resolved document to the desired type".into()))
   }
 
-    /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
-    pub fn new_dynamic() -> Resolver<Box<dyn ValidatorDocument>> {
-      Resolver::<Box<dyn ValidatorDocument>>::new()
-    }
+  /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
+  pub fn new_dynamic() -> Resolver<Box<dyn ValidatorDocument>> {
+    Resolver::<Box<dyn ValidatorDocument>>::new()
+  }
 }
 
 impl<DOC: BorrowValidator> Default for Resolver<DOC> {
