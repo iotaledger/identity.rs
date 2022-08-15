@@ -4,11 +4,11 @@ const DtsBundleWebpack = require('dts-bundle-webpack');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 
-const srcDir = path.resolve(__dirname);
-const distDir = path.resolve(__dirname, '..', 'web');
+const srcDir = path.resolve(__dirname).replace(/\\/g, "/");
+const distDir = path.resolve(__dirname, '..', 'web').replace(/\\/g, "/");
 
 module.exports = {
-    entry: path.resolve(srcDir, "index.js"),
+    entry: `${srcDir}/index.js`,
     target: 'web',
     output: {
         path: srcDir,
@@ -17,18 +17,18 @@ module.exports = {
     plugins: [
         new DtsBundleWebpack({
             name: 'identity-wasm',
-            main: path.resolve(srcDir, "index.d.ts"),
+            main: `${srcDir}/index.d.ts`,
             baseDir: srcDir,
-            out: path.resolve(distDir, 'index.d.ts'),
+            out: `${distDir}/index.d.ts`,
             outputAsModuleFolder: true,
         }),
         new CircularDependencyPlugin(),
         new CopyPlugin({
             patterns: [
-              { from: path.resolve(srcDir, '*[!webpack.config].js'), to: path.resolve(distDir, '[name].[ext]') },
-              { from: path.resolve(srcDir, 'identity_wasm_bg.wasm' ), to: distDir },
-              { from: path.resolve(srcDir, 'package.json' ), to: distDir },
+                { from: `${srcDir}/*[!webpack.config].js`, to: `${distDir}/[name].[ext]` },
+                { from: `${srcDir}/identity_wasm_bg.wasm`, to: distDir },
+                { from: `${srcDir}/package.json`, to: distDir },
             ],
-          }),
+        }),
     ],
 };
