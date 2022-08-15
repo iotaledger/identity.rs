@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "declaration": true,
+      "strict": true,
+      "esModuleInterop": true,
+      "declarationMap": true,
+      "typeRoots": ["node_modules/@types"],
+      "lib": ["DOM", "ES2020"],
+    },
+    "exclude": [
+      "node_modules",
+    ],
+    "files": ["index.ts"]
+}

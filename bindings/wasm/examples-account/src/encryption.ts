@@ -1,4 +1,4 @@
-import {AgreementInfo, AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionAlgorithm, CekAlgorithm, Resolver} from './../../node/identity_wasm.js';
+import {AgreementInfo, AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionAlgorithm, CekAlgorithm, Resolver} from './../../node';
 
 /**
  * This example demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange

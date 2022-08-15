@@ -3,7 +3,7 @@ const fs = require('fs')
 const { lintAll } = require('./lints')
 const generatePackage = require('./utils/generatePackage');
 
-const RELEASE_FOLDER = path.join(__dirname, '../web/');
+const RELEASE_FOLDER = path.join(__dirname, '../wasm-web/');
 const entryFilePath = path.join(RELEASE_FOLDER, 'identity_wasm.js');
 const entryFile = fs.readFileSync(entryFilePath).toString();
 
@@ -49,8 +49,8 @@ fs.writeFileSync(
 );
 
 const newPackage = generatePackage({
-    module: 'identity_wasm.js',
-    types: 'identity_wasm.d.ts',
+    module: 'index.js',
+    types: 'index.d.ts',
 });
 
 fs.writeFileSync(path.join(RELEASE_FOLDER, 'package.json'), JSON.stringify(newPackage, null, 2));

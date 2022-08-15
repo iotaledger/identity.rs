@@ -12,7 +12,7 @@ import {
     MethodContent,
     ProofOptions,
     RevocationBitmap
-} from "./../../node/identity_wasm.js";
+} from "./../../node";
 
 /**
  This example shows how to revoke a verifiable credential.

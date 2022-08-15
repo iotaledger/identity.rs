@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {KeyPair, KeyType, MethodScope, StardustDID, StardustDocument, StardustVerificationMethod} from '../../node';
+import {KeyPair, KeyType, MethodScope, StardustDID, StardustDocument, StardustIdentityClient, StardustVerificationMethod} from '../../node';
 
 import {
     Bech32Helper,
@@ -14,7 +14,6 @@ import {
     SingleNodeClient,
 } from '@iota/iota.js';
 
-import {StardustIdentityClient} from "./stardust_identity_client";
 import {Converter} from "@iota/util.js";
 import {Bip32Path} from "@iota/crypto.js";
 import {randomBytes} from "node:crypto";

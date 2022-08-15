@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {AccountBuilder, ExplorerUrl, MethodContent, Storage} from './../../node/identity_wasm.js';
+import {AccountBuilder, ExplorerUrl, MethodContent, Storage} from './../../node';
 
 /**
  * This example demonstrates how to create multiple identities from a builder
