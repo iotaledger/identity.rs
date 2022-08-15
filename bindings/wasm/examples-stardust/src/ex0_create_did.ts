@@ -12,14 +12,13 @@ import {
     IEd25519Address,
     IKeyPair,
     SingleNodeClient,
-    LocalPowProvider,
 } from '@iota/iota.js';
 
 import {Converter} from "@iota/util.js";
 import {Bip32Path} from "@iota/crypto.js";
 import {randomBytes} from "node:crypto";
 import fetch from "node-fetch";
-// import {NeonPowProvider} from "@iota/pow-neon.js";
+import {NeonPowProvider} from "@iota/pow-neon.js";
 
 const EXPLORER = "https://explorer.alphanet.iotaledger.net/alphanet";
 const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
@@ -40,9 +39,9 @@ export async function createIdentity(): Promise<{
 
     // Local proof-of-work in JavaScript is single-threaded and extremely slow!
     // Install and use a faster package if possible.
-    const powProvider = new LocalPowProvider();
+    // const powProvider = new LocalPowProvider();
     // const powProvider = new WasmPowProvider(); // @iota/pow-wasm.js: multi-threaded but requires Node.js.
-    // const powProvider = new NeonPowProvider(); // @iota/pow-neon.js: fastest but requires Node.js and Rust.
+    const powProvider = new NeonPowProvider(); // @iota/pow-neon.js: fastest but requires Node.js and Rust.
 
     const client = new SingleNodeClient(API_ENDPOINT, {powProvider});
     const didClient = new StardustIdentityClient(client);
