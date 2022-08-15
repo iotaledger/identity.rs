@@ -22,14 +22,14 @@ num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.4", default-features = false }
+pretty_env_logger = "*"
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
-pretty_env_logger = "*"
 
 [dependencies.iota-client]
 git = "https://github.com/Thoralf-M/iota.rs"
-rev = "349e89640051f8691e5e7942f716723a342b18cd"
+rev = "bd86de85fa698baefc8cc7f30706839c92f353e3"
 features = ["tls"]
 default-features = false
 optional = true

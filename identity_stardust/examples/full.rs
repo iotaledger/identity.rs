@@ -88,21 +88,16 @@ pub async fn run() -> anyhow::Result<()> {
   println!("published {}", alias_id);
   println!("published {}", alias_id2);
 
-  let did = StardustDID::parse("did:stardust:rms:".to_owned() + &alias_id.to_string()).unwrap();
-  let did2 = StardustDID::parse("did:stardust:rms:".to_owned() + &alias_id2.to_string()).unwrap();
+  let did = document.id().to_owned();
+  let did2 = document2.id().to_owned();
 
   let mut document2: StardustDocument = client.resolve_did(&did2).await?;
-  let alias_output: AliasOutput = client.resolve_did_output(&did).await?;
 
-  // Remove something from document2 for testing.
-  document2.remove_method(
-    document2
-      .resolve_method("key-1", None)
-      .unwrap()
-      .id()
-      .to_owned()
-      .as_ref(),
-  )?;
+  // Update
+  let keypair = KeyPair::new(KeyType::Ed25519)?;
+  let method =
+    StardustVerificationMethod::new(document2.id().to_owned(), KeyType::Ed25519, keypair.public(), "#key-2")?;
+  document2.insert_method(method, MethodScope::authentication())?;
 
   let alias_output2: AliasOutput = client.update_did_output(document2).await?;
 
@@ -110,15 +105,10 @@ pub async fn run() -> anyhow::Result<()> {
     .with_minimum_storage_deposit(rent_structure.clone())
     .finish()?;
 
-  // let alias_output_id = client.alias_output_id(alias_id).await?;
-  // let alias_output_id2 = client.alias_output_id(alias_id2).await?;
-
   let block: Block = client
     .block()
     .with_secret_manager(&secret_manager)
-    // .with_input(alias_output_id.into())?
-    // .with_input(alias_output_id2.into())?
-    .with_outputs(vec![alias_output.into(), alias_output2.into()])?
+    .with_outputs(vec![alias_output2.into()])?
     .finish()
     .await?;
 
