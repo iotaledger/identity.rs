@@ -10,7 +10,7 @@ use crate::lib::*;
 /// JSON Web Message Attributes Set
 ///
 /// [More Info](https://tools.ietf.org/id/draft-looker-jwm-01.html#rfc.section.3)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct JwmAttributes<T = ()> {
   /// A unique identifier for the JWM.
   ///
