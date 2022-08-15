@@ -9,8 +9,8 @@ use identity_iota::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::WasmProof;
-use crate::did::WasmDID;
 use crate::did::WasmDocument;
+use crate::did::WasmIotaDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -28,15 +28,15 @@ impl WasmDiffMessage {
   ///
   /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen]
-  pub fn id(&self) -> WasmDID {
-    WasmDID::from(self.0.id().clone())
+  pub fn id(&self) -> WasmIotaDID {
+    WasmIotaDID::from(self.0.id().clone())
   }
 
   /// Returns a copy of the DID of the associated DID Document.
   ///
   /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen]
-  pub fn did(&self) -> WasmDID {
+  pub fn did(&self) -> WasmIotaDID {
     self.id()
   }
 

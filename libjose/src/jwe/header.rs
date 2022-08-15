@@ -17,7 +17,7 @@ use crate::lib::*;
 /// JSON Web Encryption JOSE Header.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7516#section-4)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct JweHeader {
   /// Common JOSE Header Parameters.
   #[serde(flatten)]

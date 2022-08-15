@@ -24,9 +24,6 @@ async fn main() -> anyhow::Result<()> {
     .delete_did_output(&secret_manager, address, document.id())
     .await?;
 
-  // Wait for the node to index the new state.
-  tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-
   // Attempting to resolve a deleted DID results in a `NotFound` error.
   let error: Error = client.resolve_did(document.id()).await.unwrap_err();
 

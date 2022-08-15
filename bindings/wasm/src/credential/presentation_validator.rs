@@ -11,7 +11,7 @@ use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
 use crate::did::ArrayDocumentOrResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
-use crate::did::WasmDID;
+use crate::did::WasmIotaDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -90,8 +90,8 @@ impl WasmPresentationValidator {
   ///
   /// Fails if the holder field is missing or not a valid DID.
   #[wasm_bindgen(js_name = extractHolder)]
-  pub fn extract_holder(presentation: &WasmPresentation) -> Result<WasmDID> {
+  pub fn extract_holder(presentation: &WasmPresentation) -> Result<WasmIotaDID> {
     let did: IotaDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
-    Ok(WasmDID::from(did))
+    Ok(WasmIotaDID::from(did))
   }
 }

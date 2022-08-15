@@ -17,7 +17,7 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 
 /// Additional attributes related to an IOTA DID Document.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct IotaDocumentMetadata {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub created: Option<Timestamp>,

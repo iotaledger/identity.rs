@@ -38,7 +38,7 @@ type Ed25519Signature = crypto::signatures::ed25519::Signature;
 
 const COMPACT_SEGMENTS: usize = 3;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token<'a> {
   pub protected: Option<JwsHeader>,
   pub unprotected: Option<JwsHeader>,
