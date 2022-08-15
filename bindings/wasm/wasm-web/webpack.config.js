@@ -5,11 +5,11 @@ const CircularDependencyPlugin = require('circular-dependency-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 
 const srcDir = path.resolve(__dirname);
-const distDir = path.resolve(__dirname, '..', 'node');
+const distDir = path.resolve(__dirname, '..', 'web');
 
 module.exports = {
     entry: path.resolve(srcDir, "index.js"),
-    target: 'node16',
+    target: 'web',
     output: {
         path: srcDir,
         filename: 'index.unused.ts',

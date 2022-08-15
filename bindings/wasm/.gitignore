@@ -9,6 +9,8 @@ node_modules/
 wasm-web/*
 !wasm-web/index.ts
 !wasm-web/stardust_identity_client.ts
+!wasm-web/tsconfig.json
+!wasm-web/webpack.config.json
 wasm-node/*
 !wasm-node/index.ts
 !wasm-node/stardust_identity_client.ts

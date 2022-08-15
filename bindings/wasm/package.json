@@ -12,7 +12,7 @@
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown",
     "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir wasm-node && node ./build/node && tsc --project ./wasm-node && webpack --config ./wasm-node/webpack.config.js --mode=production",
-    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target bundler --out-dir wasm-web && node ./build/web && webpack --config ./webpack.config.web.js --mode=production",
+    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir wasm-web && node ./build/web && tsc --project ./wasm-web && webpack --config ./wasm-web/webpack.config.js --mode=production",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/identity_wasm_bg.wasm -o web/identity_wasm_bg.wasm",
     "build:docs": "node ./build/docs",

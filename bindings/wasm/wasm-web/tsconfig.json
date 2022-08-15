@@ -2,7 +2,8 @@
     "compilerOptions": {
       "declaration": true,
       "strict": true,
-      "esModuleInterop": true,
+      "module": "ES2020",
+      "moduleResolution": "node",
       "declarationMap": true,
       "typeRoots": ["node_modules/@types"],
       "lib": ["DOM", "ES2020"],
