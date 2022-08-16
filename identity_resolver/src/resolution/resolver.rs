@@ -65,6 +65,12 @@ where
     self.method_map.insert(method, handler);
   }
 
+
+  #[cfg(feature = "internals")]
+  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str,DOC>) {
+    self.method_map.insert(method, handler); 
+  }
+
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
   ///
   /// If this Resolver was constructed by the [`Resolver::new_dynamic`](Resolver::new_dynamic()) method, one may also
