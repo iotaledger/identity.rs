@@ -1,0 +1,26 @@
+[package]
+name = "identity_resolver"
+version = "0.6.0"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+keywords = ["iota", "did", "identity", "resolver", "resolution"]
+license = "Apache-2.0"
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+rust-version = "1.62"
+description = "DID Resolution utilities for the identity.rs library."
+
+[dependencies]
+# This is currently necessary for the ResolutionHandler trait. This can be made an optional dependency if alternative ways of attaching handlers are introduced.
+async-trait = { version = "0.1.56", default-features = false }
+futures = { version = "0.3" }
+identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+thiserror = { version = "1.0", default-features = false }
+
+[features]
+default = ["revocation-bitmap"]
+revocation-bitmap = ["identity_did/revocation-bitmap"]

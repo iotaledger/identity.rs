@@ -54,7 +54,7 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
   fn as_str(&self) -> &str;
 
   /// Consumes the [`DID`] and returns its serialization.
-  fn into_string(self) -> String; 
+  fn into_string(self) -> String;
 
   /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
   /// fragment to this [`DID`].
@@ -300,43 +300,47 @@ pub(crate) const fn is_char_method_id(ch: char) -> bool {
   matches!(ch, '0'..='9' | 'a'..='z' | 'A'..='Z' | '.' | '-' | '_' | ':')
 }
 
-impl<D> DID for D where D: AsRef<CoreDID> + Into<String> + FromStr + Hash + Ord + Eq + PartialEq + Clone + TryFrom<BaseDIDUrl> {
+impl<D> DID for D
+where
+  D: AsRef<CoreDID> + Into<String> + FromStr + Hash + Ord + Eq + PartialEq + Clone + TryFrom<BaseDIDUrl>,
+{
   fn as_str(&self) -> &str {
-      self.as_ref().as_str()
+    self.as_ref().as_str()
   }
 
   fn authority(&self) -> &str {
-      self.as_ref().authority()
+    self.as_ref().authority()
   }
 
   fn into_string(self) -> String {
-      <Self as Into<String>>::into(self)
+    <Self as Into<String>>::into(self)
   }
 
   fn into_url(self) -> DIDUrl<Self> {
-      DIDUrl::new(self, None)
+    DIDUrl::new(self, None)
   }
 
   fn method(&self) -> &str {
-      self.as_ref().method()
+    self.as_ref().method()
   }
 
   fn method_id(&self) -> &str {
-      self.as_ref().method_id()
+    self.as_ref().method_id()
   }
   fn scheme(&self) -> &'static str {
-      self.as_ref().scheme()
+    self.as_ref().scheme()
   }
 
   fn to_url(&self) -> DIDUrl<Self> {
     DIDUrl::new(self.clone(), None)
   }
   fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
-    where
-      Self: Sized {
-        self.into_url().join(value)
+  where
+    Self: Sized,
+  {
+    self.into_url().join(value)
   }
-} 
+}
 
 #[cfg(test)]
 mod tests {

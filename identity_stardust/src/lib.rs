@@ -14,7 +14,9 @@ pub use state_metadata::*;
 
 pub use self::error::Error;
 pub use self::error::Result;
-pub use resolution::*;
+
+#[cfg(test)]
+mod resolution;
 
 #[cfg(feature = "iota-client")]
 mod client;
@@ -22,5 +24,4 @@ mod did;
 mod document;
 mod error;
 mod network;
-mod resolution;
 mod state_metadata;

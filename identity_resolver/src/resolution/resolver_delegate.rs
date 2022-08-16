@@ -2,18 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::ResolutionHandler;
-use crate::{Error, Result};
+use crate::Error;
+use crate::Result;
 use core::future::Future;
 use identity_credential::validator::BorrowValidator;
 use identity_did::did::DID;
-use std::{pin::Pin, sync::Arc};
+use std::pin::Pin;
+use std::sync::Arc;
 
 pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 
-/// Intermediary type used to register a [`ResolutionHandler`](super::ResolutionHandler) with a [`Resolver`](super::Resolver).
+/// Intermediary type used to register a [`ResolutionHandler`](super::ResolutionHandler) with a
+/// [`Resolver`](super::Resolver).
 ///
-/// Consists of the DID Method encoded as a string and a collectable asynchronous function pointer that the [`Resolver`] will
-/// delegate resolution to when encountering did's of the corresponding method.
+/// Consists of the DID Method encoded as a string and a collectable asynchronous function pointer that the [`Resolver`]
+/// will delegate resolution to when encountering did's of the corresponding method.
 pub(super) struct ResolverDelegate<DOC: BorrowValidator> {
   pub(super) method: String,
   pub(super) handler: AsyncFnPtr<str, Result<DOC>>,
@@ -22,8 +25,8 @@ pub(super) struct ResolverDelegate<DOC: BorrowValidator> {
 impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
   /// Constructor
   ///
-  /// Converts a [`ResolutionHandler`] into a collectable asynchronous function pointer. The `output` transformer is used to
-  /// transform the [resolved document](ResolutionHandler::Resolved) to any desired document type.
+  /// Converts a [`ResolutionHandler`] into a collectable asynchronous function pointer. The `output` transformer is
+  /// used to transform the [resolved document](ResolutionHandler::Resolved) to any desired document type.
   // TODO: Improve error handling.
   pub(super) fn new<D, R>(handler: Arc<R>) -> Self
   where
@@ -32,7 +35,6 @@ impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
     <R as ResolutionHandler<D>>::Resolved: Into<DOC>,
   {
     let method = R::method();
-    dbg!(&method);
     ResolverDelegate {
       method,
       handler: Box::new(move |input: &str| {

@@ -30,7 +30,7 @@ use identity_did::verifiable::VerifierOptions;
 use identity_did::verification::MethodScope;
 use identity_did::verification::VerificationMethod;
 
-use crate::resolution::Resolver;
+use identity_resolver::Resolver;
 
 use crate::StardustDocument;
 use crate::StardustVerificationMethod;
@@ -182,8 +182,8 @@ async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator>(
     .await
     .unwrap();
 
-  // check that verification works regardless of whether we first resolve and then pass holder/issuers to the method or if resolution of missing documents is
-  // done internally.
+  // check that verification works regardless of whether we first resolve and then pass holder/issuers to the method or
+  // if resolution of missing documents is done internally.
   for pass_holder_as_arg in [true, false] {
     for pass_issuers_as_arg in [true, false] {
       let holder: Option<&DOC> = pass_holder_as_arg.then_some(&holder_doc);
@@ -209,7 +209,8 @@ async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator>(
 /// The subjects's did method: test0
 /// issuer_stardust's did method: stardust
 /// issuer_core's did method: test1
-/// Verify the presentation with both Resolver<CoreDocument> and the dynamic resolver (Resolver<Box<dyn ValidatorDocument>>).
+/// Verify the presentation with both Resolver<CoreDocument> and the dynamic resolver (Resolver<Box<dyn
+/// ValidatorDocument>>).
 async fn test_verify_presentation() {
   let MixedTestSetup {
     issuer_stardust_doc,
@@ -243,7 +244,8 @@ async fn test_verify_presentation() {
 
   // Check that verification works with the resolver converting all resolved documents to CoreDocument.
   let resolver_core: Resolver<CoreDocument> = setup_resolver::<CoreDocument>(foo_client.clone(), bar_client.clone());
-  // Check that verification works with the resolver converting all resolved documents to the boxed trait object Box<dyn ValidatorDocument>.
+  // Check that verification works with the resolver converting all resolved documents to the boxed trait object Box<dyn
+  // ValidatorDocument>.
   let resolver_dynamic: Resolver = setup_resolver::<Box<dyn ValidatorDocument>>(foo_client.clone(), bar_client);
 
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_core).await;

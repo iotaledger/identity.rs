@@ -17,10 +17,10 @@ use super::errors::CompoundCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+use super::BorrowValidator;
 use super::CredentialValidator;
 use super::FailFast;
 use super::PresentationValidationOptions;
-use super::BorrowValidator;
 use super::ValidatorDocument;
 
 /// A struct for validating [`Presentation`]s.

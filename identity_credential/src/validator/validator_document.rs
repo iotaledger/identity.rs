@@ -136,20 +136,19 @@ where
 /// # Necessity (why not just use [`ValidatorDocument`]?)
 ///
 /// This trait was introduced in order to achieve both of the following :
-/// 1. Enable passing [`Box<dyn ValidatorDocument`] and `&`[Box<dyn ValidatorDocument>]` to the [`PresentationValidator`](crate::validator::PresentationValidator).
-/// 2. Provide a blanket implementation for converting any [`Document`] implementor into [`Box<dyn ValidatorDocument>`] via the [`Into`] trait.  
+/// 1. Enable passing [`Box<dyn ValidatorDocument`] and `&`[Box<dyn ValidatorDocument>]` to the
+/// [`PresentationValidator`](crate::validator::PresentationValidator). 2. Provide a blanket implementation for
+/// converting any [`Document`] implementor into [`Box<dyn ValidatorDocument>`] via the [`Into`] trait.
 ///
-/// The first of the two points can be achieved by implementing `ValidatorDocument` directly for [`Box<dyn ValidatorDocument>`], but then
-/// the second point will not be achievable because of the [Orphan rules](https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules).
+/// The first of the two points can be achieved by implementing `ValidatorDocument` directly for [`Box<dyn
+/// ValidatorDocument>`], but then the second point will not be achievable because of the [Orphan rules](https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules).
 ///   
-/// In terms of abstract functionality requiring this trait bound is essentially equivalent to the following constraints:
-/// T: Borrow<U>,
+/// In terms of abstract functionality requiring this trait bound is essentially equivalent to the following
+/// constraints: T: Borrow<U>,
 /// U: ValidatorDocument  
 /// thus reducing the number of necessary generic parameters in methods and frees the caller from
-/// having to use turbofish to declare the concrete type of U. If the exact details of `U` (beyond equivalence of `Eq`, `Ord` and `Hash`)
-/// are important then in that case one should not consider these trait bounds equivalent.
-///
-///
+/// having to use turbofish to declare the concrete type of U. If the exact details of `U` (beyond equivalence of `Eq`,
+/// `Ord` and `Hash`) are important then in that case one should not consider these trait bounds equivalent.
 pub trait BorrowValidator: private::Sealed {
   /// The concrete ValidatorDocument one may borrow.  
   type BorrowedValidator: ValidatorDocument + ?Sized;

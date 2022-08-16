@@ -23,10 +23,10 @@ use super::errors::SignerContext;
 use super::errors::ValidationError;
 #[cfg(feature = "revocation-bitmap")]
 use super::validation_options::StatusCheck;
+use super::BorrowValidator;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
-use super::BorrowValidator;
 use super::ValidatorDocument;
 
 /// A struct for validating [`Credential`]s.
