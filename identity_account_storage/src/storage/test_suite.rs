@@ -3,6 +3,7 @@
 
 use anyhow::Context;
 use function_name::named;
+use identity_did::did::CoreDID;
 use rand::distributions::DistString;
 use rand::rngs::OsRng;
 
@@ -22,6 +23,7 @@ use identity_iota_core::tangle::NetworkName;
 use crate::identity::ChainState;
 use crate::types::AgreementInfo;
 use crate::types::CekAlgorithm;
+use crate::types::DIDType;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
@@ -66,12 +68,19 @@ impl StorageTestSuite {
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let network: NetworkName = Network::Mainnet.name();
 
-    let expected_did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network.clone()).unwrap();
+    let expected_did: CoreDID = IotaDID::new_with_network(keypair.public().as_ref(), network.clone())
+      .unwrap()
+      .into();
     let expected_location: KeyLocation =
       KeyLocation::new(KeyType::Ed25519, fragment.clone(), keypair.public().as_ref());
 
-    let (did, location): (IotaDID, KeyLocation) = storage
-      .did_create(network.clone(), &fragment, Some(keypair.private().to_owned()))
+    let (did, location): (CoreDID, KeyLocation) = storage
+      .did_create(
+        DIDType::IotaDID,
+        network.clone(),
+        &fragment,
+        Some(keypair.private().to_owned()),
+      )
       .await
       .context("did_create returned an error")?;
 
@@ -95,7 +104,7 @@ impl StorageTestSuite {
     ensure!(exists, "expected key at location `{location}` to exist");
 
     let result: Result<_, crate::Error> = storage
-      .did_create(network, &fragment, Some(keypair.private().to_owned()))
+      .did_create(DIDType::IotaDID, network, &fragment, Some(keypair.private().to_owned()))
       .await;
 
     ensure!(
@@ -122,11 +131,11 @@ impl StorageTestSuite {
   pub async fn did_create_generate_key_test(storage: impl Storage) -> anyhow::Result<()> {
     let fragment: String = random_string();
     let network: NetworkName = Network::Devnet.name();
-    let (did, location): (IotaDID, KeyLocation) = storage
-      .did_create(network.clone(), &fragment, None)
+    let (core_did, location): (CoreDID, KeyLocation) = storage
+      .did_create(DIDType::IotaDID, network.clone(), &fragment, None)
       .await
       .context("did_create returned an error")?;
-
+    let did: IotaDID = IotaDID::try_from(core_did.clone()).unwrap();
     ensure_eq!(
       did.network_str(),
       network.as_ref(),
@@ -135,14 +144,14 @@ impl StorageTestSuite {
     );
 
     let exists: bool = storage
-      .key_exists(&did, &location)
+      .key_exists(&core_did, &location)
       .await
       .context("key_exists returned an error")?;
 
     ensure!(exists, "expected key at location `{location}` to exist");
 
     let public_key: PublicKey = storage
-      .key_public(&did, &location)
+      .key_public(&core_did, &location)
       .await
       .context("key_public returned an error")?;
 
@@ -162,8 +171,8 @@ impl StorageTestSuite {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
-    let (did, _): (IotaDID, _) = storage
-      .did_create(network.clone(), &fragment, None)
+    let (did, _): (CoreDID, _) = storage
+      .did_create(DIDType::IotaDID, network.clone(), &fragment, None)
       .await
       .context("did_create returned an error")?;
 
@@ -204,8 +213,8 @@ impl StorageTestSuite {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
-    let (did, _): (IotaDID, _) = storage
-      .did_create(network.clone(), &fragment, None)
+    let (did, _): (CoreDID, _) = storage
+      .did_create(DIDType::IotaDID, network.clone(), &fragment, None)
       .await
       .context("did_create returned an error")?;
 
@@ -252,7 +261,7 @@ impl StorageTestSuite {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
-    let list: Vec<IotaDID> = storage.did_list().await.context("did_list returned an error")?;
+    let list: Vec<CoreDID> = storage.did_list().await.context("did_list returned an error")?;
 
     ensure!(
       list.is_empty(),
@@ -261,8 +270,8 @@ impl StorageTestSuite {
     );
 
     for i in 0..NUM_IDENTITIES {
-      let (did, _): (IotaDID, _) = storage
-        .did_create(network.clone(), &fragment, None)
+      let (did, _): (CoreDID, _) = storage
+        .did_create(DIDType::IotaDID, network.clone(), &fragment, None)
         .await
         .context("did_create returned an error")?;
 
@@ -287,8 +296,8 @@ impl StorageTestSuite {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
-    let (did, _): (IotaDID, _) = storage
-      .did_create(network.clone(), &fragment, None)
+    let (did, _): (CoreDID, _) = storage
+      .did_create(DIDType::IotaDID, network.clone(), &fragment, None)
       .await
       .context("did_create returned an error")?;
 
@@ -354,8 +363,13 @@ impl StorageTestSuite {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
-    let (did, location): (IotaDID, KeyLocation) = storage
-      .did_create(network.clone(), &fragment, Some(PrivateKey::from(PRIVATE_KEY.to_vec())))
+    let (did, location): (CoreDID, KeyLocation) = storage
+      .did_create(
+        DIDType::IotaDID,
+        network.clone(),
+        &fragment,
+        Some(PrivateKey::from(PRIVATE_KEY.to_vec())),
+      )
       .await
       .context("did_create returned an error")?;
 
@@ -379,8 +393,8 @@ impl StorageTestSuite {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
-    let (did, location): (IotaDID, KeyLocation) = storage
-      .did_create(network.clone(), &fragment, None)
+    let (did, location): (CoreDID, KeyLocation) = storage
+      .did_create(DIDType::IotaDID, network.clone(), &fragment, None)
       .await
       .context("did_create returned an error")?;
 
@@ -393,8 +407,13 @@ impl StorageTestSuite {
       .await
       .context("key_public returned an error")?;
 
-    let method: IotaVerificationMethod =
-      IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, &fragment).unwrap();
+    let method: IotaVerificationMethod = IotaVerificationMethod::new(
+      did.clone().try_into().unwrap(),
+      KeyType::Ed25519,
+      &public_key,
+      &fragment,
+    )
+    .unwrap();
 
     let expected_document: IotaDocument = IotaDocument::from_verification_method(method).unwrap();
     storage
@@ -431,8 +450,8 @@ impl StorageTestSuite {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
-    let (did, location): (IotaDID, KeyLocation) = storage
-      .did_create(network.clone(), &fragment, None)
+    let (did, location): (CoreDID, KeyLocation) = storage
+      .did_create(DIDType::IotaDID, network.clone(), &fragment, None)
       .await
       .context("did_create returned an error")?;
 
@@ -470,7 +489,7 @@ impl StorageTestSuite {
       "expected key at location `{location}` to no longer exist after purge"
     );
 
-    let list: Vec<IotaDID> = storage.did_list().await.context("did_list returned an error")?;
+    let list: Vec<CoreDID> = storage.did_list().await.context("did_list returned an error")?;
 
     ensure!(
       list.is_empty(),
@@ -491,13 +510,13 @@ impl StorageTestSuite {
       let network: NetworkName = Network::Mainnet.name();
 
       // Both Alice (Sender) and Bob (Receiver) must have a DID.
-      let (alice_did, _): (IotaDID, KeyLocation) = alice_storage
-        .did_create(network.clone(), &random_string(), None)
+      let (alice_did, _): (CoreDID, KeyLocation) = alice_storage
+        .did_create(DIDType::IotaDID, network.clone(), &random_string(), None)
         .await
         .context("did_create returned an error")?;
 
-      let (bob_did, _): (IotaDID, KeyLocation) = bob_storage
-        .did_create(network.clone(), &random_string(), None)
+      let (bob_did, _): (CoreDID, KeyLocation) = bob_storage
+        .did_create(DIDType::IotaDID, network.clone(), &random_string(), None)
         .await
         .context("did_create returned an error")?;
 

@@ -9,7 +9,7 @@ use crate::lib::*;
 /// JSON Web Token Claims
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7519#section-4)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct JwtClaims<T = ()> {
   /// Identifies the principal that issued the JWT
   ///

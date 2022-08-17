@@ -12,7 +12,7 @@ use crate::lib::*;
 /// JSON Web Signature JOSE Header.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7515#section-4)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct JwsHeader {
   /// Common JOSE Header Parameters.
   #[serde(flatten)]

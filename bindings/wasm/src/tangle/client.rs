@@ -24,7 +24,7 @@ use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
 use crate::common::PromiseBool;
 use crate::did::PromiseResolvedDocument;
-use crate::did::UWasmDID;
+use crate::did::UWasmIotaDID;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
@@ -175,7 +175,7 @@ impl WasmClient {
 
   /// Fetch the DID document specified by the given `DID`.
   #[wasm_bindgen]
-  pub fn resolve(&self, did: UWasmDID) -> Result<PromiseResolvedDocument> {
+  pub fn resolve(&self, did: UWasmIotaDID) -> Result<PromiseResolvedDocument> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
     let client: Rc<Client> = self.client.clone();
@@ -194,7 +194,7 @@ impl WasmClient {
 
   /// Returns the message history of the given DID.
   #[wasm_bindgen(js_name = resolveHistory)]
-  pub fn resolve_history(&self, did: UWasmDID) -> Result<PromiseDocumentHistory> {
+  pub fn resolve_history(&self, did: UWasmIotaDID) -> Result<PromiseDocumentHistory> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
     let client: Rc<Client> = self.client.clone();

@@ -7,7 +7,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 /// Holds the last published message ids of the integration and diff chains.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct ChainState {
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_integration_message_id: MessageId,

@@ -48,7 +48,7 @@ pub type StardustCoreDocument = CoreDocument<StardustDID>;
 /// A DID Document adhering to the IOTA UTXO DID method specification.
 ///
 /// This extends [`CoreDocument`].
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct StardustDocument {
   #[serde(rename = "doc")]
   pub(crate) document: StardustCoreDocument,

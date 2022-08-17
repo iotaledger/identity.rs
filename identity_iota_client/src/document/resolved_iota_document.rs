@@ -21,7 +21,7 @@ use crate::tangle::TangleRef;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more diff messages.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct ResolvedIotaDocument {
   #[serde(flatten)]
   pub document: IotaDocument,

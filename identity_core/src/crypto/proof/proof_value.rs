@@ -51,9 +51,9 @@ impl ProofValue {
   pub fn as_str(&self) -> &str {
     match self {
       Self::None => "",
-      Self::Jws(inner) => &*inner,
-      Self::Proof(inner) => &*inner,
-      Self::Signature(inner) => &*inner,
+      Self::Jws(inner) => &**inner,
+      Self::Proof(inner) => &**inner,
+      Self::Signature(inner) => &**inner,
     }
   }
 
@@ -70,7 +70,7 @@ impl ProofValue {
   /// Returns the `Jws` type proof data as a string slice.
   pub fn as_jws(&self) -> Option<&str> {
     match self {
-      Self::Jws(inner) => Some(&*inner),
+      Self::Jws(inner) => Some(&**inner),
       _ => None,
     }
   }
@@ -78,7 +78,7 @@ impl ProofValue {
   /// Returns the `Proof` type proof data as a string slice.
   pub fn as_proof(&self) -> Option<&str> {
     match self {
-      Self::Proof(inner) => Some(&*inner),
+      Self::Proof(inner) => Some(&**inner),
       _ => None,
     }
   }
@@ -86,7 +86,7 @@ impl ProofValue {
   /// Returns the `Signature` type proof data as a string slice.
   pub fn as_signature(&self) -> Option<&str> {
     match self {
-      Self::Signature(inner) => Some(&*inner),
+      Self::Signature(inner) => Some(&**inner),
       _ => None,
     }
   }

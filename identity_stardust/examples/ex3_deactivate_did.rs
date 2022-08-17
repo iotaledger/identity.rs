@@ -22,9 +22,6 @@ async fn main() -> anyhow::Result<()> {
   // Deactivation can only be done by the state controller of the Alias Output.
   client.deactivate_did_output(&secret_manager, document.id()).await?;
 
-  // Wait for the node to index the new state.
-  tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-
   // Attempting to resolve a deactivated DID results in an document
   // where the metadata's `deactivated` field is `true`.
   let deactivated_document: StardustDocument = client.resolve_did(document.id()).await?;

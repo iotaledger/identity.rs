@@ -129,7 +129,11 @@ where
     }
 
     // Ensure the identity exists in storage
-    let identity_state_bytes: Vec<u8> = setup.storage.blob_get(&did).await?.ok_or(Error::IdentityNotFound)?;
+    let identity_state_bytes: Vec<u8> = setup
+      .storage
+      .blob_get(did.as_ref())
+      .await?
+      .ok_or(Error::IdentityNotFound)?;
     let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
     let chain_state: ChainState = identity_state
       .chain_state()?
@@ -240,7 +244,7 @@ where
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.storage().did_purge(self.did()).await?;
+    self.storage().did_purge(self.did().as_ref()).await?;
 
     // Write the changes to disk
     self.save(false).await?;
@@ -324,7 +328,7 @@ where
     let identity_state_bytes: Vec<u8> = self
       .storage()
       .deref()
-      .blob_get(self.did())
+      .blob_get(self.did().as_ref())
       .await?
       .ok_or(Error::IdentityNotFound)?;
     let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
@@ -421,7 +425,10 @@ where
 
   async fn store_state(&self) -> Result<()> {
     let identity_state: IdentityState = IdentityState::new(Some(&self.document), Some(&self.chain_state))?;
-    self.storage.blob_set(self.did(), identity_state.to_json_vec()?).await?;
+    self
+      .storage
+      .blob_set(self.did().as_ref(), identity_state.to_json_vec()?)
+      .await?;
 
     self.save(false).await?;
 
@@ -546,7 +553,7 @@ where
     let location: KeyLocation = KeyLocation::from_verification_method(method)?;
 
     // Create a private key suitable for identity_core::crypto
-    let private: RemoteKey<'_> = RemoteKey::new(did, &location, self.storage().deref());
+    let private: RemoteKey<'_> = RemoteKey::new(did.as_ref(), &location, self.storage().deref());
 
     let method_url: IotaDIDUrl = method.id().to_owned();
 
@@ -637,7 +644,7 @@ mod account_encryption {
       self
         .storage()
         .data_encrypt(
-          self.did(),
+          self.did().as_ref(),
           plaintext.to_vec(),
           associated_data.to_vec(),
           encryption_algorithm,
@@ -666,7 +673,13 @@ mod account_encryption {
       let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
       self
         .storage()
-        .data_decrypt(self.did(), data, encryption_algorithm, cek_algorithm, &private_key)
+        .data_decrypt(
+          self.did().as_ref(),
+          data,
+          encryption_algorithm,
+          cek_algorithm,
+          &private_key,
+        )
         .await
         .map_err(Into::into)
     }

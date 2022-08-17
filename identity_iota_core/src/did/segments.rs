@@ -21,7 +21,7 @@ macro_rules! get {
 }
 
 #[doc(hidden)]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Segments<'id>(pub(crate) &'id str);
 
 impl<'id> Segments<'id> {
