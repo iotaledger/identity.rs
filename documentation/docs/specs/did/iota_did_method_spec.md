@@ -141,7 +141,7 @@ The payload must contain the following fields:
 ```
 ## Controllers
 
-A state controller can directly update the DID Document and the amount of coins held by the Alias Output, but it cannot destroy the output. A governor, on the other hand, can indirectly update the DID Document by updating the state controller. It can also destroy the output by performing a governance transition without producing an Alias Output with the same `Alias ID`.
+A state controller can directly update the DID Document and the amount of coins held by the Alias Output, but it cannot destroy the output. A governor, on the other hand, can indirectly update the DID Document by updating the state controller. The governor can also destroy the output by performing a governance transition without producing an Alias Output with the same `Alias ID`.
 
 As of now, only one state controller and one governor can be set for an Alias Output. Support for multiple controllers may be possible depending on future updates of the protocol.
 
