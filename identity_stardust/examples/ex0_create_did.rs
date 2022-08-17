@@ -101,9 +101,9 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
   let output_ids = client
     .basic_output_ids(vec![
       QueryParameter::Address(address.to_owned()),
-      QueryParameter::HasExpirationCondition(false),
-      QueryParameter::HasTimelockCondition(false),
-      QueryParameter::HasStorageReturnCondition(false),
+      QueryParameter::HasExpiration(false),
+      QueryParameter::HasTimelock(false),
+      QueryParameter::HasStorageDepositReturn(false),
     ])
     .await?;
 

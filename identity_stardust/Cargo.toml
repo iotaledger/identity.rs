@@ -23,6 +23,8 @@ num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.4", default-features = false }
 pretty_env_logger = "*"
+# TODO: Remove when refactoring out examples.
+primitive-types = "0.11.1"
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }

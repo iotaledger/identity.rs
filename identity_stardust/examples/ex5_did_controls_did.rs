@@ -3,11 +3,9 @@
 
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
-use identity_did::document::Document;
 use identity_did::verification::MethodScope;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustVerificationMethod;
 
@@ -28,6 +26,7 @@ use iota_client::Client;
 static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
+/// An example to demonstrate how one identity can control (and therefore "own") another identity.
 pub async fn run() -> anyhow::Result<()> {
   pretty_env_logger::init();
 
