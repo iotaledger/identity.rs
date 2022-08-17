@@ -4,7 +4,6 @@
 use std::borrow::Cow;
 use std::ops::Deref;
 
-use identity_did::did::DIDError;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::output::feature::SenderFeature;
@@ -221,13 +220,13 @@ pub trait StardustClientExt: Sync {
     }
   }
 
-  /// Resolve a [`StardustDID`] to an [`AliasOutput`].
+  /// Resolve a [`StardustDID`] to an [`AliasOutput`] and its [`OutputId`].
   ///
   /// # Errors
   ///
   /// - Returns a [`NetworkMismatch`](Error::NetworkMismatch) error if the DID's and the client's network do not match.
   /// - Returns a [`NotFound`](iota_client::Error::NotFound) error if the associated Alias Output wasn't found.
-  async fn resolve_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
+  async fn resolve_did_output(&self, did: &StardustDID) -> Result<(OutputId, AliasOutput)> {
     let network_hrp: String = get_network_hrp(self.client()).await?;
 
     if did.network_str() != network_hrp.as_str() {
@@ -239,7 +238,7 @@ pub trait StardustClientExt: Sync {
 
     resolve_alias_output(self.client(), did)
       .await
-      .map(|(_, _, alias_output)| alias_output)
+      .map(|(_, output_id, alias_output)| (output_id, alias_output))
   }
 
   /// Returns the network name of the connected node, which is the
@@ -331,9 +330,7 @@ async fn documents_from_block(client: &Client, block: &Block) -> Result<Vec<Star
 
 /// Resolve a did into an Alias Output and the associated identifiers.
 async fn resolve_alias_output(client: &Client, did: &StardustDID) -> Result<(AliasId, OutputId, AliasOutput)> {
-  let tag_bytes: [u8; StardustDID::TAG_BYTES_LEN] =
-    prefix_hex::decode(did.tag()).map_err(|_| DIDError::InvalidMethodId)?;
-  let alias_id: AliasId = AliasId::new(tag_bytes);
+  let alias_id: AliasId = did.into();
   let output_id: OutputId = client
     .alias_output_id(alias_id)
     .await

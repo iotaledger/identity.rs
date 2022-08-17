@@ -349,11 +349,11 @@ mod __stardust_did_iota_client {
 
   use crate::StardustDID;
 
-  impl StardustDID {
+  impl From<&StardustDID> for AliasId {
     /// Converts the DID tag into an [`AliasId`].
-    pub fn to_alias_id(&self) -> AliasId {
-      let tag_bytes: [u8; Self::TAG_BYTES_LEN] = prefix_hex::decode(self.tag())
-        .expect("the ability to successfully decode the tag should be checked during DID creation");
+    fn from(did: &StardustDID) -> Self {
+      let tag_bytes: [u8; StardustDID::TAG_BYTES_LEN] = prefix_hex::decode(did.tag())
+        .expect("being able to successfully decode the tag should be checked during DID creation");
       AliasId::new(tag_bytes)
     }
   }

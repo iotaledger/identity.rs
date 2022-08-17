@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 
 use iota_client::block::address::Address;
@@ -9,6 +10,8 @@ use iota_client::block::output::feature::IssuerFeature;
 use iota_client::block::output::unlock_condition::AddressUnlockCondition;
 use iota_client::block::output::unlock_condition::ImmutableAliasAddressUnlockCondition;
 use iota_client::block::output::AliasId;
+use iota_client::block::output::AliasOutput;
+use iota_client::block::output::AliasOutputBuilder;
 use iota_client::block::output::Feature;
 use iota_client::block::output::FoundryId;
 use iota_client::block::output::FoundryOutput;
@@ -29,27 +32,43 @@ use primitive_types::U256;
 
 mod ex0_create_did;
 
-/// An example to demonstrate how one identity can control (and therefore "own") another identity.
+/// An example to demonstrate how an identity can issue and control native assets
+/// such as Token Foundries and NFTs.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   pretty_env_logger::init();
 
-  // Create a new DID in an Alias Output for us to modify.
-  let (client, _, secret_manager, document): (Client, _, SecretManager, StardustDocument) =
+  // Create a new DID in an Alias Output.
+  let (client, _address, secret_manager, document): (Client, Address, SecretManager, StardustDocument) =
     ex0_create_did::run().await?;
 
-  let alias_id: AliasId = document.id().to_alias_id();
+  let alias_id: AliasId = document.id().into();
   let alias_address: AliasAddress = alias_id.into();
 
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
-  let foundry_output: FoundryOutput = create_foundry(rent_structure.clone(), alias_address)?;
-  let nft_output: NftOutput = create_nft(rent_structure.clone(), alias_address)?;
+  // We want to update the foundry counter of the Alias Output, so we obtain an
+  // updated version of the output. We pass in the same document,
+  // because we don't want to modify it in this update.
+  let alias_output: AliasOutput = client.update_did_output(document).await?;
 
+  // We don't need to modify the document, so we
+  let alias_output = AliasOutputBuilder::from(&alias_output)
+    // Set the foundry counter to 1, because we will add a foundry to this Alias Output.
+    .with_foundry_counter(1)
+    .finish()?;
+
+  // Create a token foundry with the alias set as the immutable owner.
+  let foundry_output: FoundryOutput = create_foundry(rent_structure.clone(), alias_address)?;
+
+  // Create an NFT with the alias set as the immutable issuer.
+  let nft_output: NftOutput = create_nft(rent_structure, alias_address)?;
+
+  // Publish all outputs.
   let block: Block = client
     .block()
     .with_secret_manager(&secret_manager)
-    .with_outputs(vec![nft_output.into(), foundry_output.into()])?
+    .with_outputs(vec![alias_output.into(), nft_output.into(), foundry_output.into()])?
     .finish()
     .await?;
 

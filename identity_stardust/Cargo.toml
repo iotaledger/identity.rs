@@ -31,7 +31,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/Thoralf-M/iota.rs"
-rev = "bd86de85fa698baefc8cc7f30706839c92f353e3"
+rev = "9f8716be3c24e35bb40afc099f745b37bcf573e7"
 features = ["tls"]
 default-features = false
 optional = true
