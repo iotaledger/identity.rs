@@ -106,12 +106,12 @@ This tag identifies the Alias Output where the DID Document is stored, and it wi
 
 In the `State Metadata` of the Alias Output must be a byte packed payload with header fields as follows:
 
-| Name          | Type                                                | Description                                                  |
-|---------------|-----------------------------------------------------|--------------------------------------------------------------|
-| Document Type | 3 Bytes ascii string                                | Set value to "DID" to denote a DID Document.                 |
-| Version       | An unsigned 8-bit integer encoded in Little Endian. | Set value **1** to denote the version number of this method  |
-| Encoding      | An unsigned 8-bit integer encoded in Little Endian. | Set value to **1** to denote plain text without compression. |
-| Payload       | ByteArray                                           | Byte-packed playload.                                        |
+| Name          | Type                      | Description                                                  |
+|---------------|---------------------------|--------------------------------------------------------------|
+| Document Type | 3 Bytes ascii string      | Set value to "DID" to denote a DID Document.                 |
+| Version       | An unsigned 8-bit integer | Set value **1** to denote the version number of this method  |
+| Encoding      | An unsigned 8-bit integer | Set value to **1** to denote plain text without compression. |
+| Payload       | ByteArray                 | Byte-packed playload.                                        |
 
 #### Payload
 
