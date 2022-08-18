@@ -29,7 +29,7 @@ npm run example:stardust -- <example-name>
 For instance, to run the `ex0_create_did` example execute:
 
 ```bash
-npm run example:stardust -- create_did
+npm run example:stardust -- ex0_create_did
 ```
 
 | #   | Name                                            | Details                                                          |
@@ -43,7 +43,3 @@ npm run example:stardust -- create_did
 ## Browser
 
 While the examples should work in a browser environment, we do not provide browser examples yet.
-
-The only change required should be replacing the proof-of-work provider in `ex0_create_did` to `LocalPowProvider`, since the `NeonPowProvider` only works in Node.js. 
-
-Note that the `LocalPowProvider` for browser JavaScript environments is single-threaded and extremely slow! If you need to do more than resolving DID documents, such as publishing updates, we recommend using Node.js with the `NeonPowProvider`, or the Rust library directly. 

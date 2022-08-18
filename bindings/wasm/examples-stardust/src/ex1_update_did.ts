@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {MethodRelationship, StardustDocument, StardustService, Timestamp} from '../../node';
-
 import {IAliasOutput, IRent, TransactionHelper,} from '@iota/iota.js';
+
 import {createIdentity} from "./ex0_create_did";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */

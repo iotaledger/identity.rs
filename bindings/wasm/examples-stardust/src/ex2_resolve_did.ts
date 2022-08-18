@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {StardustDocument} from '../../node';
+import type {StardustDocument} from '../../node';
+import type {IAliasOutput} from '@iota/iota.js';
 
-import {IAliasOutput,} from '@iota/iota.js';
 import {createIdentity} from "./ex0_create_did";
 
 /** Demonstrates how to resolve an existing DID in an Alias Output. */

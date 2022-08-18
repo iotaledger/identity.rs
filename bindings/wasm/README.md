@@ -107,7 +107,13 @@ import copy from 'rollup-plugin-copy'
 
 // Add the copy plugin to the `plugins` array of your rollup config:
 copy({
-  targets: [{
+  targets: [
+  {
+    src: 'node_modules/@cycraig/iota-client-wasm/web/wasm/client_wasm_bg.wasm',
+    dest: 'public',
+    rename: 'client_wasm_bg.wasm'
+  },
+  {
     src: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
     dest: 'public',
     rename: 'identity_wasm_bg.wasm'
@@ -132,6 +138,10 @@ const CopyWebPlugin= require('copy-webpack-plugin');
 new CopyWebPlugin({
   patterns: [
     {
+      from: 'node_modules/@cycraig/iota-client-wasm/web/wasm/client_wasm_bg.wasm',
+      to: 'client_wasm_bg.wasm'
+    },
+    {
       from: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
       to: 'identity_wasm_bg.wasm'
     }
@@ -142,9 +152,10 @@ new CopyWebPlugin({
 ### Web Usage
 
 ```js
+import * as client from "@cycraig/iota-client-wasm/web";
 import * as identity from "@iota/identity-wasm/web";
 
-identity.init().then(() => {
+client.init().then(() => identity.init()).then(() => {
 
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
@@ -165,8 +176,8 @@ identity.init().then(() => {
 // or
 
 (async () => {
-  
-  await identity.init()
+  await client.init();
+  await identity.init();
     
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
@@ -188,7 +199,7 @@ identity.init().then(() => {
 await identity.init("./static/identity_wasm_bg.wasm");
 ```
 
-`identity.init().then(<callback>)` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
+Calling `identity.init().then(<callback>)` or `await identity.init()` is required to load the Wasm file from the server if not available, because of that it will only be slow for the first time.
 
 ## Examples in the Wild
 

@@ -1,15 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {StardustDocument} from '../../node';
-
+import type {StardustDocument} from '../../node';
 import {IAliasOutput, IRent, TransactionHelper} from '@iota/iota.js';
+
 import {createIdentity} from "./ex0_create_did";
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {
     // Creates a new wallet and identity (see "ex0_create_did" example).
-    const {didClient, walletKeyPair, did} = await createIdentity();
+    const {didClient, secretManager, did} = await createIdentity();
 
     // Resolve the latest state of the DID document, so we can reactivate it later.
     let document: StardustDocument = await didClient.resolveDid(did);
@@ -24,7 +24,7 @@ export async function deactivateIdentity() {
     deactivatedOutput.amount = TransactionHelper.getStorageDeposit(deactivatedOutput, rentStructure).toString();
 
     // Publish the deactivated DID document.
-    await didClient.publishDidOutput(walletKeyPair, deactivatedOutput);
+    await didClient.publishDidOutput(secretManager, deactivatedOutput);
 
     // Wait for the node to index the new state.
     await new Promise(f => setTimeout(f, 10000));
@@ -42,7 +42,7 @@ export async function deactivateIdentity() {
 
     // Increase the storage deposit to the minimum again, if it was reclaimed during deactivation.
     reactivatedOutput.amount = TransactionHelper.getStorageDeposit(reactivatedOutput, rentStructure).toString();
-    await didClient.publishDidOutput(walletKeyPair, reactivatedOutput);
+    await didClient.publishDidOutput(secretManager, reactivatedOutput);
 
     // Resolve the reactivated DID document.
     let reactivated: StardustDocument = await didClient.resolveDid(did);

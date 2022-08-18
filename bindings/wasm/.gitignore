@@ -11,6 +11,8 @@ wasm-node/
 web/
 node/
 pkg/
+**/dist/
+tmp/
 
 # cypress
 cypress/screenshots/

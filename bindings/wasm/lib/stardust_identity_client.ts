@@ -1,9 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from '../../node';
+// @ts-ignore: path is set to match runtime transpiled js path when bundled.
+import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from './identity_wasm';
 
-import {Client, INodeInfoWrapper, SecretManager} from '@iota/client';
+// NOTE: this import path is replaced with `/web` in the `build/web.js` script.
+import type {Client, INodeInfoWrapper, SecretManager} from '@cycraig/iota-client-wasm/node';
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
     AddressTypes,
@@ -17,9 +19,9 @@ import {
     OutputTypes,
     TRANSACTION_PAYLOAD_TYPE,
     TransactionHelper
-} from '@iota/types';
-import {Converter} from '@iota/types/util.js';
-import {Blake2b} from '@iota/types/crypto.js';
+} from '@iota/iota.js';
+import {Converter} from '@iota/util.js';
+import {Blake2b} from '@iota/crypto.js';
 
 /** Provides operations for IOTA UTXO DID Documents with Alias Outputs. */
 export class StardustIdentityClient implements IStardustIdentityClient {

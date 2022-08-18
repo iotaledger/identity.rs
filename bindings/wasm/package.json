@@ -11,8 +11,8 @@
   },
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown",
-    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ./build/node",
-    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir web && node ./build/web",
+    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ./build/node && tsc --project ./tsconfig.node.json --outDir node",
+    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir web && node ./build/web && tsc --project ./tsconfig.web.json --outDir web",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/identity_wasm_bg.wasm -o web/identity_wasm_bg.wasm",
     "build:docs": "node ./build/docs",
@@ -25,13 +25,13 @@
     "test": "npm run test:unit && npm run test:unit:node && npm run test:examples",
     "test:examples": "concurrently -g --timings \"npm:test:node\" \"npm:test:account:node\" \"npm:test:stardust\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
     "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
-    "test:account:node": "ts-mocha ./examples-account/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
-    "test:stardust": "ts-mocha ./examples-stardust/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
+    "test:account:node": "ts-mocha -p tsconfig.node.json ./examples-account/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
+    "test:stardust": "ts-mocha -p tsconfig.node.json ./examples-stardust/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/integration -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
     "test:unit": "wasm-pack test --release --node",
-    "test:unit:node": "ts-mocha ./tests/*.ts --parallel --exit",
+    "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open"
   },
   "contributors": [
@@ -59,25 +59,29 @@
     "copy-webpack-plugin": "^7.0.0",
     "cypress": "^9.3.1",
     "cypress-parallel": "^0.1.8",
+    "fs-extra": "^10.1.0",
     "http-server": "^14.1.0",
     "jsdoc-to-markdown": "^7.1.1",
     "mocha": "^9.2.0",
     "ts-mocha": "^9.0.2",
-    "ts-node": "^10.4.0",
+    "ts-node": "^10.9.1",
     "txm": "^8.0.1",
-    "typescript": "^4.6.2",
+    "typescript": "^4.7.2",
     "wasm-opt": "^1.3.0",
     "wasm-pack": "0.10.1",
     "webpack": "^5.67.0",
     "webpack-cli": "^4.9.2"
   },
   "dependencies": {
+    "@iota/types": "^1.0.0-beta.11",
     "@types/node-fetch": "^2.6.2",
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/client": "^3.0.0-alpha.6",
-    "@iota/types": "^1.0.0-beta.11"
+    "@cycraig/iota-client-wasm": "^0.5.0-alpha.1",
+    "@iota/iota.js": "^1.9.0-stardust.25",
+    "@iota/crypto.js": "^1.9.0-stardust.6",
+    "@iota/util.js": "^1.9.0-stardust.5"
   },
   "engines": {
     "node": ">=16"

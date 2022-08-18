@@ -64,7 +64,7 @@ impl WasmStardustIdentityClientExt {
   ) -> Result<PromiseAliasOutput> {
     let address_dto: AddressDto = address.into_serde().wasm_result()?;
     let address: Address = Address::try_from(&address_dto)
-      .map_err(|err| identity_stardust::Error::JsError(format!("newDidOutput: {err}")))
+      .map_err(|err| identity_stardust::Error::JsError(format!("newDidOutput failed to decode Address: {err}: {address_dto:?}")))
       .wasm_result()?;
     let doc: StardustDocument = document.0.clone();
 

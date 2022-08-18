@@ -8,6 +8,8 @@
     },
     "exclude": [
       "build",
+      "lib",
+      "tmp",
       "node_modules",
       "node",
       "web"
