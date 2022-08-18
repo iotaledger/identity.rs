@@ -23,7 +23,7 @@ pub type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Outp
 /// will delegate resolution to when encountering did's of the corresponding method.
 pub(super) struct ResolverDelegate<DOC: BorrowValidator> {
   pub(super) method: String,
-  pub(super) handler: AsyncFnPtr<str, Result<DOC>>,
+  pub(super) handler: AsyncFnPtr<str, Result<Option<DOC>>>,
 }
 
 impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
@@ -48,7 +48,7 @@ impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
             D::try_from(input).map_err(|_| Error::ResolutionProblem(format!("failed to parse did: {}", input)))?;
 
           let resolved = value_clone.resolve(&did).await?;
-          Ok(resolved.into())
+          Ok(resolved.map(Into::into))
         })
       }),
     }
