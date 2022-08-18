@@ -74,7 +74,6 @@ pub trait StardustClientExt: Sync {
       .with_state_index(0)
       .with_foundry_counter(0)
       .with_state_metadata(document.pack()?)
-      .add_feature(Feature::Sender(SenderFeature::new(address)))
       .add_unlock_condition(UnlockCondition::StateControllerAddress(
         StateControllerAddressUnlockCondition::new(address),
       ))
