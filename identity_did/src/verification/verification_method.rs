@@ -27,7 +27,7 @@ use crate::verification::MethodType;
 /// A DID Document Verification Method.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct VerificationMethod<D = CoreDID, T = Object>
 where
   D: DID,

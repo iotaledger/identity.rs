@@ -4,7 +4,7 @@
 use identity_iota::iota_core::IotaDIDUrl;
 use wasm_bindgen::prelude::*;
 
-use crate::did::WasmDID;
+use crate::did::WasmIotaDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -24,8 +24,8 @@ impl WasmDIDUrl {
 
   /// Return a copy of the `DID` section of the `DIDUrl`.
   #[wasm_bindgen]
-  pub fn did(&self) -> WasmDID {
-    WasmDID::from(self.0.did().clone())
+  pub fn did(&self) -> WasmIotaDID {
+    WasmIotaDID::from(self.0.did().clone())
   }
 
   /// Return a copy of the relative DID Url as a string, including only the path, query, and fragment.

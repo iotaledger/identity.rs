@@ -37,9 +37,6 @@ async fn main() -> anyhow::Result<()> {
   // Publish the deactivated DID document.
   let _ = client.publish_did_output(&secret_manager, deactivated_output).await?;
 
-  // Wait for the node to index the new state.
-  tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-
   // Resolving a deactivated DID returns an empty DID document
   // with its `deactivated` metadata field set to `true`.
   let deactivated: StardustDocument = client.resolve_did(&did).await?;

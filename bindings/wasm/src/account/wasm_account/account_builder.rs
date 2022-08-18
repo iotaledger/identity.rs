@@ -19,7 +19,7 @@ use crate::account::types::OptionAutoSave;
 use crate::account::types::WasmIdentitySetup;
 use crate::account::wasm_account::PromiseAccount;
 use crate::account::wasm_account::WasmAccount;
-use crate::did::WasmDID;
+use crate::did::WasmIotaDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::IClientConfig;
@@ -69,7 +69,7 @@ impl WasmAccountBuilder {
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
-  pub fn load_identity(&mut self, did: &WasmDID) -> Result<PromiseAccount> {
+  pub fn load_identity(&mut self, did: &WasmIotaDID) -> Result<PromiseAccount> {
     let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
     let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {

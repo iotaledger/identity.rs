@@ -115,10 +115,7 @@ impl StardustClientExt for Client {
 #[async_trait::async_trait(?Send)]
 impl StardustIdentityClient for Client {
   async fn get_network_hrp(&self) -> Result<String> {
-    self
-      .get_bech32_hrp()
-      .await
-      .map_err(Error::DIDResolutionError)
+    self.get_bech32_hrp().await.map_err(Error::DIDResolutionError)
   }
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {

@@ -7,7 +7,7 @@ use identity_core::common::Url;
 /// A [`Credential`][crate::credential::Credential] issuer in object form.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#issuer)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct IssuerData {
   /// A Url identifying the credential issuer.
   pub id: Url,
@@ -19,7 +19,7 @@ pub struct IssuerData {
 /// An identifier representing the issuer of a [`Credential`][crate::credential::Credential].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#issuer)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Issuer {
   /// A credential issuer expressed as a Url.

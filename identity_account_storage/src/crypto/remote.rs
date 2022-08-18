@@ -3,7 +3,7 @@
 
 use core::marker::PhantomData;
 
-use identity_iota_core::did::IotaDID;
+use identity_did::did::CoreDID;
 use serde::Serialize;
 
 use identity_core::convert::ToJson;
@@ -61,14 +61,14 @@ impl RemoteEd25519 {
 /// A reference to a storage instance and identity key location.
 #[derive(Debug)]
 pub struct RemoteKey<'a> {
-  did: &'a IotaDID,
+  did: &'a CoreDID,
   location: &'a KeyLocation,
   store: &'a dyn Storage,
 }
 
 impl<'a> RemoteKey<'a> {
   /// Creates a new `RemoteKey` instance.
-  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
+  pub fn new(did: &'a CoreDID, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
     Self { did, location, store }
   }
 }

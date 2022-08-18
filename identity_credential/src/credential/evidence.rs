@@ -7,7 +7,7 @@ use identity_core::common::OneOrMany;
 /// Information used to increase confidence in the claims of a `Credential`
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#evidence)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Evidence {
   /// A Url that allows retrieval of information about the evidence.
   #[serde(skip_serializing_if = "Option::is_none")]

@@ -49,7 +49,7 @@ fn parse_payload<T: FromJson + TangleRef>(message_id: MessageId, payload: Option
 // TODO: allow this to return errors?
 fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Option<T> {
   // Check version.
-  let version: DIDMessageVersion = DIDMessageVersion::try_from(*data.get(0)?).ok()?;
+  let version: DIDMessageVersion = DIDMessageVersion::try_from(*data.first()?).ok()?;
   if version != DIDMessageVersion::V1 {
     return None;
   }

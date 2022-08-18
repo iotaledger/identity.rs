@@ -35,7 +35,7 @@ use crate::did::ArrayDocumentOrResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
 use crate::did::PromiseArrayResolvedDocument;
 use crate::did::PromiseResolvedDocument;
-use crate::did::UWasmDID;
+use crate::did::UWasmIotaDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -79,7 +79,7 @@ impl WasmResolver {
 
   /// Fetches the `Document` of the given `DID`.
   #[wasm_bindgen]
-  pub fn resolve(&self, did: UWasmDID) -> Result<PromiseResolvedDocument> {
+  pub fn resolve(&self, did: UWasmIotaDID) -> Result<PromiseResolvedDocument> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
@@ -98,7 +98,7 @@ impl WasmResolver {
 
   /// Fetches the `DocumentHistory` of the given `DID`.
   #[wasm_bindgen(js_name = resolveHistory)]
-  pub fn resolve_history(&self, did: UWasmDID) -> Result<PromiseDocumentHistory> {
+  pub fn resolve_history(&self, did: UWasmIotaDID) -> Result<PromiseDocumentHistory> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);

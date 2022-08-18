@@ -7,7 +7,7 @@ use identity_core::diff::Result;
 
 use crate::verification::MethodData;
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum DiffMethodData {
   PublicKeyMultibase(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),
   PublicKeyBase58(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),

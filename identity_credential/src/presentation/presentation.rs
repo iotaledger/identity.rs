@@ -26,7 +26,7 @@ use crate::error::Result;
 use crate::presentation::PresentationBuilder;
 
 /// Represents a bundle of one or more [Credential]s.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Presentation<T = Object, U = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
   #[serde(rename = "@context")]

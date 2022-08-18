@@ -7,7 +7,7 @@ use identity_core::common::Url;
 /// An entity who is the target of a set of claims.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#credential-subject)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Subject {
   /// A URI identifying the credential subject.
   #[serde(skip_serializing_if = "Option::is_none")]
