@@ -24,9 +24,9 @@ The IOTA DID Method Specification describes a method of implementing the [Decent
 
 ### UTXO Ledger
 
-The unspent transaction output ([UTXO](https://wiki.iota.org/IOTA-2.0-Research-Specifications/5.1UTXO)) model defines a ledger state where outputs are created by a transaction consuming outputs of previous transactions as inputs. IOTA and Shimmer have several output types, the relevant ones for the IOTA DID Method are: Basic Outputs for value transactions, and Alias Outputs.
+The unspent transaction output ([UTXO](https://wiki.iota.org/IOTA-2.0-Research-Specifications/5.1UTXO)) model defines a ledger state where outputs are created by a transaction consuming outputs of previous transactions as inputs. IOTA and Shimmer have several output types, the relevant ones for the IOTA DID Method are: Basic Outputs for value transactions, and Alias Outputs for storage of DID documents.
 
-All outputs must hold a minimum amount of coins to be stored on the ledger. For output types that can hold arbitrary data, for instance the Alias Output, the amount of coins held by the output must cover the byte cost of the data stored. This helps control the ledger size from growing uncontrollably while guaranteeing the data is stored on the ledger indefinitely, which is important for resolving DID Documents. This deposit is fully refundable and can be reclaimed when the output is destroyed.
+All outputs must hold a minimum amount of coins to be stored on the ledger. For output types that can hold arbitrary data, for instance the Alias Output, the amount of coins held by the output must cover the byte cost of the data stored. This helps control the ledger size from growing uncontrollably while guaranteeing that the data is not pruned from the nodes, which is important for resolving DID Documents. This deposit is fully refundable and can be reclaimed when the output is destroyed.
 
 Data saved in an output and covered by the storage deposit will be stored in *all* nodes on the network and can be retrieved from any node. This provides strong guarantees for any data stored in the ledger.
 
@@ -39,18 +39,18 @@ The [Alias Output](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0
 * **Alias ID**: 32 byte array, a unique identifier of the alias, which is the BLAKE2b-256 hash
   of the Output ID that created it.
 * **State Index**: A counter that must increase by 1 every time the alias is state transitioned.
-* **State Metadata**: Metadata that can only be changed by the state controller. A leading uint16 denotes its length.
+* **State Metadata**: Dynamically sized array of arbitrary bytes with a length up to `Max Metadata Length`, as defined in [TIP-22](https://github.com/iotaledger/tips/blob/main/tips/TIP-0022/tip-0022.md). Can only be changed by the state controller.
 * **Unlock Conditions**:
   * State Controller Address Unlock Condition
   * Governor Address Unlock Condition
 
-Consuming an Alias Output in a transaction means that the alias is transformed into the next state. The current state is defined as the consumed alias output, while the next state is defined as the **alias output with the same explicit `Alias ID` on the output side**. There are two types of transitions: `state transition` and `governance transition`.
+Consuming an Alias Output in a transaction means that the alias is transitioned into the next state. The current state is defined as the consumed alias output, while the next state is defined as the **alias output with the same explicit `Alias ID` on the output side**. There are two types of transitions: `state transition` and `governance transition`.
 
-All outputs include an `Unlock Conditions` property. This feature defines how the output can be unlocked and spent. The Alias Output supports two types of controllers that can be set as unlock conditions: the state controller and governor. Each of these can be either an Ed25519 Address, Alias Address or an NFT Address. An Alias Output can have at most one of each unlock condition.
+All outputs include an `Unlock Conditions` property. This feature defines how the output can be unlocked and spent. The Alias Output supports two types of unlock conditions that can be set: the state controller and governor. Each of these can be either an Ed25519 Address, Alias Address or an NFT Address. An Alias Output can have at most one of each unlock condition.
 
-The state controller is responsible for a state transition. It is identified by an incremented `State Index` and can change the fields `Amount`, `State Index`, `State Metadata` among other properties.
+The state controller can unlock a state transition. It is identified by an incremented `State Index` and can change the fields `Amount`, `State Index`, `State Metadata` among other properties.
 
-The governor, on the other hand, is responsible for a governance transition indicated by an unchanged `State Index`. A governance transition can change the addresses of the state controller and governor. It also allows destroying the Alias Output by consuming it.
+The governor, on the other hand, can unlock a governance transition indicated by an unchanged `State Index`. A governance transition can change the addresses of the state controller and governor. It also allows destroying the Alias Output.
 
 ### Ledger and DID
 Storing DID Documents in the ledger state means they inherently benefit from the guarantees the ledger provides.
@@ -77,7 +77,7 @@ iota-tag = "0x" lower case hex-encoded Alias ID
 char = 0-9 a-z
 ```
 
-It starts with the string "did:iota:", followed by an optional network name (0-6 char) and a colon, then the tag.
+It starts with the string "did:iota:", followed by an optional network name (0 to 6 lowercase alpha characters) and a colon, then the tag.
 The tag starts with "0x" followed by a hex-encoded `Alias ID` with lower case a-f.
 
 ### IOTA-Network
@@ -87,9 +87,9 @@ The iota-network is an identifier of the network where the DID is stored. This n
 The following values are reserved and cannot reference other networks:
 
 1. `iota` references the main network which refers to the ledger known to host the IOTA cryptocurrency.
-2. `atoi` references the development network maintained by the IOTA Foundation.
+2. `atoi` references the development network of IOTA.
 3. `smr`  references the shimmer network.
-4. `rms`  references the development network of shimmer.
+4. `rms`  references the development network of Shimmer.
 
 When no IOTA network is specified, it is assumed that the DID is located on the `iota` network. This means that the following DIDs will resolve to the same DID Document:
 
@@ -117,9 +117,11 @@ In the `State Metadata` of the Alias Output must be a byte packed payload with h
 
 The payload must contain the following fields:
 
-* `metadata`: contains metadata about the DID document for example, `created` to indicate the time of
-  creation, and `updated` to indicated the time of the last update to the document. It can also include other properties.
-* `document`: which contains the actual data of the document. In the example below, this document only contains one verification method. The `id` is specified by `did:0:0` referencing the same document since the `id` is unknown at the time of publishing.
+* `metadata`: contains metadata about the DID document. For example, `created` to indicate the time of
+  creation, and `updated` to indicate the time of the last update to the document. It can also include other properties.
+* `document`: which contains the DID document. In the example below, the document only contains one verification method. The `id` is specified by `did:0:0` which references the DID of the document itself, since the `id` is unknown at the time of publishing. It also deduplicates the DID of the document to reduce the size of the state metadata, in turn reducing the required storage deposit.
+
+Example State Metadata Document:
 
 ```Json
 {
@@ -148,7 +150,7 @@ As of now, only one state controller and one governor can be set for an Alias Ou
 
 ## CRUD Operations
 
-Create, Read, Update and Delete (CRUD) operations that change the DID Documents are done through state or governance transitions of the Alias Output in order to be available on the ledger
+Create, Read, Update and Delete (CRUD) operations that change the DID Documents are done through state or governance transitions of the Alias Output.
 
 **These operations require fund transfer to cover storage deposit. Transactions must be carefully done in order to avoid fund loss.** For example, the amount of funds in the inputs should equal these in the outputs. Additionally, private keys of controllers must be stored securely.
 
@@ -162,9 +164,9 @@ Creation steps:
 2. Use placeholder `did:0:0` instead of the actual DID in the document.
 3. Create the payload and the headers as described in the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata).
 4. Create a new Alias Output with the payload and the headers stored in its `State Metadata`.
-5. Set the Ed25519 Address as the state controller as well as the governor.
+5. Set the state controller and the governor unlock conditions to the addresses that should control state and governance transitions, respectively.
 6. Set enough coins in the output to cover the storage deposit.
-7. Publish a new transaction with the existing output as input and the newly created Alias Output as output. Other outputs can be created to hold the rest of the coins.
+7. Publish a new transaction with an existing output that contains at least the storage deposit from step 6 as input, and the newly created Alias Output as output. Other outputs can be created to hold the remainder of the coins.
 8. Query the newly created output using the address and retrieve the `Alias ID`.
 9. Once the transaction is confirmed, the DID is published and can be formatted by using the `Alias ID` as the tag in [DID Format](#did-format).
 
@@ -174,32 +176,32 @@ Note that state controller and governor don't have to be the same, nor they have
 
 The following steps can be used to read the latest DID document associated with a DID.
 1. Extract the `iota-tag` from the DID, see [DID Format](#did-format).
-2. Query the Alias Output using a node running [inx indexer](https://github.com/iotaledger/inx-indexer). Normal nodes usually include this indexer by default.
-3. Retrieve the value of `State Metadata` from the returned output.
-4. Check if its content matches the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata).
-5. Retrieve the value of `document` from the payload.
-6. Replace the placeholder `did:0:0` with the actual DID.
+2. Query the Alias Output corresponding to the alias id, using a node running the [inx indexer](https://github.com/iotaledger/inx-indexer). Nodes usually include this indexer by default.
+3. Retrieve the value of the `State Metadata` field from the returned output.
+4. Check if its content matches the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata). Return an error otherwise.
+5. Decode the DID document from the state metadata.
+6. Replace the placeholder `did:0:0` with the actual DID which can be derived from the alias id of the output.
 
 ### Update
 
 Updating a DID Document can be achieved by a state transition of the Alias Output. A state controller can update the
-`State Metadata` in the Alias Output which reflects in updating the DID Document.
+`State Metadata` in the Alias Output which reflects an update to the DID Document.
 
 1. Create the content of the updated DID Document.
 2. Use placeholder `did:0:0` instead of the actual DID in the document.
 3. Create the payload and the headers as described in the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata).
 4. Create a new Alias Output with the same `Alias ID` as the current output.
 5. Increment the `State Index`.
-6. Set the state controller and the governor.
-7. Publish a new transaction with the current Alias Output as input and the newly created one as output.
+6. Leave the unlock conditions unchanged.
+7. Publish a new transaction with the current Alias Output as input and the newly created one as output. If the Alias Output to be updated is state-controlled by other Alias or NFT Outputs, those outputs will have to be unlocked in the same transaction.
 
 Note, if the updated document requires more coins to cover the storage deposit, another input will be required to cover that.
 
 ### Delete
 
 #### Deactivate
-Temporarily deactivating a DID can be done by deleting the content of the `State Meadata` in the Alias Output. This will render the DID unresolvable.
-1. Create and new Alias Output with the same `Alias ID` as the current output with empty `State Metadata`.
+Temporarily deactivating a DID can be done by deleting the content of the `State Meadata` in the Alias Output.
+1. Set the Alias Output's `State Metadata` field to an empty byte array.
 2. Increment the `State Index`.
 3. Set the state controller and the governor.
 4. Publish a new transaction with the current Alias Output as input and the newly created one as output.
