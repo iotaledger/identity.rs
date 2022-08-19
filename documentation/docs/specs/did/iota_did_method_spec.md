@@ -111,12 +111,12 @@ This tag identifies the Alias Output where the DID Document is stored, and it wi
 
 In the `State Metadata` of the Alias Output must be a byte packed payload with header fields as follows:
 
-| Name          | Type         | Description                                                        |
-|---------------|--------------|--------------------------------------------------------------------|
-| Document Type | ByteArray[3] | Set to value **DID** to denote a DID Document.                     |
-| Version       | uint8        | Set value **1** to denote the version number of this method        |
-| Encoding      | uint8        | Set to value to **0** to denote JSON encoding without compression. |
-| Payload       | ByteArray    | Payload encoded according to `Encoding`.                           |
+| Name          | Type         | Description                                                                                                                                              |
+|---------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Document Type | ByteArray[3] | Set to value **DID** to denote a DID Document.                                                                                                           |
+| Version       | uint8        | Set value **1** to denote the version number of this method                                                                                              |
+| Encoding      | uint8        | Set to value to **0** to denote JSON encoding without compression.                                                                                       |
+| Payload       | ByteArray    | A DID document and its metadata, where every occurrence of the DID in the document is replaced by `did:0:0`. It must be encoded according to `Encoding`. |
 
 | Name      | Description                                     |
 |-----------|-------------------------------------------------|
@@ -129,7 +129,7 @@ The payload must contain the following fields:
 
 * `metadata`: contains metadata about the DID document. For example, `created` to indicate the time of
   creation, and `updated` to indicate the time of the last update to the document. It can also include other properties.
-* `document`: which contains the DID document. In the example below, the document only contains one verification method. The `id` is specified by `did:0:0` which references the DID of the document itself, since the `id` is unknown at the time of publishing. It also deduplicates the DID of the document to reduce the size of the state metadata, in turn reducing the required storage deposit.
+* `document`: which contains the DID document. In the example below, the document only contains one verification method. The `id` and `controller` is specified by `did:0:0` which references the DID of the document itself, since the DID is unknown at the time of publishing. It also deduplicates the DID of the document to reduce the size of the state metadata, in turn reducing the required storage deposit.
 
 Example State Metadata Document:
 
@@ -153,7 +153,6 @@ Example State Metadata Document:
 }
 ```
 
-In a state metadata document, every occurrence of the DID must be replaced by `did:0:0`.
 
 ## Controllers
 
@@ -186,11 +185,14 @@ Once the transaction is confirmed, the DID is published and can be formatted by 
 
 The following steps can be used to read the latest DID document associated with a DID.
 1. Obtain the `Alias ID` from the DID by extracting the `iota-tag` from the DID, see [DID Format](#did-format).
-2. Query the Alias Output corresponding to the `Alias ID`, using a node running the [inx indexer](https://github.com/iotaledger/inx-indexer). Nodes usually include this indexer by default.
-3. Retrieve the value of the `State Metadata` field from the returned output.
-4. Check if its content matches the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata). Return an error otherwise.
-5. Decode the DID document from the state metadata.
-6. Replace the placeholder `did:0:0` with the actual DID which can be derived from the `Alias ID` of the output.
+2. Obtain the network of the DID by extracting the `iota-network` from the DID, see [DID Format](#did-format).
+3. Query the Alias Output corresponding to the `Alias ID` using a node running the [inx indexer](https://github.com/iotaledger/inx-indexer). Nodes usually include this indexer by default.
+4. Assert that the extracted network matches the one returned from the node. Return an error otherwise.
+5. Assert that the `Alias ID` of the returned output matches the `Alias ID` extracted from the DID. Return an error otherwise.
+7. Retrieve the value of the `State Metadata` field from the returned output.
+8. Check if its content matches the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata). Return an error otherwise.
+9. Decode the DID document from the `State Metadata`.
+10. Replace the placeholder `did:0:0` with the DID given as input.
 
 ### Update
 
@@ -260,4 +262,4 @@ That directly conflicts with certain privacy laws such as GDPR, which have a 'ri
 
 ### Correlation Risks
 
-As with any DID method, identities can be linked if they are used too often and their usage somehow becomes public. Additionally, a DID can be correlated with funds if the Alias Output used to store the DID Document or any of its controllers is used for holding, transferring or controlling coins or NFTs. 
+As with any DID method, identities can be linked if they are used too often and their usage somehow becomes public. See [DID Correlation Risks](DID Correlation Risks). Additionally, a DID can be correlated with funds if the Alias Output used to store the DID Document or any of its controllers is used for holding, transferring or controlling coins or NFTs. 
