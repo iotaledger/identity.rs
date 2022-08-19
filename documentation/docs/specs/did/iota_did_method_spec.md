@@ -118,7 +118,7 @@ In the `State Metadata` of the Alias Output must be a byte packed payload with h
 | Encoding      | uint8        | Set to value to **0** to denote JSON encoding without compression.                                                                                       |
 | Payload       | ByteArray    | A DID document and its metadata, where every occurrence of the DID in the document is replaced by `did:0:0`. It must be encoded according to `Encoding`. |
 
-Next to [TIP-21](https://github.com/Wollac/protocol-rfcs/blob/serialization/tips/TIP-0021/tip-0021.md), we use the following type definitions:
+Next to [TIP-21](#data-types--subschema-notation), we use the following type definitions:
 
 | Name      | Description                                     |
 |-----------|-------------------------------------------------|
@@ -191,10 +191,10 @@ The following steps can be used to read the latest DID document associated with 
 3. Query the Alias Output corresponding to the `Alias ID` using a node running the [inx indexer](https://github.com/iotaledger/inx-indexer). Nodes usually include this indexer by default.
 4. Assert that the extracted network matches the one returned from the node. Return an error otherwise.
 5. Assert that the `Alias ID` of the returned output matches the `Alias ID` extracted from the DID. Return an error otherwise.
-7. Retrieve the value of the `State Metadata` field from the returned output.
-8. Check if its content matches the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata). Return an error otherwise.
-9. Decode the DID document from the `State Metadata`.
-10. Replace the placeholder `did:0:0` with the DID given as input.
+6. Retrieve the value of the `State Metadata` field from the returned output.
+7. Check if its content matches the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata). Return an error otherwise.
+8. Decode the DID document from the `State Metadata`.
+9. Replace the placeholder `did:0:0` with the DID given as input.
 
 ### Update
 
