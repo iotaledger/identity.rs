@@ -1757,7 +1757,7 @@ Deserializes an instance from a JSON object.
     * _instance_
         * [.id()](#Document+id) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.setController(controllers)](#Document+setController)
-        * [.controller()](#Document+controller) ⇒ <code>Array.&lt;DID&gt;</code>
+        * [.controller()](#Document+controller) ⇒ [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID)
         * [.setAlsoKnownAs(urls)](#Document+setAlsoKnownAs)
         * [.alsoKnownAs()](#Document+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setPropertyUnchecked(key, value)](#Document+setPropertyUnchecked)
@@ -1849,11 +1849,11 @@ Use `null` to remove all controllers.
 
 | Param | Type |
 | --- | --- |
-| controllers | <code>DID</code> \| <code>Array.&lt;DID&gt;</code> \| <code>null</code> | 
+| controllers | [<code>IotaDID</code>](#IotaDID) \| [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID) \| <code>null</code> | 
 
 <a name="Document+controller"></a>
 
-### document.controller() ⇒ <code>Array.&lt;DID&gt;</code>
+### document.controller() ⇒ [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID)
 Returns a copy of the list of document controllers.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
