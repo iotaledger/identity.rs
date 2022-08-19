@@ -13,7 +13,7 @@ use std::sync::Arc;
 #[cfg(not(feature = "internals"))]
 pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 #[cfg(feature = "internals")]
-/// Indicates an asynchronous function pointer returning a Future pinned to the heap. 
+/// Indicates an asynchronous function pointer returning a Future pinned to the heap.
 pub type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 
 /// Intermediary type used to register a [`ResolutionHandler`](super::ResolutionHandler) with a

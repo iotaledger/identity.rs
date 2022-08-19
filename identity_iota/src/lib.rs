@@ -151,3 +151,7 @@ pub mod agent {
   pub use identity_agent::IdentityKeypair;
   pub use identity_agent::Multiaddr;
 }
+
+pub mod resolver {
+  pub use identity_resolver::*;
+}

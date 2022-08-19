@@ -20,8 +20,10 @@ identity_credential = { version = "=0.6.0", path = "../identity_credential", def
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
+strum = { version = "0.21", features = ["derive"] }
 
 [features]
 default = ["revocation-bitmap"]
 revocation-bitmap = ["identity_did/revocation-bitmap"]
 internals = []
+javascript-bindings = []

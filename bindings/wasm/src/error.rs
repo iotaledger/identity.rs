@@ -98,7 +98,8 @@ impl_wasm_error_from!(
   identity_iota::did::DIDError,
   identity_iota::iota_core::Error,
   identity_iota::credential::ValidationError,
-  identity_stardust::Error
+  identity_stardust::Error,
+  identity_iota::resolver::Error
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -205,12 +206,23 @@ impl From<UpdateError> for WasmError<'_> {
   }
 }
 
-/// Convenience struct to convert Result<JsValue, JsValue> to an AccountStorageResult<_, AccountStorageError>
+/// Convenience struct to convert Result<JsValue, JsValue> to
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
   /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
   pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
+    self.stringify_error().map_err(AccountStorageError::JsError)
+  }
+
+  pub fn to_resolver_error(self) -> StdResult<JsValue, identity_iota::resolver::Error> {
+    self.stringify_error().map_err(|error_string| {
+      identity_iota::resolver::Error::JsError(format!("could not resolve DID: {}", error_string))
+    })
+  }
+
+  // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
+  fn stringify_error(self) -> StdResult<JsValue, String> {
     self.0.map_err(|js_value| {
       let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
         Ok(js_err) => ToString::to_string(&js_err.to_string()),
@@ -219,8 +231,7 @@ impl JsValueResult {
           format!("{js_val:?}")
         }
       };
-
-      AccountStorageError::JsError(error_string)
+      error_string
     })
   }
 }

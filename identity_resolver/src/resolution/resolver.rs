@@ -27,10 +27,10 @@ use super::resolver_delegate::ResolverDelegate;
 
 type Inner<DOC> = AsyncFnPtr<str, Result<Option<DOC>>>;
 
-/// 
+///
 pub struct HandlerIndex {
-  method: String, 
-  id: usize, 
+  method: String,
+  id: usize,
 }
 
 /// Convenience type for resolving did documents from different did methods.   
@@ -61,7 +61,7 @@ where
     }
   }
 
-  /// Attach a [`ResolverHandler`] to this resolver. 
+  /// Attach a [`ResolverHandler`] to this resolver.
   pub fn attach_method_handler<D, R>(&mut self, handler: Arc<R>)
   where
     D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
@@ -69,16 +69,17 @@ where
     DOC: From<<R as ResolutionHandler<D>>::Resolved> + 'static,
   {
     let ResolverDelegate::<DOC> { method, handler } = ResolverDelegate::new(handler);
-    let method_handlers = self.method_map.entry(method).or_insert(Vec::new());
-    let idx = method_handlers.len();
-    method_handlers.push(handler);
-
+    self.attach_raw_internal(method, handler);
   }
 
-
   #[cfg(feature = "internals")]
-  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str,Result<Option<DOC>>>) {
-    self.method_map.insert(method, handler); 
+  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str, Result<Option<DOC>>>) {
+    self.attach_raw_internal(method, handler);
+  }
+
+  fn attach_raw_internal(&mut self, method: String, handler: AsyncFnPtr<str, Result<Option<DOC>>>) {
+    let method_handlers = self.method_map.entry(method).or_insert(Vec::new());
+    method_handlers.push(handler);
   }
 
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
@@ -228,36 +229,33 @@ where
       .get(method)
       .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
 
-      let mut err: Option<Error> = None; 
-      
-      for delegate in delegates {
-        match delegate(did).await {
-          Ok(Some(doc)) => {
-            return Ok(doc);
-          } ,
-          Ok(None) => {
-            // The resolver was not configured to resolve this did. 
-            continue
-          },
-          Err(error) => {
-            if let Error::ResolutionAttemptError(_)  = error {
-              return Err(error);
-            }
-              else {
-              let _= err.insert(error);
-              }
-            },
+    let mut err: Option<Error> = None;
+
+    for delegate in delegates {
+      match delegate(did).await {
+        Ok(Some(doc)) => {
+          return Ok(doc);
+        }
+        Ok(None) => {
+          // The resolver was not configured to resolve this did.
+          continue;
+        }
+        Err(error) => {
+          if let Error::ResolutionAttemptError(_) = error {
+            return Err(error);
+          } else {
+            let _ = err.insert(error);
+          }
+        }
       }
     }
 
-      if let Some(error) = err {
-        Err(error)
-      } else {
-        Err(Error::NoCompatibleHandlerError)
-      }
-  
-}
-
+    if let Some(error) = err {
+      Err(error)
+    } else {
+      Err(Error::NoCompatibleHandlerError)
+    }
+  }
 }
 
 impl Resolver<Box<dyn ValidatorDocument>> {
