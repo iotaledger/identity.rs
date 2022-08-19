@@ -118,6 +118,8 @@ In the `State Metadata` of the Alias Output must be a byte packed payload with h
 | Encoding      | uint8        | Set to value to **0** to denote JSON encoding without compression.                                                                                       |
 | Payload       | ByteArray    | A DID document and its metadata, where every occurrence of the DID in the document is replaced by `did:0:0`. It must be encoded according to `Encoding`. |
 
+Next to [TIP-21](https://github.com/Wollac/protocol-rfcs/blob/serialization/tips/TIP-0021/tip-0021.md), we use the following type definitions:
+
 | Name      | Description                                     |
 |-----------|-------------------------------------------------|
 | ByteArray | A dynamically sized, but unprefixed byte array. |
