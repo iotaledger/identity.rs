@@ -71,7 +71,7 @@ A DID that uses this method MUST begin with the following prefix: `did:iota`. Fo
 
 ## DID Format
 
-The DIDs that follow this method have the following ABNF syntax. It uses the syntax in [RFC5234](https://www.w3.org/TR/did-core/#bib-rfc5234) and the corresponding definitions for `digit`.
+The DIDs that follow this method have the following ABNF syntax. It uses the syntax in [RFC5234](https://www.rfc-editor.org/rfc/rfc5234) and the corresponding definition for `digit`.
 
 ```
 iota-did = "did:iota:" iota-specific-idstring
@@ -129,7 +129,7 @@ The payload must contain the following fields:
 
 * `metadata`: contains metadata about the DID document. For example, `created` to indicate the time of
   creation, and `updated` to indicate the time of the last update to the document. It can also include other properties.
-* `document`: which contains the DID document. In the example below, the document only contains one verification method. The `id` is specified by `did:0:0` which references the DID of the document itself, since the `id` is unknown at the time of publishing. It also duplicates the DID of the document to reduce the size of the state metadata, in turn reducing the required storage deposit.
+* `document`: which contains the DID document. In the example below, the document only contains one verification method. The `id` is specified by `did:0:0` which references the DID of the document itself, since the `id` is unknown at the time of publishing. It also deduplicates the DID of the document to reduce the size of the state metadata, in turn reducing the required storage deposit.
 
 Example State Metadata Document:
 
@@ -169,7 +169,7 @@ Create, Read, Update and Delete (CRUD) operations that change the DID Documents 
 
 ### Create
 In order to create a simple self controlled DID two things are required:
-1. An Ed25519 Address of which the private key is available.
+1. An Ed25519 Address for which the private key is available, or control over an Alias or NFT Output.
 2. A Basic, Alias or NFT Output with enough coins to cover the byte cost.
 
 Creation steps:
@@ -254,9 +254,9 @@ All private keys or seeds used for the `did:iota` method should be equally well 
 
 ### Personal Identifiable Information
 
-The public IOTA Tangle networks are immutable networks. This means that once something is uploaded, it can never be completely removed. For example, destroying an Alias Output will remove it from the ledger state, but it can still be stored in permanodes or by any party that records historical ledger states.
+The public IOTA Tangle networks are immutable networks. This means that once something is included, it can never be completely removed. For example, destroying an Alias Output will remove it from the ledger state, but it can still be stored in permanodes or by any party that records historical ledger states.
 
-That directly conflicts with certain privacy laws such as GDPR, which have a 'right-to-be-forgotten' for Personal Identifiable Information (PII). As such, users should NEVER upload any PII to the Tangle, including inside DID Documents. The IOTA Identity framework allows Verifiable Credentials to be published to the Tangle directly, however this feature should only be utilized by Identity for Organisation and Identity for Things.
+That directly conflicts with certain privacy laws such as GDPR, which have a 'right-to-be-forgotten' for Personal Identifiable Information (PII). As such, users should NEVER upload any PII to the Tangle, including inside DID Documents. The IOTA Identity framework allows Verifiable Credentials to be published to the Tangle directly, however this feature should only be utilized by Identity for Organisations and Identity for Things.
 
 ### Correlation Risks
 
