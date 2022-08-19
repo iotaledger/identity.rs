@@ -110,7 +110,7 @@ impl WasmDocument {
   /// Note: Duplicates will be ignored.
   /// Use `null` to remove all controllers.
   #[wasm_bindgen(js_name = setController)]
-  pub fn set_controller(&mut self, controllers: &OptionOneOrManyDID) -> Result<()> {
+  pub fn set_controller(&mut self, controllers: &OptionOneOrManyIotaDID) -> Result<()> {
     let controllers: Option<OneOrMany<IotaDID>> = controllers.into_serde().wasm_result()?;
     let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers.map(OneOrMany::into_vec) {
       if controllers.is_empty() {
@@ -127,7 +127,7 @@ impl WasmDocument {
 
   /// Returns a copy of the list of document controllers.
   #[wasm_bindgen]
-  pub fn controller(&self) -> ArrayDID {
+  pub fn controller(&self) -> ArrayIotaDID {
     match self.0.controller() {
       Some(controllers) => controllers
         .iter()
@@ -135,8 +135,8 @@ impl WasmDocument {
         .map(WasmIotaDID::from)
         .map(JsValue::from)
         .collect::<js_sys::Array>()
-        .unchecked_into::<ArrayDID>(),
-      None => js_sys::Array::new().unchecked_into::<ArrayDID>(),
+        .unchecked_into::<ArrayIotaDID>(),
+      None => js_sys::Array::new().unchecked_into::<ArrayIotaDID>(),
     }
   }
 
@@ -689,11 +689,11 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
   pub type UDIDUrlQuery;
 
-  #[wasm_bindgen(typescript_type = "DID | DID[] | null")]
-  pub type OptionOneOrManyDID;
+  #[wasm_bindgen(typescript_type = "IotaDID | IotaDID[] | null")]
+  pub type OptionOneOrManyIotaDID;
 
-  #[wasm_bindgen(typescript_type = "DID[]")]
-  pub type ArrayDID;
+  #[wasm_bindgen(typescript_type = "IotaDID[]")]
+  pub type ArrayIotaDID;
 
   #[wasm_bindgen(typescript_type = "Service[]")]
   pub type ArrayService;
