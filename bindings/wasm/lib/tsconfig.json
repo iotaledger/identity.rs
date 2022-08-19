@@ -1,13 +1,10 @@
 {
-    "extends": "../tsconfig.json",
+    "extends": "../tsconfig.node.json",
     "compilerOptions": {
         "baseUrl": "../",
         "paths": {
             "identity_wasm": ["node/identity_wasm"],
         },
         "outDir": "../node",
-        "target": "ES2020",
-        "esModuleInterop": true,
-        "module": "commonjs"
     }
 }
