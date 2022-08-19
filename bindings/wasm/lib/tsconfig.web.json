@@ -1,0 +1,11 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": "../",
+        "paths": {
+            "identity_wasm": ["web/identity_wasm"],
+        },
+        "outDir": "../web",
+        "module": "ES2020"
+    }
+}

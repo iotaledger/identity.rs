@@ -3,5 +3,4 @@
 
 export * from './stardust_identity_client';
 
-// @ts-ignore: path is set to match runtime transpiled js path when bundled.
-export * from './identity_wasm';
+export * from 'identity_wasm';
