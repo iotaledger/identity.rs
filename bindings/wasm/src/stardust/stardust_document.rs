@@ -558,4 +558,4 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import { IBlock } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { IBlock } from '@iota/types';"#;
