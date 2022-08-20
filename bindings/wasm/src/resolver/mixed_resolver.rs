@@ -54,6 +54,7 @@ impl MixedResolver {
   ) -> Result<PromiseArraySupportedDocument> {
     let resolver: Rc<Resolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
+    
     let promise: Promise = future_to_promise(async move {
       let supported_documents: Vec<SupportedDocument> = resolver
         .resolve_presentation_issuers(&presentation)
@@ -69,8 +70,8 @@ impl MixedResolver {
       Ok(
         supported_documents
           .into_iter()
-          .map(JsValue::from)
-          .collect::<js_sys::Array>()
+          .map(|doc| doc.to_json())
+          .collect::<Result<js_sys::Array>>()?
           .into(),
       )
       //TODO: Implement Into<JsValue> for SupportedDocument

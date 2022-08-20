@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::error::Result;
 use crate::error::WasmError;
+use crate::error::WasmResult;
 use identity_iota::credential::ValidatorDocument;
 use identity_iota::did::CoreDocument;
 use identity_stardust::StardustDocument;
@@ -16,6 +18,15 @@ pub(super) enum SupportedDocument {
   Stardust(StardustDocument),
 }
 
+impl SupportedDocument {
+  pub(super) fn to_json(&self) -> Result<JsValue> {
+    match self {
+      Self::Core(doc) => JsValue::from_serde(doc).wasm_result(),
+      Self::Stardust(doc) => JsValue::from_serde(doc).wasm_result(),
+    }
+  }
+}
+
 impl From<SupportedDocument> for Box<dyn ValidatorDocument> {
   fn from(document: SupportedDocument) -> Self {
     match document {
@@ -27,7 +38,7 @@ impl From<SupportedDocument> for Box<dyn ValidatorDocument> {
 
 impl TryFrom<Box<dyn ValidatorDocument>> for SupportedDocument {
   type Error = WasmError<'static>;
-  fn try_from(value: Box<dyn ValidatorDocument>) -> Result<Self, Self::Error> {
+  fn try_from(value: Box<dyn ValidatorDocument>) -> std::result::Result<Self, Self::Error> {
     let upcast = value.into_any();
     let supported_document = match upcast.downcast::<CoreDocument>() {
       Ok(doc) => SupportedDocument::Core(*doc),
