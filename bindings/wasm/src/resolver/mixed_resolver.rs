@@ -22,7 +22,7 @@ use wasm_bindgen_futures::future_to_promise;
 #[wasm_bindgen(js_name = MixedResolver)]
 pub struct MixedResolver(Rc<Resolver>);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = MixedResolver)]
 impl MixedResolver {
   /// Constructs a new [`MixedResolver`].
   #[wasm_bindgen(constructor)]
@@ -48,13 +48,10 @@ impl MixedResolver {
   /// resolution fails.
   // TODO: Improve error handling.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
-  pub async fn resolve_presentation_issuers(
-    &self,
-    presentation: &WasmPresentation,
-  ) -> Result<PromiseArraySupportedDocument> {
+  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
     let resolver: Rc<Resolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
-    
+
     let promise: Promise = future_to_promise(async move {
       let supported_documents: Vec<SupportedDocument> = resolver
         .resolve_presentation_issuers(&presentation)
@@ -74,7 +71,6 @@ impl MixedResolver {
           .collect::<Result<js_sys::Array>>()?
           .into(),
       )
-      //TODO: Implement Into<JsValue> for SupportedDocument
     });
     Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
   }

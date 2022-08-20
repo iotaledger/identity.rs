@@ -9,8 +9,6 @@ use js_sys::Promise;
 use std::future::Future;
 use std::pin::Pin;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
 
 type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 use wasm_bindgen_futures::JsFuture;

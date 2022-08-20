@@ -19,8 +19,8 @@ identity_core = { version = "=0.6.0", path = "../identity_core", default-feature
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
-thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.21", features = ["derive"] }
+thiserror = { version = "1.0", default-features = false }
 
 [features]
 default = ["revocation-bitmap"]
