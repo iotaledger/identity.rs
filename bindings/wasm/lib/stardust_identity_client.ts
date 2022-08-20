@@ -11,17 +11,11 @@ import {
     AddressTypes,
     ALIAS_OUTPUT_TYPE,
     IAliasOutput,
-    IBlock,
     IOutputResponse,
     IRent,
-    ITransactionPayload,
     IUTXOInput,
-    OutputTypes,
-    TRANSACTION_PAYLOAD_TYPE,
     TransactionHelper
 } from '@iota/iota.js';
-import {Converter} from '@iota/util.js';
-import {Blake2b} from '@iota/crypto.js';
 
 /** Provides operations for IOTA UTXO DID Documents with Alias Outputs. */
 export class StardustIdentityClient implements IStardustIdentityClient {
@@ -122,7 +116,7 @@ export class StardustIdentityClient implements IStardustIdentityClient {
         await this.client.retryUntilIncluded(blockId);
 
         // Extract document with computed AliasId.
-        const documents = extractDocumentsFromBlock(networkHrp, block);
+        const documents = StardustDocument.unpackFromBlock(networkHrp, block);
         if (documents.length < 1) {
             throw new Error("publishDidOutput: no DID document in transaction payload");
         }
@@ -167,61 +161,4 @@ export class StardustIdentityClient implements IStardustIdentityClient {
         });
         await this.client.retryUntilIncluded(blockId);
     }
-}
-
-/** Compute the AliasId as a prefix-hex encoded string. */
-function computeAliasId(transactionIdHex: string, outputIndex: number): string {
-    const outputIdHex: string = TransactionHelper.outputIdFromTransactionData(transactionIdHex, outputIndex);
-    return computeAliasIdFromOutputId(outputIdHex);
-}
-
-/** Compute the AliasId as a prefix-hex encoded string. */
-function computeAliasIdFromOutputId(outputIdHex: string): string {
-    // Blake2b-256 digest of output id.
-    const outputIdBytes: Uint8Array = Converter.hexToBytes(outputIdHex);
-    const digest: Uint8Array = Blake2b.sum256(outputIdBytes);
-    return Converter.bytesToHex(digest, true);
-}
-
-/** Extract all DID documents of the Alias Outputs contained in a transaction payload, if any. */
-function extractDocumentsFromBlock(networkHrp: string, block: IBlock): StardustDocument[] {
-    const documents: StardustDocument[] = [];
-
-    if (block.payload === undefined || block.payload?.type !== TRANSACTION_PAYLOAD_TYPE) {
-        throw new Error("failed to extract documents from block, transaction payload missing or wrong type");
-    }
-    const payload: ITransactionPayload = block.payload;
-
-    // Compute TransactionId.
-    const transactionPayloadHash: Uint8Array = TransactionHelper.getTransactionPayloadHash(payload);
-    const transactionId: string = Converter.bytesToHex(transactionPayloadHash, true);
-
-    // Loop over Alias Outputs.
-    const outputs: OutputTypes[] = payload.essence.outputs;
-    for (let index = 0; index < outputs.length; index += 1) {
-        const output = outputs[index];
-        if (output.type !== ALIAS_OUTPUT_TYPE) {
-            continue;
-        }
-
-        // Compute Alias Id.
-        let aliasIdHex: string;
-        if (output.stateIndex === 0) {
-            aliasIdHex = computeAliasId(transactionId, index);
-        } else {
-            aliasIdHex = output.aliasId;
-        }
-        const aliasId: Uint8Array = Converter.hexToBytes(aliasIdHex);
-
-        // Unpack document.
-        const did: StardustDID = new StardustDID(aliasId, networkHrp);
-        let stateMetadata: Uint8Array;
-        if (output.stateMetadata === undefined) {
-            stateMetadata = new Uint8Array(0);
-        } else {
-            stateMetadata = Converter.hexToBytes(output.stateMetadata);
-        }
-        documents.push(StardustDocument.unpack(did, stateMetadata, true));
-    }
-    return documents;
 }

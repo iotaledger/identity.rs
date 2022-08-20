@@ -303,6 +303,60 @@ impl StardustDocument {
   }
 }
 
+#[cfg(feature = "client")]
+mod client_document {
+  use std::ops::Deref;
+
+  use crate::block::output::AliasId;
+  use crate::block::output::Output;
+  use crate::block::output::OutputId;
+  use crate::block::payload::transaction::TransactionEssence;
+  use crate::block::payload::Payload;
+  use crate::block::Block;
+  use crate::error::Result;
+  use crate::Error;
+  use crate::NetworkName;
+
+  use super::*;
+
+  impl StardustDocument {
+    /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
+    /// outputs, if any.
+    ///
+    /// Errors if any Alias Output does not contain a valid or empty DID Document.
+    pub fn unpack_from_block(network: &NetworkName, block: &Block) -> Result<Vec<StardustDocument>> {
+      let mut documents = Vec::new();
+
+      if let Some(Payload::Transaction(tx_payload)) = block.payload() {
+        let TransactionEssence::Regular(regular) = tx_payload.essence();
+
+        for (index, output) in regular.outputs().iter().enumerate() {
+          if let Output::Alias(alias_output) = output {
+            let alias_id = if alias_output.alias_id().is_null() {
+              AliasId::from(
+                OutputId::new(
+                  tx_payload.id(),
+                  index
+                    .try_into()
+                    .map_err(|_| Error::OutputIdConversionError(format!("output index {index} must fit into a u16")))?,
+                )
+                .map_err(|err| Error::OutputIdConversionError(err.to_string()))?,
+              )
+            } else {
+              alias_output.alias_id().to_owned()
+            };
+
+            let did: StardustDID = StardustDID::new(alias_id.deref(), network);
+            documents.push(StardustDocument::unpack(&did, alias_output.state_metadata(), true)?);
+          }
+        }
+      }
+
+      Ok(documents)
+    }
+  }
+}
+
 impl Document for StardustDocument {
   type D = StardustDID;
   type U = Object;
