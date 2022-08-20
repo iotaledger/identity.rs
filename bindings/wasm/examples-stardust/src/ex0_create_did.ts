@@ -11,7 +11,7 @@ import {
     StardustVerificationMethod
 } from '../../node';
 
-import {Bech32Helper, IAliasOutput,} from '@iota/iota.js';
+import {Bech32Helper, IAliasOutput} from '@iota/iota.js';
 import {Bip39} from "@iota/crypto.js";
 import fetch from "node-fetch";
 import {Client, MnemonicSecretManager, SecretManager} from "@cycraig/iota-client-wasm/node";
