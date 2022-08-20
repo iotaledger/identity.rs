@@ -7,6 +7,7 @@
             "~iota-client-wasm": ["../node_modules/@cycraig/iota-client-wasm/web"],
         },
         "outDir": "../web",
+        "declarationDir": "../web",
         "module": "ES2020"
     }
 }

@@ -9,19 +9,19 @@
 
 ## Install the library:
 
-Latest Release: this version matches the main branch of this repository, is stable and will have changelogs.
+Latest Release: this version matches the `main` branch of this repository, is stable and will have changelogs.
 ```bash
 npm install @iota/identity-wasm
 ```
 
-Development Release: this version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
+Development Release: this version usually matches the latest code changes from the `dev` branch and may see frequent breaking changes.
 ```bash
 npm install @iota/identity-wasm@dev
 ```
 
 ## Build
 
-Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. 
+Alternatively, you can build the bindings yourself if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. 
 
 Install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen). A manual installation is required because we use the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature, which [`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
 
@@ -48,7 +48,7 @@ npm run build:web
 
 ## Minimum Requirements
 
-The minimum supported version for node is: `v16.0.0`
+The minimum supported version for node is: `v16`
 
 ## NodeJS Usage
 <!-- 
@@ -62,7 +62,7 @@ cat \
 -->
 <!-- !test check Nodejs Example -->
 ```javascript
-const identity = require('@iota/identity-wasm/node')
+const identity = require('@iota/identity-wasm/node');
 
 async function main() {
 
@@ -84,7 +84,7 @@ async function main() {
     console.log(`Explorer Url:`, identity.ExplorerUrl.mainnet().resolverUrl(did));
 }
 
-main()
+await main();
 ```
 
 ## Web Setup
