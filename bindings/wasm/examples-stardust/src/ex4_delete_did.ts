@@ -15,9 +15,6 @@ export async function deleteIdentity() {
     const destinationAddress = Bech32Helper.addressFromBech32(walletAddressBech32, await didClient.getNetworkHrp());
     await didClient.deleteDidOutput(secretManager, destinationAddress, did);
 
-    // Wait for the node to index the new state.
-    await new Promise(f => setTimeout(f, 5000));
-
     // Attempting to resolve a deleted DID results in a `NotFound` error.
     let deleted = false;
     try {
