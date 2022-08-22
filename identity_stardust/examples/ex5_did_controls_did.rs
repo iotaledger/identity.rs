@@ -1,12 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::output::AliasId;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
+use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustVerificationMethod;
 
 use iota_client::block::address::Address;
@@ -25,10 +28,8 @@ mod ex0_create_did;
 /// For this example, we consider the case where a parent company's DID owns the DID of a subsidiary.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  pretty_env_logger::init();
-
   // Create a new DID for the company.
-  let (client, _address, secret_manager, company_document): (Client, Address, SecretManager, StardustDocument) =
+  let (client, _address, secret_manager, company_did): (Client, Address, SecretManager, StardustDID) =
     ex0_create_did::run().await?;
 
   // Obtain the current byte costs and the network name.
@@ -43,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
   // updates the subsidary's Alias Output.
   let subsidiary_alias: AliasOutput = client
     .new_did_output(
-      Address::Alias(AliasAddress::new(company_document.id().into())),
+      Address::Alias(AliasAddress::new(AliasId::from(&company_did))),
       subsidiary_document,
       Some(rent_structure.clone()),
     )
@@ -53,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
     // Optionally, we can set the company of the new DID as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as
     // a resolver can verify that the subsidiary was issued by the parent company.
-    .add_immutable_feature(IssuerFeature::new(AliasAddress::new(company_document.id().into()).into()).into())
+    .add_immutable_feature(IssuerFeature::new(AliasAddress::new(AliasId::from(&company_did)).into()).into())
     // Adding the issuer feature means we have to re-calculate the required storage deposit.
     .with_minimum_storage_deposit(rent_structure.clone())
     .finish()?;
@@ -78,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
   let subsidiary_document: StardustDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
 
   // Resolve both DID documents for demonstration purposes.
-  let company_document = client.resolve_did(company_document.id()).await?;
+  let company_document = client.resolve_did(&company_did).await?;
   let subsidiary_document = client.resolve_did(subsidiary_document.id()).await?;
 
   println!("Company: {company_document:#?}");

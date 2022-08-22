@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use iota_client::block::output::AliasOutput;
-use iota_client::block::output::OutputId;
 use iota_client::Client;
 
 use identity_stardust::StardustDID;
@@ -21,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Resolved DID Document: {:#}", resolved);
 
   // We can also resolve the Alias Output directly.
-  let (_output_id, alias_output): (OutputId, AliasOutput) = client.resolve_did_output(document.id()).await?;
+  let alias_output: AliasOutput = client.resolve_did_output(&did).await?;
 
   println!("The Alias Output holds {} tokens", alias_output.amount());
 
