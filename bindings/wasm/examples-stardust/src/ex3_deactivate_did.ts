@@ -26,9 +26,6 @@ export async function deactivateIdentity() {
     // Publish the deactivated DID document.
     await didClient.publishDidOutput(secretManager, deactivatedOutput);
 
-    // Wait for the node to index the new state.
-    await new Promise(f => setTimeout(f, 10000));
-
     // Resolving a deactivated DID returns an empty DID document
     // with its `deactivated` metadata field set to `true`.
     let deactivated: StardustDocument = await didClient.resolveDid(did);
