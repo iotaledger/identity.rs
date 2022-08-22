@@ -4,15 +4,19 @@
 use std::rc::Rc;
 
 use identity_iota::credential::Presentation;
+use identity_iota::did::CoreDID;
 use identity_iota::resolver::Resolver;
 use js_sys::Function;
 use js_sys::Promise;
 
 use crate::credential::WasmPresentation;
+use crate::did::WasmCoreDID;
+use crate::error::WasmError;
 use crate::resolver::supported_document_types::RustSupportedDocument;
 
 use super::function_transformation::WasmResolverCommand;
 use super::supported_document_types::PromiseArraySupportedDocument;
+use super::supported_document_types::PromiseSupportedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::prelude::*;
@@ -73,5 +77,24 @@ impl MixedResolver {
       )
     });
     Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
+  }
+
+  #[wasm_bindgen]
+  pub fn resolve(&self, did: &WasmCoreDID) -> Result<PromiseSupportedDocument> {
+    let resolver: Rc<Resolver> = self.0.clone();
+    let did: CoreDID = did.0.clone();
+
+    let promise: Promise = future_to_promise(async move {
+      Ok(
+        resolver
+          .resolve(&did)
+          .await
+          .map_err(WasmError::from)
+          .and_then(RustSupportedDocument::try_from)?
+          .to_json()?,
+      )
+    });
+
+    Ok(promise.unchecked_into::<PromiseSupportedDocument>())
   }
 }
