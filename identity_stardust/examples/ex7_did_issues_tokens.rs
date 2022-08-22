@@ -48,9 +48,6 @@ async fn main() -> anyhow::Result<()> {
   let (client, _address, secret_manager, authority_did): (Client, Address, SecretManager, StardustDID) =
     ex0_create_did::run().await?;
 
-  let authority_alias_id: AliasId = (&authority_did).into();
-  let authority_alias_address: AliasAddress = authority_alias_id.into();
-
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // We want to update the foundry counter of the authority's Alias Output, so we create an
@@ -66,7 +63,8 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a token foundry that represents carbon credits.
   // The authority is set as the immutable owner.
-  let carbon_credits_foundry: FoundryOutput = create_foundry(rent_structure.clone(), authority_alias_address)?;
+  let carbon_credits_foundry: FoundryOutput =
+    create_foundry(rent_structure.clone(), AliasAddress::new(AliasId::from(&authority_did)))?;
   let carbon_credits_foundry_id: FoundryId = carbon_credits_foundry.id();
 
   // Publish all outputs.

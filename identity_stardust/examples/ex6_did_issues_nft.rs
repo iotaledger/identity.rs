@@ -43,14 +43,12 @@ async fn main() -> anyhow::Result<()> {
   let (client, _address, secret_manager, manufacturer_did): (Client, Address, SecretManager, StardustDID) =
     ex0_create_did::run().await?;
 
-  let manufacturer_alias_id: AliasId = (&manufacturer_did).into();
-  let manufacturer_alias_address: AliasAddress = manufacturer_alias_id.into();
-
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // Create the digital product passport NFT with the manufacturer set as the immutable issuer.
-  let product_passport_nft: NftOutput = create_nft(rent_structure, manufacturer_alias_address)?;
+  let product_passport_nft: NftOutput =
+    create_nft(rent_structure, AliasAddress::new(AliasId::from(&manufacturer_did)))?;
 
   // Publish all outputs.
   let block: Block = client
