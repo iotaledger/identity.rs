@@ -6,13 +6,10 @@ Cargo.lock
 node_modules/
 
 # Build artifacts
-wasm-web/
-wasm-node/
 web/
 node/
 pkg/
 **/dist/
-tmp/
 
 # cypress
 cypress/screenshots/

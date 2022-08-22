@@ -48,24 +48,6 @@ fs.writeFileSync(
     entryFilePathTs,
     changedFileTs
 );
-
-// Copy TypeScript to a temporary directory (to avoid overwriting it with changes).
-const tmpDir = path.join(__dirname, "..", "tmp");
-fse.copySync(path.join(__dirname, '..', 'lib'), tmpDir, { 'overwrite': true });
-
-// Replace `iota-client` import path in `stardust_identity_client.ts`.
-// `@iota/client-wasm/node` -> `@iota/client-wasm/web`.
-const clientFilePath = path.join(tmpDir, 'stardust_identity_client.ts');
-const clientFileTs = fs.readFileSync(clientFilePath).toString()
-    .replace(
-        /from '(.*)\/node';/i,
-        "from '$1/web';"
-    );
-fs.writeFileSync(
-    clientFilePath,
-    clientFileTs
-);
-
 // Generate `package.json`.
 const newPackage = generatePackage({
     module: 'index.js',

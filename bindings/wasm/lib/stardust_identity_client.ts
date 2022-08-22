@@ -1,11 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// @ts-ignore: path is set to match runtime transpiled js path when bundled.
-import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from './identity_wasm';
+import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from '~identity_wasm';
 
-// NOTE: this import path is replaced with `/web` in the `build/web.js` script.
-import type {Client, INodeInfoWrapper, SecretManager} from '@cycraig/iota-client-wasm/node';
+import type {Client, INodeInfoWrapper, SecretManager} from '~iota-client-wasm';
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
     AddressTypes,
