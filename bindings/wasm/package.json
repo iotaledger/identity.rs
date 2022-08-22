@@ -27,12 +27,15 @@
     "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:account:node": "ts-mocha -p tsconfig.node.json ./examples-account/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:stardust": "ts-mocha -p tsconfig.node.json ./examples-stardust/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
-    "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/integration -a '\"--quiet\"'",
+    "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/e2e -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
     "test:unit": "wasm-pack test --release --node",
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open"
+  },
+  "config": {
+    "CYPRESS_VERIFY_TIMEOUT": 100000
   },
   "contributors": [
     "Jelle Millenaar <jelle.millenaar@iota.org>",
@@ -58,8 +61,8 @@
     "@types/mocha": "^9.1.0",
     "concurrently": "^7.0.0",
     "copy-webpack-plugin": "^7.0.0",
-    "cypress": "^9.3.1",
-    "cypress-parallel": "^0.1.8",
+    "cypress": "^10.6.0",
+    "cypress-parallel": "^0.9.1",
     "fs-extra": "^10.1.0",
     "http-server": "^14.1.0",
     "jsdoc-to-markdown": "^7.1.1",
