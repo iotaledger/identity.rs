@@ -22,7 +22,7 @@ use identity_stardust::StardustVerificationMethod;
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // Create a client and a wallet address with funds from the testnet faucet.
+  // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
   // Get an address and a secret manager with funds for testing.

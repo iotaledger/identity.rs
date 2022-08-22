@@ -5,7 +5,6 @@
 // use bee_block::output::AliasOutput;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 
 use identity_stardust::block::address::NftAddress;
@@ -26,7 +25,7 @@ use iota_client::block::payload::Payload;
 use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-use utils::create_did;
+use utils::get_address_with_funds;
 use utils::NETWORK_ENDPOINT;
 
 /// Demonstrate how an identity can issue and own NFTs,
@@ -40,14 +39,16 @@ async fn main() -> anyhow::Result<()> {
   // Create the car's DID and the DPP.
   // ==========================================
 
-  // TODO: Used to obtain an address and secret manager with funds.
-  let (_, address, secret_manager, _): (Client, Address, SecretManager, StardustDID) = create_did().await?;
-
+  // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+
+  // Get an address and a secret manager with funds for testing.
+  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
+  // Create the car NFT with an Ed25519 address as the unlock condition.
   let car_nft: NftOutput = NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone(), NftId::null())?
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
     .finish()?;
