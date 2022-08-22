@@ -171,10 +171,10 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest --manifest-path ./identity_stardust/Cargo.toml | \
+          cargo read-manifest --manifest-path ./examples_stardust/Cargo.toml | \
           jq -r '.targets[].name' | \
-          awk '$1 ~ /ex.*/' | \
-          parallel -k -j 4 --retries 3 cargo run --manifest-path ./identity_stardust/Cargo.toml --example {} --all-features --release
+          awk '$1 ~ /\d.*/' | \
+          parallel -k -j 4 --retries 3 cargo run --manifest-path ./examples_stardust/Cargo.toml --example {} --all-features --release
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
