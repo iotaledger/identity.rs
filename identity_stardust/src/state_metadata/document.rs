@@ -30,7 +30,9 @@ const DID_MARKER: &[u8] = b"DID";
 /// DID instances in the document are replaced by the `PLACEHOLDER_DID`.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub(crate) struct StateMetadataDocument {
+  #[serde(rename = "doc")]
   document: CoreDocument,
+  #[serde(rename = "meta")]
   metadata: StardustDocumentMetadata,
 }
 
@@ -71,7 +73,7 @@ impl StateMetadataDocument {
   pub fn unpack(data: &[u8]) -> Result<Self> {
     // Check marker.
     let marker: &[u8] = data.get(0..3).ok_or(identity_did::Error::InvalidDocument(
-      "expected data to have at least length 3",
+      "unpack expected data to have at least length 3",
       None,
     ))?;
     if marker != DID_MARKER {
@@ -148,6 +150,7 @@ mod tests {
   use identity_did::did::DID;
   use identity_did::verification::MethodScope;
 
+  use crate::state_metadata::document::DID_MARKER;
   use crate::state_metadata::PLACEHOLDER_DID;
   use crate::StardustDID;
   use crate::StardustDocument;
@@ -155,6 +158,7 @@ mod tests {
   use crate::StardustVerificationMethod;
   use crate::StateMetadataDocument;
   use crate::StateMetadataEncoding;
+  use crate::StateMetadataVersion;
 
   struct TestSetup {
     document: StardustDocument,
@@ -297,5 +301,29 @@ mod tests {
 
     let unpacked_doc = StateMetadataDocument::unpack(&packed_bytes).unwrap();
     assert_eq!(state_metadata_doc, unpacked_doc);
+  }
+
+  #[test]
+  fn test_pack_format() {
+    // Changing the serialization is a breaking change!
+    let TestSetup { document, .. } = test_document();
+    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
+    let packed: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
+
+    // DID marker.
+    assert_eq!(&packed[0..3], DID_MARKER);
+    // Version.
+    assert_eq!(packed[3], StateMetadataVersion::V1 as u8);
+    // Encoding.
+    assert_eq!(packed[4], StateMetadataEncoding::Json as u8);
+    // JSON payload.
+    assert_eq!(
+      &packed[5..],
+      format!(
+        "{{\"doc\":{},\"meta\":{}}}",
+        state_metadata_doc.document, state_metadata_doc.metadata
+      )
+      .as_bytes()
+    );
   }
 }

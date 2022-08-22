@@ -13,8 +13,8 @@ pub enum Error {
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
   #[cfg(feature = "iota-client")]
-  #[error("DID update failed")]
-  DIDUpdateError(#[source] iota_client::error::Error),
+  #[error("DID update: {0}")]
+  DIDUpdateError(&'static str, #[source] Option<iota_client::error::Error>),
   #[cfg(feature = "iota-client")]
   #[error("DID resolution failed")]
   DIDResolutionError(#[source] iota_client::error::Error),
@@ -29,9 +29,9 @@ pub enum Error {
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]
   RevocationError(#[source] identity_did::Error),
-  #[cfg(feature = "iota-client")]
+  #[cfg(feature = "client")]
   #[error("alias output build error")]
-  AliasOutputBuildError(#[source] iota_client::block::Error),
+  AliasOutputBuildError(#[source] bee_block::Error),
   #[cfg(feature = "iota-client")]
   #[error("output with id `{0}` is not an alias output")]
   NotAnAliasOutput(iota_client::block::output::OutputId),
@@ -40,4 +40,7 @@ pub enum Error {
   OutputConversionError(#[source] iota_client::block::DtoError),
   #[error("conversion to an OutputId failed: {0}")]
   OutputIdConversionError(String),
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+  #[error("JavaScript function threw an exception: {0}")]
+  JsError(String),
 }

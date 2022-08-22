@@ -4,7 +4,11 @@
 #![forbid(unsafe_code)]
 #![allow(clippy::upper_case_acronyms)]
 
-#[cfg(feature = "iota-client")]
+/// Re-export the `bee_block` crate for implementer convenience.
+#[cfg(feature = "client")]
+pub use bee_block as block;
+
+#[cfg(feature = "client")]
 pub use client::*;
 pub use did::StardustDID;
 pub use did::StardustDIDUrl;
@@ -14,11 +18,10 @@ pub use state_metadata::*;
 
 pub use self::error::Error;
 pub use self::error::Result;
-
 #[cfg(test)]
 mod resolution;
 
-#[cfg(feature = "iota-client")]
+#[cfg(feature = "client")]
 mod client;
 mod did;
 mod document;

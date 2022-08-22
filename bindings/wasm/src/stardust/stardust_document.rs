@@ -382,18 +382,47 @@ impl WasmStardustDocument {
 
   /// Deserializes the document from the state metadata bytes of an Alias Output.
   ///
+  /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
+  /// if `stateMetadata` is empty.
+  ///
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
   #[wasm_bindgen]
-  pub fn unpack(did: &WasmStardustDID, stateMetadata: &[u8]) -> Result<WasmStardustDocument> {
-    StardustDocument::unpack(&did.0, stateMetadata)
+  pub fn unpack(did: &WasmStardustDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmStardustDocument> {
+    StardustDocument::unpack(&did.0, stateMetadata, allowEmpty)
       .map(WasmStardustDocument)
       .wasm_result()
   }
 
-  // TODO: unpack_from_output/unpackFromOutput ? Feature-gated method, do we need an equivalent?
+  /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
+  /// outputs, if any.
+  ///
+  /// Errors if any Alias Output does not contain a valid or empty DID Document.
+  #[wasm_bindgen(js_name = unpackFromBlock)]
+  pub fn unpack_from_block(network: String, block: &IBlock) -> Result<ArrayStardustDocument> {
+    let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
+    let block_dto: bee_block::BlockDto = block
+      .into_serde()
+      .map_err(|err| {
+        identity_stardust::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
+      })
+      .wasm_result()?;
+    let block: bee_block::Block = bee_block::Block::try_from(&block_dto)
+      .map_err(|err| identity_stardust::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err)))
+      .wasm_result()?;
+
+    Ok(
+      StardustDocument::unpack_from_block(&network_name, &block)
+        .wasm_result()?
+        .into_iter()
+        .map(WasmStardustDocument::from)
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayStardustDocument>(),
+    )
+  }
 
   // ===========================================================================
   // Metadata
@@ -434,6 +463,18 @@ impl WasmStardustDocument {
     let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
     self.0.metadata.updated = timestamp;
     Ok(())
+  }
+
+  /// Returns a copy of the deactivated status of the DID document.
+  #[wasm_bindgen(js_name = metadataDeactivated)]
+  pub fn metadata_deactivated(&self) -> Option<bool> {
+    self.0.metadata.deactivated
+  }
+
+  /// Sets the deactivated status of the DID document.
+  #[wasm_bindgen(js_name = setMetadataDeactivated)]
+  pub fn set_metadata_deactivated(&mut self, deactivated: Option<bool>) {
+    self.0.metadata.deactivated = deactivated;
   }
 
   /// Sets a custom property in the document metadata.
@@ -502,9 +543,19 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "StardustDID[]")]
   pub type ArrayStardustDID;
 
+  #[wasm_bindgen(typescript_type = "StardustDocument[]")]
+  pub type ArrayStardustDocument;
+
   #[wasm_bindgen(typescript_type = "StardustService[]")]
   pub type ArrayStardustService;
 
   #[wasm_bindgen(typescript_type = "StardustVerificationMethod[]")]
   pub type ArrayStardustVerificationMethods;
+
+  // External interface from `@iota/types`, must be deserialized via BlockDto.
+  #[wasm_bindgen(typescript_type = "IBlock")]
+  pub type IBlock;
 }
+
+#[wasm_bindgen(typescript_custom_section)]
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { IBlock } from '@iota/types';"#;

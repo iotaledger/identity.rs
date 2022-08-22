@@ -26,9 +26,9 @@ fs.writeFileSync(
     changedFileNode
 );
 
+// Generate `package.json`.
 const newPackage = generatePackage({
-    main: 'identity_wasm.js',
-    types: 'identity_wasm.d.ts',
+    main: 'index.js',
+    types: 'index.d.ts',
 });
-
 fs.writeFileSync(path.join(RELEASE_FOLDER, 'package.json'), JSON.stringify(newPackage, null, 2));

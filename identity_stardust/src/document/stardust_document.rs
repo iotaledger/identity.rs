@@ -285,11 +285,75 @@ impl StardustDocument {
 
   /// Deserializes the document from the state metadata bytes of an Alias Output.
   ///
+  /// If `allow_empty` is true, this will return an empty DID document marked as `deactivated`
+  /// if `state_metadata` is empty.
+  ///
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
-  pub fn unpack(did: &StardustDID, state_metadata: &[u8]) -> Result<StardustDocument> {
+  pub fn unpack(did: &StardustDID, state_metadata: &[u8], allow_empty: bool) -> Result<StardustDocument> {
+    if state_metadata.is_empty() && allow_empty {
+      let mut empty_document = StardustDocument::new_with_id(did.clone());
+      empty_document.metadata.created = None;
+      empty_document.metadata.updated = None;
+      empty_document.metadata.deactivated = Some(true);
+      return Ok(empty_document);
+    }
     StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_stardust_document(did))
+  }
+}
+
+#[cfg(feature = "client")]
+mod client_document {
+  use std::ops::Deref;
+
+  use crate::block::output::AliasId;
+  use crate::block::output::Output;
+  use crate::block::output::OutputId;
+  use crate::block::payload::transaction::TransactionEssence;
+  use crate::block::payload::Payload;
+  use crate::block::Block;
+  use crate::error::Result;
+  use crate::Error;
+  use crate::NetworkName;
+
+  use super::*;
+
+  impl StardustDocument {
+    /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
+    /// outputs, if any.
+    ///
+    /// Errors if any Alias Output does not contain a valid or empty DID Document.
+    pub fn unpack_from_block(network: &NetworkName, block: &Block) -> Result<Vec<StardustDocument>> {
+      let mut documents = Vec::new();
+
+      if let Some(Payload::Transaction(tx_payload)) = block.payload() {
+        let TransactionEssence::Regular(regular) = tx_payload.essence();
+
+        for (index, output) in regular.outputs().iter().enumerate() {
+          if let Output::Alias(alias_output) = output {
+            let alias_id = if alias_output.alias_id().is_null() {
+              AliasId::from(
+                OutputId::new(
+                  tx_payload.id(),
+                  index
+                    .try_into()
+                    .map_err(|_| Error::OutputIdConversionError(format!("output index {index} must fit into a u16")))?,
+                )
+                .map_err(|err| Error::OutputIdConversionError(err.to_string()))?,
+              )
+            } else {
+              alias_output.alias_id().to_owned()
+            };
+
+            let did: StardustDID = StardustDID::new(alias_id.deref(), network);
+            documents.push(StardustDocument::unpack(&did, alias_output.state_metadata(), true)?);
+          }
+        }
+      }
+
+      Ok(documents)
+    }
   }
 }
 
@@ -661,6 +725,24 @@ mod tests {
   }
 
   #[test]
+  fn test_unpack_empty() {
+    // VALID: unpack empty, deactivated document.
+    let did: StardustDID = valid_did();
+    let empty: &[u8] = &[];
+    let document: StardustDocument = StardustDocument::unpack(&did, empty, true).unwrap();
+    assert_eq!(document.id(), &did);
+    assert_eq!(document.metadata.deactivated, Some(true));
+
+    // Ensure no other fields are injected.
+    // TODO: update this when controller/governor fields are added?
+    let json: String = format!("{{\"doc\":{{\"id\":\"{did}\"}},\"meta\":{{\"deactivated\":true}}}}");
+    assert_eq!(document.to_json().unwrap(), json);
+
+    // INVALID: reject empty document.
+    assert!(StardustDocument::unpack(&did, empty, false).is_err());
+  }
+
+  #[test]
   fn test_json_roundtrip() {
     let document: StardustDocument = generate_document(&valid_did());
 
@@ -671,6 +753,7 @@ mod tests {
 
   #[test]
   fn test_json_fieldnames() {
+    // Changing the serialization is a breaking change!
     let document: StardustDocument = StardustDocument::new_with_id(valid_did());
     let serialization: String = document.to_json().unwrap();
     assert_eq!(
