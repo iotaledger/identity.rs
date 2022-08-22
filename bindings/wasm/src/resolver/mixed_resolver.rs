@@ -34,7 +34,7 @@ impl MixedResolver {
     Self(Rc::new(Resolver::new()))
   }
 
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = attachHandler)]
   //TODO: Fix the potential panic below. This can be enforced using something like the builder pattern.
   pub fn attach_handler(&mut self, method: &str, handler: &Function) {
     let command = WasmResolverCommand::new(handler).ptr;
@@ -80,9 +80,9 @@ impl MixedResolver {
   }
 
   #[wasm_bindgen]
-  pub fn resolve(&self, did: &WasmCoreDID) -> Result<PromiseSupportedDocument> {
+  pub fn resolve(&self, did: &str) -> Result<PromiseSupportedDocument> {
     let resolver: Rc<Resolver> = self.0.clone();
-    let did: CoreDID = did.0.clone();
+    let did: CoreDID = CoreDID::parse(did).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       Ok(

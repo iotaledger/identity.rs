@@ -6,6 +6,7 @@ import {updateIdentity} from "./ex1_update_did";
 import {resolveIdentity} from "./ex2_resolve_did";
 import {deactivateIdentity} from "./ex3_deactivate_did";
 import {deleteIdentity} from "./ex4_delete_did";
+import {customResolution} from "./ex5_custom_resolution";
 
 async function main() {
     // Extract example name.
@@ -25,6 +26,8 @@ async function main() {
             return await deactivateIdentity();
         case "ex4_delete_did":
             return await deleteIdentity();
+        case "ex5_custom_resolution":
+            return await customResolution();
         default:
             throw "Unknown example name: '" + argument + "'";
     }

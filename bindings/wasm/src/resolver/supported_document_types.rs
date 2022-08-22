@@ -11,11 +11,12 @@ use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
 #[derive(Deserialize)]
+#[serde(untagged)]
 /// Temporary type used to convert to and from Box<dyn ValidatorDocument> until
 /// we port the Document trait to these bindings.
 pub(super) enum RustSupportedDocument {
-  Core(CoreDocument),
   Stardust(StardustDocument),
+  Core(CoreDocument),
 }
 
 impl RustSupportedDocument {
