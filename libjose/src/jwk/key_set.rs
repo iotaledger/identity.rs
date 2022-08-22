@@ -14,7 +14,7 @@ use crate::lib::*;
 /// JSON Web Key Set.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7517#section-5)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct JwkSet {
   /// An array of JWK values.

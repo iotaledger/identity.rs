@@ -163,6 +163,14 @@ describe('StardustDocument', function () {
             assert.deepStrictEqual(doc.metadata().updated().toRFC3339(), updated.toRFC3339());
             assert.notDeepStrictEqual(doc.metadataUpdated().toRFC3339(), previousUpdated.toRFC3339());
             assert.deepStrictEqual(doc.metadataCreated().toRFC3339(), created.toRFC3339());
+            // Deactivated.
+            assert.deepStrictEqual(doc.metadataDeactivated(), undefined);
+            doc.setMetadataDeactivated(true);
+            assert.deepStrictEqual(doc.metadataDeactivated(), true);
+            doc.setMetadataDeactivated(false);
+            assert.deepStrictEqual(doc.metadataDeactivated(), false);
+            doc.setMetadataDeactivated(undefined);
+            assert.deepStrictEqual(doc.metadataDeactivated(), undefined);
             // Properties.
             assert.deepStrictEqual(doc.metadata().properties(), new Map());
             const properties = new Map()

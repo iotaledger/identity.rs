@@ -6,8 +6,8 @@ use identity_iota::iota_core::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::WasmKeyType;
-use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
+use crate::did::WasmIotaDID;
 use crate::did::WasmMethodData;
 use crate::did::WasmMethodType;
 use crate::error::Result;
@@ -22,7 +22,7 @@ impl WasmVerificationMethod {
   #[allow(non_snake_case)]
   #[wasm_bindgen(constructor)]
   pub fn new(
-    did: &WasmDID,
+    did: &WasmIotaDID,
     keyType: WasmKeyType,
     publicKey: Vec<u8>,
     fragment: String,
@@ -41,13 +41,13 @@ impl WasmVerificationMethod {
 
   /// Returns a copy of the `controller` `DID` of the `VerificationMethod`.
   #[wasm_bindgen]
-  pub fn controller(&self) -> WasmDID {
-    WasmDID::from(self.0.controller().clone())
+  pub fn controller(&self) -> WasmIotaDID {
+    WasmIotaDID::from(self.0.controller().clone())
   }
 
-  /// Sets the `controller` `DID` of the `VerificationMethod`.
+  /// Sets the `controller` `DID` of the `VerificationMethod` object.
   #[wasm_bindgen(js_name = setController)]
-  pub fn set_controller(&mut self, did: &WasmDID) {
+  pub fn set_controller(&mut self, did: &WasmIotaDID) {
     *self.0.controller_mut() = did.0.clone();
   }
 

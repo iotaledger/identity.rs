@@ -35,7 +35,7 @@ lazy_static! {
 }
 
 /// Represents a set of claims describing an entity.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
   #[serde(rename = "@context")]

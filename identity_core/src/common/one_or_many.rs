@@ -93,7 +93,7 @@ impl<T> OneOrMany<T> {
 
   /// Returns a reference to the contents as a slice.
   pub fn as_slice(&self) -> &[T] {
-    &*self
+    &**self
   }
 
   /// Consumes the [`OneOrMany`] and returns the contents as a [`Vec`].
@@ -123,14 +123,14 @@ impl<T> Deref for OneOrMany<T> {
   fn deref(&self) -> &Self::Target {
     match self {
       Self::One(inner) => from_ref(inner),
-      Self::Many(inner) => &*inner,
+      Self::Many(inner) => &**inner,
     }
   }
 }
 
 impl<T> AsRef<[T]> for OneOrMany<T> {
   fn as_ref(&self) -> &[T] {
-    &*self
+    &**self
   }
 }
 

@@ -1,11 +1,14 @@
 {
     "compilerOptions": {
-      "declaration": true,
-      "strict": true,
-      "esModuleInterop": true
+        "lib": ["ES2020", "DOM"],
+        "declaration": true,
+        "sourceMap": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "importsNotUsedAsValues": "error",
+        "noImplicitAny": true,
+        "preserveConstEnums": true,
+        "forceConsistentCasingInFileNames": true,
     },
-    "exclude": [
-      "node_modules",
-      "dist"
-    ]
+    "exclude": ["node_modules"]
 }

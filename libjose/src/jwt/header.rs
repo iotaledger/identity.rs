@@ -11,7 +11,7 @@ use crate::lib::*;
 ///
 /// [More Info (JWS)](https://tools.ietf.org/html/rfc7515#section-4)
 /// [More Info (JWE)](https://tools.ietf.org/html/rfc7516#section-4)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct JwtHeader {
   /// JWK Set URL.
   ///

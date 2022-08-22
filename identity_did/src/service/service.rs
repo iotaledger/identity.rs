@@ -24,7 +24,7 @@ use crate::service::ServiceEndpoint;
 /// A DID Document Service used to enable trusted interactions associated with a DID subject.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#services)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(bound(deserialize = "D: DID + Deserialize<'de>, T: serde::Deserialize<'de>"))]
 pub struct Service<D = CoreDID, T = Object>
 where
