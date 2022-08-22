@@ -84,7 +84,7 @@ async function main() {
     console.log(`Explorer Url:`, identity.ExplorerUrl.mainnet().resolverUrl(did));
 }
 
-await main();
+main();
 ```
 
 ## Web Setup
