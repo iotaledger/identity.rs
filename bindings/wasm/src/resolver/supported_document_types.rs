@@ -13,12 +13,12 @@ use wasm_bindgen::prelude::*;
 #[derive(Deserialize)]
 /// Temporary type used to convert to and from Box<dyn ValidatorDocument> until
 /// we port the Document trait to these bindings.
-pub(super) enum SupportedDocument {
+pub(super) enum RustSupportedDocument {
   Core(CoreDocument),
   Stardust(StardustDocument),
 }
 
-impl SupportedDocument {
+impl RustSupportedDocument {
   pub(super) fn to_json(&self) -> Result<JsValue> {
     match self {
       Self::Core(doc) => JsValue::from_serde(doc).wasm_result(),
@@ -27,24 +27,24 @@ impl SupportedDocument {
   }
 }
 
-impl From<SupportedDocument> for Box<dyn ValidatorDocument> {
-  fn from(document: SupportedDocument) -> Self {
+impl From<RustSupportedDocument> for Box<dyn ValidatorDocument> {
+  fn from(document: RustSupportedDocument) -> Self {
     match document {
-      SupportedDocument::Core(core_doc) => Box::new(core_doc) as Box<dyn ValidatorDocument>,
-      SupportedDocument::Stardust(stardust_doc) => Box::new(stardust_doc) as Box<dyn ValidatorDocument>,
+      RustSupportedDocument::Core(core_doc) => Box::new(core_doc) as Box<dyn ValidatorDocument>,
+      RustSupportedDocument::Stardust(stardust_doc) => Box::new(stardust_doc) as Box<dyn ValidatorDocument>,
     }
   }
 }
 
-impl TryFrom<Box<dyn ValidatorDocument>> for SupportedDocument {
+impl TryFrom<Box<dyn ValidatorDocument>> for RustSupportedDocument {
   type Error = WasmError<'static>;
   fn try_from(value: Box<dyn ValidatorDocument>) -> std::result::Result<Self, Self::Error> {
     let upcast = value.into_any();
     let supported_document = match upcast.downcast::<CoreDocument>() {
-      Ok(doc) => SupportedDocument::Core(*doc),
+      Ok(doc) => RustSupportedDocument::Core(*doc),
       Err(retry) => {
         if let Ok(doc) = retry.downcast::<StardustDocument>() {
-          SupportedDocument::Stardust(*doc)
+          RustSupportedDocument::Stardust(*doc)
         } else {
           Err(WasmError::new(
             "ResolutionError".into(),
@@ -59,8 +59,12 @@ impl TryFrom<Box<dyn ValidatorDocument>> for SupportedDocument {
 
 #[wasm_bindgen]
 extern "C" {
-  // TODO: Export CoreDocument to these bindings and change the definition below to Promise<Array<StardustDocument |
-  // CoreDocument>>
-  #[wasm_bindgen(typescript_type = "Promise<Array<StardustDocument>>")]
+  #[wasm_bindgen(typescript_type = "Promise<Array<StardustDocument | CoreDocument>>")]
   pub type PromiseArraySupportedDocument;
+
+  #[wasm_bindgen(typescript_type = "Promise<StardustDocument | CoreDocument>")]
+  pub type PromiseSupportedDocument;
+
+  #[wasm_bindgen(typescript_type = "StardustDocument | CoreDocument")]
+  pub type SupportedDocument;
 }

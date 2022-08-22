@@ -9,7 +9,7 @@ use js_sys::Function;
 use js_sys::Promise;
 
 use crate::credential::WasmPresentation;
-use crate::resolver::supported_document_types::SupportedDocument;
+use crate::resolver::supported_document_types::RustSupportedDocument;
 
 use super::function_transformation::WasmResolverCommand;
 use super::supported_document_types::PromiseArraySupportedDocument;
@@ -53,14 +53,14 @@ impl MixedResolver {
     let presentation: Presentation = presentation.0.clone();
 
     let promise: Promise = future_to_promise(async move {
-      let supported_documents: Vec<SupportedDocument> = resolver
+      let supported_documents: Vec<RustSupportedDocument> = resolver
         .resolve_presentation_issuers(&presentation)
         .await
         .wasm_result()
         .and_then(|abstractly_resolved| {
           abstractly_resolved
             .into_iter()
-            .map(|abstract_doc| SupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
+            .map(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
             .collect::<Result<_>>()
         })?;
 

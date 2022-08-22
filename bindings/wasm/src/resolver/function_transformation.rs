@@ -15,7 +15,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::error::JsValueResult;
 
-use super::supported_document_types::SupportedDocument;
+use super::supported_document_types::RustSupportedDocument;
 
 pub(super) struct WasmResolverCommand {
   pub(super) ptr: AsyncFnPtr<str, Result<Option<Box<dyn ValidatorDocument>>>>,
@@ -34,7 +34,7 @@ impl WasmResolverCommand {
           return Ok(None);
         }
 
-        let supported_document: SupportedDocument = awaited_output.into_serde().map_err(|error| {
+        let supported_document: RustSupportedDocument = awaited_output.into_serde().map_err(|error| {
           Error::JsError(format!(
             "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
             error.to_string()
