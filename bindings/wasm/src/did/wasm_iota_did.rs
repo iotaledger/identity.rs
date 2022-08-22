@@ -11,13 +11,11 @@ use crate::error::WasmResult;
 use crate::tangle::WasmNetwork;
 
 /// A DID conforming to the IOTA DID method specification.
-///
-/// @typicalname did
-#[wasm_bindgen(js_name = DID, inspectable)]
-pub struct WasmDID(pub(crate) IotaDID);
+#[wasm_bindgen(js_name = IotaDID, inspectable)]
+pub struct WasmIotaDID(pub(crate) IotaDID);
 
-#[wasm_bindgen(js_class = DID)]
-impl WasmDID {
+#[wasm_bindgen(js_class = IotaDID)]
+impl WasmIotaDID {
   /// The IOTA DID method name (`"iota"`).
   #[wasm_bindgen(getter = METHOD)]
   pub fn static_method() -> String {
@@ -36,12 +34,12 @@ impl WasmDID {
 
   /// Creates a new `DID` from a public key.
   #[wasm_bindgen(constructor)]
-  pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
+  pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmIotaDID> {
     Self::from_public_key(public_key, network)
   }
 
-  /// Creates a new `DID` from an arbitrary public key.
-  fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
+  /// Creates a new `IotaDID` from an arbitrary public key.
+  fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmIotaDID> {
     let did = if let Some(network) = network {
       IotaDID::new_with_network(public_key, network)
     } else {
@@ -50,9 +48,9 @@ impl WasmDID {
     did.wasm_result().map(Self)
   }
 
-  /// Parses a `DID` from the input string.
+  /// Parses a `IotaDID` from the input string.
   #[wasm_bindgen]
-  pub fn parse(input: &str) -> Result<WasmDID> {
+  pub fn parse(input: &str) -> Result<WasmIotaDID> {
     IotaDID::parse(input).wasm_result().map(Self)
   }
 
@@ -60,19 +58,19 @@ impl WasmDID {
   // Properties
   // ===========================================================================
 
-  /// Returns the Tangle network of the `DID`.
+  /// Returns the Tangle network of the `IotaDID`.
   #[wasm_bindgen]
   pub fn network(&self) -> Result<WasmNetwork> {
     self.0.network().map(Into::into).wasm_result()
   }
 
-  /// Returns the Tangle network name of the `DID`.
+  /// Returns the Tangle network name of the `IotaDID`.
   #[wasm_bindgen(js_name = networkStr)]
   pub fn network_str(&self) -> String {
     self.0.network_str().to_owned()
   }
 
-  /// Returns a copy of the unique tag of the `DID`.
+  /// Returns a copy of the unique tag of the `IotaDID`.
   #[wasm_bindgen]
   pub fn tag(&self) -> String {
     self.0.tag().to_owned()
@@ -128,19 +126,19 @@ impl WasmDID {
     self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
-  /// Clones the `DID` into a `DIDUrl`.
+  /// Clones the `IotaDID` into a `DIDUrl`.
   #[wasm_bindgen(js_name = toUrl)]
   pub fn to_url(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.to_url())
   }
 
-  /// Converts the `DID` into a `DIDUrl`, consuming it.
+  /// Converts the `IotaDID` into a `DIDUrl`, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
   pub fn into_url(self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.into_url())
   }
 
-  /// Returns the `DID` as a string.
+  /// Returns the `IotaDID` as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
@@ -148,10 +146,10 @@ impl WasmDID {
   }
 }
 
-impl_wasm_json!(WasmDID, DID);
-impl_wasm_clone!(WasmDID, DID);
+impl_wasm_json!(WasmIotaDID, IotaDID);
+impl_wasm_clone!(WasmIotaDID, IotaDID);
 
-impl From<IotaDID> for WasmDID {
+impl From<IotaDID> for WasmIotaDID {
   fn from(did: IotaDID) -> Self {
     Self(did)
   }
@@ -160,14 +158,14 @@ impl From<IotaDID> for WasmDID {
 /// Duck-typed union to pass either a string or WasmDID as a parameter.
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "DID | string")]
-  pub type UWasmDID;
+  #[wasm_bindgen(typescript_type = "IotaDID | string")]
+  pub type UWasmIotaDID;
 }
 
-impl TryFrom<UWasmDID> for IotaDID {
+impl TryFrom<UWasmIotaDID> for IotaDID {
   type Error = JsValue;
 
-  fn try_from(did: UWasmDID) -> std::result::Result<Self, Self::Error> {
+  fn try_from(did: UWasmIotaDID) -> std::result::Result<Self, Self::Error> {
     // Parse rather than going through serde directly to return proper error types.
     let json: String = did.into_serde().wasm_result()?;
     IotaDID::parse(&json).wasm_result()

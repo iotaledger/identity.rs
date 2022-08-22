@@ -9,6 +9,8 @@ pub use stardust_service::WasmStardustService;
 pub use stardust_verification_method::WasmStardustVerificationMethod;
 pub use state_metadata_encoding::WasmStateMetadataEncoding;
 
+mod identity_client;
+mod identity_client_ext;
 mod stardust_did;
 mod stardust_did_url;
 mod stardust_document;

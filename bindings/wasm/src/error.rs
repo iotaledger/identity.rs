@@ -178,6 +178,15 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
+impl From<identity_stardust::block::Error> for WasmError<'_> {
+  fn from(error: identity_stardust::block::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("bee_block::Error"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
 impl From<identity_iota::credential::CompoundCredentialValidationError> for WasmError<'_> {
   fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {
@@ -221,6 +230,21 @@ impl JsValueResult {
       };
 
       AccountStorageError::JsError(error_string)
+    })
+  }
+
+  /// Consumes the struct and returns a Result<_, identity_stardust::Error>, leaving an `Ok` value untouched.
+  pub fn to_stardust_error(self) -> StdResult<JsValue, identity_stardust::Error> {
+    self.0.map_err(|js_value| {
+      let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
+        Ok(js_err) => ToString::to_string(&js_err.to_string()),
+        Err(js_val) => {
+          // Fall back to debug formatting if the error is not a proper JS Error instance.
+          format!("{js_val:?}")
+        }
+      };
+
+      identity_stardust::Error::JsError(error_string)
     })
   }
 }

@@ -1,6 +1,7 @@
-const path = require('path')
-const fs = require('fs')
-const { lintAll } = require('./lints')
+const path = require('path');
+const fs = require('fs');
+const fse = require('fs-extra');
+const { lintAll } = require('./lints');
 const generatePackage = require('./utils/generatePackage');
 
 const RELEASE_FOLDER = path.join(__dirname, '../web/');
@@ -47,10 +48,9 @@ fs.writeFileSync(
     entryFilePathTs,
     changedFileTs
 );
-
+// Generate `package.json`.
 const newPackage = generatePackage({
-    module: 'identity_wasm.js',
-    types: 'identity_wasm.d.ts',
+    module: 'index.js',
+    types: 'index.d.ts',
 });
-
 fs.writeFileSync(path.join(RELEASE_FOLDER, 'package.json'), JSON.stringify(newPackage, null, 2));

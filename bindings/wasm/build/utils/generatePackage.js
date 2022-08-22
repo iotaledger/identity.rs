@@ -7,10 +7,10 @@ module.exports = (options) => {
         description: rootPackage.description,
         version: rootPackage.version,
         license: rootPackage.license,
-        repository: rootPackage.repository,
-        main: options.main,
-        module: options.module,
         homepage: rootPackage.homepage,
+        repository: rootPackage.repository,
+        module: options.module,
+        main: options.main,
         types: options.types,
     }
 

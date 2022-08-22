@@ -9,7 +9,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 /// Supported verification method data formats.
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub enum MethodData {

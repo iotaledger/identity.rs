@@ -8,7 +8,7 @@ use identity_core::common::Url;
 /// Information used to validate the structure of a [`Credential`][crate::credential::Credential].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#data-schemas)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Schema {
   /// A Url identifying the credential schema file.
   pub id: Url,

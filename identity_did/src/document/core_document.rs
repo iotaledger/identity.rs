@@ -45,7 +45,7 @@ use crate::verification::VerificationMethod;
 /// A DID Document.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
 pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   where

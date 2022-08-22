@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use identity_iota_core::did::IotaDID;
+use identity_did::did::CoreDID;
 use iota_stronghold::Client;
 use iota_stronghold::ClientError;
 use iota_stronghold::KeyProvider;
@@ -103,7 +103,7 @@ impl Stronghold {
 
   /// Load the client for the given `did` and apply function `f` to it.
   /// The (potentially) modified client is then written to the stronghold's snapshot state.
-  pub(crate) fn mutate_client<FUN, OUT>(&self, did: &IotaDID, f: FUN) -> Result<OUT>
+  pub(crate) fn mutate_client<FUN, OUT>(&self, did: &CoreDID, f: FUN) -> Result<OUT>
   where
     FUN: FnOnce(Client) -> Result<OUT>,
   {

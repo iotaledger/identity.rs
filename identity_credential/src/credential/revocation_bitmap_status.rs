@@ -15,7 +15,7 @@ use crate::error::Result;
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential]
 /// using the `RevocationBitmap2022` specification.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RevocationBitmapStatus(Status);
 
 impl RevocationBitmapStatus {

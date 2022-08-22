@@ -20,6 +20,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
 #[cfg(feature = "encryption")]
 use identity_core::crypto::X25519;
+use identity_did::did::CoreDID;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::tangle::NetworkName;
 use std::sync::RwLockReadGuard;
@@ -31,6 +32,7 @@ use crate::error::Result;
 use crate::storage::Storage;
 #[cfg(feature = "encryption")]
 use crate::types::CekAlgorithm;
+use crate::types::DIDType;
 #[cfg(feature = "encryption")]
 use crate::types::EncryptedData;
 #[cfg(feature = "encryption")]
@@ -40,7 +42,7 @@ use crate::types::Signature;
 use crate::utils::Shared;
 
 // The map from DIDs to vaults.
-type Vaults = HashMap<IotaDID, MemVault>;
+type Vaults = HashMap<CoreDID, MemVault>;
 // The map from key locations to key pairs, that lives within a DID partition.
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
@@ -48,7 +50,7 @@ type MemVault = HashMap<KeyLocation, KeyPair>;
 pub struct MemStore {
   // Controls whether to print the storages content when debugging.
   expand: bool,
-  blobs: Shared<HashMap<IotaDID, Vec<u8>>>,
+  blobs: Shared<HashMap<CoreDID, Vec<u8>>>,
   vaults: Shared<Vaults>,
 }
 
@@ -79,10 +81,11 @@ impl MemStore {
 impl Storage for MemStore {
   async fn did_create(
     &self,
+    did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,
-  ) -> Result<(IotaDID, KeyLocation)> {
+  ) -> Result<(CoreDID, KeyLocation)> {
     // Extract a `KeyPair` from the passed private key or generate a new one.
     // For `did_create` we can assume the `KeyType` to be `Ed25519` because
     // that is the only currently available signature type.
@@ -96,8 +99,13 @@ impl Storage for MemStore {
     let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
 
     // Next we use the public key to derive the initial DID.
-    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
-      .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
+    let did: CoreDID = {
+      match did_type {
+        DIDType::IotaDID => IotaDID::new_with_network(keypair.public().as_ref(), network)
+          .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?
+          .into(),
+      }
+    };
 
     // Obtain exclusive access to the vaults.
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
@@ -118,7 +126,7 @@ impl Storage for MemStore {
     Ok((did, location))
   }
 
-  async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
+  async fn did_purge(&self, did: &CoreDID) -> Result<bool> {
     // This method is supposed to be idempotent,
     // so we only need to do work if the DID still exists.
     // The return value signals whether the DID was actually removed during this operation.
@@ -130,17 +138,17 @@ impl Storage for MemStore {
     }
   }
 
-  async fn did_exists(&self, did: &IotaDID) -> Result<bool> {
+  async fn did_exists(&self, did: &CoreDID) -> Result<bool> {
     // Note that any failure to get access to the storage and do the actual existence check
     // should result in an error rather than returning `false`.
     Ok(self.vaults.read()?.contains_key(did))
   }
 
-  async fn did_list(&self) -> Result<Vec<IotaDID>> {
+  async fn did_list(&self) -> Result<Vec<CoreDID>> {
     Ok(self.vaults.read()?.keys().cloned().collect())
   }
 
-  async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
+  async fn key_generate(&self, did: &CoreDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
     // Obtain exclusive access to the vaults.
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     // Get or insert the MemVault.
@@ -158,7 +166,7 @@ impl Storage for MemStore {
     Ok(location)
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<()> {
+  async fn key_insert(&self, did: &CoreDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<()> {
     // Obtain exclusive access to the vaults.
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     // Get or insert the MemVault.
@@ -188,7 +196,7 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+  async fn key_exists(&self, did: &CoreDID, location: &KeyLocation) -> Result<bool> {
     // Obtain read access to the vaults.
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
@@ -200,7 +208,7 @@ impl Storage for MemStore {
     Ok(false)
   }
 
-  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_public(&self, did: &CoreDID, location: &KeyLocation) -> Result<PublicKey> {
     // Obtain read access to the vaults.
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     // Lookup the vault for the given DID.
@@ -212,7 +220,7 @@ impl Storage for MemStore {
     Ok(keypair.public().clone())
   }
 
-  async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+  async fn key_delete(&self, did: &CoreDID, location: &KeyLocation) -> Result<bool> {
     // Obtain read access to the vaults.
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     // Lookup the vault for the given DID.
@@ -223,7 +231,7 @@ impl Storage for MemStore {
     Ok(vault.remove(location).is_some())
   }
 
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+  async fn key_sign(&self, did: &CoreDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     // Obtain read access to the vaults.
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     // Lookup the vault for the given DID.
@@ -251,7 +259,7 @@ impl Storage for MemStore {
   #[cfg(feature = "encryption")]
   async fn data_encrypt(
     &self,
-    _did: &IotaDID,
+    _did: &CoreDID,
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: &EncryptionAlgorithm,
@@ -312,7 +320,7 @@ impl Storage for MemStore {
   #[cfg(feature = "encryption")]
   async fn data_decrypt(
     &self,
-    did: &IotaDID,
+    did: &CoreDID,
     data: EncryptedData,
     encryption_algorithm: &EncryptionAlgorithm,
     cek_algorithm: &CekAlgorithm,
@@ -370,14 +378,14 @@ impl Storage for MemStore {
     }
   }
 
-  async fn blob_set(&self, did: &IotaDID, value: Vec<u8>) -> Result<()> {
+  async fn blob_set(&self, did: &CoreDID, value: Vec<u8>) -> Result<()> {
     // Set the arbitrary value for the given DID.
     self.blobs.write()?.insert(did.clone(), value);
 
     Ok(())
   }
 
-  async fn blob_get(&self, did: &IotaDID) -> Result<Option<Vec<u8>>> {
+  async fn blob_get(&self, did: &CoreDID) -> Result<Option<Vec<u8>>> {
     // Lookup the value stored of the given DID.
     self.blobs.read().map(|data| data.get(did).cloned())
   }

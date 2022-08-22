@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use identity_iota::account_storage::CekAlgorithm;
+use identity_iota::account_storage::DIDType;
 use identity_iota::account_storage::EncryptedData;
 use identity_iota::account_storage::EncryptionAlgorithm;
 use identity_iota::account_storage::Error as AccountStorageError;
@@ -14,7 +15,7 @@ use identity_iota::account_storage::Signature;
 use identity_iota::account_storage::Storage;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::PublicKey;
-use identity_iota::iota_core::IotaDID;
+use identity_iota::did::CoreDID;
 use identity_iota::iota_core::NetworkName;
 use identity_iota::prelude::KeyType;
 use js_sys::Array;
@@ -25,13 +26,14 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::types::WasmCekAlgorithm;
+use crate::account::types::WasmDIDType;
 use crate::account::types::WasmEncryptedData;
 use crate::account::types::WasmEncryptionAlgorithm;
 use crate::account::types::WasmKeyLocation;
 use crate::common::PromiseBool;
 use crate::common::PromiseVoid;
 use crate::crypto::WasmKeyType;
-use crate::did::WasmDID;
+use crate::did::WasmCoreDID;
 use crate::error::JsValueResult;
 
 #[wasm_bindgen]
@@ -42,9 +44,9 @@ extern "C" {
   pub type PromiseSignature;
   #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
   pub type PromiseKeyLocation;
-  #[wasm_bindgen(typescript_type = "Promise<Array<DID>>")]
+  #[wasm_bindgen(typescript_type = "Promise<Array<CoreDID>>")]
   pub type PromiseArrayDID;
-  #[wasm_bindgen(typescript_type = "Promise<[DID, KeyLocation]>")]
+  #[wasm_bindgen(typescript_type = "Promise<[CoreDID, KeyLocation]>")]
   pub type PromiseDIDKeyLocation;
   #[wasm_bindgen(typescript_type = "Promise<EncryptedData>")]
   pub type PromiseEncryptedData;
@@ -62,34 +64,45 @@ extern "C" {
   #[wasm_bindgen(method, js_name = didCreate)]
   pub fn did_create(
     this: &WasmStorage,
+    did_type: WasmDIDType,
     network: &str,
     fragment: &str,
     private_key: Option<Vec<u8>>,
   ) -> PromiseDIDKeyLocation;
   #[wasm_bindgen(method, js_name = didPurge)]
-  pub fn did_purge(this: &WasmStorage, did: WasmDID) -> PromiseVoid;
+  pub fn did_purge(this: &WasmStorage, did: WasmCoreDID) -> PromiseVoid;
 
   #[wasm_bindgen(method, js_name = didExists)]
-  pub fn did_exists(this: &WasmStorage, did: WasmDID) -> PromiseBool;
+  pub fn did_exists(this: &WasmStorage, did: WasmCoreDID) -> PromiseBool;
   #[wasm_bindgen(method, js_name = didList)]
   pub fn did_list(this: &WasmStorage) -> PromiseArrayDID;
 
   #[wasm_bindgen(method, js_name = keyGenerate)]
-  pub fn key_generate(this: &WasmStorage, did: WasmDID, key_type: WasmKeyType, fragment: String) -> PromiseKeyLocation;
+  pub fn key_generate(
+    this: &WasmStorage,
+    did: WasmCoreDID,
+    key_type: WasmKeyType,
+    fragment: String,
+  ) -> PromiseKeyLocation;
   #[wasm_bindgen(method, js_name = keyInsert)]
-  pub fn key_insert(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, private_key: Vec<u8>) -> PromiseVoid;
+  pub fn key_insert(
+    this: &WasmStorage,
+    did: WasmCoreDID,
+    location: WasmKeyLocation,
+    private_key: Vec<u8>,
+  ) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = keyPublic)]
-  pub fn key_public(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
+  pub fn key_public(this: &WasmStorage, did: WasmCoreDID, location: WasmKeyLocation) -> PromisePublicKey;
   #[wasm_bindgen(method, js_name = keyDelete)]
-  pub fn key_delete(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseVoid;
+  pub fn key_delete(this: &WasmStorage, did: WasmCoreDID, location: WasmKeyLocation) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = keySign)]
-  pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
+  pub fn key_sign(this: &WasmStorage, did: WasmCoreDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
   #[wasm_bindgen(method, js_name = keyExists)]
-  pub fn key_exists(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseBool;
+  pub fn key_exists(this: &WasmStorage, did: WasmCoreDID, location: WasmKeyLocation) -> PromiseBool;
   #[wasm_bindgen(method, js_name = dataEncrypt)]
   pub fn data_encrypt(
     this: &WasmStorage,
-    did: WasmDID,
+    did: WasmCoreDID,
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: WasmEncryptionAlgorithm,
@@ -99,16 +112,16 @@ extern "C" {
   #[wasm_bindgen(method, js_name = dataDecrypt)]
   pub fn data_decrypt(
     this: &WasmStorage,
-    did: WasmDID,
+    did: WasmCoreDID,
     data: WasmEncryptedData,
     encryption_algorithm: WasmEncryptionAlgorithm,
     cek_algorithm: WasmCekAlgorithm,
     private_key: WasmKeyLocation,
   ) -> Uint8Array;
   #[wasm_bindgen(method, js_name = blobGet)]
-  pub fn blob_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionBytes;
+  pub fn blob_get(this: &WasmStorage, did: WasmCoreDID) -> PromiseOptionBytes;
   #[wasm_bindgen(method, js_name = blobSet)]
-  pub fn blob_set(this: &WasmStorage, did: WasmDID, blob: Vec<u8>) -> PromiseVoid;
+  pub fn blob_set(this: &WasmStorage, did: WasmCoreDID, blob: Vec<u8>) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseVoid;
 }
@@ -123,22 +136,23 @@ impl Debug for WasmStorage {
 impl Storage for WasmStorage {
   async fn did_create(
     &self,
+    did_type: DIDType,
     network: NetworkName,
     fragment: &str,
     private_key: Option<PrivateKey>,
-  ) -> AccountStorageResult<(IotaDID, KeyLocation)> {
+  ) -> AccountStorageResult<(CoreDID, KeyLocation)> {
     let private_key: Option<Vec<u8>> = private_key.map(|key| {
       let key_bytes: Vec<u8> = key.as_ref().to_vec();
       core::mem::drop(key);
       key_bytes
     });
 
-    let promise: Promise = Promise::resolve(&self.did_create(network.as_ref(), fragment, private_key));
+    let promise: Promise = Promise::resolve(&self.did_create(did_type.into(), network.as_ref(), fragment, private_key));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let did_location_tuple: js_sys::Array = js_sys::Array::from(&result.to_account_error()?);
     let mut did_location_tuple: js_sys::ArrayIter = did_location_tuple.iter();
 
-    let did: IotaDID = did_location_tuple
+    let did: CoreDID = did_location_tuple
       .next()
       .ok_or_else(|| AccountStorageError::JsError("expected a tuple of size 2".to_owned()))?
       .into_serde()
@@ -153,19 +167,19 @@ impl Storage for WasmStorage {
     Ok((did, location))
   }
 
-  async fn did_purge(&self, did: &IotaDID) -> AccountStorageResult<bool> {
+  async fn did_purge(&self, did: &CoreDID) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.did_purge(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  async fn did_exists(&self, did: &IotaDID) -> AccountStorageResult<bool> {
+  async fn did_exists(&self, did: &CoreDID) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.did_exists(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  async fn did_list(&self) -> AccountStorageResult<Vec<IotaDID>> {
+  async fn did_list(&self) -> AccountStorageResult<Vec<CoreDID>> {
     let promise: Promise = Promise::resolve(&self.did_list());
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.to_account_error()?;
@@ -175,7 +189,7 @@ impl Storage for WasmStorage {
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))
   }
 
-  async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> AccountStorageResult<KeyLocation> {
+  async fn key_generate(&self, did: &CoreDID, key_type: KeyType, fragment: &str) -> AccountStorageResult<KeyLocation> {
     let promise: Promise =
       Promise::resolve(&self.key_generate(did.clone().into(), key_type.into(), fragment.to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -189,7 +203,7 @@ impl Storage for WasmStorage {
 
   async fn key_insert(
     &self,
-    did: &IotaDID,
+    did: &CoreDID,
     location: &KeyLocation,
     private_key: PrivateKey,
   ) -> AccountStorageResult<()> {
@@ -202,20 +216,20 @@ impl Storage for WasmStorage {
     result.into()
   }
 
-  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
+  async fn key_public(&self, did: &CoreDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_public(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result.to_account_error().map(uint8array_to_bytes)??;
     Ok(public_key.into())
   }
 
-  async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<bool> {
+  async fn key_delete(&self, did: &CoreDID, location: &KeyLocation) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.key_delete(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> AccountStorageResult<Signature> {
+  async fn key_sign(&self, did: &CoreDID, location: &KeyLocation, data: Vec<u8>) -> AccountStorageResult<Signature> {
     let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.to_account_error()?;
@@ -225,7 +239,7 @@ impl Storage for WasmStorage {
     Ok(signature)
   }
 
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<bool> {
+  async fn key_exists(&self, did: &CoreDID, location: &KeyLocation) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.key_exists(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
@@ -233,7 +247,7 @@ impl Storage for WasmStorage {
 
   async fn data_encrypt(
     &self,
-    did: &IotaDID,
+    did: &CoreDID,
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: &EncryptionAlgorithm,
@@ -258,7 +272,7 @@ impl Storage for WasmStorage {
 
   async fn data_decrypt(
     &self,
-    did: &IotaDID,
+    did: &CoreDID,
     data: EncryptedData,
     encryption_algorithm: &EncryptionAlgorithm,
     cek_algorithm: &CekAlgorithm,
@@ -276,7 +290,7 @@ impl Storage for WasmStorage {
     Ok(data)
   }
 
-  async fn blob_get(&self, did: &IotaDID) -> AccountStorageResult<Option<Vec<u8>>> {
+  async fn blob_get(&self, did: &CoreDID) -> AccountStorageResult<Option<Vec<u8>>> {
     let promise: Promise = Promise::resolve(&self.blob_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.to_account_error()?;
@@ -287,7 +301,7 @@ impl Storage for WasmStorage {
     Ok(Some(value))
   }
 
-  async fn blob_set(&self, did: &IotaDID, blob: Vec<u8>) -> AccountStorageResult<()> {
+  async fn blob_set(&self, did: &CoreDID, blob: Vec<u8>) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.blob_set(did.clone().into(), blob));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
@@ -326,70 +340,70 @@ Other operations on the list are `did_exists` and `did_list`.
 
 See the `MemStore` example for a test implementation. */
 interface Storage {
-  /** Creates a new identity for the given `network`.
+  /** Creates a new identity of the type declared in `did_type` for the given `network`.
 
    - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
    - Returns an error if the DID already exists.
    - Adds the newly created DID to a list which can be accessed via `did_list`.
 
-   Returns the generated DID and the location at which the key was stored. */
-  didCreate: (network: string, fragment: string, privateKey?: Uint8Array) => Promise<[DID, KeyLocation]>;
+   Returns the generated DID represented as a [`CoreDID`] and the location at which the key was stored. */
+  didCreate: (didType: DIDType, network: string, fragment: string, privateKey?: Uint8Array) => Promise<[CoreDID, KeyLocation]>;
 
   /** Removes the keys and any other state for the given `did`.
 
    This operation is idempotent: it does not fail if the given `did` does not (or no longer) exist.
 
    Returns `true` if the did and its associated data was removed, `false` if nothing was done. */
-  didPurge: (did: DID) => Promise<boolean>;
+  didPurge: (did: CoreDID) => Promise<boolean>;
 
   /** Returns `true` if `did` exists in the list of stored DIDs. */
-  didExists: (did: DID) => Promise<boolean>;
+  didExists: (did: CoreDID) => Promise<boolean>;
 
   /** Returns the list of stored DIDs. */
-  didList: () => Promise<Array<DID>>;
+  didList: () => Promise<Array<CoreDID>>;
 
   /** Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
    and returns the location of the newly generated key. */
-  keyGenerate: (did: DID, keyType: KeyType, fragment: string) => Promise<KeyLocation>;
+  keyGenerate: (did: CoreDID, keyType: KeyType, fragment: string) => Promise<KeyLocation>;
 
   /** Inserts a private key at the specified `location`.
 
    If a key at `location` exists, it is overwritten. */
-  keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: Uint8Array) => Promise<void>;
+  keyInsert: (did: CoreDID, keyLocation: KeyLocation, privateKey: Uint8Array) => Promise<void>;
 
   /** Retrieves the public key from `location`. */
-  keyPublic: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
+  keyPublic: (did: CoreDID, keyLocation: KeyLocation) => Promise<Uint8Array>;
 
   /** Deletes the key at `location`.
 
    This operation is idempotent: it does not fail if the key does not exist.
 
    Returns `true` if it removed the key, `false` if nothing was done. */
-  keyDelete: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
+  keyDelete: (did: CoreDID, keyLocation: KeyLocation) => Promise<boolean>;
 
   /** Signs `data` with the private key at the specified `location`. */
-  keySign: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<Signature>;
+  keySign: (did: CoreDID, keyLocation: KeyLocation, data: Uint8Array) => Promise<Signature>;
 
   /** Returns `true` if a key exists at the specified `location`. */
-  keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
+  keyExists: (did: CoreDID, keyLocation: KeyLocation) => Promise<boolean>;
 
   /** Encrypts the given `plaintext` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
    *
    *  Returns an `EncryptedData` instance.
    */
-  dataEncrypt: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array) => Promise<EncryptedData>;
+  dataEncrypt: (did: CoreDID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array) => Promise<EncryptedData>;
 
   /** Decrypts the given `data` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
    *
    *  Returns the decrypted text.
    */
-  dataDecrypt: (did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;
+  dataDecrypt: (did: CoreDID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;
 
   /** Returns the blob stored by the identity specified by `did`. */
-  blobGet: (did: DID) => Promise<Uint8Array | undefined>;
+  blobGet: (did: CoreDID) => Promise<Uint8Array | undefined>;
 
   /** Stores an arbitrary blob for the identity specified by `did`. */
-  blobSet: (did: DID, blob: Uint8Array) => Promise<void>;
+  blobSet: (did: CoreDID, blob: Uint8Array) => Promise<void>;
 
   /** Persists any unsaved changes. */
   flushChanges: () => Promise<void>;
