@@ -54,6 +54,7 @@
     "node/*"
   ],
   "devDependencies": {
+    "@iota/crypto.js": "^1.9.0-stardust.6",
     "@types/mocha": "^9.1.0",
     "concurrently": "^7.0.0",
     "copy-webpack-plugin": "^7.0.0",
@@ -80,9 +81,7 @@
   },
   "peerDependencies": {
     "@cycraig/iota-client-wasm": "^0.5.0-alpha.1",
-    "@iota/crypto.js": "^1.9.0-stardust.6",
-    "@iota/iota.js": "^1.9.0-stardust.25",
-    "@iota/util.js": "^1.9.0-stardust.5"
+    "@iota/iota.js": "^1.9.0-stardust.25"
   },
   "engines": {
     "node": ">=16"

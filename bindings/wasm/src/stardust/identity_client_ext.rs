@@ -23,7 +23,7 @@ use crate::stardust::WasmStardustDocument;
 // `IAliasOutput`, `AddressTypes`, and `IRent` are external interfaces.
 // See the custom TypeScript section in `identity_client.rs` for the first import statement.
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import { AddressTypes } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { AddressTypes } from '@iota/types';"#;
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<IAliasOutput>")]

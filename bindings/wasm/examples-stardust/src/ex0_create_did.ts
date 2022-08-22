@@ -10,8 +10,7 @@ import {
     StardustIdentityClient,
     StardustVerificationMethod
 } from '../../node';
-
-import {Bech32Helper, IAliasOutput,} from '@iota/iota.js';
+import {Bech32Helper, IAliasOutput} from '@iota/iota.js';
 import {Bip39} from "@iota/crypto.js";
 import fetch from "node-fetch";
 import {Client, MnemonicSecretManager, SecretManager} from "@cycraig/iota-client-wasm/node";
@@ -49,8 +48,8 @@ export async function createIdentity(): Promise<{
     }))[0];
     console.log("Wallet address Bech32:", walletAddressBech32);
 
-    // Request funds for the newly-created wallet - only works on development networks.
-    await requestFundsFromFaucet(walletAddressBech32);
+    // Request funds for the wallet, if needed - only works on development networks.
+    await ensureAddressHasFunds(client, walletAddressBech32);
 
     // Create a new DID document with a placeholder DID.
     // The DID will be derived from the Alias Id of the Alias Output after publishing.
@@ -78,7 +77,46 @@ export async function createIdentity(): Promise<{
     };
 }
 
-/** Request tokens from the faucet API. */
+/** Request funds from the testnet faucet API, if needed, and wait for them to show in the wallet. */
+async function ensureAddressHasFunds(client: Client, addressBech32: string) {
+    let balance = await getAddressBalance(client, addressBech32);
+    if (balance > 0) {
+        return;
+    }
+
+    await requestFundsFromFaucet(addressBech32);
+
+    for (let i = 0; i < 9; i++) {
+        // Wait for the funds to reflect.
+        await new Promise(f => setTimeout(f, 5000));
+
+        let balance = await getAddressBalance(client, addressBech32);
+        if (balance > 0) {
+            break;
+        }
+    }
+}
+
+/** Returns the balance of the given Bech32-encoded address. */
+async function getAddressBalance(client: Client, addressBech32: string): Promise<number> {
+    // TODO: use the `addresses/ed25519/<addressHex>` API to get the balance?
+    const outputIds = await client.basicOutputIds([
+        {address: addressBech32},
+        {hasExpiration: false},
+        {hasTimelock: false},
+        {hasStorageDepositReturn: false}
+    ]);
+    const outputs = await client.getOutputs(outputIds);
+
+    let totalAmount = 0;
+    for (const output of outputs) {
+        totalAmount += Number(output.output.amount);
+    }
+
+    return totalAmount;
+}
+
+/** Request tokens from the testnet faucet API. */
 async function requestFundsFromFaucet(addressBech32: string) {
     const requestObj = JSON.stringify({address: addressBech32});
     let errorMessage, data;
