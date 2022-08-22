@@ -13,6 +13,8 @@ description = "An IOTA Ledger integration for the identity.rs library."
 [workspace]
 
 [dependencies]
+# Ensure bee-block always matches the version used by iota-client.
+bee-block = { version = "1.0.0-beta.5", default-features = false, features = ["std"], optional = true }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
@@ -46,8 +48,10 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["iota-client", "revocation-bitmap"]
-# Enables the iota-client dependency and associated helper functions.
-iota-client = ["dep:iota-client", "dep:async-trait"]
+default = ["client", "iota-client", "revocation-bitmap"]
+# Exposes the `StardustIdentityClient` and `StardustIdentityClientExt` traits.
+client = ["dep:async-trait", "dep:bee-block"]
+# Enables the iota-client dependency, the client trait implementations for it, and the `StardustClientExt` trait.
+iota-client = ["dep:iota-client", "client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap"]
