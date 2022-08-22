@@ -19,37 +19,37 @@ tokio = "1.20.1"
 path = "util/util.rs"
 
 [[example]]
-path = "./crud/0_create_did.rs"
+path = "crud/0_create_did.rs"
 name = "0_create_did"
 
 [[example]]
-path = "./crud/1_update_did.rs"
+path = "crud/1_update_did.rs"
 name = "1_update_did"
 
 [[example]]
-path = "./crud/2_resolve_did.rs"
+path = "crud/2_resolve_did.rs"
 name = "2_resolve_did"
 
 [[example]]
-path = "./crud/3_deactivate_did.rs"
+path = "crud/3_deactivate_did.rs"
 name = "3_deactivate_did"
 
 [[example]]
-path = "./crud/4_delete_did.rs"
+path = "crud/4_delete_did.rs"
 name = "4_delete_did"
 
 [[example]]
-path = "./advanced/5_did_controls_did.rs"
+path = "advanced/5_did_controls_did.rs"
 name = "5_did_controls_did"
 
 [[example]]
-path = "./advanced/6_did_issues_nft.rs"
+path = "advanced/6_did_issues_nft.rs"
 name = "6_did_issues_nft"
 
 [[example]]
-path = "./advanced/7_nft_owns_did.rs"
+path = "advanced/7_nft_owns_did.rs"
 name = "7_nft_owns_did"
 
 [[example]]
-path = "./advanced/8_did_issues_tokens.rs"
+path = "advanced/8_did_issues_tokens.rs"
 name = "8_did_issues_tokens"
