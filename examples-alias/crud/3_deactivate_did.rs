@@ -11,14 +11,13 @@ use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
-
-mod ex0_create_did;
+use utils::create_did;
 
 /// Demonstrates how to deactivate a DID in an Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
-  let (client, _, secret_manager, did): (Client, Address, SecretManager, StardustDID) = ex0_create_did::run().await?;
+  let (client, _, secret_manager, did): (Client, Address, SecretManager, StardustDID) = create_did().await?;
 
   // Resolve the latest state of the DID document, so we can reactivate it later.
   let document: StardustDocument = client.resolve_did(&did).await?;

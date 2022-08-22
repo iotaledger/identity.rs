@@ -9,15 +9,13 @@ use identity_stardust::Error;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustIdentityClientExt;
-
-mod ex0_create_did;
+use utils::create_did;
 
 /// Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
-  let (client, address, secret_manager, did): (Client, Address, SecretManager, StardustDID) =
-    ex0_create_did::run().await?;
+  let (client, address, secret_manager, did): (Client, Address, SecretManager, StardustDID) = create_did().await?;
 
   // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.
   // This operation is *not* reversible.

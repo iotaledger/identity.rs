@@ -7,10 +7,12 @@ use identity_core::json;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::verification::MethodRelationship;
+use identity_stardust::block::output::RentStructure;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+use utils::create_did;
 
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
@@ -18,13 +20,11 @@ use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustService;
 
-mod ex0_create_did;
-
 /// Demonstrates how to update a DID document in an existing Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
-  let (client, _, secret_manager, did): (Client, _, SecretManager, StardustDID) = ex0_create_did::run().await?;
+  let (client, _, secret_manager, did): (Client, _, SecretManager, StardustDID) = create_did().await?;
 
   // Resolve the latest state of the document.
   let mut document: StardustDocument = client.resolve_did(&did).await?;
@@ -49,8 +49,8 @@ async fn main() -> anyhow::Result<()> {
 
   // Because the size of the DID document increased, we have to increase the allocated storage deposit.
   // This increases the deposit amount to the new minimum.
-  let rent_structure = client.get_rent_structure().await?;
-  let alias_output = AliasOutputBuilder::from(&alias_output)
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
+  let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
     .with_minimum_storage_deposit(rent_structure)
     .finish()?;
 

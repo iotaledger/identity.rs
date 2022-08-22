@@ -25,8 +25,7 @@ use iota_client::block::payload::Payload;
 use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-
-mod ex0_create_did;
+use utils::create_did;
 
 /// Demonstrate how an identity can issue and own NFTs,
 /// and how observers can verify the issuer of the NFT.
@@ -41,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new DID for the manufacturer.
   let (client, _address, secret_manager, manufacturer_did): (Client, Address, SecretManager, StardustDID) =
-    ex0_create_did::run().await?;
+    create_did().await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;

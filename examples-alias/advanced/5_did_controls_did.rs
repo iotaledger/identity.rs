@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::output::AliasId;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
@@ -12,6 +11,7 @@ use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustVerificationMethod;
 
+use identity_stardust::block::output::AliasId;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
 use iota_client::block::output::feature::IssuerFeature;
@@ -20,8 +20,7 @@ use iota_client::block::output::AliasOutputBuilder;
 use iota_client::block::output::RentStructure;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-
-mod ex0_create_did;
+use utils::create_did;
 
 /// An example to demonstrate how one identity can control or "own" another identity.
 ///
@@ -30,7 +29,7 @@ mod ex0_create_did;
 async fn main() -> anyhow::Result<()> {
   // Create a new DID for the company.
   let (client, _address, secret_manager, company_did): (Client, Address, SecretManager, StardustDID) =
-    ex0_create_did::run().await?;
+    create_did().await?;
 
   // Obtain the current byte costs and the network name.
   let rent_structure: RentStructure = client.get_rent_structure().await?;

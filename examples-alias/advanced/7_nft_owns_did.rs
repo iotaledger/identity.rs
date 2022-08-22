@@ -1,13 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::address::NftAddress;
-use bee_block::output::AliasOutput;
+// use bee_block::address::NftAddress;
+// use bee_block::output::AliasOutput;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 
+use identity_stardust::block::address::NftAddress;
+use identity_stardust::block::output::AliasOutput;
 use identity_stardust::StardustIdentityClientExt;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
@@ -24,10 +26,8 @@ use iota_client::block::payload::Payload;
 use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-
-mod ex0_create_did;
-
-static ENDPOINT: &str = "https://api.testnet.shimmer.network/";
+use utils::create_did;
+use utils::NETWORK_ENDPOINT;
 
 /// Demonstrate how an identity can issue and own NFTs,
 /// and how observers can verify the issuer of the NFT.
@@ -41,9 +41,9 @@ async fn main() -> anyhow::Result<()> {
   // ==========================================
 
   // TODO: Used to obtain an address and secret manager with funds.
-  let (_, address, secret_manager, _): (Client, Address, SecretManager, StardustDID) = ex0_create_did::run().await?;
+  let (_, address, secret_manager, _): (Client, Address, SecretManager, StardustDID) = create_did().await?;
 
-  let client: Client = Client::builder().with_primary_node(ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;

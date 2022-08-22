@@ -3,12 +3,12 @@
 
 use std::ops::Deref;
 
-use bee_block::output::Output;
-use bee_block::output::OutputId;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 
+use identity_stardust::block::output::Output;
+use identity_stardust::block::output::OutputId;
 use identity_stardust::StardustIdentityClientExt;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
@@ -30,8 +30,7 @@ use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use primitive_types::U256;
-
-mod ex0_create_did;
+use utils::create_did;
 
 /// An example to demonstrate how an identity can issue and control native assets
 /// such as Token Foundries and NFTs.
@@ -46,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new DID for the authority.
   let (client, _address, secret_manager, authority_did): (Client, Address, SecretManager, StardustDID) =
-    ex0_create_did::run().await?;
+    create_did().await?;
 
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
