@@ -70,7 +70,7 @@ async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, Sec
   let secret_manager = SecretManager::Mnemonic(MnemonicSecretManager::try_from_mnemonic(&mnemonic)?);
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-  let network_hrp = PRIVATE_TESTNET_BECH32_HRP // client.get_network_hrp().await?;
+  let network_hrp = PRIVATE_TESTNET_BECH32_HRP; // client.get_network_hrp().await?;
   request_faucet_funds(client, address, &network_hrp)
     .await
     .context("failed to request faucet funds")?;
