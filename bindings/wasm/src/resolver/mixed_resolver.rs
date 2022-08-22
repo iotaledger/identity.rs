@@ -36,7 +36,7 @@ impl MixedResolver {
 
   #[wasm_bindgen]
   //TODO: Fix the potential panic below. This can be enforced using something like the builder pattern.
-  pub fn attach_handler(&mut self, method: &str, handler: Function) {
+  pub fn attach_handler(&mut self, method: &str, handler: &Function) {
     let command = WasmResolverCommand::new(handler).ptr;
     Rc::<identity_iota::resolver::Resolver>::get_mut(&mut self.0)
       .expect("The resolver should be setup before being used")

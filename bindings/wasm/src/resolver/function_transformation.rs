@@ -22,9 +22,10 @@ pub(super) struct WasmResolverCommand {
 }
 
 impl WasmResolverCommand {
-  pub(super) fn new(fun: Function) -> Self {
+  pub(super) fn new(fun: &Function) -> Self {
+    let fun_closure_clone = fun.clone();
     let ptr: AsyncFnPtr<str, Result<Option<Box<dyn ValidatorDocument>>>> = Box::new(move |input: &str| {
-      let fun_clone = fun.clone();
+      let fun_clone = fun_closure_clone.clone();
       Box::pin(async move {
         let closure_output_promise: Promise =
           Promise::resolve(&JsValueResult::from(fun_clone.call1(&JsValue::null(), &input.into())).to_resolver_error()?);
