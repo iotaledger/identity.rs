@@ -28,7 +28,7 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-/// Demonstrates how one identity can control another identity.
+/// Demonstrates how an identity can control another identity.
 ///
 /// For this example, we consider the case where a parent company's DID controls the DID of a subsidiary.
 #[tokio::main]

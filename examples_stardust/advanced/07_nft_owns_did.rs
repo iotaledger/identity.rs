@@ -30,8 +30,8 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-/// Demonstrates how an identity can issue and own NFTs,
-/// and how observers can verify the issuer of the NFT.
+/// Demonstrates how an identity can be owned by NFTs,
+/// and how observers can verify that relationship.
 ///
 /// For this example, we consider the case where a car's NFT owns
 /// the DID of the car, so that transferring the NFT also transfers DID ownership.
