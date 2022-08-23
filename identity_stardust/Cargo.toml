@@ -42,6 +42,7 @@ anyhow = { version = "1.0.57" }
 iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
+identity_resolver = { version = "0.6.0", path = "../identity_resolver", default-features = false }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -57,5 +58,3 @@ client = ["dep:async-trait", "dep:bee-block"]
 iota-client = ["dep:iota-client", "client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap", "identity_resolver?/revocation-bitmap"]
-# Enables the Resolver API.
-resolver = ["dep:identity_resolver", "dep:async-trait"]

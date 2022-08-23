@@ -32,12 +32,16 @@ use identity_did::verification::VerificationMethod;
 
 use identity_resolver::Resolver;
 
+use crate::StardustDID;
 use crate::StardustDocument;
 use crate::StardustVerificationMethod;
 
 use super::client_mocks::BarClient;
 use super::client_mocks::FooClient;
-use super::client_mocks::TestDID;
+
+const TEST_METHOD_NAME_0: &'static str = "test0"; 
+const TEST_METHOD_NAME_1: &'static str = "test1"; 
+
 
 fn generate_stardust_document(keypair: &KeyPair) -> StardustDocument {
   let mut document: StardustDocument = StardustDocument::new_with_id(
@@ -123,10 +127,10 @@ impl MixedTestSetup {
       let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       (generate_stardust_document(&keypair), keypair)
     };
-    let (subject_doc, subject_key) = generate_core_document(TestDID::<0>::method_name());
+    let (subject_doc, subject_key) = generate_core_document(TEST_METHOD_NAME_0.to_string());
     let credential_stardust = generate_credential(issuer_stardust_doc.id().as_str(), subject_doc.id().as_str());
 
-    let (issuer_core_doc, issuer_core_key) = generate_core_document(TestDID::<1>::method_name());
+    let (issuer_core_doc, issuer_core_key) = generate_core_document(TEST_METHOD_NAME_1.to_string());
     let credential_core = generate_credential(issuer_core_doc.id().as_str(), subject_doc.id().as_str());
 
     Self {
@@ -236,7 +240,7 @@ async fn test_verify_presentation() {
     .unwrap();
 
   // set up mock clients
-  let foo_client = Arc::new(FooClient { issuer_stardust_doc });
+  let foo_client = FooClient { issuer_stardust_doc };
 
   let bar_client = Arc::new(BarClient {
     cache: vec![issuer_core_doc, subject_doc],
@@ -252,14 +256,23 @@ async fn test_verify_presentation() {
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_dynamic).await;
 }
 
-fn setup_resolver<DOC>(foo_client: Arc<FooClient>, bar_client: Arc<BarClient>) -> Resolver<DOC>
+fn setup_resolver<DOC>(foo_client: FooClient, bar_client: Arc<BarClient>) -> Resolver<DOC>
 where
   DOC: BorrowValidator + From<CoreDocument> + From<StardustDocument> + 'static,
 {
   let mut resolver: Resolver<DOC> = Resolver::new();
-  resolver.attach_method_handler::<_, _>(foo_client);
-  resolver.attach_method_handler::<TestDID<0>, _>(bar_client.clone());
-  resolver.attach_method_handler::<TestDID<1>, _>(bar_client);
+  resolver.attach_handler(StardustDID::METHOD.to_string(), |did: &StardustDID| async move {
+    foo_client.resolve(did).await
+  }); 
+
+  resolver.attach_handler(TEST_METHOD_NAME_0.to_string(), |did: &CoreDID| async move {
+    bar_client.resolve(did).await
+  }); 
+
+  resolver.attach_handler(TEST_METHOD_NAME_1.to_string(), |did: &CoreDID| async move {
+    bar_client.resolve(did).await
+  }); 
+
   resolver
 }
 

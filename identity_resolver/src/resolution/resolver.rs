@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::future::Future;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -25,7 +26,7 @@ use crate::Result;
 use super::resolver_delegate::AsyncFnPtr;
 use super::resolver_delegate::ResolverDelegate;
 
-type Inner<DOC> = AsyncFnPtr<str, Result<DOC>>;
+type Command<DOC> = AsyncFnPtr<str, Result<DOC>>;
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
@@ -41,7 +42,7 @@ pub struct Resolver<DOC = Box<dyn ValidatorDocument>>
 where
   DOC: BorrowValidator,
 {
-  method_map: HashMap<String, Inner<DOC>>,
+  command_map: HashMap<String, Command<DOC>>,
 }
 
 impl<DOC> Resolver<DOC>
@@ -51,7 +52,7 @@ where
   /// Constructs a new [`Resolver`].
   pub fn new() -> Self {
     Self {
-      method_map: HashMap::new(),
+      command_map: HashMap::new(),
     }
   }
 
@@ -67,13 +68,32 @@ where
     self.attach_raw_internal(method, handler);
   }
 
+  pub fn attach_handler<D, F, Fut, DOCUMENT>(&mut self, method: String, handler: F)
+  where
+    D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
+    DOCUMENT: 'static + Into<DOC>,
+    F: for<'r> Fn(&'r D) -> Fut + 'static + Clone,
+    Fut: Future<Output = Result<DOCUMENT>>,
+  {
+    let command: Command<DOC> = Box::new(move |input: &str| {
+      let handler_clone = handler.clone();
+      Box::pin(async move {
+        let did: D =
+          D::try_from(input).map_err(|_| Error::ResolutionProblem(format!("failed to parse did: {}", input)))?;
+        handler_clone(&did).await.map(Into::into)
+      })
+    });
+
+    self.command_map.insert(method, command);
+  }
+
   #[cfg(feature = "internals")]
   pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
     self.attach_raw_internal(method, handler);
   }
 
   fn attach_raw_internal(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
-    let method_handlers = self.method_map.insert(method, handler);
+    let method_handlers = self.command_map.insert(method, handler);
   }
 
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
@@ -111,7 +131,7 @@ where
 
     if let Some(unsupported_method) = issuers
       .iter()
-      .find(|issuer| !self.method_map.contains_key(issuer.method()))
+      .find(|issuer| !self.command_map.contains_key(issuer.method()))
       .map(|issuer| issuer.method())
     {
       // The presentation contains did's whose methods are not attached to this Resolver.
@@ -219,7 +239,7 @@ where
   /// respectively.  
   async fn delegate_resolution(&self, method: &str, did: &str) -> Result<DOC> {
     let delegate = self
-      .method_map
+      .command_map
       .get(method)
       .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
 
