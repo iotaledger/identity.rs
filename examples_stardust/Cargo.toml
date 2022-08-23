@@ -14,9 +14,6 @@ iota-client = { version = "2.0.0-beta.2", default-features = false, features = [
 primitive-types = "0.11.1"
 tokio = "1.20.1"
 
-# TODO: Integrate into parent workspace after legacy refactor.
-[workspace]
-
 [lib]
 path = "utils/utils.rs"
 
