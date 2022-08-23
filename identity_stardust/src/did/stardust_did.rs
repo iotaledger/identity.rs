@@ -20,7 +20,7 @@ use crate::NetworkName;
 
 pub type Result<T> = std::result::Result<T, DIDError>;
 
-/// A DID URL conforming to the IOTA Stardust UTXO DID method specification.
+/// A DID URL conforming to the IOTA UTXO DID method specification.
 ///
 /// See [`DIDUrl`].
 pub type StardustDIDUrl = DIDUrl<StardustDID>;
@@ -38,9 +38,8 @@ impl StardustDID {
   /// The URL scheme for Decentralized Identifiers.
   pub const SCHEME: &'static str = CoreDID::SCHEME;
 
-  /// The IOTA UTXO DID method name (`"stardust"`).
-  // TODO: This will be changed to `iota` in the future.
-  pub const METHOD: &'static str = "stardust";
+  /// The IOTA UTXO DID method name (`"iota"`).
+  pub const METHOD: &'static str = "iota";
 
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
@@ -65,7 +64,7 @@ impl StardustDID {
   /// # use identity_stardust::StardustDID;
   /// #
   /// let did = StardustDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
-  /// assert_eq!(did.as_str(), "did:stardust:smr:0x0101010101010101010101010101010101010101010101010101010101010101");
+  /// assert_eq!(did.as_str(), "did:iota:smr:0x0101010101010101010101010101010101010101010101010101010101010101");
   pub fn new(bytes: &[u8; 32], network_name: &NetworkName) -> Self {
     let tag = prefix_hex::encode(bytes);
     let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, tag);
@@ -83,7 +82,7 @@ impl StardustDID {
   /// # use identity_stardust::StardustDID;
   /// #
   /// let placeholder = StardustDID::placeholder(&NetworkName::try_from("smr").unwrap());
-  /// assert_eq!(placeholder.as_str(), "did:stardust:smr:0x0000000000000000000000000000000000000000000000000000000000000000");
+  /// assert_eq!(placeholder.as_str(), "did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000");
   pub fn placeholder(network_name: &NetworkName) -> Self {
     Self::new(&[0; 32], network_name)
   }
@@ -149,12 +148,11 @@ impl StardustDID {
   // Helpers
   // ===========================================================================
 
-  /// Checks if the given `DID` has a valid [`StardustDID`] `method` (i.e. `"stardust"`).
+  /// Checks if the given `DID` has a valid [`StardustDID`] `method` (i.e. `"iota"`).
   ///
   /// # Errors
   ///
   /// Returns `Err` if the input represents another method.
-  // TODO: Change the naming in the docs once we remove the code for the current IOTA method.
   fn check_method<D: DID>(did: &D) -> Result<()> {
     (did.method() == Self::METHOD)
       .then_some(())
@@ -188,8 +186,8 @@ impl StardustDID {
   /// Normalizes the DID `method_id` by removing the default network segment if present.
   ///
   /// E.g.
-  /// - `"did:stardust:main:123" -> "did:stardust:123"` is normalized
-  /// - `"did:stardust:dev:123" -> "did:stardust:dev:123"` is unchanged
+  /// - `"did:iota:main:123" -> "did:iota:123"` is normalized
+  /// - `"did:iota:dev:123" -> "did:iota:dev:123"` is unchanged
   // TODO: Remove the lint once this bug in clippy has been fixed. Without to_owned a mutable reference will be aliased.
   #[allow(clippy::unnecessary_to_owned)]
   fn normalize(mut did: CoreDID) -> CoreDID {
