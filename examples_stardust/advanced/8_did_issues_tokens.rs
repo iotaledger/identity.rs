@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
+use std::path::PathBuf;
 
 use identity_core::common::Duration;
 use identity_core::common::Timestamp;
@@ -33,11 +34,13 @@ use iota_client::block::output::TokenId;
 use iota_client::block::output::TokenScheme;
 use iota_client::block::output::UnlockCondition;
 use iota_client::block::Block;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use primitive_types::U256;
 use utils::create_did;
 use utils::get_address;
+use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how an identity can issue and control native assets
 /// such as Token Foundries and NFTs.
@@ -50,9 +53,19 @@ async fn main() -> anyhow::Result<()> {
   // Create the authority's DID and the foundry.
   // ===========================================
 
+  // Create a new client to interact with the IOTA ledger.
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .try_build(PathBuf::from("./example.stronghold"))?,
+  );
+
   // Create a new DID for the authority.
-  let (client, _address, secret_manager, authority_did): (Client, Address, SecretManager, StardustDID) =
-    create_did().await?;
+
+  let (_, authority_did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
 
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
@@ -135,7 +148,7 @@ async fn main() -> anyhow::Result<()> {
   // =========================================================
 
   // Create a new address that represents the company.
-  let (company_address, _) = get_address(&client).await?;
+  let company_address = get_address(&client, &mut secret_manager).await?;
 
   // Create the timestamp at which the basic output will expire.
   let tomorrow: u32 = Timestamp::now_utc()

@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::PathBuf;
+
 use anyhow::Context;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
@@ -8,6 +10,7 @@ use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use utils::get_address_with_funds;
@@ -25,8 +28,15 @@ async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
-  // Get an address and a secret manager with funds for testing.
-  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client)
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .try_build(PathBuf::from("./example.stronghold"))?,
+  );
+
+  // Get an address and with funds for testing.
+  let address: Address = get_address_with_funds(&client, &mut secret_manager)
     .await
     .context("failed to get address with funds")?;
 

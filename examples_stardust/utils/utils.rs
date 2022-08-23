@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 
 use identity_core::crypto::KeyPair;
@@ -15,20 +17,19 @@ use iota_client::block::output::AliasOutput;
 use iota_client::block::output::Output;
 use iota_client::crypto::keys::bip39;
 use iota_client::node_api::indexer::query_parameters::QueryParameter;
-use iota_client::secret::mnemonic::MnemonicSecretManager;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-pub static NETWORK_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
-pub static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+pub static NETWORK_ENDPOINT: &str = "https://api.alphanet.iotaledger.net/";
+pub static FAUCET_URL: &str = "https://faucet.alphanet.iotaledger.net/api/enqueue";
 
 /// Creates a DID Document and publishes it in a new Alias Output.
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub async fn create_did() -> anyhow::Result<(Client, Address, SecretManager, StardustDID)> {
-  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
-  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client)
+pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<(Address, StardustDID)> {
+  let address: Address = get_address_with_funds(client, secret_manager)
     .await
     .context("failed to get address with funds")?;
 
@@ -38,9 +39,9 @@ pub async fn create_did() -> anyhow::Result<(Client, Address, SecretManager, Sta
 
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
-  let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let document: StardustDocument = client.publish_did_output(secret_manager, alias_output).await?;
 
-  Ok((client, address, secret_manager, document.id().clone()))
+  Ok((address, document.id().clone()))
 }
 
 /// Creates an example DID document with the given `network_name`.
@@ -60,28 +61,45 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<Stardus
   Ok(document)
 }
 
-/// Creates a new address and SecretManager with funds from the testnet faucet.
-pub async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, SecretManager)> {
-  let (address, secret_manager): (Address, SecretManager) = get_address(client).await?;
+/// Generates an address from the given [`SecretManager`] and adds funds from the testnet faucet.
+pub async fn get_address_with_funds(client: &Client, stronghold: &mut SecretManager) -> anyhow::Result<Address> {
+  let address: Address = get_address(client, stronghold).await?;
 
   request_faucet_funds(client, address, "rms")
     .await
     .context("failed to request faucet funds")?;
 
-  Ok((address, secret_manager))
+  Ok(address)
 }
 
-pub async fn get_address(client: &Client) -> anyhow::Result<(Address, SecretManager)> {
+/// Initializes the [`SecretManager`] with a new mnemonic, if necessary,
+/// and generates an address from the given [`SecretManager`].
+pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<Address> {
   let keypair = identity_core::crypto::KeyPair::new(KeyType::Ed25519)?;
   let mnemonic =
     iota_client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
       .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
 
-  let secret_manager = SecretManager::Mnemonic(MnemonicSecretManager::try_from_mnemonic(&mnemonic)?);
+  if let SecretManager::Stronghold(ref mut stronghold) = secret_manager {
+    match stronghold.store_mnemonic(mnemonic).await {
+      Ok(()) => (),
+      Err(iota_client::Error::StrongholdMnemonicAlreadyStored) => (),
+      Err(err) => anyhow::bail!(err),
+    }
+  } else {
+    anyhow::bail!("expected a `StrongholdSecretManager`");
+  }
 
-  let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
+  let address = client.get_addresses(secret_manager).with_range(0..1).get_raw().await?[0];
 
-  Ok((address, secret_manager))
+  Ok(address)
+}
+
+pub fn build_stronghold(path: &str, password: &str) -> anyhow::Result<StrongholdSecretManager> {
+  StrongholdSecretManager::builder()
+    .password(password)
+    .try_build(PathBuf::from(path))
+    .map_err(Into::into)
 }
 
 /// Requests funds from the testnet faucet for the given `address`.

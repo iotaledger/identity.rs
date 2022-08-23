@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::PathBuf;
+
 // use bee_block::address::NftAddress;
 // use bee_block::output::AliasOutput;
 use identity_stardust::NetworkName;
@@ -23,6 +25,7 @@ use iota_client::block::output::UnlockCondition;
 use iota_client::block::payload::transaction::TransactionEssence;
 use iota_client::block::payload::Payload;
 use iota_client::block::Block;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use utils::create_did_document;
@@ -43,8 +46,15 @@ async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
-  // Get an address and a secret manager with funds for testing.
-  let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client).await?;
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .try_build(PathBuf::from("./example.stronghold"))?,
+  );
+
+  // Get an address with funds for testing.
+  let address: Address = get_address_with_funds(&client, &mut secret_manager).await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;

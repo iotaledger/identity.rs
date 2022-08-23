@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::block::address::Address;
+use std::path::PathBuf;
+
+use identity_stardust::block::address::Address;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::SecretManager;
@@ -11,13 +13,25 @@ use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use utils::create_did;
+use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how to deactivate a DID in an Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+  // Create a new client to interact with the IOTA ledger.
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .try_build(PathBuf::from("./example.stronghold"))?,
+  );
+
   // Create a new DID in an Alias Output for us to modify.
-  let (client, _, secret_manager, did): (Client, Address, SecretManager, StardustDID) = create_did().await?;
+  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the latest state of the DID document, so we can reactivate it later.
   let document: StardustDocument = client.resolve_did(&did).await?;

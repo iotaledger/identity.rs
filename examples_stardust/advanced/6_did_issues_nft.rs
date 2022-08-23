@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::PathBuf;
+
 use identity_stardust::NetworkName;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
@@ -23,9 +25,11 @@ use iota_client::block::output::UnlockCondition;
 use iota_client::block::payload::transaction::TransactionEssence;
 use iota_client::block::payload::Payload;
 use iota_client::block::Block;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use utils::create_did;
+use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how an identity can issue and own NFTs,
 /// and how observers can verify the issuer of the NFT.
@@ -38,9 +42,18 @@ async fn main() -> anyhow::Result<()> {
   // Create the manufacturer's DID and the DPP.
   // ==========================================
 
+  // Create a new client to interact with the IOTA ledger.
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .try_build(PathBuf::from("./example.stronghold"))?,
+  );
+
   // Create a new DID for the manufacturer.
-  let (client, _address, secret_manager, manufacturer_did): (Client, Address, SecretManager, StardustDID) =
-    create_did().await?;
+  let (_, manufacturer_did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;

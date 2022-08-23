@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
+use std::path::PathBuf;
 
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -21,10 +22,12 @@ use iota_client::block::output::feature::IssuerFeature;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::block::output::RentStructure;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use utils::create_did;
 use utils::create_did_document;
+use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how one identity can control another identity.
 ///
@@ -35,9 +38,18 @@ async fn main() -> anyhow::Result<()> {
   // Create the company's and subsidiary's Alias Output DIDs.
   // ========================================================
 
+  // Create a new client to interact with the IOTA ledger.
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .try_build(PathBuf::from("./example.stronghold"))?,
+  );
+
   // Create a new DID for the company.
-  let (client, _address, secret_manager, company_did): (Client, Address, SecretManager, StardustDID) =
-    create_did().await?;
+  let (_, company_did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
 
   // Get the current byte costs and network name.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
