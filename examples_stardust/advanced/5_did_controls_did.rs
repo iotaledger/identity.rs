@@ -21,6 +21,7 @@ use iota_client::block::output::RentStructure;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use utils::create_did;
+use utils::create_did_document;
 
 /// An example to demonstrate how one identity can control or "own" another identity.
 ///
@@ -31,12 +32,12 @@ async fn main() -> anyhow::Result<()> {
   let (client, _address, secret_manager, company_did): (Client, Address, SecretManager, StardustDID) =
     create_did().await?;
 
-  // Obtain the current byte costs and the network name.
+  // Get the current byte costs and network name.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
   let network_name: NetworkName = client.network_name().await?;
 
   // Create an exemplary DID document for the subsidiary.
-  let subsidiary_document: StardustDocument = create_example_did_document(&network_name)?;
+  let subsidiary_document: StardustDocument = create_did_document(&network_name)?;
 
   // Create a DID for the subsidiary that is controlled by the parent company's DID.
   // That means the company's Alias Output will have to be unlocked in a transaction that
@@ -63,7 +64,16 @@ async fn main() -> anyhow::Result<()> {
 
   // Add a verification method to the subsidiary.
   // This only serves as an example for updating the subsidiary DID.
-  add_verification_method(&mut subsidiary_document)?;
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+
+  let method: StardustVerificationMethod = StardustVerificationMethod::new(
+    subsidiary_document.id().clone(),
+    keypair.type_(),
+    keypair.public(),
+    "#key-2",
+  )?;
+
+  subsidiary_document.insert_method(method, MethodScope::VerificationMethod)?;
 
   // Update the subsidiary Alias Output with the updated document
   // and increase the storage deposit.
@@ -83,35 +93,6 @@ async fn main() -> anyhow::Result<()> {
 
   println!("Company: {company_document:#?}");
   println!("Subsidiary: {subsidiary_document:#?}");
-
-  Ok(())
-}
-
-fn create_example_did_document(network_name: &NetworkName) -> anyhow::Result<StardustDocument> {
-  // Create a new document for the given network with a placeholder DID.
-  let mut document: StardustDocument = StardustDocument::new(network_name);
-
-  // Create a new key pair that we'll use to create a verification method.
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-
-  // Create a new verification method based on the previously created key pair.
-  let method: StardustVerificationMethod =
-    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
-
-  // Insert the method into the document.
-  document.insert_method(method, MethodScope::VerificationMethod)?;
-
-  Ok(document)
-}
-
-// TODO: Document.
-fn add_verification_method(document: &mut StardustDocument) -> anyhow::Result<()> {
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-
-  let method: StardustVerificationMethod =
-    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-2")?;
-
-  document.insert_method(method, MethodScope::VerificationMethod)?;
 
   Ok(())
 }

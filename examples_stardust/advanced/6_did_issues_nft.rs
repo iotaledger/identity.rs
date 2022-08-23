@@ -58,9 +58,9 @@ async fn main() -> anyhow::Result<()> {
     .await?;
   let _ = client.retry_until_included(&block.id(), None, None).await?;
 
-  // ==========================================
+  // ===============================
   // Resolve the DPP and its issuer.
-  // ==========================================
+  // ===============================
 
   let nft_id: NftId = NftId::from(get_nft_output_id(
     block
@@ -90,7 +90,7 @@ async fn main() -> anyhow::Result<()> {
     anyhow::bail!("expected an Alias Address")
   };
 
-  let network: NetworkName = NetworkName::try_from(client.get_bech32_hrp().await?)?;
+  let network: NetworkName = client.network_name().await?;
   let did: StardustDID = StardustDID::new(&*alias_id, &network);
 
   // Resolve the issuer of the DPP.

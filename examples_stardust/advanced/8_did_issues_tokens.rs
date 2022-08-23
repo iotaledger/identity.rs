@@ -3,10 +3,17 @@
 
 use std::ops::Deref;
 
+use identity_core::common::Duration;
+use identity_core::common::Timestamp;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 
+use identity_stardust::block::output::unlock_condition::AddressUnlockCondition;
+use identity_stardust::block::output::unlock_condition::ExpirationUnlockCondition;
+use identity_stardust::block::output::unlock_condition::StorageDepositReturnUnlockCondition;
+use identity_stardust::block::output::BasicOutput;
+use identity_stardust::block::output::BasicOutputBuilder;
 use identity_stardust::block::output::Output;
 use identity_stardust::block::output::OutputId;
 use identity_stardust::StardustIdentityClientExt;
@@ -31,6 +38,7 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use primitive_types::U256;
 use utils::create_did;
+use utils::get_address;
 
 /// An example to demonstrate how an identity can issue and control native assets
 /// such as Token Foundries and NFTs.
@@ -39,9 +47,9 @@ use utils::create_did;
 /// carbon credits that can be used to pay for carbon emissions or traded on a marketplace.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // =======================================
+  // ===========================================
   // Create the authority's DID and the foundry.
-  // =======================================
+  // ===========================================
 
   // Create a new DID for the authority.
   let (client, _address, secret_manager, authority_did): (Client, Address, SecretManager, StardustDID) =
@@ -75,9 +83,9 @@ async fn main() -> anyhow::Result<()> {
     .await?;
   let _ = client.retry_until_included(&block.id(), None, None).await?;
 
-  // =======================================
+  // ===================================
   // Resolve Foundry and its issuer DID.
-  // =======================================
+  // ===================================
 
   let foundry_output_id: OutputId = client.foundry_output_id(carbon_credits_foundry_id).await?;
   let carbon_credits_foundry: OutputResponse = client.get_output(&foundry_output_id).await?;
@@ -91,10 +99,58 @@ async fn main() -> anyhow::Result<()> {
 
   let authority_alias_id: &AliasId = carbon_credits_foundry.alias_address().alias_id();
 
-  let network: NetworkName = NetworkName::try_from(client.get_bech32_hrp().await?)?;
+  let network: NetworkName = client.network_name().await?;
   let authority_did: StardustDID = StardustDID::new(authority_alias_id.deref(), &network);
 
-  let _authority_document: StardustDocument = client.resolve_did(&authority_did).await?;
+  let authority_document: StardustDocument = client.resolve_did(&authority_did).await?;
+
+  println!("The authority's DID is: {authority_document:#?}");
+
+  // =====================================================
+  // Transfer 100 carbon credits to the address of a company.
+  // =====================================================
+
+  let (company_address, _) = get_address(&client).await?;
+
+  let tomorrow: u32 = Timestamp::now_utc()
+    .checked_add(Duration::seconds(60 * 60 * 24))
+    .ok_or_else(|| anyhow::anyhow!("timestamp overflow"))?
+    .to_unix()
+    .try_into()
+    .map_err(|err| anyhow::anyhow!("cannot fit timestamp into u32: {err}"))?;
+
+  let basic_output: BasicOutput = BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?
+    .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(company_address)))
+    .add_native_token(NativeToken::new(carbon_credits_foundry.token_id(), U256::from(100))?)
+    // Return the full amount of the storage deposit when consuming the output.
+    // We don't know the minimum storage deposit yet, so we'll use a placeholder initially and replace it later.
+    .add_unlock_condition(UnlockCondition::StorageDepositReturn(
+      StorageDepositReturnUnlockCondition::new(Address::Alias(AliasAddress::new(*authority_alias_id)), 1)?,
+    ))
+    // If the receiver does not consume this output, we unlock after a day to avoid
+    // locking our funds forever.
+    .add_unlock_condition(UnlockCondition::Expiration(ExpirationUnlockCondition::new(
+      Address::Alias(AliasAddress::new(*authority_alias_id)),
+      tomorrow,
+    )?))
+    .finish()?;
+
+  // Get the actual storage deposit and set it in the unlock condition.
+  let storage_deposit: u64 = basic_output.amount();
+  let basic_output: BasicOutput = BasicOutputBuilder::from(&basic_output)
+    .replace_unlock_condition(UnlockCondition::StorageDepositReturn(
+      StorageDepositReturnUnlockCondition::new(
+        Address::Alias(AliasAddress::new(*authority_alias_id)),
+        storage_deposit,
+      )?,
+    ))?
+    .finish()?;
+
+  // Publish the output, transferring the carbon credits.
+  let block: Block = client.block().with_outputs(vec![basic_output.into()])?.finish().await?;
+  let _ = client.retry_until_included(&block.id(), None, None).await?;
+
+  println!("Sent native tokens to {}", company_address.to_bech32(network.as_ref()));
 
   Ok(())
 }

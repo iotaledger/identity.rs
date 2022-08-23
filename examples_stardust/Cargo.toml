@@ -16,7 +16,7 @@ tokio = "1.20.1"
 [workspace]
 
 [lib]
-path = "util/util.rs"
+path = "utils/utils.rs"
 
 [[example]]
 path = "crud/0_create_did.rs"

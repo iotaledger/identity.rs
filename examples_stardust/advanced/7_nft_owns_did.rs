@@ -25,6 +25,7 @@ use iota_client::block::payload::Payload;
 use iota_client::block::Block;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+use utils::create_did_document;
 use utils::get_address_with_funds;
 use utils::NETWORK_ENDPOINT;
 
@@ -53,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
     .finish()?;
 
-  // Publish all outputs.
+  // Publish the NFT output.
   let block: Block = client
     .block()
     .with_secret_manager(&secret_manager)
@@ -68,13 +69,10 @@ async fn main() -> anyhow::Result<()> {
       .ok_or_else(|| anyhow::anyhow!("expected the block to contain a payload"))?,
   )?);
 
-  // TODO: Use network_name in all examples.
   let network: NetworkName = client.network_name().await?;
 
-  // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  // TODO: Add methods.
-  let document: StardustDocument = StardustDocument::new(&network);
+  // Create an exemplary DID document for the subsidiary.
+  let document: StardustDocument = create_did_document(&network)?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client
