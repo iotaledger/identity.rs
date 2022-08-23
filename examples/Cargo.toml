@@ -3,7 +3,6 @@ name = "examples"
 version = "0.6.0"
 edition = "2021"
 publish = false
-release = false
 
 [dependencies]
 identity_iota = { path = "../identity_iota" }
