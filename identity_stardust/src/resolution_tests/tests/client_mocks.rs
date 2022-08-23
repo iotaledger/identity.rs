@@ -37,9 +37,7 @@ impl FooClient {
     if did == self.issuer_stardust_doc.id() {
       Ok(self.issuer_stardust_doc.clone())
     } else {
-      Err(Error::ResolutionAttemptError(Box::new(ResolutionError(
-        did.to_string(),
-      ))))
+      Err(Error::HandlerError(Box::new(ResolutionError(did.to_string()))))
     }
   }
 }
@@ -51,8 +49,6 @@ impl BarClient {
       .iter()
       .find(|doc| doc.id() == did.as_ref())
       .map(Clone::clone)
-      .ok_or(Error::ResolutionAttemptError(Box::new(ResolutionError(
-        did.to_string(),
-      ))))
+      .ok_or(Error::HandlerError(Box::new(ResolutionError(did.to_string()))))
   }
 }

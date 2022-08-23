@@ -26,4 +26,3 @@ thiserror = { version = "1.0", default-features = false }
 default = ["revocation-bitmap"]
 revocation-bitmap = ["identity_did/revocation-bitmap"]
 internals = []
-javascript-bindings = []

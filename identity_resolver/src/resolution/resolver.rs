@@ -4,7 +4,7 @@
 use core::future::Future;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::sync::Arc;
+use std::pin::Pin;
 
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
@@ -15,17 +15,16 @@ use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
+use identity_did::did::DIDError;
 use identity_did::did::DID;
 use identity_did::document::Document;
 use serde::Serialize;
 
 use crate::Error;
-use crate::ResolutionHandler;
+
 use crate::Result;
 
-use super::resolver_delegate::AsyncFnPtr;
-use super::resolver_delegate::ResolverDelegate;
-
+type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 type Command<DOC> = AsyncFnPtr<str, Result<DOC>>;
 
 /// Convenience type for resolving did documents from different did methods.   
@@ -56,44 +55,35 @@ where
     }
   }
 
-  /// Attach a [`ResolverHandler`] to this resolver.
-  /// If another handler has already been attached to the same method it will be replaced.
-  pub fn attach_method_handler<D, R>(&mut self, handler: Arc<R>)
+  pub fn attach_handler<D, F, Fut, DOCUMENT, E>(&mut self, method: String, handler: F)
   where
-    D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
-    R: ResolutionHandler<D> + 'static,
-    DOC: From<<R as ResolutionHandler<D>>::Resolved> + 'static,
-  {
-    let ResolverDelegate::<DOC> { method, handler } = ResolverDelegate::new(handler);
-    self.attach_raw_internal(method, handler);
-  }
-
-  pub fn attach_handler<D, F, Fut, DOCUMENT>(&mut self, method: String, handler: F)
-  where
-    D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
+    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDError> + 'static,
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone,
-    Fut: Future<Output = Result<DOCUMENT>>,
+    Fut: Future<Output = std::result::Result<DOCUMENT, E>>,
+    E: std::error::Error + Send + Sync + 'static,
   {
     let command: Command<DOC> = Box::new(move |input: &str| {
       let handler_clone = handler.clone();
-      let did_parse_attempt =
-        D::try_from(input).map_err(|_| Error::ResolutionProblem(format!("failed to parse did: {}", input)));
+      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDError { error });
       Box::pin(async move {
         let did: D = did_parse_attempt?;
-        handler_clone(did).await.map(Into::into)
+        handler_clone(did)
+          .await
+          .map(Into::into)
+          .map_err(|error| Error::HandlerError(error.into()))
       })
     });
 
-    self.command_map.insert(method, command);
+    self.attach_raw_internal(method, command);
   }
 
   #[cfg(feature = "internals")]
-  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
+  pub fn attach_raw(&mut self, method: String, handler: Command<DOC>) {
     self.attach_raw_internal(method, handler);
   }
 
-  fn attach_raw_internal(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
+  fn attach_raw_internal(&mut self, method: String, handler: Command<DOC>) {
     self.command_map.insert(method, handler);
   }
 
@@ -212,14 +202,17 @@ where
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
         PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
+          .map_err(|error| Error::PresentationValidationError { error })
       }
       (Some(holder), None) => {
         let issuers: Vec<DOC> = self.resolve_presentation_issuers(presentation).await?;
         PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
+          .map_err(|error| Error::PresentationValidationError { error })
       }
       (None, Some(issuers)) => {
         let holder = self.resolve_presentation_holder(presentation).await?;
         PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
+          .map_err(|error| Error::PresentationValidationError { error })
       }
       (None, None) => {
         let (holder, issuers): (DOC, Vec<DOC>) = futures::future::try_join(
@@ -229,6 +222,7 @@ where
         .await?;
 
         PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
+          .map_err(|error| Error::PresentationValidationError { error })
       }
     }
     .map_err(Into::into)

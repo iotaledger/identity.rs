@@ -61,10 +61,6 @@ revocation-bitmap = [
 # Breaking changes to functionality behind this flag is not covered by semver.
 resolver-internals = ["identity_resolver/internals"]
 
-# Provides access to functionality only relevant for the javascript bindings.
-# Breaking changes to functionality behind this flag is not covered by semver.
-resolver-javascript-bindings = ["identity_resolver/javascript-bindings"]
-
 # Enables encryption and decryption functionality.
 # Breaking changes to types and functions behind this flag are not covered by semver.
 unstable-encryption = ["identity_account/encryption"]

@@ -38,7 +38,6 @@ features = [
   "unstable-encryption",
   "revocation-bitmap",
   "resolver-internals",
-  "resolver-javascript-bindings",
 ]
 
 [dependencies.identity_stardust]
