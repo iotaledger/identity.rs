@@ -13,7 +13,7 @@ description = "An IOTA Ledger integration for the identity.rs library."
 
 [dependencies]
 # Ensure bee-block always matches the version used by iota-client.
-bee-block = { version = "1.0.0-beta.5", default-features = false, features = ["std"], optional = true }
+bee-block = { version = "1.0.0-beta.6", default-features = false, features = ["std"], optional = true }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
