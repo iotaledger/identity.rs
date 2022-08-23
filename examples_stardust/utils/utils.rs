@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use anyhow::Context;
 
 use identity_core::crypto::KeyPair;
@@ -17,7 +15,6 @@ use iota_client::block::output::AliasOutput;
 use iota_client::block::output::Output;
 use iota_client::crypto::keys::bip39;
 use iota_client::node_api::indexer::query_parameters::QueryParameter;
-use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
@@ -93,13 +90,6 @@ pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) ->
   let address = client.get_addresses(secret_manager).with_range(0..1).get_raw().await?[0];
 
   Ok(address)
-}
-
-pub fn build_stronghold(path: &str, password: &str) -> anyhow::Result<StrongholdSecretManager> {
-  StrongholdSecretManager::builder()
-    .password(password)
-    .try_build(PathBuf::from(path))
-    .map_err(Into::into)
 }
 
 /// Requests funds from the testnet faucet for the given `address`.
