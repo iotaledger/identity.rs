@@ -27,7 +27,7 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use utils::create_did;
 
-/// Demonstrate how an identity can issue and own NFTs,
+/// Demonstrates how an identity can issue and own NFTs,
 /// and how observers can verify the issuer of the NFT.
 ///
 /// For this example, we consider the case where a manufacturer issues
@@ -96,7 +96,7 @@ async fn main() -> anyhow::Result<()> {
   // Resolve the issuer of the DPP.
   let issuer_document: StardustDocument = client.resolve_did(&did).await?;
 
-  println!("The issuer of the DPP is: {issuer_document:#?}");
+  println!("The issuer of the DPP is: {issuer_document:#}");
 
   Ok(())
 }

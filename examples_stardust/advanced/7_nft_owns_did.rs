@@ -29,16 +29,16 @@ use utils::create_did_document;
 use utils::get_address_with_funds;
 use utils::NETWORK_ENDPOINT;
 
-/// Demonstrate how an identity can issue and own NFTs,
+/// Demonstrates how an identity can issue and own NFTs,
 /// and how observers can verify the issuer of the NFT.
 ///
 /// For this example, we consider the case where a car's NFT owns
-/// the DID of the car.
+/// the DID of the car, so that transferring the NFT also transfers DID ownership.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // ==========================================
-  // Create the car's DID and the DPP.
-  // ==========================================
+  // =============================
+  // Create the car's NFT and DID.
+  // =============================
 
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
@@ -81,9 +81,9 @@ async fn main() -> anyhow::Result<()> {
 
   let car_document: StardustDocument = client.publish_did_output(&secret_manager, car_did_output).await?;
 
-  // ==========================================
-  // Resolve the car's DID and the owning NFT.
-  // ==========================================
+  // ============================================
+  // Determine the car's NFT given the car's DID.
+  // ============================================
 
   let output: AliasOutput = client.resolve_did_output(car_document.id()).await?;
 
@@ -116,8 +116,8 @@ async fn main() -> anyhow::Result<()> {
     anyhow::bail!("expected an NFT output");
   };
 
-  println!("The car's DID is: {car_document:#?}");
-  println!("The car's NFT, which owns its DID, is: {car_nft:#?}");
+  println!("The car's DID is: {car_document:#}");
+  println!("The car's NFT is: {car_nft:#?}");
 
   Ok(())
 }

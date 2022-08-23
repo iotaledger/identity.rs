@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
@@ -12,6 +14,7 @@ use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustVerificationMethod;
 
 use identity_stardust::block::output::AliasId;
+use identity_stardust::block::output::UnlockCondition;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
 use iota_client::block::output::feature::IssuerFeature;
@@ -23,11 +26,15 @@ use iota_client::Client;
 use utils::create_did;
 use utils::create_did_document;
 
-/// An example to demonstrate how one identity can control or "own" another identity.
+/// Demonstrates how one identity can control another identity.
 ///
-/// For this example, we consider the case where a parent company's DID owns the DID of a subsidiary.
+/// For this example, we consider the case where a parent company's DID controls the DID of a subsidiary.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+  // ========================================================
+  // Create the company's and subsidiary's Alias Output DIDs.
+  // ========================================================
+
   // Create a new DID for the company.
   let (client, _address, secret_manager, company_did): (Client, Address, SecretManager, StardustDID) =
     create_did().await?;
@@ -50,17 +57,21 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  let alias_output2 = AliasOutputBuilder::from(&subsidiary_alias)
+  let subsidiary_alias = AliasOutputBuilder::from(&subsidiary_alias)
     // Optionally, we can set the company of the new DID as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as
     // a resolver can verify that the subsidiary was issued by the parent company.
     .add_immutable_feature(IssuerFeature::new(AliasAddress::new(AliasId::from(&company_did)).into()).into())
-    // Adding the issuer feature means we have to re-calculate the required storage deposit.
+    // Adding the issuer feature means we have to recalculate the required storage deposit.
     .with_minimum_storage_deposit(rent_structure.clone())
     .finish()?;
 
   // Publish the subsidiary's DID.
-  let mut subsidiary_document: StardustDocument = client.publish_did_output(&secret_manager, alias_output2).await?;
+  let mut subsidiary_document: StardustDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
+
+  // =====================================
+  // Update the subsidiary's Alias Output.
+  // =====================================
 
   // Add a verification method to the subsidiary.
   // This only serves as an example for updating the subsidiary DID.
@@ -75,24 +86,50 @@ async fn main() -> anyhow::Result<()> {
 
   subsidiary_document.insert_method(method, MethodScope::VerificationMethod)?;
 
-  // Update the subsidiary Alias Output with the updated document
+  // Update the subsidiary's Alias Output with the updated document
   // and increase the storage deposit.
   let subsidiary_alias: AliasOutput = client.update_did_output(subsidiary_document).await?;
-  let subsidiary_alias = AliasOutputBuilder::from(&subsidiary_alias)
+  let subsidiary_alias: AliasOutput = AliasOutputBuilder::from(&subsidiary_alias)
     .with_minimum_storage_deposit(rent_structure.clone())
     .finish()?;
 
   // Publish the updated subsidiary's DID.
+  //
   // This works because `secret_manager` can unlock the company's Alias Output,
   // which is required in order to update the subsidiary's Alias Output.
   let subsidiary_document: StardustDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
 
-  // Resolve both DID documents for demonstration purposes.
-  let company_document = client.resolve_did(&company_did).await?;
-  let subsidiary_document = client.resolve_did(subsidiary_document.id()).await?;
+  // ===================================================================
+  // Determine the controlling company's DID given the subsidiary's DID.
+  // ===================================================================
 
-  println!("Company: {company_document:#?}");
-  println!("Subsidiary: {subsidiary_document:#?}");
+  // Resolve the subsidiary's Alias Output.
+  let subsidiary_output: AliasOutput = client.resolve_did_output(subsidiary_document.id()).await?;
+
+  // Extract the company's Alias Id from the state controller unlock condition.
+  //
+  // If instead we wanted to determine the original creator of the DID,
+  // we could inspect the issuer feature.
+  let company_alias_id: AliasId = if let Some(UnlockCondition::StateControllerAddress(address)) =
+    subsidiary_output.unlock_conditions().iter().next()
+  {
+    if let Address::Alias(alias) = *address.address() {
+      *alias.alias_id()
+    } else {
+      anyhow::bail!("expected an alias address as the state controller");
+    }
+  } else {
+    anyhow::bail!("expected two unlock conditions");
+  };
+
+  // Reconstruct the company's DID from the Alias Id and the network.
+  let company_did = StardustDID::new(company_alias_id.deref(), &network_name);
+
+  // Resolve the company's DID document.
+  let company_document: StardustDocument = client.resolve_did(&company_did).await?;
+
+  println!("Company: {company_document:#}");
+  println!("Subsidiary: {subsidiary_document:#}");
 
   Ok(())
 }

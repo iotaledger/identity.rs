@@ -11,7 +11,6 @@ use identity_stardust::StardustDocument;
 
 use identity_stardust::block::output::unlock_condition::AddressUnlockCondition;
 use identity_stardust::block::output::unlock_condition::ExpirationUnlockCondition;
-use identity_stardust::block::output::unlock_condition::StorageDepositReturnUnlockCondition;
 use identity_stardust::block::output::BasicOutput;
 use identity_stardust::block::output::BasicOutputBuilder;
 use identity_stardust::block::output::Output;
@@ -40,7 +39,7 @@ use primitive_types::U256;
 use utils::create_did;
 use utils::get_address;
 
-/// An example to demonstrate how an identity can issue and control native assets
+/// Demonstrates how an identity can issue and control native assets
 /// such as Token Foundries and NFTs.
 ///
 /// For this example, we consider the case where an authority issues
@@ -69,9 +68,30 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Create a token foundry that represents carbon credits.
-  // The authority is set as the immutable owner.
+  let token_scheme = TokenScheme::Simple(SimpleTokenScheme::new(
+    U256::from(500_000u32),
+    U256::from(0u8),
+    U256::from(1_000_000u32),
+  )?);
+
+  // Create the identifier of the foundry, which is partially derived from the Alias Address.
+  let foundry_id = FoundryId::build(
+    &AliasAddress::new(AliasId::from(&authority_did)),
+    1,
+    token_scheme.kind(),
+  );
+
+  // Create the Foundry Output.
   let carbon_credits_foundry: FoundryOutput =
-    create_foundry(rent_structure.clone(), AliasAddress::new(AliasId::from(&authority_did)))?;
+    FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone(), 1, token_scheme)?
+      // Initially, all carbon credits are owned by the foundry.
+      .add_native_token(NativeToken::new(TokenId::from(foundry_id), U256::from(500_000u32))?)
+      // The authority is set as the immutable owner.
+      .add_unlock_condition(UnlockCondition::ImmutableAliasAddress(
+        ImmutableAliasAddressUnlockCondition::new(AliasAddress::new(AliasId::from(&authority_did))),
+      ))
+      .finish()?;
+
   let carbon_credits_foundry_id: FoundryId = carbon_credits_foundry.id();
 
   // Publish all outputs.
@@ -87,6 +107,7 @@ async fn main() -> anyhow::Result<()> {
   // Resolve Foundry and its issuer DID.
   // ===================================
 
+  // Get the latest output that contains the foundry.
   let foundry_output_id: OutputId = client.foundry_output_id(carbon_credits_foundry_id).await?;
   let carbon_credits_foundry: OutputResponse = client.get_output(&foundry_output_id).await?;
   let carbon_credits_foundry: Output = Output::try_from(&carbon_credits_foundry.output)?;
@@ -94,24 +115,29 @@ async fn main() -> anyhow::Result<()> {
   let carbon_credits_foundry: FoundryOutput = if let Output::Foundry(foundry_output) = carbon_credits_foundry {
     foundry_output
   } else {
-    anyhow::bail!("expected Foundry output")
+    anyhow::bail!("expected foundry output")
   };
 
+  // Get the Alias Id of the authority that issued the carbon credits foundry.
   let authority_alias_id: &AliasId = carbon_credits_foundry.alias_address().alias_id();
 
+  // Reconstruct the DID of the authority.
   let network: NetworkName = client.network_name().await?;
   let authority_did: StardustDID = StardustDID::new(authority_alias_id.deref(), &network);
 
+  // Resolve the authority's DID document.
   let authority_document: StardustDocument = client.resolve_did(&authority_did).await?;
 
-  println!("The authority's DID is: {authority_document:#?}");
+  println!("The authority's DID is: {authority_document:#}");
 
-  // =====================================================
-  // Transfer 100 carbon credits to the address of a company.
-  // =====================================================
+  // =========================================================
+  // Transfer 1000 carbon credits to the address of a company.
+  // =========================================================
 
+  // Create a new address that represents the company.
   let (company_address, _) = get_address(&client).await?;
 
+  // Create the timestamp at which the basic output will expire.
   let tomorrow: u32 = Timestamp::now_utc()
     .checked_add(Duration::seconds(60 * 60 * 24))
     .ok_or_else(|| anyhow::anyhow!("timestamp overflow"))?
@@ -119,38 +145,29 @@ async fn main() -> anyhow::Result<()> {
     .try_into()
     .map_err(|err| anyhow::anyhow!("cannot fit timestamp into u32: {err}"))?;
 
+  // Create a basic output containing our carbon credits that we'll send to the company's address.
   let basic_output: BasicOutput = BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(company_address)))
-    .add_native_token(NativeToken::new(carbon_credits_foundry.token_id(), U256::from(100))?)
-    // Return the full amount of the storage deposit when consuming the output.
-    // We don't know the minimum storage deposit yet, so we'll use a placeholder initially and replace it later.
-    .add_unlock_condition(UnlockCondition::StorageDepositReturn(
-      StorageDepositReturnUnlockCondition::new(Address::Alias(AliasAddress::new(*authority_alias_id)), 1)?,
-    ))
-    // If the receiver does not consume this output, we unlock after a day to avoid
-    // locking our funds forever.
+    .add_native_token(NativeToken::new(carbon_credits_foundry.token_id(), U256::from(1000))?)
     .add_unlock_condition(UnlockCondition::Expiration(ExpirationUnlockCondition::new(
       Address::Alias(AliasAddress::new(*authority_alias_id)),
       tomorrow,
     )?))
     .finish()?;
 
-  // Get the actual storage deposit and set it in the unlock condition.
-  let storage_deposit: u64 = basic_output.amount();
-  let basic_output: BasicOutput = BasicOutputBuilder::from(&basic_output)
-    .replace_unlock_condition(UnlockCondition::StorageDepositReturn(
-      StorageDepositReturnUnlockCondition::new(
-        Address::Alias(AliasAddress::new(*authority_alias_id)),
-        storage_deposit,
-      )?,
-    ))?
+  // Reduce the carbon credits in the foundry by the amount that is sent to the company.
+  let carbon_credits_foundry = FoundryOutputBuilder::from(&carbon_credits_foundry)
+    .with_native_tokens(vec![NativeToken::new(
+      carbon_credits_foundry.token_id(),
+      U256::from(499_000u32),
+    )?])
     .finish()?;
 
   // Publish the output, transferring the carbon credits.
   let block: Block = client
     .block()
     .with_secret_manager(&secret_manager)
-    .with_outputs(vec![basic_output.into()])?
+    .with_outputs(vec![basic_output.into(), carbon_credits_foundry.into()])?
     .finish()
     .await?;
   let _ = client.retry_until_included(&block.id(), None, None).await?;
@@ -158,24 +175,4 @@ async fn main() -> anyhow::Result<()> {
   println!("Sent carbon credits to {}", company_address.to_bech32(network.as_ref()));
 
   Ok(())
-}
-
-/// Creates the carbon credits foundry that is owned by `foundry_owner`
-/// and with half of its maximum supply of tokens minted.
-fn create_foundry(rent_structure: RentStructure, foundry_owner: AliasAddress) -> anyhow::Result<FoundryOutput> {
-  let token_scheme = TokenScheme::Simple(SimpleTokenScheme::new(
-    U256::from(500_000u32),
-    U256::from(0u8),
-    U256::from(1_000_000u32),
-  )?);
-  let foundry_id = FoundryId::build(&foundry_owner, 1, token_scheme.kind());
-  let token_id = TokenId::from(foundry_id);
-
-  FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, 1, token_scheme)?
-    .add_native_token(NativeToken::new(token_id, U256::from(70u8))?)
-    .add_unlock_condition(UnlockCondition::ImmutableAliasAddress(
-      ImmutableAliasAddressUnlockCondition::new(foundry_owner),
-    ))
-    .finish()
-    .map_err(Into::into)
 }
