@@ -24,7 +24,8 @@ pub static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueu
 
 /// Creates a DID Document and publishes it in a new Alias Output.
 ///
-/// This is equivalent to the create DID example and exists for convenient calling from the other examples.
+/// Its functionality is equivalent to the "create DID" example
+/// and exists for convenient calling from the other examples.
 pub async fn create_did() -> anyhow::Result<(Client, Address, SecretManager, StardustDID)> {
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
   let (address, secret_manager): (Address, SecretManager) = get_address_with_funds(&client)
@@ -33,12 +34,7 @@ pub async fn create_did() -> anyhow::Result<(Client, Address, SecretManager, Sta
 
   let network_name: NetworkName = client.network_name().await?;
 
-  let mut document: StardustDocument = StardustDocument::new(&network_name);
-
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: StardustVerificationMethod =
-    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
-  document.insert_method(method, MethodScope::VerificationMethod)?;
+  let document: StardustDocument = create_did_document(&network_name)?;
 
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
@@ -47,8 +43,35 @@ pub async fn create_did() -> anyhow::Result<(Client, Address, SecretManager, Sta
   Ok((client, address, secret_manager, document.id().clone()))
 }
 
+/// Creates an example DID document with the given `network_name`.
+///
+/// Its functionality is equivalent to the "create DID" example
+/// and exists for convenient calling from the other examples.
+pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<StardustDocument> {
+  let mut document: StardustDocument = StardustDocument::new(network_name);
+
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+
+  let method: StardustVerificationMethod =
+    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+
+  document.insert_method(method, MethodScope::VerificationMethod)?;
+
+  Ok(document)
+}
+
 /// Creates a new address and SecretManager with funds from the testnet faucet.
 pub async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address, SecretManager)> {
+  let (address, secret_manager): (Address, SecretManager) = get_address(client).await?;
+
+  request_faucet_funds(client, address, "rms")
+    .await
+    .context("failed to request faucet funds")?;
+
+  Ok((address, secret_manager))
+}
+
+pub async fn get_address(client: &Client) -> anyhow::Result<(Address, SecretManager)> {
   let keypair = identity_core::crypto::KeyPair::new(KeyType::Ed25519)?;
   let mnemonic =
     iota_client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
@@ -57,10 +80,6 @@ pub async fn get_address_with_funds(client: &Client) -> anyhow::Result<(Address,
   let secret_manager = SecretManager::Mnemonic(MnemonicSecretManager::try_from_mnemonic(&mnemonic)?);
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-  let network_hrp = client.network_name().await?;
-  request_faucet_funds(client, address, &network_hrp)
-    .await
-    .context("failed to request faucet funds")?;
 
   Ok((address, secret_manager))
 }

@@ -147,10 +147,15 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the output, transferring the carbon credits.
-  let block: Block = client.block().with_outputs(vec![basic_output.into()])?.finish().await?;
+  let block: Block = client
+    .block()
+    .with_secret_manager(&secret_manager)
+    .with_outputs(vec![basic_output.into()])?
+    .finish()
+    .await?;
   let _ = client.retry_until_included(&block.id(), None, None).await?;
 
-  println!("Sent native tokens to {}", company_address.to_bech32(network.as_ref()));
+  println!("Sent carbon credits to {}", company_address.to_bech32(network.as_ref()));
 
   Ok(())
 }
