@@ -7,13 +7,13 @@ use iota_client::block::address::Address;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+use examples::create_did;
+use examples::NETWORK_ENDPOINT;
 use identity_stardust::Error;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustIdentityClientExt;
 use iota_client::secret::stronghold::StrongholdSecretManager;
-use utils::create_did;
-use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit.
 #[tokio::main]

@@ -14,6 +14,8 @@ use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustVerificationMethod;
 
+use examples::create_did;
+use examples::NETWORK_ENDPOINT;
 use identity_stardust::block::output::AliasId;
 use identity_stardust::block::output::UnlockCondition;
 use iota_client::block::address::Address;
@@ -25,8 +27,6 @@ use iota_client::block::output::RentStructure;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-use utils::create_did;
-use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how one identity can control another identity.
 ///

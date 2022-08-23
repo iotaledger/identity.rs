@@ -7,13 +7,13 @@ use identity_stardust::block::address::Address;
 use iota_client::block::output::AliasOutput;
 use iota_client::Client;
 
+use examples::create_did;
+use examples::NETWORK_ENDPOINT;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
-use utils::create_did;
-use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how to resolve an existing DID in an Alias Output.
 #[tokio::main]

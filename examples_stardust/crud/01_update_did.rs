@@ -3,6 +3,8 @@
 
 use std::path::PathBuf;
 
+use examples::create_did;
+use examples::NETWORK_ENDPOINT;
 use identity_core::common::Timestamp;
 use identity_core::convert::FromJson;
 use identity_core::json;
@@ -16,8 +18,6 @@ use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-use utils::create_did;
-use utils::NETWORK_ENDPOINT;
 
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;

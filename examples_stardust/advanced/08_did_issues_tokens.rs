@@ -10,6 +10,9 @@ use identity_stardust::NetworkName;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 
+use examples::create_did;
+use examples::get_address;
+use examples::NETWORK_ENDPOINT;
 use identity_stardust::block::output::unlock_condition::AddressUnlockCondition;
 use identity_stardust::block::output::unlock_condition::ExpirationUnlockCondition;
 use identity_stardust::block::output::BasicOutput;
@@ -38,9 +41,6 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use primitive_types::U256;
-use utils::create_did;
-use utils::get_address;
-use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how an identity can issue and control native assets
 /// such as Token Foundries and NFTs.

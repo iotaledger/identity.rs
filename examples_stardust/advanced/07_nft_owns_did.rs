@@ -7,6 +7,9 @@ use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 
+use examples::create_did_document;
+use examples::get_address_with_funds;
+use examples::NETWORK_ENDPOINT;
 use identity_stardust::block::address::NftAddress;
 use identity_stardust::block::output::AliasOutput;
 use identity_stardust::StardustIdentityClientExt;
@@ -26,9 +29,6 @@ use iota_client::block::Block;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-use utils::create_did_document;
-use utils::get_address_with_funds;
-use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how an identity can issue and own NFTs,
 /// and how observers can verify the issuer of the NFT.

@@ -1,5 +1,5 @@
 [package]
-name = "examples"
+name = "legacy_examples"
 version = "0.6.0"
 edition = "2021"
 publish = false

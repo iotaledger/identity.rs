@@ -4,6 +4,8 @@
 use std::path::PathBuf;
 
 use anyhow::Context;
+use examples::get_address_with_funds;
+use examples::NETWORK_ENDPOINT;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -13,8 +15,6 @@ use iota_client::block::output::AliasOutput;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-use utils::get_address_with_funds;
-use utils::NETWORK_ENDPOINT;
 
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
