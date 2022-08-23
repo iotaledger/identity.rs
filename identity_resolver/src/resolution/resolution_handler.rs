@@ -16,7 +16,7 @@ where
   type Resolved: Document + 'static + Send;
 
   /// Fetch the associated DID Document from the given DID.
-  async fn resolve(&self, did: &D) -> Result<Option<Self::Resolved>>;
+  async fn resolve(&self, did: &D) -> Result<Self::Resolved>;
 
   /// The supported did method.
   /// The returned string is expected to match the `did-method-name` when parsing DIDs of the method this handler

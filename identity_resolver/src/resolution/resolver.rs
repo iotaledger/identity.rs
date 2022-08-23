@@ -25,13 +25,7 @@ use crate::Result;
 use super::resolver_delegate::AsyncFnPtr;
 use super::resolver_delegate::ResolverDelegate;
 
-type Inner<DOC> = AsyncFnPtr<str, Result<Option<DOC>>>;
-
-///
-pub struct HandlerIndex {
-  method: String,
-  id: usize,
-}
+type Inner<DOC> = AsyncFnPtr<str, Result<DOC>>;
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
@@ -47,7 +41,7 @@ pub struct Resolver<DOC = Box<dyn ValidatorDocument>>
 where
   DOC: BorrowValidator,
 {
-  method_map: HashMap<String, Vec<Inner<DOC>>>,
+  method_map: HashMap<String, Inner<DOC>>,
 }
 
 impl<DOC> Resolver<DOC>
@@ -62,6 +56,7 @@ where
   }
 
   /// Attach a [`ResolverHandler`] to this resolver.
+  /// If another handler has already been attached to the same method it will be replaced.
   pub fn attach_method_handler<D, R>(&mut self, handler: Arc<R>)
   where
     D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
@@ -73,13 +68,12 @@ where
   }
 
   #[cfg(feature = "internals")]
-  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str, Result<Option<DOC>>>) {
+  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
     self.attach_raw_internal(method, handler);
   }
 
-  fn attach_raw_internal(&mut self, method: String, handler: AsyncFnPtr<str, Result<Option<DOC>>>) {
-    let method_handlers = self.method_map.entry(method).or_insert(Vec::new());
-    method_handlers.push(handler);
+  fn attach_raw_internal(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
+    let method_handlers = self.method_map.insert(method, handler);
   }
 
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
@@ -224,37 +218,12 @@ where
   /// The first input parameters `method` and `did` must be &str representations of the DID method name and the DID
   /// respectively.  
   async fn delegate_resolution(&self, method: &str, did: &str) -> Result<DOC> {
-    let delegates = self
+    let delegate = self
       .method_map
       .get(method)
       .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
 
-    let mut err: Option<Error> = None;
-
-    for delegate in delegates {
-      match delegate(did).await {
-        Ok(Some(doc)) => {
-          return Ok(doc);
-        }
-        Ok(None) => {
-          // The resolver was not configured to resolve this did.
-          continue;
-        }
-        Err(error) => {
-          if let Error::ResolutionAttemptError(_) = error {
-            return Err(error);
-          } else {
-            let _ = err.insert(error);
-          }
-        }
-      }
-    }
-
-    if let Some(error) = err {
-      Err(error)
-    } else {
-      Err(Error::NoCompatibleHandlerError)
-    }
+    delegate(did).await
   }
 }
 

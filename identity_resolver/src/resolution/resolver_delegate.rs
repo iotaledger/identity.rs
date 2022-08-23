@@ -23,7 +23,7 @@ pub type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Outp
 /// will delegate resolution to when encountering did's of the corresponding method.
 pub(super) struct ResolverDelegate<DOC: BorrowValidator> {
   pub(super) method: String,
-  pub(super) handler: AsyncFnPtr<str, Result<Option<DOC>>>,
+  pub(super) handler: AsyncFnPtr<str, Result<DOC>>,
 }
 
 impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
@@ -31,7 +31,6 @@ impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
   ///
   /// Converts a [`ResolutionHandler`] into a collectable asynchronous function pointer. The `output` transformer is
   /// used to transform the [resolved document](ResolutionHandler::Resolved) to any desired document type.
-  // TODO: Improve error handling.
   pub(super) fn new<D, R>(handler: Arc<R>) -> Self
   where
     D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
@@ -46,9 +45,7 @@ impl<DOC: BorrowValidator + 'static> ResolverDelegate<DOC> {
         Box::pin(async move {
           let did: D =
             D::try_from(input).map_err(|_| Error::ResolutionProblem(format!("failed to parse did: {}", input)))?;
-
-          let resolved = value_clone.resolve(&did).await?;
-          Ok(resolved.map(Into::into))
+          value_clone.resolve(&did).await.map(Into::into)
         })
       }),
     }

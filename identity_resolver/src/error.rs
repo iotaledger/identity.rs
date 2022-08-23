@@ -16,12 +16,8 @@ pub enum Error {
   #[error("could not parse the given did")]
   #[non_exhaustive]
   DIDError { error: identity_did::did::DIDError },
-  /// None of the attached ResolutionHandlers are configured to resolve the given DID.  
-  #[error("could not find a compatible resolution handler")]
-  #[non_exhaustive]
-  NoCompatibleHandlerError,
   /// The handler attempted to resolve the did, but the resolution did not succeed.
-  #[error("attempted to resolve did, but this action did not succeed")]
+  #[error("attempted to resolve DID, but this action did not succeed")]
   ResolutionAttemptError(Box<dyn std::error::Error + Send + Sync + 'static>),
   #[cfg(feature = "javascript-bindings")]
   /// Errors thrown in Javascript

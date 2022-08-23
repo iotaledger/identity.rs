@@ -10,7 +10,6 @@ use js_sys::Function;
 use js_sys::Promise;
 
 use crate::credential::WasmPresentation;
-use crate::did::WasmCoreDID;
 use crate::error::WasmError;
 use crate::resolver::supported_document_types::RustSupportedDocument;
 
