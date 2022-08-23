@@ -343,14 +343,13 @@ impl KeyComparable for StardustDID {
   }
 }
 
-#[cfg(feature = "iota-client")]
+#[cfg(feature = "client")]
 mod __stardust_did_iota_client {
-  use iota_client::block::output::AliasId;
-
+  use crate::block::output::AliasId;
   use crate::StardustDID;
 
   impl From<&StardustDID> for AliasId {
-    /// Converts the DID tag into an [`AliasId`].
+    /// Creates an [`AliasId`] from the DID tag.
     fn from(did: &StardustDID) -> Self {
       let tag_bytes: [u8; StardustDID::TAG_BYTES_LEN] = prefix_hex::decode(did.tag())
         .expect("being able to successfully decode the tag should be checked during DID creation");
