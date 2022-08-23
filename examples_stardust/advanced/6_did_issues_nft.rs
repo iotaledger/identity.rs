@@ -45,9 +45,18 @@ async fn main() -> anyhow::Result<()> {
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
-  // Create the digital product passport NFT with the manufacturer set as the immutable issuer.
+  // Create the digital product passport NFT.
   let product_passport_nft: NftOutput =
-    create_nft(rent_structure, AliasAddress::new(AliasId::from(&manufacturer_did)))?;
+    NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())?
+      // The NFT will initially be owned by the manufacturer.
+      .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(Address::Alias(
+        AliasAddress::new(AliasId::from(&manufacturer_did)),
+      ))))
+      // Set the manufacturer as the immutable issuer.
+      .add_immutable_feature(Feature::Issuer(IssuerFeature::new(Address::Alias(AliasAddress::new(
+        AliasId::from(&manufacturer_did),
+      )))))
+      .finish()?;
 
   // Publish all outputs.
   let block: Block = client
@@ -99,19 +108,6 @@ async fn main() -> anyhow::Result<()> {
   println!("The issuer of the DPP is: {issuer_document:#}");
 
   Ok(())
-}
-
-/// Creates an example NFT that is issued and owned by `nft_issuer`.
-fn create_nft(rent_structure: RentStructure, nft_issuer: AliasAddress) -> anyhow::Result<NftOutput> {
-  NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())?
-    // The NFT will initially be owned by the issuer.
-    .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(Address::Alias(
-      nft_issuer,
-    ))))
-    // Set the `nft_issuer` as the immutable issuer of the NFT.
-    .add_immutable_feature(Feature::Issuer(IssuerFeature::new(Address::Alias(nft_issuer))))
-    .finish()
-    .map_err(Into::into)
 }
 
 // Helper function to get the output id for the first NFT output in a Block.
