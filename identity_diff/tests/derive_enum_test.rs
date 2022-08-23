@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg(feature = "derive")]
+#![allow(clippy::derive_partial_eq_without_eq)]
 #![allow(unused_variables)]
 #![allow(deprecated)]
 
