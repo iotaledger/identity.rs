@@ -3,8 +3,6 @@
 
 use std::path::PathBuf;
 
-// use bee_block::address::NftAddress;
-// use bee_block::output::AliasOutput;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
@@ -81,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
 
   let network: NetworkName = client.network_name().await?;
 
-  // Create an exemplary DID document for the subsidiary.
+  // Construct a DID document for the subsidiary.
   let document: StardustDocument = create_did_document(&network)?;
 
   // Create a new DID for the car that is owned by the car NFT.
@@ -97,14 +95,15 @@ async fn main() -> anyhow::Result<()> {
 
   let output: AliasOutput = client.resolve_did_output(car_document.id()).await?;
 
-  let unlock = output
+  // Extract the NFT address from the state controller unlock condition.
+  let unlock_condition: &UnlockCondition = output
     .unlock_conditions()
     .iter()
     .next()
     .ok_or_else(|| anyhow::anyhow!("expected at least one unlock condition"))?;
 
   let car_nft_address: NftAddress =
-    if let UnlockCondition::StateControllerAddress(state_controller_unlock_condition) = unlock {
+    if let UnlockCondition::StateControllerAddress(state_controller_unlock_condition) = unlock_condition {
       if let Address::Nft(nft_address) = state_controller_unlock_condition.address() {
         *nft_address
       } else {
@@ -114,8 +113,8 @@ async fn main() -> anyhow::Result<()> {
       anyhow::bail!("expected an Address as the unlock condition");
     };
 
+  // Retrieve the NFT Output of the car.
   let car_nft_id: &NftId = car_nft_address.nft_id();
-
   let output_id: OutputId = client.nft_output_id(*car_nft_id).await?;
   let output_response: OutputResponse = client.get_output(&output_id).await?;
   let output: Output = Output::try_from(&output_response.output)?;

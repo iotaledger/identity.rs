@@ -26,7 +26,6 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 use utils::create_did;
-use utils::create_did_document;
 use utils::NETWORK_ENDPOINT;
 
 /// Demonstrates how one identity can control another identity.
@@ -55,12 +54,12 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure: RentStructure = client.get_rent_structure().await?;
   let network_name: NetworkName = client.network_name().await?;
 
-  // Create an exemplary DID document for the subsidiary.
-  let subsidiary_document: StardustDocument = create_did_document(&network_name)?;
+  // Construct a new DID document for the subsidiary.
+  let subsidiary_document: StardustDocument = StardustDocument::new(&network_name);
 
   // Create a DID for the subsidiary that is controlled by the parent company's DID.
-  // That means the company's Alias Output will have to be unlocked in a transaction that
-  // updates the subsidary's Alias Output.
+  // This means the subsidiary's Alias Output can only be updated or destroyed by
+  // the state controller or governor of the company's Alias Output respectively.
   let subsidiary_alias: AliasOutput = client
     .new_did_output(
       Address::Alias(AliasAddress::new(AliasId::from(&company_did))),
@@ -70,9 +69,9 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
   let subsidiary_alias = AliasOutputBuilder::from(&subsidiary_alias)
-    // Optionally, we can set the company of the new DID as the issuer of the subsidiary DID.
-    // This allows to verify trust relationships between DIDs, as
-    // a resolver can verify that the subsidiary was issued by the parent company.
+    // Optionally, we can mark the company as the issuer of the subsidiary DID.
+    // This allows to verify trust relationships between DIDs, as a resolver can
+    // verify that the subsidiary DID was created by the parent company.
     .add_immutable_feature(IssuerFeature::new(AliasAddress::new(AliasId::from(&company_did)).into()).into())
     // Adding the issuer feature means we have to recalculate the required storage deposit.
     .with_minimum_storage_deposit(rent_structure.clone())
@@ -88,14 +87,12 @@ async fn main() -> anyhow::Result<()> {
   // Add a verification method to the subsidiary.
   // This only serves as an example for updating the subsidiary DID.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-
   let method: StardustVerificationMethod = StardustVerificationMethod::new(
     subsidiary_document.id().clone(),
     keypair.type_(),
     keypair.public(),
     "#key-2",
   )?;
-
   subsidiary_document.insert_method(method, MethodScope::VerificationMethod)?;
 
   // Update the subsidiary's Alias Output with the updated document

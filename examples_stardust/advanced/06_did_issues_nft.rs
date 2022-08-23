@@ -7,6 +7,7 @@ use identity_stardust::NetworkName;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 
+use identity_stardust::block::output::feature::MetadataFeature;
 use identity_stardust::StardustIdentityClientExt;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
@@ -38,9 +39,9 @@ use utils::NETWORK_ENDPOINT;
 /// a digital product passport (DPP) as an NFT.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // ==========================================
-  // Create the manufacturer's DID and the DPP.
-  // ==========================================
+  // ==============================================
+  // Create the manufacturer's DID and the DPP NFT.
+  // ==============================================
 
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
@@ -58,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
-  // Create the digital product passport NFT.
+  // Create a digital product passport NFT issued by the manufacturer.
   let product_passport_nft: NftOutput =
     NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())?
       // The NFT will initially be owned by the manufacturer.
@@ -69,9 +70,13 @@ async fn main() -> anyhow::Result<()> {
       .add_immutable_feature(Feature::Issuer(IssuerFeature::new(Address::Alias(AliasAddress::new(
         AliasId::from(&manufacturer_did),
       )))))
+      // A proper DPP would hold its metadata here.
+      .add_immutable_feature(Feature::Metadata(MetadataFeature::new(
+        b"Digital Product Passport Metadata".to_vec(),
+      )?))
       .finish()?;
 
-  // Publish all outputs.
+  // Publish the NFT.
   let block: Block = client
     .block()
     .with_secret_manager(&secret_manager)
@@ -80,20 +85,23 @@ async fn main() -> anyhow::Result<()> {
     .await?;
   let _ = client.retry_until_included(&block.id(), None, None).await?;
 
-  // ===============================
-  // Resolve the DPP and its issuer.
-  // ===============================
+  // ========================================================
+  // Resolve the Digital Product Passport NFT and its issuer.
+  // ========================================================
 
+  // Extract the identifier of the NFT from the published block.
   let nft_id: NftId = NftId::from(get_nft_output_id(
     block
       .payload()
       .ok_or_else(|| anyhow::anyhow!("expected block to contain a payload"))?,
   )?);
 
+  // Fetch the NFT Output.
   let nft_output_id: OutputId = client.nft_output_id(nft_id).await?;
   let output_response: OutputResponse = client.get_output(&nft_output_id).await?;
   let output: Output = Output::try_from(&output_response.output)?;
 
+  // Extract the issuer of the NFT.
   let nft_output: NftOutput = if let Output::Nft(nft_output) = output {
     nft_output
   } else {
@@ -115,10 +123,10 @@ async fn main() -> anyhow::Result<()> {
   let network: NetworkName = client.network_name().await?;
   let did: StardustDID = StardustDID::new(&*alias_id, &network);
 
-  // Resolve the issuer of the DPP.
+  // Resolve the issuer of the NFT.
   let issuer_document: StardustDocument = client.resolve_did(&did).await?;
 
-  println!("The issuer of the DPP is: {issuer_document:#}");
+  println!("The issuer of the Digital Product Passport NFT is: {issuer_document:#}");
 
   Ok(())
 }
