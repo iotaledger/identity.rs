@@ -39,10 +39,10 @@ optional = true
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
+identity_resolver = { version = "0.6.0", path = "../identity_resolver", default-features = false }
 iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
-identity_resolver = { version = "0.6.0", path = "../identity_resolver", default-features = false }
 
 [package.metadata.docs.rs]
 # To build locally:

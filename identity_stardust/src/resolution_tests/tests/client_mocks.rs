@@ -3,18 +3,16 @@
 
 use std::fmt::Formatter;
 
-use std::fmt::Display; 
+use std::fmt::Display;
 
 use crate::StardustDID;
 use crate::StardustDocument;
 
 use identity_did::did::CoreDID;
 
-
 use identity_did::document::CoreDocument;
 use identity_resolver::Error;
 use identity_resolver::Result;
-
 
 #[derive(Clone)]
 pub(super) struct FooClient {
@@ -25,9 +23,8 @@ pub(super) struct BarClient {
   pub(super) cache: Vec<CoreDocument>,
 }
 
-
 #[derive(Debug)]
-pub(super) struct ResolutionError(String); 
+pub(super) struct ResolutionError(String);
 impl Display for ResolutionError {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     write!(f, "could not resolve DID: {}", self.0)
@@ -40,7 +37,9 @@ impl FooClient {
     if did == self.issuer_stardust_doc.id() {
       Ok(self.issuer_stardust_doc.clone())
     } else {
-      Err(Error::ResolutionAttemptError(Box::new(ResolutionError(did.to_string()))))
+      Err(Error::ResolutionAttemptError(Box::new(ResolutionError(
+        did.to_string(),
+      ))))
     }
   }
 }
@@ -52,6 +51,8 @@ impl BarClient {
       .iter()
       .find(|doc| doc.id() == did.as_ref())
       .map(Clone::clone)
-      .ok_or(Error::ResolutionAttemptError(Box::new(ResolutionError(did.to_string()))))
+      .ok_or(Error::ResolutionAttemptError(Box::new(ResolutionError(
+        did.to_string(),
+      ))))
   }
 }

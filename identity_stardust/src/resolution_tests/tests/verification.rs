@@ -39,9 +39,8 @@ use crate::StardustVerificationMethod;
 use super::client_mocks::BarClient;
 use super::client_mocks::FooClient;
 
-const TEST_METHOD_NAME_0: &'static str = "test0"; 
-const TEST_METHOD_NAME_1: &'static str = "test1"; 
-
+const TEST_METHOD_NAME_0: &'static str = "test0";
+const TEST_METHOD_NAME_1: &'static str = "test1";
 
 fn generate_stardust_document(keypair: &KeyPair) -> StardustDocument {
   let mut document: StardustDocument = StardustDocument::new_with_id(
@@ -261,17 +260,23 @@ where
   DOC: BorrowValidator + From<CoreDocument> + From<StardustDocument> + 'static,
 {
   let mut resolver: Resolver<DOC> = Resolver::new();
-  resolver.attach_handler(StardustDID::METHOD.to_string(), |did: &StardustDID| async move {
-    foo_client.resolve(did).await
-  }); 
 
-  resolver.attach_handler(TEST_METHOD_NAME_0.to_string(), |did: &CoreDID| async move {
-    bar_client.resolve(did).await
-  }); 
+  resolver.attach_handler(StardustDID::METHOD.to_string(), move |did: StardustDID| {
+    let foo = foo_client.clone();
+    async move { foo.resolve(&did).await }
+  });
 
-  resolver.attach_handler(TEST_METHOD_NAME_1.to_string(), |did: &CoreDID| async move {
-    bar_client.resolve(did).await
-  }); 
+  let bar_client_clone = bar_client.clone();
+  resolver.attach_handler(TEST_METHOD_NAME_0.to_string(), move |did: CoreDID| {
+    let bar = bar_client_clone.clone();
+    async move { bar.resolve(&did).await }
+  });
+
+  let bar_client_clone = bar_client.clone();
+  resolver.attach_handler(TEST_METHOD_NAME_1.to_string(), move |did: CoreDID| {
+    let bar = bar_client_clone.clone();
+    async move { bar.resolve(&did).await }
+  });
 
   resolver
 }

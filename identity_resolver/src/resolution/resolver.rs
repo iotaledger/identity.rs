@@ -72,15 +72,16 @@ where
   where
     D: DID + Send + for<'r> TryFrom<&'r str> + 'static,
     DOCUMENT: 'static + Into<DOC>,
-    F: for<'r> Fn(&'r D) -> Fut + 'static + Clone,
+    F: Fn(D) -> Fut + 'static + Clone,
     Fut: Future<Output = Result<DOCUMENT>>,
   {
     let command: Command<DOC> = Box::new(move |input: &str| {
       let handler_clone = handler.clone();
+      let did_parse_attempt =
+        D::try_from(input).map_err(|_| Error::ResolutionProblem(format!("failed to parse did: {}", input)));
       Box::pin(async move {
-        let did: D =
-          D::try_from(input).map_err(|_| Error::ResolutionProblem(format!("failed to parse did: {}", input)))?;
-        handler_clone(&did).await.map(Into::into)
+        let did: D = did_parse_attempt?;
+        handler_clone(did).await.map(Into::into)
       })
     });
 
@@ -93,7 +94,7 @@ where
   }
 
   fn attach_raw_internal(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
-    let method_handlers = self.command_map.insert(method, handler);
+    self.command_map.insert(method, handler);
   }
 
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
