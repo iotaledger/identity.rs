@@ -28,16 +28,11 @@ async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
-  let stronghold_path = PathBuf::from("./example-strong.hodl");
-  if let Err(err) = tokio::fs::remove_file(stronghold_path.clone()).await {
-    println!("remove_file err: {err:?}");
-  }
-
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(stronghold_path)?,
+      .try_build(PathBuf::from("./example-strong.hodl"))?,
   );
 
   // Get an address and with funds for testing.
