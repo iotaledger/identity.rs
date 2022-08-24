@@ -2,22 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
-use std::path::PathBuf;
 
+use examples::create_did;
+use examples::random_stronghold_path;
+use examples::NETWORK_ENDPOINT;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
+use identity_stardust::block::output::AliasId;
+use identity_stardust::block::output::UnlockCondition;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustVerificationMethod;
-
-use examples::create_did;
-use examples::NETWORK_ENDPOINT;
-use identity_stardust::block::output::AliasId;
-use identity_stardust::block::output::UnlockCondition;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
 use iota_client::block::output::feature::IssuerFeature;
@@ -44,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(PathBuf::from("./example-strong.hodl"))?,
+      .try_build(random_stronghold_path())?,
   );
 
   // Create a new DID for the company.

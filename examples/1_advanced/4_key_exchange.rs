@@ -1,10 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::PathBuf;
-
 use anyhow::Context;
 use examples::get_address_with_funds;
+use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -41,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(PathBuf::from("./example-strong.hodl"))?,
+      .try_build(random_stronghold_path())?,
   );
 
   // Get an address and with funds for testing.

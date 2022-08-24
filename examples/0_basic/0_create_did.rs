@@ -1,26 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::PathBuf;
-
 use anyhow::Context;
 use examples::get_address_with_funds;
+use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
-
 use identity_stardust::NetworkName;
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustVerificationMethod;
+use iota_client::block::address::Address;
+use iota_client::block::output::AliasOutput;
+use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
@@ -32,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(PathBuf::from("./example-strong.hodl"))?,
+      .try_build(random_stronghold_path())?,
   );
 
   // Get an address and with funds for testing.

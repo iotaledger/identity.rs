@@ -2,23 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
-use std::path::PathBuf;
-
-use identity_core::common::Duration;
-use identity_core::common::Timestamp;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
 
 use examples::create_did;
 use examples::get_address;
+use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
+use identity_core::common::Duration;
+use identity_core::common::Timestamp;
 use identity_stardust::block::output::unlock_condition::AddressUnlockCondition;
 use identity_stardust::block::output::unlock_condition::ExpirationUnlockCondition;
 use identity_stardust::block::output::BasicOutput;
 use identity_stardust::block::output::BasicOutputBuilder;
 use identity_stardust::block::output::Output;
 use identity_stardust::block::output::OutputId;
+use identity_stardust::NetworkName;
+use identity_stardust::StardustDID;
+use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
@@ -60,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(PathBuf::from("./example-strong.hodl"))?,
+      .try_build(random_stronghold_path())?,
   );
 
   // Create a new DID for the authority.

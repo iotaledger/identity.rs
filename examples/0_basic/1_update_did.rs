@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::PathBuf;
-
 use examples::create_did;
+use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
 use identity_core::common::Timestamp;
 use identity_core::convert::FromJson;
@@ -13,17 +12,16 @@ use identity_did::service::Service;
 use identity_did::verification::MethodRelationship;
 use identity_stardust::block::address::Address;
 use identity_stardust::block::output::RentStructure;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
-
 use identity_stardust::StardustClientExt;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use identity_stardust::StardustIdentityClientExt;
 use identity_stardust::StardustService;
+use iota_client::block::output::AliasOutput;
+use iota_client::block::output::AliasOutputBuilder;
+use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
 
 /// Demonstrates how to update a DID document in an existing Alias Output.
 #[tokio::main]
@@ -35,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(PathBuf::from("./example-strong.hodl"))?,
+      .try_build(random_stronghold_path())?,
   );
 
   // Create a new DID in an Alias Output for us to modify.

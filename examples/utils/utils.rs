@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Context;
 
 use identity_core::crypto::KeyPair;
@@ -17,6 +19,7 @@ use iota_client::crypto::keys::bip39;
 use iota_client::node_api::indexer::query_parameters::QueryParameter;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+use rand::distributions::DistString;
 
 pub static NETWORK_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 pub static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
@@ -137,4 +140,13 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
   }
 
   Ok(total_amount)
+}
+
+/// Creates a random stronghold path in the temporary directory, whose exact location is OS-dependent.
+pub fn random_stronghold_path() -> PathBuf {
+  let mut file = std::env::temp_dir();
+  file.push("test_strongholds");
+  file.push(rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32));
+  file.set_extension("stronghold");
+  file.to_owned()
 }
