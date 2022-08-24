@@ -16,7 +16,7 @@ pub enum Error {
     source: identity_credential::validator::CompoundPresentationValidationError,
   },
   /// Caused by a failure to parse a DID string during DID resolution.
-  #[error("could not parse the given did {context}")]
+  #[error("{context}: could not parse the given did")]
   #[non_exhaustive]
   DIDParsingError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
@@ -24,15 +24,15 @@ pub enum Error {
   },
   /// A handler attached to the [`Resolver`](crate::resolution::Resolver) attempted to resolve the DID, but the
   /// resolution did not succeed.
-  #[error("attempted to resolve DID, but this action did not succeed")]
+  #[error("{context}: the attached handler failed")]
   HandlerError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
     context: ResolutionAction,
   },
   /// Caused by attempting to resolve a DID whose method does not have a corresponding handler attached to the
   /// [`Resolver`](crate::resolution::Resolver).
-  #[error("the DID method: {0} is not supported by the resolver")]
-  UnsupportedMethodError(String),
+  #[error("{context} the DID method \"{method}\" is not supported by the resolver")]
+  UnsupportedMethodError { method: String, context: ResolutionAction },
 
   /// Caused by a failure to cast a resolved document to the specified output type.
   ///
@@ -73,13 +73,11 @@ impl std::fmt::Display for ResolutionAction {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let message: Cow<str> = match self {
       ResolutionAction::PresentationHolderResolution => {
-        ": in the context of attempting to resolve the presentation holder's DID".into()
+        ": attempt to resolve the presentation holder's DID failed".into()
       }
-      ResolutionAction::CredentialIssuerResolution => {
-        ": in the context of attempting to resolve the credential issuer's DID".into()
-      }
+      ResolutionAction::CredentialIssuerResolution => ": attempt to resolve the credential issuer's DID failed".into(),
       ResolutionAction::PresentationIssuersResolution(idx) => format!(
-        ": in the context of attempting to resolve the credential issuer's DID of credential num. {}",
+        ": attempt to resolve the credential issuer's DID of credential num. {} failed",
         idx
       )
       .into(),

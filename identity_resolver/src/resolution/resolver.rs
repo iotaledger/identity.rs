@@ -130,14 +130,6 @@ where
       })
       .collect::<Result<_>>()?;
 
-    if let Some(unsupported_method) = issuers
-      .keys()
-      .find(|issuer| !self.command_map.contains_key(issuer.method()))
-      .map(|issuer| issuer.method())
-    {
-      // The presentation contains DIDs whose methods are not attached to this Resolver.
-      return Err(Error::UnsupportedMethodError(unsupported_method.to_owned()));
-    }
     // Resolve issuers concurrently.
     futures::future::try_join_all(
       issuers
@@ -267,7 +259,10 @@ where
     let delegate = self
       .command_map
       .get(method)
-      .ok_or_else(|| Error::UnsupportedMethodError(method.to_owned()))?;
+      .ok_or_else(|| Error::UnsupportedMethodError {
+        method: method.to_owned(),
+        context: crate::error::ResolutionAction::Unknown,
+      })?;
 
     delegate(did).await
   }
