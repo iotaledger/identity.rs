@@ -52,3 +52,7 @@ name = "2_nft_owns_did"
 [[example]]
 path = "1_advanced/3_did_issues_tokens.rs"
 name = "3_did_issues_tokens"
+
+[[example]]
+path = "1_advanced/4_key_exchange.rs"
+name = "4_key_exchange"
