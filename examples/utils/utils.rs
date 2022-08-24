@@ -62,7 +62,7 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<Stardus
 pub async fn get_address_with_funds(client: &Client, stronghold: &mut SecretManager) -> anyhow::Result<Address> {
   let address: Address = get_address(client, stronghold).await?;
 
-  request_faucet_funds(client, address, "rms")
+  request_faucet_funds(client, address, client.get_bech32_hrp().await?.as_str())
     .await
     .context("failed to request faucet funds")?;
 
