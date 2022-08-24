@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_did::did::DIDError;
-
 use crate::block::address::Address;
 use crate::block::output::feature::SenderFeature;
 use crate::block::output::unlock_condition::GovernorAddressUnlockCondition;
@@ -19,16 +17,6 @@ use crate::NetworkName;
 use crate::Result;
 use crate::StardustDID;
 use crate::StardustDocument;
-
-impl TryFrom<&StardustDID> for AliasId {
-  type Error = Error;
-
-  fn try_from(did: &StardustDID) -> std::result::Result<Self, Self::Error> {
-    let tag_bytes: [u8; StardustDID::TAG_BYTES_LEN] =
-      prefix_hex::decode(did.tag()).map_err(|_| DIDError::InvalidMethodId)?;
-    Ok(AliasId::new(tag_bytes))
-  }
-}
 
 /// Helper functions necessary for the [`StardustIdentityClientExt`] trait.
 #[async_trait::async_trait(? Send)]
@@ -103,7 +91,7 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   ///
   /// Returns `Err` when failing to resolve the DID contained in `document`.
   async fn update_did_output(&self, document: StardustDocument) -> Result<AliasOutput> {
-    let id: AliasId = AliasId::try_from(document.id())?;
+    let id: AliasId = AliasId::from(document.id());
     let (_, alias_output) = self.get_alias_output(id).await?;
 
     let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
@@ -130,7 +118,7 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   ///
   /// Returns `Err` when failing to resolve the `did`.
   async fn deactivate_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
-    let alias_id: AliasId = AliasId::try_from(did)?;
+    let alias_id: AliasId = AliasId::from(did);
     let (_, alias_output) = self.get_alias_output(alias_id).await?;
 
     let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
@@ -154,7 +142,7 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   async fn resolve_did(&self, did: &StardustDID) -> Result<StardustDocument> {
     validate_network(self, did).await?;
 
-    let id: AliasId = AliasId::try_from(did)?;
+    let id: AliasId = AliasId::from(did);
     let (_, alias_output) = self.get_alias_output(id).await?;
 
     let document: &[u8] = alias_output.state_metadata();
@@ -170,7 +158,7 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   async fn resolve_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
     validate_network(self, did).await?;
 
-    let id: AliasId = AliasId::try_from(did)?;
+    let id: AliasId = AliasId::from(did);
     self.get_alias_output(id).await.map(|(_, alias_output)| alias_output)
   }
 

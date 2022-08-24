@@ -15,9 +15,8 @@ import {Bip39} from "@iota/crypto.js";
 import fetch from "node-fetch";
 import {Client, MnemonicSecretManager, SecretManager} from "@cycraig/iota-client-wasm/node";
 
-const EXPLORER = "https://explorer.alphanet.iotaledger.net/alphanet";
-const API_ENDPOINT = "https://api.alphanet.iotaledger.net/";
-const FAUCET = "https://faucet.alphanet.iotaledger.net/api/enqueue";
+const API_ENDPOINT = "https://api.testnet.shimmer.network/";
+const FAUCET = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{

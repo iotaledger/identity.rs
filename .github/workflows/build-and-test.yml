@@ -104,6 +104,9 @@ jobs:
           command: build
           args: --workspace --tests --examples --all-features --release
 
+      - name: Start private tangle
+        uses: './.github/actions/private-tangle/setup'
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
@@ -114,72 +117,23 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest --manifest-path ./examples/Cargo.toml | \
+          cargo read-manifest --manifest-path ./examples_legacy/Cargo.toml | \
           jq -r '.targets[].name' | \
           parallel -k -j 4 --retries 3 cargo run --example {} --all-features --release
 
-      - name: Stop sccache
-        uses: './.github/actions/rust/sccache/stop-sccache'
-        with:
-          os: ${{matrix.os}}
-
-  build-and-test-stardust:
-    needs: [ check-for-run-condition, check-for-modification ]
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        include:
-          - os: ubuntu-latest
-            sccache-path: /home/runner/.cache/sccache
-    env:
-      SCCACHE_DIR: ${{ matrix.sccache-path }}
-      RUSTC_WRAPPER: sccache
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Rust and cache
-        uses: './.github/actions/rust/rust-setup'
-        with:
-          os: ${{ runner.os }}
-          job: ${{ github.job }}
-          target-cache-enabled: false
-          sccache-enabled: true
-          sccache-path: ${{ matrix.sccache-path }}
-
-      - name: Setup sccache
-        uses: './.github/actions/rust/sccache/setup-sccache'
-        with:
-          os: ${{matrix.os}}
-
-      - name: Build Stardust
-        run: cargo build --workspace --tests --examples --all-features --release 
-        working-directory: identity_stardust
-
-      - name: Start private tangle
-        uses: './.github/actions/private-tangle/setup'
-
-      - name: Run Stardust tests
-        run: cargo test --workspace --all-features --release
-        working-directory: identity_stardust
-      
       - name: Run Stardust Rust examples
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest | \
+          cargo read-manifest --manifest-path ./identity_stardust/Cargo.toml | \
           jq -r '.targets[].name' | \
-          awk '$1 ~ /ex.*/' | \
-          parallel -k -j 4 --retries 3 --delay 10 cargo run --example {} --all-features --release
-        working-directory: identity_stardust
+          awk '$1 ~ /[0-9].*/' | \
+          parallel -k -j 4 --retries 3 cargo run --manifest-path ./examples/Cargo.toml --example {} --all-features --release
 
       - name: Tear down private tangle
         if: always()
         uses: './.github/actions/private-tangle/tear-down'
-
+      
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
