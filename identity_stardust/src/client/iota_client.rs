@@ -79,7 +79,7 @@ impl StardustClientExt for Client {
   async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
     validate_network(self, did).await?;
 
-    let alias_id: AliasId = AliasId::try_from(did)?;
+    let alias_id: AliasId = AliasId::from(did);
     let (output_id, alias_output) = self.get_alias_output(alias_id).await?;
 
     let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())

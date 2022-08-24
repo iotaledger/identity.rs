@@ -6,8 +6,8 @@ image: /img/Identity_icon.png
 keywords:
 - Resolve
 ---
-import resolve_did_rs from '!!raw-loader!../../../../examples/low-level-api/resolve_did.rs';
-import resolve_history_rs from '!!raw-loader!../../../../examples/low-level-api/resolve_history.rs';
+import resolve_did_rs from '!!raw-loader!../../../../examples_legacy/low-level-api/resolve_did.rs';
+import resolve_history_rs from '!!raw-loader!../../../../examples_legacy/low-level-api/resolve_history.rs';
 import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples/src/resolve_did.js';
 import resolve_history_js from '!!raw-loader!../../../../bindings/wasm/examples/src/resolve_history.js';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
@@ -61,7 +61,7 @@ What happens in this example can be explained on a high level as follows: The Re
 
 ## Resolving from a private tangle
 Resolving a DID from a private tangle is similar to resolving a DID from the main net. The only difference is that
-the resolver needs to be configured to have a client capable of operating on said private tangle. Building a `Client` configured for a specified Tangle is explained in [this example in Rust](https://github.com/iotaledger/identity.rs/blob/dev/examples/low-level-api/private_tangle.rs) and [this example in Javascript](https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/private_tangle.js).
+the resolver needs to be configured to have a client capable of operating on said private tangle. Building a `Client` configured for a specified Tangle is explained in [this example in Rust](https://github.com/iotaledger/identity.rs/blob/dev/examples_legacy/low-level-api/private_tangle.rs) and [this example in Javascript](https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/private_tangle.js).
 
 The following example demonstrates how one can setup a `Resolver` with a given `client` and then attempt resolving a specified `did` which may be on any Tangle (public or private).
 <Tabs>
@@ -168,7 +168,7 @@ This section shows complete examples from the Iota Identity Framework code base.
     nodeReplitLink="https://repl.it/@IOTAFoundation/resolve-did?lite=true"
     rustContent={resolve_did_rs}
     nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/resolve_did.js"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/low-level-api/resolve_did.rs"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples_legacy/low-level-api/resolve_did.rs"
 />
 
 

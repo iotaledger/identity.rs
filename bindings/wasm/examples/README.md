@@ -1,4 +1,4 @@
-![banner](./../../../.meta/identity_banner.png)
+![banner](./../../../documentation/static/img/Banner/banner_identity.svg)
 
 ## IOTA Identity Examples
 
