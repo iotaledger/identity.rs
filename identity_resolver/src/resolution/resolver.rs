@@ -101,7 +101,6 @@ where
   /// # Errors
   /// Errors if the resolver has not been configured to handle the method corresponding to the given did or the
   /// resolution process itself fails.
-  //TODO: Improve error handling.
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
     self.delegate_resolution(did.method(), did.as_str()).await
   }
@@ -155,7 +154,6 @@ where
   ///
   /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
   /// DID resolution fails.
-  //TODO: Improve error handling
   pub async fn resolve_presentation_holder<U, V>(&self, presentation: &Presentation<U, V>) -> Result<DOC> {
     let holder: CoreDID =
       PresentationValidator::extract_holder(presentation).map_err(|error| Error::DIDParsingError {
@@ -175,7 +173,6 @@ where
   /// # Errors
   ///
   /// Errors if the issuer URL cannot be parsed to a DID with a method supported by the resolver, or resolution fails.
-  // TODO: Improve errors!
   pub async fn resolve_credential_issuer<U: Serialize>(&self, credential: &Credential<U>) -> Result<DOC> {
     let issuer_did: CoreDID =
       CredentialValidator::extract_issuer(credential).map_err(|error| Error::DIDParsingError {
