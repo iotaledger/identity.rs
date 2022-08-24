@@ -18,37 +18,37 @@ tokio = "1.20.1"
 path = "utils/utils.rs"
 
 [[example]]
-path = "0_crud/00_create_did.rs"
-name = "00_create_did"
+path = "0_crud/0_create_did.rs"
+name = "0_create_did"
 
 [[example]]
-path = "0_crud/01_update_did.rs"
-name = "01_update_did"
+path = "0_crud/1_update_did.rs"
+name = "1_update_did"
 
 [[example]]
-path = "0_crud/02_resolve_did.rs"
-name = "02_resolve_did"
+path = "0_crud/2_resolve_did.rs"
+name = "2_resolve_did"
 
 [[example]]
-path = "0_crud/03_deactivate_did.rs"
-name = "03_deactivate_did"
+path = "0_crud/3_deactivate_did.rs"
+name = "3_deactivate_did"
 
 [[example]]
-path = "0_crud/04_delete_did.rs"
-name = "04_delete_did"
+path = "0_crud/4_delete_did.rs"
+name = "4_delete_did"
 
 [[example]]
-path = "1_advanced/05_did_controls_did.rs"
-name = "05_did_controls_did"
+path = "1_advanced/0_did_controls_did.rs"
+name = "0_did_controls_did"
 
 [[example]]
-path = "1_advanced/06_did_issues_nft.rs"
-name = "06_did_issues_nft"
+path = "1_advanced/1_did_issues_nft.rs"
+name = "1_did_issues_nft"
 
 [[example]]
-path = "1_advanced/07_nft_owns_did.rs"
-name = "07_nft_owns_did"
+path = "1_advanced/2_nft_owns_did.rs"
+name = "2_nft_owns_did"
 
 [[example]]
-path = "1_advanced/08_did_issues_tokens.rs"
-name = "08_did_issues_tokens"
+path = "1_advanced/3_did_issues_tokens.rs"
+name = "3_did_issues_tokens"
