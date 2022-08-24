@@ -125,7 +125,7 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest --manifest-path ./identity_stardust/Cargo.toml | \
+          cargo read-manifest --manifest-path ./examples/Cargo.toml | \
           jq -r '.targets[].name' | \
           awk '$1 ~ /[0-9].*/' | \
           parallel -k -j 4 --retries 3 cargo run --manifest-path ./examples/Cargo.toml --example {} --all-features --release
