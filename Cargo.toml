@@ -14,8 +14,8 @@ members = [
   "identity_iota_core",
   "identity_stardust",
 
+  "examples_legacy",
   "examples",
-  "examples_stardust",
 ]
 
 exclude = [
