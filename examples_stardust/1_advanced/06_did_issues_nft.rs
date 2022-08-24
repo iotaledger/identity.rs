@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
-  // Create a digital product passport NFT issued by the manufacturer.
+  // Create a Digital Product Passport NFT issued by the manufacturer.
   let product_passport_nft: NftOutput =
     NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())?
       // The NFT will initially be owned by the manufacturer.
@@ -114,19 +114,20 @@ async fn main() -> anyhow::Result<()> {
     anyhow::bail!("expected an issuer feature")
   };
 
-  let alias_id: AliasId = if let Address::Alias(alias_address) = issuer_address {
+  let manufacturer_alias_id: AliasId = if let Address::Alias(alias_address) = issuer_address {
     *alias_address.alias_id()
   } else {
     anyhow::bail!("expected an Alias Address")
   };
 
+  // Reconstruct the manufacturer's DID from the Alias Id.
   let network: NetworkName = client.network_name().await?;
-  let did: StardustDID = StardustDID::new(&*alias_id, &network);
+  let manufacturer_did: StardustDID = StardustDID::new(&*manufacturer_alias_id, &network);
 
   // Resolve the issuer of the NFT.
-  let issuer_document: StardustDocument = client.resolve_did(&did).await?;
+  let manufacturer_document: StardustDocument = client.resolve_did(&manufacturer_did).await?;
 
-  println!("The issuer of the Digital Product Passport NFT is: {issuer_document:#}");
+  println!("The issuer of the Digital Product Passport NFT is: {manufacturer_document:#}");
 
   Ok(())
 }
