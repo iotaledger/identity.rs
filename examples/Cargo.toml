@@ -12,7 +12,7 @@ identity_did = { path = "../identity_did" }
 identity_stardust = { path = "../identity_stardust" }
 iota-client = { version = "2.0.0-beta.2", default-features = false, features = ["tls", "stronghold"] }
 primitive-types = "0.11.1"
-tokio = "1.20.1"
+tokio = { version = "1.20.1", default-features = false, features = ["fs", "rt"] }
 
 [lib]
 path = "utils/utils.rs"

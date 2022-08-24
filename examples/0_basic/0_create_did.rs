@@ -29,7 +29,9 @@ async fn main() -> anyhow::Result<()> {
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
   let stronghold_path = PathBuf::from("./example-strong.hodl");
-  tokio::fs::remove_file(stronghold_path.clone()).await?;
+  if let Err(err) = tokio::fs::remove_file(stronghold_path.clone()).await {
+    println!("remove_file err: {err:?}");
+  }
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
