@@ -55,17 +55,21 @@ where
     }
   }
 
-  pub fn attach_handler<D, F, Fut, DOCUMENT, E>(&mut self, method: String, handler: F)
+  pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
-    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDError> + 'static,
+    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + 'static,
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone,
     Fut: Future<Output = std::result::Result<DOCUMENT, E>>,
     E: std::error::Error + Send + Sync + 'static,
+    DIDERR: std::error::Error + Send + Sync + 'static,
   {
     let command: Command<DOC> = Box::new(move |input: &str| {
       let handler_clone = handler.clone();
-      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDError { error });
+      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
+        source: error.into(),
+        context: crate::error::ParsingContext::Unknown,
+      });
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
@@ -114,9 +118,12 @@ where
     let issuers: HashSet<CoreDID> = presentation
       .verifiable_credential
       .iter()
-      .map(|credential| {
+      .enumerate()
+      .map(|(idx, credential)| {
         CredentialValidator::extract_issuer::<CoreDID, V>(credential)
-          .map_err(|_| Error::ResolutionProblem("Failed to parse the issuer's did from a credential".into()))
+          .map_err(|error|
+             Error::DIDParsingError { source: error.into(), context: crate::error::ParsingContext::PresentationIssuersResolution(idx)}
+            )
       })
       .collect::<Result<_>>()?;
 
@@ -127,10 +134,7 @@ where
     {
       // The presentation contains did's whose methods are not attached to this Resolver.
       // TODO: Find a much better error!
-      return Err(Error::ResolutionProblem(format!(
-        "the presentation contains a credential issued with the following unsupported did method: {}",
-        unsupported_method
-      )));
+      return Err(Error::UnsupportedMethodError(unsupported_method.to_owned()));
     }
     // Resolve issuers concurrently.
     futures::future::try_join_all(
@@ -150,9 +154,23 @@ where
   /// DID resolution fails.
   //TODO: Improve error handling
   pub async fn resolve_presentation_holder<U, V>(&self, presentation: &Presentation<U, V>) -> Result<DOC> {
-    let holder: CoreDID = PresentationValidator::extract_holder(presentation)
-      .map_err(|error| Error::ResolutionProblem(error.to_string()))?;
-    self.delegate_resolution(holder.method(), holder.as_str()).await
+    let holder: CoreDID =
+      PresentationValidator::extract_holder(presentation).map_err(|error| Error::DIDParsingError {
+        source: error.into(),
+        context: crate::error::ParsingContext::PresentationHolderResolution,
+      })?;
+    self
+      .delegate_resolution(holder.method(), holder.as_str())
+      .await
+      .map_err(|error| match error {
+        // If the DID could not be parsed to the DID type the handler expected we are able to explain the context in
+        // this case:
+        Error::DIDParsingError { source, .. } => Error::DIDParsingError {
+          source,
+          context: crate::error::ParsingContext::PresentationHolderResolution,
+        },
+        _ => error,
+      })
   }
 
   /// Fetches the DID Document of the issuer of a [`Credential`].
@@ -162,9 +180,23 @@ where
   /// Errors if the issuer URL cannot be parsed to a DID with a method supported by the resolver, or resolution fails.
   // TODO: Improve errors!
   pub async fn resolve_credential_issuer<U: Serialize>(&self, credential: &Credential<U>) -> Result<DOC> {
-    let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
-      .map_err(|_| Error::ResolutionProblem("failed to parse the issuer's did".into()))?;
-    self.delegate_resolution(issuer_did.method(), issuer_did.as_str()).await
+    let issuer_did: CoreDID =
+      CredentialValidator::extract_issuer(credential).map_err(|error| Error::DIDParsingError {
+        source: error.into(),
+        context: crate::error::ParsingContext::CredentialIssuerResolution,
+      })?;
+    self
+      .delegate_resolution(issuer_did.method(), issuer_did.as_str())
+      .await
+      .map_err(|error| match error {
+        // If the DID could not be parsed to the DID type the handler expected we are able to explain the context in
+        // this case:
+        Error::DIDParsingError { source, .. } => Error::DIDParsingError {
+          source,
+          context: crate::error::ParsingContext::PresentationHolderResolution,
+        },
+        _ => error,
+      })
   }
 
   /// Verifies a [`Presentation`].
@@ -202,17 +234,17 @@ where
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
         PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { error })
+          .map_err(|error| Error::PresentationValidationError { source: error })
       }
       (Some(holder), None) => {
         let issuers: Vec<DOC> = self.resolve_presentation_issuers(presentation).await?;
         PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { error })
+          .map_err(|error| Error::PresentationValidationError { source: error })
       }
       (None, Some(issuers)) => {
         let holder = self.resolve_presentation_holder(presentation).await?;
         PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { error })
+          .map_err(|error| Error::PresentationValidationError { source: error })
       }
       (None, None) => {
         let (holder, issuers): (DOC, Vec<DOC>) = futures::future::try_join(
@@ -222,7 +254,7 @@ where
         .await?;
 
         PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { error })
+          .map_err(|error| Error::PresentationValidationError { source: error })
       }
     }
     .map_err(Into::into)
@@ -236,7 +268,7 @@ where
     let delegate = self
       .command_map
       .get(method)
-      .ok_or_else(|| Error::ResolutionProblem("did method not supported".into()))?;
+      .ok_or_else(|| Error::UnsupportedMethodError(method.to_owned()))?;
 
     delegate(did).await
   }
@@ -261,7 +293,7 @@ impl Resolver<Box<dyn ValidatorDocument>> {
       .into_any()
       .downcast::<DOCUMENT>()
       .map(|boxed| *boxed)
-      .map_err(|_| Error::ResolutionProblem("failed to convert the resolved document to the desired type".into()))
+      .map_err(|retry_object| Error::CastingError(retry_object))
   }
 
   /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
