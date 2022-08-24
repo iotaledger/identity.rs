@@ -3,9 +3,9 @@
 
 use core::future::Future;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::pin::Pin;
 
+use futures::TryFutureExt;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::BorrowValidator;
@@ -15,7 +15,6 @@ use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
-use identity_did::did::DIDError;
 use identity_did::did::DID;
 use identity_did::document::Document;
 use serde::Serialize;
@@ -68,14 +67,17 @@ where
       let handler_clone = handler.clone();
       let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
         source: error.into(),
-        context: crate::error::ParsingContext::Unknown,
+        context: crate::error::ResolutionAction::Unknown,
       });
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
           .await
           .map(Into::into)
-          .map_err(|error| Error::HandlerError(error.into()))
+          .map_err(|error| Error::HandlerError {
+            source: error.into(),
+            context: crate::error::ResolutionAction::Unknown,
+          })
       })
     });
 
@@ -111,36 +113,45 @@ where
   ///
   /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
   /// resolution fails.
-  // TODO: Improve error handling.
   pub async fn resolve_presentation_issuers<U, V>(&self, presentation: &Presentation<U, V>) -> Result<Vec<DOC>> {
-    // Extract unique issuers.
-    //TODO: Improve error handling.
-    let issuers: HashSet<CoreDID> = presentation
+    // Extract unique issuers, but keep the position of one credential issued by said DID for each unique issuer.
+    // The credential positions help us provide better errors.
+    let issuers: HashMap<CoreDID, usize> = presentation
       .verifiable_credential
       .iter()
       .enumerate()
       .map(|(idx, credential)| {
         CredentialValidator::extract_issuer::<CoreDID, V>(credential)
-          .map_err(|error|
-             Error::DIDParsingError { source: error.into(), context: crate::error::ParsingContext::PresentationIssuersResolution(idx)}
-            )
+          .map_err(|error| Error::DIDParsingError {
+            source: error.into(),
+            context: crate::error::ResolutionAction::PresentationIssuersResolution(idx),
+          })
+          .map(|did| (did, idx))
       })
       .collect::<Result<_>>()?;
 
     if let Some(unsupported_method) = issuers
-      .iter()
+      .keys()
       .find(|issuer| !self.command_map.contains_key(issuer.method()))
       .map(|issuer| issuer.method())
     {
-      // The presentation contains did's whose methods are not attached to this Resolver.
-      // TODO: Find a much better error!
+      // The presentation contains DIDs whose methods are not attached to this Resolver.
       return Err(Error::UnsupportedMethodError(unsupported_method.to_owned()));
     }
     // Resolve issuers concurrently.
     futures::future::try_join_all(
       issuers
         .iter()
-        .map(|issuer| self.delegate_resolution(issuer.method(), issuer.as_str()))
+        .map(|(issuer, cred_idx)| {
+          self
+            .delegate_resolution(issuer.method(), issuer.as_str())
+            .map_err(|error| {
+              Error::update_resolution_action(
+                error,
+                crate::error::ResolutionAction::PresentationIssuersResolution(*cred_idx),
+              )
+            })
+        })
         .collect::<Vec<_>>(),
     )
     .await
@@ -157,19 +168,13 @@ where
     let holder: CoreDID =
       PresentationValidator::extract_holder(presentation).map_err(|error| Error::DIDParsingError {
         source: error.into(),
-        context: crate::error::ParsingContext::PresentationHolderResolution,
+        context: crate::error::ResolutionAction::PresentationHolderResolution,
       })?;
     self
       .delegate_resolution(holder.method(), holder.as_str())
       .await
-      .map_err(|error| match error {
-        // If the DID could not be parsed to the DID type the handler expected we are able to explain the context in
-        // this case:
-        Error::DIDParsingError { source, .. } => Error::DIDParsingError {
-          source,
-          context: crate::error::ParsingContext::PresentationHolderResolution,
-        },
-        _ => error,
+      .map_err(|error| {
+        Error::update_resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution)
       })
   }
 
@@ -183,19 +188,13 @@ where
     let issuer_did: CoreDID =
       CredentialValidator::extract_issuer(credential).map_err(|error| Error::DIDParsingError {
         source: error.into(),
-        context: crate::error::ParsingContext::CredentialIssuerResolution,
+        context: crate::error::ResolutionAction::CredentialIssuerResolution,
       })?;
     self
       .delegate_resolution(issuer_did.method(), issuer_did.as_str())
       .await
-      .map_err(|error| match error {
-        // If the DID could not be parsed to the DID type the handler expected we are able to explain the context in
-        // this case:
-        Error::DIDParsingError { source, .. } => Error::DIDParsingError {
-          source,
-          context: crate::error::ParsingContext::PresentationHolderResolution,
-        },
-        _ => error,
+      .map_err(|error| {
+        Error::update_resolution_action(error, crate::error::ResolutionAction::CredentialIssuerResolution)
       })
   }
 

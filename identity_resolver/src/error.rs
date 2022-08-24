@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
+use std::borrow::Cow;
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
@@ -19,12 +20,17 @@ pub enum Error {
   #[non_exhaustive]
   DIDParsingError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
-    context: ParsingContext,
+    context: ResolutionAction,
   },
-  /// A handler attached to the [`Resolver`](crate::resolution::Resolver) attempted to resolve the DID, but the resolution did not succeed.
+  /// A handler attached to the [`Resolver`](crate::resolution::Resolver) attempted to resolve the DID, but the
+  /// resolution did not succeed.
   #[error("attempted to resolve DID, but this action did not succeed")]
-  HandlerError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-  /// Caused by attempting to resolve a DID whose method does not have a corresponding handler attached to the [`Resolver`](crate::resolution::Resolver).  
+  HandlerError {
+    source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    context: ResolutionAction,
+  },
+  /// Caused by attempting to resolve a DID whose method does not have a corresponding handler attached to the
+  /// [`Resolver`](crate::resolution::Resolver).
   #[error("the DID method: {0} is not supported by the resolver")]
   UnsupportedMethodError(String),
 
@@ -33,47 +39,53 @@ pub enum Error {
   /// The error wraps an `Any` trait object enabling the caller to efficiently try casting to another type
   /// of their choice.
   ///
-  /// This variant can only be returned from a dynamic resolver ([`Resolver<Box<dyn ValidatorDocument>>`](crate::resolution::Resolver)).  
+  /// This variant can only be returned from a dynamic resolver ([`Resolver<Box<dyn
+  /// ValidatorDocument>>`](crate::resolution::Resolver)).
   #[error("the resolved abstract document did not match the specified type")]
   CastingError(Box<dyn Any>),
 }
 
+impl Error {
+  /// Replaces the value of the wrapped [`ResolutionAction`] when relevant, otherwise the [`Error`] is left untouched.
+  pub(super) fn update_resolution_action(self, context: ResolutionAction) -> Self {
+    match self {
+      Error::DIDParsingError { source, .. } => Self::DIDParsingError { source, context },
+      Error::HandlerError { source, .. } => Self::HandlerError { source, context },
+      _ => self,
+    }
+  }
+}
+
 #[derive(Debug)]
 #[non_exhaustive]
-/// Indicates the context in which the
-/// DID could not be parsed during resolution.
-pub enum ParsingContext {
-  /// Attempted to resolve a presentation holder's DID document, but the holder's DID could not be parsed.  
+/// Indicates the action the [`Resolver`](crate::resolution::Resolver) was performing when an error ocurred.
+pub enum ResolutionAction {
   PresentationHolderResolution,
-  /// Attempted to resolve a credential issuer's DID document, but the issuer's DID could not be parsed.  
+
   CredentialIssuerResolution,
 
-  /// Attempted to resolve the DID documents belonging to the issuers of the presentation's credentials, but (at least)
-  /// one issuer's DID could not be parsed.
   PresentationIssuersResolution(usize),
   /// Further context regarding the resolution of the DID is not available.
   Unknown,
 }
 
-impl std::fmt::Display for ParsingContext {
+impl std::fmt::Display for ResolutionAction {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let message: &str  = match self {
-      ParsingContext::PresentationHolderResolution =>
-        ": failed to parse the presentation holder's URL to the required DID format",
-      ParsingContext::CredentialIssuerResolution =>
-        ": failed to parse the credential issuer's URL to the required DID format",
-      ParsingContext::PresentationIssuersResolution(idx) => {let message = format!(
-        ": the URL of credential num. {}'s issuer could not be parsed to the required DID format",
+    let message: Cow<str> = match self {
+      ResolutionAction::PresentationHolderResolution => {
+        ": in the context of attempting to resolve the presentation holder's DID".into()
+      }
+      ResolutionAction::CredentialIssuerResolution => {
+        ": in the context of attempting to resolve the credential issuer's DID".into()
+      }
+      ResolutionAction::PresentationIssuersResolution(idx) => format!(
+        ": in the context of attempting to resolve the credential issuer's DID of credential num. {}",
         idx
-      ); 
-      message.as_str()
-    },
-      ParsingContext::Unknown => "",
+      )
+      .into(),
+      ResolutionAction::Unknown => "".into(),
     };
 
-    write!(
-      f,
-      "{message}",
-    )
+    write!(f, "{}", message)
   }
 }
