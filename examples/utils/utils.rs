@@ -21,8 +21,8 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use rand::distributions::DistString;
 
-static NETWORK_ENDPOINT: &str = "http://localhost:14265"; // "https://api.testnet.shimmer.network/";
-static FAUCET_URL: &str = "http://localhost:8091/api/enqueue"; //"https://faucet.testnet.shimmer.network/api/enqueue";
+pub static NETWORK_ENDPOINT: &str = "http://localhost:14265"; // "https://api.testnet.shimmer.network/";
+pub static FAUCET_URL: &str = "http://localhost:8091/api/enqueue"; //"https://faucet.testnet.shimmer.network/api/enqueue";
 static PRIVATE_TESTNET_BECH32_HRP: &str = "tst";
 
 /// Creates a DID Document and publishes it in a new Alias Output.
