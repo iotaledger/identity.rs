@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  let subsidiary_alias = AliasOutputBuilder::from(&subsidiary_alias)
+  let subsidiary_alias: AliasOutput = AliasOutputBuilder::from(&subsidiary_alias)
     // Optionally, we can mark the company as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as a resolver can
     // verify that the subsidiary DID was created by the parent company.
@@ -118,7 +118,7 @@ async fn main() -> anyhow::Result<()> {
   // Extract the company's Alias Id from the state controller unlock condition.
   //
   // If instead we wanted to determine the original creator of the DID,
-  // we could inspect the issuer feature.
+  // we could inspect the issuer feature. This feature needs to be set when creating the DID.
   let company_alias_id: AliasId = if let Some(UnlockCondition::StateControllerAddress(address)) =
     subsidiary_output.unlock_conditions().iter().next()
   {
