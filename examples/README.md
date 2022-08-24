@@ -30,7 +30,7 @@ The following basic CRUD (Create, Read, Update, Delete) examples are available:
 
 ## Advanced Examples
 
-The following advanced examples, showing how DID Alias Outputs can interact with other Layer 1 primitives, are available:
+The following advanced examples are available:
 
 | Name                                                       | Information                                                                                              |
 | :--------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
