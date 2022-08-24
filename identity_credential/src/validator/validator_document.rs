@@ -35,7 +35,7 @@ pub trait ValidatorDocument: Sealed {
 
   /// Helper method to upcast to an [`Any`] trait object.
   /// The intended use case is to enable downcasting to a concrete [`Document`].
-  fn into_any(self: Box<Self>) -> Box<dyn Any>
+  fn into_any(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
   where
     Self: 'static;
 
@@ -68,6 +68,7 @@ mod private {
   impl<T> Sealed for T where T: Document {}
   impl Sealed for &dyn ValidatorDocument {}
   impl Sealed for Box<dyn ValidatorDocument> {}
+  impl Sealed for Box<dyn ValidatorDocument + Send + Sync> {}
 
   /// Object-safe trait workaround to satisfy the trait bounds
   /// [`serde::Serialize`] + [`GetSignature`].
@@ -87,7 +88,7 @@ mod private {
 
 impl<DOC> ValidatorDocument for DOC
 where
-  DOC: Document,
+  DOC: Document + Send + Sync,
 {
   fn did_str(&self) -> &str {
     self.id().as_str()
@@ -97,7 +98,7 @@ where
     self.verify_data(data, options).map_err(Into::into)
   }
 
-  fn into_any(self: Box<Self>) -> Box<dyn Any>
+  fn into_any(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
   where
     Self: 'static,
   {
@@ -118,9 +119,9 @@ where
   }
 }
 
-impl<DOC> From<DOC> for Box<dyn ValidatorDocument>
+impl<DOC> From<DOC> for Box<dyn ValidatorDocument + Send + Sync + 'static>
 where
-  DOC: Document + 'static,
+  DOC: Document + 'static + Send + Sync,
 {
   fn from(document: DOC) -> Self {
     Box::new(document)
@@ -158,7 +159,7 @@ pub trait BorrowValidator: private::Sealed {
 
 impl<DOC> BorrowValidator for DOC
 where
-  DOC: Document,
+  DOC: Document + Send + Sync,
 {
   type BorrowedValidator = DOC;
   /// Equivalent to: `<Self as Borrow<Self>>::borrow(self)`.
@@ -172,6 +173,14 @@ impl BorrowValidator for Box<dyn ValidatorDocument> {
   /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
   fn borrow_validator(&self) -> &Self::BorrowedValidator {
     <Self as Borrow<dyn ValidatorDocument>>::borrow(self)
+  }
+}
+
+impl BorrowValidator for Box<dyn ValidatorDocument + Send + Sync> {
+  type BorrowedValidator = dyn ValidatorDocument + Send + Sync;
+  /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
+  fn borrow_validator(&self) -> &Self::BorrowedValidator {
+    <Self as Borrow<dyn ValidatorDocument + Send + Sync>>::borrow(self)
   }
 }
 

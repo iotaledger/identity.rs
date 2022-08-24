@@ -23,7 +23,7 @@ use crate::Error;
 
 use crate::Result;
 
-type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
+type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r + Send + Sync>> + Send + Sync>;
 type Command<DOC> = AsyncFnPtr<str, Result<DOC>>;
 
 /// Convenience type for resolving did documents from different did methods.   
@@ -36,9 +36,9 @@ type Command<DOC> = AsyncFnPtr<str, Result<DOC>>;
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver`
 /// trait](super::MethodBoundResolver) for your client and then attaching it with
 /// [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
-pub struct Resolver<DOC = Box<dyn ValidatorDocument>>
+pub struct Resolver<DOC = Box<dyn ValidatorDocument + Send + Sync + 'static>>
 where
-  DOC: BorrowValidator,
+  DOC: BorrowValidator + Send + Sync,
 {
   command_map: HashMap<String, Command<DOC>>,
 }
@@ -46,6 +46,7 @@ where
 impl<DOC> Resolver<DOC>
 where
   DOC: BorrowValidator,
+  DOC: Send + Sync + 'static,
 {
   /// Constructs a new [`Resolver`].
   pub fn new() -> Self {
@@ -56,10 +57,10 @@ where
 
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
-    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + 'static,
+    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
     DOCUMENT: 'static + Into<DOC>,
-    F: Fn(D) -> Fut + 'static + Clone,
-    Fut: Future<Output = std::result::Result<DOCUMENT, E>>,
+    F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
+    Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send + Sync,
     E: std::error::Error + Send + Sync + 'static,
     DIDERR: std::error::Error + Send + Sync + 'static,
   {
@@ -265,7 +266,7 @@ where
   }
 }
 
-impl Resolver<Box<dyn ValidatorDocument>> {
+impl Resolver<Box<dyn ValidatorDocument + Send + Sync + 'static>> {
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
   ///
   ///
@@ -276,7 +277,7 @@ impl Resolver<Box<dyn ValidatorDocument>> {
   pub async fn resolve_to<DOCUMENT, D>(&self, did: &D) -> Result<DOCUMENT>
   where
     D: DID,
-    DOCUMENT: Document + 'static,
+    DOCUMENT: Document + 'static + Send + Sync,
   {
     let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
 
@@ -288,12 +289,12 @@ impl Resolver<Box<dyn ValidatorDocument>> {
   }
 
   /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
-  pub fn new_dynamic() -> Resolver<Box<dyn ValidatorDocument>> {
-    Resolver::<Box<dyn ValidatorDocument>>::new()
+  pub fn new_dynamic() -> Resolver<Box<dyn ValidatorDocument + Send + Sync>> {
+    Resolver::<Box<dyn ValidatorDocument + Send + Sync>>::new()
   }
 }
 
-impl<DOC: BorrowValidator> Default for Resolver<DOC> {
+impl<DOC: BorrowValidator + Send + Sync + 'static> Default for Resolver<DOC> {
   fn default() -> Self {
     Self::new()
   }

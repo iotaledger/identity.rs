@@ -174,7 +174,7 @@ impl MixedTestSetup {
   }
 }
 
-async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator>(
+async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator + Send + Sync + 'static>(
   signed_presentation: &Presentation,
   challenge: String,
   resolver: Resolver<DOC>,
@@ -249,7 +249,8 @@ async fn test_verify_presentation() {
   let resolver_core: Resolver<CoreDocument> = setup_resolver::<CoreDocument>(foo_client.clone(), bar_client.clone());
   // Check that verification works with the resolver converting all resolved documents to the boxed trait object Box<dyn
   // ValidatorDocument>.
-  let resolver_dynamic: Resolver = setup_resolver::<Box<dyn ValidatorDocument>>(foo_client.clone(), bar_client);
+  let resolver_dynamic: Resolver =
+    setup_resolver::<Box<dyn ValidatorDocument + Send + Sync>>(foo_client.clone(), bar_client);
 
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_core).await;
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_dynamic).await;
@@ -257,7 +258,7 @@ async fn test_verify_presentation() {
 
 fn setup_resolver<DOC>(foo_client: FooClient, bar_client: Arc<BarClient>) -> Resolver<DOC>
 where
-  DOC: BorrowValidator + From<CoreDocument> + From<StardustDocument> + 'static,
+  DOC: BorrowValidator + From<CoreDocument> + From<StardustDocument> + 'static + Send + Sync,
 {
   let mut resolver: Resolver<DOC> = Resolver::new();
 
@@ -307,7 +308,7 @@ async fn verify_presentation_dynamic_resolver_core_documents() {
     .sign(&mut presentation)
     .unwrap();
 
-  let resolver: Resolver<Box<dyn ValidatorDocument>> = Resolver::new_dynamic();
+  let resolver: Resolver<Box<dyn ValidatorDocument + Send + Sync>> = Resolver::new_dynamic();
 
   let issuers: Vec<&dyn ValidatorDocument> = vec![issuer_stardust_doc.as_validator(), issuer_core_doc.as_validator()];
 
@@ -367,7 +368,7 @@ async fn verify_presentation_dynamic_resolver_core_documents() {
     .await
     .is_ok());
 
-  let resolver: Resolver<Box<dyn ValidatorDocument>> = Resolver::new();
+  let resolver: Resolver<Box<dyn ValidatorDocument + Send + Sync>> = Resolver::new();
 
   assert!(resolver
     .verify_presentation(

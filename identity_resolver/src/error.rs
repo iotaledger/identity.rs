@@ -42,7 +42,7 @@ pub enum Error {
   /// This variant can only be returned from a dynamic resolver ([`Resolver<Box<dyn
   /// ValidatorDocument>>`](crate::resolution::Resolver)).
   #[error("the resolved abstract document did not match the specified type")]
-  CastingError(Box<dyn Any>),
+  CastingError(Box<dyn Any + Send + Sync + 'static>),
 }
 
 impl Error {

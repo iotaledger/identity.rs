@@ -33,22 +33,22 @@ impl Display for ResolutionError {
 impl std::error::Error for ResolutionError {}
 
 impl FooClient {
-  pub(super) async fn resolve(&self, did: &StardustDID) -> Result<StardustDocument> {
+  pub(super) async fn resolve(&self, did: &StardustDID) -> std::result::Result<StardustDocument, ResolutionError> {
     if did == self.issuer_stardust_doc.id() {
       Ok(self.issuer_stardust_doc.clone())
     } else {
-      Err(Error::HandlerError(Box::new(ResolutionError(did.to_string()))))
+      Err(ResolutionError(did.to_string()))
     }
   }
 }
 
 impl BarClient {
-  pub(super) async fn resolve(&self, did: &CoreDID) -> Result<CoreDocument> {
+  pub(super) async fn resolve(&self, did: &CoreDID) -> std::result::Result<CoreDocument, ResolutionError> {
     self
       .cache
       .iter()
       .find(|doc| doc.id() == did.as_ref())
       .map(Clone::clone)
-      .ok_or(Error::HandlerError(Box::new(ResolutionError(did.to_string()))))
+      .ok_or(ResolutionError(did.to_string()))
   }
 }
