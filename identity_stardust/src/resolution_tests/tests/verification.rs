@@ -22,6 +22,7 @@ use identity_credential::validator::BorrowValidator;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::SubjectHolderRelationship;
+use identity_credential::validator::ThreadSafeValidatorDocument;
 use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
@@ -250,7 +251,7 @@ async fn test_verify_presentation() {
   // Check that verification works with the resolver converting all resolved documents to the boxed trait object Box<dyn
   // ValidatorDocument>.
   let resolver_dynamic: Resolver =
-    setup_resolver::<Box<dyn ValidatorDocument + Send + Sync>>(foo_client.clone(), bar_client);
+    setup_resolver::<Box<dyn ThreadSafeValidatorDocument>>(foo_client.clone(), bar_client);
 
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_core).await;
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_dynamic).await;
@@ -308,7 +309,7 @@ async fn verify_presentation_dynamic_resolver_core_documents() {
     .sign(&mut presentation)
     .unwrap();
 
-  let resolver: Resolver<Box<dyn ValidatorDocument + Send + Sync>> = Resolver::new_dynamic();
+  let resolver: Resolver = Resolver::new_dynamic();
 
   let issuers: Vec<&dyn ValidatorDocument> = vec![issuer_stardust_doc.as_validator(), issuer_core_doc.as_validator()];
 
@@ -368,7 +369,7 @@ async fn verify_presentation_dynamic_resolver_core_documents() {
     .await
     .is_ok());
 
-  let resolver: Resolver<Box<dyn ValidatorDocument + Send + Sync>> = Resolver::new();
+  let resolver: Resolver = Resolver::new();
 
   assert!(resolver
     .verify_presentation(

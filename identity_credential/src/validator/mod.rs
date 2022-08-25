@@ -15,6 +15,7 @@ pub use self::validation_options::PresentationValidationOptions;
 pub use self::validation_options::StatusCheck;
 pub use self::validation_options::SubjectHolderRelationship;
 pub use self::validator_document::BorrowValidator;
+pub use self::validator_document::ThreadSafeValidatorDocument;
 pub use self::validator_document::ValidatorDocument;
 
 mod credential_validator;

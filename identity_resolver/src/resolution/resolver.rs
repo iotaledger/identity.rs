@@ -14,7 +14,7 @@ use identity_credential::validator::CredentialValidator;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
-use identity_credential::validator::ValidatorDocument;
+use identity_credential::validator::ThreadSafeValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::document::Document;
@@ -37,7 +37,7 @@ use super::commands::SendSyncCommand;
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver`
 /// trait](super::MethodBoundResolver) for your client and then attaching it with
 /// [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
-pub struct Resolver<DOC = Box<dyn ValidatorDocument + Send + Sync>, CMD = SendSyncCommand<DOC>>
+pub struct Resolver<DOC = Box<dyn ThreadSafeValidatorDocument>, CMD = SendSyncCommand<DOC>>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
   DOC: BorrowValidator,
@@ -291,7 +291,12 @@ impl Resolver {
   {
     let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
 
-    Ok(validator_doc.into_any().downcast::<DOCUMENT>().map(|boxed| *boxed))
+    Ok(
+      validator_doc
+        .thread_safe_upcast()
+        .downcast::<DOCUMENT>()
+        .map(|boxed| *boxed),
+    )
   }
 
   /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
@@ -337,8 +342,8 @@ mod tests {
       &presentation,
       &PresentationValidationOptions::default(),
       FailFast::FirstError,
-      Option::<&Box<dyn ValidatorDocument + Send + Sync>>::None,
-      Option::<&[Box<dyn ValidatorDocument + Send + Sync>]>::None,
+      Option::<&Box<dyn ThreadSafeValidatorDocument>>::None,
+      Option::<&[Box<dyn ThreadSafeValidatorDocument>]>::None,
     ));
   }
 }

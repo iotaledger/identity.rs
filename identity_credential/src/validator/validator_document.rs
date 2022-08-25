@@ -30,14 +30,14 @@ pub trait ValidatorDocument: Sealed {
     self as &dyn ValidatorDocument
   }
 
-  /// Returns the string identifier of the DID Document.
-  fn did_str(&self) -> &str;
-
   /// Helper method to upcast to an [`Any`] trait object.
   /// The intended use case is to enable downcasting to a concrete [`Document`].
-  fn into_any(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
+  fn upcast(self: Box<Self>) -> Box<dyn Any>
   where
     Self: 'static;
+
+  /// Returns the string identifier of the DID Document.
+  fn did_str(&self) -> &str;
 
   /// Verifies the signature of the provided data against the DID Document.
   ///
@@ -60,6 +60,19 @@ pub trait ValidatorDocument: Sealed {
   ) -> identity_did::Result<RevocationBitmap>;
 }
 
+/// Specialization of [`ValidatorDocument`](ValidatorDocument) implemented by types that
+/// are also [`Send`] and  [`Sync`].
+///
+/// NOTE: this is a sealed trait and not intended to be used externally or implemented manually.
+/// Types which implement [`Document`], [`Send`] and [`Sync`] automatically implement this trait.
+/// Any changes to this trait will be considered non-breaking.
+pub trait ThreadSafeValidatorDocument: ValidatorDocument + Send + Sync {
+  /// Thread safe variant of [`ValidatorDocument::upcast`](ValidatorDocument::upcast()).
+  fn thread_safe_upcast(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
+  where
+    Self: 'static;
+}
+
 mod private {
   use super::*;
 
@@ -68,7 +81,7 @@ mod private {
   impl<T> Sealed for T where T: Document {}
   impl Sealed for &dyn ValidatorDocument {}
   impl Sealed for Box<dyn ValidatorDocument> {}
-  impl Sealed for Box<dyn ValidatorDocument + Send + Sync> {}
+  impl Sealed for Box<dyn ThreadSafeValidatorDocument> {}
 
   /// Object-safe trait workaround to satisfy the trait bounds
   /// [`serde::Serialize`] + [`GetSignature`].
@@ -88,7 +101,7 @@ mod private {
 
 impl<DOC> ValidatorDocument for DOC
 where
-  DOC: Document + Send + Sync,
+  DOC: Document,
 {
   fn did_str(&self) -> &str {
     self.id().as_str()
@@ -98,7 +111,7 @@ where
     self.verify_data(data, options).map_err(Into::into)
   }
 
-  fn into_any(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
+  fn upcast(self: Box<Self>) -> Box<dyn Any>
   where
     Self: 'static,
   {
@@ -119,7 +132,28 @@ where
   }
 }
 
-impl<DOC> From<DOC> for Box<dyn ValidatorDocument + Send + Sync + 'static>
+impl<DOC> ThreadSafeValidatorDocument for DOC
+where
+  DOC: ValidatorDocument + Send + Sync,
+{
+  fn thread_safe_upcast(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
+  where
+    Self: 'static,
+  {
+    self
+  }
+}
+
+impl<DOC> From<DOC> for Box<dyn ValidatorDocument>
+where
+  DOC: Document + 'static,
+{
+  fn from(document: DOC) -> Self {
+    Box::new(document)
+  }
+}
+
+impl<DOC> From<DOC> for Box<dyn ThreadSafeValidatorDocument>
 where
   DOC: Document + 'static + Send + Sync,
 {
@@ -176,11 +210,11 @@ impl BorrowValidator for Box<dyn ValidatorDocument> {
   }
 }
 
-impl BorrowValidator for Box<dyn ValidatorDocument + Send + Sync> {
-  type BorrowedValidator = dyn ValidatorDocument + Send + Sync;
+impl BorrowValidator for Box<dyn ThreadSafeValidatorDocument> {
+  type BorrowedValidator = dyn ThreadSafeValidatorDocument;
   /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
   fn borrow_validator(&self) -> &Self::BorrowedValidator {
-    <Self as Borrow<dyn ValidatorDocument + Send + Sync>>::borrow(self)
+    <Self as Borrow<dyn ThreadSafeValidatorDocument>>::borrow(self)
   }
 }
 
