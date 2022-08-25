@@ -33,16 +33,6 @@ pub enum Error {
   /// [`Resolver`](crate::resolution::Resolver).
   #[error("{context} the DID method \"{method}\" is not supported by the resolver")]
   UnsupportedMethodError { method: String, context: ResolutionAction },
-
-  /// Caused by a failure to cast a resolved document to the specified output type.
-  ///
-  /// The error wraps an `Any` trait object enabling the caller to efficiently try casting to another type
-  /// of their choice.
-  ///
-  /// This variant can only be returned from a dynamic resolver ([`Resolver<Box<dyn
-  /// ValidatorDocument>>`](crate::resolution::Resolver)).
-  #[error("the resolved abstract document did not match the specified type")]
-  CastingError(Box<dyn Any + Send + Sync + 'static>),
 }
 
 impl Error {

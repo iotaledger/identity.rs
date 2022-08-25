@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
+use std::any::Any;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
@@ -279,19 +280,18 @@ impl Resolver {
   /// # Errors
   /// Errors if the resolver has not been configured to handle the method corresponding to the given did, the resolution
   /// process itself fails, or the resolved document is of another type than the specified [`Document`] implementer.  
-  //TODO: Improve error handling.
-  pub async fn resolve_to<DOCUMENT, D>(&self, did: &D) -> Result<DOCUMENT>
+
+  pub async fn resolve_to<DOCUMENT, D>(
+    &self,
+    did: &D,
+  ) -> Result<std::result::Result<DOCUMENT, Box<dyn Any + Send + Sync>>>
   where
     D: DID,
     DOCUMENT: Document + 'static + Send + Sync,
   {
     let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
 
-    validator_doc
-      .into_any()
-      .downcast::<DOCUMENT>()
-      .map(|boxed| *boxed)
-      .map_err(|retry_object| Error::CastingError(retry_object))
+    Ok(validator_doc.into_any().downcast::<DOCUMENT>().map(|boxed| *boxed))
   }
 
   /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
