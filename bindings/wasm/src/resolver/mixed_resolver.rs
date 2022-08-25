@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use identity_iota::credential::Presentation;
 use identity_iota::did::CoreDID;
-use identity_iota::resolver::Resolver;
+use identity_iota::resolver::SingleThreadedResolver;
 use js_sys::Function;
 use js_sys::Promise;
 
@@ -23,14 +23,14 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_name = MixedResolver)]
-pub struct MixedResolver(Rc<Resolver>);
+pub struct MixedResolver(Rc<SingleThreadedResolver>);
 
 #[wasm_bindgen(js_class = MixedResolver)]
 impl MixedResolver {
   /// Constructs a new [`MixedResolver`].
   #[wasm_bindgen(constructor)]
   pub fn new() -> Self {
-    Self(Rc::new(Resolver::new()))
+    Self(Rc::new(SingleThreadedResolver::new()))
   }
 
   #[wasm_bindgen(js_name = attachHandler)]
@@ -52,7 +52,7 @@ impl MixedResolver {
   // TODO: Improve error handling.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
   pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
-    let resolver: Rc<Resolver> = self.0.clone();
+    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
     let promise: Promise = future_to_promise(async move {
@@ -80,7 +80,7 @@ impl MixedResolver {
 
   #[wasm_bindgen]
   pub fn resolve(&self, did: &str) -> Result<PromiseSupportedDocument> {
-    let resolver: Rc<Resolver> = self.0.clone();
+    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
     let did: CoreDID = CoreDID::parse(did).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {

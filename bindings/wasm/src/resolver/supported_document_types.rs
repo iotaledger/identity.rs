@@ -40,7 +40,7 @@ impl From<RustSupportedDocument> for Box<dyn ValidatorDocument> {
 impl TryFrom<Box<dyn ValidatorDocument>> for RustSupportedDocument {
   type Error = WasmError<'static>;
   fn try_from(value: Box<dyn ValidatorDocument>) -> std::result::Result<Self, Self::Error> {
-    let upcast = value.into_any();
+    let upcast = value.upcast();
     let supported_document = match upcast.downcast::<CoreDocument>() {
       Ok(doc) => RustSupportedDocument::Core(*doc),
       Err(retry) => {

@@ -15,6 +15,7 @@ use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ThreadSafeValidatorDocument;
+use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::document::Document;
@@ -24,8 +25,12 @@ use crate::Error;
 
 use crate::Result;
 
+#[cfg(feature = "internals")]
+use super::commands::AsyncFnPtr; 
+
 use super::commands::Command;
 use super::commands::SendSyncCommand;
+use super::commands::SingleThreadedCommand;
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
@@ -50,7 +55,6 @@ impl<M, DOC> Resolver<DOC, M>
 where
   M: for<'r> Command<'r, Result<DOC>>,
   DOC: BorrowValidator,
-  DOC: Send + Sync + 'static,
 {
   /// Constructs a new [`Resolver`].
   pub fn new() -> Self {
@@ -232,7 +236,7 @@ where
   }
 }
 
-impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
+impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
@@ -242,36 +246,33 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC, SendSyncCommand
     E: std::error::Error + Send + Sync + 'static,
     DIDERR: std::error::Error + Send + Sync + 'static,
   {
-    let command: SendSyncCommand<DOC> = Box::new(move |input: &str| {
-      let handler_clone = handler.clone();
-      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
-        source: error.into(),
-        context: crate::error::ResolutionAction::Unknown,
-      });
-      Box::pin(async move {
-        let did: D = did_parse_attempt?;
-        handler_clone(did)
-          .await
-          .map(Into::into)
-          .map_err(|error| Error::HandlerError {
-            source: error.into(),
-            context: crate::error::ResolutionAction::Unknown,
-          })
-      })
-    });
+    let command = SendSyncCommand::new(handler); 
+    self.command_map.insert(method, command);
+  }
+}
 
-    self.attach_raw_internal(method, command);
+impl<DOC: BorrowValidator + 'static> Resolver<DOC,SingleThreadedCommand<DOC>> {
+  pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
+  where
+    D: DID + for<'r> TryFrom<&'r str, Error = DIDERR> + 'static,
+    DOCUMENT: 'static + Into<DOC>,
+    F: Fn(D) -> Fut + 'static + Clone,
+    Fut: Future<Output = std::result::Result<DOCUMENT, E>>,
+    E: std::error::Error + Send + Sync + 'static,
+    DIDERR: std::error::Error + Send + Sync + 'static,
+  {
+    let command = SingleThreadedCommand::new(handler); 
+    self.command_map.insert(method, command);
   }
 
   #[cfg(feature = "internals")]
-  pub fn attach_raw(&mut self, method: String, handler: SendSyncCommand<DOC>) {
-    self.attach_raw_internal(method, handler);
+  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
+    let command = SingleThreadedCommand {
+      fun: handler
+    }; 
+    self.command_map.insert(method, command);
   }
-
-  fn attach_raw_internal(&mut self, method: String, handler: SendSyncCommand<DOC>) {
-    self.command_map.insert(method, handler);
-  }
-}
+} 
 
 impl Resolver {
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
@@ -286,7 +287,7 @@ impl Resolver {
     did: &D,
   ) -> Result<std::result::Result<DOCUMENT, Box<dyn Any + Send + Sync>>>
   where
-    D: DID,
+    D: DID + Send + Sync,
     DOCUMENT: Document + 'static + Send + Sync,
   {
     let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
@@ -300,8 +301,35 @@ impl Resolver {
   }
 
   /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
-  pub fn new_dynamic() -> Resolver {
+  pub fn new_dynamic() -> Self {
     Resolver::new()
+  }
+}
+
+impl Resolver<Box<dyn ValidatorDocument>, SingleThreadedCommand<Box<dyn ValidatorDocument>>> {
+  /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
+  ///
+  ///
+  /// # Errors
+  /// Errors if the resolver has not been configured to handle the method corresponding to the given did, the resolution
+  /// process itself fails, or the resolved document is of another type than the specified [`Document`] implementer.  
+
+  pub async fn resolve_to<DOCUMENT, D>(
+    &self,
+    did: &D,
+  ) -> Result<std::result::Result<DOCUMENT, Box<dyn Any>>>
+  where
+    D: DID,
+    DOCUMENT: Document + 'static,
+  {
+    let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
+
+    Ok(
+      validator_doc
+        .upcast()
+        .downcast::<DOCUMENT>()
+        .map(|boxed| *boxed),
+    )
   }
 }
 
@@ -329,7 +357,7 @@ mod tests {
       .build()
       .unwrap();
 
-    let resolver = Resolver::new_dynamic();
+    let resolver = Resolver::new_dynamic(); 
     is_send_sync(resolver.resolve(&did));
 
     is_send_sync(resolver.resolve_credential_issuer(&credential));
