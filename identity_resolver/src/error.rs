@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::any::Any;
 use std::borrow::Cow;
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
