@@ -42,7 +42,7 @@ where
   DOC: BorrowValidator,
 {
   command_map: HashMap<String, CMD>,
-  _a: PhantomData<DOC>,
+  _required: PhantomData<DOC>,
 }
 
 impl<M, DOC> Resolver<DOC, M>
@@ -55,7 +55,7 @@ where
   pub fn new() -> Self {
     Self {
       command_map: HashMap::new(),
-      _a: PhantomData::<DOC>,
+      _required: PhantomData::<DOC>,
     }
   }
 
