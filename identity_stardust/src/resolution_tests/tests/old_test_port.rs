@@ -193,7 +193,7 @@ mod tests {
       .unwrap();
 
     // VALID: resolver supports presentations with issuers from different DID Methods.
-    let resolver: Resolver = Resolver::default();
+    let resolver: Resolver = Resolver::new();
     assert!(resolver
       .verify_presentation(
         &presentation,

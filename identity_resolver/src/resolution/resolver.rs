@@ -3,6 +3,7 @@
 
 use core::future::Future;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::pin::Pin;
 
 use futures::TryFutureExt;
@@ -23,8 +24,24 @@ use crate::Error;
 
 use crate::Result;
 
-type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r + Send + Sync>> + Send + Sync>;
-type Command<DOC> = AsyncFnPtr<str, Result<DOC>>;
+pub trait AsyncFn<'a, T> {
+  type Output: Future<Output = T> + 'a;
+  type Input: ?Sized;
+  fn apply(&self, input: &'a Self::Input) -> Self::Output;
+}
+
+//type AsyncFnPtr<S,T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
+type SendSyncAsyncFnPtr<S, T> =
+  Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r + Send + Sync>> + Send + Sync>;
+pub(super) type SendSyncCommand<DOC> = SendSyncAsyncFnPtr<str, Result<DOC>>;
+
+impl<'a, DOC: Send + Sync + 'static> AsyncFn<'a, Result<DOC>> for SendSyncCommand<DOC> {
+  type Input = str;
+  type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send + Sync>>;
+  fn apply(&self, input: &'a Self::Input) -> Self::Output {
+    self(input)
+  }
+}
 
 /// Convenience type for resolving did documents from different did methods.   
 ///  
@@ -36,15 +53,20 @@ type Command<DOC> = AsyncFnPtr<str, Result<DOC>>;
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver`
 /// trait](super::MethodBoundResolver) for your client and then attaching it with
 /// [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
-pub struct Resolver<DOC = Box<dyn ValidatorDocument + Send + Sync + 'static>>
-where
-  DOC: BorrowValidator + Send + Sync,
+pub struct Resolver<
+  M = SendSyncCommand<Box<dyn ValidatorDocument + Send + Sync>>,
+  DOC = Box<dyn ValidatorDocument + Send + Sync>,
+> where
+  M: for<'r> AsyncFn<'r, Result<DOC>, Input = str>,
+  DOC: BorrowValidator,
 {
-  command_map: HashMap<String, Command<DOC>>,
+  command_map: HashMap<String, M>,
+  _a: PhantomData<DOC>,
 }
 
-impl<DOC> Resolver<DOC>
+impl<M, DOC> Resolver<M, DOC>
 where
+  M: for<'r> AsyncFn<'r, Result<DOC>, Input = str>,
   DOC: BorrowValidator,
   DOC: Send + Sync + 'static,
 {
@@ -52,46 +74,8 @@ where
   pub fn new() -> Self {
     Self {
       command_map: HashMap::new(),
+      _a: PhantomData::<DOC>,
     }
-  }
-
-  pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
-  where
-    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
-    DOCUMENT: 'static + Into<DOC>,
-    F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
-    Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send + Sync,
-    E: std::error::Error + Send + Sync + 'static,
-    DIDERR: std::error::Error + Send + Sync + 'static,
-  {
-    let command: Command<DOC> = Box::new(move |input: &str| {
-      let handler_clone = handler.clone();
-      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
-        source: error.into(),
-        context: crate::error::ResolutionAction::Unknown,
-      });
-      Box::pin(async move {
-        let did: D = did_parse_attempt?;
-        handler_clone(did)
-          .await
-          .map(Into::into)
-          .map_err(|error| Error::HandlerError {
-            source: error.into(),
-            context: crate::error::ResolutionAction::Unknown,
-          })
-      })
-    });
-
-    self.attach_raw_internal(method, command);
-  }
-
-  #[cfg(feature = "internals")]
-  pub fn attach_raw(&mut self, method: String, handler: Command<DOC>) {
-    self.attach_raw_internal(method, handler);
-  }
-
-  fn attach_raw_internal(&mut self, method: String, handler: Command<DOC>) {
-    self.command_map.insert(method, handler);
   }
 
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
@@ -262,11 +246,52 @@ where
         context: crate::error::ResolutionAction::Unknown,
       })?;
 
-    delegate(did).await
+    delegate.apply(did).await
   }
 }
 
-impl Resolver<Box<dyn ValidatorDocument + Send + Sync + 'static>> {
+impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<SendSyncCommand<DOC>, DOC> {
+  pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
+  where
+    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
+    DOCUMENT: 'static + Into<DOC>,
+    F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
+    Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send + Sync,
+    E: std::error::Error + Send + Sync + 'static,
+    DIDERR: std::error::Error + Send + Sync + 'static,
+  {
+    let command: SendSyncCommand<DOC> = Box::new(move |input: &str| {
+      let handler_clone = handler.clone();
+      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
+        source: error.into(),
+        context: crate::error::ResolutionAction::Unknown,
+      });
+      Box::pin(async move {
+        let did: D = did_parse_attempt?;
+        handler_clone(did)
+          .await
+          .map(Into::into)
+          .map_err(|error| Error::HandlerError {
+            source: error.into(),
+            context: crate::error::ResolutionAction::Unknown,
+          })
+      })
+    });
+
+    self.attach_raw_internal(method, command);
+  }
+
+  #[cfg(feature = "internals")]
+  pub fn attach_raw(&mut self, method: String, handler: SendSyncCommand<DOC>) {
+    self.attach_raw_internal(method, handler);
+  }
+
+  fn attach_raw_internal(&mut self, method: String, handler: SendSyncCommand<DOC>) {
+    self.command_map.insert(method, handler);
+  }
+}
+
+impl Resolver {
   /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
   ///
   ///
@@ -289,13 +314,7 @@ impl Resolver<Box<dyn ValidatorDocument + Send + Sync + 'static>> {
   }
 
   /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
-  pub fn new_dynamic() -> Resolver<Box<dyn ValidatorDocument + Send + Sync>> {
-    Resolver::<Box<dyn ValidatorDocument + Send + Sync>>::new()
-  }
-}
-
-impl<DOC: BorrowValidator + Send + Sync + 'static> Default for Resolver<DOC> {
-  fn default() -> Self {
-    Self::new()
+  pub fn new_dynamic() -> Resolver {
+    Resolver::new()
   }
 }

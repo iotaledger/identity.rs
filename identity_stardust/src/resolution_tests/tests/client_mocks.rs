@@ -11,8 +11,6 @@ use crate::StardustDocument;
 use identity_did::did::CoreDID;
 
 use identity_did::document::CoreDocument;
-use identity_resolver::Error;
-use identity_resolver::Result;
 
 #[derive(Clone)]
 pub(super) struct FooClient {
