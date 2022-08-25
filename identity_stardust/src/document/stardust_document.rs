@@ -465,7 +465,7 @@ mod tests {
   use super::*;
 
   fn valid_did() -> StardustDID {
-    "did:stardust:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       .parse()
       .unwrap()
   }
