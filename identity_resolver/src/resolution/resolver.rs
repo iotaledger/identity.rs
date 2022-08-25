@@ -24,10 +24,9 @@ use crate::Error;
 
 use crate::Result;
 
-pub trait AsyncFn<'a, T> {
+pub trait Command<'a, T> {
   type Output: Future<Output = T> + 'a;
-  type Input: ?Sized;
-  fn apply(&self, input: &'a Self::Input) -> Self::Output;
+  fn apply(&self, input: &'a str) -> Self::Output;
 }
 
 //type AsyncFnPtr<S,T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
@@ -35,10 +34,9 @@ type SendSyncAsyncFnPtr<S, T> =
   Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r + Send + Sync>> + Send + Sync>;
 pub(super) type SendSyncCommand<DOC> = SendSyncAsyncFnPtr<str, Result<DOC>>;
 
-impl<'a, DOC: Send + Sync + 'static> AsyncFn<'a, Result<DOC>> for SendSyncCommand<DOC> {
-  type Input = str;
+impl<'a, DOC: Send + Sync + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send + Sync>>;
-  fn apply(&self, input: &'a Self::Input) -> Self::Output {
+  fn apply(&self, input: &'a str) -> Self::Output {
     self(input)
   }
 }
@@ -53,20 +51,18 @@ impl<'a, DOC: Send + Sync + 'static> AsyncFn<'a, Result<DOC>> for SendSyncComman
 /// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver`
 /// trait](super::MethodBoundResolver) for your client and then attaching it with
 /// [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
-pub struct Resolver<
-  M = SendSyncCommand<Box<dyn ValidatorDocument + Send + Sync>>,
-  DOC = Box<dyn ValidatorDocument + Send + Sync>,
-> where
-  M: for<'r> AsyncFn<'r, Result<DOC>, Input = str>,
+pub struct Resolver<DOC = Box<dyn ValidatorDocument + Send + Sync>, CMD = SendSyncCommand<DOC>>
+where
+  CMD: for<'r> Command<'r, Result<DOC>>,
   DOC: BorrowValidator,
 {
-  command_map: HashMap<String, M>,
+  command_map: HashMap<String, CMD>,
   _a: PhantomData<DOC>,
 }
 
-impl<M, DOC> Resolver<M, DOC>
+impl<M, DOC> Resolver<DOC, M>
 where
-  M: for<'r> AsyncFn<'r, Result<DOC>, Input = str>,
+  M: for<'r> Command<'r, Result<DOC>>,
   DOC: BorrowValidator,
   DOC: Send + Sync + 'static,
 {
@@ -250,7 +246,7 @@ where
   }
 }
 
-impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<SendSyncCommand<DOC>, DOC> {
+impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
@@ -316,5 +312,48 @@ impl Resolver {
   /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
   pub fn new_dynamic() -> Resolver {
     Resolver::new()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_credential::credential::CredentialBuilder;
+  use identity_credential::credential::Subject;
+  use identity_credential::presentation::PresentationBuilder;
+
+  use super::*;
+
+  fn is_send_sync<T: Send + Sync>(_t: T) {}
+
+  #[test]
+  fn default_resolver_methods_give_send_sync_futures() {
+    let did: CoreDID = "did:key:4353526346363sdtsdfgdfg".parse().unwrap();
+    let credential: Credential = CredentialBuilder::default()
+      .issuer(did.to_url())
+      .subject(Subject::with_id(did.to_url().into()))
+      .build()
+      .unwrap();
+    let presentation: Presentation = PresentationBuilder::default()
+      .credential(credential.clone())
+      .holder(did.to_url().into())
+      .build()
+      .unwrap();
+
+    let resolver = Resolver::new_dynamic();
+    is_send_sync(resolver.resolve(&did));
+
+    is_send_sync(resolver.resolve_credential_issuer(&credential));
+
+    is_send_sync(resolver.resolve_presentation_holder(&presentation));
+
+    is_send_sync(resolver.resolve_presentation_issuers(&presentation));
+
+    is_send_sync(resolver.verify_presentation(
+      &presentation,
+      &PresentationValidationOptions::default(),
+      FailFast::FirstError,
+      Option::<&Box<dyn ValidatorDocument + Send + Sync>>::None,
+      Option::<&[Box<dyn ValidatorDocument + Send + Sync>]>::None,
+    ));
   }
 }
