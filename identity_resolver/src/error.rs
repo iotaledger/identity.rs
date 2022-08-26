@@ -5,6 +5,9 @@ use std::borrow::Cow;
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
+/// Error returned from the methods on [crate::Resolver]. 
+/// 
+/// NOTE: This is a "read only error" in the sense that it can only be constructed by the methods in this crate. 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 pub enum Error {
@@ -24,6 +27,7 @@ pub enum Error {
   /// A handler attached to the [`Resolver`](crate::resolution::Resolver) attempted to resolve the DID, but the
   /// resolution did not succeed.
   #[error("{context}: the attached handler failed")]
+  #[non_exhaustive]
   HandlerError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
     context: ResolutionAction,

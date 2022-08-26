@@ -14,11 +14,8 @@ pub trait Command<'a, T>: private::Sealed {
   fn apply(&self, input: &'a str) -> Self::Output;
 }
 
-#[cfg(feature = "internals")]
-pub type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 
-#[cfg(not(feature = "internals"))]
-pub type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
+pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
 
 type SendSyncAsyncFnPtr<S, T> =
   Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r + Send + Sync>> + Send + Sync>;

@@ -57,10 +57,6 @@ revocation-bitmap = [
   "identity_resolver/revocation-bitmap",
 ]
 
-# Provides access to the internal APIs of the Resolver. Intended for bindings.
-# Breaking changes to functionality behind this flag is not covered by semver.
-resolver-internals = ["identity_resolver/internals"]
-
 # Enables encryption and decryption functionality.
 # Breaking changes to types and functions behind this flag are not covered by semver.
 unstable-encryption = ["identity_account/encryption"]
