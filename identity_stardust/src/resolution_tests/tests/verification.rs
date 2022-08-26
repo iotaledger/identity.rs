@@ -309,7 +309,7 @@ async fn verify_presentation_dynamic_resolver_core_documents() {
     .sign(&mut presentation)
     .unwrap();
 
-  let resolver: Resolver = Resolver::new_dynamic();
+  let resolver: Resolver = Resolver::new();
 
   let issuers: Vec<&dyn ValidatorDocument> = vec![issuer_stardust_doc.as_validator(), issuer_core_doc.as_validator()];
 

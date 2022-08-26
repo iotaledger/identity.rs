@@ -170,14 +170,18 @@ where
 ///
 /// # Necessity (why not just use [`ValidatorDocument`]?)
 ///
-/// This trait was introduced in order to achieve both of the following :
-/// 1. Enable passing [`Box<dyn ValidatorDocument`] and `&`[Box<dyn ValidatorDocument>]` to the
-/// [`PresentationValidator`](crate::validator::PresentationValidator). 2. Provide a blanket implementation for
+/// This trait was introduced in order to achieve all three of the following :
+/// 1. Enable passing [`Box<dyn ValidatorDocument`] (and `&Box<dyn ValidatorDocument>`) to the
+/// [`PresentationValidator`](crate::validator::PresentationValidator).
+/// 2. Provide a blanket implementation for
 /// converting any [`Document`] implementor into [`Box<dyn ValidatorDocument>`] via the [`Into`] trait.
+/// 3. Enable convenient upcasting of [`Box <dyn ValidatorDocument>`] to [`Box<dyn Any>`].  
 ///
 /// The first of the two points can be achieved by implementing `ValidatorDocument` directly for [`Box<dyn
 /// ValidatorDocument>`], but then the second point will not be achievable because of the [Orphan rules](https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules).
-///   
+/// If one instead of using [`Box<dyn ValidatorDocument>`] wrapped this into a new type say `AbstractValidatorDocument`
+/// then points 1 & 2 could essentially be achieved by implementing `ValidatorDocument` for this new type, but 3 would
+/// be harder due to upcasting requiring an explicit [`Box`].  
 /// In terms of abstract functionality requiring this trait bound is essentially equivalent to the following
 /// constraints: T: Borrow<U>,
 /// U: ValidatorDocument  

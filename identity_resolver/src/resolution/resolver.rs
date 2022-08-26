@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
-use std::any::Any;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
@@ -15,18 +14,14 @@ use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ThreadSafeValidatorDocument;
-use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
-use identity_did::document::Document;
+
 use serde::Serialize;
 
 use crate::Error;
 
 use crate::Result;
-
-#[cfg(feature = "internals")]
-use super::commands::AsyncFnPtr;
 
 use super::commands::Command;
 use super::commands::SendSyncCommand;
@@ -219,7 +214,7 @@ where
     .map_err(Into::into)
   }
 
-  /// Delegates Resolution to the relevant attached [`ResolutionHandler`].
+  /// Delegates Resolution to the relevant attached handler.
   ///
   /// The first input parameters `method` and `did` must be &str representations of the DID method name and the DID
   /// respectively.  
@@ -237,6 +232,51 @@ where
 }
 
 impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
+  /// Attach a new handler responsible for resolving DIDs of the given DID method.
+  ///
+  /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
+  /// which can be converted to the type this [`Resolver`] is parametrized over. The `handler` is required to be
+  /// `Clone`, Send, Sync and 'static hence all captured variables must satisfy these bounds. In this regard the
+  /// `move` keyword and (possibly) wrapping values in [`std::sync::Arc`] may come in handy (see the example below).
+  ///
+  /// NOTE: If there already exists a handler for this method then it will be replaced with the new handler.
+  /// In the case where one would like to have a "backup handler" for the same DID method, one can achieve this with
+  /// composition.
+  ///
+  /// # Example
+  /// ```
+  /// # use identity_resolver::Resolver;
+  /// # use identity_did::did::CoreDID;
+  /// # use identity_did::document::CoreDocument;
+  ///
+  ///    // A client that can resolve DIDs of our invented "foo" method.
+  ///    struct Client;
+  ///
+  ///    impl Client {
+  ///      // Resolves some of the DIDs we are interested in.
+  ///      async fn resolve(&self, _did: &CoreDID) -> std::result::Result<CoreDocument, std::io::Error> {
+  ///        todo!()
+  ///      }
+  ///    }
+  ///
+  ///    // This way we can essentially produce (cheap) clones of our client.
+  ///    let client = std::sync::Arc::new(Client {});
+  ///
+  ///    // Get a clone we can move into a handler.
+  ///    let client_clone = client.clone();
+  ///
+  ///    // Construct a resolver that resolves documents of type `CoreDocument`.
+  ///    let mut resolver = Resolver::<CoreDocument>::new();
+  ///
+  ///    // Now we want to attach a handler that uses the client to resolve DIDs whose method is "foo".
+  ///    resolver.attach_handler("foo".to_owned(), move |did: CoreDID| {
+  ///      // We want to resolve the did asynchronously, but since we do not know when it will be awaited we
+  ///      // let the future take ownership of the client by moving a clone into the asynchronous block.
+  ///      let future_client = client_clone.clone();
+  ///      async move { future_client.resolve(&did).await }
+  ///    });
+  /// ```
+
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
@@ -252,6 +292,50 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
 }
 
 impl<DOC: BorrowValidator + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+  /// Attach a new handler responsible for resolving DIDs of the given DID method.
+  ///
+  /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
+  /// which can be converted to the type this [`Resolver`] is parametrized over. The `handler` is required to be
+  /// `Clone` and 'static hence all captured variables must satisfy these bounds. In this regard the
+  /// `move` keyword and (possibly) wrapping values in [`std::rc::Rc`] may come in handy (see the example below).
+  ///
+  /// NOTE: If there already exists a handler for this method then it will be replaced with the new handler.
+  /// In the case where one would like to have a "backup handler" for the same DID method, one can achieve this with
+  /// composition.
+  ///
+  /// # Example
+  /// ```
+  /// # use identity_resolver::SingleThreadedResolver;
+  /// # use identity_did::did::CoreDID;
+  /// # use identity_did::document::CoreDocument;
+  ///
+  ///    // A client that can resolve DIDs of our invented "foo" method.
+  ///    struct Client;
+  ///
+  ///    impl Client {
+  ///      // Resolves some of the DIDs we are interested in.
+  ///      async fn resolve(&self, _did: &CoreDID) -> std::result::Result<CoreDocument, std::io::Error> {
+  ///        todo!()
+  ///      }
+  ///    }
+  ///
+  ///    // This way we can essentially produce (cheap) clones of our client.
+  ///    let client = std::rc::Rc::new(Client {});
+  ///
+  ///    // Get a clone we can move into a handler.
+  ///    let client_clone = client.clone();
+  ///
+  ///    // Construct a resolver that resolves documents of type `CoreDocument`.
+  ///    let mut resolver = SingleThreadedResolver::<CoreDocument>::new();
+  ///
+  ///    // Now we want to attach a handler that uses the client to resolve DIDs whose method is "foo".
+  ///    resolver.attach_handler("foo".to_owned(), move |did: CoreDID| {
+  ///      // We want to resolve the did asynchronously, but since we do not know when it will be awaited we
+  ///      // let the future take ownership of the client by moving a clone into the asynchronous block.
+  ///      let future_client = client_clone.clone();
+  ///      async move { future_client.resolve(&did).await }
+  ///    });
+  /// ```
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
     D: DID + for<'r> TryFrom<&'r str, Error = DIDERR> + 'static,
@@ -264,77 +348,26 @@ impl<DOC: BorrowValidator + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
     let command = SingleThreadedCommand::new(handler);
     self.command_map.insert(method, command);
   }
-
-  #[cfg(feature = "internals")]
-  pub fn attach_raw(&mut self, method: String, handler: AsyncFnPtr<str, Result<DOC>>) {
-    let command = SingleThreadedCommand { fun: handler };
-    self.command_map.insert(method, command);
-  }
-}
-
-impl Resolver {
-  /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
-  ///
-  ///
-  /// # Errors
-  /// Errors if the resolver has not been configured to handle the method corresponding to the given did, the resolution
-  /// process itself fails, or the resolved document is of another type than the specified [`Document`] implementer.  
-
-  pub async fn resolve_to<DOCUMENT, D>(
-    &self,
-    did: &D,
-  ) -> Result<std::result::Result<DOCUMENT, Box<dyn Any + Send + Sync>>>
-  where
-    D: DID + Send + Sync,
-    DOCUMENT: Document + 'static + Send + Sync,
-  {
-    let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
-
-    Ok(
-      validator_doc
-        .thread_safe_upcast()
-        .downcast::<DOCUMENT>()
-        .map(|boxed| *boxed),
-    )
-  }
-
-  /// Constructs a new [`Resolver`] that operates with DID Documents abstractly.
-  pub fn new_dynamic() -> Self {
-    Resolver::new()
-  }
-}
-
-impl Resolver<Box<dyn ValidatorDocument>, SingleThreadedCommand<Box<dyn ValidatorDocument>>> {
-  /// Fetches the DID Document of the given DID and attempts to cast the result to the desired document type.
-  ///
-  ///
-  /// # Errors
-  /// Errors if the resolver has not been configured to handle the method corresponding to the given did, the resolution
-  /// process itself fails, or the resolved document is of another type than the specified [`Document`] implementer.  
-
-  pub async fn resolve_to<DOCUMENT, D>(&self, did: &D) -> Result<std::result::Result<DOCUMENT, Box<dyn Any>>>
-  where
-    D: DID,
-    DOCUMENT: Document + 'static,
-  {
-    let validator_doc = self.delegate_resolution(did.method(), did.as_str()).await?;
-
-    Ok(validator_doc.upcast().downcast::<DOCUMENT>().map(|boxed| *boxed))
-  }
 }
 
 #[cfg(test)]
 mod tests {
+  // Only test that all features from the "default resolver": Resolver<DOC> are Send + Sync.
+  // The Resolver will be tested properly in a downstream crate where more DID Document types are available.
+  use super::*;
   use identity_credential::credential::CredentialBuilder;
   use identity_credential::credential::Subject;
   use identity_credential::presentation::PresentationBuilder;
+  use identity_did::did::CoreDID;
 
-  use super::*;
-
+  #[allow(dead_code)]
   fn is_send_sync<T: Send + Sync>(_t: T) {}
 
-  #[test]
-  fn default_resolver_methods_give_send_sync_futures() {
+  #[allow(dead_code)]
+  fn resolver_methods_give_send_sync_futures<DOC>()
+  where
+    DOC: BorrowValidator + Send + Sync + 'static,
+  {
     let did: CoreDID = "did:key:4353526346363sdtsdfgdfg".parse().unwrap();
     let credential: Credential = CredentialBuilder::default()
       .issuer(did.to_url())
@@ -347,7 +380,7 @@ mod tests {
       .build()
       .unwrap();
 
-    let resolver = Resolver::new_dynamic();
+    let resolver = Resolver::<DOC>::new();
     is_send_sync(resolver.resolve(&did));
 
     is_send_sync(resolver.resolve_credential_issuer(&credential));
@@ -360,8 +393,8 @@ mod tests {
       &presentation,
       &PresentationValidationOptions::default(),
       FailFast::FirstError,
-      Option::<&Box<dyn ThreadSafeValidatorDocument>>::None,
-      Option::<&[Box<dyn ThreadSafeValidatorDocument>]>::None,
+      Option::<&DOC>::None,
+      Option::<&[DOC]>::None,
     ));
   }
 }
