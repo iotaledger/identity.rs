@@ -4,16 +4,21 @@
 use std::rc::Rc;
 
 use identity_iota::credential::Presentation;
+use identity_iota::credential::ValidatorDocument;
 use identity_iota::did::CoreDID;
+use identity_iota::did::DID;
 use identity_iota::resolver::SingleThreadedResolver;
 use js_sys::Function;
 use js_sys::Promise;
+use wasm_bindgen_futures::JsFuture;
 
 use crate::credential::WasmPresentation;
+use crate::error::ErrorString;
+use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::resolver::supported_document_types::RustSupportedDocument;
 
-use super::function_transformation::WasmResolverCommand;
+//use super::function_transformation::WasmResolverCommand;
 use super::supported_document_types::PromiseArraySupportedDocument;
 use super::supported_document_types::PromiseSupportedDocument;
 use crate::error::Result;
@@ -36,10 +41,28 @@ impl MixedResolver {
   #[wasm_bindgen(js_name = attachHandler)]
   //TODO: Fix the potential panic below. This can be enforced using something like the builder pattern.
   pub fn attach_handler(&mut self, method: &str, handler: &Function) {
-    let command = WasmResolverCommand::new(handler).ptr;
-    Rc::<identity_iota::resolver::Resolver>::get_mut(&mut self.0)
+    let fun_closure_clone = handler.clone();
+    let fun = move |input: CoreDID| {
+      let fun_clone = fun_closure_clone.clone();
+      async move {
+        let closure_output_promise: Promise = Promise::resolve(
+          &JsValueResult::from(fun_clone.call1(&JsValue::null(), &input.as_str().into())).stringify_error()?,
+        );
+        let awaited_output = JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
+
+        let supported_document: RustSupportedDocument = awaited_output.into_serde().map_err(|error| {
+          ErrorString(format!(
+            "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
+            error.to_string()
+          ))
+        })?;
+        std::result::Result::<_, ErrorString>::Ok(Box::<dyn ValidatorDocument>::from(supported_document))
+      }
+    };
+
+    Rc::<SingleThreadedResolver>::get_mut(&mut self.0)
       .expect("The resolver should be setup before being used")
-      .attach_raw(method.to_string(), command);
+      .attach_handler(method.to_owned(), fun);
   }
 
   /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].

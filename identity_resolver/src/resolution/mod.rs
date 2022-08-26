@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 mod commands;
 mod resolver;
+mod resolver_builder;
+use self::commands::SingleThreadedCommand;
 use identity_credential::validator::ValidatorDocument;
 pub use resolver::Resolver;
-use self::commands::SingleThreadedCommand;
-pub type SingleThreadedResolver<DOC=Box<dyn ValidatorDocument>> = Resolver<DOC,SingleThreadedCommand<DOC>>; 
+pub type SingleThreadedResolver<DOC = Box<dyn ValidatorDocument>> = Resolver<DOC, SingleThreadedCommand<DOC>>;
