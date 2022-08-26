@@ -276,7 +276,7 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
   ///      async move { future_client.resolve(&did).await }
   ///    });
   /// ```
-
+  /// 
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,

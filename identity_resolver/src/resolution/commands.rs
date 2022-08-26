@@ -9,33 +9,35 @@ use crate::Error;
 use crate::Result;
 use std::pin::Pin;
 
+/// 
+/// 
+///  [Resolver's](crate::Resolver) concurrency requirements. 
+/// 
 pub trait Command<'a, T>: private::Sealed {
   type Output: Future<Output = T> + 'a;
   fn apply(&self, input: &'a str) -> Self::Output;
 }
 
+mod private {
+  use super::SendSyncCommand;
+  use super::SingleThreadedCommand;
+  use identity_credential::validator::BorrowValidator;
+  pub trait Sealed {}
+  impl<DOC: BorrowValidator + Send + Sync + 'static> Sealed for SendSyncCommand<DOC> {}
+  impl<DOC: BorrowValidator + 'static> Sealed for SingleThreadedCommand<DOC> {}
+}
 
-pub(super) type AsyncFnPtr<S, T> = Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r>>>;
+/// Internal representation of a thread safe handler. 
+type SendSyncCallback<DOC> =
+  Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send + Sync>> + Send + Sync>;
 
-type SendSyncAsyncFnPtr<S, T> =
-  Box<dyn for<'r> Fn(&'r S) -> Pin<Box<dyn Future<Output = T> + 'r + Send + Sync>> + Send + Sync>;
-
+/// Representation of 
 pub struct SendSyncCommand<DOC: BorrowValidator + Send + Sync + 'static> {
-  fun: SendSyncAsyncFnPtr<str, Result<DOC>>,
+  fun: SendSyncCallback<DOC>,
 }
 
 impl<'a, DOC: BorrowValidator + Send + Sync + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send + Sync>>;
-  fn apply(&self, input: &'a str) -> Self::Output {
-    (self.fun)(input)
-  }
-}
-
-pub struct SingleThreadedCommand<DOC> {
-  pub(super) fun: AsyncFnPtr<str, Result<DOC>>,
-}
-impl<'a, DOC: BorrowValidator + 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
-  type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
@@ -51,7 +53,7 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> SendSyncCommand<DOC> {
     E: std::error::Error + Send + Sync + 'static,
     DIDERR: std::error::Error + Send + Sync + 'static,
   {
-    let fun: SendSyncAsyncFnPtr<str, Result<DOC>> = Box::new(move |input: &str| {
+    let fun: SendSyncCallback<DOC> = Box::new(move |input: &str| {
       let handler_clone = handler.clone();
       let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
         source: error.into(),
@@ -71,6 +73,24 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> SendSyncCommand<DOC> {
     Self { fun }
   }
 }
+
+
+  // ===========================================================================
+  // Single threaded commands
+  // ===========================================================================
+
+pub(super) type SingleThreadedCallback<DOC> = Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r>>>;
+
+pub struct SingleThreadedCommand<DOC> {
+  fun: SingleThreadedCallback<DOC>,
+}
+impl<'a, DOC: BorrowValidator + 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
+  type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a>>;
+  fn apply(&self, input: &'a str) -> Self::Output {
+    (self.fun)(input)
+  }
+}
+
 
 impl<DOC: BorrowValidator + 'static> SingleThreadedCommand<DOC> {
   pub(super) fn new<D, F, Fut, DOCUMENT, E, DIDERR>(handler: F) -> Self
@@ -82,7 +102,7 @@ impl<DOC: BorrowValidator + 'static> SingleThreadedCommand<DOC> {
     E: std::error::Error + Send + Sync + 'static,
     DIDERR: std::error::Error + Send + Sync + 'static,
   {
-    let fun: AsyncFnPtr<str, Result<DOC>> = Box::new(move |input: &str| {
+    let fun: SingleThreadedCallback<DOC> = Box::new(move |input: &str| {
       let handler_clone = handler.clone();
       let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
         source: error.into(),
@@ -103,11 +123,4 @@ impl<DOC: BorrowValidator + 'static> SingleThreadedCommand<DOC> {
   }
 }
 
-mod private {
-  use super::SendSyncCommand;
-  use super::SingleThreadedCommand;
-  use identity_credential::validator::BorrowValidator;
-  pub trait Sealed {}
-  impl<DOC: BorrowValidator + Send + Sync + 'static> Sealed for SendSyncCommand<DOC> {}
-  impl<DOC: BorrowValidator + 'static> Sealed for SingleThreadedCommand<DOC> {}
-}
+
