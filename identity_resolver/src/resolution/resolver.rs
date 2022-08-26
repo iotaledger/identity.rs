@@ -34,9 +34,7 @@ use super::commands::SingleThreadedCommand;
 ///
 /// # Configuration
 /// The resolver will only be able to resolve did documents corresponding to a certain method after it has been
-/// configured to do so. This setup is achieved by implementing the [`MethodBoundedResolver`
-/// trait](super::MethodBoundResolver) for your client and then attaching it with
-/// [`Self::attach_method_handler`](`Resolver::attach_method_handler`).
+/// configured to do so. This setup i
 pub struct Resolver<DOC = Box<dyn ThreadSafeValidatorDocument>, CMD = SendSyncCommand<DOC>>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
@@ -276,7 +274,6 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
   ///      async move { future_client.resolve(&did).await }
   ///    });
   /// ```
-  /// 
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,

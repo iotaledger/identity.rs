@@ -9,10 +9,10 @@ use crate::Error;
 use crate::Result;
 use std::pin::Pin;
 
-/// 
-/// 
-///  [Resolver's](crate::Resolver) concurrency requirements. 
-/// 
+/// Internal trait used by the resolver to apply the command pattern.
+///
+/// The resolver is generic over the type of command which enables  
+/// support for both multi-threaded and single threaded use cases.
 pub trait Command<'a, T>: private::Sealed {
   type Output: Future<Output = T> + 'a;
   fn apply(&self, input: &'a str) -> Self::Output;
@@ -27,11 +27,11 @@ mod private {
   impl<DOC: BorrowValidator + 'static> Sealed for SingleThreadedCommand<DOC> {}
 }
 
-/// Internal representation of a thread safe handler. 
+/// Internal representation of a thread safe handler.
 type SendSyncCallback<DOC> =
   Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send + Sync>> + Send + Sync>;
 
-/// Representation of 
+/// Wrapper around a thread safe callback.
 pub struct SendSyncCommand<DOC: BorrowValidator + Send + Sync + 'static> {
   fun: SendSyncCallback<DOC>,
 }
@@ -44,6 +44,12 @@ impl<'a, DOC: BorrowValidator + Send + Sync + 'static> Command<'a, Result<DOC>> 
 }
 
 impl<DOC: BorrowValidator + Send + Sync + 'static> SendSyncCommand<DOC> {
+  /// Converts a handler represented as a closure to a command.
+  ///
+  /// This is achieved by first producing a callback represented as a dynamic asynchronous function pointer
+  /// which is invoked by the [Resolver](crate::Resolver) at a later point.
+  /// When the callback is invoked the `Resolver` will then pass a DID represented as a string slice which is then
+  /// converted to the DID type required by the handler and then the handler is called.  
   pub(super) fn new<D, F, Fut, DOCUMENT, E, DIDERR>(handler: F) -> Self
   where
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
@@ -74,13 +80,15 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> SendSyncCommand<DOC> {
   }
 }
 
+// ===========================================================================
+// Single threaded commands
+// ===========================================================================
 
-  // ===========================================================================
-  // Single threaded commands
-  // ===========================================================================
+/// Internal representation of a single threaded handler.
+pub(super) type SingleThreadedCallback<DOC> =
+  Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r>>>;
 
-pub(super) type SingleThreadedCallback<DOC> = Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r>>>;
-
+/// Wrapper around a single threaded callback.
 pub struct SingleThreadedCommand<DOC> {
   fun: SingleThreadedCallback<DOC>,
 }
@@ -91,8 +99,8 @@ impl<'a, DOC: BorrowValidator + 'static> Command<'a, Result<DOC>> for SingleThre
   }
 }
 
-
 impl<DOC: BorrowValidator + 'static> SingleThreadedCommand<DOC> {
+  /// Equivalent to [`SendSyncCommand::new`](SendSyncCommand::new()), but with less `Send` + `Sync` bounds.
   pub(super) fn new<D, F, Fut, DOCUMENT, E, DIDERR>(handler: F) -> Self
   where
     D: DID + for<'r> TryFrom<&'r str, Error = DIDERR> + 'static,
@@ -122,5 +130,3 @@ impl<DOC: BorrowValidator + 'static> SingleThreadedCommand<DOC> {
     Self { fun }
   }
 }
-
-

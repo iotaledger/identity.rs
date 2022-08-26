@@ -5,9 +5,9 @@ use std::borrow::Cow;
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
-/// Error returned from the methods on [crate::Resolver]. 
-/// 
-/// NOTE: This is a "read only error" in the sense that it can only be constructed by the methods in this crate. 
+/// Error returned from the methods on [crate::Resolver].
+///
+/// NOTE: This is a "read only error" in the sense that it can only be constructed by the methods in this crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 pub enum Error {

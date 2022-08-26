@@ -5,4 +5,5 @@ mod resolver;
 use self::commands::SingleThreadedCommand;
 use identity_credential::validator::ValidatorDocument;
 pub use resolver::Resolver;
+/// Alias for a [`Resolver`] that is not [`Send`] + [`Sync`].
 pub type SingleThreadedResolver<DOC = Box<dyn ValidatorDocument>> = Resolver<DOC, SingleThreadedCommand<DOC>>;
