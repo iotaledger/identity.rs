@@ -171,7 +171,7 @@ where
 /// # Necessity (why not just use [`ValidatorDocument`]?)
 ///
 /// This trait was introduced in order to achieve all three of the following :
-/// 1. Enable passing [`Box<dyn ValidatorDocument`] (and `&Box<dyn ValidatorDocument>`) to the
+/// 1. Enable passing [`Box<dyn ValidatorDocument>`] (and `&Box<dyn ValidatorDocument>`) to the
 /// [`PresentationValidator`](crate::validator::PresentationValidator).
 /// 2. Provide a blanket implementation for
 /// converting any [`Document`] implementor into [`Box<dyn ValidatorDocument>`] via the [`Into`] trait.

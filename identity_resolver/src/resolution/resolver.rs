@@ -27,14 +27,14 @@ use super::commands::Command;
 use super::commands::SendSyncCommand;
 use super::commands::SingleThreadedCommand;
 
-/// Convenience type for resolving did documents from different did methods.   
+/// Convenience type for resolving DID documents from different DID methods.   
 ///  
-/// Also provides functions for resolving DID Documents associated with
+/// Also provides methods for resolving DID Documents associated with
 /// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
 ///
 /// # Configuration
-/// The resolver will only be able to resolve did documents corresponding to a certain method after it has been
-/// configured to do so. This setup i
+/// The resolver will only be able to resolve DID documents for methods it has been configured for. This is done by
+/// attaching method specific handlers with [`Self::attach_handler`](Self::attach_handler()).
 pub struct Resolver<DOC = Box<dyn ThreadSafeValidatorDocument>, CMD = SendSyncCommand<DOC>>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
@@ -57,13 +57,10 @@ where
     }
   }
 
-  /// Fetches the DID Document of the given DID and attempts to cast the result to the desired type.
-  ///
-  /// If this Resolver was constructed by the [`Resolver::new_dynamic`](Resolver::new_dynamic()) method, one may also
-  /// want to consider [`Resolver::resolve_to`](Resolver::<Box<dyn ValidatorDocument>>::resolve_to()).
+  /// Fetches the DID Document of the given DID.
   ///
   /// # Errors
-  /// Errors if the resolver has not been configured to handle the method corresponding to the given did or the
+  /// Errors if the resolver has not been configured to handle the method corresponding to the given DID or the
   /// resolution process itself fails.
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
     self.delegate_resolution(did.method(), did.as_str()).await
@@ -136,7 +133,8 @@ where
   ///
   /// # Errors
   ///
-  /// Errors if the issuer URL cannot be parsed to a DID with a method supported by the resolver, or resolution fails.
+  /// Errors if the issuer URL cannot be parsed to a DID whose associated method is supported by the resolver, or
+  /// resolution fails.
   pub async fn resolve_credential_issuer<U: Serialize>(&self, credential: &Credential<U>) -> Result<DOC> {
     let issuer_did: CoreDID =
       CredentialValidator::extract_issuer(credential).map_err(|error| Error::DIDParsingError {
@@ -163,7 +161,7 @@ where
   /// to use [`PresentationValidator::validate`].
   /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`]. Note that
   /// DID Documents of a certain method can only be resolved if the resolver has been configured handle this method.
-  /// See [Self::attach_method_handler].
+  /// See [`Self::attach_handler`].
   ///
   /// # Errors
   /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
@@ -234,8 +232,9 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
   /// which can be converted to the type this [`Resolver`] is parametrized over. The `handler` is required to be
-  /// `Clone`, Send, Sync and 'static hence all captured variables must satisfy these bounds. In this regard the
-  /// `move` keyword and (possibly) wrapping values in [`std::sync::Arc`] may come in handy (see the example below).
+  /// [`Clone`], [`Send`], [`Sync`] and `'static hence all captured variables must satisfy these bounds. In this regard
+  /// the `move` keyword and (possibly) wrapping values in [`Arc`](std::sync::Arc) may come in handy (see the example
+  /// below).
   ///
   /// NOTE: If there already exists a handler for this method then it will be replaced with the new handler.
   /// In the case where one would like to have a "backup handler" for the same DID method, one can achieve this with
@@ -293,7 +292,7 @@ impl<DOC: BorrowValidator + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
   /// which can be converted to the type this [`Resolver`] is parametrized over. The `handler` is required to be
-  /// `Clone` and 'static hence all captured variables must satisfy these bounds. In this regard the
+  /// [`Clone`] and `'static  hence all captured variables must satisfy these bounds. In this regard the
   /// `move` keyword and (possibly) wrapping values in [`std::rc::Rc`] may come in handy (see the example below).
   ///
   /// NOTE: If there already exists a handler for this method then it will be replaced with the new handler.
