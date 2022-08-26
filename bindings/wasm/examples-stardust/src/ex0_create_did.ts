@@ -27,7 +27,7 @@ export async function createIdentity(): Promise<{
 }> {
     const client = new Client({
         primaryNode: API_ENDPOINT,
-        localPow: true,
+        localPow: false,
     });
     const didClient = new StardustIdentityClient(client);
 
