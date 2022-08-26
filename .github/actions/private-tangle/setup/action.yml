@@ -12,7 +12,7 @@ runs:
         cd hornet/private_tangle
         
         # Manipulate and print config
-        jq '.restApi.pow.enabled = $newVal' --argjson newVal false config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
+        jq '.restAPI.pow.enabled = $newVal' --argjson newVal false config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
         jq --color-output . config_private_tangle.json
         
         # Start Tangle
