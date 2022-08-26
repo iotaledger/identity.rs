@@ -15,8 +15,8 @@ import {Bip39} from "@iota/crypto.js";
 import fetch from "node-fetch";
 import {Client, MnemonicSecretManager, SecretManager} from "@cycraig/iota-client-wasm/node";
 
-const API_ENDPOINT = "https://api.testnet.shimmer.network/";
-const FAUCET = "https://faucet.testnet.shimmer.network/api/enqueue";
+const API_ENDPOINT = "http://localhost:14265"; // "https://api.testnet.shimmer.network/";
+const FAUCET = "http://localhost:8091/api/enqueue"; //"https://faucet.testnet.shimmer.network/api/enqueue";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{
@@ -32,7 +32,7 @@ export async function createIdentity(): Promise<{
     const didClient = new StardustIdentityClient(client);
 
     // Get the Bech32 human-readable part (HRP) of the network.
-    const networkHrp: string = await didClient.getNetworkHrp();
+    const networkHrp: string = "tst"; //await didClient.getNetworkHrp();
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
