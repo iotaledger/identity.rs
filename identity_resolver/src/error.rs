@@ -5,7 +5,7 @@ use std::borrow::Cow;
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
-/// Error returned from the methods on [crate::Resolver].
+/// Error returned from the [Resolver's](crate::Resolver) methods.
 ///
 /// NOTE: This is a "read only error" in the sense that it can only be constructed by the methods in this crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
@@ -53,10 +53,13 @@ impl Error {
 #[non_exhaustive]
 /// Indicates the action the [`Resolver`](crate::resolution::Resolver) was performing when an error ocurred.
 pub enum ResolutionAction {
+  /// Errored while attempting to resolve a presentation holder's DID.
   PresentationHolderResolution,
-
+  /// Errored while attempting to resolve the DID of the issuer of a given credential.
   CredentialIssuerResolution,
-
+  /// Errored while attempting to resolve the DIDs of the credential issuers of the given presentation.
+  ///
+  ///  The wrapped `usize` indicates the position of a credential whose issuer's DID could not be resolved.
   PresentationIssuersResolution(usize),
   /// Further context regarding the resolution of the DID is not available.
   Unknown,
@@ -66,11 +69,11 @@ impl std::fmt::Display for ResolutionAction {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let message: Cow<str> = match self {
       ResolutionAction::PresentationHolderResolution => {
-        ": attempt to resolve the presentation holder's DID failed".into()
+        "attempt to resolve the presentation holder's DID failed: ".into()
       }
-      ResolutionAction::CredentialIssuerResolution => ": attempt to resolve the credential issuer's DID failed".into(),
+      ResolutionAction::CredentialIssuerResolution => "attempt to resolve the credential issuer's DID failed: ".into(),
       ResolutionAction::PresentationIssuersResolution(idx) => format!(
-        ": attempt to resolve the credential issuer's DID of credential num. {} failed",
+        "attempt to resolve the credential issuer's DID of credential num. {} in the presentation failed: ",
         idx
       )
       .into(),
