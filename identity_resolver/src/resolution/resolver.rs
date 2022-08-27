@@ -232,8 +232,8 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
   /// which can be converted to the type this [`Resolver`] is parametrized over. The `handler` is required to be
-  /// [`Clone`], [`Send`], [`Sync`] and `'static hence all captured variables must satisfy these bounds. In this regard
-  /// the `move` keyword and (possibly) wrapping values in [`Arc`](std::sync::Arc) may come in handy (see the example
+  /// [`Clone`], [`Send`], [`Sync`] and `'static` hence all captured variables must satisfy these bounds. In this regard
+  /// the `move` keyword and (possibly) wrapping values in an [`Arc`](std::sync::Arc) may come in handy (see the example
   /// below).
   ///
   /// NOTE: If there already exists a handler for this method then it will be replaced with the new handler.
@@ -292,8 +292,8 @@ impl<DOC: BorrowValidator + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
   /// which can be converted to the type this [`Resolver`] is parametrized over. The `handler` is required to be
-  /// [`Clone`] and `'static  hence all captured variables must satisfy these bounds. In this regard the
-  /// `move` keyword and (possibly) wrapping values in [`std::rc::Rc`] may come in handy (see the example below).
+  /// [`Clone`] and `'static`  hence all captured variables must satisfy these bounds. In this regard the
+  /// `move` keyword and (possibly) wrapping values in an [`std::rc::Rc`] may come in handy (see the example below).
   ///
   /// NOTE: If there already exists a handler for this method then it will be replaced with the new handler.
   /// In the case where one would like to have a "backup handler" for the same DID method, one can achieve this with
