@@ -17,11 +17,11 @@ use identity_credential::credential::Credential;
 use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Subject;
 use identity_credential::presentation::Presentation;
-use identity_credential::validator::ValidatorDocument;
 use identity_credential::validator::AbstractThreadSafeValidatorDocument;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::SubjectHolderRelationship;
+use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
@@ -43,9 +43,13 @@ const TEST_METHOD_NAME_1: &'static str = "test1";
 
 fn generate_stardust_document(keypair: &KeyPair) -> StardustDocument {
   let mut document: StardustDocument = StardustDocument::new_with_id(
-    "did:stardust:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-      .parse()
-      .unwrap(),
+    format!(
+      "did:{}:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      StardustDID::METHOD
+    )
+    .as_str()
+    .parse()
+    .unwrap(),
   );
   let method: StardustVerificationMethod =
     StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "issuerKey").unwrap();

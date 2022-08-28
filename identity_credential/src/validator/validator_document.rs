@@ -227,10 +227,11 @@ impl AbstractThreadSafeValidatorDocument {
   /// # Example
   /// ```
   /// # use identity_did::document::CoreDocument;
+  /// # use identity_credential::validator::AbstractValidatorDocument;
   ///
   /// fn round_trip(doc: CoreDocument) -> CoreDocument {
   ///   let abstract_doc = AbstractValidatorDocument::from(doc);
-  ///   abstract_doc.into_any().downcast::<CoreDocument>().unwrap()
+  ///   *abstract_doc.into_any().downcast::<CoreDocument>().unwrap()
   /// }
   /// ```
   pub fn into_any(self) -> Box<dyn Any + Send + Sync> {
