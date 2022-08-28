@@ -4982,7 +4982,7 @@ Deep clones the object.
 <a name="StardustDID.METHOD"></a>
 
 ### StardustDID.METHOD ⇒ <code>string</code>
-The IOTA UTXO DID method name (`"stardust"`).
+The IOTA UTXO DID method name (`"iota"`).
 
 **Kind**: static property of [<code>StardustDID</code>](#StardustDID)  
 <a name="StardustDID.DEFAULT_NETWORK"></a>
@@ -4996,7 +4996,7 @@ The default Tangle network (`"main"`).
 ### StardustDID.placeholder(network) ⇒ [<code>StardustDID</code>](#StardustDID)
 Creates a new placeholder [`StardustDID`] with the given network name.
 
-E.g. `did:stardust:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
+E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
 
 **Kind**: static method of [<code>StardustDID</code>](#StardustDID)  
 

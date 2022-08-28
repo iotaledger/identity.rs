@@ -12,7 +12,7 @@ export async function customResolution() {
 
         const resolver = new MixedResolver(); 
 
-        resolver.attachHandler("stardust", resolveDid);
+        resolver.attachHandler("iota", resolveDid);
 
         const output = await resolver.resolve(did.toString());
         console.log("Resolved DID document:", JSON.stringify(output, null, 2));
