@@ -18,12 +18,10 @@ use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Subject;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::ValidatorDocument;
-
+use identity_credential::validator::AbstractThreadSafeValidatorDocument;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::SubjectHolderRelationship;
-use identity_credential::validator::ThreadSafeValidatorDocument;
-use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
@@ -251,7 +249,7 @@ async fn test_verify_presentation() {
   // Check that verification works with the resolver converting all resolved documents to the boxed trait object Box<dyn
   // ValidatorDocument>.
   let resolver_dynamic: Resolver =
-    setup_resolver::<Box<dyn ThreadSafeValidatorDocument>>(foo_client.clone(), bar_client);
+    setup_resolver::<AbstractThreadSafeValidatorDocument>(foo_client.clone(), bar_client);
 
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_core).await;
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_dynamic).await;

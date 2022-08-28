@@ -33,6 +33,7 @@ mod tests {
   use identity_credential::validator::PresentationValidator;
   use identity_credential::validator::SubjectHolderRelationship;
   use identity_credential::validator::ValidatorDocument;
+  use identity_credential::validator::AbstractValidatorDocument;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
 
@@ -253,8 +254,8 @@ mod tests {
     )
     .is_ok());
 
-    let issuer_iota_box: Box<dyn ValidatorDocument> = Box::new(issuer_stardust_doc.clone());
-    let issuer_core_box: Box<dyn ValidatorDocument> = Box::new(issuer_core_doc.clone());
+    let issuer_iota_box = AbstractValidatorDocument::from(issuer_stardust_doc.clone());
+    let issuer_core_box = AbstractValidatorDocument::from(issuer_core_doc.clone());
     assert!(PresentationValidator::validate(
       &presentation,
       &subject_doc,
