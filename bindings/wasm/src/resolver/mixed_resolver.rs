@@ -4,7 +4,7 @@
 use std::rc::Rc;
 
 use identity_iota::credential::Presentation;
-use identity_iota::credential::ValidatorDocument;
+use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::resolver::SingleThreadedResolver;
@@ -56,7 +56,7 @@ impl MixedResolver {
             error.to_string()
           ))
         })?;
-        std::result::Result::<_, ErrorString>::Ok(Box::<dyn ValidatorDocument>::from(supported_document))
+        std::result::Result::<_, ErrorString>::Ok(AbstractValidatorDocument::from(supported_document))
       }
     };
 

@@ -4,7 +4,7 @@
 use crate::error::Result;
 use crate::error::WasmError;
 use crate::error::WasmResult;
-use identity_iota::credential::ValidatorDocument;
+use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::did::CoreDocument;
 use identity_stardust::StardustDocument;
 use serde::Deserialize;
@@ -28,19 +28,19 @@ impl RustSupportedDocument {
   }
 }
 
-impl From<RustSupportedDocument> for Box<dyn ValidatorDocument> {
+impl From<RustSupportedDocument> for AbstractValidatorDocument {
   fn from(document: RustSupportedDocument) -> Self {
     match document {
-      RustSupportedDocument::Core(core_doc) => Box::new(core_doc) as Box<dyn ValidatorDocument>,
-      RustSupportedDocument::Stardust(stardust_doc) => Box::new(stardust_doc) as Box<dyn ValidatorDocument>,
+      RustSupportedDocument::Core(core_doc) => AbstractValidatorDocument::from(core_doc),
+      RustSupportedDocument::Stardust(stardust_doc) => AbstractValidatorDocument::from(stardust_doc),
     }
   }
 }
 
-impl TryFrom<Box<dyn ValidatorDocument>> for RustSupportedDocument {
+impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
   type Error = WasmError<'static>;
-  fn try_from(value: Box<dyn ValidatorDocument>) -> std::result::Result<Self, Self::Error> {
-    let upcast = value.upcast();
+  fn try_from(value: AbstractValidatorDocument) -> std::result::Result<Self, Self::Error> {
+    let upcast = value.into_any();
     let supported_document = match upcast.downcast::<CoreDocument>() {
       Ok(doc) => RustSupportedDocument::Core(*doc),
       Err(retry) => {

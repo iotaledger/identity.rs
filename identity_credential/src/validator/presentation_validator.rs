@@ -17,7 +17,6 @@ use super::errors::CompoundCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
-use super::BorrowValidator;
 use super::CredentialValidator;
 use super::FailFast;
 use super::PresentationValidationOptions;
@@ -56,7 +55,7 @@ impl PresentationValidator {
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  pub fn validate<HDOC: BorrowValidator + ?Sized, IDOC: BorrowValidator, U: Serialize, V: Serialize>(
+  pub fn validate<HDOC: ValidatorDocument + ?Sized, IDOC: ValidatorDocument, U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
     holder: &HDOC,
     issuers: &[IDOC],
@@ -112,17 +111,16 @@ impl PresentationValidator {
   /// # Errors
   /// Fails if the `holder` does not match the `presentation`'s holder property.
   /// Fails if signature verification against the holder document fails.
-  pub fn verify_presentation_signature<U: Serialize, V: Serialize, DOC: BorrowValidator + ?Sized>(
+  pub fn verify_presentation_signature<U: Serialize, V: Serialize, DOC: ValidatorDocument + ?Sized>(
     presentation: &Presentation<U, V>,
     holder: &DOC,
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
     let did: CoreDID = Self::extract_holder(presentation)?;
-    if did.as_str() != holder.borrow_validator().did_str() {
+    if did.as_str() != holder.did_str() {
       return Err(ValidationError::DocumentMismatch(SignerContext::Holder));
     }
     holder
-      .borrow_validator()
       .verify_data(&presentation, options)
       .map_err(|err| ValidationError::Signature {
         source: err.into(),
@@ -142,7 +140,7 @@ impl PresentationValidator {
   // The following properties are validated according to `options`:
   // - the semantic structure of the presentation,
   // - the holder's signature,
-  fn validate_presentation_without_credentials<U: Serialize, V: Serialize, DOC: BorrowValidator + ?Sized>(
+  fn validate_presentation_without_credentials<U: Serialize, V: Serialize, DOC: ValidatorDocument + ?Sized>(
     presentation: &Presentation<U, V>,
     holder: &DOC,
     options: &PresentationValidationOptions,
@@ -175,7 +173,7 @@ impl PresentationValidator {
   // - the relationship between the holder and the credential subjects,
   // - the signatures and some properties of the constituent credentials (see
   // [`CredentialValidator::validate`]).
-  fn validate_credentials<DOC: BorrowValidator, U, V: Serialize>(
+  fn validate_credentials<DOC: ValidatorDocument, U, V: Serialize>(
     presentation: &Presentation<U, V>,
     issuers: &[DOC],
     options: &PresentationValidationOptions,

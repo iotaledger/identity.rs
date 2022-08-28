@@ -8,12 +8,12 @@ use std::marker::PhantomData;
 use futures::TryFutureExt;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
-use identity_credential::validator::BorrowValidator;
+use identity_credential::validator::AbstractThreadSafeValidatorDocument;
 use identity_credential::validator::CredentialValidator;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
-use identity_credential::validator::ThreadSafeValidatorDocument;
+use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 
@@ -35,10 +35,10 @@ use super::commands::SingleThreadedCommand;
 /// # Configuration
 /// The resolver will only be able to resolve DID documents for methods it has been configured for. This is done by
 /// attaching method specific handlers with [`Self::attach_handler`](Self::attach_handler()).
-pub struct Resolver<DOC = Box<dyn ThreadSafeValidatorDocument>, CMD = SendSyncCommand<DOC>>
+pub struct Resolver<DOC = AbstractThreadSafeValidatorDocument, CMD = SendSyncCommand<DOC>>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: BorrowValidator,
+  DOC: ValidatorDocument,
 {
   command_map: HashMap<String, CMD>,
   _required: PhantomData<DOC>,
@@ -47,7 +47,7 @@ where
 impl<M, DOC> Resolver<DOC, M>
 where
   M: for<'r> Command<'r, Result<DOC>>,
-  DOC: BorrowValidator,
+  DOC: ValidatorDocument,
 {
   /// Constructs a new [`Resolver`].
   ///
@@ -58,13 +58,14 @@ where
   /// # use identity_resolver::Resolver;
   /// # use identity_did::document::CoreDocument;
   ///
-  /// let mut resolver = Resolver<CoreDocument>::new();
+  /// let mut resolver = Resolver::<CoreDocument>::new();
   /// // Now attach some handlers whose output can be converted to a `CoreDocument`.
   /// ```
   /// 
   /// # Example
   /// Construct a `Resolver` that is agnostic about DID Document types.
   /// ```
+  /// # use identity_resolver::Resolver;
   /// let mut resolver: Resolver = Resolver::new();
   /// // Now attach some handlers whose output type implements the `Document` trait.
   /// ```
@@ -196,8 +197,8 @@ where
   where
     U: Serialize,
     V: Serialize,
-    HDOC: BorrowValidator + ?Sized,
-    IDOC: BorrowValidator,
+    HDOC: ValidatorDocument + ?Sized,
+    IDOC: ValidatorDocument,
   {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
@@ -245,7 +246,7 @@ where
   }
 }
 
-impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
+impl<DOC: ValidatorDocument + Send + Sync + 'static> Resolver<DOC> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -305,7 +306,7 @@ impl<DOC: BorrowValidator + Send + Sync + 'static> Resolver<DOC> {
   }
 }
 
-impl<DOC: BorrowValidator + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -380,7 +381,7 @@ mod tests {
   #[allow(dead_code)]
   fn resolver_methods_give_send_sync_futures<DOC>()
   where
-    DOC: BorrowValidator + Send + Sync + 'static,
+    DOC: ValidatorDocument + Send + Sync + 'static,
   {
     let did: CoreDID = "did:key:4353526346363sdtsdfgdfg".parse().unwrap();
     let credential: Credential = CredentialBuilder::default()

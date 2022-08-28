@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
-use std::borrow::Borrow;
 
 use identity_core::crypto::GetSignature;
 use identity_did::did::DID;
@@ -30,15 +29,16 @@ pub trait ValidatorDocument: Sealed {
     self as &dyn ValidatorDocument
   }
 
-  /// Helper method to upcast to an [`Any`] trait object.
-  /// The intended use case is to enable downcasting to a concrete [`Document`].
+  #[doc(hidden)]
   fn upcast(self: Box<Self>) -> Box<dyn Any>
   where
     Self: 'static;
 
+  #[doc(hidden)]
   /// Returns the string identifier of the DID Document.
   fn did_str(&self) -> &str;
 
+  #[doc(hidden)]
   /// Verifies the signature of the provided data against the DID Document.
   ///
   /// # Errors
@@ -47,6 +47,7 @@ pub trait ValidatorDocument: Sealed {
   /// serialization fails, or the verification operation fails.
   fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()>;
 
+  #[doc(hidden)]
   /// Extracts the `RevocationBitmap` from the referenced service in the DID Document.
   ///
   /// # Errors
@@ -60,19 +61,6 @@ pub trait ValidatorDocument: Sealed {
   ) -> identity_did::Result<RevocationBitmap>;
 }
 
-/// Specialization of [`ValidatorDocument`](ValidatorDocument) implemented by types that
-/// are also [`Send`] and  [`Sync`].
-///
-/// NOTE: this is a sealed trait and not intended to be used externally or implemented manually.
-/// Types which implement [`Document`], [`Send`] and [`Sync`] automatically implement this trait.
-/// Any changes to this trait will be considered non-breaking.
-pub trait ThreadSafeValidatorDocument: ValidatorDocument + Send + Sync {
-  /// Thread safe variant of [`ValidatorDocument::upcast`](ValidatorDocument::upcast()).
-  fn thread_safe_upcast(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
-  where
-    Self: 'static;
-}
-
 mod private {
   use super::*;
 
@@ -80,8 +68,8 @@ mod private {
 
   impl<T> Sealed for T where T: Document {}
   impl Sealed for &dyn ValidatorDocument {}
-  impl Sealed for Box<dyn ValidatorDocument> {}
-  impl Sealed for Box<dyn ThreadSafeValidatorDocument> {}
+  impl Sealed for AbstractValidatorDocument {}
+  impl Sealed for AbstractThreadSafeValidatorDocument {}
 
   /// Object-safe trait workaround to satisfy the trait bounds
   /// [`serde::Serialize`] + [`GetSignature`].
@@ -96,6 +84,30 @@ mod private {
     {
       erased_serde::serialize(self, serializer)
     }
+  }
+}
+
+impl ValidatorDocument for &dyn ValidatorDocument {
+  fn did_str(&self) -> &str {
+    (*self).did_str()
+  }
+
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+    (*self).verify_data(data, options)
+  }
+  fn upcast(self: Box<Self>) -> Box<dyn Any>
+  where
+    Self: 'static,
+  {
+    self
+  }
+
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_did::utils::DIDUrlQuery<'_>,
+  ) -> identity_did::Result<RevocationBitmap> {
+    (*self).resolve_revocation_bitmap(query)
   }
 }
 
@@ -132,11 +144,61 @@ where
   }
 }
 
+/// An abstract implementer of [`ValidatorDocument`] that all implementers of [`Document`] can be converted to.
+///
+/// By calling [`Self::into_any`](Self::into_any()) one obtains a type that one may
+/// attempt to convert to a concrete DID Document representation.
+pub struct AbstractValidatorDocument(Box<dyn ValidatorDocument>);
+
+impl AbstractValidatorDocument {
+  /// See [SendSyncAbstractValidatorDocument::into_any](SendSyncAbstractValidatorDocument::into_any()).
+  pub fn into_any(self) -> Box<dyn Any> {
+    self.0.upcast()
+  }
+}
+
+impl<DOC: Document + 'static> From<DOC> for AbstractValidatorDocument {
+  fn from(doc: DOC) -> Self {
+    AbstractValidatorDocument(Box::new(doc) as Box<dyn ValidatorDocument>)
+  }
+}
+
+impl ValidatorDocument for AbstractValidatorDocument {
+  fn did_str(&self) -> &str {
+    self.0.did_str()
+  }
+
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+    self.0.verify_data(data, options)
+  }
+
+  fn upcast(self: Box<Self>) -> Box<dyn Any>
+  where
+    Self: 'static,
+  {
+    self.into_any()
+  }
+
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_did::utils::DIDUrlQuery<'_>,
+  ) -> identity_did::Result<RevocationBitmap> {
+    self.0.resolve_revocation_bitmap(query)
+  }
+}
+
+trait ThreadSafeValidatorDocument: ValidatorDocument + Send + Sync {
+  fn thread_safe_upcast(self: Box<Self>) -> Box<dyn Any + Send + Sync>
+  where
+    Self: 'static;
+}
+
 impl<DOC> ThreadSafeValidatorDocument for DOC
 where
-  DOC: ValidatorDocument + Send + Sync,
+  DOC: ValidatorDocument + Send + Sync + 'static,
 {
-  fn thread_safe_upcast(self: Box<Self>) -> Box<dyn Any + Send + Sync + 'static>
+  fn thread_safe_upcast(self: Box<Self>) -> Box<dyn Any + Send + Sync>
   where
     Self: 'static,
   {
@@ -144,88 +206,59 @@ where
   }
 }
 
-impl<DOC> From<DOC> for Box<dyn ValidatorDocument>
+/// Thread safe variant of [`AbstractValidatorDocument`].
+///
+/// By calling [`Self::into_any`](Self::into_any()) one obtains a type that one may
+/// attempt to convert to a concrete DID Document representation.
+pub struct AbstractThreadSafeValidatorDocument(Box<dyn ThreadSafeValidatorDocument>);
+
+impl<DOC> From<DOC> for AbstractThreadSafeValidatorDocument
 where
-  DOC: Document + 'static,
+  DOC: Document + Send + Sync + 'static,
 {
-  fn from(document: DOC) -> Self {
-    Box::new(document)
+  fn from(doc: DOC) -> Self {
+    Self(Box::new(doc) as Box<dyn ThreadSafeValidatorDocument>)
   }
 }
 
-impl<DOC> From<DOC> for Box<dyn ThreadSafeValidatorDocument>
-where
-  DOC: Document + 'static + Send + Sync,
-{
-  fn from(document: DOC) -> Self {
-    Box::new(document)
+impl AbstractThreadSafeValidatorDocument {
+  /// Convert the abstract document into [`Any`] which one may then attempt to cast to a concrete type.
+  ///
+  /// # Example
+  /// ```
+  /// # use identity_did::document::CoreDocument;
+  ///
+  /// fn round_trip(doc: CoreDocument) -> CoreDocument {
+  ///   let abstract_doc = AbstractValidatorDocument::from(doc);
+  ///   abstract_doc.into_any().downcast::<CoreDocument>().unwrap()
+  /// }
+  /// ```
+  pub fn into_any(self) -> Box<dyn Any + Send + Sync> {
+    self.0.thread_safe_upcast()
   }
 }
 
-/// Trait implemented by types capable of handing out a borrow implementing [`ValidatorDocument`].
-///
-/// NOTE: this is a sealed trait and its methods are not intended to be called externally or implemented manually.
-/// A blanket implementation is provided for the [`Document`] trait, which can be implemented
-/// instead to be compatible. Any changes to this trait will be considered non-breaking.
-///
-/// # Necessity (why not just use [`ValidatorDocument`]?)
-///
-/// This trait was introduced in order to achieve all three of the following :
-/// 1. Enable passing [`Box<dyn ValidatorDocument>`] (and `&Box<dyn ValidatorDocument>`) to the
-/// [`PresentationValidator`](crate::validator::PresentationValidator).
-/// 2. Provide a blanket implementation for
-/// converting any [`Document`] implementor into [`Box<dyn ValidatorDocument>`] via the [`Into`] trait.
-/// 3. Enable convenient upcasting of [`Box <dyn ValidatorDocument>`] to [`Box<dyn Any>`].  
-///
-/// The first of the two points can be achieved by implementing `ValidatorDocument` directly for [`Box<dyn
-/// ValidatorDocument>`], but then the second point will not be achievable because of the [Orphan rules](https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules).
-/// If one instead of using [`Box<dyn ValidatorDocument>`] wrapped this into a new type say `AbstractValidatorDocument`
-/// then points 1 & 2 could essentially be achieved by implementing `ValidatorDocument` for this new type, but 3 would
-/// be harder due to upcasting requiring an explicit [`Box`].  
-/// In terms of abstract functionality requiring this trait bound is essentially equivalent to the following
-/// constraints: T: Borrow<U>,
-/// U: ValidatorDocument  
-/// thus reducing the number of necessary generic parameters in methods and frees the caller from
-/// having to use turbofish to declare the concrete type of U. If the exact details of `U` (beyond equivalence of `Eq`,
-/// `Ord` and `Hash`) are important then in that case one should not consider these trait bounds equivalent.
-pub trait BorrowValidator: private::Sealed {
-  /// The concrete ValidatorDocument one may borrow.  
-  type BorrowedValidator: ValidatorDocument + ?Sized;
-  /// Hands out a borrowed representative capable of calling the methods of [`ValidatorDocument`].
-  fn borrow_validator(&self) -> &Self::BorrowedValidator;
-}
-
-impl<DOC> BorrowValidator for DOC
-where
-  DOC: Document + Send + Sync,
-{
-  type BorrowedValidator = DOC;
-  /// Equivalent to: `<Self as Borrow<Self>>::borrow(self)`.
-  fn borrow_validator(&self) -> &Self::BorrowedValidator {
-    <Self as Borrow<Self>>::borrow(self)
+impl ValidatorDocument for AbstractThreadSafeValidatorDocument {
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+    self.0.verify_data(data, options)
   }
-}
 
-impl BorrowValidator for Box<dyn ValidatorDocument> {
-  type BorrowedValidator = dyn ValidatorDocument;
-  /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
-  fn borrow_validator(&self) -> &Self::BorrowedValidator {
-    <Self as Borrow<dyn ValidatorDocument>>::borrow(self)
+  fn upcast(self: Box<Self>) -> Box<dyn Any>
+  where
+    Self: 'static,
+  {
+    self.0.upcast()
   }
-}
 
-impl BorrowValidator for Box<dyn ThreadSafeValidatorDocument> {
-  type BorrowedValidator = dyn ThreadSafeValidatorDocument;
-  /// Equivalent to: ` <Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
-  fn borrow_validator(&self) -> &Self::BorrowedValidator {
-    <Self as Borrow<dyn ThreadSafeValidatorDocument>>::borrow(self)
+  fn did_str(&self) -> &str {
+    self.0.did_str()
   }
-}
 
-impl<'a> BorrowValidator for &'a dyn ValidatorDocument {
-  type BorrowedValidator = dyn ValidatorDocument + 'a;
-  /// Equivalent to: `<Self as Borrow<dyn ValidatorDocument>>::borrow(self)`.
-  fn borrow_validator(&self) -> &Self::BorrowedValidator {
-    <Self as Borrow<dyn ValidatorDocument>>::borrow(self)
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_did::utils::DIDUrlQuery<'_>,
+  ) -> identity_did::Result<RevocationBitmap> {
+    self.0.resolve_revocation_bitmap(query)
   }
 }

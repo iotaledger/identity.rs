@@ -17,7 +17,7 @@ use identity_credential::credential::Credential;
 use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Subject;
 use identity_credential::presentation::Presentation;
-use identity_credential::validator::BorrowValidator;
+use identity_credential::validator::ValidatorDocument;
 
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
@@ -175,7 +175,7 @@ impl MixedTestSetup {
   }
 }
 
-async fn test_generic_resolver_verify_presentation<DOC: BorrowValidator + Send + Sync + 'static>(
+async fn test_generic_resolver_verify_presentation<DOC: ValidatorDocument + Send + Sync + 'static>(
   signed_presentation: &Presentation,
   challenge: String,
   resolver: Resolver<DOC>,
@@ -259,7 +259,7 @@ async fn test_verify_presentation() {
 
 fn setup_resolver<DOC>(foo_client: FooClient, bar_client: Arc<BarClient>) -> Resolver<DOC>
 where
-  DOC: BorrowValidator + From<CoreDocument> + From<StardustDocument> + 'static + Send + Sync,
+  DOC: ValidatorDocument + From<CoreDocument> + From<StardustDocument> + 'static + Send + Sync,
 {
   let mut resolver: Resolver<DOC> = Resolver::new();
 

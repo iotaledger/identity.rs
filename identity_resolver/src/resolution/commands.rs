@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
-use identity_credential::validator::BorrowValidator;
+use identity_credential::validator::ValidatorDocument;
 use identity_did::did::DID;
 
 use crate::Error;
@@ -21,10 +21,10 @@ pub trait Command<'a, T>: private::Sealed {
 mod private {
   use super::SendSyncCommand;
   use super::SingleThreadedCommand;
-  use identity_credential::validator::BorrowValidator;
+  use identity_credential::validator::ValidatorDocument;
   pub trait Sealed {}
-  impl<DOC: BorrowValidator + Send + Sync + 'static> Sealed for SendSyncCommand<DOC> {}
-  impl<DOC: BorrowValidator + 'static> Sealed for SingleThreadedCommand<DOC> {}
+  impl<DOC: ValidatorDocument + Send + Sync + 'static> Sealed for SendSyncCommand<DOC> {}
+  impl<DOC: ValidatorDocument + 'static> Sealed for SingleThreadedCommand<DOC> {}
 }
 
 /// Internal representation of a thread safe handler.
@@ -32,18 +32,18 @@ type SendSyncCallback<DOC> =
   Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send + Sync>> + Send + Sync>;
 
 /// Wrapper around a thread safe callback.
-pub struct SendSyncCommand<DOC: BorrowValidator + Send + Sync + 'static> {
+pub struct SendSyncCommand<DOC: ValidatorDocument + Send + Sync + 'static> {
   fun: SendSyncCallback<DOC>,
 }
 
-impl<'a, DOC: BorrowValidator + Send + Sync + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
+impl<'a, DOC: ValidatorDocument + Send + Sync + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send + Sync>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
 }
 
-impl<DOC: BorrowValidator + Send + Sync + 'static> SendSyncCommand<DOC> {
+impl<DOC: ValidatorDocument + Send + Sync + 'static> SendSyncCommand<DOC> {
   /// Converts a handler represented as a closure to a command.
   ///
   /// This is achieved by first producing a callback represented as a dynamic asynchronous function pointer
@@ -92,14 +92,14 @@ pub(super) type SingleThreadedCallback<DOC> =
 pub struct SingleThreadedCommand<DOC> {
   fun: SingleThreadedCallback<DOC>,
 }
-impl<'a, DOC: BorrowValidator + 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
+impl<'a, DOC: ValidatorDocument + 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
 }
 
-impl<DOC: BorrowValidator + 'static> SingleThreadedCommand<DOC> {
+impl<DOC: ValidatorDocument + 'static> SingleThreadedCommand<DOC> {
   /// Equivalent to [`SendSyncCommand::new`](SendSyncCommand::new()), but with less `Send` + `Sync` bounds.
   pub(super) fn new<D, F, Fut, DOCUMENT, E, DIDERR>(handler: F) -> Self
   where
