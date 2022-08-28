@@ -50,6 +50,24 @@ where
   DOC: BorrowValidator,
 {
   /// Constructs a new [`Resolver`].
+  ///
+  /// # Example
+  /// Construct a `Resolver` that resolves DID documents of type
+  /// [`CoreDocument`](::identity_did::document::CoreDocument).
+  ///  ```
+  /// # use identity_resolver::Resolver;
+  /// # use identity_did::document::CoreDocument;
+  ///
+  /// let mut resolver = Resolver<CoreDocument>::new();
+  /// // Now attach some handlers whose output can be converted to a `CoreDocument`.
+  /// ```
+  /// 
+  /// # Example
+  /// Construct a `Resolver` that is agnostic about DID Document types.
+  /// ```
+  /// let mut resolver: Resolver = Resolver::new();
+  /// // Now attach some handlers whose output type implements the `Document` trait.
+  /// ```
   pub fn new() -> Self {
     Self {
       command_map: HashMap::new(),
