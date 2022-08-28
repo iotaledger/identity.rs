@@ -19,8 +19,7 @@ pub struct WasmStardustDID(pub(crate) StardustDID);
 
 #[wasm_bindgen(js_class = StardustDID)]
 impl WasmStardustDID {
-  /// The IOTA UTXO DID method name (`"stardust"`).
-  // TODO: This will be changed to `iota` in the future.
+  /// The IOTA UTXO DID method name (`"iota"`).
   #[wasm_bindgen(getter = METHOD)]
   pub fn static_method() -> String {
     StardustDID::METHOD.to_owned()
@@ -52,7 +51,7 @@ impl WasmStardustDID {
 
   /// Creates a new placeholder [`StardustDID`] with the given network name.
   ///
-  /// E.g. `did:stardust:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
+  /// E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
   #[wasm_bindgen]
   pub fn placeholder(network: String) -> Result<WasmStardustDID> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;

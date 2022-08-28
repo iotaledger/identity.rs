@@ -1,4 +1,4 @@
-![banner](https://github.com/iotaledger/identity.rs/raw/HEAD/.meta/identity_banner.png)
+![banner](https://github.com/iotaledger/identity.rs/raw/HEAD/documentation/static/img/Banner/banner_identity.svg)
 
 <p align="center">
   <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>

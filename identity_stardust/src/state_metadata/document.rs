@@ -168,9 +168,9 @@ mod tests {
 
   fn test_document() -> TestSetup {
     let did_self =
-      StardustDID::parse("did:stardust:0x8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
+      StardustDID::parse("did:iota:0x8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
     let did_foreign =
-      StardustDID::parse("did:stardust:0x71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
+      StardustDID::parse("did:iota:0x71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
 
     let mut document: StardustDocument = StardustDocument::new_with_id(did_self.clone());
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();

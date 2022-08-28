@@ -10,17 +10,17 @@ readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 rust-version = "1.62"
 description = "An IOTA Ledger integration for the identity.rs library."
-[workspace]
 
 [dependencies]
 # Ensure bee-block always matches the version used by iota-client.
-bee-block = { version = "1.0.0-beta.5", default-features = false, features = ["std"], optional = true }
+bee-block = { version = "1.0.0-beta.6", default-features = false, features = ["std"], optional = true }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_resolver = { version = "0.6.0", path = "../identity_resolver", default-features = false, optional = true }
 
 async-trait = { version = "0.1.56", default-features = false, optional = true }
+iota-client = { version = "2.0.0-beta.2", default-features = false, features = ["tls"], optional = true }
 futures = { version = "0.3" }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
@@ -29,13 +29,6 @@ prefix-hex = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
-
-[dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "a582bfa882793fe21db2055c4f7878ebc531877a" # develop branch, 2022-07-27
-features = ["tls"]
-default-features = false
-optional = true
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
