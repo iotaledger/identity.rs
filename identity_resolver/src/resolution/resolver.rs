@@ -81,6 +81,46 @@ where
   /// # Errors
   /// Errors if the resolver has not been configured to handle the method corresponding to the given DID or the
   /// resolution process itself fails.
+  ///
+  /// # When the return type is abstract
+  /// If the resolver has been constructed without specifying the return type (in [`Self::new`](Self::new()))
+  /// one can call [`into_any`](AbstractThreadSafeValidatorDocument::into_any()) on the resolved output to obtain a
+  /// [`Box<dyn Any>`] which one may then attempt to downcast to a concrete type. The downcast will succeed if the
+  /// specified type matches the return type of the attached handler responsible for resolving the given DID.
+  ///
+  /// ## Example
+  /// ```
+  /// # use identity_resolver::Resolver;
+  /// # use identity_did::did::CoreDID;
+  /// # use identity_did::did::DID;
+  /// # use identity_did::document::CoreDocument;
+  ///
+  /// async fn resolve_and_cast(
+  ///   did: CoreDID,
+  /// ) -> std::result::Result<Option<CoreDocument>, Box<dyn std::error::Error>> {
+  ///   let resolver: Resolver = configure_resolver(Resolver::new());
+  ///   let abstract_doc = resolver.resolve(&did).await?;
+  ///   let document: Option<CoreDocument> = abstract_doc
+  ///     .into_any()
+  ///     .downcast::<CoreDocument>()
+  ///     .ok()
+  ///     .map(|boxed| *boxed);
+  ///   if did.method() == "foo" {
+  ///     assert!(document.is_some());
+  ///   }
+  ///   return Ok(document);
+  /// }
+  ///
+  /// fn configure_resolver(mut resolver: Resolver) -> Resolver {
+  ///   resolver.attach_handler("foo".to_owned(), resolve_foo);
+  ///   // TODO: attach handlers for other DID methods we are interested in.
+  ///   resolver
+  /// }
+  ///
+  /// async fn resolve_foo(did: CoreDID) -> std::result::Result<CoreDocument, std::io::Error> {
+  ///   todo!()
+  /// }
+  /// ```
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
     self.delegate_resolution(did.method(), did.as_str()).await
   }
