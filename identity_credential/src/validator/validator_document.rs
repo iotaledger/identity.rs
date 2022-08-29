@@ -151,7 +151,7 @@ where
 pub struct AbstractValidatorDocument(Box<dyn ValidatorDocument>);
 
 impl AbstractValidatorDocument {
-  /// See [SendSyncAbstractValidatorDocument::into_any](SendSyncAbstractValidatorDocument::into_any()).
+  /// See [AbstractThreadSafeValidatorDocument::into_any](AbstractThreadSafeValidatorDocument::into_any()).
   pub fn into_any(self) -> Box<dyn Any> {
     self.0.upcast()
   }
