@@ -57,7 +57,7 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 Replace imports with local paths for txm:
 !test program
 cat \
-| sed -e "s#require('@iota/identity-wasm/node')#require('./node/identity_wasm.js')#" \
+| sed -e "s#require('@iota/identity-wasm/node')#require('./node')#" \
 | node
 -->
 <!-- !test check Nodejs Example -->
