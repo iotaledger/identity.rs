@@ -429,7 +429,7 @@ mod tests {
   use identity_did::document::CoreDocument;
   use identity_did::document::DocumentBuilder;
 
-  fn credential(did: CoreDID) -> Credential {
+  fn credential<D: DID>(did: D) -> Credential {
     CredentialBuilder::default()
       .issuer(did.to_url())
       .subject(Subject::with_id(did.to_url().into()))
@@ -650,14 +650,88 @@ mod tests {
     resolver.attach_handler("foo".to_owned(), resolve);
 
     let did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
+    // ensure that the DID we created does not satisfy the requirements of the "foo" method
+    assert!(did.method_id().len() < FooDID::METHOD_ID_LENGTH);
+
+    // to avoid code repetition
+    let check_match = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
+      assert!(matches!(
+        err.source().unwrap().downcast_ref::<DIDError>().unwrap(),
+        &DIDError::InvalidMethodName
+      ));
+
+      match err {
+        ResolverError::DIDParsingError { context, .. } => {
+          assert!(comp(context));
+        }
+        _ => unreachable!(),
+      }
+    };
 
     let err = resolver.resolve(&did).await.unwrap_err();
+    check_match(err, |_| true);
 
-    assert!(matches!(&err, &ResolverError::DIDParsingError { .. }));
+    let cred = credential(did.clone());
 
-    assert!(matches!(
-      err.source().unwrap().downcast_ref::<DIDError>().unwrap(),
-      &DIDError::InvalidMethodName
-    ));
+    let err = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
+    check_match(err, |value| value == ResolutionAction::CredentialIssuerResolution);
+
+    let valid_foo_did: FooDID = FooDID::try_from("did:foo:12345").unwrap();
+    let other_cred = credential(valid_foo_did.clone());
+
+    let presentation = presentation([other_cred.clone(), cred, other_cred].into_iter(), did.clone());
+
+    let err = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
+    check_match(err, |value| value == ResolutionAction::PresentationHolderResolution);
+
+    let err = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
+
+    check_match(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
+
+    let mock_document = core_document(did.clone());
+
+    let err = resolver
+      .verify_presentation(
+        &presentation,
+        &PresentationValidationOptions::default(),
+        FailFast::FirstError,
+        Option::<&CoreDocument>::None,
+        Some(std::slice::from_ref(&mock_document)),
+      )
+      .await
+      .unwrap_err();
+
+    check_match(err, |value| value == ResolutionAction::PresentationHolderResolution);
+
+    let err = resolver
+      .verify_presentation(
+        &presentation,
+        &PresentationValidationOptions::default(),
+        FailFast::FirstError,
+        Some(&mock_document),
+        Option::<&[CoreDocument]>::None,
+      )
+      .await
+      .unwrap_err();
+
+    check_match(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
+
+    let err = resolver
+      .verify_presentation(
+        &presentation,
+        &PresentationValidationOptions::default(),
+        FailFast::FirstError,
+        Option::<&CoreDocument>::None,
+        Option::<&[CoreDocument]>::None,
+      )
+      .await
+      .unwrap_err();
+
+    check_match(err, |value| {
+      matches!(
+        value,
+        ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
+      )
+    });
   }
 }
