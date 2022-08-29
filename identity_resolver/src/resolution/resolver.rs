@@ -407,13 +407,51 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
 
 #[cfg(test)]
 mod tests {
-  // Only test that all features from the "default resolver": Resolver<DOC> are Send + Sync.
-  // The Resolver will be tested properly in a downstream crate where more DID Document types are available.
-  use super::*;
+  use std::error::Error;
+  use std::str::FromStr;
+
+  use crate::ResolutionAction;
+
+  use super::Credential;
+  use super::Error as ResolverError;
+  use super::Presentation;
+  use super::Resolver;
+  use super::ValidatorDocument;
+  use super::DID;
   use identity_credential::credential::CredentialBuilder;
   use identity_credential::credential::Subject;
   use identity_credential::presentation::PresentationBuilder;
+  use identity_credential::validator::FailFast;
+  use identity_credential::validator::PresentationValidationOptions;
+  use identity_did::did::BaseDIDUrl;
   use identity_did::did::CoreDID;
+  use identity_did::did::DIDError;
+  use identity_did::document::CoreDocument;
+  use identity_did::document::DocumentBuilder;
+
+  fn credential(did: CoreDID) -> Credential {
+    CredentialBuilder::default()
+      .issuer(did.to_url())
+      .subject(Subject::with_id(did.to_url().into()))
+      .build()
+      .unwrap()
+  }
+
+  fn presentation(credentials: impl Iterator<Item = Credential>, holder: CoreDID) -> Presentation {
+    let mut builder = PresentationBuilder::default().holder(holder.to_url().into());
+    for credential in credentials {
+      builder = builder.credential(credential);
+    }
+    builder.build().unwrap()
+  }
+
+  async fn mock_handler(did: CoreDID) -> std::result::Result<CoreDocument, std::io::Error> {
+    Ok(core_document(did))
+  }
+
+  fn core_document(did: CoreDID) -> CoreDocument {
+    DocumentBuilder::default().id(did).build().unwrap()
+  }
 
   #[allow(dead_code)]
   fn is_send_sync<T: Send + Sync>(_t: T) {}
@@ -424,16 +462,8 @@ mod tests {
     DOC: ValidatorDocument + Send + Sync + 'static,
   {
     let did: CoreDID = "did:key:4353526346363sdtsdfgdfg".parse().unwrap();
-    let credential: Credential = CredentialBuilder::default()
-      .issuer(did.to_url())
-      .subject(Subject::with_id(did.to_url().into()))
-      .build()
-      .unwrap();
-    let presentation: Presentation = PresentationBuilder::default()
-      .credential(credential.clone())
-      .holder(did.to_url().into())
-      .build()
-      .unwrap();
+    let credential: Credential = credential(did.clone());
+    let presentation: Presentation = presentation(std::iter::once(credential.clone()), did.clone());
 
     let resolver = Resolver::<DOC>::new();
     is_send_sync(resolver.resolve(&did));
@@ -450,6 +480,184 @@ mod tests {
       FailFast::FirstError,
       Option::<&DOC>::None,
       Option::<&[DOC]>::None,
+    ));
+  }
+
+  #[tokio::test]
+  async fn missing_handler_errors() {
+    let resolver: Resolver = Resolver::new();
+    let method_name: String = "foo".to_owned();
+    let did: CoreDID = CoreDID::parse(&format!("did:{method_name}:1234")).unwrap();
+
+    // to avoid boiler plate
+    let check_match = |err, mthd, comp: fn(ResolutionAction) -> bool| match err {
+      ResolverError::UnsupportedMethodError { method, context } => {
+        assert_eq!(mthd, method);
+        assert!(comp(context));
+      }
+      _ => unreachable!(),
+    };
+
+    // fails because no handler has been attached to the resolver
+    let err: ResolverError = resolver.resolve(&did).await.unwrap_err();
+    check_match(err, method_name.as_str(), |_| true);
+
+    let cred: Credential = credential(did.clone());
+    // still no handler hence failure
+    let err: ResolverError = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
+    check_match(err, method_name.as_str(), |value| {
+      value == ResolutionAction::CredentialIssuerResolution
+    });
+
+    let other_method: String = "bar".to_owned();
+    let other_did: CoreDID = CoreDID::parse(format!("did:{other_method}:1234")).unwrap();
+    // configure `resolver` to resolve the "bar" method
+    let mut resolver = resolver;
+    resolver.attach_handler(other_method, mock_handler);
+
+    let other_credential: Credential = credential(other_did.clone());
+    let presentation: Presentation = presentation(
+      [other_credential.clone(), cred, other_credential.clone()].into_iter(),
+      did.clone(),
+    );
+    // No handler has been registered for `did.method() = method_name` which is the issuer of `cred` hence this must
+    // fail
+    let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
+    check_match(err, method_name.as_str(), |value| {
+      value == ResolutionAction::PresentationIssuersResolution(1)
+    });
+
+    // The holder is `did` whose method has not been registered with the resolver hence this fails
+    let err: ResolverError = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
+    check_match(err, method_name.as_str(), |value| {
+      value == ResolutionAction::PresentationHolderResolution
+    });
+
+    // check that our expectations are also matched when calling `verify_presentation`.
+    let mock_document: CoreDocument = core_document(did.clone());
+    let err: ResolverError = resolver
+      .verify_presentation(
+        &presentation,
+        &PresentationValidationOptions::default(),
+        FailFast::FirstError,
+        Some(&mock_document),
+        Option::<&[CoreDocument]>::None,
+      )
+      .await
+      .unwrap_err();
+
+    check_match(err, method_name.as_str(), |value| {
+      value == ResolutionAction::PresentationIssuersResolution(1)
+    });
+
+    let err: ResolverError = resolver
+      .verify_presentation(
+        &presentation,
+        &PresentationValidationOptions::default(),
+        FailFast::FirstError,
+        Option::<&CoreDocument>::None,
+        Some(std::slice::from_ref(&mock_document)),
+      )
+      .await
+      .unwrap_err();
+
+    check_match(err, method_name.as_str(), |value| {
+      value == ResolutionAction::PresentationHolderResolution
+    });
+
+    // finally when both holder and issuer needs to be resolved we check that resolution fails
+    let err: ResolverError = resolver
+      .verify_presentation(
+        &presentation,
+        &PresentationValidationOptions::default(),
+        FailFast::FirstError,
+        Option::<&CoreDocument>::None,
+        Option::<&[CoreDocument]>::None,
+      )
+      .await
+      .unwrap_err();
+
+    check_match(err, method_name.as_str(), |value| {
+      matches!(
+        value,
+        ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
+      )
+    });
+  }
+
+  // ===========================================================================
+  // DID Parsing tests
+  // ===========================================================================
+
+  // Implement the DID trait for a new type
+  #[derive(Hash, Ord, PartialOrd, Eq, PartialEq, Clone)]
+  struct FooDID(CoreDID);
+  impl FooDID {
+    const METHOD_ID_LENGTH: usize = 5;
+  }
+  impl FooDID {
+    fn try_from_core(did: CoreDID) -> std::result::Result<Self, DIDError> {
+      Some(did)
+        .filter(|did| did.method() == "foo" && did.method_id().len() == FooDID::METHOD_ID_LENGTH)
+        .map(Self)
+        .ok_or(DIDError::InvalidMethodName)
+    }
+  }
+  impl AsRef<CoreDID> for FooDID {
+    fn as_ref(&self) -> &CoreDID {
+      &self.0
+    }
+  }
+  impl From<FooDID> for String {
+    fn from(did: FooDID) -> Self {
+      String::from(did.0)
+    }
+  }
+
+  impl FromStr for FooDID {
+    type Err = DIDError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+      CoreDID::from_str(s).and_then(Self::try_from_core)
+    }
+  }
+
+  impl TryFrom<BaseDIDUrl> for FooDID {
+    type Error = DIDError;
+    fn try_from(value: BaseDIDUrl) -> Result<Self, Self::Error> {
+      CoreDID::try_from(value).and_then(Self::try_from_core)
+    }
+  }
+
+  impl<'a> TryFrom<&'a str> for FooDID {
+    type Error = DIDError;
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+      CoreDID::try_from(value).and_then(Self::try_from_core)
+    }
+  }
+
+  #[tokio::test]
+  async fn resolve_unparsable() {
+    #[derive(Debug, thiserror::Error)]
+    #[error("could not resolve DID")]
+    struct ResolutionError;
+
+    async fn resolve(_did: FooDID) -> std::result::Result<CoreDocument, ResolutionError> {
+      Err(ResolutionError {})
+    }
+
+    let mut resolver: Resolver = Resolver::new();
+
+    resolver.attach_handler("foo".to_owned(), resolve);
+
+    let did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
+
+    let err = resolver.resolve(&did).await.unwrap_err();
+
+    assert!(matches!(&err, &ResolverError::DIDParsingError { .. }));
+
+    assert!(matches!(
+      err.source().unwrap().downcast_ref::<DIDError>().unwrap(),
+      &DIDError::InvalidMethodName
     ));
   }
 }

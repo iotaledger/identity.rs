@@ -16,9 +16,10 @@ use self::private::Verifiable;
 /// Abstraction over DID Documents for validating presentations and credentials.
 ///
 /// NOTE: this is a sealed trait and not intended to be used externally or implemented manually.
-/// A blanket implementation is provided for the [`Document`] trait, which can be implemented
-/// instead to be compatible. Any changes to this trait will be considered non-breaking.
-pub trait ValidatorDocument: Sealed {
+/// A blanket implementation is provided for all types implementing the [`Document`] and [`Debug`](core::fmt::Debug)
+/// traits, which can be implemented instead to be compatible. Any changes to this trait will be considered
+/// non-breaking.
+pub trait ValidatorDocument: Sealed + core::fmt::Debug {
   /// Convenience function for casting self to the trait.
   ///
   /// Equivalent to `self as &dyn ValidatorDocument`.
@@ -113,7 +114,7 @@ impl ValidatorDocument for &dyn ValidatorDocument {
 
 impl<DOC> ValidatorDocument for DOC
 where
-  DOC: Document,
+  DOC: Document + core::fmt::Debug,
 {
   fn did_str(&self) -> &str {
     self.id().as_str()
@@ -148,6 +149,7 @@ where
 ///
 /// By calling [`Self::into_any`](Self::into_any()) one obtains a type that one may
 /// attempt to convert to a concrete DID Document representation.
+#[derive(Debug)]
 pub struct AbstractValidatorDocument(Box<dyn ValidatorDocument>);
 
 impl AbstractValidatorDocument {
@@ -157,7 +159,7 @@ impl AbstractValidatorDocument {
   }
 }
 
-impl<DOC: Document + 'static> From<DOC> for AbstractValidatorDocument {
+impl<DOC: Document + core::fmt::Debug + 'static> From<DOC> for AbstractValidatorDocument {
   fn from(doc: DOC) -> Self {
     AbstractValidatorDocument(Box::new(doc) as Box<dyn ValidatorDocument>)
   }
@@ -210,11 +212,12 @@ where
 ///
 /// By calling [`Self::into_any`](Self::into_any()) one obtains a type that one may
 /// attempt to convert to a concrete DID Document representation.
+#[derive(Debug)]
 pub struct AbstractThreadSafeValidatorDocument(Box<dyn ThreadSafeValidatorDocument>);
 
 impl<DOC> From<DOC> for AbstractThreadSafeValidatorDocument
 where
-  DOC: Document + Send + Sync + 'static,
+  DOC: Document + core::fmt::Debug + Send + Sync + 'static,
 {
   fn from(doc: DOC) -> Self {
     Self(Box::new(doc) as Box<dyn ThreadSafeValidatorDocument>)

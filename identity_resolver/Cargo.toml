@@ -22,6 +22,9 @@ serde = { version = "1.0", default-features = false, features = ["std", "derive"
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
+[dev-dependencies]
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
+
 [features]
 default = ["revocation-bitmap"]
 revocation-bitmap = ["identity_did/revocation-bitmap"]

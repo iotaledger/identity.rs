@@ -44,12 +44,14 @@ impl Error {
     match self {
       Error::DIDParsingError { source, .. } => Self::DIDParsingError { source, context },
       Error::HandlerError { source, .. } => Self::HandlerError { source, context },
+      Error::UnsupportedMethodError { method, .. } => Self::UnsupportedMethodError { method, context },
       _ => self,
     }
   }
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[non_exhaustive]
 /// Indicates the action the [`Resolver`](crate::resolution::Resolver) was performing when an error ocurred.
 pub enum ResolutionAction {
