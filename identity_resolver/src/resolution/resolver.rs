@@ -483,61 +483,44 @@ mod tests {
     ));
   }
 
-  // ===========================================================================
-  // Missing handler for DID method failure tests
-  // ===========================================================================
-  #[tokio::test]
-  async fn missing_handler_errors() {
-    let resolver: Resolver = Resolver::new();
-    let method_name: String = "foo".to_owned();
-    let did: CoreDID = CoreDID::parse(&format!("did:{method_name}:1234")).unwrap();
+  /// Checks that all methods on the resolver involving resolution fail under the assumption that
+  /// the resolver is set up in such a way that the `resolve` method must fail for this did, but succeed with
+  /// `good_did`. The error_matcher is a closure that asserts that the error is of the expected value.  
+  async fn check_failure_for_all_methods<F, D>(resolver: Resolver, bad_did: CoreDID, good_did: D, error_matcher: F)
+  where
+    F: Fn(ResolverError, fn(ResolutionAction) -> bool) -> (),
+    D: DID,
+  {
+    // resolving bad_did fails
+    let err: ResolverError = resolver.resolve(&bad_did).await.unwrap_err();
+    error_matcher(err, |_| true);
 
-    // to avoid boiler plate
-    let check_match = |err, mthd, comp: fn(ResolutionAction) -> bool| match err {
-      ResolverError::UnsupportedMethodError { method, context } => {
-        assert_eq!(mthd, method);
-        assert!(comp(context));
-      }
-      _ => unreachable!(),
-    };
+    // resolving the issuer of the bad credential fails
+    let cred: Credential = credential(bad_did.clone());
 
-    // fails because no handler has been attached to the resolver
-    let err: ResolverError = resolver.resolve(&did).await.unwrap_err();
-    check_match(err, method_name.as_str(), |_| true);
-
-    let cred: Credential = credential(did.clone());
-    // still no handler hence failure
     let err: ResolverError = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
-    check_match(err, method_name.as_str(), |value| {
-      value == ResolutionAction::CredentialIssuerResolution
-    });
+    error_matcher(err, |value| value == ResolutionAction::CredentialIssuerResolution);
 
-    let other_method: String = "bar".to_owned();
-    let other_did: CoreDID = CoreDID::parse(format!("did:{other_method}:1234")).unwrap();
-    // configure `resolver` to resolve the "bar" method
-    let mut resolver = resolver;
-    resolver.attach_handler(other_method, mock_handler);
-
-    let other_credential: Credential = credential(other_did.clone());
+    // set up a presentation of the form: holder: bad_did , verifiableCredential: [good_credential, bad_credential,
+    // good_credential] , other stuff irrelevant for this test.
+    let other_credential: Credential = credential(good_did.clone());
     let presentation: Presentation = presentation(
       [other_credential.clone(), cred, other_credential.clone()].into_iter(),
-      did.clone(),
+      bad_did.clone(),
     );
-    // No handler has been registered for `did.method() = method_name` which is the issuer of `cred` hence this must
-    // fail
-    let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
-    check_match(err, method_name.as_str(), |value| {
-      value == ResolutionAction::PresentationIssuersResolution(1)
-    });
 
-    // The holder is `did` whose method has not been registered with the resolver hence this fails
+    // resolving the holder of the presentation fails
     let err: ResolverError = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
-    check_match(err, method_name.as_str(), |value| {
-      value == ResolutionAction::PresentationHolderResolution
-    });
+    error_matcher(err, |value| value == ResolutionAction::PresentationHolderResolution);
+
+    //resolving the presentation issuers will fail because of the bad credential at position 1.
+    let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
+    error_matcher(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
 
     // check that our expectations are also matched when calling `verify_presentation`.
-    let mock_document: CoreDocument = core_document(did.clone());
+
+    // this can be passed as an argument to `verify_presentation` to avoid resolution of the holder or issuers.
+    let mock_document: CoreDocument = core_document(bad_did.clone());
     let err: ResolverError = resolver
       .verify_presentation(
         &presentation,
@@ -549,9 +532,7 @@ mod tests {
       .await
       .unwrap_err();
 
-    check_match(err, method_name.as_str(), |value| {
-      value == ResolutionAction::PresentationIssuersResolution(1)
-    });
+    error_matcher(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
 
     let err: ResolverError = resolver
       .verify_presentation(
@@ -564,9 +545,7 @@ mod tests {
       .await
       .unwrap_err();
 
-    check_match(err, method_name.as_str(), |value| {
-      value == ResolutionAction::PresentationHolderResolution
-    });
+    error_matcher(err, |value| value == ResolutionAction::PresentationHolderResolution);
 
     // finally when both holder and issuer needs to be resolved we check that resolution fails
     let err: ResolverError = resolver
@@ -580,12 +559,36 @@ mod tests {
       .await
       .unwrap_err();
 
-    check_match(err, method_name.as_str(), |value| {
+    error_matcher(err, |value| {
       matches!(
         value,
         ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
       )
     });
+  }
+  // ===========================================================================
+  // Missing handler for DID method failure tests
+  // ===========================================================================
+  #[tokio::test]
+  async fn missing_handler_errors() {
+    let method_name: String = "foo".to_owned();
+    let bad_did: CoreDID = CoreDID::parse(&format!("did:{method_name}:1234")).unwrap();
+    let other_method: String = "bar".to_owned();
+    let good_did: CoreDID = CoreDID::parse(format!("did:{other_method}:1234")).unwrap();
+    // configure `resolver` to resolve the "bar" method
+    let mut resolver: Resolver = Resolver::new();
+    resolver.attach_handler(other_method, mock_handler);
+
+    // to avoid boiler plate
+    let check_match = move |err, comp: fn(ResolutionAction) -> bool| match err {
+      ResolverError::UnsupportedMethodError { method, context } => {
+        assert_eq!(method_name, method);
+        assert!(comp(context));
+      }
+      _ => unreachable!(),
+    };
+
+    check_failure_for_all_methods(resolver, bad_did, good_did, check_match).await;
   }
 
   // ===========================================================================
@@ -649,12 +652,13 @@ mod tests {
 
     resolver.attach_handler("foo".to_owned(), handler);
 
-    let did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
+    let bad_did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
     // ensure that the DID we created does not satisfy the requirements of the "foo" method
-    assert!(did.method_id().len() < FooDID::METHOD_ID_LENGTH);
+    assert!(bad_did.method_id().len() < FooDID::METHOD_ID_LENGTH);
 
-    // to avoid code repetition
-    let check_match = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
+    let good_did: FooDID = FooDID::try_from("did:foo:12345").unwrap();
+
+    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
       assert!(matches!(
         err
           .source()
@@ -672,72 +676,13 @@ mod tests {
       }
     };
 
-    let err = resolver.resolve(&did).await.unwrap_err();
-    check_match(err, |_| true);
-
-    let cred = credential(did.clone());
-
-    let err = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
-    check_match(err, |value| value == ResolutionAction::CredentialIssuerResolution);
-
-    let valid_foo_did: FooDID = FooDID::try_from("did:foo:12345").unwrap();
-    let other_cred = credential(valid_foo_did.clone());
-
-    let presentation = presentation([other_cred.clone(), cred, other_cred].into_iter(), did.clone());
-
-    let err = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
-    check_match(err, |value| value == ResolutionAction::PresentationHolderResolution);
-
-    let err = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
-
-    check_match(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
-
-    let mock_document = core_document(did.clone());
-
-    let err = resolver
-      .verify_presentation(
-        &presentation,
-        &PresentationValidationOptions::default(),
-        FailFast::FirstError,
-        Option::<&CoreDocument>::None,
-        Some(std::slice::from_ref(&mock_document)),
-      )
-      .await
-      .unwrap_err();
-
-    check_match(err, |value| value == ResolutionAction::PresentationHolderResolution);
-
-    let err = resolver
-      .verify_presentation(
-        &presentation,
-        &PresentationValidationOptions::default(),
-        FailFast::FirstError,
-        Some(&mock_document),
-        Option::<&[CoreDocument]>::None,
-      )
-      .await
-      .unwrap_err();
-
-    check_match(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
-
-    let err = resolver
-      .verify_presentation(
-        &presentation,
-        &PresentationValidationOptions::default(),
-        FailFast::FirstError,
-        Option::<&CoreDocument>::None,
-        Option::<&[CoreDocument]>::None,
-      )
-      .await
-      .unwrap_err();
-
-    check_match(err, |value| {
-      matches!(
-        value,
-        ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
-      )
-    });
+    check_failure_for_all_methods(resolver, bad_did, good_did, error_matcher).await;
   }
+
+  // ===========================================================================
+  // Failing handler tests
+  // ===========================================================================
+
   #[tokio::test]
   async fn handler_failure() {
     #[derive(Debug, thiserror::Error)]
@@ -749,10 +694,13 @@ mod tests {
 
     let mut resolver: Resolver = Resolver::new();
     resolver.attach_handler("foo".to_owned(), failing_handler);
-    let did: CoreDID = CoreDID::parse(&format!("did:foo:1234")).unwrap();
+
+    let bad_did: CoreDID = CoreDID::parse(&format!("did:foo:1234")).unwrap();
+    let good_did: CoreDID = CoreDID::parse(format!("did:bar:1234")).unwrap();
+    resolver.attach_handler(good_did.method().to_owned(), mock_handler);
 
     // to avoid boiler plate
-    let check_match = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
+    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
       assert!(err.source().unwrap().downcast_ref::<ResolutionError>().is_some());
       match err {
         ResolverError::HandlerError { context, .. } => {
@@ -762,78 +710,6 @@ mod tests {
       }
     };
 
-    // fails because no handler has been attached to the resolver
-    let err: ResolverError = resolver.resolve(&did).await.unwrap_err();
-    check_match(err, |_| true);
-
-    let cred: Credential = credential(did.clone());
-
-    let err: ResolverError = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
-    check_match(err, |value| value == ResolutionAction::CredentialIssuerResolution);
-
-    let other_method: String = "bar".to_owned();
-    let other_did: CoreDID = CoreDID::parse(format!("did:{other_method}:1234")).unwrap();
-    // configure `resolver` to resolve the "bar" method
-    let mut resolver = resolver;
-    resolver.attach_handler(other_method, mock_handler);
-
-    let other_credential: Credential = credential(other_did.clone());
-    let presentation: Presentation = presentation(
-      [other_credential.clone(), cred, other_credential.clone()].into_iter(),
-      did.clone(),
-    );
-
-    let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
-    check_match(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
-
-    let err: ResolverError = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
-    check_match(err, |value| value == ResolutionAction::PresentationHolderResolution);
-
-    // check that our expectations are also matched when calling `verify_presentation`.
-    let mock_document: CoreDocument = core_document(did.clone());
-    let err: ResolverError = resolver
-      .verify_presentation(
-        &presentation,
-        &PresentationValidationOptions::default(),
-        FailFast::FirstError,
-        Some(&mock_document),
-        Option::<&[CoreDocument]>::None,
-      )
-      .await
-      .unwrap_err();
-
-    check_match(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
-
-    let err: ResolverError = resolver
-      .verify_presentation(
-        &presentation,
-        &PresentationValidationOptions::default(),
-        FailFast::FirstError,
-        Option::<&CoreDocument>::None,
-        Some(std::slice::from_ref(&mock_document)),
-      )
-      .await
-      .unwrap_err();
-
-    check_match(err, |value| value == ResolutionAction::PresentationHolderResolution);
-
-    // finally when both holder and issuer needs to be resolved we check that resolution fails
-    let err: ResolverError = resolver
-      .verify_presentation(
-        &presentation,
-        &PresentationValidationOptions::default(),
-        FailFast::FirstError,
-        Option::<&CoreDocument>::None,
-        Option::<&[CoreDocument]>::None,
-      )
-      .await
-      .unwrap_err();
-
-    check_match(err, |value| {
-      matches!(
-        value,
-        ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
-      )
-    });
+    check_failure_for_all_methods(resolver, bad_did, good_did, error_matcher).await;
   }
 }
