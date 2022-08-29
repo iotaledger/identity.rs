@@ -122,7 +122,16 @@ where
   /// }
   /// ```
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
-    self.delegate_resolution(did.method(), did.as_str()).await
+    let method = did.method();
+    let delegate = self
+      .command_map
+      .get(method)
+      .ok_or_else(|| Error::UnsupportedMethodError {
+        method: method.to_owned(),
+        context: crate::error::ResolutionAction::Unknown,
+      })?;
+
+    delegate.apply(did.as_str()).await
   }
 
   /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
@@ -154,14 +163,12 @@ where
       issuers
         .iter()
         .map(|(issuer, cred_idx)| {
-          self
-            .delegate_resolution(issuer.method(), issuer.as_str())
-            .map_err(|error| {
-              Error::update_resolution_action(
-                error,
-                crate::error::ResolutionAction::PresentationIssuersResolution(*cred_idx),
-              )
-            })
+          self.resolve(issuer).map_err(|error| {
+            Error::update_resolution_action(
+              error,
+              crate::error::ResolutionAction::PresentationIssuersResolution(*cred_idx),
+            )
+          })
         })
         .collect::<Vec<_>>(),
     )
@@ -180,12 +187,9 @@ where
         source: error.into(),
         context: crate::error::ResolutionAction::PresentationHolderResolution,
       })?;
-    self
-      .delegate_resolution(holder.method(), holder.as_str())
-      .await
-      .map_err(|error| {
-        Error::update_resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution)
-      })
+    self.resolve(&holder).await.map_err(|error| {
+      Error::update_resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution)
+    })
   }
 
   /// Fetches the DID Document of the issuer of a [`Credential`].
@@ -200,12 +204,9 @@ where
         source: error.into(),
         context: crate::error::ResolutionAction::CredentialIssuerResolution,
       })?;
-    self
-      .delegate_resolution(issuer_did.method(), issuer_did.as_str())
-      .await
-      .map_err(|error| {
-        Error::update_resolution_action(error, crate::error::ResolutionAction::CredentialIssuerResolution)
-      })
+    self.resolve(&issuer_did).await.map_err(|error| {
+      Error::update_resolution_action(error, crate::error::ResolutionAction::CredentialIssuerResolution)
+    })
   }
 
   /// Verifies a [`Presentation`].
@@ -267,22 +268,6 @@ where
       }
     }
     .map_err(Into::into)
-  }
-
-  /// Delegates Resolution to the relevant attached handler.
-  ///
-  /// The first input parameters `method` and `did` must be &str representations of the DID method name and the DID
-  /// respectively.  
-  async fn delegate_resolution(&self, method: &str, did: &str) -> Result<DOC> {
-    let delegate = self
-      .command_map
-      .get(method)
-      .ok_or_else(|| Error::UnsupportedMethodError {
-        method: method.to_owned(),
-        context: crate::error::ResolutionAction::Unknown,
-      })?;
-
-    delegate.apply(did).await
   }
 }
 
