@@ -14,7 +14,7 @@ keywords:
 
 # Alias Output
 
-The IOTA method uses the IOTA ledger which uses the [unspent transaction output (UTXO) model](https://wiki.iota.org/goshimmer/protocol_specification/components/ledgerstate). Also, the features of the [Stardust](https://blog.shimmer.network/stardust-upgrade-in-a-nutshell/) upgrade are fundamental to the IOTA DID method.
+The IOTA method uses the IOTA ledger which uses the [unspent transaction output (UTXO) model](https://wiki.iota.org/goshimmer/protocol_specification/components/ledgerstate). Also, the features of the [Stardust](https://wiki.iota.org/introduction/develop/explanations/what_is_stardust) upgrade are fundamental to the IOTA DID method.
 
 The Alias Output is used for storing the DID Document on the ledger. It is a specific implementation of the UTXO state machine that can hold arbitrary data in its `State Metadata`. The Alias Output has two kinds of controllers, a state controller and a governor. A state controller can execute a state transition which allows updating the data in the `State Metadata`. The governor, on the contrary, can't update the `State Metadata` but can change both controllers and destroy the Alias Output.
 A controller can be either Ed25519 Address, Alias Address or an NFT Address and at most one of each can be set for an Alias Output.
