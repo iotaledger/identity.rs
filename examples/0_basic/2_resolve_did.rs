@@ -19,7 +19,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder()
     .with_primary_node(NETWORK_ENDPOINT, None)?
-    .with_local_pow(false)  
+    .with_local_pow(false)
     .finish()?;
 
   // Create a new secret manager backed by a Stronghold.
