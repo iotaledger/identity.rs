@@ -637,17 +637,9 @@ mod tests {
 
   #[tokio::test]
   async fn resolve_unparsable() {
-    #[derive(Debug, thiserror::Error)]
-    #[error("could not resolve DID")]
-    struct ResolutionError;
-
-    async fn resolve(_did: FooDID) -> std::result::Result<CoreDocument, ResolutionError> {
-      Err(ResolutionError {})
-    }
-
     let mut resolver: Resolver = Resolver::new();
 
-    resolver.attach_handler("foo".to_owned(), resolve);
+    resolver.attach_handler("foo".to_owned(), mock_handler);
 
     let did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
     // ensure that the DID we created does not satisfy the requirements of the "foo" method
@@ -656,7 +648,11 @@ mod tests {
     // to avoid code repetition
     let check_match = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
       assert!(matches!(
-        err.source().unwrap().downcast_ref::<DIDError>().unwrap(),
+        err
+          .source()
+          .unwrap()
+          .downcast_ref::<DIDError>()
+          .expect(&format!("{:?}", &err)),
         &DIDError::InvalidMethodName
       ));
 
