@@ -639,7 +639,12 @@ mod tests {
   async fn resolve_unparsable() {
     let mut resolver: Resolver = Resolver::new();
 
-    resolver.attach_handler("foo".to_owned(), mock_handler);
+    // register a handler that wants `did` to be of type `FooDID`. 
+    async fn handler(did: FooDID) -> std::result::Result<CoreDocument, std::io::Error> {
+      mock_handler(did.as_ref().clone()).await
+    }
+
+    resolver.attach_handler("foo".to_owned(), handler);
 
     let did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
     // ensure that the DID we created does not satisfy the requirements of the "foo" method
