@@ -445,43 +445,6 @@ mod tests {
     DocumentBuilder::default().id(did).build().unwrap()
   }
 
-  #[allow(dead_code)]
-  fn is_send_sync<T: Send + Sync>(_t: T) {}
-
-  #[allow(dead_code)]
-  fn default_resolver_is_send_sync<DOC: ValidatorDocument + Send + Sync + 'static>() {
-    let resolver = Resolver::<DOC>::new();
-    is_send_sync(resolver);
-  }
-
-  #[allow(dead_code)]
-  fn resolver_methods_give_send_sync_futures<DOC>()
-  where
-    DOC: ValidatorDocument + Send + Sync + 'static,
-  {
-    let did: CoreDID = "did:key:4353526346363sdtsdfgdfg".parse().unwrap();
-    let credential: Credential = credential(did.clone());
-    let presentation: Presentation = presentation(std::iter::once(credential.clone()), did.clone());
-
-    let resolver = Resolver::<DOC>::new();
-
-    is_send_sync(resolver.resolve(&did));
-
-    is_send_sync(resolver.resolve_credential_issuer(&credential));
-
-    is_send_sync(resolver.resolve_presentation_holder(&presentation));
-
-    is_send_sync(resolver.resolve_presentation_issuers(&presentation));
-
-    is_send_sync(resolver.verify_presentation(
-      &presentation,
-      &PresentationValidationOptions::default(),
-      FailFast::FirstError,
-      Option::<&DOC>::None,
-      Option::<&[DOC]>::None,
-    ));
-  }
-
   /// Checks that all methods on the resolver involving resolution fail under the assumption that
   /// the resolver is set up in such a way that the `resolve` method must fail for this did (because of a specific
   /// cause), but succeed with `good_did`. The `assertions` argument is a function or closure that asserts that the

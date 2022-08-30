@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 mod commands;
 mod resolver;
+#[cfg(test)]
+mod tests;
+
 use self::commands::SingleThreadedCommand;
 use identity_credential::validator::AbstractValidatorDocument;
 pub use resolver::Resolver;
