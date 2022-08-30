@@ -470,21 +470,25 @@ mod tests {
 
   /// Checks that all methods on the resolver involving resolution fail under the assumption that
   /// the resolver is set up in such a way that the `resolve` method must fail for this did, but succeed with
-  /// `good_did`. The error_matcher is a closure that asserts that the error is of the expected value.  
-  async fn check_failure_for_all_methods<F, D>(resolver: Resolver, bad_did: CoreDID, good_did: D, error_matcher: F)
+  /// `good_did`. The `assertions` argument is expected to be a function or closure that passes the
+  /// context (represented as a `ResolutionAction`) extracted from the error to the filter (the second argument of
+  /// `asserions`).
+  async fn check_failure_for_all_methods<F, D>(resolver: Resolver, bad_did: CoreDID, good_did: D, assertions: F)
   where
-    F: Fn(ResolverError, fn(ResolutionAction) -> bool) -> (),
+    F: Fn(ResolverError, fn(ResolutionAction) -> ()) -> (),
     D: DID,
   {
     // resolving bad_did fails
     let err: ResolverError = resolver.resolve(&bad_did).await.unwrap_err();
-    error_matcher(err, |_| true);
+    assertions(err, |_| {});
 
     // resolving the issuer of the bad credential fails
     let cred: Credential = credential(bad_did.clone());
 
     let err: ResolverError = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
-    error_matcher(err, |value| value == ResolutionAction::CredentialIssuerResolution);
+    assertions(err, |value| {
+      assert!(value == ResolutionAction::CredentialIssuerResolution)
+    });
 
     // set up a presentation of the form: holder: bad_did , verifiableCredential: [good_credential, bad_credential,
     // good_credential] , other stuff irrelevant for this test.
@@ -496,11 +500,15 @@ mod tests {
 
     // resolving the holder of the presentation fails
     let err: ResolverError = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
-    error_matcher(err, |value| value == ResolutionAction::PresentationHolderResolution);
+    assertions(err, |value| {
+      assert!(value == ResolutionAction::PresentationHolderResolution)
+    });
 
     //resolving the presentation issuers will fail because of the bad credential at position 1.
     let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
-    error_matcher(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
+    assertions(err, |value| {
+      assert!(value == ResolutionAction::PresentationIssuersResolution(1))
+    });
 
     // check that our expectations are also matched when calling `verify_presentation`.
 
@@ -517,7 +525,9 @@ mod tests {
       .await
       .unwrap_err();
 
-    error_matcher(err, |value| value == ResolutionAction::PresentationIssuersResolution(1));
+    assertions(err, |value| {
+      assert!(value == ResolutionAction::PresentationIssuersResolution(1))
+    });
 
     let err: ResolverError = resolver
       .verify_presentation(
@@ -530,7 +540,9 @@ mod tests {
       .await
       .unwrap_err();
 
-    error_matcher(err, |value| value == ResolutionAction::PresentationHolderResolution);
+    assertions(err, |value| {
+      assert!(value == ResolutionAction::PresentationHolderResolution)
+    });
 
     // finally when both holder and issuer needs to be resolved we check that resolution fails
     let err: ResolverError = resolver
@@ -544,11 +556,11 @@ mod tests {
       .await
       .unwrap_err();
 
-    error_matcher(err, |value| {
-      matches!(
+    assertions(err, |value| {
+      assert!(matches!(
         value,
         ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
-      )
+      ))
     });
   }
   // ===========================================================================
@@ -565,10 +577,10 @@ mod tests {
     resolver.attach_handler(other_method, mock_handler);
 
     // to avoid boiler plate
-    let check_match = move |err, comp: fn(ResolutionAction) -> bool| match err {
+    let check_match = move |err, comp: fn(ResolutionAction) -> ()| match err {
       ResolverError::UnsupportedMethodError { method, context } => {
         assert_eq!(method_name, method);
-        assert!(comp(context));
+        comp(context);
       }
       _ => unreachable!(),
     };
@@ -643,7 +655,7 @@ mod tests {
 
     let good_did: FooDID = FooDID::try_from("did:foo:12345").unwrap();
 
-    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
+    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> ()| {
       assert!(matches!(
         err
           .source()
@@ -655,7 +667,7 @@ mod tests {
 
       match err {
         ResolverError::DIDParsingError { context, .. } => {
-          assert!(comp(context));
+          comp(context);
         }
         _ => unreachable!(),
       }
@@ -685,11 +697,11 @@ mod tests {
     resolver.attach_handler(good_did.method().to_owned(), mock_handler);
 
     // to avoid boiler plate
-    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> bool| {
+    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> ()| {
       assert!(err.source().unwrap().downcast_ref::<ResolutionError>().is_some());
       match err {
         ResolverError::HandlerError { context, .. } => {
-          assert!(comp(context));
+          comp(context);
         }
         _ => unreachable!(),
       }
