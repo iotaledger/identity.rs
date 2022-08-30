@@ -449,6 +449,12 @@ mod tests {
   fn is_send_sync<T: Send + Sync>(_t: T) {}
 
   #[allow(dead_code)]
+  fn default_resolver_is_send_sync<DOC: ValidatorDocument + Send + Sync + 'static>() {
+    let resolver = Resolver::<DOC>::new();
+    is_send_sync(resolver);
+  }
+
+  #[allow(dead_code)]
   fn resolver_methods_give_send_sync_futures<DOC>()
   where
     DOC: ValidatorDocument + Send + Sync + 'static,
@@ -458,6 +464,7 @@ mod tests {
     let presentation: Presentation = presentation(std::iter::once(credential.clone()), did.clone());
 
     let resolver = Resolver::<DOC>::new();
+
     is_send_sync(resolver.resolve(&did));
 
     is_send_sync(resolver.resolve_credential_issuer(&credential));
