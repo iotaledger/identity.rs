@@ -6,6 +6,7 @@ use identity_credential::validator::ValidatorDocument;
 use identity_did::did::DID;
 
 use crate::Error;
+use crate::ErrorCause;
 use crate::Result;
 use std::pin::Pin;
 
@@ -61,19 +62,16 @@ impl<DOC: ValidatorDocument + Send + Sync + 'static> SendSyncCommand<DOC> {
   {
     let fun: SendSyncCallback<DOC> = Box::new(move |input: &str| {
       let handler_clone = handler.clone();
-      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
-        source: error.into(),
-        context: crate::error::ResolutionAction::Unknown,
-      });
+      let did_parse_attempt = D::try_from(input)
+        .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
+        .map_err(Error::new);
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
           .await
           .map(Into::into)
-          .map_err(|error| Error::HandlerError {
-            source: error.into(),
-            context: crate::error::ResolutionAction::Unknown,
-          })
+          .map_err(|error| ErrorCause::HandlerError { source: error.into() })
+          .map_err(Error::new)
       })
     });
     Self { fun }
@@ -112,19 +110,16 @@ impl<DOC: ValidatorDocument + 'static> SingleThreadedCommand<DOC> {
   {
     let fun: SingleThreadedCallback<DOC> = Box::new(move |input: &str| {
       let handler_clone = handler.clone();
-      let did_parse_attempt = D::try_from(input).map_err(|error| Error::DIDParsingError {
-        source: error.into(),
-        context: crate::error::ResolutionAction::Unknown,
-      });
+      let did_parse_attempt = D::try_from(input)
+        .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
+        .map_err(Error::new);
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
           .await
           .map(Into::into)
-          .map_err(|error| Error::HandlerError {
-            source: error.into(),
-            context: crate::error::ResolutionAction::Unknown,
-          })
+          .map_err(|error| ErrorCause::HandlerError { source: error.into() })
+          .map_err(Error::new)
       })
     });
     Self { fun }

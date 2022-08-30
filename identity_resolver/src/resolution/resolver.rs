@@ -20,6 +20,7 @@ use identity_did::did::DID;
 use serde::Serialize;
 
 use crate::Error;
+use crate::ErrorCause;
 
 use crate::Result;
 
@@ -126,10 +127,10 @@ where
     let delegate = self
       .command_map
       .get(method)
-      .ok_or_else(|| Error::UnsupportedMethodError {
+      .ok_or_else(|| ErrorCause::UnsupportedMethodError {
         method: method.to_owned(),
-        context: crate::error::ResolutionAction::Unknown,
-      })?;
+      })
+      .map_err(Error::new)?;
 
     delegate.apply(did.as_str()).await
   }
@@ -150,9 +151,13 @@ where
       .enumerate()
       .map(|(idx, credential)| {
         CredentialValidator::extract_issuer::<CoreDID, V>(credential)
-          .map_err(|error| Error::DIDParsingError {
-            source: error.into(),
-            context: crate::error::ResolutionAction::PresentationIssuersResolution(idx),
+          .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
+          .map_err(Error::new)
+          .map_err(|error| {
+            Error::update_resolution_action(
+              error,
+              crate::error::ResolutionAction::PresentationIssuersResolution(idx),
+            )
           })
           .map(|did| (did, idx))
       })
@@ -182,10 +187,11 @@ where
   /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
   /// DID resolution fails.
   pub async fn resolve_presentation_holder<U, V>(&self, presentation: &Presentation<U, V>) -> Result<DOC> {
-    let holder: CoreDID =
-      PresentationValidator::extract_holder(presentation).map_err(|error| Error::DIDParsingError {
-        source: error.into(),
-        context: crate::error::ResolutionAction::PresentationHolderResolution,
+    let holder: CoreDID = PresentationValidator::extract_holder(presentation)
+      .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
+      .map_err(Error::new)
+      .map_err(|error| {
+        Error::update_resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution)
       })?;
     self.resolve(&holder).await.map_err(|error| {
       Error::update_resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution)
@@ -199,14 +205,10 @@ where
   /// Errors if the issuer URL cannot be parsed to a DID whose associated method is supported by the resolver, or
   /// resolution fails.
   pub async fn resolve_credential_issuer<U: Serialize>(&self, credential: &Credential<U>) -> Result<DOC> {
-    let issuer_did: CoreDID =
-      CredentialValidator::extract_issuer(credential).map_err(|error| Error::DIDParsingError {
-        source: error.into(),
-        context: crate::error::ResolutionAction::CredentialIssuerResolution,
-      })?;
-    self.resolve(&issuer_did).await.map_err(|error| {
-      Error::update_resolution_action(error, crate::error::ResolutionAction::CredentialIssuerResolution)
-    })
+    let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
+      .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
+      .map_err(Error::new)?;
+    self.resolve(&issuer_did).await
   }
 
   /// Verifies a [`Presentation`].
@@ -244,17 +246,20 @@ where
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
         PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { source: error })
+          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
+          .map_err(Error::new)
       }
       (Some(holder), None) => {
         let issuers: Vec<DOC> = self.resolve_presentation_issuers(presentation).await?;
         PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { source: error })
+          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
+          .map_err(Error::new)
       }
       (None, Some(issuers)) => {
         let holder = self.resolve_presentation_holder(presentation).await?;
         PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { source: error })
+          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
+          .map_err(Error::new)
       }
       (None, None) => {
         let (holder, issuers): (DOC, Vec<DOC>) = futures::future::try_join(
@@ -264,7 +269,8 @@ where
         .await?;
 
         PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
-          .map_err(|error| Error::PresentationValidationError { source: error })
+          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
+          .map_err(Error::new)
       }
     }
     .map_err(Into::into)
@@ -399,6 +405,7 @@ mod tests {
 
   use super::Credential;
   use super::Error as ResolverError;
+  use super::ErrorCause;
   use super::Presentation;
   use super::Resolver;
   use super::ValidatorDocument;
@@ -469,26 +476,23 @@ mod tests {
   }
 
   /// Checks that all methods on the resolver involving resolution fail under the assumption that
-  /// the resolver is set up in such a way that the `resolve` method must fail for this did, but succeed with
-  /// `good_did`. The `assertions` argument is expected to be a function or closure that passes the
-  /// context (represented as a `ResolutionAction`) extracted from the error to the filter (the second argument of
-  /// `asserions`).
+  /// the resolver is set up in such a way that the `resolve` method must fail for this did (because of a specific
+  /// cause), but succeed with `good_did`. The `assertions` argument is a function or closure that asserts that the
+  /// [`ErrorCause`] is of the expected value.
   async fn check_failure_for_all_methods<F, D>(resolver: Resolver, bad_did: CoreDID, good_did: D, assertions: F)
   where
-    F: Fn(ResolverError, fn(ResolutionAction) -> ()) -> (),
+    F: Fn(ErrorCause) -> (),
     D: DID,
   {
     // resolving bad_did fails
     let err: ResolverError = resolver.resolve(&bad_did).await.unwrap_err();
-    assertions(err, |_| {});
+    assertions(err.into_cause());
 
     // resolving the issuer of the bad credential fails
     let cred: Credential = credential(bad_did.clone());
 
     let err: ResolverError = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
-    assertions(err, |value| {
-      assert!(value == ResolutionAction::CredentialIssuerResolution)
-    });
+    assertions(err.into_cause());
 
     // set up a presentation of the form: holder: bad_did , verifiableCredential: [good_credential, bad_credential,
     // good_credential] , other stuff irrelevant for this test.
@@ -500,16 +504,13 @@ mod tests {
 
     // resolving the holder of the presentation fails
     let err: ResolverError = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
-    assertions(err, |value| {
-      assert!(value == ResolutionAction::PresentationHolderResolution)
-    });
+    assert!(err.action().unwrap() == ResolutionAction::PresentationHolderResolution);
+    assertions(err.into_cause());
 
     //resolving the presentation issuers will fail because of the bad credential at position 1.
     let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
-    assertions(err, |value| {
-      assert!(value == ResolutionAction::PresentationIssuersResolution(1))
-    });
-
+    assert!(err.action().unwrap() == ResolutionAction::PresentationIssuersResolution(1));
+    assertions(err.into_cause());
     // check that our expectations are also matched when calling `verify_presentation`.
 
     // this can be passed as an argument to `verify_presentation` to avoid resolution of the holder or issuers.
@@ -525,9 +526,8 @@ mod tests {
       .await
       .unwrap_err();
 
-    assertions(err, |value| {
-      assert!(value == ResolutionAction::PresentationIssuersResolution(1))
-    });
+    assert!(err.action().unwrap() == ResolutionAction::PresentationIssuersResolution(1));
+    assertions(err.into_cause());
 
     let err: ResolverError = resolver
       .verify_presentation(
@@ -540,9 +540,8 @@ mod tests {
       .await
       .unwrap_err();
 
-    assertions(err, |value| {
-      assert!(value == ResolutionAction::PresentationHolderResolution)
-    });
+    assert!(err.action().unwrap() == ResolutionAction::PresentationHolderResolution);
+    assertions(err.into_cause());
 
     // finally when both holder and issuer needs to be resolved we check that resolution fails
     let err: ResolverError = resolver
@@ -556,12 +555,12 @@ mod tests {
       .await
       .unwrap_err();
 
-    assertions(err, |value| {
-      assert!(matches!(
-        value,
-        ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
-      ))
-    });
+    assert!(matches!(
+      err.action().unwrap(),
+      ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
+    ));
+
+    assertions(err.into_cause());
   }
   // ===========================================================================
   // Missing handler for DID method failure tests
@@ -577,10 +576,9 @@ mod tests {
     resolver.attach_handler(other_method, mock_handler);
 
     // to avoid boiler plate
-    let check_match = move |err, comp: fn(ResolutionAction) -> ()| match err {
-      ResolverError::UnsupportedMethodError { method, context } => {
+    let check_match = move |err| match err {
+      ErrorCause::UnsupportedMethodError { method } => {
         assert_eq!(method_name, method);
-        comp(context);
       }
       _ => unreachable!(),
     };
@@ -655,7 +653,7 @@ mod tests {
 
     let good_did: FooDID = FooDID::try_from("did:foo:12345").unwrap();
 
-    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> ()| {
+    let error_matcher = |err: ErrorCause| {
       assert!(matches!(
         err
           .source()
@@ -666,9 +664,7 @@ mod tests {
       ));
 
       match err {
-        ResolverError::DIDParsingError { context, .. } => {
-          comp(context);
-        }
+        ErrorCause::DIDParsingError { .. } => {}
         _ => unreachable!(),
       }
     };
@@ -697,12 +693,10 @@ mod tests {
     resolver.attach_handler(good_did.method().to_owned(), mock_handler);
 
     // to avoid boiler plate
-    let error_matcher = |err: ResolverError, comp: fn(ResolutionAction) -> ()| {
+    let error_matcher = |err: ErrorCause| {
       assert!(err.source().unwrap().downcast_ref::<ResolutionError>().is_some());
       match err {
-        ResolverError::HandlerError { context, .. } => {
-          comp(context);
-        }
+        ErrorCause::HandlerError { .. } => {}
         _ => unreachable!(),
       }
     };
