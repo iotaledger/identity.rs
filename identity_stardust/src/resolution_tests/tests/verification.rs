@@ -285,6 +285,7 @@ where
   resolver
 }
 
+/*
 #[tokio::test]
 //TODO: Avoid loads of code repetition.
 async fn verify_presentation_dynamic_resolver_core_documents() {
@@ -386,3 +387,4 @@ async fn verify_presentation_dynamic_resolver_core_documents() {
     .await
     .is_ok());
 }
+*/

@@ -229,19 +229,17 @@ where
   /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
   /// Otherwise, errors from validating the presentation and its credentials will be returned
   /// according to the `fail_fast` parameter.
-  pub async fn verify_presentation<U, V, HDOC, IDOC>(
+  pub async fn verify_presentation<U, V>(
     &self,
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
-    holder: Option<&HDOC>,
-    issuers: Option<&[IDOC]>,
+    holder: Option<&DOC>,
+    issuers: Option<&[DOC]>,
   ) -> Result<()>
   where
     U: Serialize,
     V: Serialize,
-    HDOC: ValidatorDocument + ?Sized,
-    IDOC: ValidatorDocument,
   {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {

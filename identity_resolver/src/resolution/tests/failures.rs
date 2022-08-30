@@ -11,6 +11,7 @@ use identity_credential::presentation::Presentation;
 use identity_credential::presentation::PresentationBuilder;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
+use identity_credential::validator::ValidatorDocument;
 use identity_did::did::BaseDIDUrl;
 use identity_did::did::CoreDID;
 use identity_did::did::DIDError;
@@ -55,10 +56,11 @@ fn make_presentation(credentials: impl Iterator<Item = Credential>, holder: Core
 /// the resolver is set up in such a way that the `resolve` method must fail for this did (because of a specific
 /// cause), but succeed with `good_did`. The `assertions` argument is a function or closure that asserts that the
 /// [`ErrorCause`] is of the expected value.
-async fn check_failure_for_all_methods<F, D>(resolver: Resolver, bad_did: CoreDID, good_did: D, assertions: F)
+async fn check_failure_for_all_methods<F, D, DOC>(resolver: Resolver<DOC>, bad_did: CoreDID, good_did: D, assertions: F)
 where
   F: Fn(ErrorCause) -> (),
   D: DID,
+  DOC: ValidatorDocument + Send + Sync + 'static + From<CoreDocument>,
 {
   // resolving bad_did fails
   let err: ResolverError = resolver.resolve(&bad_did).await.unwrap_err();
@@ -90,14 +92,14 @@ where
   // check that our expectations are also matched when calling `verify_presentation`.
 
   // this can be passed as an argument to `verify_presentation` to avoid resolution of the holder or issuers.
-  let mock_document: CoreDocument = core_document(bad_did.clone());
+  let mock_document: DOC = core_document(bad_did.clone()).into();
   let err: ResolverError = resolver
     .verify_presentation(
       &presentation,
       &PresentationValidationOptions::default(),
       FailFast::FirstError,
       Some(&mock_document),
-      Option::<&[CoreDocument]>::None,
+      None,
     )
     .await
     .unwrap_err();
@@ -110,7 +112,7 @@ where
       &presentation,
       &PresentationValidationOptions::default(),
       FailFast::FirstError,
-      Option::<&CoreDocument>::None,
+      None,
       Some(std::slice::from_ref(&mock_document)),
     )
     .await
@@ -125,8 +127,8 @@ where
       &presentation,
       &PresentationValidationOptions::default(),
       FailFast::FirstError,
-      Option::<&CoreDocument>::None,
-      Option::<&[CoreDocument]>::None,
+      None,
+      None,
     )
     .await
     .unwrap_err();

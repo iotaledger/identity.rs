@@ -198,6 +198,7 @@ mod tests {
       .sign(&mut presentation)
       .unwrap();
 
+    /*
     // VALID: resolver supports presentations with issuers from different DID Methods.
     let resolver: Resolver = Resolver::new();
     assert!(resolver
@@ -212,6 +213,7 @@ mod tests {
       )
       .await
       .is_ok());
+      */
   }
 
   #[test]
