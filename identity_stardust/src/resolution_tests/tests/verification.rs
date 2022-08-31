@@ -8,6 +8,7 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
@@ -29,17 +30,12 @@ use identity_did::verifiable::VerifierOptions;
 use identity_did::verification::MethodScope;
 use identity_did::verification::VerificationMethod;
 
-use identity_resolver::Resolver;
-
 use crate::StardustDID;
 use crate::StardustDocument;
 use crate::StardustVerificationMethod;
 
-use super::client_mocks::BarClient;
-use super::client_mocks::FooClient;
-
-const TEST_METHOD_NAME_0: &'static str = "test0";
-const TEST_METHOD_NAME_1: &'static str = "test1";
+const TEST_METHOD_NAME_0: &'static str = "foo";
+const TEST_METHOD_NAME_1: &'static str = "bar";
 
 fn generate_stardust_document(keypair: &KeyPair) -> StardustDocument {
   let mut document: StardustDocument = StardustDocument::new_with_id(
@@ -57,8 +53,7 @@ fn generate_stardust_document(keypair: &KeyPair) -> StardustDocument {
   document
 }
 
-fn generate_core_document(method_name: String) -> (CoreDocument, KeyPair) {
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+fn generate_core_document(method_name: String, keypair: KeyPair) -> (CoreDocument, KeyPair) {
   let did: CoreDID = CoreDID::parse(&format!(
     "did:{}:{}",
     method_name,
@@ -126,13 +121,30 @@ impl MixedTestSetup {
   // Creates DID Documents and unsigned credentials.
   fn new() -> Self {
     let (issuer_stardust_doc, issuer_stardust_key) = {
-      let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let hex_encoded: &str = "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
+      let private_key = BaseEncoding::decode(hex_encoded, identity_core::utils::Base::Base16Lower).unwrap();
+      //println!("private key: {:?}", &private_key.as_slice());
+      //let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::Ed25519, &private_key).unwrap();
       (generate_stardust_document(&keypair), keypair)
     };
-    let (subject_doc, subject_key) = generate_core_document(TEST_METHOD_NAME_0.to_string());
+    let subject_private_key_hex_encoded: &str = "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb";
+    let subject_private_key =
+      BaseEncoding::decode(subject_private_key_hex_encoded, identity_core::utils::Base::Base16Lower).unwrap();
+    let subject_key_pair: KeyPair =
+      KeyPair::try_from_private_key_bytes(KeyType::Ed25519, &subject_private_key).unwrap();
+
+    let (subject_doc, subject_key) = generate_core_document(TEST_METHOD_NAME_0.to_string(), subject_key_pair);
+
     let credential_stardust = generate_credential(issuer_stardust_doc.id().as_str(), subject_doc.id().as_str());
 
-    let (issuer_core_doc, issuer_core_key) = generate_core_document(TEST_METHOD_NAME_1.to_string());
+    let issuer_private_key_hex: &str = "c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7";
+    let issuer_private_key =
+      BaseEncoding::decode(issuer_private_key_hex, identity_core::utils::Base::Base16Lower).unwrap();
+    let issuer_core_key_pair: KeyPair =
+      KeyPair::try_from_private_key_bytes(KeyType::Ed25519, &issuer_private_key).unwrap();
+    let (issuer_core_doc, issuer_core_key) =
+      generate_core_document(TEST_METHOD_NAME_1.to_string(), issuer_core_key_pair);
     let credential_core = generate_credential(issuer_core_doc.id().as_str(), subject_doc.id().as_str());
 
     Self {
@@ -177,6 +189,7 @@ impl MixedTestSetup {
   }
 }
 
+/*
 async fn test_generic_resolver_verify_presentation<DOC: ValidatorDocument + Send + Sync + 'static>(
   signed_presentation: &Presentation,
   challenge: String,
@@ -210,6 +223,8 @@ async fn test_generic_resolver_verify_presentation<DOC: ValidatorDocument + Send
   }
 }
 
+*/
+
 #[tokio::test]
 /// Tests verifying a presentation under the following circumstances:
 /// The subjects's did method: test0
@@ -228,6 +243,8 @@ async fn test_verify_presentation() {
     ..
   } = MixedTestSetup::new_with_signed_credentials();
 
+  println!("{}", issuer_core_doc.to_json_pretty().unwrap());
+  panic!();
   // Subject signs the presentation.
   let mut presentation = generate_presentation(
     subject_doc.id().as_str(),
@@ -241,15 +258,9 @@ async fn test_verify_presentation() {
     .sign(&mut presentation)
     .unwrap();
 
-  // set up mock clients
-  let foo_client = FooClient { issuer_stardust_doc };
-
-  let bar_client = Arc::new(BarClient {
-    cache: vec![issuer_core_doc, subject_doc],
-  });
-
+  /*
   // Check that verification works with the resolver converting all resolved documents to CoreDocument.
-  let resolver_core: Resolver<CoreDocument> = setup_resolver::<CoreDocument>(foo_client.clone(), bar_client.clone());
+  //let resolver_core: Resolver<CoreDocument> = setup_resolver::<CoreDocument>(foo_client.clone(), bar_client.clone());
   // Check that verification works with the resolver converting all resolved documents to the boxed trait object Box<dyn
   // ValidatorDocument>.
   let resolver_dynamic: Resolver =
@@ -257,8 +268,10 @@ async fn test_verify_presentation() {
 
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_core).await;
   test_generic_resolver_verify_presentation(&presentation, challenge.clone(), resolver_dynamic).await;
-}
 
+  */
+}
+/*
 fn setup_resolver<DOC>(foo_client: FooClient, bar_client: Arc<BarClient>) -> Resolver<DOC>
 where
   DOC: ValidatorDocument + From<CoreDocument> + From<StardustDocument> + 'static + Send + Sync,
@@ -284,6 +297,7 @@ where
 
   resolver
 }
+*/
 
 /*
 #[tokio::test]
