@@ -183,6 +183,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#DIDType">DIDType</a></dt>
@@ -233,8 +235,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -3630,6 +3630,7 @@ Deserializes an instance from a JSON object.
     * [new MixedResolver()](#new_MixedResolver_new)
     * [.attachHandler(method, handler)](#MixedResolver+attachHandler)
     * [.resolvePresentationIssuers(presentation)](#MixedResolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(StardustDocument\|CoreDocument)&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#MixedResolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(StardustDocument\|CoreDocument)&gt;</code>
     * [.resolve(did)](#MixedResolver+resolve) ⇒ <code>Promise.&lt;(StardustDocument\|CoreDocument)&gt;</code>
 
 <a name="new_MixedResolver_new"></a>
@@ -3657,6 +3658,22 @@ Issuer documents are returned in arbitrary order.
 
 Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
 resolution fails.
+
+**Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="MixedResolver+resolvePresentationHolder"></a>
+
+### mixedResolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(StardustDocument\|CoreDocument)&gt;</code>
+Fetches the DID Document of the holder of a [`Presentation`].
+
+# Errors
+
+Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
+DID resolution fails.
 
 **Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
 
@@ -6370,6 +6387,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -6465,10 +6486,6 @@ Return after the first error occurs.
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

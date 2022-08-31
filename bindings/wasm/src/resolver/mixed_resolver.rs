@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::credential::Presentation;
+use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::resolver::SingleThreadedResolver;
@@ -12,11 +13,16 @@ use js_sys::Function;
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
+use crate::common::PromiseVoid;
+use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
+use crate::credential::WasmPresentationValidationOptions;
 use crate::error::ErrorString;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
+use crate::resolver::supported_document_types::ArraySupportedDocument;
 use crate::resolver::supported_document_types::RustSupportedDocument;
+use crate::resolver::supported_document_types::SupportedDocument;
 
 //use super::function_transformation::WasmResolverCommand;
 use super::supported_document_types::PromiseArraySupportedDocument;
@@ -121,6 +127,59 @@ impl MixedResolver {
         .to_json()
     });
     Ok(promise.unchecked_into::<PromiseSupportedDocument>())
+  }
+
+  /// Verifies a `Presentation`.
+  ///
+  /// ### Important
+  /// See `PresentationValidator::validate` for information about which properties get
+  /// validated and what is expected of the optional arguments `holder` and `issuer`.
+  ///
+  /// ### Resolution
+  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+  /// If you already have up-to-date versions of these DID Documents, you may want
+  /// to use `PresentationValidator::validate`.
+  /// See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
+  ///
+  /// ### Errors
+  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+  /// Otherwise, errors from validating the presentation and its credentials will be returned
+  /// according to the `fail_fast` parameter.
+  #[wasm_bindgen(js_name = verifyPresentation)]
+  pub fn verify_presentation(
+    &self,
+    presentation: &WasmPresentation,
+    options: &WasmPresentationValidationOptions,
+    fail_fast: WasmFailFast,
+    holder: Option<SupportedDocument>,
+    issuers: Option<ArraySupportedDocument>,
+  ) -> Result<PromiseVoid> {
+    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+    let presentation: Presentation = presentation.0.clone();
+    let options: PresentationValidationOptions = options.0.clone();
+
+    let holder: Option<RustSupportedDocument> = holder.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let holder: Option<AbstractValidatorDocument> = holder.map(From::from);
+    let issuers: Option<Vec<RustSupportedDocument>> = issuers.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let issuers: Option<Vec<AbstractValidatorDocument>> =
+      issuers.map(|vector| vector.into_iter().map(AbstractValidatorDocument::from).collect());
+
+    let promise: Promise = future_to_promise(async move {
+      resolver
+        .verify_presentation(
+          &presentation,
+          &options,
+          fail_fast.into(),
+          (holder.as_ref()).as_deref(),
+          issuers.as_deref(),
+        )
+        .await
+        .wasm_result()
+        .map_err(JsValue::from)
+        .map(|_| JsValue::UNDEFINED)
+    });
+
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 
   #[wasm_bindgen]

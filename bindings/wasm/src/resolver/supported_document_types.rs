@@ -68,4 +68,7 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "StardustDocument | CoreDocument")]
   pub type SupportedDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<StardustDocument | CoreDocument>")]
+  pub type ArraySupportedDocument;
 }
