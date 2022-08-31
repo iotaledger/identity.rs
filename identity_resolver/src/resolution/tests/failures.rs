@@ -64,13 +64,13 @@ where
 {
   // resolving bad_did fails
   let err: ResolverError = resolver.resolve(&bad_did).await.unwrap_err();
-  assertions(err.into_cause());
+  assertions(err.into_error_cause());
 
   // resolving the issuer of the bad credential fails
   let cred: Credential = make_credential(bad_did.clone());
 
   let err: ResolverError = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
-  assertions(err.into_cause());
+  assertions(err.into_error_cause());
 
   // set up a presentation of the form: holder: bad_did , verifiableCredential: [good_credential, bad_credential,
   // good_credential] , other stuff irrelevant for this test.
@@ -83,12 +83,12 @@ where
   // resolving the holder of the presentation fails
   let err: ResolverError = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
   assert!(err.action().unwrap() == ResolutionAction::PresentationHolderResolution);
-  assertions(err.into_cause());
+  assertions(err.into_error_cause());
 
   //resolving the presentation issuers will fail because of the bad credential at position 1.
   let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
   assert!(err.action().unwrap() == ResolutionAction::PresentationIssuersResolution(1));
-  assertions(err.into_cause());
+  assertions(err.into_error_cause());
   // check that our expectations are also matched when calling `verify_presentation`.
 
   // this can be passed as an argument to `verify_presentation` to avoid resolution of the holder or issuers.
@@ -105,7 +105,7 @@ where
     .unwrap_err();
 
   assert!(err.action().unwrap() == ResolutionAction::PresentationIssuersResolution(1));
-  assertions(err.into_cause());
+  assertions(err.into_error_cause());
 
   let err: ResolverError = resolver
     .verify_presentation(
@@ -119,7 +119,7 @@ where
     .unwrap_err();
 
   assert!(err.action().unwrap() == ResolutionAction::PresentationHolderResolution);
-  assertions(err.into_cause());
+  assertions(err.into_error_cause());
 
   // finally when both holder and issuer needs to be resolved we check that resolution fails
   let err: ResolverError = resolver
@@ -138,7 +138,7 @@ where
     ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
   ));
 
-  assertions(err.into_cause());
+  assertions(err.into_error_cause());
 }
 // ===========================================================================
 // Missing handler for DID method failure tests

@@ -101,6 +101,27 @@ impl MixedResolver {
     Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
   }
 
+
+  /// Fetches the DID Document of the holder of a [`Presentation`].
+  ///
+  /// # Errors
+  ///
+  /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
+  /// DID resolution fails.
+  #[wasm_bindgen(js_name = resolvePresentationHolder)]
+  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseSupportedDocument> {
+    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+    let presentation: Presentation = presentation.0.clone();
+
+    let promise: Promise = future_to_promise( async move {
+      resolver.resolve_presentation_holder(&presentation).await
+      .wasm_result()
+      .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))?
+      .to_json()
+    });
+    Ok(promise.unchecked_into::<PromiseSupportedDocument>())
+  }
+
   #[wasm_bindgen]
   pub fn resolve(&self, did: &str) -> Result<PromiseSupportedDocument> {
     let resolver: Rc<SingleThreadedResolver> = self.0.clone();
