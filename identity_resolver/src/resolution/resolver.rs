@@ -4,6 +4,7 @@
 use core::future::Future;
 use std::collections::HashMap;
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use futures::TryFutureExt;
 use identity_credential::credential::Credential;
@@ -17,6 +18,10 @@ use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 
+use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDID;
+use identity_stardust::StardustDocument;
+use identity_stardust::StardustIdentityClientExt;
 use serde::Serialize;
 
 use crate::Error;
@@ -391,5 +396,27 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
   {
     let command = SingleThreadedCommand::new(handler);
     self.command_map.insert(method, command);
+  }
+}
+
+impl<DOC> Resolver<DOC>
+where
+  DOC: From<StardustDocument> + ValidatorDocument + Send + Sync + 'static,
+{
+  /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs.
+  ///
+  /// See also [`attach_handler`](Self::attach_handler).
+  pub fn attach_iota_handler<CLI>(&mut self, client: CLI)
+  where
+    CLI: StardustClientExt + Send + Sync + 'static,
+  {
+    let arc_client: Arc<CLI> = Arc::new(client);
+
+    let handler = move |did: StardustDID| {
+      let future_client = arc_client.clone();
+      async move { future_client.resolve_did(&did).await }
+    };
+
+    self.attach_handler(StardustDID::METHOD.to_owned(), handler);
   }
 }
