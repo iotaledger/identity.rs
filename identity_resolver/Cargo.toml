@@ -27,6 +27,7 @@ thiserror = { version = "1.0", default-features = false }
 tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [features]
-default = ["revocation-bitmap", "stardust"]
+default = ["revocation-bitmap", "iota"]
 revocation-bitmap = ["identity_did/revocation-bitmap", "identity_stardust?/revocation-bitmap"]
-stardust = ["identity_stardust"]
+# Enables the IOTA integration for the resolver.
+iota = ["identity_stardust"]

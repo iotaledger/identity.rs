@@ -12,7 +12,10 @@ members = [
   "identity_iota",
   "identity_iota_client",
   "identity_iota_core",
-  "identity_stardust", 
+  "identity_resolver",
+  "identity_stardust",
+
+  "examples_legacy",
   "examples",
 ]
 
