@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Create a new DID in an Alias Output for us to modify.
