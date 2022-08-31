@@ -19,9 +19,6 @@ pub use state_metadata::*;
 pub use self::error::Error;
 pub use self::error::Result;
 
-#[cfg(test)]
-mod resolution_tests;
-
 #[cfg(feature = "client")]
 mod client;
 mod did;
