@@ -151,7 +151,9 @@ async fn missing_handler_errors() {
   let good_did: CoreDID = CoreDID::parse(format!("did:{other_method}:1234")).unwrap();
   // configure `resolver` to resolve the "bar" method
   let mut resolver: Resolver = Resolver::new();
-  resolver.attach_handler(other_method, mock_handler);
+  let mut resolver_core: Resolver<CoreDocument> = Resolver::new();
+  resolver.attach_handler(other_method.clone(), mock_handler);
+  resolver_core.attach_handler(other_method, mock_handler);
 
   // to avoid boiler plate
   let check_match = move |err| match err {
@@ -161,7 +163,8 @@ async fn missing_handler_errors() {
     _ => unreachable!(),
   };
 
-  check_failure_for_all_methods(resolver, bad_did, good_did, check_match).await;
+  check_failure_for_all_methods(resolver, bad_did.clone(), good_did.clone(), check_match.clone()).await;
+  check_failure_for_all_methods(resolver_core, bad_did, good_did, check_match).await;
 }
 
 // ===========================================================================
@@ -217,6 +220,7 @@ impl<'a> TryFrom<&'a str> for FooDID {
 #[tokio::test]
 async fn resolve_unparsable() {
   let mut resolver: Resolver = Resolver::new();
+  let mut resolver_core: Resolver<CoreDocument> = Resolver::new();
 
   // register a handler that wants `did` to be of type `FooDID`.
   async fn handler(did: FooDID) -> std::result::Result<CoreDocument, std::io::Error> {
@@ -224,6 +228,7 @@ async fn resolve_unparsable() {
   }
 
   resolver.attach_handler("foo".to_owned(), handler);
+  resolver_core.attach_handler("foo".to_owned(), handler);
 
   let bad_did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
   // ensure that the DID we created does not satisfy the requirements of the "foo" method
@@ -247,7 +252,8 @@ async fn resolve_unparsable() {
     }
   };
 
-  check_failure_for_all_methods(resolver, bad_did, good_did, error_matcher).await;
+  check_failure_for_all_methods(resolver, bad_did.clone(), good_did.clone(), error_matcher).await;
+  check_failure_for_all_methods(resolver_core, bad_did, good_did, error_matcher).await;
 }
 
 // ===========================================================================
@@ -264,11 +270,14 @@ async fn handler_failure() {
   }
 
   let mut resolver: Resolver = Resolver::new();
+  let mut resolver_core: Resolver<CoreDocument> = Resolver::new();
   resolver.attach_handler("foo".to_owned(), failing_handler);
+  resolver_core.attach_handler("foo".to_owned(), failing_handler);
 
   let bad_did: CoreDID = CoreDID::parse(&format!("did:foo:1234")).unwrap();
   let good_did: CoreDID = CoreDID::parse(format!("did:bar:1234")).unwrap();
   resolver.attach_handler(good_did.method().to_owned(), mock_handler);
+  resolver_core.attach_handler(good_did.method().to_owned(), mock_handler);
 
   // to avoid boiler plate
   let error_matcher = |err: ErrorCause| {
@@ -279,5 +288,6 @@ async fn handler_failure() {
     }
   };
 
-  check_failure_for_all_methods(resolver, bad_did, good_did, error_matcher).await;
+  check_failure_for_all_methods(resolver, bad_did.clone(), good_did.clone(), error_matcher).await;
+  check_failure_for_all_methods(resolver_core, bad_did, good_did, error_matcher).await;
 }
