@@ -31,7 +31,7 @@ pub enum Error {
   RevocationError(#[source] identity_did::Error),
   #[cfg(feature = "client")]
   #[error("alias output build error")]
-  AliasOutputBuildError(#[source] iota_client::block::Error),
+  AliasOutputBuildError(#[source] crate::block::Error),
   #[cfg(feature = "iota-client")]
   #[error("output with id `{0}` is not an alias output")]
   NotAnAliasOutput(iota_client::block::output::OutputId),
