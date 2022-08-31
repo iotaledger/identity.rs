@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Get an address and with funds for testing.
