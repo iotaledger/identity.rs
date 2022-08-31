@@ -6,7 +6,7 @@
 
 /// Re-export the `bee_block` crate for implementer convenience.
 #[cfg(feature = "client")]
-pub use bee_block as block;
+pub use iota_client::block;
 
 #[cfg(feature = "client")]
 pub use client::*;
