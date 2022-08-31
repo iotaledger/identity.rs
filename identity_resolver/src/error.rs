@@ -7,28 +7,31 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// Error returned from the [Resolver's](crate::Resolver) methods.
 ///
-/// The [`Self::cause`](Self::cause()) method provides information about the cause of the error,
+/// The [`Self::error_cause`](Self::error_cause()) method provides information about the cause of the error,
 /// while [`Self::action`](Self::action()) provides more context about the action the resolver was carrying out when the
 /// error occurred.
 #[derive(Debug)]
 pub struct Error {
-  cause: ErrorCause,
+  error_cause: ErrorCause,
   action: Option<ResolutionAction>,
 }
 
 impl Error {
   pub(crate) fn new(cause: ErrorCause) -> Self {
-    Self { cause, action: None }
+    Self {
+      error_cause: cause,
+      action: None,
+    }
   }
 
   /// Returns the cause of the error.
-  pub fn cause(&self) -> &ErrorCause {
-    &self.cause
+  pub fn error_cause(&self) -> &ErrorCause {
+    &self.error_cause
   }
 
   /// Converts the error into [`ErrorCause`].
-  pub fn into_cause(self) -> ErrorCause {
-    self.cause
+  pub fn into_error_cause(self) -> ErrorCause {
+    self.error_cause
   }
 
   /// Returns more context regarding the action the [`Resolver`](crate::Resolver) was performing when the error occurred
@@ -52,16 +55,16 @@ impl Error {
 impl std::fmt::Display for Error {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     if let Some(action) = self.action {
-      write!(f, "{}: {}", action, self.cause)
+      write!(f, "{}: {}", action, self.error_cause)
     } else {
-      write!(f, "{}", self.cause)
+      write!(f, "{}", self.error_cause)
     }
   }
 }
 
 impl std::error::Error for Error {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-    self.cause.source()
+    self.error_cause.source()
   }
 }
 

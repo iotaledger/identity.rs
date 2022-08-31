@@ -98,8 +98,7 @@ impl_wasm_error_from!(
   identity_iota::did::DIDError,
   identity_iota::iota_core::Error,
   identity_iota::credential::ValidationError,
-  identity_stardust::Error,
-  identity_iota::resolver::Error
+  identity_stardust::Error
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -157,6 +156,21 @@ impl<'a> Display for ErrorMessage<'a, identity_iota::client::Error> {
       }
       // the rest include the source error's message in their own
       _ => self.0.fmt(f),
+    }
+  }
+}
+
+impl<'a> Display for ErrorMessage<'a, identity_iota::resolver::Error> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    error_chain_fmt(self.0, f)
+  }
+}
+
+impl From<identity_iota::resolver::Error> for WasmError<'_> {
+  fn from(error: identity_iota::resolver::Error) -> Self {
+    Self {
+      name: Cow::Borrowed(error.error_cause().into()),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
