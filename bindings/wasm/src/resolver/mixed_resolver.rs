@@ -3,8 +3,8 @@
 
 use std::rc::Rc;
 
-use identity_iota::credential::Presentation;
 use identity_iota::credential::AbstractValidatorDocument;
+use identity_iota::credential::Presentation;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::resolver::SingleThreadedResolver;
@@ -101,7 +101,6 @@ impl MixedResolver {
     Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
   }
 
-
   /// Fetches the DID Document of the holder of a [`Presentation`].
   ///
   /// # Errors
@@ -113,11 +112,13 @@ impl MixedResolver {
     let resolver: Rc<SingleThreadedResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
-    let promise: Promise = future_to_promise( async move {
-      resolver.resolve_presentation_holder(&presentation).await
-      .wasm_result()
-      .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))?
-      .to_json()
+    let promise: Promise = future_to_promise(async move {
+      resolver
+        .resolve_presentation_holder(&presentation)
+        .await
+        .wasm_result()
+        .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))?
+        .to_json()
     });
     Ok(promise.unchecked_into::<PromiseSupportedDocument>())
   }
