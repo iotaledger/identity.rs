@@ -18,6 +18,7 @@ futures = { version = "0.3" }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+identity_stardust = { version = "=0.6.0", path = "../identity_stardust", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
@@ -28,3 +29,5 @@ tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-th
 [features]
 default = ["revocation-bitmap"]
 revocation-bitmap = ["identity_did/revocation-bitmap"]
+# Enables the IOTA integration for the resolver.
+iota = ["dep:identity_stardust"]
