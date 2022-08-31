@@ -71,4 +71,7 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<StardustDocument | CoreDocument>")]
   pub type ArraySupportedDocument;
+
+  #[wasm_bindgen(typescript_type = "Map<string, (arg: string) => Promise<StardustDocument | CoreDocument>>")]
+  pub type MapResolutionHandler;
 }

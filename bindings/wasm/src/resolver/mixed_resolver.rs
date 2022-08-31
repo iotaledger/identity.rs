@@ -10,6 +10,7 @@ use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::resolver::SingleThreadedResolver;
 use js_sys::Function;
+use js_sys::Map;
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
@@ -21,10 +22,10 @@ use crate::error::ErrorString;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::resolver::supported_document_types::ArraySupportedDocument;
+use crate::resolver::supported_document_types::MapResolutionHandler;
 use crate::resolver::supported_document_types::RustSupportedDocument;
 use crate::resolver::supported_document_types::SupportedDocument;
 
-//use super::function_transformation::WasmResolverCommand;
 use super::supported_document_types::PromiseArraySupportedDocument;
 use super::supported_document_types::PromiseSupportedDocument;
 use crate::error::Result;
@@ -40,14 +41,29 @@ pub struct MixedResolver(Rc<SingleThreadedResolver>);
 impl MixedResolver {
   /// Constructs a new [`MixedResolver`].
   #[wasm_bindgen(constructor)]
-  pub fn new() -> Self {
-    Self(Rc::new(SingleThreadedResolver::new()))
+  pub fn new(handlers: &MapResolutionHandler) -> Result<MixedResolver> {
+    let mut resolver = SingleThreadedResolver::new();
+    let map: &Map = handlers
+      .dyn_ref::<js_sys::Map>()
+      .ok_or_else(|| "could not construct resolver: expected a map of asynchronous functions")?;
+
+    for key in map.keys() {
+      if let Ok(mthd) = key {
+        let fun = map.get(&mthd);
+        let method: String = mthd
+          .as_string()
+          .ok_or("could not construct resolver: the handler map contains a key which is not a string")?;
+        let handler: Function = fun
+          .dyn_into::<Function>()
+          .map_err(|_| "could not construct resolver: the handler map contains a value which is not a function")?;
+        MixedResolver::attach_handler(&mut resolver, method, handler);
+      }
+    }
+    Ok(Self(Rc::new(resolver)))
   }
 
-  #[wasm_bindgen(js_name = attachHandler)]
-  //TODO: Fix the potential panic below. This can be enforced using something like the builder pattern.
-  pub fn attach_handler(&mut self, method: &str, handler: &Function) {
-    let fun_closure_clone = handler.clone();
+  fn attach_handler(resolver: &mut SingleThreadedResolver, method: String, handler: Function) {
+    let fun_closure_clone = handler;
     let fun = move |input: CoreDID| {
       let fun_clone = fun_closure_clone.clone();
       async move {
@@ -65,10 +81,7 @@ impl MixedResolver {
         std::result::Result::<_, ErrorString>::Ok(AbstractValidatorDocument::from(supported_document))
       }
     };
-
-    Rc::<SingleThreadedResolver>::get_mut(&mut self.0)
-      .expect("The resolver should be setup before being used")
-      .attach_handler(method.to_owned(), fun);
+    resolver.attach_handler(method, fun);
   }
 
   /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].

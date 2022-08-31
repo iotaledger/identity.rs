@@ -10,11 +10,19 @@ export async function customResolution() {
             return resolved;
         };
 
-        const resolver = new MixedResolver(); 
+        let handlerMap = new Map(); 
+        handlerMap.set("iota", resolveDid);
 
-        resolver.attachHandler("iota", resolveDid);
+        const resolver = new MixedResolver(handlerMap); 
 
+        console.log("before resolving"); 
         const output = await resolver.resolve(did.toString());
-        console.log("Resolved DID document:", JSON.stringify(output, null, 2));
+        console.log("The resolved DID document:", JSON.stringify(output, null, 2));
+
+        console.log("after resolving");
+
+        console.log("calling handler outside of the resolver");
+        const docFromHandler = await resolveDid(did.toString());
+        console.log("output from handler:", JSON.stringify(docFromHandler, null, 2)); 
 
 }
