@@ -30,7 +30,7 @@ mod private {
 
 /// Internal representation of a thread safe handler.
 type SendSyncCallback<DOC> =
-  Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send + Sync>> + Send + Sync>;
+  Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send>> + Send + Sync>;
 
 /// Wrapper around a thread safe callback.
 pub struct SendSyncCommand<DOC: ValidatorDocument + Send + Sync + 'static> {
@@ -38,7 +38,7 @@ pub struct SendSyncCommand<DOC: ValidatorDocument + Send + Sync + 'static> {
 }
 
 impl<'a, DOC: ValidatorDocument + Send + Sync + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
-  type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send + Sync>>;
+  type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
@@ -56,7 +56,7 @@ impl<DOC: ValidatorDocument + Send + Sync + 'static> SendSyncCommand<DOC> {
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
-    Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send + Sync,
+    Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send,
     E: std::error::Error + Send + Sync + 'static,
     DIDERR: std::error::Error + Send + Sync + 'static,
   {
