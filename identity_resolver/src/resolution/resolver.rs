@@ -326,7 +326,7 @@ impl<DOC: ValidatorDocument + Send + Sync + 'static> Resolver<DOC> {
     D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
-    Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send + Sync,
+    Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send,
     E: std::error::Error + Send + Sync + 'static,
     DIDERR: std::error::Error + Send + Sync + 'static,
   {
