@@ -112,8 +112,8 @@ impl MixedResolver {
       Ok(
         supported_documents
           .into_iter()
-          .map(|doc| doc.to_json())
-          .collect::<Result<js_sys::Array>>()?
+          .map(JsValue::from)
+          .collect::<js_sys::Array>()
           .into(),
       )
     });
@@ -136,8 +136,8 @@ impl MixedResolver {
         .resolve_presentation_holder(&presentation)
         .await
         .wasm_result()
-        .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))?
-        .to_json()
+        .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
+        .map(JsValue::from)
     });
     Ok(promise.unchecked_into::<PromiseSupportedDocument>())
   }
@@ -201,14 +201,13 @@ impl MixedResolver {
     let did: CoreDID = CoreDID::parse(did).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
-      Ok(
-        resolver
-          .resolve(&did)
-          .await
-          .map_err(WasmError::from)
-          .and_then(RustSupportedDocument::try_from)?
-          .to_json()?,
-      )
+      resolver
+        .resolve(&did)
+        .await
+        .map_err(WasmError::from)
+        .and_then(RustSupportedDocument::try_from)
+        .map_err(JsValue::from)
+        .map(JsValue::from)
     });
 
     Ok(promise.unchecked_into::<PromiseSupportedDocument>())

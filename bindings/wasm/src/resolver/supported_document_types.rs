@@ -1,9 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::did::WasmCoreDocument;
 use crate::error::Result;
 use crate::error::WasmError;
 use crate::error::WasmResult;
+use crate::stardust::WasmStardustDocument;
 use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::did::CoreDocument;
 use identity_stardust::StardustDocument;
@@ -19,11 +21,22 @@ pub(super) enum RustSupportedDocument {
   Core(CoreDocument),
 }
 
+/*
 impl RustSupportedDocument {
   pub(super) fn to_json(&self) -> Result<JsValue> {
     match self {
-      Self::Core(doc) => JsValue::from_serde(doc).wasm_result(),
-      Self::Stardust(doc) => JsValue::from_serde(doc).wasm_result(),
+      Self::Core(doc) => Ok(JsValue::from(WasmCoreDocument::from(doc.clone()))),
+      Self::Stardust(doc) => Ok(JsValue::from(WasmStardustDocument(doc.clone()))),
+    }
+  }
+}
+ */
+
+impl From<RustSupportedDocument> for JsValue {
+  fn from(document: RustSupportedDocument) -> Self {
+    match document {
+      RustSupportedDocument::Core(doc) => JsValue::from(WasmCoreDocument::from(doc)),
+      RustSupportedDocument::Stardust(doc) => JsValue::from(WasmStardustDocument(doc)),
     }
   }
 }
