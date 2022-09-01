@@ -328,7 +328,7 @@ impl<DOC: ValidatorDocument + Send + Sync + 'static> Resolver<DOC> {
     F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
     Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send,
     E: std::error::Error + Send + Sync + 'static,
-    DIDERR: std::error::Error + Send + Sync + 'static,
+    DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let command = SendSyncCommand::new(handler);
     self.command_map.insert(method, command);
@@ -387,7 +387,7 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
     F: Fn(D) -> Fut + 'static + Clone,
     Fut: Future<Output = std::result::Result<DOCUMENT, E>>,
     E: std::error::Error + Send + Sync + 'static,
-    DIDERR: std::error::Error + Send + Sync + 'static,
+    DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let command = SingleThreadedCommand::new(handler);
     self.command_map.insert(method, command);
