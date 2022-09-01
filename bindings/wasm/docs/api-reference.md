@@ -3627,26 +3627,21 @@ Deserializes an instance from a JSON object.
 **Kind**: global class  
 
 * [MixedResolver](#MixedResolver)
-    * [new MixedResolver()](#new_MixedResolver_new)
-    * [.attachHandler(method, handler)](#MixedResolver+attachHandler)
+    * [new MixedResolver(handlers)](#new_MixedResolver_new)
     * [.resolvePresentationIssuers(presentation)](#MixedResolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(StardustDocument\|CoreDocument)&gt;&gt;</code>
     * [.resolvePresentationHolder(presentation)](#MixedResolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(StardustDocument\|CoreDocument)&gt;</code>
+    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#MixedResolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.resolve(did)](#MixedResolver+resolve) ⇒ <code>Promise.&lt;(StardustDocument\|CoreDocument)&gt;</code>
 
 <a name="new_MixedResolver_new"></a>
 
-### new MixedResolver()
-Constructs a new [`MixedResolver`].
+### new MixedResolver(handlers)
+Constructs a new `MixedResolver`.
 
-<a name="MixedResolver+attachHandler"></a>
-
-### mixedResolver.attachHandler(method, handler)
-**Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
 
 | Param | Type |
 | --- | --- |
-| method | <code>string</code> | 
-| handler | <code>function</code> | 
+| handlers | <code>ResolutionHandlers</code> | 
 
 <a name="MixedResolver+resolvePresentationIssuers"></a>
 
@@ -3680,6 +3675,36 @@ DID resolution fails.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="MixedResolver+verifyPresentation"></a>
+
+### mixedResolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
+Verifies a `Presentation`.
+
+### Important
+See `PresentationValidator::validate` for information about which properties get
+validated and what is expected of the optional arguments `holder` and `issuer`.
+
+### Resolution
+The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+If you already have up-to-date versions of these DID Documents, you may want
+to use `PresentationValidator::validate`.
+See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
+
+### Errors
+Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+Otherwise, errors from validating the presentation and its credentials will be returned
+according to the `fail_fast` parameter.
+
+**Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
+| fail_fast | <code>number</code> | 
+| holder | [<code>StardustDocument</code>](#StardustDocument) \| [<code>CoreDocument</code>](#CoreDocument) \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(StardustDocument\|CoreDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="MixedResolver+resolve"></a>
 

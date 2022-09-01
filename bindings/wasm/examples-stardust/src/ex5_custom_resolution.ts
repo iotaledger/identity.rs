@@ -1,4 +1,4 @@
-import {StardustDocument, StardustDID, MixedResolver} from '../../node';
+import {StardustDocument, StardustDID, MixedResolver, ResolutionHandlers} from '../../node';
 import {createIdentity} from "./ex0_create_did";
 
 export async function customResolution() {
@@ -10,7 +10,7 @@ export async function customResolution() {
             return resolved;
         };
 
-        let handlerMap = new Map(); 
+        let handlerMap: ResolutionHandlers = new Map(); 
         handlerMap.set("iota", resolveDid);
 
         const resolver = new MixedResolver(handlerMap); 
@@ -19,6 +19,16 @@ export async function customResolution() {
         const output = await resolver.resolve(did.toString());
         console.log("The resolved DID document:", JSON.stringify(output, null, 2));
 
+        //@ts-ignore
+        const idOutput = output.id(); 
+
+        console.log("id is:", idOutput.toString()); 
+        
+        console.log("output type:", output.constructor.name); 
+        if (output instanceof StardustDocument) {
+            console.log("Got a stardust document"); 
+        }
+        
         console.log("after resolving");
 
         console.log("calling handler outside of the resolver");

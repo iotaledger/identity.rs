@@ -39,7 +39,7 @@ pub struct MixedResolver(Rc<SingleThreadedResolver>);
 
 #[wasm_bindgen(js_class = MixedResolver)]
 impl MixedResolver {
-  /// Constructs a new [`MixedResolver`].
+  /// Constructs a new `MixedResolver`.
   #[wasm_bindgen(constructor)]
   pub fn new(handlers: &MapResolutionHandler) -> Result<MixedResolver> {
     let mut resolver = SingleThreadedResolver::new();
