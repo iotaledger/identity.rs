@@ -69,56 +69,6 @@ pub mod did {
   pub use identity_did::verifiable;
 }
 
-pub mod client {
-  //! IOTA DID Tangle client and validators.
-
-  pub use identity_iota_client::chain::*;
-  pub use identity_iota_client::document::*;
-  pub use identity_iota_client::tangle::*;
-
-  pub use identity_iota_client::Error;
-  pub use identity_iota_client::Result;
-}
-
-pub mod iota_core {
-  //! IOTA Core Traits and Types definitions
-
-  pub use identity_iota_core::did::*;
-  pub use identity_iota_core::diff::*;
-  pub use identity_iota_core::document::*;
-  pub use identity_iota_core::tangle::*;
-
-  pub use identity_iota_core::Error;
-  pub use identity_iota_core::Result;
-
-  #[doc(inline)]
-  pub use identity_iota_core::try_construct_did;
-}
-
-#[cfg(feature = "account")]
-#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
-pub mod account {
-  //! Secure storage for Decentralized Identifiers
-
-  pub use identity_account::account::*;
-  pub use identity_account::error::*;
-  pub use identity_account::types::*;
-  pub use identity_account::updates::*;
-}
-
-#[cfg(feature = "account")]
-#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
-pub mod account_storage {
-  //! Storage Trait and Types definitions
-
-  pub use identity_account_storage::crypto::*;
-  pub use identity_account_storage::error::*;
-  pub use identity_account_storage::identity::*;
-  pub use identity_account_storage::storage::*;
-  pub use identity_account_storage::types::*;
-  pub use identity_account_storage::utils::*;
-}
-
 // #[cfg(feature = "comm")]
 // #[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
 // pub mod comm {
@@ -136,9 +86,6 @@ pub mod prelude {
 
   pub use identity_core::crypto::KeyPair;
   pub use identity_core::crypto::KeyType;
-  pub use identity_iota_client::tangle::Client;
-  pub use identity_iota_client::Result;
-  pub use identity_iota_core::document::IotaDocument;
 }
 
 #[cfg(feature = "unstable-agent")]
