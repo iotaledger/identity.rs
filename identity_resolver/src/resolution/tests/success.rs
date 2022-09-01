@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::convert::FromJson;
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::ProofOptions;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
@@ -19,24 +17,6 @@ use identity_stardust::StardustDocument;
 use serde::de::DeserializeOwned;
 
 use crate::Resolver;
-
-// VALID Setup: The private key of issuer did:iota:.., holder did:foo, issuer did:bar corresponds to the (hex decoding) of SECRET KEY in TEST 1, 2 and 3 of https://datatracker.ietf.org/doc/html/rfc8032#section-7 respectively.
-
-const HOLDER_PRIVATE_KEY: [u8; 32] = [
-  76, 205, 8, 155, 40, 255, 150, 218, 157, 182, 195, 70, 236, 17, 78, 15, 91, 138, 49, 159, 53, 171, 166, 36, 218, 140,
-  246, 237, 79, 184, 166, 251,
-];
-
-// Not used, but can be useful for maintenance purposes.
-const _ISSUER_IOTA_PRIVATE_KEY: [u8; 32] = [
-  157, 97, 177, 157, 239, 253, 90, 96, 186, 132, 74, 244, 146, 236, 44, 196, 68, 73, 197, 105, 123, 50, 105, 25, 112,
-  59, 172, 3, 28, 174, 127, 96,
-];
-
-const _ISSUER_BAR_PRIVATE_KEY: [u8; 32] = [
-  197, 170, 141, 244, 63, 159, 131, 123, 237, 183, 68, 47, 49, 220, 183, 177, 102, 211, 133, 53, 7, 111, 9, 75, 133,
-  206, 58, 46, 11, 68, 88, 247,
-];
 
 const HOLDER_DOC_JSON: &str = r#"{
     "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
@@ -81,63 +61,85 @@ const ISSUER_BAR_DOC: &str = r#"{
   }"#;
 
 const PRESENTATION_JSON: &str = r#"{
-    "@context": "https://www.w3.org/2018/credentials/v1",
-    "id": "https://example.org/credentials/3732",
-    "type": "VerifiablePresentation",
-    "verifiableCredential": [
-      {
-        "@context": "https://www.w3.org/2018/credentials/v1",
-        "id": "https://example.edu/credentials/3732",
-        "type": [
-          "VerifiableCredential",
-          "UniversityDegreeCredential"
-        ],
-        "credentialSubject": {
-          "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-          "GPA": "4.0",
-          "degree": {
-            "name": "Bachelor of Science and Arts",
-            "type": "BachelorDegree"
-          },
-          "name": "Alice"
+  "@context": "https://www.w3.org/2018/credentials/v1",
+  "id": "https://example.org/credentials/3732",
+  "type": "VerifiablePresentation",
+  "verifiableCredential": [
+    {
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "id": "https://example.edu/credentials/3732",
+      "type": [
+        "VerifiableCredential",
+        "UniversityDegreeCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+        "GPA": "4.0",
+        "degree": {
+          "name": "Bachelor of Science and Arts",
+          "type": "BachelorDegree"
         },
-        "issuer": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        "issuanceDate": "2022-08-31T08:35:44Z",
-        "expirationDate": "2050-09-01T08:35:44Z",
-        "proof": {
-          "type": "JcsEd25519Signature2020",
-          "verificationMethod": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#issuerKey",
-          "signatureValue": "3d2aAPqjzaSQ2XbFtqLsauv2Ukdn4Hcevz2grNuJn4q4JbBmDHZpAvekVG12A3ZKRRTeKaBPguxXqcDaqujckWWz"
-        }
+        "name": "Alice"
       },
-      {
-        "@context": "https://www.w3.org/2018/credentials/v1",
-        "id": "https://example.edu/credentials/3732",
-        "type": [
-          "VerifiableCredential",
-          "UniversityDegreeCredential"
-        ],
-        "credentialSubject": {
-          "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-          "GPA": "4.0",
-          "degree": {
-            "name": "Bachelor of Science and Arts",
-            "type": "BachelorDegree"
-          },
-          "name": "Alice"
+      "issuer": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "issuanceDate": "2022-08-31T08:35:44Z",
+      "expirationDate": "2050-09-01T08:35:44Z",
+      "proof": {
+        "type": "JcsEd25519Signature2020",
+        "verificationMethod": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#issuerKey",
+        "signatureValue": "3d2aAPqjzaSQ2XbFtqLsauv2Ukdn4Hcevz2grNuJn4q4JbBmDHZpAvekVG12A3ZKRRTeKaBPguxXqcDaqujckWWz"
+      }
+    },
+    {
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "id": "https://example.edu/credentials/3732",
+      "type": [
+        "VerifiableCredential",
+        "UniversityDegreeCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+        "GPA": "4.0",
+        "degree": {
+          "name": "Bachelor of Science and Arts",
+          "type": "BachelorDegree"
         },
-        "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-        "issuanceDate": "2022-08-31T08:35:44Z",
-        "expirationDate": "2050-09-01T08:35:44Z",
-        "proof": {
-          "type": "JcsEd25519Signature2020",
-          "verificationMethod": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr#root",
-          "signatureValue": "2iAYujqHLXP5csZzabdkfurpHaKT3Q8dnJDA4TL7pSJ7gjXLCb2tN7CF4ztKkCKmvY6VYG3pTuN1PeLGEFiQvuQr"
-        }
-      }      
-    ],
-    "holder": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5"
-  }"#;
+        "name": "Alice"
+      },
+      "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
+      "issuanceDate": "2022-08-31T08:35:44Z",
+      "expirationDate": "2050-09-01T08:35:44Z",
+      "proof": {
+        "type": "JcsEd25519Signature2020",
+        "verificationMethod": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr#root",
+        "signatureValue": "2iAYujqHLXP5csZzabdkfurpHaKT3Q8dnJDA4TL7pSJ7gjXLCb2tN7CF4ztKkCKmvY6VYG3pTuN1PeLGEFiQvuQr"
+      }
+    }
+  ],
+  "holder": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+  "proof": {
+    "type": "JcsEd25519Signature2020",
+    "verificationMethod": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5#root",
+    "signatureValue": "3tVeoKjftrEAQvV3MgpKgiydRHU6i8mYVRnPc6C85upo1TDBEdN94gyW1RzbgPESaZCGeDa582BxAUHVE4rVjaAd",
+    "challenge": "475a7984-1bb5-4c4c-a56f-822bccd46441"
+  }
+}"#;
+
+// Not used, but can be useful for maintenance purposes.
+const _HOLDER_PRIVATE_KEY: [u8; 32] = [
+  76, 205, 8, 155, 40, 255, 150, 218, 157, 182, 195, 70, 236, 17, 78, 15, 91, 138, 49, 159, 53, 171, 166, 36, 218, 140,
+  246, 237, 79, 184, 166, 251,
+];
+
+const _ISSUER_IOTA_PRIVATE_KEY: [u8; 32] = [
+  157, 97, 177, 157, 239, 253, 90, 96, 186, 132, 74, 244, 146, 236, 44, 196, 68, 73, 197, 105, 123, 50, 105, 25, 112,
+  59, 172, 3, 28, 174, 127, 96,
+];
+
+const _ISSUER_BAR_PRIVATE_KEY: [u8; 32] = [
+  197, 170, 141, 244, 63, 159, 131, 123, 237, 183, 68, 47, 49, 220, 183, 177, 102, 211, 133, 53, 7, 111, 9, 75, 133,
+  206, 58, 46, 11, 68, 88, 247,
+];
 
 // Setup mock handlers:
 #[derive(Debug, thiserror::Error)]
@@ -166,35 +168,15 @@ async fn resolve_bar(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
   resolve(did, ISSUER_BAR_DOC).await
 }
 
-// Signs the presentation with the holder's did document and a challenge.
-// Returns the signed presentation together with the challenge.
-fn signed_presentation() -> (Presentation, String) {
-  // deserialize the presentation and holder doc and sign the presentation with the holder's private key.
-  let mut presentation: Presentation = Presentation::from_json(PRESENTATION_JSON).unwrap();
-  let holder: CoreDocument = CoreDocument::from_json(HOLDER_DOC_JSON).unwrap();
-  let challenge: String = "475a7984-1bb5-4c4c-a56f-822bccd46441".to_owned();
-  holder
-    .signer(
-      KeyPair::try_from_private_key_bytes(identity_core::crypto::KeyType::Ed25519, &HOLDER_PRIVATE_KEY)
-        .unwrap()
-        .private(),
-    )
-    .options(ProofOptions::new().challenge(challenge.clone()))
-    .method(holder.methods().next().unwrap().id())
-    .sign(&mut presentation)
-    .unwrap();
-  (presentation, challenge)
-}
-
 async fn check_success_for_all_methods<DOC>(mut resolver: Resolver<DOC>)
 where
   DOC: ValidatorDocument + From<CoreDocument> + From<StardustDocument> + Send + Sync,
 {
+  let presentation: Presentation = Presentation::from_json(PRESENTATION_JSON).unwrap();
+
   resolver.attach_handler(StardustDID::METHOD.to_owned(), resolve_iota);
   resolver.attach_handler("foo".to_owned(), resolve_foo);
   resolver.attach_handler("bar".to_owned(), resolve_bar);
-
-  let (presentation, challenge): (Presentation, String) = signed_presentation();
 
   // resolve the DID documents of the presentation's holder and credential issuers.
   let holder_doc = resolver.resolve_presentation_holder(&presentation).await.unwrap();
@@ -210,7 +192,9 @@ where
         .verify_presentation(
           &presentation,
           &PresentationValidationOptions::new()
-            .presentation_verifier_options(VerifierOptions::new().challenge(challenge.clone()))
+            .presentation_verifier_options(
+              VerifierOptions::new().challenge(presentation.proof.clone().unwrap().challenge.unwrap())
+            )
             .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
           FailFast::FirstError,
           holder,
