@@ -18,12 +18,7 @@ identity_credential = { version = "=0.6.0", path = "../identity_credential", fea
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 
 [dev-dependencies]
-criterion = { version = "0.3" }
 tokio = { version = "1.17.0", features = ["full"] }
-
-[[bench]]
-name = "benchmark"
-harness = false
 
 [features]
 default = ["revocation-bitmap"]
