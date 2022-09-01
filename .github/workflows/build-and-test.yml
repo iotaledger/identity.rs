@@ -114,18 +114,18 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest --manifest-path ./examples_legacy/Cargo.toml | \
-          jq -r '.targets[].name' | \
-          parallel -k -j 4 --retries 3 cargo run --example {} --all-features --release
+          cargo metadata --format-version 1 --manifest-path ./examples_legacy/Cargo.toml | \
+          jq -r '.packages[] | select(.name == "examples_legacy") | .targets[].name'
+          parallel -k -j 4 --retries 3 ./target/release/examples/{}
 
       - name: Run Stardust Rust examples
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest --manifest-path ./examples/Cargo.toml | \
-          jq -r '.targets[].name' | \
+          cargo metadata --format-version 1 --manifest-path ./examples/Cargo.toml | \
+          jq -r '.packages[] | select(.name == "examples") | .targets[].name'
           awk '$1 ~ /[0-9].*/' | \
-          parallel -k -j 4 --retries 3 cargo run --manifest-path ./examples/Cargo.toml --example {} --all-features --release
+          parallel -k -j 4 --retries 3 ./target/release/examples/{}
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
