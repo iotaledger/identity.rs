@@ -21,7 +21,6 @@ identity_credential = { version = "=0.6.0", path = "../identity_credential", def
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_iota_client = { version = "=0.6.0", path = "../identity_iota_client", default-features = false }
 identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
-identity_resolver = { version = "=0.6.0", path = "../identity_resolver", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
@@ -54,7 +53,6 @@ revocation-bitmap = [
   "identity_account?/revocation-bitmap",
   "identity_iota_client/revocation-bitmap",
   "identity_credential/revocation-bitmap",
-  "identity_resolver/revocation-bitmap",
 ]
 
 # Enables encryption and decryption functionality.

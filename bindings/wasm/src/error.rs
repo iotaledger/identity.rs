@@ -160,14 +160,14 @@ impl<'a> Display for ErrorMessage<'a, identity_iota::client::Error> {
   }
 }
 
-impl<'a> Display for ErrorMessage<'a, identity_iota::resolver::Error> {
+impl<'a> Display for ErrorMessage<'a, identity_resolver::Error> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     error_chain_fmt(self.0, f)
   }
 }
 
-impl From<identity_iota::resolver::Error> for WasmError<'_> {
-  fn from(error: identity_iota::resolver::Error) -> Self {
+impl From<identity_resolver::Error> for WasmError<'_> {
+  fn from(error: identity_resolver::Error) -> Self {
     Self {
       name: Cow::Borrowed(error.error_cause().into()),
       message: Cow::Owned(ErrorMessage(&error).to_string()),

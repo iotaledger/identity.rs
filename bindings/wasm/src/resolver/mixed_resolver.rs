@@ -8,7 +8,7 @@ use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
-use identity_iota::resolver::SingleThreadedResolver;
+use identity_resolver::SingleThreadedResolver;
 use js_sys::Function;
 use js_sys::Map;
 use js_sys::Promise;
