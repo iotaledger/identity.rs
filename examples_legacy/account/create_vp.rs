@@ -6,12 +6,11 @@
 //!
 //! cargo run --example account_create_vp
 
-use identity_iota::account::Account;
-use identity_iota::account::AccountBuilder;
-use identity_iota::account::IdentitySetup;
-use identity_iota::account::MethodContent;
-use identity_iota::account::Result;
-use identity_iota::client::Resolver;
+use identity_account_legacy::account::Account;
+use identity_account_legacy::account::AccountBuilder;
+use identity_account_legacy::types::IdentitySetup;
+use identity_account_legacy::types::MethodContent;
+use identity_account_legacy::Result;
 use identity_iota::core::json;
 use identity_iota::core::Duration;
 use identity_iota::core::FromJson;
@@ -29,6 +28,7 @@ use identity_iota::credential::Subject;
 use identity_iota::credential::SubjectHolderRelationship;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifierOptions;
+use identity_iota_client_legacy::tangle::Resolver;
 
 #[tokio::main]
 async fn main() -> Result<()> {

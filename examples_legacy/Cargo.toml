@@ -5,7 +5,12 @@ edition = "2021"
 publish = false
 
 [dependencies]
+identity_account_legacy = { path = "../identity_account_legacy" }
+identity_account_storage_legacy = { path = "../identity_account_storage_legacy" }
+identity_credential = { path = "../identity_credential" }
 identity_iota = { path = "../identity_iota" }
+identity_iota_client_legacy = { path = "../identity_iota_client_legacy" }
+identity_iota_core_legacy = { path = "../identity_iota_core_legacy" }
 pretty_env_logger = { version = "0.4" }
 rand = { version = "0.8" }
 tokio = { version = "1.17.0", features = ["full"] }

@@ -5,13 +5,11 @@
 
 use std::path::PathBuf;
 
-use identity_iota::account::Account;
-use identity_iota::account::IdentitySetup;
-use identity_iota::account::MethodContent;
-use identity_iota::account::Result;
-use identity_iota::account_storage::Stronghold;
-use identity_iota::client::ExplorerUrl;
-use identity_iota::client::ResolvedIotaDocument;
+use identity_account_legacy::account::Account;
+use identity_account_legacy::types::IdentitySetup;
+use identity_account_legacy::types::MethodContent;
+use identity_account_legacy::Result;
+use identity_account_storage_legacy::stronghold::Stronghold;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
@@ -21,8 +19,10 @@ use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifierOptions;
 use identity_iota::did::DID;
-use identity_iota::iota_core::IotaDID;
 use identity_iota::prelude::*;
+use identity_iota_client_legacy::document::ResolvedIotaDocument;
+use identity_iota_client_legacy::tangle::ExplorerUrl;
+use identity_iota_core_legacy::did::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {
