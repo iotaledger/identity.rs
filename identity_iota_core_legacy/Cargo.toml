@@ -10,6 +10,7 @@ publish = false
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 description = "Core data structures for the IOTA DID Method."
+publish = false
 
 [dependencies]
 bee-message = { version = "0.1.6", default-features = false, features = ["serde"] }

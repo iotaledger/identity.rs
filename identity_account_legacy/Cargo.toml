@@ -10,6 +10,7 @@ publish = false
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 description = "High-level interface for managing IOTA DID Documents."
+publish = false
 
 [dependencies]
 identity_account_storage_legacy = { version = "=0.6.0", path = "../identity_account_storage_legacy", default-features = false }
