@@ -1,13 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account_storage::types::DIDType;
+use identity_account_storage_legacy::types::DIDType;
 use identity_did::did::CoreDID;
 use log::debug;
 use log::trace;
 
-use identity_account_storage::storage::Storage;
-use identity_account_storage::types::KeyLocation;
+use identity_account_storage_legacy::storage::Storage;
+use identity_account_storage_legacy::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;

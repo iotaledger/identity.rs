@@ -12,7 +12,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "High-level interface for managing IOTA DID Documents."
 
 [dependencies]
-identity_account_storage = { version = "=0.6.0", path = "../identity_account_storage", default-features = false }
+identity_account_storage_legacy = { version = "=0.6.0", path = "../identity_account_storage_legacy", default-features = false }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
@@ -47,10 +47,10 @@ tokio = { version = "1.17.0", default-features = false, features = [
 [features]
 default = ["stronghold", "send-sync-storage", "encryption", "revocation-bitmap"]
 mem-client = []
-stronghold = ["identity_account_storage/stronghold"]
-send-sync-storage = ["identity_account_storage/send-sync-storage"]
+stronghold = ["identity_account_storage_legacy/stronghold"]
+send-sync-storage = ["identity_account_storage_legacy/send-sync-storage"]
 # Enables encryption and decryption functionality.
-encryption = ["identity_account_storage/encryption"]
+encryption = ["identity_account_storage_legacy/encryption"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_iota_client_legacy/revocation-bitmap"]

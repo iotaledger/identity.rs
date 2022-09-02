@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account_storage::types::KeyLocation;
+use identity_account_storage_legacy::types::KeyLocation;
 use identity_did::verification::MethodType;
 
 /// Errors than may occur while processing an update in the [`Account`][crate::account::Account].

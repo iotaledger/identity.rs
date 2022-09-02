@@ -6,9 +6,9 @@ use std::sync::Arc;
 
 use futures::Future;
 
-use identity_account_storage::identity::ChainState;
-use identity_account_storage::storage::MemStore;
-use identity_account_storage::storage::Stronghold;
+use identity_account_storage_legacy::identity::ChainState;
+use identity_account_storage_legacy::storage::MemStore;
+use identity_account_storage_legacy::storage::Stronghold;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::ProofOptions;
