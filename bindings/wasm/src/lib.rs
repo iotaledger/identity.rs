@@ -28,8 +28,8 @@ pub mod common;
 pub mod crypto;
 pub mod did;
 pub mod error;
+pub mod iota;
 pub mod revocation;
-pub mod stardust;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

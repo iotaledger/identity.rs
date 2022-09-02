@@ -35,12 +35,12 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::stardust::WasmIotaDID;
-use crate::stardust::WasmIotaDIDUrl;
-use crate::stardust::WasmIotaDocumentMetadata;
-use crate::stardust::WasmIotaService;
-use crate::stardust::WasmIotaVerificationMethod;
-use crate::stardust::WasmStateMetadataEncoding;
+use crate::iota::WasmIotaDID;
+use crate::iota::WasmIotaDIDUrl;
+use crate::iota::WasmIotaDocumentMetadata;
+use crate::iota::WasmIotaService;
+use crate::iota::WasmIotaVerificationMethod;
+use crate::iota::WasmStateMetadataEncoding;
 
 // =============================================================================
 // =============================================================================

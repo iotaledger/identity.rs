@@ -10,8 +10,8 @@ use crate::did::WasmMethodData;
 use crate::did::WasmMethodType;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::stardust::WasmIotaDID;
-use crate::stardust::WasmIotaDIDUrl;
+use crate::iota::WasmIotaDID;
+use crate::iota::WasmIotaDIDUrl;
 
 #[wasm_bindgen(js_name = IotaVerificationMethod, inspectable)]
 pub struct WasmIotaVerificationMethod(pub(crate) IotaVerificationMethod);

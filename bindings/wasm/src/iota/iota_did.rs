@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::stardust::WasmIotaDIDUrl;
+use crate::iota::WasmIotaDIDUrl;
 
 /// A DID conforming to the IOTA UTXO DID method specification.
 ///

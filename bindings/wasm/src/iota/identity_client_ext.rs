@@ -16,9 +16,9 @@ use wasm_bindgen_futures::future_to_promise;
 
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::stardust::identity_client::WasmIotaIdentityClient;
-use crate::stardust::WasmIotaDID;
-use crate::stardust::WasmIotaDocument;
+use crate::iota::identity_client::WasmIotaIdentityClient;
+use crate::iota::WasmIotaDID;
+use crate::iota::WasmIotaDocument;
 
 // `IAliasOutput`, `AddressTypes`, and `IRent` are external interfaces.
 // See the custom TypeScript section in `identity_client.rs` for the first import statement.
