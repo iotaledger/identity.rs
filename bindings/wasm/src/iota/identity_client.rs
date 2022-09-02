@@ -98,7 +98,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const I_STARDUST_IDENTITY_CLIENT: &'static str = r#"
+const I_IOTA_IDENTITY_CLIENT: &'static str = r#"
 import type { IAliasOutput, IRent } from '@iota/types';
 /** Helper interface necessary for `IotaIdentityClientExt`. */
 interface IIotaIdentityClient {

@@ -8,7 +8,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDID;
 
-/// A DID URL conforming to the IOTA Stardust UTXO DID method specification.
+/// A DID URL conforming to the IOTA DID method specification.
 #[wasm_bindgen(js_name = IotaDIDUrl, inspectable)]
 pub struct WasmIotaDIDUrl(pub(crate) IotaDIDUrl);
 

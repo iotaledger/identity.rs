@@ -92,7 +92,7 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const I_STARDUST_SERVICE: &'static str = r#"
+const I_IOTA_SERVICE: &'static str = r#"
 /**
  * Holds options to create a new `IotaService`.
  */
