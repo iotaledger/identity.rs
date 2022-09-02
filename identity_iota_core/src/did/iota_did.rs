@@ -38,11 +38,11 @@ impl IotaDID {
   /// The URL scheme for Decentralized Identifiers.
   pub const SCHEME: &'static str = CoreDID::SCHEME;
 
-  /// The IOTA UTXO DID method name (`"iota"`).
+  /// The IOTA DID method name (`"iota"`).
   pub const METHOD: &'static str = "iota";
 
-  /// The default Tangle network (`"main"`).
-  pub const DEFAULT_NETWORK: &'static str = "main";
+  /// The default network name (`"iota"`).
+  pub const DEFAULT_NETWORK: &'static str = "iota";
 
   // The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
