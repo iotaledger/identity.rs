@@ -14,7 +14,7 @@ members = [
   "identity_iota_core_legacy",
   "identity_stardust",
 
-  # "examples_legacy",
+  "examples_legacy",
   "examples",
 ]
 
