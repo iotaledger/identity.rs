@@ -1,5 +1,5 @@
 [package]
-name = "identity_account_storage_legacy"
+name = "identity_account_storage"
 version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"

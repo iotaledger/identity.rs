@@ -45,7 +45,7 @@ runs:
       run: |
         cargo add identity_core@=${{ inputs.version }} --path=../../identity_core
         cargo add identity_iota_core_legacy@=${{ inputs.version }} --path=../../identity_iota_core_legacy
-        cargo add identity_account_storage_legacy@=${{ inputs.version }} --path=../../identity_account_storage_legacy
+        cargo add identity_account_storage@=${{ inputs.version }} --path=../../identity_account_storage
 
     - name: Bump Rust crate versions
       shell: bash
