@@ -29,21 +29,21 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::error::Result;
+use crate::IotaDID;
+use crate::IotaDIDUrl;
 use crate::NetworkName;
-use crate::StardustDID;
-use crate::StardustDIDUrl;
 use crate::StardustDocumentMetadata;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
 /// A [`VerificationMethod`] adhering to the IOTA UTXO DID method specification.
-pub type StardustVerificationMethod = VerificationMethod<StardustDID, Object>;
+pub type StardustVerificationMethod = VerificationMethod<IotaDID, Object>;
 
 /// A [`Service`] adhering to the IOTA UTXO DID method specification.
-pub type StardustService = Service<StardustDID, Object>;
+pub type StardustService = Service<IotaDID, Object>;
 
 /// A [`CoreDocument`] whose fields adhere to the IOTA UTXO DID method specification.
-pub type StardustCoreDocument = CoreDocument<StardustDID>;
+pub type StardustCoreDocument = CoreDocument<IotaDID>;
 
 /// A DID Document adhering to the IOTA UTXO DID method specification.
 ///
@@ -61,16 +61,16 @@ impl StardustDocument {
   // Constructors
   // ===========================================================================
 
-  /// Constructs an empty DID Document with a [`StardustDID::placeholder`] identifier
+  /// Constructs an empty DID Document with a [`IotaDID::placeholder`] identifier
   /// for the given `network`.
   // TODO: always take Option<NetworkName> or `new_with_options` for a particular network?
   // TODO: store the network in the serialized state metadata? Currently it's lost during packing.
   pub fn new(network: &NetworkName) -> Self {
-    Self::new_with_id(StardustDID::placeholder(network))
+    Self::new_with_id(IotaDID::placeholder(network))
   }
 
   /// Constructs an empty DID Document with the given identifier.
-  pub fn new_with_id(id: StardustDID) -> Self {
+  pub fn new_with_id(id: IotaDID) -> Self {
     // PANIC: constructing an empty DID Document is infallible, caught by tests otherwise.
     let document: StardustCoreDocument = CoreDocument::builder(Object::default())
       .id(id)
@@ -85,7 +85,7 @@ impl StardustDocument {
   // ===========================================================================
 
   /// Returns the DID document identifier.
-  pub fn id(&self) -> &StardustDID {
+  pub fn id(&self) -> &IotaDID {
     self.document.id()
   }
 
@@ -93,7 +93,7 @@ impl StardustDocument {
   ///
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
-  pub fn controller(&self) -> Option<&OneOrSet<StardustDID>> {
+  pub fn controller(&self) -> Option<&OneOrSet<IotaDID>> {
     self.document.controller()
   }
 
@@ -150,10 +150,10 @@ impl StardustDocument {
     }
   }
 
-  /// Remove a [`StardustService`] identified by the given [`StardustDIDUrl`] from the document.
+  /// Remove a [`StardustService`] identified by the given [`IotaDIDUrl`] from the document.
   ///
   /// Returns `true` if a service was removed.
-  pub fn remove_service(&mut self, did_url: &StardustDIDUrl) -> bool {
+  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
     self.core_document_mut().service_mut().remove(did_url)
   }
 
@@ -180,7 +180,7 @@ impl StardustDocument {
   /// # Errors
   ///
   /// Returns an error if the method does not exist.
-  pub fn remove_method(&mut self, did_url: &StardustDIDUrl) -> Result<()> {
+  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
     Ok(self.core_document_mut().remove_method(did_url)?)
   }
 
@@ -188,11 +188,7 @@ impl StardustDocument {
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
-  pub fn attach_method_relationship(
-    &mut self,
-    did_url: &StardustDIDUrl,
-    relationship: MethodRelationship,
-  ) -> Result<bool> {
+  pub fn attach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     Ok(
       self
         .core_document_mut()
@@ -201,11 +197,7 @@ impl StardustDocument {
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(
-    &mut self,
-    did_url: &StardustDIDUrl,
-    relationship: MethodRelationship,
-  ) -> Result<bool> {
+  pub fn detach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     Ok(
       self
         .core_document_mut()
@@ -235,7 +227,7 @@ impl StardustDocument {
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
   /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, StardustDID> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, IotaDID> {
     self.document.signer(private_key)
   }
 
@@ -291,7 +283,7 @@ impl StardustDocument {
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
-  pub fn unpack(did: &StardustDID, state_metadata: &[u8], allow_empty: bool) -> Result<StardustDocument> {
+  pub fn unpack(did: &IotaDID, state_metadata: &[u8], allow_empty: bool) -> Result<StardustDocument> {
     if state_metadata.is_empty() && allow_empty {
       let mut empty_document = StardustDocument::new_with_id(did.clone());
       empty_document.metadata.created = None;
@@ -346,7 +338,7 @@ mod client_document {
               alias_output.alias_id().to_owned()
             };
 
-            let did: StardustDID = StardustDID::new(alias_id.deref(), network);
+            let did: IotaDID = IotaDID::new(alias_id.deref(), network);
             documents.push(StardustDocument::unpack(&did, alias_output.state_metadata(), true)?);
           }
         }
@@ -358,7 +350,7 @@ mod client_document {
 }
 
 impl Document for StardustDocument {
-  type D = StardustDID;
+  type D = IotaDID;
   type U = Object;
   type V = Object;
 
@@ -464,13 +456,13 @@ mod tests {
 
   use super::*;
 
-  fn valid_did() -> StardustDID {
+  fn valid_did() -> IotaDID {
     "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       .parse()
       .unwrap()
   }
 
-  fn generate_method(controller: &StardustDID, fragment: &str) -> StardustVerificationMethod {
+  fn generate_method(controller: &IotaDID, fragment: &str) -> StardustVerificationMethod {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
@@ -480,7 +472,7 @@ mod tests {
       .unwrap()
   }
 
-  fn generate_document(id: &StardustDID) -> StardustDocument {
+  fn generate_document(id: &IotaDID) -> StardustDocument {
     let mut metadata: StardustDocumentMetadata = StardustDocumentMetadata::new();
     metadata.created = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
     metadata.updated = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
@@ -503,7 +495,7 @@ mod tests {
   fn test_new() {
     // VALID new().
     let network: NetworkName = NetworkName::try_from("test").unwrap();
-    let placeholder: StardustDID = StardustDID::placeholder(&network);
+    let placeholder: IotaDID = IotaDID::placeholder(&network);
     let doc1: StardustDocument = StardustDocument::new(&network);
     assert_eq!(doc1.id().network_str(), network.as_ref());
     assert_eq!(doc1.id().tag(), placeholder.tag());
@@ -512,7 +504,7 @@ mod tests {
     assert!(doc1.service().is_empty());
 
     // VALID new_with_id().
-    let did: StardustDID = valid_did();
+    let did: IotaDID = valid_did();
     let doc2: StardustDocument = StardustDocument::new_with_id(did.clone());
     assert_eq!(doc2.id(), &did);
     assert_eq!(doc2.methods().count(), 0);
@@ -521,7 +513,7 @@ mod tests {
 
   #[test]
   fn test_methods() {
-    let controller: StardustDID = valid_did();
+    let controller: IotaDID = valid_did();
     let document: StardustDocument = generate_document(&controller);
     let expected: Vec<StardustVerificationMethod> = vec![
       generate_method(&controller, "#key-1"),
@@ -611,7 +603,7 @@ mod tests {
   fn test_services() {
     // VALID: add one service.
     let mut document: StardustDocument = StardustDocument::new_with_id(valid_did());
-    let url1: StardustDIDUrl = document.id().to_url().join("#linked-domain").unwrap();
+    let url1: IotaDIDUrl = document.id().to_url().join("#linked-domain").unwrap();
     let service1: StardustService = Service::from_json(&format!(
       r#"{{
       "id":"{}",
@@ -630,7 +622,7 @@ mod tests {
     assert_eq!(document.resolve_service("#other"), None);
 
     // VALID: add two services.
-    let url2: StardustDIDUrl = document.id().to_url().join("#revocation").unwrap();
+    let url2: IotaDIDUrl = document.id().to_url().join("#revocation").unwrap();
     let service2: StardustService = Service::from_json(&format!(
       r#"{{
       "id":"{}",
@@ -721,7 +713,7 @@ mod tests {
   #[test]
   fn test_unpack_empty() {
     // VALID: unpack empty, deactivated document.
-    let did: StardustDID = valid_did();
+    let did: IotaDID = valid_did();
     let empty: &[u8] = &[];
     let document: StardustDocument = StardustDocument::unpack(&did, empty, true).unwrap();
     assert_eq!(document.id(), &did);

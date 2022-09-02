@@ -11,11 +11,11 @@ use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
 use identity_iota_core::block::output::AliasId;
 use identity_iota_core::block::output::UnlockCondition;
+use identity_iota_core::IotaClientExt;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustClientExt;
-use identity_iota_core::StardustDID;
 use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustIdentityClientExt;
 use identity_iota_core::StardustVerificationMethod;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the company.
-  let (_, company_did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, company_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Get the current byte costs and network name.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
@@ -131,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
   };
 
   // Reconstruct the company's DID from the Alias Id and the network.
-  let company_did = StardustDID::new(company_alias_id.deref(), &network_name);
+  let company_did = IotaDID::new(company_alias_id.deref(), &network_name);
 
   // Resolve the company's DID document.
   let company_document: StardustDocument = client.resolve_did(&company_did).await?;

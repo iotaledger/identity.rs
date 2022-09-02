@@ -12,11 +12,11 @@ use identity_did::verification::MethodScope;
 use identity_iota_core::block::address::Address;
 use identity_iota_core::block::output::AliasOutput;
 use identity_iota_core::block::output::RentStructure;
+use identity_iota_core::IotaClientExt;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustClientExt;
-use identity_iota_core::StardustDID;
 use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustIdentityClientExt;
 use identity_iota_core::StardustVerificationMethod;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // Alice creates and publishes their DID Document.
-  let (alice_did, alice_x25519): (StardustDID, KeyPair) = {
+  let (alice_did, alice_x25519): (IotaDID, KeyPair) = {
     // Create a DID Document.
     let mut alice_document: StardustDocument = StardustDocument::new(&network);
 
@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
   };
 
   // Bob creates and publishes their DID Document.
-  let (bob_did, bob_x25519): (StardustDID, KeyPair) = {
+  let (bob_did, bob_x25519): (IotaDID, KeyPair) = {
     // Create a DID Document.
     let mut bob_document: StardustDocument = StardustDocument::new(&network);
 

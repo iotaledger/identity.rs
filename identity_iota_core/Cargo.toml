@@ -42,9 +42,9 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["client", "iota-client", "revocation-bitmap"]
-# Exposes the `StardustIdentityClient` and `StardustIdentityClientExt` traits.
+# Exposes the `StardustIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["dep:async-trait", "dep:bee-block"]
-# Enables the iota-client dependency, the client trait implementations for it, and the `StardustClientExt` trait.
+# Enables the iota-client dependency, the client trait implementations for it, and the `IotaClientExt` trait.
 iota-client = ["dep:iota-client", "client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap"]

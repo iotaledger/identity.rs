@@ -24,14 +24,17 @@ tokio = { version = "1.17.0", features = ["full"] }
 [features]
 default = ["revocation-bitmap"]
 
-# Exposes the `StardustIdentityClient` and `StardustIdentityClientExt` traits.
+# Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
 
 # Enables the iota-client integration, the client trait implementations for it, and the `StardustClientExt` trait.
 iota-client = ["identity_iota_core/iota-client"]
 
 # Enables revocation with `RevocationBitmap2022`.
-revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core/revocation-bitmap"]
+revocation-bitmap = [
+  "identity_credential/revocation-bitmap",
+  "identity_iota_core/revocation-bitmap",
+]
 
 # Enables support for the unstable identity agent.
 # Breaking changes to types and functions behind this flag are not covered by semver.

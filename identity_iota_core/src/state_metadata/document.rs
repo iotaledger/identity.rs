@@ -11,8 +11,8 @@ use serde::Serialize;
 
 use crate::error::Result;
 use crate::Error;
+use crate::IotaDID;
 use crate::StardustCoreDocument;
-use crate::StardustDID;
 use crate::StardustDocument;
 use crate::StardustDocumentMetadata;
 
@@ -38,7 +38,7 @@ pub(crate) struct StateMetadataDocument {
 
 impl StateMetadataDocument {
   /// Transforms the document into a [`StardustDocument`] by replacing all placeholders with `original_did`.
-  pub fn into_stardust_document(self, original_did: &StardustDID) -> Result<StardustDocument> {
+  pub fn into_stardust_document(self, original_did: &IotaDID) -> Result<StardustDocument> {
     let Self { document, metadata } = self;
     let core_document: StardustCoreDocument = document.try_map(
       // Replace placeholder identifiers.
@@ -47,7 +47,7 @@ impl StateMetadataDocument {
           Ok(original_did.clone())
         } else {
           // TODO: wrap error?
-          StardustDID::try_from_core(did)
+          IotaDID::try_from_core(did)
         }
       },
       // Do not modify properties.
@@ -120,7 +120,7 @@ impl From<StardustDocument> for StateMetadataDocument {
   /// occurrences of its did with a placeholder.
   fn from(document: StardustDocument) -> Self {
     let StardustDocument { document, metadata } = document;
-    let id: StardustDID = document.id().clone();
+    let id: IotaDID = document.id().clone();
     let core_document: CoreDocument = document.map(
       // Replace self-referential identifiers with a placeholder, but not others.
       |did| {
@@ -152,7 +152,7 @@ mod tests {
 
   use crate::state_metadata::document::DID_MARKER;
   use crate::state_metadata::PLACEHOLDER_DID;
-  use crate::StardustDID;
+  use crate::IotaDID;
   use crate::StardustDocument;
   use crate::StardustService;
   use crate::StardustVerificationMethod;
@@ -162,15 +162,15 @@ mod tests {
 
   struct TestSetup {
     document: StardustDocument,
-    did_self: StardustDID,
-    did_foreign: StardustDID,
+    did_self: IotaDID,
+    did_foreign: IotaDID,
   }
 
   fn test_document() -> TestSetup {
     let did_self =
-      StardustDID::parse("did:iota:0x8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
+      IotaDID::parse("did:iota:0x8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
     let did_foreign =
-      StardustDID::parse("did:iota:0x71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
+      IotaDID::parse("did:iota:0x71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
 
     let mut document: StardustDocument = StardustDocument::new_with_id(did_self.clone());
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();

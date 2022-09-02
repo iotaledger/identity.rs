@@ -12,8 +12,8 @@ pub use iota_client::block;
 
 #[cfg(feature = "client")]
 pub use client::*;
-pub use did::StardustDID;
-pub use did::StardustDIDUrl;
+pub use did::IotaDID;
+pub use did::IotaDIDUrl;
 pub use document::*;
 pub use network::NetworkName;
 pub(crate) use state_metadata::*;

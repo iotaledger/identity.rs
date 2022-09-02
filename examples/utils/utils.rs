@@ -5,11 +5,11 @@ use anyhow::Context;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
+use identity_iota_core::IotaClientExt;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustClientExt;
-use identity_iota_core::StardustDID;
 use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustIdentityClientExt;
 use identity_iota_core::StardustVerificationMethod;
 
 use iota_client::block::address::Address;
@@ -28,7 +28,7 @@ pub static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueu
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<(Address, StardustDID)> {
+pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<(Address, IotaDID)> {
   let address: Address = get_address_with_funds(client, secret_manager)
     .await
     .context("failed to get address with funds")?;

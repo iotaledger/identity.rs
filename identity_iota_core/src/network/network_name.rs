@@ -15,7 +15,7 @@ use serde::Serialize;
 use crate::error::Error;
 use crate::error::Result;
 
-/// Network name compliant with the [`crate::StardustDID`] method specification.
+/// Network name compliant with the [`crate::IotaDID`] method specification.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct NetworkName(Cow<'static, str>);

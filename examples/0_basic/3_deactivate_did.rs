@@ -5,10 +5,10 @@ use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
 use identity_iota_core::block::address::Address;
-use identity_iota_core::StardustClientExt;
-use identity_iota_core::StardustDID;
+use identity_iota_core::IotaClientExt;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustIdentityClientExt;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the latest state of the DID document, so we can reactivate it later.
   let document: StardustDocument = client.resolve_did(&did).await?;

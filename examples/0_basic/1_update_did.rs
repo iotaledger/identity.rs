@@ -12,10 +12,10 @@ use identity_did::service::Service;
 use identity_did::verification::MethodRelationship;
 use identity_iota_core::block::address::Address;
 use identity_iota_core::block::output::RentStructure;
-use identity_iota_core::StardustClientExt;
-use identity_iota_core::StardustDID;
+use identity_iota_core::IotaClientExt;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustIdentityClientExt;
 use identity_iota_core::StardustService;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
@@ -37,7 +37,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the latest state of the document.
   let mut document: StardustDocument = client.resolve_did(&did).await?;

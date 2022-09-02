@@ -15,10 +15,10 @@ use identity_iota_core::block::output::BasicOutput;
 use identity_iota_core::block::output::BasicOutputBuilder;
 use identity_iota_core::block::output::Output;
 use identity_iota_core::block::output::OutputId;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustDID;
 use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustIdentityClientExt;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new DID for the authority.
 
-  let (_, authority_did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, authority_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
@@ -135,7 +135,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Reconstruct the DID of the authority.
   let network: NetworkName = client.network_name().await?;
-  let authority_did: StardustDID = StardustDID::new(authority_alias_id.deref(), &network);
+  let authority_did: IotaDID = IotaDID::new(authority_alias_id.deref(), &network);
 
   // Resolve the authority's DID document.
   let authority_document: StardustDocument = client.resolve_did(&authority_did).await?;

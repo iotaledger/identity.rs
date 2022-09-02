@@ -13,14 +13,14 @@ use crate::block::output::OutputId;
 use crate::block::output::RentStructure;
 use crate::block::output::UnlockCondition;
 use crate::Error;
+use crate::IotaDID;
 use crate::NetworkName;
 use crate::Result;
-use crate::StardustDID;
 use crate::StardustDocument;
 
-/// Helper functions necessary for the [`StardustIdentityClientExt`] trait.
-#[async_trait::async_trait(? Send)]
-pub trait StardustIdentityClient {
+/// Helper functions necessary for the [`IotaIdentityClientExt`] trait.
+#[async_trait::async_trait(?Send)]
+pub trait IotaIdentityClient {
   /// Return the Bech32 human-readable part (HRP) of the network.
   ///
   /// E.g. "iota", "atoi", "smr", "rms".
@@ -37,9 +37,9 @@ pub trait StardustIdentityClient {
 /// and resolution of DID documents in Alias Outputs.
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
-/// provided for [`StardustIdentityClient`] implementers.
-#[async_trait::async_trait(? Send)]
-pub trait StardustIdentityClientExt: StardustIdentityClient {
+/// provided for [`IotaIdentityClient`] implementers.
+#[async_trait::async_trait(?Send)]
+pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// Create a DID with a new Alias Output containing the given `document`.
   ///
   /// The `address` will be set as the state controller and governor unlock conditions.
@@ -117,7 +117,7 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   /// # Errors
   ///
   /// Returns `Err` when failing to resolve the `did`.
-  async fn deactivate_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
+  async fn deactivate_did_output(&self, did: &IotaDID) -> Result<AliasOutput> {
     let alias_id: AliasId = AliasId::from(did);
     let (_, alias_output) = self.get_alias_output(alias_id).await?;
 
@@ -139,7 +139,7 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
   /// - [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output was not found.
-  async fn resolve_did(&self, did: &StardustDID) -> Result<StardustDocument> {
+  async fn resolve_did(&self, did: &IotaDID) -> Result<StardustDocument> {
     validate_network(self, did).await?;
 
     let id: AliasId = AliasId::from(did);
@@ -155,7 +155,7 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
   /// - [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output was not found.
-  async fn resolve_did_output(&self, did: &StardustDID) -> Result<AliasOutput> {
+  async fn resolve_did_output(&self, did: &IotaDID) -> Result<AliasOutput> {
     validate_network(self, did).await?;
 
     let id: AliasId = AliasId::from(did);
@@ -171,11 +171,11 @@ pub trait StardustIdentityClientExt: StardustIdentityClient {
   }
 }
 
-impl<T> StardustIdentityClientExt for T where T: StardustIdentityClient {}
+impl<T> IotaIdentityClientExt for T where T: IotaIdentityClient {}
 
-pub(super) async fn validate_network<T>(client: &T, did: &StardustDID) -> Result<()>
+pub(super) async fn validate_network<T>(client: &T, did: &IotaDID) -> Result<()>
 where
-  T: StardustIdentityClient + ?Sized,
+  T: IotaIdentityClient + ?Sized,
 {
   let network_hrp: String = client.get_network_hrp().await?;
   if did.network_str() != network_hrp.as_str() {

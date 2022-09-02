@@ -18,16 +18,16 @@ use crate::block::Block;
 use crate::client::identity_client::validate_network;
 use crate::error::Result;
 use crate::Error;
+use crate::IotaDID;
+use crate::IotaIdentityClient;
+use crate::IotaIdentityClientExt;
 use crate::NetworkName;
-use crate::StardustDID;
 use crate::StardustDocument;
-use crate::StardustIdentityClient;
-use crate::StardustIdentityClientExt;
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
 #[async_trait::async_trait(?Send)]
-pub trait StardustClientExt: StardustIdentityClient {
+pub trait IotaClientExt: IotaIdentityClient {
   /// Publish the given `alias_output` with the provided `secret_manager`, and returns
   /// the DID document extracted from the published block.
   ///
@@ -50,13 +50,13 @@ pub trait StardustClientExt: StardustIdentityClient {
   /// # WARNING
   ///
   /// This destroys the Alias Output and DID document, rendering them permanently unrecoverable.
-  async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()>;
+  async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &IotaDID) -> Result<()>;
 }
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
 #[async_trait::async_trait(?Send)]
-impl StardustClientExt for Client {
+impl IotaClientExt for Client {
   async fn publish_did_output(
     &self,
     secret_manager: &SecretManager,
@@ -76,7 +76,7 @@ impl StardustClientExt for Client {
       ))
   }
 
-  async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &StardustDID) -> Result<()> {
+  async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &IotaDID) -> Result<()> {
     validate_network(self, did).await?;
 
     let alias_id: AliasId = AliasId::from(did);
@@ -109,7 +109,7 @@ impl StardustClientExt for Client {
 }
 
 #[async_trait::async_trait(?Send)]
-impl StardustIdentityClient for Client {
+impl IotaIdentityClient for Client {
   async fn get_network_hrp(&self) -> Result<String> {
     self.get_bech32_hrp().await.map_err(Error::DIDResolutionError)
   }
