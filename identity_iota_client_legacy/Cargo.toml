@@ -6,10 +6,10 @@ edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "did"]
 license = "Apache-2.0"
+publish = false
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 description = "Tangle Client integration for the IOTA DID Method."
-publish = false
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
