@@ -4,8 +4,8 @@
 use std::sync::Arc;
 
 use dashmap::DashMap;
-use identity_account::account::Account;
-use identity_account::account::AccountBuilder;
+use identity_account_legacy::account::AccountBuilder;
+use identity_account_legacy::account::Account;
 use identity_iota_core_legacy::did::IotaDID;
 use identity_iota_core_legacy::document::IotaDocument;
 use tokio::sync::Mutex;
@@ -54,7 +54,7 @@ impl Handler<IdentityGet> for RemoteAccount {
 }
 
 impl RemoteAccount {
-  pub(crate) fn new() -> identity_account::Result<Self> {
+  pub(crate) fn new() -> identity_account_legacy::Result<Self> {
     let builder: AccountBuilder = Account::builder().autopublish(false);
 
     Ok(Self {
