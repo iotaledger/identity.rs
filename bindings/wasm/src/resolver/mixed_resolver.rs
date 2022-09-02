@@ -9,6 +9,8 @@ use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_resolver::SingleThreadedResolver;
+use identity_stardust::StardustDID;
+use identity_stardust::StardustDocument;
 use js_sys::Function;
 use js_sys::Map;
 use js_sys::Promise;
@@ -20,10 +22,12 @@ use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
-use crate::resolver::constructor_input::OptionMapResolutionHandler;
+use crate::resolver::constructor_input::OptionWasmStardustIdentityClient;
+use crate::resolver::constructor_input::ResolverConfig;
 use crate::resolver::supported_document_types::OptionArraySupportedDocument;
 use crate::resolver::supported_document_types::OptionSupportedDocument;
 use crate::resolver::supported_document_types::RustSupportedDocument;
+use crate::stardust::WasmStardustDID;
 
 use super::supported_document_types::PromiseArraySupportedDocument;
 use super::supported_document_types::PromiseSupportedDocument;
@@ -39,32 +43,82 @@ pub struct MixedResolver(Rc<SingleThreadedResolver>);
 #[wasm_bindgen(js_class = MixedResolver)]
 impl MixedResolver {
   /// Constructs a new `MixedResolver`.
+  ///
+  /// # Errors
+  /// If both a `client` is given and the `handlers` map contains the "iota" key the construction process
+  /// will throw an error as it is then ambiguous what should be .
   #[wasm_bindgen(constructor)]
-  pub fn new(handlers: &OptionMapResolutionHandler) -> Result<MixedResolver> {
+  pub fn new(config: ResolverConfig) -> Result<MixedResolver> {
     let mut resolver = SingleThreadedResolver::new();
-    if !handlers.is_undefined() {
-      let map: &Map = handlers
-        .dyn_ref::<js_sys::Map>()
-        .ok_or("could not construct resolver: the constructor did not receive a map of asynchronous functions")?;
-      Self::attach_handlers(&mut resolver, map)?;
+
+    let mut attached_iota_method = false;
+    let resolution_handlers = config.handlers();
+    let client = config.client();
+
+    if let Some(handlers) = resolution_handlers {
+      let map: &Map = handlers.dyn_ref::<js_sys::Map>().ok_or(WasmError::new(
+        "ResolverError::ConstructionError".into(),
+        "could not construct resolver: the constructor did not receive a map of asynchronous functions".into(),
+      ))?;
+      Self::attach_handlers(&mut resolver, map, &mut attached_iota_method)?;
+    }
+
+    if !client.is_undefined() {
+      if attached_iota_method {
+        Err(WasmError::new(
+          "ResolverError::ConstructionError".into(),
+          "could not construct resolver: cannot attach the iota method twice".into(),
+        ))?;
+      }
+
+      let ref_counted_client = Rc::new(client);
+      let handler = move |did: StardustDID| {
+        let delegate = ref_counted_client.clone();
+        async move { Self::client_as_handler(delegate.as_ref(), did.into()).await }
+      };
+      resolver.attach_handler(StardustDID::METHOD.to_owned(), handler);
     }
     Ok(Self(Rc::new(resolver)))
   }
 
+  pub(crate) async fn client_as_handler(
+    unwrapped_client: &OptionWasmStardustIdentityClient,
+    did: WasmStardustDID,
+  ) -> std::result::Result<StardustDocument, String> {
+    let closure_output_promise: Promise = Promise::resolve(&unwrapped_client.resolve_did(did.into()).into());
+    let awaited_output = JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
+
+    let document: StardustDocument = awaited_output.into_serde().map_err(|error| {
+      format!(
+        "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
+        error.to_string()
+      )
+    })?;
+    Ok(document)
+  }
+
   /// attempts to extract (method, handler) pairs from the entries of a map and attaches them to the resolver.
-  fn attach_handlers(resolver: &mut SingleThreadedResolver, map: &Map) -> Result<()> {
+  fn attach_handlers(resolver: &mut SingleThreadedResolver, map: &Map, attached_iota_method: &mut bool) -> Result<()> {
     for key in map.keys() {
       if let Ok(mthd) = key {
         let fun = map.get(&mthd);
-        let method: String = mthd
-          .as_string()
-          .ok_or("could not construct resolver: the handler map contains a key which is not a string")?;
+        let method: String = mthd.as_string().ok_or(WasmError::new(
+          "ResolverError::ConstructionError".into(),
+          "could not construct resolver: the handler map contains a key which is not a string".into(),
+        ))?;
         let handler: Function = fun
           .dyn_into::<Function>()
           .map_err(|_| "could not construct resolver: the handler map contains a value which is not a function")?;
+        if method == StardustDID::METHOD {
+          *attached_iota_method = true;
+        }
         MixedResolver::attach_handler(resolver, method, handler);
       } else {
-        Err("could not construct resolver: invalid constructor arguments. Expected a map of asynchronous functions")?;
+        Err(WasmError::new(
+          "ResolverError::ConstructionError".into(),
+          "could not construct resolver: invalid constructor arguments. Expected a map of asynchronous functions"
+            .into(),
+        ))?;
       }
     }
 

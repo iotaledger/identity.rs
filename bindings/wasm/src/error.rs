@@ -169,7 +169,7 @@ impl<'a> Display for ErrorMessage<'a, identity_resolver::Error> {
 impl From<identity_resolver::Error> for WasmError<'_> {
   fn from(error: identity_resolver::Error) -> Self {
     Self {
-      name: Cow::Borrowed(error.error_cause().into()),
+      name: Cow::Owned(format!("ResolverError::{}", <&'static str>::from(error.error_cause()))),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
