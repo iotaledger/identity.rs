@@ -11,9 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
 
 [dependencies]
-anyhow = { version = "1.0", default-features = false, features = [
-  "std",
-], optional = true }
+anyhow = { version = "1.0", default-features = false, features = ["std"], optional = true }
 async-trait = { version = "0.1", default-features = false }
 function_name = { version = "0.2", default-features = false, optional = true }
 futures = { version = "0.3", optional = true }
@@ -21,48 +19,20 @@ hashbrown = { version = "0.11", features = ["serde"] }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_iota_core_legacy = { version = "=0.6.0", path = "../identity_iota_core_legacy", default-features = false }
-iota-crypto = { version = "0.12.1", default-features = false, features = [
-  "hmac",
-  "pbkdf",
-  "sha",
-  "std",
-  "aes-gcm",
-  "aes-kw",
-] }
-iota_stronghold = { version = "0.6.4", default-features = false, features = [
-  "std",
-], optional = true }
-once_cell = { version = "1.7", default-features = false, features = [
-  "std",
-], optional = true }
-rand = { version = "0.8", default-features = false, features = [
-  "std",
-  "std_rng",
-], optional = true }
+iota-crypto = { version = "0.12.1", default-features = false, features = ["hmac", "pbkdf", "sha", "std", "aes-gcm", "aes-kw"] }
+iota_stronghold = { version = "0.6.4", default-features = false, features = ["std"], optional = true }
+once_cell = { version = "1.7", default-features = false, features = ["std"], optional = true }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default-features = false }
-serde = { version = "1.0", default-features = false, features = [
-  "alloc",
-  "derive",
-] }
-strum = { version = "0.24.0", default-features = false, features = [
-  "std",
-  "derive",
-] }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
-tokio = { version = "1.17.0", default-features = false, features = [
-  "sync",
-  "fs",
-], optional = true }
+tokio = { version = "1.17.0", default-features = false, features = ["sync", "fs"], optional = true }
 zeroize = { version = "1.4" }
 
 [dev-dependencies]
 rusty-fork = { version = "0.3" }
-tokio = { version = "1.17.0", default-features = false, features = [
-  "macros",
-  "rt",
-  "rt-multi-thread",
-  "sync",
-] }
+tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
 default = [

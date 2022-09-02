@@ -7,23 +7,12 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-identity_account_storage = { version = "=0.6.0", path = "../../identity_account_storage_legacy", default-features = false, features = [
-  "stronghold",
-  "send-sync-storage",
-  "encryption",
-] }
+identity_account_storage = { version = "=0.6.0", path = "../../identity_account_storage_legacy", default-features = false, features = ["stronghold", "send-sync-storage", "encryption"] }
 identity_core = { version = "=0.6.0", path = "../../identity_core", default-features = false }
 identity_did = { version = "=0.6.0", path = "../../identity_did", default-features = false }
 identity_iota_core = { version = "=0.6.0", path = "../../identity_iota_core", default-features = false }
-napi = { version = "2.4.3", default-features = false, features = [
-  "napi4",
-  "tokio_rt",
-  "serde-json",
-] }
-napi-derive = { version = "2.4.1", default-features = false, features = [
-  "compat-mode",
-  "full",
-] }
+napi = { version = "2.4.3", default-features = false, features = ["napi4", "tokio_rt", "serde-json"] }
+napi-derive = { version = "2.4.1", default-features = false, features = ["compat-mode", "full"] }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 
