@@ -229,35 +229,17 @@ impl From<UpdateError> for WasmError<'_> {
   }
 }
 
-// Convenience struct wrapping an error represented as a string.
-// Implements std::error::Error.
-#[derive(Debug)]
-pub(crate) struct ErrorString(pub(crate) String);
-impl std::fmt::Display for ErrorString {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
-impl std::error::Error for ErrorString {}
-impl From<ErrorString> for String {
-  fn from(error_string: ErrorString) -> Self {
-    error_string.0
-  }
-}
 /// Convenience struct to convert Result<JsValue, JsValue> to
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
   /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
   pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
-    self
-      .stringify_error()
-      .map_err(String::from)
-      .map_err(AccountStorageError::JsError)
+    self.stringify_error().map_err(AccountStorageError::JsError)
   }
 
-  // Consumes the struct and returns a Result<_, ErrorString>, leaving an `Ok` value untouched.
-  pub(crate) fn stringify_error(self) -> StdResult<JsValue, ErrorString> {
+  // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
+  pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
     self.0.map_err(|js_value| {
       let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
         Ok(js_err) => ToString::to_string(&js_err.to_string()),
@@ -266,16 +248,13 @@ impl JsValueResult {
           format!("{js_val:?}")
         }
       };
-      ErrorString(error_string)
+      error_string
     })
   }
 
   /// Consumes the struct and returns a Result<_, identity_stardust::Error>, leaving an `Ok` value untouched.
   pub fn to_stardust_error(self) -> StdResult<JsValue, identity_stardust::Error> {
-    self
-      .stringify_error()
-      .map_err(String::from)
-      .map_err(identity_stardust::Error::JsError)
+    self.stringify_error().map_err(identity_stardust::Error::JsError)
   }
 }
 

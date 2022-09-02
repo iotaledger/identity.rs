@@ -18,7 +18,6 @@ use crate::common::PromiseVoid;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::error::ErrorString;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::resolver::supported_document_types::ArraySupportedDocument;
@@ -45,7 +44,7 @@ impl MixedResolver {
     let mut resolver = SingleThreadedResolver::new();
     let map: &Map = handlers
       .dyn_ref::<js_sys::Map>()
-      .ok_or_else(|| "could not construct resolver: expected a map of asynchronous functions")?;
+      .ok_or("could not construct resolver: the constructor did not receive a map of asynchronous functions")?;
 
     for key in map.keys() {
       if let Ok(mthd) = key {
@@ -57,6 +56,8 @@ impl MixedResolver {
           .dyn_into::<Function>()
           .map_err(|_| "could not construct resolver: the handler map contains a value which is not a function")?;
         MixedResolver::attach_handler(&mut resolver, method, handler);
+      } else {
+        Err("could not construct resolver: invalid constructor arguments. Expected a map of asynchronous functions")?;
       }
     }
     Ok(Self(Rc::new(resolver)))
@@ -73,12 +74,12 @@ impl MixedResolver {
         let awaited_output = JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
 
         let supported_document: RustSupportedDocument = awaited_output.into_serde().map_err(|error| {
-          ErrorString(format!(
+          format!(
             "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
             error.to_string()
-          ))
+          )
         })?;
-        std::result::Result::<_, ErrorString>::Ok(AbstractValidatorDocument::from(supported_document))
+        std::result::Result::<_, String>::Ok(AbstractValidatorDocument::from(supported_document))
       }
     };
     resolver.attach_handler(method, fun);

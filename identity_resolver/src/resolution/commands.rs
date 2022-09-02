@@ -57,7 +57,7 @@ impl<DOC: ValidatorDocument + Send + Sync + 'static> SendSyncCommand<DOC> {
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
     Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send,
-    E: std::error::Error + Send + Sync + 'static,
+    E: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
     DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let fun: SendSyncCallback<DOC> = Box::new(move |input: &str| {
@@ -105,7 +105,7 @@ impl<DOC: ValidatorDocument + 'static> SingleThreadedCommand<DOC> {
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone,
     Fut: Future<Output = std::result::Result<DOCUMENT, E>>,
-    E: std::error::Error + Send + Sync + 'static,
+    E: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
     DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let fun: SingleThreadedCallback<DOC> = Box::new(move |input: &str| {

@@ -48,7 +48,7 @@ impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
           RustSupportedDocument::Stardust(*doc)
         } else {
           Err(WasmError::new(
-            "ResolutionError".into(),
+            "CastingError".into(),
             "Failed to cast the resolved did output to the required document type".into(),
           ))?
         }
