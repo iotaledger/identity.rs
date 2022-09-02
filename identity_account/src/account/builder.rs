@@ -8,7 +8,7 @@ use identity_account_storage::storage::Storage;
 use identity_iota_client::tangle::Client;
 use identity_iota_client::tangle::ClientBuilder;
 use identity_iota_client::tangle::SharedPtr;
-use identity_iota_core::did::IotaDID;
+use identity_iota_core_legacy::did::IotaDID;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -100,7 +100,7 @@ where
     }
   }
 
-  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core::tangle::Network]
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core_legacy::tangle::Network]
   /// used by the identity.
   /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///
@@ -113,7 +113,7 @@ where
     self
   }
 
-  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core::tangle::Network]
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core_legacy::tangle::Network]
   /// used by the identity.
   /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///

@@ -5,7 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 use std::time::Duration;
 
-use identity_iota_core::tangle::Network;
+use identity_iota_core_legacy::tangle::Network;
 
 use crate::error::Result;
 use crate::tangle::Client;

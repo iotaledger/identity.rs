@@ -5,9 +5,9 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_iota_core::tangle::Message;
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::Network;
+use identity_iota_core_legacy::tangle::Message;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::Network;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Receipt {

@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 use identity_core::common::Url;
 use identity_did::did::DID;
-use identity_iota_core::tangle::MessageId;
+use identity_iota_core_legacy::tangle::MessageId;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -29,7 +29,7 @@ lazy_static::lazy_static! {
 /// # Example
 ///
 /// ```
-/// # use identity_iota_core::did::IotaDID;
+/// # use identity_iota_core_legacy::did::IotaDID;
 /// # use identity_iota_client::tangle::ExplorerUrl;
 /// let explorer = ExplorerUrl::mainnet();
 /// let did = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV")?;
@@ -152,7 +152,7 @@ impl Display for ExplorerUrl {
 
 #[cfg(test)]
 mod tests {
-  use identity_iota_core::did::IotaDID;
+  use identity_iota_core_legacy::did::IotaDID;
 
   use super::*;
 

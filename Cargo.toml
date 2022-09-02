@@ -11,10 +11,10 @@ members = [
   "identity_diff",
   "identity_iota",
   "identity_iota_client",
-  "identity_iota_core",
+  "identity_iota_core_legacy",
   "identity_stardust",
 
-  "examples_legacy",
+  # "examples_legacy",
   "examples",
 ]
 

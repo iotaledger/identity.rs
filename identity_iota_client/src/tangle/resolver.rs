@@ -14,10 +14,10 @@ use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::tangle::NetworkName;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::tangle::NetworkName;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
@@ -47,7 +47,7 @@ where
   C: SharedPtr<Client>,
 {
   /// Constructs a new [`Resolver`] with a default [`Client`] for
-  /// the [`Mainnet`](identity_iota_core::tangle::Network::Mainnet).
+  /// the [`Mainnet`](identity_iota_core_legacy::tangle::Network::Mainnet).
   ///
   /// See also [`Resolver::builder`].
   pub async fn new() -> Result<Self> {
@@ -292,8 +292,8 @@ mod tests {
   use identity_did::document::CoreDocument;
   use identity_did::verifiable::VerifierOptions;
   use identity_did::verification::VerificationMethod;
-  use identity_iota_core::document::IotaDocument;
-  use identity_iota_core::tangle::Network;
+  use identity_iota_core_legacy::document::IotaDocument;
+  use identity_iota_core_legacy::tangle::Network;
 
   use super::*;
 

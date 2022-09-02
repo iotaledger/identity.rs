@@ -8,7 +8,7 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use std::collections::HashMap;
 
-use identity_iota_core::tangle::MessageId;
+use identity_iota_core_legacy::tangle::MessageId;
 
 use crate::tangle::TangleRef;
 
@@ -115,7 +115,7 @@ where
 
 #[cfg(test)]
 mod tests {
-  use identity_iota_core::did::IotaDID;
+  use identity_iota_core_legacy::did::IotaDID;
 
   use super::*;
 

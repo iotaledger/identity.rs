@@ -16,7 +16,7 @@ dashmap = { version = "5.3", default-features = false }
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_iota_client = { version = "=0.6.0", path = "../identity_iota_client", default-features = false }
-identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
+identity_iota_core_legacy = { version = "=0.6.0", path = "../identity_iota_core_legacy", default-features = false }
 libp2p = { version = "0.45", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }

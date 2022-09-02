@@ -4,11 +4,11 @@
 use std::collections::HashSet;
 use std::ops::Deref;
 
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::tangle::Message;
-use identity_iota_core::tangle::MessageId;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::tangle::Message;
+use identity_iota_core_legacy::tangle::MessageId;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;

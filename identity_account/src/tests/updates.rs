@@ -21,10 +21,10 @@ use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota_client::tangle::ClientBuilder;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::tangle::Network;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
+use identity_iota_core_legacy::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountConfig;
@@ -442,7 +442,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -525,7 +525,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -620,7 +620,7 @@ async fn test_delete_method() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));

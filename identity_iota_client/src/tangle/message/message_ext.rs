@@ -4,10 +4,10 @@
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::DID;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::tangle::Message;
-use identity_iota_core::tangle::MessageId;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::tangle::Message;
+use identity_iota_core_legacy::tangle::MessageId;
 use iota_client::bee_message::payload::transaction::Essence;
 use iota_client::bee_message::payload::Payload;
 
@@ -141,9 +141,9 @@ mod test {
   use identity_did::service::ServiceBuilder;
   use identity_did::service::ServiceEndpoint;
   use identity_did::verification::MethodScope;
-  use identity_iota_core::document::IotaDocument;
-  use identity_iota_core::document::IotaVerificationMethod;
-  use identity_iota_core::tangle::MessageId;
+  use identity_iota_core_legacy::document::IotaDocument;
+  use identity_iota_core_legacy::document::IotaVerificationMethod;
+  use identity_iota_core_legacy::tangle::MessageId;
 
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;

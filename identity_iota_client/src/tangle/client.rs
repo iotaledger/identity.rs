@@ -5,12 +5,12 @@ use bee_rest_api::types::dtos::LedgerInclusionStateDto;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use identity_core::convert::ToJson;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::tangle::Message;
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::Network;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::tangle::Message;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::Network;
 use iota_client::Client as IotaClient;
 use iota_client::Error as IotaClientError;
 

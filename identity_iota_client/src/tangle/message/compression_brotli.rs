@@ -31,7 +31,7 @@ mod test {
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_iota_core::document::IotaDocument;
+  use identity_iota_core_legacy::document::IotaDocument;
 
   use super::*;
 

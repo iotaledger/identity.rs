@@ -5,9 +5,9 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::tangle::MessageId;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::tangle::MessageId;
 
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;

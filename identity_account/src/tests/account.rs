@@ -18,12 +18,12 @@ use identity_did::verification::MethodScope;
 use identity_iota_client::chain::DocumentChain;
 use identity_iota_client::tangle::Client;
 use identity_iota_client::tangle::ClientBuilder;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::MessageIdExt;
-use identity_iota_core::tangle::Network;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::MessageIdExt;
+use identity_iota_core_legacy::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
@@ -299,7 +299,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));
@@ -310,7 +310,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with(auth_method))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));
@@ -321,7 +321,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with(invalid_signing_method))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDocumentSigningMethodType),
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDocumentSigningMethodType),
   ));
 
   assert!(account

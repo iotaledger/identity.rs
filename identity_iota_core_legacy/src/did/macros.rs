@@ -11,7 +11,7 @@
 ///
 /// ```
 /// # use identity_did::did::DID;
-/// # use identity_iota_core::try_construct_did;
+/// # use identity_iota_core_legacy::try_construct_did;
 /// #
 /// let did = try_construct_did!(b"public-key")?;
 /// assert_eq!(
@@ -24,7 +24,7 @@
 ///   did.as_str(),
 ///   "did:iota:com:2xQiiGHDq5gCi1H7utY1ni7cf65fTay3G11S4xKp1vkS"
 /// );
-/// # Ok::<(), identity_iota_core::Error>(())
+/// # Ok::<(), identity_iota_core_legacy::Error>(())
 /// ```
 #[macro_export]
 macro_rules! try_construct_did {

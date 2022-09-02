@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaVerificationMethod;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
 #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
@@ -40,8 +40,8 @@ mod test {
   use identity_core::crypto::KeyType;
   use identity_did::did::DID;
   use identity_did::verification::MethodScope;
-  use identity_iota_core::did::IotaDIDUrl;
-  use identity_iota_core::document::IotaVerificationMethod;
+  use identity_iota_core_legacy::did::IotaDIDUrl;
+  use identity_iota_core_legacy::document::IotaVerificationMethod;
 
   use crate::Result;
 

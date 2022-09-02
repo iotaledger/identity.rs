@@ -5,9 +5,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use identity_core::convert::FmtJson;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::tangle::MessageId;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::tangle::MessageId;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -177,9 +177,9 @@ mod test {
   use identity_did::verification::MethodRelationship;
   use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
-  use identity_iota_core::did::IotaDIDUrl;
-  use identity_iota_core::document::IotaDocument;
-  use identity_iota_core::document::IotaVerificationMethod;
+  use identity_iota_core_legacy::did::IotaDIDUrl;
+  use identity_iota_core_legacy::document::IotaDocument;
+  use identity_iota_core_legacy::document::IotaVerificationMethod;
 
   use crate::tangle::TangleRef;
   use crate::Error;

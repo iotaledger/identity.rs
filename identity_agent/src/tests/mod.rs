@@ -7,7 +7,7 @@ mod presentation;
 mod remote_account;
 
 use identity_core::crypto::KeyPair;
-use identity_iota_core::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaDocument;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 

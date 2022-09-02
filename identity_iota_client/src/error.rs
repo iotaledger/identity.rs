@@ -16,7 +16,7 @@ pub enum Error {
   #[error("{0}")]
   ClientError(#[from] iota_client::error::Error),
   #[error("{0}")]
-  IotaCoreError(#[from] identity_iota_core::Error),
+  IotaCoreError(#[from] identity_iota_core_legacy::Error),
 
   #[error("{0}")]
   DIDNotFound(String),
