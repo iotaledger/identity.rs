@@ -5,31 +5,31 @@ import {
     KeyPair,
     KeyType,
     MethodScope,
-    StardustDID,
-    StardustDocument,
-    StardustIdentityClient,
-    StardustVerificationMethod
+    IotaDID,
+    IotaDocument,
+    IotaIdentityClient,
+    IotaVerificationMethod
 } from '../../node';
-import {Bech32Helper, IAliasOutput} from '@iota/iota.js';
-import {Bip39} from "@iota/crypto.js";
+import { Bech32Helper, IAliasOutput } from '@iota/iota.js';
+import { Bip39 } from "@iota/crypto.js";
 import fetch from "node-fetch";
-import {Client, MnemonicSecretManager, SecretManager} from "@cycraig/iota-client-wasm/node";
+import { Client, MnemonicSecretManager, SecretManager } from "@cycraig/iota-client-wasm/node";
 
 const API_ENDPOINT = "https://api.testnet.shimmer.network/";
 const FAUCET = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{
-    didClient: StardustIdentityClient,
+    didClient: IotaIdentityClient,
     secretManager: SecretManager,
     walletAddressBech32: string,
-    did: StardustDID
+    did: IotaDID
 }> {
     const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
-    const didClient = new StardustIdentityClient(client);
+    const didClient = new IotaIdentityClient(client);
 
     // Get the Bech32 human-readable part (HRP) of the network.
     const networkHrp: string = await didClient.getNetworkHrp();
@@ -52,11 +52,11 @@ export async function createIdentity(): Promise<{
 
     // Create a new DID document with a placeholder DID.
     // The DID will be derived from the Alias Id of the Alias Output after publishing.
-    const document = new StardustDocument(networkHrp);
+    const document = new IotaDocument(networkHrp);
 
     // Insert a new Ed25519 verification method in the DID document.
     let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new StardustVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
+    let method = new IotaVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
     document.insertMethod(method, MethodScope.VerificationMethod());
 
     // Construct an Alias Output containing the DID document, with the wallet address
@@ -100,10 +100,10 @@ async function ensureAddressHasFunds(client: Client, addressBech32: string) {
 async function getAddressBalance(client: Client, addressBech32: string): Promise<number> {
     // TODO: use the `addresses/ed25519/<addressHex>` API to get the balance?
     const outputIds = await client.basicOutputIds([
-        {address: addressBech32},
-        {hasExpiration: false},
-        {hasTimelock: false},
-        {hasStorageDepositReturn: false}
+        { address: addressBech32 },
+        { hasExpiration: false },
+        { hasTimelock: false },
+        { hasStorageDepositReturn: false }
     ]);
     const outputs = await client.getOutputs(outputIds);
 
@@ -117,7 +117,7 @@ async function getAddressBalance(client: Client, addressBech32: string): Promise
 
 /** Request tokens from the testnet faucet API. */
 async function requestFundsFromFaucet(addressBech32: string) {
-    const requestObj = JSON.stringify({address: addressBech32});
+    const requestObj = JSON.stringify({ address: addressBech32 });
     let errorMessage, data;
     try {
         const response = await fetch(FAUCET, {

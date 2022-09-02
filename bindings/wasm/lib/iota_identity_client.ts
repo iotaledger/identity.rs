@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt} from '~identity_wasm';
+import { IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt } from '~identity_wasm';
 
-import type {Client, INodeInfoWrapper, SecretManager} from '~iota-client-wasm';
+import type { Client, INodeInfoWrapper, SecretManager } from '~iota-client-wasm';
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
     AddressTypes,
@@ -16,7 +16,7 @@ import {
 } from '@iota/iota.js';
 
 /** Provides operations for IOTA UTXO DID Documents with Alias Outputs. */
-export class StardustIdentityClient implements IIotaIdentityClient {
+export class IotaIdentityClient implements IIotaIdentityClient {
     client: Client;
 
     constructor(client: Client) {

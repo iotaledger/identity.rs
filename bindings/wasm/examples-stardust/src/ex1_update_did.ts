@@ -1,25 +1,25 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {MethodRelationship, StardustDocument, StardustService, Timestamp} from '../../node';
-import {IAliasOutput, IRent, TransactionHelper} from '@iota/iota.js';
+import { MethodRelationship, IotaDocument, IotaService, Timestamp } from '../../node';
+import { IAliasOutput, IRent, TransactionHelper } from '@iota/iota.js';
 
-import {createIdentity} from "./ex0_create_did";
+import { createIdentity } from "./ex0_create_did";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
     // Creates a new wallet and identity (see "ex0_create_did" example).
-    const {didClient, secretManager, did} = await createIdentity();
+    const { didClient, secretManager, did } = await createIdentity();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.
-    const document: StardustDocument = await didClient.resolveDid(did);
+    const document: IotaDocument = await didClient.resolveDid(did);
 
     // Attach a new method relationship to the existing method.
     document.attachMethodRelationship(did.join("#key-1"), MethodRelationship.Authentication);
 
     // Add a new Service.
-    const service: StardustService = new StardustService({
+    const service: IotaService = new IotaService({
         id: did.join("#linked-domain"),
         type: "LinkedDomains",
         serviceEndpoint: "https://iota.org/"
@@ -36,6 +36,6 @@ export async function updateIdentity() {
     aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
 
     // Publish the output.
-    const updated: StardustDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
+    const updated: IotaDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
     console.log("Updated DID document:", JSON.stringify(updated, null, 2));
 }

@@ -1,4 +1,4 @@
-export {};
+export { };
 
 const assert = require('assert');
 const {
@@ -7,10 +7,10 @@ const {
     MethodScope,
     MethodType,
     MethodRelationship,
-    StardustDID,
-    StardustDocument,
-    StardustService,
-    StardustVerificationMethod,
+    IotaDID,
+    IotaDocument,
+    IotaService,
+    IotaVerificationMethod,
     Timestamp,
 } = require("../node");
 
@@ -18,15 +18,15 @@ const aliasIdBytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 
 const aliasIdHex = "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
 const networkName = "smr";
 
-describe('StardustDID', function () {
+describe('IotaDID', function () {
     describe('#constructor', function () {
         it('should work', () => {
-            const did = new StardustDID(aliasIdBytes, networkName);
-            assert.deepStrictEqual(did.toString(), "did:" + StardustDID.METHOD + ":" + networkName + ":" + aliasIdHex);
+            const did = new IotaDID(aliasIdBytes, networkName);
+            assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.tag(), aliasIdHex);
-            assert.deepStrictEqual(did.method(), StardustDID.METHOD);
+            assert.deepStrictEqual(did.method(), IotaDID.METHOD);
             assert.deepStrictEqual(did.networkStr(), networkName);
-            assert.deepStrictEqual(did.authority(), StardustDID.METHOD + ":" + networkName + ":" + aliasIdHex);
+            assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.scheme(), "did");
         });
@@ -34,36 +34,36 @@ describe('StardustDID', function () {
     describe('#placeholder()', function () {
         it('should be zeroes', () => {
             const expectedTag = "0x0000000000000000000000000000000000000000000000000000000000000000";
-            const did = StardustDID.placeholder(networkName);
-            assert.deepStrictEqual(did.toString(), "did:" + StardustDID.METHOD + ":" + networkName + ":" + expectedTag);
+            const did = IotaDID.placeholder(networkName);
+            assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.tag(), expectedTag);
-            assert.deepStrictEqual(did.method(), StardustDID.METHOD);
+            assert.deepStrictEqual(did.method(), IotaDID.METHOD);
             assert.deepStrictEqual(did.networkStr(), networkName);
-            assert.deepStrictEqual(did.authority(), StardustDID.METHOD + ":" + networkName + ":" + expectedTag);
+            assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.scheme(), "did");
         });
     });
 });
 
-describe('StardustDocument', function () {
+describe('IotaDocument', function () {
     describe('#constructors', function () {
         it('new should generate a placeholder', () => {
-            const doc = new StardustDocument(networkName);
-            assert.deepStrictEqual(doc.id().toString(), StardustDID.placeholder(networkName).toString());
+            const doc = new IotaDocument(networkName);
+            assert.deepStrictEqual(doc.id().toString(), IotaDID.placeholder(networkName).toString());
         });
         it('newWithId should work', () => {
-            const did = new StardustDID(aliasIdBytes, networkName);
-            const doc = StardustDocument.newWithId(did);
+            const did = new IotaDID(aliasIdBytes, networkName);
+            const doc = IotaDocument.newWithId(did);
             assert.deepStrictEqual(doc.id().toString(), did.toString());
         });
     });
     describe('#insert/resolve/removeMethod', function () {
         it('should work', async () => {
-            const doc = new StardustDocument(networkName);
+            const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
             const scope = MethodScope.AssertionMethod();
-            const method = new StardustVerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = new IotaVerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
 
             // Add.
             doc.insertMethod(method, scope);
@@ -89,9 +89,9 @@ describe('StardustDocument', function () {
     });
     describe('#attach/detachMethodRelationship', function () {
         it('should work', async () => {
-            const doc = new StardustDocument(networkName);
+            const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
-            const method = new StardustVerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = new IotaVerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
             doc.insertMethod(method, MethodScope.VerificationMethod());
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(), method.toJSON());
 
@@ -116,11 +116,11 @@ describe('StardustDocument', function () {
     });
     describe('#insert/resolve/removeService', function () {
         it('should work', async () => {
-            const doc = new StardustDocument(networkName);
+            const doc = new IotaDocument(networkName);
 
             // Add.
             const fragment1 = "new-service-1";
-            const service = new StardustService({
+            const service = new IotaService({
                 id: doc.id().toUrl().join('#' + fragment1),
                 type: ["LinkedDomains", "ExampleType"],
                 serviceEndpoint: ["https://example.com/", "https://iota.org/"],
@@ -145,7 +145,7 @@ describe('StardustDocument', function () {
     });
     describe('#metadata', function () {
         it('should work', () => {
-            const doc = new StardustDocument(networkName);
+            const doc = new IotaDocument(networkName);
             const previousCreated = doc.metadataCreated();
             const previousUpdated = doc.metadataUpdated();
 
@@ -183,7 +183,7 @@ describe('StardustDocument', function () {
     });
     describe('#properties', function () {
         it('should work', () => {
-            const doc = new StardustDocument(networkName);
+            const doc = new IotaDocument(networkName);
             assert.deepStrictEqual(doc.properties(), new Map());
 
             const properties = new Map()
