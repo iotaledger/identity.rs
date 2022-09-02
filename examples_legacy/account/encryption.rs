@@ -7,16 +7,16 @@
 
 use std::path::PathBuf;
 
-use identity_account_legacy::account::Account;
-use identity_account_legacy::account::AccountBuilder;
-use identity_account_legacy::types::IdentitySetup;
-use identity_account_legacy::types::MethodContent;
-use identity_account_legacy::Result;
-use identity_account_storage_legacy::stronghold::Stronghold;
-use identity_account_storage_legacy::types::AgreementInfo;
-use identity_account_storage_legacy::types::CekAlgorithm;
-use identity_account_storage_legacy::types::EncryptedData;
-use identity_account_storage_legacy::types::EncryptionAlgorithm;
+use identity_account::account::Account;
+use identity_account::account::AccountBuilder;
+use identity_account::types::IdentitySetup;
+use identity_account::types::MethodContent;
+use identity_account::Result;
+use identity_account_storage::stronghold::Stronghold;
+use identity_account_storage::types::AgreementInfo;
+use identity_account_storage::types::CekAlgorithm;
+use identity_account_storage::types::EncryptedData;
+use identity_account_storage::types::EncryptionAlgorithm;
 use identity_iota::did::MethodScope;
 use identity_iota_client_legacy::document::ResolvedIotaDocument;
 use identity_iota_client_legacy::tangle::Resolver;

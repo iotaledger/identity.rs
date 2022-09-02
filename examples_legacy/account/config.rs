@@ -3,12 +3,12 @@
 
 //! cargo run --example account_config
 
-use identity_account_legacy::account::Account;
-use identity_account_legacy::account::AccountBuilder;
-use identity_account_legacy::account::AutoSave;
-use identity_account_legacy::types::IdentitySetup;
-use identity_account_legacy::Result;
-use identity_account_storage_legacy::storage::MemStore;
+use identity_account::account::Account;
+use identity_account::account::AccountBuilder;
+use identity_account::account::AutoSave;
+use identity_account::types::IdentitySetup;
+use identity_account::Result;
+use identity_account_storage::storage::MemStore;
 use identity_iota_client_legacy::tangle::ClientBuilder;
 use identity_iota_client_legacy::tangle::ExplorerUrl;
 use identity_iota_core_legacy::did::IotaDID;

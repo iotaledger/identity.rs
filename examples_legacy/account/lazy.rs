@@ -4,10 +4,10 @@
 //! cargo run --example account_lazy
 use std::path::PathBuf;
 
-use identity_account_legacy::account::Account;
-use identity_account_legacy::types::IdentitySetup;
-use identity_account_legacy::Result;
-use identity_account_storage_legacy::stronghold::Stronghold;
+use identity_account::account::Account;
+use identity_account::types::IdentitySetup;
+use identity_account::Result;
+use identity_account_storage::stronghold::Stronghold;
 use identity_iota::core::Url;
 use identity_iota_client_legacy::tangle::ExplorerUrl;
 use identity_iota_core_legacy::did::IotaDID;

@@ -5,8 +5,8 @@ edition = "2021"
 publish = false
 
 [dependencies]
-identity_account_legacy = { path = "../identity_account_legacy" }
-identity_account_storage_legacy = { path = "../identity_account_storage_legacy" }
+identity_account = { path = "../identity_account" }
+identity_account_storage = { path = "../identity_account_storage" }
 identity_iota = { path = "../identity_iota" }
 identity_iota_client_legacy = { path = "../identity_iota_client_legacy" }
 identity_iota_core_legacy = { path = "../identity_iota_core_legacy" }

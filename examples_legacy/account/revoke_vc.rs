@@ -12,11 +12,11 @@
 //!
 //! cargo run --example account_revoke_vc
 
-use identity_account_legacy::account::Account;
-use identity_account_legacy::account::AccountBuilder;
-use identity_account_legacy::types::IdentitySetup;
-use identity_account_legacy::types::MethodContent;
-use identity_account_legacy::Result;
+use identity_account::account::Account;
+use identity_account::account::AccountBuilder;
+use identity_account::types::IdentitySetup;
+use identity_account::types::MethodContent;
+use identity_account::Result;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
