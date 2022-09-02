@@ -20,10 +20,10 @@ use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
-use crate::resolver::supported_document_types::ArraySupportedDocument;
-use crate::resolver::supported_document_types::MapResolutionHandler;
+use crate::resolver::constructor_input::OptionMapResolutionHandler;
+use crate::resolver::supported_document_types::OptionArraySupportedDocument;
+use crate::resolver::supported_document_types::OptionSupportedDocument;
 use crate::resolver::supported_document_types::RustSupportedDocument;
-use crate::resolver::supported_document_types::SupportedDocument;
 
 use super::supported_document_types::PromiseArraySupportedDocument;
 use super::supported_document_types::PromiseSupportedDocument;
@@ -40,12 +40,19 @@ pub struct MixedResolver(Rc<SingleThreadedResolver>);
 impl MixedResolver {
   /// Constructs a new `MixedResolver`.
   #[wasm_bindgen(constructor)]
-  pub fn new(handlers: &MapResolutionHandler) -> Result<MixedResolver> {
+  pub fn new(handlers: &OptionMapResolutionHandler) -> Result<MixedResolver> {
     let mut resolver = SingleThreadedResolver::new();
-    let map: &Map = handlers
-      .dyn_ref::<js_sys::Map>()
-      .ok_or("could not construct resolver: the constructor did not receive a map of asynchronous functions")?;
+    if !handlers.is_undefined() {
+      let map: &Map = handlers
+        .dyn_ref::<js_sys::Map>()
+        .ok_or("could not construct resolver: the constructor did not receive a map of asynchronous functions")?;
+      Self::attach_handlers(&mut resolver, map)?;
+    }
+    Ok(Self(Rc::new(resolver)))
+  }
 
+  /// attempts to extract (method, handler) pairs from the entries of a map and attaches them to the resolver.
+  fn attach_handlers(resolver: &mut SingleThreadedResolver, map: &Map) -> Result<()> {
     for key in map.keys() {
       if let Ok(mthd) = key {
         let fun = map.get(&mthd);
@@ -55,14 +62,16 @@ impl MixedResolver {
         let handler: Function = fun
           .dyn_into::<Function>()
           .map_err(|_| "could not construct resolver: the handler map contains a value which is not a function")?;
-        MixedResolver::attach_handler(&mut resolver, method, handler);
+        MixedResolver::attach_handler(resolver, method, handler);
       } else {
         Err("could not construct resolver: invalid constructor arguments. Expected a map of asynchronous functions")?;
       }
     }
-    Ok(Self(Rc::new(resolver)))
+
+    Ok(())
   }
 
+  /// Converts a JS handler to a Rust closure and attaches it to the given `resolver`.
   fn attach_handler(resolver: &mut SingleThreadedResolver, method: String, handler: Function) {
     let fun_closure_clone = handler;
     let fun = move |input: CoreDID| {
@@ -165,16 +174,16 @@ impl MixedResolver {
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
-    holder: Option<SupportedDocument>,
-    issuers: Option<ArraySupportedDocument>,
+    holder: &OptionSupportedDocument,
+    issuers: &OptionArraySupportedDocument,
   ) -> Result<PromiseVoid> {
     let resolver: Rc<SingleThreadedResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
     let options: PresentationValidationOptions = options.0.clone();
 
-    let holder: Option<RustSupportedDocument> = holder.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let holder: Option<RustSupportedDocument> = holder.into_serde().wasm_result()?;
     let holder: Option<AbstractValidatorDocument> = holder.map(From::from);
-    let issuers: Option<Vec<RustSupportedDocument>> = issuers.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let issuers: Option<Vec<RustSupportedDocument>> = issuers.into_serde().wasm_result()?;
     let issuers: Option<Vec<AbstractValidatorDocument>> =
       issuers.map(|vector| vector.into_iter().map(AbstractValidatorDocument::from).collect());
 

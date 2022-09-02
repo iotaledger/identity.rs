@@ -2,5 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //mod function_transformation;
+mod constructor_input;
 mod mixed_resolver;
 mod supported_document_types;

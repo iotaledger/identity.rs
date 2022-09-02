@@ -69,16 +69,13 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "StardustDocument | CoreDocument")]
   pub type SupportedDocument;
 
+  #[wasm_bindgen(typescript_type = "StardustDocument | CoreDocument | undefined")]
+  pub type OptionSupportedDocument;
+
   #[wasm_bindgen(typescript_type = "Array<StardustDocument | CoreDocument>")]
   pub type ArraySupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "ResolutionHandlers")]
-  pub type MapResolutionHandler;
+  #[wasm_bindgen(typescript_type = "Array<StardustDocument | CoreDocument> | undefined")]
+  pub type OptionArraySupportedDocument;
 
 }
-
-// Workaround because JSDocs does not support arrows (=>) while TS does not support the "function" word in type
-// definitions (which would be accepted by JSDocs).
-#[wasm_bindgen(typescript_custom_section)]
-const HANDLERS: &'static str =
-  "export type ResolutionHandlers = Map<string, (did: string) => Promise<StardustDocument | CoreDocument>>;";

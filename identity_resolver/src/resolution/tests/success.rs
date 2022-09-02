@@ -18,10 +18,14 @@ use serde::de::DeserializeOwned;
 
 use crate::Resolver;
 
-const SUBJECT_FOO_JSON: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/subject_foo_doc.json");
-const ISSUER_IOTA_DOC: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_iota_doc.json");
-const ISSUER_BAR_DOC: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_bar_doc.json");
-const PRESENTATION_JSON: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/presentation.json");
+const SUBJECT_FOO_JSON: &str =
+  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/subject_foo_doc.json");
+const ISSUER_IOTA_DOC: &str =
+  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_iota_doc.json");
+const ISSUER_BAR_DOC: &str =
+  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_bar_doc.json");
+const PRESENTATION_JSON: &str =
+  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/presentation.json");
 
 // Not used, but can be useful for maintenance purposes.
 const _HOLDER_PRIVATE_KEY: [u8; 32] = [
