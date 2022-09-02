@@ -14,9 +14,9 @@ use identity_iota_core::block::address::Address;
 use identity_iota_core::block::output::RentStructure;
 use identity_iota_core::IotaClientExt;
 use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
-use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustService;
+use identity_iota_core::IotaService;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
   let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the latest state of the document.
-  let mut document: StardustDocument = client.resolve_did(&did).await?;
+  let mut document: IotaDocument = client.resolve_did(&did).await?;
 
   // Attach a new method relationship to the existing method.
   document.attach_method_relationship(
@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
   )?;
 
   // Add a new Service.
-  let service: StardustService = Service::from_json_value(json!({
+  let service: IotaService = Service::from_json_value(json!({
     "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org/"
@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the updated Alias Output.
-  let updated: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let updated: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Updated DID document: {:#}", updated);
 
   Ok(())

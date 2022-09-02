@@ -3,10 +3,10 @@
 
 pub use stardust_did::WasmStardustDID;
 pub use stardust_did_url::WasmStardustDIDUrl;
-pub use stardust_document::WasmStardustDocument;
-pub use stardust_document_metadata::WasmStardustDocumentMetadata;
-pub use stardust_service::WasmStardustService;
-pub use stardust_verification_method::WasmStardustVerificationMethod;
+pub use stardust_document::WasmIotaDocument;
+pub use stardust_document_metadata::WasmIotaDocumentMetadata;
+pub use stardust_service::WasmIotaService;
+pub use stardust_verification_method::WasmIotaVerificationMethod;
 pub use state_metadata_encoding::WasmStateMetadataEncoding;
 
 mod identity_client;

@@ -1,11 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use stardust_document::StardustCoreDocument;
-pub use stardust_document::StardustDocument;
-pub use stardust_document::StardustService;
-pub use stardust_document::StardustVerificationMethod;
-pub use stardust_document_metadata::StardustDocumentMetadata;
+pub use iota_document::IotaCoreDocument;
+pub use iota_document::IotaDocument;
+pub use iota_document::IotaService;
+pub use iota_document::IotaVerificationMethod;
+pub use iota_document_metadata::IotaDocumentMetadata;
 
-mod stardust_document;
-mod stardust_document_metadata;
+mod iota_document;
+mod iota_document_metadata;

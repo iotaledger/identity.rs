@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_stardust::StardustDocumentMetadata;
+use identity_stardust::IotaDocumentMetadata;
 use wasm_bindgen::prelude::*;
 
 use crate::common::MapStringAny;
@@ -9,13 +9,13 @@ use crate::common::WasmTimestamp;
 use crate::error::Result;
 
 /// Additional attributes related to an IOTA DID Document.
-#[wasm_bindgen(js_name = StardustDocumentMetadata, inspectable)]
-pub struct WasmStardustDocumentMetadata(pub(crate) StardustDocumentMetadata);
+#[wasm_bindgen(js_name = IotaDocumentMetadata, inspectable)]
+pub struct WasmIotaDocumentMetadata(pub(crate) IotaDocumentMetadata);
 
 // NOTE: these properties are read-only (no setters) to prevent bugs where a clone of the metadata
 //       is updated instead of the actual instance in the document.
-#[wasm_bindgen(js_class = StardustDocumentMetadata)]
-impl WasmStardustDocumentMetadata {
+#[wasm_bindgen(js_class = IotaDocumentMetadata)]
+impl WasmIotaDocumentMetadata {
   /// Returns a copy of the timestamp of when the DID document was created.
   #[wasm_bindgen]
   pub fn created(&self) -> Option<WasmTimestamp> {
@@ -41,11 +41,11 @@ impl WasmStardustDocumentMetadata {
   }
 }
 
-impl_wasm_json!(WasmStardustDocumentMetadata, StardustDocumentMetadata);
-impl_wasm_clone!(WasmStardustDocumentMetadata, StardustDocumentMetadata);
+impl_wasm_json!(WasmIotaDocumentMetadata, IotaDocumentMetadata);
+impl_wasm_clone!(WasmIotaDocumentMetadata, IotaDocumentMetadata);
 
-impl From<StardustDocumentMetadata> for WasmStardustDocumentMetadata {
-  fn from(metadata: StardustDocumentMetadata) -> Self {
+impl From<IotaDocumentMetadata> for WasmIotaDocumentMetadata {
+  fn from(metadata: IotaDocumentMetadata) -> Self {
     Self(metadata)
   }
 }

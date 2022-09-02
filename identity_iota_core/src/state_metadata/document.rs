@@ -11,10 +11,10 @@ use serde::Serialize;
 
 use crate::error::Result;
 use crate::Error;
+use crate::IotaCoreDocument;
 use crate::IotaDID;
-use crate::StardustCoreDocument;
-use crate::StardustDocument;
-use crate::StardustDocumentMetadata;
+use crate::IotaDocument;
+use crate::IotaDocumentMetadata;
 
 use super::StateMetadataEncoding;
 use super::StateMetadataVersion;
@@ -33,14 +33,14 @@ pub(crate) struct StateMetadataDocument {
   #[serde(rename = "doc")]
   document: CoreDocument,
   #[serde(rename = "meta")]
-  metadata: StardustDocumentMetadata,
+  metadata: IotaDocumentMetadata,
 }
 
 impl StateMetadataDocument {
-  /// Transforms the document into a [`StardustDocument`] by replacing all placeholders with `original_did`.
-  pub fn into_stardust_document(self, original_did: &IotaDID) -> Result<StardustDocument> {
+  /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
+  pub fn into_stardust_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
-    let core_document: StardustCoreDocument = document.try_map(
+    let core_document: IotaCoreDocument = document.try_map(
       // Replace placeholder identifiers.
       |did| {
         if did == PLACEHOLDER_DID.as_ref() {
@@ -53,7 +53,7 @@ impl StateMetadataDocument {
       // Do not modify properties.
       Ok,
     )?;
-    Ok(StardustDocument::from((core_document, metadata)))
+    Ok(IotaDocument::from((core_document, metadata)))
   }
 
   /// Pack a [`StateMetadataDocument`] into bytes, suitable for inclusion in
@@ -115,11 +115,11 @@ fn add_flags_to_message(mut data: Vec<u8>, version: StateMetadataVersion, encodi
   buffer
 }
 
-impl From<StardustDocument> for StateMetadataDocument {
-  /// Transforms a [`StardustDocument`] into its state metadata representation by replacing all
+impl From<IotaDocument> for StateMetadataDocument {
+  /// Transforms a [`IotaDocument`] into its state metadata representation by replacing all
   /// occurrences of its did with a placeholder.
-  fn from(document: StardustDocument) -> Self {
-    let StardustDocument { document, metadata } = document;
+  fn from(document: IotaDocument) -> Self {
+    let IotaDocument { document, metadata } = document;
     let id: IotaDID = document.id().clone();
     let core_document: CoreDocument = document.map(
       // Replace self-referential identifiers with a placeholder, but not others.
@@ -153,15 +153,15 @@ mod tests {
   use crate::state_metadata::document::DID_MARKER;
   use crate::state_metadata::PLACEHOLDER_DID;
   use crate::IotaDID;
-  use crate::StardustDocument;
-  use crate::StardustService;
-  use crate::StardustVerificationMethod;
+  use crate::IotaDocument;
+  use crate::IotaService;
+  use crate::IotaVerificationMethod;
   use crate::StateMetadataDocument;
   use crate::StateMetadataEncoding;
   use crate::StateMetadataVersion;
 
   struct TestSetup {
-    document: StardustDocument,
+    document: IotaDocument,
     did_self: IotaDID,
     did_foreign: IotaDID,
   }
@@ -172,11 +172,11 @@ mod tests {
     let did_foreign =
       IotaDID::parse("did:iota:0x71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
 
-    let mut document: StardustDocument = StardustDocument::new_with_id(did_self.clone());
+    let mut document: IotaDocument = IotaDocument::new_with_id(did_self.clone());
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .insert_method(
-        StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
+        IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
         MethodScope::VerificationMethod,
       )
       .unwrap();
@@ -184,7 +184,7 @@ mod tests {
     let keypair_foreign: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .insert_method(
-        StardustVerificationMethod::new(
+        IotaVerificationMethod::new(
           did_foreign.clone(),
           keypair_foreign.type_(),
           keypair_foreign.public(),
@@ -196,7 +196,7 @@ mod tests {
       .unwrap();
 
     assert!(document.insert_service(
-      StardustService::builder(Object::new())
+      IotaService::builder(Object::new())
         .id(document.id().to_url().join("#my-service").unwrap())
         .type_("RevocationList2022")
         .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
@@ -205,7 +205,7 @@ mod tests {
     ));
 
     assert!(document.insert_service(
-      StardustService::builder(Object::new())
+      IotaService::builder(Object::new())
         .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
         .type_("RevocationList2022")
         .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())

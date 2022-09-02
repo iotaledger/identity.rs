@@ -14,9 +14,9 @@ use crate::block::output::RentStructure;
 use crate::block::output::UnlockCondition;
 use crate::Error;
 use crate::IotaDID;
+use crate::IotaDocument;
 use crate::NetworkName;
 use crate::Result;
-use crate::StardustDocument;
 
 /// Helper functions necessary for the [`IotaIdentityClientExt`] trait.
 #[async_trait::async_trait(?Send)]
@@ -56,7 +56,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   async fn new_did_output(
     &self,
     address: Address,
-    document: StardustDocument,
+    document: IotaDocument,
     rent_structure: Option<RentStructure>,
   ) -> Result<AliasOutput> {
     let rent_structure: RentStructure = if let Some(rent) = rent_structure {
@@ -90,7 +90,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// # Errors
   ///
   /// Returns `Err` when failing to resolve the DID contained in `document`.
-  async fn update_did_output(&self, document: StardustDocument) -> Result<AliasOutput> {
+  async fn update_did_output(&self, document: IotaDocument) -> Result<AliasOutput> {
     let id: AliasId = AliasId::from(document.id());
     let (_, alias_output) = self.get_alias_output(id).await?;
 
@@ -132,21 +132,21 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
-  /// Resolve a [`StardustDocument`]. Returns an empty, deactivated document if the state metadata
+  /// Resolve a [`IotaDocument`]. Returns an empty, deactivated document if the state metadata
   /// of the Alias Output is empty.
   ///
   /// # Errors
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
   /// - [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output was not found.
-  async fn resolve_did(&self, did: &IotaDID) -> Result<StardustDocument> {
+  async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
     validate_network(self, did).await?;
 
     let id: AliasId = AliasId::from(did);
     let (_, alias_output) = self.get_alias_output(id).await?;
 
     let document: &[u8] = alias_output.state_metadata();
-    StardustDocument::unpack(did, document, true)
+    IotaDocument::unpack(did, document, true)
   }
 
   /// Fetches the [`AliasOutput`] associated with the given DID.

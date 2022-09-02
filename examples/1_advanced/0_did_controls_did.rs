@@ -13,10 +13,10 @@ use identity_iota_core::block::output::AliasId;
 use identity_iota_core::block::output::UnlockCondition;
 use identity_iota_core::IotaClientExt;
 use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
+use identity_iota_core::IotaVerificationMethod;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustVerificationMethod;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
 use iota_client::block::output::feature::IssuerFeature;
@@ -54,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
   let network_name: NetworkName = client.network_name().await?;
 
   // Construct a new DID document for the subsidiary.
-  let subsidiary_document: StardustDocument = StardustDocument::new(&network_name);
+  let subsidiary_document: IotaDocument = IotaDocument::new(&network_name);
 
   // Create a DID for the subsidiary that is controlled by the parent company's DID.
   // This means the subsidiary's Alias Output can only be updated or destroyed by
@@ -77,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the subsidiary's DID.
-  let mut subsidiary_document: StardustDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
+  let mut subsidiary_document: IotaDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
 
   // =====================================
   // Update the subsidiary's Alias Output.
@@ -86,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
   // Add a verification method to the subsidiary.
   // This only serves as an example for updating the subsidiary DID.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: StardustVerificationMethod = StardustVerificationMethod::new(
+  let method: IotaVerificationMethod = IotaVerificationMethod::new(
     subsidiary_document.id().clone(),
     keypair.type_(),
     keypair.public(),
@@ -105,7 +105,7 @@ async fn main() -> anyhow::Result<()> {
   //
   // This works because `secret_manager` can unlock the company's Alias Output,
   // which is required in order to update the subsidiary's Alias Output.
-  let subsidiary_document: StardustDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
+  let subsidiary_document: IotaDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
 
   // ===================================================================
   // Determine the controlling company's DID given the subsidiary's DID.
@@ -134,7 +134,7 @@ async fn main() -> anyhow::Result<()> {
   let company_did = IotaDID::new(company_alias_id.deref(), &network_name);
 
   // Resolve the company's DID document.
-  let company_document: StardustDocument = client.resolve_did(&company_did).await?;
+  let company_document: IotaDocument = client.resolve_did(&company_did).await?;
 
   println!("Company: {company_document:#}");
   println!("Subsidiary: {subsidiary_document:#}");

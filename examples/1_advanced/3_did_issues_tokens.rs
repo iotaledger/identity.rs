@@ -16,9 +16,9 @@ use identity_iota_core::block::output::BasicOutputBuilder;
 use identity_iota_core::block::output::Output;
 use identity_iota_core::block::output::OutputId;
 use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustDocument;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
   // We want to update the foundry counter of the authority's Alias Output, so we create an
   // updated version of the output. We pass in the previous document,
   // because we don't want to modify it in this update.
-  let authority_document: StardustDocument = client.resolve_did(&authority_did).await?;
+  let authority_document: IotaDocument = client.resolve_did(&authority_did).await?;
   let authority_alias_output: AliasOutput = client.update_did_output(authority_document).await?;
 
   // We will add one foundry to this Alias Output.
@@ -138,7 +138,7 @@ async fn main() -> anyhow::Result<()> {
   let authority_did: IotaDID = IotaDID::new(authority_alias_id.deref(), &network);
 
   // Resolve the authority's DID document.
-  let authority_document: StardustDocument = client.resolve_did(&authority_did).await?;
+  let authority_document: IotaDocument = client.resolve_did(&authority_did).await?;
 
   println!("The authority's DID is: {authority_document:#}");
 

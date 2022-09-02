@@ -6,9 +6,9 @@ use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
 use identity_iota_core::block::output::feature::MetadataFeature;
 use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustDocument;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
@@ -123,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
   let manufacturer_did: IotaDID = IotaDID::new(&*manufacturer_alias_id, &network);
 
   // Resolve the issuer of the NFT.
-  let manufacturer_document: StardustDocument = client.resolve_did(&manufacturer_did).await?;
+  let manufacturer_document: IotaDocument = client.resolve_did(&manufacturer_did).await?;
 
   println!("The issuer of the Digital Product Passport NFT is: {manufacturer_document:#}");
 

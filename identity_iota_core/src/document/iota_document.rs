@@ -31,32 +31,32 @@ use serde::Serialize;
 use crate::error::Result;
 use crate::IotaDID;
 use crate::IotaDIDUrl;
+use crate::IotaDocumentMetadata;
 use crate::NetworkName;
-use crate::StardustDocumentMetadata;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
 /// A [`VerificationMethod`] adhering to the IOTA UTXO DID method specification.
-pub type StardustVerificationMethod = VerificationMethod<IotaDID, Object>;
+pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
 
 /// A [`Service`] adhering to the IOTA UTXO DID method specification.
-pub type StardustService = Service<IotaDID, Object>;
+pub type IotaService = Service<IotaDID, Object>;
 
 /// A [`CoreDocument`] whose fields adhere to the IOTA UTXO DID method specification.
-pub type StardustCoreDocument = CoreDocument<IotaDID>;
+pub type IotaCoreDocument = CoreDocument<IotaDID>;
 
 /// A DID Document adhering to the IOTA UTXO DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct StardustDocument {
+pub struct IotaDocument {
   #[serde(rename = "doc")]
-  pub(crate) document: StardustCoreDocument,
+  pub(crate) document: IotaCoreDocument,
   #[serde(rename = "meta")]
-  pub metadata: StardustDocumentMetadata,
+  pub metadata: IotaDocumentMetadata,
 }
 
-impl StardustDocument {
+impl IotaDocument {
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -72,11 +72,11 @@ impl StardustDocument {
   /// Constructs an empty DID Document with the given identifier.
   pub fn new_with_id(id: IotaDID) -> Self {
     // PANIC: constructing an empty DID Document is infallible, caught by tests otherwise.
-    let document: StardustCoreDocument = CoreDocument::builder(Object::default())
+    let document: IotaCoreDocument = CoreDocument::builder(Object::default())
       .id(id)
       .build()
-      .expect("empty StardustDocument constructor failed");
-    let metadata: StardustDocumentMetadata = StardustDocumentMetadata::new();
+      .expect("empty IotaDocument constructor failed");
+    let metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
     Self { document, metadata }
   }
 
@@ -107,16 +107,16 @@ impl StardustDocument {
     self.document.also_known_as_mut()
   }
 
-  /// Returns a reference to the underlying [`StardustCoreDocument`].
-  pub fn core_document(&self) -> &StardustCoreDocument {
+  /// Returns a reference to the underlying [`IotaCoreDocument`].
+  pub fn core_document(&self) -> &IotaCoreDocument {
     &self.document
   }
 
-  /// Returns a mutable reference to the underlying [`StardustCoreDocument`].
+  /// Returns a mutable reference to the underlying [`IotaCoreDocument`].
   ///
   /// WARNING: mutating the inner document directly bypasses restrictions and
   /// may have undesired consequences.
-  pub fn core_document_mut(&mut self) -> &mut StardustCoreDocument {
+  pub fn core_document_mut(&mut self) -> &mut IotaCoreDocument {
     &mut self.document
   }
 
@@ -134,15 +134,15 @@ impl StardustDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all [`StardustService`]s in the document.
-  pub fn service(&self) -> &OrderedSet<StardustService> {
+  /// Return a set of all [`IotaService`]s in the document.
+  pub fn service(&self) -> &OrderedSet<IotaService> {
     self.document.service()
   }
 
-  /// Add a new [`StardustService`] to the document.
+  /// Add a new [`IotaService`] to the document.
   ///
   /// Returns `true` if the service was added.
-  pub fn insert_service(&mut self, service: StardustService) -> bool {
+  pub fn insert_service(&mut self, service: IotaService) -> bool {
     if service.id().fragment().is_none() {
       false
     } else {
@@ -150,7 +150,7 @@ impl StardustDocument {
     }
   }
 
-  /// Remove a [`StardustService`] identified by the given [`IotaDIDUrl`] from the document.
+  /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
   ///
   /// Returns `true` if a service was removed.
   pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
@@ -161,21 +161,21 @@ impl StardustDocument {
   // Verification Methods
   // ===========================================================================
 
-  /// Returns an iterator over all [`StardustVerificationMethod`] in the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item = &StardustVerificationMethod> {
+  /// Returns an iterator over all [`IotaVerificationMethod`] in the DID Document.
+  pub fn methods(&self) -> impl Iterator<Item = &IotaVerificationMethod> {
     self.document.methods()
   }
 
-  /// Adds a new [`StardustVerificationMethod`] to the document in the given [`MethodScope`].
+  /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
   ///
   /// # Errors
   ///
   /// Returns an error if a method with the same fragment already exists.
-  pub fn insert_method(&mut self, method: StardustVerificationMethod, scope: MethodScope) -> Result<()> {
+  pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
     Ok(self.core_document_mut().insert_method(method, scope)?)
   }
 
-  /// Removes all references to the specified [`StardustVerificationMethod`].
+  /// Removes all references to the specified [`IotaVerificationMethod`].
   ///
   /// # Errors
   ///
@@ -205,7 +205,7 @@ impl StardustDocument {
     )
   }
 
-  /// Returns the first [`StardustVerificationMethod`] with an `id` property matching the
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
   ///
   /// WARNING: improper usage of this allows violating the uniqueness of the verification method
@@ -214,7 +214,7 @@ impl StardustDocument {
     &mut self,
     query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&mut StardustVerificationMethod>
+  ) -> Option<&mut IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -232,10 +232,10 @@ impl StardustDocument {
   }
 
   /// Signs the provided `data` with the verification method specified by `method_query`.
-  /// See [`StardustDocument::signer`] for creating signatures with a builder pattern.
+  /// See [`IotaDocument::signer`] for creating signatures with a builder pattern.
   ///
   /// NOTE: does not validate whether `private_key` corresponds to the verification method.
-  /// See [`StardustDocument::verify_data`].
+  /// See [`IotaDocument::verify_data`].
   ///
   /// # Errors
   ///
@@ -283,9 +283,9 @@ impl StardustDocument {
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
-  pub fn unpack(did: &IotaDID, state_metadata: &[u8], allow_empty: bool) -> Result<StardustDocument> {
+  pub fn unpack(did: &IotaDID, state_metadata: &[u8], allow_empty: bool) -> Result<IotaDocument> {
     if state_metadata.is_empty() && allow_empty {
-      let mut empty_document = StardustDocument::new_with_id(did.clone());
+      let mut empty_document = IotaDocument::new_with_id(did.clone());
       empty_document.metadata.created = None;
       empty_document.metadata.updated = None;
       empty_document.metadata.deactivated = Some(true);
@@ -311,12 +311,12 @@ mod client_document {
 
   use super::*;
 
-  impl StardustDocument {
+  impl IotaDocument {
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
     /// outputs, if any.
     ///
     /// Errors if any Alias Output does not contain a valid or empty DID Document.
-    pub fn unpack_from_block(network: &NetworkName, block: &Block) -> Result<Vec<StardustDocument>> {
+    pub fn unpack_from_block(network: &NetworkName, block: &Block) -> Result<Vec<IotaDocument>> {
       let mut documents = Vec::new();
 
       if let Some(Payload::Transaction(tx_payload)) = block.payload() {
@@ -339,7 +339,7 @@ mod client_document {
             };
 
             let did: IotaDID = IotaDID::new(alias_id.deref(), network);
-            documents.push(StardustDocument::unpack(&did, alias_output.state_metadata(), true)?);
+            documents.push(IotaDocument::unpack(&did, alias_output.state_metadata(), true)?);
           }
         }
       }
@@ -349,13 +349,13 @@ mod client_document {
   }
 }
 
-impl Document for StardustDocument {
+impl Document for IotaDocument {
   type D = IotaDID;
   type U = Object;
   type V = Object;
 
   fn id(&self) -> &Self::D {
-    StardustDocument::id(self)
+    IotaDocument::id(self)
   }
 
   fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
@@ -391,9 +391,9 @@ mod iota_document_revocation {
   use crate::Error;
   use crate::Result;
 
-  use super::StardustDocument;
+  use super::IotaDocument;
 
-  impl StardustDocument {
+  impl IotaDocument {
     /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
     /// service identified by `service_query`, revoke all specified `indices`.
     pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
@@ -420,25 +420,25 @@ mod iota_document_revocation {
   }
 }
 
-impl From<StardustDocument> for StardustCoreDocument {
-  fn from(document: StardustDocument) -> Self {
+impl From<IotaDocument> for IotaCoreDocument {
+  fn from(document: IotaDocument) -> Self {
     document.document
   }
 }
 
-impl From<(StardustCoreDocument, StardustDocumentMetadata)> for StardustDocument {
-  fn from((document, metadata): (StardustCoreDocument, StardustDocumentMetadata)) -> Self {
+impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
+  fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
     Self { document, metadata }
   }
 }
 
-impl Display for StardustDocument {
+impl Display for IotaDocument {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.fmt_json(f)
   }
 }
 
-impl TryMethod for StardustDocument {
+impl TryMethod for IotaDocument {
   const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
@@ -462,7 +462,7 @@ mod tests {
       .unwrap()
   }
 
-  fn generate_method(controller: &IotaDID, fragment: &str) -> StardustVerificationMethod {
+  fn generate_method(controller: &IotaDID, fragment: &str) -> IotaVerificationMethod {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
@@ -472,12 +472,12 @@ mod tests {
       .unwrap()
   }
 
-  fn generate_document(id: &IotaDID) -> StardustDocument {
-    let mut metadata: StardustDocumentMetadata = StardustDocumentMetadata::new();
+  fn generate_document(id: &IotaDID) -> IotaDocument {
+    let mut metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
     metadata.created = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
     metadata.updated = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
 
-    let document: StardustCoreDocument = StardustCoreDocument::builder(Object::default())
+    let document: IotaCoreDocument = IotaCoreDocument::builder(Object::default())
       .id(id.clone())
       .controller(id.clone())
       .verification_method(generate_method(id, "#key-1"))
@@ -488,7 +488,7 @@ mod tests {
       .build()
       .unwrap();
 
-    StardustDocument::from((document, metadata))
+    IotaDocument::from((document, metadata))
   }
 
   #[test]
@@ -496,7 +496,7 @@ mod tests {
     // VALID new().
     let network: NetworkName = NetworkName::try_from("test").unwrap();
     let placeholder: IotaDID = IotaDID::placeholder(&network);
-    let doc1: StardustDocument = StardustDocument::new(&network);
+    let doc1: IotaDocument = IotaDocument::new(&network);
     assert_eq!(doc1.id().network_str(), network.as_ref());
     assert_eq!(doc1.id().tag(), placeholder.tag());
     assert_eq!(doc1.id(), &placeholder);
@@ -505,7 +505,7 @@ mod tests {
 
     // VALID new_with_id().
     let did: IotaDID = valid_did();
-    let doc2: StardustDocument = StardustDocument::new_with_id(did.clone());
+    let doc2: IotaDocument = IotaDocument::new_with_id(did.clone());
     assert_eq!(doc2.id(), &did);
     assert_eq!(doc2.methods().count(), 0);
     assert!(doc2.service().is_empty());
@@ -514,8 +514,8 @@ mod tests {
   #[test]
   fn test_methods() {
     let controller: IotaDID = valid_did();
-    let document: StardustDocument = generate_document(&controller);
-    let expected: Vec<StardustVerificationMethod> = vec![
+    let document: IotaDocument = generate_document(&controller);
+    let expected: Vec<IotaVerificationMethod> = vec![
       generate_method(&controller, "#key-1"),
       generate_method(&controller, "#key-2"),
       generate_method(&controller, "#key-3"),
@@ -543,7 +543,7 @@ mod tests {
       properties
     }
 
-    let mut document: StardustDocument = StardustDocument::new_with_id(valid_did());
+    let mut document: IotaDocument = IotaDocument::new_with_id(valid_did());
 
     // Try sign using each type of verification relationship.
     for scope in [
@@ -557,7 +557,7 @@ mod tests {
       // Add a new method.
       let key_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
-      let method_new: StardustVerificationMethod = StardustVerificationMethod::new(
+      let method_new: IotaVerificationMethod = IotaVerificationMethod::new(
         document.id().clone(),
         key_new.type_(),
         key_new.public(),
@@ -602,9 +602,9 @@ mod tests {
   #[test]
   fn test_services() {
     // VALID: add one service.
-    let mut document: StardustDocument = StardustDocument::new_with_id(valid_did());
+    let mut document: IotaDocument = IotaDocument::new_with_id(valid_did());
     let url1: IotaDIDUrl = document.id().to_url().join("#linked-domain").unwrap();
-    let service1: StardustService = Service::from_json(&format!(
+    let service1: IotaService = Service::from_json(&format!(
       r#"{{
       "id":"{}",
       "type": "LinkedDomains",
@@ -623,7 +623,7 @@ mod tests {
 
     // VALID: add two services.
     let url2: IotaDIDUrl = document.id().to_url().join("#revocation").unwrap();
-    let service2: StardustService = Service::from_json(&format!(
+    let service2: IotaService = Service::from_json(&format!(
       r#"{{
       "id":"{}",
       "type": "RevocationBitmap2022",
@@ -641,7 +641,7 @@ mod tests {
     assert_eq!(document.resolve_service("#other"), None);
 
     // INVALID: insert service with duplicate fragment fails.
-    let duplicate: StardustService = Service::from_json(&format!(
+    let duplicate: IotaService = Service::from_json(&format!(
       r#"{{
       "id":"{}",
       "type": "DuplicateService",
@@ -652,14 +652,14 @@ mod tests {
     .unwrap();
     assert!(!document.insert_service(duplicate.clone()));
     assert_eq!(2, document.service().len());
-    let resolved: &StardustService = document.resolve_service(&url1).unwrap();
+    let resolved: &IotaService = document.resolve_service(&url1).unwrap();
     assert_eq!(resolved, &service1);
     assert_ne!(resolved, &duplicate);
 
     // VALID: remove services.
     assert!(document.remove_service(&url1));
     assert_eq!(1, document.service().len());
-    let last_service: &StardustService = document.resolve_service(&url2).unwrap();
+    let last_service: &IotaService = document.resolve_service(&url2).unwrap();
     assert_eq!(last_service, &service2);
 
     assert!(document.remove_service(&url2));
@@ -668,9 +668,9 @@ mod tests {
 
   #[test]
   fn test_document_equality() {
-    let mut original_doc: StardustDocument = StardustDocument::new_with_id(valid_did());
+    let mut original_doc: IotaDocument = IotaDocument::new_with_id(valid_did());
     let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method1: StardustVerificationMethod = StardustVerificationMethod::new(
+    let method1: IotaVerificationMethod = IotaVerificationMethod::new(
       original_doc.id().to_owned(),
       keypair1.type_(),
       keypair1.public(),
@@ -684,8 +684,8 @@ mod tests {
     // Update the key material of the existing verification method #test-0.
     let mut doc1 = original_doc.clone();
     let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method2: StardustVerificationMethod =
-      StardustVerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
+    let method2: IotaVerificationMethod =
+      IotaVerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
     doc1
       .remove_method(&doc1.id().to_url().join("#test-0").unwrap())
@@ -700,8 +700,8 @@ mod tests {
 
     let mut doc2 = doc1.clone();
     let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method3: StardustVerificationMethod =
-      StardustVerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
+    let method3: IotaVerificationMethod =
+      IotaVerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 
     let insertion_result = doc2.insert_method(method3, MethodScope::capability_invocation());
 
@@ -715,7 +715,7 @@ mod tests {
     // VALID: unpack empty, deactivated document.
     let did: IotaDID = valid_did();
     let empty: &[u8] = &[];
-    let document: StardustDocument = StardustDocument::unpack(&did, empty, true).unwrap();
+    let document: IotaDocument = IotaDocument::unpack(&did, empty, true).unwrap();
     assert_eq!(document.id(), &did);
     assert_eq!(document.metadata.deactivated, Some(true));
 
@@ -725,22 +725,22 @@ mod tests {
     assert_eq!(document.to_json().unwrap(), json);
 
     // INVALID: reject empty document.
-    assert!(StardustDocument::unpack(&did, empty, false).is_err());
+    assert!(IotaDocument::unpack(&did, empty, false).is_err());
   }
 
   #[test]
   fn test_json_roundtrip() {
-    let document: StardustDocument = generate_document(&valid_did());
+    let document: IotaDocument = generate_document(&valid_did());
 
     let ser: String = document.to_json().unwrap();
-    let de: StardustDocument = StardustDocument::from_json(&ser).unwrap();
+    let de: IotaDocument = IotaDocument::from_json(&ser).unwrap();
     assert_eq!(document, de);
   }
 
   #[test]
   fn test_json_fieldnames() {
     // Changing the serialization is a breaking change!
-    let document: StardustDocument = StardustDocument::new_with_id(valid_did());
+    let document: IotaDocument = IotaDocument::new_with_id(valid_did());
     let serialization: String = document.to_json().unwrap();
     assert_eq!(
       serialization,

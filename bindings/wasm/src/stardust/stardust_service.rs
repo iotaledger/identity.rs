@@ -3,8 +3,8 @@
 
 use identity_iota::core::OneOrMany;
 use identity_iota::did::ServiceEndpoint;
+use identity_stardust::IotaService;
 use identity_stardust::StardustDIDUrl;
-use identity_stardust::StardustService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -18,13 +18,13 @@ use crate::error::WasmResult;
 use crate::stardust::WasmStardustDIDUrl;
 
 /// A `Service` adhering to the IOTA UTXO DID method specification.
-#[wasm_bindgen(js_name = StardustService, inspectable)]
-pub struct WasmStardustService(pub(crate) StardustService);
+#[wasm_bindgen(js_name = IotaService, inspectable)]
+pub struct WasmIotaService(pub(crate) IotaService);
 
-#[wasm_bindgen(js_class = StardustService)]
-impl WasmStardustService {
+#[wasm_bindgen(js_class = IotaService)]
+impl WasmIotaService {
   #[wasm_bindgen(constructor)]
-  pub fn new(service: IStardustService) -> Result<WasmStardustService> {
+  pub fn new(service: IIotaService) -> Result<WasmIotaService> {
     let id: StardustDIDUrl = service.id().into_serde().wasm_result()?;
 
     let base_service: &IService = service.as_ref();
@@ -32,12 +32,12 @@ impl WasmStardustService {
     let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&base_service.service_endpoint())?;
     let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&base_service.properties())?;
 
-    StardustService::builder(properties.unwrap_or_default())
+    IotaService::builder(properties.unwrap_or_default())
       .id(id)
       .types(types)
       .service_endpoint(service_endpoint)
       .build()
-      .map(WasmStardustService)
+      .map(WasmIotaService)
       .wasm_result()
   }
 
@@ -73,30 +73,30 @@ impl WasmStardustService {
   }
 }
 
-impl_wasm_json!(WasmStardustService, StardustService);
-impl_wasm_clone!(WasmStardustService, StardustService);
+impl_wasm_json!(WasmIotaService, IotaService);
+impl_wasm_clone!(WasmIotaService, IotaService);
 
-impl From<StardustService> for WasmStardustService {
-  fn from(service: StardustService) -> Self {
+impl From<IotaService> for WasmIotaService {
+  fn from(service: IotaService) -> Self {
     Self(service)
   }
 }
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IStardustService", extends = IService)]
-  pub type IStardustService;
+  #[wasm_bindgen(typescript_type = "IIotaService", extends = IService)]
+  pub type IIotaService;
 
   #[wasm_bindgen(method, getter)]
-  pub fn id(this: &IStardustService) -> JsValue;
+  pub fn id(this: &IIotaService) -> JsValue;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_STARDUST_SERVICE: &'static str = r#"
 /**
- * Holds options to create a new `StardustService`.
+ * Holds options to create a new `IotaService`.
  */
-interface IStardustService extends IService {
+interface IIotaService extends IService {
     /**
      * Identifier of the service.
      *

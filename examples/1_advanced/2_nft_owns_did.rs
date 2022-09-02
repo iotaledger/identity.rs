@@ -8,9 +8,9 @@ use examples::NETWORK_ENDPOINT;
 use identity_iota_core::block::address::NftAddress;
 use identity_iota_core::block::output::AliasOutput;
 use identity_iota_core::IotaClientExt;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustDocument;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::output::unlock_condition::AddressUnlockCondition;
@@ -78,14 +78,14 @@ async fn main() -> anyhow::Result<()> {
   let network: NetworkName = client.network_name().await?;
 
   // Construct a DID document for the subsidiary.
-  let document: StardustDocument = create_did_document(&network)?;
+  let document: IotaDocument = create_did_document(&network)?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client
     .new_did_output(Address::Nft(car_nft_id.into()), document, Some(rent_structure))
     .await?;
 
-  let car_document: StardustDocument = client.publish_did_output(&secret_manager, car_did_output).await?;
+  let car_document: IotaDocument = client.publish_did_output(&secret_manager, car_did_output).await?;
 
   // ============================================
   // Determine the car's NFT given the car's DID.

@@ -19,10 +19,10 @@ use crate::client::identity_client::validate_network;
 use crate::error::Result;
 use crate::Error;
 use crate::IotaDID;
+use crate::IotaDocument;
 use crate::IotaIdentityClient;
 use crate::IotaIdentityClientExt;
 use crate::NetworkName;
-use crate::StardustDocument;
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
@@ -36,11 +36,8 @@ pub trait IotaClientExt: IotaIdentityClient {
   /// the storage deposit amount specified on `alias_output`.
   ///
   /// This method modifies the on-ledger state.
-  async fn publish_did_output(
-    &self,
-    secret_manager: &SecretManager,
-    alias_output: AliasOutput,
-  ) -> Result<StardustDocument>;
+  async fn publish_did_output(&self, secret_manager: &SecretManager, alias_output: AliasOutput)
+    -> Result<IotaDocument>;
 
   /// Destroy the Alias Output containing the given `did`, sending its tokens to a new Basic Output
   /// unlockable by `address`.
@@ -61,13 +58,13 @@ impl IotaClientExt for Client {
     &self,
     secret_manager: &SecretManager,
     alias_output: AliasOutput,
-  ) -> Result<StardustDocument> {
+  ) -> Result<IotaDocument> {
     let block: Block = publish_output(self, secret_manager, alias_output)
       .await
       .map_err(|err| Error::DIDUpdateError("publish_did_output: publish failed", Some(err)))?;
     let network: NetworkName = self.network_name().await?;
 
-    StardustDocument::unpack_from_block(&network, &block)?
+    IotaDocument::unpack_from_block(&network, &block)?
       .into_iter()
       .next()
       .ok_or(Error::DIDUpdateError(

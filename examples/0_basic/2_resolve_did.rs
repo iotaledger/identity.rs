@@ -6,8 +6,8 @@ use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
 use identity_iota_core::block::address::Address;
 use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
-use identity_iota_core::StardustDocument;
 use iota_client::block::output::AliasOutput;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
@@ -30,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
   let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the associated Alias Output and extract the DID document from it.
-  let resolved: StardustDocument = client.resolve_did(&did).await?;
+  let resolved: IotaDocument = client.resolve_did(&did).await?;
   println!("Resolved DID Document: {:#}", resolved);
 
   // We can also resolve the Alias Output directly.

@@ -12,10 +12,10 @@ use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
 use identity_iota::did::Document;
 use identity_iota::did::MethodScope;
+use identity_stardust::IotaDocument;
+use identity_stardust::IotaVerificationMethod;
 use identity_stardust::NetworkName;
 use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustVerificationMethod;
 use identity_stardust::StateMetadataEncoding;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -35,21 +35,21 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::stardust::WasmIotaDocumentMetadata;
+use crate::stardust::WasmIotaService;
+use crate::stardust::WasmIotaVerificationMethod;
 use crate::stardust::WasmStardustDID;
 use crate::stardust::WasmStardustDIDUrl;
-use crate::stardust::WasmStardustDocumentMetadata;
-use crate::stardust::WasmStardustService;
-use crate::stardust::WasmStardustVerificationMethod;
 use crate::stardust::WasmStateMetadataEncoding;
 
 // =============================================================================
 // =============================================================================
 
-#[wasm_bindgen(js_name = StardustDocument, inspectable)]
-pub struct WasmStardustDocument(pub(crate) StardustDocument);
+#[wasm_bindgen(js_name = IotaDocument, inspectable)]
+pub struct WasmIotaDocument(pub(crate) IotaDocument);
 
-#[wasm_bindgen(js_class = StardustDocument)]
-impl WasmStardustDocument {
+#[wasm_bindgen(js_class = IotaDocument)]
+impl WasmIotaDocument {
   // ===========================================================================
   // Constructors
   // ===========================================================================
@@ -57,16 +57,16 @@ impl WasmStardustDocument {
   /// Constructs an empty DID Document with a {@link StardustDID.placeholder} identifier
   /// for the given `network`.
   #[wasm_bindgen(constructor)]
-  pub fn new(network: String) -> Result<WasmStardustDocument> {
+  pub fn new(network: String) -> Result<WasmIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    Ok(WasmStardustDocument::from(StardustDocument::new(&network_name)))
+    Ok(WasmIotaDocument::from(IotaDocument::new(&network_name)))
   }
 
   /// Constructs an empty DID Document with the given identifier.
   #[wasm_bindgen(js_name = newWithId)]
-  pub fn new_with_id(id: &WasmStardustDID) -> WasmStardustDocument {
+  pub fn new_with_id(id: &WasmStardustDID) -> WasmIotaDocument {
     let did: StardustDID = id.0.clone();
-    WasmStardustDocument::from(StardustDocument::new_with_id(did))
+    WasmIotaDocument::from(IotaDocument::new_with_id(did))
   }
 
   // ===========================================================================
@@ -153,29 +153,29 @@ impl WasmStardustDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all {@link StardustService} in the document.
+  /// Return a set of all {@link IotaService} in the document.
   #[wasm_bindgen]
-  pub fn service(&self) -> ArrayStardustService {
+  pub fn service(&self) -> ArrayIotaService {
     self
       .0
       .service()
       .iter()
       .cloned()
-      .map(WasmStardustService)
+      .map(WasmIotaService)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayStardustService>()
+      .unchecked_into::<ArrayIotaService>()
   }
 
-  /// Add a new {@link StardustService} to the document.
+  /// Add a new {@link IotaService} to the document.
   ///
   /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmStardustService) -> bool {
+  pub fn insert_service(&mut self, service: &WasmIotaService) -> bool {
     self.0.insert_service(service.0.clone())
   }
 
-  /// Remove a {@link StardustService} identified by the given {@link DIDUrl} from the document.
+  /// Remove a {@link IotaService} identified by the given {@link DIDUrl} from the document.
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
@@ -183,38 +183,38 @@ impl WasmStardustDocument {
     self.0.remove_service(&did.0)
   }
 
-  /// Returns the first {@link StardustService} with an `id` property matching the provided `query`,
+  /// Returns the first {@link IotaService} with an `id` property matching the provided `query`,
   /// if present.
   #[wasm_bindgen(js_name = resolveService)]
-  pub fn resolve_service(&self, query: &UStardustDIDUrlQuery) -> Option<WasmStardustService> {
+  pub fn resolve_service(&self, query: &UStardustDIDUrlQuery) -> Option<WasmIotaService> {
     let service_query: String = query.into_serde().ok()?;
     self
       .0
       .resolve_service(&service_query)
       .cloned()
-      .map(WasmStardustService::from)
+      .map(WasmIotaService::from)
   }
 
   // ===========================================================================
   // Verification Methods
   // ===========================================================================
 
-  /// Returns a list of all {@link StardustVerificationMethod} in the DID Document.
+  /// Returns a list of all {@link IotaVerificationMethod} in the DID Document.
   #[wasm_bindgen]
-  pub fn methods(&self) -> ArrayStardustVerificationMethods {
+  pub fn methods(&self) -> ArrayIotaVerificationMethods {
     self
       .0
       .methods()
       .cloned()
-      .map(WasmStardustVerificationMethod::from)
+      .map(WasmIotaVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayStardustVerificationMethods>()
+      .unchecked_into::<ArrayIotaVerificationMethods>()
   }
 
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmStardustVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
+  pub fn insert_method(&mut self, method: &WasmIotaVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
     self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
     Ok(())
   }
@@ -233,12 +233,12 @@ impl WasmStardustDocument {
     &self,
     query: &UStardustDIDUrlQuery,
     scope: Option<RefMethodScope>,
-  ) -> Result<Option<WasmStardustVerificationMethod>> {
+  ) -> Result<Option<WasmIotaVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let method: Option<&StardustVerificationMethod> = self.0.resolve_method(&method_query, method_scope);
-    Ok(method.cloned().map(WasmStardustVerificationMethod))
+    let method: Option<&IotaVerificationMethod> = self.0.resolve_method(&method_query, method_scope);
+    Ok(method.cloned().map(WasmIotaVerificationMethod))
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -390,9 +390,9 @@ impl WasmStardustDocument {
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
   #[wasm_bindgen]
-  pub fn unpack(did: &WasmStardustDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmStardustDocument> {
-    StardustDocument::unpack(&did.0, stateMetadata, allowEmpty)
-      .map(WasmStardustDocument)
+  pub fn unpack(did: &WasmStardustDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmIotaDocument> {
+    IotaDocument::unpack(&did.0, stateMetadata, allowEmpty)
+      .map(WasmIotaDocument)
       .wasm_result()
   }
 
@@ -401,7 +401,7 @@ impl WasmStardustDocument {
   ///
   /// Errors if any Alias Output does not contain a valid or empty DID Document.
   #[wasm_bindgen(js_name = unpackFromBlock)]
-  pub fn unpack_from_block(network: String, block: &IBlock) -> Result<ArrayStardustDocument> {
+  pub fn unpack_from_block(network: String, block: &IBlock) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
     let block_dto: bee_block::BlockDto = block
       .into_serde()
@@ -414,13 +414,13 @@ impl WasmStardustDocument {
       .wasm_result()?;
 
     Ok(
-      StardustDocument::unpack_from_block(&network_name, &block)
+      IotaDocument::unpack_from_block(&network_name, &block)
         .wasm_result()?
         .into_iter()
-        .map(WasmStardustDocument::from)
+        .map(WasmIotaDocument::from)
         .map(JsValue::from)
         .collect::<js_sys::Array>()
-        .unchecked_into::<ArrayStardustDocument>(),
+        .unchecked_into::<ArrayIotaDocument>(),
     )
   }
 
@@ -433,8 +433,8 @@ impl WasmStardustDocument {
   /// NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
   /// `metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
   #[wasm_bindgen]
-  pub fn metadata(&self) -> WasmStardustDocumentMetadata {
-    WasmStardustDocumentMetadata::from(self.0.metadata.clone())
+  pub fn metadata(&self) -> WasmIotaDocumentMetadata {
+    WasmIotaDocumentMetadata::from(self.0.metadata.clone())
   }
 
   /// Returns a copy of the timestamp of when the DID document was created.
@@ -520,17 +520,17 @@ impl WasmStardustDocument {
   }
 }
 
-impl_wasm_json!(WasmStardustDocument, StardustDocument);
-impl_wasm_clone!(WasmStardustDocument, StardustDocument);
+impl_wasm_json!(WasmIotaDocument, IotaDocument);
+impl_wasm_clone!(WasmIotaDocument, IotaDocument);
 
-impl From<StardustDocument> for WasmStardustDocument {
-  fn from(document: StardustDocument) -> Self {
+impl From<IotaDocument> for WasmIotaDocument {
+  fn from(document: IotaDocument) -> Self {
     Self(document)
   }
 }
 
-impl From<WasmStardustDocument> for StardustDocument {
-  fn from(wasm_document: WasmStardustDocument) -> Self {
+impl From<WasmIotaDocument> for IotaDocument {
+  fn from(wasm_document: WasmIotaDocument) -> Self {
     wasm_document.0
   }
 }
@@ -543,14 +543,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "StardustDID[]")]
   pub type ArrayStardustDID;
 
-  #[wasm_bindgen(typescript_type = "StardustDocument[]")]
-  pub type ArrayStardustDocument;
+  #[wasm_bindgen(typescript_type = "IotaDocument[]")]
+  pub type ArrayIotaDocument;
 
-  #[wasm_bindgen(typescript_type = "StardustService[]")]
-  pub type ArrayStardustService;
+  #[wasm_bindgen(typescript_type = "IotaService[]")]
+  pub type ArrayIotaService;
 
-  #[wasm_bindgen(typescript_type = "StardustVerificationMethod[]")]
-  pub type ArrayStardustVerificationMethods;
+  #[wasm_bindgen(typescript_type = "IotaVerificationMethod[]")]
+  pub type ArrayIotaVerificationMethods;
 
   // External interface from `@iota/types`, must be deserialized via BlockDto.
   #[wasm_bindgen(typescript_type = "IBlock")]

@@ -11,9 +11,9 @@ use identity_core::convert::FmtJson;
 use serde::Deserialize;
 use serde::Serialize;
 
-/// Additional attributes related to a [`StardustDocument`][crate::StardustDocument].
+/// Additional attributes related to a [`IotaDocument`][crate::IotaDocument].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct StardustDocumentMetadata {
+pub struct IotaDocumentMetadata {
   // TODO: store created in the immutable metadata, if possible?
   #[serde(skip_serializing_if = "Option::is_none")]
   pub created: Option<Timestamp>,
@@ -25,8 +25,8 @@ pub struct StardustDocumentMetadata {
   pub properties: Object,
 }
 
-impl StardustDocumentMetadata {
-  /// Creates a new `StardustDocumentMetadata` with the current system datetime used for `created`
+impl IotaDocumentMetadata {
+  /// Creates a new `IotaDocumentMetadata` with the current system datetime used for `created`
   /// and `updated` timestamps.
   pub fn new() -> Self {
     let now: Timestamp = Timestamp::now_utc();
@@ -39,13 +39,13 @@ impl StardustDocumentMetadata {
   }
 }
 
-impl Default for StardustDocumentMetadata {
+impl Default for IotaDocumentMetadata {
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl Display for StardustDocumentMetadata {
+impl Display for IotaDocumentMetadata {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }

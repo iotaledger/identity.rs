@@ -7,10 +7,10 @@ use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
 use identity_iota_core::IotaClientExt;
 use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
+use identity_iota_core::IotaVerificationMethod;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustVerificationMethod;
 
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
@@ -35,11 +35,11 @@ pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> 
 
   let network_name: NetworkName = client.network_name().await?;
 
-  let document: StardustDocument = create_did_document(&network_name)?;
+  let document: IotaDocument = create_did_document(&network_name)?;
 
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
-  let document: StardustDocument = client.publish_did_output(secret_manager, alias_output).await?;
+  let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
 
   Ok((address, document.id().clone()))
 }
@@ -48,13 +48,13 @@ pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> 
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<StardustDocument> {
-  let mut document: StardustDocument = StardustDocument::new(network_name);
+pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<IotaDocument> {
+  let mut document: IotaDocument = IotaDocument::new(network_name);
 
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
-  let method: StardustVerificationMethod =
-    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
 
   document.insert_method(method, MethodScope::VerificationMethod)?;
 

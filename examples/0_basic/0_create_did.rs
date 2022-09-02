@@ -10,10 +10,10 @@ use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
 use identity_iota_core::IotaClientExt;
+use identity_iota_core::IotaDocument;
 use identity_iota_core::IotaIdentityClientExt;
+use identity_iota_core::IotaVerificationMethod;
 use identity_iota_core::NetworkName;
-use identity_iota_core::StardustDocument;
-use identity_iota_core::StardustVerificationMethod;
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -43,12 +43,12 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut document: StardustDocument = StardustDocument::new(&network_name);
+  let mut document: IotaDocument = IotaDocument::new(&network_name);
 
   // Insert a new Ed25519 verification method in the DID document.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: StardustVerificationMethod =
-    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
   // Construct an Alias Output containing the DID document, with the wallet address
@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Alias Output: {}", alias_output.to_json()?);
 
   // Publish the Alias Output and get the published DID document.
-  let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Published DID document: {:#}", document);
 
   Ok(())
