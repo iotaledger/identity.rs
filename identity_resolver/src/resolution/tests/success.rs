@@ -18,112 +18,10 @@ use serde::de::DeserializeOwned;
 
 use crate::Resolver;
 
-const HOLDER_DOC_JSON: &str = r#"{
-    "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-    "verificationMethod": [
-      {
-        "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5#root",
-        "controller": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-        "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "z586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5"
-      }
-    ]
-  }"#;
-
-const ISSUER_IOTA_DOC: &str = r#"{
-    "doc": {
-      "id": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "verificationMethod": [
-        {
-          "id": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#issuerKey",
-          "controller": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-          "type": "Ed25519VerificationKey2018",
-          "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
-        }
-      ]
-    },
-    "meta": {
-      "created": "2022-08-31T09:33:31Z",
-      "updated": "2022-08-31T09:33:31Z"
-    }
-  }"#;
-
-const ISSUER_BAR_DOC: &str = r#"{
-    "id": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-    "verificationMethod": [
-      {
-        "id": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr#root",
-        "controller": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-        "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "zHyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr"
-      }
-    ]
-  }"#;
-
-const PRESENTATION_JSON: &str = r#"{
-  "@context": "https://www.w3.org/2018/credentials/v1",
-  "id": "https://example.org/credentials/3732",
-  "type": "VerifiablePresentation",
-  "verifiableCredential": [
-    {
-      "@context": "https://www.w3.org/2018/credentials/v1",
-      "id": "https://example.edu/credentials/3732",
-      "type": [
-        "VerifiableCredential",
-        "UniversityDegreeCredential"
-      ],
-      "credentialSubject": {
-        "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-        "GPA": "4.0",
-        "degree": {
-          "name": "Bachelor of Science and Arts",
-          "type": "BachelorDegree"
-        },
-        "name": "Alice"
-      },
-      "issuer": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "issuanceDate": "2022-08-31T08:35:44Z",
-      "expirationDate": "2050-09-01T08:35:44Z",
-      "proof": {
-        "type": "JcsEd25519Signature2020",
-        "verificationMethod": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#issuerKey",
-        "signatureValue": "3d2aAPqjzaSQ2XbFtqLsauv2Ukdn4Hcevz2grNuJn4q4JbBmDHZpAvekVG12A3ZKRRTeKaBPguxXqcDaqujckWWz"
-      }
-    },
-    {
-      "@context": "https://www.w3.org/2018/credentials/v1",
-      "id": "https://example.edu/credentials/3732",
-      "type": [
-        "VerifiableCredential",
-        "UniversityDegreeCredential"
-      ],
-      "credentialSubject": {
-        "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-        "GPA": "4.0",
-        "degree": {
-          "name": "Bachelor of Science and Arts",
-          "type": "BachelorDegree"
-        },
-        "name": "Alice"
-      },
-      "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-      "issuanceDate": "2022-08-31T08:35:44Z",
-      "expirationDate": "2050-09-01T08:35:44Z",
-      "proof": {
-        "type": "JcsEd25519Signature2020",
-        "verificationMethod": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr#root",
-        "signatureValue": "2iAYujqHLXP5csZzabdkfurpHaKT3Q8dnJDA4TL7pSJ7gjXLCb2tN7CF4ztKkCKmvY6VYG3pTuN1PeLGEFiQvuQr"
-      }
-    }
-  ],
-  "holder": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-  "proof": {
-    "type": "JcsEd25519Signature2020",
-    "verificationMethod": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5#root",
-    "signatureValue": "3tVeoKjftrEAQvV3MgpKgiydRHU6i8mYVRnPc6C85upo1TDBEdN94gyW1RzbgPESaZCGeDa582BxAUHVE4rVjaAd",
-    "challenge": "475a7984-1bb5-4c4c-a56f-822bccd46441"
-  }
-}"#;
+const SUBJECT_FOO_JSON: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/subject_foo_doc.json");
+const ISSUER_IOTA_DOC: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_iota_doc.json");
+const ISSUER_BAR_DOC: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_bar_doc.json");
+const PRESENTATION_JSON: &str = include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/presentation.json");
 
 // Not used, but can be useful for maintenance purposes.
 const _HOLDER_PRIVATE_KEY: [u8; 32] = [
@@ -157,7 +55,7 @@ where
 }
 
 async fn resolve_foo(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
-  resolve(did, HOLDER_DOC_JSON).await
+  resolve(did, SUBJECT_FOO_JSON).await
 }
 
 async fn resolve_iota(did: StardustDID) -> Result<StardustDocument, ResolutionError> {
