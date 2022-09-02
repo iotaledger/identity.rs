@@ -38,7 +38,7 @@ pub(crate) struct StateMetadataDocument {
 
 impl StateMetadataDocument {
   /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
-  pub fn into_stardust_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
+  pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
     let core_document: IotaCoreDocument = document.try_map(
       // Replace placeholder identifiers.
@@ -288,8 +288,8 @@ mod tests {
     assert_eq!(controllers.get(0).unwrap(), did_foreign.as_ref());
     assert_eq!(controllers.get(1).unwrap(), PLACEHOLDER_DID.as_ref());
 
-    let stardust_document = state_metadata_doc.into_stardust_document(&did_self).unwrap();
-    assert_eq!(stardust_document, document);
+    let iota_document = state_metadata_doc.into_iota_document(&did_self).unwrap();
+    assert_eq!(iota_document, document);
   }
 
   #[test]

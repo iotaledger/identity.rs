@@ -342,7 +342,7 @@ impl KeyComparable for IotaDID {
 }
 
 #[cfg(feature = "client")]
-mod __stardust_did_iota_client {
+mod __iota_did_client {
   use crate::block::output::AliasId;
   use crate::IotaDID;
 
@@ -377,8 +377,7 @@ mod tests {
 
   const LEN_VALID_ALIAS_STR: usize = VALID_ALIAS_ID_STR.len();
 
-  static VALID_STARDUST_DID_STRING: Lazy<String> =
-    Lazy::new(|| format!("did:{}:{}", IotaDID::METHOD, VALID_ALIAS_ID_STR));
+  static VALID_IOTA_DID_STRING: Lazy<String> = Lazy::new(|| format!("did:{}:{}", IotaDID::METHOD, VALID_ALIAS_ID_STR));
 
   // Rules are: at least one character, at most six characters and may only contain digits and/or lowercase ascii
   // characters.
@@ -398,7 +397,7 @@ mod tests {
     "42foo",
   ];
 
-  static VALID_STARDUST_DID_STRINGS: Lazy<Vec<String>> = Lazy::new(|| {
+  static VALID_IOTA_DID_STRINGS: Lazy<Vec<String>> = Lazy::new(|| {
     let network_tag_to_did = |network, tag| format!("did:{}:{}:{}", IotaDID::METHOD, network, tag);
 
     let valid_strings: Vec<String> = VALID_NETWORK_NAMES
@@ -432,8 +431,8 @@ mod tests {
 
   #[test]
   fn valid_check_method() {
-    let did_stardust_core: CoreDID = CoreDID::parse(&*VALID_STARDUST_DID_STRING).unwrap();
-    assert!(IotaDID::check_method(&did_stardust_core).is_ok());
+    let did_iota_core: CoreDID = CoreDID::parse(&*VALID_IOTA_DID_STRING).unwrap();
+    assert!(IotaDID::check_method(&did_iota_core).is_ok());
   }
 
   #[test]
@@ -496,7 +495,7 @@ mod tests {
 
   #[test]
   fn valid_check_tag() {
-    for input in VALID_STARDUST_DID_STRINGS.iter() {
+    for input in VALID_IOTA_DID_STRINGS.iter() {
       let did_core: CoreDID = CoreDID::parse(input).unwrap();
       assert!(
         IotaDID::check_tag(&did_core).is_ok(),
@@ -505,7 +504,7 @@ mod tests {
       );
     }
 
-    // Should also work for DID's of the form: did:<method_name>:<valid_stardust_network (or
+    // Should also work for DID's of the form: did:<method_name>:<valid_iota_network (or
     // nothing/normalized)>:<alias_id>
     let did_other_string: String = format!("did:method:{}", VALID_ALIAS_ID_STR);
     let did_other_with_network: String = format!("did:method:test:{}", VALID_ALIAS_ID_STR);
@@ -585,7 +584,7 @@ mod tests {
 
   #[test]
   fn parse_valid() {
-    for did_str in VALID_STARDUST_DID_STRINGS.iter() {
+    for did_str in VALID_IOTA_DID_STRINGS.iter() {
       assert!(IotaDID::parse(&did_str).is_ok());
     }
   }

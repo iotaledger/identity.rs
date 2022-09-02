@@ -291,7 +291,7 @@ impl IotaDocument {
       empty_document.metadata.deactivated = Some(true);
       return Ok(empty_document);
     }
-    StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_stardust_document(did))
+    StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_iota_document(did))
   }
 }
 
