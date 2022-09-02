@@ -14,12 +14,15 @@ description = "An implementation of the DIDComm Messaging Specification."
 identity_core = { path = "../identity_core", version = "=0.5.0-dev.4" }
 identity_credential = { path = "../identity_credential", version = "=0.5.0-dev.4" }
 identity_did = { path = "../identity_did", version = "=0.5.0-dev.4" }
-identity_iota_client = { version = "=0.5.0", path = "../identity_iota_client", default-features = false }
+identity_iota_client_legacy = { version = "=0.5.0", path = "../identity_iota_client_legacy", default-features = false }
 # libjose = { path = "../libjose", version = "=0.1.0" }
 paste = { version = "1.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+strum = { version = "0.24.0", default-features = false, features = [
+  "std",
+  "derive",
+] }
 thiserror = { version = "1.0" }
 uuid = { version = "0.8", features = ["serde", "v4"], default-features = false }
 

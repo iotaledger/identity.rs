@@ -17,11 +17,11 @@ use identity_core::convert::ToJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
-use identity_iota_client::chain::DocumentChain;
-use identity_iota_client::document::ResolvedIotaDocument;
-use identity_iota_client::tangle::Client;
-use identity_iota_client::tangle::PublishType;
-use identity_iota_client::tangle::SharedPtr;
+use identity_iota_client_legacy::chain::DocumentChain;
+use identity_iota_client_legacy::document::ResolvedIotaDocument;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::PublishType;
+use identity_iota_client_legacy::tangle::SharedPtr;
 use identity_iota_core_legacy::did::IotaDID;
 use identity_iota_core_legacy::did::IotaDIDUrl;
 use identity_iota_core_legacy::diff::DiffMessage;
@@ -120,7 +120,7 @@ where
     // Ensure the DID matches the client network.
     if did.network_str() != setup.client.network().name_str() {
       return Err(Error::IotaClientError(
-        identity_iota_client::Error::IncompatibleNetwork(format!(
+        identity_iota_client_legacy::Error::IncompatibleNetwork(format!(
           "DID network {} does not match account network {}",
           did.network_str(),
           setup.client.network().name_str()
@@ -574,8 +574,8 @@ mod account_revocation {
   use crate::account::PublishOptions;
   use crate::Result;
   use identity_did::did::DID;
-  use identity_iota_client::tangle::Client;
-  use identity_iota_client::tangle::SharedPtr;
+  use identity_iota_client_legacy::tangle::Client;
+  use identity_iota_client_legacy::tangle::SharedPtr;
   use identity_iota_core_legacy::did::IotaDIDUrl;
 
   impl<C> Account<C>
@@ -622,8 +622,8 @@ mod account_encryption {
   use identity_account_storage::types::EncryptionAlgorithm;
   use identity_account_storage::types::KeyLocation;
   use identity_core::crypto::PublicKey;
-  use identity_iota_client::tangle::Client;
-  use identity_iota_client::tangle::SharedPtr;
+  use identity_iota_client_legacy::tangle::Client;
+  use identity_iota_client_legacy::tangle::SharedPtr;
   use identity_iota_core_legacy::document::IotaVerificationMethod;
 
   impl<C> Account<C>

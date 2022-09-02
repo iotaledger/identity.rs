@@ -1,5 +1,5 @@
 [package]
-name = "identity_iota_client"
+name = "identity_iota_client_legacy"
 version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"

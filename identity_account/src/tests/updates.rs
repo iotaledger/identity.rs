@@ -20,7 +20,7 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota_client::tangle::ClientBuilder;
+use identity_iota_client_legacy::tangle::ClientBuilder;
 use identity_iota_core_legacy::did::IotaDID;
 use identity_iota_core_legacy::document::IotaDocument;
 use identity_iota_core_legacy::document::IotaVerificationMethod;
