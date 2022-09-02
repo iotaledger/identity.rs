@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {IStardustIdentityClient, StardustDID, StardustDocument, StardustIdentityClientExt} from '~identity_wasm';
+import {IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt} from '~identity_wasm';
 
 import type {Client, INodeInfoWrapper, SecretManager} from '~iota-client-wasm';
 import {
@@ -16,7 +16,7 @@ import {
 } from '@iota/iota.js';
 
 /** Provides operations for IOTA UTXO DID Documents with Alias Outputs. */
-export class StardustIdentityClient implements IStardustIdentityClient {
+export class StardustIdentityClient implements IIotaIdentityClient {
     client: Client;
 
     constructor(client: Client) {
@@ -56,8 +56,8 @@ export class StardustIdentityClient implements IStardustIdentityClient {
      *
      * NOTE: this does *not* publish the Alias Output.
      */
-    async newDidOutput(address: AddressTypes, document: StardustDocument, rentStructure?: IRent): Promise<IAliasOutput> {
-        return await StardustIdentityClientExt.newDidOutput(this, address, document, rentStructure);
+    async newDidOutput(address: AddressTypes, document: IotaDocument, rentStructure?: IRent): Promise<IAliasOutput> {
+        return await IotaIdentityClientExt.newDidOutput(this, address, document, rentStructure);
     }
 
     /** Fetches the associated Alias Output and updates it with `document` in its state metadata.
@@ -66,8 +66,8 @@ export class StardustIdentityClient implements IStardustIdentityClient {
      *
      * NOTE: this does *not* publish the updated Alias Output.
      */
-    async updateDidOutput(document: StardustDocument): Promise<IAliasOutput> {
-        return await StardustIdentityClientExt.updateDidOutput(this, document);
+    async updateDidOutput(document: IotaDocument): Promise<IAliasOutput> {
+        return await IotaIdentityClientExt.updateDidOutput(this, document);
     }
 
     /** Removes the DID document from the state metadata of its Alias Output,
@@ -79,20 +79,20 @@ export class StardustIdentityClient implements IStardustIdentityClient {
      *
      * NOTE: this does *not* publish the updated Alias Output.
      */
-    async deactivateDidOutput(did: StardustDID): Promise<IAliasOutput> {
-        return await StardustIdentityClientExt.deactivateDidOutput(this, did);
+    async deactivateDidOutput(did: IotaDID): Promise<IAliasOutput> {
+        return await IotaIdentityClientExt.deactivateDidOutput(this, did);
     }
 
-    /** Resolve a {@link StardustDocument}. Returns an empty, deactivated document if the state
+    /** Resolve a {@link IotaDocument}. Returns an empty, deactivated document if the state
      * metadata of the Alias Output is empty.
      */
-    async resolveDid(did: StardustDID): Promise<StardustDocument> {
-        return await StardustIdentityClientExt.resolveDid(this, did);
+    async resolveDid(did: IotaDID): Promise<IotaDocument> {
+        return await IotaIdentityClientExt.resolveDid(this, did);
     }
 
     /** Fetches the Alias Output associated with the given DID. */
-    async resolveDidOutput(did: StardustDID): Promise<IAliasOutput> {
-        return await StardustIdentityClientExt.resolveDidOutput(this, did);
+    async resolveDidOutput(did: IotaDID): Promise<IAliasOutput> {
+        return await IotaIdentityClientExt.resolveDidOutput(this, did);
     }
 
     /** Publish the given `aliasOutput` with the provided ` `, and returns
@@ -104,7 +104,7 @@ export class StardustIdentityClient implements IStardustIdentityClient {
      *
      * This method modifies the on-ledger state.
      */
-    async publishDidOutput(secretManager: SecretManager, aliasOutput: IAliasOutput): Promise<StardustDocument> {
+    async publishDidOutput(secretManager: SecretManager, aliasOutput: IAliasOutput): Promise<IotaDocument> {
         const networkHrp = await this.getNetworkHrp();
 
         // Publish block.
@@ -114,7 +114,7 @@ export class StardustIdentityClient implements IStardustIdentityClient {
         await this.client.retryUntilIncluded(blockId);
 
         // Extract document with computed AliasId.
-        const documents = StardustDocument.unpackFromBlock(networkHrp, block);
+        const documents = IotaDocument.unpackFromBlock(networkHrp, block);
         if (documents.length < 1) {
             throw new Error("publishDidOutput: no DID document in transaction payload");
         }
@@ -130,7 +130,7 @@ export class StardustIdentityClient implements IStardustIdentityClient {
      *
      * This destroys the Alias Output and DID document, rendering them permanently unrecoverable.
      */
-    async deleteDidOutput(secretManager: SecretManager, address: AddressTypes, did: StardustDID) {
+    async deleteDidOutput(secretManager: SecretManager, address: AddressTypes, did: IotaDID) {
         const networkHrp = await this.getNetworkHrp();
         if (networkHrp !== did.networkStr()) {
             throw new Error("deleteDidOutput: DID network mismatch, client expected `" + networkHrp + "`, DID network is `" + did.networkStr() + "`");

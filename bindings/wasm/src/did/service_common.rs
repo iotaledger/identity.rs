@@ -48,29 +48,6 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IIotaService", extends = IService)]
-  pub type IIotaService;
-
-  #[wasm_bindgen(method, getter)]
-  pub fn id(this: &IIotaService) -> JsValue;
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const I_IOTA_SERVICE: &'static str = r#"
-/**
- * Holds options to create a new `IotaService`.
- */
-interface IIotaService extends IService {
-    /**
-     * Identifier of the service.
-     *
-     * Must be a valid DIDUrl with a fragment.
-     */
-    readonly id: DIDUrl | string;
-}"#;
-
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "IService")]
   pub type IService;
 
