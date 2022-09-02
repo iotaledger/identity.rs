@@ -9,7 +9,7 @@ publish = false
 anyhow = "1.0.62"
 identity_core = { path = "../identity_core" }
 identity_did = { path = "../identity_did" }
-identity_stardust = { path = "../identity_stardust" }
+identity_iota_core = { path = "../identity_iota_core" }
 iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 primitive-types = "0.11.1"
 rand = "0.8.5"

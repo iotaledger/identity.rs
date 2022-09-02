@@ -1,15 +1,15 @@
 [package]
-name = "identity_stardust"
+name = "identity_iota_core"
 version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
-keywords = ["iota", "tangle", "stardust", "identity"]
+keywords = ["iota", "tangle", "utxo", "identity"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 rust-version = "1.62"
-description = "An IOTA Ledger integration for the identity.rs library."
+description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
 # Ensure bee-block always matches the version used by iota-client.

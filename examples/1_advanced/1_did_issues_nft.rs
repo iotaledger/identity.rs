@@ -4,11 +4,11 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
-use identity_stardust::block::output::feature::MetadataFeature;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
+use identity_iota_core::block::output::feature::MetadataFeature;
+use identity_iota_core::NetworkName;
+use identity_iota_core::StardustDID;
+use identity_iota_core::StardustDocument;
+use identity_iota_core::StardustIdentityClientExt;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;

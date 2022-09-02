@@ -5,12 +5,12 @@ use anyhow::Context;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodScope;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
-use identity_stardust::StardustVerificationMethod;
+use identity_iota_core::NetworkName;
+use identity_iota_core::StardustClientExt;
+use identity_iota_core::StardustDID;
+use identity_iota_core::StardustDocument;
+use identity_iota_core::StardustIdentityClientExt;
+use identity_iota_core::StardustVerificationMethod;
 
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
