@@ -18,9 +18,9 @@ pub enum Error {
   /// Caused by errors from the [identity_credential] crate.
   #[error(transparent)]
   CredentialError(#[from] identity_credential::Error),
-  /// Caused by errors from the [identity_account_storage] crate.
+  /// Caused by errors from the [identity_account_storage_legacy] crate.
   #[error(transparent)]
-  AccountCoreError(#[from] identity_account_storage::Error),
+  AccountCoreError(#[from] identity_account_storage_legacy::Error),
   /// Caused by errors from the [identity_iota_client_legacy] crate.
   #[error(transparent)]
   IotaClientError(#[from] identity_iota_client_legacy::Error),

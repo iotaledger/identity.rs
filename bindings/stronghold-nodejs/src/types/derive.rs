@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account_storage::identity::ChainState;
-use identity_account_storage::types::CekAlgorithm;
-use identity_account_storage::types::EncryptedData;
-use identity_account_storage::types::EncryptionAlgorithm;
-use identity_account_storage::types::KeyLocation;
-use identity_account_storage::types::Signature;
+use identity_account_storage_legacy::identity::ChainState;
+use identity_account_storage_legacy::types::CekAlgorithm;
+use identity_account_storage_legacy::types::EncryptedData;
+use identity_account_storage_legacy::types::EncryptionAlgorithm;
+use identity_account_storage_legacy::types::KeyLocation;
+use identity_account_storage_legacy::types::Signature;
 use identity_did::did::CoreDID;
 use identity_iota_core_legacy::document::IotaDocument;
 use napi::Result;
