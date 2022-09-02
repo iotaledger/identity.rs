@@ -60,8 +60,8 @@ impl StardustDID {
   ///
   /// ```
   /// # use identity_did::did::DID;
-  /// # use identity_stardust::NetworkName;
-  /// # use identity_stardust::StardustDID;
+  /// # use identity_iota_core::NetworkName;
+  /// # use identity_iota_core::StardustDID;
   /// #
   /// let did = StardustDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
   /// assert_eq!(did.as_str(), "did:iota:smr:0x0101010101010101010101010101010101010101010101010101010101010101");
@@ -78,8 +78,8 @@ impl StardustDID {
   ///
   /// ```
   /// # use identity_did::did::DID;
-  /// # use identity_stardust::NetworkName;
-  /// # use identity_stardust::StardustDID;
+  /// # use identity_iota_core::NetworkName;
+  /// # use identity_iota_core::StardustDID;
   /// #
   /// let placeholder = StardustDID::placeholder(&NetworkName::try_from("smr").unwrap());
   /// assert_eq!(placeholder.as_str(), "did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000");

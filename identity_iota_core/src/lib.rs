@@ -16,7 +16,7 @@ pub use did::StardustDID;
 pub use did::StardustDIDUrl;
 pub use document::*;
 pub use network::NetworkName;
-pub use state_metadata::*;
+pub(crate) use state_metadata::*;
 
 pub use self::error::Error;
 pub use self::error::Result;
