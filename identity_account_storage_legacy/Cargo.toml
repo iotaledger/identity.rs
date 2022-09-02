@@ -10,7 +10,6 @@ publish = false
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
-publish = false
 
 [dependencies]
 anyhow = { version = "1.0", default-features = false, features = ["std"], optional = true }
