@@ -69,8 +69,8 @@ criterion_main!(benches);
 
 mod remote_account {
   use dashmap::DashMap;
-  use identity_account_legacy::account::AccountBuilder;
   use identity_account_legacy::account::Account;
+  use identity_account_legacy::account::AccountBuilder;
   use identity_account_legacy::types::IdentitySetup;
   use identity_agent::agent::Endpoint;
   use identity_agent::agent::Handler;

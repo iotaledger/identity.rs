@@ -18,9 +18,7 @@ brotli = { version = "3.3", default-features = false, features = ["std"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = [
-  "validator",
-] }
+identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_iota_core_legacy = { version = "=0.6.0", path = "../identity_iota_core_legacy", default-features = false }
 itertools = { version = "0.10" }
@@ -28,14 +26,8 @@ lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
-serde = { version = "1.0", default-features = false, features = [
-  "std",
-  "derive",
-] }
-strum = { version = "0.24.0", default-features = false, features = [
-  "std",
-  "derive",
-] }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
