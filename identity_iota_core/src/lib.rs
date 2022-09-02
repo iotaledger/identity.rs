@@ -16,7 +16,7 @@ pub use did::IotaDID;
 pub use did::IotaDIDUrl;
 pub use document::*;
 pub use network::NetworkName;
-pub(crate) use state_metadata::*;
+pub use state_metadata::*;
 
 pub use self::error::Error;
 pub use self::error::Result;

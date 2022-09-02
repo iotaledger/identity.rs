@@ -1,20 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use stardust_did::WasmStardustDID;
-pub use stardust_did_url::WasmStardustDIDUrl;
-pub use stardust_document::WasmIotaDocument;
-pub use stardust_document_metadata::WasmIotaDocumentMetadata;
-pub use stardust_service::WasmIotaService;
-pub use stardust_verification_method::WasmIotaVerificationMethod;
-pub use state_metadata_encoding::WasmStateMetadataEncoding;
+pub use iota_did::WasmIotaDID;
+pub use iota_did_url::WasmIotaDIDUrl;
+pub use iota_document::WasmIotaDocument;
+pub use iota_document_metadata::WasmIotaDocumentMetadata;
+pub use iota_metadata_encoding::WasmStateMetadataEncoding;
+pub use iota_service::WasmIotaService;
+pub use iota_verification_method::WasmIotaVerificationMethod;
 
 mod identity_client;
 mod identity_client_ext;
-mod stardust_did;
-mod stardust_did_url;
-mod stardust_document;
-mod stardust_document_metadata;
-mod stardust_service;
-mod stardust_verification_method;
-mod state_metadata_encoding;
+mod iota_did;
+mod iota_did_url;
+mod iota_document;
+mod iota_document_metadata;
+mod iota_metadata_encoding;
+mod iota_service;
+mod iota_verification_method;

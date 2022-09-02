@@ -5,18 +5,18 @@ use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
-use identity_iota::credential::Credential;
-use identity_iota::credential::Presentation;
+// use identity_iota::credential::Credential;
+// use identity_iota::credential::Presentation;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
 use identity_iota::did::Document;
 use identity_iota::did::MethodScope;
-use identity_stardust::IotaDocument;
-use identity_stardust::IotaVerificationMethod;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustDID;
-use identity_stardust::StateMetadataEncoding;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::iota_core::NetworkName;
+use identity_iota::iota_core::StateMetadataEncoding;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -26,8 +26,8 @@ use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
-use crate::credential::WasmCredential;
-use crate::credential::WasmPresentation;
+// use crate::credential::WasmCredential;
+// use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::RefMethodScope;
 use crate::did::WasmMethodRelationship;
@@ -35,11 +35,11 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::stardust::WasmIotaDID;
+use crate::stardust::WasmIotaDIDUrl;
 use crate::stardust::WasmIotaDocumentMetadata;
 use crate::stardust::WasmIotaService;
 use crate::stardust::WasmIotaVerificationMethod;
-use crate::stardust::WasmStardustDID;
-use crate::stardust::WasmStardustDIDUrl;
 use crate::stardust::WasmStateMetadataEncoding;
 
 // =============================================================================
@@ -54,7 +54,7 @@ impl WasmIotaDocument {
   // Constructors
   // ===========================================================================
 
-  /// Constructs an empty DID Document with a {@link StardustDID.placeholder} identifier
+  /// Constructs an empty DID Document with a {@link IotaDID.placeholder} identifier
   /// for the given `network`.
   #[wasm_bindgen(constructor)]
   pub fn new(network: String) -> Result<WasmIotaDocument> {
@@ -64,8 +64,8 @@ impl WasmIotaDocument {
 
   /// Constructs an empty DID Document with the given identifier.
   #[wasm_bindgen(js_name = newWithId)]
-  pub fn new_with_id(id: &WasmStardustDID) -> WasmIotaDocument {
-    let did: StardustDID = id.0.clone();
+  pub fn new_with_id(id: &WasmIotaDID) -> WasmIotaDocument {
+    let did: IotaDID = id.0.clone();
     WasmIotaDocument::from(IotaDocument::new_with_id(did))
   }
 
@@ -75,8 +75,8 @@ impl WasmIotaDocument {
 
   /// Returns a copy of the DID Document `id`.
   #[wasm_bindgen]
-  pub fn id(&self) -> WasmStardustDID {
-    WasmStardustDID::from(self.0.id().clone())
+  pub fn id(&self) -> WasmIotaDID {
+    WasmIotaDID::from(self.0.id().clone())
   }
 
   /// Returns a copy of the list of document controllers.
@@ -84,16 +84,16 @@ impl WasmIotaDocument {
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
   #[wasm_bindgen]
-  pub fn controller(&self) -> ArrayStardustDID {
+  pub fn controller(&self) -> ArrayIotaDID {
     match self.0.controller() {
       Some(controllers) => controllers
         .iter()
         .cloned()
-        .map(WasmStardustDID::from)
+        .map(WasmIotaDID::from)
         .map(JsValue::from)
         .collect::<js_sys::Array>()
-        .unchecked_into::<ArrayStardustDID>(),
-      None => js_sys::Array::new().unchecked_into::<ArrayStardustDID>(),
+        .unchecked_into::<ArrayIotaDID>(),
+      None => js_sys::Array::new().unchecked_into::<ArrayIotaDID>(),
     }
   }
 
@@ -179,14 +179,14 @@ impl WasmIotaDocument {
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmStardustDIDUrl) -> bool {
+  pub fn remove_service(&mut self, did: &WasmIotaDIDUrl) -> bool {
     self.0.remove_service(&did.0)
   }
 
   /// Returns the first {@link IotaService} with an `id` property matching the provided `query`,
   /// if present.
   #[wasm_bindgen(js_name = resolveService)]
-  pub fn resolve_service(&self, query: &UStardustDIDUrlQuery) -> Option<WasmIotaService> {
+  pub fn resolve_service(&self, query: &UIotaDIDUrlQuery) -> Option<WasmIotaService> {
     let service_query: String = query.into_serde().ok()?;
     self
       .0
@@ -221,7 +221,7 @@ impl WasmIotaDocument {
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmStardustDIDUrl) -> Result<()> {
+  pub fn remove_method(&mut self, did: &WasmIotaDIDUrl) -> Result<()> {
     self.0.remove_method(&did.0).wasm_result()
   }
 
@@ -231,7 +231,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = resolveMethod)]
   pub fn resolve_method(
     &self,
-    query: &UStardustDIDUrlQuery,
+    query: &UIotaDIDUrlQuery,
     scope: Option<RefMethodScope>,
   ) -> Result<Option<WasmIotaVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
@@ -249,7 +249,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = attachMethodRelationship)]
   pub fn attach_method_relationship(
     &mut self,
-    didUrl: &WasmStardustDIDUrl,
+    didUrl: &WasmIotaDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
@@ -263,7 +263,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
     &mut self,
-    didUrl: &WasmStardustDIDUrl,
+    didUrl: &WasmIotaDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
@@ -276,51 +276,52 @@ impl WasmIotaDocument {
   // Signatures
   // ===========================================================================
 
-  /// Creates a signature for the given `Credential` with the specified DID Document
-  /// Verification Method.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signCredential)]
-  pub fn sign_credential(
-    &self,
-    credential: &WasmCredential,
-    privateKey: Vec<u8>,
-    methodQuery: &UStardustDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<WasmCredential> {
-    let mut data: Credential = credential.0.clone();
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
+  // REFACTOR-TODO: Readd after credential module is fixed.
+  // /// Creates a signature for the given `Credential` with the specified DID Document
+  // /// Verification Method.
+  // #[allow(non_snake_case)]
+  // #[wasm_bindgen(js_name = signCredential)]
+  // pub fn sign_credential(
+  //   &self,
+  //   credential: &WasmCredential,
+  //   privateKey: Vec<u8>,
+  //   methodQuery: &UIotaDIDUrlQuery,
+  //   options: &WasmProofOptions,
+  // ) -> Result<WasmCredential> {
+  //   let mut data: Credential = credential.0.clone();
+  //   let private_key: PrivateKey = privateKey.into();
+  //   let method_query: String = methodQuery.into_serde().wasm_result()?;
+  //   let options: ProofOptions = options.0.clone();
 
-    self
-      .0
-      .sign_data(&mut data, &private_key, &method_query, options)
-      .wasm_result()?;
-    Ok(WasmCredential::from(data))
-  }
+  //   self
+  //     .0
+  //     .sign_data(&mut data, &private_key, &method_query, options)
+  //     .wasm_result()?;
+  //   Ok(WasmCredential::from(data))
+  // }
 
-  /// Creates a signature for the given `Presentation` with the specified DID Document
-  /// Verification Method.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signPresentation)]
-  pub fn sign_presentation(
-    &self,
-    presentation: &WasmPresentation,
-    privateKey: Vec<u8>,
-    methodQuery: &UStardustDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<WasmPresentation> {
-    let mut data: Presentation = presentation.0.clone();
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
+  // /// Creates a signature for the given `Presentation` with the specified DID Document
+  // /// Verification Method.
+  // #[allow(non_snake_case)]
+  // #[wasm_bindgen(js_name = signPresentation)]
+  // pub fn sign_presentation(
+  //   &self,
+  //   presentation: &WasmPresentation,
+  //   privateKey: Vec<u8>,
+  //   methodQuery: &UIotaDIDUrlQuery,
+  //   options: &WasmProofOptions,
+  // ) -> Result<WasmPresentation> {
+  //   let mut data: Presentation = presentation.0.clone();
+  //   let private_key: PrivateKey = privateKey.into();
+  //   let method_query: String = methodQuery.into_serde().wasm_result()?;
+  //   let options: ProofOptions = options.0.clone();
 
-    self
-      .0
-      .sign_data(&mut data, &private_key, &method_query, options)
-      .wasm_result()?;
-    Ok(WasmPresentation::from(data))
-  }
+  //   self
+  //     .0
+  //     .sign_data(&mut data, &private_key, &method_query, options)
+  //     .wasm_result()?;
+  //   Ok(WasmPresentation::from(data))
+  // }
 
   /// Creates a signature for the given `data` with the specified DID Document
   /// Verification Method.
@@ -332,7 +333,7 @@ impl WasmIotaDocument {
     &self,
     data: &JsValue,
     privateKey: Vec<u8>,
-    methodQuery: &UStardustDIDUrlQuery,
+    methodQuery: &UIotaDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
@@ -390,7 +391,7 @@ impl WasmIotaDocument {
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
   #[wasm_bindgen]
-  pub fn unpack(did: &WasmStardustDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmIotaDocument> {
+  pub fn unpack(did: &WasmIotaDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmIotaDocument> {
     IotaDocument::unpack(&did.0, stateMetadata, allowEmpty)
       .map(WasmIotaDocument)
       .wasm_result()
@@ -406,11 +407,13 @@ impl WasmIotaDocument {
     let block_dto: bee_block::BlockDto = block
       .into_serde()
       .map_err(|err| {
-        identity_stardust::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
+        identity_iota::iota_core::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
       })
       .wasm_result()?;
     let block: bee_block::Block = bee_block::Block::try_from(&block_dto)
-      .map_err(|err| identity_stardust::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err)))
+      .map_err(|err| {
+        identity_iota::iota_core::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
+      })
       .wasm_result()?;
 
     Ok(
@@ -501,7 +504,7 @@ impl WasmIotaDocument {
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, serviceQuery: &UStardustDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_credentials(&mut self, serviceQuery: &UIotaDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
@@ -512,7 +515,7 @@ impl WasmIotaDocument {
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(&mut self, serviceQuery: &UStardustDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn unrevoke_credentials(&mut self, serviceQuery: &UIotaDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
@@ -537,11 +540,11 @@ impl From<WasmIotaDocument> for IotaDocument {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "StardustDIDUrl | string")]
-  pub type UStardustDIDUrlQuery;
+  #[wasm_bindgen(typescript_type = "IotaDIDUrl | string")]
+  pub type UIotaDIDUrlQuery;
 
-  #[wasm_bindgen(typescript_type = "StardustDID[]")]
-  pub type ArrayStardustDID;
+  #[wasm_bindgen(typescript_type = "IotaDID[]")]
+  pub type ArrayIotaDID;
 
   #[wasm_bindgen(typescript_type = "IotaDocument[]")]
   pub type ArrayIotaDocument;

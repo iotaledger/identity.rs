@@ -3,8 +3,8 @@
 
 use identity_iota::core::OneOrMany;
 use identity_iota::did::ServiceEndpoint;
-use identity_stardust::IotaService;
-use identity_stardust::StardustDIDUrl;
+use identity_iota::iota_core::IotaDIDUrl;
+use identity_iota::iota_core::IotaService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -15,7 +15,7 @@ use crate::did::IService;
 use crate::did::UServiceEndpoint;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::stardust::WasmStardustDIDUrl;
+use crate::stardust::WasmIotaDIDUrl;
 
 /// A `Service` adhering to the IOTA UTXO DID method specification.
 #[wasm_bindgen(js_name = IotaService, inspectable)]
@@ -25,7 +25,7 @@ pub struct WasmIotaService(pub(crate) IotaService);
 impl WasmIotaService {
   #[wasm_bindgen(constructor)]
   pub fn new(service: IIotaService) -> Result<WasmIotaService> {
-    let id: StardustDIDUrl = service.id().into_serde().wasm_result()?;
+    let id: IotaDIDUrl = service.id().into_serde().wasm_result()?;
 
     let base_service: &IService = service.as_ref();
     let types: OneOrMany<String> = service.type_().into_serde().wasm_result()?;
@@ -43,8 +43,8 @@ impl WasmIotaService {
 
   /// Returns a copy of the `Service` id.
   #[wasm_bindgen]
-  pub fn id(&self) -> WasmStardustDIDUrl {
-    WasmStardustDIDUrl::from(self.0.id().clone())
+  pub fn id(&self) -> WasmIotaDIDUrl {
+    WasmIotaDIDUrl::from(self.0.id().clone())
   }
 
   /// Returns a copy of the `Service` type.
@@ -102,5 +102,5 @@ interface IIotaService extends IService {
      *
      * Must be a valid DIDUrl with a fragment.
      */
-    readonly id: StardustDIDUrl | string;
+    readonly id: IotaDIDUrl | string;
 }"#;

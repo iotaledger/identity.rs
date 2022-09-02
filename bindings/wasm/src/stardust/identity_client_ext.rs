@@ -1,14 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_stardust::block::address::dto::AddressDto;
-use identity_stardust::block::address::Address;
-use identity_stardust::block::output::dto::AliasOutputDto;
-use identity_stardust::block::output::AliasOutput;
-use identity_stardust::block::output::RentStructure;
-use identity_stardust::StardustDID;
-use identity_stardust::IotaDocument;
-use identity_stardust::IotaIdentityClientExt;
+use identity_iota::iota_core::block::address::dto::AddressDto;
+use identity_iota::iota_core::block::address::Address;
+use identity_iota::iota_core::block::output::dto::AliasOutputDto;
+use identity_iota::iota_core::block::output::AliasOutput;
+use identity_iota::iota_core::block::output::RentStructure;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaIdentityClientExt;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -17,7 +17,7 @@ use wasm_bindgen_futures::future_to_promise;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::stardust::identity_client::WasmIotaIdentityClient;
-use crate::stardust::WasmStardustDID;
+use crate::stardust::WasmIotaDID;
 use crate::stardust::WasmIotaDocument;
 
 // `IAliasOutput`, `AddressTypes`, and `IRent` are external interfaces.
@@ -65,7 +65,9 @@ impl WasmIotaIdentityClientExt {
     let address_dto: AddressDto = address.into_serde().wasm_result()?;
     let address: Address = Address::try_from(&address_dto)
       .map_err(|err| {
-        identity_stardust::Error::JsError(format!("newDidOutput failed to decode Address: {err}: {address_dto:?}"))
+        identity_iota::iota_core::Error::JsError(format!(
+          "newDidOutput failed to decode Address: {err}: {address_dto:?}"
+        ))
       })
       .wasm_result()?;
     let doc: IotaDocument = document.0.clone();
@@ -92,10 +94,7 @@ impl WasmIotaIdentityClientExt {
   ///
   /// NOTE: this does *not* publish the updated Alias Output.
   #[wasm_bindgen(js_name = updateDidOutput)]
-  pub fn update_did_output(
-    client: WasmIotaIdentityClient,
-    document: &WasmIotaDocument,
-  ) -> Result<PromiseAliasOutput> {
+  pub fn update_did_output(client: WasmIotaIdentityClient, document: &WasmIotaDocument) -> Result<PromiseAliasOutput> {
     let document: IotaDocument = document.0.clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = IotaIdentityClientExt::update_did_output(&client, document)
@@ -119,11 +118,8 @@ impl WasmIotaIdentityClientExt {
   ///
   /// NOTE: this does *not* publish the updated Alias Output.
   #[wasm_bindgen(js_name = deactivateDidOutput)]
-  pub fn deactivate_did_output(
-    client: WasmIotaIdentityClient,
-    did: &WasmStardustDID,
-  ) -> Result<PromiseAliasOutput> {
-    let did: StardustDID = did.0.clone();
+  pub fn deactivate_did_output(client: WasmIotaIdentityClient, did: &WasmIotaDID) -> Result<PromiseAliasOutput> {
+    let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = IotaIdentityClientExt::deactivate_did_output(&client, &did)
         .await
@@ -140,8 +136,8 @@ impl WasmIotaIdentityClientExt {
   /// Resolve a {@link IotaDocument}. Returns an empty, deactivated document if the state metadata
   /// of the Alias Output is empty.
   #[wasm_bindgen(js_name = resolveDid)]
-  pub fn resolve_did(client: WasmIotaIdentityClient, did: &WasmStardustDID) -> Result<PromiseIotaDocument> {
-    let did: StardustDID = did.0.clone();
+  pub fn resolve_did(client: WasmIotaIdentityClient, did: &WasmIotaDID) -> Result<PromiseIotaDocument> {
+    let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       IotaIdentityClientExt::resolve_did(&client, &did)
         .await
@@ -156,8 +152,8 @@ impl WasmIotaIdentityClientExt {
 
   /// Fetches the `IAliasOutput` associated with the given DID.
   #[wasm_bindgen(js_name = resolveDidOutput)]
-  pub fn resolve_did_output(client: WasmIotaIdentityClient, did: &WasmStardustDID) -> Result<PromiseAliasOutput> {
-    let did: StardustDID = did.0.clone();
+  pub fn resolve_did_output(client: WasmIotaIdentityClient, did: &WasmIotaDID) -> Result<PromiseAliasOutput> {
+    let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = IotaIdentityClientExt::resolve_did_output(&client, &did)
         .await
