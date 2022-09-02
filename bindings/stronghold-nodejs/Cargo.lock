@@ -727,7 +727,7 @@ dependencies = [
 name = "identity-stronghold-nodejs"
 version = "0.6.0"
 dependencies = [
- "identity_account_storage_legacy",
+ "identity_account_storage",
  "identity_core",
  "identity_did",
  "identity_iota_core_legacy",
@@ -739,7 +739,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "identity_account_storage_legacy"
+name = "identity_account_storage"
 version = "0.6.0"
 dependencies = [
  "async-trait",

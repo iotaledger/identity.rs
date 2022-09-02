@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
-use identity_account_storage_legacy::storage::MemStore;
-use identity_account_storage_legacy::types::KeyLocation;
+use identity_account_storage::storage::MemStore;
+use identity_account_storage::types::KeyLocation;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
@@ -144,7 +144,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
     assert!(matches!(
       output.unwrap_err(),
-      Error::AccountCoreError(identity_account_storage_legacy::Error::IdentityAlreadyExists)
+      Error::AccountCoreError(identity_account_storage::Error::IdentityAlreadyExists)
     ));
 
     // Ensure nothing was overwritten in storage

@@ -36,7 +36,7 @@ account
   .await?;
 ```
 
-The above code generates a new Ed25519 keypair, writes it to [`Storage`](identity_account_storage_legacy::storage::Storage), embeds it in a new verification method, and publishes the updated DID Document to the Tangle. 
+The above code generates a new Ed25519 keypair, writes it to [`Storage`](identity_account_storage::storage::Storage), embeds it in a new verification method, and publishes the updated DID Document to the Tangle. 
 
 See the [`IdentityUpdater`](crate::types::IdentityUpdater) for a list of provided update operations.
 

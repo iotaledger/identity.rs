@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account_storage_legacy::storage::Storage;
-use identity_account_storage_legacy::storage::Stronghold;
-use identity_account_storage_legacy::types::EncryptedData;
-use identity_account_storage_legacy::types::KeyLocation;
+use identity_account_storage::storage::Storage;
+use identity_account_storage::storage::Stronghold;
+use identity_account_storage::types::EncryptedData;
+use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDID;

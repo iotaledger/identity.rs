@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account_storage_legacy::Result as AccountStorageResult;
+use identity_account_storage::Result as AccountStorageResult;
 use identity_core::Result as CoreResult;
 use identity_iota_core_legacy::Result as IotaCoreResult;
 use napi::bindgen_prelude::Error;
