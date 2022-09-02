@@ -11,8 +11,8 @@ pub(crate) enum RemoteAccountError {
   AccountError(String),
 }
 
-impl From<identity_account::Error> for RemoteAccountError {
-  fn from(err: identity_account::Error) -> Self {
+impl From<identity_account_legacy::Error> for RemoteAccountError {
+  fn from(err: identity_account_legacy::Error) -> Self {
     Self::AccountError(err.to_string())
   }
 }
