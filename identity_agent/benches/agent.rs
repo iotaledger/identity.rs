@@ -69,9 +69,9 @@ criterion_main!(benches);
 
 mod remote_account {
   use dashmap::DashMap;
-  use identity_account_legacy::account::Account;
-  use identity_account_legacy::account::AccountBuilder;
-  use identity_account_legacy::types::IdentitySetup;
+  use identity_account::account::Account;
+  use identity_account::account::AccountBuilder;
+  use identity_account::types::IdentitySetup;
   use identity_agent::agent::Endpoint;
   use identity_agent::agent::Handler;
   use identity_agent::agent::HandlerRequest;
@@ -90,7 +90,7 @@ mod remote_account {
   }
 
   impl RemoteAccount {
-    pub fn new() -> identity_account_legacy::Result<Self> {
+    pub fn new() -> identity_account::Result<Self> {
       let builder: AccountBuilder = Account::builder().autopublish(false);
 
       Ok(Self {
@@ -138,8 +138,8 @@ mod remote_account {
     AccountError(String),
   }
 
-  impl From<identity_account_legacy::Error> for RemoteAccountError {
-    fn from(err: identity_account_legacy::Error) -> Self {
+  impl From<identity_account::Error> for RemoteAccountError {
+    fn from(err: identity_account::Error) -> Self {
       Self::AccountError(err.to_string())
     }
   }
