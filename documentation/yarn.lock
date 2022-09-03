@@ -2089,7 +2089,7 @@ __metadata:
     react-dom: ^17.0.2
   bin:
     iota-wiki: dist/index.js
-  checksum: 3889581b7751dc71682bc6e0150bc7e55b50b7fcd79b4adcdd1f28a406c2393b9ddf8e6cc11440d6df1f815f2061483e4b9203d0c16fcd73a70463a293a482f0
+  checksum: c8ff6808523df0196c25cb0b54d9c571ab17dbea25ea732b0f7e70cd0105b0759d6adccbdcfc22adc161c087812b1323f6d82a7537c06b92014477bf21afc846
   languageName: node
   linkType: hard
 
