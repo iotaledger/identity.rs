@@ -7,43 +7,63 @@ keywords:
 - Resolve
 ---
 import resolve_did_rs from '!!raw-loader!../../../../examples/0_basic/2_resolve_did.rs';
-import CodeSnippet from '../../../src/components/CodeSnippetComponent'
+import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples-stardust/src/ex2_resolve_did.ts';
+import CodeBlock from '@theme/CodeBlock';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 DID resolution is the process of fetching and decoding a [DID Document](https://www.w3.org/TR/did-core/#dfn-did-documents) corresponding to a given [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers).
-The [IOTA Identity framework](https://github.com/iotaledger/identity.rs) supports resolving DID Documents that are stored on Shimmer networks (public or private),
-and the IOTA Tangle once it updated.
+The [IOTA Identity framework](https://github.com/iotaledger/identity.rs) supports resolving DID Documents that are stored on the IOTA Tangle and Shimmer networks.
 
 This is similar to, but not to be confused with, the [W3C DID Resolution specification](https://w3c-ccg.github.io/did-resolution/), which
-defines function signatures for resolution more in the context of web or REST API resolution, whereas the IOTA Identity framework
-provides strongly-typed resolution for better developer experience.
+defines function signatures for resolution in the context of web or REST APIs, whereas the IOTA Identity framework
+provides strongly-typed resolution for a better developer experience.
 
 This functionality is primarily provided by the `Resolver`, which can:
 - [Resolve DID Documents across multiple networks](#resolving-a-did).
-- Resolve an issuer's DID Document given a [verifiable credential](#resolution-for-verifiable-presentations).
-- Resolve the holder and issuer DID Documents referenced in a [verifiable presentation](#resolution-for-verifiable-presentations).
+- [Resolve the DID Documents referenced in a verifiable presentation or credential](#resolution-for-verifiable-presentations).
 
 ## Resolving a DID
 
-The following examples demonstrates how to resolve the DID: `did:iota:rms:0xe4edef97da1257e83cbeb49159cfdd2da6ac971ac447f233f8439cf29376ebfe`,
-which is from the Shimmer testnet.
+The following examples demonstrate how to resolve an IOTA DID Document from its DID.
 
 ### Resolver
 
-The `Resolver` follows the read procedure defined in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md),
-to extract and validate the DID Document in the latest [Alias Output](../../specs/did/iota_did_method_spec#alias-output)
-from the network specified in the DID (here `rms` is the Bech32-HRP for the Shimmer testnet, see [DID Format](../../specs/did/iota_did_method_spec#did-format)).
-If the `Resolver` was not configured with a client for the given network, an error is thrown.
+The `Resolver` follows the read procedure defined in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#read).
+It fetches the latest [Alias Output](../../specs/did/iota_did_method_spec#alias-output)
+from the network specified in the DID (see [DID Format](../../specs/did/iota_did_method_spec#did-format)),
+then extracts and validates the DID Document from it.
+
+Multiple networks can be supported by a `Resolver` simply by adding multiple clients to it, each using a node endpoint for a different network.
 
 TODO: add example code.
 
 ### Client
 
-The `Client` can also be used directly to resolve individual DIDs from the network for which it is configured.
+The `Client` can also be used directly, to resolve individual DIDs from its configured network.
 
 <Tabs>
+<TabItem value="rust" label="Rust">
+
+```rust
+use identity_stardust::{StardustDID, StardustDocument, StardustIdentityClientExt};
+use iota_client::Client;
+
+#[tokio::main]
+async fn main() {
+    // Configure a client for the Shimmer testnet "rms".
+    let node_url = "https://api.testnet.shimmer.network/";
+    let client = Client::builder().with_primary_node(node_url, None).unwrap().finish().unwrap();
+
+    // Parse the DID and resolve its DID Document.
+    let did = StardustDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
+    let document: StardustDocument = client.resolve_did(&did).await.unwrap();
+}
+```
+
+</TabItem>
 <TabItem value="node" label="Node.js">
+
 ```js
 const { StardustDID, StardustIdentityClient } = require('@iota/identity-wasm/node');
 const { Client } = require('@cycraig/iota-client-wasm/node');
@@ -60,23 +80,7 @@ const didClient = new StardustIdentityClient(client);
 const did = StardustDID.parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47");
 const document = await didClient.resolveDid(did);
 ```
-</TabItem>
-<TabItem value="Rust" label="Rust">
-```rust
-use identity_stardust::{StardustDID, StardustDocument, StardustIdentityClientExt};
-use iota_client::Client;
 
-#[tokio::main]
-async fn main() {
-    // Configure a client for the Shimmer testnet "rms".
-    let node_url = "https://api.testnet.shimmer.network/";
-    let client = Client::builder().with_primary_node(node_url, None).unwrap().finish().unwrap();
-
-    // Parse the DID and resolve its DID Document.
-    let did = StardustDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
-    let document: StardustDocument = client.resolve_did(&did).await.unwrap();
-}
-```
 </TabItem>
 </Tabs>
 
@@ -85,20 +89,24 @@ async fn main() {
 When validating [verifiable presentations](../verifiable_credentials/verifiable_presentations.mdx),
 it is necessary to resolve the DID Documents of the [verifiable credential](../verifiable_credentials/overview.md)
 issuers and presentation holder to verify their signatures. Resolving the necessary DID Documents is performed automatically
-when verifying presentations via the `Resolver::verify_presentation` method (see the following [example](../verifiable#example)).
+when verifying presentations via the `Resolver` (see this [example](../verifiable_credentials/verifiable_presentations.mdx#example)).
 
 When direct access to these DID Documents is desired, the `Resolver` also provides standalone methods to:
 - Resolve a presentation holder's DID Document.
 - Resolve the DID Documents of the issuers of the credentials in a verifiable presentation.
 - Resolve the issuer's DID Document for a given verifiable credential.
 
-## Complete example
-This section shows a full example from the IOTA Identity Framework codebase.
+## Example
+The following example creates a new IOTA DID, publishes it and then resolves its DID Document and Alias Output.
 
-The example creates a DID Document, publishes it to the Tangle and then resolves it.
-<CodeSnippet
-    nodeReplitLink="https://repl.it/@IOTAFoundation/resolve-did?lite=true"
-    rustContent={resolve_did_rs}
-    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-stardust/src/ex0_resolve_did.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/2_resolve_did.rs"
-/>
+<Tabs>
+    <TabItem value="rust" label="Rust">
+        <CodeBlock className="language-rust">
+            {resolve_did_rs}
+        </CodeBlock>
+    </TabItem>
+    <TabItem value="node" label="Node.js">
+        <CodeBlock className="language-javascript">
+            {resolve_did_js}
+        </CodeBlock></TabItem>
+</Tabs>
