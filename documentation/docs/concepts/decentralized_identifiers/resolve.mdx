@@ -36,7 +36,57 @@ then extracts and validates the DID Document from it.
 
 Multiple networks can be supported by a `Resolver` simply by adding multiple clients to it, each using a node endpoint for a different network.
 
-TODO: add example code.
+<Tabs>
+<TabItem value="rust" label="Rust">
+
+```rust
+use identity_resolver::Resolver;
+use identity_stardust::{StardustDID, StardustDocument, StardustIdentityClientExt};
+use iota_client::Client;
+
+#[tokio::main]
+async fn main() {
+    // Configure a client for the Shimmer testnet "rms".
+    let node_url = "https://api.testnet.shimmer.network/";
+    let client = Client::builder().with_primary_node(node_url, None).unwrap().finish().unwrap();
+
+    // Construct a resolver using the client.
+    let mut resolver = Resolver::<StardustDocument>::new();
+    resolver.attach_iota_handler(client);
+
+    // Parse the DID and resolve its DID Document.
+    let did = StardustDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
+    let document: StardustDocument = resolver.resolve(&did).await.unwrap();
+}
+```
+
+</TabItem>
+<TabItem value="node" label="Node.js">
+
+```js
+const { MixedResolver, StardustDID, StardustIdentityClient } = require('@iota/identity-wasm/node');
+const { Client } = require('@cycraig/iota-client-wasm/node');
+
+// Configure a client for the Shimmer testnet "rms".
+const nodeUrl = "https://api.testnet.shimmer.network/";
+const client = new Client({
+    primaryNode: nodeUrl,
+    localPow: true,
+});
+const didClient = new StardustIdentityClient(client);
+
+// Construct a resolver using the client.
+const resolver = new MixedResolver({
+    client: didClient,
+});
+
+// Parse the DID and resolve its DID Document.
+const did = StardustDID.parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47");
+const document = await resolver.resolve(did);
+```
+
+</TabItem>
+</Tabs>
 
 ### Client
 
