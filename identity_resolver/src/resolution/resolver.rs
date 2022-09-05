@@ -426,3 +426,13 @@ mod iota_handler {
     }
   }
 }
+
+impl<M, DOC> Default for Resolver<DOC, M>
+where
+  M: for<'r> Command<'r, Result<DOC>>,
+  DOC: ValidatorDocument,
+{
+  fn default() -> Self {
+    Self::new()
+  }
+}
