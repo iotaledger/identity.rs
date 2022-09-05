@@ -31,7 +31,7 @@ use identity_iota::did::VerificationMethod;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-
+/// A method-agnostic DID Document.
 #[wasm_bindgen(js_name = CoreDocument, inspectable)]
 pub struct WasmCoreDocument(pub(crate) CoreDocument);
 
