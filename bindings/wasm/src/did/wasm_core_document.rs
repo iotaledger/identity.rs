@@ -391,7 +391,7 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "CoreVerificationMethod[]")]
   pub type ArrayCoreVerificationMethod;
 
-  #[wasm_bindgen(typescript_type = "(CoreDIDUrl | CoreVerificationMethod)[]")]
+  #[wasm_bindgen(typescript_type = "Array<CoreDIDUrl | CoreVerificationMethod>")]
   pub type ArrayCoreMethodRef;
 
   #[wasm_bindgen(typescript_type = "CoreDIDUrl | string")]
