@@ -28,10 +28,6 @@ serde_repr = { version = "0.1", default-features = false }
 wasm-bindgen = { version = "0.2.82", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
-# Pin tokio version as a orkaround for compliation error caused by `iota-client`.
-# TODO unpin version once issue is resolved.
-tokio = { version = "=1.20.1", default-features = false }
-
 [dependencies.identity_iota]
 version = "=0.6.0"
 path = "../../identity_iota"
