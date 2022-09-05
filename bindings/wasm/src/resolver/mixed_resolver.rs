@@ -148,14 +148,12 @@ impl MixedResolver {
     resolver.attach_handler(method, fun);
   }
 
-  /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
+  /// Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
   /// Issuer documents are returned in arbitrary order.
   ///
   /// # Errors
-  ///
   /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
   /// resolution fails.
-  // TODO: Improve error handling.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
   pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
     let resolver: Rc<SingleThreadedResolver> = self.0.clone();
@@ -184,10 +182,9 @@ impl MixedResolver {
     Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
   }
 
-  /// Fetches the DID Document of the holder of a [`Presentation`].
+  /// Fetches the DID Document of the holder of a `Presentation`.
   ///
   /// # Errors
-  ///
   /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
   /// DID resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationHolder)]
