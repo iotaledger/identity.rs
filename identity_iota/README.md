@@ -81,8 +81,9 @@ edition = "2021"
 identity_iota = { version = "0.6" }
 tokio = { version = "1", features = ["full"] }
 ```
+<!-- TODO: Fix example below; change `ignore` to `no_run`. -->
 *main.*<span></span>*rs*
-```rust,no_run
+```rust,ignore
 use identity_iota::account::Account;
 use identity_iota::account::IdentitySetup;
 use identity_iota::account::Result;
