@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::resolver::*;
-mod failures;
+mod resolution_errors;
 mod send_sync;
 #[cfg(feature = "iota")]
-mod success;
+mod successful_presentation_validation;
