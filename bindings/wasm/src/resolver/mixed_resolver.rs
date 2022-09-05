@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
 use std::rc::Rc;
 
 use identity_iota::credential::AbstractValidatorDocument;
@@ -56,18 +57,22 @@ impl MixedResolver {
     let client = config.client();
 
     if let Some(handlers) = resolution_handlers {
-      let map: &Map = handlers.dyn_ref::<js_sys::Map>().ok_or(WasmError::new(
-        "ResolverError::ConstructionError".into(),
-        "could not construct resolver: the constructor did not receive a map of asynchronous functions".into(),
-      ))?;
+      let map: &Map = handlers.dyn_ref::<js_sys::Map>().ok_or_else(|| {
+        WasmError::new(
+          Cow::Borrowed("ResolverError::ConstructionError"),
+          Cow::Borrowed(
+            "could not construct resolver: the constructor did not receive a map of asynchronous functions",
+          ),
+        )
+      })?;
       Self::attach_handlers(&mut resolver, map, &mut attached_iota_method)?;
     }
 
     if !client.is_undefined() {
       if attached_iota_method {
         Err(WasmError::new(
-          "ResolverError::ConstructionError".into(),
-          "could not construct resolver: cannot attach the iota method twice".into(),
+          Cow::Borrowed("ResolverError::ConstructionError"),
+          Cow::Borrowed("could not construct resolver: cannot attach the iota method twice"),
         ))?;
       }
 
@@ -85,13 +90,13 @@ impl MixedResolver {
     unwrapped_client: &OptionWasmStardustIdentityClient,
     did: WasmStardustDID,
   ) -> std::result::Result<StardustDocument, String> {
-    let closure_output_promise: Promise = Promise::resolve(&unwrapped_client.resolve_did(did.into()).into());
+    let closure_output_promise: Promise = Promise::resolve(&unwrapped_client.resolve_did(did).into());
     let awaited_output = JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
 
     let document: StardustDocument = awaited_output.into_serde().map_err(|error| {
       format!(
         "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
-        error.to_string()
+        error
       )
     })?;
     Ok(document)
@@ -102,10 +107,12 @@ impl MixedResolver {
     for key in map.keys() {
       if let Ok(mthd) = key {
         let fun = map.get(&mthd);
-        let method: String = mthd.as_string().ok_or(WasmError::new(
-          "ResolverError::ConstructionError".into(),
-          "could not construct resolver: the handler map contains a key which is not a string".into(),
-        ))?;
+        let method: String = mthd.as_string().ok_or_else(|| {
+          WasmError::new(
+            Cow::Borrowed("ResolverError::ConstructionError"),
+            Cow::Borrowed("could not construct resolver: the handler map contains a key which is not a string"),
+          )
+        })?;
         let handler: Function = fun
           .dyn_into::<Function>()
           .map_err(|_| "could not construct resolver: the handler map contains a value which is not a function")?;
@@ -115,9 +122,10 @@ impl MixedResolver {
         MixedResolver::attach_handler(resolver, method, handler);
       } else {
         Err(WasmError::new(
-          "ResolverError::ConstructionError".into(),
-          "could not construct resolver: invalid constructor arguments. Expected a map of asynchronous functions"
-            .into(),
+          Cow::Borrowed("ResolverError::ConstructionError"),
+          Cow::Borrowed(
+            "could not construct resolver: invalid constructor arguments. Expected a map of asynchronous functions",
+          ),
         ))?;
       }
     }
@@ -139,7 +147,7 @@ impl MixedResolver {
         let supported_document: RustSupportedDocument = awaited_output.into_serde().map_err(|error| {
           format!(
             "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
-            error.to_string()
+            error
           )
         })?;
         std::result::Result::<_, String>::Ok(AbstractValidatorDocument::from(supported_document))
@@ -244,7 +252,7 @@ impl MixedResolver {
           &presentation,
           &options,
           fail_fast.into(),
-          (holder.as_ref()).as_deref(),
+          holder.as_ref(),
           issuers.as_deref(),
         )
         .await

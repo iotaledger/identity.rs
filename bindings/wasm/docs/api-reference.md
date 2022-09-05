@@ -4230,11 +4230,10 @@ will throw an error as it is then ambiguous what should be .
 <a name="MixedResolver+resolvePresentationIssuers"></a>
 
 ### mixedResolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(StardustDocument\|CoreDocument)&gt;&gt;</code>
-Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
+Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
 # Errors
-
 Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
 resolution fails.
 
@@ -4247,10 +4246,9 @@ resolution fails.
 <a name="MixedResolver+resolvePresentationHolder"></a>
 
 ### mixedResolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(StardustDocument\|CoreDocument)&gt;</code>
-Fetches the DID Document of the holder of a [`Presentation`].
+Fetches the DID Document of the holder of a `Presentation`.
 
 # Errors
-
 Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
 DID resolution fails.
 
