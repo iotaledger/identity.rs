@@ -1,26 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::stardust::PromiseStardustDocument;
-use crate::stardust::WasmStardustDID;
 use wasm_bindgen::prelude::*;
+
+use crate::stardust::WasmStardustIdentityClient;
 
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "ResolutionHandlers")]
-  pub type MapResolutionHandler;
-
-  #[wasm_bindgen(typescript_type = "IStardustIdentityClient | undefined")]
-  pub(crate) type OptionWasmStardustIdentityClient;
-
-  #[wasm_bindgen(method, js_name = resolveDid)]
-  pub(crate) fn resolve_did(this: &OptionWasmStardustIdentityClient, did: WasmStardustDID) -> PromiseStardustDocument;
+  pub(crate) type MapResolutionHandler;
 
   #[wasm_bindgen(typescript_type = "ResolverConfig")]
   pub type ResolverConfig;
 
   #[wasm_bindgen(method, getter)]
-  pub(crate) fn client(this: &ResolverConfig) -> OptionWasmStardustIdentityClient;
+  pub(crate) fn client(this: &ResolverConfig) -> Option<WasmStardustIdentityClient>;
 
   #[wasm_bindgen(method, getter)]
   pub(crate) fn handlers(this: &ResolverConfig) -> Option<MapResolutionHandler>;

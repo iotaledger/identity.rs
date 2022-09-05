@@ -1,5 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+pub(crate) use identity_client::WasmStardustIdentityClient;
 pub use identity_client_ext::PromiseStardustDocument;
 pub use stardust_did::WasmStardustDID;
 pub use stardust_did_url::WasmStardustDIDUrl;

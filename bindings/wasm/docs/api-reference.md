@@ -103,7 +103,12 @@ situations like these.</p>
 <dd><p>Supported verification method types.</p>
 </dd>
 <dt><a href="#MixedResolver">MixedResolver</a></dt>
-<dd></dd>
+<dd><p>Convenience type for resolving DID documents from different DID methods.</p>
+<p>Also provides methods for resolving DID Documents associated with
+verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
+<h1 id="configuration">Configuration</h1>
+<p>The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.</p>
+</dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
@@ -238,9 +243,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
@@ -265,10 +270,10 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -290,17 +295,6 @@ publishing to the Tangle.
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+deleteMethod"></a>
 
@@ -334,6 +328,17 @@ Sets the controllers of the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -4204,6 +4209,14 @@ Deserializes an instance from a JSON object.
 <a name="MixedResolver"></a>
 
 ## MixedResolver
+Convenience type for resolving DID documents from different DID methods.
+
+Also provides methods for resolving DID Documents associated with
+verifiable `Credentials` and `Presentations`.
+
+# Configuration
+The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
+
 **Kind**: global class  
 
 * [MixedResolver](#MixedResolver)
@@ -7082,13 +7095,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 

@@ -12,6 +12,7 @@ use identity_iota::did::DID;
 use identity_resolver::SingleThreadedResolver;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
+use identity_stardust::StardustIdentityClientExt;
 use js_sys::Function;
 use js_sys::Map;
 use js_sys::Promise;
@@ -23,12 +24,12 @@ use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
-use crate::resolver::constructor_input::OptionWasmStardustIdentityClient;
 use crate::resolver::constructor_input::ResolverConfig;
 use crate::resolver::supported_document_types::OptionArraySupportedDocument;
 use crate::resolver::supported_document_types::OptionSupportedDocument;
 use crate::resolver::supported_document_types::RustSupportedDocument;
 use crate::stardust::WasmStardustDID;
+use crate::stardust::WasmStardustIdentityClient;
 
 use super::supported_document_types::PromiseArraySupportedDocument;
 use super::supported_document_types::PromiseSupportedDocument;
@@ -75,7 +76,7 @@ impl MixedResolver {
       Self::attach_handlers(&mut resolver, map, &mut attached_iota_method)?;
     }
 
-    if !client.is_undefined() {
+    if let Some(wasm_client) = client {
       if attached_iota_method {
         Err(WasmError::new(
           Cow::Borrowed("ResolverError::ConstructionError"),
@@ -83,7 +84,7 @@ impl MixedResolver {
         ))?;
       }
 
-      let ref_counted_client = Rc::new(client);
+      let ref_counted_client = Rc::new(wasm_client);
       let handler = move |did: StardustDID| {
         let delegate = ref_counted_client.clone();
         async move { Self::client_as_handler(delegate.as_ref(), did.into()).await }
@@ -94,19 +95,10 @@ impl MixedResolver {
   }
 
   pub(crate) async fn client_as_handler(
-    unwrapped_client: &OptionWasmStardustIdentityClient,
+    unwrapped_client: &WasmStardustIdentityClient,
     did: WasmStardustDID,
-  ) -> std::result::Result<StardustDocument, String> {
-    let closure_output_promise: Promise = Promise::resolve(&unwrapped_client.resolve_did(did).into());
-    let awaited_output = JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
-
-    let document: StardustDocument = awaited_output.into_serde().map_err(|error| {
-      format!(
-        "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
-        error
-      )
-    })?;
-    Ok(document)
+  ) -> std::result::Result<StardustDocument, identity_stardust::Error> {
+    unwrapped_client.resolve_did(&did.0).await
   }
 
   /// attempts to extract (method, handler) pairs from the entries of a map and attaches them to the resolver.
