@@ -30,7 +30,7 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 # Pin tokio version as a orkaround for compliation error caused by `iota-client`.
 # TODO unpin version once issue is resolved.
-tokio = { version = "=1.20.1", default-features = false}
+tokio = { version = "=1.20.1", default-features = false }
 
 
 [dependencies.identity_iota]
