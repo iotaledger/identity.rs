@@ -28,7 +28,7 @@ Data types and subschemas used throughout this TIP are defined in [draft TIP-21]
 
 ### UTXO Ledger
 
-The unspent transaction output ([UTXO](https://wiki.iota.org/IOTA-2.0-Research-Specifications/5.1UTXO)) model defines a ledger state where outputs are created by a transaction consuming outputs of previous transactions as inputs. IOTA and Shimmer have several output types, the relevant ones for the IOTA DID Method are: Basic Outputs for value transactions, and Alias Outputs for storage of DID documents.
+The unspent transaction output ([UTXO](https://wiki.iota.org/IOTA-2.0-Research-Specifications/5.1UTXO)) model defines a ledger state where outputs are created by a transaction consuming outputs of previous transactions as inputs. IOTA and Shimmer have several output types, the relevant ones for the IOTA DID Method are: Basic Outputs for value transactions, and Alias Outputs for storage of DID Documents.
 
 All outputs must hold a minimum amount of coins to be stored on the ledger. For output types that can hold arbitrary data, for instance the Alias Output, the amount of coins held by the output must cover the byte cost of the data stored. This helps control the ledger size from growing uncontrollably while guaranteeing that the data is not pruned from the nodes, which is important for resolving DID Documents. This deposit is fully refundable and can be reclaimed when the output is destroyed.
 
@@ -116,7 +116,7 @@ In the `State Metadata` of the Alias Output must be a byte packed payload with h
 | Document Type | ByteArray[3] | Set to value **DID** to denote a DID Document.                                                                                                           |
 | Version       | uint8        | Set value **1** to denote the version number of this method                                                                                              |
 | Encoding      | uint8        | Set to value to **0** to denote JSON encoding without compression.                                                                                       |
-| Payload       | ByteArray    | A DID document and its metadata, where every occurrence of the DID in the document is replaced by `did:0:0`. It must be encoded according to `Encoding`. |
+| Payload       | ByteArray    | A DID Document and its metadata, where every occurrence of the DID in the document is replaced by `did:0:0`. It must be encoded according to `Encoding`. |
 
 Next to [TIP-21](#data-types--subschema-notation), we use the following type definitions:
 
@@ -129,9 +129,9 @@ Next to [TIP-21](#data-types--subschema-notation), we use the following type def
 
 The payload must contain the following fields:
 
-* `metadata`: contains metadata about the DID document. For example, `created` to indicate the time of
+* `metadata`: contains metadata about the DID Document. For example, `created` to indicate the time of
   creation, and `updated` to indicate the time of the last update to the document. It can also include other properties.
-* `document`: which contains the DID document. In the example below, the document only contains one verification method. The `id` and `controller` is specified by `did:0:0` which references the DID of the document itself, since the DID is unknown at the time of publishing. It also deduplicates the DID of the document to reduce the size of the state metadata, in turn reducing the required storage deposit.
+* `document`: which contains the DID Document. In the example below, the document only contains one verification method. The `id` and `controller` is specified by `did:0:0` which references the DID of the document itself, since the DID is unknown at the time of publishing. It also deduplicates the DID of the document to reduce the size of the state metadata, in turn reducing the required storage deposit.
 
 Example State Metadata Document:
 
@@ -185,43 +185,42 @@ Once the transaction is confirmed, the DID is published and can be formatted by 
 
 ### Read
 
-The following steps can be used to read the latest DID document associated with a DID.
+The following steps can be used to read the latest DID Document associated with a DID.
 1. Obtain the `Alias ID` from the DID by extracting the `iota-tag` from the DID, see [DID Format](#did-format).
 2. Obtain the network of the DID by extracting the `iota-network` from the DID, see [DID Format](#did-format).
 3. Query the Alias Output corresponding to the `Alias ID` using a node running the [inx indexer](https://github.com/iotaledger/inx-indexer). Nodes usually include this indexer by default.
 4. Assert that the extracted network matches the one returned from the node. Return an error otherwise.
 5. Assert that the `Alias ID` of the returned output matches the `Alias ID` extracted from the DID. Return an error otherwise.
 6. Retrieve the value of the `State Metadata` field from the returned output.
-7. Check if its content matches the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata). Return an error otherwise.
-8. Decode the DID document from the `State Metadata`.
+7. Validate the contents match the structure described in [Anatomy of the State Metadata](#anatomy-of-the-state-metadata). Return an error otherwise.
+8. Decode the DID Document from the `State Metadata`.
 9. Replace the placeholder `did:0:0` with the DID given as input.
 
 ### Update
 
-Updating a DID Document can be achieved by a state transition of the Alias Output. A state controller can update the
-`State Metadata` in the Alias Output which reflects an update to the DID Document.
+Updating a DID Document can be achieved by the state controller performing a state transition
+of the Alias Output with the updated content:
 
-1. Create the content of the updated DID Document.
-2. Create the payload and the headers as described in the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata).
-3. Create a new Alias Output with the same `Alias ID` as the current output.
-4. Increment the `State Index`.
-5. Leave the unlock conditions unchanged.
-6. Set enough coins in the output to cover the byte cost.
-7. Publish a new transaction that includes the current Alias Output as input and the newly created one as output. If the Alias Output to be updated is state-controlled by other Alias or NFT Outputs, those outputs will have to be unlocked in the same transaction.
+1. Create a copy of the Alias Output with the `Alias ID` set explicitly.
+2. Pack the updated DID Document, as described in the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata), into the `State Metadata` of the output.
+3. Increment the `State Index`.
+4. Set the `amount` of coins sufficient to cover the byte cost.
+5. Publish a new transaction that includes the current Alias Output as input (along with any required Basic Outputs to consume to cover the `amount`, if increased) and the updated one as output. If the state controller unlock of the Alias Output references other Alias or NFT Outputs, those outputs must be unlocked in the same transaction, recursively.
 
 ### Delete
 
 #### Deactivate
-Temporarily deactivating a DID can be done by deleting the content of the `State Meadata` in the Alias Output.
-1. Set the Alias Output's `State Metadata` field to an empty byte array.
-2. Increment the `State Index`.
-3. Set the state controller and the governor.
-4. Publish a new transaction with the current Alias Output as input and the newly created one as output.
 
-Another option is to update the DID Document and set the `deactivated` property in `metadata` to true. In this case the deactivated DID Document will be deactivated, but it can still be resolved, see [Update](#update).
+Temporarily deactivating a DID can be done by deleting the contents of the `State Meadata` in the Alias Output, setting
+it to an empty byte array, and publishing an [update](#update).
+
+Another option is to [update](#update) the DID Document and set the `deactivated` property in its `metadata` to true. In both cases, the deactivated DID Document will be marked as `deactivated` when resolved.
 
 #### Destroy
-In order to permanently destroy a DID, a new transaction can be published that consumes the Alias Output without having an Alias Output on the output side with a corresponding explicit `Alias ID`. This results in destroying the Alias Output and the DID. Note that this operation is irreversible resulting in permanently deleting the DID.
+
+In order to permanently destroy a DID, a new transaction can be published by the governor that consumes the Alias Output without having a corresponding Alias Output on the output side with the same explicit `Alias ID`. This results in destroying the Alias Output and the DID.
+
+Note that this operation irreversibly and irrecoverably deletes the DID. This is because the `Alias ID` from which an IOTA DID is derived (see [IOTA-Tag](#iota-tag)) is generated from the hash of the input transaction that created it, which cannot generally be replicated.
 
 ## IOTA Identity standards
 

@@ -1,0 +1,65 @@
+---
+title: Delete an IOTA Identity
+sidebar_label: Delete
+description: How to deactivate or destroy an IOTA Identity
+image: /img/Identity_icon.png
+keywords:
+- Delete
+- Deactivate
+- Destroy
+---
+import deactivate_did_rs from '!!raw-loader!../../../../examples/0_basic/3_deactivate_did.rs';
+import deactivate_did_js from '!!raw-loader!../../../../bindings/wasm/examples-stardust/src/ex3_deactivate_did';
+import CodeSnippet from '../../../src/components/CodeSnippetComponent'
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+
+
+There are two approaches for deleting an IOTA Identity, with different implications:
+
+- [Deactivate](#deactivate)
+- [Destroy](#destroy)
+
+
+## Deactivate
+
+As detailed in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#deactivate),
+the state controller of an IOTA Identity may [deactivate](https://www.w3.org/TR/did-core/#did-document-metadata) it by
+publishing an update and either:
+
+- deleting the contents of the DID Document entirely, leaving the state metadata empty, OR
+- setting the `deactivated` field in the DID Document metadata to `true`.
+
+In both cases, the DID Document will be marked as `deactivated` when resolved.
+
+This operation is reversible: the identity can subsequently be reactivated at any time, by publishing an update
+restoring the DID Document's contents, or unsetting the `deactivated` field in the metadata respectively,
+depending on how it was initially deactivated.
+
+Note that the governor (if different from the state controller) cannot deactivate an identity directly because
+it is disallowed from updating the DID Document, but it may [destroy](#destroy) it.
+
+### Example
+
+The following example demonstrates deactivating and reactivating an IOTA DID Document, and optionally reclaiming
+the storage deposit from the Alias Output.
+
+<Tabs>
+    <TabItem value="rust" label="Rust">
+        <CodeBlock className="language-rust">{deactivate_did_rs}</CodeBlock>
+    </TabItem>
+    <TabItem value="nodejs" label="Node.js">
+        <CodeBlock className="language-javascript">{deactivate_did_js}</CodeBlock>
+    </TabItem>
+</Tabs>
+
+## Destroy
+
+Alternatively, an IOTA Identity can be permanently [destroyed](../../specs/did/iota_did_method_spec.md#destroy).
+
+This is achieved by the governor of
+
+TODO
+
+### Example
