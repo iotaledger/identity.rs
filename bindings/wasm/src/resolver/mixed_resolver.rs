@@ -39,6 +39,13 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_name = MixedResolver)]
+/// Convenience type for resolving DID documents from different DID methods.   
+///  
+/// Also provides methods for resolving DID Documents associated with
+/// verifiable `Credentials` and `Presentations`.
+///
+/// # Configuration
+/// The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
 pub struct MixedResolver(Rc<SingleThreadedResolver>);
 
 #[wasm_bindgen(js_class = MixedResolver)]
