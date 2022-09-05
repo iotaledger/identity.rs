@@ -446,3 +446,9 @@ struct ICoreDocumentHelper {
 
 impl_wasm_json!(WasmCoreDocument, CoreDocument);
 impl_wasm_clone!(WasmCoreDocument, CoreDocument);
+
+impl From<CoreDocument> for WasmCoreDocument {
+  fn from(doc: CoreDocument) -> Self {
+    Self(doc)
+  }
+}
