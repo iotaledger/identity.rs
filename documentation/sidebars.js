@@ -60,7 +60,6 @@ module.exports = {
                   'concepts/advanced/overview',
                   'concepts/advanced/did_messages',
                   'concepts/advanced/storage_interface',
-
               ]
             },
           ],
