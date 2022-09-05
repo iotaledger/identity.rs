@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::task::Poll;
 
 use futures::pin_mut;
-use identity_iota_core::did::IotaDID;
+use identity_iota_core_legacy::did::IotaDID;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 

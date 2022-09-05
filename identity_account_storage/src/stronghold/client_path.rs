@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_did::did::CoreDID;
-use identity_iota_core::did::IotaDID;
+use identity_iota_core_legacy::did::IotaDID;
 
 /// A helper type to ensure a consistently generated client path, for DIDs and strings
 /// to avoid having `Vec<u8>` everywhere.

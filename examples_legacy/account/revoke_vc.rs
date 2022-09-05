@@ -12,13 +12,11 @@
 //!
 //! cargo run --example account_revoke_vc
 
-use identity_iota::account::Account;
-use identity_iota::account::AccountBuilder;
-use identity_iota::account::IdentitySetup;
-use identity_iota::account::MethodContent;
-use identity_iota::account::Result;
-use identity_iota::client::ResolvedIotaDocument;
-use identity_iota::client::Resolver;
+use identity_account::account::Account;
+use identity_account::account::AccountBuilder;
+use identity_account::types::IdentitySetup;
+use identity_account::types::MethodContent;
+use identity_account::Result;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
@@ -34,6 +32,8 @@ use identity_iota::credential::ValidationError;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::RevocationBitmap;
 use identity_iota::did::DID;
+use identity_iota_client_legacy::document::ResolvedIotaDocument;
+use identity_iota_client_legacy::tangle::Resolver;
 
 #[tokio::main]
 async fn main() -> Result<()> {

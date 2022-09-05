@@ -21,8 +21,8 @@ use identity_core::crypto::Sign;
 #[cfg(feature = "encryption")]
 use identity_core::crypto::X25519;
 use identity_did::did::CoreDID;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::tangle::NetworkName;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::tangle::NetworkName;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use zeroize::Zeroize;

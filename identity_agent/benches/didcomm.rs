@@ -15,7 +15,7 @@ use identity_agent::Multiaddr;
 
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
-use identity_iota_core::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaDocument;
 use test_handler::PresentationOffer;
 use test_handler::PresentationRequest;
 use test_handler::TestHandler;

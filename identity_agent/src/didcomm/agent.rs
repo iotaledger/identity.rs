@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
-use identity_iota_core::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaDocument;
 use libp2p::Multiaddr;
 use serde::de::DeserializeOwned;
 

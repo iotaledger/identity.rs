@@ -6,7 +6,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error(transparent)]
-  IotaError(#[from] identity_iota_client::Error),
+  IotaError(#[from] identity_iota_client_legacy::Error),
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
   #[error(transparent)]

@@ -10,19 +10,15 @@ members = [
   "identity_did",
   "identity_diff",
   "identity_iota",
-  "identity_iota_client",
-  "identity_iota_core",
+  "identity_iota_client_legacy",
+  "identity_iota_core_legacy",
   "identity_stardust",
 
   "examples_legacy",
   "examples",
 ]
 
-exclude = [
-  "bindings/stronghold-nodejs",
-  "bindings/wasm",
-  "libjose",
-]
+exclude = ["bindings/stronghold-nodejs", "bindings/wasm", "libjose"]
 
 [profile.dev]
 split-debuginfo = "unpacked"
