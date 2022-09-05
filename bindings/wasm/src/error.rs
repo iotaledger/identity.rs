@@ -171,7 +171,7 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
-  // TODO: Remove or reuse.
+  // TODO: Remove or reuse depending on what we do with the account..
   // /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
   // pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
   //   self.0.map_err(|js_value| {
@@ -209,7 +209,7 @@ impl From<Result<JsValue>> for JsValueResult {
   }
 }
 
-// TODO: Remove or reuse.
+// TODO: Remove or reuse depending on what we do with the account..
 // impl From<JsValueResult> for AccountStorageResult<()> {
 //   fn from(result: JsValueResult) -> Self {
 //     result.to_account_error().and_then(|js_value| {
@@ -220,7 +220,7 @@ impl From<Result<JsValue>> for JsValueResult {
 //   }
 // }
 
-// TODO: Remove or reuse.
+// TODO: Remove or reuse depending on what we do with the account..
 // impl From<JsValueResult> for AccountStorageResult<bool> {
 //   fn from(result: JsValueResult) -> Self {
 //     result.to_account_error().and_then(|js_value| {

@@ -288,7 +288,7 @@ fn test_timestamp_serde() {
   assert_eq!(wasm_de.to_rfc3339(), expected_str);
 }
 
-// TODO: Remove or reuse depending on what we do with the account.
+// TODO: Remove or reuse depending on what we do with the account. depending on what we do with the account.
 // This test should be matched by a test with equivalent test vector in Rust
 // to ensure hashes are consistent across architectures.
 // #[wasm_bindgen_test]

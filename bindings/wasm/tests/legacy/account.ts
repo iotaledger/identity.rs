@@ -1,4 +1,5 @@
-export {};
+// TODO: Remove or reuse depending on what we do with the account..
+export { };
 
 const assert = require('assert');
 const {
