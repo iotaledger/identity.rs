@@ -25,7 +25,7 @@ impl WasmIotaDID {
     IotaDID::METHOD.to_owned()
   }
 
-  /// The default Tangle network (`"main"`).
+  /// The default Tangle network (`"iota"`).
   #[wasm_bindgen(getter = DEFAULT_NETWORK)]
   pub fn static_default_network() -> String {
     IotaDID::DEFAULT_NETWORK.to_owned()
