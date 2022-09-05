@@ -36,6 +36,7 @@ default-features = false
 features = ["client", "revocation-bitmap"]
 
 [dev-dependencies]
+rand = "0.8.5"
 wasm-bindgen-test = { version = "0.3" }
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]

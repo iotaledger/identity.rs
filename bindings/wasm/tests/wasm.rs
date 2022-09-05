@@ -5,7 +5,9 @@ use std::borrow::Cow;
 
 use identity_iota::core::Timestamp;
 use identity_iota::iota_core::IotaDID;
-use identity_wasm::account::types::WasmKeyLocation;
+use identity_wasm::crypto::WasmProofOptions;
+use identity_wasm::did::WasmVerifierOptions;
+use serde_json::json;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
@@ -13,12 +15,17 @@ use wasm_bindgen_test::*;
 use identity_wasm::common::WasmTimestamp;
 use identity_wasm::crypto::WasmKeyPair;
 use identity_wasm::crypto::WasmKeyType;
-use identity_wasm::did::WasmDIDUrl;
-use identity_wasm::did::WasmDocument;
-use identity_wasm::did::WasmIotaDID;
 use identity_wasm::did::WasmMethodScope;
-use identity_wasm::did::WasmVerificationMethod;
 use identity_wasm::error::WasmError;
+use identity_wasm::iota::WasmIotaDID;
+use identity_wasm::iota::WasmIotaDIDUrl;
+use identity_wasm::iota::WasmIotaDocument;
+use identity_wasm::iota::WasmIotaVerificationMethod;
+
+/// Generate a random byte array of the length of an Alias Id.
+fn random_alias_id() -> [u8; 32] {
+  rand::random()
+}
 
 #[wasm_bindgen_test]
 fn test_keypair() {
@@ -48,47 +55,47 @@ fn test_js_error_from_wasm_error() {
 
 #[wasm_bindgen_test]
 fn test_did() {
-  let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let did = WasmIotaDID::new(&key.public(), None).unwrap();
+  let alias_bytes = random_alias_id();
+  let did = WasmIotaDID::new(&alias_bytes, IotaDID::DEFAULT_NETWORK.to_owned()).unwrap();
 
-  assert_eq!(did.network_str(), "main");
+  assert_eq!(did.network_str(), WasmIotaDID::static_default_network());
 
   let parsed = WasmIotaDID::parse(&did.to_string()).unwrap();
 
   assert_eq!(did.to_string(), parsed.to_string());
 
-  let base58 = WasmIotaDID::new(&key.public(), Some("dev".to_owned())).unwrap();
+  let smr_did = WasmIotaDID::new(&alias_bytes, "smr".to_owned()).unwrap();
 
-  assert_eq!(base58.tag(), did.tag());
-  assert_eq!(base58.network_str(), "dev");
+  assert_eq!(smr_did.tag(), did.tag());
+  assert_eq!(smr_did.network_str(), "smr");
 }
 
 #[wasm_bindgen_test]
 fn test_did_methods() {
-  let tag = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
-  let did_str = format!("did:iota:dev:{tag}");
+  let tag = "0xdfda8bcfb959c3e6ef261343c3e1a8310e9c8294eeafee326a4e96d65dbeaca0";
+  let did_str = format!("did:iota:smr:{tag}");
   let did = WasmIotaDID::parse(&did_str).unwrap();
 
   assert_eq!(did.to_string(), did_str);
   assert_eq!(did.tag(), tag);
-  assert_eq!(did.network_str(), "dev");
+  assert_eq!(did.network_str(), "smr");
   assert_eq!(did.scheme(), "did");
   assert_eq!(did.method(), "iota");
-  assert_eq!(did.method_id(), format!("dev:{tag}"));
-  assert_eq!(did.authority(), format!("iota:dev:{tag}"));
+  assert_eq!(did.method_id(), format!("smr:{tag}"));
+  assert_eq!(did.authority(), format!("iota:smr:{tag}"));
 }
 
 #[wasm_bindgen_test]
 fn test_did_url() {
   // Base DID Url
-  let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let did = WasmIotaDID::new(&key.public(), None).unwrap();
+  let alias_bytes = random_alias_id();
+  let did = WasmIotaDID::new(&alias_bytes, WasmIotaDID::static_default_network()).unwrap();
   let did_url = did.to_url();
 
   assert_eq!(did.to_string(), did_url.to_string());
 
-  let parsed_from_did = WasmDIDUrl::parse(&did.to_string()).unwrap();
-  let parsed_from_did_url = WasmDIDUrl::parse(&did_url.to_string()).unwrap();
+  let parsed_from_did = WasmIotaDIDUrl::parse(&did.to_string()).unwrap();
+  let parsed_from_did_url = WasmIotaDIDUrl::parse(&did_url.to_string()).unwrap();
 
   assert_eq!(did_url.to_string(), parsed_from_did.to_string());
   assert_eq!(did_url.to_string(), parsed_from_did_url.to_string());
@@ -106,165 +113,140 @@ fn test_did_url() {
 
 #[wasm_bindgen_test]
 fn test_document_new() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
-  assert_eq!(document.id().network_str(), "main");
-  assert!(document.default_signing_method().is_ok());
+  let document: WasmIotaDocument = WasmIotaDocument::new("atoi".to_owned()).unwrap();
+  assert_eq!(
+    document.id().tag(),
+    "0x0000000000000000000000000000000000000000000000000000000000000000"
+  );
+  assert_eq!(document.id().network_str(), "atoi");
+  assert!(document.metadata_created().is_some());
+  assert!(document.metadata_updated().is_some());
 }
 
 #[wasm_bindgen_test]
-fn test_document_sign_self() {
+fn test_document_sign() {
   let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
 
   // Sign with DIDUrl method query.
   {
-    let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
+    let mut document: WasmIotaDocument = WasmIotaDocument::new(WasmIotaDID::static_default_network()).unwrap();
+    let method = WasmIotaVerificationMethod::new(
+      &document.id(),
+      WasmKeyType::Ed25519,
+      keypair.public(),
+      "#sign-0".to_owned(),
+    )
+    .unwrap();
     document
-      .sign_self(
-        &keypair,
-        &JsValue::from(document.default_signing_method().unwrap().id()).unchecked_into(),
-      )
+      .insert_method(&method, &WasmMethodScope::authentication())
       .unwrap();
-    assert!(document.verify_document(&document).is_ok());
-  }
 
-  // Sign with string method query.
-  {
-    let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
-    document
-      .sign_self(
-        &keypair,
-        &JsValue::from_str(&document.default_signing_method().unwrap().id().to_string()).unchecked_into(),
+    let data = JsValue::from_serde(&json!({
+      "answer": 42,
+      "nested": {
+        "property": "string",
+      }
+    }))
+    .unwrap();
+
+    // Sign with DIDUrl.
+    let signed = document
+      .sign_data(
+        &data,
+        keypair.private(),
+        &JsValue::from(method.id()).unchecked_into(),
+        &WasmProofOptions::default(),
       )
       .unwrap();
-    assert!(document.verify_document(&document).is_ok());
+
+    // Sign with string method query.
+    let signed_str = document
+      .sign_data(
+        &data,
+        keypair.private(),
+        &JsValue::from_str("#sign-0").unchecked_into(),
+        &WasmProofOptions::default(),
+      )
+      .unwrap();
+
+    assert!(document.verify_data(&signed, &WasmVerifierOptions::default()).unwrap());
+    assert_eq!(
+      signed.into_serde::<serde_json::Value>().unwrap(),
+      signed_str.into_serde::<serde_json::Value>().unwrap()
+    );
   }
 }
 
 #[wasm_bindgen_test]
 fn test_document_resolve_method() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
-  let default_method: WasmVerificationMethod = document.default_signing_method().unwrap();
+  let mut document: WasmIotaDocument = WasmIotaDocument::new(WasmIotaDID::static_default_network()).unwrap();
 
-  let keypair_new: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let method_new: WasmVerificationMethod = WasmVerificationMethod::new(
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
+  let method: WasmIotaVerificationMethod = WasmIotaVerificationMethod::new(
     &document.id(),
     WasmKeyType::Ed25519,
-    keypair_new.public(),
+    keypair.public(),
     "new-key".to_owned(),
   )
   .unwrap();
   document
-    .insert_method(&method_new, &WasmMethodScope::authentication())
+    .insert_method(&method, &WasmMethodScope::authentication())
     .unwrap();
 
   // Resolve with DIDUrl method query.
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(default_method.id()).unchecked_into(), None)
+      .resolve_method(&JsValue::from(method.id()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
       .to_string(),
-    default_method.id().to_string()
-  );
-  assert_eq!(
-    document
-      .resolve_method(&JsValue::from(method_new.id()).unchecked_into(), None)
-      .unwrap()
-      .unwrap()
-      .id()
-      .to_string(),
-    method_new.id().to_string()
+    method.id().to_string()
   );
 
   // Resolve with string method query.
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        None,
-      )
+      .resolve_method(&JsValue::from_str(&method.id().to_string()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
       .to_string(),
-    default_method.id().to_string()
-  );
-  assert_eq!(
-    document
-      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into(), None)
-      .unwrap()
-      .unwrap()
-      .id()
-      .to_string(),
-    method_new.id().to_string()
+    method.id().to_string()
   );
 
   // Resolve with string fragment method query.
   assert_eq!(
     document
       .resolve_method(
-        &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
+        &JsValue::from_str(&method.id().fragment().unwrap()).unchecked_into(),
         None,
       )
       .unwrap()
       .unwrap()
       .id()
       .to_string(),
-    default_method.id().to_string()
-  );
-  assert_eq!(
-    document
-      .resolve_method(
-        &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        None,
-      )
-      .unwrap()
-      .unwrap()
-      .id()
-      .to_string(),
-    method_new.id().to_string()
+    method.id().to_string()
   );
 
   // Resolve with correct verification method relationship.
   assert_eq!(
     document
       .resolve_method(
-        &JsValue::from(default_method.id()).unchecked_into(),
-        Some(JsValue::from(WasmMethodScope::capability_invocation()).unchecked_into()),
-      )
-      .unwrap()
-      .unwrap()
-      .id()
-      .to_string(),
-    default_method.id().to_string()
-  );
-  assert_eq!(
-    document
-      .resolve_method(
-        &JsValue::from(method_new.id()).unchecked_into(),
+        &JsValue::from(method.id()).unchecked_into(),
         Some(JsValue::from(WasmMethodScope::authentication()).unchecked_into()),
       )
       .unwrap()
       .unwrap()
       .id()
       .to_string(),
-    method_new.id().to_string()
+    method.id().to_string()
   );
 
   // Resolve with wrong verification method relationship.
   assert!(document
     .resolve_method(
-      &JsValue::from(default_method.id()).unchecked_into(),
-      Some(JsValue::from(WasmMethodScope::key_agreement()).unchecked_into()),
-    )
-    .unwrap()
-    .is_none());
-  assert!(document
-    .resolve_method(
-      &JsValue::from(method_new.id()).unchecked_into(),
+      &JsValue::from(method.id()).unchecked_into(),
       Some(JsValue::from(WasmMethodScope::assertion_method()).unchecked_into()),
     )
     .unwrap()
@@ -272,17 +254,9 @@ fn test_document_resolve_method() {
 }
 
 #[wasm_bindgen_test]
-fn test_document_network() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
-
-  assert_eq!(document.id().network_str(), "dev");
-}
-
-#[wasm_bindgen_test]
 fn test_did_serde() {
   // Ensure JSON deserialization of DID and strings match (for UWasmDID duck-typed parameters).
-  let expected_str: &str = "did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
+  let expected_str: &str = "did:iota:0xdfda8bcfb959c3e6ef261343c3e1a8310e9c8294eeafee326a4e96d65dbeaca0";
   let expected: IotaDID = IotaDID::parse(expected_str).unwrap();
 
   // Check WasmDID deserialization.
@@ -314,60 +288,27 @@ fn test_timestamp_serde() {
   assert_eq!(wasm_de.to_rfc3339(), expected_str);
 }
 
-#[wasm_bindgen_test]
-fn test_sign_document() {
-  let keypair1: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let document1: WasmDocument = WasmDocument::new(&keypair1, None, None).unwrap();
-
-  // Replace the default signing method.
-  let mut document2: WasmDocument = document1.deep_clone();
-  let keypair2: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let method: WasmVerificationMethod = WasmVerificationMethod::new(
-    &document2.id(),
-    keypair2.type_(),
-    keypair2.public(),
-    "#method-2".to_owned(),
-  )
-  .unwrap();
-  document2
-    .insert_method(&method, &WasmMethodScope::capability_invocation())
-    .unwrap();
-  document2
-    .remove_method(&document1.default_signing_method().unwrap().id())
-    .unwrap();
-
-  // Sign update using original document.
-  assert!(document1.verify_document(&document2).is_err());
-  document1
-    .sign_document(
-      &mut document2,
-      &keypair1,
-      &JsValue::from(document1.default_signing_method().unwrap().id()).unchecked_into(),
-    )
-    .unwrap();
-  document1.verify_document(&document2).unwrap();
-}
-
+// TODO: Remove or reuse depending on what we do with the account.
 // This test should be matched by a test with equivalent test vector in Rust
 // to ensure hashes are consistent across architectures.
-#[wasm_bindgen_test]
-fn test_hash_is_consistent() {
-  let test_vector_1: [u8; 32] = [
-    187, 104, 26, 87, 133, 152, 0, 180, 17, 232, 218, 46, 190, 140, 102, 34, 42, 94, 9, 101, 87, 249, 167, 237, 194,
-    182, 240, 2, 150, 78, 110, 218,
-  ];
+// #[wasm_bindgen_test]
+// fn test_hash_is_consistent() {
+//   let test_vector_1: [u8; 32] = [
+//     187, 104, 26, 87, 133, 152, 0, 180, 17, 232, 218, 46, 190, 140, 102, 34, 42, 94, 9, 101, 87, 249, 167, 237, 194,
+//     182, 240, 2, 150, 78, 110, 218,
+//   ];
 
-  let test_vector_2: [u8; 32] = [
-    125, 153, 99, 21, 23, 190, 149, 109, 84, 120, 40, 91, 181, 57, 67, 254, 11, 25, 152, 214, 84, 46, 105, 186, 16, 39,
-    141, 151, 100, 163, 138, 222,
-  ];
+//   let test_vector_2: [u8; 32] = [
+//     125, 153, 99, 21, 23, 190, 149, 109, 84, 120, 40, 91, 181, 57, 67, 254, 11, 25, 152, 214, 84, 46, 105, 186, 16,
+// 39,     141, 151, 100, 163, 138, 222,
+//   ];
 
-  let location_1 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_1.to_vec());
-  let location_2 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_2.to_vec());
+//   let location_1 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_1.to_vec());
+//   let location_2 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_2.to_vec());
 
-  assert_eq!(location_1.to_string().split(':').last().unwrap(), "74874706796298672");
-  assert_eq!(
-    location_2.to_string().split(':').last().unwrap(),
-    "10201576743536852223"
-  );
-}
+//   assert_eq!(location_1.to_string().split(':').last().unwrap(), "74874706796298672");
+//   assert_eq!(
+//     location_2.to_string().split(':').last().unwrap(),
+//     "10201576743536852223"
+//   );
+// }
