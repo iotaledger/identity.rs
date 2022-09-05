@@ -11,7 +11,7 @@ use crate::error::WasmResult;
 use identity_iota::crypto::PublicKey;
 use identity_iota::did::VerificationMethod;
 use wasm_bindgen::prelude::*;
-
+/// A DID Document Verification Method.
 #[wasm_bindgen(js_name = CoreVerificationMethod, inspectable)]
 pub struct WasmCoreVerificationMethod(pub(crate) VerificationMethod);
 
