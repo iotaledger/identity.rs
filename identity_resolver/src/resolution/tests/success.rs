@@ -27,22 +27,6 @@ const ISSUER_BAR_DOC: &str =
 const PRESENTATION_JSON: &str =
   include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/presentation.json");
 
-// Not used, but can be useful for maintenance purposes.
-const _HOLDER_PRIVATE_KEY: [u8; 32] = [
-  76, 205, 8, 155, 40, 255, 150, 218, 157, 182, 195, 70, 236, 17, 78, 15, 91, 138, 49, 159, 53, 171, 166, 36, 218, 140,
-  246, 237, 79, 184, 166, 251,
-];
-
-const _ISSUER_IOTA_PRIVATE_KEY: [u8; 32] = [
-  157, 97, 177, 157, 239, 253, 90, 96, 186, 132, 74, 244, 146, 236, 44, 196, 68, 73, 197, 105, 123, 50, 105, 25, 112,
-  59, 172, 3, 28, 174, 127, 96,
-];
-
-const _ISSUER_BAR_PRIVATE_KEY: [u8; 32] = [
-  197, 170, 141, 244, 63, 159, 131, 123, 237, 183, 68, 47, 49, 220, 183, 177, 102, 211, 133, 53, 7, 111, 9, 75, 133,
-  206, 58, 46, 11, 68, 88, 247,
-];
-
 // Setup mock handlers:
 #[derive(Debug, thiserror::Error)]
 #[error("the document could not be resolved")]
