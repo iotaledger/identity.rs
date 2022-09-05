@@ -57,3 +57,7 @@ name = "3_did_issues_tokens"
 [[example]]
 path = "1_advanced/4_key_exchange.rs"
 name = "4_key_exchange"
+
+[[example]]
+path = "1_advanced/5_alias_output_history.rs"
+name = "5_alias_output_history"

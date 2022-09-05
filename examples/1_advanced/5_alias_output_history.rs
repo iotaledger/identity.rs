@@ -1,0 +1,164 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::str::FromStr;
+
+use examples::create_did;
+use examples::random_stronghold_path;
+use examples::NETWORK_ENDPOINT;
+use identity_core::common::Timestamp;
+use identity_core::convert::FromJson;
+use identity_core::json;
+use identity_did::did::DID;
+use identity_did::service::Service;
+use identity_did::verification::MethodRelationship;
+use identity_stardust::block::address::Address;
+use identity_stardust::block::output::RentStructure;
+use identity_stardust::StardustClientExt;
+use identity_stardust::StardustDID;
+use identity_stardust::StardustDocument;
+use identity_stardust::StardustIdentityClient;
+use identity_stardust::StardustIdentityClientExt;
+use identity_stardust::StardustService;
+use iota_client::api_types::responses::OutputMetadataResponse;
+use iota_client::block::input::Input;
+use iota_client::block::output::AliasId;
+use iota_client::block::output::AliasOutput;
+use iota_client::block::output::AliasOutputBuilder;
+use iota_client::block::output::Output;
+use iota_client::block::output::OutputId;
+use iota_client::block::payload::transaction::TransactionEssence;
+use iota_client::block::payload::Payload;
+use iota_client::block::Block;
+use iota_client::block::BlockId;
+use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
+
+/// Demonstrates how to obtain the alias output history.
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+  // Create a new client to interact with the IOTA ledger.
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .try_build(random_stronghold_path())?,
+  );
+
+  // Create a new DID in an Alias Output for us to modify.
+  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+
+  // Resolve the latest state of the document.
+  let mut document: StardustDocument = client.resolve_did(&did).await?;
+
+  // Attach a new method relationship to the existing method.
+  document.attach_method_relationship(
+    &document.id().to_url().join("#key-1")?,
+    MethodRelationship::Authentication,
+  )?;
+
+  // Adding multiple services.
+  let services = [
+    json!({"id": document.id().to_url().join("#my-service-0")?, "type": "MyService", "serviceEndpoint": "https://iota.org/"}),
+    json!({"id": document.id().to_url().join("#my-service-1")?, "type": "MyService", "serviceEndpoint": "https://iota.org/"}),
+    json!({"id": document.id().to_url().join("#my-service-2")?, "type": "MyService", "serviceEndpoint": "https://iota.org/"}),
+  ];
+  for service in services {
+    let service: StardustService = Service::from_json_value(service)?;
+    assert!(document.insert_service(service));
+    document.metadata.updated = Some(Timestamp::now_utc());
+
+    // Resolve the latest output and update it with the given document.
+    let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
+
+    // Because the size of the DID document increased, we have to increase the allocated storage deposit.
+    // This increases the deposit amount to the new minimum.
+    let rent_structure: RentStructure = client.get_rent_structure().await?;
+    let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
+      .with_minimum_storage_deposit(rent_structure)
+      .finish()?;
+
+    // Publish the updated Alias Output.
+    client.publish_did_output(&secret_manager, alias_output).await?;
+  }
+
+  // ====================================
+  // Retrieving the Alias Output History
+  // ====================================
+  let mut alias_history: Vec<AliasOutput> = Vec::new();
+
+  // Step 0 - Get the latest Alias Output
+  let alias_id: AliasId = AliasId::from(client.resolve_did(&did).await?.id());
+  let (mut output_id, mut alias_output): (OutputId, AliasOutput) = client.get_alias_output(alias_id).await?;
+
+  while alias_output.state_index() != 0 {
+    // Step 1 - Get the current block
+    let block: Block = current_block(&client, &output_id).await?;
+    // Step 2 - Get the OutputId of the previous block
+    output_id = previous_output_id(&block)?;
+    // Step 3 - Get the Alias Output from the block
+    alias_output = block_alias_output(&block)?;
+    alias_history.push(alias_output.clone());
+  }
+
+  println!("Alias History: {:?}", alias_history);
+
+  Ok(())
+}
+
+async fn current_block(client: &Client, output_id: &OutputId) -> anyhow::Result<Block> {
+  let output_metadata: OutputMetadataResponse = client.get_output_metadata(&output_id).await?;
+  let block_id: BlockId = BlockId::from_str(&output_metadata.block_id)?;
+  let block: Block = client.get_block(&block_id).await?;
+  Ok(block)
+}
+
+fn previous_output_id(block: &Block) -> anyhow::Result<OutputId> {
+  match block
+    .payload()
+    .expect("expected a transaction payload, but no payload was found")
+  {
+    Payload::Transaction(transaction_payload) => match transaction_payload.essence() {
+      TransactionEssence::Regular(regular_transaction_essence) => {
+        match regular_transaction_essence
+          .inputs()
+          .first()
+          .expect("expected an utxo for the block, but no input was found")
+        {
+          Input::Utxo(utxo_input) => Ok(*utxo_input.output_id()),
+          Input::Treasury(_) => {
+            anyhow::bail!("expected an utxo input, found a treasury input");
+          }
+        }
+      }
+    },
+    Payload::Milestone(_) | Payload::TreasuryTransaction(_) | Payload::TaggedData(_) => {
+      anyhow::bail!("expected a transaction payload");
+    }
+  }
+}
+
+fn block_alias_output(block: &Block) -> anyhow::Result<AliasOutput> {
+  match block
+    .payload()
+    .expect("expected a transaction payload, but no payload was found")
+  {
+    Payload::Transaction(transaction_payload) => match transaction_payload.essence() {
+      TransactionEssence::Regular(regular_transaction_essence) => {
+        for output in regular_transaction_essence.outputs() {
+          match output {
+            Output::Alias(alias_output) => return Ok(alias_output.clone()),
+            Output::Basic(_) | Output::Foundry(_) | Output::Nft(_) | Output::Treasury(_) => continue,
+          }
+        }
+      }
+    },
+    Payload::Milestone(_) | Payload::TreasuryTransaction(_) | Payload::TaggedData(_) => {
+      anyhow::bail!("expected a transaction payload");
+    }
+  }
+  anyhow::bail!("no alias output has been found");
+}
