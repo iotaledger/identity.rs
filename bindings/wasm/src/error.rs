@@ -119,8 +119,9 @@ macro_rules! impl_wasm_error_from_with_struct_name {
 // us display the entire display chain for new variants that don't include the error message of the source error in its
 // own display.
 
+// REFACTOR-TODO: Remove `_` after merging resolver PR, which will use this function again.
 // the following function is inspired by https://www.lpalmieri.com/posts/error-handling-rust/#error-source
-fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+fn _error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
   write!(f, "{}. ", e)?;
   let mut current = e.source();
   while let Some(cause) = current {
