@@ -20,6 +20,7 @@ identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", defau
 
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["full"] }
+iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 
 [features]
 default = ["revocation-bitmap"]

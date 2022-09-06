@@ -81,16 +81,13 @@ edition = "2021"
 
 [dependencies]
 identity_iota = { version = "0.7" }
+iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 ```
 
 _main._<span></span>_rs_
 
 ```rust,no_run
-use anyhow::Context;
-use examples::get_address_with_funds;
-use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
 use identity_iota::core::ToJson;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
@@ -106,23 +103,24 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
+// The endpoint of the IOTA node to use.
+static NETWORK_ENDPOINT: &str = "https://127.0.0.1:14265";
+
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
-  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+  let secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .build(random_stronghold_path())?,
+      .build("./example-strong.hodl")?,
   );
 
-  // Get an address and with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager)
-    .await
-    .context("failed to get address with funds")?;
+  // Get an address from the secret manager. The address needs to hold funds.
+  let address: Address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
 
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
