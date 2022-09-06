@@ -53,7 +53,7 @@ fn make_presentation(credentials: impl Iterator<Item = Credential>, holder: Core
 }
 
 /// Checks that all methods on the resolver involving resolution fail under the assumption that
-/// the resolver is set up in such a way that the `resolve` method must fail for this did (because of a specific
+/// the resolver is set up in such a way that the `resolve` method must fail for this DID (because of a specific
 /// cause), but succeed with `good_did`. The `assertions` argument is a function or closure that asserts that the
 /// [`ErrorCause`] is of the expected value.
 async fn check_failure_for_all_methods<F, D, DOC>(resolver: Resolver<DOC>, bad_did: CoreDID, good_did: D, assertions: F)

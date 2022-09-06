@@ -169,8 +169,8 @@ describe('Resolver', function () {
             
             assert(issuerDocuments instanceof Array);
 
-            /*
-            const verificationResultPassingHolderDoc = await resolver.verifyPresentation(
+
+            let verificationResultPassingHolderDoc = await resolver.verifyPresentation(
                 presentation, 
                 new PresentationValidationOptions({}), 
                 FailFast.FirstError, 
@@ -178,7 +178,7 @@ describe('Resolver', function () {
                 assert.equal(verificationResultPassingHolderDoc, undefined); 
                 
 
-            const verificationResultPassingHolderAndIssuerDocuments = await resolver.verifyPresentation(
+            let verificationResultPassingHolderAndIssuerDocuments = await resolver.verifyPresentation(
                 presentation, 
                 new PresentationValidationOptions({}), 
                 FailFast.FirstError, 
@@ -187,7 +187,7 @@ describe('Resolver', function () {
                 assert.equal(verificationResultPassingHolderAndIssuerDocuments, undefined); 
                
             
-            const verificationResultPassingIssuerDocuments = await resolver.verifyPresentation(
+            let verificationResultPassingIssuerDocuments = await resolver.verifyPresentation(
                 presentation, 
                 new PresentationValidationOptions({}), 
                 FailFast.FirstError, 
@@ -196,21 +196,27 @@ describe('Resolver', function () {
                 assert.equal(verificationResultPassingIssuerDocuments, undefined); 
                 
             
-            const verificationResultPassingNoDocuments = await resolver.verifyPresentation(
+            let verificationResultPassingNoDocuments = await resolver.verifyPresentation(
                 presentation, 
                 new PresentationValidationOptions({}), 
                 FailFast.FirstError
                 );
                 assert.equal(verificationResultPassingNoDocuments, undefined); 
-              */
+              
+             // passing the wrong document should throw an error   
              assert.notEqual(holderDoc, issuerDocuments[0]);
 
-                assert.doesNotThrow(async () => await resolver.verifyPresentation(
-                  presentation, 
-                  PresentationValidationOptions.default(), 
-                  FailFast.FirstError, 
-                  issuerDocuments[0],
-                  ));
+             try {
+             let result = await resolver.verifyPresentation(
+              presentation, 
+              PresentationValidationOptions.default(), 
+              FailFast.FirstError, 
+              issuerDocuments[0],
+              ); 
+             } catch (e) {
+              return; 
+             }
+             throw new Error("no error thrown when passing incorrect holder"); 
             
         });
     });

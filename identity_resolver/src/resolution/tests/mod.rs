@@ -6,3 +6,6 @@ mod resolution_errors;
 mod send_sync;
 #[cfg(feature = "iota")]
 mod successful_presentation_validation;
+
+#[cfg(feature = "iota")]
+mod presentation_validation_errors;
