@@ -19,7 +19,6 @@ mod macros;
 
 // Deactivated legacy packages.
 // pub mod account;
-// pub mod chain;
 // pub mod tangle;
 
 pub mod common;
