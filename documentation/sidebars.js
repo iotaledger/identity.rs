@@ -44,6 +44,7 @@ module.exports = {
             {
               'Decentralized Identifiers (DID)': [
                   'concepts/decentralized_identifiers/overview',
+                  'concepts/decentralized_identifiers/alias',
                   'concepts/decentralized_identifiers/create',
                   'concepts/decentralized_identifiers/update',
                   'concepts/decentralized_identifiers/resolve',
