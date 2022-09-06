@@ -8,7 +8,7 @@ keywords = ["iota", "tangle", "identity", "did", "ssi"]
 license = "Apache-2.0"
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-rust-version = "1.60"
+rust-version = "1.62"
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
