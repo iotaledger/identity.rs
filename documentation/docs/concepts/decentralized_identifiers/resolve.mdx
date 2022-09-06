@@ -6,11 +6,13 @@ image: /img/Identity_icon.png
 keywords:
 - Resolve
 ---
-// REFACTOR-TODO: Remove before merging PR #992.
-// import resolve_did_rs from '!!raw-loader!../../../../examples_legacy/low-level-api/resolve_did.rs';
-// import resolve_history_rs from '!!raw-loader!../../../../examples_legacy/low-level-api/resolve_history.rs';
-// import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples/src/resolve_did.js';
-// import resolve_history_js from '!!raw-loader!../../../../bindings/wasm/examples/src/resolve_history.js';
+
+<!--
+REFACTOR-TODO: Remove before merging PR #992.
+import resolve_did_rs from '!!raw-loader!../../../../examples_legacy/low-level-api/resolve_did.rs';
+import resolve_history_rs from '!!raw-loader!../../../../examples_legacy/low-level-api/resolve_history.rs';
+import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples/src/resolve_did.js';
+import resolve_history_js from '!!raw-loader!../../../../bindings/wasm/examples/src/resolve_history.js'; -->
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -165,16 +167,16 @@ async function callResolveHistory(did) {
 ## Complete examples
 This section shows complete examples from the Iota Identity Framework code base. The first example creates a DID Document, publishes it to the Tangle and then resolves it.
 
-{/* <CodeSnippet
+<!-- <CodeSnippet
     nodeReplitLink="https://repl.it/@IOTAFoundation/resolve-did?lite=true"
     rustContent={resolve_did_rs}
     nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/resolve_did.js"
     rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples_legacy/low-level-api/resolve_did.rs"
-/> */}
+/> -->
 
 
 This second example demonstrates creating, publishing changes and then resolving the history of a DID Document.
-{/* <Tabs
+<!-- <Tabs
   groupId="programming-languages"
   defaultValue="nodejs"
   values={[
@@ -188,6 +190,6 @@ This second example demonstrates creating, publishing changes and then resolving
   <TabItem value="rust">
     <CodeBlock className="language-rust">{resolve_history_rs}</CodeBlock>
   </TabItem>
-</Tabs> */}
+</Tabs> -->
 
 Note that this example used the `Client` to resolve the history of the DID Document, but one could also use the `Resolver` for this task.
