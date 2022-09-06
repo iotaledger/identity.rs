@@ -90,6 +90,10 @@ pub mod iota_core {
 pub mod prelude {
   //! Prelude of commonly used types
 
+  pub use identity_iota_core::IotaClientExt;
+  pub use identity_iota_core::IotaDID;
+  pub use identity_iota_core::IotaDocument;
+
   pub use identity_core::crypto::KeyPair;
   pub use identity_core::crypto::KeyType;
 }
