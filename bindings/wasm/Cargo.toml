@@ -52,4 +52,4 @@ lto = true
 
 # TODO: Temporary iota-crypto fix.
 [patch.crates-io]
-iota-crypto = { git = "https://github.com/thibault-martinez/crypto.rs/", rev = "fe6875e1096f2c0384ed610c6ff83f3bfa25a6e0" }
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs/", rev = "43196de5cdf320b000963165c0da252ee738f190" }
