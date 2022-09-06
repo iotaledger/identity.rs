@@ -16,17 +16,12 @@ use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use serde::de::DeserializeOwned;
 
-use crate::ErrorCause;
 use crate::Resolver;
 
-const SUBJECT_FOO_JSON: &str =
-  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/subject_foo_doc.json");
-const ISSUER_IOTA_DOC: &str =
-  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_iota_doc.json");
-const ISSUER_BAR_DOC: &str =
-  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/issuer_bar_doc.json");
-const PRESENTATION_JSON: &str =
-  include_str!("../../../../identity_credential/tests/fixtures/signed_presentation/presentation.json");
+use super::valid_presentation_data::HOLDER_FOO_DOC_JSON;
+use super::valid_presentation_data::ISSUER_BAR_DOC_JSON;
+use super::valid_presentation_data::ISSUER_IOTA_DOC_JSON;
+use super::valid_presentation_data::PRESENTATION_JSON;
 
 // Setup mock handlers:
 #[derive(Debug, thiserror::Error)]
@@ -44,15 +39,15 @@ where
 }
 
 async fn resolve_foo(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
-  resolve(did, SUBJECT_FOO_JSON).await
+  resolve(did, HOLDER_FOO_DOC_JSON).await
 }
 
 async fn resolve_iota(did: StardustDID) -> Result<StardustDocument, ResolutionError> {
-  resolve(did, ISSUER_IOTA_DOC).await
+  resolve(did, ISSUER_IOTA_DOC_JSON).await
 }
 
 async fn resolve_bar(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
-  resolve(did, ISSUER_BAR_DOC).await
+  resolve(did, ISSUER_BAR_DOC_JSON).await
 }
 
 async fn check_verify_presentation<DOC>(mut resolver: Resolver<DOC>)
@@ -94,7 +89,7 @@ where
 }
 
 #[tokio::test]
-async fn presentation_verification_works() {
+async fn correct_presentation_validation() {
   let core_resolver: Resolver<CoreDocument> = Resolver::new();
   let dynamic_resolver: Resolver = Resolver::new();
   check_verify_presentation(core_resolver).await;
