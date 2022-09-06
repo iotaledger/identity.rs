@@ -198,8 +198,7 @@ The following steps can be used to read the latest DID Document associated with 
 
 ### Update
 
-Updating a DID Document can be achieved by the state controller performing a state transition
-of the Alias Output with the updated content:
+Updating a DID Document can be achieved by the state controller performing a state transition of the Alias Output with the updated content:
 
 1. Create a copy of the Alias Output with the `Alias ID` set explicitly.
 2. Pack the updated DID Document, as described in the [Anatomy of the State Metadata](#anatomy-of-the-state-metadata), into the `State Metadata` of the output.
@@ -211,8 +210,7 @@ of the Alias Output with the updated content:
 
 #### Deactivate
 
-Temporarily deactivating a DID can be done by deleting the contents of the `State Meadata` in the Alias Output, setting
-it to an empty byte array, and publishing an [update](#update).
+Temporarily deactivating a DID can be done by deleting the contents of the `State Meadata` in the Alias Output, setting it to an empty byte array, and publishing an [update](#update).
 
 Another option is to [update](#update) the DID Document and set the `deactivated` property in its `metadata` to true. In both cases, the deactivated DID Document will be marked as `deactivated` when resolved.
 
