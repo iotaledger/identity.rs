@@ -256,8 +256,7 @@ impl MixedResolver {
         )
         .await
         .wasm_result()
-        .map_err(JsValue::from)
-        .map(|_| JsValue::UNDEFINED)
+        .map(|_| JsValue::UNDEFINED);
     });
 
     Ok(promise.unchecked_into::<PromiseVoid>())
