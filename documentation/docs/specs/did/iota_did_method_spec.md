@@ -243,7 +243,7 @@ The IOTA Identity framework also standardized certain `services` that are embedd
 
 Currently standardized `services`:
 
-* Nothing yet.
+* [Revocation Bitmap Service](../revocation_bitmap_2022.md#revocation-bitmap-service)
 
 ## Security Considerations
 The `did:iota` method is implemented on the [IOTA](https://iota.org), a public permissionless and feeless Distributed Ledger Technology (DLT), making it resistant against almost all censorship attack vectors. Up until the `Coordicide` update for the IOTA network, a reliability on the coordinator exists for resolving ordering conflicts. This has a minor censorship possibility, that, in the wrost case, can prevent transactions from getting confirmed.
