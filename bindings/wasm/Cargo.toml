@@ -49,7 +49,3 @@ wasm-opt = true
 [profile.release]
 opt-level = 's'
 lto = true
-
-# TODO: Temporary iota-crypto fix.
-[patch.crates-io]
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs/", rev = "43196de5cdf320b000963165c0da252ee738f190" }
