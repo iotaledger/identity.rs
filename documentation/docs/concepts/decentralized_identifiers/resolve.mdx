@@ -12,12 +12,9 @@ import CodeBlock from '@theme/CodeBlock';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-DID resolution is the process of fetching and decoding a [DID Document](https://www.w3.org/TR/did-core/#dfn-did-documents) corresponding to a given [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers).
-The [IOTA Identity framework](https://github.com/iotaledger/identity.rs) supports resolving DID Documents that are stored on the IOTA Tangle and Shimmer networks.
+DID resolution is the process of fetching and decoding a [DID Document](https://www.w3.org/TR/did-core/#dfn-did-documents) corresponding to a given [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers). The [IOTA Identity framework](https://github.com/iotaledger/identity.rs) supports resolving DID Documents that are stored on the IOTA Tangle and Shimmer networks.
 
-This is similar to, but not to be confused with, the [W3C DID Resolution specification](https://w3c-ccg.github.io/did-resolution/), which
-defines function signatures for resolution in the context of web or REST APIs, whereas the IOTA Identity framework
-provides strongly-typed resolution for a better developer experience.
+This is similar to, but not to be confused with, the [W3C DID Resolution specification](https://w3c-ccg.github.io/did-resolution/), which defines function signatures for resolution in the context of web or REST APIs, whereas the IOTA Identity framework provides strongly-typed resolution for a better developer experience.
 
 This functionality is primarily provided by the `Resolver`, which can:
 - [Resolve DID Documents across multiple networks](#resolving-a-did).
@@ -29,10 +26,7 @@ The following examples demonstrate how to resolve an IOTA DID Document from its 
 
 ### Resolver
 
-The `Resolver` follows the read procedure defined in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#read).
-It fetches the latest [Alias Output](../../specs/did/iota_did_method_spec#alias-output)
-from the network specified in the DID (see [DID Format](../../specs/did/iota_did_method_spec#did-format)),
-then extracts and validates the DID Document from it.
+The `Resolver` follows the read procedure defined in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#read). It fetches the latest [Alias Output](../../specs/did/iota_did_method_spec#alias-output) from the network specified in the DID (see [DID Format](../../specs/did/iota_did_method_spec#did-format)), then extracts and validates the DID Document from it.
 
 Multiple networks can be supported by a `Resolver` simply by adding multiple clients to it, each using a node endpoint for a different network.
 
@@ -136,10 +130,7 @@ const document = await didClient.resolveDid(did);
 
 ## Resolution for Verifiable Presentations
 
-When validating [verifiable presentations](../verifiable_credentials/verifiable_presentations.mdx),
-it is necessary to resolve the DID Documents of the [verifiable credential](../verifiable_credentials/overview.md)
-issuers and presentation holder to verify their signatures. Resolving the necessary DID Documents is performed automatically
-when verifying presentations via the `Resolver` (see this [example](../verifiable_credentials/verifiable_presentations.mdx#example)).
+When validating [verifiable presentations](../verifiable_credentials/verifiable_presentations.mdx), it is necessary to resolve the DID Documents of the [verifiable credential](../verifiable_credentials/overview.md) issuers and presentation holder to verify their signatures. Resolving the necessary DID Documents is performed automatically when verifying presentations via the `Resolver` (see this [example](../verifiable_credentials/verifiable_presentations.mdx#example)).
 
 When direct access to these DID Documents is desired, the `Resolver` also provides standalone methods to:
 - Resolve a presentation holder's DID Document.
