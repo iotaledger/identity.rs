@@ -8,6 +8,7 @@ keywords:
 - Deactivate
 - Destroy
 ---
+
 import deactivate_did_rs from '!!raw-loader!../../../../examples/0_basic/3_deactivate_did.rs';
 import deactivate_did_js from '!!raw-loader!../../../../bindings/wasm/examples-stardust/src/ex3_deactivate_did.ts';
 import delete_did_rs from '!!raw-loader!../../../../examples/0_basic/4_delete_did.rs';
@@ -23,40 +24,33 @@ There are two approaches to delete an IOTA Identity, with different implications
 
 ## Deactivate
 
-As detailed in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#deactivate),
-the state controller of an IOTA Identity may [deactivate](https://www.w3.org/TR/did-core/#did-document-metadata) it by
-publishing an update that either:
+As detailed in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#deactivate), the state controller of an IOTA Identity may [deactivate](https://www.w3.org/TR/did-core/#did-document-metadata) it by publishing an update that either:
 
 - deletes the contents of the DID Document entirely, leaving the state metadata empty, OR
 - sets the `deactivated` field in the DID Document metadata to `true`.
 
 In both cases, the DID Document will be marked as `deactivated` when resolved.
 
-This operation is reversible: the identity can subsequently be reactivated at any time, by publishing an update
-restoring the DID Document's contents, or unsetting the `deactivated` field in the metadata respectively,
-depending on how it was initially deactivated.
+This operation is reversible: the identity can subsequently be reactivated at any time, by publishing an update restoring the DID Document's contents, or unsetting the `deactivated` field in the metadata respectively, depending on how it was initially deactivated.
 
-Note that the governor (if different from the state controller) cannot deactivate an identity directly because
-it is disallowed from updating the DID Document, but it may [destroy](#destroy) it.
+Note that the governor (if different from the state controller) cannot deactivate an identity directly because it is disallowed from updating the DID Document, but it may [destroy](#destroy) it.
 
 ### Example
 
-The following example demonstrates deactivating and reactivating an IOTA DID Document, and optionally reclaiming
-the storage deposit.
+The following example demonstrates deactivating and reactivating an IOTA DID Document, and optionally reclaiming the storage deposit.
 
 <CodeSnippet
     nodeContent={deactivate_did_js}
     rustContent={deactivate_did_rs}
-    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-stardust/src/ex3_deactivate_did.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/3_deactivate_did.rs"
+    nodeGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-stardust/src/ex3_deactivate_did.ts"
+    rustGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/3_deactivate_did.rs"
 />
 
 ## Destroy
 
 Alternatively, an IOTA Identity can be permanently [destroyed](../../specs/did/iota_did_method_spec.md#destroy).
 
-This is achieved by the governor of a DID publishing a transaction consuming the [Alias Output](../../specs/did/iota_did_method_spec.md#alias-output)
-containing the IOTA DID Document, without a corresponding Alias Output on the output side.
+This is achieved by the governor of a DID publishing a transaction consuming the [Alias Output](../../specs/did/iota_did_method_spec.md#alias-output) containing the IOTA DID Document, without a corresponding Alias Output on the output side.
 
 Any coins and tokens in the Alias Output are reclaimed and can be sent to another address.
 
@@ -66,9 +60,7 @@ Destroying an IOTA Identity is permanent and irreversible.
 
 :::
 
-Note that historical versions may still be stored off-ledger or on a permanode, so sensitive or
-Personal Identifiable Information (PII) should NEVER be stored in a DID Document.
-Even with a previous version available, a destroyed DID can never be restored.
+Note that historical versions may still be stored off-ledger or on a permanode, so sensitive or Personal Identifiable Information (PII) should NEVER be stored in a DID Document. Even with a previous version available, a destroyed DID can never be restored.
 
 ### Example
 
@@ -77,6 +69,6 @@ The following example demonstrates a governor destroying an IOTA Identity and se
 <CodeSnippet
     nodeContent={delete_did_js}
     rustContent={delete_did_rs}
-    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-stardust/src/ex4_delete_did.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/4_delete_did.rs"
+    nodeGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-stardust/src/ex4_delete_did.ts"
+    rustGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/4_delete_did.rs"
 />
