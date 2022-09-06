@@ -14,140 +14,45 @@ const {
     PresentationValidationOptions
 } = require("../node");
 
+const presentationJSON = require("../../../identity_credential/tests/fixtures/signed_presentation/presentation.json");
+const issuerIotaDocJSON = require("../../../identity_credential/tests/fixtures/signed_presentation/issuer_iota_doc.json");
+const issuerBarDocJSON = require("../../../identity_credential/tests/fixtures/signed_presentation/issuer_bar_doc.json");
+const holderFooDocJSON = require("../../../identity_credential/tests/fixtures/signed_presentation/subject_foo_doc.json");
+const presentation = Presentation.fromJSON(presentationJSON);
+const holderFooDoc = CoreDocument.fromJSON(holderFooDocJSON);
+const issuerIotaDoc: StardustDocument = StardustDocument.fromJSON(issuerIotaDocJSON);
+const issuerBarDoc: CoreDocument = CoreDocument.fromJSON(issuerBarDocJSON); 
+
 describe('Resolver', function () {
     describe('#verifyPresentation', function () {
-        it('should verify presentations correctly', async () => {
-            const presentationJSON = {
-                "@context": "https://www.w3.org/2018/credentials/v1",
-                "id": "https://example.org/credentials/3732",
-                "type": "VerifiablePresentation",
-                "verifiableCredential": [
-                  {
-                    "@context": "https://www.w3.org/2018/credentials/v1",
-                    "id": "https://example.edu/credentials/3732",
-                    "type": [
-                      "VerifiableCredential",
-                      "UniversityDegreeCredential"
-                    ],
-                    "credentialSubject": {
-                      "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-                      "GPA": "4.0",
-                      "degree": {
-                        "name": "Bachelor of Science and Arts",
-                        "type": "BachelorDegree"
-                      },
-                      "name": "Alice"
-                    },
-                    "issuer": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                    "issuanceDate": "2022-08-31T08:35:44Z",
-                    "expirationDate": "2050-09-01T08:35:44Z",
-                    "proof": {
-                      "type": "JcsEd25519Signature2020",
-                      "verificationMethod": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#issuerKey",
-                      "signatureValue": "3d2aAPqjzaSQ2XbFtqLsauv2Ukdn4Hcevz2grNuJn4q4JbBmDHZpAvekVG12A3ZKRRTeKaBPguxXqcDaqujckWWz"
-                    }
-                  },
-                  {
-                    "@context": "https://www.w3.org/2018/credentials/v1",
-                    "id": "https://example.edu/credentials/3732",
-                    "type": [
-                      "VerifiableCredential",
-                      "UniversityDegreeCredential"
-                    ],
-                    "credentialSubject": {
-                      "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-                      "GPA": "4.0",
-                      "degree": {
-                        "name": "Bachelor of Science and Arts",
-                        "type": "BachelorDegree"
-                      },
-                      "name": "Alice"
-                    },
-                    "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-                    "issuanceDate": "2022-08-31T08:35:44Z",
-                    "expirationDate": "2050-09-01T08:35:44Z",
-                    "proof": {
-                      "type": "JcsEd25519Signature2020",
-                      "verificationMethod": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr#root",
-                      "signatureValue": "2iAYujqHLXP5csZzabdkfurpHaKT3Q8dnJDA4TL7pSJ7gjXLCb2tN7CF4ztKkCKmvY6VYG3pTuN1PeLGEFiQvuQr"
-                    }
-                  }
-                ],
-                "holder": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-                "proof": {
-                  "type": "JcsEd25519Signature2020",
-                  "verificationMethod": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5#root",
-                  "signatureValue": "3tVeoKjftrEAQvV3MgpKgiydRHU6i8mYVRnPc6C85upo1TDBEdN94gyW1RzbgPESaZCGeDa582BxAUHVE4rVjaAd",
-                  "challenge": "475a7984-1bb5-4c4c-a56f-822bccd46441"
-                }
-              };
-
-            const presentation = Presentation.fromJSON(presentationJSON); 
-
-
-            const resolveDidIota = async function nameOne(did_input: string) {
+        it('should accept a correct presentation when configured correctly', async () => {
+            
+            // mock method handlers  
+            const resolveDidIota = async function (did_input: string) {
                 const parsedDid: StardustDID = StardustDID.parse(did_input);
-                const resolvedJSON = {
-                    "doc": {
-                      "id": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                      "verificationMethod": [
-                        {
-                          "id": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#issuerKey",
-                          "controller": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                          "type": "Ed25519VerificationKey2018",
-                          "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
-                        }
-                      ]
-                    },
-                    "meta": {
-                      "created": "2022-08-31T09:33:31Z",
-                      "updated": "2022-08-31T09:33:31Z"
-                    }
-                  };
-                  if (parsedDid.toString() == did_input) {
-                    return StardustDocument.fromJSON(resolvedJSON);
+                  if (issuerIotaDoc.id().toString() == parsedDid.toString()) {
+                    return issuerIotaDoc; 
+                  } else {
+                    throw new Error(`could not resolve did ${did_input}`); 
                   }
-                  
             };
 
-            const resolveDidFoo = async function nameTwo(did_input: string) {
+            const resolveDidFoo = async function (did_input: string) {
                 const parsedDid: CoreDID = CoreDID.parse(did_input);
-                const resolvedJSON = {
-                    "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-                    "verificationMethod": [
-                      {
-                        "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5#root",
-                        "controller": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
-                        "type": "Ed25519VerificationKey2018",
-                        "publicKeyMultibase": "z586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5"
-                      }
-                    ]
-                  };
-
-                  if (parsedDid.toString() == did_input) {
-                    return CoreDocument.fromJSON(resolvedJSON);
+                  if (holderFooDoc.id().toString() == parsedDid.toString()) {
+                    return holderFooDoc;
+                  } else {
+                    throw new Error(`could not resolve did ${did_input}`); 
                   }
-                  
             };
 
-            const resolveDidBar = async function nameThree(did_input: string) {
+            const resolveDidBar = async function (did_input: string) {
                 const parsedDid: CoreDID = CoreDID.parse(did_input);
-                const resolvedJSON = {
-                    "id": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-                    "verificationMethod": [
-                      {
-                        "id": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr#root",
-                        "controller": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-                        "type": "Ed25519VerificationKey2018",
-                        "publicKeyMultibase": "zHyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr"
-                      }
-                    ]
-                  };
-
-                  if (parsedDid.toString() == did_input) {
-                    return CoreDocument.fromJSON(resolvedJSON);
-                  }
-                  
+                if (issuerBarDoc.id().toString() == parsedDid.toString()) {
+                  return issuerBarDoc;
+                } else {
+                  throw new Error(`could not resolve did ${did_input}`);
+                } 
             };
 
             let handlerMap: Map<string, (did:string) => Promise<StardustDocument | CoreDocument>> = new Map(); 
@@ -161,57 +66,57 @@ describe('Resolver', function () {
 
             
 
-            const holderDoc = await resolver.resolvePresentationHolder(presentation); 
-            assert(holderDoc instanceof CoreDocument);
+            const resolvedHolderDoc = await resolver.resolvePresentationHolder(presentation); 
+            assert(resolvedHolderDoc instanceof CoreDocument);
             
             
-            const issuerDocuments = await resolver.resolvePresentationIssuers(presentation); 
+            const resolvedIssuerDocuments = await resolver.resolvePresentationIssuers(presentation); 
             
-            assert(issuerDocuments instanceof Array);
+            assert(resolvedIssuerDocuments instanceof Array);
 
 
             let verificationResultPassingHolderDoc = await resolver.verifyPresentation(
                 presentation, 
-                new PresentationValidationOptions({}), 
+                PresentationValidationOptions.default(), 
                 FailFast.FirstError, 
-                holderDoc);
+                resolvedHolderDoc);
                 assert.equal(verificationResultPassingHolderDoc, undefined); 
                 
 
             let verificationResultPassingHolderAndIssuerDocuments = await resolver.verifyPresentation(
                 presentation, 
-                new PresentationValidationOptions({}), 
+                PresentationValidationOptions.default(), 
                 FailFast.FirstError, 
-                holderDoc, 
-                issuerDocuments);
+                resolvedHolderDoc, 
+                resolvedIssuerDocuments);
                 assert.equal(verificationResultPassingHolderAndIssuerDocuments, undefined); 
                
             
             let verificationResultPassingIssuerDocuments = await resolver.verifyPresentation(
                 presentation, 
-                new PresentationValidationOptions({}), 
+                PresentationValidationOptions.default(), 
                 FailFast.FirstError, 
                 undefined, 
-                issuerDocuments);
+                resolvedIssuerDocuments);
                 assert.equal(verificationResultPassingIssuerDocuments, undefined); 
                 
             
             let verificationResultPassingNoDocuments = await resolver.verifyPresentation(
                 presentation, 
-                new PresentationValidationOptions({}), 
+                PresentationValidationOptions.default(), 
                 FailFast.FirstError
                 );
                 assert.equal(verificationResultPassingNoDocuments, undefined); 
               
              // passing the wrong document should throw an error   
-             assert.notEqual(holderDoc, issuerDocuments[0]);
+             assert.notEqual(resolvedHolderDoc, resolvedIssuerDocuments[0]);
 
              try {
              let result = await resolver.verifyPresentation(
               presentation, 
               PresentationValidationOptions.default(), 
               FailFast.FirstError, 
-              issuerDocuments[0],
+              resolvedIssuerDocuments[0],
               ); 
              } catch (e) {
               return; 
@@ -219,5 +124,44 @@ describe('Resolver', function () {
              throw new Error("no error thrown when passing incorrect holder"); 
             
         });
+
+        it('should fail presentation validation when configured incorrectly', async () => { 
+            // setup mock handlers returning DID documents from other methods 
+            const resolveDidIotaMisconfigured = async function (_did_input: string) {
+              return holderFooDoc; 
+          };
+
+          const resolveDidFooMisconfigured = async function (_did_input: string) {
+              return issuerBarDoc; 
+          };
+
+          const resolveDidBarMisconfigured = async function (did_input: string) {
+             return issuerIotaDoc; 
+          };
+
+          let handlerMap: Map<string, (did:string) => Promise<StardustDocument | CoreDocument>> = new Map(); 
+          handlerMap.set("iota", resolveDidIotaMisconfigured);
+          handlerMap.set("foo", resolveDidFooMisconfigured);
+          handlerMap.set("bar", resolveDidBarMisconfigured); 
+
+          const resolver = new MixedResolver({
+              handlers: handlerMap
+          });
+
+          try {
+            await resolver.verifyPresentation(
+              presentation, 
+              PresentationValidationOptions.default(), 
+              FailFast.FirstError
+              );
+          } catch (e) {
+            assert.equal("ResolverError::PresentationValidationError", e.name);
+            return;
+          } 
+
+          throw new Error("the incorrectly configured resolver did not throw the expected error when validating the presentation"); 
+
+        });
     });
 });
+
