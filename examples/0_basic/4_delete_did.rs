@@ -4,10 +4,10 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
-use identity_iota_core::Error;
-use identity_iota_core::IotaClientExt;
-use identity_iota_core::IotaDID;
-use identity_iota_core::IotaIdentityClientExt;
+use identity_iota::iota_core::Error;
+use identity_iota::iota_core::IotaClientExt;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaIdentityClientExt;
 use iota_client::block::address::Address;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
   let error: Error = client.resolve_did(&did).await.unwrap_err();
   assert!(matches!(
     error,
-    identity_iota_core::Error::DIDResolutionError(iota_client::Error::NotFound)
+    identity_iota::iota_core::Error::DIDResolutionError(iota_client::Error::NotFound)
   ));
 
   Ok(())

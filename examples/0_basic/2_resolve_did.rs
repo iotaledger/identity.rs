@@ -4,10 +4,10 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
-use identity_iota_core::block::address::Address;
-use identity_iota_core::IotaDID;
-use identity_iota_core::IotaDocument;
-use identity_iota_core::IotaIdentityClientExt;
+use identity_iota::iota_core::block::address::Address;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaIdentityClientExt;
 use iota_client::block::output::AliasOutput;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;

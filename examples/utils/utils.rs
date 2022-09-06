@@ -2,15 +2,15 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::KeyType;
-use identity_did::verification::MethodScope;
-use identity_iota_core::IotaClientExt;
-use identity_iota_core::IotaDID;
-use identity_iota_core::IotaDocument;
-use identity_iota_core::IotaIdentityClientExt;
-use identity_iota_core::IotaVerificationMethod;
-use identity_iota_core::NetworkName;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::KeyType;
+use identity_iota::did::MethodScope;
+use identity_iota::iota_core::IotaClientExt;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaIdentityClientExt;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::iota_core::NetworkName;
 
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
@@ -75,7 +75,7 @@ pub async fn get_address_with_funds(client: &Client, stronghold: &mut SecretMana
 /// Initializes the [`SecretManager`] with a new mnemonic, if necessary,
 /// and generates an address from the given [`SecretManager`].
 pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<Address> {
-  let keypair = identity_core::crypto::KeyPair::new(KeyType::Ed25519)?;
+  let keypair = KeyPair::new(KeyType::Ed25519)?;
   let mnemonic =
     iota_client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
       .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
