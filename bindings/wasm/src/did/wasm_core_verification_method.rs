@@ -40,6 +40,13 @@ impl WasmCoreVerificationMethod {
     WasmCoreDIDUrl::from(self.0.id().clone())
   }
 
+  /// Sets the id of the `StardustVerificationMethod`.
+  #[wasm_bindgen(js_name = setId)]
+  pub fn set_id(&mut self, id: &WasmCoreDIDUrl) -> Result<()> {
+    self.0.set_id(id.0.clone()).wasm_result()?;
+    Ok(())
+  }
+
   /// Returns a copy of the `controller` `DID` of the `CoreVerificationMethod`.
   #[wasm_bindgen]
   pub fn controller(&self) -> WasmCoreDID {
