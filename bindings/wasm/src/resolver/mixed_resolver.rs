@@ -85,9 +85,14 @@ impl MixedResolver {
       }
 
       let ref_counted_client = Rc::new(wasm_client);
-      let handler = move |did: StardustDID| {
+      let handler = move |did: CoreDID| {
+        //Take CoreDID (and convert internally to StardustDID) to be consistent with the other handlers (See
+        // `Self::attach_handler`).
         let delegate = ref_counted_client.clone();
-        async move { Self::client_as_handler(delegate.as_ref(), did.into()).await }
+        async move {
+          let stardust_did = StardustDID::parse(did)?;
+          Self::client_as_handler(delegate.as_ref(), stardust_did.into()).await
+        }
       };
       resolver.attach_handler(StardustDID::METHOD.to_owned(), handler);
     }
