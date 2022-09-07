@@ -61,7 +61,7 @@ impl WasmCoreVerificationMethod {
   /// Sets the `CoreVerificationMethod` type.
   #[wasm_bindgen(js_name = setType)]
   pub fn set_type(&mut self, type_: &WasmMethodType) {
-    *self.0.type_mut() = type_.0.clone();
+    *self.0.type_mut() = type_.0;
   }
 
   /// Returns a copy of the `CoreVerificationMethod` public key data.

@@ -230,38 +230,37 @@ describe('CoreDocument', function () {
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.KeyAgreement()), undefined);
         });
     });
-    // TODO: add insertService, removeService to CoreDocument.
-    // describe('#insert/resolve/removeService', function () {
-    //     it('should work', async () => {
-    //         const doc = new CoreDocument({
-    //             id: VALID_DID_EXAMPLE,
-    //         });
-    //
-    //         // Add.
-    //         const fragment1 = "new-service-1";
-    //         const service = new CoreService({
-    //             id: doc.id().toUrl().join('#' + fragment1),
-    //             type: ["LinkedDomains", "ExampleType"],
-    //             serviceEndpoint: ["https://example.com/", "https://iota.org/"],
-    //         });
-    //         doc.insertService(service);
-    //         // Resolve.
-    //         const resolved = doc.resolveService(fragment1);
-    //         assert.deepStrictEqual(resolved.id().fragment(), fragment1);
-    //         assert.deepStrictEqual(resolved.type(), ["LinkedDomains", "ExampleType"]);
-    //         assert.deepStrictEqual(resolved.serviceEndpoint(), ["https://example.com/", "https://iota.org/"]);
-    //         assert.deepStrictEqual(resolved.toJSON(), service.toJSON());
-    //         // List.
-    //         const list = doc.service();
-    //         assert.deepStrictEqual(list.length, 1);
-    //         assert.deepStrictEqual(list[0].toJSON(), resolved.toJSON());
-    //         // Remove
-    //         const remove = doc.removeService(resolved.id());
-    //         assert.deepStrictEqual(remove, true);
-    //         assert.deepStrictEqual(doc.resolveService(fragment1), undefined);
-    //         assert.deepStrictEqual(doc.service().length, 0);
-    //     });
-    // });
+    describe('#insert/resolve/removeService', function () {
+        it('should work', async () => {
+            const doc = new CoreDocument({
+                id: VALID_DID_EXAMPLE,
+            });
+    
+            // Add.
+            const fragment1 = "new-service-1";
+            const service = new CoreService({
+                id: doc.id().toUrl().join('#' + fragment1),
+                type: ["LinkedDomains", "ExampleType"],
+                serviceEndpoint: ["https://example.com/", "https://iota.org/"],
+            });
+            doc.insertService(service);
+            // Resolve.
+            const resolved = doc.resolveService(fragment1);
+            assert.deepStrictEqual(resolved.id().fragment(), fragment1);
+            assert.deepStrictEqual(resolved.type(), ["LinkedDomains", "ExampleType"]);
+            assert.deepStrictEqual(resolved.serviceEndpoint(), ["https://example.com/", "https://iota.org/"]);
+            assert.deepStrictEqual(resolved.toJSON(), service.toJSON());
+            // List.
+            const list = doc.service();
+            assert.deepStrictEqual(list.length, 1);
+            assert.deepStrictEqual(list[0].toJSON(), resolved.toJSON());
+            // Remove
+            const remove = doc.removeService(resolved.id());
+            assert.deepStrictEqual(remove, true);
+            assert.deepStrictEqual(doc.resolveService(fragment1), undefined);
+            assert.deepStrictEqual(doc.service().length, 0);
+        });
+    });
     describe('#properties', function () {
         it('should work', () => {
             const doc = new CoreDocument({
