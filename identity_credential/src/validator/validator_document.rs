@@ -214,7 +214,7 @@ where
 /// Thread safe variant of [`AbstractValidatorDocument`].
 ///
 /// By calling [`Self::into_any`](Self::into_any()) one obtains a type that one may
-/// attempt to convert to a concrete DID Document representation.
+/// attempt to downcast to a concrete DID Document representation.
 #[derive(Debug)]
 pub struct AbstractThreadSafeValidatorDocument(Box<dyn ThreadSafeValidatorDocument>);
 
