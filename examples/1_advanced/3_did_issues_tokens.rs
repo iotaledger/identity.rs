@@ -41,8 +41,8 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use primitive_types::U256;
 
-/// Demonstrates how an identity can issue and control native assets
-/// such as Token Foundries and NFTs.
+/// Demonstrates how an identity can issue and control
+/// a Token Foundry and its tokens.
 ///
 /// For this example, we consider the case where an authority issues
 /// carbon credits that can be used to pay for carbon emissions or traded on a marketplace.
