@@ -55,12 +55,6 @@ module.exports = {
                   'concepts/verifiable_credentials/create',
                   'concepts/verifiable_credentials/revocation',
                   'concepts/verifiable_credentials/verifiable_presentations',
-              ],
-              'Advanced Concepts': [
-                  'concepts/advanced/overview',
-                  'concepts/advanced/did_messages',
-                  'concepts/advanced/storage_interface',
-  
               ]
             },
           ],
