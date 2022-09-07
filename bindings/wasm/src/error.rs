@@ -229,7 +229,7 @@ impl From<UpdateError> for WasmError<'_> {
   }
 }
 
-/// Convenience struct to convert Result<JsValue, JsValue> to
+/// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
