@@ -6,6 +6,7 @@ use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::UOneOrManyNumber;
+use crate::crypto::WasmProofOptions;
 use crate::did::wasm_core_service::WasmCoreService;
 use crate::did::wasm_core_url::WasmCoreDIDUrl;
 use crate::did::wasm_core_verification_method::WasmCoreVerificationMethod;
@@ -20,6 +21,8 @@ use identity_iota::core::OneOrMany;
 use identity_iota::core::OneOrSet;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Url;
+use identity_iota::crypto::PrivateKey;
+use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
 use identity_iota::did::CoreDID;
 use identity_iota::did::CoreDocument;
@@ -28,10 +31,12 @@ use identity_iota::did::MethodRef;
 use identity_iota::did::MethodScope;
 use identity_iota::did::Service;
 use identity_iota::did::VerificationMethod;
+
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+/// A method-agnostic DID Document.
 #[wasm_bindgen(js_name = CoreDocument, inspectable)]
 pub struct WasmCoreDocument(pub(crate) CoreDocument);
 
@@ -48,6 +53,12 @@ impl WasmCoreDocument {
   #[wasm_bindgen]
   pub fn id(&self) -> WasmCoreDID {
     WasmCoreDID::from(self.0.id().clone())
+  }
+
+  /// Sets the DID of the document.
+  #[wasm_bindgen(js_name = setId)]
+  pub fn set_id(&mut self, id: &WasmCoreDID) {
+    *self.0.id_mut() = id.0.clone();
   }
 
   /// Returns a copy of the document controllers.
@@ -249,7 +260,22 @@ impl WasmCoreDocument {
       .unchecked_into::<ArrayCoreService>()
   }
 
-  // TODO: add handler for setting/removing services.
+  /// Add a new {@link CoreService} to the document.
+  ///
+  /// Returns `true` if the service was added.
+  #[wasm_bindgen(js_name = insertService)]
+  pub fn insert_service(&mut self, service: &WasmCoreService) -> bool {
+    self.0.service_mut().append(service.0.clone())
+  }
+
+  /// Remoce a {@link CoreService} identified by the given {@link CoreDIDUrl} from the document.
+  ///
+  /// Returns `true` if the service was removed.
+  #[wasm_bindgen(js_name = removeService)]
+  #[allow(non_snake_case)]
+  pub fn remove_service(&mut self, didUrl: &WasmCoreDIDUrl) -> bool {
+    self.0.service_mut().remove(&didUrl.0.clone())
+  }
 
   /// Returns the first {@link CoreService} with an `id` property matching the provided `query`,
   /// if present.
@@ -280,12 +306,25 @@ impl WasmCoreDocument {
       .unchecked_into::<ArrayCoreVerificationMethod>()
   }
 
+  /// Returns an array of all verification relationships.
+  #[wasm_bindgen(js_name = verificationRelationships)]
+  pub fn verification_relationships(&self) -> ArrayCoreMethodRef {
+    self
+      .0
+      .verification_relationships()
+      .cloned()
+      .map(|method_ref| match method_ref {
+        MethodRef::Embed(verification_method) => JsValue::from(WasmCoreVerificationMethod(verification_method)),
+        MethodRef::Refer(did_url) => JsValue::from(WasmCoreDIDUrl(did_url)),
+      })
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayCoreMethodRef>()
+  }
+
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmCoreVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-    let vm = method.0.clone();
-    let vm_gen = vm.map(CoreDID::from);
-    self.0.insert_method(vm_gen, scope.0).wasm_result()?;
+    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
     Ok(())
   }
 
@@ -378,6 +417,35 @@ impl WasmCoreDocument {
 
     self.0.unrevoke_credentials(&query, indices.as_slice()).wasm_result()
   }
+
+  // ===========================================================================
+  // Signatures
+  // ===========================================================================
+
+  /// Creates a signature for the given `data` with the specified DID Document
+  /// Verification Method.
+  ///
+  /// NOTE: use `signSelf` or `signDocument` for DID Documents.
+  #[allow(non_snake_case)]
+  #[wasm_bindgen(js_name = signData)]
+  pub fn sign_data(
+    &self,
+    data: &JsValue,
+    privateKey: Vec<u8>,
+    methodQuery: &UCoreDIDUrlQuery,
+    options: &WasmProofOptions,
+  ) -> Result<JsValue> {
+    let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
+
+    let signer = self.0.signer(&private_key);
+    let signer = signer.options(options);
+    let signer = signer.method(&method_query);
+    signer.sign(&mut data).wasm_result()?;
+    JsValue::from_serde(&data).wasm_result()
+  }
 }
 
 #[wasm_bindgen]
@@ -436,7 +504,7 @@ struct ICoreDocumentHelper {
   #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | StardustVerificationMethod | StardustDIDUrl)[]")]
   capabilityInvocation: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
 
-  #[typescript(type = "CoreService[]")]
+  #[typescript(type = "(CoreService | StardustService)[]")]
   service: Option<OrderedSet<Service<CoreDID, Object>>>,
 
   #[serde(flatten)]
@@ -446,9 +514,3 @@ struct ICoreDocumentHelper {
 
 impl_wasm_json!(WasmCoreDocument, CoreDocument);
 impl_wasm_clone!(WasmCoreDocument, CoreDocument);
-
-impl From<CoreDocument> for WasmCoreDocument {
-  fn from(doc: CoreDocument) -> Self {
-    Self(doc)
-  }
-}

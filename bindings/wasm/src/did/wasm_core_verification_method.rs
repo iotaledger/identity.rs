@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::common::MapStringAny;
 use crate::crypto::WasmKeyType;
 use crate::did::wasm_core_url::WasmCoreDIDUrl;
 use crate::did::WasmCoreDID;
@@ -12,6 +13,7 @@ use identity_iota::crypto::PublicKey;
 use identity_iota::did::VerificationMethod;
 use wasm_bindgen::prelude::*;
 
+/// A DID Document Verification Method.
 #[wasm_bindgen(js_name = CoreVerificationMethod, inspectable)]
 pub struct WasmCoreVerificationMethod(pub(crate) VerificationMethod);
 
@@ -38,6 +40,13 @@ impl WasmCoreVerificationMethod {
     WasmCoreDIDUrl::from(self.0.id().clone())
   }
 
+  /// Sets the id of the `CoreVerificationMethod`.
+  #[wasm_bindgen(js_name = setId)]
+  pub fn set_id(&mut self, id: &WasmCoreDIDUrl) -> Result<()> {
+    self.0.set_id(id.0.clone()).wasm_result()?;
+    Ok(())
+  }
+
   /// Returns a copy of the `controller` `DID` of the `CoreVerificationMethod`.
   #[wasm_bindgen]
   pub fn controller(&self) -> WasmCoreDID {
@@ -56,10 +65,48 @@ impl WasmCoreVerificationMethod {
     WasmMethodType::from(self.0.type_())
   }
 
+  /// Sets the `CoreVerificationMethod` type.
+  #[wasm_bindgen(js_name = setType)]
+  pub fn set_type(&mut self, type_: &WasmMethodType) {
+    *self.0.type_mut() = type_.0;
+  }
+
   /// Returns a copy of the `CoreVerificationMethod` public key data.
   #[wasm_bindgen]
   pub fn data(&self) -> WasmMethodData {
     WasmMethodData::from(self.0.data().clone())
+  }
+
+  /// Sets `CoreVerificationMethod` public key data.
+  #[wasm_bindgen(js_name = setData)]
+  pub fn set_data(&mut self, data: &WasmMethodData) {
+    *self.0.data_mut() = data.0.clone();
+  }
+
+  /// Get custom properties of the Verification Method.
+  #[wasm_bindgen]
+  pub fn properties(&self) -> Result<MapStringAny> {
+    MapStringAny::try_from(self.0.properties())
+  }
+
+  /// Adds a custom property to the Verification Method.
+  /// If the value is set to `null`, the custom property will be removed.
+  ///
+  /// ### WARNING
+  /// This method can overwrite existing properties like `id` and result
+  /// in an invalid Verification Method.
+  #[wasm_bindgen(js_name = setPropertyUnchecked)]
+  pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
+    let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
+    match value {
+      Some(value) => {
+        self.0.properties_mut().insert(key, value);
+      }
+      None => {
+        self.0.properties_mut().remove(&key);
+      }
+    }
+    Ok(())
   }
 }
 

@@ -93,7 +93,7 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const I_CORE_SERVICE: &'static str = r#"
 /**
- * Holds options to create a new `StardustService`.
+ * Holds options to create a new `CoreService`.
  */
 interface ICoreService extends IService {
     /**

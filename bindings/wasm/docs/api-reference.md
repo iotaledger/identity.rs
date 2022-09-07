@@ -27,7 +27,7 @@ the configuration of previously built accounts.</p>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
 <dt><a href="#CoreDID">CoreDID</a></dt>
-<dd><p>A Decentralized Identifier (DID).</p>
+<dd><p>A method-agnostic Decentralized Identifier (DID).</p>
 </dd>
 <dt><a href="#CoreDIDUrl">CoreDIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
@@ -197,8 +197,6 @@ See <code>IVerifierOptions</code>.</p>
 
 <dl>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -997,19 +995,115 @@ Creates a new `Client` with the given settings.
 <a name="CoreDID"></a>
 
 ## CoreDID
-A Decentralized Identifier (DID).
+A method-agnostic Decentralized Identifier (DID).
 
 **Kind**: global class  
 
 * [CoreDID](#CoreDID)
     * _instance_
+        * [.setMethodName(value)](#CoreDID+setMethodName)
+        * [.setMethodId(value)](#CoreDID+setMethodId)
+        * [.scheme()](#CoreDID+scheme) ⇒ <code>string</code>
+        * [.authority()](#CoreDID+authority) ⇒ <code>string</code>
+        * [.method()](#CoreDID+method) ⇒ <code>string</code>
+        * [.methodId()](#CoreDID+methodId) ⇒ <code>string</code>
+        * [.join(segment)](#CoreDID+join) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.toUrl()](#CoreDID+toUrl) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.intoUrl()](#CoreDID+intoUrl) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
         * [.toString()](#CoreDID+toString) ⇒ <code>string</code>
         * [.toJSON()](#CoreDID+toJSON) ⇒ <code>any</code>
         * [.clone()](#CoreDID+clone) ⇒ [<code>CoreDID</code>](#CoreDID)
     * _static_
         * [.parse(input)](#CoreDID.parse) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.validMethodName(value)](#CoreDID.validMethodName) ⇒ <code>boolean</code>
+        * [.validMethodId(value)](#CoreDID.validMethodId) ⇒ <code>boolean</code>
         * [.fromJSON(json)](#CoreDID.fromJSON) ⇒ [<code>CoreDID</code>](#CoreDID)
 
+<a name="CoreDID+setMethodName"></a>
+
+### coreDID.setMethodName(value)
+Set the method name of the `CoreDID`.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="CoreDID+setMethodId"></a>
+
+### coreDID.setMethodId(value)
+Set the method-specific-id of the `DID`.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="CoreDID+scheme"></a>
+
+### coreDID.scheme() ⇒ <code>string</code>
+Returns the `CoreDID` scheme.
+
+E.g.
+- `"did:example:12345678" -> "did"`
+- `"did:iota:smr:12345678" -> "did"`
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+authority"></a>
+
+### coreDID.authority() ⇒ <code>string</code>
+Returns the `CoreDID` authority: the method name and method-id.
+
+E.g.
+- `"did:example:12345678" -> "example:12345678"`
+- `"did:iota:smr:12345678" -> "iota:smr:12345678"`
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+method"></a>
+
+### coreDID.method() ⇒ <code>string</code>
+Returns the `CoreDID` method name.
+
+E.g.
+- `"did:example:12345678" -> "example"`
+- `"did:iota:smr:12345678" -> "iota"`
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+methodId"></a>
+
+### coreDID.methodId() ⇒ <code>string</code>
+Returns the `CoreDID` method-specific ID.
+
+E.g.
+- `"did:example:12345678" -> "12345678"`
+- `"did:iota:smr:12345678" -> "smr:12345678"`
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+join"></a>
+
+### coreDID.join(segment) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Construct a new `CoreDIDUrl` by joining with a relative DID Url string.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="CoreDID+toUrl"></a>
+
+### coreDID.toUrl() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Clones the `CoreDID` into a `CoreDIDUrl`.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+intoUrl"></a>
+
+### coreDID.intoUrl() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Converts the `CoreDID` into a `CoreDIDUrl`, consuming it.
+
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+toString"></a>
 
 ### coreDID.toString() ⇒ <code>string</code>
@@ -1031,17 +1125,39 @@ Deep clones the object.
 <a name="CoreDID.parse"></a>
 
 ### CoreDID.parse(input) ⇒ [<code>CoreDID</code>](#CoreDID)
-Parses a [`CoreDID`] from the given `input`.
+Parses a `CoreDID` from the given `input`.
 
-# Errors
+### Errors
 
-Returns `Err` if the input is not a valid [`CoreDID`].
+Throws an error if the input is not a valid `CoreDID`.
 
 **Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
 | input | <code>string</code> | 
+
+<a name="CoreDID.validMethodName"></a>
+
+### CoreDID.validMethodName(value) ⇒ <code>boolean</code>
+Validates whether a string is a valid DID method name.
+
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="CoreDID.validMethodId"></a>
+
+### CoreDID.validMethodId(value) ⇒ <code>boolean</code>
+Validates whether a string is a valid `DID` method-id.
+
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
 
 <a name="CoreDID.fromJSON"></a>
 
@@ -7010,10 +7126,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
