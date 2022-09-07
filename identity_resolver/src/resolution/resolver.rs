@@ -154,7 +154,7 @@ where
           .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
           .map_err(Error::new)
           .map_err(|error| {
-            Error::update_resolution_action(
+            Error::resolution_action(
               error,
               crate::error::ResolutionAction::PresentationIssuersResolution(idx),
             )
@@ -169,7 +169,7 @@ where
         .iter()
         .map(|(issuer, cred_idx)| {
           self.resolve(issuer).map_err(|error| {
-            Error::update_resolution_action(
+            Error::resolution_action(
               error,
               crate::error::ResolutionAction::PresentationIssuersResolution(*cred_idx),
             )
@@ -190,12 +190,11 @@ where
     let holder: CoreDID = PresentationValidator::extract_holder(presentation)
       .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
       .map_err(Error::new)
-      .map_err(|error| {
-        Error::update_resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution)
-      })?;
-    self.resolve(&holder).await.map_err(|error| {
-      Error::update_resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution)
-    })
+      .map_err(|error| Error::resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution))?;
+    self
+      .resolve(&holder)
+      .await
+      .map_err(|error| Error::resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution))
   }
 
   /// Fetches the DID Document of the issuer of a [`Credential`].

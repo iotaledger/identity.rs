@@ -46,7 +46,7 @@ impl Error {
   }
 
   /// Replaces the value of the [`ResolutionAction`], but leaves the category untouched.
-  pub(crate) fn update_resolution_action(mut self, action: ResolutionAction) -> Self {
+  pub(crate) fn resolution_action(mut self, action: ResolutionAction) -> Self {
     self.action = Some(action);
     self
   }

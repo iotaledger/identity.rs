@@ -18,7 +18,7 @@ use self::private::Verifiable;
 /// NOTE: this is a sealed trait and not intended to be used externally or implemented manually.
 /// A blanket implementation is provided for all types implementing the [`Document`] and [`Debug`](core::fmt::Debug)
 /// traits, which is recommended to be implemented instead to be compatible.
-/// 
+///
 /// # Warning
 ///
 /// Any changes to this trait will be considered non-breaking.
