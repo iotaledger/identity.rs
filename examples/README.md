@@ -27,7 +27,6 @@ The following basic CRUD (Create, Read, Update, Delete) examples are available:
 | [2_resolve_did](./0_basic/2_resolve_did.rs)       | Demonstrates how to resolve an existing DID in an Alias Output.                      |
 | [3_deactivate_did](./0_basic/3_deactivate_did.rs) | Demonstrates how to deactivate a DID in an Alias Output.                             |
 | [4_delete_did](./0_basic/4_delete_did.rs)         | Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. |
-| [5_private_tangle](./0_basic/5_private_tangle.rs) | Demonstrates how to create a DID in in a private tangle.                             |
 
 ## Advanced Examples
 

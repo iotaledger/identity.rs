@@ -100,11 +100,11 @@ pub async fn request_faucet_funds(
   client: &Client,
   address: Address,
   network_hrp: &str,
-  faucet_url: &str,
+  faucet_endpoint: &str,
 ) -> anyhow::Result<()> {
   let address_bech32 = address.to_bech32(network_hrp);
 
-  iota_client::request_funds_from_faucet(faucet_url, &address_bech32).await?;
+  iota_client::request_funds_from_faucet(faucet_endpoint, &address_bech32).await?;
 
   tokio::time::timeout(std::time::Duration::from_secs(45), async {
     loop {
