@@ -27,6 +27,10 @@ pub use self::wasm_verification_method::WasmVerificationMethod;
 pub use self::wasm_verifier_options::WasmVerifierOptions;
 
 mod wasm_core_did;
+mod wasm_core_document;
+mod wasm_core_service;
+mod wasm_core_url;
+mod wasm_core_verification_method;
 mod wasm_did_url;
 mod wasm_diff_message;
 mod wasm_document;
