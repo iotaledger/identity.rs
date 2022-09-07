@@ -19,30 +19,30 @@ on:
         description: "path to the changelog config"
         required: true
         type: string
-      main-tag-regex:
+      main-release-tag-regex:
         description: "the regex to find all related main releases"
         required: true
         type: string
-      non-main-tag-regex:
-        description: "the regex to find all related non-main releases. Must include a named capture group 'tag', which captures the non-main version (e.g. 'alpha', 'beta', etc.)"
+      pre-release-tag-regex:
+        description: "the regex to find all related pre-releases. Must include a named capture group 'pre-release', which captures the pre-release version (e.g. 'alpha', 'beta', etc.)"
         required: true
         type: string
     outputs:
       is-release:
         description: "is release"
         value: ${{ jobs.build.outputs.is-release }}
-      is-non-main-release:
-        description: "is non-main release"
-        value: ${{ jobs.build.outputs.is-non-main-release }}
+      is-pre-release:
+        description: "is pre-release"
+        value: ${{ jobs.build.outputs.is-pre-release }}
       previous-version:
         description: "tag of the previous version (e.g. '0.5.0')"
         value: ${{ jobs.build.outputs.previous-version }}
       current-version:
         description: "tag of the current version (e.g. '0.6.0')"
         value: ${{ jobs.build.outputs.current-version }}
-      non-main-tag:
-        description: "tag of the non-main version (e.g. 'alpha', 'beta', etc.)"
-        value: ${{ jobs.build.outputs.non-main-tag }}
+      pre-release-identifier:
+        description: "identifier of the pre-release (e.g. 'alpha', 'beta', etc.)"
+        value: ${{ jobs.build.outputs.pre-release-identifier }}
     secrets:
       GPG_PRIVATE_KEY:
         description: "GPG private key for signing commits and tags"
@@ -56,8 +56,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       is-release: ${{ steps.determine-version.outputs.is-release }}
-      is-non-main-release: ${{ steps.determine-version.outputs.is-non-main-release }}
-      non-main-tag: ${{ steps.determine-version.outputs.non-main-tag }}
+      is-pre-release: ${{ steps.determine-version.outputs.is-pre-release }}
+      pre-release-identifier: ${{ steps.determine-version.outputs.pre-release-identifier }}
       previous-version: ${{ steps.determine-version.outputs.previous-version }}
       current-version: ${{ steps.determine-version.outputs.current-version }}
     steps:
@@ -72,19 +72,19 @@ jobs:
         run: |
           BRANCHNAME=${{ github.head_ref }}
           CURRENT_VERSION=${BRANCHNAME##*/}
-          if ! [[  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.non-main-tag-regex }}') ||  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.main-tag-regex }}') ]]; then
+          if ! [[  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.pre-release-tag-regex }}') ||  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.main-release-tag-regex }}') ]]; then
             exit 0
           fi
           IS_RELEASE=true
           echo IS_RELEASE=$IS_RELEASE
           echo IS_RELEASE=$IS_RELEASE >> $GITHUB_ENV
           echo "::set-output name=is-release::$IS_RELEASE"
-          if [[ $(echo $CURRENT_VERSION | grep -w -P '${{ inputs.non-main-tag-regex }}') ]]; then
-            IS_NON_MAIN_RELEASE=true
-            NON_MAIN_TAG=$(echo $CURRENT_VERSION | perl -pe '/${{ inputs.non-main-tag-regex }}/; $_ = "$+{tag}\n"')
-            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.non-main-tag-regex }}' | head -n 1)
+          if [[ $(echo $CURRENT_VERSION | grep -w -P '${{ inputs.pre-release-tag-regex }}') ]]; then
+            IS_PRE_RELEASE=true
+            PRE_RELEASE_IDENTIFIER=$(echo $CURRENT_VERSION | perl -pe '/${{ inputs.pre-release-tag-regex }}/; $_ = "$+{tag}\n"')
+            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.pre-release-tag-regex }}' | head -n 1)
           else
-            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.main-tag-regex }}' | head -n 1)
+            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.main-release-tag-regex }}' | head -n 1)
           fi
 
           # create a list of tags that are unrelated to the current release
@@ -105,12 +105,12 @@ jobs:
             EXCLUDE_ARG=$FIRST$SECOND
           fi
           
-          echo IS_NON_MAIN_RELEASE=$IS_NON_MAIN_RELEASE
-          echo IS_NON_MAIN_RELEASE=$IS_NON_MAIN_RELEASE >> $GITHUB_ENV
-          echo "::set-output name=is-non-main-release::$IS_NON_MAIN_RELEASE"
-          echo NON_MAIN_TAG=$NON_MAIN_TAG
-          echo NON_MAIN_TAG=$NON_MAIN_TAG >> $GITHUB_ENV
-          echo "::set-output name=non-main-tag::$NON_MAIN_TAG"
+          echo IS_PRE_RELEASE=$IS_PRE_RELEASE
+          echo IS_PRE_RELEASE=$IS_PRE_RELEASE >> $GITHUB_ENV
+          echo "::set-output name=is-pre-release::$IS_PRE_RELEASE"
+          echo PRE_RELEASE_IDENTIFIER=$PRE_RELEASE_IDENTIFIER
+          echo PRE_RELEASE_IDENTIFIER=$PRE_RELEASE_IDENTIFIER >> $GITHUB_ENV
+          echo "::set-output name=pre-release-identifier::$PRE_RELEASE_IDENTIFIER"
           echo CURRENT_VERSION=$CURRENT_VERSION
           echo CURRENT_VERSION=$CURRENT_VERSION >> $GITHUB_ENV
           echo "::set-output name=current-version::$CURRENT_VERSION"

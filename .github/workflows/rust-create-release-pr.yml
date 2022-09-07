@@ -11,6 +11,9 @@ on:
         type: choice
         required: true
         options: 
+        - alpha
+        - beta
+        - rc
         - dev
         - main
 

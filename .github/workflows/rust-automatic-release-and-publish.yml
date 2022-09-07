@@ -14,8 +14,8 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-release.yml@dev
     with:
       changelog-config-path: ./.github/.github_changelog_generator
-      dev-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+-(dev)\.\d*$
-      main-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
+      pre-release-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+-(?<pre-release>\w+)\.\d+$
+      main-release-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
       create-github-release: true
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
