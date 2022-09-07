@@ -7,7 +7,7 @@ on:
         description: 'Version to release Rust under (e.g. `1.2.3`)'
         required: true
       release-type:
-        description: Create a `dev` or `main` release. If `dev`, a `dev` postfix and auto-incrementing number will be added automatically (e.g. `1.2.3-dev.x`)'
+        description: Create a `main` or a pre-release. If anything other then `main` is selected, a postfix and auto-incrementing number will be added automatically (e.g. `1.2.3-dev.x`)'
         type: choice
         required: true
         options: 
