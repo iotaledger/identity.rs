@@ -31,22 +31,6 @@ runs:
         command: install
         args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
 
-    - name: Replace identity_iota version in Wasm bindings
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      working-directory: bindings/wasm
-      run: |
-        cargo add identity_iota --path=../../identity_iota
-
-    - name: Replace identity versions in stronghold nodejs bindings
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      working-directory: bindings/stronghold-nodejs
-      run: |
-        cargo add identity_core --path=../../identity_core
-        cargo add identity_iota_core --path=../../identity_iota_core
-        cargo add identity_account_storage --path=../../identity_account_storage
-
     - name: Bump Rust crate versions
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
@@ -74,6 +58,22 @@ runs:
       working-directory: bindings/stronghold-nodejs
       run: |
         cargo set-version ${{ inputs.version }}
+
+    - name: Replace identity_iota version in Wasm bindings
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: bindings/wasm
+      run: |
+        cargo add identity_iota --path=../../identity_iota
+
+    - name: Replace identity versions in stronghold nodejs bindings
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: bindings/stronghold-nodejs
+      run: |
+        cargo add identity_core --path=../../identity_core
+        cargo add identity_iota_core --path=../../identity_iota_core
+        cargo add identity_account_storage --path=../../identity_account_storage
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
