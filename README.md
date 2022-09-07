@@ -183,8 +183,8 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 | [IOTA DID Method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec) |             |             |                |  ✔️  | Finished implementation. |
 |           [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)            |             |             |                |  ✔️  | Finished implementation. |
 |                                       Account                                       |             |             |                |  ✔️  | Finished implementation. |
-|                                   Identity Actor                                    |             |             |       🔶       |      |                          |
-|         [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview)         |             |             |       🔶       |      |  In-progress with Actor  |
+| [Identity Agent](https://github.com/iotaledger/identity.rs/tree/dev/identity_agent) |             |             |       🔶       |      |                          |
+|         [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview)         |             |             |       🔶       |      |  In-progress with Agent  |
 |                                Selective Disclosure                                 |             |     🔶      |                |      |                          |
 |                                Zero Knowledge Proofs                                |             |     🔶      |                |      |                          |
 |                                Support Embedded Rust                                |             |     🔶      |                |      |                          |
