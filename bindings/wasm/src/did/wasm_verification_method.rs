@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::crypto::PublicKey;
+
 use identity_iota::iota_core::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
