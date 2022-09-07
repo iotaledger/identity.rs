@@ -65,7 +65,7 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<Stardus
 pub async fn get_address_with_funds(client: &Client, stronghold: &mut SecretManager) -> anyhow::Result<Address> {
   let address: Address = get_address(client, stronghold).await?;
 
-  request_faucet_funds(client, address, client.get_bech32_hrp().await?.as_str())
+  request_faucet_funds(client, address, client.get_bech32_hrp().await?.as_str(), FAUCET_URL)
     .await
     .context("failed to request faucet funds")?;
 
@@ -96,10 +96,15 @@ pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) ->
 }
 
 /// Requests funds from the testnet faucet for the given `address`.
-async fn request_faucet_funds(client: &Client, address: Address, network_hrp: &str) -> anyhow::Result<()> {
+pub async fn request_faucet_funds(
+  client: &Client,
+  address: Address,
+  network_hrp: &str,
+  faucet_url: &str,
+) -> anyhow::Result<()> {
   let address_bech32 = address.to_bech32(network_hrp);
 
-  iota_client::request_funds_from_faucet(FAUCET_URL, &address_bech32).await?;
+  iota_client::request_funds_from_faucet(faucet_url, &address_bech32).await?;
 
   tokio::time::timeout(std::time::Duration::from_secs(45), async {
     loop {
