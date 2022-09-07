@@ -19,7 +19,7 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-/// Demonstrates the create_did example in a private tangle.
+/// Demonstrates how to create a DID in in a private tangle.
 ///
 /// We use the Shimmer Testnet as our private tangle
 /// to show how we would configure the necessary network endpoints.
