@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::crypto::PublicKey;
+
 use identity_iota::iota_core::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
+use crate::common::MapStringAny;
 use crate::crypto::WasmKeyType;
 use crate::did::WasmMethodData;
 use crate::did::WasmMethodType;
@@ -51,6 +53,12 @@ impl WasmIotaVerificationMethod {
     *self.0.controller_mut() = did.0.clone();
   }
 
+  /// Sets the `IotaVerificationMethod` type.
+  #[wasm_bindgen(js_name = setType)]
+  pub fn set_type(&mut self, type_: &WasmMethodType) {
+    *self.0.type_mut() = type_.0;
+  }
+
   /// Returns a copy of the `IotaVerificationMethod` type.
   #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> WasmMethodType {
@@ -61,6 +69,38 @@ impl WasmIotaVerificationMethod {
   #[wasm_bindgen]
   pub fn data(&self) -> WasmMethodData {
     WasmMethodData::from(self.0.data().clone())
+  }
+
+  /// Sets `CoreVerificationMethod` public key data.
+  #[wasm_bindgen(js_name = setData)]
+  pub fn set_data(&mut self, data: &WasmMethodData) {
+    *self.0.data_mut() = data.0.clone();
+  }
+
+  /// Get custom properties of the Verification Method.
+  #[wasm_bindgen]
+  pub fn properties(&self) -> Result<MapStringAny> {
+    MapStringAny::try_from(self.0.properties())
+  }
+
+  /// Adds a custom property to the Verification Method.
+  /// If the value is set to `null`, the custom property will be removed.
+  ///
+  /// ### WARNING
+  /// This method can overwrite existing properties like `id` and result
+  /// in an invalid Verification Method.
+  #[wasm_bindgen(js_name = setPropertyUnchecked)]
+  pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
+    let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
+    match value {
+      Some(value) => {
+        self.0.properties_mut().insert(key, value);
+      }
+      None => {
+        self.0.properties_mut().remove(&key);
+      }
+    }
+    Ok(())
   }
 }
 
