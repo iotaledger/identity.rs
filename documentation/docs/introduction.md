@@ -38,10 +38,6 @@ Explains the DID standard from W3C and how to manipulate DID Documents.
 
 Explains the VC standard from W3C, how to create and revoke VCs, and how to use Verifiable Presentations.
 
-### [Chapter 3.3: Advanced Concepts](./concepts/advanced/overview)
-
-This chapter is meant for those that want to push the IOTA Identity framework to its limits, utilizing the more complex, yet more flexible lower-level libraries, allowing developers to optimize their implementation, take control over storage/security, and add features to the framework. 
-
 ### [Chapter 4: Programming Languages](./libraries/overview)
 
 
