@@ -195,3 +195,5 @@ Please review the [contribution](https://wiki.iota.org/identity.rs/contribute) a
 To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
 
 The best place to get involved in discussions about this framework or to look for support at is the `#identity` channel on the [IOTA Discord](https://discord.iota.org). You can also ask questions on our [Stack Exchange](https://iota.stackexchange.com/).
+
+<!-- REFACTOR-TODO: Remove me. -->
