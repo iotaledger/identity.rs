@@ -58,7 +58,7 @@ fn make_presentation(credentials: impl Iterator<Item = Credential>, holder: Core
 /// [`ErrorCause`] is of the expected value.
 async fn check_failure_for_all_methods<F, D, DOC>(resolver: Resolver<DOC>, bad_did: CoreDID, good_did: D, assertions: F)
 where
-  F: Fn(ErrorCause) -> (),
+  F: Fn(ErrorCause),
   D: DID,
   DOC: ValidatorDocument + Send + Sync + 'static + From<CoreDocument>,
 {
@@ -242,7 +242,7 @@ async fn resolve_unparsable() {
         .source()
         .unwrap()
         .downcast_ref::<DIDError>()
-        .expect(&format!("{:?}", &err)),
+        .unwrap_or_else(|| panic!("{:?}", &err)),
       &DIDError::InvalidMethodName
     ));
 
@@ -274,8 +274,8 @@ async fn handler_failure() {
   resolver.attach_handler("foo".to_owned(), failing_handler);
   resolver_core.attach_handler("foo".to_owned(), failing_handler);
 
-  let bad_did: CoreDID = CoreDID::parse(&format!("did:foo:1234")).unwrap();
-  let good_did: CoreDID = CoreDID::parse(format!("did:bar:1234")).unwrap();
+  let bad_did: CoreDID = CoreDID::parse("did:foo:1234").unwrap();
+  let good_did: CoreDID = CoreDID::parse("did:bar:1234").unwrap();
   resolver.attach_handler(good_did.method().to_owned(), mock_handler);
   resolver_core.attach_handler(good_did.method().to_owned(), mock_handler);
 
