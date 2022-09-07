@@ -17,8 +17,11 @@ use self::private::Verifiable;
 ///
 /// NOTE: this is a sealed trait and not intended to be used externally or implemented manually.
 /// A blanket implementation is provided for all types implementing the [`Document`] and [`Debug`](core::fmt::Debug)
-/// traits, which can be implemented instead to be compatible. Any changes to this trait will be considered
-/// non-breaking.
+/// traits, which is recommended to be implemented instead to be compatible.
+/// 
+/// # Warning
+///
+/// Any changes to this trait will be considered non-breaking.
 pub trait ValidatorDocument: Sealed + core::fmt::Debug {
   /// Convenience function for casting self to the trait.
   ///
