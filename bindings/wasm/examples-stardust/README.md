@@ -39,7 +39,6 @@ npm run example:stardust -- ex0_create_did
 | 2   | [ex2_resolve_did](src/ex2_resolve_did.ts)             | Resolve an existing DID in an Alias Output.                      |
 | 3   | [ex3_deactivate_did](src/ex3_deactivate_did.ts)       | Deactivate a DID in an Alias Output.                             |
 | 4   | [ex4_delete_did](src/ex4_delete_did.ts)               | Delete a DID in an Alias Output, reclaiming the storage deposit. |
-| 5   | [ex5_custom_resolution](src/ex5_custom_resolution.ts) | Resolves a DID using a MixedResolver                       |
 
 ## Browser
 
