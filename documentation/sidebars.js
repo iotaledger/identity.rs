@@ -44,6 +44,7 @@ module.exports = {
             {
               'Decentralized Identifiers (DID)': [
                   'concepts/decentralized_identifiers/overview',
+                  'concepts/decentralized_identifiers/alias',
                   'concepts/decentralized_identifiers/create',
                   'concepts/decentralized_identifiers/update',
                   'concepts/decentralized_identifiers/resolve',
@@ -55,11 +56,6 @@ module.exports = {
                   'concepts/verifiable_credentials/create',
                   'concepts/verifiable_credentials/revocation',
                   'concepts/verifiable_credentials/verifiable_presentations',
-              ],
-              'Advanced Concepts': [
-                  'concepts/advanced/overview',
-                  'concepts/advanced/did_messages',
-                  'concepts/advanced/storage_interface',
               ]
             },
           ],
