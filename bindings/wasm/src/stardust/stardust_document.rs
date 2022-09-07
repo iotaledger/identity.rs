@@ -175,7 +175,7 @@ impl WasmStardustDocument {
     self.0.insert_service(service.0.clone())
   }
 
-  /// Remove a {@link StardustService} identified by the given {@link DIDUrl} from the document.
+  /// Remove a {@link StardustService} identified by the given {@link StardustDIDUrl} from the document.
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
