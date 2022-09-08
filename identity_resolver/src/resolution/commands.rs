@@ -53,7 +53,7 @@ impl<DOC: ValidatorDocument + Send + Sync + 'static> SendSyncCommand<DOC> {
   /// converted to the DID type required by the handler and then the handler is called.  
   pub(super) fn new<D, F, Fut, DOCUMENT, E, DIDERR>(handler: F) -> Self
   where
-    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
+    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + 'static,
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
     Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send,

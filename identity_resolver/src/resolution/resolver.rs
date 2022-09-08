@@ -322,7 +322,7 @@ impl<DOC: ValidatorDocument + Send + Sync + 'static> Resolver<DOC> {
   /// ```
   pub fn attach_handler<D, F, Fut, DOCUMENT, E, DIDERR>(&mut self, method: String, handler: F)
   where
-    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + Sync + 'static,
+    D: DID + Send + for<'r> TryFrom<&'r str, Error = DIDERR> + 'static,
     DOCUMENT: 'static + Into<DOC>,
     F: Fn(D) -> Fut + 'static + Clone + Send + Sync,
     Fut: Future<Output = std::result::Result<DOCUMENT, E>> + Send,
