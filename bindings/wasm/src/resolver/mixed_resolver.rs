@@ -24,6 +24,7 @@ use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
+use crate::resolver::constructor_input::MapResolutionHandler;
 use crate::resolver::constructor_input::ResolverConfig;
 use crate::resolver::supported_document_types::OptionArraySupportedDocument;
 use crate::resolver::supported_document_types::OptionSupportedDocument;
@@ -58,11 +59,11 @@ impl MixedResolver {
   /// will throw an error as it is then ambiguous what should be .
   #[wasm_bindgen(constructor)]
   pub fn new(config: ResolverConfig) -> Result<MixedResolver> {
-    let mut resolver = SingleThreadedResolver::new();
+    let mut resolver: SingleThreadedResolver = SingleThreadedResolver::new();
 
     let mut attached_iota_method = false;
-    let resolution_handlers = config.handlers();
-    let client = config.client();
+    let resolution_handlers: Option<MapResolutionHandler> = config.handlers();
+    let client: Option<WasmStardustIdentityClient> = config.client();
 
     if let Some(handlers) = resolution_handlers {
       let map: &Map = handlers.dyn_ref::<js_sys::Map>().ok_or_else(|| {
@@ -73,6 +74,7 @@ impl MixedResolver {
           ),
         )
       })?;
+
       Self::attach_handlers(&mut resolver, map, &mut attached_iota_method)?;
     }
 
@@ -84,14 +86,14 @@ impl MixedResolver {
         ))?;
       }
 
-      let ref_counted_client = Rc::new(wasm_client);
+      let rc_client: Rc<WasmStardustIdentityClient> = Rc::new(wasm_client);
       // Take CoreDID (instead of StardustDID) to avoid inconsistent error messages between the
       // cases when the iota handler is attached by passing a client or directly as a handler.
       let handler = move |did: CoreDID| {
-        let delegate = ref_counted_client.clone();
+        let rc_client_clone: Rc<WasmStardustIdentityClient> = rc_client.clone();
         async move {
-          let stardust_did = StardustDID::parse(did)?;
-          Self::client_as_handler(delegate.as_ref(), stardust_did.into()).await
+          let stardust_did: StardustDID = StardustDID::parse(did)?;
+          Self::client_as_handler(rc_client_clone.as_ref(), stardust_did.into()).await
         }
       };
       resolver.attach_handler(StardustDID::METHOD.to_owned(), handler);
@@ -101,30 +103,32 @@ impl MixedResolver {
   }
 
   pub(crate) async fn client_as_handler(
-    unwrapped_client: &WasmStardustIdentityClient,
+    client: &WasmStardustIdentityClient,
     did: WasmStardustDID,
   ) -> std::result::Result<StardustDocument, identity_stardust::Error> {
-    unwrapped_client.resolve_did(&did.0).await
+    client.resolve_did(&did.0).await
   }
 
   /// attempts to extract (method, handler) pairs from the entries of a map and attaches them to the resolver.
   fn attach_handlers(resolver: &mut SingleThreadedResolver, map: &Map, attached_iota_method: &mut bool) -> Result<()> {
     for key in map.keys() {
-      if let Ok(mthd) = key {
-        let fun = map.get(&mthd);
-        let method: String = mthd.as_string().ok_or_else(|| {
+      if let Ok(js_method) = key {
+        let js_handler: JsValue = map.get(&js_method);
+        let did_method: String = js_method.as_string().ok_or_else(|| {
           WasmError::new(
             Cow::Borrowed("ResolverError::ConstructionError"),
             Cow::Borrowed("could not construct resolver: the handler map contains a key which is not a string"),
           )
         })?;
-        let handler: Function = fun
+        let handler: Function = js_handler
           .dyn_into::<Function>()
           .map_err(|_| "could not construct resolver: the handler map contains a value which is not a function")?;
-        if method == StardustDID::METHOD {
+
+        if did_method == StardustDID::METHOD {
           *attached_iota_method = true;
         }
-        MixedResolver::attach_handler(resolver, method, handler);
+
+        MixedResolver::attach_handler(resolver, did_method, handler);
       } else {
         Err(WasmError::new(
           Cow::Borrowed("ResolverError::ConstructionError"),
@@ -140,14 +144,14 @@ impl MixedResolver {
 
   /// Converts a JS handler to a Rust closure and attaches it to the given `resolver`.
   fn attach_handler(resolver: &mut SingleThreadedResolver, method: String, handler: Function) {
-    let fun_closure_clone = handler;
     let fun = move |input: CoreDID| {
-      let fun_clone = fun_closure_clone.clone();
+      let fun_clone: Function = handler.clone();
       async move {
         let closure_output_promise: Promise = Promise::resolve(
           &JsValueResult::from(fun_clone.call1(&JsValue::null(), &input.as_str().into())).stringify_error()?,
         );
-        let awaited_output = JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
+        let awaited_output: JsValue =
+          JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
 
         let supported_document: RustSupportedDocument = awaited_output.into_serde().map_err(|error| {
           format!(
@@ -158,6 +162,7 @@ impl MixedResolver {
         std::result::Result::<_, String>::Ok(AbstractValidatorDocument::from(supported_document))
       }
     };
+
     resolver.attach_handler(method, fun);
   }
 
