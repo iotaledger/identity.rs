@@ -108,7 +108,7 @@ static NETWORK_ENDPOINT: &str = "https://127.0.0.1:14265";
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
