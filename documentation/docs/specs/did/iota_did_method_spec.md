@@ -261,4 +261,4 @@ That directly conflicts with certain privacy laws such as GDPR, which have a 'ri
 
 ### Correlation Risks
 
-As with any DID method, identities can be linked if they are used too often and their usage somehow becomes public. See [DID Correlation Risks](DID Correlation Risks). Additionally, a DID can be correlated with funds if the Alias Output used to store the DID Document or any of its controllers is used for holding, transferring or controlling coins or NFTs. 
+As with any DID method, identities can be linked if they are used too often and their usage somehow becomes public. See [DID Correlation Risks](https://www.w3.org/TR/did-core/#did-correlation-risks). Additionally, a DID can be correlated with funds if the Alias Output used to store the DID Document or any of its controllers is used for holding, transferring or controlling coins or NFTs. 
