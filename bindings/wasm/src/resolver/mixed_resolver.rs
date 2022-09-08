@@ -155,7 +155,7 @@ impl MixedResolver {
 
         let supported_document: RustSupportedDocument = awaited_output.into_serde().map_err(|error| {
           format!(
-            "resolution succeeded, but could not convert the outcome into a supported DID Document: {}",
+            "unable to convert the resolved document into a supported DID document: {}",
             error
           )
         })?;
