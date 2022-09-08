@@ -44,9 +44,11 @@ module.exports = {
             {
               'Decentralized Identifiers (DID)': [
                   'concepts/decentralized_identifiers/overview',
+                  'concepts/decentralized_identifiers/alias',
                   'concepts/decentralized_identifiers/create',
                   'concepts/decentralized_identifiers/update',
                   'concepts/decentralized_identifiers/resolve',
+                  'concepts/decentralized_identifiers/delete',
                   'concepts/decentralized_identifiers/private_tangle',
               ],
               'Verifiable Credentials': [
@@ -54,12 +56,6 @@ module.exports = {
                   'concepts/verifiable_credentials/create',
                   'concepts/verifiable_credentials/revocation',
                   'concepts/verifiable_credentials/verifiable_presentations',
-              ],
-              'Advanced Concepts': [
-                  'concepts/advanced/overview',
-                  'concepts/advanced/did_messages',
-                  'concepts/advanced/storage_interface',
-  
               ]
             },
           ],
@@ -100,7 +96,6 @@ module.exports = {
           collapsed: true,
           items: [
             'specs/overview',
-            'specs/revocation_bitmap_2022',
             {
               type: 'category',
               label: 'IOTA DID',
@@ -144,6 +139,7 @@ module.exports = {
                 'specs/didcomm/CHANGELOG',
               ]
             },
+            'specs/revocation_bitmap_2022',
           ],
         },
         'glossary',

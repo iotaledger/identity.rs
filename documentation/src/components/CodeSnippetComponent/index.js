@@ -3,7 +3,7 @@ import React, {useEffect} from "react";
 import "./styles.css";
 import CodeBlock from "@theme/CodeBlock";
 
-export default function CodeSnippet({nodeReplitLink, rustContent, nodeGithubLink, rustGithubLink}) {
+export default function CodeSnippet({nodeReplitLink, nodeContent, rustContent, nodeGithubLink, rustGithubLink}) {
   const [lang, setLang] = React.useState("node");
 
   const ARROW_OUT_OF_BOX_ICON = (
@@ -31,8 +31,8 @@ export default function CodeSnippet({nodeReplitLink, rustContent, nodeGithubLink
     let langFromStorage = localStorage.getItem("lang");
     let lang = langFromStorage ? langFromStorage : "node";
 
-    //If Replit doesn't exist default to next option
-    if (lang === "node" && !nodeReplitLink) {
+    //If Node doesn't exist, default to next option
+    if (lang === "node" && !nodeReplitLink && !nodeContent) {
       lang = "rust";
     }
     if (lang === "rust" && !rustContent) {
@@ -46,7 +46,19 @@ export default function CodeSnippet({nodeReplitLink, rustContent, nodeGithubLink
 
       {/***** Tabs *****/}
       <div className={clsx("langSelector")}>
-        {nodeReplitLink && (
+        {rustContent && (
+          <button
+              className={clsx("button", "languageButton", {
+                  activeButton: lang == "rust",
+                  inactiveButton: lang !== "rust"
+              })}
+              onClick={() => {
+                  localStorage.setItem("lang", "rust");
+                  setLang("rust");
+              }}
+          >Rust</button>
+        )}
+        {(nodeReplitLink || nodeContent) && (
           <button
             className={clsx("button", "languageButton", "mr-sm", {
               activeButton: lang === "node",
@@ -56,39 +68,39 @@ export default function CodeSnippet({nodeReplitLink, rustContent, nodeGithubLink
               localStorage.setItem("lang", "node");
               setLang("node");
             }}
-          >
-            Node.js
-          </button>
-        )}
-        {rustContent && (
-          <button
-            className={clsx("button", "languageButton", {
-              activeButton: lang == "rust",
-              inactiveButton: lang !== "rust"
-            })}
-            onClick={() => {
-              localStorage.setItem("lang", "rust");
-              setLang("rust");
-            }}
-          >
-            Rust
-          </button>
+          >Node.js</button>
         )}
       </div>
 
       {/***** Code Snippet *****/}
       <div className={clsx("codeSnippetContainer")}>
-        {lang === "node" ? (
-          <>
-            <iframe frameborder="0" width="100%" height="700px" src={nodeReplitLink}></iframe>
-          </>
-        ) : (
-          <div className={clsx("rustContainer")}>
-            <CodeBlock className={clsx("noMarginBottom")} language="rust">
-              {rustContent}
-            </CodeBlock>
-          </div>
-        )}
+        {
+            (() => {
+                if(lang === "node" && nodeReplitLink) {
+                    return (
+                        <>
+                            <iframe frameborder="0" width="100%" height="700px" src={nodeReplitLink}></iframe>
+                        </>
+                    )
+                } else if (lang === "node" && nodeContent) {
+                    return (
+                        <div className={clsx("nodeContainer")}>
+                            <CodeBlock className={clsx("noMarginBottom")} language="typescript">
+                                {nodeContent}
+                            </CodeBlock>
+                        </div>
+                    )
+                } else {
+                    return (
+                        <div className={clsx("rustContainer")}>
+                            <CodeBlock className={clsx("noMarginBottom")} language="rust">
+                                {rustContent}
+                            </CodeBlock>
+                        </div>
+                    )
+                }
+            })()
+        }
       </div>
 
       {/*****  Github Link *****/}
