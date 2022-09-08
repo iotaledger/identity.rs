@@ -255,9 +255,9 @@ All private keys or seeds used for the `did:iota` method should be equally well 
 
 ### Personal Identifiable Information
 
-The public IOTA Tangle networks are immutable networks. This means that once something is included, it can never be completely removed. For example, destroying an Alias Output will remove it from the ledger state, but it can still be stored in permanodes or by any party that records historical ledger states.
+The public IOTA and Shimmer networks are immutable. This means that once something is included, it can never be completely removed. For example, destroying an Alias Output will remove it from the ledger state, but it can still be stored in permanodes or by any party that records historical ledger states.
 
-That directly conflicts with certain privacy laws such as GDPR, which have a 'right-to-be-forgotten' for Personal Identifiable Information (PII). As such, users should NEVER upload any PII to the Tangle, including inside DID Documents. The IOTA Identity framework allows Verifiable Credentials to be published to the Tangle directly, however this feature should only be utilized by Identity for Organisations and Identity for Things.
+That directly conflicts with certain privacy laws such as GDPR, which have a 'right-to-be-forgotten' for Personal Identifiable Information (PII). As such, users should NEVER upload any PII, including inside DID Documents. While Verifiable Credentials can be made public, this should only be utilized by Identity for Organisations and Identity for Things.
 
 ### Correlation Risks
 
