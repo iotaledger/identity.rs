@@ -405,7 +405,7 @@ mod iota_handler {
 
   impl<DOC> Resolver<DOC>
   where
-    DOC: From<StardustDocument> + ValidatorDocument + Send + 'static,
+    DOC: From<StardustDocument> + ValidatorDocument + 'static,
   {
     /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs.
     ///
