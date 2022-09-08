@@ -273,6 +273,12 @@ impl MixedResolver {
     Ok(promise.unchecked_into::<PromiseVoid>())
   }
 
+  /// Fetches the DID Document of the given DID.
+  ///
+  /// ### Errors
+  ///
+  /// Errors if the resolver has not been configured to handle the method
+  /// corresponding to the given DID or the resolution process itself fails.
   #[wasm_bindgen]
   pub fn resolve(&self, did: &str) -> Result<PromiseSupportedDocument> {
     let resolver: Rc<SingleThreadedResolver> = self.0.clone();
