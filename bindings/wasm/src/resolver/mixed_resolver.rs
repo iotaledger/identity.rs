@@ -85,9 +85,9 @@ impl MixedResolver {
       }
 
       let ref_counted_client = Rc::new(wasm_client);
+      // Take CoreDID (instead of StardustDID) to avoid inconsistent error messages between the
+      // cases when the iota handler is attached by passing a client or directly as a handler.
       let handler = move |did: CoreDID| {
-        //Take CoreDID (and convert internally to StardustDID) to be consistent with the other handlers (See
-        // `Self::attach_handler`).
         let delegate = ref_counted_client.clone();
         async move {
           let stardust_did = StardustDID::parse(did)?;
@@ -96,6 +96,7 @@ impl MixedResolver {
       };
       resolver.attach_handler(StardustDID::METHOD.to_owned(), handler);
     }
+
     Ok(Self(Rc::new(resolver)))
   }
 
