@@ -114,7 +114,7 @@ where
   ///
   /// fn configure_resolver(mut resolver: Resolver) -> Resolver {
   ///   resolver.attach_handler("foo".to_owned(), resolve_foo);
-  ///   // TODO: attach handlers for other DID methods we are interested in.
+  ///   // Attach handlers for other DID methods we are interested in.
   ///   resolver
   /// }
   ///

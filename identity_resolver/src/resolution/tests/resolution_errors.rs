@@ -140,6 +140,7 @@ where
 
   assertions(err.into_error_cause());
 }
+
 // ===========================================================================
 // Missing handler for DID method failure tests
 // ===========================================================================
@@ -174,10 +175,10 @@ async fn missing_handler_errors() {
 // Implement the DID trait for a new type
 #[derive(Hash, Ord, PartialOrd, Eq, PartialEq, Clone)]
 struct FooDID(CoreDID);
+
 impl FooDID {
   const METHOD_ID_LENGTH: usize = 5;
-}
-impl FooDID {
+
   fn try_from_core(did: CoreDID) -> std::result::Result<Self, DIDError> {
     Some(did)
       .filter(|did| did.method() == "foo" && did.method_id().len() == FooDID::METHOD_ID_LENGTH)
@@ -185,11 +186,13 @@ impl FooDID {
       .ok_or(DIDError::InvalidMethodName)
   }
 }
+
 impl AsRef<CoreDID> for FooDID {
   fn as_ref(&self) -> &CoreDID {
     &self.0
   }
 }
+
 impl From<FooDID> for String {
   fn from(did: FooDID) -> Self {
     String::from(did.0)
