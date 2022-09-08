@@ -14,7 +14,7 @@ use std::pin::Pin;
 ///
 /// The resolver is generic over the type of command which enables  
 /// support for both multi-threaded and single threaded use cases.
-pub trait Command<'a, T>: private::Sealed {
+pub trait Command<'a, T>: std::fmt::Debug + private::Sealed {
   type Output: Future<Output = T> + 'a;
   fn apply(&self, input: &'a str) -> Self::Output;
 }
@@ -26,6 +26,18 @@ mod private {
   pub trait Sealed {}
   impl<DOC: ValidatorDocument + 'static> Sealed for SendSyncCommand<DOC> {}
   impl<DOC: ValidatorDocument + 'static> Sealed for SingleThreadedCommand<DOC> {}
+}
+
+impl<DOC: ValidatorDocument + 'static> std::fmt::Debug for SendSyncCommand<DOC> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str("<resolution_handler>")
+  }
+}
+
+impl<DOC: ValidatorDocument + 'static> std::fmt::Debug for SingleThreadedCommand<DOC> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str("<resolution_handler>")
+  }
 }
 
 /// Internal representation of a thread safe handler.

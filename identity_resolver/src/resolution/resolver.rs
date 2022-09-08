@@ -426,12 +426,24 @@ mod iota_handler {
   }
 }
 
-impl<M, DOC> Default for Resolver<DOC, M>
+impl<CMD, DOC> Default for Resolver<DOC, CMD>
 where
-  M: for<'r> Command<'r, Result<DOC>>,
+  CMD: for<'r> Command<'r, Result<DOC>>,
   DOC: ValidatorDocument,
 {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+impl<CMD, DOC> std::fmt::Debug for Resolver<DOC, CMD>
+where
+  CMD: for<'r> Command<'r, Result<DOC>>,
+  DOC: ValidatorDocument,
+{
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("Resolver")
+      .field("command_map", &self.command_map)
+      .finish()
   }
 }
