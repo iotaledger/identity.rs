@@ -24,7 +24,7 @@ mod private {
   use super::SingleThreadedCommand;
   use identity_credential::validator::ValidatorDocument;
   pub trait Sealed {}
-  impl<DOC: ValidatorDocument + Send + Sync + 'static> Sealed for SendSyncCommand<DOC> {}
+  impl<DOC: ValidatorDocument + 'static> Sealed for SendSyncCommand<DOC> {}
   impl<DOC: ValidatorDocument + 'static> Sealed for SingleThreadedCommand<DOC> {}
 }
 
@@ -33,18 +33,18 @@ type SendSyncCallback<DOC> =
   Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send>> + Send + Sync>;
 
 /// Wrapper around a thread safe callback.
-pub struct SendSyncCommand<DOC: ValidatorDocument + Send + Sync + 'static> {
+pub struct SendSyncCommand<DOC: ValidatorDocument + 'static> {
   fun: SendSyncCallback<DOC>,
 }
 
-impl<'a, DOC: ValidatorDocument + Send + Sync + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
+impl<'a, DOC: ValidatorDocument + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
 }
 
-impl<DOC: ValidatorDocument + Send + Sync + 'static> SendSyncCommand<DOC> {
+impl<DOC: ValidatorDocument + 'static> SendSyncCommand<DOC> {
   /// Converts a handler represented as a closure to a command.
   ///
   /// This is achieved by first producing a callback represented as a dynamic asynchronous function pointer

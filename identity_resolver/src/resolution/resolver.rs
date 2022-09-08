@@ -274,7 +274,7 @@ where
   }
 }
 
-impl<DOC: ValidatorDocument + Send + Sync + 'static> Resolver<DOC> {
+impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -405,7 +405,7 @@ mod iota_handler {
 
   impl<DOC> Resolver<DOC>
   where
-    DOC: From<StardustDocument> + ValidatorDocument + Send + Sync + 'static,
+    DOC: From<StardustDocument> + ValidatorDocument + Send + 'static,
   {
     /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs.
     ///
