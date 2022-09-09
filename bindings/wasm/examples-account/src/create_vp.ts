@@ -172,11 +172,12 @@ async function createVP(storage?: Storage) {
     const resolver = new Resolver();
 
     // Validate the presentation and all the credentials included in it according to the validation options
-    await resolver.verifyPresentation(
-        presentation,
-        presentationValidationOptions,
-        FailFast.FirstError
-    );
+    // TODO: uncomment when ported to Stardust.
+    // await resolver.verifyPresentation(
+    //     presentation,
+    //     presentationValidationOptions,
+    //     FailFast.FirstError
+    // );
 
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful.
     console.log(`VP successfully validated`);

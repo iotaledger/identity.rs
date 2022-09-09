@@ -21,8 +21,7 @@ mod macros;
 // pub mod account;
 
 pub mod common;
-// REFACTOR-TODO: Reactivate after validators were fixed.
-// pub mod credential;
+pub mod credential;
 pub mod crypto;
 pub mod did;
 pub mod error;

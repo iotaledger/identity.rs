@@ -1,20 +1,27 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::did::WasmCoreDID;
 use crate::did::WasmCoreDocument;
 use crate::error::WasmError;
+use crate::error::WasmResult;
+use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 use identity_iota::credential::AbstractValidatorDocument;
+use identity_iota::did::CoreDID;
 use identity_iota::did::CoreDocument;
 use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::did::DID;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 #[derive(Deserialize)]
 #[serde(untagged)]
 /// Temporary type used to convert to and from Box<dyn ValidatorDocument> until
 /// we port the Document trait to these bindings.
-pub(super) enum RustSupportedDocument {
+pub enum RustSupportedDocument {
   Iota(IotaDocument),
   Core(CoreDocument),
 }
@@ -58,6 +65,21 @@ impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
   }
 }
 
+impl TryFrom<CoreDID> for SupportedDID {
+  type Error = JsValue;
+
+  fn try_from(did: CoreDID) -> Result<Self, Self::Error> {
+    let js: JsValue = if did.method() == IotaDID::METHOD {
+      let ret: IotaDID = IotaDID::try_from_core(did).wasm_result()?;
+      JsValue::from(WasmIotaDID::from(ret))
+    } else {
+      JsValue::from(WasmCoreDID::from(did))
+    };
+
+    Ok(js.unchecked_into::<SupportedDID>())
+  }
+}
+
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Array<IotaDocument | CoreDocument>>")]
@@ -78,4 +100,6 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Array<IotaDocument | CoreDocument> | undefined")]
   pub type OptionArraySupportedDocument;
 
+  #[wasm_bindgen(typescript_type = "CoreDID | IotaDID")]
+  pub type SupportedDID;
 }
