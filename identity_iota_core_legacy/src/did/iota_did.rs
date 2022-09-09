@@ -209,57 +209,6 @@ impl IotaDID {
   }
 }
 
-impl DID for IotaDID {
-  /// Returns the [`IotaDID`] scheme. See [`DID::SCHEME`].
-  fn scheme(&self) -> &'static str {
-    self.0.scheme()
-  }
-
-  /// Returns the [`IotaDID`] authority.
-  fn authority(&self) -> &str {
-    self.0.authority()
-  }
-
-  /// Returns the [`IotaDID`] method name.
-  fn method(&self) -> &str {
-    self.0.method()
-  }
-
-  /// Returns the [`IotaDID`] method-specific ID.
-  fn method_id(&self) -> &str {
-    self.0.method_id()
-  }
-
-  /// Returns the serialized [`IotaDID`].
-  ///
-  /// This is fast since the serialized value is stored in the [`DID`].
-  fn as_str(&self) -> &str {
-    self.0.as_str()
-  }
-
-  /// Consumes the [`IotaDID`] and returns the serialization.
-  fn into_string(self) -> String {
-    self.0.into_string()
-  }
-
-  /// Creates a new [`IotaDIDUrl`] by joining with a relative DID Url string.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if any base or relative DID segments are invalid.
-  fn join(self, segment: impl AsRef<str>) -> std::result::Result<DIDUrl<Self>, DIDError> {
-    self.into_url().join(segment)
-  }
-
-  fn to_url(&self) -> DIDUrl<Self> {
-    DIDUrl::new(self.clone(), None)
-  }
-
-  fn into_url(self) -> DIDUrl<Self> {
-    DIDUrl::new(self, None)
-  }
-}
-
 impl Display for IotaDID {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.0)

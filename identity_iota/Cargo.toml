@@ -17,6 +17,7 @@ identity_core = { version = "=0.6.0", path = "../identity_core", default-feature
 identity_credential = { version = "=0.6.0", path = "../identity_credential", features = ["validator"], default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=0.6.0", path = "../identity_resolver", default-features = false }
 
 [dev-dependencies]
 iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
@@ -29,6 +30,7 @@ default = ["revocation-bitmap"]
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
 
+# TODO: After merging the refactor (#1000), add "identity_resolver/iota" to the `iota-client` feature.
 # Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
 iota-client = ["identity_iota_core/iota-client"]
 
@@ -36,6 +38,7 @@ iota-client = ["identity_iota_core/iota-client"]
 revocation-bitmap = [
   "identity_credential/revocation-bitmap",
   "identity_iota_core/revocation-bitmap",
+  "identity_resolver/revocation-bitmap"
 ]
 
 # Enables support for the unstable identity agent.

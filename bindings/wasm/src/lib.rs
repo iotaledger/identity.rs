@@ -29,6 +29,8 @@ pub mod error;
 pub mod iota;
 pub mod revocation;
 
+pub mod resolver;
+
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {

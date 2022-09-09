@@ -95,6 +95,13 @@ pub mod prelude {
 
   pub use identity_core::crypto::KeyPair;
   pub use identity_core::crypto::KeyType;
+  pub use identity_resolver::Resolver;
+}
+
+pub mod resolver {
+  //! DID resolution utilities
+
+  pub use identity_resolver::*;
 }
 
 #[cfg(feature = "unstable-agent")]

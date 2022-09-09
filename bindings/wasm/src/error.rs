@@ -119,9 +119,8 @@ macro_rules! impl_wasm_error_from_with_struct_name {
 // us display the entire display chain for new variants that don't include the error message of the source error in its
 // own display.
 
-// REFACTOR-TODO: Remove `_` after merging resolver PR, which will use this function again.
 // the following function is inspired by https://www.lpalmieri.com/posts/error-handling-rust/#error-source
-fn _error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
   write!(f, "{}. ", e)?;
   let mut current = e.source();
   while let Some(cause) = current {
@@ -129,6 +128,23 @@ fn _error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>)
     current = cause.source();
   }
   Ok(())
+}
+
+struct ErrorMessage<'a, E: std::error::Error>(&'a E);
+
+impl<'a> Display for ErrorMessage<'a, identity_resolver::Error> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    error_chain_fmt(self.0, f)
+  }
+}
+
+impl From<identity_resolver::Error> for WasmError<'_> {
+  fn from(error: identity_resolver::Error) -> Self {
+    Self {
+      name: Cow::Owned(format!("ResolverError::{}", <&'static str>::from(error.error_cause()))),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
 }
 
 impl From<serde_json::Error> for WasmError<'_> {
@@ -167,39 +183,42 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   }
 }
 
-/// Convenience struct to convert Result<JsValue, JsValue> to an AccountStorageResult<_, AccountStorageError>
+impl From<UpdateError> for WasmError<'_> {
+  fn from(error: UpdateError) -> Self {
+    Self {
+      name: Cow::Borrowed("Update::Error"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
+/// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
   // TODO: Remove or reuse depending on what we do with the account.
-  // /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
+  /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
   // pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
-  //   self.0.map_err(|js_value| {
-  //     let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
-  //       Ok(js_err) => ToString::to_string(&js_err.to_string()),
-  //       Err(js_val) => {
-  //         // Fall back to debug formatting if this is not a proper JS Error instance.
-  //         format!("{js_val:?}")
-  //       }
-  //     };
-
-  //     AccountStorageError::JsError(error_string)
-  //   })
+  //   self.stringify_error().map_err(AccountStorageError::JsError)
   // }
 
-  /// Consumes the struct and returns a Result<_, identity_iota::iota_core::Error>, leaving an `Ok` value untouched.
-  pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_iota::iota_core::Error> {
+  // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
+  pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
     self.0.map_err(|js_value| {
       let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
         Ok(js_err) => ToString::to_string(&js_err.to_string()),
         Err(js_val) => {
-          // Fall back to debug formatting if the error is not a proper JS Error instance.
+          // Fall back to debug formatting if this is not a proper JS Error instance.
           format!("{js_val:?}")
         }
       };
-
-      identity_iota::iota_core::Error::JsError(error_string)
+      error_string
     })
+  }
+
+  /// Consumes the struct and returns a Result<_, identity_stardust::Error>, leaving an `Ok` value untouched.
+  pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_stardust::Error> {
+    self.stringify_error().map_err(identity_stardust::Error::JsError)
   }
 }
 

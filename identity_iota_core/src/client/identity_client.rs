@@ -18,8 +18,9 @@ use crate::IotaDocument;
 use crate::NetworkName;
 use crate::Result;
 
-/// Helper functions necessary for the [`IotaIdentityClientExt`] trait.
-#[async_trait::async_trait(?Send)]
+/// Helper functions necessary for the [`StardustIdentityClientExt`] trait.
+#[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait IotaIdentityClient {
   /// Return the Bech32 human-readable part (HRP) of the network.
   ///
@@ -37,8 +38,10 @@ pub trait IotaIdentityClient {
 /// and resolution of DID documents in Alias Outputs.
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
-/// provided for [`IotaIdentityClient`] implementers.
-#[async_trait::async_trait(?Send)]
+/// provided for [`StardustIdentityClient`] implementers.
+
+#[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// Create a DID with a new Alias Output containing the given `document`.
   ///

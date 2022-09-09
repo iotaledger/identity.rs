@@ -26,7 +26,8 @@ use crate::NetworkName;
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
-#[async_trait::async_trait(?Send)]
+#[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait IotaClientExt: IotaIdentityClient {
   /// Publish the given `alias_output` with the provided `secret_manager`, and returns
   /// the DID document extracted from the published block.
@@ -52,7 +53,8 @@ pub trait IotaClientExt: IotaIdentityClient {
 
 /// An extension trait for [`Client`] that provides helper functions for publication
 /// and deletion of DID documents in Alias Outputs.
-#[async_trait::async_trait(?Send)]
+#[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl IotaClientExt for Client {
   async fn publish_did_output(
     &self,
@@ -105,7 +107,8 @@ impl IotaClientExt for Client {
   }
 }
 
-#[async_trait::async_trait(?Send)]
+#[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl IotaIdentityClient for Client {
   async fn get_network_hrp(&self) -> Result<String> {
     self.get_bech32_hrp().await.map_err(Error::DIDResolutionError)

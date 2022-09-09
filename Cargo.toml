@@ -13,6 +13,7 @@ members = [
   "identity_iota_client_legacy",
   "identity_iota_core_legacy",
   "identity_iota_core",
+  "identity_resolver",
 
   "examples_legacy",
   "examples",

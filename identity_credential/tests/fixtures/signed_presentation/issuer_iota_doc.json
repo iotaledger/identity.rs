@@ -1,0 +1,17 @@
+{
+    "doc": {
+      "id": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "verificationMethod": [
+        {
+          "id": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#issuerKey",
+          "controller": "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+        }
+      ]
+    },
+    "meta": {
+      "created": "2022-08-31T09:33:31Z",
+      "updated": "2022-08-31T09:33:31Z"
+    }
+  }
