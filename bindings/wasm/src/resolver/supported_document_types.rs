@@ -3,10 +3,10 @@
 
 use crate::did::WasmCoreDocument;
 use crate::error::WasmError;
-use crate::stardust::WasmStardustDocument;
+use crate::iota::WasmIotaDocument;
 use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::did::CoreDocument;
-use identity_stardust::StardustDocument;
+use identity_iota::iota_core::IotaDocument;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
@@ -15,7 +15,7 @@ use wasm_bindgen::prelude::*;
 /// Temporary type used to convert to and from Box<dyn ValidatorDocument> until
 /// we port the Document trait to these bindings.
 pub(super) enum RustSupportedDocument {
-  Stardust(StardustDocument),
+  Stardust(IotaDocument),
   Core(CoreDocument),
 }
 
@@ -23,7 +23,7 @@ impl From<RustSupportedDocument> for JsValue {
   fn from(document: RustSupportedDocument) -> Self {
     match document {
       RustSupportedDocument::Core(doc) => JsValue::from(WasmCoreDocument::from(doc)),
-      RustSupportedDocument::Stardust(doc) => JsValue::from(WasmStardustDocument(doc)),
+      RustSupportedDocument::Stardust(doc) => JsValue::from(WasmIotaDocument(doc)),
     }
   }
 }
@@ -44,7 +44,7 @@ impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
     let supported_document = match upcast.downcast::<CoreDocument>() {
       Ok(doc) => RustSupportedDocument::Core(*doc),
       Err(retry) => {
-        if let Ok(doc) = retry.downcast::<StardustDocument>() {
+        if let Ok(doc) = retry.downcast::<IotaDocument>() {
           RustSupportedDocument::Stardust(*doc)
         } else {
           Err(WasmError::new(
@@ -60,22 +60,22 @@ impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<Array<StardustDocument | CoreDocument>>")]
+  #[wasm_bindgen(typescript_type = "Promise<Array<IotaDocument | CoreDocument>>")]
   pub type PromiseArraySupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "Promise<StardustDocument | CoreDocument>")]
+  #[wasm_bindgen(typescript_type = "Promise<IotaDocument | CoreDocument>")]
   pub type PromiseSupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "StardustDocument | CoreDocument")]
+  #[wasm_bindgen(typescript_type = "IotaDocument | CoreDocument")]
   pub type SupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "StardustDocument | CoreDocument | undefined")]
+  #[wasm_bindgen(typescript_type = "IotaDocument | CoreDocument | undefined")]
   pub type OptionSupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "Array<StardustDocument | CoreDocument>")]
+  #[wasm_bindgen(typescript_type = "Array<IotaDocument | CoreDocument>")]
   pub type ArraySupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "Array<StardustDocument | CoreDocument> | undefined")]
+  #[wasm_bindgen(typescript_type = "Array<IotaDocument | CoreDocument> | undefined")]
   pub type OptionArraySupportedDocument;
 
 }

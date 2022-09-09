@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
+use std::fmt::Display;
 use std::result::Result as StdResult;
 
 use wasm_bindgen::JsValue;
@@ -183,14 +184,15 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   }
 }
 
-impl From<UpdateError> for WasmError<'_> {
-  fn from(error: UpdateError) -> Self {
-    Self {
-      name: Cow::Borrowed("Update::Error"),
-      message: Cow::Owned(error.to_string()),
-    }
-  }
-}
+// TODO: Remove or reuse depending on what we do with the account.
+// impl From<UpdateError> for WasmError<'_> {
+//   fn from(error: UpdateError) -> Self {
+//     Self {
+//       name: Cow::Borrowed("Update::Error"),
+//       message: Cow::Owned(error.to_string()),
+//     }
+//   }
+// }
 
 /// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
@@ -216,9 +218,9 @@ impl JsValueResult {
     })
   }
 
-  /// Consumes the struct and returns a Result<_, identity_stardust::Error>, leaving an `Ok` value untouched.
-  pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_stardust::Error> {
-    self.stringify_error().map_err(identity_stardust::Error::JsError)
+  /// Consumes the struct and returns a Result<_, identity_iota::iota_core::Error>, leaving an `Ok` value untouched.
+  pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_iota::iota_core::Error> {
+    self.stringify_error().map_err(identity_iota::iota_core::Error::JsError)
   }
 }
 

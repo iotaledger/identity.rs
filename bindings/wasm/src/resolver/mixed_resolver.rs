@@ -9,10 +9,10 @@ use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaIdentityClientExt;
 use identity_resolver::SingleThreadedResolver;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
 use js_sys::Function;
 use js_sys::Map;
 use js_sys::Promise;
@@ -24,13 +24,13 @@ use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
+use crate::iota::WasmIotaDID;
+use crate::iota::WasmIotaIdentityClient;
 use crate::resolver::constructor_input::MapResolutionHandler;
 use crate::resolver::constructor_input::ResolverConfig;
 use crate::resolver::supported_document_types::OptionArraySupportedDocument;
 use crate::resolver::supported_document_types::OptionSupportedDocument;
 use crate::resolver::supported_document_types::RustSupportedDocument;
-use crate::stardust::WasmStardustDID;
-use crate::stardust::WasmStardustIdentityClient;
 
 use super::supported_document_types::PromiseArraySupportedDocument;
 use super::supported_document_types::PromiseSupportedDocument;
@@ -63,7 +63,7 @@ impl MixedResolver {
 
     let mut attached_iota_method = false;
     let resolution_handlers: Option<MapResolutionHandler> = config.handlers();
-    let client: Option<WasmStardustIdentityClient> = config.client();
+    let client: Option<WasmIotaIdentityClient> = config.client();
 
     if let Some(handlers) = resolution_handlers {
       let map: &Map = handlers.dyn_ref::<js_sys::Map>().ok_or_else(|| {
@@ -86,26 +86,26 @@ impl MixedResolver {
         ))?;
       }
 
-      let rc_client: Rc<WasmStardustIdentityClient> = Rc::new(wasm_client);
-      // Take CoreDID (instead of StardustDID) to avoid inconsistent error messages between the
+      let rc_client: Rc<WasmIotaIdentityClient> = Rc::new(wasm_client);
+      // Take CoreDID (instead of IotaDID) to avoid inconsistent error messages between the
       // cases when the iota handler is attached by passing a client or directly as a handler.
       let handler = move |did: CoreDID| {
-        let rc_client_clone: Rc<WasmStardustIdentityClient> = rc_client.clone();
+        let rc_client_clone: Rc<WasmIotaIdentityClient> = rc_client.clone();
         async move {
-          let stardust_did: StardustDID = StardustDID::parse(did)?;
+          let stardust_did: IotaDID = IotaDID::parse(did)?;
           Self::client_as_handler(rc_client_clone.as_ref(), stardust_did.into()).await
         }
       };
-      resolver.attach_handler(StardustDID::METHOD.to_owned(), handler);
+      resolver.attach_handler(IotaDID::METHOD.to_owned(), handler);
     }
 
     Ok(Self(Rc::new(resolver)))
   }
 
   pub(crate) async fn client_as_handler(
-    client: &WasmStardustIdentityClient,
-    did: WasmStardustDID,
-  ) -> std::result::Result<StardustDocument, identity_stardust::Error> {
+    client: &WasmIotaIdentityClient,
+    did: WasmIotaDID,
+  ) -> std::result::Result<IotaDocument, identity_iota::iota_core::Error> {
     client.resolve_did(&did.0).await
   }
 
@@ -124,7 +124,7 @@ impl MixedResolver {
           .dyn_into::<Function>()
           .map_err(|_| "could not construct resolver: the handler map contains a value which is not a function")?;
 
-        if did_method == StardustDID::METHOD {
+        if did_method == IotaDID::METHOD {
           *attached_iota_method = true;
         }
 
