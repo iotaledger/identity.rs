@@ -25,7 +25,7 @@ iota-client = { version = "2.0.0-beta.3", default-features = false, features = [
 tokio = { version = "1.17.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap"]
+default = ["revocation-bitmap", "client", "iota-client"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
