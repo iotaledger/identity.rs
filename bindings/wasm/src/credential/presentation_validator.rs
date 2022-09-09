@@ -1,20 +1,25 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::credential::PresentationValidator;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDocument;
+use identity_iota::did::CoreDID;
+use identity_iota::did::DID;
+use identity_stardust::StardustDID;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayDocumentOrResolvedDocument;
-use crate::did::DocumentOrResolvedDocument;
-use crate::did::WasmIotaDID;
+use crate::did::WasmCoreDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::resolver::ArraySupportedDocument;
+use crate::resolver::RustSupportedDocument;
+use crate::resolver::SupportedDocument;
+use crate::stardust::WasmStardustDID;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
 pub struct WasmPresentationValidator;
@@ -50,13 +55,18 @@ impl WasmPresentationValidator {
   #[wasm_bindgen]
   pub fn validate(
     presentation: &WasmPresentation,
-    holder: &DocumentOrResolvedDocument,
-    issuers: &ArrayDocumentOrResolvedDocument,
+    holder: &SupportedDocument,
+    issuers: &ArraySupportedDocument,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let holder: IotaDocument = holder.into_serde().wasm_result()?;
-    let issuers: Vec<IotaDocument> = issuers.into_serde().wasm_result()?;
+    let holder: AbstractValidatorDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?.into();
+    let issuers: Vec<AbstractValidatorDocument> = issuers
+      .into_serde::<Vec<RustSupportedDocument>>()
+      .wasm_result()?
+      .into_iter()
+      .map(Into::into)
+      .collect();
     PresentationValidator::validate(&presentation.0, &holder, &issuers, &options.0, fail_fast.into()).wasm_result()
   }
 
@@ -71,10 +81,10 @@ impl WasmPresentationValidator {
   #[wasm_bindgen(js_name = verifyPresentationSignature)]
   pub fn verify_presentation_signature(
     presentation: &WasmPresentation,
-    holder: &DocumentOrResolvedDocument,
+    holder: &SupportedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let holder: IotaDocument = holder.into_serde().wasm_result()?;
+    let holder: AbstractValidatorDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?.into();
     PresentationValidator::verify_presentation_signature(&presentation.0, &holder, &options.0).wasm_result()
   }
 
@@ -90,8 +100,22 @@ impl WasmPresentationValidator {
   ///
   /// Fails if the holder field is missing or not a valid DID.
   #[wasm_bindgen(js_name = extractHolder)]
-  pub fn extract_holder(presentation: &WasmPresentation) -> Result<WasmIotaDID> {
-    let did: IotaDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
-    Ok(WasmIotaDID::from(did))
+  pub fn extract_holder(presentation: &WasmPresentation) -> Result<SupportedDID> {
+    let did: CoreDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
+
+    let js: JsValue = if did.method() == StardustDID::METHOD {
+      let ret: StardustDID = StardustDID::try_from_core(did).wasm_result()?;
+      JsValue::from(WasmStardustDID::from(ret))
+    } else {
+      JsValue::from(WasmCoreDID::from(did))
+    };
+
+    Ok(js.unchecked_into::<SupportedDID>())
   }
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "CoreDID | StardustDID")]
+  pub type SupportedDID;
 }

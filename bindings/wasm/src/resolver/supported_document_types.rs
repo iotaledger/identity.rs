@@ -14,7 +14,7 @@ use wasm_bindgen::prelude::*;
 #[serde(untagged)]
 /// Temporary type used to convert to and from Box<dyn ValidatorDocument> until
 /// we port the Document trait to these bindings.
-pub(super) enum RustSupportedDocument {
+pub enum RustSupportedDocument {
   Stardust(StardustDocument),
   Core(CoreDocument),
 }
