@@ -3,8 +3,8 @@
 
 use identity_iota::did::DIDError;
 use identity_iota::did::DID;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::NetworkName;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::NetworkName;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;

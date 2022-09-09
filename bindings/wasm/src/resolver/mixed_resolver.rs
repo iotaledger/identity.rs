@@ -9,9 +9,9 @@ use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDocument;
-use identity_iota::iota_core::IotaIdentityClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
 use identity_resolver::SingleThreadedResolver;
 use js_sys::Function;
 use js_sys::Map;
@@ -105,7 +105,7 @@ impl MixedResolver {
   pub(crate) async fn client_as_handler(
     client: &WasmIotaIdentityClient,
     did: WasmIotaDID,
-  ) -> std::result::Result<IotaDocument, identity_iota::iota_core::Error> {
+  ) -> std::result::Result<IotaDocument, identity_iota::iota::Error> {
     client.resolve_did(&did.0).await
   }
 

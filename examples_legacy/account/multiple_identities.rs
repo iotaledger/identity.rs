@@ -12,7 +12,7 @@ use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
 use identity_iota::account_storage::Stronghold;
 use identity_iota_client_legacy::tangle::ExplorerUrl;
-use identity_iota::iota_core::IotaDID;
+use identity_iota::iota::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {

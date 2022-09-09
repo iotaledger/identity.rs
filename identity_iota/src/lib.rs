@@ -69,7 +69,7 @@ pub mod did {
   pub use identity_did::verifiable;
 }
 
-pub mod iota_core {
+pub mod iota {
   //! The IOTA DID method implementation for the IOTA ledger.
 
   pub use identity_iota_core::*;

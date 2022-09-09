@@ -3,7 +3,7 @@
 
 use identity_iota::crypto::PublicKey;
 
-use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::iota::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::common::MapStringAny;

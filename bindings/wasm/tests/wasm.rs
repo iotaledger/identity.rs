@@ -4,7 +4,7 @@
 use std::borrow::Cow;
 
 use identity_iota::core::Timestamp;
-use identity_iota::iota_core::IotaDID;
+use identity_iota::iota::IotaDID;
 use identity_wasm::crypto::WasmProofOptions;
 use identity_wasm::did::WasmVerifierOptions;
 use serde_json::json;

@@ -4,11 +4,11 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
-use identity_iota::iota_core::block::output::feature::MetadataFeature;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDocument;
-use identity_iota::iota_core::IotaIdentityClientExt;
-use identity_iota::iota_core::NetworkName;
+use identity_iota::iota::block::output::feature::MetadataFeature;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::NetworkName;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;

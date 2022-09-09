@@ -3,8 +3,8 @@
 
 use identity_iota::core::OneOrMany;
 use identity_iota::did::ServiceEndpoint;
-use identity_iota::iota_core::IotaDIDUrl;
-use identity_iota::iota_core::IotaService;
+use identity_iota::iota::IotaDIDUrl;
+use identity_iota::iota::IotaService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 

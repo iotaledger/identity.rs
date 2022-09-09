@@ -12,11 +12,11 @@ use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
 use identity_iota::did::Document;
 use identity_iota::did::MethodScope;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDocument;
-use identity_iota::iota_core::IotaVerificationMethod;
-use identity_iota::iota_core::NetworkName;
-use identity_iota::iota_core::StateMetadataEncoding;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaVerificationMethod;
+use identity_iota::iota::NetworkName;
+use identity_iota::iota::StateMetadataEncoding;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -406,12 +406,12 @@ impl WasmIotaDocument {
     let block_dto: bee_block::BlockDto = block
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota_core::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
+        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
       })
       .wasm_result()?;
     let block: bee_block::Block = bee_block::Block::try_from(&block_dto)
       .map_err(|err| {
-        identity_iota::iota_core::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
+        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
       })
       .wasm_result()?;
 

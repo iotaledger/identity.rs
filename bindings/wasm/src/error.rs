@@ -91,7 +91,7 @@ impl_wasm_error_from!(
   identity_iota::credential::Error,
   identity_iota::did::Error,
   identity_iota::did::DIDError,
-  identity_iota::iota_core::Error,
+  identity_iota::iota::Error,
   identity_iota::credential::ValidationError
 );
 
@@ -157,8 +157,8 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
-impl From<identity_iota::iota_core::block::Error> for WasmError<'_> {
-  fn from(error: identity_iota::iota_core::block::Error) -> Self {
+impl From<identity_iota::iota::block::Error> for WasmError<'_> {
+  fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {
       name: Cow::Borrowed("bee_block::Error"),
       message: Cow::Owned(error.to_string()),
@@ -218,9 +218,9 @@ impl JsValueResult {
     })
   }
 
-  /// Consumes the struct and returns a Result<_, identity_iota::iota_core::Error>, leaving an `Ok` value untouched.
-  pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_iota::iota_core::Error> {
-    self.stringify_error().map_err(identity_iota::iota_core::Error::JsError)
+  /// Consumes the struct and returns a Result<_, identity_iota::iota::Error>, leaving an `Ok` value untouched.
+  pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_iota::iota::Error> {
+    self.stringify_error().map_err(identity_iota::iota::Error::JsError)
   }
 }
 

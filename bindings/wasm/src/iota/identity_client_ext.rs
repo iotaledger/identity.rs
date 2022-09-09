@@ -1,14 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::iota_core::block::address::dto::AddressDto;
-use identity_iota::iota_core::block::address::Address;
-use identity_iota::iota_core::block::output::dto::AliasOutputDto;
-use identity_iota::iota_core::block::output::AliasOutput;
-use identity_iota::iota_core::block::output::RentStructure;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDocument;
-use identity_iota::iota_core::IotaIdentityClientExt;
+use identity_iota::iota::block::address::dto::AddressDto;
+use identity_iota::iota::block::address::Address;
+use identity_iota::iota::block::output::dto::AliasOutputDto;
+use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::block::output::RentStructure;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -65,9 +65,7 @@ impl WasmIotaIdentityClientExt {
     let address_dto: AddressDto = address.into_serde().wasm_result()?;
     let address: Address = Address::try_from(&address_dto)
       .map_err(|err| {
-        identity_iota::iota_core::Error::JsError(format!(
-          "newDidOutput failed to decode Address: {err}: {address_dto:?}"
-        ))
+        identity_iota::iota::Error::JsError(format!("newDidOutput failed to decode Address: {err}: {address_dto:?}"))
       })
       .wasm_result()?;
     let doc: IotaDocument = document.0.clone();

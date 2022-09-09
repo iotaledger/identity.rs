@@ -5,12 +5,12 @@ use anyhow::Context;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
 use identity_iota::did::MethodScope;
-use identity_iota::iota_core::IotaClientExt;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDocument;
-use identity_iota::iota_core::IotaIdentityClientExt;
-use identity_iota::iota_core::IotaVerificationMethod;
-use identity_iota::iota_core::NetworkName;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::IotaVerificationMethod;
+use identity_iota::iota::NetworkName;
 
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;

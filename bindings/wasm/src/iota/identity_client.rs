@@ -4,13 +4,13 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
-use identity_iota::iota_core::block::output::dto::AliasOutputDto;
-use identity_iota::iota_core::block::output::AliasId;
-use identity_iota::iota_core::block::output::AliasOutput;
-use identity_iota::iota_core::block::output::OutputId;
-use identity_iota::iota_core::block::output::RentStructure;
-use identity_iota::iota_core::block::output::RentStructureBuilder;
-use identity_iota::iota_core::IotaIdentityClient;
+use identity_iota::iota::block::output::dto::AliasOutputDto;
+use identity_iota::iota::block::output::AliasId;
+use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::block::output::OutputId;
+use identity_iota::iota::block::output::RentStructure;
+use identity_iota::iota::block::output::RentStructureBuilder;
+use identity_iota::iota::IotaIdentityClient;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
@@ -41,20 +41,20 @@ impl Debug for WasmIotaIdentityClient {
 
 #[async_trait::async_trait(?Send)]
 impl IotaIdentityClient for WasmIotaIdentityClient {
-  async fn get_network_hrp(&self) -> Result<String, identity_iota::iota_core::Error> {
+  async fn get_network_hrp(&self) -> Result<String, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_network_hrp(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js: JsValue = result.to_iota_core_error()?;
     let network_hrp = match js.as_string() {
       Some(hrp) => hrp,
       None => js.into_serde().map_err(|err| {
-        identity_iota::iota_core::Error::JsError(format!("get_network_hrp failed to deserialize String: {}", err))
+        identity_iota::iota::Error::JsError(format!("get_network_hrp failed to deserialize String: {}", err))
       })?,
     };
     Ok(network_hrp)
   }
 
-  async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput), identity_iota::iota_core::Error> {
+  async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput), identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_alias_output(self, id.to_string()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let tuple: js_sys::Array = js_sys::Array::from(&result.to_iota_core_error()?);
@@ -62,36 +62,32 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
 
     let output_id: OutputId = iter
       .next()
-      .ok_or_else(|| {
-        identity_iota::iota_core::Error::JsError("get_alias_output expected a tuple of size 2".to_owned())
-      })?
+      .ok_or_else(|| identity_iota::iota::Error::JsError("get_alias_output expected a tuple of size 2".to_owned()))?
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota_core::Error::JsError(format!("get_alias_output failed to deserialize OutputId: {}", err))
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize OutputId: {}", err))
       })?;
     let alias_dto: AliasOutputDto = iter
       .next()
-      .ok_or_else(|| {
-        identity_iota::iota_core::Error::JsError("get_alias_output expected a tuple of size 2".to_owned())
-      })?
+      .ok_or_else(|| identity_iota::iota::Error::JsError("get_alias_output expected a tuple of size 2".to_owned()))?
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota_core::Error::JsError(format!(
+        identity_iota::iota::Error::JsError(format!(
           "get_alias_output failed to deserialize AliasOutputDto: {}",
           err
         ))
       })?;
     let alias_output = AliasOutput::try_from(&alias_dto).map_err(|err| {
-      identity_iota::iota_core::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+      identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
     })?;
     Ok((output_id, alias_output))
   }
 
-  async fn get_rent_structure(&self) -> Result<RentStructure, identity_iota::iota_core::Error> {
+  async fn get_rent_structure(&self) -> Result<RentStructure, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_rent_structure(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let rent_structure: RentStructureBuilder = result.to_iota_core_error()?.into_serde().map_err(|err| {
-      identity_iota::iota_core::Error::JsError(format!("get_rent_structure failed to deserialize: {}", err))
+      identity_iota::iota::Error::JsError(format!("get_rent_structure failed to deserialize: {}", err))
     })?;
     Ok(rent_structure.finish())
   }
