@@ -30,9 +30,8 @@ default = ["revocation-bitmap"]
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
 
-# TODO: After merging the refactor (#1000), add "identity_resolver/iota" to the `iota-client` feature.
 # Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
-iota-client = ["identity_iota_core/iota-client"]
+iota-client = ["identity_iota_core/iota-client", "identity_resolver/iota"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
