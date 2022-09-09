@@ -18,7 +18,7 @@ use crate::IotaDocument;
 use crate::NetworkName;
 use crate::Result;
 
-/// Helper functions necessary for the [`StardustIdentityClientExt`] trait.
+/// Helper functions necessary for the [`IotaIdentityClientExt`] trait.
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait IotaIdentityClient {
@@ -38,7 +38,7 @@ pub trait IotaIdentityClient {
 /// and resolution of DID documents in Alias Outputs.
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
-/// provided for [`StardustIdentityClient`] implementers.
+/// provided for [`IotaIdentityClient`] implementers.
 
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
