@@ -1,4 +1,3 @@
-// REFACTOR-TODO: Reactivate after credential stuff is fixed.
 export {};
 
 const assert = require('assert');

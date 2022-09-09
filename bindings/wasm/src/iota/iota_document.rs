@@ -5,8 +5,8 @@ use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
-// use identity_iota::credential::Credential;
-// use identity_iota::credential::Presentation;
+use identity_iota::credential::Credential;
+use identity_iota::credential::Presentation;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
@@ -26,8 +26,8 @@ use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
-// use crate::credential::WasmCredential;
-// use crate::credential::WasmPresentation;
+use crate::credential::WasmCredential;
+use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::RefMethodScope;
 use crate::did::WasmMethodRelationship;
@@ -276,52 +276,51 @@ impl WasmIotaDocument {
   // Signatures
   // ===========================================================================
 
-  // REFACTOR-TODO: Readd after credential module is fixed.
-  // /// Creates a signature for the given `Credential` with the specified DID Document
-  // /// Verification Method.
-  // #[allow(non_snake_case)]
-  // #[wasm_bindgen(js_name = signCredential)]
-  // pub fn sign_credential(
-  //   &self,
-  //   credential: &WasmCredential,
-  //   privateKey: Vec<u8>,
-  //   methodQuery: &UIotaDIDUrlQuery,
-  //   options: &WasmProofOptions,
-  // ) -> Result<WasmCredential> {
-  //   let mut data: Credential = credential.0.clone();
-  //   let private_key: PrivateKey = privateKey.into();
-  //   let method_query: String = methodQuery.into_serde().wasm_result()?;
-  //   let options: ProofOptions = options.0.clone();
+  /// Creates a signature for the given `Credential` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
+  #[wasm_bindgen(js_name = signCredential)]
+  pub fn sign_credential(
+    &self,
+    credential: &WasmCredential,
+    privateKey: Vec<u8>,
+    methodQuery: &UIotaDIDUrlQuery,
+    options: &WasmProofOptions,
+  ) -> Result<WasmCredential> {
+    let mut data: Credential = credential.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-  //   self
-  //     .0
-  //     .sign_data(&mut data, &private_key, &method_query, options)
-  //     .wasm_result()?;
-  //   Ok(WasmCredential::from(data))
-  // }
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmCredential::from(data))
+  }
 
-  // /// Creates a signature for the given `Presentation` with the specified DID Document
-  // /// Verification Method.
-  // #[allow(non_snake_case)]
-  // #[wasm_bindgen(js_name = signPresentation)]
-  // pub fn sign_presentation(
-  //   &self,
-  //   presentation: &WasmPresentation,
-  //   privateKey: Vec<u8>,
-  //   methodQuery: &UIotaDIDUrlQuery,
-  //   options: &WasmProofOptions,
-  // ) -> Result<WasmPresentation> {
-  //   let mut data: Presentation = presentation.0.clone();
-  //   let private_key: PrivateKey = privateKey.into();
-  //   let method_query: String = methodQuery.into_serde().wasm_result()?;
-  //   let options: ProofOptions = options.0.clone();
+  /// Creates a signature for the given `Presentation` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
+  #[wasm_bindgen(js_name = signPresentation)]
+  pub fn sign_presentation(
+    &self,
+    presentation: &WasmPresentation,
+    privateKey: Vec<u8>,
+    methodQuery: &UIotaDIDUrlQuery,
+    options: &WasmProofOptions,
+  ) -> Result<WasmPresentation> {
+    let mut data: Presentation = presentation.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-  //   self
-  //     .0
-  //     .sign_data(&mut data, &private_key, &method_query, options)
-  //     .wasm_result()?;
-  //   Ok(WasmPresentation::from(data))
-  // }
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmPresentation::from(data))
+  }
 
   /// Creates a signature for the given `data` with the specified DID Document
   /// Verification Method.

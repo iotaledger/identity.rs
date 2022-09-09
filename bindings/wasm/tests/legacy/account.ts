@@ -1,4 +1,5 @@
-// TODO: Remove or reuse depending on what we do with the account..
+// TODO: Remove or reuse depending on what we do with the account.
+// Note that this test is not executed as long as it sits in the legacy directory.
 export { };
 
 const assert = require('assert');
