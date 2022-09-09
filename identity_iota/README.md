@@ -69,7 +69,7 @@ To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/ex
 
 ## Example: Creating an Identity
 
-The following code creates and publishes a new IOTA DID Document to the Tangle Mainnet.
+The following code creates and publishes a new IOTA DID Document to the Shimmer Testnet.
 
 _Cargo.toml_
 
