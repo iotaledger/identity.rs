@@ -33,7 +33,7 @@ impl NetworkName {
     Ok(Self(name_cow))
   }
 
-  /// Validates whether a string is a spec-compliant IOTA UTXO DID [`NetworkName`].
+  /// Validates whether a string is a spec-compliant IOTA DID [`NetworkName`].
   pub fn validate_network_name(name: &str) -> Result<()> {
     Some(())
       .filter(|_| {

@@ -17,7 +17,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDIDUrl;
 
-/// A `Service` adhering to the IOTA UTXO DID method specification.
+/// A `Service` adhering to the IOTA DID method specification.
 #[wasm_bindgen(js_name = IotaService, inspectable)]
 pub struct WasmIotaService(pub(crate) IotaService);
 

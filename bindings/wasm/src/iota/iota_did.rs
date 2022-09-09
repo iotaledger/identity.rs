@@ -11,7 +11,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDIDUrl;
 
-/// A DID conforming to the IOTA UTXO DID method specification.
+/// A DID conforming to the IOTA DID method specification.
 ///
 /// @typicalname did
 #[wasm_bindgen(js_name = IotaDID, inspectable)]
@@ -19,7 +19,7 @@ pub struct WasmIotaDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = IotaDID)]
 impl WasmIotaDID {
-  /// The IOTA UTXO DID method name (`"iota"`).
+  /// The IOTA DID method name (`"iota"`).
   #[wasm_bindgen(getter = METHOD)]
   pub fn static_method() -> String {
     IotaDID::METHOD.to_owned()

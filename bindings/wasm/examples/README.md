@@ -1,6 +1,6 @@
 ![banner](./../../../documentation/static/img/Banner/banner_identity.svg)
 
-## IOTA Identity UTXO Examples
+## IOTA Identity Examples
 
 The following code examples demonstrate how to use the IOTA Identity Wasm bindings in JavaScript/TypeScript.
 

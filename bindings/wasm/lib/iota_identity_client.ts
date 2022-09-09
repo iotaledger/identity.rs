@@ -15,7 +15,7 @@ import {
     TransactionHelper
 } from '@iota/iota.js';
 
-/** Provides operations for IOTA UTXO DID Documents with Alias Outputs. */
+/** Provides operations for IOTA DID Documents with Alias Outputs. */
 export class IotaIdentityClient implements IIotaIdentityClient {
     client: Client;
 

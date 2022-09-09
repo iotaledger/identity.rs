@@ -36,16 +36,16 @@ use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
-/// A [`VerificationMethod`] adhering to the IOTA UTXO DID method specification.
+/// A [`VerificationMethod`] adhering to the IOTA DID method specification.
 pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
 
-/// A [`Service`] adhering to the IOTA UTXO DID method specification.
+/// A [`Service`] adhering to the IOTA DID method specification.
 pub type IotaService = Service<IotaDID, Object>;
 
-/// A [`CoreDocument`] whose fields adhere to the IOTA UTXO DID method specification.
+/// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
 pub type IotaCoreDocument = CoreDocument<IotaDID>;
 
-/// A DID Document adhering to the IOTA UTXO DID method specification.
+/// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
