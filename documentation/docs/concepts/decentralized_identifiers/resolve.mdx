@@ -7,7 +7,7 @@ keywords:
 - Resolve
 ---
 import resolve_did_rs from '!!raw-loader!../../../../examples/0_basic/2_resolve_did.rs';
-import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples-stardust/src/ex2_resolve_did.ts';
+import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples/src/ex2_resolve_did.ts';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -143,6 +143,6 @@ The following example creates a new IOTA DID, publishes it and then resolves its
 <CodeSnippet
     nodeContent={resolve_did_js}
     rustContent={resolve_did_rs}
-    nodeGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-stardust/src/ex2_resolve_did.ts"
+    nodeGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/ex2_resolve_did.ts"
     rustGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/2_resolve_did.rs"
 />
