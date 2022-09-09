@@ -61,12 +61,9 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 
 Replace imports with local paths for txm:
 !test program
-cat \
-| sed -e "s#require(\"@iota/identity-wasm/node\")#require('./node/')#" \
-| node
+cat | sed -e "s#require('@iota/identity-wasm/node')#require('./node')#" | node
 -->
 <!-- !test check Nodejs Example -->
-
 ```typescript
 const {
   KeyPair,
@@ -77,8 +74,8 @@ const {
   IotaService,
   MethodRelationship,
   IotaIdentityClient,
-} = require("@iota/identity-wasm/node");
-const { Client } = require("@cycraig/iota-client-wasm/node");
+} = require('@iota/identity-wasm/node');
+const { Client } = require('@cycraig/iota-client-wasm/node');
 
 const API_ENDPOINT = "https://api.testnet.shimmer.network/";
 
@@ -160,6 +157,8 @@ Created document  {
   }
 }
 ```
+
+**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md) for how to publish an IOTA DID Document.**
 
 ## Web Setup
 
@@ -295,6 +294,8 @@ await identity.init("./static/identity_wasm_bg.wasm");
 ```
 
 Calling `identity.init().then(<callback>)` or `await identity.init()` is required to load the Wasm file from the server if not available, because of that it will only be slow for the first time.
+
+**NOTE: see the [examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md) for how to publish an IOTA DID Document.**
 
 ## Examples in the Wild
 
