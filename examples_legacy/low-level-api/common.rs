@@ -15,7 +15,7 @@ use identity_iota::credential::Subject;
 use identity_iota::did::MethodScope;
 use identity_iota::did::DID;
 use identity_iota_client_legacy::Receipt;
-use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and

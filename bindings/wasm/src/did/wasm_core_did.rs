@@ -6,7 +6,6 @@ use identity_iota::did::DID;
 use wasm_bindgen::prelude::*;
 
 use crate::did::wasm_core_url::WasmCoreDIDUrl;
-use crate::did::WasmIotaDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -126,12 +125,5 @@ impl_wasm_clone!(WasmCoreDID, CoreDID);
 impl From<CoreDID> for WasmCoreDID {
   fn from(did: CoreDID) -> Self {
     WasmCoreDID(did)
-  }
-}
-
-impl From<WasmIotaDID> for WasmCoreDID {
-  fn from(wasm_did: WasmIotaDID) -> Self {
-    let core_did: CoreDID = wasm_did.0.into();
-    core_did.into()
   }
 }

@@ -38,7 +38,7 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
 
-* [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
+- [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
 
 ## Documentation and Resources
 
@@ -55,6 +55,7 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 ## Getting Started
 
 If you want to include IOTA Identity in your project, simply add it as a dependency in your `Cargo.toml`:
+
 ```toml
 [dependencies]
 identity_iota = { version = "0.6" }
@@ -68,9 +69,10 @@ To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/ex
 
 ## Example: Creating an Identity
 
-The following code creates and publishes a new IOTA DID Document to the Tangle Mainnet. 
+The following code creates and publishes a new IOTA DID Document to the Tangle Mainnet.
 
-*Cargo.toml*
+_Cargo.toml_
+
 ```toml
 [package]
 name = "iota_identity_example"
@@ -78,82 +80,95 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "0.6" }
+identity_iota = { version = "0.7" }
+iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 ```
-*main.*<span></span>*rs*
+
+_main._<span></span>_rs_
+
 ```rust,no_run
-use identity_iota::account::Account;
-use identity_iota::account::IdentitySetup;
-use identity_iota::account::Result;
-use identity_iota::account_storage::Stronghold;
 use identity_iota::core::ToJson;
-use identity_iota::client::ExplorerUrl;
-use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::KeyType;
+use identity_iota::did::MethodScope;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::IotaVerificationMethod;
+use identity_iota::iota::NetworkName;
+use iota_client::block::address::Address;
+use iota_client::block::output::AliasOutput;
+use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
 
+// The endpoint of the IOTA node to use.
+static NETWORK_ENDPOINT: &str = "https://127.0.0.1:14265";
+
+/// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
-async fn main() -> Result<()> {
-  // Stronghold settings.
-  let stronghold_path: &str = "./example-strong.hodl";
-  let password: String = "my-password".into();
-  let stronghold: Stronghold = Stronghold::new(stronghold_path, password, None).await?;
+async fn main() -> anyhow::Result<()> {
+  // Create a new client to interact with the IOTA ledger.
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
-  // Create a new identity with default settings and
-  // Stronghold as the storage.
-  let account: Account = Account::builder()
-    .storage(stronghold)
-    .create_identity(IdentitySetup::default())
-    .await?;
-
-  println!("[Example] Local Document = {:#?}", account.document());
-
-  // Fetch the DID Document from the Tangle
-  //
-  // This is an optional step to ensure DID Document consistency.
-  let resolved: ResolvedIotaDocument = account.resolve_identity().await?;
-
-  println!("[Example] Tangle Document = {}", resolved.to_json_pretty()?);
-
-  // Print the Identity Resolver Explorer URL.
-  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
-  println!(
-    "[Example] Explore the DID Document = {}",
-    explorer.resolver_url(account.did())?
+  // Create a new secret manager backed by a Stronghold.
+  let secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .build("./example-strong.hodl")?,
   );
+
+  // Get an address from the secret manager. The address needs to hold funds.
+  let address: Address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
+
+  // Get the Bech32 human-readable part (HRP) of the network.
+  let network_name: NetworkName = client.network_name().await?;
+
+  // Create a new DID document with a placeholder DID.
+  // The DID will be derived from the Alias Id of the Alias Output after publishing.
+  let mut document: IotaDocument = IotaDocument::new(&network_name);
+
+  // Insert a new Ed25519 verification method in the DID document.
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+  document.insert_method(method, MethodScope::VerificationMethod)?;
+
+  // Construct an Alias Output containing the DID document, with the wallet address
+  // set as both the state controller and governor.
+  let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
+  println!("Alias Output: {}", alias_output.to_json()?);
+
+  // Publish the Alias Output and get the published DID document.
+  let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  println!("Published DID document: {:#}", document);
 
   Ok(())
 }
 ```
-*Example output*
+
+_Example output_
+
 ```json
 {
   "doc": {
-    "id": "did:iota:8nG4d85jnqTYGMWt5DL63FobHF5Ersuw4foQnEo66nbD",
-    "capabilityInvocation": [
+    "id": "did:iota:rms:0x4113f08e360a3c1725bb1f93d94f6e807a1ef88f091d45f93513c3e88dac3248",
+    "verificationMethod": [
       {
-        "id": "did:iota:8nG4d85jnqTYGMWt5DL63FobHF5Ersuw4foQnEo66nbD#sign-0",
-        "controller": "did:iota:8nG4d85jnqTYGMWt5DL63FobHF5Ersuw4foQnEo66nbD",
+        "id": "did:iota:rms:0x4113f08e360a3c1725bb1f93d94f6e807a1ef88f091d45f93513c3e88dac3248#key-1",
+        "controller": "did:iota:rms:0x4113f08e360a3c1725bb1f93d94f6e807a1ef88f091d45f93513c3e88dac3248",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "zHCoXy5XR9BmxMfXK8GrKziPGJLFBnrfeuH3XR4GuQoR2"
+        "publicKeyMultibase": "z7BoQerJn9NxwcA4KHGK9CP5FJRRZJBmsxrGPvWiyuFGG"
       }
     ]
   },
   "meta": {
-    "created": "2022-06-14T13:16:04Z",
-    "updated": "2022-06-14T13:16:04Z"
-  },
-  "proof": {
-    "type": "JcsEd25519Signature2020",
-    "verificationMethod": "did:iota:8nG4d85jnqTYGMWt5DL63FobHF5Ersuw4foQnEo66nbD#sign-0",
-    "signatureValue": "2zx5UCTbcbzSRtPmNj12fzPe1fdGAPPEyT3WGjkP8ADb6xx5jj6E6tcGCYPgWi9YvohkwHSjAVPS5sD2Zac5deyW"
-  },
-  "integrationMessageId": "446c1416eda4b40ec793f902fe4ba18e88d8f164637426d9239fc7c1b921c8c3"
+    "created": "2022-09-06T12:12:11Z",
+    "updated": "2022-09-06T12:12:11Z"
+  }
 }
 ```
-```text
-[Example] Explore the DID Document = https://explorer.iota.org/mainnet/identity-resolver/did:iota:8nG4d85jnqTYGMWt5DL63FobHF5Ersuw4foQnEo66nbD
-```
-The output link points to the [Identity Resolver on the IOTA Tangle Explorer](https://explorer.iota.org/mainnet/identity-resolver/did:iota:8jYcEGiNYUWcSdEtjCAcS97G58qq1VrWzW7M57BsHymz).
 
 ## Roadmap and Milestones
 
@@ -163,20 +178,19 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 
 #### Basic Framework
 
-| Feature                   | Not started | In Research | In Development | Done | Notes                                                               |
-| :------------------------- | :---------: | :------: | :---------------: | :-:  | :-------------------------------------------------------------------- |
-| [IOTA DID Method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec) | | | | ✔️ | Finished implementation. |
-| [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) | | | | ✔️ | Finished implementation. |
-| Account | | | | ✔️ | Finished implementation. |
-| Identity Actor | | | 🔶 | | |
-| [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview) | | | 🔶 | | In-progress with Actor |
-| Selective Disclosure | | 🔶 | | | |
-| Zero Knowledge Proofs | | 🔶 | | | |
-| Support Embedded Rust | | 🔶 | | | |
-| [WASM Bindings](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm) | | | | ✔️  | Finished implementation. |
-| [Code Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples) | | | | ✔️ | |
-| [Documentation Portal](https://wiki.iota.org/identity.rs/introduction) | | | 🔶 | | |
-
+|                                       Feature                                       | Not started | In Research | In Development | Done |          Notes           |
+| :---------------------------------------------------------------------------------: | :---------: | :---------: | :------------: | :--: | :----------------------: |
+| [IOTA DID Method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec) |             |             |                |  ✔️  | Finished implementation. |
+|           [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)            |             |             |                |  ✔️  | Finished implementation. |
+|                                       Account                                       |             |             |                |  ✔️  | Finished implementation. |
+| [Identity Agent](https://github.com/iotaledger/identity.rs/tree/dev/identity_agent) |             |             |       🔶       |      |                          |
+|         [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview)         |             |             |       🔶       |      |  In-progress with Agent  |
+|                                Selective Disclosure                                 |             |     🔶      |                |      |                          |
+|                                Zero Knowledge Proofs                                |             |     🔶      |                |      |                          |
+|                                Support Embedded Rust                                |             |     🔶      |                |      |                          |
+| [WASM Bindings](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm)  |             |             |                |  ✔️  | Finished implementation. |
+|    [Code Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples)    |             |             |                |  ✔️  |                          |
+|       [Documentation Portal](https://wiki.iota.org/identity.rs/introduction)        |             |             |       🔶       |      |                          |
 
 #### Next Milestones
 

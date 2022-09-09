@@ -17,16 +17,16 @@ use wasm_bindgen::prelude::*;
 #[macro_use]
 mod macros;
 
-pub mod account;
-pub mod chain;
+// Deactivated legacy packages.
+// pub mod account;
+
 pub mod common;
 pub mod credential;
 pub mod crypto;
 pub mod did;
 pub mod error;
+pub mod iota;
 pub mod revocation;
-pub mod stardust;
-pub mod tangle;
 
 pub mod resolver;
 

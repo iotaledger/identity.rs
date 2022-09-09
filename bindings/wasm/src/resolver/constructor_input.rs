@@ -3,7 +3,7 @@
 
 use wasm_bindgen::prelude::*;
 
-use crate::stardust::WasmStardustIdentityClient;
+use crate::iota::WasmIotaIdentityClient;
 
 #[wasm_bindgen]
 extern "C" {
@@ -14,7 +14,7 @@ extern "C" {
   pub type ResolverConfig;
 
   #[wasm_bindgen(method, getter)]
-  pub(crate) fn client(this: &ResolverConfig) -> Option<WasmStardustIdentityClient>;
+  pub(crate) fn client(this: &ResolverConfig) -> Option<WasmIotaIdentityClient>;
 
   #[wasm_bindgen(method, getter)]
   pub(crate) fn handlers(this: &ResolverConfig) -> Option<MapResolutionHandler>;
@@ -25,7 +25,7 @@ extern "C" {
 // definitions (which would be accepted by JSDocs).
 #[wasm_bindgen(typescript_custom_section)]
 const HANDLERS: &'static str =
-  "export type ResolutionHandlers = Map<string, (did: string) => Promise<StardustDocument | CoreDocument>>;";
+  "export type ResolutionHandlers = Map<string, (did: string) => Promise<IotaDocument | CoreDocument>>;";
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_RESOLVER_CONFIG: &'static str = r#"
@@ -37,7 +37,7 @@ export type ResolverConfig = {
     /**
      * Client for resolving DIDs of the iota method. 
      */
-    client?: IStardustIdentityClient,
+    client?: IIotaIdentityClient,
 
     /**
      * Handlers for resolving DIDs from arbitrary DID methods. 
@@ -46,6 +46,6 @@ export type ResolverConfig = {
      * 
      * Note that if a `client` is given the key "iota" may NOT be present in this map. 
      */
-    handlers?: Map<string, (did: string) => Promise<StardustDocument | CoreDocument>>
+    handlers?: Map<string, (did: string) => Promise<IotaDocument | CoreDocument>>
 };
 "#;

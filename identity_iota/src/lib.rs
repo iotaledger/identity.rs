@@ -69,6 +69,12 @@ pub mod did {
   pub use identity_did::verifiable;
 }
 
+pub mod iota {
+  //! The IOTA DID method implementation for the IOTA ledger.
+
+  pub use identity_iota_core::*;
+}
+
 // #[cfg(feature = "comm")]
 // #[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
 // pub mod comm {
@@ -83,6 +89,9 @@ pub mod did {
 
 pub mod prelude {
   //! Prelude of commonly used types
+
+  pub use identity_iota_core::IotaDID;
+  pub use identity_iota_core::IotaDocument;
 
   pub use identity_core::crypto::KeyPair;
   pub use identity_core::crypto::KeyType;

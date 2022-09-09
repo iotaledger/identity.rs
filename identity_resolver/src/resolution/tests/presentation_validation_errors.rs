@@ -10,8 +10,8 @@ use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::document::CoreDocument;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 
 use super::valid_presentation_data::HOLDER_FOO_DOC_JSON;
 use super::valid_presentation_data::ISSUER_BAR_DOC_JSON;
@@ -19,12 +19,12 @@ use super::valid_presentation_data::ISSUER_IOTA_DOC_JSON;
 use super::valid_presentation_data::PRESENTATION_JSON;
 
 type DynamicError = Box<dyn std::error::Error + Send + Sync + 'static>;
-async fn misconfigured_iota_resolver(_did: StardustDID) -> Result<CoreDocument, DynamicError> {
+async fn misconfigured_iota_resolver(_did: IotaDID) -> Result<CoreDocument, DynamicError> {
   Ok(CoreDocument::from_json(HOLDER_FOO_DOC_JSON).unwrap())
 }
 
-async fn misconfigured_bar_resolver(_did: CoreDID) -> Result<StardustDocument, DynamicError> {
-  Ok(StardustDocument::from_json(ISSUER_IOTA_DOC_JSON).unwrap())
+async fn misconfigured_bar_resolver(_did: CoreDID) -> Result<IotaDocument, DynamicError> {
+  Ok(IotaDocument::from_json(ISSUER_IOTA_DOC_JSON).unwrap())
 }
 
 async fn misconfigured_foo_resolver(_did: CoreDID) -> Result<CoreDocument, DynamicError> {
@@ -34,9 +34,9 @@ async fn misconfigured_foo_resolver(_did: CoreDID) -> Result<CoreDocument, Dynam
 /// checks that `Resolver::verify_presentation` fails when the resolver is misconfigured.
 async fn check_verify_presentation<DOC>(mut resolver: Resolver<DOC>)
 where
-  DOC: ValidatorDocument + From<CoreDocument> + From<StardustDocument> + Send + Sync,
+  DOC: ValidatorDocument + From<CoreDocument> + From<IotaDocument> + Send + Sync,
 {
-  let correct_iota_issuer: StardustDocument = StardustDocument::from_json(ISSUER_IOTA_DOC_JSON).unwrap();
+  let correct_iota_issuer: IotaDocument = IotaDocument::from_json(ISSUER_IOTA_DOC_JSON).unwrap();
   let correct_bar_issuer: CoreDocument = CoreDocument::from_json(ISSUER_BAR_DOC_JSON).unwrap();
   let correct_issuers: [DOC; 2] = [correct_bar_issuer.into(), correct_iota_issuer.into()];
   let correct_holder: DOC = CoreDocument::from_json(HOLDER_FOO_DOC_JSON).unwrap().into();

@@ -11,9 +11,9 @@ const {
     Presentation,
     ProofOptions,
     RevocationBitmap,
-    StardustDocument,
-    StardustService,
-    StardustVerificationMethod,
+    IotaDocument,
+    IotaService,
+    IotaVerificationMethod,
     StatusCheck,
     SubjectHolderRelationship,
     Timestamp,
@@ -163,21 +163,21 @@ describe('CredentialValidator, PresentationValidator', function () {
     describe('#validate()', function () {
         it('should work', async () => {
             // Set up issuer & subject DID documents.
-            const issuerDoc = new StardustDocument("iota");
+            const issuerDoc = new IotaDocument("iota");
             const issuerKeys = new KeyPair(KeyType.Ed25519);
-            issuerDoc.insertMethod(new StardustVerificationMethod(issuerDoc.id(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"), MethodScope.VerificationMethod());
+            issuerDoc.insertMethod(new IotaVerificationMethod(issuerDoc.id(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"), MethodScope.VerificationMethod());
 
             // Add RevocationBitmap service.
             const revocationBitmap = new RevocationBitmap();
-            issuerDoc.insertService(new StardustService({
+            issuerDoc.insertService(new IotaService({
                 id: issuerDoc.id().join("#my-revocation-service"),
                 type: RevocationBitmap.type(),
                 serviceEndpoint: revocationBitmap.toEndpoint()
             }))
 
-            const subjectDoc = new StardustDocument("iota");
+            const subjectDoc = new IotaDocument("iota");
             const subjectKeys = new KeyPair(KeyType.Ed25519);
-            subjectDoc.insertMethod(new StardustVerificationMethod(subjectDoc.id(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"), MethodScope.VerificationMethod());
+            subjectDoc.insertMethod(new IotaVerificationMethod(subjectDoc.id(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"), MethodScope.VerificationMethod());
 
             const subjectDID = subjectDoc.id();
             const issuerDID = issuerDoc.id();
