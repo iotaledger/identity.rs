@@ -21,6 +21,7 @@ identity_credential = { version = "=0.6.0", path = "../identity_credential", def
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_iota_client = { version = "=0.6.0", path = "../identity_iota_client", default-features = false }
 identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=0.6.0", path = "../identity_resolver", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
@@ -42,6 +43,8 @@ stronghold = ["identity_account/stronghold", "identity_account_storage/stronghol
 # Enables support for DID Communication
 # comm = ["identity_comm"]
 
+# TODO: After merging the refactor (#1000), add "identity_resolver/iota" to the `iota-client` feature.
+
 # Enables `Send` + `Sync` bounds for the Storage trait.
 send-sync-storage = ["identity_account_storage/send-sync-storage"]
 
@@ -51,6 +54,7 @@ storage-test-suite = ["identity_account_storage/storage-test-suite"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
   "identity_account?/revocation-bitmap",
+  "identity_resolver/revocation-bitmap",
   "identity_iota_client/revocation-bitmap",
   "identity_credential/revocation-bitmap",
 ]

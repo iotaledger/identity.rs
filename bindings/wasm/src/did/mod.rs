@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use self::wasm_core_did::WasmCoreDID;
+pub use self::wasm_core_document::WasmCoreDocument;
 pub use self::wasm_did_url::WasmDIDUrl;
 pub use self::wasm_diff_message::WasmDiffMessage;
 pub use self::wasm_document::WasmDocument;

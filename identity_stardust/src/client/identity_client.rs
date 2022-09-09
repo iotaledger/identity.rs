@@ -19,7 +19,8 @@ use crate::StardustDID;
 use crate::StardustDocument;
 
 /// Helper functions necessary for the [`StardustIdentityClientExt`] trait.
-#[async_trait::async_trait(? Send)]
+#[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait StardustIdentityClient {
   /// Return the Bech32 human-readable part (HRP) of the network.
   ///
@@ -38,7 +39,9 @@ pub trait StardustIdentityClient {
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
 /// provided for [`StardustIdentityClient`] implementers.
-#[async_trait::async_trait(? Send)]
+
+#[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
+#[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait StardustIdentityClientExt: StardustIdentityClient {
   /// Create a DID with a new Alias Output containing the given `document`.
   ///

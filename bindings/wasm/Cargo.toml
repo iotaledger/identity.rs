@@ -33,13 +33,24 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 version = "=0.6.0"
 path = "../../identity_iota"
 default-features = false
-features = ["account", "storage-test-suite", "unstable-encryption", "revocation-bitmap"]
+features = [
+  "account",
+  "storage-test-suite",
+  "unstable-encryption",
+  "revocation-bitmap",
+]
 
 [dependencies.identity_stardust]
 version = "=0.6.0"
 path = "../../identity_stardust"
 default-features = false
 features = ["client", "revocation-bitmap"]
+
+[dependencies.identity_resolver]
+version = "=0.6.0"
+path = "../../identity_resolver"
+default-features = false
+features = ["revocation-bitmap"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }

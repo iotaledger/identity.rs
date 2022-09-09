@@ -160,6 +160,21 @@ impl<'a> Display for ErrorMessage<'a, identity_iota::client::Error> {
   }
 }
 
+impl<'a> Display for ErrorMessage<'a, identity_resolver::Error> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    error_chain_fmt(self.0, f)
+  }
+}
+
+impl From<identity_resolver::Error> for WasmError<'_> {
+  fn from(error: identity_resolver::Error) -> Self {
+    Self {
+      name: Cow::Owned(format!("ResolverError::{}", <&'static str>::from(error.error_cause()))),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
 impl From<identity_iota::client::Error> for WasmError<'_> {
   fn from(error: identity_iota::client::Error) -> Self {
     Self {
@@ -214,12 +229,17 @@ impl From<UpdateError> for WasmError<'_> {
   }
 }
 
-/// Convenience struct to convert Result<JsValue, JsValue> to an AccountStorageResult<_, AccountStorageError>
+/// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
   /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
   pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
+    self.stringify_error().map_err(AccountStorageError::JsError)
+  }
+
+  // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
+  pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
     self.0.map_err(|js_value| {
       let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
         Ok(js_err) => ToString::to_string(&js_err.to_string()),
@@ -228,24 +248,13 @@ impl JsValueResult {
           format!("{js_val:?}")
         }
       };
-
-      AccountStorageError::JsError(error_string)
+      error_string
     })
   }
 
   /// Consumes the struct and returns a Result<_, identity_stardust::Error>, leaving an `Ok` value untouched.
   pub fn to_stardust_error(self) -> StdResult<JsValue, identity_stardust::Error> {
-    self.0.map_err(|js_value| {
-      let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
-        Ok(js_err) => ToString::to_string(&js_err.to_string()),
-        Err(js_val) => {
-          // Fall back to debug formatting if the error is not a proper JS Error instance.
-          format!("{js_val:?}")
-        }
-      };
-
-      identity_stardust::Error::JsError(error_string)
-    })
+    self.stringify_error().map_err(identity_stardust::Error::JsError)
   }
 }
 

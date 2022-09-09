@@ -139,6 +139,13 @@ pub mod prelude {
   pub use identity_iota_client::tangle::Client;
   pub use identity_iota_client::Result;
   pub use identity_iota_core::document::IotaDocument;
+  pub use identity_resolver::Resolver;
+}
+
+pub mod resolver {
+  //! DID resolution utilities
+
+  pub use identity_resolver::*;
 }
 
 #[cfg(feature = "unstable-agent")]
