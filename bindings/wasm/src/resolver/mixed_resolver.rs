@@ -19,9 +19,9 @@ use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::common::PromiseVoid;
-use crate::credential::WasmFailFast;
-use crate::credential::WasmPresentation;
-use crate::credential::WasmPresentationValidationOptions;
+// use crate::credential::WasmFailFast;
+// use crate::credential::WasmPresentation;
+// use crate::credential::WasmPresentationValidationOptions;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::iota::WasmIotaDID;
@@ -166,60 +166,61 @@ impl MixedResolver {
     resolver.attach_handler(method, fun);
   }
 
+  // REFACTOR-TODO: Reactivate after credential validators are fixed.
   /// Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
   /// Issuer documents are returned in arbitrary order.
   ///
   /// # Errors
   /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
   /// resolution fails.
-  #[wasm_bindgen(js_name = resolvePresentationIssuers)]
-  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
-    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
+  // #[wasm_bindgen(js_name = resolvePresentationIssuers)]
+  // pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
+  //   let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+  //   let presentation: Presentation = presentation.0.clone();
 
-    let promise: Promise = future_to_promise(async move {
-      let supported_documents: Vec<RustSupportedDocument> = resolver
-        .resolve_presentation_issuers(&presentation)
-        .await
-        .wasm_result()
-        .and_then(|abstractly_resolved| {
-          abstractly_resolved
-            .into_iter()
-            .map(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
-            .collect::<Result<_>>()
-        })?;
+  //   let promise: Promise = future_to_promise(async move {
+  //     let supported_documents: Vec<RustSupportedDocument> = resolver
+  //       .resolve_presentation_issuers(&presentation)
+  //       .await
+  //       .wasm_result()
+  //       .and_then(|abstractly_resolved| {
+  //         abstractly_resolved
+  //           .into_iter()
+  //           .map(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
+  //           .collect::<Result<_>>()
+  //       })?;
 
-      Ok(
-        supported_documents
-          .into_iter()
-          .map(JsValue::from)
-          .collect::<js_sys::Array>()
-          .into(),
-      )
-    });
-    Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
-  }
+  //     Ok(
+  //       supported_documents
+  //         .into_iter()
+  //         .map(JsValue::from)
+  //         .collect::<js_sys::Array>()
+  //         .into(),
+  //     )
+  //   });
+  //   Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
+  // }
 
   /// Fetches the DID Document of the holder of a `Presentation`.
   ///
   /// # Errors
   /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
   /// DID resolution fails.
-  #[wasm_bindgen(js_name = resolvePresentationHolder)]
-  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseSupportedDocument> {
-    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
+  // #[wasm_bindgen(js_name = resolvePresentationHolder)]
+  // pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseSupportedDocument> {
+  //   let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+  //   let presentation: Presentation = presentation.0.clone();
 
-    let promise: Promise = future_to_promise(async move {
-      resolver
-        .resolve_presentation_holder(&presentation)
-        .await
-        .wasm_result()
-        .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
-        .map(JsValue::from)
-    });
-    Ok(promise.unchecked_into::<PromiseSupportedDocument>())
-  }
+  //   let promise: Promise = future_to_promise(async move {
+  //     resolver
+  //       .resolve_presentation_holder(&presentation)
+  //       .await
+  //       .wasm_result()
+  //       .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
+  //       .map(JsValue::from)
+  //   });
+  //   Ok(promise.unchecked_into::<PromiseSupportedDocument>())
+  // }
 
   /// Verifies a `Presentation`.
   ///
@@ -237,41 +238,41 @@ impl MixedResolver {
   /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
   /// Otherwise, errors from validating the presentation and its credentials will be returned
   /// according to the `fail_fast` parameter.
-  #[wasm_bindgen(js_name = verifyPresentation)]
-  pub fn verify_presentation(
-    &self,
-    presentation: &WasmPresentation,
-    options: &WasmPresentationValidationOptions,
-    fail_fast: WasmFailFast,
-    holder: &OptionSupportedDocument,
-    issuers: &OptionArraySupportedDocument,
-  ) -> Result<PromiseVoid> {
-    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
-    let options: PresentationValidationOptions = options.0.clone();
+  // #[wasm_bindgen(js_name = verifyPresentation)]
+  // pub fn verify_presentation(
+  //   &self,
+  //   presentation: &WasmPresentation,
+  //   options: &WasmPresentationValidationOptions,
+  //   fail_fast: WasmFailFast,
+  //   holder: &OptionSupportedDocument,
+  //   issuers: &OptionArraySupportedDocument,
+  // ) -> Result<PromiseVoid> {
+  //   let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+  //   let presentation: Presentation = presentation.0.clone();
+  //   let options: PresentationValidationOptions = options.0.clone();
 
-    let holder: Option<RustSupportedDocument> = holder.into_serde().wasm_result()?;
-    let holder: Option<AbstractValidatorDocument> = holder.map(From::from);
-    let issuers: Option<Vec<RustSupportedDocument>> = issuers.into_serde().wasm_result()?;
-    let issuers: Option<Vec<AbstractValidatorDocument>> =
-      issuers.map(|vector| vector.into_iter().map(AbstractValidatorDocument::from).collect());
+  //   let holder: Option<RustSupportedDocument> = holder.into_serde().wasm_result()?;
+  //   let holder: Option<AbstractValidatorDocument> = holder.map(From::from);
+  //   let issuers: Option<Vec<RustSupportedDocument>> = issuers.into_serde().wasm_result()?;
+  //   let issuers: Option<Vec<AbstractValidatorDocument>> =
+  //     issuers.map(|vector| vector.into_iter().map(AbstractValidatorDocument::from).collect());
 
-    let promise: Promise = future_to_promise(async move {
-      resolver
-        .verify_presentation(
-          &presentation,
-          &options,
-          fail_fast.into(),
-          holder.as_ref(),
-          issuers.as_deref(),
-        )
-        .await
-        .wasm_result()
-        .map(|_| JsValue::UNDEFINED)
-    });
+  //   let promise: Promise = future_to_promise(async move {
+  //     resolver
+  //       .verify_presentation(
+  //         &presentation,
+  //         &options,
+  //         fail_fast.into(),
+  //         holder.as_ref(),
+  //         issuers.as_deref(),
+  //       )
+  //       .await
+  //       .wasm_result()
+  //       .map(|_| JsValue::UNDEFINED)
+  //   });
 
-    Ok(promise.unchecked_into::<PromiseVoid>())
-  }
+  //   Ok(promise.unchecked_into::<PromiseVoid>())
+  // }
 
   /// Fetches the DID Document of the given DID.
   ///
