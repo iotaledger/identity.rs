@@ -422,6 +422,12 @@ mod iota_document_revocation {
 
 impl From<IotaDocument> for IotaCoreDocument {
   fn from(document: IotaDocument) -> Self {
+    document.document
+  }
+}
+
+impl From<IotaDocument> for CoreDocument {
+  fn from(document: IotaDocument) -> Self {
     document.document.map(Into::into, |id| id)
   }
 }

@@ -20,9 +20,9 @@ identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", defau
 identity_resolver = { version = "=0.6.0", path = "../identity_resolver", default-features = false }
 
 [dev-dependencies]
+anyhow = "1.0.64"
 iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 tokio = { version = "1.17.0", features = ["full"] }
-anyhow = "1.0.64"
 
 [features]
 default = ["revocation-bitmap"]
@@ -38,7 +38,7 @@ iota-client = ["identity_iota_core/iota-client"]
 revocation-bitmap = [
   "identity_credential/revocation-bitmap",
   "identity_iota_core/revocation-bitmap",
-  "identity_resolver/revocation-bitmap"
+  "identity_resolver/revocation-bitmap",
 ]
 
 # Enables support for the unstable identity agent.

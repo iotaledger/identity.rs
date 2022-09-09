@@ -397,31 +397,31 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
 mod iota_handler {
   use super::Resolver;
   use identity_credential::validator::ValidatorDocument;
-  use identity_stardust::StardustClientExt;
-  use identity_stardust::StardustDID;
-  use identity_stardust::StardustDocument;
-  use identity_stardust::StardustIdentityClientExt;
+  use identity_iota_core::IotaClientExt;
+  use identity_iota_core::IotaDID;
+  use identity_iota_core::IotaDocument;
+  use identity_iota_core::IotaIdentityClientExt;
   use std::sync::Arc;
 
   impl<DOC> Resolver<DOC>
   where
-    DOC: From<StardustDocument> + ValidatorDocument + 'static,
+    DOC: From<IotaDocument> + ValidatorDocument + 'static,
   {
     /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs.
     ///
     /// See also [`attach_handler`](Self::attach_handler).
     pub fn attach_iota_handler<CLI>(&mut self, client: CLI)
     where
-      CLI: StardustClientExt + Send + Sync + 'static,
+      CLI: IotaClientExt + Send + Sync + 'static,
     {
       let arc_client: Arc<CLI> = Arc::new(client);
 
-      let handler = move |did: StardustDID| {
+      let handler = move |did: IotaDID| {
         let future_client = arc_client.clone();
         async move { future_client.resolve_did(&did).await }
       };
 
-      self.attach_handler(StardustDID::METHOD.to_owned(), handler);
+      self.attach_handler(IotaDID::METHOD.to_owned(), handler);
     }
   }
 }

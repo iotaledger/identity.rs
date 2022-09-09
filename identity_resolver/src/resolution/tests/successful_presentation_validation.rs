@@ -12,8 +12,8 @@ use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::document::Document;
 use identity_did::verifiable::VerifierOptions;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use serde::de::DeserializeOwned;
 
 use crate::Resolver;
@@ -42,7 +42,7 @@ async fn resolve_foo(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
   resolve(did, HOLDER_FOO_DOC_JSON).await
 }
 
-async fn resolve_iota(did: StardustDID) -> Result<StardustDocument, ResolutionError> {
+async fn resolve_iota(did: IotaDID) -> Result<IotaDocument, ResolutionError> {
   resolve(did, ISSUER_IOTA_DOC_JSON).await
 }
 
@@ -52,11 +52,11 @@ async fn resolve_bar(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
 
 async fn check_verify_presentation<DOC>(mut resolver: Resolver<DOC>)
 where
-  DOC: ValidatorDocument + From<CoreDocument> + From<StardustDocument> + Send + Sync,
+  DOC: ValidatorDocument + From<CoreDocument> + From<IotaDocument> + Send + Sync,
 {
   let presentation: Presentation = Presentation::from_json(PRESENTATION_JSON).unwrap();
 
-  resolver.attach_handler(StardustDID::METHOD.to_owned(), resolve_iota);
+  resolver.attach_handler(IotaDID::METHOD.to_owned(), resolve_iota);
   resolver.attach_handler("foo".to_owned(), resolve_foo);
   resolver.attach_handler("bar".to_owned(), resolve_bar);
 
