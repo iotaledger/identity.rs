@@ -49,7 +49,6 @@ module.exports = {
                   'concepts/decentralized_identifiers/update',
                   'concepts/decentralized_identifiers/resolve',
                   'concepts/decentralized_identifiers/delete',
-                  'concepts/decentralized_identifiers/private_tangle',
               ],
               'Verifiable Credentials': [
                   'concepts/verifiable_credentials/overview',
