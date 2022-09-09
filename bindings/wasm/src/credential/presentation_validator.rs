@@ -4,22 +4,18 @@
 use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
-use identity_iota::did::DID;
-use identity_stardust::StardustDID;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::WasmCoreDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::resolver::ArraySupportedDocument;
 use crate::resolver::RustSupportedDocument;
+use crate::resolver::SupportedDID;
 use crate::resolver::SupportedDocument;
-use crate::stardust::WasmStardustDID;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
 pub struct WasmPresentationValidator;
@@ -102,20 +98,6 @@ impl WasmPresentationValidator {
   #[wasm_bindgen(js_name = extractHolder)]
   pub fn extract_holder(presentation: &WasmPresentation) -> Result<SupportedDID> {
     let did: CoreDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
-
-    let js: JsValue = if did.method() == StardustDID::METHOD {
-      let ret: StardustDID = StardustDID::try_from_core(did).wasm_result()?;
-      JsValue::from(WasmStardustDID::from(ret))
-    } else {
-      JsValue::from(WasmCoreDID::from(did))
-    };
-
-    Ok(js.unchecked_into::<SupportedDID>())
+    SupportedDID::try_from(did)
   }
-}
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "CoreDID | StardustDID")]
-  pub type SupportedDID;
 }

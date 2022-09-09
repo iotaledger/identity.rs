@@ -1,14 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::did::WasmCoreDID;
 use crate::did::WasmCoreDocument;
 use crate::error::WasmError;
+use crate::error::WasmResult;
+use crate::stardust::WasmStardustDID;
 use crate::stardust::WasmStardustDocument;
 use identity_iota::credential::AbstractValidatorDocument;
+use identity_iota::did::CoreDID;
 use identity_iota::did::CoreDocument;
+use identity_iota::did::DID;
+use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 #[derive(Deserialize)]
 #[serde(untagged)]
@@ -58,6 +65,21 @@ impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
   }
 }
 
+impl TryFrom<CoreDID> for SupportedDID {
+  type Error = JsValue;
+
+  fn try_from(did: CoreDID) -> Result<Self, Self::Error> {
+    let js: JsValue = if did.method() == StardustDID::METHOD {
+      let ret: StardustDID = StardustDID::try_from_core(did).wasm_result()?;
+      JsValue::from(WasmStardustDID::from(ret))
+    } else {
+      JsValue::from(WasmCoreDID::from(did))
+    };
+
+    Ok(js.unchecked_into::<SupportedDID>())
+  }
+}
+
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Array<StardustDocument | CoreDocument>>")]
@@ -78,4 +100,6 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Array<StardustDocument | CoreDocument> | undefined")]
   pub type OptionArraySupportedDocument;
 
+  #[wasm_bindgen(typescript_type = "CoreDID | StardustDID")]
+  pub type SupportedDID;
 }
