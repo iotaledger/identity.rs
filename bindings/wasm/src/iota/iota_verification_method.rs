@@ -78,7 +78,7 @@ impl WasmIotaVerificationMethod {
     WasmMethodData::from(self.0.data().clone())
   }
 
-  /// Sets `CoreVerificationMethod` public key data.
+  /// Sets `IotaVerificationMethod` public key data.
   #[wasm_bindgen(js_name = setData)]
   pub fn set_data(&mut self, data: &WasmMethodData) {
     *self.0.data_mut() = data.0.clone();

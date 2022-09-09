@@ -23,13 +23,13 @@ npm run build
 Then, run an example using:
 
 ```bash
-npm run example:stardust -- <example-name>
+npm run example:node -- <example-name>
 ```
 
 For instance, to run the `ex0_create_did` example execute:
 
 ```bash
-npm run example:stardust -- ex0_create_did
+npm run example:node -- ex0_create_did
 ```
 
 | #   | Name                                            | Details                                                          |
