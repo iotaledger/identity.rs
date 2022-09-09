@@ -14,6 +14,9 @@ const {
     StardustDocument,
     StardustService,
     StardustVerificationMethod,
+    StatusCheck,
+    SubjectHolderRelationship,
+    Timestamp,
     KeyPair,
     VerifierOptions,
     PresentationValidator,
@@ -201,8 +204,14 @@ describe('CredentialValidator, PresentationValidator', function () {
             const signedCredential = issuerDoc.signCredential(credential, issuerKeys.private(), "#iss-0", ProofOptions.default());
 
             // Validate the credential.
+            assert.doesNotThrow(() => CredentialValidator.checkStructure(signedCredential));
+            assert.doesNotThrow(() => CredentialValidator.checkExpiresOnOrAfter(signedCredential, Timestamp.nowUTC()));
+            assert.doesNotThrow(() => CredentialValidator.checkIssuedOnOrBefore(signedCredential, Timestamp.nowUTC()));
+            assert.doesNotThrow(() => CredentialValidator.checkSubjectHolderRelationship(signedCredential, subjectDID.toString(), SubjectHolderRelationship.AlwaysSubject));
+            assert.doesNotThrow(() => CredentialValidator.checkStatus(signedCredential, [issuerDoc], StatusCheck.Strict));
             assert.doesNotThrow(() => CredentialValidator.verifySignature(signedCredential, [issuerDoc, subjectDoc], VerifierOptions.default()));
             assert.doesNotThrow(() => CredentialValidator.validate(signedCredential, issuerDoc, CredentialValidationOptions.default(), FailFast.FirstError));
+            assert.deepStrictEqual(CredentialValidator.extractIssuer(signedCredential).toString(), issuerDID.toString());
 
             // Construct a presentation.
             const presentation = new Presentation({
@@ -213,8 +222,10 @@ describe('CredentialValidator, PresentationValidator', function () {
             const signedPresentation = subjectDoc.signPresentation(presentation, subjectKeys.private(), "#sub-0", ProofOptions.default());
 
             // Validate the presentation.
+            assert.doesNotThrow(() => PresentationValidator.checkStructure(signedPresentation));
             assert.doesNotThrow(() => PresentationValidator.verifyPresentationSignature(signedPresentation, subjectDoc, VerifierOptions.default()));
             assert.doesNotThrow(() => PresentationValidator.validate(signedPresentation, subjectDoc, [issuerDoc], PresentationValidationOptions.default(), FailFast.FirstError));
+            assert.deepStrictEqual(PresentationValidator.extractHolder(signedPresentation).toString(), subjectDID.toString());
         });
     });
 });
