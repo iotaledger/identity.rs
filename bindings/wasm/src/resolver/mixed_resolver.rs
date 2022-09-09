@@ -92,8 +92,8 @@ impl MixedResolver {
       let handler = move |did: CoreDID| {
         let rc_client_clone: Rc<WasmIotaIdentityClient> = rc_client.clone();
         async move {
-          let stardust_did: IotaDID = IotaDID::parse(did)?;
-          Self::client_as_handler(rc_client_clone.as_ref(), stardust_did.into()).await
+          let iota_did: IotaDID = IotaDID::parse(did)?;
+          Self::client_as_handler(rc_client_clone.as_ref(), iota_did.into()).await
         }
       };
       resolver.attach_handler(IotaDID::METHOD.to_owned(), handler);
@@ -174,8 +174,8 @@ impl MixedResolver {
   /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
   /// resolution fails.
   // #[wasm_bindgen(js_name = resolvePresentationIssuers)]
-  // pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
-  //   let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+  // pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) ->
+  // Result<PromiseArraySupportedDocument> {   let resolver: Rc<SingleThreadedResolver> = self.0.clone();
   //   let presentation: Presentation = presentation.0.clone();
 
   //   let promise: Promise = future_to_promise(async move {

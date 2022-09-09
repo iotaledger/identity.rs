@@ -15,7 +15,7 @@ use wasm_bindgen::prelude::*;
 /// Temporary type used to convert to and from Box<dyn ValidatorDocument> until
 /// we port the Document trait to these bindings.
 pub(super) enum RustSupportedDocument {
-  Stardust(IotaDocument),
+  Iota(IotaDocument),
   Core(CoreDocument),
 }
 
@@ -23,7 +23,7 @@ impl From<RustSupportedDocument> for JsValue {
   fn from(document: RustSupportedDocument) -> Self {
     match document {
       RustSupportedDocument::Core(doc) => JsValue::from(WasmCoreDocument::from(doc)),
-      RustSupportedDocument::Stardust(doc) => JsValue::from(WasmIotaDocument(doc)),
+      RustSupportedDocument::Iota(doc) => JsValue::from(WasmIotaDocument(doc)),
     }
   }
 }
@@ -32,7 +32,7 @@ impl From<RustSupportedDocument> for AbstractValidatorDocument {
   fn from(document: RustSupportedDocument) -> Self {
     match document {
       RustSupportedDocument::Core(core_doc) => AbstractValidatorDocument::from(core_doc),
-      RustSupportedDocument::Stardust(stardust_doc) => AbstractValidatorDocument::from(stardust_doc),
+      RustSupportedDocument::Iota(iota_doc) => AbstractValidatorDocument::from(iota_doc),
     }
   }
 }
@@ -45,7 +45,7 @@ impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
       Ok(doc) => RustSupportedDocument::Core(*doc),
       Err(retry) => {
         if let Ok(doc) = retry.downcast::<IotaDocument>() {
-          RustSupportedDocument::Stardust(*doc)
+          RustSupportedDocument::Iota(*doc)
         } else {
           Err(WasmError::new(
             "CastingError".into(),
