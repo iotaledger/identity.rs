@@ -217,57 +217,6 @@ impl StardustDID {
   }
 }
 
-impl DID for StardustDID {
-  /// Returns the [`StardustDID`] scheme. See [`DID::SCHEME`].
-  fn scheme(&self) -> &'static str {
-    self.0.scheme()
-  }
-
-  /// Returns the [`StardustDID`] authority.
-  fn authority(&self) -> &str {
-    self.0.authority()
-  }
-
-  /// Returns the [`StardustDID`] method name.
-  fn method(&self) -> &str {
-    self.0.method()
-  }
-
-  /// Returns the [`StardustDID`] method-specific ID.
-  fn method_id(&self) -> &str {
-    self.0.method_id()
-  }
-
-  /// Returns the serialized [`StardustDID`].
-  ///
-  /// This is fast since the serialized value is stored in the [`DID`].
-  fn as_str(&self) -> &str {
-    self.0.as_str()
-  }
-
-  /// Consumes the [`StardustDID`] and returns the serialization.
-  fn into_string(self) -> String {
-    self.0.into_string()
-  }
-
-  /// Creates a new [`DIDUrl`](crate::StardustDIDUrl) by joining with a relative DID Url string.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if any base or relative DID segments are invalid.
-  fn join(self, segment: impl AsRef<str>) -> std::result::Result<DIDUrl<Self>, DIDError> {
-    self.into_url().join(segment)
-  }
-
-  fn to_url(&self) -> DIDUrl<Self> {
-    DIDUrl::new(self.clone(), None)
-  }
-
-  fn into_url(self) -> DIDUrl<Self> {
-    DIDUrl::new(self, None)
-  }
-}
-
 impl FromStr for StardustDID {
   type Err = DIDError;
 

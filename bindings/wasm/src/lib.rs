@@ -28,6 +28,8 @@ pub mod revocation;
 pub mod stardust;
 pub mod tangle;
 
+pub mod resolver;
+
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {

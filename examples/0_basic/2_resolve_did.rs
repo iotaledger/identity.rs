@@ -4,6 +4,7 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
+use identity_resolver::Resolver;
 use identity_stardust::block::address::Address;
 use identity_stardust::StardustDID;
 use identity_stardust::StardustDocument;
@@ -26,12 +27,26 @@ async fn main() -> anyhow::Result<()> {
       .build(random_stronghold_path())?,
   );
 
-  // Create a new DID in an Alias Output for us to modify.
+  // Create a new DID in an Alias Output for us to resolve.
   let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
 
+  // We can resolve a `StardustDID` with the client itself.
   // Resolve the associated Alias Output and extract the DID document from it.
-  let resolved: StardustDocument = client.resolve_did(&did).await?;
-  println!("Resolved DID Document: {:#}", resolved);
+  let client_document: StardustDocument = client.resolve_did(&did).await?;
+  println!("Client resolved DID Document: {:#}", client_document);
+
+  // We can also create a `Resolver` that has additional convenience methods,
+  // for example to resolve presentation issuers or to verify presentations.
+  let mut resolver = Resolver::<StardustDocument>::new();
+
+  // We need to register a handler that can resolve IOTA DIDs.
+  // This convenience method only requires us to provide a client.
+  resolver.attach_iota_handler(client.clone());
+
+  let resolver_document: StardustDocument = resolver.resolve(&did).await.unwrap();
+
+  // Client and Resolver resolve to the same document in this case.
+  assert_eq!(client_document, resolver_document);
 
   // We can also resolve the Alias Output directly.
   let alias_output: AliasOutput = client.resolve_did_output(&did).await?;

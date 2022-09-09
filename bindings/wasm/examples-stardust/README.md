@@ -32,13 +32,13 @@ For instance, to run the `ex0_create_did` example execute:
 npm run example:stardust -- ex0_create_did
 ```
 
-| #   | Name                                            | Details                                                          |
-|-----|-------------------------------------------------|------------------------------------------------------------------|
-| 0   | [ex0_create_did](src/ex0_create_did.ts)         | Create a DID Document and publish it in a new Alias Output.      |
-| 1   | [ex1_update_did](src/ex1_update_did.ts)         | Update a DID document in an existing Alias Output.               |
-| 2   | [ex2_resolve_did](src/ex2_resolve_did.ts)       | Resolve an existing DID in an Alias Output.                      |
-| 3   | [ex3_deactivate_did](src/ex3_deactivate_did.ts) | Deactivate a DID in an Alias Output.                             |
-| 4   | [ex4_delete_did](src/ex4_delete_did.ts)         | Delete a DID in an Alias Output, reclaiming the storage deposit. |
+| #   | Name                                                  | Details                                                          |
+|-----|-------------------------------------------------------|------------------------------------------------------------------|
+| 0   | [ex0_create_did](src/ex0_create_did.ts)               | Create a DID Document and publish it in a new Alias Output.      |
+| 1   | [ex1_update_did](src/ex1_update_did.ts)               | Update a DID document in an existing Alias Output.               |
+| 2   | [ex2_resolve_did](src/ex2_resolve_did.ts)             | Resolve an existing DID in an Alias Output.                      |
+| 3   | [ex3_deactivate_did](src/ex3_deactivate_did.ts)       | Deactivate a DID in an Alias Output.                             |
+| 4   | [ex4_delete_did](src/ex4_delete_did.ts)               | Delete a DID in an Alias Output, reclaiming the storage deposit. |
 
 ## Browser
 
