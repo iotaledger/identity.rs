@@ -1,5 +1,4 @@
-# IOTA Stardust Identity Library
+IOTA Identity
+===
 
-This is a work-in-progress intended to replace the `did:iota` DID Method.
-
-`cargo run --example create_did`
+This crate provides the core data structures for the [IOTA DID Method Specification](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec). It provides interfaces for publishing and resolving DID Documents to and from the Tangle according to the IOTA DID Method Specification.
