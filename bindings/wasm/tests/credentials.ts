@@ -6,12 +6,14 @@ const {
     CredentialValidator,
     CredentialValidationOptions,
     FailFast,
-    Document,
     KeyType,
+    MethodScope,
     Presentation,
     ProofOptions,
     RevocationBitmap,
-    Service,
+    StardustDocument,
+    StardustService,
+    StardustVerificationMethod,
     KeyPair,
     VerifierOptions,
     PresentationValidator,
@@ -158,19 +160,21 @@ describe('CredentialValidator, PresentationValidator', function () {
     describe('#validate()', function () {
         it('should work', async () => {
             // Set up issuer & subject DID documents.
+            const issuerDoc = new StardustDocument("iota");
             const issuerKeys = new KeyPair(KeyType.Ed25519);
-            const issuerDoc = new Document(issuerKeys);
+            issuerDoc.insertMethod(new StardustVerificationMethod(issuerDoc.id(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"), MethodScope.VerificationMethod());
 
             // Add RevocationBitmap service.
             const revocationBitmap = new RevocationBitmap();
-            issuerDoc.insertService(new Service({
+            issuerDoc.insertService(new StardustService({
                 id: issuerDoc.id().join("#my-revocation-service"),
                 type: RevocationBitmap.type(),
                 serviceEndpoint: revocationBitmap.toEndpoint()
             }))
 
+            const subjectDoc = new StardustDocument("iota");
             const subjectKeys = new KeyPair(KeyType.Ed25519);
-            const subjectDoc = new Document(subjectKeys);
+            subjectDoc.insertMethod(new StardustVerificationMethod(subjectDoc.id(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"), MethodScope.VerificationMethod());
 
             const subjectDID = subjectDoc.id();
             const issuerDID = issuerDoc.id();
@@ -194,7 +198,7 @@ describe('CredentialValidator, PresentationValidator', function () {
             });
 
             // Sign the credential with the issuer's DID Document.
-            const signedCredential = issuerDoc.signCredential(credential, issuerKeys.private(), "#sign-0", ProofOptions.default());
+            const signedCredential = issuerDoc.signCredential(credential, issuerKeys.private(), "#iss-0", ProofOptions.default());
 
             // Validate the credential.
             assert.doesNotThrow(() => CredentialValidator.verifySignature(signedCredential, [issuerDoc, subjectDoc], VerifierOptions.default()));
@@ -206,7 +210,7 @@ describe('CredentialValidator, PresentationValidator', function () {
                 holder: subjectDID.toString(),
                 verifiableCredential: signedCredential
             });
-            const signedPresentation = subjectDoc.signPresentation(presentation, subjectKeys.private(), "#sign-0", ProofOptions.default());
+            const signedPresentation = subjectDoc.signPresentation(presentation, subjectKeys.private(), "#sub-0", ProofOptions.default());
 
             // Validate the presentation.
             assert.doesNotThrow(() => PresentationValidator.verifyPresentationSignature(signedPresentation, subjectDoc, VerifierOptions.default()));

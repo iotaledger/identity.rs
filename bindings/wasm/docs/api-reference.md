@@ -2145,7 +2145,7 @@ Deserializes an instance from a JSON object.
     * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
     * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
     * [.verifySignature(credential, trustedIssuers, options)](#CredentialValidator.verifySignature)
-    * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
+    * [.checkSubjectHolderRelationship(credential, holder, relationship)](#CredentialValidator.checkSubjectHolderRelationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
     * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>StardustDID</code>](#StardustDID)
 
@@ -2244,18 +2244,18 @@ to verify the credential's signature will be made and an error is returned upon 
 | trustedIssuers | <code>Array.&lt;(StardustDocument\|CoreDocument)&gt;</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
-<a name="CredentialValidator.check_subject_holder_relationship"></a>
+<a name="CredentialValidator.checkSubjectHolderRelationship"></a>
 
-### CredentialValidator.check\_subject\_holder\_relationship(credential, holder_url, relationship)
+### CredentialValidator.checkSubjectHolderRelationship(credential, holder, relationship)
 Validate that the relationship between the `holder` and the credential subjects is in accordance with
-`relationship`. The `holder_url` parameter is expected to be the URL of the holder.
+`relationship`. The `holder` parameter is expected to be the URL of the holder.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| holder_url | <code>string</code> | 
+| holder | <code>string</code> | 
 | relationship | <code>number</code> | 
 
 <a name="CredentialValidator.checkStatus"></a>
