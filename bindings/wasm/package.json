@@ -26,7 +26,7 @@
     "test:node": "ts-mocha -p tsconfig.node.json ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/e2e -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
-    "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
+    "test:readme": "txm README.md",
     "test:unit": "wasm-pack test --release --node",
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open"
