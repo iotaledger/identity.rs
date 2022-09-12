@@ -60,12 +60,14 @@ impl StateMetadataDocument {
   /// an Alias Output's state metadata, according to the given `encoding`.
   pub fn pack(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
     let encoded_message_data: Vec<u8> = match encoding {
-      StateMetadataEncoding::Json => self.to_json_vec().map_err(Error::SerializationError)?,
+      StateMetadataEncoding::Json => self
+        .to_json_vec()
+        .map_err(|err| Error::SerializationError("failed to serialize document to JSON", Some(err)))?,
     };
 
-    // Prepend flags.
+    // Prepend flags and length.
     let encoded_message_data_with_flags =
-      add_flags_to_message(encoded_message_data, StateMetadataVersion::CURRENT, encoding);
+      add_flags_to_message(encoded_message_data, StateMetadataVersion::CURRENT, encoding)?;
     Ok(encoded_message_data_with_flags)
   }
 
@@ -93,26 +95,47 @@ impl StateMetadataDocument {
       identity_did::Error::InvalidDocument("expected data to have at least length 5", None),
     )?)?;
 
-    let inner: &[u8] = data.get(5..).ok_or(identity_did::Error::InvalidDocument(
-      "expected data to have at least length 6",
-      None,
-    ))?;
+    let data_len_packed: [u8; 2] = data
+      .get(5..=6)
+      .ok_or(identity_did::Error::InvalidDocument(
+        "expected data to have at least length 8",
+        None,
+      ))?
+      .try_into()
+      .map_err(|_| identity_did::Error::InvalidDocument("failed to get data length", None))?;
+    let data_len: u16 = u16::from_le_bytes(data_len_packed);
+
+    let data: &[u8] = data
+      .get(7..7 + data_len as usize)
+      .ok_or(identity_did::Error::InvalidDocument(
+        "expected encoded document to match packed length",
+        None,
+      ))?;
 
     match encoding {
-      StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(inner).map_err(Error::SerializationError),
+      StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(data)
+        .map_err(|err| Error::SerializationError("failed to deserialize JSON document", Some(err))),
     }
   }
 }
 
 /// Prepends the message flags and marker magic bytes to the data in the following order:
-/// `[marker, version, encoding, data]`.
-fn add_flags_to_message(mut data: Vec<u8>, version: StateMetadataVersion, encoding: StateMetadataEncoding) -> Vec<u8> {
-  let mut buffer: Vec<u8> = Vec::with_capacity(1 + DID_MARKER.len() + 1 + data.len());
+/// `[marker, version, encoding, data length, data]`.
+fn add_flags_to_message(
+  mut data: Vec<u8>,
+  version: StateMetadataVersion,
+  encoding: StateMetadataEncoding,
+) -> Result<Vec<u8>> {
+  let data_len: u16 =
+    u16::try_from(data.len()).map_err(|_| Error::SerializationError("failed to convert usize to u16", None))?;
+  let data_len_packed: [u8; 2] = data_len.to_le_bytes();
+  let mut buffer: Vec<u8> = Vec::with_capacity(1 + DID_MARKER.len() + 1 + data_len_packed.len() + data_len as usize);
   buffer.extend_from_slice(DID_MARKER);
   buffer.push(version as u8);
   buffer.push(encoding as u8);
+  buffer.extend_from_slice(&data_len_packed);
   buffer.append(&mut data);
-  buffer
+  Ok(buffer)
 }
 
 impl From<IotaDocument> for StateMetadataDocument {
@@ -309,6 +332,10 @@ mod tests {
     let TestSetup { document, .. } = test_document();
     let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
     let packed: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
+    let expected_payload: String = format!(
+      "{{\"doc\":{},\"meta\":{}}}",
+      state_metadata_doc.document, state_metadata_doc.metadata
+    );
 
     // DID marker.
     assert_eq!(&packed[0..3], DID_MARKER);
@@ -316,14 +343,12 @@ mod tests {
     assert_eq!(packed[3], StateMetadataVersion::V1 as u8);
     // Encoding.
     assert_eq!(packed[4], StateMetadataEncoding::Json as u8);
-    // JSON payload.
+    // JSON length.
     assert_eq!(
-      &packed[5..],
-      format!(
-        "{{\"doc\":{},\"meta\":{}}}",
-        state_metadata_doc.document, state_metadata_doc.metadata
-      )
-      .as_bytes()
+      &packed[5..=6],
+      (expected_payload.as_bytes().len() as u16).to_le_bytes().as_ref()
     );
+    // JSON payload.
+    assert_eq!(&packed[7..], expected_payload.as_bytes());
   }
 }
