@@ -74,8 +74,8 @@ impl StateMetadataDocument {
   /// Unpack bytes into a [`StateMetadataDocument`].
   pub fn unpack(data: &[u8]) -> Result<Self> {
     // Check marker.
-    let marker: &[u8] = data.get(0..3).ok_or(identity_did::Error::InvalidDocument(
-      "unpack expected data to have at least length 3",
+    let marker: &[u8] = data.get(0..=2).ok_or(identity_did::Error::InvalidDocument(
+      "state metadata decoding: expected DID marker at offset [0..=2]",
       None,
     ))?;
     if marker != DID_MARKER {
@@ -84,7 +84,7 @@ impl StateMetadataDocument {
 
     // Check version.
     let version: StateMetadataVersion = StateMetadataVersion::try_from(*data.get(3).ok_or(
-      identity_did::Error::InvalidDocument("expected data to have at least length 4", None),
+      identity_did::Error::InvalidDocument("state metadata decoding: expected version at offset 3", None),
     )?)?;
     if version != StateMetadataVersion::V1 {
       return Err(Error::InvalidStateMetadata("unsupported version"));
@@ -92,29 +92,35 @@ impl StateMetadataDocument {
 
     // Decode data.
     let encoding: StateMetadataEncoding = StateMetadataEncoding::try_from(*data.get(4).ok_or(
-      identity_did::Error::InvalidDocument("expected data to have at least length 5", None),
+      identity_did::Error::InvalidDocument("state metadata decoding: expected encoding at offset 4", None),
     )?)?;
 
     let data_len_packed: [u8; 2] = data
       .get(5..=6)
       .ok_or(identity_did::Error::InvalidDocument(
-        "expected data to have at least length 8",
+        "state metadata decoding: expected data length at offset [5..=6]",
         None,
       ))?
       .try_into()
-      .map_err(|_| identity_did::Error::InvalidDocument("failed to get data length", None))?;
+      .map_err(|_| {
+        identity_did::Error::InvalidDocument("state metadata decoding: data length conversion error", None)
+      })?;
     let data_len: u16 = u16::from_le_bytes(data_len_packed);
 
     let data: &[u8] = data
-      .get(7..7 + data_len as usize)
+      .get(7..(7 + data_len as usize))
       .ok_or(identity_did::Error::InvalidDocument(
-        "expected encoded document to match packed length",
+        "state metadata decoding: encoded document shorter than length prefix",
         None,
       ))?;
 
     match encoding {
-      StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(data)
-        .map_err(|err| Error::SerializationError("failed to deserialize JSON document", Some(err))),
+      StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(data).map_err(|err| {
+        Error::SerializationError(
+          "state metadata decoding: failed to deserialize JSON document",
+          Some(err),
+        )
+      }),
     }
   }
 }
@@ -129,7 +135,7 @@ fn add_flags_to_message(
   let data_len: u16 =
     u16::try_from(data.len()).map_err(|_| Error::SerializationError("failed to convert usize to u16", None))?;
   let data_len_packed: [u8; 2] = data_len.to_le_bytes();
-  let mut buffer: Vec<u8> = Vec::with_capacity(1 + DID_MARKER.len() + 1 + data_len_packed.len() + data_len as usize);
+  let mut buffer: Vec<u8> = Vec::with_capacity(DID_MARKER.len() + 1 + 1 + data_len_packed.len() + data_len as usize);
   buffer.extend_from_slice(DID_MARKER);
   buffer.push(version as u8);
   buffer.push(encoding as u8);
