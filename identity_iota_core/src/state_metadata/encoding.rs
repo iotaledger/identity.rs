@@ -6,8 +6,9 @@ use num_traits::FromPrimitive;
 use crate::Error;
 
 /// Indicates the encoding of a DID document in state metadata.
-#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, num_derive::FromPrimitive)]
+#[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq, num_derive::FromPrimitive)]
 pub enum StateMetadataEncoding {
+  #[default]
   Json = 0,
 }
 

@@ -111,19 +111,14 @@ This tag identifies the Alias Output where the DID Document is stored, and it wi
 
 In the `State Metadata` of the Alias Output must be a byte packed payload with header fields as follows:
 
-| Name          | Type         | Description                                                                                                                                              |
-|---------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Document Type | ByteArray[3] | Set to value **DID** to denote a DID Document.                                                                                                           |
-| Version       | uint8        | Set value **1** to denote the version number of this method                                                                                              |
-| Encoding      | uint8        | Set to value to **0** to denote JSON encoding without compression.                                                                                       |
-| Payload       | ByteArray    | A DID Document and its metadata, where every occurrence of the DID in the document is replaced by `did:0:0`. It must be encoded according to `Encoding`. |
+| Name          | Type              | Description                                                                                                                                              |
+|---------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Document Type | ByteArray[3]      | Set to value **DID** to denote a DID Document.                                                                                                           |
+| Version       | uint8             | Set value **1** to denote the version number of this method                                                                                              |
+| Encoding      | uint8             | Set to value to **0** to denote JSON encoding without compression.                                                                                       |
+| Payload       | (uint16)ByteArray | A DID Document and its metadata, where every occurrence of the DID in the document is replaced by `did:0:0`. It must be encoded according to `Encoding`. |
 
-Next to [TIP-21](#data-types--subschema-notation), we use the following type definitions:
-
-| Name      | Description                                     |
-|-----------|-------------------------------------------------|
-| ByteArray | A dynamically sized, but unprefixed byte array. |
-
+The types are defined in [TIP-21](#data-types--subschema-notation).
 
 #### Payload
 
