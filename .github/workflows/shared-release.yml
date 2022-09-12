@@ -24,7 +24,7 @@ on:
         required: true
         type: string
       pre-release-tag-regex:
-        description: "the regex to find all related pre-releases. Must include a named capture group 'pre-release', which captures the pre-release version (e.g. 'alpha', 'beta', etc.)"
+        description: "the regex to find all related pre-releases. Must include a named capture group 'pre_release', which captures the pre-release version (e.g. 'alpha', 'beta', etc.)"
         required: true
         type: string
     outputs:
@@ -81,7 +81,7 @@ jobs:
           echo "::set-output name=is-release::$IS_RELEASE"
           if [[ $(echo $CURRENT_VERSION | grep -w -P '${{ inputs.pre-release-tag-regex }}') ]]; then
             IS_PRE_RELEASE=true
-            PRE_RELEASE_IDENTIFIER=$(echo $CURRENT_VERSION | perl -pe '/${{ inputs.pre-release-tag-regex }}/; $_ = "$+{tag}\n"')
+            PRE_RELEASE_IDENTIFIER=$(echo $CURRENT_VERSION | perl -pe '/${{ inputs.pre-release-tag-regex }}/; $_ = "$+{pre_release}\n"')
             PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.pre-release-tag-regex }}' | head -n 1)
           else
             PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.main-release-tag-regex }}' | head -n 1)

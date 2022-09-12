@@ -14,7 +14,7 @@ jobs:
     uses: eike-hass/identity.rs/.github/workflows/shared-release.yml@dev
     with:
       changelog-config-path: ./.github/.github_changelog_generator
-      pre-release-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+-(?<pre-release>\w+)\.\d+$
+      pre-release-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+-(?<pre_release>\w+)\.\d+$
       main-release-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
       create-github-release: true
     secrets:
