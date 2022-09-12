@@ -33,13 +33,7 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 version = "=0.6.0"
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap"]
-
-[dependencies.identity_resolver]
-version = "=0.6.0"
-path = "../../identity_resolver"
-default-features = false
-features = ["revocation-bitmap"]
+features = ["client", "revocation-bitmap", "resolver"]
 
 [dev-dependencies]
 rand = "0.8.5"
