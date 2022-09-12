@@ -351,4 +351,43 @@ mod tests {
     // JSON payload.
     assert_eq!(&packed[7..], expected_payload.as_bytes());
   }
+
+  #[test]
+  fn test_unpack_length_prefix() {
+    // Changing the serialization is a breaking change!
+    let TestSetup { document, .. } = test_document();
+    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
+    let mut packed: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
+    let original_length = u16::from_le_bytes(packed[5..=6].try_into().unwrap());
+
+    // INVALID: length is too long.
+    let longer = (original_length + 1_u16).to_le_bytes();
+    packed[5] = longer[0];
+    packed[6] = longer[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // INVALID: length is too long.
+    let max: [u8; 2] = u16::MAX.to_le_bytes();
+    packed[5] = max[0];
+    packed[6] = max[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // INVALID: length is too short (JSON deserialization fails).
+    let shorter = (original_length - 1_u16).to_le_bytes();
+    packed[5] = shorter[0];
+    packed[6] = shorter[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // INVALID: length is too short (JSON deserialization fails).
+    let min = 0_u16.to_le_bytes();
+    packed[5] = min[0];
+    packed[6] = min[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // VALID: length is just right.
+    let original = original_length.to_le_bytes();
+    packed[5] = original[0];
+    packed[6] = original[1];
+    assert_eq!(StateMetadataDocument::unpack(&packed).unwrap(), state_metadata_doc);
+  }
 }
