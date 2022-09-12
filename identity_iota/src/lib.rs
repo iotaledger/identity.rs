@@ -93,11 +93,26 @@ pub mod prelude {
   pub use identity_iota_core::IotaDID;
   pub use identity_iota_core::IotaDocument;
 
+  #[cfg(feature = "iota-client")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "iota-client")))]
+  pub use identity_iota_core::IotaClientExt;
+  #[cfg(feature = "client")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "client")))]
+  pub use identity_iota_core::IotaIdentityClient;
+  #[cfg(feature = "client")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "client")))]
+  pub use identity_iota_core::IotaIdentityClientExt;
+
   pub use identity_core::crypto::KeyPair;
   pub use identity_core::crypto::KeyType;
+
+  #[cfg(feature = "resolver")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]
   pub use identity_resolver::Resolver;
 }
 
+#[cfg(feature = "resolver")]
+#[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]
 pub mod resolver {
   //! DID resolution utilities
 
