@@ -6,7 +6,7 @@ use std::ops::Deref;
 use examples::create_did;
 use examples::get_address;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
+use examples::API_ENDPOINT;
 use identity_iota::core::Duration;
 use identity_iota::core::Timestamp;
 use identity_iota::iota::block::output::unlock_condition::AddressUnlockCondition;
@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(

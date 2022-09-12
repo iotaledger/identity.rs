@@ -4,8 +4,8 @@
 use anyhow::Context;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
+use examples::API_ENDPOINT;
 use examples::FAUCET_ENDPOINT;
-use examples::NETWORK_ENDPOINT;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
 use identity_iota::crypto::X25519;
@@ -35,7 +35,7 @@ async fn main() -> anyhow::Result<()> {
   // ==============================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(

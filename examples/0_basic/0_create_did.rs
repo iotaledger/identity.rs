@@ -30,14 +30,14 @@ use iota_client::Client;
 async fn main() -> anyhow::Result<()> {
   // The API endpoint of an IOTA node, e.g. Hornet.
   // In a locally running Hornet node, this would usually be `http://127.0.0.1:14265`.
-  let network_endpoint: &str = "https://api.testnet.shimmer.network/";
+  let api_endpoint: &str = "https://api.testnet.shimmer.network/";
 
   // The faucet endpoint from where we can request funds for testing purposes.
   // In a locally running hornet node, this would usually be `http://127.0.0.1:8091/api/enqueue`.
   let faucet_endpoint: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(network_endpoint, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(api_endpoint, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
