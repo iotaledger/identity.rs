@@ -3,6 +3,7 @@
 
 use anyhow::Context;
 use examples::get_address;
+use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use examples::request_faucet_funds;
 use identity_iota::crypto::KeyPair;
@@ -29,11 +30,11 @@ use iota_client::Client;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // The API endpoint of an IOTA node, e.g. Hornet.
-  // In a locally running Hornet node, this would usually be `http://127.0.0.1:14265`.
+  // For a local Hornet node, this would usually be `http://127.0.0.1:14265`.
   let api_endpoint: &str = "https://api.testnet.shimmer.network/";
 
-  // The faucet endpoint from where we can request funds for testing purposes.
-  // In a locally running hornet node, this would usually be `http://127.0.0.1:8091/api/enqueue`.
+  // The faucet endpoint allows requesting funds for testing purposes.
+  // For a local Hornet node, this would usually be `http://127.0.0.1:8091/api/enqueue`.
   let faucet_endpoint: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
   // Create a new client to interact with the IOTA ledger.
@@ -46,16 +47,11 @@ async fn main() -> anyhow::Result<()> {
       .build(random_stronghold_path())?,
   );
 
-  // Get an address from the secret manager.
-  let address: Address = get_address(&client, &mut secret_manager)
-    .await
-    .context("failed to get address")?;
+  // Get an address with funds for testing.
+  let address: Address = get_address_with_funds(&client, &mut secret_manager, faucet_endpoint).await?;
 
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
-
-  // Request funds from the private tangle faucet for the address.
-  request_faucet_funds(&client, address, network_name.as_ref(), faucet_endpoint).await?;
 
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
