@@ -22,14 +22,14 @@ use iota_client::Client;
 use rand::distributions::DistString;
 
 pub static NETWORK_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
-pub static FAUCET_URL: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+pub static FAUCET_ENDPOINT: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /// Creates a DID Document and publishes it in a new Alias Output.
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
 pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<(Address, IotaDID)> {
-  let address: Address = get_address_with_funds(client, secret_manager)
+  let address: Address = get_address_with_funds(client, secret_manager, FAUCET_ENDPOINT)
     .await
     .context("failed to get address with funds")?;
 
@@ -62,12 +62,21 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<IotaDoc
 }
 
 /// Generates an address from the given [`SecretManager`] and adds funds from the testnet faucet.
-pub async fn get_address_with_funds(client: &Client, stronghold: &mut SecretManager) -> anyhow::Result<Address> {
+pub async fn get_address_with_funds(
+  client: &Client,
+  stronghold: &mut SecretManager,
+  faucet_endpoint: &str,
+) -> anyhow::Result<Address> {
   let address: Address = get_address(client, stronghold).await?;
 
-  request_faucet_funds(client, address, client.get_bech32_hrp().await?.as_str(), FAUCET_URL)
-    .await
-    .context("failed to request faucet funds")?;
+  request_faucet_funds(
+    client,
+    address,
+    client.get_bech32_hrp().await?.as_str(),
+    faucet_endpoint,
+  )
+  .await
+  .context("failed to request faucet funds")?;
 
   Ok(address)
 }

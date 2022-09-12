@@ -21,16 +21,15 @@ use iota_client::Client;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///
-/// This example can be easily adapted to run in a private tangle by changing
-/// the network_endpoint and faucet_endpoint. In this example we use
-/// the Shimmer Testnet API.
+/// In this example we connect to the Shimmer testnet, but it can be adapted
+/// to run on a private network by setting the network and faucet endpoints.
 ///
-/// A private tangle can be run by following the instructions in
-/// https://github.com/iotaledger/hornet/tree/develop/private_tangle.
+/// See the following instructions on running your own private network
+/// https://wiki.iota.org/hornet/develop/how_tos/private_tangle
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // The API endpoint of a hornet node.
-  // In a locally running hornet node, this would usually be `http://127.0.0.1:14265`.
+  // The API endpoint of an IOTA node, e.g. Hornet.
+  // In a locally running Hornet node, this would usually be `http://127.0.0.1:14265`.
   let network_endpoint: &str = "https://api.testnet.shimmer.network/";
 
   // The faucet endpoint from where we can request funds for testing purposes.

@@ -4,6 +4,7 @@
 use examples::create_did_document;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
+use examples::FAUCET_ENDPOINT;
 use examples::NETWORK_ENDPOINT;
 use identity_iota::iota::block::address::NftAddress;
 use identity_iota::iota::block::output::AliasOutput;
@@ -50,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Get an address with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager).await?;
+  let address: Address = get_address_with_funds(&client, &mut secret_manager, FAUCET_ENDPOINT).await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;

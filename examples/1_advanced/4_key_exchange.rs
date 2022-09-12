@@ -4,6 +4,7 @@
 use anyhow::Context;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
+use examples::FAUCET_ENDPOINT;
 use examples::NETWORK_ENDPOINT;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
@@ -44,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Get an address and with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager)
+  let address: Address = get_address_with_funds(&client, &mut secret_manager, FAUCET_ENDPOINT)
     .await
     .context("failed to get address with funds")?;
 
