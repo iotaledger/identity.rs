@@ -105,7 +105,7 @@ pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) ->
 }
 
 /// Requests funds from the testnet faucet for the given `address`.
-pub async fn request_faucet_funds(
+async fn request_faucet_funds(
   client: &Client,
   address: Address,
   network_hrp: &str,

@@ -1,11 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
-use examples::get_address;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
-use examples::request_faucet_funds;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
 use identity_iota::did::MethodScope;
