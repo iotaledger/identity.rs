@@ -69,7 +69,7 @@ To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/ex
 
 ## Example: Creating an Identity
 
-The following code creates and publishes a new IOTA DID Document to the Tangle Mainnet.
+The following code creates and publishes a new IOTA DID Document to the Shimmer Testnet.
 
 _Cargo.toml_
 
@@ -99,31 +99,44 @@ use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
+use iota_client::crypto::keys::bip39;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
-static NETWORK_ENDPOINT: &str = "https://127.0.0.1:14265";
+static API_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
-  // Create a new secret manager backed by a Stronghold.
-  let secret_manager: SecretManager = SecretManager::Stronghold(
-    StrongholdSecretManager::builder()
-      .password("secure_password")
-      .build("./example-strong.hodl")?,
-  );
+  // Create a new Stronghold.
+  let mut stronghold = StrongholdSecretManager::builder()
+    .password("secure_password")
+    .build("./example-strong.hodl")?;
 
-  // Get an address from the secret manager. The address needs to hold funds.
+  // Generate a mnemonic and store it in the Stronghold.
+  let keypair = KeyPair::new(KeyType::Ed25519)?;
+  let mnemonic = bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
+    .map_err(|err| anyhow::anyhow!("{err:?}"))?;
+  stronghold.store_mnemonic(mnemonic).await?;
+
+  // Create a new secret manager backed by the Stronghold.
+  let secret_manager: SecretManager = SecretManager::Stronghold(stronghold);
+
+  // Get an address from the secret manager.
   let address: Address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
 
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
+
+  println!("Your wallet address is: {}", address.to_bech32(network_name.as_ref()));
+  println!("Please request funds from https://faucet.testnet.shimmer.network/, then press Enter.");
+  tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
