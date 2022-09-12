@@ -19,12 +19,12 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 
-DID Documents can be extended by adding [verification methods](https://www.w3.org/TR/did-core/#verification-methods), [Services](https://www.w3.org/TR/did-core/#services) and custom properties.
+DID Documents can be extended by adding [verification methods](#verification-methods), [services](#services) and custom properties.
 A verification method adds public keys, which can be used to digitally sign things like a DID message or a verifiable credential, while a service can provide metadata around the identity via URIs.
 
 ### Verification Methods
 
-As demonstrated by the [example](#example) below, the Iota identity framework offers easy-to-use methods for adding verification methods.
+As demonstrated by the [example](#example) below, the IOTA Identity framework offers easy-to-use methods for adding [verification methods](https://www.w3.org/TR/did-core/#verification-methods).
 
 The following properties can be specified for a verification method:
 
@@ -52,7 +52,7 @@ a map entry of the `verificationMethod` property. Verification relationships can
 
 :::note
 
-Updates to the DID Document are done through a state transition of the [Alias Output](../../specs/did/iota_did_method_spec#alias-output). The State Controller does not have to be listed as a Capability Invocation verification method.
+Updates to the DID Document are done through a state transition of the [Alias Output](../../specs/did/iota_did_method_spec#alias-output) by its state controller. The public key or address of the state controller does not need to be a verification method in the DID Document, since it is defined in the containing Alias Output.
 
 :::
 
@@ -81,7 +81,7 @@ The following example demonstrates managing verification methods and services to
 
 ### Creating Identity
 
-The Example above starts by [creating an identity](./create.mdx).
+The example above starts by [creating an identity](./create.mdx).
 
 <Tabs groupId="code-examples">
 <TabItem value="Rust" label="Rust">
@@ -112,7 +112,7 @@ const {didClient, secretManager, did} = await createIdentity();
 </TabItem>
 </Tabs>
 
-This will creates and publishes an Alias Output containing a DID Document with one verification method.
+This creates and publishes an Alias Output containing a DID Document with one verification method.
 
 ```json
 {
@@ -218,7 +218,6 @@ document.setMetadataUpdated(Timestamp.nowUTC());
 </TabItem>
 </Tabs>
 
-In JavaScript, the `serviceEndpoint` property type is a string, this must be a valid URL, otherwise an error will be thrown.
 Additionally, custom properties can be added to a service by setting `properties` in both Rust and JavaScript.
 
 The updated Document with the newly created service looks as follows.
