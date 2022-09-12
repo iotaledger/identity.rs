@@ -13,8 +13,8 @@ pub(crate) fn random_temporary_path() -> String {
   file.to_str().unwrap().to_owned()
 }
 
-pub(crate) fn random_did() -> identity_iota_core::did::IotaDID {
-  identity_iota_core::did::IotaDID::new(&random_bytes()).unwrap()
+pub(crate) fn random_did() -> identity_iota_core_legacy::did::IotaDID {
+  identity_iota_core_legacy::did::IotaDID::new(&random_bytes()).unwrap()
 }
 
 pub(crate) fn random_key_location() -> crate::types::KeyLocation {

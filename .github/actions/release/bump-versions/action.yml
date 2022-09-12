@@ -72,7 +72,7 @@ runs:
       working-directory: bindings/stronghold-nodejs
       run: |
         cargo add identity_core --path=../../identity_core
-        cargo add identity_iota_core --path=../../identity_iota_core
+        cargo add identity_iota_core_legacy --path=../../identity_iota_core_legacy
         cargo add identity_account_storage --path=../../identity_account_storage
 
     - name: Set up Node.js

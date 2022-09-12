@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_account::types::IdentitySetup;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 

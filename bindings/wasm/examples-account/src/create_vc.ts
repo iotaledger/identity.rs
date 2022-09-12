@@ -65,12 +65,13 @@ async function createVC(storage?: Storage) {
 
     // Validate the credential's signature, the credential's semantic structure,
     // check that the issuance date is not in the future and that the expiration date is not in the past.
-    CredentialValidator.validate(
-        signedVc,
-        issuer.document(),
-        CredentialValidationOptions.default(),
-        FailFast.AllErrors
-    );
+    // TODO: uncomment when ported to Stardust.
+    // CredentialValidator.validate(
+    //     signedVc,
+    //     issuer.document(),
+    //     CredentialValidationOptions.default(),
+    //     FailFast.AllErrors
+    // );
 
     // Since `validate` did not throw any errors we know that the credential was successfully validated.
     console.log(`VC successfully validated`);

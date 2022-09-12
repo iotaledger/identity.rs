@@ -5,14 +5,14 @@
 
 use std::path::PathBuf;
 
-use identity_iota::account::Account;
-use identity_iota::account::IdentitySetup;
-use identity_iota::account::Result;
-use identity_iota::account_storage::Stronghold;
-use identity_iota::client::ExplorerUrl;
+use identity_account::account::Account;
+use identity_account::types::IdentitySetup;
+use identity_account::Result;
+use identity_account_storage::stronghold::Stronghold;
 use identity_iota::core::Timestamp;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::prelude::IotaDocument;
+use identity_iota_client_legacy::tangle::ExplorerUrl;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::document::IotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {

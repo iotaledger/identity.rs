@@ -21,12 +21,12 @@ pub enum Error {
   /// Caused by errors from the [identity_account_storage] crate.
   #[error(transparent)]
   AccountCoreError(#[from] identity_account_storage::Error),
-  /// Caused by errors from the [identity_iota_client] crate.
+  /// Caused by errors from the [identity_iota_client_legacy] crate.
   #[error(transparent)]
-  IotaClientError(#[from] identity_iota_client::Error),
-  /// Caused by errors from the [identity_iota_core] crate.
+  IotaClientError(#[from] identity_iota_client_legacy::Error),
+  /// Caused by errors from the [identity_iota_core_legacy] crate.
   #[error(transparent)]
-  IotaCoreError(#[from] identity_iota_core::Error),
+  IotaCoreError(#[from] identity_iota_core_legacy::Error),
   /// Caused by attempting to find an identity that does not exist.
   #[error("Identity not found")]
   IdentityNotFound,

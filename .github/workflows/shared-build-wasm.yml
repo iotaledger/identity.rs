@@ -80,9 +80,6 @@ jobs:
         if: ${{ inputs.run-unit-tests }}
         run: npm run test:unit:node
 
-      - name: Build Wasm examples
-        run: npm run build:examples
-
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:

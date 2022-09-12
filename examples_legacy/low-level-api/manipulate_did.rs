@@ -6,17 +6,20 @@
 //!
 //! cargo run --example update_did
 
-use identity_iota::client::ExplorerUrl;
-use identity_iota::client::Receipt;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
 use identity_iota::did::MethodScope;
 use identity_iota::did::Service;
 use identity_iota::did::DID;
-use identity_iota::iota_core::IotaService;
-use identity_iota::iota_core::IotaVerificationMethod;
 use identity_iota::prelude::*;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::ExplorerUrl;
+use identity_iota_client_legacy::tangle::Receipt;
+use identity_iota_client_legacy::Result;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaService;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
 
 mod create_did;
 
