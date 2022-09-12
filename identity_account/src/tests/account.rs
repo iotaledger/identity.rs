@@ -15,15 +15,15 @@ use identity_core::crypto::ProofOptions;
 use identity_did::did::CoreDID;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
-use identity_iota_client::chain::DocumentChain;
-use identity_iota_client::tangle::Client;
-use identity_iota_client::tangle::ClientBuilder;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::MessageIdExt;
-use identity_iota_core::tangle::Network;
+use identity_iota_client_legacy::chain::DocumentChain;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::ClientBuilder;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::MessageIdExt;
+use identity_iota_core_legacy::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
@@ -299,7 +299,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));
@@ -310,7 +310,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with(auth_method))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));
@@ -321,7 +321,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with(invalid_signing_method))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDocumentSigningMethodType),
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDocumentSigningMethodType),
   ));
 
   assert!(account
@@ -589,7 +589,7 @@ async fn network_resilient_test(
     let test_attempt = f(test_run).await;
 
     match test_attempt {
-      error @ Err(Error::IotaClientError(identity_iota_client::Error::ClientError(_))) => {
+      error @ Err(Error::IotaClientError(identity_iota_client_legacy::Error::ClientError(_))) => {
         eprintln!("test run {} errored with {:?}", test_run, error);
 
         if test_run == test_runs - 1 {
