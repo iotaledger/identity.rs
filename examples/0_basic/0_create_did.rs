@@ -2,16 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Context;
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
-
-use examples::get_address_with_funds;
+use examples::get_address;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
-use identity_iota::core::ToJson;
+use examples::request_faucet_funds;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
 use identity_iota::did::MethodScope;
@@ -20,6 +13,11 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
+use iota_client::block::address::Address;
+use iota_client::block::output::AliasOutput;
+use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///
