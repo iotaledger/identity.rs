@@ -4,19 +4,19 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
-use identity_core::common::Timestamp;
-use identity_core::convert::FromJson;
-use identity_core::json;
-use identity_did::did::DID;
-use identity_did::service::Service;
-use identity_did::verification::MethodRelationship;
-use identity_stardust::block::address::Address;
-use identity_stardust::block::output::RentStructure;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
-use identity_stardust::StardustService;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Timestamp;
+use identity_iota::did::MethodRelationship;
+use identity_iota::did::Service;
+use identity_iota::did::DID;
+use identity_iota::iota::block::address::Address;
+use identity_iota::iota::block::output::RentStructure;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::IotaService;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -37,10 +37,10 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the latest state of the document.
-  let mut document: StardustDocument = client.resolve_did(&did).await?;
+  let mut document: IotaDocument = client.resolve_did(&did).await?;
 
   // Attach a new method relationship to the existing method.
   document.attach_method_relationship(
@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
   )?;
 
   // Add a new Service.
-  let service: StardustService = Service::from_json_value(json!({
+  let service: IotaService = Service::from_json_value(json!({
     "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org/"
@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the updated Alias Output.
-  let updated: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let updated: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Updated DID document: {:#}", updated);
 
   Ok(())

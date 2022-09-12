@@ -7,20 +7,20 @@
 
 use std::path::PathBuf;
 
-use identity_iota::account::Account;
-use identity_iota::account::AccountBuilder;
-use identity_iota::account::IdentitySetup;
-use identity_iota::account::MethodContent;
-use identity_iota::account::Result;
-use identity_iota::account_storage::AgreementInfo;
-use identity_iota::account_storage::CekAlgorithm;
-use identity_iota::account_storage::EncryptedData;
-use identity_iota::account_storage::EncryptionAlgorithm;
-use identity_iota::account_storage::Stronghold;
-use identity_iota::client::ResolvedIotaDocument;
-use identity_iota::client::Resolver;
+use identity_account::account::Account;
+use identity_account::account::AccountBuilder;
+use identity_account::types::IdentitySetup;
+use identity_account::types::MethodContent;
+use identity_account::Result;
+use identity_account_storage::stronghold::Stronghold;
+use identity_account_storage::types::AgreementInfo;
+use identity_account_storage::types::CekAlgorithm;
+use identity_account_storage::types::EncryptedData;
+use identity_account_storage::types::EncryptionAlgorithm;
 use identity_iota::did::MethodScope;
-use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota_client_legacy::document::ResolvedIotaDocument;
+use identity_iota_client_legacy::tangle::Resolver;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
 
 #[tokio::main]
 async fn main() -> Result<()> {

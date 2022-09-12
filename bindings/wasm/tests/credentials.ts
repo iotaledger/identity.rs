@@ -6,12 +6,17 @@ const {
     CredentialValidator,
     CredentialValidationOptions,
     FailFast,
-    Document,
     KeyType,
+    MethodScope,
     Presentation,
     ProofOptions,
     RevocationBitmap,
-    Service,
+    IotaDocument,
+    IotaService,
+    IotaVerificationMethod,
+    StatusCheck,
+    SubjectHolderRelationship,
+    Timestamp,
     KeyPair,
     VerifierOptions,
     PresentationValidator,
@@ -158,19 +163,21 @@ describe('CredentialValidator, PresentationValidator', function () {
     describe('#validate()', function () {
         it('should work', async () => {
             // Set up issuer & subject DID documents.
+            const issuerDoc = new IotaDocument("iota");
             const issuerKeys = new KeyPair(KeyType.Ed25519);
-            const issuerDoc = new Document(issuerKeys);
+            issuerDoc.insertMethod(new IotaVerificationMethod(issuerDoc.id(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"), MethodScope.VerificationMethod());
 
             // Add RevocationBitmap service.
             const revocationBitmap = new RevocationBitmap();
-            issuerDoc.insertService(new Service({
+            issuerDoc.insertService(new IotaService({
                 id: issuerDoc.id().join("#my-revocation-service"),
                 type: RevocationBitmap.type(),
                 serviceEndpoint: revocationBitmap.toEndpoint()
             }))
 
+            const subjectDoc = new IotaDocument("iota");
             const subjectKeys = new KeyPair(KeyType.Ed25519);
-            const subjectDoc = new Document(subjectKeys);
+            subjectDoc.insertMethod(new IotaVerificationMethod(subjectDoc.id(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"), MethodScope.VerificationMethod());
 
             const subjectDID = subjectDoc.id();
             const issuerDID = issuerDoc.id();
@@ -194,11 +201,17 @@ describe('CredentialValidator, PresentationValidator', function () {
             });
 
             // Sign the credential with the issuer's DID Document.
-            const signedCredential = issuerDoc.signCredential(credential, issuerKeys.private(), "#sign-0", ProofOptions.default());
+            const signedCredential = issuerDoc.signCredential(credential, issuerKeys.private(), "#iss-0", ProofOptions.default());
 
             // Validate the credential.
+            assert.doesNotThrow(() => CredentialValidator.checkStructure(signedCredential));
+            assert.doesNotThrow(() => CredentialValidator.checkExpiresOnOrAfter(signedCredential, Timestamp.nowUTC()));
+            assert.doesNotThrow(() => CredentialValidator.checkIssuedOnOrBefore(signedCredential, Timestamp.nowUTC()));
+            assert.doesNotThrow(() => CredentialValidator.checkSubjectHolderRelationship(signedCredential, subjectDID.toString(), SubjectHolderRelationship.AlwaysSubject));
+            assert.doesNotThrow(() => CredentialValidator.checkStatus(signedCredential, [issuerDoc], StatusCheck.Strict));
             assert.doesNotThrow(() => CredentialValidator.verifySignature(signedCredential, [issuerDoc, subjectDoc], VerifierOptions.default()));
             assert.doesNotThrow(() => CredentialValidator.validate(signedCredential, issuerDoc, CredentialValidationOptions.default(), FailFast.FirstError));
+            assert.deepStrictEqual(CredentialValidator.extractIssuer(signedCredential).toString(), issuerDID.toString());
 
             // Construct a presentation.
             const presentation = new Presentation({
@@ -206,11 +219,13 @@ describe('CredentialValidator, PresentationValidator', function () {
                 holder: subjectDID.toString(),
                 verifiableCredential: signedCredential
             });
-            const signedPresentation = subjectDoc.signPresentation(presentation, subjectKeys.private(), "#sign-0", ProofOptions.default());
+            const signedPresentation = subjectDoc.signPresentation(presentation, subjectKeys.private(), "#sub-0", ProofOptions.default());
 
             // Validate the presentation.
+            assert.doesNotThrow(() => PresentationValidator.checkStructure(signedPresentation));
             assert.doesNotThrow(() => PresentationValidator.verifyPresentationSignature(signedPresentation, subjectDoc, VerifierOptions.default()));
             assert.doesNotThrow(() => PresentationValidator.validate(signedPresentation, subjectDoc, [issuerDoc], PresentationValidationOptions.default(), FailFast.FirstError));
+            assert.deepStrictEqual(PresentationValidator.extractHolder(signedPresentation).toString(), subjectDID.toString());
         });
     });
 });

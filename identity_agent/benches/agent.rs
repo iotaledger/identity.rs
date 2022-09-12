@@ -76,8 +76,8 @@ mod remote_account {
   use identity_agent::agent::Handler;
   use identity_agent::agent::HandlerRequest;
   use identity_agent::agent::RequestContext;
-  use identity_iota_core::did::IotaDID;
-  use identity_iota_core::document::IotaDocument;
+  use identity_iota_core_legacy::did::IotaDID;
+  use identity_iota_core_legacy::document::IotaDocument;
   use serde::Deserialize;
   use serde::Serialize;
   use std::sync::Arc;

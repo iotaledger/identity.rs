@@ -125,7 +125,7 @@ struct ICredentialHelper {
   #[typescript(optional = false, name = "credentialSubject", type = "Subject | Array<Subject>")]
   credential_subject: Option<OneOrMany<Subject>>,
   /// A reference to the issuer of the `Credential`.
-  #[typescript(optional = false, type = "string | CoreDID | IotaDID | StardustDID | Issuer")]
+  #[typescript(optional = false, type = "string | CoreDID | IotaDID | Issuer")]
   issuer: Option<Issuer>,
   /// A timestamp of when the `Credential` becomes valid. Defaults to the current datetime.
   #[typescript(name = "issuanceDate", type = "Timestamp")]

@@ -2,22 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Context;
-use examples::get_address;
-use examples::random_stronghold_path;
-use examples::request_faucet_funds;
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::KeyType;
-use identity_did::verification::MethodScope;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
-use identity_stardust::StardustVerificationMethod;
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
+
+use examples::get_address_with_funds;
+use examples::random_stronghold_path;
+use examples::NETWORK_ENDPOINT;
+use identity_iota::core::ToJson;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::KeyType;
+use identity_iota::did::MethodScope;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::IotaVerificationMethod;
+use identity_iota::iota::NetworkName;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///
@@ -60,12 +62,12 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new DID document with a placeholder DID.
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut document: StardustDocument = StardustDocument::new(&network_name);
+  let mut document: IotaDocument = IotaDocument::new(&network_name);
 
   // Insert a new Ed25519 verification method in the DID document.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: StardustVerificationMethod =
-    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
   // Construct an Alias Output containing the DID document, with the wallet address
@@ -73,7 +75,7 @@ async fn main() -> anyhow::Result<()> {
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
   // Publish the Alias Output and get the published DID document.
-  let document: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Published DID document: {:#}", document);
 
   Ok(())

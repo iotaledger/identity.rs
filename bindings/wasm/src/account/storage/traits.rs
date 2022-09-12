@@ -16,7 +16,7 @@ use identity_iota::account_storage::Storage;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::PublicKey;
 use identity_iota::did::CoreDID;
-use identity_iota::iota_core::NetworkName;
+use identity_iota::iota::NetworkName;
 use identity_iota::prelude::KeyType;
 use js_sys::Array;
 use js_sys::Promise;

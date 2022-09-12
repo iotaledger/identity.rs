@@ -6,9 +6,12 @@
 //!
 //! cargo run --example create_did
 
-use identity_iota::client::ExplorerUrl;
-use identity_iota::client::Receipt;
 use identity_iota::prelude::*;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::ExplorerUrl;
+use identity_iota_client_legacy::tangle::Receipt;
+use identity_iota_client_legacy::Result;
+use identity_iota_core_legacy::document::IotaDocument;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   // Create a client instance to send messages to the Tangle.

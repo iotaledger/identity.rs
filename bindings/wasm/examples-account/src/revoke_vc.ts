@@ -90,12 +90,13 @@ async function revokeVC(storage?: Storage) {
 
     // Credential verification now fails.
     try {
-        CredentialValidator.validate(
-            signedVc,
-            issuer.document(),
-            CredentialValidationOptions.default(),
-            FailFast.FirstError
-        );
+        // TODO: uncomment when ported to Stardust.
+        // CredentialValidator.validate(
+        //     signedVc,
+        //     issuer.document(),
+        //     CredentialValidationOptions.default(),
+        //     FailFast.FirstError
+        // );
     } catch (e) {
         console.log(`Error during validation: ${e}`);
     }
@@ -117,12 +118,13 @@ async function revokeVC(storage?: Storage) {
         const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(
             signedVc
         );
-        CredentialValidator.validate(
-            signedVc,
-            resolvedIssuerDoc,
-            CredentialValidationOptions.default(),
-            FailFast.FirstError
-        );
+        // TODO: uncomment when ported to Stardust.
+        // CredentialValidator.validate(
+        //     signedVc,
+        //     resolvedIssuerDoc,
+        //     CredentialValidationOptions.default(),
+        //     FailFast.FirstError
+        // );
 
         // `CredentialValidator.validate` will throw an error, hence this will not be reached.
         console.log("Revocation failed!");

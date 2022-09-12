@@ -9,7 +9,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDID;
-use identity_iota_core::tangle::NetworkName;
+use identity_iota_core_legacy::tangle::NetworkName;
 
 use crate::error::Result;
 #[cfg(feature = "encryption")]

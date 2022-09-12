@@ -12,7 +12,7 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
-  /// Caused by errors from the [`identity_iota_core`] crate.
+  /// Caused by errors from the [`identity_iota_core_legacy`] crate.
   #[error("DID creation failed: {0}")]
   DIDCreationError(String),
   /// Caused by errors from the [identity_did] crate.

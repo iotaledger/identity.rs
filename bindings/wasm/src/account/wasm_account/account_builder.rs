@@ -8,7 +8,7 @@ use identity_iota::account::AccountBuilder;
 use identity_iota::account::IdentitySetup;
 use identity_iota::client::Client;
 use identity_iota::client::ClientBuilder;
-use identity_iota::iota_core::IotaDID;
+use identity_iota::iota::IotaDID;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
