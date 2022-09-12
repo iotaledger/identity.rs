@@ -7,7 +7,7 @@ keywords:
 - Resolve
 ---
 import resolve_did_rs from '!!raw-loader!../../../../examples/0_basic/2_resolve_did.rs';
-import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples-stardust/src/ex2_resolve_did.ts';
+import resolve_did_js from '!!raw-loader!../../../../bindings/wasm/examples/src/ex2_resolve_did.ts';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -34,23 +34,28 @@ Multiple networks can be supported by a `Resolver` simply by adding multiple cli
 <TabItem value="rust" label="Rust">
 
 ```rust
-use identity_resolver::Resolver;
-use identity_stardust::{StardustDID, StardustDocument, StardustIdentityClientExt};
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::resolver::Resolver;
 use iota_client::Client;
 
 #[tokio::main]
 async fn main() {
-    // Configure a client for the Shimmer testnet "rms".
-    let node_url = "https://api.testnet.shimmer.network/";
-    let client = Client::builder().with_primary_node(node_url, None).unwrap().finish().unwrap();
+  // Configure a client for the Shimmer testnet "rms".
+  let node_url = "https://api.testnet.shimmer.network/";
+  let client = Client::builder()
+    .with_primary_node(node_url, None)
+    .unwrap()
+    .finish()
+    .unwrap();
 
-    // Construct a resolver using the client.
-    let mut resolver = Resolver::<StardustDocument>::new();
-    resolver.attach_iota_handler(client);
+  // Construct a resolver using the client.
+  let mut resolver = Resolver::<IotaDocument>::new();
+  resolver.attach_iota_handler(client);
 
-    // Parse the DID and resolve its DID Document.
-    let did = StardustDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
-    let document: StardustDocument = resolver.resolve(&did).await.unwrap();
+  // Parse the DID and resolve its DID Document.
+  let did = IotaDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
+  let document: IotaDocument = resolver.resolve(&did).await.unwrap();
 }
 ```
 
@@ -58,7 +63,7 @@ async fn main() {
 <TabItem value="node" label="Node.js">
 
 ```js
-const { MixedResolver, StardustDID, StardustIdentityClient } = require('@iota/identity-wasm/node');
+const { MixedResolver, IotaDID, IotaIdentityClient } = require('@iota/identity-wasm/node');
 const { Client } = require('@cycraig/iota-client-wasm/node');
 
 // Configure a client for the Shimmer testnet "rms".
@@ -67,7 +72,7 @@ const client = new Client({
     primaryNode: nodeUrl,
     localPow: true,
 });
-const didClient = new StardustIdentityClient(client);
+const didClient = new IotaIdentityClient(client);
 
 // Construct a resolver using the client.
 const resolver = new MixedResolver({
@@ -75,7 +80,7 @@ const resolver = new MixedResolver({
 });
 
 // Parse the DID and resolve its DID Document.
-const did = StardustDID.parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47");
+const did = IotaDID.parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47");
 const document = await resolver.resolve(did);
 ```
 
@@ -90,18 +95,24 @@ The `Client` can also be used directly, to resolve individual DIDs from its conf
 <TabItem value="rust" label="Rust">
 
 ```rust
-use identity_stardust::{StardustDID, StardustDocument, StardustIdentityClientExt};
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
 use iota_client::Client;
 
 #[tokio::main]
 async fn main() {
-    // Configure a client for the Shimmer testnet "rms".
-    let node_url = "https://api.testnet.shimmer.network/";
-    let client = Client::builder().with_primary_node(node_url, None).unwrap().finish().unwrap();
+  // Configure a client for the Shimmer testnet "rms".
+  let node_url = "https://api.testnet.shimmer.network/";
+  let client = Client::builder()
+    .with_primary_node(node_url, None)
+    .unwrap()
+    .finish()
+    .unwrap();
 
-    // Parse the DID and resolve its DID Document.
-    let did = StardustDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
-    let document: StardustDocument = client.resolve_did(&did).await.unwrap();
+  // Parse the DID and resolve its DID Document.
+  let did = IotaDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
+  let document: IotaDocument = client.resolve_did(&did).await.unwrap();
 }
 ```
 
@@ -109,7 +120,7 @@ async fn main() {
 <TabItem value="node" label="Node.js">
 
 ```js
-const { StardustDID, StardustIdentityClient } = require('@iota/identity-wasm/node');
+const { IotaDID, IotaIdentityClient } = require('@iota/identity-wasm/node');
 const { Client } = require('@cycraig/iota-client-wasm/node');
 
 // Configure a client for the Shimmer testnet "rms".
@@ -118,10 +129,10 @@ const client = new Client({
     primaryNode: nodeUrl,
     localPow: true,
 });
-const didClient = new StardustIdentityClient(client);
+const didClient = new IotaIdentityClient(client);
 
 // Parse the DID and resolve its DID Document.
-const did = StardustDID.parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47");
+const did = IotaDID.parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47");
 const document = await didClient.resolveDid(did);
 ```
 
@@ -143,6 +154,6 @@ The following example creates a new IOTA DID, publishes it and then resolves its
 <CodeSnippet
     nodeContent={resolve_did_js}
     rustContent={resolve_did_rs}
-    nodeGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-stardust/src/ex2_resolve_did.ts"
+    nodeGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/ex2_resolve_did.ts"
     rustGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/2_resolve_did.rs"
 />

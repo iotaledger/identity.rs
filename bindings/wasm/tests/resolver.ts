@@ -2,10 +2,10 @@ export {};
 
 import {
   CoreDocument,
-  StardustDID,
+  IotaDID,
   MixedResolver,
   Presentation,
-  StardustDocument,
+  IotaDocument,
   CoreDID,
   FailFast,
   PresentationValidationOptions
@@ -18,7 +18,7 @@ const issuerBarDocJSON = require("../../../identity_credential/tests/fixtures/si
 const holderFooDocJSON = require("../../../identity_credential/tests/fixtures/signed_presentation/subject_foo_doc.json");
 const presentation = Presentation.fromJSON(presentationJSON);
 const holderFooDoc = CoreDocument.fromJSON(holderFooDocJSON);
-const issuerIotaDoc: StardustDocument = StardustDocument.fromJSON(issuerIotaDocJSON);
+const issuerIotaDoc: IotaDocument = IotaDocument.fromJSON(issuerIotaDocJSON);
 const issuerBarDoc: CoreDocument = CoreDocument.fromJSON(issuerBarDocJSON);
 
 describe("Resolver", function () {
@@ -26,7 +26,7 @@ describe("Resolver", function () {
     it("should accept a correct presentation when configured correctly", async () => {
       // mock method handlers
       const resolveDidIota = async function (did_input: string) {
-        const parsedDid: StardustDID = StardustDID.parse(did_input);
+        const parsedDid: IotaDID = IotaDID.parse(did_input);
         if (issuerIotaDoc.id().toString() == parsedDid.toString()) {
           return issuerIotaDoc;
         } else {
@@ -52,7 +52,7 @@ describe("Resolver", function () {
         }
       };
 
-      let handlerMap: Map<string, (did: string) => Promise<StardustDocument | CoreDocument>> = new Map();
+      let handlerMap: Map<string, (did: string) => Promise<IotaDocument | CoreDocument>> = new Map();
       handlerMap.set("iota", resolveDidIota);
       handlerMap.set("foo", resolveDidFoo);
       handlerMap.set("bar", resolveDidBar);
@@ -135,7 +135,7 @@ describe("Resolver", function () {
         return issuerIotaDoc;
       };
 
-      let handlerMap: Map<string, (did: string) => Promise<StardustDocument | CoreDocument>> = new Map();
+      let handlerMap: Map<string, (did: string) => Promise<IotaDocument | CoreDocument>> = new Map();
       handlerMap.set("iota", resolveDidIotaMisconfigured);
       handlerMap.set("foo", resolveDidFooMisconfigured);
       handlerMap.set("bar", resolveDidBarMisconfigured);

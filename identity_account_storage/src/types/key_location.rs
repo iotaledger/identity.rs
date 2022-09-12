@@ -8,7 +8,7 @@ use core::fmt::Result;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
-use identity_iota_core::document::IotaVerificationMethod;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
 use seahash::SeaHasher;
 use std::hash::Hash;
 use std::hash::Hasher;

@@ -6,10 +6,6 @@
 //!
 //! cargo run --example did_history
 
-use identity_iota::client::Client;
-use identity_iota::client::DocumentHistory;
-use identity_iota::client::Receipt;
-use identity_iota::client::Result;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
@@ -17,10 +13,14 @@ use identity_iota::crypto::KeyPair;
 use identity_iota::did::MethodScope;
 use identity_iota::did::Service;
 use identity_iota::did::DID;
-use identity_iota::iota_core::IotaDocument;
-use identity_iota::iota_core::IotaService;
-use identity_iota::iota_core::IotaVerificationMethod;
 use identity_iota::prelude::*;
+use identity_iota_client_legacy::chain::DocumentHistory;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::Receipt;
+use identity_iota_client_legacy::Result;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaService;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
 
 mod create_did;
 

@@ -9,13 +9,16 @@
 //!
 //! cargo run --example private_tangle
 
-use identity_iota::client::ClientBuilder;
-use identity_iota::client::DIDMessageEncoding;
-use identity_iota::client::ExplorerUrl;
-use identity_iota::client::Receipt;
 use identity_iota::crypto::KeyType;
-use identity_iota::iota_core::Network;
 use identity_iota::prelude::*;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::ClientBuilder;
+use identity_iota_client_legacy::tangle::DIDMessageEncoding;
+use identity_iota_client_legacy::tangle::ExplorerUrl;
+use identity_iota_client_legacy::tangle::Receipt;
+use identity_iota_client_legacy::Result;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::tangle::Network;
 
 #[tokio::main]
 pub async fn main() -> Result<()> {

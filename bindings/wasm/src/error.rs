@@ -5,9 +5,6 @@ use std::borrow::Cow;
 use std::fmt::Display;
 use std::result::Result as StdResult;
 
-use identity_iota::account::UpdateError;
-use identity_iota::account_storage::Error as AccountStorageError;
-use identity_iota::account_storage::Result as AccountStorageResult;
 use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
@@ -90,15 +87,12 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-  identity_iota::account::Error,
-  identity_iota::account_storage::Error,
   identity_iota::core::Error,
   identity_iota::credential::Error,
   identity_iota::did::Error,
   identity_iota::did::DIDError,
-  identity_iota::iota_core::Error,
-  identity_iota::credential::ValidationError,
-  identity_stardust::Error
+  identity_iota::iota::Error,
+  identity_iota::credential::ValidationError
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -139,27 +133,6 @@ fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) 
 
 struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
-impl<'a> Display for ErrorMessage<'a, identity_iota::client::Error> {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match &self.0 {
-      identity_iota::client::Error::CredentialValidationError(e) => {
-        write!(f, "{}. ", self.0)?;
-        error_chain_fmt(&e, f)
-      }
-      identity_iota::client::Error::PresentationValidationError(e) => {
-        write!(f, "{}. ", self.0)?;
-        error_chain_fmt(&e, f)
-      }
-      identity_iota::client::Error::IsolatedValidationError(e) => {
-        write!(f, "{}. ", self.0)?;
-        error_chain_fmt(&e, f)
-      }
-      // the rest include the source error's message in their own
-      _ => self.0.fmt(f),
-    }
-  }
-}
-
 impl<'a> Display for ErrorMessage<'a, identity_resolver::Error> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     error_chain_fmt(self.0, f)
@@ -175,15 +148,6 @@ impl From<identity_resolver::Error> for WasmError<'_> {
   }
 }
 
-impl From<identity_iota::client::Error> for WasmError<'_> {
-  fn from(error: identity_iota::client::Error) -> Self {
-    Self {
-      message: Cow::Owned(ErrorMessage(&error).to_string()),
-      name: Cow::Borrowed(error.into()),
-    }
-  }
-}
-
 impl From<serde_json::Error> for WasmError<'_> {
   fn from(error: serde_json::Error) -> Self {
     Self {
@@ -193,8 +157,8 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
-impl From<identity_stardust::block::Error> for WasmError<'_> {
-  fn from(error: identity_stardust::block::Error) -> Self {
+impl From<identity_iota::iota::block::Error> for WasmError<'_> {
+  fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {
       name: Cow::Borrowed("bee_block::Error"),
       message: Cow::Owned(error.to_string()),
@@ -220,23 +184,25 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   }
 }
 
-impl From<UpdateError> for WasmError<'_> {
-  fn from(error: UpdateError) -> Self {
-    Self {
-      name: Cow::Borrowed("Update::Error"),
-      message: Cow::Owned(error.to_string()),
-    }
-  }
-}
+// TODO: Remove or reuse depending on what we do with the account.
+// impl From<UpdateError> for WasmError<'_> {
+//   fn from(error: UpdateError) -> Self {
+//     Self {
+//       name: Cow::Borrowed("Update::Error"),
+//       message: Cow::Owned(error.to_string()),
+//     }
+//   }
+// }
 
 /// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
+  // TODO: Remove or reuse depending on what we do with the account.
   /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
-  pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
-    self.stringify_error().map_err(AccountStorageError::JsError)
-  }
+  // pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
+  //   self.stringify_error().map_err(AccountStorageError::JsError)
+  // }
 
   // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
   pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
@@ -252,9 +218,9 @@ impl JsValueResult {
     })
   }
 
-  /// Consumes the struct and returns a Result<_, identity_stardust::Error>, leaving an `Ok` value untouched.
-  pub fn to_stardust_error(self) -> StdResult<JsValue, identity_stardust::Error> {
-    self.stringify_error().map_err(identity_stardust::Error::JsError)
+  /// Consumes the struct and returns a Result<_, identity_iota::iota::Error>, leaving an `Ok` value untouched.
+  pub fn to_iota_core_error(self) -> StdResult<JsValue, identity_iota::iota::Error> {
+    self.stringify_error().map_err(identity_iota::iota::Error::JsError)
   }
 }
 
@@ -264,22 +230,24 @@ impl From<Result<JsValue>> for JsValueResult {
   }
 }
 
-impl From<JsValueResult> for AccountStorageResult<()> {
-  fn from(result: JsValueResult) -> Self {
-    result.to_account_error().and_then(|js_value| {
-      js_value
-        .into_serde()
-        .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-    })
-  }
-}
+// TODO: Remove or reuse depending on what we do with the account..
+// impl From<JsValueResult> for AccountStorageResult<()> {
+//   fn from(result: JsValueResult) -> Self {
+//     result.to_account_error().and_then(|js_value| {
+//       js_value
+//         .into_serde()
+//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
+//     })
+//   }
+// }
 
-impl From<JsValueResult> for AccountStorageResult<bool> {
-  fn from(result: JsValueResult) -> Self {
-    result.to_account_error().and_then(|js_value| {
-      js_value
-        .into_serde()
-        .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-    })
-  }
-}
+// TODO: Remove or reuse depending on what we do with the account..
+// impl From<JsValueResult> for AccountStorageResult<bool> {
+//   fn from(result: JsValueResult) -> Self {
+//     result.to_account_error().and_then(|js_value| {
+//       js_value
+//         .into_serde()
+//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
+//     })
+//   }
+// }

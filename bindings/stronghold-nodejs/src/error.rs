@@ -3,7 +3,7 @@
 
 use identity_account_storage::Result as AccountStorageResult;
 use identity_core::Result as CoreResult;
-use identity_iota_core::Result as IotaCoreResult;
+use identity_iota_core_legacy::Result as IotaCoreResult;
 use napi::bindgen_prelude::Error;
 use napi::Result;
 use serde_json::Result as SerdeResult;

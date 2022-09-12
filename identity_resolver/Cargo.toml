@@ -22,9 +22,9 @@ serde = { version = "1.0", default-features = false, features = ["std", "derive"
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
-[dependencies.identity_stardust]
+[dependencies.identity_iota_core]
 version = "=0.6.0"
-path = "../identity_stardust"
+path = "../identity_iota_core"
 default-features = false
 features = ["send-sync-client-ext", "iota-client"]
 optional = true
@@ -35,6 +35,6 @@ tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-th
 
 [features]
 default = ["revocation-bitmap", "iota"]
-revocation-bitmap = ["identity_did/revocation-bitmap", "identity_stardust?/revocation-bitmap"]
+revocation-bitmap = ["identity_did/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
-iota = ["dep:identity_stardust"]
+iota = ["dep:identity_iota_core"]

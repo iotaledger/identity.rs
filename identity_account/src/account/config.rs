@@ -4,8 +4,8 @@
 use std::sync::Arc;
 
 use identity_account_storage::storage::Storage;
-use identity_iota_client::tangle::Client;
-use identity_iota_client::tangle::SharedPtr;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::SharedPtr;
 use serde::Deserialize;
 use serde::Serialize;
 

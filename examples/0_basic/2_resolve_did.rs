@@ -4,11 +4,11 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
-use identity_resolver::Resolver;
-use identity_stardust::block::address::Address;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
+use identity_iota::iota::block::address::Address;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::prelude::Resolver;
 use iota_client::block::output::AliasOutput;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
@@ -28,22 +28,22 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to resolve.
-  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
-  // We can resolve a `StardustDID` with the client itself.
+  // We can resolve a `IotaDID` with the client itself.
   // Resolve the associated Alias Output and extract the DID document from it.
-  let client_document: StardustDocument = client.resolve_did(&did).await?;
+  let client_document: IotaDocument = client.resolve_did(&did).await?;
   println!("Client resolved DID Document: {:#}", client_document);
 
   // We can also create a `Resolver` that has additional convenience methods,
   // for example to resolve presentation issuers or to verify presentations.
-  let mut resolver = Resolver::<StardustDocument>::new();
+  let mut resolver = Resolver::<IotaDocument>::new();
 
   // We need to register a handler that can resolve IOTA DIDs.
   // This convenience method only requires us to provide a client.
   resolver.attach_iota_handler(client.clone());
 
-  let resolver_document: StardustDocument = resolver.resolve(&did).await.unwrap();
+  let resolver_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
   // Client and Resolver resolve to the same document in this case.
   assert_eq!(client_document, resolver_document);

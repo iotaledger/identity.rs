@@ -29,7 +29,7 @@ Select your programming language of choice and press the green play button to ex
     nodeReplitLink="https://repl.it/@IOTAFoundation/Create-DID-07?lite=true"
     rustContent={createDidRustExample}
     nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-account/src/create_did.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/identity_stardust/examples/ex0_create_did.rs"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/0_basic/0_create_did.rs"
 />
 
 This examples creates a new address with funds using the faucet on the testnet. Next, it creates a new DID Document with a verification method. This DID Document is then published in an Alias Output making the DID available in the ledger state and resolvable by any node.
@@ -43,7 +43,7 @@ Updating the identity is also possible, which will be discussed in the next sect
 
 In order to create a Alias Output, an existing output is required to make a transaction. For that a new Address is generated and a Basic Output controlled by this address is created using the faucet.
 
-A DID Document is then created which includes one verification method. At this point the DID itself is unknown since the Alias Output is not published yet and didn't get an `Alias ID` assigned. For that a placeholder `did:stardust:0x0000000000000000000000000000000000000000000000000000000000000000` is used to reference the DID inside the document.
+A DID Document is then created which includes one verification method. At this point the DID itself is unknown since the Alias Output is not published yet and didn't get an `Alias ID` assigned. For that a placeholder `did:iota:0x0000000000000000000000000000000000000000000000000000000000000000` is used to reference the DID inside the document.
 
 An Alias Output is created which contains an encoded version of the DID Document in its `State Metadata` and has the state controller and the governor set to the generated Ed25519 address. Note that controllers don't have to be Ed25519 addresses, they can be any type of output. However, they must be unlocked in order perform a state or governance transition when the DID Document is updated or destroyed.
 

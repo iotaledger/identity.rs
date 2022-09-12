@@ -477,34 +477,34 @@ extern "C" {
 #[typescript(name = "ICoreDocument", readonly, optional)]
 #[allow(non_snake_case, dead_code)]
 struct ICoreDocumentHelper {
-  #[typescript(optional = false, type = "string | CoreDID | StardustDID")]
+  #[typescript(optional = false, type = "string | CoreDID | IotaDID")]
   id: Option<CoreDID>,
 
-  #[typescript(type = "(string | CoreDID | StardustDID)[]")]
+  #[typescript(type = "(string | CoreDID | IotaDID)[]")]
   controller: Option<OneOrSet<CoreDID>>,
 
   #[typescript(type = "string[]")]
   alsoKnownAs: Option<OrderedSet<Url>>,
 
-  #[typescript(type = "(CoreVerificationMethod | StardustVerificationMethod)[]")]
+  #[typescript(type = "(CoreVerificationMethod | IotaVerificationMethod)[]")]
   verificationMethod: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | StardustVerificationMethod | StardustDIDUrl)[]")]
+  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
   authentication: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | StardustVerificationMethod | StardustDIDUrl)[]")]
+  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
   assertionMethod: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | StardustVerificationMethod | StardustDIDUrl)[]")]
+  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
   keyAgreement: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | StardustVerificationMethod | StardustDIDUrl)[]")]
+  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
   capabilityDelegation: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | StardustVerificationMethod | StardustDIDUrl)[]")]
+  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
   capabilityInvocation: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
 
-  #[typescript(type = "(CoreService | StardustService)[]")]
+  #[typescript(type = "(CoreService | IotaService)[]")]
   service: Option<OrderedSet<Service<CoreDID, Object>>>,
 
   #[serde(flatten)]
