@@ -1,15 +1,29 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import type { IotaDocument } from '../../node';
+import { IotaDocument, IotaIdentityClient } from '../../node';
 import { IAliasOutput, IRent, TransactionHelper } from '@iota/iota.js';
 
 import { createIdentity } from "./ex0_create_did";
+import { API_ENDPOINT, createDid } from './util';
+import { Bip39 } from '@iota/crypto.js';
+import { Client, MnemonicSecretManager } from '@cycraig/iota-client-wasm/node';
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {
+    const client = new Client({
+        primaryNode: API_ENDPOINT,
+        localPow: true,
+    });
+    const didClient = new IotaIdentityClient(client);
+
+    // Generate a random mnemonic for our wallet.
+    const secretManager: MnemonicSecretManager = {
+        Mnemonic: Bip39.randomMnemonic()
+    };
+
     // Creates a new wallet and identity (see "ex0_create_did" example).
-    const { didClient, secretManager, did } = await createIdentity();
+    const { did } = await createDid(client, secretManager);
 
     // Resolve the latest state of the DID document, so we can reactivate it later.
     let document: IotaDocument = await didClient.resolveDid(did);
