@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::resolver;
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::result::Result as StdResult;
-
 use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
@@ -133,14 +133,14 @@ fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) 
 
 struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
-impl<'a> Display for ErrorMessage<'a, identity_resolver::Error> {
+impl<'a> Display for ErrorMessage<'a, resolver::Error> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     error_chain_fmt(self.0, f)
   }
 }
 
-impl From<identity_resolver::Error> for WasmError<'_> {
-  fn from(error: identity_resolver::Error) -> Self {
+impl From<resolver::Error> for WasmError<'_> {
+  fn from(error: resolver::Error) -> Self {
     Self {
       name: Cow::Owned(format!("ResolverError::{}", <&'static str>::from(error.error_cause()))),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
