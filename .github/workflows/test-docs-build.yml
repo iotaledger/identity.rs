@@ -42,12 +42,3 @@ jobs:
           command: doc
           toolchain: nightly
           args: --all-features --no-deps --workspace
-
-      - name: Test Stardust Rust Documentation
-        uses: actions-rs/cargo@v1
-        env:
-          RUSTDOCFLAGS: "-D warnings --cfg docsrs"
-        with:
-          command: doc
-          toolchain: nightly
-          args: --manifest-path ./identity_stardust/Cargo.toml --all-features --no-deps --workspace

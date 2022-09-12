@@ -6,7 +6,6 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
-use identity_iota_core::document::IotaDocument;
 use libp2p::Multiaddr;
 use serde::de::DeserializeOwned;
 
@@ -31,11 +30,15 @@ use crate::p2p::ThreadRequest;
 /// The identity of a [`DidCommAgent`].
 ///
 /// Note: Currently an incomplete implementation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DidCommAgentIdentity {
   // TODO: This type is meant to be used in a future update.
-  #[allow(dead_code)]
-  pub document: IotaDocument,
+}
+
+impl DidCommAgentIdentity {
+  pub fn new() -> Self {
+    Self {}
+  }
 }
 
 /// The internal state of a [`DidCommAgent`].

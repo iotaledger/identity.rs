@@ -13,12 +13,12 @@ use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::Network;
-use identity_iota_core::tangle::NetworkName;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::Network;
+use identity_iota_core_legacy::tangle::NetworkName;
 
 use crate::identity::ChainState;
 use crate::types::AgreementInfo;

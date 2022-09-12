@@ -5,7 +5,7 @@
 //!
 //! cargo run --example getting_started
 
-use identity_iota::client::Result;
+use identity_iota_client_legacy::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -6,8 +6,8 @@ use std::sync::Arc;
 use identity_account_storage::storage::MemStore;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::storage::Stronghold;
-use identity_iota_client::tangle::ClientBuilder;
-use identity_iota_core::tangle::Network;
+use identity_iota_client_legacy::tangle::ClientBuilder;
+use identity_iota_core_legacy::tangle::Network;
 use rand::distributions::DistString;
 use rand::rngs::OsRng;
 

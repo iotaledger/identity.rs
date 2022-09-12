@@ -4,10 +4,10 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
-use identity_stardust::Error;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustIdentityClientExt;
+use identity_iota::iota::Error;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaIdentityClientExt;
 use iota_client::block::address::Address;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
@@ -27,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (address, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (address, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.
   // This operation is *not* reversible.
@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
   let error: Error = client.resolve_did(&did).await.unwrap_err();
   assert!(matches!(
     error,
-    identity_stardust::Error::DIDResolutionError(iota_client::Error::NotFound)
+    identity_iota::iota::Error::DIDResolutionError(iota_client::Error::NotFound)
   ));
 
   Ok(())
