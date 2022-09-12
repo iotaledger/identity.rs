@@ -1,71 +1,75 @@
-use identity_iota::core::ToJson;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
-use identity_iota::did::MethodScope;
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use examples::create_did;
+use examples::random_stronghold_path;
+use examples::NETWORK_ENDPOINT;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Timestamp;
+use identity_iota::did::MethodRelationship;
+use identity_iota::did::Service;
+use identity_iota::did::DID;
+use identity_iota::iota::block::address::Address;
+use identity_iota::iota::block::output::RentStructure;
 use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaVerificationMethod;
-use identity_iota::iota::NetworkName;
-use iota_client::block::address::Address;
+use identity_iota::iota::IotaService;
 use iota_client::block::output::AliasOutput;
-use iota_client::crypto::keys::bip39;
+use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
-use tokio::io::AsyncReadExt;
 
-// The endpoint of the IOTA node to use.
-static API_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
-
-/// Demonstrates how to create a DID Document and publish it in a new Alias Output.
+/// Demonstrates how to update a DID document in an existing Alias Output.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
-  // Create a new Stronghold.
-  let mut stronghold = StrongholdSecretManager::builder()
-    .password("secure_password")
-    .build("./example-strong.hodl")?;
+  // Create a new secret manager backed by a Stronghold.
+  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password("secure_password")
+      .build(random_stronghold_path())?,
+  );
 
-  // Generate a mnemonic and store it in the Stronghold.
-  let keypair = KeyPair::new(KeyType::Ed25519)?;
-  let mnemonic = bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
-    .map_err(|err| anyhow::anyhow!("{err:?}"))?;
-  stronghold.store_mnemonic(mnemonic).await?;
+  // Create a new DID in an Alias Output for us to modify.
+  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
-  // Create a new secret manager backed by the Stronghold.
-  let secret_manager: SecretManager = SecretManager::Stronghold(stronghold);
+  // Resolve the latest state of the document.
+  let mut document: IotaDocument = client.resolve_did(&did).await?;
 
-  // Get an address from the secret manager.
-  let address: Address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
+  // Attach a new method relationship to the existing method.
+  document.attach_method_relationship(
+    &document.id().to_url().join("#key-1")?,
+    MethodRelationship::Authentication,
+  )?;
 
-  // Get the Bech32 human-readable part (HRP) of the network.
-  let network_name: NetworkName = client.network_name().await?;
+  // Add a new Service.
+  let service: IotaService = Service::from_json_value(json!({
+    "id": document.id().to_url().join("#linked-domain")?,
+    "type": "LinkedDomains",
+    "serviceEndpoint": "https://iota.org/"
+  }))?;
+  assert!(document.insert_service(service));
+  document.metadata.updated = Some(Timestamp::now_utc());
 
-  println!("Your wallet address is: {}", address.to_bech32(network_name.as_ref()));
-  println!("Please request funds from https://faucet.testnet.shimmer.network/, then press Enter.");
-  tokio::io::stdin().read_u8().await?;
+  // Resolve the latest output and update it with the given document.
+  let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
 
-  // Create a new DID document with a placeholder DID.
-  // The DID will be derived from the Alias Id of the Alias Output after publishing.
-  let mut document: IotaDocument = IotaDocument::new(&network_name);
+  // Because the size of the DID document increased, we have to increase the allocated storage deposit.
+  // This increases the deposit amount to the new minimum.
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
+  let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
+    .with_minimum_storage_deposit(rent_structure)
+    .finish()?;
 
-  // Insert a new Ed25519 verification method in the DID document.
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
-  document.insert_method(method, MethodScope::VerificationMethod)?;
-
-  // Construct an Alias Output containing the DID document, with the wallet address
-  // set as both the state controller and governor.
-  let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
-  println!("Alias Output: {}", alias_output.to_json()?);
-
-  // Publish the Alias Output and get the published DID document.
-  let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
-  println!("Published DID document: {:#}", document);
+  // Publish the updated Alias Output.
+  let updated: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  println!("Updated DID document: {:#}", updated);
 
   Ok(())
 }
