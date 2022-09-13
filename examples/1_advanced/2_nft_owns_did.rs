@@ -4,7 +4,8 @@
 use examples::create_did_document;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
+use examples::API_ENDPOINT;
+use examples::FAUCET_ENDPOINT;
 use identity_iota::iota::block::address::NftAddress;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaClientExt;
@@ -40,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
   // =============================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
@@ -50,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Get an address with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager).await?;
+  let address: Address = get_address_with_funds(&client, &mut secret_manager, FAUCET_ENDPOINT).await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
