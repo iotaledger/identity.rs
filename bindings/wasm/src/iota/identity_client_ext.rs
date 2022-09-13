@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::output::RentStructureBuilder;
 use identity_iota::iota::block::address::dto::AddressDto;
 use identity_iota::iota::block::address::Address;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
@@ -71,8 +72,14 @@ impl WasmIotaIdentityClientExt {
     let doc: IotaDocument = document.0.clone();
 
     let promise: Promise = future_to_promise(async move {
-      let rent_structure: Option<RentStructure> =
-        rentStructure.map(|rent| rent.into_serde()).transpose().wasm_result()?;
+      let rent_structure: Option<RentStructure> = rentStructure
+        .map(|rent| {
+          rent
+            .into_serde::<RentStructureBuilder>()
+            .map(RentStructureBuilder::finish)
+        })
+        .transpose()
+        .wasm_result()?;
 
       let output: AliasOutput = IotaIdentityClientExt::new_did_output(&client, address, doc, rent_structure)
         .await

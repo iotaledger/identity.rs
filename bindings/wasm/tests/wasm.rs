@@ -1,6 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+// TODO: remove allow after https://github.com/iotaledger/identity.rs/issues/1011 is fixed.
+#![allow(deprecated)]
+
 use std::borrow::Cow;
 
 use identity_iota::core::Timestamp;
