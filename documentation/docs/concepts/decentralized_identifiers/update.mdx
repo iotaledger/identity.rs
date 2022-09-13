@@ -11,7 +11,6 @@ keywords:
   - Publish
 ---
 
-import account_manipulate_did_rs from "!!raw-loader!../../../../examples_legacy/account/manipulate_did.rs";
 import update_did_rust from "!!raw-loader!../../../../examples/0_basic/1_update_did.rs";
 import update_did_node from "!!raw-loader!../../../../bindings/wasm/examples/src/ex1_update_did.ts";
 import CodeSnippet from "../../../src/components/CodeSnippetComponent";
@@ -45,7 +44,7 @@ The following relationships are supported by the Identity Framework:
 - **[Capability Invocation](https://www.w3.org/TR/did-core/#capability-invocation)**: can be used to authorize updates to the DID Document.
 - **[Capability Delegation](https://www.w3.org/TR/did-core/#capability-delegation)**: a mechanism to delegate cryptographic capability to another party.
 
-Verification methods can be either [embedded or referenced](https://www.w3.org/TR/did-core/#example-14-embedding-and-referencing-verification-methods). Referencing verification
+Verification methods can be either [embedded or referenced](https://www.w3.org/TR/did-core/#referring-to-verification-methods). Referencing verification
 methods allow them to be used by more than one verification relationship.
 Upon creating a verification method using the identity framework, specifying the `MethodScope` option will result in an embedded verification method. Leaving that option unset will create the verification method as
 a map entry of the `verificationMethod` property. Verification relationships can be added afterwards using references.
