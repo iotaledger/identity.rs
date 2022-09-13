@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { didControlsDid } from "./0_did_controls_did";
+import { didIssuesNft } from "./1_did_issues_nft";
 import {createIdentity} from "./ex0_create_did";
 import {updateIdentity} from "./ex1_update_did";
 import {resolveIdentity} from "./ex2_resolve_did";
@@ -28,6 +29,8 @@ async function main() {
             return await deleteIdentity();
         case "0_did_controls_did":
             return await didControlsDid();
+        case "1_did_issues_nft":
+            return await didIssuesNft();
         default:
             throw "Unknown example name: '" + argument + "'";
     }

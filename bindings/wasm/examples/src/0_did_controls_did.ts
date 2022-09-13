@@ -8,9 +8,9 @@ import { Client, MnemonicSecretManager } from '@cycraig/iota-client-wasm/node';
 import { Bip39 } from '@iota/crypto.js';
 import { Converter } from '@iota/util.js';
 
-/// Demonstrates how an identity can control another identity.
-///
-/// For this example, we consider the case where a parent company's DID controls the DID of a subsidiary.
+/** Demonstrates how an identity can control another identity.
+
+For this example, we consider the case where a parent company's DID controls the DID of a subsidiary. */
 export async function didControlsDid() {
   // ========================================================
   // Create the company's and subsidiary's Alias Output DIDs.
