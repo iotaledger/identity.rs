@@ -267,7 +267,7 @@ impl IotaDocument {
   /// Serializes the document for inclusion in an Alias Output's state metadata
   /// with the default [`StateMetadataEncoding`].
   pub fn pack(self) -> Result<Vec<u8>> {
-    self.pack_with_encoding(StateMetadataEncoding::Json)
+    self.pack_with_encoding(StateMetadataEncoding::default())
   }
 
   /// Serializes the document for inclusion in an Alias Output's state metadata.
