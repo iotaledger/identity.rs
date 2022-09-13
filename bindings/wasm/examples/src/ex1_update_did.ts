@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { MethodRelationship, IotaDocument, IotaService, Timestamp } from '../../node';
+import { MethodRelationship, IotaDocument, IotaService, Timestamp, IotaVerificationMethod, KeyPair, KeyType, MethodScope } from '../../node';
 import { IAliasOutput, IRent, TransactionHelper } from '@iota/iota.js';
 
 import { createIdentity } from "./ex0_create_did";
@@ -15,8 +15,13 @@ export async function updateIdentity() {
     // Technically this is equivalent to the document above.
     const document: IotaDocument = await didClient.resolveDid(did);
 
-    // Attach a new method relationship to the existing method.
-    document.attachMethodRelationship(did.join("#key-1"), MethodRelationship.Authentication);
+    // Insert a new Ed25519 verification method in the DID document.
+    let keypair = new KeyPair(KeyType.Ed25519);
+    let method = new IotaVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-2");
+    document.insertMethod(method, MethodScope.VerificationMethod());
+
+    // Attach a new method relationship to the inserted method.
+    document.attachMethodRelationship(did.join("#key-2"), MethodRelationship.Authentication);
 
     // Add a new Service.
     const service: IotaService = new IotaService({
@@ -26,6 +31,10 @@ export async function updateIdentity() {
     });
     document.insertService(service);
     document.setMetadataUpdated(Timestamp.nowUTC());
+
+    // Remove a verification method.
+    let originalMethod = document.resolveMethod("key-1") as IotaVerificationMethod;
+    document.removeMethod(originalMethod?.id());
 
     // Resolve the latest output and update it with the given document.
     const aliasOutput: IAliasOutput = await didClient.updateDidOutput(document);

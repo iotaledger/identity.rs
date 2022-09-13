@@ -70,7 +70,7 @@ The following properties can be specified for a service:
 
 ## Example
 
-The following example demonstrates managing verification methods and services to a DID Document.
+The following example demonstrates managing verification methods and services in a DID Document.
 
 <CodeSnippet
   nodeContent={update_did_node}
@@ -117,22 +117,78 @@ This creates and publishes an Alias Output containing a DID Document with one ve
 ```json
 {
   "doc": {
-    "id": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06",
+    "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
     "verificationMethod": [
       {
-        "id": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06#key-1",
-        "controller": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06",
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-1",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "z8ogKEagUH8swGf9vJNwsLQk79HSm2rkbQjfsMuGQqBjG"
+        "publicKeyMultibase": "z94fP8Vo6qJtejpycjUcYtiSTbLGuCNYUTrjQX9hT2gSv"
       }
     ]
   },
   "meta": {
-    "created": "2022-09-11T19:21:47Z",
-    "updated": "2022-09-11T19:21:47Z"
+    "created": "2022-09-12T21:58:06Z",
+    "updated": "2022-09-12T21:58:06Z"
   }
 }
 ```
+
+### Adding Verification Method
+
+<Tabs groupId="code-examples">
+<TabItem value="Rust" label="Rust">
+
+```rust
+  // Insert a new Ed25519 verification method in the DID document.
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-2")?;
+  document.insert_method(method, MethodScope::VerificationMethod)?;
+```
+
+</TabItem>
+<TabItem value="node" label="Node.js">
+
+```js
+// Insert a new Ed25519 verification method in the DID document.
+let keypair = new KeyPair(KeyType.Ed25519);
+let method = new IotaVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-2");
+document.insertMethod(method, MethodScope.VerificationMethod());
+```
+
+</TabItem>
+</Tabs>
+
+This creates a new verification method that includes a newly generated Ed25519 public key.
+
+```json
+{
+  "doc": {
+    "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
+    "verificationMethod": [
+      {
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-1",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "z94fP8Vo6qJtejpycjUcYtiSTbLGuCNYUTrjQX9hT2gSv"
+      },
+      {
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-2",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "zHiCj7kbZdWznNvBhqxXwgoEChYseKrArLFdi5kPKAVRq"
+      }
+    ]
+  },
+  "meta": {
+    "created": "2022-09-12T21:58:06Z",
+    "updated": "2022-09-12T21:58:06Z"
+  }
+}
+```
+
+Notice that these changes to the document are not published yet. This will be done in a later stage.
 
 ### Adding Verification Relationships
 
@@ -165,25 +221,29 @@ This will add `Authentication` relationship to the verification method with the 
 ```json
 {
   "doc": {
-    "id": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06",
+    "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
     "verificationMethod": [
       {
-        "id": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06#key-1",
-        "controller": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06",
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-1",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "z8ogKEagUH8swGf9vJNwsLQk79HSm2rkbQjfsMuGQqBjG"
+        "publicKeyMultibase": "z94fP8Vo6qJtejpycjUcYtiSTbLGuCNYUTrjQX9hT2gSv"
+      },
+      {
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-2",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "zHiCj7kbZdWznNvBhqxXwgoEChYseKrArLFdi5kPKAVRq"
       }
     ],
-    "authentication": ["did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06#key-1"]
+    "authentication": ["did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-2"]
   },
   "meta": {
-    "created": "2022-09-11T19:21:47Z",
-    "updated": "2022-09-11T19:21:47Z"
+    "created": "2022-09-12T21:58:06Z",
+    "updated": "2022-09-12T21:58:06Z"
   }
 }
 ```
-
-Notice that these changes to the document are not published yet. This will be done after adding the service.
 
 ### Adding a Service
 
@@ -225,27 +285,86 @@ The updated Document with the newly created service looks as follows.
 ```json
 {
   "doc": {
-    "id": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06",
+    "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
     "verificationMethod": [
       {
-        "id": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06#key-1",
-        "controller": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06",
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-1",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "z8ogKEagUH8swGf9vJNwsLQk79HSm2rkbQjfsMuGQqBjG"
+        "publicKeyMultibase": "z94fP8Vo6qJtejpycjUcYtiSTbLGuCNYUTrjQX9hT2gSv"
+      },
+      {
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-2",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "zHiCj7kbZdWznNvBhqxXwgoEChYseKrArLFdi5kPKAVRq"
       }
     ],
-    "authentication": ["did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06#key-1"],
+    "authentication": ["did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-2"],
     "service": [
       {
-        "id": "did:iota:rms:0x7408d40ceaf44b83ad03b0e05f5a5fe21adce0b47a133f91657efe4e41619a06#linked-domain",
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#linked-domain",
         "type": "LinkedDomains",
         "serviceEndpoint": "https://iota.org/"
       }
     ]
   },
   "meta": {
-    "created": "2022-09-11T19:21:47Z",
-    "updated": "2022-09-11T19:23:24Z"
+    "created": "2022-09-12T21:58:06Z",
+    "updated": "2022-09-12T21:58:19Z"
+  }
+}
+```
+
+### Removing Verification Method
+
+<Tabs groupId="code-examples">
+<TabItem value="Rust" label="Rust">
+
+```rust
+// Remove a verification method.
+let original_method: DIDUrl<IotaDID> = document.resolve_method("key-1", None).unwrap().id().clone();
+document.remove_method(&original_method).unwrap();
+```
+
+</TabItem>
+<TabItem value="node" label="Node.js">
+
+```js
+// Remove a verification method.
+let originalMethod = document.resolveMethod("key-1") as IotaVerificationMethod;
+document.removeMethod(originalMethod?.id());
+```
+
+</TabItem>
+</Tabs>
+
+This removes the original verification method with the fragment `key-1`.
+
+```json
+{
+  "doc": {
+    "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
+    "verificationMethod": [
+      {
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-2",
+        "controller": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "zHiCj7kbZdWznNvBhqxXwgoEChYseKrArLFdi5kPKAVRq"
+      }
+    ],
+    "authentication": ["did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#key-2"],
+    "service": [
+      {
+        "id": "did:iota:rms:0x6fdcc441ab461aaee2ec1837ea5068fe2bc643a9ac0729a055ef5df42a762483#linked-domain",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://iota.org/"
+      }
+    ]
+  },
+  "meta": {
+    "created": "2022-09-12T21:58:06Z",
+    "updated": "2022-09-12T21:58:19Z"
   }
 }
 ```

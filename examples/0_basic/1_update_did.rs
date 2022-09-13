@@ -7,7 +7,12 @@ use examples::NETWORK_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::KeyType;
+use identity_iota::did::DIDUrl;
+use identity_iota::did::Document;
 use identity_iota::did::MethodRelationship;
+use identity_iota::did::MethodScope;
 use identity_iota::did::Service;
 use identity_iota::did::DID;
 use identity_iota::iota::block::address::Address;
@@ -17,6 +22,7 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaService;
+use identity_iota::iota::IotaVerificationMethod;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -42,9 +48,15 @@ async fn main() -> anyhow::Result<()> {
   // Resolve the latest state of the document.
   let mut document: IotaDocument = client.resolve_did(&did).await?;
 
-  // Attach a new method relationship to the existing method.
+  // Insert a new Ed25519 verification method in the DID document.
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-2")?;
+  document.insert_method(method, MethodScope::VerificationMethod)?;
+
+  // Attach a new method relationship to the inserted method.
   document.attach_method_relationship(
-    &document.id().to_url().join("#key-1")?,
+    &document.id().to_url().join("#key-2")?,
     MethodRelationship::Authentication,
   )?;
 
@@ -56,6 +68,10 @@ async fn main() -> anyhow::Result<()> {
   }))?;
   assert!(document.insert_service(service));
   document.metadata.updated = Some(Timestamp::now_utc());
+
+  // Remove a verification method.
+  let original_method: DIDUrl<IotaDID> = document.resolve_method("key-1", None).unwrap().id().clone();
+  document.remove_method(&original_method).unwrap();
 
   // Resolve the latest output and update it with the given document.
   let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
