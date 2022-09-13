@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import { didControlsDid } from "./0_did_controls_did";
 import {createIdentity} from "./ex0_create_did";
 import {updateIdentity} from "./ex1_update_did";
 import {resolveIdentity} from "./ex2_resolve_did";
@@ -25,6 +26,8 @@ async function main() {
             return await deactivateIdentity();
         case "ex4_delete_did":
             return await deleteIdentity();
+        case "0_did_controls_did":
+            return await didControlsDid();
         default:
             throw "Unknown example name: '" + argument + "'";
     }
