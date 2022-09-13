@@ -3,6 +3,7 @@
 
 use std::str::FromStr;
 
+use anyhow::Context;
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::NETWORK_ENDPOINT;
@@ -39,6 +40,7 @@ use iota_client::Client;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
+  // NOTE: a permanode is required to fetch older output histories.
   let client: Client = Client::builder().with_primary_node(NETWORK_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
@@ -63,25 +65,18 @@ async fn main() -> anyhow::Result<()> {
   // Adding multiple services.
   let services = [
     json!({"id": document.id().to_url().join("#my-service-0")?, "type": "MyService", "serviceEndpoint": "https://iota.org/"}),
-    json!({"id": document.id().to_url().join("#my-service-1")?, "type": "MyService", "serviceEndpoint": "https://iota.org/"}),
-    json!({"id": document.id().to_url().join("#my-service-2")?, "type": "MyService", "serviceEndpoint": "https://iota.org/"}),
   ];
   for service in services {
     let service: IotaService = Service::from_json_value(service)?;
     assert!(document.insert_service(service));
     document.metadata.updated = Some(Timestamp::now_utc());
 
-    // Resolve the latest output and update it with the given document.
+    // Increase the storage deposit and publish the update.
     let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
-
-    // Because the size of the DID document increased, we have to increase the allocated storage deposit.
-    // This increases the deposit amount to the new minimum.
     let rent_structure: RentStructure = client.get_rent_structure().await?;
     let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
       .with_minimum_storage_deposit(rent_structure)
       .finish()?;
-
-    // Publish the updated Alias Output.
     client.publish_did_output(&secret_manager, alias_output).await?;
   }
 
@@ -100,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
     // Step 2 - Get the OutputId of the previous block
     output_id = previous_output_id(&block)?;
     // Step 3 - Get the Alias Output from the block
-    alias_output = block_alias_output(&block)?;
+    alias_output = block_alias_output(&block, &alias_id)?;
     alias_history.push(alias_output.clone());
   }
 
@@ -119,14 +114,14 @@ async fn current_block(client: &Client, output_id: &OutputId) -> anyhow::Result<
 fn previous_output_id(block: &Block) -> anyhow::Result<OutputId> {
   match block
     .payload()
-    .expect("expected a transaction payload, but no payload was found")
+    .context("expected a transaction payload, but no payload was found")?
   {
     Payload::Transaction(transaction_payload) => match transaction_payload.essence() {
       TransactionEssence::Regular(regular_transaction_essence) => {
         match regular_transaction_essence
           .inputs()
           .first()
-          .expect("expected an utxo for the block, but no input was found")
+          .context("expected an utxo for the block, but no input was found")?
         {
           Input::Utxo(utxo_input) => Ok(*utxo_input.output_id()),
           Input::Treasury(_) => {
@@ -141,16 +136,27 @@ fn previous_output_id(block: &Block) -> anyhow::Result<OutputId> {
   }
 }
 
-fn block_alias_output(block: &Block) -> anyhow::Result<AliasOutput> {
+fn block_alias_output(block: &Block, alias_id: &AliasId) -> anyhow::Result<AliasOutput> {
   match block
     .payload()
-    .expect("expected a transaction payload, but no payload was found")
+    .context("expected a transaction payload, but no payload was found")?
   {
     Payload::Transaction(transaction_payload) => match transaction_payload.essence() {
       TransactionEssence::Regular(regular_transaction_essence) => {
-        for output in regular_transaction_essence.outputs() {
+        for (index, output) in regular_transaction_essence.outputs().iter().enumerate() {
           match output {
-            Output::Alias(alias_output) => return Ok(alias_output.clone()),
+            Output::Alias(alias_output) => {
+              if &alias_output.alias_id().or_from_output_id(
+                OutputId::new(
+                  transaction_payload.id(),
+                  index.try_into().context("output index must fit into a u16")?,
+                )
+                .context("failed to create OutputId")?,
+              ) == alias_id
+              {
+                return Ok(alias_output.clone());
+              }
+            }
             Output::Basic(_) | Output::Foundry(_) | Output::Nft(_) | Output::Treasury(_) => continue,
           }
         }
