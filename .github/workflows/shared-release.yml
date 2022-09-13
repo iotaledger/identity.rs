@@ -156,6 +156,6 @@ jobs:
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
         with:
           body_path: RELEASE_CHANGELOG.md
-          prerelease: ${{env.IS_DEV_RELEASE}}
+          prerelease: ${{env.IS_PRE_RELEASE}}
           tag_name: ${{env.CURRENT_VERSION}}
       
