@@ -46,8 +46,6 @@ export async function didControlsDid() {
     type: ALIAS_ADDRESS_TYPE
   };
 
-  console.log("companyAliasAddress ", JSON.stringify(companyAliasAddress));
-
   // Create a DID for the subsidiary that is controlled by the parent company's DID.
   // This means the subsidiary's Alias Output can only be updated or destroyed by
   // the state controller or governor of the company's Alias Output respectively.
@@ -72,7 +70,6 @@ export async function didControlsDid() {
   // Adding the issuer feature means we have to recalculate the required storage deposit.
   subsidiaryAlias.amount = TransactionHelper.getStorageDeposit(subsidiaryAlias, rentStructure).toString();
 
-  console.log("publish subsidiary");
   // Publish the subsidiary's DID.
   subsidiaryDocument = await didClient.publishDidOutput(secretManager, subsidiaryAlias);
 
@@ -96,8 +93,6 @@ export async function didControlsDid() {
   const subsidiaryAliasUpdate: IAliasOutput = await didClient.updateDidOutput(subsidiaryDocument);
   subsidiaryAliasUpdate.amount = TransactionHelper.getStorageDeposit(subsidiaryAliasUpdate, rentStructure).toString();
 
-  console.log("publish subsidiary update");
-
   // Publish the updated subsidiary's DID.
   //
   // This works because `secret_manager` can unlock the company's Alias Output,
@@ -108,12 +103,8 @@ export async function didControlsDid() {
   // Determine the controlling company's DID given the subsidiary's DID.
   // ===================================================================
 
-  console.log("resolve subsidiary");
-
   // Resolve the subsidiary's Alias Output.
   const subsidiaryOutput: IAliasOutput = await didClient.resolveDidOutput(subsidiaryDocument.id());
-
-  console.log("subsidiary output ", JSON.stringify(subsidiaryOutput, null, 2));
 
   // Extract the company's Alias Id from the state controller unlock condition.
   //
@@ -124,7 +115,7 @@ export async function didControlsDid() {
   // Cast to IStateControllerAddressUnlockCondition is safe as we check the type in find.
   const stateControllerUnlockCondition: IStateControllerAddressUnlockCondition =
     subsidiaryOutput.unlockConditions.find(condition => condition.type == STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE)! as IStateControllerAddressUnlockCondition
-  
+
   // Cast to IAliasAddress is safe because we set an Alias Address earlier.
   const companyAliasId: string = (stateControllerUnlockCondition.address as IAliasAddress).aliasId;
 
