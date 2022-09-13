@@ -45,6 +45,14 @@ runs:
       run: |
         cargo set-version ${{ inputs.version }}
 
+    # cargo workspaces ignores examples_legacy/ but cargo release still tries to version it during publishing.
+    - name: Bump Rust examples_legacy version
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: examples_legacy
+      run: |
+        cargo set-version ${{ inputs.version }}
+
     - name: Bump Wasm bindings crate version
       shell: bash
       if: ${{inputs.release-target == 'wasm'}}
