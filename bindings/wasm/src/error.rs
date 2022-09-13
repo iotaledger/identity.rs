@@ -3,7 +3,7 @@
 
 use identity_iota::resolver;
 use std::borrow::Cow;
-use std::fmt::Display;
+use std::fmt::Write;
 use std::result::Result as StdResult;
 use wasm_bindgen::JsValue;
 
@@ -89,26 +89,8 @@ macro_rules! impl_wasm_error_from {
 impl_wasm_error_from!(
   identity_iota::core::Error,
   identity_iota::credential::Error,
-  identity_iota::did::Error,
-  identity_iota::did::DIDError,
-  identity_iota::iota::Error,
-  identity_iota::credential::ValidationError
+  identity_iota::did::DIDError
 );
-
-// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
-#[macro_export]
-macro_rules! impl_wasm_error_from_with_struct_name {
-  ( $($t:ty),* ) => {
-  $(impl From<$t> for WasmError<'_> {
-    fn from(error: $t) -> Self {
-      Self {
-        message: Cow::Owned(error.to_string()),
-        name: Cow::Borrowed(stringify!($t)),
-      }
-    }
-  })*
-  }
-}
 
 // identity_iota::iota now has some errors where the error message does not include the source error's error message.
 // This is in compliance with the Rust error handling project group's recommendation:
@@ -121,21 +103,43 @@ macro_rules! impl_wasm_error_from_with_struct_name {
 // own display.
 
 // the following function is inspired by https://www.lpalmieri.com/posts/error-handling-rust/#error-source
-fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-  write!(f, "{}. ", e)?;
-  let mut current = e.source();
+fn error_chain_to_string(error: &impl std::error::Error) -> String {
+  let mut error_message = format!("{error}.");
+
+  let mut current = error.source();
   while let Some(cause) = current {
-    write!(f, "Caused by: {}. ", cause)?;
+    // write! on a String should never fail.
+    let _ = write!(error_message, " Caused by: {cause}. ");
     current = cause.source();
   }
-  Ok(())
+
+  error_message
 }
 
-struct ErrorMessage<'a, E: std::error::Error>(&'a E);
+impl From<identity_iota::credential::ValidationError> for WasmError<'_> {
+  fn from(error: identity_iota::credential::ValidationError) -> Self {
+    Self {
+      name: Cow::Borrowed("ValidationError"),
+      message: Cow::Owned(error_chain_to_string(&error)),
+    }
+  }
+}
 
-impl<'a> Display for ErrorMessage<'a, resolver::Error> {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    error_chain_fmt(self.0, f)
+impl From<identity_iota::did::Error> for WasmError<'_> {
+  fn from(error: identity_iota::did::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("DidError"),
+      message: Cow::Owned(error_chain_to_string(&error)),
+    }
+  }
+}
+
+impl From<identity_iota::iota::Error> for WasmError<'_> {
+  fn from(error: identity_iota::iota::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("IotaError"),
+      message: Cow::Owned(error_chain_to_string(&error)),
+    }
   }
 }
 
@@ -143,7 +147,7 @@ impl From<resolver::Error> for WasmError<'_> {
   fn from(error: resolver::Error) -> Self {
     Self {
       name: Cow::Owned(format!("ResolverError::{}", <&'static str>::from(error.error_cause()))),
-      message: Cow::Owned(ErrorMessage(&error).to_string()),
+      message: Cow::Owned(error_chain_to_string(&error)),
     }
   }
 }
