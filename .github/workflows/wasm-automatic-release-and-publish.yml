@@ -15,8 +15,8 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-release.yml@dev
     with:
       changelog-config-path: ./bindings/wasm/.github_changelog_generator
-      dev-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+-(dev)\.\d*$
-      main-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+$
+      pre-release-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+-(?<pre_release>\w+)\.\d+$
+      main-release-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+$
       create-github-release: false
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -42,7 +42,7 @@ jobs:
         with:
           input-artifact-name: identity-wasm-bindings-build
           npm-token: ${{ secrets.NPM_TOKEN }}
-          tag: ${{ needs.call-create-release-workflow.outputs.is-dev-release && 'dev' }}
+          tag: ${{ needs.call-create-release-workflow.outputs.is-pre-release && needs.call-create-release-workflow.outputs.pre-release-identifier }}
 
   # build-stronghold-nodejs:
   #   needs: build-wasm
@@ -66,5 +66,5 @@ jobs:
   #       uses: './.github/actions/publish/publish-stronghold-nodejs'
   #       with:
   #         npm-token: ${{ secrets.NPM_TOKEN }}
-  #         tag: ${{ needs.call-create-release-workflow.outputs.is-dev-release && 'dev' }}
+  #         tag: ${{ needs.call-create-release-workflow.outputs.is-pre-release && needs.call-create-release-workflow.outputs.pre-release-identifier }}
   #         input-artifact-name: identity-stronghold-nodejs-bindings-build
