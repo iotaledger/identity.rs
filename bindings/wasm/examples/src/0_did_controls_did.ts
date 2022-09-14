@@ -114,7 +114,7 @@ export async function didControlsDid() {
   // Non-null assertion is safe to use since every Alias Output has a state controller unlock condition.
   // Cast to IStateControllerAddressUnlockCondition is safe as we check the type in find.
   const stateControllerUnlockCondition: IStateControllerAddressUnlockCondition =
-    subsidiaryOutput.unlockConditions.find(condition => condition.type == STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE)! as IStateControllerAddressUnlockCondition
+    subsidiaryOutput.unlockConditions.find(unlockCondition => unlockCondition.type == STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE)! as IStateControllerAddressUnlockCondition
 
   // Cast to IAliasAddress is safe because we set an Alias Address earlier.
   const companyAliasId: string = (stateControllerUnlockCondition.address as IAliasAddress).aliasId;
