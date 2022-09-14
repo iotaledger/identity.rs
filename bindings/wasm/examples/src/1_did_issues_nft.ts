@@ -45,6 +45,7 @@ export async function didIssuesNft() {
     aliasId: manufacturerDid.toAliasId()
   }
 
+  // TODO: Use client.buildNftOutput.
   // Create a Digital Product Passport NFT issued by the manufacturer.
   let productPassportNft: INftOutput = {
     type: NFT_OUTPUT_TYPE,
