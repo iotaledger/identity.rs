@@ -82,20 +82,7 @@ export async function nftOwnsDid() {
   var carDocument: IotaDocument = new IotaDocument(networkName);
 
   // Create a new DID for the car that is owned by the car NFT.
-  var carDidAliasOutput: IAliasOutput = await client.buildAliasOutput({
-    aliasId: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    unlockConditions: [
-      {
-        type: STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE,
-        address: nftAddress,
-      },
-      {
-        type: GOVERNOR_ADDRESS_UNLOCK_CONDITION_TYPE,
-        address: nftAddress,
-      }
-    ],
-    stateMetadata: Array.from(carDocument.pack())
-  })
+  var carDidAliasOutput: IAliasOutput = await didClient.newDidOutput(nftAddress, carDocument, rentStructure);
 
   // Publish the car DID.
   carDocument = await didClient.publishDidOutput(secretManager, carDidAliasOutput);
