@@ -7,6 +7,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.62"
+did-key = { version = "=0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
 iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 primitive-types = "0.11.1"
@@ -59,3 +60,7 @@ name = "4_key_exchange"
 [[example]]
 path = "1_advanced/5_alias_output_history.rs"
 name = "5_alias_output_history"
+
+[[example]]
+path = "1_advanced/6_custom_resolution.rs"
+name = "6_custom_resolution"
