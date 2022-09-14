@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDocument, IotaIdentityClient, MethodScope, KeyPair, KeyType, IotaVerificationMethod, IotaDID } from '../../node';
-import { AddressTypes, IAliasOutput, IRent, TransactionHelper, ALIAS_ADDRESS_TYPE, IAliasAddress, ISSUER_FEATURE_TYPE, IStateControllerAddressUnlockCondition, STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE, NFT_OUTPUT_TYPE, METADATA_FEATURE_TYPE, PayloadTypes, TRANSACTION_PAYLOAD_TYPE, ITransactionPayload, TRANSACTION_ESSENCE_TYPE, INftOutput, ADDRESS_UNLOCK_CONDITION_TYPE } from '@iota/iota.js';
+import { IotaDocument, IotaIdentityClient, IotaDID } from '../../node';
+import { AddressTypes, IRent, TransactionHelper, ALIAS_ADDRESS_TYPE, ISSUER_FEATURE_TYPE, NFT_OUTPUT_TYPE, METADATA_FEATURE_TYPE, PayloadTypes, TRANSACTION_PAYLOAD_TYPE, ITransactionPayload, TRANSACTION_ESSENCE_TYPE, INftOutput, ADDRESS_UNLOCK_CONDITION_TYPE, IIssuerFeature, IOutputResponse, OutputTypes } from '@iota/iota.js';
 import { API_ENDPOINT, createDid } from './util';
-import { Client, INftOutputBuilderOptions, MnemonicSecretManager } from '@cycraig/iota-client-wasm/node';
+import { Client, MnemonicSecretManager } from '@cycraig/iota-client-wasm/node';
 import { Bip39 } from '@iota/crypto.js';
 import { Converter } from '@iota/util.js';
 
@@ -39,7 +39,8 @@ export async function didIssuesNft() {
   // Get the Bech32 human-readable part (HRP) of the network.
   const networkName: string = await didClient.getNetworkHrp();
 
-  const manufacturerAliasAddress: AddressTypes = {
+  // Create the Alias Address of the manufacturer.
+  var manufacturerAliasAddress: AddressTypes = {
     type: ALIAS_ADDRESS_TYPE,
     aliasId: manufacturerDid.toAliasId()
   }
@@ -70,6 +71,7 @@ export async function didIssuesNft() {
     ]
   };
 
+  // Set the appropriate storage deposit.
   productPassportNft.amount = TransactionHelper.getStorageDeposit(productPassportNft, rentStructure).toString();
 
   // Publish the NFT.
@@ -81,50 +83,35 @@ export async function didIssuesNft() {
   // ========================================================
 
   // Extract the identifier of the NFT from the published block.
-
   // Non-null assertion is safe because we published a block with a payload.
   let nftId: string = nft_output_id(block.payload!);
 
-  console.log("nftId ", nftId);
+  // Fetch the NFT Output.
+  const nftOutputId: string = await client.nftOutputId(nftId);
+  const outputResponse: IOutputResponse = await client.getOutput(nftOutputId);
+  const output: OutputTypes = outputResponse.output
 
-  // let nft_id: NftId = NftId::from(get_nft_output_id(
-  //   block
-  //     .payload()
-  //     .ok_or_else(|| anyhow::anyhow!("expected block to contain a payload"))?,
-  // )?);
+  // Extract the issuer of the NFT.
+  let manufacturerAliasId: string;
+  if (output.type === NFT_OUTPUT_TYPE && output.immutableFeatures) {
+    const issuerFeature: IIssuerFeature = output.immutableFeatures.find(feature => feature.type === ISSUER_FEATURE_TYPE) as IIssuerFeature;
 
-  // // Fetch the NFT Output.
-  // let nft_output_id: OutputId = client.nft_output_id(nft_id).await?;
-  // let output_response: OutputResponse = client.get_output(&nft_output_id).await?;
-  // let output: Output = Output::try_from(&output_response.output)?;
+    if (issuerFeature && issuerFeature.address.type === ALIAS_ADDRESS_TYPE) {
+      manufacturerAliasId = issuerFeature.address.aliasId
+    } else {
+      throw new Error("expected to find issuer feature with an alias address");
+    }
+  } else {
+    throw new Error("expected NFT output with immutable features");
+  }
 
-  // // Extract the issuer of the NFT.
-  // let nft_output: NftOutput = if let Output::Nft(nft_output) = output {
-  //   nft_output
-  // } else {
-  //   anyhow::bail!("expected NFT output")
-  // };
+  // Reconstruct the manufacturer's DID from the Alias Id.
+  manufacturerDid = new IotaDID(Converter.hexToBytes(manufacturerAliasId), networkName);
 
-  // let issuer_address: Address = if let Some(Feature::Issuer(issuer)) = nft_output.immutable_features().iter().next() {
-  //   *issuer.address()
-  // } else {
-  //   anyhow::bail!("expected an issuer feature")
-  // };
+  // Resolve the issuer of the NFT.
+  const manufacturerDocument: IotaDocument = await didClient.resolveDid(manufacturerDid);
 
-  // let manufacturer_alias_id: AliasId = if let Address::Alias(alias_address) = issuer_address {
-  //   *alias_address.alias_id()
-  // } else {
-  //   anyhow::bail!("expected an Alias Address")
-  // };
-
-  // // Reconstruct the manufacturer's DID from the Alias Id.
-  // let network: NetworkName = client.network_name().await?;
-  // let manufacturer_did: IotaDID = IotaDID::new(&*manufacturer_alias_id, &network);
-
-  // // Resolve the issuer of the NFT.
-  // let manufacturer_document: IotaDocument = client.resolve_did(&manufacturer_did).await?;
-
-  // println!("The issuer of the Digital Product Passport NFT is: {manufacturer_document:#}");
+  console.log("The issuer of the Digital Product Passport NFT is:", JSON.stringify(manufacturerDocument, null, 2));
 }
 
 function nft_output_id(payload: PayloadTypes): string {
@@ -136,7 +123,8 @@ function nft_output_id(payload: PayloadTypes): string {
       const outputs = txPayload.essence.outputs;
       for (let index in txPayload.essence.outputs) {
         if (outputs[index].type === NFT_OUTPUT_TYPE) {
-          return TransactionHelper.outputIdFromTransactionData(txHash, parseInt(index));
+          const outputId: string = TransactionHelper.outputIdFromTransactionData(txHash, parseInt(index));
+          return TransactionHelper.resolveIdFromOutputId(outputId);
         }
       }
       throw new Error("no NFT output in transaction essence");
