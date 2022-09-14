@@ -7,9 +7,8 @@ import {
   IotaIdentityClient,
   IotaVerificationMethod
 } from '../../node';
-import type { Client, MnemonicSecretManager, SecretManager } from "@cycraig/iota-client-wasm/node";
+import type { Client, SecretManager } from "@cycraig/iota-client-wasm/node";
 import { AddressTypes, Bech32Helper, IAliasOutput } from '@iota/iota.js';
-import { Bip39 } from '@iota/crypto.js';
 
 export const API_ENDPOINT = "https://api.testnet.shimmer.network/";
 export const FAUCET_ENDPOINT = "https://faucet.testnet.shimmer.network/api/enqueue";
@@ -46,7 +45,6 @@ export async function createDid(client: Client, secretManager: SecretManager): P
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.
   const aliasOutput: IAliasOutput = await didClient.newDidOutput(address, document);
-  console.log("Alias Output:", JSON.stringify(aliasOutput, null, 2));
 
   // Publish the Alias Output and get the published DID document.
   const published = await didClient.publishDidOutput(secretManager, aliasOutput);

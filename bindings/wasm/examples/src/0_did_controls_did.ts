@@ -120,7 +120,7 @@ export async function didControlsDid() {
   const companyAliasId: string = (stateControllerUnlockCondition.address as IAliasAddress).aliasId;
 
   // Reconstruct the company's DID from the Alias Id and the network.
-  companyDid = new IotaDID(Converter.hexToBytes(companyAliasId.slice(2)), networkName);
+  companyDid = new IotaDID(Converter.hexToBytes(companyAliasId), networkName);
 
   // Resolve the company's DID document.
   const companyDocument: IotaDocument = await didClient.resolveDid(companyDid);
