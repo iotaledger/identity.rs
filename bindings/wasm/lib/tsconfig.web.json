@@ -4,7 +4,7 @@
         "baseUrl": "./",
         "paths": {
             "~identity_wasm": ["../web/identity_wasm"],
-            "~iota-client-wasm": ["../node_modules/@cycraig/iota-client-wasm/web"],
+            "~iota-client-wasm": ["../node_modules/@iota/iota-client-wasm/web"],
         },
         "outDir": "../web",
         "declarationDir": "../web",
