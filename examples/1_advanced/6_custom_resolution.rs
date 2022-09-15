@@ -61,15 +61,16 @@ async fn main() -> anyhow::Result<()> {
   // them to concrete document types.
 
   let did_key_doc: CoreDocument = *did_key_doc
-  .into_any()
-  .downcast::<CoreDocument>()
-  .expect(
-    "downcasting should work since the specified type matches that of the handler responsible associated with the resolved did"
-  );
+    .into_any()
+    .downcast::<CoreDocument>()
+    .expect("downcasting to the return type of the did:key handler should be fine");
 
   println!("Resolved DID Key document: {}", did_key_doc.to_json_pretty()?);
 
-  let iota_doc: IotaDocument = *iota_doc.into_any().downcast::<IotaDocument>().unwrap();
+  let iota_doc: IotaDocument = *iota_doc
+    .into_any()
+    .downcast::<IotaDocument>()
+    .expect("downcasting to the return type of the iota handler should be fine");
   println!("Resolved DID iota document: {}", iota_doc.to_json_pretty()?);
 
   Ok(())
