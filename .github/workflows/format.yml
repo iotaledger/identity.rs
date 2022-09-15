@@ -31,6 +31,12 @@ jobs:
           override: true
           components: rustfmt
 
+      - name: Install cargo-license-template
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-license-template
+
       - name: Install dprint
         run: npm install -g dprint
         #run: cargo install dprint # installing from source is slow, ~5 minutes
@@ -64,3 +70,9 @@ jobs:
       - name: Cargo.toml fmt check
         run:
           dprint check
+
+      - name: cargo-license-template check
+        uses: actions-rs/cargo@v1
+        with:
+          command: cargo-license-template
+          args: --template .license_template --ignore .license_template_ignore --verbose
