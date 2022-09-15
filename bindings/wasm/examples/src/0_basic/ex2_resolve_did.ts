@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDocument, IotaIdentityClient } from '../../node';
+import { IotaDocument, IotaIdentityClient } from '../../../node';
 import type { IAliasOutput } from '@iota/iota.js';
-import { API_ENDPOINT, createDid } from './util';
+import { API_ENDPOINT, createDid } from '../util';
 import { Bip39 } from '@iota/crypto.js';
 import { Client, MnemonicSecretManager } from '@iota/iota-client-wasm/node';
 

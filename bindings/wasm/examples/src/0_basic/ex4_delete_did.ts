@@ -3,8 +3,8 @@
 
 import { Bech32Helper } from "@iota/iota.js";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { IotaIdentityClient } from "../../node";
-import { API_ENDPOINT, createDid } from "./util";
+import { IotaIdentityClient } from "../../../node";
+import { API_ENDPOINT, createDid } from "../util";
 import { Bip39 } from "@iota/crypto.js";
 
 /** Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. */

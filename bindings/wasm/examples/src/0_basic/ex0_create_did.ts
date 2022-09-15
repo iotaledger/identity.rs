@@ -9,11 +9,11 @@ import {
     IotaDocument,
     IotaIdentityClient,
     IotaVerificationMethod
-} from '../../node';
+} from '../../../node';
 import { Bech32Helper, IAliasOutput } from '@iota/iota.js';
 import { Bip39 } from "@iota/crypto.js";
 import { Client, MnemonicSecretManager, SecretManager } from "@iota/iota-client-wasm/node";
-import { API_ENDPOINT, ensureAddressHasFunds } from './util';
+import { API_ENDPOINT, ensureAddressHasFunds } from '../util';
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{

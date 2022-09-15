@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaDocument, IotaIdentityClient, MethodScope, KeyPair, KeyType, IotaVerificationMethod, IotaDID } from '../../node';
+import { IotaDocument, IotaIdentityClient, MethodScope, KeyPair, KeyType, IotaVerificationMethod, IotaDID } from '../../../node';
 import { AddressTypes, IAliasOutput, IRent, TransactionHelper, ALIAS_ADDRESS_TYPE, IAliasAddress, ISSUER_FEATURE_TYPE, IStateControllerAddressUnlockCondition, STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE } from '@iota/iota.js';
-import { API_ENDPOINT, createDid } from './util';
+import { API_ENDPOINT, createDid } from '../util';
 import { Client, MnemonicSecretManager } from '@iota/iota-client-wasm/node';
 import { Bip39 } from '@iota/crypto.js';
 import { Converter } from '@iota/util.js';
