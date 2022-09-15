@@ -23,25 +23,6 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-/// Resolves an Ed25519 did:key DID to a spec compliant DID Document represented as a [`CoreDocument`].
-///
-/// # Errors
-/// Errors if the DID is not a valid Ed25519 did:key.  
-async fn resolve_ed25519_did_key(did: CoreDID) -> Result<CoreDocument, Box<dyn std::error::Error + Send + Sync>> {
-  DIDKey::try_from(did.as_str())
-    .map_err(|err| anyhow::anyhow!("The provided DID does not satisfy the did:key format: {:?}", err))
-    .map(|key| {
-      key.get_did_document(Config {
-        use_jose_format: false,
-        serialize_secrets: false,
-      })
-    })?
-    .to_json()
-    .and_then(|doc_json| CoreDocument::from_json(&doc_json))
-    .context("failed to obtain a supported DID Document")
-    .map_err(Into::into)
-}
-
 /// Demonstrates how to set up a resolver using custom handlers.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -89,4 +70,23 @@ async fn main() -> anyhow::Result<()> {
   // NOTE: Since both `IotaDocument` and `CoreDocument` implement `Into<CoreDocument>` we could have used
   // Resolver<CoreDocument> in this example and just worked with `CoreDocument` representations throughout.
   Ok(())
+}
+
+/// Resolves an Ed25519 did:key DID to a spec compliant DID Document represented as a [`CoreDocument`].
+///
+/// # Errors
+/// Errors if the DID is not a valid Ed25519 did:key.  
+async fn resolve_ed25519_did_key(did: CoreDID) -> Result<CoreDocument, Box<dyn std::error::Error + Send + Sync>> {
+  DIDKey::try_from(did.as_str())
+    .map_err(|err| anyhow::anyhow!("the provided DID does not satisfy the did:key format: {:?}", err))
+    .map(|key| {
+      key.get_did_document(Config {
+        use_jose_format: false,
+        serialize_secrets: false,
+      })
+    })?
+    .to_json()
+    .and_then(|doc_json| CoreDocument::from_json(&doc_json))
+    .context("failed to obtain a supported DID Document")
+    .map_err(Into::into)
 }
