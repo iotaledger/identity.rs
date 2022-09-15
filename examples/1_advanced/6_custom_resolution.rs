@@ -67,10 +67,10 @@ async fn main() -> anyhow::Result<()> {
   // Create a new DID for us to resolve.
   let (_, iota_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
-  // Resolve did_key to get an abstract document
+  // Resolve did_key to get an abstract document.
   let did_key_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&did_key).await?;
 
-  // Resolve iota_did to get an abstract document
+  // Resolve iota_did to get an abstract document.
   let iota_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&iota_did).await?;
 
   // These documents are mainly meant for validating credentials and presentations, but one can also attempt to cast
