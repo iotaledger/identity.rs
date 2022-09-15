@@ -3,7 +3,6 @@
 
 import { IotaDocument, IotaIdentityClient } from '../../../node';
 import { IAliasOutput, IRent, TransactionHelper } from '@iota/iota.js';
-
 import { API_ENDPOINT, createDid } from '../util';
 import { Bip39 } from '@iota/crypto.js';
 import { Client, MnemonicSecretManager } from '@iota/iota-client-wasm/node';
