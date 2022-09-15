@@ -85,5 +85,8 @@ async fn main() -> anyhow::Result<()> {
 
   let iota_doc: IotaDocument = *iota_doc.into_any().downcast::<IotaDocument>().unwrap();
   println!("Resolved DID iota document: {}", iota_doc.to_json_pretty()?);
+
+  // NOTE: Since both `IotaDocument` and `CoreDocument` implement `Into<CoreDocument>` we could have used
+  // Resolver<CoreDocument> in this example and just worked with `CoreDocument` representations throughout.
   Ok(())
 }
