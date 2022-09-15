@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use bee_block::address::Address;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
@@ -21,6 +22,10 @@ pub struct IotaDocumentMetadata {
   pub updated: Option<Timestamp>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub deactivated: Option<bool>,
+  #[serde(rename = "governorAddress", skip_serializing_if = "Option::is_none")]
+  pub governor_address: Option<Address>,
+  #[serde(rename = "stateControllerAddress", skip_serializing_if = "Option::is_none")]
+  pub state_controller_address: Option<Address>,
   #[serde(flatten)]
   pub properties: Object,
 }
@@ -34,6 +39,8 @@ impl IotaDocumentMetadata {
       created: Some(now),
       updated: Some(now),
       deactivated: None,
+      governor_address: None,
+      state_controller_address: None,
       properties: Object::default(),
     }
   }
