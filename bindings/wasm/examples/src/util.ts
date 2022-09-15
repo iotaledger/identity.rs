@@ -7,7 +7,7 @@ import {
   IotaIdentityClient,
   IotaVerificationMethod
 } from '../../node';
-import type { Client, SecretManager } from "@cycraig/iota-client-wasm/node";
+import type { Client, SecretManager } from "@iota/iota-client-wasm/node";
 import { AddressTypes, Bech32Helper, IAliasOutput } from '@iota/iota.js';
 
 export const API_ENDPOINT = "https://api.testnet.shimmer.network/";

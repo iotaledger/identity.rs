@@ -4,7 +4,7 @@
 import { MethodRelationship, IotaDocument, IotaService, Timestamp, IotaVerificationMethod, KeyPair, KeyType, MethodScope, IotaIdentityClient } from '../../node';
 import { IAliasOutput, IRent, TransactionHelper } from '@iota/iota.js';
 import { API_ENDPOINT, createDid } from './util';
-import { Client, MnemonicSecretManager } from '@cycraig/iota-client-wasm/node';
+import { Client, MnemonicSecretManager } from '@iota/iota-client-wasm/node';
 import { Bip39 } from '@iota/crypto.js';
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */

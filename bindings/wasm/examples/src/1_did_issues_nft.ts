@@ -4,7 +4,7 @@
 import { IotaDocument, IotaIdentityClient, IotaDID } from '../../node';
 import { AddressTypes, IRent, TransactionHelper, ALIAS_ADDRESS_TYPE, ISSUER_FEATURE_TYPE, NFT_OUTPUT_TYPE, METADATA_FEATURE_TYPE, PayloadTypes, TRANSACTION_PAYLOAD_TYPE, ITransactionPayload, TRANSACTION_ESSENCE_TYPE, INftOutput, ADDRESS_UNLOCK_CONDITION_TYPE, IIssuerFeature, IOutputResponse, OutputTypes } from '@iota/iota.js';
 import { API_ENDPOINT, createDid } from './util';
-import { Client, MnemonicSecretManager } from '@cycraig/iota-client-wasm/node';
+import { Client, MnemonicSecretManager } from '@iota/iota-client-wasm/node';
 import { Bip39 } from '@iota/crypto.js';
 import { Converter } from '@iota/util.js';
 

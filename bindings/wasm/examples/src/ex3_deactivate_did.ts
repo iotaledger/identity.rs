@@ -7,7 +7,7 @@ import { IAliasOutput, IRent, TransactionHelper } from '@iota/iota.js';
 import { createIdentity } from "./ex0_create_did";
 import { API_ENDPOINT, createDid } from './util';
 import { Bip39 } from '@iota/crypto.js';
-import { Client, MnemonicSecretManager } from '@cycraig/iota-client-wasm/node';
+import { Client, MnemonicSecretManager } from '@iota/iota-client-wasm/node';
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {
