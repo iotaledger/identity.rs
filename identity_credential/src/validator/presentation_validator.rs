@@ -318,14 +318,14 @@ mod tests {
       issuer_foo_doc
         .signer(issuer_foo_key.private())
         .options(ProofOptions::default())
-        .method(issuer_foo_doc.methods().next().unwrap().id())
+        .method(issuer_foo_doc.methods(None).get(0).unwrap().id())
         .sign(credential_foo)
         .unwrap();
 
       issuer_bar_doc
         .signer(issuer_bar_key.private())
         .options(ProofOptions::default())
-        .method(issuer_bar_doc.methods().next().unwrap().id())
+        .method(issuer_bar_doc.methods(None).get(0).unwrap().id())
         .sign(credential_bar)
         .unwrap();
       setup
@@ -350,7 +350,7 @@ mod tests {
     subject_foo_doc
       .signer(subject_foo_key.private())
       .options(ProofOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()))
-      .method(subject_foo_doc.methods().next().unwrap().id())
+      .method(subject_foo_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 
@@ -396,7 +396,7 @@ mod tests {
     subject_foo_doc
       .signer(subject_foo_key.private())
       .options(ProofOptions::new().challenge("some challenge".to_owned()))
-      .method(subject_foo_doc.methods().next().unwrap().id())
+      .method(subject_foo_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 
@@ -461,7 +461,7 @@ mod tests {
     subject_foo_doc
       .signer(subject_foo_key.private())
       .options(ProofOptions::new().challenge("some challenge".to_owned()))
-      .method(subject_foo_doc.methods().next().unwrap().id())
+      .method(subject_foo_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 
@@ -513,7 +513,7 @@ mod tests {
     issuer_bar_doc
       .signer(issuer_bar_key.private())
       .options(ProofOptions::default())
-      .method(issuer_bar_doc.methods().next().unwrap().id())
+      .method(issuer_bar_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential_bar)
       .unwrap();
 
@@ -525,7 +525,7 @@ mod tests {
     subject_foo_doc
       .signer(subject_foo_key.private())
       .options(ProofOptions::new().challenge("some challenge".to_owned()))
-      .method(subject_foo_doc.methods().next().unwrap().id())
+      .method(subject_foo_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 
@@ -619,7 +619,7 @@ mod tests {
     subject_foo_doc
       .signer(subject_foo_key.private())
       .options(ProofOptions::new().challenge("some challenge".to_owned()))
-      .method(subject_foo_doc.methods().next().unwrap().id())
+      .method(subject_foo_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 
@@ -692,7 +692,7 @@ mod tests {
     subject_foo_doc
       .signer(subject_foo_key.private())
       .options(ProofOptions::new().challenge("some challenge".to_owned()))
-      .method(subject_foo_doc.methods().next().unwrap().id())
+      .method(subject_foo_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 

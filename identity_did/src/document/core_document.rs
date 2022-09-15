@@ -483,10 +483,48 @@ where
     }
   }
 
+  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod<D, U>>
+  where
+    D: DID,
+  {
+    if let Some(scope) = scope {
+      match scope {
+        MethodScope::VerificationMethod => self.verification_method().iter().collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => self
+          .assertion_method()
+          .iter()
+          .filter_map(|mr| self.resolve_method_ref(mr))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::Authentication) => self
+          .authentication()
+          .iter()
+          .filter_map(|mr| self.resolve_method_ref(mr))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
+          .capability_delegation()
+          .iter()
+          .filter_map(|mr| self.resolve_method_ref(mr))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
+          .capability_invocation()
+          .iter()
+          .filter_map(|mr| self.resolve_method_ref(mr))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => self
+          .key_agreement()
+          .iter()
+          .filter_map(|mr| self.resolve_method_ref(mr))
+          .collect(),
+      }
+    } else {
+      self.all_methods().collect()
+    }
+  }
+
   /// Returns an iterator over all embedded verification methods in the DID Document.
   ///
   /// This excludes verification methods that are referenced by the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item = &VerificationMethod<D, U>> {
+  fn all_methods(&self) -> impl Iterator<Item = &VerificationMethod<D, U>> {
     fn __filter_ref<D, T>(method: &MethodRef<D, T>) -> Option<&VerificationMethod<D, T>>
     where
       D: DID,
@@ -1053,8 +1091,8 @@ mod tests {
     let document: CoreDocument = document();
 
     // Access methods by index.
-    assert_eq!(document.methods().next().unwrap().id().to_string(), "did:example:1234#key-1");
-    assert_eq!(document.methods().nth(2).unwrap().id().to_string(), "did:example:1234#key-3");
+    assert_eq!(document.methods(None).get(0).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.methods(None).get(2).unwrap().id().to_string(), "did:example:1234#key-3");
   }
 
   #[test]
