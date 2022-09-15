@@ -46,7 +46,7 @@ export async function keyExchange() {
   // Get the current byte costs.
   const rentStructure: IRent = await didClient.getRentStructure();
 
-  // Alice creates and publishes their DID Document (see ex0_create_did and 1_update_did examples).
+  // Alice creates and publishes their DID Document (see 0_create_did and 1_update_did examples).
   let aliceDid;
   let aliceX25519;
   {
@@ -66,7 +66,7 @@ export async function keyExchange() {
     aliceX25519 = x25519;
   }
 
-  // Alice creates and publishes their DID Document (see ex0_create_did and 1_update_did examples).
+  // Alice creates and publishes their DID Document (see 0_create_did and 1_update_did examples).
   let bobDid;
   let bobX25519;
   {

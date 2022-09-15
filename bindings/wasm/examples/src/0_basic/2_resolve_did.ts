@@ -20,7 +20,7 @@ export async function resolveIdentity() {
         Mnemonic: Bip39.randomMnemonic()
     };
 
-    // Creates a new wallet and identity (see "ex0_create_did" example).
+    // Creates a new wallet and identity (see "0_create_did" example).
     const { did } = await createDid(client, secretManager);
 
     // Resolve the associated Alias Output and extract the DID document from it.

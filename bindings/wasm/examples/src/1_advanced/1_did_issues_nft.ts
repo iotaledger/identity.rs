@@ -30,7 +30,7 @@ export async function didIssuesNft() {
     Mnemonic: Bip39.randomMnemonic()
   };
 
-  // Create a new DID for the manufacturer. (see "ex0_create_did" example).
+  // Create a new DID for the manufacturer. (see "0_create_did" example).
   var { did: manufacturerDid } = await createDid(client, secretManager);
 
   // Get the current byte costs.

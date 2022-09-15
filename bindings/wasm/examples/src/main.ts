@@ -1,11 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { createIdentity } from "./0_basic/ex0_create_did";
-import { updateIdentity } from "./0_basic/ex1_update_did";
-import { resolveIdentity } from "./0_basic/ex2_resolve_did";
-import { deactivateIdentity } from "./0_basic/ex3_deactivate_did";
-import { deleteIdentity } from "./0_basic/ex4_delete_did";
+import { createIdentity } from "./0_basic/0_create_did";
+import { updateIdentity } from "./0_basic/1_update_did";
+import { resolveIdentity } from "./0_basic/2_resolve_did";
+import { deactivateIdentity } from "./0_basic/3_deactivate_did";
+import { deleteIdentity } from "./0_basic/4_delete_did";
 import { didControlsDid } from "./1_advanced/0_did_controls_did";
 import { didIssuesNft } from "./1_advanced/1_did_issues_nft";
 import { nftOwnsDid } from "./1_advanced/2_nft_owns_did";
@@ -20,15 +20,15 @@ async function main() {
     const argument = process.argv[2].toLowerCase();
 
     switch (argument) {
-        case "ex0_create_did":
+        case "0_create_did":
             return await createIdentity();
-        case "ex1_update_did":
+        case "1_update_did":
             return await updateIdentity();
-        case "ex2_resolve_did":
+        case "2_resolve_did":
             return await resolveIdentity();
-        case "ex3_deactivate_did":
+        case "3_deactivate_did":
             return await deactivateIdentity();
-        case "ex4_delete_did":
+        case "4_delete_did":
             return await deleteIdentity();
         case "0_did_controls_did":
             return await didControlsDid();

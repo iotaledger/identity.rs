@@ -31,7 +31,7 @@ export async function didIssuesTokens() {
     Mnemonic: Bip39.randomMnemonic()
   };
 
-  // Create a new DID for the authority. (see "ex0_create_did" example).
+  // Create a new DID for the authority. (see "0_create_did" example).
   var { did: authorityDid } = await createDid(client, secretManager);
 
   // Get the current byte costs.

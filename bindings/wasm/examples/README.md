@@ -26,19 +26,19 @@ Then, run an example using:
 npm run example:node -- <example-name>
 ```
 
-For instance, to run the `ex0_create_did` example execute:
+For instance, to run the `0_create_did` example execute:
 
 ```bash
-npm run example:node -- ex0_create_did
+npm run example:node -- 0_create_did
 ```
 
-| #   | Name                                            | Details                                                          |
-|-----|-------------------------------------------------|------------------------------------------------------------------|
-| 0   | [ex0_create_did](src/ex0_create_did.ts)         | Create a DID Document and publish it in a new Alias Output.      |
-| 1   | [ex1_update_did](src/ex1_update_did.ts)         | Update a DID document in an existing Alias Output.               |
-| 2   | [ex2_resolve_did](src/ex2_resolve_did.ts)       | Resolve an existing DID in an Alias Output.                      |
-| 3   | [ex3_deactivate_did](src/ex3_deactivate_did.ts) | Deactivate a DID in an Alias Output.                             |
-| 4   | [ex4_delete_did](src/ex4_delete_did.ts)         | Delete a DID in an Alias Output, reclaiming the storage deposit. |
+| #   | Name                                        | Details                                                          |
+| --- | ------------------------------------------- | ---------------------------------------------------------------- |
+| 0   | [0_create_did](src/0_create_did.ts)         | Create a DID Document and publish it in a new Alias Output.      |
+| 1   | [1_update_did](src/1_update_did.ts)         | Update a DID document in an existing Alias Output.               |
+| 2   | [2_resolve_did](src/2_resolve_did.ts)       | Resolve an existing DID in an Alias Output.                      |
+| 3   | [3_deactivate_did](src/3_deactivate_did.ts) | Deactivate a DID in an Alias Output.                             |
+| 4   | [4_delete_did](src/4_delete_did.ts)         | Delete a DID in an Alias Output, reclaiming the storage deposit. |
 
 ## Browser
 

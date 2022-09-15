@@ -28,7 +28,7 @@ export async function didControlsDid() {
     Mnemonic: Bip39.randomMnemonic()
   };
 
-  // Creates a new wallet and identity (see "ex0_create_did" example).
+  // Creates a new wallet and identity (see "0_create_did" example).
   var { did: companyDid } = await createDid(client, secretManager);
 
   // Get the current byte costs.

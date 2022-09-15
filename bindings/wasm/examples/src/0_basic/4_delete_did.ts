@@ -20,7 +20,7 @@ export async function deleteIdentity() {
         Mnemonic: Bip39.randomMnemonic()
     };
 
-    // Creates a new wallet and identity (see "ex0_create_did" example).
+    // Creates a new wallet and identity (see "0_create_did" example).
     const { address, did } = await createDid(client, secretManager);
 
     // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.

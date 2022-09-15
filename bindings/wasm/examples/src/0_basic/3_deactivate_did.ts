@@ -21,7 +21,7 @@ export async function deactivateIdentity() {
         Mnemonic: Bip39.randomMnemonic()
     };
 
-    // Creates a new wallet and identity (see "ex0_create_did" example).
+    // Creates a new wallet and identity (see "0_create_did" example).
     const { did } = await createDid(client, secretManager);
 
     // Resolve the latest state of the DID document, so we can reactivate it later.
