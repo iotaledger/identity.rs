@@ -38,18 +38,20 @@ async fn main() -> anyhow::Result<()> {
   // A valid Ed25519 did:key value taken from https://w3c-ccg.github.io/did-method-key/#example-1-a-simple-ed25519-did-key-value.
   let did_key: CoreDID = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK".parse()?;
 
-  // Create an IOTA DID that we can resolve.
+  // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
       .build(random_stronghold_path())?,
   );
+
+  // Create a new DID for us to resolve.
   let (_, iota_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
-  // Resolve did_key to get an abstract document
+  // Resolve did_key to get an abstract document.
   let did_key_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&did_key).await?;
 
-  // Resolve iota_did to get an abstract document
+  // Resolve iota_did to get an abstract document.
   let iota_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&iota_did).await?;
 
   // These documents are mainly meant for validating credentials and presentations, but one can also attempt to cast
