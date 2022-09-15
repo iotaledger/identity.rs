@@ -1,11 +1,20 @@
 {
   "$schema": "https://dprint.dev/schemas/v0.json",
   "incremental": true,
-  "toml": {
-  },
-  "includes": ["**/*.toml"],
-  "excludes": [],
+  "typescript": {},
+  "toml": {},
+  "includes": [
+    "**/*.{toml,js,ts}"
+  ],
+  "excludes": [
+    "documentation",
+    "bindings/wasm/cypress/**/*.{js,ts}",
+    "**/{node_modules,target}",
+    "bindings/wasm/{cypress,node,web}/**/*.{js,ts}",
+    "bindings/stronghold-nodejs/{napi-dist,dist}/**/*.{js,ts}"
+  ],
   "plugins": [
-    "https://plugins.dprint.dev/toml-0.5.1.wasm"
+    "https://plugins.dprint.dev/toml-0.5.1.wasm",
+    "https://plugins.dprint.dev/typescript-0.73.1.wasm"
   ]
 }
