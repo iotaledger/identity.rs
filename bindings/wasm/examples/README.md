@@ -32,13 +32,13 @@ For instance, to run the `0_create_did` example execute:
 npm run example:node -- 0_create_did
 ```
 
-| #   | Name                                        | Details                                                          |
-| --- | ------------------------------------------- | ---------------------------------------------------------------- |
-| 0   | [0_create_did](src/0_create_did.ts)         | Create a DID Document and publish it in a new Alias Output.      |
-| 1   | [1_update_did](src/1_update_did.ts)         | Update a DID document in an existing Alias Output.               |
-| 2   | [2_resolve_did](src/2_resolve_did.ts)       | Resolve an existing DID in an Alias Output.                      |
-| 3   | [3_deactivate_did](src/3_deactivate_did.ts) | Deactivate a DID in an Alias Output.                             |
-| 4   | [4_delete_did](src/4_delete_did.ts)         | Delete a DID in an Alias Output, reclaiming the storage deposit. |
+| #   | Name                                                | Details                                                          |
+| --- | --------------------------------------------------- | ---------------------------------------------------------------- |
+| 0   | [0_create_did](src/0_basic/0_create_did.ts)         | Create a DID Document and publish it in a new Alias Output.      |
+| 1   | [1_update_did](src/0_basic/1_update_did.ts)         | Update a DID document in an existing Alias Output.               |
+| 2   | [2_resolve_did](src/0_basic/2_resolve_did.ts)       | Resolve an existing DID in an Alias Output.                      |
+| 3   | [3_deactivate_did](src/0_basic/3_deactivate_did.ts) | Deactivate a DID in an Alias Output.                             |
+| 4   | [4_delete_did](src/0_basic/4_delete_did.ts)         | Delete a DID in an Alias Output, reclaiming the storage deposit. |
 
 ## Browser
 
