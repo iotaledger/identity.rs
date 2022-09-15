@@ -13,7 +13,7 @@ import {
 import { Bech32Helper, IAliasOutput } from '@iota/iota.js';
 import { Bip39 } from "@iota/crypto.js";
 import fetch from "node-fetch";
-import { Client, MnemonicSecretManager, SecretManager } from "@cycraig/iota-client-wasm/node";
+import { Client, MnemonicSecretManager, SecretManager } from "@iota/iota-client-wasm/node";
 
 const API_ENDPOINT = "https://api.testnet.shimmer.network/";
 const FAUCET = "https://faucet.testnet.shimmer.network/api/enqueue";
