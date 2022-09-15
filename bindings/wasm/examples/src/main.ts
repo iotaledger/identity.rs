@@ -5,11 +5,12 @@ import { didControlsDid } from "./0_did_controls_did";
 import { didIssuesNft } from "./1_did_issues_nft";
 import { nftOwnsDid } from "./2_nft_owns_did";
 import { didIssuesTokens } from "./3_did_issues_tokens";
-import {createIdentity} from "./ex0_create_did";
-import {updateIdentity} from "./ex1_update_did";
-import {resolveIdentity} from "./ex2_resolve_did";
-import {deactivateIdentity} from "./ex3_deactivate_did";
-import {deleteIdentity} from "./ex4_delete_did";
+import { keyExchange } from "./4_key_exchange";
+import { createIdentity } from "./ex0_create_did";
+import { updateIdentity } from "./ex1_update_did";
+import { resolveIdentity } from "./ex2_resolve_did";
+import { deactivateIdentity } from "./ex3_deactivate_did";
+import { deleteIdentity } from "./ex4_delete_did";
 
 async function main() {
     // Extract example name.
@@ -37,6 +38,8 @@ async function main() {
             return await nftOwnsDid();
         case "3_did_issues_tokens":
             return await didIssuesTokens();
+        case "4_key_exchange":
+            return await keyExchange();
         default:
             throw "Unknown example name: '" + argument + "'";
     }
