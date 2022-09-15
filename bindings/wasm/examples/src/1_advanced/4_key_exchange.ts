@@ -32,6 +32,7 @@ export async function keyExchange() {
   // Get the Bech32 human-readable part (HRP) of the network.
   const networkName: string = await didClient.getNetworkHrp();
 
+  // Create a new address with funds for testing.
   const addressBech32 = (await client.generateAddresses(secretManager, {
     accountIndex: 0,
     range: {
@@ -40,7 +41,6 @@ export async function keyExchange() {
     },
   }))[0];
   const address: AddressTypes = Bech32Helper.addressFromBech32(addressBech32, networkName);
-
   await ensureAddressHasFunds(client, addressBech32);
 
   // Get the current byte costs.
