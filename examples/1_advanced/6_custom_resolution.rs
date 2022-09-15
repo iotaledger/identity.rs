@@ -23,7 +23,7 @@ use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
-/// Resolves an Ed25519 did:key DID to a spec compliant DID Document.
+/// Resolves an Ed25519 did:key DID to a spec compliant DID Document represented as a [`CoreDocument`].
 ///
 /// # Errors
 /// Errors if the DID is not a valid Ed25519 did:key.  
