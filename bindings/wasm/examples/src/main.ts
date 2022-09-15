@@ -4,6 +4,7 @@
 import { didControlsDid } from "./0_did_controls_did";
 import { didIssuesNft } from "./1_did_issues_nft";
 import { nftOwnsDid } from "./2_nft_owns_did";
+import { didIssuesTokens } from "./3_did_issues_tokens";
 import {createIdentity} from "./ex0_create_did";
 import {updateIdentity} from "./ex1_update_did";
 import {resolveIdentity} from "./ex2_resolve_did";
@@ -34,6 +35,8 @@ async function main() {
             return await didIssuesNft();
         case "2_nft_owns_did":
             return await nftOwnsDid();
+        case "3_did_issues_tokens":
+            return await didIssuesTokens();
         default:
             throw "Unknown example name: '" + argument + "'";
     }
