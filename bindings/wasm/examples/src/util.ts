@@ -13,6 +13,10 @@ import { AddressTypes, Bech32Helper, IAliasOutput } from '@iota/iota.js';
 export const API_ENDPOINT = "https://api.testnet.shimmer.network/";
 export const FAUCET_ENDPOINT = "https://faucet.testnet.shimmer.network/api/enqueue";
 
+/** Creates a DID Document and publishes it in a new Alias Output.
+
+Its functionality is equivalent to the "create DID" example
+and exists for convenient calling from the other examples. */
 export async function createDid(client: Client, secretManager: SecretManager): Promise<{
   address: AddressTypes,
   did: IotaDID
