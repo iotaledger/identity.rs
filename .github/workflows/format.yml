@@ -72,7 +72,4 @@ jobs:
           dprint check
 
       - name: cargo-license-template check
-        uses: actions-rs/cargo@v1
-        with:
-          command: cargo-license-template
-          args: --template .license_template --ignore .license_template_ignore --verbose
+        run: cargo license-template --template .license_template --ignore .license_template_ignore --verbose
