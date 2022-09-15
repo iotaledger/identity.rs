@@ -31,12 +31,12 @@ use iota_client::Client;
 async fn main() -> anyhow::Result<()> {
   // Create a method agnostic resolver and attach handlers for the "key" and "iota" methods.
   let mut resolver: Resolver = Resolver::new();
-  resolver.attach_handler("key".to_owned(), resolve_ed25519_did_key);
 
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   resolver.attach_iota_handler(client.clone());
+  resolver.attach_handler("key".to_owned(), resolve_ed25519_did_key);
 
   // A valid Ed25519 did:key value taken from https://w3c-ccg.github.io/did-method-key/#example-1-a-simple-ed25519-did-key-value.
   let did_key: CoreDID = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK".parse()?;
