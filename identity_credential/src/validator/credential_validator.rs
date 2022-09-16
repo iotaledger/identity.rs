@@ -81,7 +81,8 @@ impl CredentialValidator {
 
   /// Validate that the [`Credential`] expires on or after the specified [`Timestamp`].
   pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
-    (credential.expiration_date.unwrap_or(timestamp) >= timestamp)
+    let expiration_date: Option<Timestamp> = credential.expiration_date;
+    (expiration_date.is_none() || expiration_date >= Some(timestamp))
       .then_some(())
       .ok_or(ValidationError::ExpirationDate)
   }
