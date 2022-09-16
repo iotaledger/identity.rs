@@ -3,7 +3,7 @@
 
 //mod function_transformation;
 mod constructor_input;
-mod mixed_resolver;
+mod resolver;
 mod supported_document_types;
 
 pub use supported_document_types::*;

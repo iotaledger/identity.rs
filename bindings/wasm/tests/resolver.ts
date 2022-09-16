@@ -3,7 +3,7 @@ export {};
 import {
   CoreDocument,
   IotaDID,
-  MixedResolver,
+  Resolver,
   Presentation,
   IotaDocument,
   CoreDID,
@@ -57,7 +57,7 @@ describe("Resolver", function () {
       handlerMap.set("foo", resolveDidFoo);
       handlerMap.set("bar", resolveDidBar);
 
-      const resolver = new MixedResolver({
+      const resolver = new Resolver({
         handlers: handlerMap
       });
 
@@ -140,7 +140,7 @@ describe("Resolver", function () {
       handlerMap.set("foo", resolveDidFooMisconfigured);
       handlerMap.set("bar", resolveDidBarMisconfigured);
 
-      const resolver = new MixedResolver({
+      const resolver = new Resolver({
         handlers: handlerMap
       });
 
