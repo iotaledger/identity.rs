@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota_core"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -14,9 +14,9 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 [dependencies]
 # Ensure bee-block always matches the version used by iota-client.
 bee-block = { version = "1.0.0-beta.7", default-features = false, features = ["std"], optional = true }
-identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = ["validator"] }
-identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+identity_core = { version = "=0.7.0-alpha.1", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.1", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=0.7.0-alpha.1", path = "../identity_did", default-features = false }
 
 async-trait = { version = "0.1.56", default-features = false, optional = true }
 futures = { version = "0.3" }
