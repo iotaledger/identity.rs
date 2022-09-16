@@ -137,10 +137,10 @@ impl WasmIotaDID {
     WasmIotaDIDUrl::from(self.0.to_url())
   }
 
-  /// Creates an AliasId from the DID tag.
+  /// Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
   #[wasm_bindgen(js_name = toAliasId)]
   pub fn to_alias_id(&self) -> String {
-    Into::<AliasId>::into(&self.0).to_string()
+    AliasId::from(&self.0).to_string()
   }
 
   /// Converts the `DID` into a `DIDUrl`, consuming it.

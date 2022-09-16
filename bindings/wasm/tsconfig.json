@@ -8,7 +8,6 @@
         "importsNotUsedAsValues": "error",
         "noImplicitAny": true,
         "preserveConstEnums": true,
-        "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
     },
     "exclude": ["node_modules"]

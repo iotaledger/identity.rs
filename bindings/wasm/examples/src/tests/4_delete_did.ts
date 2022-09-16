@@ -1,8 +1,8 @@
-import { deactivateIdentity } from "../0_basic/3_deactivate_did";
+import { deleteIdentity } from "../0_basic/4_delete_did";
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
 describe("Test node examples", function () {
-    it("Deactivate Identity", async () => {
-        await deactivateIdentity();
+    it("Delete Identity", async () => {
+        await deleteIdentity();
     });
 })
