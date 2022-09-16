@@ -1096,6 +1096,73 @@ mod tests {
   }
 
   #[test]
+  fn test_methods_scope() {
+    let document: CoreDocument = document();
+
+    // VerificationMethod
+    assert_eq!(
+      document
+        .methods(Some(MethodScope::VerificationMethod))
+        .get(0)
+        .unwrap()
+        .id()
+        .to_string(),
+      "did:example:1234#key-1"
+    );
+    assert_eq!(
+      document
+        .methods(Some(MethodScope::VerificationMethod))
+        .get(1)
+        .unwrap()
+        .id()
+        .to_string(),
+      "did:example:1234#key-2"
+    );
+    assert_eq!(
+      document
+        .methods(Some(MethodScope::VerificationMethod))
+        .get(2)
+        .unwrap()
+        .id()
+        .to_string(),
+      "did:example:1234#key-3"
+    );
+    assert_eq!(document.methods(Some(MethodScope::VerificationMethod)).len(), 3);
+
+    // Authentication
+    assert_eq!(
+      document
+        .methods(Some(MethodScope::VerificationRelationship(
+          MethodRelationship::Authentication
+        )))
+        .get(0)
+        .unwrap()
+        .id()
+        .to_string(),
+      "did:example:1234#auth-key"
+    );
+    assert_eq!(
+      document
+        .methods(Some(MethodScope::VerificationRelationship(
+          MethodRelationship::Authentication
+        )))
+        .get(1)
+        .unwrap()
+        .id()
+        .to_string(),
+      "did:example:1234#key-3"
+    );
+    assert_eq!(
+      document
+        .methods(Some(MethodScope::VerificationRelationship(
+          MethodRelationship::Authentication
+        )))
+        .len(),
+      2
+    );
+  }
+
+  #[test]
   fn test_attach_verification_relationships() {
     let mut document: CoreDocument = document();
 
