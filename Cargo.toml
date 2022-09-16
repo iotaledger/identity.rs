@@ -13,7 +13,15 @@ members = [
   "examples",
 ]
 
-exclude = ["identity_account", "identity_account_storage", "examples_legacy", "identity_iota_core_legacy", "bindings/stronghold-nodejs", "bindings/wasm", "libjose"]
+exclude = [
+  "identity_account",
+  "identity_account_storage",
+  "examples_legacy",
+  "identity_iota_core_legacy",
+  "bindings/stronghold-nodejs",
+  "bindings/wasm",
+  "libjose",
+]
 
 [profile.dev]
 split-debuginfo = "unpacked"
