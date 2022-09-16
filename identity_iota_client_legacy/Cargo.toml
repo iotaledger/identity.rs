@@ -11,6 +11,8 @@ readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 description = "Tangle Client integration for the IOTA DID Method."
 
+[workspace]
+
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 bee-rest-api = { version = "0.1.7", default-features = false }
