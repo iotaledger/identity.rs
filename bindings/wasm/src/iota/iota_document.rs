@@ -29,6 +29,7 @@ use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
+use crate::did::OptionMethodScope;
 use crate::did::RefMethodScope;
 use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
@@ -201,15 +202,18 @@ impl WasmIotaDocument {
 
   /// Returns a list of all {@link IotaVerificationMethod} in the DID Document.
   #[wasm_bindgen]
-  pub fn methods(&self) -> ArrayIotaVerificationMethods {
-    self
+  pub fn methods(&self, scope: &OptionMethodScope) -> Result<ArrayIotaVerificationMethods> {
+    let scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
+    let methods = self
       .0
-      .methods()
+      .methods(scope)
+      .into_iter()
       .cloned()
       .map(WasmIotaVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayIotaVerificationMethods>()
+      .unchecked_into::<ArrayIotaVerificationMethods>();
+    Ok(methods)
   }
 
   /// Adds a new `method` to the document in the given `scope`.

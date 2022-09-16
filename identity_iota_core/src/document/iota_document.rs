@@ -4,7 +4,6 @@
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
-use std::slice::Iter;
 
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
@@ -15,15 +14,12 @@ use identity_core::crypto::GetSignature;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
-use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::document::Document;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
-use identity_did::utils::Queryable;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::VerifierOptions;
-use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodUriType;

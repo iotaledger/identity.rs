@@ -10,6 +10,7 @@ use crate::crypto::WasmProofOptions;
 use crate::did::wasm_core_service::WasmCoreService;
 use crate::did::wasm_core_url::WasmCoreDIDUrl;
 use crate::did::wasm_core_verification_method::WasmCoreVerificationMethod;
+use crate::did::OptionMethodScope;
 use crate::did::RefMethodScope;
 use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
@@ -295,15 +296,18 @@ impl WasmCoreDocument {
 
   /// Returns a list of all {@link CoreVerificationMethod} in the DID Document.
   #[wasm_bindgen]
-  pub fn methods(&self) -> ArrayCoreVerificationMethod {
-    self
+  pub fn methods(&self, scope: &OptionMethodScope) -> Result<ArrayCoreVerificationMethod> {
+    let scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
+    let methods = self
       .0
-      .methods()
+      .methods(scope)
+      .into_iter()
       .cloned()
       .map(WasmCoreVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreVerificationMethod>()
+      .unchecked_into::<ArrayCoreVerificationMethod>();
+    Ok(methods)
   }
 
   /// Returns an array of all verification relationships.
