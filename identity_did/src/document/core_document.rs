@@ -493,27 +493,27 @@ where
         MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => self
           .assertion_method()
           .iter()
-          .filter_map(|mr| self.resolve_method_ref(mr))
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
           .collect(),
         MethodScope::VerificationRelationship(MethodRelationship::Authentication) => self
           .authentication()
           .iter()
-          .filter_map(|mr| self.resolve_method_ref(mr))
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
           .collect(),
         MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
           .capability_delegation()
           .iter()
-          .filter_map(|mr| self.resolve_method_ref(mr))
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
           .collect(),
         MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
           .capability_invocation()
           .iter()
-          .filter_map(|mr| self.resolve_method_ref(mr))
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
           .collect(),
         MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => self
           .key_agreement()
           .iter()
-          .filter_map(|mr| self.resolve_method_ref(mr))
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
           .collect(),
       }
     } else {
@@ -1100,66 +1100,32 @@ mod tests {
     let document: CoreDocument = document();
 
     // VerificationMethod
+    let verification_methods: Vec<&VerificationMethod> = document.methods(Some(MethodScope::VerificationMethod));
     assert_eq!(
-      document
-        .methods(Some(MethodScope::VerificationMethod))
-        .get(0)
-        .unwrap()
-        .id()
-        .to_string(),
+      verification_methods.get(0).unwrap().id().to_string(),
       "did:example:1234#key-1"
     );
     assert_eq!(
-      document
-        .methods(Some(MethodScope::VerificationMethod))
-        .get(1)
-        .unwrap()
-        .id()
-        .to_string(),
+      verification_methods.get(1).unwrap().id().to_string(),
       "did:example:1234#key-2"
     );
     assert_eq!(
-      document
-        .methods(Some(MethodScope::VerificationMethod))
-        .get(2)
-        .unwrap()
-        .id()
-        .to_string(),
+      verification_methods.get(2).unwrap().id().to_string(),
       "did:example:1234#key-3"
     );
-    assert_eq!(document.methods(Some(MethodScope::VerificationMethod)).len(), 3);
+    assert_eq!(verification_methods.len(), 3);
 
     // Authentication
+    let authentication: Vec<&VerificationMethod> = document.methods(Some(MethodScope::authentication()));
     assert_eq!(
-      document
-        .methods(Some(MethodScope::VerificationRelationship(
-          MethodRelationship::Authentication
-        )))
-        .get(0)
-        .unwrap()
-        .id()
-        .to_string(),
+      authentication.get(0).unwrap().id().to_string(),
       "did:example:1234#auth-key"
     );
     assert_eq!(
-      document
-        .methods(Some(MethodScope::VerificationRelationship(
-          MethodRelationship::Authentication
-        )))
-        .get(1)
-        .unwrap()
-        .id()
-        .to_string(),
+      authentication.get(1).unwrap().id().to_string(),
       "did:example:1234#key-3"
     );
-    assert_eq!(
-      document
-        .methods(Some(MethodScope::VerificationRelationship(
-          MethodRelationship::Authentication
-        )))
-        .len(),
-      2
-    );
+    assert_eq!(authentication.len(), 2);
   }
 
   #[test]
