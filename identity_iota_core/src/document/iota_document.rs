@@ -161,7 +161,9 @@ impl IotaDocument {
   // Verification Methods
   // ===========================================================================
 
-  /// Returns an iterator over all [`IotaVerificationMethod`] in the DID Document.
+  /// Returns a `Vec` of verification methods references whose verification relationship matches `scope`.
+  ///
+  /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
   pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&IotaVerificationMethod> {
     self.document.methods(scope)
   }
