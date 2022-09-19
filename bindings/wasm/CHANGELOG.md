@@ -1,5 +1,42 @@
 # Changelog
 
+## [wasm-v0.7.0-alpha.1](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.1) (2022-09-16)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.6.0...wasm-v0.7.0-alpha.1)
+ 
+This version introduces a new DID method targeting the IOTA UTXO ledger. This method works fundamentally differently from the previous method and introduces new capabilities to interact with Layer 1 entities like native tokens, NFTs and smart contracts. 
+
+ This is an early alpha release, so there may be breaking changes in upcoming versions that invalidate DIDs created with this version. The method at this point is only intended for experimentation. 
+
+ Note: Identities created with the earlier versions cannot be resolved with this version of the library. 
+
+
+
+### Changed
+
+- Chore/rename mixed resolver [\#1026](https://github.com/iotaledger/identity.rs/pull/1026)
+- Add length prefix to DID Document payloads [\#1010](https://github.com/iotaledger/identity.rs/pull/1010)
+- Update Wasm credential, presentation validators for Stardust [\#1004](https://github.com/iotaledger/identity.rs/pull/1004)
+- Rename `Stardust` types to `Iota` [\#1000](https://github.com/iotaledger/identity.rs/pull/1000)
+- Change Stardust DID method to IOTA [\#982](https://github.com/iotaledger/identity.rs/pull/982)
+- Add Wasm Stardust Client [\#975](https://github.com/iotaledger/identity.rs/pull/975)
+- Generalized Resolver [\#970](https://github.com/iotaledger/identity.rs/pull/970)
+- Change `Storage` to handle `CoreDID` [\#968](https://github.com/iotaledger/identity.rs/pull/968)
+- Change `Storage` to store arbitrary blobs [\#953](https://github.com/iotaledger/identity.rs/pull/953)
+- Change `Service` `type` field to allow sets [\#944](https://github.com/iotaledger/identity.rs/pull/944)
+- Generalise `CredentialValidator`, `PresentationValidator` to support arbitrary DID Documents [\#935](https://github.com/iotaledger/identity.rs/pull/935)
+
+### Added
+
+- Add Wasm bindings for `CoreDocument` [\#994](https://github.com/iotaledger/identity.rs/pull/994)
+- Add initial Wasm Stardust bindings [\#967](https://github.com/iotaledger/identity.rs/pull/967)
+
+### Patch
+
+- Support case insensitive serialization of `RentStructure` [\#1012](https://github.com/iotaledger/identity.rs/pull/1012)
+- Fix broken wasm bindings compilation [\#995](https://github.com/iotaledger/identity.rs/pull/995)
+- Fix DID TypeScript references [\#977](https://github.com/iotaledger/identity.rs/pull/977)
+
 ## [wasm-v0.6.0](https://github.com/iotaledger/identity.rs/tree/wasm-v0.6.0) (2022-06-15)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0...wasm-v0.6.0)

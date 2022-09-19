@@ -2,24 +2,26 @@
 resolver = "2"
 members = [
   # "identity_comm",
-  "identity_account",
-  "identity_account_storage",
   "identity_agent",
   "identity_core",
   "identity_credential",
   "identity_did",
   "identity_diff",
   "identity_iota",
-  "identity_iota_client_legacy",
-  "identity_iota_core_legacy",
   "identity_iota_core",
   "identity_resolver",
-
-  "examples_legacy",
   "examples",
 ]
 
-exclude = ["bindings/stronghold-nodejs", "bindings/wasm", "libjose"]
+exclude = [
+  "identity_account",
+  "identity_account_storage",
+  "examples_legacy",
+  "identity_iota_core_legacy",
+  "bindings/stronghold-nodejs",
+  "bindings/wasm",
+  "libjose",
+]
 
 [profile.dev]
 split-debuginfo = "unpacked"
