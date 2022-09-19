@@ -1,47 +1,5 @@
 # Changelog
 
-## [v0.7.0-alpha.1](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.1) (2022-09-16)
-
-[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.0...v0.7.0-alpha.1)
- 
-This version introduces a new DID method targeting the IOTA UTXO ledger. This method works fundamentally differently from the previous method and introduces new capabilities to interact with Layer 1 entities like native tokens, NFTs and smart contracts. 
-
- This is an early alpha release, so there may be breaking changes in upcoming versions that invalidate DIDs created with this version. The method at this point is only intended for experimentation. 
-
- Note: Identities created with the earlier versions cannot be resolved with this version of the library. 
-
-
-
-### Changed
-
-- Chore/rename mixed resolver [\#1026](https://github.com/iotaledger/identity.rs/pull/1026)
-- Add length prefix to DID Document payloads [\#1010](https://github.com/iotaledger/identity.rs/pull/1010)
-- Feature-gate `Resolver` [\#1007](https://github.com/iotaledger/identity.rs/pull/1007)
-- Rename `Stardust` types to `Iota` [\#1000](https://github.com/iotaledger/identity.rs/pull/1000)
-- Change Stardust DID method to IOTA [\#982](https://github.com/iotaledger/identity.rs/pull/982)
-- Add Wasm Stardust Client [\#975](https://github.com/iotaledger/identity.rs/pull/975)
-- Generalized Resolver [\#970](https://github.com/iotaledger/identity.rs/pull/970)
-- Change `Storage` to handle `CoreDID` [\#968](https://github.com/iotaledger/identity.rs/pull/968)
-- Feature-gate `iota-client` dependency, integrate `StardustDID` [\#958](https://github.com/iotaledger/identity.rs/pull/958)
-- Change `Storage` to store arbitrary blobs [\#953](https://github.com/iotaledger/identity.rs/pull/953)
-- Add `StardustDocumentMetadata`, implement `StardustDocument` methods [\#951](https://github.com/iotaledger/identity.rs/pull/951)
-- Fix stack overflow in `CoreDID` `PartialEq` impl [\#946](https://github.com/iotaledger/identity.rs/pull/946)
-- Change `Service` `type` field to allow sets [\#944](https://github.com/iotaledger/identity.rs/pull/944)
-- Generalise `CredentialValidator`, `PresentationValidator` to support arbitrary DID Documents [\#935](https://github.com/iotaledger/identity.rs/pull/935)
-
-### Added
-
-- Add Stardust Client Extension Trait [\#963](https://github.com/iotaledger/identity.rs/pull/963)
-- Add StardustDID [\#949](https://github.com/iotaledger/identity.rs/pull/949)
-- State metadata serialization for the stardust DID method [\#947](https://github.com/iotaledger/identity.rs/pull/947)
-- Stardust DID Method Proof-of-Concept [\#940](https://github.com/iotaledger/identity.rs/pull/940)
-- Implement the Identity Agent [\#322](https://github.com/iotaledger/identity.rs/pull/322)
-
-### Patch
-
-- Support case insensitive serialization of `RentStructure` [\#1012](https://github.com/iotaledger/identity.rs/pull/1012)
-- Update stronghold to 0.6.4 [\#928](https://github.com/iotaledger/identity.rs/pull/928)
-
 ## [v0.6.0](https://github.com/iotaledger/identity.rs/tree/v0.6.0) (2022-06-15)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0...v0.6.0)
