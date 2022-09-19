@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota_client_legacy"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -19,10 +19,10 @@ bee-rest-api = { version = "0.1.7", default-features = false }
 brotli = { version = "3.3", default-features = false, features = ["std"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
-identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false, features = ["validator"] }
-identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
-identity_iota_core_legacy = { version = "=0.6.0", path = "../identity_iota_core_legacy", default-features = false }
+identity_core = { version = "0.7.0-alpha.1", path = "../identity_core", default-features = false }
+identity_credential = { version = "0.7.0-alpha.1", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "0.7.0-alpha.1", path = "../identity_did", default-features = false }
+identity_iota_core_legacy = { version = "0.7.0-alpha.1", path = "../identity_iota_core_legacy", default-features = false }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
