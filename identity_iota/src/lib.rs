@@ -118,14 +118,3 @@ pub mod resolver {
 
   pub use identity_resolver::*;
 }
-
-#[cfg(feature = "unstable-agent")]
-#[cfg_attr(docsrs, doc(cfg(feature = "unstable-agent")))]
-pub mod agent {
-  //! Identity agent types
-
-  pub use identity_agent::agent::*;
-  pub use identity_agent::didcomm::*;
-  pub use identity_agent::IdentityKeypair;
-  pub use identity_agent::Multiaddr;
-}
