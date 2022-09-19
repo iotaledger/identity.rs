@@ -1,26 +1,26 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import { Bip39 } from "@iota/crypto.js";
+import { Client, MnemonicSecretManager, SecretManager } from "@iota/iota-client-wasm/node";
+import { Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import {
-    KeyPair,
-    KeyType,
-    MethodScope,
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    IotaVerificationMethod
-} from '../../../node';
-import { Bech32Helper, IAliasOutput } from '@iota/iota.js';
-import { Bip39 } from "@iota/crypto.js";
-import { Client, MnemonicSecretManager, SecretManager } from "@iota/iota-client-wasm/node";
-import { API_ENDPOINT, ensureAddressHasFunds } from '../util';
+    IotaVerificationMethod,
+    KeyPair,
+    KeyType,
+    MethodScope,
+} from "../../../node";
+import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{
-    didClient: IotaIdentityClient,
-    secretManager: SecretManager,
-    walletAddressBech32: string,
-    did: IotaDID
+    didClient: IotaIdentityClient;
+    secretManager: SecretManager;
+    walletAddressBech32: string;
+    did: IotaDID;
 }> {
     const client = new Client({
         primaryNode: API_ENDPOINT,
@@ -33,7 +33,7 @@ export async function createIdentity(): Promise<{
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic()
+        Mnemonic: Bip39.randomMnemonic(),
     };
     const walletAddressBech32 = (await client.generateAddresses(secretManager, {
         accountIndex: 0,
@@ -67,8 +67,9 @@ export async function createIdentity(): Promise<{
     console.log("Published DID document:", JSON.stringify(published, null, 2));
 
     return {
-        didClient, secretManager,
+        didClient,
+        secretManager,
         walletAddressBech32,
-        did: published.id()
+        did: published.id(),
     };
 }

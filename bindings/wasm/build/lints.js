@@ -1,11 +1,11 @@
 /** Aborts the build process if disallowed occurrences are found in identity_wasm.js **/
 function lintBigInt(content) {
     if (content.includes("BigInt64Array") || content.includes("BigUint64Array")) {
-        throw(
-        "Build artifacts should not include BigInt64Array/BigUint64Array imports\n" +
-        "to ensure React Native/WebKit compatibility.\n" +
-        "Remove any u64 and i64 occurrence from the public Wasm interface.\n" +
-        "See: https://github.com/iotaledger/identity.rs/issues/362\n"
+        throw (
+            "Build artifacts should not include BigInt64Array/BigUint64Array imports\n"
+            + "to ensure React Native/WebKit compatibility.\n"
+            + "Remove any u64 and i64 occurrence from the public Wasm interface.\n"
+            + "See: https://github.com/iotaledger/identity.rs/issues/362\n"
         );
     }
 }
@@ -18,11 +18,11 @@ function lintBigInt(content) {
  *
  * Functions which take owned parameters cause this situation; the solution is to borrow and clone the parameter
  * instead.
- **/
+ */
 function lintPtrNullWithoutFree(content) {
     // Find line numbers of offending code.
     const lines = content.split(/\r?\n/);
-    const matches = lines.flatMap(function (line, number) {
+    const matches = lines.flatMap(function(line, number) {
         if (/(?<!this).ptr = 0;/.test(line)) {
             return [(number + 1) + " " + line.trim()];
         } else {
@@ -30,7 +30,7 @@ function lintPtrNullWithoutFree(content) {
         }
     });
     if (matches.length > 0) {
-        throw(`ERROR: generated Javascript should not include 'obj.ptr = 0;'. 
+        throw (`ERROR: generated Javascript should not include 'obj.ptr = 0;'. 
 When weak references are enabled with '--weak-refs', WasmRefCell in wasm-bindgen causes 
 runtime errors from automatic garbage collection trying to free objects taken as owned parameters. 
 
@@ -47,7 +47,7 @@ See: https://github.com/rustwasm/wasm-bindgen/pull/2677`);
  *  This is typically due to Wasm compatibility features not being enabled on crate dependencies. **/
 function lintImportEnv(content) {
     if (content.includes("imports['env']") || content.includes("require('env')") || content.includes("from 'env'")) {
-        throw(`ERROR: generated Javascript should not include any imports for 'env', e.g.:
+        throw (`ERROR: generated Javascript should not include any imports for 'env', e.g.:
 
 - imports['env'] = require('env'); 
 - imports['env'] = __wbg_star0;

@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt } from '~identity_wasm';
+import { IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt } from "~identity_wasm";
 
-import type { Client, INodeInfoWrapper, SecretManager } from '~iota-client-wasm';
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
     AddressTypes,
@@ -12,8 +11,9 @@ import {
     IOutputResponse,
     IRent,
     IUTXOInput,
-    TransactionHelper
-} from '@iota/iota.js';
+    TransactionHelper,
+} from "@iota/iota.js";
+import type { Client, INodeInfoWrapper, SecretManager } from "~iota-client-wasm";
 
 /** Provides operations for IOTA DID Documents with Alias Outputs. */
 export class IotaIdentityClient implements IIotaIdentityClient {
@@ -133,7 +133,10 @@ export class IotaIdentityClient implements IIotaIdentityClient {
     async deleteDidOutput(secretManager: SecretManager, address: AddressTypes, did: IotaDID) {
         const networkHrp = await this.getNetworkHrp();
         if (networkHrp !== did.networkStr()) {
-            throw new Error("deleteDidOutput: DID network mismatch, client expected `" + networkHrp + "`, DID network is `" + did.networkStr() + "`");
+            throw new Error(
+                "deleteDidOutput: DID network mismatch, client expected `" + networkHrp + "`, DID network is `"
+                    + did.networkStr() + "`",
+            );
         }
 
         const aliasId: string = did.tag();
@@ -147,15 +150,15 @@ export class IotaIdentityClient implements IIotaIdentityClient {
             unlockConditions: [
                 {
                     type: ADDRESS_UNLOCK_CONDITION_TYPE,
-                    address: address
-                }
+                    address: address,
+                },
             ],
-        })
+        });
 
         // Publish block.
         const [blockId, _block] = await this.client.buildAndPostBlock(secretManager, {
             inputs: [aliasInput],
-            outputs: [basicOutput]
+            outputs: [basicOutput],
         });
         await this.client.retryUntilIncluded(blockId);
     }

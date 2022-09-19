@@ -1,6 +1,6 @@
 export {};
 
-const assert = require('assert');
+const assert = require("assert");
 const {
     CoreDID,
     CoreDocument,
@@ -14,11 +14,44 @@ const {
 
 const VALID_DID_KEY = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 const VALID_DID_EXAMPLE = "did:example:123";
-const KEY_BYTES = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]);
+const KEY_BYTES = new Uint8Array([
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+]);
 
-describe('CoreDID', function () {
-    describe('#parse', function () {
-        it('iota', () => {
+describe("CoreDID", function() {
+    describe("#parse", function() {
+        it("iota", () => {
             let tag = "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
             const didStr = "did:iota:smr:" + tag;
             const did = CoreDID.parse(didStr);
@@ -28,7 +61,7 @@ describe('CoreDID', function () {
             assert.deepStrictEqual(did.methodId(), "smr:" + tag);
             assert.deepStrictEqual(did.scheme(), "did");
         });
-        it('key', () => {
+        it("key", () => {
             const tag = "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
             const didStr = "did:key:" + tag;
             const did = CoreDID.parse(didStr);
@@ -38,7 +71,7 @@ describe('CoreDID', function () {
             assert.deepStrictEqual(did.methodId(), tag);
             assert.deepStrictEqual(did.scheme(), "did");
         });
-        it('example', () => {
+        it("example", () => {
             const tag = "123";
             const didStr = VALID_DID_EXAMPLE;
             const did = CoreDID.parse(didStr);
@@ -49,8 +82,8 @@ describe('CoreDID', function () {
             assert.deepStrictEqual(did.scheme(), "did");
         });
     });
-    describe('#setMethodId', function () {
-        it('should work', () => {
+    describe("#setMethodId", function() {
+        it("should work", () => {
             let didStr = "did:example:network:123";
             const did = CoreDID.parse(didStr);
             did.setMethodId("abc");
@@ -60,8 +93,8 @@ describe('CoreDID', function () {
             assert.deepStrictEqual(did.methodId(), "abc");
         });
     });
-    describe('#validMethodId', function () {
-        it('should work', () => {
+    describe("#validMethodId", function() {
+        it("should work", () => {
             // Valid
             assert.deepStrictEqual(CoreDID.validMethodId("abc"), true);
             assert.deepStrictEqual(CoreDID.validMethodId("network:123"), true);
@@ -71,8 +104,8 @@ describe('CoreDID', function () {
             assert.deepStrictEqual(CoreDID.validMethodId("abc[brackets]"), false);
         });
     });
-    describe('#setMethodName', function () {
-        it('should work', () => {
+    describe("#setMethodName", function() {
+        it("should work", () => {
             let didStr = "did:example:network:123";
             const did = CoreDID.parse(didStr);
             did.setMethodName("other");
@@ -82,8 +115,8 @@ describe('CoreDID', function () {
             assert.deepStrictEqual(did.methodId(), "network:123");
         });
     });
-    describe('#validMethodName', function () {
-        it('should work', () => {
+    describe("#validMethodName", function() {
+        it("should work", () => {
             // Valid
             assert.deepStrictEqual(CoreDID.validMethodId("abc"), true);
             assert.deepStrictEqual(CoreDID.validMethodId("example"), true);
@@ -95,9 +128,9 @@ describe('CoreDID', function () {
     });
 });
 
-describe('CoreDocument', function () {
-    describe('#new', function () {
-        it('minimal should work', () => {
+describe("CoreDocument", function() {
+    describe("#new", function() {
+        it("minimal should work", () => {
             const doc = new CoreDocument({
                 id: VALID_DID_EXAMPLE,
             });
@@ -114,13 +147,18 @@ describe('CoreDocument', function () {
             assert.deepStrictEqual(doc.service(), []);
             assert.deepStrictEqual(doc.properties(), new Map());
         });
-        it('full should work', () => {
+        it("full should work", () => {
             const did = CoreDID.parse(VALID_DID_EXAMPLE);
             const method0 = new CoreVerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-0");
             const method1 = new CoreVerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-1");
-            const method2 = new CoreVerificationMethod(CoreDID.parse(VALID_DID_EXAMPLE), KeyType.Ed25519, KEY_BYTES, "key-2");
+            const method2 = new CoreVerificationMethod(
+                CoreDID.parse(VALID_DID_EXAMPLE),
+                KeyType.Ed25519,
+                KEY_BYTES,
+                "key-2",
+            );
             const service = new CoreService({
-                id: did.join('#service-1'),
+                id: did.join("#service-1"),
                 type: "LinkedDomains",
                 serviceEndpoint: "https://example.com/",
             });
@@ -140,7 +178,10 @@ describe('CoreDocument', function () {
                 custom2: 1234,
             });
             assert.deepStrictEqual(doc.id().toString(), did.toString());
-            assert.deepStrictEqual(doc.controller().map((item: any) => item.toString()), [VALID_DID_KEY, VALID_DID_EXAMPLE]);
+            assert.deepStrictEqual(doc.controller().map((item: any) => item.toString()), [
+                VALID_DID_KEY,
+                VALID_DID_EXAMPLE,
+            ]);
             assert.deepStrictEqual(doc.alsoKnownAs(), [VALID_DID_KEY]);
             assert.deepStrictEqual(doc.verificatonMethod().length, 2);
             assert.deepStrictEqual(doc.verificatonMethod()[0].toJSON(), method0.toJSON());
@@ -164,14 +205,14 @@ describe('CoreDocument', function () {
             assert.deepStrictEqual(doc.methods()[2].toJSON(), method2.toJSON());
             assert.deepStrictEqual(doc.service().length, 1);
             assert.deepStrictEqual(doc.service()[0].toJSON(), service.toJSON());
-            const properties = new Map()
+            const properties = new Map();
             properties.set("custom1", "asdf");
             properties.set("custom2", 1234);
             assert.deepStrictEqual(doc.properties(), properties);
         });
     });
-    describe('#insert/resolve/removeMethod', function () {
-        it('should work', async () => {
+    describe("#insert/resolve/removeMethod", function() {
+        it("should work", async () => {
             const doc = new CoreDocument({
                 id: VALID_DID_EXAMPLE,
             });
@@ -201,19 +242,25 @@ describe('CoreDocument', function () {
             assert.deepStrictEqual(doc.methods().length, 0);
         });
     });
-    describe('#attach/detachMethodRelationship', function () {
-        it('should work', async () => {
+    describe("#attach/detachMethodRelationship", function() {
+        it("should work", async () => {
             const doc = new CoreDocument({
                 id: VALID_DID_EXAMPLE,
             });
             const fragment = "new-method-1";
             const method = new CoreVerificationMethod(doc.id(), KeyType.Ed25519, KEY_BYTES, fragment);
             doc.insertMethod(method, MethodScope.VerificationMethod());
-            assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(), method.toJSON());
+            assert.deepStrictEqual(
+                doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
+                method.toJSON(),
+            );
 
             // Attach.
             doc.attachMethodRelationship(method.id(), MethodRelationship.Authentication);
-            assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(), method.toJSON());
+            assert.deepStrictEqual(
+                doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
+                method.toJSON(),
+            );
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.Authentication()).toJSON(), method.toJSON());
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.AssertionMethod()), undefined);
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.CapabilityInvocation()), undefined);
@@ -222,7 +269,10 @@ describe('CoreDocument', function () {
 
             // Detach.
             doc.detachMethodRelationship(method.id(), MethodRelationship.Authentication);
-            assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(), method.toJSON());
+            assert.deepStrictEqual(
+                doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
+                method.toJSON(),
+            );
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.Authentication()), undefined);
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.AssertionMethod()), undefined);
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.CapabilityInvocation()), undefined);
@@ -230,16 +280,16 @@ describe('CoreDocument', function () {
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.KeyAgreement()), undefined);
         });
     });
-    describe('#insert/resolve/removeService', function () {
-        it('should work', async () => {
+    describe("#insert/resolve/removeService", function() {
+        it("should work", async () => {
             const doc = new CoreDocument({
                 id: VALID_DID_EXAMPLE,
             });
-    
+
             // Add.
             const fragment1 = "new-service-1";
             const service = new CoreService({
-                id: doc.id().toUrl().join('#' + fragment1),
+                id: doc.id().toUrl().join("#" + fragment1),
                 type: ["LinkedDomains", "ExampleType"],
                 serviceEndpoint: ["https://example.com/", "https://iota.org/"],
             });
@@ -261,14 +311,14 @@ describe('CoreDocument', function () {
             assert.deepStrictEqual(doc.service().length, 0);
         });
     });
-    describe('#properties', function () {
-        it('should work', () => {
+    describe("#properties", function() {
+        it("should work", () => {
             const doc = new CoreDocument({
                 id: VALID_DID_EXAMPLE,
             });
             assert.deepStrictEqual(doc.properties(), new Map());
 
-            const properties = new Map()
+            const properties = new Map();
             properties.set("custom1", "asdf");
             properties.set("custom2", 1234);
             doc.setPropertyUnchecked("custom1", "asdf");

@@ -1,2 +1,2 @@
-export * from './stronghold';
-export * from '../napi-dist/napi';
+export * from "../napi-dist/napi";
+export * from "./stronghold";
