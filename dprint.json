@@ -2,7 +2,8 @@
   "$schema": "https://dprint.dev/schemas/v0.json",
   "incremental": true,
   "typescript": {
-    "indentWidth": 4
+    "indentWidth": 4,
+    "arrayExpression.preferHanging": true
   },
   "toml": {},
   "includes": [
