@@ -28,6 +28,8 @@ use identity_did::verification::VerificationMethod;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::block::address::Address;
+use crate::block::output::AliasOutput;
 use crate::error::Result;
 use crate::IotaDID;
 use crate::IotaDIDUrl;
@@ -293,6 +295,59 @@ impl IotaDocument {
     }
     StateMetadataDocument::unpack(state_metadata).and_then(|doc| doc.into_iota_document(did))
   }
+
+  /// Deserializes the document from an Alias Output.
+  ///
+  /// If `allow_empty` is true, this will return an empty DID document marked as `deactivated`
+  /// if `state_metadata` is empty.
+  ///
+  /// NOTE: `did` is required since it is omitted from the serialized DID Document and
+  /// cannot be inferred from the state metadata. It also indicates the network, which is not
+  /// encoded in the `AliasId` alone.
+  pub fn unpack_from_output(
+    did: &IotaDID,
+    alias_output: &AliasOutput,
+    allow_empty: bool,
+    network_name: &NetworkName,
+  ) -> Result<IotaDocument> {
+    if alias_output.state_metadata().is_empty() && allow_empty {
+      let mut empty_document = IotaDocument::new_with_id(did.clone());
+      empty_document.metadata.created = None;
+      empty_document.metadata.updated = None;
+      empty_document.metadata.deactivated = Some(true);
+      return Ok(empty_document);
+    }
+    let mut iota_document: IotaDocument =
+      StateMetadataDocument::unpack(alias_output.state_metadata()).and_then(|doc| doc.into_iota_document(did))?;
+    iota_document.set_controller_and_governor_addresses(alias_output, network_name);
+    Ok(iota_document)
+  }
+
+  fn set_controller_and_governor_addresses(&mut self, alias_output: &AliasOutput, network_name: &NetworkName) {
+    self.metadata.governor_address = Some(*alias_output.governor_address());
+    self.metadata.state_controller_address = Some(*alias_output.state_controller_address());
+
+    let controller_did: Option<IotaDID> = {
+      match alias_output.unlock_conditions().state_controller_address() {
+        Some(unlock_condition) => match unlock_condition.address() {
+          Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
+          Address::Nft(_) | Address::Ed25519(_) => None,
+        },
+        None => None,
+      }
+    };
+    if let Some(controller_did) = controller_did {
+      let controller: &mut Option<OneOrSet<IotaDID>> = self.core_document_mut().controller_mut();
+      match controller {
+        Some(controller) => {
+          controller.append(controller_did);
+        }
+        None => {
+          *controller = Some(OneOrSet::new_one(controller_did));
+        }
+      }
+    }
+  }
 }
 
 #[cfg(feature = "client")]
@@ -339,7 +394,7 @@ mod client_document {
             };
 
             let did: IotaDID = IotaDID::new(alias_id.deref(), network);
-            documents.push(IotaDocument::unpack(&did, alias_output.state_metadata(), true)?);
+            documents.push(IotaDocument::unpack_from_output(&did, alias_output, true, network)?);
           }
         }
       }

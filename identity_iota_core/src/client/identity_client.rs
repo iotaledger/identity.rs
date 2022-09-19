@@ -17,7 +17,6 @@ use crate::IotaDID;
 use crate::IotaDocument;
 use crate::NetworkName;
 use crate::Result;
-use identity_core::common::OneOrSet;
 
 /// Helper functions necessary for the [`IotaIdentityClientExt`] trait.
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
@@ -148,13 +147,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
 
     let id: AliasId = AliasId::from(did);
     let (_, alias_output) = self.get_alias_output(id).await?;
-
-    let document: &[u8] = alias_output.state_metadata();
-    let mut resolved_document: IotaDocument = IotaDocument::unpack(did, document, true)?;
-
-    set_controller_and_governor_addresses(&alias_output, &mut resolved_document, &self.network_name().await?);
-
-    Ok(resolved_document)
+    IotaDocument::unpack_from_output(did, &alias_output, true, &self.network_name().await?)
   }
 
   /// Fetches the [`AliasOutput`] associated with the given DID.
@@ -193,39 +186,4 @@ where
     });
   };
   Ok(())
-}
-
-fn set_controller_and_governor_addresses(
-  alias_output: &AliasOutput,
-  resolved_document: &mut IotaDocument,
-  network: &NetworkName,
-) {
-  if let Some(is_empty) = resolved_document.metadata.deactivated {
-    if is_empty {
-      return;
-    }
-  }
-
-  resolved_document.metadata.governor_address = Some(*alias_output.governor_address());
-  resolved_document.metadata.state_controller_address = Some(*alias_output.state_controller_address());
-  let controller_did: Option<IotaDID> = {
-    match alias_output.unlock_conditions().state_controller_address() {
-      Some(unlock_condition) => match unlock_condition.address() {
-        Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network)),
-        Address::Nft(_) | Address::Ed25519(_) => None,
-      },
-      None => None,
-    }
-  };
-  if let Some(controller_did) = controller_did {
-    let controller: &mut Option<OneOrSet<IotaDID>> = resolved_document.core_document_mut().controller_mut();
-    match controller {
-      Some(controller) => {
-        controller.append(controller_did);
-      }
-      None => {
-        *controller = Some(OneOrSet::new_one(controller_did));
-      }
-    }
-  }
 }

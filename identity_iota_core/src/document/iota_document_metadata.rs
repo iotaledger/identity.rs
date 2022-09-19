@@ -5,12 +5,13 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 
-use bee_block::address::Address;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
 use serde::Deserialize;
 use serde::Serialize;
+
+use crate::block::address::Address;
 
 /// Additional attributes related to a [`IotaDocument`][crate::IotaDocument].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
