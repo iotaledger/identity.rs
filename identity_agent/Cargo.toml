@@ -25,8 +25,8 @@ uuid = { version = "0.8", default-features = false, features = ["v4", "serde"] }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
-identity_account = { version = "=0.6.0", path = "../identity_account", default-features = false, features = ["send-sync-storage"] }
-identity_iota_core_legacy = { version = "=0.6.0", path = "../identity_iota_core_legacy", default-features = false }
+identity_account = { version = "=0.6.1", default-features = false, features = ["send-sync-storage", "encryption", "async", "revocation-bitmap"] }
+identity_iota_core = { version = "=0.6.1", default-features = false }
 pretty_env_logger = { version = "0.4", default-features = false }
 
 [[bench]]
