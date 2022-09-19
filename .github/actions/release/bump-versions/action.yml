@@ -53,6 +53,32 @@ runs:
       run: |
         cargo set-version ${{ inputs.version }}
 
+    # cargo workspaces ignores the legacy crates because they are excluded from the workspace.
+    # Bump versions for consistency.
+    - name: Bump Rust legacy crates' version
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      run: |
+        cargo set-version --manifest-path identity_account_storage/Cargo.toml ${{ inputs.version }}
+        cargo set-version --manifest-path identity_iota_client_legacy/Cargo.toml ${{ inputs.version }}
+        cargo set-version --manifest-path identity_iota_core_legacy/Cargo.toml ${{ inputs.version }}
+        cargo set-version --manifest-path identity_account/Cargo.toml ${{ inputs.version }}
+        cargo add --manifest-path identity_account_storage/Cargo.toml --path identity_core
+        cargo add --manifest-path identity_account_storage/Cargo.toml --path identity_did
+        cargo add --manifest-path identity_account_storage/Cargo.toml --path identity_iota_core_legacy
+        cargo add --manifest-path identity_account/Cargo.toml --path identity_account_storage
+        cargo add --manifest-path identity_account/Cargo.toml --path identity_core
+        cargo add --manifest-path identity_account/Cargo.toml --path identity_credential
+        cargo add --manifest-path identity_account/Cargo.toml --path identity_did
+        cargo add --manifest-path identity_account/Cargo.toml --path identity_iota_client_legacy
+        cargo add --manifest-path identity_account/Cargo.toml --path identity_iota_core_legacy
+        cargo add --manifest-path identity_iota_core_legacy/Cargo.toml --path identity_core
+        cargo add --manifest-path identity_iota_core_legacy/Cargo.toml --path identity_did
+        cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_core
+        cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_credential
+        cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_did
+        cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_iota_core_legacy
+
     # cargo workspaces ignores identity_agent because it is excluded from the workspace.
     # Bump versions for consistency.
     - name: Bump Rust agent version
