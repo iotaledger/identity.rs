@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_block::output::AliasId;
 use identity_iota::did::DIDError;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDID;
@@ -134,6 +135,12 @@ impl WasmIotaDID {
   #[wasm_bindgen(js_name = toUrl)]
   pub fn to_url(&self) -> WasmIotaDIDUrl {
     WasmIotaDIDUrl::from(self.0.to_url())
+  }
+
+  /// Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
+  #[wasm_bindgen(js_name = toAliasId)]
+  pub fn to_alias_id(&self) -> String {
+    AliasId::from(&self.0).to_string()
   }
 
   /// Converts the `DID` into a `DIDUrl`, consuming it.

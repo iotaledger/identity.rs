@@ -1624,6 +1624,7 @@ A DID conforming to the IOTA DID method specification.
         * [.methodId()](#IotaDID+methodId) ⇒ <code>string</code>
         * [.join(segment)](#IotaDID+join) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
         * [.toUrl()](#IotaDID+toUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.toAliasId()](#IotaDID+toAliasId) ⇒ <code>string</code>
         * [.intoUrl()](#IotaDID+intoUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
         * [.toString()](#IotaDID+toString) ⇒ <code>string</code>
         * [.toJSON()](#IotaDID+toJSON) ⇒ <code>any</code>
@@ -1716,6 +1717,12 @@ Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 ### did.toUrl() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
 Clones the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toAliasId"></a>
+
+### did.toAliasId() ⇒ <code>string</code>
+Creates an AliasId from the DID tag.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+intoUrl"></a>
