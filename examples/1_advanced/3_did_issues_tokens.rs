@@ -4,7 +4,6 @@
 use std::ops::Deref;
 
 use examples::create_did;
-use examples::get_address;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
 use identity_iota::core::Duration;
@@ -63,7 +62,6 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the authority.
-
   let (_, authority_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   let rent_structure: RentStructure = client.get_rent_structure().await?;
@@ -147,7 +145,7 @@ async fn main() -> anyhow::Result<()> {
   // =========================================================
 
   // Create a new address that represents the company.
-  let company_address = get_address(&client, &mut secret_manager).await?;
+  let company_address: Address = client.get_addresses(&secret_manager).with_range(1..2).get_raw().await?[0];
 
   // Create the timestamp at which the basic output will expire.
   let tomorrow: u32 = Timestamp::now_utc()
@@ -161,6 +159,7 @@ async fn main() -> anyhow::Result<()> {
   let basic_output: BasicOutput = BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(company_address)))
     .add_native_token(NativeToken::new(carbon_credits_foundry.token_id(), U256::from(1000))?)
+    // Allow the company to claim the credits within 24 hours by using an expiration unlock condition.
     .add_unlock_condition(UnlockCondition::Expiration(ExpirationUnlockCondition::new(
       Address::Alias(AliasAddress::new(*authority_alias_id)),
       tomorrow,

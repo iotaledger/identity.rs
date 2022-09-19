@@ -715,7 +715,7 @@ dependencies = [
 
 [[package]]
 name = "identity-diff"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -725,7 +725,7 @@ dependencies = [
 
 [[package]]
 name = "identity-stronghold-nodejs"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 dependencies = [
  "identity_account_storage",
  "identity_core",
@@ -740,7 +740,7 @@ dependencies = [
 
 [[package]]
 name = "identity_account_storage"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 dependencies = [
  "async-trait",
  "futures",
@@ -762,7 +762,7 @@ dependencies = [
 
 [[package]]
 name = "identity_core"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 dependencies = [
  "identity-diff",
  "iota-crypto 0.12.1",
@@ -780,7 +780,7 @@ dependencies = [
 
 [[package]]
 name = "identity_did"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 dependencies = [
  "did_url",
  "form_urlencoded",
@@ -793,7 +793,7 @@ dependencies = [
 
 [[package]]
 name = "identity_iota_core_legacy"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 dependencies = [
  "bee-message",
  "identity_core",

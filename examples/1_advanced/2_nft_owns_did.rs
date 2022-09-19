@@ -78,20 +78,22 @@ async fn main() -> anyhow::Result<()> {
 
   let network: NetworkName = client.network_name().await?;
 
-  // Construct a DID document for the subsidiary.
-  let document: IotaDocument = create_did_document(&network)?;
+  // Construct a DID document for the car.
+  let car_document: IotaDocument = create_did_document(&network)?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client
-    .new_did_output(Address::Nft(car_nft_id.into()), document, Some(rent_structure))
+    .new_did_output(Address::Nft(car_nft_id.into()), car_document, Some(rent_structure))
     .await?;
 
+  // Publish the car DID.
   let car_document: IotaDocument = client.publish_did_output(&secret_manager, car_did_output).await?;
 
   // ============================================
   // Determine the car's NFT given the car's DID.
   // ============================================
 
+  // Resolve the Alias Output of the DID.
   let output: AliasOutput = client.resolve_did_output(car_document.id()).await?;
 
   // Extract the NFT address from the state controller unlock condition.
