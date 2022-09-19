@@ -274,7 +274,11 @@ impl IotaDocument {
 
   /// Serializes the document for inclusion in an Alias Output's state metadata.
   pub fn pack_with_encoding(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
-    StateMetadataDocument::from(self).pack(encoding)
+    let mut state_metadata_document: StateMetadataDocument = StateMetadataDocument::from(self);
+    // Unset Governor and State Controller Addresses to avoid bloating the payload
+    state_metadata_document.metadata.governor_address = None;
+    state_metadata_document.metadata.state_controller_address = None;
+    state_metadata_document.pack(encoding)
   }
 
   /// Deserializes the document from the state metadata bytes of an Alias Output.

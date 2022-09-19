@@ -31,9 +31,9 @@ const DID_MARKER: &[u8] = b"DID";
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub(crate) struct StateMetadataDocument {
   #[serde(rename = "doc")]
-  document: CoreDocument,
+  pub(crate) document: CoreDocument,
   #[serde(rename = "meta")]
-  metadata: IotaDocumentMetadata,
+  pub(crate) metadata: IotaDocumentMetadata,
 }
 
 impl StateMetadataDocument {
