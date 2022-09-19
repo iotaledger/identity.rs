@@ -59,13 +59,6 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
-<dt><a href="#MixedResolver">MixedResolver</a></dt>
-<dd><p>Convenience type for resolving DID documents from different DID methods.</p>
-<p>Also provides methods for resolving DID Documents associated with
-verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
-<h1 id="configuration">Configuration</h1>
-<p>The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.</p>
-</dd>
 <dt><a href="#Presentation">Presentation</a></dt>
 <dd></dd>
 <dt><a href="#PresentationValidationOptions">PresentationValidationOptions</a></dt>
@@ -84,6 +77,13 @@ See <code>IProofOptions</code>.</p>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
 <dd><p>Associates a purpose with a <a href="#Proof">Proof</a>.</p>
 <p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
+</dd>
+<dt><a href="#Resolver">Resolver</a></dt>
+<dd><p>Convenience type for resolving DID documents from different DID methods.</p>
+<p>Also provides methods for resolving DID Documents associated with
+verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
+<h1 id="configuration">Configuration</h1>
+<p>The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.</p>
 </dd>
 <dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
 <dd><p>A compressed bitmap for managing credential revocation.</p>
@@ -1624,6 +1624,7 @@ A DID conforming to the IOTA DID method specification.
         * [.methodId()](#IotaDID+methodId) ⇒ <code>string</code>
         * [.join(segment)](#IotaDID+join) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
         * [.toUrl()](#IotaDID+toUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.toAliasId()](#IotaDID+toAliasId) ⇒ <code>string</code>
         * [.intoUrl()](#IotaDID+intoUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
         * [.toString()](#IotaDID+toString) ⇒ <code>string</code>
         * [.toJSON()](#IotaDID+toJSON) ⇒ <code>any</code>
@@ -1716,6 +1717,12 @@ Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 ### did.toUrl() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
 Clones the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toAliasId"></a>
+
+### did.toAliasId() ⇒ <code>string</code>
+Creates an AliasId from the DID tag.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+intoUrl"></a>
@@ -3093,117 +3100,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="MixedResolver"></a>
-
-## MixedResolver
-Convenience type for resolving DID documents from different DID methods.
-
-Also provides methods for resolving DID Documents associated with
-verifiable `Credentials` and `Presentations`.
-
-# Configuration
-The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
-
-**Kind**: global class  
-
-* [MixedResolver](#MixedResolver)
-    * [new MixedResolver(config)](#new_MixedResolver_new)
-    * [.resolvePresentationIssuers(presentation)](#MixedResolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
-    * [.resolvePresentationHolder(presentation)](#MixedResolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
-    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#MixedResolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.resolve(did)](#MixedResolver+resolve) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
-
-<a name="new_MixedResolver_new"></a>
-
-### new MixedResolver(config)
-Constructs a new `MixedResolver`.
-
-# Errors
-If both a `client` is given and the `handlers` map contains the "iota" key the construction process
-will throw an error as it is then ambiguous what should be .
-
-
-| Param | Type |
-| --- | --- |
-| config | <code>ResolverConfig</code> | 
-
-<a name="MixedResolver+resolvePresentationIssuers"></a>
-
-### mixedResolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
-Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
-Issuer documents are returned in arbitrary order.
-
-# Errors
-Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
-resolution fails.
-
-**Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="MixedResolver+resolvePresentationHolder"></a>
-
-### mixedResolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
-Fetches the DID Document of the holder of a `Presentation`.
-
-# Errors
-Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
-DID resolution fails.
-
-**Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="MixedResolver+verifyPresentation"></a>
-
-### mixedResolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
-Verifies a `Presentation`.
-
-### Important
-See `PresentationValidator::validate` for information about which properties get
-validated and what is expected of the optional arguments `holder` and `issuer`.
-
-### Resolution
-The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
-If you already have up-to-date versions of these DID Documents, you may want
-to use `PresentationValidator::validate`.
-See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
-
-### Errors
-Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
-Otherwise, errors from validating the presentation and its credentials will be returned
-according to the `fail_fast` parameter.
-
-**Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
-| fail_fast | <code>number</code> | 
-| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) \| <code>undefined</code> | 
-| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> \| <code>undefined</code> | 
-
-<a name="MixedResolver+resolve"></a>
-
-### mixedResolver.resolve(did) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
-Fetches the DID Document of the given DID.
-
-### Errors
-
-Errors if the resolver has not been configured to handle the method
-corresponding to the given DID or the resolution process itself fails.
-
-**Kind**: instance method of [<code>MixedResolver</code>](#MixedResolver)  
-
-| Param | Type |
-| --- | --- |
-| did | <code>string</code> | 
-
 <a name="Presentation"></a>
 
 ## Presentation
@@ -3688,6 +3584,117 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="Resolver"></a>
+
+## Resolver
+Convenience type for resolving DID documents from different DID methods.
+
+Also provides methods for resolving DID Documents associated with
+verifiable `Credentials` and `Presentations`.
+
+# Configuration
+The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
+
+**Kind**: global class  
+
+* [Resolver](#Resolver)
+    * [new Resolver(config)](#new_Resolver_new)
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+
+<a name="new_Resolver_new"></a>
+
+### new Resolver(config)
+Constructs a new `Resolver`.
+
+# Errors
+If both a `client` is given and the `handlers` map contains the "iota" key the construction process
+will throw an error as it is then ambiguous what should be .
+
+
+| Param | Type |
+| --- | --- |
+| config | <code>ResolverConfig</code> | 
+
+<a name="Resolver+resolvePresentationIssuers"></a>
+
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
+Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
+Issuer documents are returned in arbitrary order.
+
+# Errors
+Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
+resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="Resolver+resolvePresentationHolder"></a>
+
+### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+Fetches the DID Document of the holder of a `Presentation`.
+
+# Errors
+Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
+DID resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="Resolver+verifyPresentation"></a>
+
+### resolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
+Verifies a `Presentation`.
+
+### Important
+See `PresentationValidator::validate` for information about which properties get
+validated and what is expected of the optional arguments `holder` and `issuer`.
+
+### Resolution
+The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+If you already have up-to-date versions of these DID Documents, you may want
+to use `PresentationValidator::validate`.
+See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
+
+### Errors
+Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+Otherwise, errors from validating the presentation and its credentials will be returned
+according to the `fail_fast` parameter.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
+| fail_fast | <code>number</code> | 
+| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> \| <code>undefined</code> | 
+
+<a name="Resolver+resolve"></a>
+
+### resolver.resolve(did) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+Fetches the DID Document of the given DID.
+
+### Errors
+
+Errors if the resolver has not been configured to handle the method
+corresponding to the given DID or the resolution process itself fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> | 
 
 <a name="RevocationBitmap"></a>
 

@@ -81,18 +81,16 @@ impl CredentialValidator {
 
   /// Validate that the [`Credential`] expires on or after the specified [`Timestamp`].
   pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
-    let is_ok = if let Some(expiration_date) = credential.expiration_date {
-      expiration_date >= timestamp
-    } else {
-      true
-    };
-    is_ok.then(|| ()).ok_or(ValidationError::ExpirationDate)
+    let expiration_date: Option<Timestamp> = credential.expiration_date;
+    (expiration_date.is_none() || expiration_date >= Some(timestamp))
+      .then_some(())
+      .ok_or(ValidationError::ExpirationDate)
   }
 
   /// Validate that the [`Credential`] is issued on or before the specified [`Timestamp`].
   pub fn check_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
     (credential.issuance_date <= timestamp)
-      .then(|| ())
+      .then_some(())
       .ok_or(ValidationError::IssuanceDate)
   }
 
@@ -145,19 +143,16 @@ impl CredentialValidator {
       }
     };
 
-    let is_ok: bool = match relationship {
-      SubjectHolderRelationship::AlwaysSubject => url_matches,
-      SubjectHolderRelationship::SubjectOnNonTransferable => {
-        url_matches || !credential.non_transferable.unwrap_or(false)
-      }
-      SubjectHolderRelationship::Any => true,
-    };
-
-    if is_ok {
-      Ok(())
-    } else {
-      Err(ValidationError::SubjectHolderRelationship)
-    }
+    Some(relationship)
+      .filter(|relationship| match relationship {
+        SubjectHolderRelationship::AlwaysSubject => url_matches,
+        SubjectHolderRelationship::SubjectOnNonTransferable => {
+          url_matches || !credential.non_transferable.unwrap_or(false)
+        }
+        SubjectHolderRelationship::Any => true,
+      })
+      .map(|_| ())
+      .ok_or(ValidationError::SubjectHolderRelationship)
   }
 
   /// Checks whether the credential status has been revoked.

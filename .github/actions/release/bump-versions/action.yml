@@ -53,6 +53,16 @@ runs:
       run: |
         cargo set-version ${{ inputs.version }}
 
+    # cargo workspaces ignores identity_agent because it is excluded from the workspace.
+    # Bump versions for consistency.
+    - name: Bump Rust agent version
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: identity_agent
+      run: |
+        cargo set-version ${{ inputs.version }}
+        cargo add --path ../identity_core
+
     - name: Bump Wasm bindings crate version
       shell: bash
       if: ${{inputs.release-target == 'wasm'}}
