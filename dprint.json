@@ -1,7 +1,9 @@
 {
   "$schema": "https://dprint.dev/schemas/v0.json",
   "incremental": true,
-  "typescript": {},
+  "typescript": {
+    "indentWidth": 4
+  },
   "toml": {},
   "includes": [
     "**/*.{toml,js,ts}"
