@@ -19,8 +19,8 @@ async-trait = { version = "0.1", default-features = false }
 function_name = { version = "0.2", default-features = false, optional = true }
 futures = { version = "0.3", optional = true }
 hashbrown = { version = "0.11", features = ["serde"] }
-identity_core = { version = "=0.7.0-alpha.1", path = "../identity_core", default-features = false }
-identity_did = { version = "=0.7.0-alpha.1", path = "../identity_did", default-features = false }
+identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
+identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_iota_core_legacy = { version = "=0.6.0", path = "../identity_iota_core_legacy", default-features = false }
 iota-crypto = { version = "0.12.1", default-features = false, features = ["hmac", "pbkdf", "sha", "std", "aes-gcm", "aes-kw"] }
 iota_stronghold = { version = "0.6.4", default-features = false, features = ["std"], optional = true }
