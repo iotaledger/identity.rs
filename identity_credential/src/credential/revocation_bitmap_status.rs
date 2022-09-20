@@ -120,7 +120,7 @@ impl TryFrom<Status> for RevocationBitmapStatus {
     };
 
     // If the index query is present it must match the revocationBitmapIndex.
-    // It is allowed to not be present to maintain backwards-compatibility
+    // It is allowed not to be present to maintain backwards-compatibility
     // with an earlier version of the RevocationBitmap spec.
     for pair in status.id.query_pairs() {
       if pair.0 == "index" {
@@ -153,8 +153,11 @@ mod tests {
   use identity_core::common::Object;
   use identity_core::common::Url;
   use identity_core::common::Value;
+  use identity_core::convert::FromJson;
   use identity_did::did::CoreDID;
   use identity_did::did::DIDUrl;
+
+  use crate::Error;
 
   use super::RevocationBitmapStatus;
   use super::Status;
@@ -184,5 +187,55 @@ mod tests {
 
     let status_wrong_type: Status = Status::new_with_properties(url, "DifferentType".to_owned(), object);
     assert!(RevocationBitmapStatus::try_from(status_wrong_type).is_err());
+  }
+
+  #[test]
+  fn test_revocation_bitmap_status_index_query() {
+    // index is set.
+    let did_url: DIDUrl<CoreDID> = DIDUrl::parse(format!("did:method:0xffff#rev-0")).unwrap();
+    let revocation_status: RevocationBitmapStatus = RevocationBitmapStatus::new(did_url, 250);
+    assert_eq!(revocation_status.id::<CoreDID>().unwrap().query().unwrap(), "index=250");
+
+    // index is overwritten.
+    let did_url: DIDUrl<CoreDID> = DIDUrl::parse(format!("did:method:0xffff?index=300#rev-0")).unwrap();
+    let revocation_status: RevocationBitmapStatus = RevocationBitmapStatus::new(did_url, 250);
+    assert_eq!(revocation_status.id::<CoreDID>().unwrap().query().unwrap(), "index=250");
+  }
+
+  #[test]
+  fn test_revocation_bitmap_status_index_requirements() {
+    // index mismatch in id and property.
+    let status: Status = Status::from_json_value(serde_json::json!({
+      "id": "did:method:0xffff?index=10#rev-0",
+      "type": RevocationBitmapStatus::TYPE,
+      RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
+    }))
+    .unwrap();
+
+    assert!(matches!(
+      RevocationBitmapStatus::try_from(status).unwrap_err(),
+      Error::InvalidStatus(_)
+    ));
+
+    // index matches in id and property.
+    let status: Status = Status::from_json_value(serde_json::json!({
+      "id": "did:method:0xffff?index=5#rev-0",
+      "type": RevocationBitmapStatus::TYPE,
+      RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
+    }))
+    .unwrap();
+
+    // matching index is fine.
+    RevocationBitmapStatus::try_from(status).unwrap();
+
+    let status: Status = Status::from_json_value(serde_json::json!({
+      "id": "did:method:0xffff#rev-0",
+      "type": RevocationBitmapStatus::TYPE,
+      RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
+    }))
+    .unwrap();
+
+    // missing index in id is allowed to be backwards-compatible.
+    RevocationBitmapStatus::try_from(status).unwrap();
   }
 }
