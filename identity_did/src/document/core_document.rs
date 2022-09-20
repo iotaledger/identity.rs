@@ -483,7 +483,7 @@ where
     }
   }
 
-  /// Returns a `Vec` of verification methods references whose verification relationship matches `scope`.
+  /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
   ///
   /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
   pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod<D, U>>
