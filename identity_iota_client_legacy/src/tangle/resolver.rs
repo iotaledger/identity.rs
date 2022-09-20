@@ -410,7 +410,7 @@ mod tests {
       issuer_core_doc
         .signer(issuer_core_key.private())
         .options(ProofOptions::default())
-        .method(issuer_core_doc.methods().next().unwrap().id())
+        .method(issuer_core_doc.methods(None).get(0).unwrap().id())
         .sign(credential_core)
         .unwrap();
       setup
@@ -436,7 +436,7 @@ mod tests {
     subject_doc
       .signer(subject_key.private())
       .options(ProofOptions::new().challenge(challenge.clone()))
-      .method(subject_doc.methods().next().unwrap().id())
+      .method(subject_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 
@@ -479,7 +479,7 @@ mod tests {
     subject_doc
       .signer(subject_key.private())
       .options(ProofOptions::new().challenge(challenge.clone()))
-      .method(subject_doc.methods().next().unwrap().id())
+      .method(subject_doc.methods(None).get(0).unwrap().id())
       .sign(&mut presentation)
       .unwrap();
 

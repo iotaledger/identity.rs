@@ -408,7 +408,7 @@ mod tests {
     issuer_doc
       .signer(issuer_key.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
 
@@ -478,7 +478,7 @@ mod tests {
     issuer_doc
       .signer(issuer_key.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
 
@@ -516,7 +516,7 @@ mod tests {
     issuer_doc
       .signer(issuer_key.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
 
@@ -542,7 +542,7 @@ mod tests {
     issuer_doc
       .signer(issuer_key.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
 
@@ -589,7 +589,7 @@ mod tests {
     issuer_doc
       .signer(other_keys.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
 
@@ -815,7 +815,7 @@ mod tests {
     issuer_doc
       .signer(issuer_key.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
@@ -855,7 +855,7 @@ mod tests {
     issuer_doc
       .signer(issuer_key.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
@@ -894,7 +894,7 @@ mod tests {
     issuer_doc
       .signer(issuer_key.private())
       .options(ProofOptions::default())
-      .method(issuer_doc.methods().next().unwrap().id())
+      .method(issuer_doc.methods(None).get(0).unwrap().id())
       .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
