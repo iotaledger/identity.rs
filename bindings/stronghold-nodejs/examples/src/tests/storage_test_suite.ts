@@ -1,8 +1,8 @@
-import { stronghold } from '../stronghold';
-import { StorageTestSuite } from '@iota/identity-wasm/node';
+import { StorageTestSuite } from "@iota/identity-wasm/node";
+import { stronghold } from "../stronghold";
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
-describe("Test Stronghold Node.js", function () {
+describe("Test Stronghold Node.js", function() {
     it("didCreateGenerateKey", async () => {
         await StorageTestSuite.didCreateGenerateKeyTest(await stronghold());
     });

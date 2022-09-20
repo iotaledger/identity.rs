@@ -11,14 +11,13 @@ import {
     MethodContent,
     ProofOptions,
     Storage,
-    VerifierOptions
-} from './../../node/identity_wasm.js';
+    VerifierOptions,
+} from "./../../node/identity_wasm.js";
 
 /**
  * This example demonstrates how to issue and sign Verifiable Credentials using the account.
  */
 async function signing(storage?: Storage) {
-
     // ===========================================================================
     // Create Identity - Similar to create_did example
     // ===========================================================================
@@ -37,8 +36,8 @@ async function signing(storage?: Storage) {
     // Add a new Ed25519 Verification Method to the identity for signing issued verifiable credentials.
     await account.createMethod({
         content: MethodContent.GenerateEd25519(),
-        fragment: "key_1"
-    })
+        fragment: "key_1",
+    });
 
     // Prepare a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -46,8 +45,8 @@ async function signing(storage?: Storage) {
         name: "Alice",
         degree: {
             type: "BachelorDegree",
-            name: "Bachelor of Science and Arts"
-        }
+            name: "Bachelor of Science and Arts",
+        },
     };
 
     // Issue an unsigned Credential...
@@ -81,4 +80,4 @@ async function signing(storage?: Storage) {
     console.log("[Example] Credential Verified = ", verified);
 }
 
-export {signing};
+export { signing };

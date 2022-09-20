@@ -1,7 +1,7 @@
-const {execSync} = require('child_process')
+const { execSync } = require("child_process");
 
-describe("Test TXM", function () {
+describe("Test TXM", function() {
     it("README examples pass", async () => {
-        execSync("txm README.md")
+        execSync("txm README.md");
     });
-})
+});

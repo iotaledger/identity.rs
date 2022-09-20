@@ -1,18 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    AccountBuilder,
-    ExplorerUrl,
-    Storage
-} from '../../node';
+import { AccountBuilder, ExplorerUrl, Storage } from "../../node";
 
 /**
  * This example demonstrates how to take control over publishing DID updates manually,
  * instead of the default automated behavior.
  */
 async function lazy(storage?: Storage) {
-
     // Create a new Account with auto publishing set to false.
     // This means updates are not pushed to the tangle automatically.
     // Rather, when we publish, multiple updates are batched together.
@@ -26,8 +21,8 @@ async function lazy(storage?: Storage) {
     await account.createService({
         fragment: "example-service",
         type: "LinkedDomains",
-        endpoint: "https://example.org"
-    })
+        endpoint: "https://example.org",
+    });
 
     // Publish the newly created DID document,
     // including the new service, to the tangle.
@@ -37,12 +32,12 @@ async function lazy(storage?: Storage) {
     await account.createService({
         fragment: "another-service",
         type: "LinkedDomains",
-        endpoint: "https://example.org"
+        endpoint: "https://example.org",
     });
 
     // Delete the previously added service.
     await account.deleteService({
-        fragment: "example-service"
+        fragment: "example-service",
     });
 
     // Publish the updates as one message to the tangle.
