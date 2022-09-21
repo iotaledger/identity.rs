@@ -3,20 +3,26 @@
 
 use examples::create_did;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
-use identity_core::common::Timestamp;
-use identity_core::convert::FromJson;
-use identity_core::json;
-use identity_did::did::DID;
-use identity_did::service::Service;
-use identity_did::verification::MethodRelationship;
-use identity_stardust::block::address::Address;
-use identity_stardust::block::output::RentStructure;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
-use identity_stardust::StardustService;
+use examples::API_ENDPOINT;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Timestamp;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::KeyType;
+use identity_iota::did::DIDUrl;
+use identity_iota::did::Document;
+use identity_iota::did::MethodRelationship;
+use identity_iota::did::MethodScope;
+use identity_iota::did::Service;
+use identity_iota::did::DID;
+use identity_iota::iota::block::address::Address;
+use identity_iota::iota::block::output::RentStructure;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::IotaService;
+use identity_iota::iota::IotaVerificationMethod;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -27,38 +33,45 @@ use iota_client::Client;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(NETWORK_ENDPOINT, None)?
-    .with_local_pow(false)
-    .finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the latest state of the document.
-  let mut document: StardustDocument = client.resolve_did(&did).await?;
+  let mut document: IotaDocument = client.resolve_did(&did).await?;
 
-  // Attach a new method relationship to the existing method.
+  // Insert a new Ed25519 verification method in the DID document.
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-2")?;
+  document.insert_method(method, MethodScope::VerificationMethod)?;
+
+  // Attach a new method relationship to the inserted method.
   document.attach_method_relationship(
-    &document.id().to_url().join("#key-1")?,
+    &document.id().to_url().join("#key-2")?,
     MethodRelationship::Authentication,
   )?;
 
   // Add a new Service.
-  let service: StardustService = Service::from_json_value(json!({
+  let service: IotaService = Service::from_json_value(json!({
     "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org/"
   }))?;
   assert!(document.insert_service(service));
   document.metadata.updated = Some(Timestamp::now_utc());
+
+  // Remove a verification method.
+  let original_method: DIDUrl<IotaDID> = document.resolve_method("key-1", None).unwrap().id().clone();
+  document.remove_method(&original_method).unwrap();
 
   // Resolve the latest output and update it with the given document.
   let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
@@ -71,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
 
   // Publish the updated Alias Output.
-  let updated: StardustDocument = client.publish_did_output(&secret_manager, alias_output).await?;
+  let updated: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
   println!("Updated DID document: {:#}", updated);
 
   Ok(())

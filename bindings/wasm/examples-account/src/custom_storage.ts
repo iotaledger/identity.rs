@@ -1,7 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { DID, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, StorageTestSuite, EncryptionAlgorithm, CekAlgorithm, EncryptedData } from '../../node/identity_wasm.js';
+import {
+    CekAlgorithm,
+    DID,
+    Ed25519,
+    EncryptedData,
+    EncryptionAlgorithm,
+    KeyLocation,
+    KeyPair,
+    KeyType,
+    Signature,
+    Storage,
+    StorageTestSuite,
+} from "../../node/identity_wasm.js";
 
 /** An insecure, in-memory `Storage` implementation that serves as an example.
 This can be passed to the `AccountBuilder` to create accounts with this as the storage. */
@@ -127,7 +139,7 @@ export class MemStore implements Storage {
         if (vault) {
             return vault.has(keyLocation.canonical());
         } else {
-            return false
+            return false;
         }
     }
 
@@ -139,12 +151,12 @@ export class MemStore implements Storage {
         if (vault) {
             const keyPair: KeyPair | undefined = vault.get(keyLocation.canonical());
             if (keyPair) {
-                return keyPair.public()
+                return keyPair.public();
             } else {
-                throw new Error('Key location not found')
+                throw new Error("Key location not found");
             }
         } else {
-            throw new Error('DID not found')
+            throw new Error("DID not found");
         }
     }
 
@@ -163,7 +175,7 @@ export class MemStore implements Storage {
 
     public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<Signature> {
         if (keyLocation.keyType() !== KeyType.Ed25519) {
-            throw new Error('Unsupported Method')
+            throw new Error("Unsupported Method");
         }
 
         // Get the vault for the given DID.
@@ -176,21 +188,34 @@ export class MemStore implements Storage {
                 // Use the `Ed25519` API to sign the given data with the private key.
                 const signature: Uint8Array = Ed25519.sign(data, keyPair.private());
                 // Construct a new `Signature` wrapper with the returned signature bytes.
-                return new Signature(signature)
+                return new Signature(signature);
             } else {
-                throw new Error('Key location not found')
+                throw new Error("Key location not found");
             }
         } else {
-            throw new Error('DID not found')
+            throw new Error("DID not found");
         }
     }
 
-    public async dataEncrypt(did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array): Promise<EncryptedData> {
-        throw new Error('not yet implemented')
+    public async dataEncrypt(
+        did: DID,
+        plaintext: Uint8Array,
+        associatedData: Uint8Array,
+        encryptionAlgorithm: EncryptionAlgorithm,
+        cekAlgorithm: CekAlgorithm,
+        publicKey: Uint8Array,
+    ): Promise<EncryptedData> {
+        throw new Error("not yet implemented");
     }
 
-    public async dataDecrypt(did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation): Promise<Uint8Array> {
-        throw new Error('not yet implemented')
+    public async dataDecrypt(
+        did: DID,
+        data: EncryptedData,
+        encryptionAlgorithm: EncryptionAlgorithm,
+        cekAlgorithm: CekAlgorithm,
+        privateKey: KeyLocation,
+    ): Promise<Uint8Array> {
+        throw new Error("not yet implemented");
     }
 
     public async blobGet(did: DID): Promise<Uint8Array | undefined> {

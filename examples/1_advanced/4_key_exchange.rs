@@ -4,20 +4,21 @@
 use anyhow::Context;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::KeyType;
-use identity_core::crypto::X25519;
-use identity_did::verification::MethodScope;
-use identity_stardust::block::address::Address;
-use identity_stardust::block::output::AliasOutput;
-use identity_stardust::block::output::RentStructure;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
-use identity_stardust::StardustVerificationMethod;
+use examples::API_ENDPOINT;
+use examples::FAUCET_ENDPOINT;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::KeyType;
+use identity_iota::crypto::X25519;
+use identity_iota::did::MethodScope;
+use identity_iota::iota::block::address::Address;
+use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::block::output::RentStructure;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::IotaVerificationMethod;
+use identity_iota::iota::NetworkName;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
@@ -34,20 +35,17 @@ async fn main() -> anyhow::Result<()> {
   // ==============================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(NETWORK_ENDPOINT, None)?
-    .with_local_pow(false)
-    .finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Get an address and with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager)
+  let address: Address = get_address_with_funds(&client, &mut secret_manager, FAUCET_ENDPOINT)
     .await
     .context("failed to get address with funds")?;
 
@@ -55,41 +53,41 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // Alice creates and publishes their DID Document.
-  let (alice_did, alice_x25519): (StardustDID, KeyPair) = {
+  let (alice_did, alice_x25519): (IotaDID, KeyPair) = {
     // Create a DID Document.
-    let mut alice_document: StardustDocument = StardustDocument::new(&network);
+    let mut alice_document: IotaDocument = IotaDocument::new(&network);
 
     // Insert a new X25519 KeyAgreement verification method.
     let x25519: KeyPair = KeyPair::new(KeyType::X25519)?;
-    let method: StardustVerificationMethod =
-      StardustVerificationMethod::new(alice_document.id().clone(), KeyType::X25519, x25519.public(), "kex-0")?;
+    let method: IotaVerificationMethod =
+      IotaVerificationMethod::new(alice_document.id().clone(), KeyType::X25519, x25519.public(), "kex-0")?;
     alice_document.insert_method(method, MethodScope::key_agreement())?;
 
     // Publish the DID.
     let alice_output: AliasOutput = client
       .new_did_output(address, alice_document, Some(rent_structure.clone()))
       .await?;
-    let alice_document: StardustDocument = client.publish_did_output(&secret_manager, alice_output).await?;
+    let alice_document: IotaDocument = client.publish_did_output(&secret_manager, alice_output).await?;
 
     (alice_document.id().clone(), x25519)
   };
 
   // Bob creates and publishes their DID Document.
-  let (bob_did, bob_x25519): (StardustDID, KeyPair) = {
+  let (bob_did, bob_x25519): (IotaDID, KeyPair) = {
     // Create a DID Document.
-    let mut bob_document: StardustDocument = StardustDocument::new(&network);
+    let mut bob_document: IotaDocument = IotaDocument::new(&network);
 
     // Insert a new X25519 KeyAgreement verification method.
     let x25519: KeyPair = KeyPair::new(KeyType::X25519)?;
-    let method: StardustVerificationMethod =
-      StardustVerificationMethod::new(bob_document.id().clone(), KeyType::X25519, x25519.public(), "kex-0")?;
+    let method: IotaVerificationMethod =
+      IotaVerificationMethod::new(bob_document.id().clone(), KeyType::X25519, x25519.public(), "kex-0")?;
     bob_document.insert_method(method, MethodScope::key_agreement())?;
 
     // Publish the DID.
     let bob_output: AliasOutput = client
       .new_did_output(address, bob_document, Some(rent_structure))
       .await?;
-    let bob_document: StardustDocument = client.publish_did_output(&secret_manager, bob_output).await?;
+    let bob_document: IotaDocument = client.publish_did_output(&secret_manager, bob_output).await?;
 
     (bob_document.id().clone(), x25519)
   };
@@ -102,8 +100,8 @@ async fn main() -> anyhow::Result<()> {
 
   let alice_shared_secret_key: [u8; 32] = {
     // Alice: resolves Bob's DID Document and extracts their public key.
-    let bob_document: StardustDocument = client.resolve_did(&bob_did).await?;
-    let bob_method: &StardustVerificationMethod = bob_document
+    let bob_document: IotaDocument = client.resolve_did(&bob_did).await?;
+    let bob_method: &IotaVerificationMethod = bob_document
       .core_document()
       .resolve_method("kex-0", Some(MethodScope::key_agreement()))
       .unwrap();
@@ -115,8 +113,8 @@ async fn main() -> anyhow::Result<()> {
 
   let bob_shared_secret_key: [u8; 32] = {
     // Bob: resolves Alice's DID Document and extracts their public key.
-    let alice_document: StardustDocument = client.resolve_did(&alice_did).await?;
-    let alice_method: &StardustVerificationMethod = alice_document
+    let alice_document: IotaDocument = client.resolve_did(&alice_did).await?;
+    let alice_method: &IotaVerificationMethod = alice_document
       .core_document()
       .resolve_method("kex-0", Some(MethodScope::key_agreement()))
       .unwrap();

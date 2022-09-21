@@ -1,10 +1,10 @@
-const path = require('path')
-const fs = require('fs')
-const { lintAll } = require('./lints')
-const generatePackage = require('./utils/generatePackage');
+const path = require("path");
+const fs = require("fs");
+const { lintAll } = require("./lints");
+const generatePackage = require("./utils/generatePackage");
 
-const RELEASE_FOLDER = path.join(__dirname, '../node/');
-const entryFilePathNode = path.join(RELEASE_FOLDER, 'identity_wasm.js');
+const RELEASE_FOLDER = path.join(__dirname, "../node/");
+const entryFilePathNode = path.join(RELEASE_FOLDER, "identity_wasm.js");
 const entryFileNode = fs.readFileSync(entryFilePathNode).toString();
 
 lintAll(entryFileNode);
@@ -19,16 +19,17 @@ let changedFileNode = entryFileNode.replace(
     globalThis.Response = fetch.Response
     globalThis.fetch = fetch
 }
-let imports = {};`);
+let imports = {};`,
+);
 
 fs.writeFileSync(
     entryFilePathNode,
-    changedFileNode
+    changedFileNode,
 );
 
 // Generate `package.json`.
 const newPackage = generatePackage({
-    main: 'index.js',
-    types: 'index.d.ts',
+    main: "index.js",
+    types: "index.d.ts",
 });
-fs.writeFileSync(path.join(RELEASE_FOLDER, 'package.json'), JSON.stringify(newPackage, null, 2));
+fs.writeFileSync(path.join(RELEASE_FOLDER, "package.json"), JSON.stringify(newPackage, null, 2));

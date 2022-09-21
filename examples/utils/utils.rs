@@ -1,16 +1,19 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::path::PathBuf;
 
 use anyhow::Context;
 
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::KeyType;
-use identity_did::verification::MethodScope;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
-use identity_stardust::StardustVerificationMethod;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::KeyType;
+use identity_iota::did::MethodScope;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::IotaVerificationMethod;
+use identity_iota::iota::NetworkName;
 
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
@@ -21,26 +24,25 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use rand::distributions::DistString;
 
-pub static NETWORK_ENDPOINT: &str = "http://localhost:14265"; // "https://api.testnet.shimmer.network/";
-pub static FAUCET_URL: &str = "http://localhost:8091/api/enqueue"; //"https://faucet.testnet.shimmer.network/api/enqueue";
-static PRIVATE_TESTNET_BECH32_HRP: &str = "tst";
+pub static API_ENDPOINT: &str = "http://localhost:14265";
+pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
 
 /// Creates a DID Document and publishes it in a new Alias Output.
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<(Address, StardustDID)> {
-  let address: Address = get_address_with_funds(client, secret_manager)
+pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<(Address, IotaDID)> {
+  let address: Address = get_address_with_funds(client, secret_manager, FAUCET_ENDPOINT)
     .await
     .context("failed to get address with funds")?;
 
   let network_name: NetworkName = client.network_name().await?;
 
-  let document: StardustDocument = create_did_document(&network_name)?;
+  let document: IotaDocument = create_did_document(&network_name)?;
 
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
-  let document: StardustDocument = client.publish_did_output(secret_manager, alias_output).await?;
+  let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
 
   Ok((address, document.id().clone()))
 }
@@ -49,13 +51,13 @@ pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> 
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<StardustDocument> {
-  let mut document: StardustDocument = StardustDocument::new(network_name);
+pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<IotaDocument> {
+  let mut document: IotaDocument = IotaDocument::new(network_name);
 
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
-  let method: StardustVerificationMethod =
-    StardustVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
 
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
@@ -63,12 +65,21 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<Stardus
 }
 
 /// Generates an address from the given [`SecretManager`] and adds funds from the testnet faucet.
-pub async fn get_address_with_funds(client: &Client, stronghold: &mut SecretManager) -> anyhow::Result<Address> {
+pub async fn get_address_with_funds(
+  client: &Client,
+  stronghold: &mut SecretManager,
+  faucet_endpoint: &str,
+) -> anyhow::Result<Address> {
   let address: Address = get_address(client, stronghold).await?;
 
-  request_faucet_funds(client, address, PRIVATE_TESTNET_BECH32_HRP)
-    .await
-    .context("failed to request faucet funds")?;
+  request_faucet_funds(
+    client,
+    address,
+    client.get_bech32_hrp().await?.as_str(),
+    faucet_endpoint,
+  )
+  .await
+  .context("failed to request faucet funds")?;
 
   Ok(address)
 }
@@ -76,7 +87,7 @@ pub async fn get_address_with_funds(client: &Client, stronghold: &mut SecretMana
 /// Initializes the [`SecretManager`] with a new mnemonic, if necessary,
 /// and generates an address from the given [`SecretManager`].
 pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<Address> {
-  let keypair = identity_core::crypto::KeyPair::new(KeyType::Ed25519)?;
+  let keypair = KeyPair::new(KeyType::Ed25519)?;
   let mnemonic =
     iota_client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
       .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
@@ -97,10 +108,15 @@ pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) ->
 }
 
 /// Requests funds from the testnet faucet for the given `address`.
-async fn request_faucet_funds(client: &Client, address: Address, network_hrp: &str) -> anyhow::Result<()> {
+async fn request_faucet_funds(
+  client: &Client,
+  address: Address,
+  network_hrp: &str,
+  faucet_endpoint: &str,
+) -> anyhow::Result<()> {
   let address_bech32 = address.to_bech32(network_hrp);
 
-  iota_client::request_funds_from_faucet(FAUCET_URL, &address_bech32).await?;
+  iota_client::request_funds_from_faucet(faucet_endpoint, &address_bech32).await?;
 
   tokio::time::timeout(std::time::Duration::from_secs(45), async {
     loop {

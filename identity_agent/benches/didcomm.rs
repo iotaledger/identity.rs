@@ -13,18 +13,13 @@ use identity_agent::didcomm::DidCommPlaintextMessage;
 use identity_agent::didcomm::ThreadId;
 use identity_agent::Multiaddr;
 
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::KeyType;
-use identity_iota_core::document::IotaDocument;
 use test_handler::PresentationOffer;
 use test_handler::PresentationRequest;
 use test_handler::TestHandler;
 
 async fn setup() -> (DidCommAgent, AgentId, DidCommAgent) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = DidCommAgentBuilder::new().identity(DidCommAgentIdentity {
-    document: IotaDocument::new(&KeyPair::new(KeyType::Ed25519).unwrap()).unwrap(),
-  });
+  let mut builder = DidCommAgentBuilder::new().identity(DidCommAgentIdentity::new());
 
   builder.attach_didcomm(TestHandler);
 
@@ -34,9 +29,7 @@ async fn setup() -> (DidCommAgent, AgentId, DidCommAgent) {
   let receiver_agent_id = receiver.agent_id();
 
   let mut sender: DidCommAgent = DidCommAgentBuilder::new()
-    .identity(DidCommAgentIdentity {
-      document: IotaDocument::new(&KeyPair::new(KeyType::Ed25519).unwrap()).unwrap(),
-    })
+    .identity(DidCommAgentIdentity::new())
     .build()
     .await
     .unwrap();

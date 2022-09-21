@@ -1,6 +1,6 @@
 [package]
 name = "identity_wasm"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -17,7 +17,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-bee-block = { version = "1.0.0-beta.5", default-features = false, features = ["dto"] }
+# Ensure bee-block always matches the version used by iota-client.
+bee-block = { version = "1.0.0-beta.7", default-features = false, features = ["dto"] }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3" }
@@ -29,18 +30,13 @@ wasm-bindgen = { version = "0.2.82", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity_iota]
-version = "=0.6.0"
+version = "0.7.0-alpha.1"
 path = "../../identity_iota"
 default-features = false
-features = ["account", "storage-test-suite", "unstable-encryption", "revocation-bitmap"]
-
-[dependencies.identity_stardust]
-version = "=0.6.0"
-path = "../../identity_stardust"
-default-features = false
-features = ["client", "revocation-bitmap"]
+features = ["client", "revocation-bitmap", "resolver"]
 
 [dev-dependencies]
+rand = "0.8.5"
 wasm-bindgen-test = { version = "0.3" }
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]

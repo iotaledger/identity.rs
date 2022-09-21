@@ -6,8 +6,6 @@ mod handler;
 mod presentation;
 mod remote_account;
 
-use identity_core::crypto::KeyPair;
-use identity_iota_core::document::IotaDocument;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 
@@ -77,9 +75,5 @@ async fn default_listening_didcomm_agent(
 }
 
 fn default_identity() -> DidCommAgentIdentity {
-  let keypair: KeyPair = KeyPair::new(identity_core::crypto::KeyType::Ed25519).unwrap();
-
-  DidCommAgentIdentity {
-    document: IotaDocument::new(&keypair).unwrap(),
-  }
+  DidCommAgentIdentity::new()
 }

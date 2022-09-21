@@ -3,12 +3,12 @@
 
 use examples::create_did;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
-use identity_stardust::block::address::Address;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
+use examples::API_ENDPOINT;
+use identity_iota::iota::block::address::Address;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -19,23 +19,20 @@ use iota_client::Client;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(NETWORK_ENDPOINT, None)?
-    .with_local_pow(false)
-    .finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Resolve the latest state of the DID document, so we can reactivate it later.
-  let document: StardustDocument = client.resolve_did(&did).await?;
+  let document: IotaDocument = client.resolve_did(&did).await?;
 
   // Deactivate the DID by publishing an empty document.
   // This process can be reversed since the Alias Output is not destroyed.
@@ -53,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Resolving a deactivated DID returns an empty DID document
   // with its `deactivated` metadata field set to `true`.
-  let deactivated: StardustDocument = client.resolve_did(&did).await?;
+  let deactivated: IotaDocument = client.resolve_did(&did).await?;
   println!("Deactivated DID document: {:#}", deactivated);
   assert_eq!(deactivated.metadata.deactivated, Some(true));
 
@@ -68,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
   client.publish_did_output(&secret_manager, reactivated_output).await?;
 
   // Resolve the reactivated DID document.
-  let reactivated: StardustDocument = client.resolve_did(&did).await?;
+  let reactivated: IotaDocument = client.resolve_did(&did).await?;
   assert_eq!(document, reactivated);
   assert!(!reactivated.metadata.deactivated.unwrap_or_default());
 

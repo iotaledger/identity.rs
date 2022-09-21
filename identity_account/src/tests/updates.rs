@@ -20,11 +20,11 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota_client::tangle::ClientBuilder;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::tangle::Network;
+use identity_iota_client_legacy::tangle::ClientBuilder;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
+use identity_iota_core_legacy::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountConfig;
@@ -55,7 +55,7 @@ async fn test_create_identity() -> Result<()> {
     let method: &IotaVerificationMethod = document.resolve_method(expected_fragment, None).unwrap();
 
     assert_eq!(document.core_document().verification_relationships().count(), 1);
-    assert_eq!(document.core_document().methods().count(), 1);
+    assert_eq!(document.core_document().methods(None).len(), 1);
 
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
@@ -204,7 +204,7 @@ async fn test_create_method_content_generate() -> Result<()> {
 
       // Still only the default relationship.
       assert_eq!(document.core_document().verification_relationships().count(), 1);
-      assert_eq!(document.core_document().methods().count(), 2);
+      assert_eq!(document.core_document().methods(None).len(), 2);
 
       let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
@@ -291,7 +291,7 @@ async fn test_create_scoped_method() -> Result<()> {
 
     assert_eq!(document.core_document().verification_relationships().count(), 2);
 
-    assert_eq!(document.core_document().methods().count(), 2);
+    assert_eq!(document.core_document().methods(None).len(), 2);
 
     let core_doc = document.core_document();
 
@@ -442,7 +442,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -525,7 +525,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -601,7 +601,7 @@ async fn test_delete_method() -> Result<()> {
   // Still only the default relationship.
   assert_eq!(document.core_document().verification_relationships().count(), 1);
 
-  assert_eq!(document.core_document().methods().count(), 1);
+  assert_eq!(document.core_document().methods(None).len(), 1);
 
   // Ensure the key still exists in storage.
   assert!(account
@@ -620,7 +620,7 @@ async fn test_delete_method() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));

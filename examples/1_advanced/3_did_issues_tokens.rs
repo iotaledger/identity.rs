@@ -4,21 +4,20 @@
 use std::ops::Deref;
 
 use examples::create_did;
-use examples::get_address;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
-use identity_core::common::Duration;
-use identity_core::common::Timestamp;
-use identity_stardust::block::output::unlock_condition::AddressUnlockCondition;
-use identity_stardust::block::output::unlock_condition::ExpirationUnlockCondition;
-use identity_stardust::block::output::BasicOutput;
-use identity_stardust::block::output::BasicOutputBuilder;
-use identity_stardust::block::output::Output;
-use identity_stardust::block::output::OutputId;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
+use examples::API_ENDPOINT;
+use identity_iota::core::Duration;
+use identity_iota::core::Timestamp;
+use identity_iota::iota::block::output::unlock_condition::AddressUnlockCondition;
+use identity_iota::iota::block::output::unlock_condition::ExpirationUnlockCondition;
+use identity_iota::iota::block::output::BasicOutput;
+use identity_iota::iota::block::output::BasicOutputBuilder;
+use identity_iota::iota::block::output::Output;
+use identity_iota::iota::block::output::OutputId;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::NetworkName;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
@@ -41,8 +40,8 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use primitive_types::U256;
 
-/// Demonstrates how an identity can issue and control native assets
-/// such as Token Foundries and NFTs.
+/// Demonstrates how an identity can issue and control
+/// a Token Foundry and its tokens.
 ///
 /// For this example, we consider the case where an authority issues
 /// carbon credits that can be used to pay for carbon emissions or traded on a marketplace.
@@ -53,28 +52,24 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(NETWORK_ENDPOINT, None)?
-    .with_local_pow(false)
-    .finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Create a new DID for the authority.
-
-  let (_, authority_did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, authority_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // We want to update the foundry counter of the authority's Alias Output, so we create an
   // updated version of the output. We pass in the previous document,
   // because we don't want to modify it in this update.
-  let authority_document: StardustDocument = client.resolve_did(&authority_did).await?;
+  let authority_document: IotaDocument = client.resolve_did(&authority_did).await?;
   let authority_alias_output: AliasOutput = client.update_did_output(authority_document).await?;
 
   // We will add one foundry to this Alias Output.
@@ -138,10 +133,10 @@ async fn main() -> anyhow::Result<()> {
 
   // Reconstruct the DID of the authority.
   let network: NetworkName = client.network_name().await?;
-  let authority_did: StardustDID = StardustDID::new(authority_alias_id.deref(), &network);
+  let authority_did: IotaDID = IotaDID::new(authority_alias_id.deref(), &network);
 
   // Resolve the authority's DID document.
-  let authority_document: StardustDocument = client.resolve_did(&authority_did).await?;
+  let authority_document: IotaDocument = client.resolve_did(&authority_did).await?;
 
   println!("The authority's DID is: {authority_document:#}");
 
@@ -150,7 +145,7 @@ async fn main() -> anyhow::Result<()> {
   // =========================================================
 
   // Create a new address that represents the company.
-  let company_address = get_address(&client, &mut secret_manager).await?;
+  let company_address: Address = client.get_addresses(&secret_manager).with_range(1..2).get_raw().await?[0];
 
   // Create the timestamp at which the basic output will expire.
   let tomorrow: u32 = Timestamp::now_utc()
@@ -164,6 +159,7 @@ async fn main() -> anyhow::Result<()> {
   let basic_output: BasicOutput = BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(company_address)))
     .add_native_token(NativeToken::new(carbon_credits_foundry.token_id(), U256::from(1000))?)
+    // Allow the company to claim the credits within 24 hours by using an expiration unlock condition.
     .add_unlock_condition(UnlockCondition::Expiration(ExpirationUnlockCondition::new(
       Address::Alias(AliasAddress::new(*authority_alias_id)),
       tomorrow,

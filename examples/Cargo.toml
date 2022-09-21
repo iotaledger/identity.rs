@@ -1,16 +1,14 @@
 [package]
 name = "examples"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-identity_core = { path = "../identity_core" }
-identity_did = { path = "../identity_did" }
-identity_stardust = { path = "../identity_stardust" }
-iota-client = { version = "2.0.0-beta.2", default-features = false, features = ["tls", "stronghold"] }
+identity_iota = { path = "../identity_iota" }
+iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 primitive-types = "0.11.1"
 rand = "0.8.5"
 tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
@@ -57,3 +55,7 @@ name = "3_did_issues_tokens"
 [[example]]
 path = "1_advanced/4_key_exchange.rs"
 name = "4_key_exchange"
+
+[[example]]
+path = "1_advanced/5_alias_output_history.rs"
+name = "5_alias_output_history"

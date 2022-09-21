@@ -14,7 +14,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::X25519;
 use identity_core::utils::Base::Base16Lower;
 use identity_core::utils::BaseEncoding;
-use identity_iota_core::did::IotaDID;
+use identity_iota_core_legacy::did::IotaDID;
 
 use crate::storage::stronghold::aead_decrypt;
 use crate::storage::stronghold::aead_encrypt;

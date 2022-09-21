@@ -114,22 +114,22 @@ jobs:
           command: test
           args: --workspace --all-features --release
 
+      - name: Run legacy examples
+        # run examples only on ubuntu for now
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo metadata --format-version 1 --manifest-path ./examples_legacy/Cargo.toml | \
+          jq -r '.packages[] | select(.name == "examples_legacy") | .targets[].name' | \
+          parallel -k -j 4 --retries 3 ./target/release/examples/{}
+
       - name: Run Rust examples
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest --manifest-path ./examples_legacy/Cargo.toml | \
-          jq -r '.targets[].name' | \
-          parallel -k -j 4 --retries 3 cargo run --example {} --all-features --release
-
-      - name: Run Stardust Rust examples
-        # run examples only on ubuntu for now
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cargo read-manifest --manifest-path ./examples/Cargo.toml | \
-          jq -r '.targets[].name' | \
+          cargo metadata --format-version 1 --manifest-path ./examples/Cargo.toml | \
+          jq -r '.packages[] | select(.name == "examples") | .targets[].name' | \
           awk '$1 ~ /[0-9].*/' | \
-          parallel -k -j 4 --retries 3 cargo run --manifest-path ./examples/Cargo.toml --example {} --all-features --release
+          parallel -k -j 4 --retries 3 ./target/release/examples/{}
 
       - name: Tear down private tangle
         if: matrix.os == 'ubuntu-latest' && always()
@@ -220,12 +220,12 @@ jobs:
         if: always()
         uses: './.github/actions/private-tangle/tear-down'
 
-  build-and-test-stronghold-nodejs:
-    needs:
-      - check-for-run-condition
-      - build-wasm
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
-    with:
-      input-artifact-name: identity-wasm-bindings-build
+  # build-and-test-stronghold-nodejs:
+  #   needs:
+  #     - check-for-run-condition
+  #     - build-wasm
+  #   if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+  #   # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
+  #   with:
+  #     input-artifact-name: identity-wasm-bindings-build

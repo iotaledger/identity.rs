@@ -4,29 +4,43 @@
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+#[non_exhaustive]
 pub enum Error {
-  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
+  #[error("serialization error")]
+  SerializationError(&'static str, #[source] Option<identity_core::Error>),
   #[error("{0}")]
-  DiffError(#[from] identity_core::diff::Error),
-  #[error("{0}")]
-  InvalidDID(#[from] identity_did::did::DIDError),
+  DIDSyntaxError(#[from] identity_did::did::DIDError),
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
-  #[error("Invalid Message: {0}")]
-  InvalidMessage(#[from] bee_message::Error),
-
-  #[error("signing failed: {0}")]
-  DocumentSignError(&'static str, #[source] Option<identity_core::Error>),
-  #[error("Invalid Document - Missing Message Id")]
-  InvalidDocumentMessageId,
-  #[error("Invalid Document - Signing Verification Method Type Not Supported")]
-  InvalidDocumentSigningMethodType,
-  #[error("Invalid Network Name")]
-  InvalidNetworkName,
-  #[error("invalid root document: {0}")]
-  InvalidRootDocument(&'static str),
-  #[error("Missing Signing Key")]
-  MissingSigningKey,
+  #[cfg(feature = "iota-client")]
+  #[error("DID update: {0}")]
+  DIDUpdateError(&'static str, #[source] Option<iota_client::error::Error>),
+  #[cfg(feature = "iota-client")]
+  #[error("DID resolution failed")]
+  DIDResolutionError(#[source] iota_client::error::Error),
+  #[cfg(feature = "iota-client")]
+  #[error("{0}")]
+  BasicOutputBuildError(#[source] iota_client::block::Error),
+  #[error("\"{0}\" is not a valid network name")]
+  InvalidNetworkName(String),
+  #[error("unable to resolve a `{expected}` DID on network `{actual}`")]
+  NetworkMismatch { expected: String, actual: String },
+  #[error("invalid state metadata {0}")]
+  InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]
   RevocationError(#[source] identity_did::Error),
+  #[cfg(feature = "client")]
+  #[error("alias output build error")]
+  AliasOutputBuildError(#[source] crate::block::Error),
+  #[cfg(feature = "iota-client")]
+  #[error("output with id `{0}` is not an alias output")]
+  NotAnAliasOutput(iota_client::block::output::OutputId),
+  #[cfg(feature = "iota-client")]
+  #[error("converting a DTO to an output failed")]
+  OutputConversionError(#[source] iota_client::block::DtoError),
+  #[error("conversion to an OutputId failed: {0}")]
+  OutputIdConversionError(String),
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+  #[error("JavaScript function threw an exception: {0}")]
+  JsError(String),
 }

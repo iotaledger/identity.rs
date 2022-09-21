@@ -4,7 +4,7 @@
 use identity_account_storage::identity::ChainState;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
-use identity_iota_core::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 

@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -8,60 +8,39 @@ keywords = ["iota", "tangle", "identity", "did", "ssi"]
 license = "Apache-2.0"
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-rust-version = "1.60"
+rust-version = "1.62"
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
-# identity_comm = { version = "=0.5.0-dev.4", path = "../identity_comm", optional = true }
-identity_account = { version = "=0.6.0", path = "../identity_account", default-features = false, optional = true }
-identity_account_storage = { version = "=0.6.0", path = "../identity_account_storage", default-features = false, optional = true }
-identity_agent = { version = "=0.6.0", path = "../identity_agent", default-features = false, optional = true }
-identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
-identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
-identity_iota_client = { version = "=0.6.0", path = "../identity_iota_client", default-features = false }
-identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
+identity_core = { version = "=0.7.0-alpha.1", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.1", path = "../identity_credential", features = ["validator"], default-features = false }
+identity_did = { version = "=0.7.0-alpha.1", path = "../identity_did", default-features = false }
+identity_iota_core = { version = "=0.7.0-alpha.1", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=0.7.0-alpha.1", path = "../identity_resolver", default-features = false, optional = true }
 
 [dev-dependencies]
-criterion = { version = "0.3" }
+anyhow = "1.0.64"
+iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
 tokio = { version = "1.17.0", features = ["full"] }
 
-[[bench]]
-name = "benchmark"
-harness = false
-
 [features]
-default = ["account", "stronghold", "send-sync-storage", "unstable-encryption", "revocation-bitmap"]
+default = ["revocation-bitmap", "client", "iota-client", "resolver"]
 
-# Enables support for secure storage of DID Documents
-account = ["identity_account", "identity_account_storage"]
+# Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
+client = ["identity_iota_core/client"]
 
-# Enables support for stronghold storage.
-stronghold = ["identity_account/stronghold", "identity_account_storage/stronghold"]
-
-# Enables support for DID Communication
-# comm = ["identity_comm"]
-
-# Enables `Send` + `Sync` bounds for the Storage trait.
-send-sync-storage = ["identity_account_storage/send-sync-storage"]
-
-# Exposes Storage `test_suite` module.
-storage-test-suite = ["identity_account_storage/storage-test-suite"]
+# Enables the iota-client integration, the client trait implementations for it, and the `IotaClientExt` trait.
+iota-client = ["identity_iota_core/iota-client", "identity_resolver?/iota"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
-  "identity_account?/revocation-bitmap",
-  "identity_iota_client/revocation-bitmap",
   "identity_credential/revocation-bitmap",
+  "identity_iota_core/revocation-bitmap",
+  "identity_resolver?/revocation-bitmap",
 ]
 
-# Enables encryption and decryption functionality.
-# Breaking changes to types and functions behind this flag are not covered by semver.
-unstable-encryption = ["identity_account/encryption"]
-
-# Enables support for the unstable identity agent.
-# Breaking changes to types and functions behind this flag are not covered by semver.
-unstable-agent = ["dep:identity_agent"]
+# Enables support for the `Resolver`.
+resolver = ["dep:identity_resolver"]
 
 [package.metadata.docs.rs]
 # To build locally:

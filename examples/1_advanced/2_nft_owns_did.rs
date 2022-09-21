@@ -4,13 +4,14 @@
 use examples::create_did_document;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
-use identity_stardust::block::address::NftAddress;
-use identity_stardust::block::output::AliasOutput;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustClientExt;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
+use examples::API_ENDPOINT;
+use examples::FAUCET_ENDPOINT;
+use identity_iota::iota::block::address::NftAddress;
+use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::NetworkName;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::output::unlock_condition::AddressUnlockCondition;
@@ -40,20 +41,17 @@ async fn main() -> anyhow::Result<()> {
   // =============================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(NETWORK_ENDPOINT, None)?
-    .with_local_pow(false)
-    .finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Get an address with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager).await?;
+  let address: Address = get_address_with_funds(&client, &mut secret_manager, FAUCET_ENDPOINT).await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
@@ -80,20 +78,22 @@ async fn main() -> anyhow::Result<()> {
 
   let network: NetworkName = client.network_name().await?;
 
-  // Construct a DID document for the subsidiary.
-  let document: StardustDocument = create_did_document(&network)?;
+  // Construct a DID document for the car.
+  let car_document: IotaDocument = create_did_document(&network)?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client
-    .new_did_output(Address::Nft(car_nft_id.into()), document, Some(rent_structure))
+    .new_did_output(Address::Nft(car_nft_id.into()), car_document, Some(rent_structure))
     .await?;
 
-  let car_document: StardustDocument = client.publish_did_output(&secret_manager, car_did_output).await?;
+  // Publish the car DID.
+  let car_document: IotaDocument = client.publish_did_output(&secret_manager, car_did_output).await?;
 
   // ============================================
   // Determine the car's NFT given the car's DID.
   // ============================================
 
+  // Resolve the Alias Output of the DID.
   let output: AliasOutput = client.resolve_did_output(car_document.id()).await?;
 
   // Extract the NFT address from the state controller unlock condition.

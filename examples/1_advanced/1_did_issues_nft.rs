@@ -3,12 +3,12 @@
 
 use examples::create_did;
 use examples::random_stronghold_path;
-use examples::NETWORK_ENDPOINT;
-use identity_stardust::block::output::feature::MetadataFeature;
-use identity_stardust::NetworkName;
-use identity_stardust::StardustDID;
-use identity_stardust::StardustDocument;
-use identity_stardust::StardustIdentityClientExt;
+use examples::API_ENDPOINT;
+use identity_iota::iota::block::output::feature::MetadataFeature;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::NetworkName;
 use iota_client::api_types::responses::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
@@ -42,20 +42,17 @@ async fn main() -> anyhow::Result<()> {
   // ==============================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder()
-    .with_primary_node(NETWORK_ENDPOINT, None)?
-    .with_local_pow(false)
-    .finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password")
-      .try_build(random_stronghold_path())?,
+      .build(random_stronghold_path())?,
   );
 
   // Create a new DID for the manufacturer.
-  let (_, manufacturer_did): (Address, StardustDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, manufacturer_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure().await?;
@@ -123,10 +120,10 @@ async fn main() -> anyhow::Result<()> {
 
   // Reconstruct the manufacturer's DID from the Alias Id.
   let network: NetworkName = client.network_name().await?;
-  let manufacturer_did: StardustDID = StardustDID::new(&*manufacturer_alias_id, &network);
+  let manufacturer_did: IotaDID = IotaDID::new(&*manufacturer_alias_id, &network);
 
   // Resolve the issuer of the NFT.
-  let manufacturer_document: StardustDocument = client.resolve_did(&manufacturer_did).await?;
+  let manufacturer_document: IotaDocument = client.resolve_did(&manufacturer_did).await?;
 
   println!("The issuer of the Digital Product Passport NFT is: {manufacturer_document:#}");
 
