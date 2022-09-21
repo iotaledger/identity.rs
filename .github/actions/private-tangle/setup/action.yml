@@ -9,9 +9,11 @@ runs:
         # Download the private_tangle setup from the hornet repo.
         mkdir private_tangle
         cd private_tangle
-        # Use the outpt of https://api.github.com/repos/iotaledger/hornet/releases/latest once we have a 2.0 Hornet release.
-        RELEASE_ID=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r .[0].tag_name)
+        # Use the output of https://api.github.com/repos/iotaledger/hornet/releases/latest once there's a 2.0 Hornet release.
+        export RELEASE_ID=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r .[0].tag_name)
         curl -L -O "https://github.com/iotaledger/hornet/releases/download/${RELEASE_ID}/HORNET-${RELEASE_ID}-private_tangle.tar.gz"
+        ls -lA
+        echo "Unpacking HORNET-${RELEASE_ID}-private_tangle.tar.gz"
         tar -xf HORNET-${RELEASE_ID}-private_tangle.tar.gz
 
         # Manipulate and print config
