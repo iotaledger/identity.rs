@@ -47,18 +47,18 @@ use wasm_bindgen_futures::future_to_promise;
 ///
 /// # Configuration
 /// The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
-#[wasm_bindgen(js_name = MixedResolver)]
-pub struct MixedResolver(Rc<SingleThreadedResolver>);
+#[wasm_bindgen(js_name = Resolver)]
+pub struct WasmResolver(Rc<SingleThreadedResolver>);
 
-#[wasm_bindgen(js_class = MixedResolver)]
-impl MixedResolver {
-  /// Constructs a new `MixedResolver`.
+#[wasm_bindgen(js_class = Resolver)]
+impl WasmResolver {
+  /// Constructs a new `Resolver`.
   ///
   /// # Errors
   /// If both a `client` is given and the `handlers` map contains the "iota" key the construction process
   /// will throw an error as it is then ambiguous what should be .
   #[wasm_bindgen(constructor)]
-  pub fn new(config: ResolverConfig) -> Result<MixedResolver> {
+  pub fn new(config: ResolverConfig) -> Result<WasmResolver> {
     let mut resolver: SingleThreadedResolver = SingleThreadedResolver::new();
 
     let mut attached_iota_method = false;
@@ -128,7 +128,7 @@ impl MixedResolver {
           *attached_iota_method = true;
         }
 
-        MixedResolver::attach_handler(resolver, did_method, handler);
+        WasmResolver::attach_handler(resolver, did_method, handler);
       } else {
         Err(WasmError::new(
           Cow::Borrowed("ResolverError::ConstructionError"),

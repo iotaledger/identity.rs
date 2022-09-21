@@ -293,17 +293,23 @@ impl WasmCoreDocument {
   // Verification Methods
   // ===========================================================================
 
-  /// Returns a list of all {@link CoreVerificationMethod} in the DID Document.
+  /// Returns a list of all {@link CoreVerificationMethod} in the DID Document,
+  /// whose verification relationship matches `scope`.
+  ///
+  /// If `scope` is not set, a list over the **embedded** methods is returned.
   #[wasm_bindgen]
-  pub fn methods(&self) -> ArrayCoreVerificationMethod {
-    self
+  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayCoreVerificationMethod> {
+    let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let methods = self
       .0
-      .methods()
+      .methods(scope)
+      .into_iter()
       .cloned()
       .map(WasmCoreVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreVerificationMethod>()
+      .unchecked_into::<ArrayCoreVerificationMethod>();
+    Ok(methods)
   }
 
   /// Returns an array of all verification relationships.

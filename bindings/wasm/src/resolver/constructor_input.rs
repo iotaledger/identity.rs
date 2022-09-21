@@ -30,7 +30,7 @@ const HANDLERS: &'static str =
 #[wasm_bindgen(typescript_custom_section)]
 const TS_RESOLVER_CONFIG: &'static str = r#"
 /**
- * Configurations for the new {@link MixedResolver}.
+ * Configurations for the new {@link Resolver}.
  */
 export type ResolverConfig = {
 

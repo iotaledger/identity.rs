@@ -1,43 +1,29 @@
-// Copyright 2020-2022 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
-
+import type { Client, SecretManager } from "@iota/iota-client-wasm/node";
+import { AddressTypes, Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import {
-    KeyPair,
-    KeyType,
-    MethodScope,
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    IotaVerificationMethod
-} from '../../node';
-import { Bech32Helper, IAliasOutput } from '@iota/iota.js';
-import { Bip39 } from "@iota/crypto.js";
-import fetch from "node-fetch";
-import { Client, MnemonicSecretManager, SecretManager } from "@cycraig/iota-client-wasm/node";
+    IotaVerificationMethod,
+    KeyPair,
+    KeyType,
+    MethodScope,
+} from "../../node";
 
-const API_ENDPOINT = "https://api.testnet.shimmer.network/";
-const FAUCET = "https://faucet.testnet.shimmer.network/api/enqueue";
+export const API_ENDPOINT = "https://api.testnet.shimmer.network/";
+export const FAUCET_ENDPOINT = "https://faucet.testnet.shimmer.network/api/enqueue";
 
-/** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
-export async function createIdentity(): Promise<{
-    didClient: IotaIdentityClient,
-    secretManager: SecretManager,
-    walletAddressBech32: string,
-    did: IotaDID
+/** Creates a DID Document and publishes it in a new Alias Output.
+
+Its functionality is equivalent to the "create DID" example
+and exists for convenient calling from the other examples. */
+export async function createDid(client: Client, secretManager: SecretManager): Promise<{
+    address: AddressTypes;
+    did: IotaDID;
 }> {
-    const client = new Client({
-        primaryNode: API_ENDPOINT,
-        localPow: true,
-    });
     const didClient = new IotaIdentityClient(client);
-
-    // Get the Bech32 human-readable part (HRP) of the network.
     const networkHrp: string = await didClient.getNetworkHrp();
 
-    // Generate a random mnemonic for our wallet.
-    const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic()
-    };
     const walletAddressBech32 = (await client.generateAddresses(secretManager, {
         accountIndex: 0,
         range: {
@@ -47,8 +33,9 @@ export async function createIdentity(): Promise<{
     }))[0];
     console.log("Wallet address Bech32:", walletAddressBech32);
 
-    // Request funds for the wallet, if needed - only works on development networks.
     await ensureAddressHasFunds(client, walletAddressBech32);
+
+    const address = Bech32Helper.addressFromBech32(walletAddressBech32, networkHrp);
 
     // Create a new DID document with a placeholder DID.
     // The DID will be derived from the Alias Id of the Alias Output after publishing.
@@ -61,23 +48,16 @@ export async function createIdentity(): Promise<{
 
     // Construct an Alias Output containing the DID document, with the wallet address
     // set as both the state controller and governor.
-    const address = Bech32Helper.addressFromBech32(walletAddressBech32, networkHrp);
     const aliasOutput: IAliasOutput = await didClient.newDidOutput(address, document);
-    console.log("Alias Output:", JSON.stringify(aliasOutput, null, 2));
 
     // Publish the Alias Output and get the published DID document.
     const published = await didClient.publishDidOutput(secretManager, aliasOutput);
-    console.log("Published DID document:", JSON.stringify(published, null, 2));
 
-    return {
-        didClient, secretManager,
-        walletAddressBech32,
-        did: published.id()
-    };
+    return { address, did: published.id() };
 }
 
 /** Request funds from the testnet faucet API, if needed, and wait for them to show in the wallet. */
-async function ensureAddressHasFunds(client: Client, addressBech32: string) {
+export async function ensureAddressHasFunds(client: Client, addressBech32: string) {
     let balance = await getAddressBalance(client, addressBech32);
     if (balance > 0) {
         return;
@@ -103,7 +83,7 @@ async function getAddressBalance(client: Client, addressBech32: string): Promise
         { address: addressBech32 },
         { hasExpiration: false },
         { hasTimelock: false },
-        { hasStorageDepositReturn: false }
+        { hasStorageDepositReturn: false },
     ]);
     const outputs = await client.getOutputs(outputIds);
 
@@ -120,7 +100,7 @@ async function requestFundsFromFaucet(addressBech32: string) {
     const requestObj = JSON.stringify({ address: addressBech32 });
     let errorMessage, data;
     try {
-        const response = await fetch(FAUCET, {
+        const response = await fetch(FAUCET_ENDPOINT, {
             method: "POST",
             headers: {
                 Accept: "application/json",

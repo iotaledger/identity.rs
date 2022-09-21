@@ -161,9 +161,11 @@ impl IotaDocument {
   // Verification Methods
   // ===========================================================================
 
-  /// Returns an iterator over all [`IotaVerificationMethod`] in the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item = &IotaVerificationMethod> {
-    self.document.methods()
+  /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
+  ///
+  /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
+  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&IotaVerificationMethod> {
+    self.document.methods(scope)
   }
 
   /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
@@ -506,14 +508,14 @@ mod tests {
     assert_eq!(doc1.id().network_str(), network.as_ref());
     assert_eq!(doc1.id().tag(), placeholder.tag());
     assert_eq!(doc1.id(), &placeholder);
-    assert_eq!(doc1.methods().count(), 0);
+    assert_eq!(doc1.methods(None).len(), 0);
     assert!(doc1.service().is_empty());
 
     // VALID new_with_id().
     let did: IotaDID = valid_did();
     let doc2: IotaDocument = IotaDocument::new_with_id(did.clone());
     assert_eq!(doc2.id(), &did);
-    assert_eq!(doc2.methods().count(), 0);
+    assert_eq!(doc2.methods(None).len(), 0);
     assert!(doc2.service().is_empty());
   }
 
@@ -528,7 +530,7 @@ mod tests {
       generate_method(&controller, "#auth-key"),
     ];
 
-    let mut methods = document.methods();
+    let mut methods = document.methods(None).into_iter();
     assert_eq!(methods.next(), Some(&expected[0]));
     assert_eq!(methods.next(), Some(&expected[1]));
     assert_eq!(methods.next(), Some(&expected[2]));

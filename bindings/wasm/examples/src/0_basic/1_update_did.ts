@@ -1,15 +1,37 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { MethodRelationship, IotaDocument, IotaService, Timestamp, IotaVerificationMethod, KeyPair, KeyType, MethodScope } from '../../node';
-import { IAliasOutput, IRent, TransactionHelper } from '@iota/iota.js';
-
-import { createIdentity } from "./ex0_create_did";
+import { Bip39 } from "@iota/crypto.js";
+import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
+import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
+import {
+    IotaDocument,
+    IotaIdentityClient,
+    IotaService,
+    IotaVerificationMethod,
+    KeyPair,
+    KeyType,
+    MethodRelationship,
+    MethodScope,
+    Timestamp,
+} from "../../../node";
+import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
-    // Creates a new wallet and identity (see "ex0_create_did" example).
-    const { didClient, secretManager, did } = await createIdentity();
+    const client = new Client({
+        primaryNode: API_ENDPOINT,
+        localPow: true,
+    });
+    const didClient = new IotaIdentityClient(client);
+
+    // Generate a random mnemonic for our wallet.
+    const secretManager: MnemonicSecretManager = {
+        Mnemonic: Bip39.randomMnemonic(),
+    };
+
+    // Creates a new wallet and identity (see "0_create_did" example).
+    const { did } = await createDid(client, secretManager);
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.
@@ -27,7 +49,7 @@ export async function updateIdentity() {
     const service: IotaService = new IotaService({
         id: did.join("#linked-domain"),
         type: "LinkedDomains",
-        serviceEndpoint: "https://iota.org/"
+        serviceEndpoint: "https://iota.org/",
     });
     document.insertService(service);
     document.setMetadataUpdated(Timestamp.nowUTC());

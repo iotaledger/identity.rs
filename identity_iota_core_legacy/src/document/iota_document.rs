@@ -273,8 +273,8 @@ impl IotaDocument {
   // ===========================================================================
 
   /// Returns an iterator over all [`IotaVerificationMethods`][IotaVerificationMethod] in the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item = &IotaVerificationMethod> {
-    self.document.methods()
+  pub fn methods(&self) -> Vec<&IotaVerificationMethod> {
+    self.document.methods(None)
   }
 
   /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
@@ -950,7 +950,7 @@ mod tests {
       .build()
       .unwrap();
 
-    let mut methods = document.methods();
+    let mut methods = document.methods().into_iter();
 
     assert_eq!(methods.next(), Some(expected).as_ref());
     assert_eq!(methods.next(), None);
@@ -967,7 +967,7 @@ mod tests {
       valid_verification_method(&controller, "#auth-key"),
     ];
 
-    let mut methods = document.methods();
+    let mut methods = document.methods().into_iter();
     assert_eq!(methods.next(), Some(&expected[0]));
     assert_eq!(methods.next(), Some(&expected[1]));
     assert_eq!(methods.next(), Some(&expected[2]));
@@ -1640,7 +1640,7 @@ mod tests {
     }
 
     // `methods` returns all embedded verification methods, so only one is expected.
-    assert_eq!(document.methods().count(), 1);
+    assert_eq!(document.methods().len(), 1);
   }
 
   #[test]

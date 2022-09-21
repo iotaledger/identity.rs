@@ -7,11 +7,11 @@ import {
     CredentialValidationOptions,
     CredentialValidator,
     FailFast,
-    Resolver,
-    Storage,
     MethodContent,
     ProofOptions,
-    RevocationBitmap
+    Resolver,
+    RevocationBitmap,
+    Storage,
 } from "./../../node/identity_wasm.js";
 
 /**
@@ -30,7 +30,7 @@ async function revokeVC(storage?: Storage) {
     // ===========================================================================
 
     const builder = new AccountBuilder({
-        storage
+        storage,
     });
 
     // Create an identity for the issuer.
@@ -39,7 +39,7 @@ async function revokeVC(storage?: Storage) {
     // Add a dedicated verification method to the issuer, with which to sign credentials.
     await issuer.createMethod({
         content: MethodContent.GenerateEd25519(),
-        fragment: "key-1"
+        fragment: "key-1",
     });
 
     // Add a RevocationBitmap service to the issuer's DID Document.
@@ -48,7 +48,7 @@ async function revokeVC(storage?: Storage) {
     await issuer.createService({
         fragment: "my-revocation-service",
         type: RevocationBitmap.type(),
-        endpoint: revocationBitmap.toEndpoint()
+        endpoint: revocationBitmap.toEndpoint(),
     });
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
@@ -56,7 +56,7 @@ async function revokeVC(storage?: Storage) {
         id: "did:iota:B8DucnzULJ9E8cmaReYoePU2b7UKE9WKxyEVov8tQA7H",
         name: "Alice",
         degree: "Bachelor of Science and Arts",
-        GPA: "4.0"
+        GPA: "4.0",
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice.
@@ -67,17 +67,17 @@ async function revokeVC(storage?: Storage) {
         credentialStatus: {
             id: issuer.did() + "#my-revocation-service",
             type: RevocationBitmap.type(),
-            revocationBitmapIndex: "5"
+            revocationBitmapIndex: "5",
         },
         issuer: issuer.document().id(),
-        credentialSubject: subject
+        credentialSubject: subject,
     });
 
     // Created a signed credential by the issuer.
     const signedVc = await issuer.createSignedCredential(
         "#key-1",
         unsignedVc,
-        ProofOptions.default()
+        ProofOptions.default(),
     );
 
     // ===========================================================================
@@ -108,7 +108,7 @@ async function revokeVC(storage?: Storage) {
     // By removing the verification method, that signed the credential, from the issuer's DID document,
     // we effectively revoke the credential, as it will no longer be possible to validate the signature.
     await issuer.deleteMethod({
-        fragment: "key-1"
+        fragment: "key-1",
     });
 
     // We expect the verifiable credential to be revoked.
@@ -116,7 +116,7 @@ async function revokeVC(storage?: Storage) {
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
         const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(
-            signedVc
+            signedVc,
         );
         // TODO: uncomment when ported to Stardust.
         // CredentialValidator.validate(

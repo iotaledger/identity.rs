@@ -159,7 +159,7 @@ async fn test_account_autopublish() {
 
   let doc = account.document();
 
-  assert_eq!(doc.methods().count(), 1);
+  assert_eq!(doc.methods().len(), 1);
   assert_eq!(doc.service().len(), 2);
 
   for service in ["my-service", "my-other-service"] {
@@ -213,7 +213,7 @@ async fn test_account_autopublish() {
   let doc = account.document();
 
   assert_eq!(doc.service().len(), 0);
-  assert_eq!(doc.methods().count(), 2);
+  assert_eq!(doc.methods().len(), 2);
 
   for method in ["sign-0", "new-method"] {
     assert!(doc.resolve_method(method, None).is_some());

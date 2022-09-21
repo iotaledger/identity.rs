@@ -55,7 +55,7 @@ async fn test_create_identity() -> Result<()> {
     let method: &IotaVerificationMethod = document.resolve_method(expected_fragment, None).unwrap();
 
     assert_eq!(document.core_document().verification_relationships().count(), 1);
-    assert_eq!(document.core_document().methods().count(), 1);
+    assert_eq!(document.core_document().methods(None).len(), 1);
 
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
@@ -204,7 +204,7 @@ async fn test_create_method_content_generate() -> Result<()> {
 
       // Still only the default relationship.
       assert_eq!(document.core_document().verification_relationships().count(), 1);
-      assert_eq!(document.core_document().methods().count(), 2);
+      assert_eq!(document.core_document().methods(None).len(), 2);
 
       let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
@@ -291,7 +291,7 @@ async fn test_create_scoped_method() -> Result<()> {
 
     assert_eq!(document.core_document().verification_relationships().count(), 2);
 
-    assert_eq!(document.core_document().methods().count(), 2);
+    assert_eq!(document.core_document().methods(None).len(), 2);
 
     let core_doc = document.core_document();
 
@@ -601,7 +601,7 @@ async fn test_delete_method() -> Result<()> {
   // Still only the default relationship.
   assert_eq!(document.core_document().verification_relationships().count(), 1);
 
-  assert_eq!(document.core_document().methods().count(), 1);
+  assert_eq!(document.core_document().methods(None).len(), 1);
 
   // Ensure the key still exists in storage.
   assert!(account
