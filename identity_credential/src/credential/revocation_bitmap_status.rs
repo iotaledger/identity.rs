@@ -64,13 +64,7 @@ impl RevocationBitmapStatus {
   /// Returns the index of the credential in the issuer's revocation bitmap if it can be decoded.
   pub fn index(&self) -> Result<u32> {
     if let Some(Value::String(index)) = self.0.properties.get(Self::INDEX_PROPERTY) {
-      u32::from_str(index).map_err(|err| {
-        Error::InvalidStatus(format!(
-          "expected {} to be an unsigned 32-bit integer: {}",
-          Self::INDEX_PROPERTY,
-          err
-        ))
-      })
+      try_index_to_u32(index, Self::INDEX_PROPERTY)
     } else {
       Err(Error::InvalidStatus(format!(
         "expected {} to be an unsigned 32-bit integer expressed as a string",
@@ -103,12 +97,7 @@ impl TryFrom<Status> for RevocationBitmapStatus {
       };
 
     let revocation_bitmap_index: u32 = if let Value::String(index) = revocation_bitmap_index {
-      index.parse::<u32>().map_err(|err| {
-        Error::InvalidStatus(format!(
-          "property '{}' cannot be converted to an unsigned, 32-bit integer: {err}",
-          Self::INDEX_PROPERTY
-        ))
-      })?
+      try_index_to_u32(index, Self::INDEX_PROPERTY)?
     } else {
       return Err(Error::InvalidStatus(format!(
         "property '{}' is not a string",
@@ -121,12 +110,7 @@ impl TryFrom<Status> for RevocationBitmapStatus {
     // with an earlier version of the RevocationBitmap spec.
     for pair in status.id.query_pairs() {
       if pair.0 == "index" {
-        let index: u32 = pair.1.parse::<u32>().map_err(|err| {
-          Error::InvalidStatus(format!(
-            "value of index query cannot be converted to an unsigned, 32-bit integer: {err}"
-          ))
-        })?;
-
+        let index: u32 = try_index_to_u32(pair.1.as_ref(), "value of index query")?;
         if index != revocation_bitmap_index {
           return Err(Error::InvalidStatus(format!(
             "value of index query `{index}` does not match revocationBitmapIndex `{revocation_bitmap_index}`"
@@ -143,6 +127,15 @@ impl From<RevocationBitmapStatus> for Status {
   fn from(status: RevocationBitmapStatus) -> Self {
     status.0
   }
+}
+
+/// Attempts to convert the given index string to a u32.
+fn try_index_to_u32(index: &str, name: &str) -> Result<u32> {
+  u32::from_str(index).map_err(|err| {
+    Error::InvalidStatus(format!(
+      "{name} cannot be converted to an unsigned, 32-bit integer: {err}",
+    ))
+  })
 }
 
 #[cfg(test)]
