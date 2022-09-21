@@ -19,7 +19,7 @@ use crate::error::Result;
 pub struct RevocationBitmapStatus(Status);
 
 impl RevocationBitmapStatus {
-  const REVOCATION_BITMAP_INDEX_PROPERTY: &'static str = "revocationBitmapIndex";
+  const INDEX_PROPERTY: &'static str = "revocationBitmapIndex";
   /// Type name of the revocation bitmap.
   pub const TYPE: &'static str = "RevocationBitmap2022";
 
@@ -46,10 +46,7 @@ impl RevocationBitmapStatus {
       .expect("the string should be non-empty and a valid URL query");
 
     let mut object = Object::new();
-    object.insert(
-      Self::REVOCATION_BITMAP_INDEX_PROPERTY.to_owned(),
-      Value::String(index.to_string()),
-    );
+    object.insert(Self::INDEX_PROPERTY.to_owned(), Value::String(index.to_string()));
     RevocationBitmapStatus(Status::new_with_properties(
       Url::from(id),
       Self::TYPE.to_owned(),
@@ -66,18 +63,18 @@ impl RevocationBitmapStatus {
 
   /// Returns the index of the credential in the issuer's revocation bitmap if it can be decoded.
   pub fn index(&self) -> Result<u32> {
-    if let Some(Value::String(index)) = self.0.properties.get(Self::REVOCATION_BITMAP_INDEX_PROPERTY) {
+    if let Some(Value::String(index)) = self.0.properties.get(Self::INDEX_PROPERTY) {
       u32::from_str(index).map_err(|err| {
         Error::InvalidStatus(format!(
           "expected {} to be an unsigned 32-bit integer: {}",
-          Self::REVOCATION_BITMAP_INDEX_PROPERTY,
+          Self::INDEX_PROPERTY,
           err
         ))
       })
     } else {
       Err(Error::InvalidStatus(format!(
         "expected {} to be an unsigned 32-bit integer expressed as a string",
-        Self::REVOCATION_BITMAP_INDEX_PROPERTY
+        Self::INDEX_PROPERTY
       )))
     }
   }
@@ -96,12 +93,12 @@ impl TryFrom<Status> for RevocationBitmapStatus {
     }
 
     let revocation_bitmap_index: &Value =
-      if let Some(revocation_bitmap_index) = status.properties.get(Self::REVOCATION_BITMAP_INDEX_PROPERTY) {
+      if let Some(revocation_bitmap_index) = status.properties.get(Self::INDEX_PROPERTY) {
         revocation_bitmap_index
       } else {
         return Err(Error::InvalidStatus(format!(
           "missing required property '{}'",
-          Self::REVOCATION_BITMAP_INDEX_PROPERTY
+          Self::INDEX_PROPERTY
         )));
       };
 
@@ -109,13 +106,13 @@ impl TryFrom<Status> for RevocationBitmapStatus {
       index.parse::<u32>().map_err(|err| {
         Error::InvalidStatus(format!(
           "property '{}' cannot be converted to an unsigned, 32-bit integer: {err}",
-          Self::REVOCATION_BITMAP_INDEX_PROPERTY
+          Self::INDEX_PROPERTY
         ))
       })?
     } else {
       return Err(Error::InvalidStatus(format!(
         "property '{}' is not a string",
-        Self::REVOCATION_BITMAP_INDEX_PROPERTY
+        Self::INDEX_PROPERTY
       )));
     };
 
@@ -171,7 +168,7 @@ mod tests {
       RevocationBitmapStatus::new(did_url, revocation_list_index);
 
     let object: Object = Object::from([(
-      RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY.to_owned(),
+      RevocationBitmapStatus::INDEX_PROPERTY.to_owned(),
       Value::String(revocation_list_index.to_string()),
     )]);
     let status: Status =
@@ -205,7 +202,7 @@ mod tests {
     let status: Status = Status::from_json_value(serde_json::json!({
       "id": "did:method:0xffff?index=10#rev-0",
       "type": RevocationBitmapStatus::TYPE,
-      RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
+      RevocationBitmapStatus::INDEX_PROPERTY: "5",
     }))
     .unwrap();
 
@@ -218,7 +215,7 @@ mod tests {
     let status: Status = Status::from_json_value(serde_json::json!({
       "id": "did:method:0xffff?index=5#rev-0",
       "type": RevocationBitmapStatus::TYPE,
-      RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
+      RevocationBitmapStatus::INDEX_PROPERTY: "5",
     }))
     .unwrap();
     assert!(RevocationBitmapStatus::try_from(status).is_ok());
@@ -227,7 +224,7 @@ mod tests {
     let status: Status = Status::from_json_value(serde_json::json!({
       "id": "did:method:0xffff#rev-0",
       "type": RevocationBitmapStatus::TYPE,
-      RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
+      RevocationBitmapStatus::INDEX_PROPERTY: "5",
     }))
     .unwrap();
     assert!(RevocationBitmapStatus::try_from(status).is_ok());
