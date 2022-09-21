@@ -1,14 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, Timestamp, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
+import { AccountBuilder, ExplorerUrl, Storage, Timestamp } from "./../../node/identity_wasm.js";
 
 /**
  * This example demonstrates how to update the custom properties of a DID document directly
  * and publish it without performing validation.
  */
 async function unchecked(storage?: Storage) {
-
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
     let builder = new AccountBuilder({
@@ -41,7 +40,6 @@ async function unchecked(storage?: Storage) {
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(account.did()));
-
 }
 
-export { unchecked }
+export { unchecked };

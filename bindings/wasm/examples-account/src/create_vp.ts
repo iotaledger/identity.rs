@@ -7,17 +7,17 @@ import {
     CredentialValidationOptions,
     Duration,
     FailFast,
+    MethodContent,
+    Network,
     Presentation,
     PresentationValidationOptions,
     ProofOptions,
     Resolver,
+    Storage,
     SubjectHolderRelationship,
     Timestamp,
     VerifierOptions,
-    Storage,
-    MethodContent,
-    Network
-} from './../../node/identity_wasm.js';
+} from "./../../node/identity_wasm.js";
 
 /**
  This example shows how to create a Verifiable Presentation and validate it.
@@ -40,8 +40,8 @@ async function createVP(storage?: Storage) {
     // Add a dedicated verification method to the issuer, with which to sign credentials.
     await issuer.createMethod({
         content: MethodContent.GenerateEd25519(),
-        fragment: "issuerKey"
-    })
+        fragment: "issuerKey",
+    });
 
     // Create an identity for the holder, in this case also the subject.
     const alice = await builder.createIdentity();
@@ -49,8 +49,8 @@ async function createVP(storage?: Storage) {
     // Add verification method to the holder.
     await alice.createMethod({
         content: MethodContent.GenerateEd25519(),
-        fragment: "aliceKey"
-    })
+        fragment: "aliceKey",
+    });
 
     // ===========================================================================
     // Step 2: Issuer creates and signs a Verifiable Credential.
@@ -62,7 +62,7 @@ async function createVP(storage?: Storage) {
         name: "Alice",
         degreeName: "Bachelor of Science and Arts",
         degreeType: "BachelorDegree",
-        GPA: "4.0"
+        GPA: "4.0",
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
@@ -70,7 +70,7 @@ async function createVP(storage?: Storage) {
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.document().id(),
-        credentialSubject: subject
+        credentialSubject: subject,
     });
 
     // Created a signed credential by the issuer.
@@ -89,7 +89,6 @@ async function createVP(storage?: Storage) {
     const signedVcJson = signedVc.toJSON();
     console.log(`Credential JSON >`, JSON.stringify(signedVcJson, null, 2));
 
-
     // ===========================================================================
     // Step 4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
     // ===========================================================================
@@ -101,7 +100,6 @@ async function createVP(storage?: Storage) {
     // 10 minutes from now.
     const expires = Timestamp.nowUTC().checkedAdd(Duration.minutes(10));
 
-
     // ===========================================================================
     // Step 5: Holder creates a verifiable presentation from the issued credential for the verifier to validate.
     // ===========================================================================
@@ -112,8 +110,8 @@ async function createVP(storage?: Storage) {
     // Create a Verifiable Presentation from the Credential
     const unsignedVp = new Presentation({
         holder: alice.did(),
-        verifiableCredential: receivedVc
-    })
+        verifiableCredential: receivedVc,
+    });
 
     // Sign the verifiable presentation using the holder's verification method
     // and include the requested challenge and expiry timestamp.
@@ -122,8 +120,8 @@ async function createVP(storage?: Storage) {
         unsignedVp,
         new ProofOptions({
             challenge: challenge,
-            expires
-        })
+            expires,
+        }),
     );
 
     // ===========================================================================

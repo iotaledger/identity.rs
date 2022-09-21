@@ -201,17 +201,23 @@ impl WasmIotaDocument {
   // Verification Methods
   // ===========================================================================
 
-  /// Returns a list of all {@link IotaVerificationMethod} in the DID Document.
+  /// Returns a list of all {@link IotaVerificationMethod} in the DID Document,
+  /// whose verification relationship matches `scope`.
+  ///
+  /// If `scope` is not set, a list over the **embedded** methods is returned.
   #[wasm_bindgen]
-  pub fn methods(&self) -> ArrayIotaVerificationMethods {
-    self
+  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayIotaVerificationMethods> {
+    let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let methods = self
       .0
-      .methods()
+      .methods(scope)
+      .into_iter()
       .cloned()
       .map(WasmIotaVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayIotaVerificationMethods>()
+      .unchecked_into::<ArrayIotaVerificationMethods>();
+    Ok(methods)
   }
 
   /// Adds a new `method` to the document in the given `scope`.
