@@ -55,7 +55,7 @@ The following advanced examples are available:
 | [2_nft_owns_did](src/1_advanced/2_nft_owns_did.ts)           | Demonstrates how an identity can be owned by NFTs, and how observers can verify that relationship.       |
 | [3_did_issues_tokens](src/1_advanced/3_did_issues_tokens.ts) | Demonstrates how an identity can issue and control a Token Foundry and its tokens.                       |
 | [4_key_exchange](src/1_advanced/4_key_exchange.ts)           | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.         |
-| [5_custom_resolution](src/1_advanced/5_custom_resolution.ts)           | Demonstrates how to set up a resolver using custom handlers.        |
+| [5_custom_resolution](src/1_advanced/5_custom_resolution.ts) | Demonstrates how to set up a resolver using custom handlers. |
 
 ## Browser
 
