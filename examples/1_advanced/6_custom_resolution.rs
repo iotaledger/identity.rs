@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
     .into_any()
     .downcast::<IotaDocument>()
     .expect("downcasting to the return type of the iota handler should be fine");
-  println!("Resolved DID iota document: {}", iota_doc.to_json_pretty()?);
+  println!("Resolved IOTA DID document: {}", iota_doc.to_json_pretty()?);
 
   Ok(())
 }
