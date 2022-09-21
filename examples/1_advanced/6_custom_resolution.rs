@@ -6,6 +6,7 @@ use anyhow::Context;
 use did_key::Config;
 use did_key::DIDCore;
 use did_key::DIDKey;
+use did_key::KeyPair;
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
@@ -80,9 +81,16 @@ async fn main() -> anyhow::Result<()> {
 ///
 /// # Errors
 /// Errors if the DID is not a valid Ed25519 did:key.  
-async fn resolve_ed25519_did_key(did: CoreDID) -> Result<CoreDocument, Box<dyn std::error::Error + Send + Sync>> {
+async fn resolve_ed25519_did_key(did: CoreDID) -> anyhow::Result<CoreDocument> {
   DIDKey::try_from(did.as_str())
     .map_err(|err| anyhow::anyhow!("the provided DID does not satisfy the did:key format: {:?}", err))
+    .and_then(|key_pair| {
+      if let KeyPair::Ed25519(..) = key_pair {
+        Ok(key_pair)
+      } else {
+        Err(anyhow::anyhow!("the provided DID is not an Ed25519 did:key"))
+      }
+    })
     .map(|key| {
       key.get_did_document(Config {
         use_jose_format: false,
@@ -92,5 +100,4 @@ async fn resolve_ed25519_did_key(did: CoreDID) -> Result<CoreDocument, Box<dyn s
     .to_json()
     .and_then(|doc_json| CoreDocument::from_json(&doc_json))
     .context("failed to obtain a supported DID Document")
-    .map_err(Into::into)
 }
