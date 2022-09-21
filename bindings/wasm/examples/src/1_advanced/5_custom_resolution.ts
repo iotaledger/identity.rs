@@ -58,15 +58,15 @@ export async function customResolution() {
     if (didKeyDoc instanceof CoreDocument) {
         console.log("Resolved DID Key document:", JSON.stringify(didKeyDoc, null, 2));
     } else {
-        new Error(
+        throw new Error(
             "the resolved document type should match the output type of keyHandler",
         );
     }
 
     if (didIotaDoc instanceof IotaDocument) {
-        console.log("Resolved DID Iota document:", JSON.stringify(didIotaDoc, null, 2));
+        console.log("Resolved IOTA DID document:", JSON.stringify(didIotaDoc, null, 2));
     } else {
-        new Error(
+        throw new Error(
             "the resolved document type should match IotaDocument",
         );
     }
