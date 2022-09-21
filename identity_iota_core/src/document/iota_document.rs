@@ -312,17 +312,8 @@ impl IotaDocument {
         None => None,
       }
     };
-    if let Some(controller_did) = controller_did {
-      let controller: &mut Option<OneOrSet<IotaDID>> = self.core_document_mut().controller_mut();
-      match controller {
-        Some(controller) => {
-          controller.append(controller_did);
-        }
-        None => {
-          *controller = Some(OneOrSet::new_one(controller_did));
-        }
-      }
-    }
+    // Overwrite the DID Document controller.
+    *self.core_document_mut().controller_mut() = controller_did.map(OneOrSet::new_one);
   }
 }
 

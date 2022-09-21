@@ -62,6 +62,7 @@ impl StateMetadataDocument {
     // Unset Governor and State Controller Addresses to avoid bloating the payload
     self.metadata.governor_address = None;
     self.metadata.state_controller_address = None;
+    *self.document.controller_mut() = None;
 
     let encoded_message_data: Vec<u8> = match encoding {
       StateMetadataEncoding::Json => self

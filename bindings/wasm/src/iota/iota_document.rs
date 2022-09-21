@@ -389,9 +389,9 @@ impl WasmIotaDocument {
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
-  #[wasm_bindgen]
-  pub fn unpack(did: &WasmIotaDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmIotaDocument> {
-    IotaDocument::unpack(&did.0, stateMetadata, allowEmpty)
+  #[wasm_bindgen(js_name = unpackFromOutput)]
+  pub fn unpack_from_output(did: &WasmIotaDID, aliasOutput: JsValue, allowEmpty: bool) -> Result<WasmIotaDocument> {
+    IotaDocument::unpack_from_output(&did.0, &serde_wasm_bindgen::from_value(aliasOutput)?, allowEmpty)
       .map(WasmIotaDocument)
       .wasm_result()
   }
