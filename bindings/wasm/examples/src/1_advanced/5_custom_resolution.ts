@@ -5,7 +5,7 @@ import { API_ENDPOINT, createDid } from "../util";
 
 import * as ed25519 from "@transmute/did-key-ed25519";
 
-/** Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.
+/** Demonstrates how to set up a resolver using custom handlers.
  */
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
