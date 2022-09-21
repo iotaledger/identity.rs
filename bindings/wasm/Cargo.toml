@@ -28,7 +28,6 @@ serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
 wasm-bindgen = { version = "0.2.82", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
-serde-wasm-bindgen = {version = "0.4.3", default-features = false }
 
 [dependencies.identity_iota]
 version = "0.7.0-alpha.1"
