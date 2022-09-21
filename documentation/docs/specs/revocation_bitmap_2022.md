@@ -15,7 +15,7 @@ keywords:
 
 ## Abstract
 
-This specification describes an on-ledger mechanism for publishing the revocation status of [Verifiable Credentials](../concepts/verifiable_credentials/overview) embedded in an issuer's DID document.
+This specification describes a mechanism for publishing the revocation status of [Verifiable Credentials](../concepts/verifiable_credentials/overview) embedded in an issuer's DID document.
 
 ## Introduction
 
