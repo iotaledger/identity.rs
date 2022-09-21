@@ -33,7 +33,7 @@ For an issuer to enable verifiers to check the status of a verifiable credential
 
 | Property | Description |
 | :--- | :--- |
-| `id` | The constraints on the `id` property are listed in the [Verifiable Credentials Data Model specification](https://www.w3.org/TR/vc-data-model/). The `id` MUST be a [DID URL](https://www.w3.org/TR/did-core/#did-url-syntax) that is the URL to a [Revocation Bitmap Service](#revocation-bitmap-service) in the DID Document of the issuer, with an `index` query set to the same value as `revocationBitmapIndex`. |
+| `id` | The constraints on the `id` property are listed in the [Verifiable Credentials Data Model specification](https://www.w3.org/TR/vc-data-model/). The `id` MUST be a [DID URL](https://www.w3.org/TR/did-core/#did-url-syntax) that is the URL to a [Revocation Bitmap Service](#revocation-bitmap-service) in the DID Document of the issuer. It SHOULD include an `index` query set to the same value as `revocationBitmapIndex`, to uniquely identify the `credentialStatus`. If the `index` query is present, implementations SHOULD reject statuses where the `index` query's value does not match `revocationBitmapIndex`. |
 | `type` | The `type` property MUST be `"RevocationBitmap2022"`. |
 | `revocationBitmapIndex` | The `revocationBitmapIndex` property MUST be an unsigned, 32-bit integer expressed as a string. This is the index of the credential in the issuer's revocation bitmap. Each index SHOULD be unique among all credentials linking to the same [Revocation Bitmap Service](#revocation-bitmap-service). |
 
