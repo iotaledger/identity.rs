@@ -102,10 +102,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -149,6 +145,10 @@ This variant is the default used if no other variant is specified when construct
 <dd><p>Return after the first error occurs.</p>
 </dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -513,7 +513,7 @@ A method-agnostic DID Document.
         * [.insertService(service)](#CoreDocument+insertService) ⇒ <code>boolean</code>
         * [.removeService(didUrl)](#CoreDocument+removeService) ⇒ <code>boolean</code>
         * [.resolveService(query)](#CoreDocument+resolveService) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
-        * [.methods()](#CoreDocument+methods) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
+        * [.methods(scope)](#CoreDocument+methods) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
         * [.verificationRelationships()](#CoreDocument+verificationRelationships) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
         * [.insertMethod(method, scope)](#CoreDocument+insertMethod)
         * [.removeMethod(did)](#CoreDocument+removeMethod)
@@ -697,10 +697,18 @@ if present.
 
 <a name="CoreDocument+methods"></a>
 
-### coreDocument.methods() ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
-Returns a list of all [CoreVerificationMethod](#CoreVerificationMethod) in the DID Document.
+### coreDocument.methods(scope) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
+Returns a list of all [CoreVerificationMethod](#CoreVerificationMethod) in the DID Document,
+whose verification relationship matches `scope`.
+
+If `scope` is not set, a list over the **embedded** methods is returned.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+
 <a name="CoreDocument+verificationRelationships"></a>
 
 ### coreDocument.verificationRelationships() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
@@ -1722,7 +1730,7 @@ Clones the `DID` into a `DIDUrl`.
 <a name="IotaDID+toAliasId"></a>
 
 ### did.toAliasId() ⇒ <code>string</code>
-Creates an AliasId from the DID tag.
+Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+intoUrl"></a>
@@ -1961,7 +1969,7 @@ Deserializes an instance from a JSON object.
         * [.insertService(service)](#IotaDocument+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#IotaDocument+removeService) ⇒ <code>boolean</code>
         * [.resolveService(query)](#IotaDocument+resolveService) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
-        * [.methods()](#IotaDocument+methods) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
+        * [.methods(scope)](#IotaDocument+methods) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
         * [.insertMethod(method, scope)](#IotaDocument+insertMethod)
         * [.removeMethod(did)](#IotaDocument+removeMethod)
         * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
@@ -1987,7 +1995,7 @@ Deserializes an instance from a JSON object.
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-        * [.unpack(did, stateMetadata, allowEmpty)](#IotaDocument.unpack) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [.unpackFromOutput(did, aliasOutput, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromBlock(network, block)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
         * [.fromJSON(json)](#IotaDocument.fromJSON) ⇒ [<code>IotaDocument</code>](#IotaDocument)
 
@@ -2102,10 +2110,18 @@ if present.
 
 <a name="IotaDocument+methods"></a>
 
-### iotaDocument.methods() ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
-Returns a list of all [IotaVerificationMethod](#IotaVerificationMethod) in the DID Document.
+### iotaDocument.methods(scope) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
+Returns a list of all [IotaVerificationMethod](#IotaVerificationMethod) in the DID Document,
+whose verification relationship matches `scope`.
+
+If `scope` is not set, a list over the **embedded** methods is returned.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+
 <a name="IotaDocument+insertMethod"></a>
 
 ### iotaDocument.insertMethod(method, scope)
@@ -2369,10 +2385,10 @@ Constructs an empty DID Document with the given identifier.
 | --- | --- |
 | id | [<code>IotaDID</code>](#IotaDID) | 
 
-<a name="IotaDocument.unpack"></a>
+<a name="IotaDocument.unpackFromOutput"></a>
 
-### IotaDocument.unpack(did, stateMetadata, allowEmpty) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Deserializes the document from the state metadata bytes of an Alias Output.
+### IotaDocument.unpackFromOutput(did, aliasOutput, allowEmpty) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+Deserializes the document from an Alias Output.
 
 If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
 if `stateMetadata` is empty.
@@ -2386,7 +2402,7 @@ encoded in the `AliasId` alone.
 | Param | Type |
 | --- | --- |
 | did | [<code>IotaDID</code>](#IotaDID) | 
-| stateMetadata | <code>Uint8Array</code> | 
+| aliasOutput | <code>IAliasOutput</code> | 
 | allowEmpty | <code>boolean</code> | 
 
 <a name="IotaDocument.unpackFromBlock"></a>
@@ -3991,14 +4007,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4080,6 +4088,14 @@ Return after the first error occurs.
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
