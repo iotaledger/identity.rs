@@ -58,7 +58,11 @@ impl StateMetadataDocument {
 
   /// Pack a [`StateMetadataDocument`] into bytes, suitable for inclusion in
   /// an Alias Output's state metadata, according to the given `encoding`.
-  pub fn pack(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
+  pub fn pack(mut self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
+    // Unset Governor and State Controller Addresses to avoid bloating the payload
+    self.metadata.governor_address = None;
+    self.metadata.state_controller_address = None;
+
     let encoded_message_data: Vec<u8> = match encoding {
       StateMetadataEncoding::Json => self
         .to_json_vec()
