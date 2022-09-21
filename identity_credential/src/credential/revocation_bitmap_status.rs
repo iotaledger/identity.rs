@@ -162,12 +162,9 @@ mod tests {
   use super::RevocationBitmapStatus;
   use super::Status;
 
-  const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
-  const SERVICE: &str = "revocation";
-
   #[test]
   fn test_embedded_status_invariants() {
-    let url: Url = Url::parse(format!("did:iota:{}?index=0#{}", TAG, SERVICE)).unwrap();
+    let url: Url = Url::parse(format!("did:method:0xabcd?index=0#revocation")).unwrap();
     let did_url: DIDUrl<CoreDID> = DIDUrl::parse(url.clone().into_string()).unwrap();
     let revocation_list_index: u32 = 0;
     let embedded_revocation_status: RevocationBitmapStatus =
@@ -226,7 +223,7 @@ mod tests {
     .unwrap();
 
     // matching index is fine.
-    RevocationBitmapStatus::try_from(status).unwrap();
+    assert!(RevocationBitmapStatus::try_from(status).is_ok());
 
     let status: Status = Status::from_json_value(serde_json::json!({
       "id": "did:method:0xffff#rev-0",
@@ -236,6 +233,6 @@ mod tests {
     .unwrap();
 
     // missing index in id is allowed to be backwards-compatible.
-    RevocationBitmapStatus::try_from(status).unwrap();
+    assert!(RevocationBitmapStatus::try_from(status).is_ok());
   }
 }
