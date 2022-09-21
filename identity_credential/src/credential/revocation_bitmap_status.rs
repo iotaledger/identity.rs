@@ -201,7 +201,7 @@ mod tests {
 
   #[test]
   fn test_revocation_bitmap_status_index_requirements() {
-    // index mismatch in id and property.
+    // INVALID: index mismatch in id and property.
     let status: Status = Status::from_json_value(serde_json::json!({
       "id": "did:method:0xffff?index=10#rev-0",
       "type": RevocationBitmapStatus::TYPE,
@@ -214,25 +214,22 @@ mod tests {
       Error::InvalidStatus(_)
     ));
 
-    // index matches in id and property.
+    // VALID: index matches in id and property.
     let status: Status = Status::from_json_value(serde_json::json!({
       "id": "did:method:0xffff?index=5#rev-0",
       "type": RevocationBitmapStatus::TYPE,
       RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
     }))
     .unwrap();
-
-    // matching index is fine.
     assert!(RevocationBitmapStatus::try_from(status).is_ok());
 
+    // VALID: missing index in id is allowed to be backwards-compatible.
     let status: Status = Status::from_json_value(serde_json::json!({
       "id": "did:method:0xffff#rev-0",
       "type": RevocationBitmapStatus::TYPE,
       RevocationBitmapStatus::REVOCATION_BITMAP_INDEX_PROPERTY: "5",
     }))
     .unwrap();
-
-    // missing index in id is allowed to be backwards-compatible.
     assert!(RevocationBitmapStatus::try_from(status).is_ok());
   }
 }
