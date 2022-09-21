@@ -147,9 +147,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
 
     let id: AliasId = AliasId::from(did);
     let (_, alias_output) = self.get_alias_output(id).await?;
-
-    let document: &[u8] = alias_output.state_metadata();
-    IotaDocument::unpack(did, document, true)
+    IotaDocument::unpack_from_output(did, &alias_output, true)
   }
 
   /// Fetches the [`AliasOutput`] associated with the given DID.
