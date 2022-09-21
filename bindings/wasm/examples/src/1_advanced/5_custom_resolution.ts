@@ -3,6 +3,7 @@ import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import { CoreDocument, IotaDocument, IotaIdentityClient, Resolver } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
 
+// Use this external package to avoid implementing the entire did:key method in this example.
 import * as ed25519 from "@transmute/did-key-ed25519";
 
 /** Demonstrates how to set up a resolver using custom handlers.
