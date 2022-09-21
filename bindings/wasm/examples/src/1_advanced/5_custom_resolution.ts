@@ -47,10 +47,10 @@ export async function customResolution() {
     // Creates a new wallet and identity for us to resolve (see "0_create_did" example).
     const { did } = await createDid(client, secretManager);
 
-    // Resolve didKey
+    // Resolve didKey into a DID document.
     const didKeyDoc = await resolver.resolve(didKey);
 
-    // Resolve the did we created on the IOTA ledger.
+    // Resolve the DID we created on the IOTA ledger.
     const didIotaDoc = await resolver.resolve(did.toString());
 
     // Check that the types of the resolved documents match our expectations:
