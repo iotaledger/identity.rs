@@ -6,11 +6,16 @@ runs:
     - name: Setup private tangle
       shell: bash
       run: |
-        # Checkout hornet repo
-        git clone --depth=1 https://github.com/iotaledger/hornet.git
+        # Checkout only the private_tangle subdirectory of the hornet repo.
+        git clone \
+          --depth 1 \
+          --filter=blob:none \
+          --no-checkout \
+          "https://github.com/iotaledger/hornet/"
+        cd hornet
+        git checkout develop -- private_tangle
+        cd private_tangle
 
-        cd hornet/private_tangle
-        
         # Manipulate and print config
         jq '.restAPI.pow.enabled = $newVal' --argjson newVal false config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
         jq --color-output . config_private_tangle.json
