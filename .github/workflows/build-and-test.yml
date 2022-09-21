@@ -110,14 +110,6 @@ jobs:
           command: test
           args: --workspace --all-features --release
 
-      - name: Run legacy examples
-        # run examples only on ubuntu for now
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cargo metadata --format-version 1 --manifest-path ./examples_legacy/Cargo.toml | \
-          jq -r '.packages[] | select(.name == "examples_legacy") | .targets[].name' | \
-          parallel -k -j 4 --retries 3 ./target/release/examples/{}
-
       - name: Run Rust examples
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
