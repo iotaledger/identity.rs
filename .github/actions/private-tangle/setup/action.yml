@@ -6,15 +6,13 @@ runs:
     - name: Setup private tangle
       shell: bash
       run: |
-        # Checkout only the private_tangle subdirectory of the hornet repo.
-        git clone \
-          --depth 1 \
-          --filter=blob:none \
-          --no-checkout \
-          "https://github.com/iotaledger/hornet/"
-        cd hornet
-        git checkout develop -- private_tangle
+        # Download the private_tangle setup from the hornet repo.
+        mkdir private_tangle
         cd private_tangle
+        # Use the outpt of https://api.github.com/repos/iotaledger/hornet/releases/latest once we have a 2.0 Hornet release.
+        RELEASE_ID=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r .[0].tag_name)
+        curl -L -O "https://github.com/iotaledger/hornet/releases/download/${RELEASE_ID}/HORNET-${RELEASE_ID}-private_tangle.tar.gz"
+        tar -zxf HORNET-${RELEASE_ID}-private_tangle.tar.gz
 
         # Manipulate and print config
         jq '.restAPI.pow.enabled = $newVal' --argjson newVal false config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
