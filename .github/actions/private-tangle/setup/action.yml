@@ -10,11 +10,9 @@ runs:
         mkdir private_tangle
         cd private_tangle
         # Use the output of https://api.github.com/repos/iotaledger/hornet/releases/latest once there's a 2.0 Hornet release.
-        export RELEASE_ID=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r .[0].tag_name)
-        curl -L -O "https://github.com/iotaledger/hornet/releases/download/${RELEASE_ID}/HORNET-${RELEASE_ID}-private_tangle.tar.gz"
-        ls -lA
-        echo "Unpacking HORNET-${RELEASE_ID}-private_tangle.tar.gz"
-        tar -xf HORNET-${RELEASE_ID}-private_tangle.tar.gz
+        DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r '.[0].assets[] | select(.name | contains("private_tangle")) | .browser_download_url')
+        curl -L -o private_tangle.tar.gz $DOWNLOAD_URL
+        tar -xf private_tangle.tar.gz
 
         # Manipulate and print config
         jq '.restAPI.pow.enabled = $newVal' --argjson newVal false config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
