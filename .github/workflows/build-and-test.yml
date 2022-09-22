@@ -97,7 +97,29 @@ jobs:
         with:
           os: ${{matrix.os}}
 
-      - name: Build
+      - name: Check --no-default-features
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo metadata --format-version 1 | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
+          xargs -I {} cargo check -p {} --no-default-features
+
+      - name: Check default features
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo metadata --format-version 1 | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
+          xargs -I {} cargo check -p {}
+
+      # Clean debug target to avoid bloating the GitHub Actions cache.
+      # The previous builds cannot be re-used at all for the full --all-features --release build anyway.
+      - name: Clean target
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo clean
+
+      - name: Build all features
         uses: actions-rs/cargo@v1
         with:
           # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
