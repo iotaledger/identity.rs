@@ -19,8 +19,8 @@ use iota_client::Client;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///
-/// In this example we connect to the Shimmer testnet, but it can be adapted
-/// to run on a private network by setting the network and faucet endpoints.
+/// In this example we connect to a locally running private network, but it can be adapted
+/// to run on any IOTA node by setting the network and faucet endpoints.
 ///
 /// See the following instructions on running your own private network
 /// https://wiki.iota.org/hornet/develop/how_tos/private_tangle

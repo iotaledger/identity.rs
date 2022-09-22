@@ -69,7 +69,8 @@ To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/ex
 
 ## Example: Creating an Identity
 
-The following code creates and publishes a new IOTA DID Document to the Shimmer Testnet.
+The following code creates and publishes a new IOTA DID Document to a locally running private network.
+See the [instructions](https://wiki.iota.org/hornet/develop/how_tos/private_tangle) on running your own private network.
 
 _Cargo.toml_
 
@@ -106,7 +107,7 @@ use iota_client::Client;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
-static API_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
+static API_ENDPOINT: &str = "http://127.0.0.1:14265";
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]
@@ -135,7 +136,7 @@ async fn main() -> anyhow::Result<()> {
   let network_name: NetworkName = client.network_name().await?;
 
   println!("Your wallet address is: {}", address.to_bech32(network_name.as_ref()));
-  println!("Please request funds from https://faucet.testnet.shimmer.network/, then press Enter.");
+  println!("Please request funds from http://127.0.0.1:8091/, then press Enter.");
   tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.

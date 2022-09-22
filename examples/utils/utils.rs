@@ -64,7 +64,7 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<IotaDoc
   Ok(document)
 }
 
-/// Generates an address from the given [`SecretManager`] and adds funds from the testnet faucet.
+/// Generates an address from the given [`SecretManager`] and adds funds from the faucet.
 pub async fn get_address_with_funds(
   client: &Client,
   stronghold: &mut SecretManager,
@@ -107,7 +107,7 @@ pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) ->
   Ok(address)
 }
 
-/// Requests funds from the testnet faucet for the given `address`.
+/// Requests funds from the faucet for the given `address`.
 async fn request_faucet_funds(
   client: &Client,
   address: Address,
