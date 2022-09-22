@@ -16,6 +16,8 @@ runs:
 
         # Set minPoWScore = 1 since the default (0) doesn't work with wasm_miner.rs in iota.rs currently.
         jq '.minPoWScore = $val' --argjson val 1 protocol_parameters.json > tmp.json && mv tmp.json protocol_parameters.json
+        jq --color-output . protocol_parameters.json
+        
         # Manipulate and print config
         jq '.restAPI.pow.enabled = $newVal' --argjson newVal false config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
         jq --color-output . config_private_tangle.json
