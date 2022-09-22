@@ -102,6 +102,7 @@ jobs:
         run: |
           cargo metadata --format-version 1 | \
           jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
           xargs -I {} cargo check -p {} --no-default-features
 
       - name: Check default features
@@ -109,6 +110,7 @@ jobs:
         run: |
           cargo metadata --format-version 1 | \
           jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
           xargs -I {} cargo check -p {}
 
       # Clean debug target to avoid bloating the GitHub Actions cache.
