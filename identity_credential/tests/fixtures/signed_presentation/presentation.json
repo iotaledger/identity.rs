@@ -2,8 +2,7 @@
   "@context": "https://www.w3.org/2018/credentials/v1",
   "id": "https://example.org/credentials/3732",
   "type": "VerifiablePresentation",
-  "verifiableCredential": [
-    {
+  "verifiableCredential": {
       "@context": "https://www.w3.org/2018/credentials/v1",
       "id": "https://example.edu/credentials/3732",
       "type": [
@@ -27,8 +26,7 @@
         "verificationMethod": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
         "signatureValue": "2xoRHPUWRVavrBsymJCKhTUe9iYX8iEEZtPhaMjmFvVmjaybVUYXHJagw9kCFmDoPgeyvZjRVQatp2VYs1b8f2Ug"
       }
-    }
-  ],
+  },
   "holder": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
   "proof": {
     "type": "JcsEd25519Signature2020",
