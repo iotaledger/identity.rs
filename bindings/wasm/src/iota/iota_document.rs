@@ -12,6 +12,8 @@ use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
 use identity_iota::did::Document;
 use identity_iota::did::MethodScope;
+use identity_iota::iota::block::output::dto::AliasOutputDto;
+use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaVerificationMethod;
@@ -395,9 +397,15 @@ impl WasmIotaDocument {
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
-  #[wasm_bindgen]
-  pub fn unpack(did: &WasmIotaDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmIotaDocument> {
-    IotaDocument::unpack(&did.0, stateMetadata, allowEmpty)
+  #[wasm_bindgen(js_name = unpackFromOutput)]
+  pub fn unpack_from_output(did: &WasmIotaDID, aliasDto: JsValue, allowEmpty: bool) -> Result<WasmIotaDocument> {
+    let alias_dto: AliasOutputDto = aliasDto.into_serde().wasm_result()?;
+    let alias_output: AliasOutput = AliasOutput::try_from(&alias_dto)
+      .map_err(|err| {
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+      })
+      .wasm_result()?;
+    IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
       .map(WasmIotaDocument)
       .wasm_result()
   }
