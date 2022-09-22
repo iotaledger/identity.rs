@@ -773,7 +773,9 @@ mod tests {
     assert_eq!(document.metadata.deactivated, Some(true));
 
     // Ensure no other fields are injected.
-    let json: String = format!(r#"{{"doc":{{"id":"{did}","controller":"{controller_did}"}},"meta":{{"deactivated":true,"governorAddress":"iota1pz424242424242424242424242424242424242424242424242425ryaqzy","stateControllerAddress":"iota1pz424242424242424242424242424242424242424242424242425ryaqzy"}}}}"#);
+    let json: String = format!(
+      r#"{{"doc":{{"id":"{did}","controller":"{controller_did}"}},"meta":{{"deactivated":true,"governorAddress":"iota1pz424242424242424242424242424242424242424242424242425ryaqzy","stateControllerAddress":"iota1pz424242424242424242424242424242424242424242424242425ryaqzy"}}}}"#
+    );
     assert_eq!(document.to_json().unwrap(), json);
 
     // INVALID: reject empty document.
