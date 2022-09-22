@@ -5,6 +5,9 @@ use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -25,11 +28,7 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
-use serde::Deserialize;
-use serde::Serialize;
 
-use crate::block::address::Address;
-use crate::block::output::AliasOutput;
 use crate::error::Result;
 use crate::IotaDID;
 use crate::IotaDIDUrl;
@@ -278,52 +277,15 @@ impl IotaDocument {
   pub fn pack_with_encoding(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
     StateMetadataDocument::from(self).pack(encoding)
   }
-
-  /// Deserializes the document from an Alias Output.
-  ///
-  /// If `allow_empty` is true, this will return an empty DID document marked as `deactivated`
-  /// if `state_metadata` is empty.
-  ///
-  /// NOTE: `did` is required since it is omitted from the serialized DID Document and
-  /// cannot be inferred from the state metadata. It also indicates the network, which is not
-  /// encoded in the `AliasId` alone.
-  pub fn unpack_from_output(did: &IotaDID, alias_output: &AliasOutput, allow_empty: bool) -> Result<IotaDocument> {
-    if alias_output.state_metadata().is_empty() && allow_empty {
-      let mut empty_document = IotaDocument::new_with_id(did.clone());
-      empty_document.metadata.created = None;
-      empty_document.metadata.updated = None;
-      empty_document.metadata.deactivated = Some(true);
-      return Ok(empty_document);
-    }
-    let mut iota_document: IotaDocument =
-      StateMetadataDocument::unpack(alias_output.state_metadata()).and_then(|doc| doc.into_iota_document(did))?;
-    iota_document.set_controller_and_governor_addresses(alias_output, &did.network_str().to_owned().try_into()?);
-    Ok(iota_document)
-  }
-
-  fn set_controller_and_governor_addresses(&mut self, alias_output: &AliasOutput, network_name: &NetworkName) {
-    self.metadata.governor_address = Some(*alias_output.governor_address());
-    self.metadata.state_controller_address = Some(*alias_output.state_controller_address());
-
-    let controller_did: Option<IotaDID> = {
-      match alias_output.unlock_conditions().state_controller_address() {
-        Some(unlock_condition) => match unlock_condition.address() {
-          Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
-          Address::Nft(_) | Address::Ed25519(_) => None,
-        },
-        None => None,
-      }
-    };
-    // Overwrite the DID Document controller.
-    *self.core_document_mut().controller_mut() = controller_did.map(OneOrSet::new_one);
-  }
 }
 
 #[cfg(feature = "client")]
 mod client_document {
   use std::ops::Deref;
 
+  use crate::block::address::Address;
   use crate::block::output::AliasId;
+  use crate::block::output::AliasOutput;
   use crate::block::output::Output;
   use crate::block::output::OutputId;
   use crate::block::payload::transaction::TransactionEssence;
@@ -336,6 +298,45 @@ mod client_document {
   use super::*;
 
   impl IotaDocument {
+    // ===========================================================================
+    // Unpacking
+    // ===========================================================================
+
+    /// Deserializes the document from an Alias Output.
+    ///
+    /// If `allow_empty` is true, this will return an empty DID document marked as `deactivated`
+    /// if `state_metadata` is empty.
+    ///
+    /// NOTE: `did` is required since it is omitted from the serialized DID Document and
+    /// cannot be inferred from the state metadata. It also indicates the network, which is not
+    /// encoded in the `AliasId` alone.
+    pub fn unpack_from_output(did: &IotaDID, alias_output: &AliasOutput, allow_empty: bool) -> Result<IotaDocument> {
+      let mut document: IotaDocument = if alias_output.state_metadata().is_empty() && allow_empty {
+        let mut empty_document = IotaDocument::new_with_id(did.clone());
+        empty_document.metadata.created = None;
+        empty_document.metadata.updated = None;
+        empty_document.metadata.deactivated = Some(true);
+        empty_document
+      } else {
+        StateMetadataDocument::unpack(alias_output.state_metadata()).and_then(|doc| doc.into_iota_document(did))?
+      };
+
+      document.set_controller_and_governor_addresses(alias_output, &did.network_str().to_owned().try_into()?);
+      Ok(document)
+    }
+
+    fn set_controller_and_governor_addresses(&mut self, alias_output: &AliasOutput, network_name: &NetworkName) {
+      self.metadata.governor_address = Some(alias_output.governor_address().to_bech32(network_name));
+      self.metadata.state_controller_address = Some(alias_output.state_controller_address().to_bech32(network_name));
+
+      // Overwrite the DID Document controller.
+      let controller_did: Option<IotaDID> = match alias_output.state_controller_address() {
+        Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
+        _ => None,
+      };
+      *self.core_document_mut().controller_mut() = controller_did.map(OneOrSet::new_one);
+    }
+
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
     /// outputs, if any.
     ///
@@ -484,13 +485,16 @@ mod tests {
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
 
-  use super::*;
+  use crate::block::address::Address;
   use crate::block::address::AliasAddress;
   use crate::block::output::unlock_condition::GovernorAddressUnlockCondition;
   use crate::block::output::unlock_condition::StateControllerAddressUnlockCondition;
   use crate::block::output::AliasId;
+  use crate::block::output::AliasOutput;
   use crate::block::output::AliasOutputBuilder;
   use crate::block::output::UnlockCondition;
+
+  use super::*;
 
   fn valid_did() -> IotaDID {
     "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
@@ -748,6 +752,8 @@ mod tests {
 
   #[test]
   fn test_unpack_empty() {
+    let controller_did: IotaDID = valid_did();
+
     // VALID: unpack empty, deactivated document.
     let did: IotaDID = "did:iota:0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
       .parse()
@@ -755,10 +761,10 @@ mod tests {
     let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&did))
       .unwrap()
       .add_unlock_condition(UnlockCondition::StateControllerAddress(
-        StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&valid_did())))),
+        StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&controller_did)))),
       ))
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
-        Address::Alias(AliasAddress::new(AliasId::from(&valid_did()))),
+        Address::Alias(AliasAddress::new(AliasId::from(&controller_did))),
       )))
       .finish()
       .unwrap();
@@ -767,12 +773,19 @@ mod tests {
     assert_eq!(document.metadata.deactivated, Some(true));
 
     // Ensure no other fields are injected.
-    // TODO: update this when controller/governor fields are added?
-    let json: String = format!("{{\"doc\":{{\"id\":\"{did}\"}},\"meta\":{{\"deactivated\":true}}}}");
+    let json: String = format!(r#"{{"doc":{{"id":"{did}","controller":"{controller_did}"}},"meta":{{"deactivated":true,"governorAddress":"iota1pz424242424242424242424242424242424242424242424242425ryaqzy","stateControllerAddress":"iota1pz424242424242424242424242424242424242424242424242425ryaqzy"}}}}"#);
     assert_eq!(document.to_json().unwrap(), json);
 
     // INVALID: reject empty document.
     assert!(IotaDocument::unpack_from_output(&did, &alias_output, false).is_err());
+
+    // Ensure re-packing removes the controller, state controller address, and governor address.
+    let packed: Vec<u8> = document.pack_with_encoding(StateMetadataEncoding::Json).unwrap();
+    let state_metadata_document: StateMetadataDocument = StateMetadataDocument::unpack(&packed).unwrap();
+    let unpacked_document: IotaDocument = state_metadata_document.into_iota_document(&did).unwrap();
+    assert!(unpacked_document.document.controller().is_none());
+    assert!(unpacked_document.metadata.state_controller_address.is_none());
+    assert!(unpacked_document.metadata.governor_address.is_none());
   }
 
   #[test]
