@@ -102,6 +102,12 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -144,12 +150,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -1988,6 +1988,8 @@ Deserializes an instance from a JSON object.
         * [.setMetadataUpdated(timestamp)](#IotaDocument+setMetadataUpdated)
         * [.metadataDeactivated()](#IotaDocument+metadataDeactivated) ⇒ <code>boolean</code> \| <code>undefined</code>
         * [.setMetadataDeactivated(deactivated)](#IotaDocument+setMetadataDeactivated)
+        * [.metadataStateControllerAddress()](#IotaDocument+metadataStateControllerAddress) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.metadataGovernorAddress()](#IotaDocument+metadataGovernorAddress) ⇒ <code>string</code> \| <code>undefined</code>
         * [.setMetadataPropertyUnchecked(key, value)](#IotaDocument+setMetadataPropertyUnchecked)
         * [.revokeCredentials(serviceQuery, indices)](#IotaDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#IotaDocument+unrevokeCredentials)
@@ -2323,6 +2325,18 @@ Sets the deactivated status of the DID document.
 | --- | --- |
 | deactivated | <code>boolean</code> \| <code>undefined</code> | 
 
+<a name="IotaDocument+metadataStateControllerAddress"></a>
+
+### iotaDocument.metadataStateControllerAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded state controller address, if present.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+metadataGovernorAddress"></a>
+
+### iotaDocument.metadataGovernorAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded governor address, if present.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+setMetadataPropertyUnchecked"></a>
 
 ### iotaDocument.setMetadataPropertyUnchecked(key, value)
@@ -2443,6 +2457,8 @@ Additional attributes related to an IOTA DID Document.
         * [.created()](#IotaDocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.updated()](#IotaDocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.deactivated()](#IotaDocumentMetadata+deactivated) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.stateControllerAddress()](#IotaDocumentMetadata+stateControllerAddress) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.governorAddress()](#IotaDocumentMetadata+governorAddress) ⇒ <code>string</code> \| <code>undefined</code>
         * [.properties()](#IotaDocumentMetadata+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#IotaDocumentMetadata+toJSON) ⇒ <code>any</code>
         * [.clone()](#IotaDocumentMetadata+clone) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
@@ -2465,6 +2481,18 @@ Returns a copy of the timestamp of the last DID document update.
 
 ### iotaDocumentMetadata.deactivated() ⇒ <code>boolean</code> \| <code>undefined</code>
 Returns a copy of the deactivated status of the DID document.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+stateControllerAddress"></a>
+
+### iotaDocumentMetadata.stateControllerAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded state controller address, if present.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+governorAddress"></a>
+
+### iotaDocumentMetadata.governorAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded governor address, if present.
 
 **Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
 <a name="IotaDocumentMetadata+properties"></a>
@@ -4007,6 +4035,18 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4084,18 +4124,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
