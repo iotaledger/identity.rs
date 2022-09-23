@@ -1997,7 +1997,7 @@ Deserializes an instance from a JSON object.
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-        * [.unpackFromOutput(did, aliasDto, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [.unpackFromOutput(did, aliasOutput, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromBlock(network, block)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
         * [.fromJSON(json)](#IotaDocument.fromJSON) ⇒ [<code>IotaDocument</code>](#IotaDocument)
 
@@ -2401,8 +2401,8 @@ Constructs an empty DID Document with the given identifier.
 
 <a name="IotaDocument.unpackFromOutput"></a>
 
-### IotaDocument.unpackFromOutput(did, aliasDto, allowEmpty) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Deserializes the document from the state metadata bytes of an Alias Output.
+### IotaDocument.unpackFromOutput(did, aliasOutput, allowEmpty) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+Deserializes the document from an Alias Output.
 
 If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
 if `stateMetadata` is empty.
@@ -2416,7 +2416,7 @@ encoded in the `AliasId` alone.
 | Param | Type |
 | --- | --- |
 | did | [<code>IotaDID</code>](#IotaDID) | 
-| aliasDto | <code>any</code> | 
+| aliasOutput | <code>IAliasOutput</code> | 
 | allowEmpty | <code>boolean</code> | 
 
 <a name="IotaDocument.unpackFromBlock"></a>

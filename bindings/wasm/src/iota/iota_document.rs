@@ -37,6 +37,7 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::iota::identity_client_ext::IAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDIDUrl;
 use crate::iota::WasmIotaDocumentMetadata;
@@ -388,7 +389,7 @@ impl WasmIotaDocument {
       .wasm_result()
   }
 
-  /// Deserializes the document from the state metadata bytes of an Alias Output.
+  /// Deserializes the document from an Alias Output.
   ///
   /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
   /// if `stateMetadata` is empty.
@@ -398,8 +399,12 @@ impl WasmIotaDocument {
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = unpackFromOutput)]
-  pub fn unpack_from_output(did: &WasmIotaDID, aliasDto: JsValue, allowEmpty: bool) -> Result<WasmIotaDocument> {
-    let alias_dto: AliasOutputDto = aliasDto.into_serde().wasm_result()?;
+  pub fn unpack_from_output(
+    did: &WasmIotaDID,
+    aliasOutput: IAliasOutput,
+    allowEmpty: bool,
+  ) -> Result<WasmIotaDocument> {
+    let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
     let alias_output: AliasOutput = AliasOutput::try_from(&alias_dto)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))

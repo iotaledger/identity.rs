@@ -36,6 +36,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "AddressTypes")]
   pub type AddressTypes;
 
+  #[wasm_bindgen(typescript_type = "IAliasOutput")]
+  pub type IAliasOutput;
+
   #[wasm_bindgen(typescript_type = "IRent")]
   pub type IRent;
 }
