@@ -126,6 +126,10 @@ jobs:
           command: build
           args: --workspace --tests --examples --all-features --release
 
+      - name: Start private tangle
+        if: matrix.os == 'ubuntu-latest'
+        uses: './.github/actions/private-tangle/setup'
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
@@ -141,6 +145,10 @@ jobs:
           awk '$1 ~ /[0-9].*/' | \
           parallel -k -j 4 --retries 3 ./target/release/examples/{}
 
+      - name: Tear down private tangle
+        if: matrix.os == 'ubuntu-latest' && always()
+        uses: './.github/actions/private-tangle/tear-down'
+      
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
@@ -215,9 +223,16 @@ jobs:
           name: identity-wasm-bindings-build
           path: bindings/wasm
 
+      - name: Start private tangle
+        uses: './.github/actions/private-tangle/setup'
+
       - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
+
+      - name: Tear down private tangle
+        if: always()
+        uses: './.github/actions/private-tangle/tear-down'
 
   # build-and-test-stronghold-nodejs:
   #   needs:

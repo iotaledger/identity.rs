@@ -56,6 +56,9 @@ The minimum supported version for node is: `v16`
 
 ## NodeJS Usage
 
+The following code creates a new IOTA DID Document suitable for publishing to a locally running private network.
+See the [instructions](https://wiki.iota.org/hornet/develop/how_tos/private_tangle) on running your own private network.
+
 <!--
 Test this example using https://github.com/anko/txm: `txm README.md`
 
@@ -77,7 +80,8 @@ const {
 } = require('@iota/identity-wasm/node');
 const { Client } = require('@iota/iota-client-wasm/node');
 
-const API_ENDPOINT = "https://api.testnet.shimmer.network/";
+// The endpoint of the IOTA node to use.
+const API_ENDPOINT = "http://127.0.0.1:14265";
 
 /** Demonstrate how to create a DID Document. */
 async function main() {
