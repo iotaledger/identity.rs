@@ -12,6 +12,8 @@ use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
 use identity_iota::did::Document;
 use identity_iota::did::MethodScope;
+use identity_iota::iota::block::output::dto::AliasOutputDto;
+use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaVerificationMethod;
@@ -35,6 +37,7 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::iota::identity_client_ext::IAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDIDUrl;
 use crate::iota::WasmIotaDocumentMetadata;
@@ -386,7 +389,7 @@ impl WasmIotaDocument {
       .wasm_result()
   }
 
-  /// Deserializes the document from the state metadata bytes of an Alias Output.
+  /// Deserializes the document from an Alias Output.
   ///
   /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
   /// if `stateMetadata` is empty.
@@ -395,9 +398,19 @@ impl WasmIotaDocument {
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
   #[allow(non_snake_case)]
-  #[wasm_bindgen]
-  pub fn unpack(did: &WasmIotaDID, stateMetadata: &[u8], allowEmpty: bool) -> Result<WasmIotaDocument> {
-    IotaDocument::unpack(&did.0, stateMetadata, allowEmpty)
+  #[wasm_bindgen(js_name = unpackFromOutput)]
+  pub fn unpack_from_output(
+    did: &WasmIotaDID,
+    aliasOutput: IAliasOutput,
+    allowEmpty: bool,
+  ) -> Result<WasmIotaDocument> {
+    let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
+    let alias_output: AliasOutput = AliasOutput::try_from(&alias_dto)
+      .map_err(|err| {
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+      })
+      .wasm_result()?;
+    IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
       .map(WasmIotaDocument)
       .wasm_result()
   }
@@ -483,6 +496,18 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = setMetadataDeactivated)]
   pub fn set_metadata_deactivated(&mut self, deactivated: Option<bool>) {
     self.0.metadata.deactivated = deactivated;
+  }
+
+  /// Returns a copy of the Bech32-encoded state controller address, if present.
+  #[wasm_bindgen(js_name = metadataStateControllerAddress)]
+  pub fn metadata_state_controller_address(&self) -> Option<String> {
+    self.0.metadata.state_controller_address.clone()
+  }
+
+  /// Returns a copy of the Bech32-encoded governor address, if present.
+  #[wasm_bindgen(js_name = metadataGovernorAddress)]
+  pub fn metadata_governor_address(&self) -> Option<String> {
+    self.0.metadata.governor_address.clone()
   }
 
   /// Sets a custom property in the document metadata.

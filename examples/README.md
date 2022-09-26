@@ -40,3 +40,4 @@ The following advanced examples are available:
 | [3_did_issues_tokens](./1_advanced/3_did_issues_tokens.rs) | Demonstrates how an identity can issue and control a Token Foundry and its tokens.                       |
 | [4_key_exchange](./1_advanced/4_key_exchange.rs)           | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.         |
 | [5_alias_output_history](./1_advanced/5_alias_output_history.rs) | Demonstrates fetching the history of an Alias Output. |
+| [6_custom_resolution](./1_advanced/6_custom_resolution.rs)       | Demonstrates how to set up a resolver using custom handlers. |

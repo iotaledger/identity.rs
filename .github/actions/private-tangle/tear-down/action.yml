@@ -1,0 +1,16 @@
+name: 'private-tangle-tear-down'
+description: 'tear-down a private tangle'
+runs:
+  using: "composite"
+  steps:
+    - name: Tear down private tangle
+      shell: bash
+      run: |
+        # TODO: use next line when a working hornet release is published
+        #cd private_tangle
+        
+        # TODO: remove next line when a working hornet release is published
+        cd hornet/private_tangle
+        docker-compose down
+        cd ..
+        sudo rm -rf private_tangle

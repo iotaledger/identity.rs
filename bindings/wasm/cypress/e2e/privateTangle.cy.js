@@ -19,7 +19,7 @@ describe(
         });
         it("Private Tangle", async function () {
             try {
-                await privateTangle()
+                await privateTangle("http://127.0.0.1:1111/")
                 throw new Error("Did not throw.")
             } catch (err) {
                 // Example is expected to throw an error because no private Tangle is running

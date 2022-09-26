@@ -97,26 +97,44 @@ jobs:
         with:
           os: ${{matrix.os}}
 
-      - name: Build
+      - name: Check --no-default-features
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo metadata --format-version 1 | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
+          xargs -I {} cargo check -p {} --no-default-features
+
+      - name: Check default features
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo metadata --format-version 1 | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
+          xargs -I {} cargo check -p {}
+
+      # Clean debug target to avoid bloating the GitHub Actions cache.
+      # The previous builds cannot be re-used at all for the full --all-features --release build anyway.
+      - name: Clean target
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo clean
+
+      - name: Build all features
         uses: actions-rs/cargo@v1
         with:
           # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
           command: build
           args: --workspace --tests --examples --all-features --release
 
+      - name: Start private tangle
+        if: matrix.os == 'ubuntu-latest'
+        uses: './.github/actions/private-tangle/setup'
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --workspace --all-features --release
-
-      - name: Run legacy examples
-        # run examples only on ubuntu for now
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cargo metadata --format-version 1 --manifest-path ./examples_legacy/Cargo.toml | \
-          jq -r '.packages[] | select(.name == "examples_legacy") | .targets[].name' | \
-          parallel -k -j 4 --retries 3 ./target/release/examples/{}
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -127,6 +145,10 @@ jobs:
           awk '$1 ~ /[0-9].*/' | \
           parallel -k -j 4 --retries 3 ./target/release/examples/{}
 
+      - name: Tear down private tangle
+        if: matrix.os == 'ubuntu-latest' && always()
+        uses: './.github/actions/private-tangle/tear-down'
+      
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
@@ -201,9 +223,16 @@ jobs:
           name: identity-wasm-bindings-build
           path: bindings/wasm
 
+      - name: Start private tangle
+        uses: './.github/actions/private-tangle/setup'
+
       - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
+
+      - name: Tear down private tangle
+        if: always()
+        uses: './.github/actions/private-tangle/tear-down'
 
   # build-and-test-stronghold-nodejs:
   #   needs:

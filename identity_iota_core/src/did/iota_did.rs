@@ -100,7 +100,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input does not conform to the [`IotaDID`] specification.
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
-    CoreDID::parse(input).and_then(Self::try_from_core)
+    CoreDID::parse(input.as_ref().to_lowercase()).and_then(Self::try_from_core)
   }
 
   /// Converts a [`CoreDID`] to a [`IotaDID`].

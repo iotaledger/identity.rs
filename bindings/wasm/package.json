@@ -57,6 +57,7 @@
     "big-integer": "^1.6.51",
     "@iota/crypto.js": "^1.9.0-stardust.6",
     "@iota/util.js": "^1.9.0-stardust.5",
+    "@transmute/did-key-ed25519": "0.3.0-unstable.9",
     "@types/mocha": "^9.1.0",
     "concurrently": "^7.0.0",
     "copy-webpack-plugin": "^7.0.0",

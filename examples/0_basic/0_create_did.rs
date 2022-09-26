@@ -19,20 +19,18 @@ use iota_client::Client;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///
-/// In this example we connect to the Shimmer testnet, but it can be adapted
-/// to run on a private network by setting the network and faucet endpoints.
+/// In this example we connect to a locally running private network, but it can be adapted
+/// to run on any IOTA node by setting the network and faucet endpoints.
 ///
 /// See the following instructions on running your own private network
 /// https://wiki.iota.org/hornet/develop/how_tos/private_tangle
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // The API endpoint of an IOTA node, e.g. Hornet.
-  // For a local Hornet node, this would usually be `http://127.0.0.1:14265`.
-  let api_endpoint: &str = "https://api.testnet.shimmer.network/";
+  let api_endpoint: &str = "http://127.0.0.1:14265";
 
   // The faucet endpoint allows requesting funds for testing purposes.
-  // For a local Hornet node, this would usually be `http://127.0.0.1:8091/api/enqueue`.
-  let faucet_endpoint: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+  let faucet_endpoint: &str = "http://127.0.0.1:8091/api/enqueue";
 
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(api_endpoint, None)?.finish()?;

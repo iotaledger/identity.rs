@@ -10,8 +10,8 @@ import {
     MethodScope,
 } from "../../node";
 
-export const API_ENDPOINT = "https://api.testnet.shimmer.network/";
-export const FAUCET_ENDPOINT = "https://faucet.testnet.shimmer.network/api/enqueue";
+export const API_ENDPOINT = "http://localhost:14265";
+export const FAUCET_ENDPOINT = "http://localhost:8091/api/enqueue";
 
 /** Creates a DID Document and publishes it in a new Alias Output.
 
@@ -56,7 +56,7 @@ export async function createDid(client: Client, secretManager: SecretManager): P
     return { address, did: published.id() };
 }
 
-/** Request funds from the testnet faucet API, if needed, and wait for them to show in the wallet. */
+/** Request funds from the faucet API, if needed, and wait for them to show in the wallet. */
 export async function ensureAddressHasFunds(client: Client, addressBech32: string) {
     let balance = await getAddressBalance(client, addressBech32);
     if (balance > 0) {
@@ -95,7 +95,7 @@ async function getAddressBalance(client: Client, addressBech32: string): Promise
     return totalAmount;
 }
 
-/** Request tokens from the testnet faucet API. */
+/** Request tokens from the faucet API. */
 async function requestFundsFromFaucet(addressBech32: string) {
     const requestObj = JSON.stringify({ address: addressBech32 });
     let errorMessage, data;
