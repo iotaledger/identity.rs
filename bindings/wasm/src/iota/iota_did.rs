@@ -50,6 +50,15 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::new(tag_bytes, &network_name)))
   }
 
+  /// Constructs a new `IotaDID` from a hex representation of the tag and the given
+  /// network name.
+  #[wasm_bindgen(js_name = fromAliasId)]
+  #[allow(non_snake_case)]
+  pub fn from_alias_id(aliasId: String, network: String) -> Result<WasmIotaDID> {
+    let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
+    Ok(Self::from(IotaDID::from_alias_id(aliasId.as_ref(), &network_name)))
+  }
+
   /// Creates a new placeholder [`IotaDID`] with the given network name.
   ///
   /// E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.

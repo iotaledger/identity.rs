@@ -123,7 +123,7 @@ export async function didIssuesNft() {
     }
 
     // Reconstruct the manufacturer's DID from the Alias Id.
-    manufacturerDid = new IotaDID(Converter.hexToBytes(manufacturerAliasId), networkName);
+    manufacturerDid = IotaDID.fromAliasId(manufacturerAliasId, networkName);
 
     // Resolve the issuer of the NFT.
     const manufacturerDocument: IotaDocument = await didClient.resolveDid(manufacturerDid);
