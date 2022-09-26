@@ -43,7 +43,7 @@ jobs:
           args: --all-targets --all-features -- -D warnings
           name: core
 
-      - name: wasm clippy check
+      - name: Wasm clippy check
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

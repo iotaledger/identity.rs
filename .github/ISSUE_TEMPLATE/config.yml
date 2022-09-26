@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Official Discord
+  - name: Official IOTA Discord
     url: https://discord.iota.org/
-    about: Contact the maintainers by joining the official Discord. Look for the channel #identity-discussion. 
+    about: "Contact the maintainers by joining the #identity channel on the IOTA Discord."

@@ -20,10 +20,19 @@ use crate::utils::BaseEncoding;
 // TODO: Marker trait for Ed25519 implementations (?)
 
 /// An implementation of the [JCS Ed25519 Signature 2020][SPEC1] signature suite
-/// for [Linked Data Proofs][SPEC2].
+/// for [Linked Data Proofs][SPEC2] modified to pass the official test vectors.
 ///
 /// Users should use the [`Sign`]/[`Verify`] traits to access
 /// this implementation.
+///
+/// ## Deviation from the [JCS Ed25519 Signature 2020 specification][SPEC1]
+/// This implementation follows the specification with the single exception that the SHA-256 pre-hash of the input, the third step of the [proof generation algorithm](https://identity.foundation/JcsEd25519Signature2020/#ProofGeneration), is skipped.
+///
+/// We deviate from the specification to satisfy the [official test vectors](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors), as well as to achieve compatibility with the official reference implementations for [Go](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/golang)
+/// and [Java](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/java).
+///
+/// See [this GitHub issue](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) for further discussions.
+///
 ///
 /// [SPEC1]: https://identity.foundation/JcsEd25519Signature2020/
 /// [SPEC2]: https://w3c-ccg.github.io/ld-proofs/
@@ -56,7 +65,7 @@ where
 {
   fn verify<X>(data: &X, signature: &ProofValue, public: &T::Public) -> Result<()>
   where
-    X: Serialize,
+    X: Serialize + ?Sized,
   {
     let signature: &str = signature
       .as_signature()
@@ -87,32 +96,42 @@ mod tests {
   use crate::crypto::Verifier as _;
   use crate::json;
   use crate::utils::BaseEncoding;
+  use serde::Deserialize;
 
   type Signer = JcsEd25519<Ed25519<PrivateKey>>;
 
   type Verifier = JcsEd25519<Ed25519<PublicKey>>;
 
-  struct TestVector {
-    public: &'static str,
-    private: &'static str,
-    input: &'static str,
-    output: &'static str,
-  }
-
-  const TVS: &[TestVector] = &include!("../../../tests/fixtures/jcs_ed25519.rs");
-
   #[test]
   fn test_tvs() {
-    for tv in TVS {
-      // The test vectors are from [JcsEd25519Signature2020](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors),
-      // and use [Go crypto/ed25519](https://pkg.go.dev/crypto/ed25519#pkg-types)'s convention of representing an Ed25519 private key as: 32-byte seed concatenated with the 32-byte public key (computed from the seed).
-      // We follow the convention from [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2) and extract the 32-byte seed as the private key.
-      let public: PublicKey = BaseEncoding::decode_base58(tv.public).unwrap().into();
-      let private: PrivateKey = (BaseEncoding::decode_base58(tv.private).unwrap()[..32]).to_vec().into();
-      let badkey: PublicKey = b"IOTA".to_vec().into();
+    // Represents a test vector from [JcsEd25519Signature2020](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors),
+    #[derive(Deserialize)]
+    struct TestVector {
+      public: String,
+      private: String,
+      input: Object,
+      output: Object,
+    }
 
-      let input: Object = Object::from_json(tv.input).unwrap();
-      let output: Object = Object::from_json(tv.output).unwrap();
+    const TV_1_BYTES: &[u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_1.json");
+    const TV_2_BYTES: &[u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_2.json");
+    const TEST_VECTOR_BYTES: [&[u8]; 2] = [TV_1_BYTES, TV_2_BYTES];
+
+    for tv_bytes in TEST_VECTOR_BYTES {
+      let TestVector {
+        public,
+        private,
+        input,
+        output,
+      } = TestVector::from_json_slice(tv_bytes).unwrap();
+
+      // The test vectors use [Go crypto/ed25519](https://pkg.go.dev/crypto/ed25519#pkg-types)'s convention of representing an Ed25519 private key as: 32-byte seed concatenated with the 32-byte public key (computed from the seed).
+      // We follow the convention from [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2) and extract the 32-byte seed as the private key.
+      let public: PublicKey = BaseEncoding::decode_base58(public.as_str()).unwrap().into();
+      let private: PrivateKey = (BaseEncoding::decode_base58(private.as_str()).unwrap()[..32])
+        .to_vec()
+        .into();
+      let badkey: PublicKey = b"IOTA".to_vec().into();
 
       let signature: ProofValue = Signer::sign(&input, &private).unwrap();
 

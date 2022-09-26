@@ -1,4 +1,4 @@
-  
+
 .languageButton:hover {
     color: var(--ifm-color-emphasis-1000);
 }
@@ -23,7 +23,7 @@
 }
 
 .codeSnippetContainer {
-    height: 700px;
+    max-height: 700px;
     width: 100%;
     background-color: #292D3E;
     overflow: hidden;
@@ -47,7 +47,7 @@
     margin-bottom: 20px;
 }
 
-.rustContainer {
-    height: 100%;
+.rustContainer,.nodeContainer {
+    max-height: 700px;
     overflow-y: scroll;
 }

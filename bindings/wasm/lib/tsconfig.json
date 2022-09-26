@@ -1,0 +1,12 @@
+{
+    "extends": "../tsconfig.node.json",
+    "compilerOptions": {
+        "baseUrl": "./",
+        "paths": {
+            "~identity_wasm": ["../node/identity_wasm"],
+            "~iota-client-wasm": ["../node_modules/@iota/iota-client-wasm/node"],
+        },
+        "outDir": "../node",
+        "declarationDir": "../node",
+    },
+}

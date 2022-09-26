@@ -8,6 +8,12 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Timestamp | undefined")]
+  pub type OptionTimestamp;
+}
+
 #[wasm_bindgen(js_name = Timestamp, inspectable)]
 pub struct WasmTimestamp(pub(crate) Timestamp);
 
@@ -47,19 +53,9 @@ impl WasmTimestamp {
   pub fn checked_sub(&self, duration: &WasmDuration) -> Option<WasmTimestamp> {
     self.0.checked_sub(duration.0).map(WasmTimestamp)
   }
-
-  /// Serializes a `Timestamp` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Timestamp` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmTimestamp> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmTimestamp, Timestamp);
 
 impl From<Timestamp> for WasmTimestamp {
   fn from(timestamp: Timestamp) -> Self {
@@ -101,19 +97,9 @@ impl WasmDuration {
   pub fn weeks(weeks: u32) -> WasmDuration {
     Self(Duration::weeks(weeks))
   }
-
-  /// Serializes a `Duration` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Duration` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmDuration> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmDuration, Duration);
 
 impl From<Duration> for WasmDuration {
   fn from(duration: Duration) -> Self {

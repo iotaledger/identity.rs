@@ -1,85 +1,66 @@
 [package]
 name = "examples"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
+authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
-release = false
 
 [dependencies]
+anyhow = "1.0.62"
+did-key = { version = "0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
-pretty_env_logger = { version = "0.4" }
-rand = { version = "0.8" }
-tokio = { version = "1.17.0", features = ["full"] }
+iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
+primitive-types = "0.11.1"
+rand = "0.8.5"
+tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
+
+[lib]
+path = "utils/utils.rs"
 
 [[example]]
-name = "getting_started"
-path = "getting_started.rs"
+path = "0_basic/0_create_did.rs"
+name = "0_create_did"
 
 [[example]]
-name = "account_create"
-path = "account/create_did.rs"
+path = "0_basic/1_update_did.rs"
+name = "1_update_did"
 
 [[example]]
-name = "account_config"
-path = "account/config.rs"
+path = "0_basic/2_resolve_did.rs"
+name = "2_resolve_did"
 
 [[example]]
-name = "account_manipulate"
-path = "account/manipulate_did.rs"
+path = "0_basic/3_deactivate_did.rs"
+name = "3_deactivate_did"
 
 [[example]]
-name = "account_lazy"
-path = "account/lazy.rs"
+path = "0_basic/4_delete_did.rs"
+name = "4_delete_did"
 
 [[example]]
-name = "account_signing"
-path = "account/signing.rs"
-
-# TODO: Temporarily disabled until iotaledger/stronghold.rs#353 is fixed.
-# [[example]]
-# name = "account_multiple"
-# path = "account/multiple_identities.rs"
+path = "1_advanced/0_did_controls_did.rs"
+name = "0_did_controls_did"
 
 [[example]]
-name = "account_unchecked"
-path = "account/unchecked.rs"
+path = "1_advanced/1_did_issues_nft.rs"
+name = "1_did_issues_nft"
 
 [[example]]
-name = "account_encryption"
-path = "account/encryption.rs"
+path = "1_advanced/2_nft_owns_did.rs"
+name = "2_nft_owns_did"
 
 [[example]]
-name = "create_did"
-path = "low-level-api/create_did.rs"
+path = "1_advanced/3_did_issues_tokens.rs"
+name = "3_did_issues_tokens"
 
 [[example]]
-name = "account_create_vc"
-path = "account/create_vc.rs"
+path = "1_advanced/4_key_exchange.rs"
+name = "4_key_exchange"
 
 [[example]]
-name = "account_create_vp"
-path = "account/create_vp.rs"
+path = "1_advanced/5_alias_output_history.rs"
+name = "5_alias_output_history"
 
 [[example]]
-name = "resolve_history"
-path = "low-level-api/resolve_history.rs"
-
-[[example]]
-name = "manipulate_did"
-path = "low-level-api/manipulate_did.rs"
-
-[[example]]
-name = "key_exchange"
-path = "low-level-api/key_exchange.rs"
-
-[[example]]
-name = "resolve_did"
-path = "low-level-api/resolve_did.rs"
-
-[[example]]
-name = "private_tangle"
-path = "low-level-api/private_tangle.rs"
-
-[[example]]
-name = "account_revoke_vc"
-path = "account/revoke_vc.rs"
+path = "1_advanced/6_custom_resolution.rs"
+name = "6_custom_resolution"

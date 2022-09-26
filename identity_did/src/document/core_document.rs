@@ -25,6 +25,7 @@ use identity_core::crypto::Verifier;
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
 use crate::did::DID;
+use crate::document::Document;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
@@ -44,7 +45,7 @@ use crate::verification::VerificationMethod;
 /// A DID Document.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
 pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   where
@@ -482,10 +483,51 @@ where
     }
   }
 
+  /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
+  ///
+  /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
+  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod<D, U>>
+  where
+    D: DID,
+  {
+    if let Some(scope) = scope {
+      match scope {
+        MethodScope::VerificationMethod => self.verification_method().iter().collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => self
+          .assertion_method()
+          .iter()
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::Authentication) => self
+          .authentication()
+          .iter()
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
+          .capability_delegation()
+          .iter()
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
+          .capability_invocation()
+          .iter()
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
+          .collect(),
+        MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => self
+          .key_agreement()
+          .iter()
+          .filter_map(|method_ref| self.resolve_method_ref(method_ref))
+          .collect(),
+      }
+    } else {
+      self.all_methods().collect()
+    }
+  }
+
   /// Returns an iterator over all embedded verification methods in the DID Document.
   ///
   /// This excludes verification methods that are referenced by the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item = &VerificationMethod<D, U>> {
+  fn all_methods(&self) -> impl Iterator<Item = &VerificationMethod<D, U>> {
     fn __filter_ref<D, T>(method: &MethodRef<D, T>) -> Option<&VerificationMethod<D, T>>
     where
       D: DID,
@@ -664,7 +706,8 @@ impl<D, T, U, V> CoreDocument<D, T, U, V>
 where
   D: DID + KeyComparable,
 {
-  /// Verifies the signature of the provided data.
+  /// Verifies the signature of the provided `data` was created using a verification method
+  /// in this DID Document.
   ///
   /// # Errors
   ///
@@ -672,7 +715,7 @@ where
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     let signature: &Proof = data.signature().ok_or(Error::InvalidSignature("missing signature"))?;
 
@@ -736,7 +779,7 @@ where
   /// serialization fails, or the verification operation fails.
   fn do_verify<X>(method: &VerificationMethod<D, U>, data: &X) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     let public_key: Vec<u8> = method.data().try_decode()?;
 
@@ -750,6 +793,108 @@ where
     }
 
     Ok(())
+  }
+}
+
+impl<D, T, U, V> Document for CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
+  type D = D;
+  type U = U;
+  type V = V;
+
+  fn id(&self) -> &Self::D {
+    CoreDocument::id(self)
+  }
+
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.service().query(query.into())
+  }
+
+  fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    CoreDocument::resolve_method(self, query, scope)
+  }
+
+  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    CoreDocument::verify_data(self, data, options)
+  }
+}
+
+#[cfg(feature = "revocation-bitmap")]
+mod core_document_revocation {
+  use identity_core::common::KeyComparable;
+
+  use crate::did::DID;
+  use crate::revocation::RevocationBitmap;
+  use crate::service::Service;
+  use crate::utils::DIDUrlQuery;
+  use crate::utils::Queryable;
+  use crate::Error;
+  use crate::Result;
+
+  use super::CoreDocument;
+
+  impl<D, T, U, V> CoreDocument<D, T, U, V>
+  where
+    D: DID + KeyComparable,
+  {
+    /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
+    /// revoke all specified `indices`.
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
+    where
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      self.update_revocation_bitmap(service_query, |revocation_bitmap| {
+        for credential in indices {
+          revocation_bitmap.revoke(*credential);
+        }
+      })
+    }
+
+    /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
+    /// unrevoke all specified `indices`.
+    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
+    where
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      self.update_revocation_bitmap(service_query, |revocation_bitmap| {
+        for credential in indices {
+          revocation_bitmap.unrevoke(*credential);
+        }
+      })
+    }
+
+    fn update_revocation_bitmap<'query, 'me, F, Q>(&'me mut self, service_query: Q, f: F) -> Result<()>
+    where
+      F: FnOnce(&mut RevocationBitmap),
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      let service: &mut Service<D, V> = self
+        .service_mut()
+        .query_mut(service_query)
+        .ok_or(Error::InvalidService("invalid id - service not found"))?;
+
+      let mut revocation_bitmap: RevocationBitmap = RevocationBitmap::try_from(&*service)?;
+      f(&mut revocation_bitmap);
+
+      std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
+
+      Ok(())
+    }
   }
 }
 
@@ -789,15 +934,9 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::did::CoreDID;
-  use crate::did::DID;
-  use crate::document::CoreDocument;
-  use crate::utils::Queryable;
   use crate::verification::MethodData;
-  use crate::verification::MethodRelationship;
-  use crate::verification::MethodScope;
-  use crate::verification::MethodType;
-  use crate::verification::VerificationMethod;
+
+  use super::*;
 
   fn controller() -> CoreDID {
     "did:example:1234".parse().unwrap()
@@ -826,6 +965,35 @@ mod tests {
       .key_agreement(controller.to_url().join("#key-4").unwrap())
       .build()
       .unwrap()
+  }
+
+  #[test]
+  fn test_controller() {
+    // One controller.
+    {
+      let mut document: CoreDocument = document();
+      let expected: CoreDID = CoreDID::parse("did:example:one1234").unwrap();
+      *document.controller_mut() = Some(OneOrSet::new_one(expected.clone()));
+      assert_eq!(document.controller().unwrap().as_slice(), &[expected]);
+      // Unset.
+      *document.controller_mut() = None;
+      assert!(document.controller().is_none());
+    }
+
+    // Many controllers.
+    {
+      let mut document: CoreDocument = document();
+      let expected_controllers: Vec<CoreDID> = vec![
+        CoreDID::parse("did:example:many1234").unwrap(),
+        CoreDID::parse("did:example:many4567").unwrap(),
+        CoreDID::parse("did:example:many8910").unwrap(),
+      ];
+      *document.controller_mut() = Some(expected_controllers.clone().try_into().unwrap());
+      assert_eq!(document.controller().unwrap().as_slice(), &expected_controllers);
+      // Unset.
+      *document.controller_mut() = None;
+      assert!(document.controller().is_none());
+    }
   }
 
   #[rustfmt::skip]
@@ -926,8 +1094,41 @@ mod tests {
     let document: CoreDocument = document();
 
     // Access methods by index.
-    assert_eq!(document.methods().next().unwrap().id().to_string(), "did:example:1234#key-1");
-    assert_eq!(document.methods().nth(2).unwrap().id().to_string(), "did:example:1234#key-3");
+    assert_eq!(document.methods(None).get(0).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.methods(None).get(2).unwrap().id().to_string(), "did:example:1234#key-3");
+  }
+
+  #[test]
+  fn test_methods_scope() {
+    let document: CoreDocument = document();
+
+    // VerificationMethod
+    let verification_methods: Vec<&VerificationMethod> = document.methods(Some(MethodScope::VerificationMethod));
+    assert_eq!(
+      verification_methods.get(0).unwrap().id().to_string(),
+      "did:example:1234#key-1"
+    );
+    assert_eq!(
+      verification_methods.get(1).unwrap().id().to_string(),
+      "did:example:1234#key-2"
+    );
+    assert_eq!(
+      verification_methods.get(2).unwrap().id().to_string(),
+      "did:example:1234#key-3"
+    );
+    assert_eq!(verification_methods.len(), 3);
+
+    // Authentication
+    let authentication: Vec<&VerificationMethod> = document.methods(Some(MethodScope::authentication()));
+    assert_eq!(
+      authentication.get(0).unwrap().id().to_string(),
+      "did:example:1234#auth-key"
+    );
+    assert_eq!(
+      authentication.get(1).unwrap().id().to_string(),
+      "did:example:1234#key-3"
+    );
+    assert_eq!(authentication.len(), 2);
   }
 
   #[test]
@@ -1079,5 +1280,57 @@ mod tests {
     // Ensure *all* references were removed.
     assert!(document.capability_delegation().query(method3.id()).is_none());
     assert!(document.verification_method().query(method3.id()).is_none());
+  }
+
+  #[cfg(feature = "revocation-bitmap")]
+  #[test]
+  fn test_revocation() {
+    let mut document: CoreDocument = document();
+    let indices_1 = [3, 9, 254, 65536];
+    let indices_2 = [2, 15, 1337, 1000];
+
+    let service_id = document.id().to_url().join("#revocation-service").unwrap();
+
+    // The methods error if the service doesn't exist.
+    assert!(document.revoke_credentials(&service_id, &indices_2).is_err());
+    assert!(document.unrevoke_credentials(&service_id, &indices_2).is_err());
+
+    // Add service with indices_1 already revoked.
+    let mut bitmap: crate::revocation::RevocationBitmap = crate::revocation::RevocationBitmap::new();
+    for index in indices_1.iter() {
+      bitmap.revoke(*index);
+    }
+    assert!(document.service_mut().append(
+      Service::builder(Object::new())
+        .id(service_id.clone())
+        .type_(crate::revocation::RevocationBitmap::TYPE)
+        .service_endpoint(bitmap.to_endpoint().unwrap())
+        .build()
+        .unwrap()
+    ));
+
+    // Revoke indices_2.
+    document.revoke_credentials(&service_id, &indices_2).unwrap();
+    let service: &Service = document.resolve_service(&service_id).unwrap();
+    let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();
+
+    // We expect all indices to be revoked now.
+    for index in indices_1.iter().chain(indices_2.iter()) {
+      assert!(decoded_bitmap.is_revoked(*index));
+    }
+
+    // Unrevoke indices_1.
+    document.unrevoke_credentials(&service_id, &indices_1).unwrap();
+
+    let service: &Service = document.resolve_service(&service_id).unwrap();
+    let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();
+
+    // Expect indices_2 to be revoked, but not indices_1.
+    for index in indices_2 {
+      assert!(decoded_bitmap.is_revoked(index));
+    }
+    for index in indices_1 {
+      assert!(!decoded_bitmap.is_revoked(index));
+    }
   }
 }

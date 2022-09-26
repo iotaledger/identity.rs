@@ -4,9 +4,6 @@
 use identity_iota::did::MethodScope;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 #[wasm_bindgen]
 extern "C" {
   // Workaround for lack of Option<&Type>/&Option<Type> support.
@@ -19,7 +16,6 @@ extern "C" {
 
 /// Supported verification method types.
 #[wasm_bindgen(js_name = MethodScope, inspectable)]
-#[derive(Clone, Debug)]
 pub struct WasmMethodScope(pub(crate) MethodScope);
 
 #[wasm_bindgen(js_class = MethodScope)]
@@ -60,18 +56,7 @@ impl WasmMethodScope {
   pub fn to_string(&self) -> String {
     self.0.to_string()
   }
-
-  /// Serializes a `MethodScope` object as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `MethodScope` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmMethodScope> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmMethodScope, MethodScope);
 impl_wasm_clone!(WasmMethodScope, MethodScope);

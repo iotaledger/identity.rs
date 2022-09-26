@@ -19,8 +19,8 @@ use identity_iota::credential::Presentation;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::crypto::PublicKey;
 use identity_iota::did::verifiable::VerifiableProperties;
-use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -31,12 +31,13 @@ use crate::account::types::WasmCekAlgorithm;
 use crate::account::types::WasmEncryptedData;
 use crate::account::types::WasmEncryptionAlgorithm;
 use crate::common::PromiseVoid;
+use crate::common::UOneOrManyNumber;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::PromiseResolvedDocument;
-use crate::did::WasmDID;
 use crate::did::WasmDocument;
+use crate::did::WasmIotaDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -52,10 +53,10 @@ pub struct WasmAccount(pub(crate) Rc<RefCell<AccountRc>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  /// Returns the {@link DID} of the managed identity.
+  /// Returns the {@link IotaDID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
-  pub fn did(&self) -> WasmDID {
-    WasmDID::from(self.0.borrow().did().clone())
+  pub fn did(&self) -> WasmIotaDID {
+    WasmIotaDID::from(self.0.borrow().did().clone())
   }
 
   /// Returns whether auto-publish is enabled.
@@ -276,18 +277,18 @@ impl WasmAccount {
   }
 
   /// If the document has a `RevocationBitmap` service identified by `fragment`,
-  /// revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+  /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, fragment: String, credentialIndices: UOneOrManyNumber) -> PromiseVoid {
+  pub fn revoke_credentials(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
-      let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+      let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
       account
         .as_ref()
         .borrow_mut()
-        .revoke_credentials(&fragment, credentials_indices.as_slice())
+        .revoke_credentials(&fragment, indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -296,18 +297,18 @@ impl WasmAccount {
   }
 
   /// If the document has a `RevocationBitmap` service identified by `fragment`,
-  /// unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+  /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(&mut self, fragment: String, credentialIndices: UOneOrManyNumber) -> PromiseVoid {
+  pub fn unrevoke_credentials(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
-      let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+      let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
       account
         .as_ref()
         .borrow_mut()
-        .unrevoke_credentials(&fragment, credentials_indices.as_slice())
+        .unrevoke_credentials(&fragment, indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -328,8 +329,8 @@ impl WasmAccount {
     public_key: Vec<u8>,
   ) -> PromiseEncryptedData {
     let account = self.0.clone();
-    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
-    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.0;
+    let cek_algorithm: CekAlgorithm = cek_algorithm.0.clone();
     let public_key: PublicKey = public_key.to_vec().into();
 
     future_to_promise(async move {
@@ -364,8 +365,8 @@ impl WasmAccount {
   ) -> PromiseData {
     let account = self.0.clone();
     let data: EncryptedData = data.0.clone();
-    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
-    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.0;
+    let cek_algorithm: CekAlgorithm = cek_algorithm.0.clone();
 
     future_to_promise(async move {
       let data: Vec<u8> = account
@@ -466,10 +467,4 @@ impl From<WasmPublishOptions> for PublishOptions {
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Account>")]
   pub type PromiseAccount;
-}
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "number | number[]")]
-  pub type UOneOrManyNumber;
 }

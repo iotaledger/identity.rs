@@ -12,17 +12,18 @@ use identity_account_storage::storage::Stronghold;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::ProofOptions;
+use identity_did::did::CoreDID;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
-use identity_iota_client::chain::DocumentChain;
-use identity_iota_client::tangle::Client;
-use identity_iota_client::tangle::ClientBuilder;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::MessageIdExt;
-use identity_iota_core::tangle::Network;
+use identity_iota_client_legacy::chain::DocumentChain;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::ClientBuilder;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::MessageIdExt;
+use identity_iota_core_legacy::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
@@ -158,7 +159,7 @@ async fn test_account_autopublish() {
 
   let doc = account.document();
 
-  assert_eq!(doc.methods().count(), 1);
+  assert_eq!(doc.methods().len(), 1);
   assert_eq!(doc.service().len(), 2);
 
   for service in ["my-service", "my-other-service"] {
@@ -212,7 +213,7 @@ async fn test_account_autopublish() {
   let doc = account.document();
 
   assert_eq!(doc.service().len(), 0);
-  assert_eq!(doc.methods().count(), 2);
+  assert_eq!(doc.methods().len(), 2);
 
   for method in ["sign-0", "new-method"] {
     assert!(doc.resolve_method(method, None).is_some());
@@ -298,7 +299,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));
@@ -309,7 +310,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with(auth_method))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));
@@ -320,7 +321,7 @@ async fn test_account_publish_options_sign_with() {
       .publish_with_options(PublishOptions::default().sign_with(invalid_signing_method))
       .await
       .unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDocumentSigningMethodType),
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDocumentSigningMethodType),
   ));
 
   assert!(account
@@ -538,7 +539,7 @@ async fn test_account_sync_diff_msg_update() {
         .await
         .unwrap();
       client
-        .publish_diff(&*account.chain_state().last_integration_message_id(), &diff_msg)
+        .publish_diff(account.chain_state().last_integration_message_id(), &diff_msg)
         .await
         .unwrap();
       let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
@@ -588,7 +589,7 @@ async fn network_resilient_test(
     let test_attempt = f(test_run).await;
 
     match test_attempt {
-      error @ Err(Error::IotaClientError(identity_iota_client::Error::ClientError(_))) => {
+      error @ Err(Error::IotaClientError(identity_iota_client_legacy::Error::ClientError(_))) => {
         eprintln!("test run {} errored with {:?}", test_run, error);
 
         if test_run == test_runs - 1 {
@@ -625,27 +626,27 @@ async fn test_storage_index() {
       .await
       .unwrap();
 
-    let index: Vec<IotaDID> = account1.storage().did_list().await.unwrap();
+    let index: Vec<CoreDID> = account1.storage().did_list().await.unwrap();
 
     assert_eq!(index.len(), 1);
-    assert!(index.contains(account1.did()));
+    assert!(index.contains(account1.did().as_ref()));
 
     let account2: Account = Account::create_identity(setup, IdentitySetup::default()).await.unwrap();
 
-    let index: Vec<IotaDID> = account2.storage().did_list().await.unwrap();
+    let index: Vec<CoreDID> = account2.storage().did_list().await.unwrap();
 
     assert_eq!(index.len(), 2);
-    assert!(index.contains(account1.did()));
-    assert!(index.contains(account2.did()));
+    assert!(index.contains(account1.did().as_ref()));
+    assert!(index.contains(account2.did().as_ref()));
 
-    assert!(account2.storage().did_exists(account1.did()).await.unwrap());
-    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
+    assert!(account2.storage().did_exists(account1.did().as_ref()).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did().as_ref()).await.unwrap());
 
     let account1_did: IotaDID = account1.did().to_owned();
     account1.delete_identity().await.unwrap();
 
-    assert!(!account2.storage().did_exists(&account1_did).await.unwrap());
-    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
+    assert!(!account2.storage().did_exists(account1_did.as_ref()).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did().as_ref()).await.unwrap());
     assert_eq!(account2.storage().did_list().await.unwrap().len(), 1);
   }
 }

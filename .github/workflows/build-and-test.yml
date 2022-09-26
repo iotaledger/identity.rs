@@ -6,7 +6,7 @@ on:
       - main
       - dev
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [ opened, synchronize, reopened, ready_for_review ]
     branches:
       - main
       - dev
@@ -63,7 +63,7 @@ jobs:
 
   build-and-test:
     runs-on: ${{ matrix.os }}
-    needs: [check-for-run-condition, check-for-modification]
+    needs: [ check-for-run-condition, check-for-modification ]
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
@@ -97,27 +97,58 @@ jobs:
         with:
           os: ${{matrix.os}}
 
-      - name: Build
+      - name: Check --no-default-features
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo metadata --format-version 1 | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
+          xargs -I {} cargo check -p {} --no-default-features
+
+      - name: Check default features
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo metadata --format-version 1 | \
+          jq -r '.workspace_members[] | select(contains("examples") | not)' | \
+          awk '{print $1}' | \
+          xargs -I {} cargo check -p {}
+
+      # Clean debug target to avoid bloating the GitHub Actions cache.
+      # The previous builds cannot be re-used at all for the full --all-features --release build anyway.
+      - name: Clean target
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo clean
+
+      - name: Build all features
         uses: actions-rs/cargo@v1
         with:
           # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
           command: build
-          args: --workspace --tests --examples --release
+          args: --workspace --tests --examples --all-features --release
+
+      - name: Start private tangle
+        if: matrix.os == 'ubuntu-latest'
+        uses: './.github/actions/private-tangle/setup'
 
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --all-features --release
+          args: --workspace --all-features --release
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest --manifest-path ./examples/Cargo.toml | \
-          jq -r '.targets[].name' | \
-          parallel -k -j 4 --retries 3 cargo run --example {} --release
+          cargo metadata --format-version 1 --manifest-path ./examples/Cargo.toml | \
+          jq -r '.packages[] | select(.name == "examples") | .targets[].name' | \
+          awk '$1 ~ /[0-9].*/' | \
+          parallel -k -j 4 --retries 3 ./target/release/examples/{}
 
+      - name: Tear down private tangle
+        if: matrix.os == 'ubuntu-latest' && always()
+        uses: './.github/actions/private-tangle/tear-down'
+      
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:
@@ -192,16 +223,23 @@ jobs:
           name: identity-wasm-bindings-build
           path: bindings/wasm
 
+      - name: Start private tangle
+        uses: './.github/actions/private-tangle/setup'
+
       - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
 
-  build-and-test-stronghold-nodejs:
-    needs:
-      - check-for-run-condition
-      - build-wasm
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
-    with:
-      input-artifact-name: identity-wasm-bindings-build
+      - name: Tear down private tangle
+        if: always()
+        uses: './.github/actions/private-tangle/tear-down'
+
+  # build-and-test-stronghold-nodejs:
+  #   needs:
+  #     - check-for-run-condition
+  #     - build-wasm
+  #   if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+  #   # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
+  #   with:
+  #     input-artifact-name: identity-wasm-bindings-build

@@ -1,31 +1,21 @@
 ## Classes
 
 <dl>
-<dt><a href="#Account">Account</a></dt>
-<dd><p>An account manages one identity.</p>
-<p>It handles private keys, writing to storage and
-publishing to the Tangle.</p>
+<dt><a href="#CoreDID">CoreDID</a></dt>
+<dd><p>A method-agnostic Decentralized Identifier (DID).</p>
 </dd>
-<dt><a href="#AccountBuilder">AccountBuilder</a></dt>
-<dd><p>An [<code>Account</code>] builder for easy account configuration.</p>
-<p>To reduce memory usage, accounts created from the same builder share the same <code>Storage</code>
-used to store identities, and the same <a href="#Client">Client</a> used to publish identities to the Tangle.</p>
-<p>The configuration on the other hand is cloned, and therefore unique for each built account.
-This means a builder can be reconfigured in-between account creations, without affecting
-the configuration of previously built accounts.</p>
+<dt><a href="#CoreDIDUrl">CoreDIDUrl</a></dt>
+<dd><p>A method agnostic DID Url.</p>
 </dd>
-<dt><a href="#AgreementInfo">AgreementInfo</a></dt>
-<dd><p>Agreement information used as the input for the concat KDF.</p>
+<dt><a href="#CoreDocument">CoreDocument</a></dt>
+<dd><p>A method-agnostic DID Document.</p>
 </dd>
-<dt><a href="#AutoSave">AutoSave</a></dt>
-<dd></dd>
-<dt><a href="#CekAlgorithm">CekAlgorithm</a></dt>
-<dd><p>Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).</p>
+<dt><a href="#CoreService">CoreService</a></dt>
+<dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
-<dt><a href="#ChainState">ChainState</a></dt>
-<dd></dd>
-<dt><a href="#Client">Client</a></dt>
-<dd></dd>
+<dt><a href="#CoreVerificationMethod">CoreVerificationMethod</a></dt>
+<dd><p>A DID Document Verification Method.</p>
+</dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
@@ -33,50 +23,32 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#CredentialValidator">CredentialValidator</a></dt>
 <dd></dd>
-<dt><a href="#DID">DID</a></dt>
-<dd></dd>
-<dt><a href="#DIDUrl">DIDUrl</a></dt>
-<dd></dd>
-<dt><del><a href="#DiffChainHistory">DiffChainHistory</a></del></dt>
-<dd></dd>
-<dt><del><a href="#DiffMessage">DiffMessage</a></del></dt>
-<dd><p>Defines the difference between two DID <code>Document</code>s&#39; JSON representations.</p>
-</dd>
-<dt><a href="#Document">Document</a></dt>
-<dd></dd>
-<dt><a href="#DocumentHistory">DocumentHistory</a></dt>
-<dd><p>A DID Document&#39;s history and current state.</p>
-</dd>
-<dt><a href="#DocumentMetadata">DocumentMetadata</a></dt>
-<dd><p>Additional attributes related to an IOTA DID Document.</p>
-</dd>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
-<dt><a href="#EncryptedData">EncryptedData</a></dt>
-<dd><p>The structure returned after encrypting data</p>
+<dt><a href="#IotaDID">IotaDID</a></dt>
+<dd><p>A DID conforming to the IOTA DID method specification.</p>
 </dd>
-<dt><a href="#EncryptionAlgorithm">EncryptionAlgorithm</a></dt>
-<dd><p>Supported content encryption algorithms.</p>
+<dt><a href="#IotaDIDUrl">IotaDIDUrl</a></dt>
+<dd><p>A DID URL conforming to the IOTA DID method specification.</p>
 </dd>
-<dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
+<dt><a href="#IotaDocument">IotaDocument</a></dt>
 <dd></dd>
-<dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
-<dd></dd>
-<dt><a href="#KeyLocation">KeyLocation</a></dt>
-<dd><p>The storage location of a verification method key.</p>
-<p>A key is uniquely identified by the fragment and a hash of its public key.
-Importantly, the fragment alone is insufficient to represent the storage location.
-For example, when rotating a key, there will be two keys in storage for the
-same identity with the same fragment. The <code>key_hash</code> disambiguates the keys in
-situations like these.</p>
-<p>The string representation of that location can be obtained via <code>canonicalRepr</code>.</p>
+<dt><a href="#IotaDocumentMetadata">IotaDocumentMetadata</a></dt>
+<dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
+<dt><a href="#IotaIdentityClientExt">IotaIdentityClientExt</a></dt>
+<dd><p>An extension interface that provides helper functions for publication
+and resolution of DID documents in Alias Outputs.</p>
+</dd>
+<dt><a href="#IotaService">IotaService</a></dt>
+<dd><p>A <code>Service</code> adhering to the IOTA DID method specification.</p>
+</dd>
+<dt><a href="#IotaVerificationMethod">IotaVerificationMethod</a></dt>
+<dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
-<dd></dd>
-<dt><a href="#MethodContent">MethodContent</a></dt>
 <dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
 <dd><p>Supported verification method data formats.</p>
@@ -87,8 +59,6 @@ situations like these.</p>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
-<dt><a href="#Network">Network</a></dt>
-<dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
 <dd></dd>
 <dt><a href="#PresentationValidationOptions">PresentationValidationOptions</a></dt>
@@ -108,38 +78,17 @@ See <code>IProofOptions</code>.</p>
 <dd><p>Associates a purpose with a <a href="#Proof">Proof</a>.</p>
 <p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
 </dd>
-<dt><a href="#Receipt">Receipt</a></dt>
-<dd></dd>
-<dt><a href="#ResolvedDocument">ResolvedDocument</a></dt>
-<dd><p>An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
-merged with one or more <code>DiffMessages</code>.</p>
-</dd>
 <dt><a href="#Resolver">Resolver</a></dt>
-<dd></dd>
-<dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
-<dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
+<dd><p>Convenience type for resolving DID documents from different DID methods.</p>
+<p>Also provides methods for resolving DID Documents associated with
+verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
+<h1 id="configuration">Configuration</h1>
+<p>The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.</p>
 </dd>
 <dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
 <dd><p>A compressed bitmap for managing credential revocation.</p>
 </dd>
-<dt><a href="#Service">Service</a></dt>
-<dd><p>A DID Document Service used to enable trusted interactions associated
-with a DID subject.</p>
-<p>See: <a href="https://www.w3.org/TR/did-core/#services">https://www.w3.org/TR/did-core/#services</a></p>
-</dd>
-<dt><a href="#Signature">Signature</a></dt>
-<dd></dd>
-<dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
-<dd><p>A test suite for the <code>Storage</code> interface.</p>
-<p>This module contains a set of tests that a correct storage implementation
-should pass. Note that not every edge case is tested.</p>
-<p>Tests usually rely on multiple interface methods being implemented, so they should only
-be run on a fully implemented version. That&#39;s why there is not a single test case for every
-interface method.</p>
-</dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
-<dd></dd>
-<dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
 <dt><a href="#VerifierOptions">VerifierOptions</a></dt>
 <dd><p>Holds additional proof verification options.
@@ -153,7 +102,11 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -197,10 +150,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -211,734 +160,928 @@ This variant is the default used if no other variant is specified when construct
 </dd>
 </dl>
 
-<a name="Account"></a>
+<a name="CoreDID"></a>
 
-## Account
-An account manages one identity.
-
-It handles private keys, writing to storage and
-publishing to the Tangle.
+## CoreDID
+A method-agnostic Decentralized Identifier (DID).
 
 **Kind**: global class  
 
-* [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
-    * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
-    * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
-    * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.publish(publish_options)](#Account+publish) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createSignedCredential(fragment, credential, options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
-    * [.createSignedDocument(fragment, document, options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
-    * [.createSignedPresentation(fragment, presentation, options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-    * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.revokeCredentials(fragment, credentialIndices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-    * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+* [CoreDID](#CoreDID)
+    * _instance_
+        * [.setMethodName(value)](#CoreDID+setMethodName)
+        * [.setMethodId(value)](#CoreDID+setMethodId)
+        * [.scheme()](#CoreDID+scheme) ⇒ <code>string</code>
+        * [.authority()](#CoreDID+authority) ⇒ <code>string</code>
+        * [.method()](#CoreDID+method) ⇒ <code>string</code>
+        * [.methodId()](#CoreDID+methodId) ⇒ <code>string</code>
+        * [.join(segment)](#CoreDID+join) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.toUrl()](#CoreDID+toUrl) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.intoUrl()](#CoreDID+intoUrl) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.toString()](#CoreDID+toString) ⇒ <code>string</code>
+        * [.toJSON()](#CoreDID+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CoreDID+clone) ⇒ [<code>CoreDID</code>](#CoreDID)
+    * _static_
+        * [.parse(input)](#CoreDID.parse) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.validMethodName(value)](#CoreDID.validMethodName) ⇒ <code>boolean</code>
+        * [.validMethodId(value)](#CoreDID.validMethodId) ⇒ <code>boolean</code>
+        * [.fromJSON(json)](#CoreDID.fromJSON) ⇒ [<code>CoreDID</code>](#CoreDID)
 
-<a name="Account+attachMethodRelationships"></a>
+<a name="CoreDID+setMethodName"></a>
 
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
+### coreDID.setMethodName(value)
+Set the method name of the `CoreDID`.
 
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
+| value | <code>string</code> | 
 
-<a name="Account+createMethod"></a>
+<a name="CoreDID+setMethodId"></a>
 
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
+### coreDID.setMethodId(value)
+Set the method-specific-id of the `DID`.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
+| value | <code>string</code> | 
 
-<a name="Account+did"></a>
+<a name="CoreDID+scheme"></a>
 
-### account.did() ⇒ [<code>DID</code>](#DID)
-Returns the [DID](#DID) of the managed identity.
+### coreDID.scheme() ⇒ <code>string</code>
+Returns the `CoreDID` scheme.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+autopublish"></a>
+E.g.
+- `"did:example:12345678" -> "did"`
+- `"did:iota:smr:12345678" -> "did"`
 
-### account.autopublish() ⇒ <code>boolean</code>
-Returns whether auto-publish is enabled.
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+authority"></a>
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+autosave"></a>
+### coreDID.authority() ⇒ <code>string</code>
+Returns the `CoreDID` authority: the method name and method-id.
 
-### account.autosave() ⇒ [<code>AutoSave</code>](#AutoSave)
-Returns the auto-save configuration value.
+E.g.
+- `"did:example:12345678" -> "example:12345678"`
+- `"did:iota:smr:12345678" -> "iota:smr:12345678"`
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+document"></a>
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+method"></a>
 
-### account.document() ⇒ [<code>Document</code>](#Document)
-Returns a copy of the document managed by the `Account`.
+### coreDID.method() ⇒ <code>string</code>
+Returns the `CoreDID` method name.
 
-Note: the returned document only has a valid signature after publishing an integration chain update.
-In general, for use cases where the signature is required, it is advisable to resolve the
-document from the Tangle.
+E.g.
+- `"did:example:12345678" -> "example"`
+- `"did:iota:smr:12345678" -> "iota"`
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+resolveIdentity"></a>
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+methodId"></a>
 
-### account.resolveIdentity() ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-Resolves the DID Document associated with this `Account` from the Tangle.
+### coreDID.methodId() ⇒ <code>string</code>
+Returns the `CoreDID` method-specific ID.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+deleteIdentity"></a>
+E.g.
+- `"did:example:12345678" -> "12345678"`
+- `"did:iota:smr:12345678" -> "smr:12345678"`
 
-### account.deleteIdentity() ⇒ <code>Promise.&lt;void&gt;</code>
-Removes the identity from the local storage entirely.
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+join"></a>
 
-Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
+### coreDID.join(segment) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Construct a new `CoreDIDUrl` by joining with a relative DID Url string.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+publish"></a>
-
-### account.publish(publish_options) ⇒ <code>Promise.&lt;void&gt;</code>
-Push all unpublished changes to the tangle in a single message.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
-| publish_options | <code>PublishOptions</code> \| <code>undefined</code> | 
+| segment | <code>string</code> | 
 
-<a name="Account+createSignedCredential"></a>
+<a name="CoreDID+toUrl"></a>
 
-### account.createSignedCredential(fragment, credential, options) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
-Signs a [Credential](#Credential) with the key specified by `fragment`.
+### coreDID.toUrl() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Clones the `CoreDID` into a `CoreDIDUrl`.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+intoUrl"></a>
 
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| credential | [<code>Credential</code>](#Credential) | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
+### coreDID.intoUrl() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Converts the `CoreDID` into a `CoreDIDUrl`, consuming it.
 
-<a name="Account+createSignedDocument"></a>
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+toString"></a>
 
-### account.createSignedDocument(fragment, document, options) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
-Signs a [Document](#Document) with the key specified by `fragment`.
+### coreDID.toString() ⇒ <code>string</code>
+Returns the `CoreDID` as a string.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+toJSON"></a>
 
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| document | [<code>Document</code>](#Document) | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
+### coreDID.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
 
-<a name="Account+createSignedPresentation"></a>
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+clone"></a>
 
-### account.createSignedPresentation(fragment, presentation, options) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-Signs a [Presentation](#Presentation) the key specified by `fragment`.
+### coreDID.clone() ⇒ [<code>CoreDID</code>](#CoreDID)
+Deep clones the object.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID.parse"></a>
 
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
+### CoreDID.parse(input) ⇒ [<code>CoreDID</code>](#CoreDID)
+Parses a `CoreDID` from the given `input`.
 
-<a name="Account+createSignedData"></a>
+### Errors
 
-### account.createSignedData(fragment, data, options) ⇒ <code>Promise.&lt;any&gt;</code>
-Signs arbitrary `data` with the key specified by `fragment`.
+Throws an error if the input is not a valid `CoreDID`.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
-| data | <code>any</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
+| input | <code>string</code> | 
 
-<a name="Account+updateDocumentUnchecked"></a>
+<a name="CoreDID.validMethodName"></a>
 
-### account.updateDocumentUnchecked(document) ⇒ <code>Promise.&lt;void&gt;</code>
-Overwrites the [Document](#Document) this account manages, **without doing any validation**.
+### CoreDID.validMethodName(value) ⇒ <code>boolean</code>
+Validates whether a string is a valid DID method name.
 
-### WARNING
-
-This method is dangerous and can easily corrupt the internal state,
-potentially making the identity unusable. Only call this if you fully
-understand the implications!
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
-| document | [<code>Document</code>](#Document) | 
+| value | <code>string</code> | 
 
-<a name="Account+fetchDocument"></a>
+<a name="CoreDID.validMethodId"></a>
 
-### account.fetchDocument() ⇒ <code>Promise.&lt;void&gt;</code>
-Fetches the latest changes from the tangle and **overwrites** the local document.
+### CoreDID.validMethodId(value) ⇒ <code>boolean</code>
+Validates whether a string is a valid `DID` method-id.
 
-If a DID is managed from distributed accounts, this should be called before making changes
-to the identity, to avoid publishing updates that would be ignored.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+revokeCredentials"></a>
-
-### account.revokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
-If the document has a `RevocationBitmap` service identified by `fragment`,
-revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| value | <code>string</code> | 
 
-<a name="Account+unrevokeCredentials"></a>
+<a name="CoreDID.fromJSON"></a>
 
-### account.unrevokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
-If the document has a `RevocationBitmap` service identified by `fragment`,
-unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+### CoreDID.fromJSON(json) ⇒ [<code>CoreDID</code>](#CoreDID)
+Deserializes an instance from a JSON object.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| json | <code>any</code> | 
 
-<a name="Account+encryptData"></a>
+<a name="CoreDIDUrl"></a>
 
-### account.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+## CoreDIDUrl
+A method agnostic DID Url.
 
-Returns an [`EncryptedData`] instance.
+**Kind**: global class  
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+* [CoreDIDUrl](#CoreDIDUrl)
+    * _instance_
+        * [.did()](#CoreDIDUrl+did) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.urlStr()](#CoreDIDUrl+urlStr) ⇒ <code>string</code>
+        * [.fragment()](#CoreDIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setFragment(value)](#CoreDIDUrl+setFragment)
+        * [.path()](#CoreDIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setPath(value)](#CoreDIDUrl+setPath)
+        * [.query()](#CoreDIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setQuery(value)](#CoreDIDUrl+setQuery)
+        * [.join(segment)](#CoreDIDUrl+join) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.toString()](#CoreDIDUrl+toString) ⇒ <code>string</code>
+        * [.toJSON()](#CoreDIDUrl+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CoreDIDUrl+clone) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+    * _static_
+        * [.parse(input)](#CoreDIDUrl.parse) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.fromJSON(json)](#CoreDIDUrl.fromJSON) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+
+<a name="CoreDIDUrl+did"></a>
+
+### coreDIDUrl.did() ⇒ [<code>CoreDID</code>](#CoreDID)
+Return a copy of the `CoreDID` section of the `CoreDIDUrl`.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl+urlStr"></a>
+
+### coreDIDUrl.urlStr() ⇒ <code>string</code>
+Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl+fragment"></a>
+
+### coreDIDUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `CoreDIDUrl` method fragment, if any. Excludes the leading '#'.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl+setFragment"></a>
+
+### coreDIDUrl.setFragment(value)
+Sets the `fragment` component of the `CoreDIDUrl`.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
 
 | Param | Type |
 | --- | --- |
-| plaintext | <code>Uint8Array</code> | 
-| associated_data | <code>Uint8Array</code> | 
-| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
-| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
-| public_key | <code>Uint8Array</code> | 
+| value | <code>string</code> \| <code>undefined</code> | 
 
-<a name="Account+decryptData"></a>
+<a name="CoreDIDUrl+path"></a>
 
-### account.decryptData(data, encryption_algorithm, cek_algorithm, fragment) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
-`cek_algorithm`.
+### coreDIDUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `CoreDIDUrl` path.
 
-Returns the decrypted text.
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl+setPath"></a>
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+### coreDIDUrl.setPath(value)
+Sets the `path` component of the `CoreDIDUrl`.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
 
 | Param | Type |
 | --- | --- |
-| data | [<code>EncryptedData</code>](#EncryptedData) | 
-| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
-| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
-| fragment | <code>string</code> | 
+| value | <code>string</code> \| <code>undefined</code> | 
 
-<a name="Account+setAlsoKnownAs"></a>
+<a name="CoreDIDUrl+query"></a>
 
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+### coreDIDUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `CoreDIDUrl` method query, if any. Excludes the leading '?'.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl+setQuery"></a>
+
+### coreDIDUrl.setQuery(value)
+Sets the `query` component of the `CoreDIDUrl`.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="CoreDIDUrl+join"></a>
+
+### coreDIDUrl.join(segment) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Append a string representing a path, query, and/or fragment, returning a new `CoreDIDUrl`.
+
+Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
+segment and any following segments in order of path, query, then fragment.
+
+I.e.
+- joining a path will clear the query and fragment.
+- joining a query will clear the fragment.
+- joining a fragment will only overwrite the fragment.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="CoreDIDUrl+toString"></a>
+
+### coreDIDUrl.toString() ⇒ <code>string</code>
+Returns the `CoreDIDUrl` as a string.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl+toJSON"></a>
+
+### coreDIDUrl.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl+clone"></a>
+
+### coreDIDUrl.clone() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Deep clones the object.
+
+**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+<a name="CoreDIDUrl.parse"></a>
+
+### CoreDIDUrl.parse(input) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Parses a `CoreDIDUrl` from the input string.
+
+**Kind**: static method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="CoreDIDUrl.fromJSON"></a>
+
+### CoreDIDUrl.fromJSON(json) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="CoreDocument"></a>
+
+## CoreDocument
+A method-agnostic DID Document.
+
+**Kind**: global class  
+
+* [CoreDocument](#CoreDocument)
+    * [new CoreDocument(values)](#new_CoreDocument_new)
+    * _instance_
+        * [.id()](#CoreDocument+id) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.setId(id)](#CoreDocument+setId)
+        * [.controller()](#CoreDocument+controller) ⇒ [<code>Array.&lt;CoreDID&gt;</code>](#CoreDID)
+        * [.setController(controllers)](#CoreDocument+setController)
+        * [.alsoKnownAs()](#CoreDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.setAlsoKnownAs(urls)](#CoreDocument+setAlsoKnownAs)
+        * [.verificatonMethod()](#CoreDocument+verificatonMethod) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
+        * [.authentication()](#CoreDocument+authentication) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.assertionMethod()](#CoreDocument+assertionMethod) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.keyAgreement()](#CoreDocument+keyAgreement) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.capabilityDelegation()](#CoreDocument+capabilityDelegation) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.capabilityInvocation()](#CoreDocument+capabilityInvocation) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.properties()](#CoreDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#CoreDocument+setPropertyUnchecked)
+        * [.service()](#CoreDocument+service) ⇒ [<code>Array.&lt;CoreService&gt;</code>](#CoreService)
+        * [.insertService(service)](#CoreDocument+insertService) ⇒ <code>boolean</code>
+        * [.removeService(didUrl)](#CoreDocument+removeService) ⇒ <code>boolean</code>
+        * [.resolveService(query)](#CoreDocument+resolveService) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
+        * [.methods(scope)](#CoreDocument+methods) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
+        * [.verificationRelationships()](#CoreDocument+verificationRelationships) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.insertMethod(method, scope)](#CoreDocument+insertMethod)
+        * [.removeMethod(did)](#CoreDocument+removeMethod)
+        * [.resolveMethod(query, scope)](#CoreDocument+resolveMethod) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
+        * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
+        * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
+        * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
+        * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
+        * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+    * _static_
+        * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+
+<a name="new_CoreDocument_new"></a>
+
+### new CoreDocument(values)
+Creates a new `CoreDocument` with the given properties.
+
+
+| Param | Type |
+| --- | --- |
+| values | <code>ICoreDocument</code> | 
+
+<a name="CoreDocument+id"></a>
+
+### coreDocument.id() ⇒ [<code>CoreDID</code>](#CoreDID)
+Returns a copy of the DID Document `id`.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+setId"></a>
+
+### coreDocument.setId(id)
+Sets the DID of the document.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| id | [<code>CoreDID</code>](#CoreDID) | 
+
+<a name="CoreDocument+controller"></a>
+
+### coreDocument.controller() ⇒ [<code>Array.&lt;CoreDID&gt;</code>](#CoreDID)
+Returns a copy of the document controllers.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+setController"></a>
+
+### coreDocument.setController(controllers)
+Sets the controllers of the DID Document.
+
+Note: Duplicates will be ignored.
+Use `null` to remove all controllers.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| controllers | [<code>CoreDID</code>](#CoreDID) \| [<code>Array.&lt;CoreDID&gt;</code>](#CoreDID) \| <code>null</code> | 
+
+<a name="CoreDocument+alsoKnownAs"></a>
+
+### coreDocument.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the document's `alsoKnownAs` set.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+setAlsoKnownAs"></a>
+
+### coreDocument.setAlsoKnownAs(urls)
 Sets the `alsoKnownAs` property in the DID document.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
+| urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
 
-<a name="Account+deleteMethod"></a>
+<a name="CoreDocument+verificatonMethod"></a>
 
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
+### coreDocument.verificatonMethod() ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
+Returns a copy of the document's `verificationMethod` set.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+authentication"></a>
 
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
+### coreDocument.authentication() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+Returns a copy of the document's `authentication` set.
 
-<a name="Account+deleteService"></a>
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+assertionMethod"></a>
 
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
+### coreDocument.assertionMethod() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+Returns a copy of the document's `assertionMethod` set.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+keyAgreement"></a>
 
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
+### coreDocument.keyAgreement() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+Returns a copy of the document's `keyAgreement` set.
 
-<a name="Account+setController"></a>
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+capabilityDelegation"></a>
 
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
+### coreDocument.capabilityDelegation() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+Returns a copy of the document's `capabilityDelegation` set.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+capabilityInvocation"></a>
 
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
+### coreDocument.capabilityInvocation() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+Returns a copy of the document's `capabilityInvocation` set.
 
-<a name="Account+createService"></a>
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+properties"></a>
 
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
+### coreDocument.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom DID Document properties.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+setPropertyUnchecked"></a>
 
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
+### coreDocument.setPropertyUnchecked(key, value)
+Sets a custom property in the DID Document.
+If the value is set to `null`, the custom property will be removed.
 
-<a name="AccountBuilder"></a>
+### WARNING
+This method can overwrite existing properties like `id` and result in an invalid document.
 
-## AccountBuilder
-An [`Account`] builder for easy account configuration.
-
-To reduce memory usage, accounts created from the same builder share the same `Storage`
-used to store identities, and the same [Client](#Client) used to publish identities to the Tangle.
-
-The configuration on the other hand is cloned, and therefore unique for each built account.
-This means a builder can be reconfigured in-between account creations, without affecting
-the configuration of previously built accounts.
-
-**Kind**: global class  
-
-* [AccountBuilder](#AccountBuilder)
-    * [new AccountBuilder(options)](#new_AccountBuilder_new)
-    * [.loadIdentity(did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-    * [.createIdentity(identity_setup)](#AccountBuilder+createIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-
-<a name="new_AccountBuilder_new"></a>
-
-### new AccountBuilder(options)
-Creates a new `AccountBuilder`.
-
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>AccountBuilderOptions</code> \| <code>undefined</code> | 
+| key | <code>string</code> | 
+| value | <code>any</code> | 
 
-<a name="AccountBuilder+loadIdentity"></a>
+<a name="CoreDocument+service"></a>
 
-### accountBuilder.loadIdentity(did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-Loads an existing identity with the specified `did` using the current builder configuration.
-The identity must exist in the configured `Storage`.
+### coreDocument.service() ⇒ [<code>Array.&lt;CoreService&gt;</code>](#CoreService)
+Returns a set of all [CoreService](#CoreService) in the document.
 
-**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+insertService"></a>
 
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
+### coreDocument.insertService(service) ⇒ <code>boolean</code>
+Add a new [CoreService](#CoreService) to the document.
 
-<a name="AccountBuilder+createIdentity"></a>
+Returns `true` if the service was added.
 
-### accountBuilder.createIdentity(identity_setup) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-Creates a new identity based on the builder configuration and returns
-an [Account](#Account) object to manage it.
-
-The identity is stored locally in the `Storage`. The DID network is automatically determined
-by the [Client](#Client) used to publish it.
-
-**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
-**See**: [IdentitySetup](IdentitySetup) to customize the identity creation.  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| identity_setup | <code>IdentitySetup</code> \| <code>undefined</code> | 
+| service | [<code>CoreService</code>](#CoreService) | 
 
-<a name="AgreementInfo"></a>
+<a name="CoreDocument+removeService"></a>
 
-## AgreementInfo
-Agreement information used as the input for the concat KDF.
+### coreDocument.removeService(didUrl) ⇒ <code>boolean</code>
+Remoce a [CoreService](#CoreService) identified by the given [CoreDIDUrl](#CoreDIDUrl) from the document.
 
-**Kind**: global class  
+Returns `true` if the service was removed.
 
-* [AgreementInfo](#AgreementInfo)
-    * [new AgreementInfo(apu, apv, pub_info, priv_info)](#new_AgreementInfo_new)
-    * _instance_
-        * [.apu()](#AgreementInfo+apu) ⇒ <code>Uint8Array</code>
-        * [.apv()](#AgreementInfo+apv) ⇒ <code>Uint8Array</code>
-        * [.pubInfo()](#AgreementInfo+pubInfo) ⇒ <code>Uint8Array</code>
-        * [.privInfo()](#AgreementInfo+privInfo) ⇒ <code>Uint8Array</code>
-        * [.toJSON()](#AgreementInfo+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#AgreementInfo.fromJSON) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
-
-<a name="new_AgreementInfo_new"></a>
-
-### new AgreementInfo(apu, apv, pub_info, priv_info)
-Creates an `AgreementInfo` Object.
-
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| apu | <code>Uint8Array</code> | 
-| apv | <code>Uint8Array</code> | 
-| pub_info | <code>Uint8Array</code> | 
-| priv_info | <code>Uint8Array</code> | 
+| didUrl | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
 
-<a name="AgreementInfo+apu"></a>
+<a name="CoreDocument+resolveService"></a>
 
-### agreementInfo.apu() ⇒ <code>Uint8Array</code>
-Returns a copy of `apu'
+### coreDocument.resolveService(query) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
+Returns the first [CoreService](#CoreService) with an `id` property matching the provided `query`,
+if present.
 
-**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
-<a name="AgreementInfo+apv"></a>
-
-### agreementInfo.apv() ⇒ <code>Uint8Array</code>
-Returns a copy of `apv'
-
-**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
-<a name="AgreementInfo+pubInfo"></a>
-
-### agreementInfo.pubInfo() ⇒ <code>Uint8Array</code>
-Returns a copy of `pubInfo'
-
-**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
-<a name="AgreementInfo+privInfo"></a>
-
-### agreementInfo.privInfo() ⇒ <code>Uint8Array</code>
-Returns a copy of `privInfo'
-
-**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
-<a name="AgreementInfo+toJSON"></a>
-
-### agreementInfo.toJSON() ⇒ <code>any</code>
-Serializes `AgreementInfo` as a JSON object.
-
-**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
-<a name="AgreementInfo.fromJSON"></a>
-
-### AgreementInfo.fromJSON(json_value) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
-Deserializes `AgreementInfo` from a JSON object.
-
-**Kind**: static method of [<code>AgreementInfo</code>](#AgreementInfo)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| query | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
 
-<a name="AutoSave"></a>
+<a name="CoreDocument+methods"></a>
 
-## AutoSave
-**Kind**: global class  
+### coreDocument.methods(scope) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
+Returns a list of all [CoreVerificationMethod](#CoreVerificationMethod) in the DID Document,
+whose verification relationship matches `scope`.
 
-* [AutoSave](#AutoSave)
-    * _instance_
-        * [.toJSON()](#AutoSave+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
-        * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
-        * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
-        * [.fromJSON(json_value)](#AutoSave.fromJSON) ⇒ [<code>AutoSave</code>](#AutoSave)
+If `scope` is not set, a list over the **embedded** methods is returned.
 
-<a name="AutoSave+toJSON"></a>
-
-### autoSave.toJSON() ⇒ <code>any</code>
-Serializes `AutoSave` as a JSON object.
-
-**Kind**: instance method of [<code>AutoSave</code>](#AutoSave)  
-<a name="AutoSave.never"></a>
-
-### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
-Never save.
-
-**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
-<a name="AutoSave.every"></a>
-
-### AutoSave.every() ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every action.
-
-**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
-<a name="AutoSave.batch"></a>
-
-### AutoSave.batch(number_of_actions) ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every N actions.
-
-**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| number_of_actions | <code>number</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
-<a name="AutoSave.fromJSON"></a>
+<a name="CoreDocument+verificationRelationships"></a>
 
-### AutoSave.fromJSON(json_value) ⇒ [<code>AutoSave</code>](#AutoSave)
-Deserializes `AutoSave` from a JSON object.
+### coreDocument.verificationRelationships() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+Returns an array of all verification relationships.
 
-**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+insertMethod"></a>
 
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
+### coreDocument.insertMethod(method, scope)
+Adds a new `method` to the document in the given `scope`.
 
-<a name="CekAlgorithm"></a>
-
-## CekAlgorithm
-Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).
-
-**Kind**: global class  
-
-* [CekAlgorithm](#CekAlgorithm)
-    * _instance_
-        * [.toJSON()](#CekAlgorithm+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.EcdhEs(agreement)](#CekAlgorithm.EcdhEs) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-        * [.EcdhEsA256Kw(agreement)](#CekAlgorithm.EcdhEsA256Kw) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-        * [.fromJSON(json_value)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-
-<a name="CekAlgorithm+toJSON"></a>
-
-### cekAlgorithm.toJSON() ⇒ <code>any</code>
-Serializes `CekAlgorithm` as a JSON object.
-
-**Kind**: instance method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
-<a name="CekAlgorithm.EcdhEs"></a>
-
-### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
-
-**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
+| method | [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
 
-<a name="CekAlgorithm.EcdhEsA256Kw"></a>
+<a name="CoreDocument+removeMethod"></a>
 
-### CekAlgorithm.EcdhEsA256Kw(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+### coreDocument.removeMethod(did)
+Removes all references to the specified Verification Method.
 
-**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
-
-| Param | Type |
-| --- | --- |
-| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
-
-<a name="CekAlgorithm.fromJSON"></a>
-
-### CekAlgorithm.fromJSON(json_value) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-Deserializes `CekAlgorithm` from a JSON object.
-
-**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| did | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
 
-<a name="ChainState"></a>
+<a name="CoreDocument+resolveMethod"></a>
 
-## ChainState
-**Kind**: global class  
+### coreDocument.resolveMethod(query, scope) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
+Returns a copy of the first verification method with an `id` property
+matching the provided `query` and the verification relationship
+specified by `scope`, if present.
 
-* [ChainState](#ChainState)
-    * _instance_
-        * [.toJSON()](#ChainState+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#ChainState.fromJSON) ⇒ [<code>ChainState</code>](#ChainState)
-
-<a name="ChainState+toJSON"></a>
-
-### chainState.toJSON() ⇒ <code>any</code>
-Serializes a `ChainState` object as a JSON object.
-
-**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
-<a name="ChainState.fromJSON"></a>
-
-### ChainState.fromJSON(json_value) ⇒ [<code>ChainState</code>](#ChainState)
-Deserializes a JSON object as `ChainState`.
-
-**Kind**: static method of [<code>ChainState</code>](#ChainState)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| query | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
-<a name="Client"></a>
+<a name="CoreDocument+attachMethodRelationship"></a>
 
-## Client
-**Kind**: global class  
+### coreDocument.attachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
+Attaches the relationship to the given method, if the method exists.
 
-* [Client](#Client)
-    * [new Client()](#new_Client_new)
-    * _instance_
-        * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
-        * [.publishDocument(document)](#Client+publishDocument) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-        * ~~[.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
-        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-        * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.isMessageIncluded(messageId)](#Client+isMessageIncluded) ⇒ <code>Promise.&lt;boolean&gt;</code>
-        * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
-        * ~~[.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
-    * _static_
-        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
 
-<a name="new_Client_new"></a>
-
-### new Client()
-Creates a new `Client` with default settings.
-
-<a name="Client+network"></a>
-
-### client.network() ⇒ [<code>Network</code>](#Network)
-Returns the `Client` Tangle network.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
-<a name="Client+publishDocument"></a>
-
-### client.publishDocument(document) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-Publishes a [Document](#Document) to the Tangle.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| document | [<code>Document</code>](#Document) | 
+| didUrl | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
+| relationship | <code>number</code> | 
 
-<a name="Client+publishDiff"></a>
+<a name="CoreDocument+detachMethodRelationship"></a>
 
-### ~~client.publishDiff(message_id, diff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
-***Deprecated***
+### coreDocument.detachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
+Detaches the given relationship from the given method, if the method exists.
 
-Publishes a `DiffMessage` to the Tangle.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-| diff | [<code>DiffMessage</code>](#DiffMessage) | 
-
-<a name="Client+publishJSON"></a>
-
-### client.publishJSON(index, data) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-Publishes arbitrary JSON data to the specified index on the Tangle.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| index | <code>string</code> | 
+| didUrl | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
+| relationship | <code>number</code> | 
+
+<a name="CoreDocument+verifyData"></a>
+
+### coreDocument.verifyData(data, options) ⇒ <code>boolean</code>
+Verifies the authenticity of `data` using the target verification method.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
 | data | <code>any</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
-<a name="Client+publishJsonWithRetry"></a>
+<a name="CoreDocument+revokeCredentials"></a>
 
-### client.publishJsonWithRetry(index, data, interval, max_attempts) ⇒ <code>Promise.&lt;any&gt;</code>
-Publishes arbitrary JSON data to the specified index on the Tangle.
-Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
-Default interval is 5 seconds and max attempts is 40.
+### coreDocument.revokeCredentials(serviceQuery, indices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+revoke all specified `indices`.
 
-**Kind**: instance method of [<code>Client</code>](#Client)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| index | <code>string</code> | 
+| serviceQuery | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="CoreDocument+unrevokeCredentials"></a>
+
+### coreDocument.unrevokeCredentials(serviceQuery, indices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+unrevoke all specified `indices`.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| serviceQuery | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="CoreDocument+signData"></a>
+
+### coreDocument.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
+Creates a signature for the given `data` with the specified DID Document
+Verification Method.
+
+NOTE: use `signSelf` or `signDocument` for DID Documents.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
 | data | <code>any</code> | 
-| interval | <code>number</code> \| <code>undefined</code> | 
-| max_attempts | <code>number</code> \| <code>undefined</code> | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
-<a name="Client+isMessageIncluded"></a>
+<a name="CoreDocument+toJSON"></a>
 
-### client.isMessageIncluded(messageId) ⇒ <code>Promise.&lt;boolean&gt;</code>
-Checks if a message is confirmed by a milestone.
+### coreDocument.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
 
-**Kind**: instance method of [<code>Client</code>](#Client)  
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+clone"></a>
 
-| Param | Type |
-| --- | --- |
-| messageId | <code>string</code> | 
+### coreDocument.clone() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+Deep clones the object.
 
-<a name="Client+resolve"></a>
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument.fromJSON"></a>
 
-### client.resolve(did) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-Fetch the DID document specified by the given `DID`.
+### CoreDocument.fromJSON(json) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+Deserializes an instance from a JSON object.
 
-**Kind**: instance method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
-
-<a name="Client+resolveHistory"></a>
-
-### client.resolveHistory(did) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
-Returns the message history of the given DID.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
+**Kind**: static method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+| json | <code>any</code> | 
 
-<a name="Client+resolveDiffHistory"></a>
+<a name="CoreService"></a>
 
-### ~~client.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
-***Deprecated***
+## CoreService
+A DID Document Service used to enable trusted interactions associated with a DID subject.
 
-Returns the `DiffChainHistory` of a diff chain starting from a document on the
-integration chain.
+**Kind**: global class  
 
-NOTE: the document must have been published to the tangle and have a valid message id and
-capability invocation method.
+* [CoreService](#CoreService)
+    * [new CoreService(service)](#new_CoreService_new)
+    * _instance_
+        * [.id()](#CoreService+id) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.type()](#CoreService+type) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.serviceEndpoint()](#CoreService+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+        * [.properties()](#CoreService+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#CoreService+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CoreService+clone) ⇒ [<code>CoreService</code>](#CoreService)
+    * _static_
+        * [.fromJSON(json)](#CoreService.fromJSON) ⇒ [<code>CoreService</code>](#CoreService)
 
-**Kind**: instance method of [<code>Client</code>](#Client)  
+<a name="new_CoreService_new"></a>
+
+### new CoreService(service)
 
 | Param | Type |
 | --- | --- |
-| document | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| service | <code>ICoreService</code> | 
 
-<a name="Client.fromConfig"></a>
+<a name="CoreService+id"></a>
 
-### Client.fromConfig(config) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
-Creates a new `Client` with the given settings.
+### coreService.id() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Returns a copy of the `CoreService` id.
 
-**Kind**: static method of [<code>Client</code>](#Client)  
+**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
+<a name="CoreService+type"></a>
+
+### coreService.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the `CoreService` type.
+
+**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
+<a name="CoreService+serviceEndpoint"></a>
+
+### coreService.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Returns a copy of the `CoreService` endpoint.
+
+**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
+<a name="CoreService+properties"></a>
+
+### coreService.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom properties on the `CoreService`.
+
+**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
+<a name="CoreService+toJSON"></a>
+
+### coreService.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
+<a name="CoreService+clone"></a>
+
+### coreService.clone() ⇒ [<code>CoreService</code>](#CoreService)
+Deep clones the object.
+
+**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
+<a name="CoreService.fromJSON"></a>
+
+### CoreService.fromJSON(json) ⇒ [<code>CoreService</code>](#CoreService)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>CoreService</code>](#CoreService)  
 
 | Param | Type |
 | --- | --- |
-| config | <code>IClientConfig</code> | 
+| json | <code>any</code> | 
+
+<a name="CoreVerificationMethod"></a>
+
+## CoreVerificationMethod
+A DID Document Verification Method.
+
+**Kind**: global class  
+
+* [CoreVerificationMethod](#CoreVerificationMethod)
+    * [new CoreVerificationMethod(did, keyType, publicKey, fragment)](#new_CoreVerificationMethod_new)
+    * _instance_
+        * [.id()](#CoreVerificationMethod+id) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.setId(id)](#CoreVerificationMethod+setId)
+        * [.controller()](#CoreVerificationMethod+controller) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.setController(did)](#CoreVerificationMethod+setController)
+        * [.type()](#CoreVerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.setType(type_)](#CoreVerificationMethod+setType)
+        * [.data()](#CoreVerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.setData(data)](#CoreVerificationMethod+setData)
+        * [.properties()](#CoreVerificationMethod+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#CoreVerificationMethod+setPropertyUnchecked)
+        * [.toJSON()](#CoreVerificationMethod+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CoreVerificationMethod+clone) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
+    * _static_
+        * [.fromJSON(json)](#CoreVerificationMethod.fromJSON) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
+
+<a name="new_CoreVerificationMethod_new"></a>
+
+### new CoreVerificationMethod(did, keyType, publicKey, fragment)
+Creates a new `CoreVerificationMethod` from the given `did` and public key.
+
+
+| Param | Type |
+| --- | --- |
+| did | [<code>CoreDID</code>](#CoreDID) | 
+| keyType | <code>number</code> | 
+| publicKey | <code>Uint8Array</code> | 
+| fragment | <code>string</code> | 
+
+<a name="CoreVerificationMethod+id"></a>
+
+### coreVerificationMethod.id() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+Returns a copy of the `CoreDIDUrl` of the `CoreVerificationMethod`'s `id`.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+<a name="CoreVerificationMethod+setId"></a>
+
+### coreVerificationMethod.setId(id)
+Sets the id of the `CoreVerificationMethod`.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| id | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
+
+<a name="CoreVerificationMethod+controller"></a>
+
+### coreVerificationMethod.controller() ⇒ [<code>CoreDID</code>](#CoreDID)
+Returns a copy of the `controller` `DID` of the `CoreVerificationMethod`.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+<a name="CoreVerificationMethod+setController"></a>
+
+### coreVerificationMethod.setController(did)
+Sets the `controller` `DID` of the `CoreVerificationMethod` object.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>CoreDID</code>](#CoreDID) | 
+
+<a name="CoreVerificationMethod+type"></a>
+
+### coreVerificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
+Returns a copy of the `CoreVerificationMethod` type.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+<a name="CoreVerificationMethod+setType"></a>
+
+### coreVerificationMethod.setType(type_)
+Sets the `CoreVerificationMethod` type.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| type_ | [<code>MethodType</code>](#MethodType) | 
+
+<a name="CoreVerificationMethod+data"></a>
+
+### coreVerificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
+Returns a copy of the `CoreVerificationMethod` public key data.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+<a name="CoreVerificationMethod+setData"></a>
+
+### coreVerificationMethod.setData(data)
+Sets `CoreVerificationMethod` public key data.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| data | [<code>MethodData</code>](#MethodData) | 
+
+<a name="CoreVerificationMethod+properties"></a>
+
+### coreVerificationMethod.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Get custom properties of the Verification Method.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+<a name="CoreVerificationMethod+setPropertyUnchecked"></a>
+
+### coreVerificationMethod.setPropertyUnchecked(key, value)
+Adds a custom property to the Verification Method.
+If the value is set to `null`, the custom property will be removed.
+
+### WARNING
+This method can overwrite existing properties like `id` and result
+in an invalid Verification Method.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="CoreVerificationMethod+toJSON"></a>
+
+### coreVerificationMethod.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+<a name="CoreVerificationMethod+clone"></a>
+
+### coreVerificationMethod.clone() ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
+Deep clones the object.
+
+**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+<a name="CoreVerificationMethod.fromJSON"></a>
+
+### CoreVerificationMethod.fromJSON(json) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="Credential"></a>
 
@@ -1074,7 +1217,7 @@ Returns a copy of the miscellaneous properties on the `Credential`.
 <a name="Credential+toJSON"></a>
 
 ### credential.toJSON() ⇒ <code>any</code>
-Serializes a `Credential` to a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+clone"></a>
@@ -1098,7 +1241,7 @@ Returns the base type.
 <a name="Credential.fromJSON"></a>
 
 ### Credential.fromJSON(json) ⇒ [<code>Credential</code>](#Credential)
-Deserializes a `Credential` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Credential</code>](#Credential)  
 
@@ -1137,7 +1280,7 @@ Throws an error if any of the options are invalid.
 <a name="CredentialValidationOptions+toJSON"></a>
 
 ### credentialValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes a `CredentialValidationOptions` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 <a name="CredentialValidationOptions+clone"></a>
@@ -1155,7 +1298,7 @@ Creates a new `CredentialValidationOptions` with defaults.
 <a name="CredentialValidationOptions.fromJSON"></a>
 
 ### CredentialValidationOptions.fromJSON(json) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Deserializes a `CredentialValidationOptions` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 
@@ -1173,9 +1316,10 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
     * [.checkStructure(credential)](#CredentialValidator.checkStructure)
     * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
     * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
-    * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
-    * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
+    * [.verifySignature(credential, trustedIssuers, options)](#CredentialValidator.verifySignature)
+    * [.checkSubjectHolderRelationship(credential, holder, relationship)](#CredentialValidator.checkSubjectHolderRelationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
+    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1210,7 +1354,7 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| issuer | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
 | options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -1254,7 +1398,7 @@ Validate that the credential is issued on or before the specified timestamp.
 
 <a name="CredentialValidator.verifySignature"></a>
 
-### CredentialValidator.verifySignature(credential, trusted_issuers, options)
+### CredentialValidator.verifySignature(credential, trustedIssuers, options)
 Verify the signature using the DID Document of a trusted issuer.
 
 # Warning
@@ -1269,21 +1413,21 @@ to verify the credential's signature will be made and an error is returned upon 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trusted_issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| trustedIssuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
-<a name="CredentialValidator.check_subject_holder_relationship"></a>
+<a name="CredentialValidator.checkSubjectHolderRelationship"></a>
 
-### CredentialValidator.check\_subject\_holder\_relationship(credential, holder_url, relationship)
+### CredentialValidator.checkSubjectHolderRelationship(credential, holder, relationship)
 Validate that the relationship between the `holder` and the credential subjects is in accordance with
-`relationship`. The `holder_url` parameter is expected to be the URL of the holder.
+`relationship`. The `holder` parameter is expected to be the URL of the holder.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| holder_url | <code>string</code> | 
+| holder | <code>string</code> | 
 | relationship | <code>number</code> | 
 
 <a name="CredentialValidator.checkStatus"></a>
@@ -1298,1176 +1442,24 @@ Only supports `BitmapRevocation2022`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| trustedIssuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
 | statusCheck | <code>number</code> | 
 
-<a name="DID"></a>
+<a name="CredentialValidator.extractIssuer"></a>
 
-## DID
-**Kind**: global class  
+### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+Utility for extracting the issuer field of a `Credential` as a DID.
 
-* [DID](#DID)
-    * [new DID(public_key, network)](#new_DID_new)
-    * _instance_
-        * [.networkName](#DID+networkName) ⇒ <code>string</code>
-        * [.network()](#DID+network) ⇒ [<code>Network</code>](#Network)
-        * [.tag()](#DID+tag) ⇒ <code>string</code>
-        * [.join(segment)](#DID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.toUrl()](#DID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.toString()](#DID+toString) ⇒ <code>string</code>
-        * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
-        * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
-    * _static_
-        * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
-        * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
+### Errors
 
-<a name="new_DID_new"></a>
+Fails if the issuer field is not a valid DID.
 
-### new DID(public_key, network)
-Creates a new `DID` from a public key.
-
-
-| Param | Type |
-| --- | --- |
-| public_key | <code>Uint8Array</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
-<a name="DID+networkName"></a>
-
-### did.networkName ⇒ <code>string</code>
-Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)  
-<a name="DID+network"></a>
-
-### did.network() ⇒ [<code>Network</code>](#Network)
-Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+tag"></a>
-
-### did.tag() ⇒ <code>string</code>
-Returns a copy of the unique tag of the `DID`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+join"></a>
-
-### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Construct a new `DIDUrl` by joining with a relative DID Url string.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| segment | <code>string</code> | 
-
-<a name="DID+toUrl"></a>
-
-### did.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Clones the `DID` into a `DIDUrl`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+intoUrl"></a>
-
-### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Converts the `DID` into a `DIDUrl`.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+toString"></a>
-
-### did.toString() ⇒ <code>string</code>
-Returns the `DID` as a string.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+toJSON"></a>
-
-### did.toJSON() ⇒ <code>any</code>
-Serializes a `DID` as a JSON object.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID+clone"></a>
-
-### did.clone() ⇒ [<code>DID</code>](#DID)
-Deep clones the object.
-
-**Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID.parse"></a>
-
-### DID.parse(input) ⇒ [<code>DID</code>](#DID)
-Parses a `DID` from the input string.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="DID.fromJSON"></a>
-
-### DID.fromJSON(json_value) ⇒ [<code>DID</code>](#DID)
-Deserializes a JSON object as `DID`.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
-<a name="DIDUrl"></a>
-
-## DIDUrl
-**Kind**: global class  
-
-* [DIDUrl](#DIDUrl)
-    * _instance_
-        * [.did()](#DIDUrl+did) ⇒ [<code>DID</code>](#DID)
-        * [.urlStr()](#DIDUrl+urlStr) ⇒ <code>string</code>
-        * [.fragment()](#DIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setFragment(value)](#DIDUrl+setFragment)
-        * [.path()](#DIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setPath(value)](#DIDUrl+setPath)
-        * [.query()](#DIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setQuery(value)](#DIDUrl+setQuery)
-        * [.join(segment)](#DIDUrl+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.toString()](#DIDUrl+toString) ⇒ <code>string</code>
-        * [.toJSON()](#DIDUrl+toJSON) ⇒ <code>any</code>
-        * [.clone()](#DIDUrl+clone) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-    * _static_
-        * [.parse(input)](#DIDUrl.parse) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-
-<a name="DIDUrl+did"></a>
-
-### didUrl.did() ⇒ [<code>DID</code>](#DID)
-Return a copy of the `DID` section of the `DIDUrl`.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl+urlStr"></a>
-
-### didUrl.urlStr() ⇒ <code>string</code>
-Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl+fragment"></a>
-
-### didUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `DIDUrl` method fragment, if any. Excludes the leading '#'.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl+setFragment"></a>
-
-### didUrl.setFragment(value)
-Sets the `fragment` component of the `DIDUrl`.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="DIDUrl+path"></a>
-
-### didUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `DIDUrl` path.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl+setPath"></a>
-
-### didUrl.setPath(value)
-Sets the `path` component of the `DIDUrl`.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="DIDUrl+query"></a>
-
-### didUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `DIDUrl` method query, if any. Excludes the leading '?'.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl+setQuery"></a>
-
-### didUrl.setQuery(value)
-Sets the `query` component of the `DIDUrl`.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="DIDUrl+join"></a>
-
-### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
-
-Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
-segment and any following segments in order of path, query, then fragment.
-
-I.e.
-- joining a path will clear the query and fragment.
-- joining a query will clear the fragment.
-- joining a fragment will only overwrite the fragment.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| segment | <code>string</code> | 
-
-<a name="DIDUrl+toString"></a>
-
-### didUrl.toString() ⇒ <code>string</code>
-Returns the `DIDUrl` as a string.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl+toJSON"></a>
-
-### didUrl.toJSON() ⇒ <code>any</code>
-Serializes a `DIDUrl` as a JSON object.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl+clone"></a>
-
-### didUrl.clone() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Deep clones the object.
-
-**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
-<a name="DIDUrl.parse"></a>
-
-### DIDUrl.parse(input) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Parses a `DIDUrl` from the input string.
-
-**Kind**: static method of [<code>DIDUrl</code>](#DIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="DiffChainHistory"></a>
-
-## ~~DiffChainHistory~~
-***Deprecated***
-
-**Kind**: global class  
-
-* ~~[DiffChainHistory](#DiffChainHistory)~~
-    * _instance_
-        * [.chainData()](#DiffChainHistory+chainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
-        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.toJSON()](#DiffChainHistory+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json)](#DiffChainHistory.fromJSON) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
-
-<a name="DiffChainHistory+chainData"></a>
-
-### diffChainHistory.chainData() ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
-Returns an `Array` of the diff chain `DiffMessages`.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
-<a name="DiffChainHistory+spam"></a>
-
-### diffChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
-Returns an `Array` of `MessageIds` as strings.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
-<a name="DiffChainHistory+toJSON"></a>
-
-### diffChainHistory.toJSON() ⇒ <code>any</code>
-Serializes as a JSON object.
-
-**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
-<a name="DiffChainHistory.fromJSON"></a>
-
-### DiffChainHistory.fromJSON(json) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
-Deserializes from a JSON object.
-
-**Kind**: static method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="DiffMessage"></a>
-
-## ~~DiffMessage~~
-***Deprecated***
-
-Defines the difference between two DID `Document`s' JSON representations.
-
-**Kind**: global class  
-
-* ~~[DiffMessage](#DiffMessage)~~
-    * _instance_
-        * ~~[.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)~~
-        * ~~[.did()](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)~~
-        * ~~[.diff()](#DiffMessage+diff) ⇒ <code>string</code>~~
-        * ~~[.messageId()](#DiffMessage+messageId) ⇒ <code>string</code>~~
-        * ~~[.setMessageId(message_id)](#DiffMessage+setMessageId)~~
-        * ~~[.previousMessageId()](#DiffMessage+previousMessageId) ⇒ <code>string</code>~~
-        * ~~[.setPreviousMessageId(message_id)](#DiffMessage+setPreviousMessageId)~~
-        * ~~[.proof()](#DiffMessage+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>~~
-        * ~~[.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)~~
-        * ~~[.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>~~
-        * [.clone()](#DiffMessage+clone) ⇒ [<code>DiffMessage</code>](#DiffMessage)
-    * _static_
-        * ~~[.fromJSON(json)](#DiffMessage.fromJSON) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
-
-<a name="DiffMessage+id"></a>
-
-### ~~diffMessage.id() ⇒ [<code>DID</code>](#DID)~~
-***Deprecated***
-
-Returns the DID of the associated DID Document.
-
-NOTE: clones the data.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+did"></a>
-
-### ~~diffMessage.did() ⇒ [<code>DID</code>](#DID)~~
-***Deprecated***
-
-Returns a copy of the DID of the associated DID Document.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+diff"></a>
-
-### ~~diffMessage.diff() ⇒ <code>string</code>~~
-***Deprecated***
-
-Returns a copy of the raw contents of the DID Document diff as a JSON string.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+messageId"></a>
-
-### ~~diffMessage.messageId() ⇒ <code>string</code>~~
-***Deprecated***
-
-Returns a copy of the message_id of the DID Document diff.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+setMessageId"></a>
-
-### ~~diffMessage.setMessageId(message_id)~~
-***Deprecated***
-
-Sets the message_id of the DID Document diff.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
-<a name="DiffMessage+previousMessageId"></a>
-
-### ~~diffMessage.previousMessageId() ⇒ <code>string</code>~~
-***Deprecated***
-
-Returns a copy of the Tangle message id of the previous DID Document diff.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+setPreviousMessageId"></a>
-
-### ~~diffMessage.setPreviousMessageId(message_id)~~
-***Deprecated***
-
-Sets the Tangle message id of the previous DID Document diff.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
-<a name="DiffMessage+proof"></a>
-
-### ~~diffMessage.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>~~
-***Deprecated***
-
-Returns a copy of the proof.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+merge"></a>
-
-### ~~diffMessage.merge(document) ⇒ [<code>Document</code>](#Document)~~
-***Deprecated***
-
-Returns a new DID Document which is the result of merging `self`
-with the given Document.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-
-| Param | Type |
-| --- | --- |
-| document | [<code>Document</code>](#Document) | 
-
-<a name="DiffMessage+toJSON"></a>
-
-### ~~diffMessage.toJSON() ⇒ <code>any</code>~~
-***Deprecated***
-
-Serializes a `DiffMessage` as a JSON object.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+clone"></a>
-
-### diffMessage.clone() ⇒ [<code>DiffMessage</code>](#DiffMessage)
-Deep clones the object.
-
-**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage.fromJSON"></a>
-
-### ~~DiffMessage.fromJSON(json) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
-***Deprecated***
-
-Deserializes a `DiffMessage` from a JSON object.
-
-**Kind**: static method of [<code>DiffMessage</code>](#DiffMessage)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="Document"></a>
-
-## Document
-**Kind**: global class  
-
-* [Document](#Document)
-    * [new Document(keypair, network, fragment)](#new_Document_new)
-    * _instance_
-        * [.id()](#Document+id) ⇒ [<code>DID</code>](#DID)
-        * [.setController(controllers)](#Document+setController)
-        * [.controller()](#Document+controller) ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
-        * [.setAlsoKnownAs(urls)](#Document+setAlsoKnownAs)
-        * [.alsoKnownAs()](#Document+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.setPropertyUnchecked(key, value)](#Document+setPropertyUnchecked)
-        * [.properties()](#Document+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
-        * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
-        * [.removeService(did)](#Document+removeService) ⇒ <code>boolean</code>
-        * [.methods()](#Document+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
-        * [.insertMethod(method, scope)](#Document+insertMethod)
-        * [.removeMethod(did)](#Document+removeMethod)
-        * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
-        * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
-        * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.signSelf(key_pair, method_query)](#Document+signSelf)
-        * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
-        * [.signCredential(credential, privateKey, methodQuery, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
-        * [.signPresentation(presentation, privateKey, methodQuery, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
-        * [.signData(data, privateKey, methodQuery, options)](#Document+signData) ⇒ <code>any</code>
-        * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.verifyDocument(signed)](#Document+verifyDocument)
-        * ~~[.diff(other, message_id, key, method_query)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
-        * ~~[.verifyDiff(diff)](#Document+verifyDiff)~~
-        * ~~[.mergeDiff(diff)](#Document+mergeDiff)~~
-        * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
-        * [.metadata()](#Document+metadata) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
-        * [.metadataCreated()](#Document+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-        * [.setMetadataCreated(timestamp)](#Document+setMetadataCreated)
-        * [.metadataUpdated()](#Document+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-        * [.setMetadataUpdated(timestamp)](#Document+setMetadataUpdated)
-        * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
-        * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
-        * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.revokeCredentials(fragment, credentialIndices)](#Document+revokeCredentials)
-        * [.unrevokeCredentials(fragment, credentialIndices)](#Document+unrevokeCredentials)
-        * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
-    * _static_
-        * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
-        * [.isSigningMethodType(method_type)](#Document.isSigningMethodType) ⇒ <code>boolean</code>
-        * [.verifyRootDocument(document)](#Document.verifyRootDocument)
-        * ~~[.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>~~
-        * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
-
-<a name="new_Document_new"></a>
-
-### new Document(keypair, network, fragment)
-Creates a new DID Document from the given `KeyPair`, network, and verification method
-fragment name.
-
-The DID Document will be pre-populated with a single verification method
-derived from the provided `KeyPair` embedded as a capability invocation
-verification relationship. This method will have the DID URL fragment
-`#sign-0` by default and can be easily retrieved with `Document::defaultSigningMethod`.
-
-NOTE: the generated document is unsigned, see `Document::signSelf`.
-
-Arguments:
-
-* keypair: the initial verification method is derived from the public key with this keypair.
-* network: Tangle network to use for the DID, default `Network::mainnet`.
-* fragment: name of the initial verification method, default "sign-0".
-
-
-| Param | Type |
-| --- | --- |
-| keypair | [<code>KeyPair</code>](#KeyPair) | 
-| network | <code>string</code> \| <code>undefined</code> | 
-| fragment | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Document+id"></a>
-
-### document.id() ⇒ [<code>DID</code>](#DID)
-Returns a copy of the DID Document `id`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+setController"></a>
-
-### document.setController(controllers)
-Sets the controllers of the DID Document.
-
-Note: Duplicates will be ignored.
-Use `null` to remove all controllers.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| controllers | [<code>DID</code>](#DID) \| [<code>Array.&lt;DID&gt;</code>](#DID) \| <code>null</code> | 
-
-<a name="Document+controller"></a>
-
-### document.controller() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
-Returns a list of document controllers.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+setAlsoKnownAs"></a>
-
-### document.setAlsoKnownAs(urls)
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
-
-<a name="Document+alsoKnownAs"></a>
-
-### document.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a set of the document's `alsoKnownAs`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+setPropertyUnchecked"></a>
-
-### document.setPropertyUnchecked(key, value)
-Adds a custom property to the DID Document.
-If the value is set to `null`, the custom property will be removed.
-
-### WARNING
-This method can overwrite existing properties like `id` and result in an invalid document.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| key | <code>string</code> | 
-| value | <code>any</code> | 
-
-<a name="Document+properties"></a>
-
-### document.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the custom DID Document properties.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+service"></a>
-
-### document.service() ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
-Return a set of all [Services](#Service) in the document.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+insertService"></a>
-
-### document.insertService(service) ⇒ <code>boolean</code>
-Add a new [Service](#Service) to the document.
-
-Returns `true` if the service was added.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| service | [<code>Service</code>](#Service) | 
-
-<a name="Document+removeService"></a>
-
-### document.removeService(did) ⇒ <code>boolean</code>
-Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
-
-Returns `true` if a service was removed.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DIDUrl</code>](#DIDUrl) | 
-
-<a name="Document+methods"></a>
-
-### document.methods() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
-Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Document.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+insertMethod"></a>
-
-### document.insertMethod(method, scope)
-Adds a new Verification Method to the DID Document.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
-| scope | [<code>MethodScope</code>](#MethodScope) | 
-
-<a name="Document+removeMethod"></a>
-
-### document.removeMethod(did)
-Removes all references to the specified Verification Method.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DIDUrl</code>](#DIDUrl) | 
-
-<a name="Document+defaultSigningMethod"></a>
-
-### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns a copy of the first `VerificationMethod` with a capability invocation relationship
-capable of signing this DID document.
-
-Throws an error if no signing method is present.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+resolveMethod"></a>
-
-### document.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
-Returns a copy of the first `VerificationMethod` with an `id` property
-matching the provided `query`.
-
-Throws an error if the method is not found.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
-
-<a name="Document+resolveSigningMethod"></a>
-
-### document.resolveSigningMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Attempts to resolve the given method query into a method capable of signing a document update.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-
-<a name="Document+attachMethodRelationship"></a>
-
-### document.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
-Attaches the relationship to the given method, if the method exists.
-
-Note: The method needs to be in the set of verification methods,
-so it cannot be an embedded one.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | <code>number</code> | 
-
-<a name="Document+detachMethodRelationship"></a>
-
-### document.detachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | <code>number</code> | 
-
-<a name="Document+signSelf"></a>
-
-### document.signSelf(key_pair, method_query)
-Signs the DID document with the verification method specified by `method_query`.
-The `method_query` may be the full `DIDUrl` of the method or just its fragment,
-e.g. "#sign-0".
-
-NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-verification method. See `Document::verifySelfSigned`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| key_pair | [<code>KeyPair</code>](#KeyPair) | 
-| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-
-<a name="Document+signDocument"></a>
-
-### document.signDocument(document, key_pair, method_query)
-Signs another DID document using the verification method specified by `method_query`.
-The `method_query` may be the full `DIDUrl` of the method or just its fragment,
-e.g. "#sign-0".
-
-`Document.signSelf` should be used in general, this throws an error if trying to operate
-on the same document. This is intended for signing updates to a document where a sole
-capability invocation method is rotated or replaced entirely.
-
-NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-verification method. See [Document.verifyDocument](Document.verifyDocument).
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| document | [<code>Document</code>](#Document) | 
-| key_pair | [<code>KeyPair</code>](#KeyPair) | 
-| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-
-<a name="Document+signCredential"></a>
-
-### document.signCredential(credential, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
-Creates a signature for the given `Credential` with the specified DID Document
-Verification Method.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
-<a name="Document+signPresentation"></a>
-
-### document.signPresentation(presentation, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
-Creates a signature for the given `Presentation` with the specified DID Document
-Verification Method.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="Document+signData"></a>
-
-### document.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
-Creates a signature for the given `data` with the specified DID Document
-Verification Method.
-
-NOTE: use `signSelf` or `signDocument` for DID Documents.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="Document+verifyData"></a>
-
-### document.verifyData(data, options) ⇒ <code>boolean</code>
-Verifies the authenticity of `data` using the target verification method.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
-<a name="Document+verifyDocument"></a>
-
-### document.verifyDocument(signed)
-Verifies that the signature on the DID document `signed` was generated by a valid method from
-this DID document.
-
-# Errors
-
-Fails if:
-- The signature proof section is missing in the `signed` document.
-- The method is not found in this document.
-- An unsupported verification method is used.
-- The signature verification operation fails.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| signed | [<code>Document</code>](#Document) | 
-
-<a name="Document+diff"></a>
-
-### ~~document.diff(other, message_id, key, method_query) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
-***Deprecated***
-
-Generate a `DiffMessage` between two DID Documents and sign it using the specified
-`key` and `method`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| other | [<code>Document</code>](#Document) | 
-| message_id | <code>string</code> | 
-| key | [<code>KeyPair</code>](#KeyPair) | 
-| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-
-<a name="Document+verifyDiff"></a>
-
-### ~~document.verifyDiff(diff)~~
-***Deprecated***
-
-Verifies the signature of the `diff` was created using a capability invocation method
-in this DID Document.
-
-# Errors
-
-Fails if an unsupported verification method is used or the verification operation fails.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| diff | [<code>DiffMessage</code>](#DiffMessage) | 
-
-<a name="Document+mergeDiff"></a>
-
-### ~~document.mergeDiff(diff)~~
-***Deprecated***
-
-Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| diff | [<code>DiffMessage</code>](#DiffMessage) | 
-
-<a name="Document+integrationIndex"></a>
-
-### document.integrationIndex() ⇒ <code>string</code>
-Returns the Tangle index of the integration chain for this DID.
-
-This is simply the tag segment of the `DID`.
-E.g.
-For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
-`doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+metadata"></a>
-
-### document.metadata() ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
-Returns a copy of the metadata associated with this document.
-
-NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
-`metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+metadataCreated"></a>
-
-### document.metadataCreated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-Returns a copy of the timestamp of when the DID document was created.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+setMetadataCreated"></a>
-
-### document.setMetadataCreated(timestamp)
-Sets the timestamp of when the DID document was created.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
-
-<a name="Document+metadataUpdated"></a>
-
-### document.metadataUpdated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-Returns a copy of the timestamp of the last DID document update.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+setMetadataUpdated"></a>
-
-### document.setMetadataUpdated(timestamp)
-Sets the timestamp of the last DID document update.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
-
-<a name="Document+metadataPreviousMessageId"></a>
-
-### document.metadataPreviousMessageId() ⇒ <code>string</code>
-Returns a copy of the previous integration chain message id.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+setMetadataPreviousMessageId"></a>
-
-### document.setMetadataPreviousMessageId(value)
-Sets the previous integration chain message id.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Document+proof"></a>
-
-### document.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-Returns a copy of the proof.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+revokeCredentials"></a>
-
-### document.revokeCredentials(fragment, credentialIndices)
-If the document has a `RevocationBitmap` service identified by `fragment`,
-revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
-
-<a name="Document+unrevokeCredentials"></a>
-
-### document.unrevokeCredentials(fragment, credentialIndices)
-If the document has a `RevocationBitmap` service identified by `fragment`,
-unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
-
-<a name="Document+toJSON"></a>
-
-### document.toJSON() ⇒ <code>any</code>
-Serializes a `Document` as a JSON object.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+clone"></a>
-
-### document.clone() ⇒ [<code>Document</code>](#Document)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document.fromVerificationMethod"></a>
-
-### Document.fromVerificationMethod(method) ⇒ [<code>Document</code>](#Document)
-Creates a new DID Document from the given `VerificationMethod`.
-
-NOTE: the generated document is unsigned, see `Document::signSelf`.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
-
-<a name="Document.isSigningMethodType"></a>
-
-### Document.isSigningMethodType(method_type) ⇒ <code>boolean</code>
-Returns whether the given [MethodType](#MethodType) can be used to sign document updates.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| method_type | [<code>MethodType</code>](#MethodType) | 
-
-<a name="Document.verifyRootDocument"></a>
-
-### Document.verifyRootDocument(document)
-Verifies whether `document` is a valid root DID document according to the IOTA DID method
-specification.
-
-It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
-the DID tag.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| document | [<code>Document</code>](#Document) | 
-
-<a name="Document.diffIndex"></a>
-
-### ~~Document.diffIndex(message_id) ⇒ <code>string</code>~~
-***Deprecated***
-
-Returns the Tangle index of the DID diff chain. This should only be called on documents
-published on the integration chain.
-
-This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
-<a name="Document.fromJSON"></a>
-
-### Document.fromJSON(json) ⇒ [<code>Document</code>](#Document)
-Deserializes a `Document` from a JSON object.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="DocumentHistory"></a>
-
-## DocumentHistory
-A DID Document's history and current state.
-
-**Kind**: global class  
-
-* [DocumentHistory](#DocumentHistory)
-    * _instance_
-        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-        * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
-        * ~~[.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)~~
-        * ~~[.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>~~
-        * [.toJSON()](#DocumentHistory+toJSON) ⇒ <code>any</code>
-        * [.clone()](#DocumentHistory+clone) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-    * _static_
-        * [.fromJSON(json)](#DocumentHistory.fromJSON) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-
-<a name="DocumentHistory+integrationChainData"></a>
-
-### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-Returns an `Array` of integration chain `Documents`.
-
-NOTE: clones the data.
-
-**Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
-<a name="DocumentHistory+integrationChainSpam"></a>
-
-### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
-Returns an `Array` of message id strings for "spam" messages on the same index
-as the integration chain.
-
-NOTE: clones the data.
-
-**Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
-<a name="DocumentHistory+diffChainData"></a>
-
-### ~~documentHistory.diffChainData() ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)~~
-***Deprecated***
-
-Returns an `Array` of diff chain `DiffMessages`.
-
-NOTE: clones the data.
-
-**Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
-<a name="DocumentHistory+diffChainSpam"></a>
-
-### ~~documentHistory.diffChainSpam() ⇒ <code>Array.&lt;string&gt;</code>~~
-***Deprecated***
-
-Returns an `Array` of message id strings for "spam" messages on the same index
-as the diff chain.
-
-NOTE: clones the data.
-
-**Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
-<a name="DocumentHistory+toJSON"></a>
-
-### documentHistory.toJSON() ⇒ <code>any</code>
-Serializes `DocumentHistory` as a JSON object.
-
-**Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
-<a name="DocumentHistory+clone"></a>
-
-### documentHistory.clone() ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-Deep clones the object.
-
-**Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
-<a name="DocumentHistory.fromJSON"></a>
-
-### DocumentHistory.fromJSON(json) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-Deserializes `DocumentHistory` from a JSON object.
-
-**Kind**: static method of [<code>DocumentHistory</code>](#DocumentHistory)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="DocumentMetadata"></a>
-
-## DocumentMetadata
-Additional attributes related to an IOTA DID Document.
-
-**Kind**: global class  
-
-* [DocumentMetadata](#DocumentMetadata)
-    * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
-    * [.created()](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-    * [.updated()](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-    * [.clone()](#DocumentMetadata+clone) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
-
-<a name="DocumentMetadata+previousMessageId"></a>
-
-### documentMetadata.previousMessageId ⇒ <code>string</code>
-**Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
-<a name="DocumentMetadata+created"></a>
-
-### documentMetadata.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-Returns a copy of the timestamp of when the DID document was created.
-
-**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
-<a name="DocumentMetadata+updated"></a>
-
-### documentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-Returns a copy of the timestamp of the last DID document update.
-
-**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
-<a name="DocumentMetadata+clone"></a>
-
-### documentMetadata.clone() ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
-Deep clones the object.
-
-**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="Duration"></a>
 
 ## Duration
@@ -2489,7 +1481,7 @@ A span of time.
 <a name="Duration+toJSON"></a>
 
 ### duration.toJSON() ⇒ <code>any</code>
-Serializes a `Duration` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Duration</code>](#Duration)  
 <a name="Duration.seconds"></a>
@@ -2550,7 +1542,7 @@ Create a new `Duration` with the given number of weeks.
 <a name="Duration.fromJSON"></a>
 
 ### Duration.fromJSON(json) ⇒ [<code>Duration</code>](#Duration)
-Deserializes a `Duration` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -2593,7 +1585,7 @@ Length in bytes of an Ed25519 signature.
 ### Ed25519.sign(message, privateKey) ⇒ <code>Uint8Array</code>
 Computes an EdDSA signature using an Ed25519 private key.
 
-NOTE: this differs from [Document.signData](Document.signData) which uses JCS
+NOTE: this differs from [Document.signData](#Document+signData) which uses JCS
 to canonicalize JSON messages.
 
 The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
@@ -2611,7 +1603,7 @@ Other implementations often use another format. See [this blog post](https://blo
 ### Ed25519.verify(message, signature, publicKey)
 Verifies an EdDSA signature against an Ed25519 public key.
 
-NOTE: this differs from [Document.verifyData](Document.verifyData) which uses JCS
+NOTE: this differs from [Document.verifyData](#Document+verifyData) which uses JCS
 to canonicalize JSON messages.
 
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
@@ -2622,309 +1614,1235 @@ to canonicalize JSON messages.
 | signature | <code>Uint8Array</code> | 
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="EncryptedData"></a>
+<a name="IotaDID"></a>
 
-## EncryptedData
-The structure returned after encrypting data
-
-**Kind**: global class  
-
-* [EncryptedData](#EncryptedData)
-    * _instance_
-        * [.nonce()](#EncryptedData+nonce) ⇒ <code>Uint8Array</code>
-        * [.associatedData()](#EncryptedData+associatedData) ⇒ <code>Uint8Array</code>
-        * [.ciphertext()](#EncryptedData+ciphertext) ⇒ <code>Uint8Array</code>
-        * [.tag()](#EncryptedData+tag) ⇒ <code>Uint8Array</code>
-        * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#EncryptedData.fromJSON) ⇒ [<code>EncryptedData</code>](#EncryptedData)
-
-<a name="EncryptedData+nonce"></a>
-
-### encryptedData.nonce() ⇒ <code>Uint8Array</code>
-Returns a copy of the nonce
-
-**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
-<a name="EncryptedData+associatedData"></a>
-
-### encryptedData.associatedData() ⇒ <code>Uint8Array</code>
-Returns a copy of the associated data
-
-**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
-<a name="EncryptedData+ciphertext"></a>
-
-### encryptedData.ciphertext() ⇒ <code>Uint8Array</code>
-Returns a copy of the ciphertext
-
-**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
-<a name="EncryptedData+tag"></a>
-
-### encryptedData.tag() ⇒ <code>Uint8Array</code>
-Returns a copy of the tag
-
-**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
-<a name="EncryptedData+toJSON"></a>
-
-### encryptedData.toJSON() ⇒ <code>any</code>
-Serializes `EncryptedData` as a JSON object.
-
-**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
-<a name="EncryptedData.fromJSON"></a>
-
-### EncryptedData.fromJSON(json_value) ⇒ [<code>EncryptedData</code>](#EncryptedData)
-Deserializes `EncryptedData` from a JSON object.
-
-**Kind**: static method of [<code>EncryptedData</code>](#EncryptedData)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
-<a name="EncryptionAlgorithm"></a>
-
-## EncryptionAlgorithm
-Supported content encryption algorithms.
+## IotaDID
+A DID conforming to the IOTA DID method specification.
 
 **Kind**: global class  
 
-* [EncryptionAlgorithm](#EncryptionAlgorithm)
+* [IotaDID](#IotaDID)
+    * [new IotaDID(bytes, network)](#new_IotaDID_new)
     * _instance_
-        * [.keyLength()](#EncryptionAlgorithm+keyLength) ⇒ <code>number</code>
-        * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
+        * [.networkStr()](#IotaDID+networkStr) ⇒ <code>string</code>
+        * [.tag()](#IotaDID+tag) ⇒ <code>string</code>
+        * [.scheme()](#IotaDID+scheme) ⇒ <code>string</code>
+        * [.authority()](#IotaDID+authority) ⇒ <code>string</code>
+        * [.method()](#IotaDID+method) ⇒ <code>string</code>
+        * [.methodId()](#IotaDID+methodId) ⇒ <code>string</code>
+        * [.join(segment)](#IotaDID+join) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.toUrl()](#IotaDID+toUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.toAliasId()](#IotaDID+toAliasId) ⇒ <code>string</code>
+        * [.intoUrl()](#IotaDID+intoUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.toString()](#IotaDID+toString) ⇒ <code>string</code>
+        * [.toJSON()](#IotaDID+toJSON) ⇒ <code>any</code>
+        * [.clone()](#IotaDID+clone) ⇒ [<code>IotaDID</code>](#IotaDID)
     * _static_
-        * [.A256GCM()](#EncryptionAlgorithm.A256GCM) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
-        * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+        * [.METHOD](#IotaDID.METHOD) ⇒ <code>string</code>
+        * [.DEFAULT_NETWORK](#IotaDID.DEFAULT_NETWORK) ⇒ <code>string</code>
+        * [.placeholder(network)](#IotaDID.placeholder) ⇒ [<code>IotaDID</code>](#IotaDID)
+        * [.parse(input)](#IotaDID.parse) ⇒ [<code>IotaDID</code>](#IotaDID)
+        * [.fromJSON(json)](#IotaDID.fromJSON) ⇒ [<code>IotaDID</code>](#IotaDID)
 
-<a name="EncryptionAlgorithm+keyLength"></a>
+<a name="new_IotaDID_new"></a>
 
-### encryptionAlgorithm.keyLength() ⇒ <code>number</code>
-Returns the length of the cipher's key.
+### new IotaDID(bytes, network)
+Constructs a new `IotaDID` from a byte representation of the tag and the given
+network name.
 
-**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
-<a name="EncryptionAlgorithm+toJSON"></a>
+See also [placeholder](#IotaDID.placeholder).
 
-### encryptionAlgorithm.toJSON() ⇒ <code>any</code>
-Serializes `EncryptionAlgorithm` as a JSON object.
-
-**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
-<a name="EncryptionAlgorithm.A256GCM"></a>
-
-### EncryptionAlgorithm.A256GCM() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
-AES GCM using 256-bit key.
-
-**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
-<a name="EncryptionAlgorithm.fromJSON"></a>
-
-### EncryptionAlgorithm.fromJSON(json_value) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
-Deserializes `EncryptionAlgorithm` from a JSON object.
-
-**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| bytes | <code>Uint8Array</code> | 
+| network | <code>string</code> | 
 
-<a name="ExplorerUrl"></a>
+<a name="IotaDID+networkStr"></a>
 
-## ExplorerUrl
-**Kind**: global class  
+### did.networkStr() ⇒ <code>string</code>
+Returns the Tangle network name of the `IotaDID`.
 
-* [ExplorerUrl](#ExplorerUrl)
-    * _instance_
-        * [.messageUrl(message_id)](#ExplorerUrl+messageUrl) ⇒ <code>string</code>
-        * [.resolverUrl(did)](#ExplorerUrl+resolverUrl) ⇒ <code>string</code>
-        * [.toString()](#ExplorerUrl+toString) ⇒ <code>string</code>
-    * _static_
-        * [.parse(url)](#ExplorerUrl.parse) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
-        * [.mainnet()](#ExplorerUrl.mainnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
-        * [.devnet()](#ExplorerUrl.devnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+tag"></a>
 
-<a name="ExplorerUrl+messageUrl"></a>
+### did.tag() ⇒ <code>string</code>
+Returns a copy of the unique tag of the `IotaDID`.
 
-### explorerUrl.messageUrl(message_id) ⇒ <code>string</code>
-Returns the web explorer URL of the given `message_id`.
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+scheme"></a>
 
-E.g. https://explorer.iota.org/mainnet/message/{message_id}
+### did.scheme() ⇒ <code>string</code>
+Returns the `DID` scheme.
 
-**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+E.g.
+- `"did:example:12345678" -> "did"`
+- `"did:iota:main:12345678" -> "did"`
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+authority"></a>
+
+### did.authority() ⇒ <code>string</code>
+Returns the `DID` authority: the method name and method-id.
+
+E.g.
+- `"did:example:12345678" -> "example:12345678"`
+- `"did:iota:main:12345678" -> "iota:main:12345678"`
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+method"></a>
+
+### did.method() ⇒ <code>string</code>
+Returns the `DID` method name.
+
+E.g.
+- `"did:example:12345678" -> "example"`
+- `"did:iota:main:12345678" -> "iota"`
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+methodId"></a>
+
+### did.methodId() ⇒ <code>string</code>
+Returns the `DID` method-specific ID.
+
+E.g.
+- `"did:example:12345678" -> "12345678"`
+- `"did:iota:main:12345678" -> "main:12345678"`
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+join"></a>
+
+### did.join(segment) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Construct a new `DIDUrl` by joining with a relative DID Url string.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 
 | Param | Type |
 | --- | --- |
-| message_id | <code>string</code> | 
+| segment | <code>string</code> | 
 
-<a name="ExplorerUrl+resolverUrl"></a>
+<a name="IotaDID+toUrl"></a>
 
-### explorerUrl.resolverUrl(did) ⇒ <code>string</code>
-Returns the web identity resolver URL for the given DID.
+### did.toUrl() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Clones the `DID` into a `DIDUrl`.
 
-E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toAliasId"></a>
 
-**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+### did.toAliasId() ⇒ <code>string</code>
+Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+intoUrl"></a>
+
+### did.intoUrl() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Converts the `DID` into a `DIDUrl`, consuming it.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toString"></a>
+
+### did.toString() ⇒ <code>string</code>
+Returns the `DID` as a string.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toJSON"></a>
+
+### did.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+clone"></a>
+
+### did.clone() ⇒ [<code>IotaDID</code>](#IotaDID)
+Deep clones the object.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID.METHOD"></a>
+
+### IotaDID.METHOD ⇒ <code>string</code>
+The IOTA DID method name (`"iota"`).
+
+**Kind**: static property of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID.DEFAULT_NETWORK"></a>
+
+### IotaDID.DEFAULT\_NETWORK ⇒ <code>string</code>
+The default Tangle network (`"iota"`).
+
+**Kind**: static property of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID.placeholder"></a>
+
+### IotaDID.placeholder(network) ⇒ [<code>IotaDID</code>](#IotaDID)
+Creates a new placeholder [`IotaDID`] with the given network name.
+
+E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
+
+**Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+| network | <code>string</code> | 
 
-<a name="ExplorerUrl+toString"></a>
+<a name="IotaDID.parse"></a>
 
-### explorerUrl.toString() ⇒ <code>string</code>
-**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="ExplorerUrl.parse"></a>
+### IotaDID.parse(input) ⇒ [<code>IotaDID</code>](#IotaDID)
+Parses a `IotaDID` from the input string.
 
-### ExplorerUrl.parse(url) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
-Constructs a new Tangle explorer URL from a string.
-
-Use `ExplorerUrl::mainnet` or `ExplorerUrl::devnet` unless using a private Tangle
-or local explorer.
-
-**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+**Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> | 
+| input | <code>string</code> | 
 
-<a name="ExplorerUrl.mainnet"></a>
+<a name="IotaDID.fromJSON"></a>
 
-### ExplorerUrl.mainnet() ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
-Returns the Tangle explorer URL for the mainnet.
+### IotaDID.fromJSON(json) ⇒ [<code>IotaDID</code>](#IotaDID)
+Deserializes an instance from a JSON object.
 
-**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="ExplorerUrl.devnet"></a>
-
-### ExplorerUrl.devnet() ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
-Returns the Tangle explorer URL for the devnet.
-
-**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="IntegrationChainHistory"></a>
-
-## IntegrationChainHistory
-**Kind**: global class  
-
-* [IntegrationChainHistory](#IntegrationChainHistory)
-    * _instance_
-        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json)](#IntegrationChainHistory.fromJSON) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
-
-<a name="IntegrationChainHistory+chainData"></a>
-
-### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-Returns an `Array` of the integration chain `Documents`.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
-<a name="IntegrationChainHistory+spam"></a>
-
-### integrationChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
-Returns an `Array` of `MessageIds` as strings.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
-<a name="IntegrationChainHistory+toJSON"></a>
-
-### integrationChainHistory.toJSON() ⇒ <code>any</code>
-Serializes as a JSON object.
-
-**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
-<a name="IntegrationChainHistory.fromJSON"></a>
-
-### IntegrationChainHistory.fromJSON(json) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
-Deserializes from a JSON object.
-
-**Kind**: static method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+**Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
 
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="KeyLocation"></a>
+<a name="IotaDIDUrl"></a>
 
-## KeyLocation
-The storage location of a verification method key.
-
-A key is uniquely identified by the fragment and a hash of its public key.
-Importantly, the fragment alone is insufficient to represent the storage location.
-For example, when rotating a key, there will be two keys in storage for the
-same identity with the same fragment. The `key_hash` disambiguates the keys in
-situations like these.
-
-The string representation of that location can be obtained via `canonicalRepr`.
+## IotaDIDUrl
+A DID URL conforming to the IOTA DID method specification.
 
 **Kind**: global class  
 
-* [KeyLocation](#KeyLocation)
-    * [new KeyLocation(keyType, fragment, publicKey)](#new_KeyLocation_new)
+* [IotaDIDUrl](#IotaDIDUrl)
     * _instance_
-        * [.canonical()](#KeyLocation+canonical) ⇒ <code>string</code>
-        * [.keyType()](#KeyLocation+keyType) ⇒ <code>number</code>
-        * [.toJSON()](#KeyLocation+toJSON) ⇒ <code>any</code>
-        * [.toString()](#KeyLocation+toString) ⇒ <code>string</code>
+        * [.did()](#IotaDIDUrl+did) ⇒ [<code>IotaDID</code>](#IotaDID)
+        * [.urlStr()](#IotaDIDUrl+urlStr) ⇒ <code>string</code>
+        * [.fragment()](#IotaDIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setFragment(value)](#IotaDIDUrl+setFragment)
+        * [.path()](#IotaDIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setPath(value)](#IotaDIDUrl+setPath)
+        * [.query()](#IotaDIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setQuery(value)](#IotaDIDUrl+setQuery)
+        * [.join(segment)](#IotaDIDUrl+join) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.toString()](#IotaDIDUrl+toString) ⇒ <code>string</code>
+        * [.toJSON()](#IotaDIDUrl+toJSON) ⇒ <code>any</code>
+        * [.clone()](#IotaDIDUrl+clone) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
     * _static_
-        * [.fromVerificationMethod(method)](#KeyLocation.fromVerificationMethod) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-        * [.fromJSON(json_value)](#KeyLocation.fromJSON) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+        * [.parse(input)](#IotaDIDUrl.parse) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.fromJSON(json)](#IotaDIDUrl.fromJSON) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
 
-<a name="new_KeyLocation_new"></a>
+<a name="IotaDIDUrl+did"></a>
 
-### new KeyLocation(keyType, fragment, publicKey)
-Create a location from a `KeyType`, the fragment of a verification method
-and the bytes of a public key.
+### iotaDIDUrl.did() ⇒ [<code>IotaDID</code>](#IotaDID)
+Return a copy of the `IotaDID` section of the `IotaDIDUrl`.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl+urlStr"></a>
+
+### iotaDIDUrl.urlStr() ⇒ <code>string</code>
+Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl+fragment"></a>
+
+### iotaDIDUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `IotaDIDUrl` method fragment, if any. Excludes the leading '#'.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl+setFragment"></a>
+
+### iotaDIDUrl.setFragment(value)
+Sets the `fragment` component of the `IotaDIDUrl`.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IotaDIDUrl+path"></a>
+
+### iotaDIDUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `IotaDIDUrl` path.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl+setPath"></a>
+
+### iotaDIDUrl.setPath(value)
+Sets the `path` component of the `IotaDIDUrl`.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IotaDIDUrl+query"></a>
+
+### iotaDIDUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `IotaDIDUrl` method query, if any. Excludes the leading '?'.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl+setQuery"></a>
+
+### iotaDIDUrl.setQuery(value)
+Sets the `query` component of the `IotaDIDUrl`.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="IotaDIDUrl+join"></a>
+
+### iotaDIDUrl.join(segment) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Append a string representing a path, query, and/or fragment, returning a new `IotaDIDUrl`.
+
+Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
+segment and any following segments in order of path, query, then fragment.
+
+I.e.
+- joining a path will clear the query and fragment.
+- joining a query will clear the fragment.
+- joining a fragment will only overwrite the fragment.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="IotaDIDUrl+toString"></a>
+
+### iotaDIDUrl.toString() ⇒ <code>string</code>
+Returns the `IotaDIDUrl` as a string.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl+toJSON"></a>
+
+### iotaDIDUrl.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl+clone"></a>
+
+### iotaDIDUrl.clone() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Deep clones the object.
+
+**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+<a name="IotaDIDUrl.parse"></a>
+
+### IotaDIDUrl.parse(input) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Parses a `IotaDIDUrl` from the input string.
+
+**Kind**: static method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="IotaDIDUrl.fromJSON"></a>
+
+### IotaDIDUrl.fromJSON(json) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="IotaDocument"></a>
+
+## IotaDocument
+**Kind**: global class  
+
+* [IotaDocument](#IotaDocument)
+    * [new IotaDocument(network)](#new_IotaDocument_new)
+    * _instance_
+        * [.id()](#IotaDocument+id) ⇒ [<code>IotaDID</code>](#IotaDID)
+        * [.controller()](#IotaDocument+controller) ⇒ [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID)
+        * [.alsoKnownAs()](#IotaDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.setAlsoKnownAs(urls)](#IotaDocument+setAlsoKnownAs)
+        * [.properties()](#IotaDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#IotaDocument+setPropertyUnchecked)
+        * [.service()](#IotaDocument+service) ⇒ [<code>Array.&lt;IotaService&gt;</code>](#IotaService)
+        * [.insertService(service)](#IotaDocument+insertService) ⇒ <code>boolean</code>
+        * [.removeService(did)](#IotaDocument+removeService) ⇒ <code>boolean</code>
+        * [.resolveService(query)](#IotaDocument+resolveService) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
+        * [.methods(scope)](#IotaDocument+methods) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
+        * [.insertMethod(method, scope)](#IotaDocument+insertMethod)
+        * [.removeMethod(did)](#IotaDocument+removeMethod)
+        * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
+        * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
+        * [.signCredential(credential, privateKey, methodQuery, options)](#IotaDocument+signCredential) ⇒ [<code>Credential</code>](#Credential)
+        * [.signPresentation(presentation, privateKey, methodQuery, options)](#IotaDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
+        * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
+        * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
+        * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
+        * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
+        * [.metadata()](#IotaDocument+metadata) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
+        * [.metadataCreated()](#IotaDocument+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.setMetadataCreated(timestamp)](#IotaDocument+setMetadataCreated)
+        * [.metadataUpdated()](#IotaDocument+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.setMetadataUpdated(timestamp)](#IotaDocument+setMetadataUpdated)
+        * [.metadataDeactivated()](#IotaDocument+metadataDeactivated) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.setMetadataDeactivated(deactivated)](#IotaDocument+setMetadataDeactivated)
+        * [.metadataStateControllerAddress()](#IotaDocument+metadataStateControllerAddress) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.metadataGovernorAddress()](#IotaDocument+metadataGovernorAddress) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setMetadataPropertyUnchecked(key, value)](#IotaDocument+setMetadataPropertyUnchecked)
+        * [.revokeCredentials(serviceQuery, indices)](#IotaDocument+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, indices)](#IotaDocument+unrevokeCredentials)
+        * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
+        * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+    * _static_
+        * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [.unpackFromOutput(did, aliasOutput, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [.unpackFromBlock(network, block)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+        * [.fromJSON(json)](#IotaDocument.fromJSON) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+
+<a name="new_IotaDocument_new"></a>
+
+### new IotaDocument(network)
+Constructs an empty DID Document with a [placeholder](#IotaDID.placeholder) identifier
+for the given `network`.
 
 
 | Param | Type |
 | --- | --- |
+| network | <code>string</code> | 
+
+<a name="IotaDocument+id"></a>
+
+### iotaDocument.id() ⇒ [<code>IotaDID</code>](#IotaDID)
+Returns a copy of the DID Document `id`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+controller"></a>
+
+### iotaDocument.controller() ⇒ [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID)
+Returns a copy of the list of document controllers.
+
+NOTE: controllers are determined by the `state_controller` unlock condition of the output
+during resolution and are omitted when publishing.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+alsoKnownAs"></a>
+
+### iotaDocument.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the document's `alsoKnownAs` set.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+setAlsoKnownAs"></a>
+
+### iotaDocument.setAlsoKnownAs(urls)
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
+
+<a name="IotaDocument+properties"></a>
+
+### iotaDocument.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom DID Document properties.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+setPropertyUnchecked"></a>
+
+### iotaDocument.setPropertyUnchecked(key, value)
+Sets a custom property in the DID Document.
+If the value is set to `null`, the custom property will be removed.
+
+### WARNING
+This method can overwrite existing properties like `id` and result in an invalid document.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="IotaDocument+service"></a>
+
+### iotaDocument.service() ⇒ [<code>Array.&lt;IotaService&gt;</code>](#IotaService)
+Return a set of all [IotaService](#IotaService) in the document.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+insertService"></a>
+
+### iotaDocument.insertService(service) ⇒ <code>boolean</code>
+Add a new [IotaService](#IotaService) to the document.
+
+Returns `true` if the service was added.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>IotaService</code>](#IotaService) | 
+
+<a name="IotaDocument+removeService"></a>
+
+### iotaDocument.removeService(did) ⇒ <code>boolean</code>
+Remove a [IotaService](#IotaService) identified by the given [IotaDIDUrl](#IotaDIDUrl) from the document.
+
+Returns `true` if a service was removed.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+
+<a name="IotaDocument+resolveService"></a>
+
+### iotaDocument.resolveService(query) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
+Returns the first [IotaService](#IotaService) with an `id` property matching the provided `query`,
+if present.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+
+<a name="IotaDocument+methods"></a>
+
+### iotaDocument.methods(scope) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
+Returns a list of all [IotaVerificationMethod](#IotaVerificationMethod) in the DID Document,
+whose verification relationship matches `scope`.
+
+If `scope` is not set, a list over the **embedded** methods is returned.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+
+<a name="IotaDocument+insertMethod"></a>
+
+### iotaDocument.insertMethod(method, scope)
+Adds a new `method` to the document in the given `scope`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| method | [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
+
+<a name="IotaDocument+removeMethod"></a>
+
+### iotaDocument.removeMethod(did)
+Removes all references to the specified Verification Method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+
+<a name="IotaDocument+resolveMethod"></a>
+
+### iotaDocument.resolveMethod(query, scope) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
+Returns a copy of the first verification method with an `id` property
+matching the provided `query` and the verification relationship
+specified by `scope`, if present.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+
+<a name="IotaDocument+attachMethodRelationship"></a>
+
+### iotaDocument.attachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
+Attaches the relationship to the given method, if the method exists.
+
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| didUrl | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+| relationship | <code>number</code> | 
+
+<a name="IotaDocument+detachMethodRelationship"></a>
+
+### iotaDocument.detachMethodRelationship(didUrl, relationship) ⇒ <code>boolean</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| didUrl | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+| relationship | <code>number</code> | 
+
+<a name="IotaDocument+signCredential"></a>
+
+### iotaDocument.signCredential(credential, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
+Creates a signature for the given `Credential` with the specified DID Document
+Verification Method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
+
+<a name="IotaDocument+signPresentation"></a>
+
+### iotaDocument.signPresentation(presentation, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
+Creates a signature for the given `Presentation` with the specified DID Document
+Verification Method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
+
+<a name="IotaDocument+signData"></a>
+
+### iotaDocument.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
+Creates a signature for the given `data` with the specified DID Document
+Verification Method.
+
+NOTE: use `signSelf` or `signDocument` for DID Documents.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
+
+<a name="IotaDocument+verifyData"></a>
+
+### iotaDocument.verifyData(data, options) ⇒ <code>boolean</code>
+Verifies the authenticity of `data` using the target verification method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="IotaDocument+pack"></a>
+
+### iotaDocument.pack() ⇒ <code>Uint8Array</code>
+Serializes the document for inclusion in an Alias Output's state metadata
+with the default [StateMetadataEncoding](#StateMetadataEncoding).
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+packWithEncoding"></a>
+
+### iotaDocument.packWithEncoding(encoding) ⇒ <code>Uint8Array</code>
+Serializes the document for inclusion in an Alias Output's state metadata.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| encoding | <code>number</code> | 
+
+<a name="IotaDocument+metadata"></a>
+
+### iotaDocument.metadata() ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
+Returns a copy of the metadata associated with this document.
+
+NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
+`metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+metadataCreated"></a>
+
+### iotaDocument.metadataCreated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of when the DID document was created.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+setMetadataCreated"></a>
+
+### iotaDocument.setMetadataCreated(timestamp)
+Sets the timestamp of when the DID document was created.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+
+<a name="IotaDocument+metadataUpdated"></a>
+
+### iotaDocument.metadataUpdated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+setMetadataUpdated"></a>
+
+### iotaDocument.setMetadataUpdated(timestamp)
+Sets the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+
+<a name="IotaDocument+metadataDeactivated"></a>
+
+### iotaDocument.metadataDeactivated() ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns a copy of the deactivated status of the DID document.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+setMetadataDeactivated"></a>
+
+### iotaDocument.setMetadataDeactivated(deactivated)
+Sets the deactivated status of the DID document.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| deactivated | <code>boolean</code> \| <code>undefined</code> | 
+
+<a name="IotaDocument+metadataStateControllerAddress"></a>
+
+### iotaDocument.metadataStateControllerAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded state controller address, if present.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+metadataGovernorAddress"></a>
+
+### iotaDocument.metadataGovernorAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded governor address, if present.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+setMetadataPropertyUnchecked"></a>
+
+### iotaDocument.setMetadataPropertyUnchecked(key, value)
+Sets a custom property in the document metadata.
+If the value is set to `null`, the custom property will be removed.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="IotaDocument+revokeCredentials"></a>
+
+### iotaDocument.revokeCredentials(serviceQuery, indices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+revoke all specified `indices`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| serviceQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="IotaDocument+unrevokeCredentials"></a>
+
+### iotaDocument.unrevokeCredentials(serviceQuery, indices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+unrevoke all specified `indices`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| serviceQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="IotaDocument+toJSON"></a>
+
+### iotaDocument.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+clone"></a>
+
+### iotaDocument.clone() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+Deep clones the object.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument.newWithId"></a>
+
+### IotaDocument.newWithId(id) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+Constructs an empty DID Document with the given identifier.
+
+**Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| id | [<code>IotaDID</code>](#IotaDID) | 
+
+<a name="IotaDocument.unpackFromOutput"></a>
+
+### IotaDocument.unpackFromOutput(did, aliasOutput, allowEmpty) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+Deserializes the document from an Alias Output.
+
+If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
+if `stateMetadata` is empty.
+
+NOTE: `did` is required since it is omitted from the serialized DID Document and
+cannot be inferred from the state metadata. It also indicates the network, which is not
+encoded in the `AliasId` alone.
+
+**Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>IotaDID</code>](#IotaDID) | 
+| aliasOutput | <code>IAliasOutput</code> | 
+| allowEmpty | <code>boolean</code> | 
+
+<a name="IotaDocument.unpackFromBlock"></a>
+
+### IotaDocument.unpackFromBlock(network, block) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+Returns all DID documents of the Alias Outputs contained in the block's transaction payload
+outputs, if any.
+
+Errors if any Alias Output does not contain a valid or empty DID Document.
+
+**Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| network | <code>string</code> | 
+| block | <code>IBlock</code> | 
+
+<a name="IotaDocument.fromJSON"></a>
+
+### IotaDocument.fromJSON(json) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="IotaDocumentMetadata"></a>
+
+## IotaDocumentMetadata
+Additional attributes related to an IOTA DID Document.
+
+**Kind**: global class  
+
+* [IotaDocumentMetadata](#IotaDocumentMetadata)
+    * _instance_
+        * [.created()](#IotaDocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.updated()](#IotaDocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.deactivated()](#IotaDocumentMetadata+deactivated) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.stateControllerAddress()](#IotaDocumentMetadata+stateControllerAddress) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.governorAddress()](#IotaDocumentMetadata+governorAddress) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.properties()](#IotaDocumentMetadata+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#IotaDocumentMetadata+toJSON) ⇒ <code>any</code>
+        * [.clone()](#IotaDocumentMetadata+clone) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
+    * _static_
+        * [.fromJSON(json)](#IotaDocumentMetadata.fromJSON) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
+
+<a name="IotaDocumentMetadata+created"></a>
+
+### iotaDocumentMetadata.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of when the DID document was created.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+updated"></a>
+
+### iotaDocumentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of the last DID document update.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+deactivated"></a>
+
+### iotaDocumentMetadata.deactivated() ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns a copy of the deactivated status of the DID document.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+stateControllerAddress"></a>
+
+### iotaDocumentMetadata.stateControllerAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded state controller address, if present.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+governorAddress"></a>
+
+### iotaDocumentMetadata.governorAddress() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the Bech32-encoded governor address, if present.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+properties"></a>
+
+### iotaDocumentMetadata.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom metadata properties.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+toJSON"></a>
+
+### iotaDocumentMetadata.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata+clone"></a>
+
+### iotaDocumentMetadata.clone() ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
+Deep clones the object.
+
+**Kind**: instance method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+<a name="IotaDocumentMetadata.fromJSON"></a>
+
+### IotaDocumentMetadata.fromJSON(json) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="IotaIdentityClientExt"></a>
+
+## IotaIdentityClientExt
+An extension interface that provides helper functions for publication
+and resolution of DID documents in Alias Outputs.
+
+**Kind**: global class  
+
+* [IotaIdentityClientExt](#IotaIdentityClientExt)
+    * [.newDidOutput(client, address, document, rentStructure)](#IotaIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.updateDidOutput(client, document)](#IotaIdentityClientExt.updateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.deactivateDidOutput(client, did)](#IotaIdentityClientExt.deactivateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.resolveDid(client, did)](#IotaIdentityClientExt.resolveDid) ⇒ [<code>Promise.&lt;IotaDocument&gt;</code>](#IotaDocument)
+    * [.resolveDidOutput(client, did)](#IotaIdentityClientExt.resolveDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+
+<a name="IotaIdentityClientExt.newDidOutput"></a>
+
+### IotaIdentityClientExt.newDidOutput(client, address, document, rentStructure) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Create a DID with a new Alias Output containing the given `document`.
+
+The `address` will be set as the state controller and governor unlock conditions.
+The minimum required token deposit amount will be set according to the given
+`rent_structure`, which will be fetched from the node if not provided.
+The returned Alias Output can be further customised before publication, if desired.
+
+NOTE: this does *not* publish the Alias Output.
+
+**Kind**: static method of [<code>IotaIdentityClientExt</code>](#IotaIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IIotaIdentityClient</code> | 
+| address | <code>AddressTypes</code> | 
+| document | [<code>IotaDocument</code>](#IotaDocument) | 
+| rentStructure | <code>IRent</code> \| <code>undefined</code> | 
+
+<a name="IotaIdentityClientExt.updateDidOutput"></a>
+
+### IotaIdentityClientExt.updateDidOutput(client, document) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Fetches the associated Alias Output and updates it with `document` in its state metadata.
+The storage deposit on the output is left unchanged. If the size of the document increased,
+the amount should be increased manually.
+
+NOTE: this does *not* publish the updated Alias Output.
+
+**Kind**: static method of [<code>IotaIdentityClientExt</code>](#IotaIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IIotaIdentityClient</code> | 
+| document | [<code>IotaDocument</code>](#IotaDocument) | 
+
+<a name="IotaIdentityClientExt.deactivateDidOutput"></a>
+
+### IotaIdentityClientExt.deactivateDidOutput(client, did) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Removes the DID document from the state metadata of its Alias Output,
+effectively deactivating it. The storage deposit on the output is left unchanged,
+and should be reallocated manually.
+
+Deactivating does not destroy the output. Hence, it can be re-activated by publishing
+an update containing a DID document.
+
+NOTE: this does *not* publish the updated Alias Output.
+
+**Kind**: static method of [<code>IotaIdentityClientExt</code>](#IotaIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IIotaIdentityClient</code> | 
+| did | [<code>IotaDID</code>](#IotaDID) | 
+
+<a name="IotaIdentityClientExt.resolveDid"></a>
+
+### IotaIdentityClientExt.resolveDid(client, did) ⇒ [<code>Promise.&lt;IotaDocument&gt;</code>](#IotaDocument)
+Resolve a [IotaDocument](#IotaDocument). Returns an empty, deactivated document if the state metadata
+of the Alias Output is empty.
+
+**Kind**: static method of [<code>IotaIdentityClientExt</code>](#IotaIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IIotaIdentityClient</code> | 
+| did | [<code>IotaDID</code>](#IotaDID) | 
+
+<a name="IotaIdentityClientExt.resolveDidOutput"></a>
+
+### IotaIdentityClientExt.resolveDidOutput(client, did) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+Fetches the `IAliasOutput` associated with the given DID.
+
+**Kind**: static method of [<code>IotaIdentityClientExt</code>](#IotaIdentityClientExt)  
+
+| Param | Type |
+| --- | --- |
+| client | <code>IIotaIdentityClient</code> | 
+| did | [<code>IotaDID</code>](#IotaDID) | 
+
+<a name="IotaService"></a>
+
+## IotaService
+A `Service` adhering to the IOTA DID method specification.
+
+**Kind**: global class  
+
+* [IotaService](#IotaService)
+    * [new IotaService(service)](#new_IotaService_new)
+    * _instance_
+        * [.id()](#IotaService+id) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.type()](#IotaService+type) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.serviceEndpoint()](#IotaService+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+        * [.properties()](#IotaService+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#IotaService+toJSON) ⇒ <code>any</code>
+        * [.clone()](#IotaService+clone) ⇒ [<code>IotaService</code>](#IotaService)
+    * _static_
+        * [.fromJSON(json)](#IotaService.fromJSON) ⇒ [<code>IotaService</code>](#IotaService)
+
+<a name="new_IotaService_new"></a>
+
+### new IotaService(service)
+
+| Param | Type |
+| --- | --- |
+| service | <code>IIotaService</code> | 
+
+<a name="IotaService+id"></a>
+
+### iotaService.id() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Returns a copy of the `Service` id.
+
+**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
+<a name="IotaService+type"></a>
+
+### iotaService.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the `Service` type.
+
+**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
+<a name="IotaService+serviceEndpoint"></a>
+
+### iotaService.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Returns a copy of the `Service` endpoint.
+
+**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
+<a name="IotaService+properties"></a>
+
+### iotaService.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom properties on the `Service`.
+
+**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
+<a name="IotaService+toJSON"></a>
+
+### iotaService.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
+<a name="IotaService+clone"></a>
+
+### iotaService.clone() ⇒ [<code>IotaService</code>](#IotaService)
+Deep clones the object.
+
+**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
+<a name="IotaService.fromJSON"></a>
+
+### IotaService.fromJSON(json) ⇒ [<code>IotaService</code>](#IotaService)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>IotaService</code>](#IotaService)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="IotaVerificationMethod"></a>
+
+## IotaVerificationMethod
+**Kind**: global class  
+
+* [IotaVerificationMethod](#IotaVerificationMethod)
+    * [new IotaVerificationMethod(did, keyType, publicKey, fragment)](#new_IotaVerificationMethod_new)
+    * _instance_
+        * [.id()](#IotaVerificationMethod+id) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.setId(id)](#IotaVerificationMethod+setId)
+        * [.controller()](#IotaVerificationMethod+controller) ⇒ [<code>IotaDID</code>](#IotaDID)
+        * [.setController(did)](#IotaVerificationMethod+setController)
+        * [.setType(type_)](#IotaVerificationMethod+setType)
+        * [.type()](#IotaVerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.data()](#IotaVerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.setData(data)](#IotaVerificationMethod+setData)
+        * [.properties()](#IotaVerificationMethod+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#IotaVerificationMethod+setPropertyUnchecked)
+        * [.toJSON()](#IotaVerificationMethod+toJSON) ⇒ <code>any</code>
+        * [.clone()](#IotaVerificationMethod+clone) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
+    * _static_
+        * [.fromJSON(json)](#IotaVerificationMethod.fromJSON) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
+
+<a name="new_IotaVerificationMethod_new"></a>
+
+### new IotaVerificationMethod(did, keyType, publicKey, fragment)
+Creates a new `IotaVerificationMethod` from the given `did` and public key.
+
+
+| Param | Type |
+| --- | --- |
+| did | [<code>IotaDID</code>](#IotaDID) | 
 | keyType | <code>number</code> | 
-| fragment | <code>string</code> | 
 | publicKey | <code>Uint8Array</code> | 
+| fragment | <code>string</code> | 
 
-<a name="KeyLocation+canonical"></a>
+<a name="IotaVerificationMethod+id"></a>
 
-### keyLocation.canonical() ⇒ <code>string</code>
-Returns the canonical string representation of the location.
+### iotaVerificationMethod.id() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+Returns a reference to the `IotaVerificationMethod` id.
 
-This should be used as the representation for storage keys.
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+<a name="IotaVerificationMethod+setId"></a>
 
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+keyType"></a>
+### iotaVerificationMethod.setId(id)
+Sets the id of the `IotaVerificationMethod`.
 
-### keyLocation.keyType() ⇒ <code>number</code>
-Returns a copy of the key type of the key location.
-
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+toJSON"></a>
-
-### keyLocation.toJSON() ⇒ <code>any</code>
-Serializes `KeyLocation` as a JSON object.
-
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+toString"></a>
-
-### keyLocation.toString() ⇒ <code>string</code>
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation.fromVerificationMethod"></a>
-
-### KeyLocation.fromVerificationMethod(method) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Obtain the location of a verification method's key in storage.
-
-**Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
 
 | Param | Type |
 | --- | --- |
-| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+| id | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
 
-<a name="KeyLocation.fromJSON"></a>
+<a name="IotaVerificationMethod+controller"></a>
 
-### KeyLocation.fromJSON(json_value) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Deserializes a JSON object into a `KeyLocation`.
+### iotaVerificationMethod.controller() ⇒ [<code>IotaDID</code>](#IotaDID)
+Returns a copy of the `controller` `DID` of the `IotaVerificationMethod`.
 
-**Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+<a name="IotaVerificationMethod+setController"></a>
+
+### iotaVerificationMethod.setController(did)
+Sets the `controller` `DID` of the `IotaVerificationMethod`.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
 
 | Param | Type |
 | --- | --- |
-| json_value | <code>any</code> | 
+| did | [<code>IotaDID</code>](#IotaDID) | 
+
+<a name="IotaVerificationMethod+setType"></a>
+
+### iotaVerificationMethod.setType(type_)
+Sets the `IotaVerificationMethod` type.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| type_ | [<code>MethodType</code>](#MethodType) | 
+
+<a name="IotaVerificationMethod+type"></a>
+
+### iotaVerificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
+Returns a copy of the `IotaVerificationMethod` type.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+<a name="IotaVerificationMethod+data"></a>
+
+### iotaVerificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
+Returns a copy of the `IotaVerificationMethod` public key data.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+<a name="IotaVerificationMethod+setData"></a>
+
+### iotaVerificationMethod.setData(data)
+Sets `IotaVerificationMethod` public key data.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| data | [<code>MethodData</code>](#MethodData) | 
+
+<a name="IotaVerificationMethod+properties"></a>
+
+### iotaVerificationMethod.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Get custom properties of the Verification Method.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+<a name="IotaVerificationMethod+setPropertyUnchecked"></a>
+
+### iotaVerificationMethod.setPropertyUnchecked(key, value)
+Adds a custom property to the Verification Method.
+If the value is set to `null`, the custom property will be removed.
+
+### WARNING
+This method can overwrite existing properties like `id` and result
+in an invalid Verification Method.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="IotaVerificationMethod+toJSON"></a>
+
+### iotaVerificationMethod.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+<a name="IotaVerificationMethod+clone"></a>
+
+### iotaVerificationMethod.clone() ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
+Deep clones the object.
+
+**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+<a name="IotaVerificationMethod.fromJSON"></a>
+
+### IotaVerificationMethod.fromJSON(json) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="KeyPair"></a>
 
@@ -3024,104 +2942,6 @@ Deserializes a `KeyPair` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="MethodContent"></a>
-
-## MethodContent
-**Kind**: global class  
-
-* [MethodContent](#MethodContent)
-    * _instance_
-        * [.toJSON()](#MethodContent+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.GenerateEd25519()](#MethodContent.GenerateEd25519) ⇒ [<code>MethodContent</code>](#MethodContent)
-        * [.PrivateEd25519(privateKey)](#MethodContent.PrivateEd25519) ⇒ [<code>MethodContent</code>](#MethodContent)
-        * [.PublicEd25519(publicKey)](#MethodContent.PublicEd25519) ⇒ [<code>MethodContent</code>](#MethodContent)
-        * [.GenerateX25519()](#MethodContent.GenerateX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
-        * [.PrivateX25519(privateKey)](#MethodContent.PrivateX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
-        * [.PublicX25519(publicKey)](#MethodContent.PublicX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
-        * [.fromJSON(json_value)](#MethodContent.fromJSON) ⇒ [<code>MethodContent</code>](#MethodContent)
-
-<a name="MethodContent+toJSON"></a>
-
-### methodContent.toJSON() ⇒ <code>any</code>
-Serializes `MethodContent` as a JSON object.
-
-**Kind**: instance method of [<code>MethodContent</code>](#MethodContent)  
-<a name="MethodContent.GenerateEd25519"></a>
-
-### MethodContent.GenerateEd25519() ⇒ [<code>MethodContent</code>](#MethodContent)
-Generate and store a new Ed25519 keypair for a new `Ed25519VerificationKey2018` method.
-
-**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
-<a name="MethodContent.PrivateEd25519"></a>
-
-### MethodContent.PrivateEd25519(privateKey) ⇒ [<code>MethodContent</code>](#MethodContent)
-Store an existing Ed25519 private key and derive a public key from it for a new
-`Ed25519VerificationKey2018` method.
-
-**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="MethodContent.PublicEd25519"></a>
-
-### MethodContent.PublicEd25519(publicKey) ⇒ [<code>MethodContent</code>](#MethodContent)
-Insert an existing Ed25519 public key into a new `Ed25519VerificationKey2018` method,
-without generating or storing a private key.
-
-NOTE: the method will be unable to be used to sign anything without a private key.
-
-**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
-
-| Param | Type |
-| --- | --- |
-| publicKey | <code>Uint8Array</code> | 
-
-<a name="MethodContent.GenerateX25519"></a>
-
-### MethodContent.GenerateX25519() ⇒ [<code>MethodContent</code>](#MethodContent)
-Generate and store a new X25519 keypair for a new `X25519KeyAgreementKey2019` method.
-
-**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
-<a name="MethodContent.PrivateX25519"></a>
-
-### MethodContent.PrivateX25519(privateKey) ⇒ [<code>MethodContent</code>](#MethodContent)
-Store an existing X25519 private key and derive a public key from it for a new
-`X25519KeyAgreementKey2019` method.
-
-**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="MethodContent.PublicX25519"></a>
-
-### MethodContent.PublicX25519(publicKey) ⇒ [<code>MethodContent</code>](#MethodContent)
-Insert an existing X25519 public key into a new `X25519KeyAgreementKey2019` method,
-without generating or storing a private key.
-
-NOTE: the method will be unable to be used for key exchange without a private key.
-
-**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
-
-| Param | Type |
-| --- | --- |
-| publicKey | <code>Uint8Array</code> | 
-
-<a name="MethodContent.fromJSON"></a>
-
-### MethodContent.fromJSON(json_value) ⇒ [<code>MethodContent</code>](#MethodContent)
-Deserializes `MethodContent` from a JSON object.
-
-**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
 <a name="MethodData"></a>
 
 ## MethodData
@@ -3154,7 +2974,7 @@ represented as a vector of bytes.
 <a name="MethodData+toJSON"></a>
 
 ### methodData.toJSON() ⇒ <code>any</code>
-Serializes a `MethodData` object as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+clone"></a>
@@ -3188,7 +3008,7 @@ Creates a new `MethodData` variant with Multibase-encoded content.
 <a name="MethodData.fromJSON"></a>
 
 ### MethodData.fromJSON(json) ⇒ [<code>MethodData</code>](#MethodData)
-Deserializes a `MethodData` object from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodData</code>](#MethodData)  
 
@@ -3226,7 +3046,7 @@ Returns the `MethodScope` as a string.
 <a name="MethodScope+toJSON"></a>
 
 ### methodScope.toJSON() ⇒ <code>any</code>
-Serializes a `MethodScope` object as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
 <a name="MethodScope+clone"></a>
@@ -3262,7 +3082,7 @@ Deep clones the object.
 <a name="MethodScope.fromJSON"></a>
 
 ### MethodScope.fromJSON(json) ⇒ [<code>MethodScope</code>](#MethodScope)
-Deserializes a `MethodScope` object from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
 
@@ -3279,24 +3099,24 @@ Supported verification method types.
 
 * [MethodType](#MethodType)
     * _instance_
-        * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
         * [.toString()](#MethodType+toString) ⇒ <code>string</code>
+        * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
         * [.clone()](#MethodType+clone) ⇒ [<code>MethodType</code>](#MethodType)
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
-<a name="MethodType+toJSON"></a>
-
-### methodType.toJSON() ⇒ <code>any</code>
-Serializes a `MethodType` object as a JSON object.
-
-**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+toString"></a>
 
 ### methodType.toString() ⇒ <code>string</code>
 Returns the `MethodType` as a string.
+
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType+toJSON"></a>
+
+### methodType.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+clone"></a>
@@ -3316,87 +3136,9 @@ Deep clones the object.
 <a name="MethodType.fromJSON"></a>
 
 ### MethodType.fromJSON(json) ⇒ [<code>MethodType</code>](#MethodType)
-Deserializes a `MethodType` object from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="Network"></a>
-
-## Network
-**Kind**: global class  
-
-* [Network](#Network)
-    * _instance_
-        * [.name()](#Network+name) ⇒ <code>string</code>
-        * [.defaultNodeURL()](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.toString()](#Network+toString) ⇒ <code>string</code>
-        * [.toJSON()](#Network+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Network+clone) ⇒ [<code>Network</code>](#Network)
-    * _static_
-        * [.tryFromName(name)](#Network.tryFromName) ⇒ [<code>Network</code>](#Network)
-        * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
-        * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
-        * [.fromJSON(json)](#Network.fromJSON) ⇒ [<code>Network</code>](#Network)
-
-<a name="Network+name"></a>
-
-### network.name() ⇒ <code>string</code>
-Returns a copy of the network name.
-
-**Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network+defaultNodeURL"></a>
-
-### network.defaultNodeURL() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the node URL of the Tangle network.
-
-**Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network+toString"></a>
-
-### network.toString() ⇒ <code>string</code>
-**Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network+toJSON"></a>
-
-### network.toJSON() ⇒ <code>any</code>
-Serializes a `Network` as a JSON object.
-
-**Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network+clone"></a>
-
-### network.clone() ⇒ [<code>Network</code>](#Network)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network.tryFromName"></a>
-
-### Network.tryFromName(name) ⇒ [<code>Network</code>](#Network)
-Parses the provided string to a `Network`.
-
-Errors if the name is invalid.
-
-**Kind**: static method of [<code>Network</code>](#Network)  
-
-| Param | Type |
-| --- | --- |
-| name | <code>string</code> | 
-
-<a name="Network.mainnet"></a>
-
-### Network.mainnet() ⇒ [<code>Network</code>](#Network)
-**Kind**: static method of [<code>Network</code>](#Network)  
-<a name="Network.devnet"></a>
-
-### Network.devnet() ⇒ [<code>Network</code>](#Network)
-**Kind**: static method of [<code>Network</code>](#Network)  
-<a name="Network.fromJSON"></a>
-
-### Network.fromJSON(json) ⇒ [<code>Network</code>](#Network)
-Deserializes a `Network` from a JSON object.
-
-**Kind**: static method of [<code>Network</code>](#Network)  
 
 | Param | Type |
 | --- | --- |
@@ -3493,7 +3235,7 @@ Returns a copy of the miscellaneous properties on the `Presentation`.
 <a name="Presentation+toJSON"></a>
 
 ### presentation.toJSON() ⇒ <code>any</code>
-Serializes a `Presentation` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+clone"></a>
@@ -3517,7 +3259,7 @@ Returns the base type.
 <a name="Presentation.fromJSON"></a>
 
 ### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
-Deserializes a `Presentation` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Presentation</code>](#Presentation)  
 
@@ -3556,7 +3298,7 @@ Throws an error if any of the options are invalid.
 <a name="PresentationValidationOptions+toJSON"></a>
 
 ### presentationValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes a `PresentationValidationOptions` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 <a name="PresentationValidationOptions+clone"></a>
@@ -3574,7 +3316,7 @@ Creates a new `PresentationValidationOptions` with defaults.
 <a name="PresentationValidationOptions.fromJSON"></a>
 
 ### PresentationValidationOptions.fromJSON(json) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Deserializes a `PresentationValidationOptions` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 
@@ -3591,6 +3333,7 @@ Deserializes a `PresentationValidationOptions` from a JSON object.
     * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
+    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -3627,8 +3370,8 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
-| issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
+| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -3649,13 +3392,28 @@ Fails if signature verification against the holder document fails.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="PresentationValidator.checkStructure"></a>
 
 ### PresentationValidator.checkStructure(presentation)
 Validates the semantic structure of the `Presentation`.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="PresentationValidator.extractHolder"></a>
+
+### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+Utility for extracting the holder field of a `Presentation` as a DID.
+
+### Errors
+
+Fails if the holder field is missing or not a valid DID.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
 
@@ -3738,7 +3496,7 @@ Purpose for which the proof was generated.
 <a name="Proof+toJSON"></a>
 
 ### proof.toJSON() ⇒ <code>any</code>
-Serializes a `Proof` to a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Proof</code>](#Proof)  
 <a name="Proof+clone"></a>
@@ -3750,7 +3508,7 @@ Deep clones the object.
 <a name="Proof.fromJSON"></a>
 
 ### Proof.fromJSON(json) ⇒ [<code>Proof</code>](#Proof)
-Deserializes a `Proof` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Proof</code>](#Proof)  
 
@@ -3769,9 +3527,11 @@ See `IProofOptions`.
 * [ProofOptions](#ProofOptions)
     * [new ProofOptions(options)](#new_ProofOptions_new)
     * _instance_
+        * [.toJSON()](#ProofOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#ProofOptions+clone) ⇒ [<code>ProofOptions</code>](#ProofOptions)
     * _static_
         * [.default()](#ProofOptions.default) ⇒ [<code>ProofOptions</code>](#ProofOptions)
+        * [.fromJSON(json)](#ProofOptions.fromJSON) ⇒ [<code>ProofOptions</code>](#ProofOptions)
 
 <a name="new_ProofOptions_new"></a>
 
@@ -3785,6 +3545,12 @@ Throws an error if any of the options are invalid.
 | --- | --- |
 | options | <code>IProofOptions</code> | 
 
+<a name="ProofOptions+toJSON"></a>
+
+### proofOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>ProofOptions</code>](#ProofOptions)  
 <a name="ProofOptions+clone"></a>
 
 ### proofOptions.clone() ⇒ [<code>ProofOptions</code>](#ProofOptions)
@@ -3797,6 +3563,17 @@ Deep clones the object.
 Creates a new `ProofOptions` with default options.
 
 **Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
+<a name="ProofOptions.fromJSON"></a>
+
+### ProofOptions.fromJSON(json) ⇒ [<code>ProofOptions</code>](#ProofOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="ProofPurpose"></a>
 
 ## ProofPurpose
@@ -3818,7 +3595,7 @@ See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 <a name="ProofPurpose+toJSON"></a>
 
 ### proofPurpose.toJSON() ⇒ <code>any</code>
-Serializes a `ProofPurpose` to a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
 <a name="ProofPurpose+clone"></a>
@@ -3844,195 +3621,9 @@ See https://www.w3.org/TR/did-core/#authentication
 <a name="ProofPurpose.fromJSON"></a>
 
 ### ProofPurpose.fromJSON(json) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Deserializes a `ProofPurpose` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="Receipt"></a>
-
-## Receipt
-**Kind**: global class  
-
-* [Receipt](#Receipt)
-    * _instance_
-        * [.network()](#Receipt+network) ⇒ [<code>Network</code>](#Network)
-        * [.messageId()](#Receipt+messageId) ⇒ <code>string</code>
-        * [.networkId()](#Receipt+networkId) ⇒ <code>string</code>
-        * [.nonce()](#Receipt+nonce) ⇒ <code>string</code>
-        * [.toJSON()](#Receipt+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Receipt+clone) ⇒ [<code>Receipt</code>](#Receipt)
-    * _static_
-        * [.fromJSON(json)](#Receipt.fromJSON) ⇒ [<code>Receipt</code>](#Receipt)
-
-<a name="Receipt+network"></a>
-
-### receipt.network() ⇒ [<code>Network</code>](#Network)
-Returns a copy of the associated IOTA Tangle `Network`.
-
-**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
-<a name="Receipt+messageId"></a>
-
-### receipt.messageId() ⇒ <code>string</code>
-Returns a copy of the message `id`.
-
-**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
-<a name="Receipt+networkId"></a>
-
-### receipt.networkId() ⇒ <code>string</code>
-Returns a copy of the message `network_id`.
-
-**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
-<a name="Receipt+nonce"></a>
-
-### receipt.nonce() ⇒ <code>string</code>
-Returns a copy of the message `nonce`.
-
-**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
-<a name="Receipt+toJSON"></a>
-
-### receipt.toJSON() ⇒ <code>any</code>
-Serializes a `Receipt` as a JSON object.
-
-**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
-<a name="Receipt+clone"></a>
-
-### receipt.clone() ⇒ [<code>Receipt</code>](#Receipt)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
-<a name="Receipt.fromJSON"></a>
-
-### Receipt.fromJSON(json) ⇒ [<code>Receipt</code>](#Receipt)
-Deserializes a `Receipt` from a JSON object.
-
-**Kind**: static method of [<code>Receipt</code>](#Receipt)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="ResolvedDocument"></a>
-
-## ResolvedDocument
-An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
-merged with one or more `DiffMessages`.
-
-**Kind**: global class  
-
-* [ResolvedDocument](#ResolvedDocument)
-    * _instance_
-        * ~~[.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)~~
-        * [.document()](#ResolvedDocument+document) ⇒ [<code>Document</code>](#Document)
-        * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
-        * ~~[.diffMessageId()](#ResolvedDocument+diffMessageId) ⇒ <code>string</code>~~
-        * ~~[.setDiffMessageId(value)](#ResolvedDocument+setDiffMessageId)~~
-        * [.integrationMessageId()](#ResolvedDocument+integrationMessageId) ⇒ <code>string</code>
-        * [.setIntegrationMessageId(value)](#ResolvedDocument+setIntegrationMessageId)
-        * [.toJSON()](#ResolvedDocument+toJSON) ⇒ <code>any</code>
-        * [.clone()](#ResolvedDocument+clone) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
-    * _static_
-        * [.fromJSON(json)](#ResolvedDocument.fromJSON) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
-
-<a name="ResolvedDocument+mergeDiffMessage"></a>
-
-### ~~resolvedDocument.mergeDiffMessage(diff_message)~~
-***Deprecated***
-
-Attempts to merge changes from a `DiffMessage` into this document and
-updates the `ResolvedDocument::diffMessageId`.
-
-If merging fails the document remains unmodified, otherwise this represents
-the merged document state.
-
-See `Document::mergeDiff`.
-
-# Errors
-
-Fails if the merge operation or signature verification on the diff fails.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-
-| Param | Type |
-| --- | --- |
-| diff_message | [<code>DiffMessage</code>](#DiffMessage) | 
-
-<a name="ResolvedDocument+document"></a>
-
-### resolvedDocument.document() ⇒ [<code>Document</code>](#Document)
-Returns a copy of the inner DID document.
-
-NOTE: If the `ResolvedDocument` is no longer needed after calling this method
-then consider using `intoDocument()` for efficiency.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-<a name="ResolvedDocument+intoDocument"></a>
-
-### resolvedDocument.intoDocument() ⇒ [<code>Document</code>](#Document)
-Consumes this object and returns the inner DID document.
-
-NOTE: trying to use the `ResolvedDocument` after calling this will throw an error.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-<a name="ResolvedDocument+diffMessageId"></a>
-
-### ~~resolvedDocument.diffMessageId() ⇒ <code>string</code>~~
-***Deprecated***
-
-Returns a copy of the diff chain message id.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-<a name="ResolvedDocument+setDiffMessageId"></a>
-
-### ~~resolvedDocument.setDiffMessageId(value)~~
-***Deprecated***
-
-Sets the diff chain message id.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="ResolvedDocument+integrationMessageId"></a>
-
-### resolvedDocument.integrationMessageId() ⇒ <code>string</code>
-Returns a copy of the integration chain message id.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-<a name="ResolvedDocument+setIntegrationMessageId"></a>
-
-### resolvedDocument.setIntegrationMessageId(value)
-Sets the integration chain message id.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="ResolvedDocument+toJSON"></a>
-
-### resolvedDocument.toJSON() ⇒ <code>any</code>
-Serializes a `Document` object as a JSON object.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-<a name="ResolvedDocument+clone"></a>
-
-### resolvedDocument.clone() ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
-Deep clones the object.
-
-**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
-<a name="ResolvedDocument.fromJSON"></a>
-
-### ResolvedDocument.fromJSON(json) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
-Deserializes a `Document` object from a JSON object.
-
-**Kind**: static method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
 
 | Param | Type |
 | --- | --- |
@@ -4041,101 +3632,46 @@ Deserializes a `Document` object from a JSON object.
 <a name="Resolver"></a>
 
 ## Resolver
+Convenience type for resolving DID documents from different DID methods.
+
+Also provides methods for resolving DID Documents associated with
+verifiable `Credentials` and `Presentations`.
+
+# Configuration
+The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
+
 **Kind**: global class  
 
 * [Resolver](#Resolver)
-    * [new Resolver()](#new_Resolver_new)
-    * _instance_
-        * [.getClient(network_name)](#Resolver+getClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
-        * [.resolve(did)](#Resolver+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-        * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
-        * ~~[.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
-        * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-        * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
-        * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-        * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
-    * _static_
-        * [.builder()](#Resolver.builder) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+    * [new Resolver(config)](#new_Resolver_new)
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
-### new Resolver()
-Constructs a new `Resolver` with a default `Client` for
-the `Mainnet`.
+### new Resolver(config)
+Constructs a new `Resolver`.
 
-<a name="Resolver+getClient"></a>
+# Errors
+If both a `client` is given and the `handlers` map contains the "iota" key the construction process
+will throw an error as it is then ambiguous what should be .
 
-### resolver.getClient(network_name) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
-Returns the `Client` corresponding to the given network name if one exists.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
 | Param | Type |
 | --- | --- |
-| network_name | <code>string</code> | 
-
-<a name="Resolver+resolve"></a>
-
-### resolver.resolve(did) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-Fetches the `Document` of the given `DID`.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
-
-<a name="Resolver+resolveHistory"></a>
-
-### resolver.resolveHistory(did) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
-Fetches the `DocumentHistory` of the given `DID`.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) \| <code>string</code> | 
-
-<a name="Resolver+resolveDiffHistory"></a>
-
-### ~~resolver.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
-***Deprecated***
-
-Returns the `DiffChainHistory` of a diff chain starting from a `Document` on the
-integration chain.
-
-NOTE: the document must have been published to the Tangle and have a valid message id.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| document | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
-
-<a name="Resolver+resolveCredentialIssuer"></a>
-
-### resolver.resolveCredentialIssuer(credential) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-Fetches the DID Document of the issuer on a `Credential`.
-
-### Errors
-
-Errors if the issuer URL is not a valid `DID` or document resolution fails.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
+| config | <code>ResolverConfig</code> | 
 
 <a name="Resolver+resolvePresentationIssuers"></a>
 
-### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
 Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
-### Errors
-
-Errors if any issuer URL is not a valid `DID` or document resolution fails.
+# Errors
+Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
+resolution fails.
 
 **Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
@@ -4145,12 +3681,12 @@ Errors if any issuer URL is not a valid `DID` or document resolution fails.
 
 <a name="Resolver+resolvePresentationHolder"></a>
 
-### resolver.resolvePresentationHolder(presentation) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
 Fetches the DID Document of the holder of a `Presentation`.
 
-### Errors
-
-Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
+# Errors
+Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
+DID resolution fails.
 
 **Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
@@ -4185,65 +3721,25 @@ according to the `fail_fast` parameter.
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
-| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
-| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>undefined</code> | 
+| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> \| <code>undefined</code> | 
 
-<a name="Resolver.builder"></a>
+<a name="Resolver+resolve"></a>
 
-### Resolver.builder() ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
-Returns a [ResolverBuilder](#ResolverBuilder) to construct a new `Resolver`.
+### resolver.resolve(did) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+Fetches the DID Document of the given DID.
 
-**Kind**: static method of [<code>Resolver</code>](#Resolver)  
-<a name="ResolverBuilder"></a>
+### Errors
 
-## ResolverBuilder
-Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
+Errors if the resolver has not been configured to handle the method
+corresponding to the given DID or the resolution process itself fails.
 
-**Kind**: global class  
-
-* [ResolverBuilder](#ResolverBuilder)
-    * [new ResolverBuilder()](#new_ResolverBuilder_new)
-    * [.client(client)](#ResolverBuilder+client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
-    * [.clientConfig(config)](#ResolverBuilder+clientConfig) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
-    * [.build()](#ResolverBuilder+build) ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
-
-<a name="new_ResolverBuilder_new"></a>
-
-### new ResolverBuilder()
-Constructs a new `ResolverBuilder` with no `Clients` configured.
-
-<a name="ResolverBuilder+client"></a>
-
-### resolverBuilder.client(client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
-Inserts a `Client`.
-
-NOTE: replaces any previous `Client` or `Config` with the same network name.
-
-**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
 | Param | Type |
 | --- | --- |
-| client | [<code>Client</code>](#Client) | 
+| did | <code>string</code> | 
 
-<a name="ResolverBuilder+clientConfig"></a>
-
-### resolverBuilder.clientConfig(config) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
-Inserts a `Config` used to create a `Client`.
-
-NOTE: replaces any previous `Client` or `Config` with the same network name.
-
-**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
-
-| Param | Type |
-| --- | --- |
-| config | <code>IClientConfig</code> | 
-
-<a name="ResolverBuilder+build"></a>
-
-### resolverBuilder.build() ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
-Constructs a new [`Resolver`] based on the builder configuration.
-
-**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
 <a name="RevocationBitmap"></a>
 
 ## RevocationBitmap
@@ -4334,236 +3830,6 @@ Construct a `RevocationBitmap` from a data `url`.
 | --- | --- |
 | endpoint | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code> | 
 
-<a name="Service"></a>
-
-## Service
-A DID Document Service used to enable trusted interactions associated
-with a DID subject.
-
-See: https://www.w3.org/TR/did-core/#services
-
-**Kind**: global class  
-
-* [Service](#Service)
-    * [new Service(service)](#new_Service_new)
-    * _instance_
-        * [.id()](#Service+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.type()](#Service+type) ⇒ <code>string</code>
-        * [.serviceEndpoint()](#Service+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-        * [.properties()](#Service+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Service+clone) ⇒ [<code>Service</code>](#Service)
-    * _static_
-        * [.fromJSON(value)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
-
-<a name="new_Service_new"></a>
-
-### new Service(service)
-
-| Param | Type |
-| --- | --- |
-| service | <code>IService</code> | 
-
-<a name="Service+id"></a>
-
-### service.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Returns a copy of the `Service` id.
-
-**Kind**: instance method of [<code>Service</code>](#Service)  
-<a name="Service+type"></a>
-
-### service.type() ⇒ <code>string</code>
-Returns a copy of the `Service` type.
-
-**Kind**: instance method of [<code>Service</code>](#Service)  
-<a name="Service+serviceEndpoint"></a>
-
-### service.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-Returns a copy of the `Service` endpoint.
-
-**Kind**: instance method of [<code>Service</code>](#Service)  
-<a name="Service+properties"></a>
-
-### service.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the custom properties on the `Service`.
-
-**Kind**: instance method of [<code>Service</code>](#Service)  
-<a name="Service+toJSON"></a>
-
-### service.toJSON() ⇒ <code>any</code>
-Serializes a `Service` object as a JSON object.
-
-**Kind**: instance method of [<code>Service</code>](#Service)  
-<a name="Service+clone"></a>
-
-### service.clone() ⇒ [<code>Service</code>](#Service)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Service</code>](#Service)  
-<a name="Service.fromJSON"></a>
-
-### Service.fromJSON(value) ⇒ [<code>Service</code>](#Service)
-Deserializes a `Service` object from a JSON object.
-
-**Kind**: static method of [<code>Service</code>](#Service)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="Signature"></a>
-
-## Signature
-**Kind**: global class  
-
-* [Signature](#Signature)
-    * [new Signature(data)](#new_Signature_new)
-    * _instance_
-        * [.asBytes()](#Signature+asBytes) ⇒ <code>Uint8Array</code>
-        * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
-
-<a name="new_Signature_new"></a>
-
-### new Signature(data)
-Creates a new `Signature`.
-
-
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
-
-<a name="Signature+asBytes"></a>
-
-### signature.asBytes() ⇒ <code>Uint8Array</code>
-Returns a copy of the signature as a `UInt8Array`.
-
-**Kind**: instance method of [<code>Signature</code>](#Signature)  
-<a name="Signature+toJSON"></a>
-
-### signature.toJSON() ⇒ <code>any</code>
-Serializes a `Signature` as a JSON object.
-
-**Kind**: instance method of [<code>Signature</code>](#Signature)  
-<a name="Signature.fromJSON"></a>
-
-### Signature.fromJSON(json_value) ⇒ [<code>Signature</code>](#Signature)
-Deserializes a JSON object as `Signature`.
-
-**Kind**: static method of [<code>Signature</code>](#Signature)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
-<a name="StorageTestSuite"></a>
-
-## StorageTestSuite
-A test suite for the `Storage` interface.
-
-This module contains a set of tests that a correct storage implementation
-should pass. Note that not every edge case is tested.
-
-Tests usually rely on multiple interface methods being implemented, so they should only
-be run on a fully implemented version. That's why there is not a single test case for every
-interface method.
-
-**Kind**: global class  
-
-* [StorageTestSuite](#StorageTestSuite)
-    * [.didCreateGenerateKeyTest(storage)](#StorageTestSuite.didCreateGenerateKeyTest) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.didCreatePrivateKeyTest(storage)](#StorageTestSuite.didCreatePrivateKeyTest) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.didListTest(storage)](#StorageTestSuite.didListTest) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.didPurgeTest(storage)](#StorageTestSuite.didPurgeTest) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.keyGenerateTest(storage)](#StorageTestSuite.keyGenerateTest) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.keyDeleteTest(storage)](#StorageTestSuite.keyDeleteTest) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.keyInsertTest(storage)](#StorageTestSuite.keyInsertTest) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.keySignEd25519Test(storage)](#StorageTestSuite.keySignEd25519Test) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.encryptionTest(alice_storage, bob_storage)](#StorageTestSuite.encryptionTest) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="StorageTestSuite.didCreateGenerateKeyTest"></a>
-
-### StorageTestSuite.didCreateGenerateKeyTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.didCreatePrivateKeyTest"></a>
-
-### StorageTestSuite.didCreatePrivateKeyTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.didListTest"></a>
-
-### StorageTestSuite.didListTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.didPurgeTest"></a>
-
-### StorageTestSuite.didPurgeTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.keyGenerateTest"></a>
-
-### StorageTestSuite.keyGenerateTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.keyDeleteTest"></a>
-
-### StorageTestSuite.keyDeleteTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.keyInsertTest"></a>
-
-### StorageTestSuite.keyInsertTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.keySignEd25519Test"></a>
-
-### StorageTestSuite.keySignEd25519Test(storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| storage | <code>Storage</code> | 
-
-<a name="StorageTestSuite.encryptionTest"></a>
-
-### StorageTestSuite.encryptionTest(alice_storage, bob_storage) ⇒ <code>Promise.&lt;void&gt;</code>
-**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
-
-| Param | Type |
-| --- | --- |
-| alice_storage | <code>Storage</code> | 
-| bob_storage | <code>Storage</code> | 
-
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -4615,7 +3881,7 @@ Returns `null` if the operation leads to a timestamp not in the valid range for 
 <a name="Timestamp+toJSON"></a>
 
 ### timestamp.toJSON() ⇒ <code>any</code>
-Serializes a `Timestamp` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp.parse"></a>
@@ -4638,102 +3904,13 @@ Creates a new `Timestamp` with the current date and time.
 <a name="Timestamp.fromJSON"></a>
 
 ### Timestamp.fromJSON(json) ⇒ [<code>Timestamp</code>](#Timestamp)
-Deserializes a `Timestamp` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
 
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
-
-<a name="VerificationMethod"></a>
-
-## VerificationMethod
-**Kind**: global class  
-
-* [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(did, key_type, public_key, fragment)](#new_VerificationMethod_new)
-    * _instance_
-        * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.controller()](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
-        * [.SetController(did)](#VerificationMethod+SetController)
-        * [.type()](#VerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.data()](#VerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
-        * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
-        * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-    * _static_
-        * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-
-<a name="new_VerificationMethod_new"></a>
-
-### new VerificationMethod(did, key_type, public_key, fragment)
-Creates a new `VerificationMethod` object from the given `did` and public key.
-
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
-| key_type | <code>number</code> | 
-| public_key | <code>Uint8Array</code> | 
-| fragment | <code>string</code> | 
-
-<a name="VerificationMethod+id"></a>
-
-### verificationMethod.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Returns a copy of the `id` `DIDUrl` of the `VerificationMethod` object.
-
-**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod+controller"></a>
-
-### verificationMethod.controller() ⇒ [<code>DID</code>](#DID)
-Returns a copy of the `controller` `DID` of the `VerificationMethod` object.
-
-**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod+SetController"></a>
-
-### verificationMethod.SetController(did)
-Sets the `controller` `DID` of the `VerificationMethod` object.
-
-**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
-
-<a name="VerificationMethod+type"></a>
-
-### verificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
-Returns a copy of the `VerificationMethod` type.
-
-**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod+data"></a>
-
-### verificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
-Returns a copy of the `VerificationMethod` public key data.
-
-**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod+toJSON"></a>
-
-### verificationMethod.toJSON() ⇒ <code>any</code>
-Serializes a `VerificationMethod` object as a JSON object.
-
-**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod+clone"></a>
-
-### verificationMethod.clone() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Deep clones the object.
-
-**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod.fromJSON"></a>
-
-### VerificationMethod.fromJSON(value) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Deserializes a `VerificationMethod` object from a JSON object.
-
-**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
 
 <a name="VerifierOptions"></a>
 
@@ -4767,7 +3944,7 @@ Throws an error if any of the options are invalid.
 <a name="VerifierOptions+toJSON"></a>
 
 ### verifierOptions.toJSON() ⇒ <code>any</code>
-Serializes a `VerifierOptions` as a JSON object.
+Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="VerifierOptions+clone"></a>
@@ -4785,7 +3962,7 @@ Creates a new `VerifierOptions` with default options.
 <a name="VerifierOptions.fromJSON"></a>
 
 ### VerifierOptions.fromJSON(json) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Deserializes a `VerifierOptions` from a JSON object.
+Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
 
@@ -4858,9 +4035,17 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="DIDMessageEncoding"></a>
+<a name="KeyType"></a>
 
-## DIDMessageEncoding
+## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -4939,14 +4124,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

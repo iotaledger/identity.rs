@@ -11,7 +11,7 @@ keywords:
 
 # IOTA Identity Framework Guide
 
-![IOTA Identity](https://github.com/iotaledger/identity.rs/raw/dev/.meta/identity_banner.png)
+![IOTA Identity](/img/Banner/banner_identity.svg)
 
 The IOTA Identity framework implements the most common standards and patterns for Decentralized Identity in both a DLT agnostic and `iota` method specification manner. It is designed to work for Identity for People, Organizations, Things, and Objects acting as a unifying-layer of trust between everyone and everything.
 
@@ -34,13 +34,9 @@ Describes relevant concepts of SSI and how to utilize them in the library.
 
 Explains the DID standard from W3C and how to manipulate DID Documents.
 
-### [Chapter 3.2: Verifiable Credentials (VC)](http://localhost:3000/identity.rs/concepts/verifiable_credentials/overview)
+### [Chapter 3.2: Verifiable Credentials (VC)](./concepts/verifiable_credentials/overview)
 
 Explains the VC standard from W3C, how to create and revoke VCs, and how to use Verifiable Presentations.
-
-### [Chapter 3.3: Advanced Concepts](./concepts/advanced/overview)
-
-This chapter is meant for those that want to push the IOTA Identity framework to its limits, utilizing the more complex, yet more flexible lower-level libraries, allowing developers to optimize their implementation, take control over storage/security, and add features to the framework. 
 
 ### [Chapter 4: Programming Languages](./libraries/overview)
 

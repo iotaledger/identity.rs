@@ -44,22 +44,17 @@ module.exports = {
             {
               'Decentralized Identifiers (DID)': [
                   'concepts/decentralized_identifiers/overview',
+                  'concepts/decentralized_identifiers/alias',
                   'concepts/decentralized_identifiers/create',
                   'concepts/decentralized_identifiers/update',
                   'concepts/decentralized_identifiers/resolve',
-                  'concepts/decentralized_identifiers/private_tangle',
+                  'concepts/decentralized_identifiers/delete',
               ],
               'Verifiable Credentials': [
                   'concepts/verifiable_credentials/overview',
                   'concepts/verifiable_credentials/create',
-                  'concepts/verifiable_credentials/revoke',
+                  'concepts/verifiable_credentials/revocation',
                   'concepts/verifiable_credentials/verifiable_presentations',
-              ],
-              'Advanced Concepts': [
-                  'concepts/advanced/overview',
-                  'concepts/advanced/did_messages',
-                  'concepts/advanced/storage_interface',
-  
               ]
             },
           ],
@@ -76,7 +71,6 @@ module.exports = {
                     collapsed: true,
                     items: [
                         'libraries/rust/getting_started',
-                        'libraries/rust/api_reference',
                     ],
                 },
                 {
@@ -144,6 +138,7 @@ module.exports = {
                 'specs/didcomm/CHANGELOG',
               ]
             },
+            'specs/revocation_bitmap_2022',
           ],
         },
         'glossary',

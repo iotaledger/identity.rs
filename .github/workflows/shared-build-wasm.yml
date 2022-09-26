@@ -15,7 +15,7 @@ on:
         description: "Name used for the output build artifact"
         required: true
         type: string
-jobs:  
+jobs:
   build-wasm:
     defaults:
       run:
@@ -55,10 +55,10 @@ jobs:
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
         uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9
-        
+
       - name: Setup sccache
-        uses: './.github/actions/rust/sccache/setup-sccache' 
-        with:    
+        uses: './.github/actions/rust/sccache/setup-sccache'
+        with:
           os: ${{matrix.os}}
 
       - name: Set up Node.js
@@ -76,12 +76,13 @@ jobs:
         if: ${{ inputs.run-unit-tests }}
         run: npm run test:unit
 
-      - name: Build Wasm examples
-        run: npm run build:examples
+      - name: Run Node unit tests
+        if: ${{ inputs.run-unit-tests }}
+        run: npm run test:unit:node
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
-        with:    
+        with:
           os: ${{matrix.os}}
 
       - name: Upload artifact

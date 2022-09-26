@@ -9,7 +9,7 @@ keywords:
 - Create
 - sign
 ---
-import create_vc_rs from  '!!raw-loader!../../../../examples/account/create_vc.rs';
+import create_vc_rs from  '!!raw-loader!../../../../examples_legacy/account/create_vc.rs';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
 
 A [verifiable credential (VC)](./overview.md) can represent all information that a physical credential represents, such as a passport or university degree. However, by allowing other parties to cryptographically verify the authorship and integrity of the claims, verifiable credentials can be seen as more tamper-evident and more trustworthy than their physical counterparts.
@@ -23,7 +23,7 @@ In the IOTA Identity Framework you can create a Verifiable Credential with the f
 - [**ID**](https://www.w3.org/TR/vc-data-model/#identifiers): optional URI identifier for the credential.
 - [**Issuance Date**](https://www.w3.org/TR/vc-data-model/#issuance-date): optional timestamp for expressing the date and time when a credential becomes valid. 
 - [**Expiration Date**](https://www.w3.org/TR/vc-data-model/#expiration): optional timestamp for expressing the date and time when a credential ceases to be valid.
-- [**Status**](https://www.w3.org/TR/vc-data-model/#status): optional information used to determine the current status of a credential, i.e. whether or not it has been [revoked](./revoke.mdx).
+- [**Status**](https://www.w3.org/TR/vc-data-model/#status): optional information used to determine the current status of a credential, i.e. whether or not it has been [revoked](./revocation.mdx).
 - [**Schema**](https://www.w3.org/TR/vc-data-model/#data-schemas): optional list of objects specifying the schema that the data must conform to. 
 - [**Refresh Service**](https://www.w3.org/TR/vc-data-model/#refreshing): optional link to a service where the recipient may refresh the included credentials.
 - [**Terms of Use**](https://www.w3.org/TR/vc-data-model/#terms-of-use): optional list of policies defining obligations, prohibitions, or permissions of the presentation recipient.
@@ -82,5 +82,5 @@ This Verifiable Credential can be [verified by anyone](./verifiable_presentation
     nodeReplitLink="https://repl.it/@IOTAFoundation/create-vc?lite=true"
     rustContent={create_vc_rs}
     nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-account/src/create_vc.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/account/create_vc.rs"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples_legacy/account/create_vc.rs"
 />

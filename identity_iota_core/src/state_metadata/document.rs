@@ -1,0 +1,484 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
+use identity_did::did::CoreDID;
+use identity_did::document::CoreDocument;
+use once_cell::sync::Lazy;
+use serde::Deserialize;
+use serde::Serialize;
+
+use crate::error::Result;
+use crate::Error;
+use crate::IotaCoreDocument;
+use crate::IotaDID;
+use crate::IotaDocument;
+use crate::IotaDocumentMetadata;
+
+use super::StateMetadataEncoding;
+use super::StateMetadataVersion;
+
+pub(crate) static PLACEHOLDER_DID: Lazy<CoreDID> = Lazy::new(|| CoreDID::parse("did:0:0").unwrap());
+
+/// Magic bytes used to mark DID documents.
+const DID_MARKER: &[u8] = b"DID";
+
+/// Intermediate representation of the DID document as it is contained in the state metadata of
+/// an Alias Output.
+///
+/// DID instances in the document are replaced by the `PLACEHOLDER_DID`.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub(crate) struct StateMetadataDocument {
+  #[serde(rename = "doc")]
+  pub(crate) document: CoreDocument,
+  #[serde(rename = "meta")]
+  pub(crate) metadata: IotaDocumentMetadata,
+}
+
+impl StateMetadataDocument {
+  /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
+  pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
+    let Self { document, metadata } = self;
+    let core_document: IotaCoreDocument = document.try_map(
+      // Replace placeholder identifiers.
+      |did| {
+        if did == PLACEHOLDER_DID.as_ref() {
+          Ok(original_did.clone())
+        } else {
+          // TODO: wrap error?
+          IotaDID::try_from_core(did)
+        }
+      },
+      // Do not modify properties.
+      Ok,
+    )?;
+    Ok(IotaDocument::from((core_document, metadata)))
+  }
+
+  /// Pack a [`StateMetadataDocument`] into bytes, suitable for inclusion in
+  /// an Alias Output's state metadata, according to the given `encoding`.
+  pub fn pack(mut self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
+    // Unset Governor and State Controller Addresses to avoid bloating the payload
+    self.metadata.governor_address = None;
+    self.metadata.state_controller_address = None;
+    *self.document.controller_mut() = None;
+
+    let encoded_message_data: Vec<u8> = match encoding {
+      StateMetadataEncoding::Json => self
+        .to_json_vec()
+        .map_err(|err| Error::SerializationError("failed to serialize document to JSON", Some(err)))?,
+    };
+
+    // Prepend flags and length.
+    let encoded_message_data_with_flags =
+      add_flags_to_message(encoded_message_data, StateMetadataVersion::CURRENT, encoding)?;
+    Ok(encoded_message_data_with_flags)
+  }
+
+  /// Unpack bytes into a [`StateMetadataDocument`].
+  pub fn unpack(data: &[u8]) -> Result<Self> {
+    // Check marker.
+    let marker: &[u8] = data.get(0..=2).ok_or(identity_did::Error::InvalidDocument(
+      "state metadata decoding: expected DID marker at offset [0..=2]",
+      None,
+    ))?;
+    if marker != DID_MARKER {
+      return Err(Error::InvalidStateMetadata("missing `DID` marker"));
+    }
+
+    // Check version.
+    let version: StateMetadataVersion = StateMetadataVersion::try_from(*data.get(3).ok_or(
+      identity_did::Error::InvalidDocument("state metadata decoding: expected version at offset 3", None),
+    )?)?;
+    if version != StateMetadataVersion::V1 {
+      return Err(Error::InvalidStateMetadata("unsupported version"));
+    }
+
+    // Decode data.
+    let encoding: StateMetadataEncoding = StateMetadataEncoding::try_from(*data.get(4).ok_or(
+      identity_did::Error::InvalidDocument("state metadata decoding: expected encoding at offset 4", None),
+    )?)?;
+
+    let data_len_packed: [u8; 2] = data
+      .get(5..=6)
+      .ok_or(identity_did::Error::InvalidDocument(
+        "state metadata decoding: expected data length at offset [5..=6]",
+        None,
+      ))?
+      .try_into()
+      .map_err(|_| {
+        identity_did::Error::InvalidDocument("state metadata decoding: data length conversion error", None)
+      })?;
+    let data_len: u16 = u16::from_le_bytes(data_len_packed);
+
+    let data: &[u8] = data
+      .get(7..(7 + data_len as usize))
+      .ok_or(identity_did::Error::InvalidDocument(
+        "state metadata decoding: encoded document shorter than length prefix",
+        None,
+      ))?;
+
+    match encoding {
+      StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(data).map_err(|err| {
+        Error::SerializationError(
+          "state metadata decoding: failed to deserialize JSON document",
+          Some(err),
+        )
+      }),
+    }
+  }
+}
+
+/// Prepends the message flags and marker magic bytes to the data in the following order:
+/// `[marker, version, encoding, data length, data]`.
+fn add_flags_to_message(
+  mut data: Vec<u8>,
+  version: StateMetadataVersion,
+  encoding: StateMetadataEncoding,
+) -> Result<Vec<u8>> {
+  let data_len: u16 =
+    u16::try_from(data.len()).map_err(|_| Error::SerializationError("failed to convert usize to u16", None))?;
+  let data_len_packed: [u8; 2] = data_len.to_le_bytes();
+  let mut buffer: Vec<u8> = Vec::with_capacity(DID_MARKER.len() + 1 + 1 + data_len_packed.len() + data_len as usize);
+  buffer.extend_from_slice(DID_MARKER);
+  buffer.push(version as u8);
+  buffer.push(encoding as u8);
+  buffer.extend_from_slice(&data_len_packed);
+  buffer.append(&mut data);
+  Ok(buffer)
+}
+
+impl From<IotaDocument> for StateMetadataDocument {
+  /// Transforms a [`IotaDocument`] into its state metadata representation by replacing all
+  /// occurrences of its did with a placeholder.
+  fn from(document: IotaDocument) -> Self {
+    let IotaDocument { document, metadata } = document;
+    let id: IotaDID = document.id().clone();
+    let core_document: CoreDocument = document.map(
+      // Replace self-referential identifiers with a placeholder, but not others.
+      |did| {
+        if did == id {
+          PLACEHOLDER_DID.clone()
+        } else {
+          CoreDID::from(did)
+        }
+      },
+      // Do not modify properties.
+      |o| o,
+    );
+    StateMetadataDocument {
+      document: core_document,
+      metadata,
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_core::common::Object;
+  use identity_core::common::OneOrSet;
+  use identity_core::common::Url;
+  use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
+  use identity_did::did::DID;
+  use identity_did::verification::MethodScope;
+
+  use crate::state_metadata::document::DID_MARKER;
+  use crate::state_metadata::PLACEHOLDER_DID;
+  use crate::IotaDID;
+  use crate::IotaDocument;
+  use crate::IotaService;
+  use crate::IotaVerificationMethod;
+  use crate::StateMetadataDocument;
+  use crate::StateMetadataEncoding;
+  use crate::StateMetadataVersion;
+
+  struct TestSetup {
+    document: IotaDocument,
+    did_self: IotaDID,
+    did_foreign: IotaDID,
+  }
+
+  fn test_document() -> TestSetup {
+    let did_self =
+      IotaDID::parse("did:iota:0x8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
+    let did_foreign =
+      IotaDID::parse("did:iota:0x71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
+
+    let mut document: IotaDocument = IotaDocument::new_with_id(did_self.clone());
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    document
+      .insert_method(
+        IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
+        MethodScope::VerificationMethod,
+      )
+      .unwrap();
+
+    let keypair_foreign: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    document
+      .insert_method(
+        IotaVerificationMethod::new(
+          did_foreign.clone(),
+          keypair_foreign.type_(),
+          keypair_foreign.public(),
+          "did-foreign",
+        )
+        .unwrap(),
+        MethodScope::authentication(),
+      )
+      .unwrap();
+
+    assert!(document.insert_service(
+      IotaService::builder(Object::new())
+        .id(document.id().to_url().join("#my-service").unwrap())
+        .type_("RevocationList2022")
+        .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
+        .build()
+        .unwrap()
+    ));
+
+    assert!(document.insert_service(
+      IotaService::builder(Object::new())
+        .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
+        .type_("RevocationList2022")
+        .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
+        .build()
+        .unwrap()
+    ));
+
+    document
+      .also_known_as_mut()
+      .append(Url::parse("did:example:abc").unwrap());
+    document
+      .also_known_as_mut()
+      .append(Url::parse("did:example:xyz").unwrap());
+
+    let controllers = OneOrSet::try_from(vec![did_foreign.clone(), did_self.clone()]).unwrap();
+    *document.core_document_mut().controller_mut() = Some(controllers);
+
+    TestSetup {
+      document,
+      did_self,
+      did_foreign,
+    }
+  }
+
+  #[test]
+  fn test_transformation_roundtrip() {
+    let TestSetup {
+      document,
+      did_self,
+      did_foreign,
+    } = test_document();
+
+    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document.clone());
+
+    assert_eq!(
+      state_metadata_doc
+        .document
+        .resolve_method("#did-self", None)
+        .unwrap()
+        .id()
+        .did(),
+      PLACEHOLDER_DID.as_ref()
+    );
+
+    assert_eq!(
+      state_metadata_doc
+        .document
+        .resolve_method("#did-foreign", None)
+        .unwrap()
+        .id()
+        .did(),
+      did_foreign.as_ref()
+    );
+
+    assert_eq!(
+      state_metadata_doc
+        .document
+        .service()
+        .iter()
+        .find(|service| service.id().fragment().unwrap() == "my-foreign-service")
+        .unwrap()
+        .id()
+        .did(),
+      did_foreign.as_ref()
+    );
+
+    assert_eq!(
+      state_metadata_doc
+        .document
+        .service()
+        .iter()
+        .find(|service| service.id().fragment().unwrap() == "my-service")
+        .unwrap()
+        .id()
+        .did(),
+      PLACEHOLDER_DID.as_ref()
+    );
+
+    let controllers = state_metadata_doc.document.controller().unwrap();
+    assert_eq!(controllers.get(0).unwrap(), did_foreign.as_ref());
+    assert_eq!(controllers.get(1).unwrap(), PLACEHOLDER_DID.as_ref());
+
+    let iota_document = state_metadata_doc.into_iota_document(&did_self).unwrap();
+    assert_eq!(iota_document, document);
+  }
+
+  #[test]
+  fn test_packing_roundtrip() {
+    let TestSetup { document, .. } = test_document();
+
+    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
+    let packed_bytes: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
+
+    let unpacked_doc = StateMetadataDocument::unpack(&packed_bytes).unwrap();
+    // Controller and State Controller are set to None when packing
+    assert_eq!(state_metadata_doc.metadata.created, unpacked_doc.metadata.created);
+    assert_eq!(state_metadata_doc.metadata.updated, unpacked_doc.metadata.updated);
+    assert_eq!(
+      state_metadata_doc.metadata.deactivated,
+      unpacked_doc.metadata.deactivated
+    );
+
+    assert_eq!(state_metadata_doc.document.id(), unpacked_doc.document.id());
+    assert_eq!(
+      state_metadata_doc.document.also_known_as(),
+      unpacked_doc.document.also_known_as()
+    );
+    assert_eq!(
+      state_metadata_doc.document.verification_method(),
+      unpacked_doc.document.verification_method()
+    );
+    assert_eq!(
+      state_metadata_doc.document.authentication(),
+      unpacked_doc.document.authentication()
+    );
+    assert_eq!(
+      state_metadata_doc.document.assertion_method(),
+      unpacked_doc.document.assertion_method()
+    );
+    assert_eq!(
+      state_metadata_doc.document.key_agreement(),
+      unpacked_doc.document.key_agreement()
+    );
+    assert_eq!(
+      state_metadata_doc.document.capability_delegation(),
+      unpacked_doc.document.capability_delegation()
+    );
+    assert_eq!(state_metadata_doc.document.service(), unpacked_doc.document.service());
+    assert_eq!(
+      state_metadata_doc.document.properties(),
+      unpacked_doc.document.properties()
+    );
+  }
+
+  #[test]
+  fn test_pack_format() {
+    // Changing the serialization is a breaking change!
+    let TestSetup { document, .. } = test_document();
+    let mut state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
+    let packed: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
+    // Controller and State Controller are set to None when packing
+    *state_metadata_doc.document.controller_mut() = None;
+    state_metadata_doc.metadata.governor_address = None;
+    state_metadata_doc.metadata.state_controller_address = None;
+    let expected_payload: String = format!(
+      "{{\"doc\":{},\"meta\":{}}}",
+      state_metadata_doc.document, state_metadata_doc.metadata
+    );
+
+    // DID marker.
+    assert_eq!(&packed[0..3], DID_MARKER);
+    // Version.
+    assert_eq!(packed[3], StateMetadataVersion::V1 as u8);
+    // Encoding.
+    assert_eq!(packed[4], StateMetadataEncoding::Json as u8);
+    // JSON length.
+    assert_eq!(
+      &packed[5..=6],
+      (expected_payload.as_bytes().len() as u16).to_le_bytes().as_ref()
+    );
+    // JSON payload.
+    assert_eq!(&packed[7..], expected_payload.as_bytes());
+  }
+
+  #[test]
+  fn test_unpack_length_prefix() {
+    // Changing the serialization is a breaking change!
+    let TestSetup { document, .. } = test_document();
+    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
+    let mut packed: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
+    let original_length = u16::from_le_bytes(packed[5..=6].try_into().unwrap());
+
+    // INVALID: length is too long.
+    let longer = (original_length + 1_u16).to_le_bytes();
+    packed[5] = longer[0];
+    packed[6] = longer[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // INVALID: length is too long.
+    let max: [u8; 2] = u16::MAX.to_le_bytes();
+    packed[5] = max[0];
+    packed[6] = max[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // INVALID: length is too short (JSON deserialization fails).
+    let shorter = (original_length - 1_u16).to_le_bytes();
+    packed[5] = shorter[0];
+    packed[6] = shorter[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // INVALID: length is too short (JSON deserialization fails).
+    let min = 0_u16.to_le_bytes();
+    packed[5] = min[0];
+    packed[6] = min[1];
+    assert!(StateMetadataDocument::unpack(&packed).is_err());
+
+    // VALID: length is just right.
+    let original = original_length.to_le_bytes();
+    packed[5] = original[0];
+    packed[6] = original[1];
+
+    let unpacked_doc = StateMetadataDocument::unpack(&packed).unwrap();
+    // Controller and State Controller are set to None when packing
+    assert_eq!(state_metadata_doc.metadata.created, unpacked_doc.metadata.created);
+    assert_eq!(state_metadata_doc.metadata.updated, unpacked_doc.metadata.updated);
+    assert_eq!(
+      state_metadata_doc.metadata.deactivated,
+      unpacked_doc.metadata.deactivated
+    );
+
+    assert_eq!(state_metadata_doc.document.id(), unpacked_doc.document.id());
+    assert_eq!(
+      state_metadata_doc.document.also_known_as(),
+      unpacked_doc.document.also_known_as()
+    );
+    assert_eq!(
+      state_metadata_doc.document.verification_method(),
+      unpacked_doc.document.verification_method()
+    );
+    assert_eq!(
+      state_metadata_doc.document.authentication(),
+      unpacked_doc.document.authentication()
+    );
+    assert_eq!(
+      state_metadata_doc.document.assertion_method(),
+      unpacked_doc.document.assertion_method()
+    );
+    assert_eq!(
+      state_metadata_doc.document.key_agreement(),
+      unpacked_doc.document.key_agreement()
+    );
+    assert_eq!(
+      state_metadata_doc.document.capability_delegation(),
+      unpacked_doc.document.capability_delegation()
+    );
+    assert_eq!(state_metadata_doc.document.service(), unpacked_doc.document.service());
+    assert_eq!(
+      state_metadata_doc.document.properties(),
+      unpacked_doc.document.properties()
+    );
+  }
+}

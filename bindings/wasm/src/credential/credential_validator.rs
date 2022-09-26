@@ -1,22 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::client::CredentialValidator;
-use identity_iota::client::ResolvedIotaDocument;
-use identity_iota::client::StatusCheck;
-use identity_iota::client::ValidationError;
 use identity_iota::core::Url;
-use identity_iota::iota_core::IotaDocument;
+use identity_iota::credential::AbstractValidatorDocument;
+use identity_iota::credential::CredentialValidator;
+use identity_iota::credential::StatusCheck;
+use identity_iota::credential::ValidationError;
+use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
-use crate::did::ArrayDocumentOrArrayResolvedDocument;
-use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::resolver::ArraySupportedDocument;
+use crate::resolver::RustSupportedDocument;
+use crate::resolver::SupportedDID;
+use crate::resolver::SupportedDocument;
 
 use super::WasmCredential;
 use super::WasmCredentialValidationOptions;
@@ -54,12 +56,12 @@ impl WasmCredentialValidator {
   #[wasm_bindgen]
   pub fn validate(
     credential: &WasmCredential,
-    issuer: &DocumentOrResolvedDocument,
+    issuer: &SupportedDocument,
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let issuer_doc: ResolvedIotaDocument = issuer.into_serde().wasm_result()?;
-    CredentialValidator::validate(&credential.0, &issuer_doc, &options.0, fail_fast.into()).wasm_result()
+    let issuer: AbstractValidatorDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?.into();
+    CredentialValidator::validate(&credential.0, &issuer, &options.0, fail_fast.into()).wasm_result()
   }
 
   /// Validates the semantic structure of the `Credential`.
@@ -96,23 +98,30 @@ impl WasmCredentialValidator {
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
   #[wasm_bindgen(js_name = verifySignature)]
+  #[allow(non_snake_case)]
   pub fn verify_signature(
     credential: &WasmCredential,
-    trusted_issuers: &ArrayDocumentOrArrayResolvedDocument,
+    trustedIssuers: &ArraySupportedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let trusted_issuers: Vec<ResolvedIotaDocument> = trusted_issuers.into_serde().wasm_result()?;
-    CredentialValidator::verify_signature(&credential.0, trusted_issuers.as_slice(), &options.0).wasm_result()
+    let trusted_issuers: Vec<AbstractValidatorDocument> = trustedIssuers
+      .into_serde::<Vec<RustSupportedDocument>>()
+      .wasm_result()?
+      .into_iter()
+      .map(Into::into)
+      .collect();
+    CredentialValidator::verify_signature(&credential.0, &trusted_issuers, &options.0).wasm_result()
   }
 
   /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
-  /// `relationship`. The `holder_url` parameter is expected to be the URL of the holder.
+  /// `relationship`. The `holder` parameter is expected to be the URL of the holder.
+  #[wasm_bindgen(js_name = checkSubjectHolderRelationship)]
   pub fn check_subject_holder_relationship(
     credential: &WasmCredential,
-    holder_url: &str,
+    holder: &str,
     relationship: WasmSubjectHolderRelationship,
   ) -> Result<()> {
-    let holder: Url = Url::parse(holder_url).wasm_result()?;
+    let holder: Url = Url::parse(holder).wasm_result()?;
     CredentialValidator::check_subject_holder_relationship(&credential.0, &holder, relationship.into()).wasm_result()
   }
 
@@ -123,11 +132,27 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn check_status(
     credential: &WasmCredential,
-    trustedIssuers: &ArrayDocumentOrArrayResolvedDocument,
+    trustedIssuers: &ArraySupportedDocument,
     statusCheck: WasmStatusCheck,
   ) -> Result<()> {
-    let trusted_issuers: Vec<IotaDocument> = trustedIssuers.into_serde().wasm_result()?;
+    let trusted_issuers: Vec<AbstractValidatorDocument> = trustedIssuers
+      .into_serde::<Vec<RustSupportedDocument>>()
+      .wasm_result()?
+      .into_iter()
+      .map(Into::into)
+      .collect();
     let status_check: StatusCheck = StatusCheck::from(statusCheck);
-    CredentialValidator::check_status(&credential.0, trusted_issuers.as_slice(), status_check).wasm_result()
+    CredentialValidator::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
+  }
+
+  /// Utility for extracting the issuer field of a `Credential` as a DID.
+  ///
+  /// ### Errors
+  ///
+  /// Fails if the issuer field is not a valid DID.
+  #[wasm_bindgen(js_name = extractIssuer)]
+  pub fn extract_issuer(credential: &WasmCredential) -> Result<SupportedDID> {
+    let did: CoreDID = CredentialValidator::extract_issuer(&credential.0).wasm_result()?;
+    SupportedDID::try_from(did)
   }
 }

@@ -13,7 +13,7 @@ use crate::did::DID;
 use crate::verification::VerificationMethod;
 
 /// A reference to a verification method, either a `DID` or embedded `Method`.
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum MethodRef<D = CoreDID, T = Object>
 where

@@ -11,35 +11,30 @@ use identity_account_storage::crypto::RemoteEd25519;
 use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
-#[cfg(feature = "encryption")]
-use identity_account_storage::types::CekAlgorithm;
-#[cfg(feature = "encryption")]
-use identity_account_storage::types::EncryptedData;
-#[cfg(feature = "encryption")]
-use identity_account_storage::types::EncryptionAlgorithm;
 use identity_account_storage::types::KeyLocation;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
-use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
-use identity_did::did::DID;
-use identity_iota_client::chain::DocumentChain;
-use identity_iota_client::document::ResolvedIotaDocument;
-use identity_iota_client::tangle::Client;
-use identity_iota_client::tangle::PublishType;
-use identity_iota_client::tangle::SharedPtr;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::did::IotaDIDUrl;
-use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::MessageIdExt;
+use identity_iota_client_legacy::chain::DocumentChain;
+use identity_iota_client_legacy::document::ResolvedIotaDocument;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::PublishType;
+use identity_iota_client_legacy::tangle::SharedPtr;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::did::IotaDIDUrl;
+use identity_iota_core_legacy::diff::DiffMessage;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::MessageIdExt;
 use serde::Serialize;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
 use crate::types::IdentitySetup;
+use crate::types::IdentityState;
 use crate::types::IdentityUpdater;
 use crate::updates::create_identity;
 use crate::updates::Update;
@@ -125,7 +120,7 @@ where
     // Ensure the DID matches the client network.
     if did.network_str() != setup.client.network().name_str() {
       return Err(Error::IotaClientError(
-        identity_iota_client::Error::IncompatibleNetwork(format!(
+        identity_iota_client_legacy::Error::IncompatibleNetwork(format!(
           "DID network {} does not match account network {}",
           did.network_str(),
           setup.client.network().name_str()
@@ -134,12 +129,18 @@ where
     }
 
     // Ensure the identity exists in storage
-    let document: IotaDocument = setup.storage.document_get(&did).await?.ok_or(Error::IdentityNotFound)?;
-    let chain_state: ChainState = setup
+    let identity_state_bytes: Vec<u8> = setup
       .storage
-      .chain_state_get(&did)
+      .blob_get(did.as_ref())
       .await?
       .ok_or(Error::IdentityNotFound)?;
+    let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
+    let chain_state: ChainState = identity_state
+      .chain_state()?
+      .ok_or_else(|| Error::InvalidIdentityState("missing chain state".to_owned()))?;
+    let document: IotaDocument = identity_state
+      .document()?
+      .ok_or_else(|| Error::InvalidIdentityState("missing document".to_owned()))?;
 
     Self::with_setup(setup, chain_state, document).await
   }
@@ -243,7 +244,7 @@ where
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.storage().did_purge(self.did()).await?;
+    self.storage().did_purge(self.did().as_ref()).await?;
 
     // Write the changes to disk
     self.save(false).await?;
@@ -316,84 +317,6 @@ where
     Ok(())
   }
 
-  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
-  /// `fragment`, revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-  pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
-    // Find the service to be updated.
-    let mut service_id: IotaDIDUrl = self.did().to_url();
-    service_id.set_fragment(Some(fragment))?;
-
-    self.document.revoke_credentials(&service_id, credential_indices)?;
-
-    self.increment_actions();
-    self.publish_internal(false, PublishOptions::default()).await?;
-    Ok(())
-  }
-
-  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
-  /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-  pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
-    // Find the service to be updated.
-    let mut service_id: IotaDIDUrl = self.did().to_url();
-    service_id.set_fragment(Some(fragment))?;
-
-    self.document.unrevoke_credentials(&service_id, credential_indices)?;
-
-    self.increment_actions();
-    self.publish_internal(false, PublishOptions::default()).await?;
-    Ok(())
-  }
-
-  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
-  ///
-  /// Returns an [`EncryptedData`] instance.
-  #[cfg(feature = "encryption")]
-  pub async fn encrypt_data(
-    &self,
-    plaintext: &[u8],
-    associated_data: &[u8],
-    encryption_algorithm: &EncryptionAlgorithm,
-    cek_algorithm: &CekAlgorithm,
-    public_key: PublicKey,
-  ) -> Result<EncryptedData> {
-    self
-      .storage()
-      .data_encrypt(
-        self.did(),
-        plaintext.to_vec(),
-        associated_data.to_vec(),
-        encryption_algorithm,
-        cek_algorithm,
-        public_key,
-      )
-      .await
-      .map_err(Into::into)
-  }
-
-  /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
-  /// `cek_algorithm`.
-  ///
-  /// Returns the decrypted text.
-  #[cfg(feature = "encryption")]
-  pub async fn decrypt_data(
-    &self,
-    data: EncryptedData,
-    encryption_algorithm: &EncryptionAlgorithm,
-    cek_algorithm: &CekAlgorithm,
-    fragment: &str,
-  ) -> Result<Vec<u8>> {
-    let method: &IotaVerificationMethod = self
-      .document()
-      .resolve_method(fragment, None)
-      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
-    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
-    self
-      .storage()
-      .data_decrypt(self.did(), data, encryption_algorithm, cek_algorithm, &private_key)
-      .await
-      .map_err(Into::into)
-  }
-
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
@@ -402,12 +325,17 @@ where
     // TODO: An account always holds a valid identity,
     // so if None is returned, that's a broken invariant.
     // This should be mapped to a fatal error in the future.
-    self
+    let identity_state_bytes: Vec<u8> = self
       .storage()
       .deref()
-      .document_get(self.did())
+      .blob_get(self.did().as_ref())
       .await?
-      .ok_or(Error::IdentityNotFound)
+      .ok_or(Error::IdentityNotFound)?;
+    let identity_state: IdentityState = IdentityState::from_json_slice(&identity_state_bytes)?;
+
+    identity_state
+      .document()?
+      .ok_or_else(|| Error::InvalidIdentityState("document not found".to_owned()))
   }
 
   pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {
@@ -496,8 +424,11 @@ where
   }
 
   async fn store_state(&self) -> Result<()> {
-    self.storage.document_set(self.did(), &self.document).await?;
-    self.storage.chain_state_set(self.did(), self.chain_state()).await?;
+    let identity_state: IdentityState = IdentityState::new(Some(&self.document), Some(&self.chain_state))?;
+    self
+      .storage
+      .blob_set(self.did().as_ref(), identity_state.to_json_vec()?)
+      .await?;
 
     self.save(false).await?;
 
@@ -622,7 +553,7 @@ where
     let location: KeyLocation = KeyLocation::from_verification_method(method)?;
 
     // Create a private key suitable for identity_core::crypto
-    let private: RemoteKey<'_> = RemoteKey::new(did, &location, self.storage().deref());
+    let private: RemoteKey<'_> = RemoteKey::new(did.as_ref(), &location, self.storage().deref());
 
     let method_url: IotaDIDUrl = method.id().to_owned();
 
@@ -634,5 +565,123 @@ where
     }
 
     Ok(())
+  }
+}
+
+#[cfg(feature = "revocation-bitmap")]
+mod account_revocation {
+  use super::Account;
+  use crate::account::PublishOptions;
+  use crate::Result;
+  use identity_did::did::DID;
+  use identity_iota_client_legacy::tangle::Client;
+  use identity_iota_client_legacy::tangle::SharedPtr;
+  use identity_iota_core_legacy::did::IotaDIDUrl;
+
+  impl<C> Account<C>
+  where
+    C: SharedPtr<Client>,
+  {
+    /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
+    /// `fragment`, revoke all specified `indices`.
+    pub async fn revoke_credentials(&mut self, fragment: &str, indices: &[u32]) -> Result<()> {
+      // Find the service to be updated.
+      let mut service_id: IotaDIDUrl = self.did().to_url();
+      service_id.set_fragment(Some(fragment))?;
+
+      self.document.revoke_credentials(&service_id, indices)?;
+
+      self.increment_actions();
+      self.publish_internal(false, PublishOptions::default()).await?;
+      Ok(())
+    }
+
+    /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
+    /// `fragment`, unrevoke all specified `indices`.
+    pub async fn unrevoke_credentials(&mut self, fragment: &str, indices: &[u32]) -> Result<()> {
+      // Find the service to be updated.
+      let mut service_id: IotaDIDUrl = self.did().to_url();
+      service_id.set_fragment(Some(fragment))?;
+
+      self.document.unrevoke_credentials(&service_id, indices)?;
+
+      self.increment_actions();
+      self.publish_internal(false, PublishOptions::default()).await?;
+      Ok(())
+    }
+  }
+}
+
+#[cfg(feature = "encryption")]
+mod account_encryption {
+  use super::Account;
+  use crate::Error;
+  use crate::Result;
+  use identity_account_storage::types::CekAlgorithm;
+  use identity_account_storage::types::EncryptedData;
+  use identity_account_storage::types::EncryptionAlgorithm;
+  use identity_account_storage::types::KeyLocation;
+  use identity_core::crypto::PublicKey;
+  use identity_iota_client_legacy::tangle::Client;
+  use identity_iota_client_legacy::tangle::SharedPtr;
+  use identity_iota_core_legacy::document::IotaVerificationMethod;
+
+  impl<C> Account<C>
+  where
+    C: SharedPtr<Client>,
+  {
+    /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+    ///
+    /// Returns an [`EncryptedData`] instance.
+    pub async fn encrypt_data(
+      &self,
+      plaintext: &[u8],
+      associated_data: &[u8],
+      encryption_algorithm: &EncryptionAlgorithm,
+      cek_algorithm: &CekAlgorithm,
+      public_key: PublicKey,
+    ) -> Result<EncryptedData> {
+      self
+        .storage()
+        .data_encrypt(
+          self.did().as_ref(),
+          plaintext.to_vec(),
+          associated_data.to_vec(),
+          encryption_algorithm,
+          cek_algorithm,
+          public_key,
+        )
+        .await
+        .map_err(Into::into)
+    }
+
+    /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+    /// `cek_algorithm`.
+    ///
+    /// Returns the decrypted text.
+    pub async fn decrypt_data(
+      &self,
+      data: EncryptedData,
+      encryption_algorithm: &EncryptionAlgorithm,
+      cek_algorithm: &CekAlgorithm,
+      fragment: &str,
+    ) -> Result<Vec<u8>> {
+      let method: &IotaVerificationMethod = self
+        .document()
+        .resolve_method(fragment, None)
+        .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
+      let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
+      self
+        .storage()
+        .data_decrypt(
+          self.did().as_ref(),
+          data,
+          encryption_algorithm,
+          cek_algorithm,
+          &private_key,
+        )
+        .await
+        .map_err(Into::into)
+    }
   }
 }

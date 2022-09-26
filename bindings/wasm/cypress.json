@@ -1,7 +1,0 @@
-{
-  "screenshotOnRunFailure": false,
-  "video": false,
-  "retries": {
-    "runMode": 3
-  }
-}

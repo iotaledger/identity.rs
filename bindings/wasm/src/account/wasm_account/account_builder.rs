@@ -8,7 +8,7 @@ use identity_iota::account::AccountBuilder;
 use identity_iota::account::IdentitySetup;
 use identity_iota::client::Client;
 use identity_iota::client::ClientBuilder;
-use identity_iota::iota_core::IotaDID;
+use identity_iota::iota::IotaDID;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -19,7 +19,7 @@ use crate::account::types::OptionAutoSave;
 use crate::account::types::WasmIdentitySetup;
 use crate::account::wasm_account::PromiseAccount;
 use crate::account::wasm_account::WasmAccount;
-use crate::did::WasmDID;
+use crate::did::WasmIotaDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::IClientConfig;
@@ -69,7 +69,7 @@ impl WasmAccountBuilder {
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
-  pub fn load_identity(&mut self, did: &WasmDID) -> Result<PromiseAccount> {
+  pub fn load_identity(&mut self, did: &WasmIotaDID) -> Result<PromiseAccount> {
     let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
     let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -90,8 +90,6 @@ impl WasmAccountBuilder {
   ///
   /// The identity is stored locally in the `Storage`. The DID network is automatically determined
   /// by the {@link Client} used to publish it.
-  ///
-  /// @See {@link IdentitySetup} to customize the identity creation.
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
     let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();

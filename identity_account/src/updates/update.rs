@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_account_storage::types::DIDType;
+use identity_did::did::CoreDID;
 use log::debug;
 use log::trace;
 
@@ -23,14 +25,14 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
-use identity_iota_client::tangle::Client;
-use identity_iota_client::tangle::SharedPtr;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::did::IotaDIDUrl;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaService;
-use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::tangle::NetworkName;
+use identity_iota_client_legacy::tangle::Client;
+use identity_iota_client_legacy::tangle::SharedPtr;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::did::IotaDIDUrl;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaService;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
+use identity_iota_core_legacy::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -50,12 +52,14 @@ pub(crate) async fn create_identity(
       .map_err(|err| UpdateError::InvalidMethodContent(err.to_string()))?;
   };
 
-  let (did, location) = store.did_create(network.clone(), fragment, setup.private_key).await?;
+  let (did, location) = store
+    .did_create(DIDType::IotaDID, network.clone(), fragment, setup.private_key)
+    .await?;
 
   let public_key: PublicKey = store.key_public(&did, &location).await?;
 
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
+    IotaVerificationMethod::new(did.clone().try_into()?, KeyType::Ed25519, &public_key, fragment)?;
 
   let document = IotaDocument::from_verification_method(method)?;
 
@@ -82,7 +86,7 @@ pub(crate) enum Update {
   },
   CreateService {
     fragment: String,
-    type_: String,
+    types: Vec<String>,
     endpoint: ServiceEndpoint,
     properties: Option<Object>,
   },
@@ -119,16 +123,15 @@ impl Update {
 
         // Generate or extract the private key and/or retrieve the public key.
         let key_type: KeyType = content.key_type();
-
         let public: PublicKey = match content {
           MethodContent::GenerateEd25519 | MethodContent::GenerateX25519 => {
-            let location: KeyLocation = storage.key_generate(did, key_type, fragment.name()).await?;
-            storage.key_public(did, &location).await?
+            let location: KeyLocation = storage.key_generate(did.as_ref(), key_type, fragment.name()).await?;
+            storage.key_public(did.as_ref(), &location).await?
           }
           MethodContent::PrivateEd25519(private_key) | MethodContent::PrivateX25519(private_key) => {
             let location: KeyLocation =
-              insert_method_secret(storage, did, key_type, fragment.name(), private_key).await?;
-            storage.key_public(did, &location).await?
+              insert_method_secret(storage, did.as_ref(), key_type, fragment.name(), private_key).await?;
+            storage.key_public(did.as_ref(), &location).await?
           }
           MethodContent::PublicEd25519(public_key) => public_key,
           MethodContent::PublicX25519(public_key) => public_key,
@@ -198,7 +201,7 @@ impl Update {
       }
       Self::CreateService {
         fragment,
-        type_,
+        types,
         endpoint,
         properties,
       } => {
@@ -214,7 +217,7 @@ impl Update {
         let service: IotaService = Service::builder(properties.unwrap_or_default())
           .id(did_url)
           .service_endpoint(endpoint)
-          .type_(type_)
+          .types(types)
           .build()?;
 
         document.insert_service(service);
@@ -248,7 +251,7 @@ impl Update {
 
 async fn insert_method_secret(
   store: &dyn Storage,
-  did: &IotaDID,
+  did: &CoreDID,
   key_type: KeyType,
   fragment: &str,
   private_key: PrivateKey,
@@ -343,16 +346,27 @@ impl_update_builder!(
 /// Create a new service on an identity.
 ///
 /// # Parameters
-/// - `type_`: the type of the service, e.g. `"LinkedDomains"`, required.
+/// - `types`: the type/s of the service, e.g. `"LinkedDomains"`, required.
 /// - `fragment`: the identifier of the service in the document, required.
 /// - `endpoint`: the `ServiceEndpoint` of the service, required.
 /// - `properties`: additional properties of the service, optional.
 CreateService {
   @required fragment String,
-  @required type_ String,
+  @required types Vec<String>,
   @required endpoint ServiceEndpoint,
   @optional properties Object,
 });
+
+impl<'account, C> CreateServiceBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
+  #[must_use]
+  pub fn type_(mut self, value: impl Into<String>) -> Self {
+    self.types.get_or_insert_with(Default::default).push(value.into());
+    self
+  }
+}
 
 impl_update_builder!(
 /// Delete a service on an identity.

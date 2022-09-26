@@ -4,9 +4,6 @@
 use identity_iota::account::AutoSave;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "AutoSave | undefined")]
@@ -36,16 +33,6 @@ impl WasmAutoSave {
   pub fn batch(number_of_actions: usize) -> WasmAutoSave {
     Self(AutoSave::Batch(number_of_actions))
   }
-
-  /// Serializes `AutoSave` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes `AutoSave` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json_value: JsValue) -> Result<WasmAutoSave> {
-    json_value.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmAutoSave, AutoSave);

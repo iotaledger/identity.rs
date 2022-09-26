@@ -1,0 +1,90 @@
+[package]
+name = "examples_legacy"
+version = "0.7.0-alpha.1"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+identity_account = { path = "../identity_account" }
+identity_account_storage = { path = "../identity_account_storage" }
+identity_iota = { path = "../identity_iota" }
+identity_iota_client_legacy = { path = "../identity_iota_client_legacy" }
+identity_iota_core_legacy = { path = "../identity_iota_core_legacy" }
+pretty_env_logger = { version = "0.4" }
+rand = { version = "0.8" }
+tokio = { version = "1.17.0", features = ["full"] }
+
+[[example]]
+name = "getting_started"
+path = "getting_started.rs"
+
+[[example]]
+name = "account_create"
+path = "account/create_did.rs"
+
+[[example]]
+name = "account_config"
+path = "account/config.rs"
+
+[[example]]
+name = "account_manipulate"
+path = "account/manipulate_did.rs"
+
+[[example]]
+name = "account_lazy"
+path = "account/lazy.rs"
+
+[[example]]
+name = "account_signing"
+path = "account/signing.rs"
+
+# TODO: Temporarily disabled until iotaledger/stronghold.rs#353 is fixed.
+# [[example]]
+# name = "account_multiple"
+# path = "account/multiple_identities.rs"
+
+[[example]]
+name = "account_unchecked"
+path = "account/unchecked.rs"
+
+[[example]]
+name = "account_encryption"
+path = "account/encryption.rs"
+
+[[example]]
+name = "create_did"
+path = "low-level-api/create_did.rs"
+
+[[example]]
+name = "account_create_vc"
+path = "account/create_vc.rs"
+
+[[example]]
+name = "account_create_vp"
+path = "account/create_vp.rs"
+
+[[example]]
+name = "resolve_history"
+path = "low-level-api/resolve_history.rs"
+
+[[example]]
+name = "manipulate_did"
+path = "low-level-api/manipulate_did.rs"
+
+[[example]]
+name = "key_exchange"
+path = "low-level-api/key_exchange.rs"
+
+[[example]]
+name = "resolve_did"
+path = "low-level-api/resolve_did.rs"
+
+[[example]]
+name = "private_tangle"
+path = "low-level-api/private_tangle.rs"
+
+[[example]]
+name = "account_revoke_vc"
+path = "account/revoke_vc.rs"

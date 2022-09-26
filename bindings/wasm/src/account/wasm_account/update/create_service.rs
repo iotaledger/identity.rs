@@ -10,6 +10,7 @@ use identity_iota::account::IdentityUpdater;
 use identity_iota::account::UpdateError::MissingRequiredField;
 use identity_iota::client::Client;
 use identity_iota::core::Object;
+use identity_iota::core::OneOrSet;
 use identity_iota::did::ServiceEndpoint;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -28,12 +29,11 @@ impl WasmAccount {
   /// Adds a new Service to the DID Document.
   #[wasm_bindgen(js_name = createService)]
   pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<PromiseVoid> {
-    let service_type: String = options.type_().ok_or(MissingRequiredField("type")).wasm_result()?;
-
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
+    let service_types: OneOrSet<String> = options.type_().into_serde().wasm_result()?;
     let endpoint: ServiceEndpoint = deserialize_map_or_any(&options.endpoint())?;
     let properties: Option<Object> = deserialize_map_or_any(&options.properties())?;
 
@@ -44,7 +44,7 @@ impl WasmAccount {
       let mut create_service: CreateServiceBuilder<'_, Rc<Client>> = updater
         .create_service()
         .fragment(fragment)
-        .type_(service_type)
+        .types(service_types)
         .endpoint(endpoint);
 
       if let Some(properties) = properties {
@@ -67,7 +67,7 @@ extern "C" {
   pub fn fragment(this: &CreateServiceOptions) -> Option<String>;
 
   #[wasm_bindgen(getter, method, js_name = type)]
-  pub fn type_(this: &CreateServiceOptions) -> Option<String>;
+  pub fn type_(this: &CreateServiceOptions) -> JsValue;
 
   #[wasm_bindgen(getter, method)]
   pub fn endpoint(this: &CreateServiceOptions) -> JsValue;
@@ -90,7 +90,7 @@ export type CreateServiceOptions = {
   /**
    * The type of the service.
    */
-  type: string;
+  type: string | string[];
 
   /**
    * The `ServiceEndpoint` of the service.

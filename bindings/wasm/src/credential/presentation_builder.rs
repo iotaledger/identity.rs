@@ -95,7 +95,7 @@ struct IPresentationHelper {
   )]
   verifiable_credential: Option<OneOrMany<Credential>>,
   /// The entity that generated the `Presentation`.
-  #[typescript(type = "string | DID")]
+  #[typescript(type = "string | CoreDID | IotaDID ")]
   holder: Option<String>,
   /// Service(s) used to refresh an expired {@link Credential} in the `Presentation`.
   #[typescript(name = "refreshService", type = "RefreshService | Array<RefreshService>")]

@@ -9,6 +9,7 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::convert::FromJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
@@ -19,11 +20,11 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota_client::tangle::ClientBuilder;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::tangle::Network;
+use identity_iota_client_legacy::tangle::ClientBuilder;
+use identity_iota_core_legacy::did::IotaDID;
+use identity_iota_core_legacy::document::IotaDocument;
+use identity_iota_core_legacy::document::IotaVerificationMethod;
+use identity_iota_core_legacy::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountConfig;
@@ -31,6 +32,7 @@ use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
 use crate::types::IdentitySetup;
+use crate::types::IdentityState;
 use crate::types::MethodContent;
 use crate::updates::Update;
 use crate::updates::UpdateError;
@@ -53,7 +55,7 @@ async fn test_create_identity() -> Result<()> {
     let method: &IotaVerificationMethod = document.resolve_method(expected_fragment, None).unwrap();
 
     assert_eq!(document.core_document().verification_relationships().count(), 1);
-    assert_eq!(document.core_document().methods().count(), 1);
+    assert_eq!(document.core_document().methods(None).len(), 1);
 
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
@@ -68,7 +70,11 @@ async fn test_create_identity() -> Result<()> {
     );
 
     // Ensure the key exists in storage.
-    assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+    assert!(account
+      .storage()
+      .key_exists(account.did().as_ref(), &location)
+      .await
+      .unwrap());
 
     // Ensure the state was written to storage.
     assert!(account.load_document().await.is_ok());
@@ -78,7 +84,7 @@ async fn test_create_identity() -> Result<()> {
     assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
     // Ensure the DID was added to the index.
-    assert!(account.storage().did_exists(account.did()).await.unwrap());
+    assert!(account.storage().did_exists(account.did().as_ref()).await.unwrap());
   }
 
   Ok(())
@@ -131,12 +137,8 @@ async fn test_create_identity_already_exists() -> Result<()> {
       .await
       .unwrap();
 
-    let initial_state = account_setup
-      .storage
-      .document_get(account.did())
-      .await
-      .unwrap()
-      .unwrap();
+    let initial_state: Vec<u8> = account_setup.storage.blob_get(account.did().as_ref()).await?.unwrap();
+    let initial_state: IdentityState = IdentityState::from_json_slice(&initial_state).unwrap();
 
     let output = Account::create_identity(account_setup.clone(), identity_create).await;
 
@@ -146,10 +148,9 @@ async fn test_create_identity_already_exists() -> Result<()> {
     ));
 
     // Ensure nothing was overwritten in storage
-    assert_eq!(
-      initial_state,
-      account_setup.storage.document_get(account.did()).await?.unwrap()
-    );
+    let account_state: Vec<u8> = account_setup.storage.blob_get(account.did().as_ref()).await?.unwrap();
+    let account_state: IdentityState = IdentityState::from_json_slice(&account_state).unwrap();
+    assert_eq!(initial_state.document()?, account_state.document()?);
   }
   Ok(())
 }
@@ -203,7 +204,7 @@ async fn test_create_method_content_generate() -> Result<()> {
 
       // Still only the default relationship.
       assert_eq!(document.core_document().verification_relationships().count(), 1);
-      assert_eq!(document.core_document().methods().count(), 2);
+      assert_eq!(document.core_document().methods(None).len(), 2);
 
       let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
@@ -214,7 +215,11 @@ async fn test_create_method_content_generate() -> Result<()> {
       );
 
       // Ensure the key exists in storage.
-      assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+      assert!(account
+        .storage()
+        .key_exists(account.did().as_ref(), &location)
+        .await
+        .unwrap());
 
       // Ensure `created` wasn't updated.
       assert_eq!(initial_document.metadata.created, document.metadata.created);
@@ -252,7 +257,11 @@ async fn test_create_method_content_public() -> Result<()> {
 
     // Ensure no key exists in storage.
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
-    assert!(!account.storage().key_exists(account.did(), &location).await.unwrap());
+    assert!(!account
+      .storage()
+      .key_exists(account.did().as_ref(), &location)
+      .await
+      .unwrap());
   }
   Ok(())
 }
@@ -282,7 +291,7 @@ async fn test_create_scoped_method() -> Result<()> {
 
     assert_eq!(document.core_document().verification_relationships().count(), 2);
 
-    assert_eq!(document.core_document().methods().count(), 2);
+    assert_eq!(document.core_document().methods(None).len(), 2);
 
     let core_doc = document.core_document();
 
@@ -364,7 +373,11 @@ async fn test_create_method_from_private_key() {
 
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
-    let public_key = account.storage().key_public(account.did(), &location).await.unwrap();
+    let public_key = account
+      .storage()
+      .key_public(account.did().as_ref(), &location)
+      .await
+      .unwrap();
 
     assert_eq!(public_key.as_ref(), keypair.public().as_ref());
   }
@@ -429,7 +442,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -512,7 +525,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -588,10 +601,14 @@ async fn test_delete_method() -> Result<()> {
   // Still only the default relationship.
   assert_eq!(document.core_document().verification_relationships().count(), 1);
 
-  assert_eq!(document.core_document().methods().count(), 1);
+  assert_eq!(document.core_document().methods(None).len(), 1);
 
   // Ensure the key still exists in storage.
-  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+  assert!(account
+    .storage()
+    .key_exists(account.did().as_ref(), &location)
+    .await
+    .unwrap());
 
   // Ensure `created` wasn't updated.
   assert_eq!(initial_document.metadata.created, document.metadata.created);
@@ -603,7 +620,7 @@ async fn test_delete_method() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core_legacy::Error::InvalidDoc(
       identity_did::Error::MethodNotFound
     ))
   ));
@@ -621,7 +638,7 @@ async fn test_insert_service() -> Result<()> {
 
   let update: Update = Update::CreateService {
     fragment: fragment.clone(),
-    type_: "LinkedDomains".to_owned(),
+    types: vec!["LinkedDomains".to_owned()],
     endpoint: ServiceEndpoint::One(Url::parse("https://iota.org").unwrap()),
     properties: None,
   };
@@ -652,7 +669,7 @@ async fn test_remove_service() -> Result<()> {
 
   let update: Update = Update::CreateService {
     fragment: fragment.clone(),
-    type_: "LinkedDomains".to_owned(),
+    types: vec!["LinkedDomains".to_owned()],
     endpoint: ServiceEndpoint::One(Url::parse("https://iota.org").unwrap()),
     properties: None,
   };

@@ -27,9 +27,15 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2022-03-11
+          toolchain: nightly-2022-06-30
           override: true
           components: rustfmt
+
+      - name: Install cargo-license-template
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-license-template
 
       - name: Install dprint
         run: npm install -g dprint
@@ -64,3 +70,6 @@ jobs:
       - name: Cargo.toml fmt check
         run:
           dprint check
+
+      - name: cargo-license-template check
+        run: cargo license-template --template .license_template --ignore .license_template_ignore --verbose

@@ -1,28 +1,39 @@
 [package]
 name = "identity_iota_core"
-version = "0.6.0"
+version = "0.7.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
-keywords = ["iota", "tangle", "identity", "did"]
+keywords = ["iota", "tangle", "utxo", "shimmer", "identity"]
 license = "Apache-2.0"
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "Core data structures for the IOTA DID Method."
+rust-version = "1.62"
+description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
-bee-message = { version = "0.1.6", default-features = false, features = ["serde"] }
-identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
-identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
-lazy_static = { version = "1.4", default-features = false }
+# Ensure bee-block always matches the version used by iota-client.
+bee-block = { version = "1.0.0-beta.7", default-features = false, features = ["std"], optional = true }
+identity_core = { version = "=0.7.0-alpha.1", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.1", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=0.7.0-alpha.1", path = "../identity_did", default-features = false }
+
+async-trait = { version = "0.1.56", default-features = false, optional = true }
+futures = { version = "0.3" }
+iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls"], optional = true }
+num-derive = { version = "0.3", default-features = false }
+num-traits = { version = "0.2", default-features = false, features = ["std"] }
+once_cell = { version = "1", default-features = false, features = ["std"] }
+prefix-hex = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
-[dependencies.iota-crypto]
-version = ">=0.7, <0.10"
-default-features = false
-features = ["blake2b"]
+[dev-dependencies]
+anyhow = { version = "1.0.57" }
+iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
+proptest = { version = "1.0.0", default-features = false, features = ["std"] }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -31,6 +42,12 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap"]
+default = ["client", "iota-client", "revocation-bitmap", "send-sync-client-ext"]
+# Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
+client = ["dep:async-trait", "dep:bee-block"]
+# Enables the iota-client dependency, the client trait implementations for it, and the `IotaClientExt` trait.
+iota-client = ["dep:iota-client", "client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_did/revocation-bitmap"]
+# Adds Send bounds on the futures produces by the client extension traits.
+send-sync-client-ext = []

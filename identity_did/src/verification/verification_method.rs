@@ -27,7 +27,7 @@ use crate::verification::MethodType;
 /// A DID Document Verification Method.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct VerificationMethod<D = CoreDID, T = Object>
 where
   D: DID,
@@ -108,42 +108,42 @@ where
     Ok(())
   }
 
-  /// Returns a reference to the verification `Method` controller.
+  /// Returns a reference to the `VerificationMethod` controller.
   pub fn controller(&self) -> &D {
     &self.controller
   }
 
-  /// Returns a mutable reference to the verification `Method` controller.
+  /// Returns a mutable reference to the `VerificationMethod` controller.
   pub fn controller_mut(&mut self) -> &mut D {
     &mut self.controller
   }
 
-  /// Returns a reference to the verification `Method` type.
+  /// Returns a reference to the `VerificationMethod` type.
   pub fn type_(&self) -> MethodType {
     self.type_
   }
 
-  /// Returns a mutable reference to the verification `Method` type.
+  /// Returns a mutable reference to the `VerificationMethod` type.
   pub fn type_mut(&mut self) -> &mut MethodType {
     &mut self.type_
   }
 
-  /// Returns a reference to the verification `Method` data.
+  /// Returns a reference to the `VerificationMethod` data.
   pub fn data(&self) -> &MethodData {
     &self.data
   }
 
-  /// Returns a mutable reference to the verification `Method` data.
+  /// Returns a mutable reference to the `VerificationMethod` data.
   pub fn data_mut(&mut self) -> &mut MethodData {
     &mut self.data
   }
 
-  /// Returns a reference to the custom verification `Method` properties.
+  /// Returns a reference to the custom `VerificationMethod` properties.
   pub fn properties(&self) -> &T {
     &self.properties
   }
 
-  /// Returns a mutable reference to the custom verification `Method` properties.
+  /// Returns a mutable reference to the custom `VerificationMethod` properties.
   pub fn properties_mut(&mut self) -> &mut T {
     &mut self.properties
   }

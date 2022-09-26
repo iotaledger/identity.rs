@@ -1,13 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_core::tangle::MessageId;
-use identity_iota_core::tangle::MessageIdExt;
+use identity_iota_core_legacy::tangle::MessageId;
+use identity_iota_core_legacy::tangle::MessageIdExt;
 use serde::Deserialize;
 use serde::Serialize;
 
 /// Holds the last published message ids of the integration and diff chains.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct ChainState {
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_integration_message_id: MessageId,

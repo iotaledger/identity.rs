@@ -1,0 +1,37 @@
+{
+  "@context": "https://www.w3.org/2018/credentials/v1",
+  "id": "https://example.org/credentials/3732",
+  "type": "VerifiablePresentation",
+  "verifiableCredential": {
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "id": "https://example.edu/credentials/3732",
+      "type": [
+        "VerifiableCredential",
+        "UniversityDegreeCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+        "GPA": "4.0",
+        "degree": {
+          "name": "Bachelor of Science and Arts",
+          "type": "BachelorDegree"
+        },
+        "name": "Alice"
+      },
+      "issuer": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "issuanceDate": "2022-08-31T08:35:44Z",
+      "expirationDate": "2050-09-01T08:35:44Z",
+      "proof": {
+        "type": "JcsEd25519Signature2020",
+        "verificationMethod": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+        "signatureValue": "2xoRHPUWRVavrBsymJCKhTUe9iYX8iEEZtPhaMjmFvVmjaybVUYXHJagw9kCFmDoPgeyvZjRVQatp2VYs1b8f2Ug"
+      }
+  },
+  "holder": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+  "proof": {
+    "type": "JcsEd25519Signature2020",
+    "verificationMethod": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5#root",
+    "signatureValue": "5xgWVFQ8J5rsYkkF2BLxzY6YDfdGoZXfT9R9rJPbq53MHc3QkLrpr49kY9aMtQQzEL53nBxJZMtihN2F5nZ44TeR",
+    "challenge": "475a7984-1bb5-4c4c-a56f-822bccd46441"
+  }
+}

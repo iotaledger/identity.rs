@@ -4,9 +4,6 @@
 use identity_iota::account_storage::EncryptedData;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 /// The structure returned after encrypting data
 #[wasm_bindgen(js_name = EncryptedData, inspectable)]
 pub struct WasmEncryptedData(pub(crate) EncryptedData);
@@ -36,19 +33,9 @@ impl WasmEncryptedData {
   pub fn tag(&self) -> Vec<u8> {
     self.0.tag.clone()
   }
-
-  /// Serializes `EncryptedData` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes `EncryptedData` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json_value: JsValue) -> Result<WasmEncryptedData> {
-    json_value.into_serde().map(Self).wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmEncryptedData, EncryptedData);
 
 impl From<WasmEncryptedData> for EncryptedData {
   fn from(wasm_encrypted_data: WasmEncryptedData) -> Self {

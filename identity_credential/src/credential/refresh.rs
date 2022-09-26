@@ -8,7 +8,7 @@ use identity_core::common::Url;
 /// Information used to refresh or assert the status of a [`Credential`][crate::credential::Credential].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#refreshing)
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct RefreshService {
   /// The Url of the credential refresh service.
   pub id: Url,
