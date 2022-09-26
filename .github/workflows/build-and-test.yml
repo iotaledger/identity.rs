@@ -130,6 +130,12 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: './.github/actions/private-tangle/setup'
 
+      - name: Wait and log docker
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sleep 2m
+          docker ps 
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
@@ -140,7 +146,6 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          docker ps | \
           cargo metadata --format-version 1 --manifest-path ./examples/Cargo.toml | \
           jq -r '.packages[] | select(.name == "examples") | .targets[].name' | \
           awk '$1 ~ /[0-9].*/' | \
