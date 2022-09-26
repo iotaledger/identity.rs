@@ -6,6 +6,7 @@ runs:
     - name: Setup private tangle
       shell: bash
       run: |
+        # TODO: use next lines when a working hornet release is published
         # # Download the private_tangle setup from the hornet repo.
         # mkdir private_tangle
         # cd private_tangle
@@ -15,6 +16,7 @@ runs:
         # curl -L -o private_tangle.tar.gz $DOWNLOAD_URL
         # tar -xf private_tangle.tar.gz
 
+        # TODO: remove next lines when a working hornet release is published
         git clone https://github.com/iotaledger/hornet.git
         cd hornet/private_tangle
 
