@@ -130,14 +130,6 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: './.github/actions/private-tangle/setup'
 
-      - name: Wait and log docker
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sleep 2m
-          docker ps
-          cd private_tangle
-          docker-compose logs inx-spammer
-          
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
