@@ -11,6 +11,7 @@ runs:
         cd private_tangle
         # Use the output of https://api.github.com/repos/iotaledger/hornet/releases/latest once there's a 2.0 Hornet release.
         DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r '.[0].assets[] | select(.name | contains("private_tangle")) | .browser_download_url')
+        echo "Downloading private tangle from $DOWNLOAD_URL"
         curl -L -o private_tangle.tar.gz $DOWNLOAD_URL
         tar -xf private_tangle.tar.gz
 
