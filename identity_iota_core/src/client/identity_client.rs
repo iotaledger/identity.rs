@@ -31,7 +31,10 @@ pub trait IotaIdentityClient {
   async fn get_alias_output(&self, alias_id: AliasId) -> Result<(OutputId, AliasOutput)>;
 
   /// Return the rent structure of the network, indicating the byte costs for outputs.
-  async fn get_rent_structure(&self) -> Result<RentStructure>;
+  fn get_rent_structure(&self) -> Result<RentStructure>;
+
+  /// Gets the token supply of the node we're connecting to.
+  fn get_token_supply(&self) -> Result<u64>;
 }
 
 /// An extension trait that provides helper functions for publication
@@ -65,7 +68,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     let rent_structure: RentStructure = if let Some(rent) = rent_structure {
       rent
     } else {
-      self.get_rent_structure().await?
+      self.get_rent_structure()?
     };
 
     AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())
@@ -80,7 +83,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         address,
       )))
-      .finish()
+      .finish(self.get_token_supply()?)
       .map_err(Error::AliasOutputBuildError)
   }
 
@@ -105,7 +108,9 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(id);
     }
 
-    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
+    alias_output_builder
+      .finish(self.get_token_supply()?)
+      .map_err(Error::AliasOutputBuildError)
   }
 
   /// Removes the DID document from the state metadata of its Alias Output,
@@ -132,7 +137,9 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(alias_id);
     }
 
-    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
+    alias_output_builder
+      .finish(self.get_token_supply()?)
+      .map_err(Error::AliasOutputBuildError)
   }
 
   /// Resolve a [`IotaDocument`]. Returns an empty, deactivated document if the state metadata

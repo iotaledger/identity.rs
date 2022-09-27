@@ -85,7 +85,7 @@ impl IotaClientExt for Client {
       .map_err(Error::BasicOutputBuildError)?
       .with_native_tokens(alias_output.native_tokens().clone())
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-      .finish_output()
+      .finish_output(self.get_token_supply().map_err(Error::TokenSupplyError)?)
       .map_err(Error::BasicOutputBuildError)?;
 
     let block: Block = self
@@ -111,13 +111,17 @@ impl IotaClientExt for Client {
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl IotaIdentityClient for Client {
   async fn get_network_hrp(&self) -> Result<String> {
-    self.get_bech32_hrp().await.map_err(Error::DIDResolutionError)
+    self.get_bech32_hrp().map_err(Error::DIDResolutionError)
   }
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {
     let output_id: OutputId = self.alias_output_id(id).await.map_err(Error::DIDResolutionError)?;
     let output_response: OutputResponse = self.get_output(&output_id).await.map_err(Error::DIDResolutionError)?;
-    let output: Output = Output::try_from(&output_response.output).map_err(Error::OutputConversionError)?;
+    let output: Output = Output::try_from_dto(
+      &output_response.output,
+      <Self as IotaIdentityClient>::get_token_supply(&self)?,
+    )
+    .map_err(Error::OutputConversionError)?;
 
     if let Output::Alias(alias_output) = output {
       Ok((output_id, alias_output))
@@ -126,10 +130,11 @@ impl IotaIdentityClient for Client {
     }
   }
 
-  async fn get_rent_structure(&self) -> Result<RentStructure> {
-    Client::get_rent_structure(self)
-      .await
-      .map_err(|err| Error::DIDUpdateError("get_rent_structure failed", Some(err)))
+  fn get_rent_structure(&self) -> Result<RentStructure> {
+    Client::get_rent_structure(self).map_err(|err| Error::DIDUpdateError("get_rent_structure failed", Some(err)))
+  }
+  fn get_token_supply(&self) -> Result<u64> {
+    self.get_token_supply().map_err(Error::TokenSupplyError)
   }
 }
 

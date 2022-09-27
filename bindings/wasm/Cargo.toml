@@ -18,7 +18,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 # Ensure bee-block always matches the version used by iota-client.
-bee-block = { version = "1.0.0-beta.7", default-features = false, features = ["dto"] }
+bee-block = { version = "1.0", default-features = false, features = ["dto"] }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3" }

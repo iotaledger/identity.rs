@@ -13,14 +13,14 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
 # Ensure bee-block always matches the version used by iota-client.
-bee-block = { version = "1.0.0-beta.7", default-features = false, features = ["std"], optional = true }
+bee-block = { version = "1.0", default-features = false, features = ["std"], optional = true }
 identity_core = { version = "=0.7.0-alpha.1", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.7.0-alpha.1", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.7.0-alpha.1", path = "../identity_did", default-features = false }
 
 async-trait = { version = "0.1.56", default-features = false, optional = true }
 futures = { version = "0.3" }
-iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls"], optional = true }
+iota-client = { version = "2.0", default-features = false, features = ["tls"], optional = true }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
