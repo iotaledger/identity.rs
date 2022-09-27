@@ -80,7 +80,7 @@ pub mod iota {
 // pub mod comm {
 //   //! DID Communications Message Specification
 //   //!
-//   //! [Specification](https://github.com/iotaledger/identity.rs/tree/dev/docs/DID%20Communications%20Research%20and%20Specification)
+//   //! [Specification](https://github.com/iotaledger/identity.rs/tree/main/docs/DID%20Communications%20Research%20and%20Specification)
 
 //   pub use identity_comm::envelope::*;
 //   pub use identity_comm::error::*;

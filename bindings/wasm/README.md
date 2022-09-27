@@ -16,12 +16,6 @@ Latest Release: this version matches the `main` branch of this repository, is st
 npm install @iota/identity-wasm
 ```
 
-Development Release: this version usually matches the latest code changes from the `dev` branch and may see frequent breaking changes.
-
-```bash
-npm install @iota/identity-wasm@dev
-```
-
 ## Build
 
 Alternatively, you can build the bindings yourself if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation.

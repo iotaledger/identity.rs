@@ -8,11 +8,6 @@ Latest Release: this version matches the main branch of this repository and is s
 ```bash
 npm install @iota/identity-stronghold-nodejs
 ```
-
-Development Release: this version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
-```bash
-npm install @iota/identity-stronghold-nodejs@dev
-```
 ## Usage
 <!-- 
 Test this example using https://github.com/anko/txm: `txm README.md`
