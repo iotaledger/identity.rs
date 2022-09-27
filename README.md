@@ -6,7 +6,7 @@
   <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/discord/397872799483428865" alt="Discord"></a>
   <a href="https://github.com/iotaledger/identity.rs/blob/HEAD/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/github/license/iotaledger/identity.rs.svg" alt="Apache 2.0 license"></a>
   <img src="https://deps.rs/repo/github/iotaledger/identity.rs/status.svg" alt="Dependencies">
-  <a href='https://coveralls.io/github/iotaledger/identity.rs?branch=dev'><img src='https://coveralls.io/repos/github/iotaledger/identity.rs/badge.svg?branch=dev' alt='Coverage Status' /></a>
+  <a href='https://coveralls.io/github/iotaledger/identity.rs?branch=main'><img src='https://coveralls.io/repos/github/iotaledger/identity.rs/badge.svg?branch=main' alt='Coverage Status' /></a>
 
 </p>
 
@@ -197,7 +197,7 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 | [IOTA DID Method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec) |             |             |                |  ✔️  | Finished implementation. |
 |           [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)            |             |             |                |  ✔️  | Finished implementation. |
 |                                       Account                                       |             |             |                |  ✔️  | Finished implementation. |
-| [Identity Agent](https://github.com/iotaledger/identity.rs/tree/dev/identity_agent) |             |             |       🔶       |      |                          |
+| [Identity Agent](https://github.com/iotaledger/identity.rs/tree/main/identity_agent) |             |             |       🔶       |      |                          |
 |         [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview)         |             |             |       🔶       |      |  In-progress with Agent  |
 |                                Selective Disclosure                                 |             |     🔶      |                |      |                          |
 |                                Zero Knowledge Proofs                                |             |     🔶      |                |      |                          |
