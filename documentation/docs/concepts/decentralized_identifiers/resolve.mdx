@@ -142,7 +142,6 @@ The `Resolver` can be configured to support many use cases by attaching custom r
 a particular DID method (such as for instance the IOTA method) gets resolved. This feature is mainly intended to be used together with the Resolver's convenience methods for handling verifiable presentations and credentials. 
 
 ### Resolving multiple DID methods 
-
 <CodeSnippet
     nodeContent={resolve_did_custom_js}
     rustContent={resolve_did_custom_rs}
@@ -150,103 +149,8 @@ a particular DID method (such as for instance the IOTA method) gets resolved. Th
     rustGithubLink="https://github.com/iotaledger/identity.rs/blob/dev/examples/1_advanced/6_custom_resolution.rs"
 />
 
-### Resolving IOTA DIDs across different networks 
-When configuring the `Resolver` with a `Client` it will only be able to resolve DIDs on the network the client is configured for. By attaching our own handler for the IOTA method we 
-can overcome this limitation. 
-
-<Tabs>
-<TabItem value="rust" label="Rust">
-
-```rust
-use identity_iota::iota::IotaDID;
-use identity_iota::iota::IotaDocument;
-use identity_iota::resolver::Resolver;
-use identity_iota::prelude::IotaIdentityClientExt;
-use std::sync::Arc;
-use iota_client::Client;
-use anyhow::Context;
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-  let mut resolver: Resolver<IotaDocument> = Resolver::new();
-
-  let node_url = "https://api.testnet.shimmer.network/";
-
-  // Create clients to resolve DIDs on the "smr" and "rms" networks respectively.
-  let smr_client: Client = Client::builder()
-    .with_primary_node(node_url, None)?
-    .with_network("smr")
-    .finish()?;
-  let rms_client: Client = Client::builder()
-    .with_primary_node(node_url, None)?
-    .with_network("rms")
-    .finish()?;
-
-  // Move the clients into Arcs that we can cheaply clone
-  let smr_client: Arc<Client> = Arc::new(smr_client.clone());
-  let rms_client: Arc<Client> = Arc::new(rms_client.clone());
-
-  // Create a custom handler for the IOTA method.
-  let iota_handler = move |did: IotaDID| {
-    // Produce client clones that we can move into the Future so they may be invoked at any point in time.
-    let (smr_client_clone, rms_client_clone): (Arc<Client>, Arc<Client>) = (smr_client.clone(), rms_client.clone());
-    async move {
-      match did.network_str() {
-        "smr" => smr_client_clone
-          .resolve_did(&did)
-          .await
-          .context("unable to resolve DID from the smr network"),
-        "rms" => rms_client_clone
-          .resolve_did(&did)
-          .await
-          .context("unable to resolve DID from the rms network"),
-        _ => Err(anyhow::anyhow!("unsupported network")),
-      }
-    }
-  };
-
-  resolver.attach_handler("iota".to_owned(), iota_handler);
-
-  // Parse the DID and resolve its DID Document.
-  let did = IotaDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47")?;
-  let document: IotaDocument = resolver.resolve(&did).await.unwrap();
-
-  Ok(())
-}
-
-```
-
-</TabItem>
-<TabItem value="node" label="Node.js">
-
-```js
-TODO TODO TODO TODO!!!!!!!!!!!!!!!!!!!!!!!!
-const { Resolver, IotaDID, IotaIdentityClient } = require('@iota/identity-wasm/node');
-const { Client } = require('@iota/iota-client-wasm/node');
-
-// Configure a client for the Shimmer testnet "rms".
-const nodeUrl = "https://api.testnet.shimmer.network/";
-const client = new Client({
-    primaryNode: nodeUrl,
-    localPow: true,
-});
-const didClient = new IotaIdentityClient(client);
-
-// Construct a resolver using the client.
-const resolver = new Resolver({
-    client: didClient,
-});
-
-// Parse the DID and resolve its DID Document.
-const did = "did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47";
-const document = await resolver.resolve(did);
-```
-</TabItem>
-</Tabs>
 
 ## Resolution for Verifiable Presentations
-TODO!
-
 When validating [verifiable presentations](../verifiable_credentials/verifiable_presentations.mdx), it is necessary to resolve the DID Documents of the [verifiable credential](../verifiable_credentials/overview.md) issuers and presentation holder to verify their signatures. Resolving the necessary DID Documents is performed automatically when verifying presentations via the `Resolver` (see this [example](../verifiable_credentials/verifiable_presentations.mdx#example)).
 
 When direct access to these DID Documents is desired, the `Resolver` also provides standalone methods to:
