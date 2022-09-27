@@ -119,7 +119,7 @@ impl IotaIdentityClient for Client {
     let output_response: OutputResponse = self.get_output(&output_id).await.map_err(Error::DIDResolutionError)?;
     let output: Output = Output::try_from_dto(
       &output_response.output,
-      <Self as IotaIdentityClient>::get_token_supply(&self)?,
+      <Self as IotaIdentityClient>::get_token_supply(self)?,
     )
     .map_err(Error::OutputConversionError)?;
 
