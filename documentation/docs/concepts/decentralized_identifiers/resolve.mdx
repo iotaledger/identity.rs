@@ -39,22 +39,22 @@ use identity_iota::resolver::Resolver;
 use iota_client::Client;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()>{
   // Configure a client for the Shimmer testnet "rms".
   let node_url = "https://api.testnet.shimmer.network/";
   let client = Client::builder()
-    .with_primary_node(node_url, None)
-    .unwrap()
-    .finish()
-    .unwrap();
+    .with_primary_node(node_url, None)?
+    .finish()?;
 
   // Construct a resolver using the client.
   let mut resolver = Resolver::<IotaDocument>::new();
   resolver.attach_iota_handler(client);
 
   // Parse the DID and resolve its DID Document.
-  let did = IotaDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
-  let document: IotaDocument = resolver.resolve(&did).await.unwrap();
+  let did = IotaDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47")?;
+  let document: IotaDocument = resolver.resolve(&did).await?;
+
+  Ok(())
 }
 ```
 
@@ -100,18 +100,17 @@ use identity_iota::iota::IotaIdentityClientExt;
 use iota_client::Client;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()>{
   // Configure a client for the Shimmer testnet "rms".
   let node_url = "https://api.testnet.shimmer.network/";
   let client = Client::builder()
-    .with_primary_node(node_url, None)
-    .unwrap()
-    .finish()
-    .unwrap();
+    .with_primary_node(node_url, None)?
+    .finish()?;
 
   // Parse the DID and resolve its DID Document.
-  let did = IotaDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47").unwrap();
-  let document: IotaDocument = client.resolve_did(&did).await.unwrap();
+  let did = IotaDID::parse("did:iota:rms:0x7b48b06232b8a1e7a31c314cab1ceedb84e2e9dd2b1fae79b67eaa4595f15e47")?;
+  let document: IotaDocument = client.resolve_did(&did).await?;
+  Ok(())
 }
 ```
 
@@ -140,7 +139,7 @@ const document = await didClient.resolveDid(did);
 
 ## Advanced Resolver configuration 
 The `Resolver` can be configured to support many use cases by attaching custom resolution handlers. This enables the resolver to resolve multiple DID methods as well as customizing how 
-a particular DID method (such as for instance the IOTA method) gets resolved more precisely. 
+a particular DID method (such as for instance the IOTA method) gets resolved. This feature is mainly intended to be used together with the Resolver's convenience methods for handling verifiable presentations and credentials. 
 
 ### Resolving multiple DID methods 
 
