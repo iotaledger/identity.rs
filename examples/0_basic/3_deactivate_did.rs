@@ -40,10 +40,10 @@ async fn main() -> anyhow::Result<()> {
   let deactivated_output: AliasOutput = client.deactivate_did_output(&did).await?;
 
   // Optional: reduce and reclaim the storage deposit, sending the tokens to the state controller.
-  let rent_structure = client.get_rent_structure().await?;
+  let rent_structure = client.get_rent_structure()?;
   let deactivated_output = AliasOutputBuilder::from(&deactivated_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish()?;
+    .finish(client.get_token_supply()?)?;
 
   // Publish the deactivated DID document.
   let _ = client.publish_did_output(&secret_manager, deactivated_output).await?;
@@ -58,10 +58,10 @@ async fn main() -> anyhow::Result<()> {
   let reactivated_output: AliasOutput = client.update_did_output(document.clone()).await?;
 
   // Increase the storage deposit to the minimum again, if it was reclaimed during deactivation.
-  let rent_structure = client.get_rent_structure().await?;
+  let rent_structure = client.get_rent_structure()?;
   let reactivated_output = AliasOutputBuilder::from(&reactivated_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish()?;
+    .finish(client.get_token_supply()?)?;
   client.publish_did_output(&secret_manager, reactivated_output).await?;
 
   // Resolve the reactivated DID document.

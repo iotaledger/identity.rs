@@ -31,6 +31,12 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = getRentStructure)]
   pub fn get_rent_structure(this: &WasmIotaIdentityClient) -> JsValue;
+
+  #[wasm_bindgen(method, js_name = getTokenSupply)]
+  pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
+
+  #[wasm_bindgen(method, js_name = getProtocolResponse)]
+  pub fn get_protocol_response(this: &WasmIotaIdentityClient) -> JsValue;
 }
 
 impl Debug for WasmIotaIdentityClient {
@@ -58,6 +64,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_alias_output(self, id.to_string()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let tuple: js_sys::Array = js_sys::Array::from(&result.to_iota_core_error()?);
+
     let mut iter: js_sys::ArrayIter = tuple.iter();
 
     let output_id: OutputId = iter
@@ -77,7 +84,21 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
           err
         ))
       })?;
-    let alias_output = AliasOutput::try_from(&alias_dto).map_err(|err| {
+
+    let token_supply_promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_token_supply(self));
+    let token_supply: u64 = JsValueResult::from(JsFuture::from(token_supply_promise).await)
+      .to_iota_core_error()
+      .and_then(|value| {
+        if let Some(big_int) = value.as_f64() {
+          Ok(big_int as u64)
+        } else {
+          Err(identity_iota::iota::Error::JsError(
+            "could not retrieve a token supply of the required type".into(),
+          ))
+        }
+      })?;
+
+    let alias_output = AliasOutput::try_from_dto(&alias_dto, token_supply).map_err(|err| {
       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
     })?;
     Ok((output_id, alias_output))
@@ -90,6 +111,23 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       identity_iota::iota::Error::JsError(format!("get_rent_structure failed to deserialize: {}", err))
     })?;
     Ok(rent_structure.finish())
+  }
+
+  async fn get_token_supply(&self) -> Result<u64, identity_iota::iota::Error> {
+    let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_token_supply(self));
+    Ok(
+      JsValueResult::from(JsFuture::from(promise).await)
+        .to_iota_core_error()
+        .and_then(|value| {
+          if let Some(big_int) = value.as_f64() {
+            Ok(big_int as u64)
+          } else {
+            Err(identity_iota::iota::Error::JsError(
+              "could not retrieve a token supply of the required type".into(),
+            ))
+          }
+        })?,
+    )
   }
 }
 
@@ -110,4 +148,10 @@ interface IIotaIdentityClient {
 
   /** Return the rent structure of the network, indicating the byte costs for outputs. */
   getRentStructure(): Promise<IRent>;
+
+  /** Gets the token supply of the node we're connecting to. */
+  getTokenSupply(): Promise<BigInt>;
+
+  /** Returns the protocol response as a JSON string. */
+  getProtocolResponse(): Promise<string>;
 }"#;

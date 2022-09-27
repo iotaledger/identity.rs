@@ -73,10 +73,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Increase the storage deposit and publish the update.
     let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
-    let rent_structure: RentStructure = client.get_rent_structure().await?;
+    let rent_structure: RentStructure = client.get_rent_structure()?;
     let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
       .with_minimum_storage_deposit(rent_structure)
-      .finish()?;
+      .finish(client.get_token_supply()?)?;
     client.publish_did_output(&secret_manager, alias_output).await?;
   }
 

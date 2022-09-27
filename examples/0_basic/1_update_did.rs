@@ -78,10 +78,10 @@ async fn main() -> anyhow::Result<()> {
 
   // Because the size of the DID document increased, we have to increase the allocated storage deposit.
   // This increases the deposit amount to the new minimum.
-  let rent_structure: RentStructure = client.get_rent_structure().await?;
+  let rent_structure: RentStructure = client.get_rent_structure()?;
   let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish()?;
+    .finish(client.get_token_supply()?)?;
 
   // Publish the updated Alias Output.
   let updated: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
