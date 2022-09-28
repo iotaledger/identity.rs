@@ -120,7 +120,7 @@ impl IotaIdentityClient for Client {
     let output_response: OutputResponse = self.get_output(&output_id).await.map_err(Error::DIDResolutionError)?;
     let output: Output = Output::try_from_dto(
       &output_response.output,
-      <Self as IotaIdentityClient>::get_token_supply(self)?,
+      <Self as IotaIdentityClient>::get_token_supply(self).await?,
     )
     .map_err(Error::OutputConversionError)?;
 
@@ -131,10 +131,10 @@ impl IotaIdentityClient for Client {
     }
   }
 
-  fn get_rent_structure(&self) -> Result<RentStructure> {
+  async fn get_rent_structure(&self) -> Result<RentStructure> {
     Client::get_rent_structure(self).map_err(|err| Error::DIDUpdateError("get_rent_structure failed", Some(err)))
   }
-  fn get_token_supply(&self) -> Result<u64> {
+  async fn get_token_supply(&self) -> Result<u64> {
     self.get_token_supply().map_err(Error::TokenSupplyError)
   }
 }

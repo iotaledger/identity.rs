@@ -13,6 +13,7 @@ use identity_iota::iota::block::output::RentStructureBuilder;
 use identity_iota::iota::IotaIdentityClient;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::error::JsValueResult;
@@ -31,6 +32,9 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = getRentStructure)]
   pub fn get_rent_structure(this: &WasmIotaIdentityClient) -> JsValue;
+
+  #[wasm_bindgen(method, js_name = getTokenSupply)]
+  pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
 }
 
 impl Debug for WasmIotaIdentityClient {
@@ -58,6 +62,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_alias_output(self, id.to_string()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let tuple: js_sys::Array = js_sys::Array::from(&result.to_iota_core_error()?);
+
     let mut iter: js_sys::ArrayIter = tuple.iter();
 
     let output_id: OutputId = iter
@@ -77,7 +82,17 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
           err
         ))
       })?;
-    let alias_output = AliasOutput::try_from(&alias_dto).map_err(|err| {
+
+    let token_supply_promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_token_supply(self));
+    let token_supply: u64 = JsValueResult::from(JsFuture::from(token_supply_promise).await)
+      .to_iota_core_error()
+      .and_then(|value| {
+        u64::try_from(value).map_err(|_| {
+          identity_iota::iota::Error::JsError("could not retrieve a token supply of the required type".into())
+        })
+      })?;
+
+    let alias_output = AliasOutput::try_from_dto(&alias_dto, token_supply).map_err(|err| {
       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
     })?;
     Ok((output_id, alias_output))

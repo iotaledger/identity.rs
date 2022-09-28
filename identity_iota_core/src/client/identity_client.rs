@@ -30,11 +30,14 @@ pub trait IotaIdentityClient {
   /// Resolve an Alias identifier, returning its latest [`OutputId`] and [`AliasOutput`].
   async fn get_alias_output(&self, alias_id: AliasId) -> Result<(OutputId, AliasOutput)>;
 
+  // get_rent_structure and get_token_supply technically don't need to be async, but the JS Client only has async
+  // versions of these so we use async here as well to avoid compatibility issues.
+
   /// Return the rent structure of the network, indicating the byte costs for outputs.
-  fn get_rent_structure(&self) -> Result<RentStructure>;
+  async fn get_rent_structure(&self) -> Result<RentStructure>;
 
   /// Gets the token supply of the node we're connecting to.
-  fn get_token_supply(&self) -> Result<u64>;
+  async fn get_token_supply(&self) -> Result<u64>;
 }
 
 /// An extension trait that provides helper functions for publication
@@ -68,7 +71,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     let rent_structure: RentStructure = if let Some(rent) = rent_structure {
       rent
     } else {
-      self.get_rent_structure()?
+      self.get_rent_structure().await?
     };
 
     AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())
@@ -83,7 +86,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         address,
       )))
-      .finish(self.get_token_supply()?)
+      .finish(self.get_token_supply().await?)
       .map_err(Error::AliasOutputBuildError)
   }
 
@@ -109,7 +112,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     }
 
     alias_output_builder
-      .finish(self.get_token_supply()?)
+      .finish(self.get_token_supply().await?)
       .map_err(Error::AliasOutputBuildError)
   }
 
@@ -138,7 +141,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     }
 
     alias_output_builder
-      .finish(self.get_token_supply()?)
+      .finish(self.get_token_supply().await?)
       .map_err(Error::AliasOutputBuildError)
   }
 
