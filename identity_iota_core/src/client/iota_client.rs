@@ -95,6 +95,7 @@ impl IotaClientExt for Client {
       .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block input", Some(err)))?
       .with_outputs(vec![basic_output])
       .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block output", Some(err)))?
+      .with_burning_allowed(true)
       .finish()
       .await
       .map_err(|err| Error::DIDUpdateError("delete_did_output: publish failed", Some(err)))?;

@@ -392,8 +392,10 @@ impl WasmIotaDocument {
   /// Deserializes the document from an Alias Output.
   ///
   /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
-  /// if `stateMetadata` is empty.
+  /// if `stateMetadata` is empty. 
   ///
+  /// The `tokenSupply` must be equal to the token supply of the network the DID is associated with.  
+  /// 
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
@@ -403,9 +405,10 @@ impl WasmIotaDocument {
     did: &WasmIotaDID,
     aliasOutput: IAliasOutput,
     allowEmpty: bool,
+    tokenSupply: u64, 
   ) -> Result<WasmIotaDocument> {
     let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
-    let alias_output: AliasOutput = AliasOutput::try_from(&alias_dto)
+    let alias_output: AliasOutput = AliasOutput::try_from_dto(&alias_dto,tokenSupply)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
       })
@@ -428,7 +431,7 @@ impl WasmIotaDocument {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
       })
       .wasm_result()?;
-    let block: bee_block::Block = bee_block::Block::try_from(&block_dto)
+    let block: bee_block::Block = bee_block::Block::try_from_dto(&block_dto)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
       })
