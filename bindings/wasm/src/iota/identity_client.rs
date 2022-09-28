@@ -35,6 +35,9 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name = getTokenSupply)]
   pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
+
+  #[wasm_bindgen(method, js_name = getProtocolParametersJSON)]
+  pub fn get_protocol_parameters_json(this: &WasmIotaIdentityClient) -> JsValue;
 }
 
 impl Debug for WasmIotaIdentityClient {
@@ -105,6 +108,19 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       identity_iota::iota::Error::JsError(format!("get_rent_structure failed to deserialize: {}", err))
     })?;
     Ok(rent_structure.finish())
+  }
+
+  async fn get_token_supply(&self) -> Result<u64, identity_iota::iota::Error> {
+    let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_token_supply(self));
+    Ok(
+      JsValueResult::from(JsFuture::from(promise).await)
+        .to_iota_core_error()
+        .and_then(|value| {
+          u64::try_from(value).map_err(|_| {
+            identity_iota::iota::Error::JsError("could not retrieve a token supply of the required type".into())
+          })
+        })?,
+    )
   }
 }
 
