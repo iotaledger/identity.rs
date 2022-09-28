@@ -143,7 +143,8 @@ jobs:
           cargo metadata --format-version 1 --manifest-path ./examples/Cargo.toml | \
           jq -r '.packages[] | select(.name == "examples") | .targets[].name' | \
           awk '$1 ~ /[0-9].*/' | \
-          parallel -k -j 4 --retries 3 ./target/release/examples/{}
+          parallel -k -j 4 --retries 3 --joblog report.log ./target/release/examples/{}
+          cat report.log
 
       - name: Tear down private tangle
         if: matrix.os == 'ubuntu-latest' && always()
