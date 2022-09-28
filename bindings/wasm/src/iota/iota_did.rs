@@ -50,7 +50,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::new(tag_bytes, &network_name)))
   }
 
-  /// Constructs a new `IotaDID` from a hex representation of the tag and the given
+  /// Constructs a new `IotaDID` from a hex representation of an Alias Id and the given
   /// network name.
   #[wasm_bindgen(js_name = fromAliasId)]
   #[allow(non_snake_case)]
