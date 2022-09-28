@@ -9,7 +9,7 @@ publish = false
 anyhow = "1.0.62"
 did-key = { version = "0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
-iota-client = { version = "2.0", default-features = false, features = ["tls", "stronghold"] }
+iota-client = { version = "2.0.1-rc.1", default-features = false, features = ["tls", "stronghold"] }
 primitive-types = "0.11.1"
 rand = "0.8.5"
 tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
