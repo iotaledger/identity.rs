@@ -10,7 +10,7 @@ import * as ed25519 from "@transmute/did-key-ed25519";
  */
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
-    const keyHandler = async function (didKey: string): Promise<CoreDocument> {
+    const keyHandler = async function(didKey: string): Promise<CoreDocument> {
         let document = await ed25519.resolve(
             didKey,
             { accept: "application/did+ld+json" },
