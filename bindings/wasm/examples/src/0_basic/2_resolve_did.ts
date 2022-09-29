@@ -9,7 +9,7 @@ import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to resolve an existing DID in an Alias Output. */
 export async function resolveIdentity() {
-    const client = new Client({
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

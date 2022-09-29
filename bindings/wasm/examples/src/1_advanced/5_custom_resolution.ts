@@ -10,7 +10,7 @@ import * as ed25519 from "@transmute/did-key-ed25519";
  */
 export async function customResolution() {
     // Set up a handler for resolving Ed25519 did:key
-    const keyHandler = async function(didKey: string): Promise<CoreDocument> {
+    const keyHandler = async function (didKey: string): Promise<CoreDocument> {
         let document = await ed25519.resolve(
             didKey,
             { accept: "application/did+ld+json" },
@@ -18,8 +18,8 @@ export async function customResolution() {
         return CoreDocument.fromJSON(document.didDocument);
     };
 
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
+    // Create a new Client to interact with the IOTA ledger.
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

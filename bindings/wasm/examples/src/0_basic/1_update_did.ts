@@ -19,7 +19,7 @@ import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
-    const client = new Client({
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

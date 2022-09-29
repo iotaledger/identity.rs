@@ -22,7 +22,7 @@ export async function createIdentity(): Promise<{
     walletAddressBech32: string;
     did: IotaDID;
 }> {
-    const client = new Client({
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

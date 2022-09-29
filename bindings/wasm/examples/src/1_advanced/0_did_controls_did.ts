@@ -34,8 +34,8 @@ export async function didControlsDid() {
     // Create the company's and subsidiary's Alias Output DIDs.
     // ========================================================
 
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
+    // Create a new Client to interact with the IOTA ledger.
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

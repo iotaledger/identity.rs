@@ -36,8 +36,8 @@ export async function didIssuesTokens() {
     // Create the authority's DID and the foundry.
     // ===========================================
 
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
+    // Create a new Client to interact with the IOTA ledger.
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
