@@ -34,7 +34,7 @@ export async function keyExchange() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Get the Bech32 human-readable part (HRP) of the network.

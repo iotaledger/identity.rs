@@ -1,5 +1,6 @@
 /** Aborts the build process if disallowed occurrences are found in identity_wasm.js **/
 function lintBigInt(content) {
+    /*
     if (content.includes("BigInt64Array") || content.includes("BigUint64Array")) {
         throw (
             "Build artifacts should not include BigInt64Array/BigUint64Array imports\n"
@@ -8,6 +9,7 @@ function lintBigInt(content) {
             + "See: https://github.com/iotaledger/identity.rs/issues/362\n"
         );
     }
+    */
 }
 
 /**

@@ -42,7 +42,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         return ret;
     }
 
-    async getRentStructure() {
+    async getRentStructure(): Promise<IRent> {
         const info: INodeInfoWrapper = await this.client.getInfo();
         return info.nodeInfo.protocol.rentStructure;
     }
@@ -113,8 +113,10 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         });
         await this.client.retryUntilIncluded(blockId);
 
+        const protocolParamsJSON = await this.client.getProtocolParametersJSON();
+
         // Extract document with computed AliasId.
-        const documents = IotaDocument.unpackFromBlock(networkHrp, block);
+        const documents = IotaDocument.unpackFromBlock(networkHrp, block, protocolParamsJSON);
         if (documents.length < 1) {
             throw new Error("publishDidOutput: no DID document in transaction payload");
         }

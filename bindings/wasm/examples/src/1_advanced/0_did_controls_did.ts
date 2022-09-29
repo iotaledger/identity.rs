@@ -43,7 +43,7 @@ export async function didControlsDid() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).

@@ -13,7 +13,7 @@ import {
     KeyType,
     MethodScope,
 } from "../../../node";
-import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
+import { API_ENDPOINT, createDid, ensureAddressHasFunds } from "../util";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{
@@ -33,7 +33,7 @@ export async function createIdentity(): Promise<{
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
     const walletAddressBech32 = (await client.generateAddresses(secretManager, {
         accountIndex: 0,

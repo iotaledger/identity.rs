@@ -10,8 +10,8 @@ import {
     MethodScope,
 } from "../../node";
 
-export const API_ENDPOINT = "http://localhost:14265";
-export const FAUCET_ENDPOINT = "http://localhost:8091/api/enqueue";
+export const API_ENDPOINT = "https://api.testnet.shimmer.network/";
+export const FAUCET_ENDPOINT = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /** Creates a DID Document and publishes it in a new Alias Output.
 

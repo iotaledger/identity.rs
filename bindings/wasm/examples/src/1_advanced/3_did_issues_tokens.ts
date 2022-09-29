@@ -45,7 +45,7 @@ export async function didIssuesTokens() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Create a new DID for the authority. (see "0_create_did" example).
