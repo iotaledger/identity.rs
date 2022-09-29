@@ -13,7 +13,6 @@ use identity_iota::iota::block::output::RentStructureBuilder;
 use identity_iota::iota::IotaIdentityClient;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::error::JsValueResult;
@@ -36,8 +35,8 @@ extern "C" {
   #[wasm_bindgen(method, js_name = getTokenSupply)]
   pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
 
-  #[wasm_bindgen(method, js_name = getProtocolParametersJSON)]
-  pub fn get_protocol_parameters_json(this: &WasmIotaIdentityClient) -> JsValue;
+  #[wasm_bindgen(method, js_name = getProtocolParameters)]
+  pub fn get_protocol_parameters(this: &WasmIotaIdentityClient) -> JsValue;
 }
 
 impl Debug for WasmIotaIdentityClient {
@@ -90,9 +89,13 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     let token_supply: u64 = JsValueResult::from(JsFuture::from(token_supply_promise).await)
       .to_iota_core_error()
       .and_then(|value| {
-        u64::try_from(value).map_err(|_| {
-          identity_iota::iota::Error::JsError("could not retrieve a token supply of the required type".into())
-        })
+        if let Some(big_int) = value.as_f64() {
+          Ok(big_int as u64)
+        } else {
+          Err(identity_iota::iota::Error::JsError(
+            "could not retrieve a token supply of the required type".into(),
+          ))
+        }
       })?;
 
     let alias_output = AliasOutput::try_from_dto(&alias_dto, token_supply).map_err(|err| {
@@ -116,9 +119,13 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       JsValueResult::from(JsFuture::from(promise).await)
         .to_iota_core_error()
         .and_then(|value| {
-          u64::try_from(value).map_err(|_| {
-            identity_iota::iota::Error::JsError("could not retrieve a token supply of the required type".into())
-          })
+          if let Some(big_int) = value.as_f64() {
+            Ok(big_int as u64)
+          } else {
+            Err(identity_iota::iota::Error::JsError(
+              "could not retrieve a token supply of the required type".into(),
+            ))
+          }
         })?,
     )
   }
@@ -141,4 +148,10 @@ interface IIotaIdentityClient {
 
   /** Return the rent structure of the network, indicating the byte costs for outputs. */
   getRentStructure(): Promise<IRent>;
+
+  /** Gets the token supply of the node we're connecting to. */
+  getTokenSupply(): Promise<BigInt>;
+
+  /** Returns the protocol parameters as a JSON string. */
+  getProtocolParameters(): Promise<string>;
 }"#;

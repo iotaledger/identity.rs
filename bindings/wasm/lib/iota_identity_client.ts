@@ -47,6 +47,14 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         return info.nodeInfo.protocol.rentStructure;
     }
 
+    async getTokenSupply(): Promise<BigInt> {
+        return await this.client.getTokenSupply();
+    }
+
+    async getProtocolParameters(): Promise<string> {
+        return await this.client.getProtocolParameters();
+    }
+
     /** Create a DID with a new Alias Output containing the given `document`.
      *
      * The `address` will be set as the state controller and governor unlock conditions.
@@ -113,10 +121,10 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         });
         await this.client.retryUntilIncluded(blockId);
 
-        const protocolParamsJSON = await this.client.getProtocolParametersJSON();
+        const protocolParams = await this.client.getProtocolParameters();
 
         // Extract document with computed AliasId.
-        const documents = IotaDocument.unpackFromBlock(networkHrp, block, protocolParamsJSON);
+        const documents = IotaDocument.unpackFromBlock(networkHrp, block, protocolParams);
         if (documents.length < 1) {
             throw new Error("publishDidOutput: no DID document in transaction payload");
         }
