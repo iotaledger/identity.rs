@@ -1,6 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_api_types::responses::ProtocolResponse;
+use bee_block::protocol::ProtocolParameters;
+use identity_iota::core::FromJson;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
@@ -394,6 +397,8 @@ impl WasmIotaDocument {
   /// If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
   /// if `stateMetadata` is empty.
   ///
+  /// The `tokenSupply` must be equal to the token supply of the network the DID is associated with.  
+  ///
   /// NOTE: `did` is required since it is omitted from the serialized DID Document and
   /// cannot be inferred from the state metadata. It also indicates the network, which is not
   /// encoded in the `AliasId` alone.
@@ -403,9 +408,10 @@ impl WasmIotaDocument {
     did: &WasmIotaDID,
     aliasOutput: IAliasOutput,
     allowEmpty: bool,
+    tokenSupply: u64,
   ) -> Result<WasmIotaDocument> {
     let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
-    let alias_output: AliasOutput = AliasOutput::try_from(&alias_dto)
+    let alias_output: AliasOutput = AliasOutput::try_from_dto(&alias_dto, tokenSupply)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
       })
@@ -419,8 +425,11 @@ impl WasmIotaDocument {
   /// outputs, if any.
   ///
   /// Errors if any Alias Output does not contain a valid or empty DID Document.
+  ///
+  /// `protocolResponseJson` can be obtained from a `Client`.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = unpackFromBlock)]
-  pub fn unpack_from_block(network: String, block: &IBlock) -> Result<ArrayIotaDocument> {
+  pub fn unpack_from_block(network: String, block: &IBlock, protocolResponseJson: String) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
     let block_dto: bee_block::BlockDto = block
       .into_serde()
@@ -428,7 +437,10 @@ impl WasmIotaDocument {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
       })
       .wasm_result()?;
-    let block: bee_block::Block = bee_block::Block::try_from(&block_dto)
+
+    let protocol_response: ProtocolResponse = ProtocolResponse::from_json(&protocolResponseJson).wasm_result()?;
+    let protocol_parameters: ProtocolParameters = ProtocolParameters::try_from(protocol_response).wasm_result()?;
+    let block: bee_block::Block = bee_block::Block::try_from_dto(&block_dto, &protocol_parameters)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
       })

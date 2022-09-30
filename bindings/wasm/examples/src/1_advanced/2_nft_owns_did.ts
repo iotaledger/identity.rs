@@ -36,8 +36,8 @@ export async function nftOwnsDid() {
     // Create the car's NFT and DID.
     // =============================
 
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
+    // Create a new Client to interact with the IOTA ledger.
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
@@ -45,7 +45,7 @@ export async function nftOwnsDid() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Get the current byte costs.

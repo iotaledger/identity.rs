@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
   let (_, company_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Get the current byte costs and network name.
-  let rent_structure: RentStructure = client.get_rent_structure().await?;
+  let rent_structure: RentStructure = client.get_rent_structure()?;
   let network_name: NetworkName = client.network_name().await?;
 
   // Construct a new DID document for the subsidiary.
@@ -74,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
     .add_immutable_feature(IssuerFeature::new(AliasAddress::new(AliasId::from(&company_did)).into()).into())
     // Adding the issuer feature means we have to recalculate the required storage deposit.
     .with_minimum_storage_deposit(rent_structure.clone())
-    .finish()?;
+    .finish(client.get_token_supply()?)?;
 
   // Publish the subsidiary's DID.
   let mut subsidiary_document: IotaDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
@@ -99,7 +99,7 @@ async fn main() -> anyhow::Result<()> {
   let subsidiary_alias: AliasOutput = client.update_did_output(subsidiary_document).await?;
   let subsidiary_alias: AliasOutput = AliasOutputBuilder::from(&subsidiary_alias)
     .with_minimum_storage_deposit(rent_structure.clone())
-    .finish()?;
+    .finish(client.get_token_supply()?)?;
 
   // Publish the updated subsidiary's DID.
   //

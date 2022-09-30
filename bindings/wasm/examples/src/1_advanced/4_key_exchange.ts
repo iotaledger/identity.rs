@@ -25,8 +25,8 @@ export async function keyExchange() {
     // Create DIDs for Alice and Bob.
     // ==============================
 
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
+    // Create a new Client to interact with the IOTA ledger.
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
@@ -34,7 +34,7 @@ export async function keyExchange() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Get the Bech32 human-readable part (HRP) of the network.

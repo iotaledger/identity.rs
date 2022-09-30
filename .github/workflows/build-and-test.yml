@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - main
-      - dev
   pull_request:
     types: [ opened, synchronize, reopened, ready_for_review ]
     branches:
       - main
-      - dev
       - epic/*
       - support/*
     paths:
@@ -143,7 +141,8 @@ jobs:
           cargo metadata --format-version 1 --manifest-path ./examples/Cargo.toml | \
           jq -r '.packages[] | select(.name == "examples") | .targets[].name' | \
           awk '$1 ~ /[0-9].*/' | \
-          parallel -k -j 4 --retries 3 ./target/release/examples/{}
+          parallel -k -j 4 --retries 3 --joblog report.log ./target/release/examples/{}
+          cat report.log
 
       - name: Tear down private tangle
         if: matrix.os == 'ubuntu-latest' && always()
@@ -190,7 +189,7 @@ jobs:
     needs: check-for-run-condition
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@dev
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@main
     with:
       output-artifact-name: identity-wasm-bindings-build
 
@@ -240,6 +239,6 @@ jobs:
   #     - build-wasm
   #   if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
   #   # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
+  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@main
   #   with:
   #     input-artifact-name: identity-wasm-bindings-build

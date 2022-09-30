@@ -6,20 +6,26 @@ runs:
     - name: Setup private tangle
       shell: bash
       run: |
-        # Download the private_tangle setup from the hornet repo.
-        mkdir private_tangle
-        cd private_tangle
-        # Use the output of https://api.github.com/repos/iotaledger/hornet/releases/latest once there's a 2.0 Hornet release.
-        DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r '.[0].assets[] | select(.name | contains("private_tangle")) | .browser_download_url')
-        curl -L -o private_tangle.tar.gz $DOWNLOAD_URL
-        tar -xf private_tangle.tar.gz
+        # TODO: use next lines when a working hornet release is published
+        # # Download the private_tangle setup from the hornet repo.
+        # mkdir private_tangle
+        # cd private_tangle
+        # # Use the output of https://api.github.com/repos/iotaledger/hornet/releases/latest once there's a 2.0 Hornet release.
+        # DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/hornet/releases" | jq -r '.[0].assets[] | select(.name | contains("private_tangle")) | .browser_download_url')
+        # echo "Downloading private tangle from $DOWNLOAD_URL"
+        # curl -L -o private_tangle.tar.gz $DOWNLOAD_URL
+        # tar -xf private_tangle.tar.gz
+
+        # TODO: remove next lines when a working hornet release is published
+        git clone https://github.com/iotaledger/hornet.git
+        cd hornet/private_tangle
 
         # Set minPoWScore = 1 since the default (0) doesn't work with wasm_miner.rs in iota.rs currently.
         jq '.minPoWScore = $val' --argjson val 1 protocol_parameters.json > tmp.json && mv tmp.json protocol_parameters.json
         jq --color-output . protocol_parameters.json
         
         # Manipulate and print config
-        jq '.restAPI.pow.enabled = $newVal' --argjson newVal false config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
+        jq '.restAPI.pow.enabled = $newVal' --argjson newVal true config_private_tangle.json > tmp.$$.json && mv tmp.$$.json config_private_tangle.json
         jq --color-output . config_private_tangle.json
 
         # Start Tangle
