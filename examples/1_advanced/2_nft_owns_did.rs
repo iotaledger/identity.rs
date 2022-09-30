@@ -54,12 +54,12 @@ async fn main() -> anyhow::Result<()> {
   let address: Address = get_address_with_funds(&client, &mut secret_manager, FAUCET_ENDPOINT).await?;
 
   // Get the current byte cost.
-  let rent_structure: RentStructure = client.get_rent_structure().await?;
+  let rent_structure: RentStructure = client.get_rent_structure()?;
 
   // Create the car NFT with an Ed25519 address as the unlock condition.
   let car_nft: NftOutput = NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone(), NftId::null())?
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-    .finish()?;
+    .finish(client.get_token_supply()?)?;
 
   // Publish the NFT output.
   let block: Block = client
@@ -118,7 +118,7 @@ async fn main() -> anyhow::Result<()> {
   let car_nft_id: &NftId = car_nft_address.nft_id();
   let output_id: OutputId = client.nft_output_id(*car_nft_id).await?;
   let output_response: OutputResponse = client.get_output(&output_id).await?;
-  let output: Output = Output::try_from(&output_response.output)?;
+  let output: Output = Output::try_from_dto(&output_response.output, client.get_token_supply()?)?;
 
   let car_nft: NftOutput = if let Output::Nft(nft_output) = output {
     nft_output

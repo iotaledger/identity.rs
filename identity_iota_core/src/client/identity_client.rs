@@ -30,8 +30,14 @@ pub trait IotaIdentityClient {
   /// Resolve an Alias identifier, returning its latest [`OutputId`] and [`AliasOutput`].
   async fn get_alias_output(&self, alias_id: AliasId) -> Result<(OutputId, AliasOutput)>;
 
+  // get_rent_structure and get_token_supply technically don't need to be async, but the JS Client only has async
+  // versions of these so we use async here as well to avoid compatibility issues.
+
   /// Return the rent structure of the network, indicating the byte costs for outputs.
   async fn get_rent_structure(&self) -> Result<RentStructure>;
+
+  /// Gets the token supply of the node we're connecting to.
+  async fn get_token_supply(&self) -> Result<u64>;
 }
 
 /// An extension trait that provides helper functions for publication
@@ -80,7 +86,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         address,
       )))
-      .finish()
+      .finish(self.get_token_supply().await?)
       .map_err(Error::AliasOutputBuildError)
   }
 
@@ -105,7 +111,9 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(id);
     }
 
-    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
+    alias_output_builder
+      .finish(self.get_token_supply().await?)
+      .map_err(Error::AliasOutputBuildError)
   }
 
   /// Removes the DID document from the state metadata of its Alias Output,
@@ -132,7 +140,9 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(alias_id);
     }
 
-    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
+    alias_output_builder
+      .finish(self.get_token_supply().await?)
+      .map_err(Error::AliasOutputBuildError)
   }
 
   /// Resolve a [`IotaDocument`]. Returns an empty, deactivated document if the state metadata

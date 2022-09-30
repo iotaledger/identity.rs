@@ -72,14 +72,9 @@ pub async fn get_address_with_funds(
 ) -> anyhow::Result<Address> {
   let address: Address = get_address(client, stronghold).await?;
 
-  request_faucet_funds(
-    client,
-    address,
-    client.get_bech32_hrp().await?.as_str(),
-    faucet_endpoint,
-  )
-  .await
-  .context("failed to request faucet funds")?;
+  request_faucet_funds(client, address, client.get_bech32_hrp()?.as_str(), faucet_endpoint)
+    .await
+    .context("failed to request faucet funds")?;
 
   Ok(address)
 }
@@ -152,7 +147,7 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
 
   let mut total_amount = 0;
   for output_response in outputs_responses {
-    let output = Output::try_from(&output_response.output)?;
+    let output = Output::try_from_dto(&output_response.output, client.get_token_supply()?)?;
     total_amount += output.amount();
   }
 

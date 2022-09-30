@@ -55,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
   let (_, manufacturer_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
 
   // Get the current byte cost.
-  let rent_structure: RentStructure = client.get_rent_structure().await?;
+  let rent_structure: RentStructure = client.get_rent_structure()?;
 
   // Create a Digital Product Passport NFT issued by the manufacturer.
   let product_passport_nft: NftOutput =
@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
       .add_immutable_feature(Feature::Metadata(MetadataFeature::new(
         b"Digital Product Passport Metadata".to_vec(),
       )?))
-      .finish()?;
+      .finish(client.get_token_supply()?)?;
 
   // Publish the NFT.
   let block: Block = client
@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
   // Fetch the NFT Output.
   let nft_output_id: OutputId = client.nft_output_id(nft_id).await?;
   let output_response: OutputResponse = client.get_output(&nft_output_id).await?;
-  let output: Output = Output::try_from(&output_response.output)?;
+  let output: Output = Output::try_from_dto(&output_response.output, client.get_token_supply()?)?;
 
   // Extract the issuer of the NFT.
   let nft_output: NftOutput = if let Output::Nft(nft_output) = output {

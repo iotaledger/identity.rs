@@ -18,8 +18,8 @@ export async function customResolution() {
         return CoreDocument.fromJSON(document.didDocument);
     };
 
-    // Create a new client to interact with the IOTA ledger.
-    const client = new Client({
+    // Create a new Client to interact with the IOTA ledger.
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
@@ -41,7 +41,7 @@ export async function customResolution() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Creates a new wallet and identity for us to resolve (see "0_create_did" example).

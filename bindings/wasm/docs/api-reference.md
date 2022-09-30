@@ -1997,8 +1997,8 @@ Deserializes an instance from a JSON object.
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-        * [.unpackFromOutput(did, aliasOutput, allowEmpty)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-        * [.unpackFromBlock(network, block)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+        * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [.unpackFromBlock(network, block, protocolParametersJSON)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
         * [.fromJSON(json)](#IotaDocument.fromJSON) ⇒ [<code>IotaDocument</code>](#IotaDocument)
 
 <a name="new_IotaDocument_new"></a>
@@ -2401,11 +2401,13 @@ Constructs an empty DID Document with the given identifier.
 
 <a name="IotaDocument.unpackFromOutput"></a>
 
-### IotaDocument.unpackFromOutput(did, aliasOutput, allowEmpty) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+### IotaDocument.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply) ⇒ [<code>IotaDocument</code>](#IotaDocument)
 Deserializes the document from an Alias Output.
 
 If `allowEmpty` is true, this will return an empty DID document marked as `deactivated`
 if `stateMetadata` is empty.
+
+The `tokenSupply` must be equal to the token supply of the network the DID is associated with.
 
 NOTE: `did` is required since it is omitted from the serialized DID Document and
 cannot be inferred from the state metadata. It also indicates the network, which is not
@@ -2418,14 +2420,17 @@ encoded in the `AliasId` alone.
 | did | [<code>IotaDID</code>](#IotaDID) | 
 | aliasOutput | <code>IAliasOutput</code> | 
 | allowEmpty | <code>boolean</code> | 
+| tokenSupply | <code>bigint</code> | 
 
 <a name="IotaDocument.unpackFromBlock"></a>
 
-### IotaDocument.unpackFromBlock(network, block) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+### IotaDocument.unpackFromBlock(network, block, protocolParametersJSON) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
 Returns all DID documents of the Alias Outputs contained in the block's transaction payload
 outputs, if any.
 
 Errors if any Alias Output does not contain a valid or empty DID Document.
+
+protocolParametersJSON can be obtained from a `Client`.
 
 **Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
 
@@ -2433,6 +2438,7 @@ Errors if any Alias Output does not contain a valid or empty DID Document.
 | --- | --- |
 | network | <code>string</code> | 
 | block | <code>IBlock</code> | 
+| protocolParametersJSON | <code>string</code> | 
 
 <a name="IotaDocument.fromJSON"></a>
 

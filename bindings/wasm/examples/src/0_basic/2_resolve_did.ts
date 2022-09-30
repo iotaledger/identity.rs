@@ -9,7 +9,7 @@ import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to resolve an existing DID in an Alias Output. */
 export async function resolveIdentity() {
-    const client = new Client({
+    const client = await Client.new({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
@@ -17,7 +17,7 @@ export async function resolveIdentity() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        Mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
