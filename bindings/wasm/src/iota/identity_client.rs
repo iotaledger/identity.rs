@@ -35,8 +35,8 @@ extern "C" {
   #[wasm_bindgen(method, js_name = getTokenSupply)]
   pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
 
-  #[wasm_bindgen(method, js_name = getProtocolParameters)]
-  pub fn get_protocol_parameters(this: &WasmIotaIdentityClient) -> JsValue;
+  #[wasm_bindgen(method, js_name = getProtocolResponse)]
+  pub fn get_protocol_response(this: &WasmIotaIdentityClient) -> JsValue;
 }
 
 impl Debug for WasmIotaIdentityClient {
@@ -152,6 +152,6 @@ interface IIotaIdentityClient {
   /** Gets the token supply of the node we're connecting to. */
   getTokenSupply(): Promise<BigInt>;
 
-  /** Returns the protocol parameters as a JSON string. */
-  getProtocolParameters(): Promise<string>;
+  /** Returns the protocol response as a JSON string. */
+  getProtocolResponse(): Promise<string>;
 }"#;

@@ -166,6 +166,15 @@ impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   }
 }
 
+impl From<bee_api_types::error::Error> for WasmError<'_> {
+  fn from(error: bee_api_types::error::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("bee_api_types::Error"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
 impl From<identity_iota::credential::CompoundCredentialValidationError> for WasmError<'_> {
   fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {

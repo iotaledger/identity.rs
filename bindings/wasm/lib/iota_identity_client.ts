@@ -51,8 +51,8 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         return await this.client.getTokenSupply();
     }
 
-    async getProtocolParameters(): Promise<string> {
-        return await this.client.getProtocolParameters();
+    async getProtocolResponse(): Promise<string> {
+        return await this.client.getProtocolResponse();
     }
 
     /** Create a DID with a new Alias Output containing the given `document`.
@@ -121,7 +121,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         });
         await this.client.retryUntilIncluded(blockId);
 
-        const protocolParams = await this.client.getProtocolParameters();
+        const protocolParams = await this.client.getProtocolResponse();
 
         // Extract document with computed AliasId.
         const documents = IotaDocument.unpackFromBlock(networkHrp, block, protocolParams);
