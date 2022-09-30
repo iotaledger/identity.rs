@@ -715,7 +715,7 @@ dependencies = [
 
 [[package]]
 name = "identity-diff"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -762,7 +762,7 @@ dependencies = [
 
 [[package]]
 name = "identity_core"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.2"
 dependencies = [
  "identity-diff",
  "iota-crypto 0.12.1",
@@ -780,7 +780,7 @@ dependencies = [
 
 [[package]]
 name = "identity_did"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.2"
 dependencies = [
  "did_url",
  "form_urlencoded",
