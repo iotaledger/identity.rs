@@ -4,16 +4,14 @@
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
-## [Account Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples-account/README.md)
-
-## [Low-Level Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
+## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
 
 ## Install the library:
 
-Latest Release: this version matches the `main` branch of this repository, is stable and will have changelogs.
+Latest Release: this version matches the `main` branch of this repository.
 
 ```bash
-npm install @iota/identity-wasm
+npm install @iota/identity-wasm@alpha
 ```
 
 ## Build

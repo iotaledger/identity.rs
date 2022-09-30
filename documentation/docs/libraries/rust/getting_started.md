@@ -23,7 +23,7 @@ This version is published to crates.io and is **stable**, following semantic ver
 
 ```toml
 [dependencies]
-identity_iota = { version = "0.6" }
+identity_iota = { version = "0.7.0-alpha" }
 ```
 
 ### Development Release
