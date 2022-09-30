@@ -475,6 +475,7 @@ impl TryMethod for IotaDocument {
 
 #[cfg(test)]
 mod tests {
+  use bee_block::protocol::ProtocolParameters;
   use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
@@ -752,6 +753,7 @@ mod tests {
 
   #[test]
   fn test_unpack_empty() {
+    let mock_token_supply: u64 = ProtocolParameters::default().token_supply();
     let controller_did: IotaDID = valid_did();
 
     // VALID: unpack empty, deactivated document.
@@ -766,7 +768,7 @@ mod tests {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         Address::Alias(AliasAddress::new(AliasId::from(&controller_did))),
       )))
-      .finish()
+      .finish(mock_token_supply)
       .unwrap();
     let document: IotaDocument = IotaDocument::unpack_from_output(&did, &alias_output, true).unwrap();
     assert_eq!(document.id(), &did);

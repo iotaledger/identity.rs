@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
   let error: Error = client.resolve_did(&did).await.unwrap_err();
   assert!(matches!(
     error,
-    identity_iota::iota::Error::DIDResolutionError(iota_client::Error::NotFound)
+    identity_iota::iota::Error::DIDResolutionError(iota_client::Error::NotFound(..))
   ));
 
   Ok(())
