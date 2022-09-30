@@ -169,6 +169,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         const [blockId, _block] = await this.client.buildAndPostBlock(secretManager, {
             inputs: [aliasInput],
             outputs: [basicOutput],
+            allowBurning: true,
         });
         await this.client.retryUntilIncluded(blockId);
     }
