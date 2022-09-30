@@ -56,7 +56,7 @@ impl WasmResolver {
   ///
   /// # Errors
   /// If both a `client` is given and the `handlers` map contains the "iota" key the construction process
-  /// will throw an error as it is then ambiguous what should be .
+  /// will throw an error because the handler for the "iota" method then becomes ambiguous.
   #[wasm_bindgen(constructor)]
   pub fn new(config: ResolverConfig) -> Result<WasmResolver> {
     let mut resolver: SingleThreadedResolver = SingleThreadedResolver::new();
