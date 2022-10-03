@@ -22,7 +22,7 @@ import {
     TransactionHelper,
 } from "@iota/iota.js";
 import type { IFoundryOutput } from "@iota/types";
-import { Converter, HexHelper } from "@iota/util.js";
+import { HexHelper } from "@iota/util.js";
 import bigInt from "big-integer";
 import { IotaDID, IotaDocument, IotaIdentityClient } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
@@ -135,7 +135,7 @@ export async function didIssuesTokens() {
     const authorityAliasId: string = (aliasUnlockCondition.address as IAliasAddress).aliasId;
 
     // Reconstruct the DID of the authority.
-    authorityDid = new IotaDID(Converter.hexToBytes(authorityAliasId), networkName);
+    authorityDid = IotaDID.fromAliasId(authorityAliasId, networkName);
 
     // Resolve the authority's DID document.
     authorityDocument = await didClient.resolveDid(authorityDid);

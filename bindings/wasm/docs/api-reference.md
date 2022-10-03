@@ -102,12 +102,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -150,6 +144,12 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -1640,6 +1640,7 @@ A DID conforming to the IOTA DID method specification.
     * _static_
         * [.METHOD](#IotaDID.METHOD) ⇒ <code>string</code>
         * [.DEFAULT_NETWORK](#IotaDID.DEFAULT_NETWORK) ⇒ <code>string</code>
+        * [.fromAliasId(aliasId, network)](#IotaDID.fromAliasId) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.placeholder(network)](#IotaDID.placeholder) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.parse(input)](#IotaDID.parse) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.fromJSON(json)](#IotaDID.fromJSON) ⇒ [<code>IotaDID</code>](#IotaDID)
@@ -1769,6 +1770,19 @@ The IOTA DID method name (`"iota"`).
 The default Tangle network (`"iota"`).
 
 **Kind**: static property of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID.fromAliasId"></a>
+
+### IotaDID.fromAliasId(aliasId, network) ⇒ [<code>IotaDID</code>](#IotaDID)
+Constructs a new `IotaDID` from a hex representation of the tag and the given
+network name.
+
+**Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
+
+| Param | Type |
+| --- | --- |
+| aliasId | <code>string</code> | 
+| network | <code>string</code> | 
+
 <a name="IotaDID.placeholder"></a>
 
 ### IotaDID.placeholder(network) ⇒ [<code>IotaDID</code>](#IotaDID)
@@ -4041,18 +4055,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4130,6 +4132,18 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

@@ -72,6 +72,13 @@ impl IotaDID {
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }
 
+  /// Constructs a new [`IotaDID`] from a hex representation of an Alias Id and the given
+  /// network name.
+  pub fn from_alias_id(alias_id: &str, network_name: &NetworkName) -> Self {
+    let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, alias_id);
+    Self::parse(did).expect("DIDs constructed with new should be valid")
+  }
+
   /// Creates a new placeholder [`IotaDID`] with the given network name.
   ///
   /// # Example
