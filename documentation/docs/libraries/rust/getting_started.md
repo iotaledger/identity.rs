@@ -23,16 +23,16 @@ This version is published to crates.io and is **stable**, following semantic ver
 
 ```toml
 [dependencies]
-identity_iota = { version = "0.6" }
+identity_iota = { version = "0.7.0-alpha" }
 ```
 
 ### Development Release
 
-This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+This version matches the `main` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
 
 ```toml
 [dependencies]
-identity_iota = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+identity_iota = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 ```
 
 

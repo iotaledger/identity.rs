@@ -58,7 +58,7 @@ jobs:
         with:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           fetch-depth: 0
-          ref: dev
+          ref: main
 
       - name: Validate version
         run: |
@@ -81,7 +81,7 @@ jobs:
           for value in ${ALL_TAGS[@]}
           do
               # Exclude any tags not matching the type of release or hotfix tags not on dev or main
-              if ! [[ ( $value == $TAG_PREFIX$TAG_BASE$TAG_POSTFIX* || $value =~ ${{ inputs.main-tag-regex }} ) && $(git branch -a --contains $value | grep -E 'remotes/origin/dev|remotes/origin/main') ]]; then
+              if ! [[ ( $value == $TAG_PREFIX$TAG_BASE$TAG_POSTFIX* || $value =~ ${{ inputs.main-tag-regex }} ) && $(git branch -a --contains $value | grep -E 'remotes/origin/main') ]]; then
                 temp_array+=($value)
               fi
           done
@@ -133,22 +133,22 @@ jobs:
           echo EXCLUDE_ARG=$EXCLUDE_ARG
           echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
 
-      - name: Run Changelog Generator
-        uses: './.github/actions/release/changelog-generator'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          changelog-path: ${{ inputs.changelog-path }}
-          changelog-config-path: ${{ inputs.changelog-config-path }}
-          future-release: ${{ env.NEXTVERSION }} 
-          optional-arg: ${{env.EXCLUDE_ARG}}
+      # - name: Run Changelog Generator
+      #   uses: './.github/actions/release/changelog-generator'
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     changelog-path: ${{ inputs.changelog-path }}
+      #     changelog-config-path: ${{ inputs.changelog-config-path }}
+      #     future-release: ${{ env.NEXTVERSION }} 
+      #     optional-arg: ${{env.EXCLUDE_ARG}}
 
-      - name: Check Changelog For Modification
-        run: |
-          git add .
-          if [[ $(git diff --stat --staged) == '' ]]; then
-            echo 'repository unmodified'
-            exit 1
-          fi
+      # - name: Check Changelog For Modification
+      #   run: |
+      #     git add .
+      #     if [[ $(git diff --stat --staged) == '' ]]; then
+      #       echo 'repository unmodified'
+      #       exit 1
+      #     fi
 
       - name: Import GPG key
         id: import-gpg

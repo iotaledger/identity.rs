@@ -5,14 +5,14 @@ name: Wasm Automatic Release and Publish
 on:
   pull_request:
     branches:
-      - dev
+      - main
       - support/wasm-v*
     types: [closed]
 jobs:
   call-create-release-workflow:
     if: github.event.pull_request.merged == true
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-release.yml@dev
+    uses: iotaledger/identity.rs/.github/workflows/shared-release.yml@main
     with:
       changelog-config-path: ./bindings/wasm/.github_changelog_generator
       pre-release-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+-(?<pre_release>\w+)\.\d+$
@@ -26,7 +26,7 @@ jobs:
     needs: call-create-release-workflow
     if: ${{ needs.call-create-release-workflow.outputs.is-release }}
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@dev
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@main
     with:
       output-artifact-name: identity-wasm-bindings-build
 
@@ -48,7 +48,7 @@ jobs:
   #   needs: build-wasm
   #   if: ${{ needs.call-create-release-workflow.outputs.is-release }}
   #   # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
+  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@main
   #   with:
   #     input-artifact-name: identity-wasm-bindings-build
   #     upload-binaries-as-artifacts: true

@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.7.0-alpha.2](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.2) (2022-09-30)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.1...v0.7.0-alpha.2)
+ 
+### Changed
+
+- Use Bech32-encoded state controller and governor addresses [\#1044](https://github.com/iotaledger/identity.rs/pull/1044)
+- Expose iteration over verification relationship fields [\#1024](https://github.com/iotaledger/identity.rs/pull/1024)
+
+### Added
+
+- Expose Controller and Governor Addresses in metadata [\#1023](https://github.com/iotaledger/identity.rs/pull/1023)
+
+### Patch
+
+- Recommend unique `credentialStatus.id` in `RevocationBitmap2022` [\#1039](https://github.com/iotaledger/identity.rs/pull/1039)
+
 ## [v0.7.0-alpha.1](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.1) (2022-09-19)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.0...v0.7.0-alpha.1)

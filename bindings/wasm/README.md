@@ -4,22 +4,14 @@
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
-## [Account Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples-account/README.md)
-
-## [Low-Level Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
+## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
 
 ## Install the library:
 
-Latest Release: this version matches the `main` branch of this repository, is stable and will have changelogs.
+Latest Release: this version matches the `main` branch of this repository.
 
 ```bash
-npm install @iota/identity-wasm
-```
-
-Development Release: this version usually matches the latest code changes from the `dev` branch and may see frequent breaking changes.
-
-```bash
-npm install @iota/identity-wasm@dev
+npm install @iota/identity-wasm@alpha
 ```
 
 ## Build
@@ -86,7 +78,7 @@ const API_ENDPOINT = "http://127.0.0.1:14265";
 /** Demonstrate how to create a DID Document. */
 async function main() {
   // Create a new client with the given network endpoint.
-  const client = new Client({
+  const client = await Client.new({
     primaryNode: API_ENDPOINT,
     localPow: true,
   });

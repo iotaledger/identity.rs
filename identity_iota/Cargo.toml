@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.2"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -12,15 +12,15 @@ rust-version = "1.62"
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
-identity_core = { version = "=0.7.0-alpha.1", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.1", path = "../identity_credential", features = ["validator"], default-features = false }
-identity_did = { version = "=0.7.0-alpha.1", path = "../identity_did", default-features = false }
-identity_iota_core = { version = "=0.7.0-alpha.1", path = "../identity_iota_core", default-features = false }
-identity_resolver = { version = "=0.7.0-alpha.1", path = "../identity_resolver", default-features = false, optional = true }
+identity_core = { version = "=0.7.0-alpha.2", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.2", path = "../identity_credential", features = ["validator"], default-features = false }
+identity_did = { version = "=0.7.0-alpha.2", path = "../identity_did", default-features = false }
+identity_iota_core = { version = "=0.7.0-alpha.2", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=0.7.0-alpha.2", path = "../identity_resolver", default-features = false, optional = true }
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-client = { version = "2.0.0-beta.3", default-features = false, features = ["tls", "stronghold"] }
+iota-client = { version = "2.0.1-rc.1", default-features = false, features = ["tls", "stronghold"] }
 tokio = { version = "1.17.0", features = ["full"] }
 
 [features]

@@ -23,6 +23,9 @@ pub enum Error {
   BasicOutputBuildError(#[source] iota_client::block::Error),
   #[error("\"{0}\" is not a valid network name")]
   InvalidNetworkName(String),
+  #[cfg(feature = "iota-client")]
+  #[error("unable to obtain the token supply from the client")]
+  TokenSupplyError(#[source] iota_client::Error),
   #[error("unable to resolve a `{expected}` DID on network `{actual}`")]
   NetworkMismatch { expected: String, actual: String },
   #[error("invalid state metadata {0}")]
