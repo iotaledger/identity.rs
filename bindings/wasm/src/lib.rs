@@ -28,7 +28,9 @@ pub mod error;
 pub mod iota;
 pub mod revocation;
 
+pub mod key_storage;
 pub mod resolver;
+pub mod storage;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
