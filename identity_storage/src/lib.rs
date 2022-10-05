@@ -109,13 +109,13 @@ impl SignatureHandler for JcsEd25519 {
   }
 }
 
-pub struct IdentitySuite {
-  key_storage: Box<dyn KeyStorage>,
+pub struct IdentitySuite<K: KeyStorage> {
+  key_storage: K,
   signature_handlers: HashMap<String, Box<dyn SignatureHandler + Send + Sync>>,
 }
 
-impl IdentitySuite {
-  pub fn new(key_storage: Box<dyn KeyStorage>) -> Self {
+impl<K: KeyStorage> IdentitySuite<K> {
+  pub fn new(key_storage: K) -> Self {
     Self {
       key_storage,
       signature_handlers: HashMap::new(),
@@ -130,7 +130,7 @@ impl IdentitySuite {
 
   pub async fn sign(&self, data: Vec<u8>, method_type: &NewMethodType) -> Vec<u8> {
     match self.signature_handlers.get(method_type.as_str()) {
-      Some(handler) => handler.sign(data, self.key_storage.as_ref()).await,
+      Some(handler) => handler.sign(data, &self.key_storage).await,
       None => todo!("return missing handler error"),
     }
   }
@@ -166,7 +166,7 @@ mod tests2 {
 
     assert!(document.resolve_method(fragment, Default::default()).is_some());
 
-    let mut suite = IdentitySuite::new(Box::new(storage));
+    let mut suite = IdentitySuite::new(storage);
     suite.register(Box::new(JcsEd25519));
 
     let signature = document.sign(fragment, b"data to be signed".to_vec(), &suite).await;

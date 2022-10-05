@@ -6,13 +6,14 @@ use identity_did::document::CoreDocument;
 
 use crate::identity_updater::IdentityUpdater;
 use crate::IdentitySuite;
+use crate::KeyStorage;
 use crate::NewMethodType;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait CoreDocumentExt {
   fn update_identity(&mut self) -> IdentityUpdater;
-  async fn sign(&self, fragment: &str, data: Vec<u8>, suite: &IdentitySuite) -> Vec<u8>;
+  async fn sign<K: KeyStorage>(&self, fragment: &str, data: Vec<u8>, suite: &IdentitySuite<K>) -> Vec<u8>;
 }
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -22,7 +23,7 @@ impl CoreDocumentExt for CoreDocument {
     IdentityUpdater { document: self }
   }
 
-  async fn sign(&self, fragment: &str, data: Vec<u8>, suite: &IdentitySuite) -> Vec<u8> {
+  async fn sign<K: KeyStorage>(&self, fragment: &str, data: Vec<u8>, suite: &IdentitySuite<K>) -> Vec<u8> {
     let method = self.resolve_method(fragment, Default::default()).expect("TODO");
     // This would return NewMethodType after a refactoring.
     let new_method_type = match method.type_() {
