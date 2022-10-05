@@ -32,6 +32,18 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.scheme(), "did");
         });
     });
+    describe("#from_alias_id", function() {
+        it("should work", () => {
+            const did = IotaDID.fromAliasId(aliasIdHex, networkName);
+            assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
+            assert.deepStrictEqual(did.tag(), aliasIdHex);
+            assert.deepStrictEqual(did.method(), IotaDID.METHOD);
+            assert.deepStrictEqual(did.networkStr(), networkName);
+            assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
+            assert.deepStrictEqual(did.methodId(), networkName + ":" + aliasIdHex);
+            assert.deepStrictEqual(did.scheme(), "did");
+        });
+    });
     describe("#placeholder()", function() {
         it("should be zeroes", () => {
             const expectedTag = "0x0000000000000000000000000000000000000000000000000000000000000000";
