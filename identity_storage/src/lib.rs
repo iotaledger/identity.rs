@@ -11,6 +11,7 @@ mod key_storage;
 mod memstore;
 mod method_content;
 mod signature;
+mod signature_handler;
 mod signature_suite;
 mod signing_algorithm;
 mod storage;
@@ -29,6 +30,7 @@ pub use key_storage::*;
 pub use memstore::*;
 pub use method_content::*;
 pub use signature::*;
+pub use signature_handler::*;
 pub use signature_suite::*;
 pub use signing_algorithm::*;
 pub use storage::*;
@@ -81,31 +83,6 @@ impl NewMethodType {
     Self {
       repr: Cow::Borrowed("X25519VerificationKey2018"),
     }
-  }
-}
-
-#[async_trait::async_trait]
-pub trait SignatureHandler {
-  fn typ(&self) -> NewMethodType;
-  async fn sign(&self, data: Vec<u8>, key_storage: &dyn KeyStorage) -> Vec<u8>;
-}
-
-pub struct JcsEd25519;
-
-#[async_trait::async_trait]
-impl SignatureHandler for JcsEd25519 {
-  fn typ(&self) -> NewMethodType {
-    NewMethodType::ed25519_verification_key_2018()
-  }
-
-  async fn sign(&self, data: Vec<u8>, key_storage: &dyn KeyStorage) -> Vec<u8> {
-    // TODO: Alias needs to be passed in.
-    let private_key: KeyAlias = KeyAlias::new("random_string");
-    key_storage
-      .sign(&private_key, SigningAlgorithm::Ed25519, data)
-      .await
-      .expect("TODO")
-      .0
   }
 }
 
