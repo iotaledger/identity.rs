@@ -1,0 +1,35 @@
+[package]
+name = "identity_storage"
+version = "0.7.0-alpha.2"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "utxo", "shimmer", "identity"]
+license = "Apache-2.0"
+readme = "./README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+rust-version = "1.62"
+description = "An IOTA Ledger integration for the IOTA DID Method."
+
+[dependencies]
+async-trait = "0.1"
+bee-block = { version = "1.0", default-features = false, features = ["std"], optional = true }
+identity_core = { version = "=0.7.0-alpha.2", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.2", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=0.7.0-alpha.2", path = "../identity_did", default-features = false }
+rand = "0.8"
+serde = "1.0.145"
+thiserror = "1"
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros", "sync"] }
+
+[dev-dependencies]
+anyhow = { version = "1.0.57" }
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+send-sync-storage = []

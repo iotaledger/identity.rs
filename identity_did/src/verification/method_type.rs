@@ -13,13 +13,15 @@ use crate::error::Result;
 pub enum MethodType {
   Ed25519VerificationKey2018,
   X25519KeyAgreementKey2019,
+  // Other(String),
 }
 
 impl MethodType {
-  pub const fn as_str(self) -> &'static str {
+  pub fn as_str(&self) -> &str {
     match self {
       Self::Ed25519VerificationKey2018 => "Ed25519VerificationKey2018",
       Self::X25519KeyAgreementKey2019 => "X25519KeyAgreementKey2019",
+      // Self::Other(other) => other.as_str()
     }
   }
 }
@@ -37,6 +39,7 @@ impl FromStr for MethodType {
     match string {
       "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
       "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
+      // other => Ok(Self::Other(other.to_owned())),
       _ => Err(Error::UnknownMethodType),
     }
   }
