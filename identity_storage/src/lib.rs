@@ -128,7 +128,7 @@ mod tests2 {
   #[tokio::test]
   async fn test_things() {
     let fragment = "my-key";
-    let storage = MemStore::new();
+    let key_storage = MemStore::new();
 
     let did = CoreDID::parse("did:iota:0x0000").unwrap();
     let mut document: CoreDocument = CoreDocument::builder(Default::default()).id(did).build().unwrap();
@@ -138,14 +138,17 @@ mod tests2 {
       .create_method()
       .content(MethodContent::Generate(NewMethodType::ed25519_verification_key_2018()))
       .fragment(fragment)
-      .apply(&storage)
+      .apply(&key_storage)
       .await;
 
     assert!(document.resolve_method(fragment, Default::default()).is_some());
 
-    let mut suite = IdentitySuite::new(storage);
+    let mut suite = IdentitySuite::new(key_storage);
+    // This adds a "Ed25519VerificationKey2018" -> JcsEd25519 handler mapping.
     suite.register(Box::new(JcsEd25519));
 
+    // Since `fragment` resolves to a method of type "Ed25519VerificationKey2018",
+    // the JcsEd25519 handler is invoked to sign.
     let signature = document.sign(fragment, b"data to be signed".to_vec(), &suite).await;
 
     assert_eq!(signature.len(), 64);

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// An alias for a secret key in KeyStorage.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct KeyAlias {
   alias: String,
 }
