@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 
 use crate::KeyAlias;
 use crate::Signature;
-use crate::SigningAlgorithm;
 use crate::StorageResult;
 
 #[cfg(not(feature = "send-sync-storage"))]
@@ -26,14 +24,17 @@ mod storage_sub_trait {
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 // TODO: Copy docs from legacy `Storage` interface.
 pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
-  async fn generate(&self, key_type: KeyType) -> StorageResult<KeyAlias>;
+  type KeyType: Send + Sync + 'static;
+  type SigningAlgorithm: Send + Sync + 'static;
+
+  async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias>;
   // async fn import(key_type: KeyType, private_key: PrivateKey) -> StorageResult<KeyAlias>;
   async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey>;
   // async fn delete(private_key: &KeyAlias) -> StorageResult<bool>;
-  async fn sign(
+  async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
     &self,
     private_key: &KeyAlias,
-    signing_algorithm: SigningAlgorithm,
+    signing_algorithm: ST,
     data: Vec<u8>,
   ) -> StorageResult<Signature>;
   // async fn encrypt(

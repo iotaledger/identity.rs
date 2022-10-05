@@ -12,8 +12,9 @@ mod memstore;
 mod method_content;
 mod signature;
 mod signature_handler;
-mod signature_suite;
-mod signing_algorithm;
+// mod signature_suite;
+// mod signing_algorithm;
+mod signature_types;
 mod storage;
 mod storage_combinator;
 
@@ -31,8 +32,9 @@ pub use memstore::*;
 pub use method_content::*;
 pub use signature::*;
 pub use signature_handler::*;
-pub use signature_suite::*;
-pub use signing_algorithm::*;
+// pub use signature_suite::*;
+// pub use signing_algorithm::*;
+pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
 
@@ -88,7 +90,7 @@ impl NewMethodType {
 
 pub struct IdentitySuite<K: KeyStorage> {
   key_storage: K,
-  signature_handlers: HashMap<String, Box<dyn SignatureHandler + Send + Sync>>,
+  signature_handlers: HashMap<String, Box<dyn SignatureHandler<K>>>,
 }
 
 impl<K: KeyStorage> IdentitySuite<K> {
@@ -99,7 +101,7 @@ impl<K: KeyStorage> IdentitySuite<K> {
     }
   }
 
-  pub fn register(&mut self, handler: Box<dyn SignatureHandler + Send + Sync>) {
+  pub fn register(&mut self, handler: Box<dyn SignatureHandler<K>>) {
     self
       .signature_handlers
       .insert(handler.typ().as_str().to_owned(), handler);

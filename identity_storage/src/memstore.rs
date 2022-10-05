@@ -29,6 +29,7 @@ use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 // use zeroize::Zeroize;
 
+use crate::Ed25519Signature;
 use crate::KeyAlias;
 // use crate::error::Error;
 // use crate::error::Result;
@@ -39,7 +40,6 @@ use crate::KeyAlias;
 // #[cfg(feature = "encryption")]
 // use crate::types::EncryptionAlgorithm;
 use crate::KeyStorage;
-use crate::SigningAlgorithm;
 use crate::StorageErrorKind;
 use crate::StorageResult;
 // use crate::types::KeyLocation;
@@ -80,11 +80,25 @@ impl MemStore {
   }
 }
 
+pub enum MemStoreSigningAlgorithm {
+  Ed25519,
+}
+
+impl From<Ed25519Signature> for MemStoreSigningAlgorithm {
+  fn from(_: Ed25519Signature) -> Self {
+    MemStoreSigningAlgorithm::Ed25519
+  }
+}
+
 // Refer to the `Storage` interface docs for high-level documentation of the individual methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl KeyStorage for MemStore {
-  async fn generate(&self, key_type: KeyType) -> StorageResult<KeyAlias> {
+  type KeyType = KeyType;
+  type SigningAlgorithm = MemStoreSigningAlgorithm;
+
+  async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias> {
+    let key_type: Self::KeyType = key_type.into();
     // Obtain exclusive access to the vaults.
     let mut store: RwLockWriteGuard<'_, KeyStore> = self.store.write().await;
 
@@ -168,12 +182,14 @@ impl KeyStorage for MemStore {
   //   Ok(vault.remove(location).is_some())
   // }
 
-  async fn sign(
+  async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
     &self,
     private_key: &KeyAlias,
-    signing_algorithm: SigningAlgorithm,
+    signing_algorithm: ST,
     data: Vec<u8>,
   ) -> StorageResult<Signature> {
+    let signing_algorithm = signing_algorithm.into();
+
     // Obtain read access to the vaults.
     let store: RwLockReadGuard<'_, KeyStore> = self.store.read().await;
     // Lookup the key pair within the vault.
@@ -182,7 +198,7 @@ impl KeyStorage for MemStore {
       .ok_or_else(|| StorageErrorKind::KeyNotFound(private_key.clone()))?;
 
     match signing_algorithm {
-      SigningAlgorithm::Ed25519 => {
+      MemStoreSigningAlgorithm::Ed25519 => {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
         // Use the `Ed25519` API to sign the given data with the private key.
@@ -191,7 +207,6 @@ impl KeyStorage for MemStore {
         let signature: Signature = Signature::new(signature.to_vec());
         Ok(signature)
       }
-      _ => todo!(),
     }
   }
 

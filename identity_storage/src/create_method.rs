@@ -34,7 +34,10 @@ impl<'builder> CreateMethodBuilder<'builder> {
     self
   }
 
-  pub async fn apply(self, key_storage: &impl KeyStorage) {
+  pub async fn apply<K: KeyStorage>(self, key_storage: &K)
+  where
+    K::KeyType: From<KeyType>,
+  {
     let (key_alias, typ) = if let Some(MethodContent::Generate(typ)) = self.content {
       let typ = match typ {
         ty if ty == NewMethodType::ed25519_verification_key_2018() => KeyType::Ed25519,
@@ -44,7 +47,7 @@ impl<'builder> CreateMethodBuilder<'builder> {
 
       (key_storage.generate(typ).await.expect("TODO"), typ)
     } else {
-      unimplemented!("")
+      unimplemented!()
     };
 
     let public_key = key_storage.public(&key_alias).await.expect("TODO");

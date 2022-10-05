@@ -15,6 +15,6 @@ impl KeyAlias {
 
 impl std::fmt::Display for KeyAlias {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.write_fmt(format_args!("{alias}", alias = self.alias))
+    f.write_str(&self.alias)
   }
 }
