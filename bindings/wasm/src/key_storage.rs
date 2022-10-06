@@ -21,13 +21,9 @@ use identity_iota::crypto::PublicKey;
 use identity_storage::KeyAlias;
 use identity_storage::KeyStorage;
 use identity_storage::Signature;
-use identity_storage::StorageError;
 use identity_storage::StorageResult;
-use js_sys::Array;
 use js_sys::Promise;
-use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 // use crate::account::types::WasmCekAlgorithm;
@@ -40,6 +36,7 @@ use wasm_bindgen_futures::JsFuture;
 // use crate::crypto::WasmKeyType;
 // use crate::did::WasmCoreDID;
 use crate::error::JsValueResult;
+use crate::util::uint8array_to_bytes;
 
 #[wasm_bindgen]
 extern "C" {
@@ -134,17 +131,3 @@ interface KeyStorage {
   public: (privateKey: string) => Promise<Uint8Array>;
   sign: (privateKey: string, signing_algorithm: string, data: Uint8Array) => Promise<Uint8Array>;
 }"#;
-
-fn uint8array_to_bytes(value: JsValue) -> StorageResult<Vec<u8>> {
-  if !JsCast::is_instance_of::<Uint8Array>(&value) {
-    return Err(StorageError::new(identity_storage::StorageErrorKind::Other(
-      "expected Uint8Array".into(),
-    )));
-  }
-  let array_js_value = JsValue::from(Array::from(&value));
-  array_js_value.into_serde().map_err(|e| {
-    StorageError::new(identity_storage::StorageErrorKind::Other(
-      format!("serialization error: {e}").into(),
-    ))
-  })
-}

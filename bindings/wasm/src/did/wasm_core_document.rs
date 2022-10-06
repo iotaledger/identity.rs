@@ -5,6 +5,7 @@ use super::WasmCoreDID;
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
+use crate::common::PromiseUint8Array;
 use crate::common::UOneOrManyNumber;
 use crate::crypto::WasmProofOptions;
 use crate::did::wasm_core_service::WasmCoreService;
@@ -16,6 +17,7 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::storage::WasmIdentitySuite;
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OneOrSet;
@@ -32,9 +34,11 @@ use identity_iota::did::MethodScope;
 use identity_iota::did::Service;
 use identity_iota::did::VerificationMethod;
 
+use identity_storage::CoreDocumentExt;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
 
 /// A method-agnostic DID Document.
 #[wasm_bindgen(js_name = CoreDocument, inspectable)]
@@ -451,6 +455,19 @@ impl WasmCoreDocument {
     let signer = signer.method(&method_query);
     signer.sign(&mut data).wasm_result()?;
     JsValue::from_serde(&data).wasm_result()
+  }
+
+  #[allow(non_snake_case)]
+  #[wasm_bindgen]
+  pub fn sign(&self, fragment: &str, data: Vec<u8>, suite: &WasmIdentitySuite) -> PromiseUint8Array {
+    let doc = self.0.clone();
+    let fragment = fragment.to_owned();
+    let suite_clone = suite.clone();
+
+    future_to_promise(async move {
+      Ok(js_sys::Uint8Array::from(doc.sign(&fragment, data, &suite_clone.0).await.as_slice()).into())
+    })
+    .unchecked_into::<PromiseUint8Array>()
   }
 }
 

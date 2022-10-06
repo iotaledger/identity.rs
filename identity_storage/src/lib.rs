@@ -107,6 +107,10 @@ impl<K: KeyStorage> IdentitySuite<K> {
       .insert(handler.typ().as_str().to_owned(), handler);
   }
 
+  pub fn register_raw(&mut self, signature_type: String, handler: Box<dyn SignatureHandler<K>>) {
+    self.signature_handlers.insert(signature_type, handler);
+  }
+
   pub async fn sign(&self, data: Vec<u8>, method_type: &NewMethodType) -> Vec<u8> {
     match self.signature_handlers.get(method_type.as_str()) {
       Some(handler) => handler.sign(data, &self.key_storage).await,
