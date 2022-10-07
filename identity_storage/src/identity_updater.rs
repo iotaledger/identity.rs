@@ -3,7 +3,7 @@
 
 use identity_did::document::CoreDocument;
 
-use crate::{create_method::CreateMethodBuilder};
+use crate::create_method::CreateMethodBuilder;
 
 pub struct IdentityUpdater<'updater> {
   pub document: &'updater mut CoreDocument,

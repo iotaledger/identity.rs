@@ -5,15 +5,15 @@ mod blob_storage;
 mod core_document_ext;
 mod create_method;
 mod error;
+mod identity_suite;
 mod identity_updater;
 mod key_alias;
 mod key_storage;
 mod memstore;
 mod method_content;
+mod method_type1;
 mod signature;
 mod signature_handler;
-mod identity_suite;
-mod method_type1;
 mod signature_types;
 mod storage;
 mod storage_combinator;
@@ -22,15 +22,15 @@ pub use blob_storage::*;
 pub use core_document_ext::*;
 pub use create_method::*;
 pub use error::*;
+pub use identity_suite::*;
 pub use identity_updater::*;
 pub use key_alias::*;
 pub use key_storage::*;
 pub use memstore::*;
 pub use method_content::*;
+pub use method_type1::*;
 pub use signature::*;
 pub use signature_handler::*;
-pub use identity_suite::*;
-pub use method_type1::*;
 pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
@@ -45,7 +45,7 @@ mod tests2 {
   use crate::JcsEd25519;
   use crate::MemStore;
   use crate::MethodContent;
-use crate::MethodType1;
+  use crate::MethodType1;
 
   #[tokio::test]
   async fn test_things() {
@@ -67,12 +67,8 @@ use crate::MethodType1;
 
     let mut suite = IdentitySuite::new(key_storage);
 
-    // let default_suite = IdentitySuite::default_suite(key_storage);
-
-    // This adds a "Ed25519VerificationKey2018" -> JcsEd25519 handler mapping.
+    // This adds an "Ed25519VerificationKey2018" -> JcsEd25519 handler mapping.
     suite.register(JcsEd25519);
-    // suite.register(Ed25519VerificationKey2018, JcsEd25519);
-    // suite.register(JcsEd25519);
 
     // Since `fragment` resolves to a method of type "Ed25519VerificationKey2018",
     // the JcsEd25519 handler is invoked to sign.
@@ -84,11 +80,15 @@ use crate::MethodType1;
 
 #[allow(dead_code, unused_variables)]
 mod custom_user_impl {
-  use crate::{KeyAlias, KeyStorage, Signature, SignatureHandler, StorageResult};
+  use crate::KeyAlias;
+  use crate::KeyStorage;
+  use crate::Signature;
+  use crate::SignatureHandler;
+  use crate::StorageResult;
   use async_trait::async_trait;
   use identity_core::crypto::PublicKey;
 
-  pub struct SecpThingy;
+  pub struct SecpSignatureHandler;
 
   pub enum MySigningAlgorithm {
     Secp,
@@ -119,7 +119,7 @@ mod custom_user_impl {
 
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
-  impl SignatureHandler<MyStorage> for SecpThingy {
+  impl SignatureHandler<MyStorage> for SecpSignatureHandler {
     async fn sign(&self, data: Vec<u8>, key_storage: &MyStorage) -> Vec<u8> {
       // TODO: Alias needs to be passed in.
       let private_key: KeyAlias = KeyAlias::new("random_string");

@@ -3,7 +3,10 @@
 
 use std::collections::HashMap;
 
-use crate::{KeyStorage, SignatureHandler, SignatureMethodType, MethodType1};
+use crate::KeyStorage;
+use crate::MethodType1;
+use crate::SignatureHandler;
+use crate::SignatureMethodType;
 
 pub struct IdentitySuite<K: KeyStorage> {
   key_storage: K,
@@ -23,9 +26,7 @@ impl<K: KeyStorage> IdentitySuite<K> {
     SIG: SignatureHandler<K> + 'static,
     SIG: SignatureMethodType,
   {
-    self
-      .signature_handlers
-      .insert(SIG::name(), Box::new(handler));
+    self.signature_handlers.insert(SIG::name(), Box::new(handler));
   }
 
   #[cfg(target_family = "wasm")]
