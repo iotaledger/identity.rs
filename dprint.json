@@ -10,6 +10,7 @@
     "**/*.{toml,js,ts}"
   ],
   "excludes": [
+    "**/.git",
     "documentation",
     "bindings/wasm/cypress/**/*.{js,ts}",
     "**/{node_modules,target}",
