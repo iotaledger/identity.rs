@@ -4,6 +4,7 @@
 use std::rc::Rc;
 
 use identity_storage::IdentitySuite;
+use identity_storage::MethodType1;
 use identity_storage::SignatureHandler;
 use js_sys::Function;
 use js_sys::Map;
@@ -39,7 +40,10 @@ impl WasmIdentitySuite {
             .dyn_into::<Function>()
             .map_err(|_| "could not construct TODO: the handler map contains a value which is not a function")?;
 
-          id_suite.register_unchecked(signature_identifier, Box::new(WasmSignatureHandler(handler)));
+          id_suite.register_unchecked(
+            MethodType1::from(signature_identifier),
+            Box::new(WasmSignatureHandler(handler)),
+          );
         } else {
           todo!("error")
         }
