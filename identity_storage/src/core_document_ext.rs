@@ -29,9 +29,9 @@ impl CoreDocumentExt for CoreDocument {
     // TODO: Remove after refactoring VerificationMethod to hold the new MethodType.
     let method_type = match method.type_() {
       identity_did::verification::MethodType::Ed25519VerificationKey2018 => {
-        MethodType1::ed_25519_verification_key_2018()
+        MethodType1::ed25519_verification_key_2018()
       }
-      identity_did::verification::MethodType::X25519KeyAgreementKey2019 => MethodType1::x_25519_verification_key_2018(),
+      identity_did::verification::MethodType::X25519KeyAgreementKey2019 => MethodType1::x25519_verification_key_2018(),
     };
 
     suite.sign(&method_type, data).await

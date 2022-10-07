@@ -58,9 +58,10 @@ mod tests2 {
     document
       .update_identity()
       .create_method()
-      .content(MethodContent::Generate(MethodType1::ed_25519_verification_key_2018()))
+      .key_storage(&key_storage)
+      .content(MethodContent::Generate(MethodType1::ed25519_verification_key_2018()))
       .fragment(fragment)
-      .apply(&key_storage)
+      .apply()
       .await;
 
     assert!(document.resolve_method(fragment, Default::default()).is_some());
@@ -78,56 +79,56 @@ mod tests2 {
   }
 }
 
-#[allow(dead_code, unused_variables)]
-mod custom_user_impl {
-  use crate::KeyAlias;
-  use crate::KeyStorage;
-  use crate::Signature;
-  use crate::SignatureHandler;
-  use crate::StorageResult;
-  use async_trait::async_trait;
-  use identity_core::crypto::PublicKey;
+// #[allow(dead_code, unused_variables)]
+// mod custom_user_impl {
+//   use crate::KeyAlias;
+//   use crate::KeyStorage;
+//   use crate::Signature;
+//   use crate::SignatureHandler;
+//   use crate::StorageResult;
+//   use async_trait::async_trait;
+//   use identity_core::crypto::PublicKey;
 
-  pub struct SecpSignatureHandler;
+//   pub struct SecpSignatureHandler;
 
-  pub enum MySigningAlgorithm {
-    Secp,
-  }
+//   pub enum MySigningAlgorithm {
+//     Secp,
+//   }
 
-  pub struct MyStorage;
-  #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
-  #[cfg_attr(feature = "send-sync-storage", async_trait)]
-  impl KeyStorage for MyStorage {
-    type KeyType = ();
-    type SigningAlgorithm = MySigningAlgorithm;
+//   pub struct MyStorage;
+//   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+//   #[cfg_attr(feature = "send-sync-storage", async_trait)]
+//   impl KeyStorage for MyStorage {
+//     type KeyType = ();
+//     type SigningAlgorithm = MySigningAlgorithm;
 
-    async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias> {
-      todo!()
-    }
-    async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
-      todo!()
-    }
-    async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
-      &self,
-      private_key: &KeyAlias,
-      signing_algorithm: ST,
-      data: Vec<u8>,
-    ) -> StorageResult<Signature> {
-      todo!()
-    }
-  }
+//     async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias> {
+//       todo!()
+//     }
+//     async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+//       todo!()
+//     }
+//     async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
+//       &self,
+//       private_key: &KeyAlias,
+//       signing_algorithm: ST,
+//       data: Vec<u8>,
+//     ) -> StorageResult<Signature> {
+//       todo!()
+//     }
+//   }
 
-  #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
-  #[cfg_attr(feature = "send-sync-storage", async_trait)]
-  impl SignatureHandler<MyStorage> for SecpSignatureHandler {
-    async fn sign(&self, data: Vec<u8>, key_storage: &MyStorage) -> Vec<u8> {
-      // TODO: Alias needs to be passed in.
-      let private_key: KeyAlias = KeyAlias::new("random_string");
-      key_storage
-        .sign(&private_key, MySigningAlgorithm::Secp, data)
-        .await
-        .expect("TODO")
-        .0
-    }
-  }
-}
+//   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+//   #[cfg_attr(feature = "send-sync-storage", async_trait)]
+//   impl SignatureHandler<MyStorage> for SecpSignatureHandler {
+//     async fn sign(&self, data: Vec<u8>, key_storage: &MyStorage) -> Vec<u8> {
+//       // TODO: Alias needs to be passed in.
+//       let private_key: KeyAlias = KeyAlias::new("random_string");
+//       key_storage
+//         .sign(&private_key, MySigningAlgorithm::Secp, data)
+//         .await
+//         .expect("TODO")
+//         .0
+//     }
+//   }
+// }

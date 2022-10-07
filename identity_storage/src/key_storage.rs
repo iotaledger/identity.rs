@@ -1,10 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use async_trait::async_trait;
 use identity_core::crypto::PublicKey;
 
 use crate::KeyAlias;
+use crate::MethodType1;
 use crate::Signature;
 use crate::StorageResult;
 
@@ -20,14 +23,24 @@ mod storage_sub_trait {
   impl<S: Send + Sync + super::KeyStorage> StorageSendSyncMaybe for S {}
 }
 
+// TODO: Make sealed.
+pub trait SealedAbstractKeyType {}
+
+impl<T> SealedAbstractKeyType for T
+where
+  T: TryFrom<MethodType1> + Send + Sync + 'static,
+  <T as TryFrom<MethodType1>>::Error: std::error::Error + Send + Sync,
+{
+}
+
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 // TODO: Copy docs from legacy `Storage` interface.
 pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
-  type KeyType: Send + Sync + 'static;
+  type KeyType: SealedAbstractKeyType;
   type SigningAlgorithm: Send + Sync + 'static;
 
-  async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias>;
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias>;
   // async fn import(key_type: KeyType, private_key: PrivateKey) -> StorageResult<KeyAlias>;
   async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey>;
   // async fn delete(private_key: &KeyAlias) -> StorageResult<bool>;

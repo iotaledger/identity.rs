@@ -40,6 +40,8 @@ use crate::KeyAlias;
 // #[cfg(feature = "encryption")]
 // use crate::types::EncryptionAlgorithm;
 use crate::KeyStorage;
+use crate::MethodType1;
+use crate::StorageError;
 use crate::StorageErrorKind;
 use crate::StorageResult;
 // use crate::types::KeyLocation;
@@ -90,6 +92,21 @@ impl From<Ed25519Signature> for MemStoreSigningAlgorithm {
   }
 }
 
+impl TryFrom<MethodType1> for KeyType {
+  type Error = StorageError;
+
+  fn try_from(method_type: MethodType1) -> Result<Self, Self::Error> {
+    match method_type {
+      ty if ty == MethodType1::ed25519_verification_key_2018() => Ok(KeyType::Ed25519),
+      ty if ty == MethodType1::x25519_verification_key_2018() => Ok(KeyType::X25519),
+      type_ if type_.as_str().starts_with("Ed25519") => Ok(KeyType::Ed25519),
+      other => Err(StorageError::new(StorageErrorKind::NotSupported(format!(
+        "unsupported key type {other}"
+      )))),
+    }
+  }
+}
+
 // Refer to the `Storage` interface docs for high-level documentation of the individual methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -97,7 +114,7 @@ impl KeyStorage for MemStore {
   type KeyType = KeyType;
   type SigningAlgorithm = MemStoreSigningAlgorithm;
 
-  async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias> {
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
     let key_type: Self::KeyType = key_type.into();
     // Obtain exclusive access to the vaults.
     let mut store: RwLockWriteGuard<'_, KeyStore> = self.store.write().await;
