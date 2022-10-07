@@ -7,7 +7,7 @@ use identity_did::verification::VerificationMethod;
 
 use crate::KeyStorage;
 use crate::MethodContent;
-use crate::NewMethodType;
+use crate::MethodType1;
 
 pub struct CreateMethodBuilder<'builder> {
   document: &'builder mut CoreDocument,
@@ -38,10 +38,10 @@ impl<'builder> CreateMethodBuilder<'builder> {
   where
     K::KeyType: From<KeyType>,
   {
-    let (key_alias, typ) = if let Some(MethodContent::Generate(typ)) = self.content {
-      let typ = match typ {
-        ty if ty == NewMethodType::ed25519_verification_key_2018() => KeyType::Ed25519,
-        ty if ty == NewMethodType::x25519_verification_key_2018() => KeyType::X25519,
+    let (key_alias, typ) = if let Some(MethodContent::Generate(method_type)) = self.content {
+      let typ = match method_type {
+        ty if ty == MethodType1::ed_25519_verification_key_2018() => KeyType::Ed25519,
+        ty if ty == MethodType1::x_25519_verification_key_2018() => KeyType::X25519,
         _ => unimplemented!("unsupported method type"),
       };
 

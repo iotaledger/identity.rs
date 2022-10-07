@@ -14,12 +14,11 @@ mod signature;
 mod signature_handler;
 // mod signature_suite;
 // mod signing_algorithm;
+mod identity_suite;
+mod method_type1;
 mod signature_types;
 mod storage;
 mod storage_combinator;
-
-use std::borrow::Cow;
-use std::collections::HashMap;
 
 pub use blob_storage::*;
 pub use core_document_ext::*;
@@ -34,90 +33,12 @@ pub use signature::*;
 pub use signature_handler::*;
 // pub use signature_suite::*;
 // pub use signing_algorithm::*;
+pub use identity_suite::*;
+pub use method_type1::*;
+// pub use method_type2::*;
 pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
-
-// #[cfg(test)]
-// mod tests {
-//   use identity_did::{did::CoreDID, document::CoreDocument, verification::MethodType};
-
-//   use crate::{CoreDocumentExt, MemStore, MethodContent};
-
-//   #[tokio::test]
-//   async fn test_add_key() -> anyhow::Result<()> {
-//     let storage = MemStore::new();
-
-//     let did = CoreDID::parse("did:iota:0x0000").unwrap();
-//     let mut doc: CoreDocument = CoreDocument::builder(Default::default()).id(did).build().unwrap();
-
-//     doc
-//       .update_identity()
-//       .create_method()
-//       .content(MethodContent::Generate(NewMethodType::Ed25519VerificationKey2018))
-//       .fragment("my-next-key")
-//       .apply(&storage)
-//       .await;
-
-//     doc.resolve_method("my-next-key", Default::default()).unwrap();
-
-//     Ok(())
-//   }
-// }
-
-#[derive(PartialEq, Eq, Hash)]
-pub struct NewMethodType {
-  repr: Cow<'static, str>,
-}
-
-impl NewMethodType {
-  pub fn as_str(&self) -> &str {
-    self.repr.as_ref()
-  }
-
-  pub const fn ed25519_verification_key_2018() -> Self {
-    Self {
-      repr: Cow::Borrowed("Ed25519VerificationKey2018"),
-    }
-  }
-
-  pub const fn x25519_verification_key_2018() -> Self {
-    Self {
-      repr: Cow::Borrowed("X25519VerificationKey2018"),
-    }
-  }
-}
-
-pub struct IdentitySuite<K: KeyStorage> {
-  key_storage: K,
-  signature_handlers: HashMap<String, Box<dyn SignatureHandler<K>>>,
-}
-
-impl<K: KeyStorage> IdentitySuite<K> {
-  pub fn new(key_storage: K) -> Self {
-    Self {
-      key_storage,
-      signature_handlers: HashMap::new(),
-    }
-  }
-
-  pub fn register(&mut self, handler: Box<dyn SignatureHandler<K>>) {
-    self
-      .signature_handlers
-      .insert(handler.typ().as_str().to_owned(), handler);
-  }
-
-  pub fn register_raw(&mut self, signature_type: String, handler: Box<dyn SignatureHandler<K>>) {
-    self.signature_handlers.insert(signature_type, handler);
-  }
-
-  pub async fn sign(&self, data: Vec<u8>, method_type: &NewMethodType) -> Vec<u8> {
-    match self.signature_handlers.get(method_type.as_str()) {
-      Some(handler) => handler.sign(data, &self.key_storage).await,
-      None => todo!("return missing handler error"),
-    }
-  }
-}
 
 #[cfg(test)]
 mod tests2 {
@@ -129,7 +50,7 @@ mod tests2 {
   use crate::JcsEd25519;
   use crate::MemStore;
   use crate::MethodContent;
-  use crate::NewMethodType;
+use crate::MethodType1;
 
   #[tokio::test]
   async fn test_things() {
@@ -142,7 +63,7 @@ mod tests2 {
     document
       .update_identity()
       .create_method()
-      .content(MethodContent::Generate(NewMethodType::ed25519_verification_key_2018()))
+      .content(MethodContent::Generate(MethodType1::ed_25519_verification_key_2018()))
       .fragment(fragment)
       .apply(&key_storage)
       .await;
@@ -150,13 +71,68 @@ mod tests2 {
     assert!(document.resolve_method(fragment, Default::default()).is_some());
 
     let mut suite = IdentitySuite::new(key_storage);
+
+    // let default_suite = IdentitySuite::default_suite(key_storage);
+
     // This adds a "Ed25519VerificationKey2018" -> JcsEd25519 handler mapping.
-    suite.register(Box::new(JcsEd25519));
+    suite.register(JcsEd25519);
+    // suite.register(Ed25519VerificationKey2018, JcsEd25519);
+    // suite.register(JcsEd25519);
 
     // Since `fragment` resolves to a method of type "Ed25519VerificationKey2018",
     // the JcsEd25519 handler is invoked to sign.
     let signature = document.sign(fragment, b"data to be signed".to_vec(), &suite).await;
 
     assert_eq!(signature.len(), 64);
+  }
+}
+
+#[allow(dead_code, unused_variables)]
+mod custom_user_impl {
+  use crate::{KeyAlias, KeyStorage, Signature, SignatureHandler, StorageResult};
+  use async_trait::async_trait;
+  use identity_core::crypto::PublicKey;
+
+  pub struct SecpThingy;
+
+  pub enum MySigningAlgorithm {
+    Secp,
+  }
+
+  pub struct MyStorage;
+  #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+  #[cfg_attr(feature = "send-sync-storage", async_trait)]
+  impl KeyStorage for MyStorage {
+    type KeyType = ();
+    type SigningAlgorithm = MySigningAlgorithm;
+
+    async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias> {
+      todo!()
+    }
+    async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+      todo!()
+    }
+    async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
+      &self,
+      private_key: &KeyAlias,
+      signing_algorithm: ST,
+      data: Vec<u8>,
+    ) -> StorageResult<Signature> {
+      todo!()
+    }
+  }
+
+  #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+  #[cfg_attr(feature = "send-sync-storage", async_trait)]
+  impl SignatureHandler<MyStorage> for SecpThingy {
+    async fn sign(&self, data: Vec<u8>, key_storage: &MyStorage) -> Vec<u8> {
+      // TODO: Alias needs to be passed in.
+      let private_key: KeyAlias = KeyAlias::new("random_string");
+      key_storage
+        .sign(&private_key, MySigningAlgorithm::Secp, data)
+        .await
+        .expect("TODO")
+        .0
+    }
   }
 }

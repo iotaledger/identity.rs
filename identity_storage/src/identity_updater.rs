@@ -3,14 +3,14 @@
 
 use identity_did::document::CoreDocument;
 
-use crate::create_method::CreateMethodBuilder;
+use crate::{create_method::CreateMethodBuilder};
 
 pub struct IdentityUpdater<'updater> {
   pub document: &'updater mut CoreDocument,
 }
 
 impl<'updater> IdentityUpdater<'updater> {
-  pub fn create_method(&mut self) -> CreateMethodBuilder {
+  pub fn create_method(&mut self) -> CreateMethodBuilder<'_> {
     CreateMethodBuilder::new(self.document)
   }
 }

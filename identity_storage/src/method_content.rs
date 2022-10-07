@@ -1,10 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::NewMethodType;
+use identity_core::crypto::{PrivateKey, PublicKey};
+
+use crate::MethodType1;
 
 pub enum MethodContent {
-  Generate(NewMethodType),
-  Private(NewMethodType, Vec<u8>),
-  Public(NewMethodType, Vec<u8>),
+  Generate(MethodType1),
+  Private(MethodType1, PrivateKey),
+  Public(MethodType1, PublicKey),
 }
