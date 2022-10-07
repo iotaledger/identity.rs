@@ -60,6 +60,11 @@ where
     self
   }
 
+  pub fn mapping_strategy(mut self, strategy: fn(MethodType1) -> StorageResult<K::KeyType>) -> Self {
+    self.mapping_strategy = strategy;
+    self
+  }
+
   pub async fn apply(self)
   // where
   //   K::KeyType: TryFrom<MethodType1>,
