@@ -21,6 +21,7 @@ mod macros;
 // pub mod account;
 
 pub mod common;
+pub mod core_document_rc;
 pub mod credential;
 pub mod crypto;
 pub mod did;

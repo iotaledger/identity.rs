@@ -1,11 +1,4 @@
-import {
-    CoreDocument,
-    CoreVerificationMethod,
-    IdentitySuite,
-    KeyStorage,
-    KeyType,
-    MethodScope,
-} from "../../../node";
+import { CoreDocument, CoreVerificationMethod, IdentitySuite, KeyStorage, KeyType, MethodScope } from "../../../node";
 
 // Use this external package to avoid implementing the entire did:key method in this example.
 import { MemStore } from "./custom_storage";

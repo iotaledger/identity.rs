@@ -39,7 +39,7 @@ impl WasmIdentitySuite {
             .dyn_into::<Function>()
             .map_err(|_| "could not construct TODO: the handler map contains a value which is not a function")?;
 
-          id_suite.register_raw(signature_identifier, Box::new(WasmSignatureHandler(handler)));
+          id_suite.register_unchecked(signature_identifier, Box::new(WasmSignatureHandler(handler)));
         } else {
           todo!("error")
         }
@@ -85,10 +85,6 @@ pub struct WasmSignatureHandler(Function);
 
 #[async_trait::async_trait(?Send)]
 impl SignatureHandler<WasmKeyStorage> for WasmSignatureHandler {
-  fn typ(&self) -> identity_storage::NewMethodType {
-    unimplemented!("remove this method from the trait")
-  }
-
   async fn sign(&self, data: Vec<u8>, key_storage: &WasmKeyStorage) -> Vec<u8> {
     let function_clone = self.0.clone();
 

@@ -65,11 +65,7 @@ where
     self
   }
 
-  pub async fn apply(self)
-  // where
-  //   K::KeyType: TryFrom<MethodType1>,
-  //   <K::KeyType as TryFrom<MethodType1>>::Error: std::error::Error + Send + Sync + 'static,
-  {
+  pub async fn apply(self) {
     let key_storage = self.key_storage.expect("TODO");
     let (key_alias, key_type) = if let Some(MethodContent::Generate(method_type)) = self.content {
       // TODO: Remove.

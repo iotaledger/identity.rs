@@ -95,7 +95,7 @@ impl KeyStorage for WasmKeyStorage {
   type KeyType = WasmNewKeyType;
   type SigningAlgorithm = WasmSigningAlgorithm;
 
-  async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias> {
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
     let promise: Promise = Promise::resolve(&self.generate(key_type.into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let alias: KeyAlias = result.0.expect("TODO").into_serde().expect("TODO");
