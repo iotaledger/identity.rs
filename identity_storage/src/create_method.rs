@@ -9,6 +9,7 @@ use crate::key_storage;
 use crate::KeyStorage;
 use crate::MethodContent;
 use crate::MethodType1;
+use crate::StorageError;
 use crate::StorageResult;
 
 pub struct CreateMethodBuilder<'builder, K>
@@ -36,7 +37,11 @@ where
       key_storage: None,
       content: None,
       fragment: None,
-      mapping_strategy: TryFrom::<MethodType1>::try_from,
+      mapping_strategy: |method_type| {
+        K::KeyType::try_from(method_type).map_err(|err| {
+          StorageError::new_with_source(crate::StorageErrorKind::Other("could not convert".into()), err.into())
+        })
+      },
     }
   }
 
@@ -69,7 +74,7 @@ where
         _ => todo!("this will be gone after refactoring VerificationMethod"),
       };
 
-      let ms = self.mapping_strategy.expect("TODO");
+      let ms = self.mapping_strategy;
 
       let key_alias = key_storage
         .generate(ms(method_type).expect("TODO"))
