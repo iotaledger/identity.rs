@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::cell::RefCell;
+
 use std::rc::Rc;
 
 use identity_iota::account::UpdateError::MissingRequiredField;
@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::account::wasm_account::account::AccountRc;
+
 use crate::account::wasm_account::account::TokioLock;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
