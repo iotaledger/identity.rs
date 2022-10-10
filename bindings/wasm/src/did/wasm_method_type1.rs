@@ -5,8 +5,8 @@ use identity_storage::MethodType1;
 use wasm_bindgen::prelude::*;
 
 /// Supported verification method types.
-#[wasm_bindgen(js_name = MethodType, inspectable)]
-#[derive(Serialize, Deserialize)]
+#[wasm_bindgen(js_name = MethodType1, inspectable)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WasmMethodType1(pub(crate) MethodType1);
 
 #[wasm_bindgen(js_class = MethodType1)]

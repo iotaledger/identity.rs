@@ -33,20 +33,20 @@ pub struct WasmMethodContent(WasmMethodContentInner);
 impl WasmMethodContent {
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = Generate)]
-  pub fn generate(methodType: WasmMethodType1) -> WasmMethodContent {
-    Self(WasmMethodContentInner::Generate(methodType))
+  pub fn generate(methodType: &WasmMethodType1) -> WasmMethodContent {
+    Self(WasmMethodContentInner::Generate(methodType.clone()))
   }
 
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = Private)]
-  pub fn private(methodType: WasmMethodType1, privateKey: Vec<u8>) -> WasmMethodContent {
-    Self(WasmMethodContentInner::Private(methodType, privateKey))
+  pub fn private(methodType: &WasmMethodType1, privateKey: Vec<u8>) -> WasmMethodContent {
+    Self(WasmMethodContentInner::Private(methodType.clone(), privateKey))
   }
 
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = Public)]
-  pub fn public(methodType: WasmMethodType1, publicKey: Vec<u8>) -> WasmMethodContent {
-    Self(WasmMethodContentInner::Public(methodType, publicKey))
+  pub fn public(methodType: &WasmMethodType1, publicKey: Vec<u8>) -> WasmMethodContent {
+    Self(WasmMethodContentInner::Public(methodType.clone(), publicKey))
   }
 }
 

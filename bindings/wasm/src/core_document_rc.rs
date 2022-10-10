@@ -1,3 +1,6 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
@@ -11,7 +14,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::key_storage::WasmKeyStorage;
 use identity_iota::did::CoreDocument;
-use identity_iota::did::MethodScope;
 
 use identity_storage::CoreDocumentExt;
 use identity_storage::CreateMethodBuilder;
@@ -23,21 +25,24 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_name = CoreDocumentRc)]
-pub struct CoreDocumentRc(Rc<RefCell<CoreDocument>>);
+pub struct WasmCoreDocumentRc(Rc<RefCell<CoreDocument>>);
 
 #[wasm_bindgen(js_class = CoreDocumentRc)]
-impl CoreDocumentRc {
+impl WasmCoreDocumentRc {
   #[wasm_bindgen(constructor)]
-  pub fn new(core_document: WasmCoreDocument) -> CoreDocumentRc {
-    CoreDocumentRc(Rc::new(RefCell::new(core_document.0)))
+  pub fn new(core_document: &WasmCoreDocument) -> WasmCoreDocumentRc {
+    WasmCoreDocumentRc(Rc::new(RefCell::new(core_document.0.clone())))
   }
 
-  // TODO Add method to get back a WasmCoreDocument (if possible?).
+  #[wasm_bindgen(js_name = intoDocument)]
+  pub fn into_document(&self) -> WasmCoreDocument {
+    WasmCoreDocument(RefCell::borrow(&self.0).clone())
+  }
 
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<PromiseVoid> {
     let fragment: String = options.fragment().expect("TODO");
-    let scope: Option<MethodScope> = options.scope().into_serde().expect("TODO");
+    // let scope: Option<MethodScope> = options.scope().into_serde().expect("TODO");
     let content: MethodContent = options
       .content()
       .into_serde::<Option<WasmMethodContent>>()
@@ -47,22 +52,23 @@ impl CoreDocumentRc {
 
     let key_storage: WasmKeyStorage = options.key_storage().expect("TODO");
 
-    let account: Rc<RefCell<CoreDocument>> = Rc::clone(&self.0);
+    let document: Rc<RefCell<CoreDocument>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
-      let mut account: RefMut<CoreDocument> = account.borrow_mut();
-      let mut updater: IdentityUpdater<'_> = account.update_identity();
+      let mut document_ref: RefMut<CoreDocument> = document.borrow_mut();
+      let mut updater: IdentityUpdater<'_> = document_ref.update_identity();
 
-      let mut create_method: CreateMethodBuilder<'_, WasmKeyStorage> = updater
+      let create_method: CreateMethodBuilder<'_, WasmKeyStorage> = updater
         .create_method()
         .key_storage(&key_storage)
         .content(content)
         .fragment(&fragment);
+
       // TODO: Not implemented currently.
       // if let Some(scope) = scope {
       //   create_method = create_method.scope(scope);
       // };
 
-      let res = create_method.apply().await;
+      create_method.apply().await;
 
       Ok(JsValue::undefined())
     });
@@ -109,6 +115,9 @@ export type CreateMethodOptions = {
     /**
      * Method content for the new method.
      */
-    content: MethodContent
+    content: MethodContent,
+
+    /** A KeyStorage implementation. */
+    key_storage: KeyStorage
   };
 "#;

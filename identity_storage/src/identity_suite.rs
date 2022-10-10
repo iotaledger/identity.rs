@@ -29,7 +29,7 @@ impl<K: KeyStorage> IdentitySuite<K> {
     self.signature_handlers.insert(SIG::name(), Box::new(handler));
   }
 
-  // #[cfg(target_family = "wasm")]
+  #[cfg(target_family = "wasm")]
   pub fn register_unchecked(&mut self, signature_name: MethodType1, handler: Box<dyn SignatureHandler<K>>) {
     self.signature_handlers.insert(signature_name, handler);
   }

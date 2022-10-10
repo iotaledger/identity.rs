@@ -27,6 +27,7 @@ pub mod crypto;
 pub mod did;
 pub mod error;
 pub mod iota;
+pub mod key_alias;
 pub mod key_storage;
 pub mod resolver;
 pub mod revocation;

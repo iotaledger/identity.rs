@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { storageTestSuite } from "../../examples/src/1_advanced/custom_storage";
+import { storageTestSuite } from "../../examples/src/1_advanced/memStore";
 import { config } from "./config";
 import { createIdentity } from "./create_did";
 import { createVC } from "./create_vc";

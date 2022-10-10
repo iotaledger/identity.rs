@@ -12,6 +12,7 @@ import { nftOwnsDid } from "./1_advanced/2_nft_owns_did";
 import { didIssuesTokens } from "./1_advanced/3_did_issues_tokens";
 import { keyExchange } from "./1_advanced/4_key_exchange";
 import { customResolution } from "./1_advanced/5_custom_resolution";
+import { customStorage } from "./1_advanced/6_custom_storage";
 
 async function main() {
     // Extract example name.
@@ -43,6 +44,8 @@ async function main() {
             return await keyExchange();
         case "5_custom_resolution":
             return await customResolution();
+        case "6_custom_storage":
+            return await customStorage();
         default:
             throw "Unknown example name: '" + argument + "'";
     }
