@@ -21,14 +21,20 @@ impl MethodType1 {
   }
 }
 
-impl<S: Into<String>> From<S> for MethodType1 {
+impl<S: AsRef<str>> From<S> for MethodType1 {
   fn from(string: S) -> Self {
-    Self(Cow::Owned(string.into()))
+    Self(Cow::Owned(string.as_ref().to_owned()))
   }
 }
 
 impl Display for MethodType1 {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     Display::fmt(&self.0, f)
+  }
+}
+
+impl From<MethodType1> for String {
+  fn from(method_type: MethodType1) -> Self {
+    method_type.to_string()
   }
 }

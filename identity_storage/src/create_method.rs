@@ -5,7 +5,6 @@ use identity_core::crypto::KeyType;
 use identity_did::document::CoreDocument;
 use identity_did::verification::VerificationMethod;
 
-use crate::key_storage;
 use crate::KeyStorage;
 use crate::MethodContent;
 use crate::MethodType1;

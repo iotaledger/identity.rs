@@ -115,7 +115,6 @@ impl KeyStorage for MemStore {
   type SigningAlgorithm = MemStoreSigningAlgorithm;
 
   async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
-    let key_type: Self::KeyType = key_type.into();
     // Obtain exclusive access to the vaults.
     let mut store: RwLockWriteGuard<'_, KeyStore> = self.store.write().await;
 
