@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use identity_iota::account::AccountBuilder;
@@ -35,7 +34,7 @@ type AccountBuilderRc = AccountBuilder<Rc<Client>>;
 /// This means a builder can be reconfigured in-between account creations, without affecting
 /// the configuration of previously built accounts.
 #[wasm_bindgen(js_name = AccountBuilder)]
-pub struct WasmAccountBuilder(Rc<RefCell<AccountBuilderRc>>);
+pub struct WasmAccountBuilder(Rc<tokio::sync::RwLock<AccountBuilderRc>>);
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
@@ -63,19 +62,20 @@ impl WasmAccountBuilder {
       }
     }
 
-    Ok(Self(Rc::new(RefCell::new(builder))))
+    Ok(Self(Rc::new(tokio::sync::RwLock::new(builder))))
   }
 
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
   pub fn load_identity(&mut self, did: &WasmDID) -> Result<PromiseAccount> {
-    let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
+    let builder: Rc<tokio::sync::RwLock<AccountBuilderRc>> = self.0.clone();
     let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .load_identity(did)
         .await
         .map(WasmAccount::from)
@@ -94,11 +94,12 @@ impl WasmAccountBuilder {
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
     let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();
 
-    let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
+    let builder: Rc<tokio::sync::RwLock<AccountBuilderRc>> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .create_identity(setup)
         .await
         .map(WasmAccount::from)

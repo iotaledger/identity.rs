@@ -3,6 +3,12 @@
 
 use std::rc::Rc;
 
+use crate::account::wasm_account::account::TokioLock;
+use crate::account::wasm_account::WasmAccount;
+use crate::common::PromiseVoid;
+use crate::did::WasmMethodRelationship;
+use crate::error::Result;
+use crate::error::WasmResult;
 use identity_iota::account::UpdateError::MissingRequiredField;
 use identity_iota::core::OneOrMany;
 use identity_iota::did::MethodRelationship;
@@ -10,12 +16,6 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
-use crate::account::wasm_account::account::TokioLock;
-use crate::account::wasm_account::WasmAccount;
-use crate::common::PromiseVoid;
-use crate::did::WasmMethodRelationship;
-use crate::error::Result;
-use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
