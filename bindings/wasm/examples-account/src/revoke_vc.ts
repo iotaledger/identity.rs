@@ -86,10 +86,15 @@ async function revokeVC(storage?: Storage) {
 
     // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
-    await issuer.revokeCredentials("my-revocation-service", 5);
+
+    console.log("about to run revocation logic"); 
+    //await issuer.unrevokeCredentials("my-revocation-service", 4); 
+    //await issuer.revokeCredentials("my-revocation-service", 5);
+    await Promise.all([issuer.unrevokeCredentials("my-revocation-service", 4), issuer.revokeCredentials("my-revocation-service", 5)]);
 
     // Credential verification now fails.
     try {
+        console.log("got here");
         CredentialValidator.validate(
             signedVc,
             issuer.document(),

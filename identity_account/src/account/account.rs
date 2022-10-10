@@ -319,6 +319,8 @@ where
   /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
   /// `fragment`, revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
   pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+    futures::future::pending().await 
+    /* 
     // Find the service to be updated.
     let mut service_id: IotaDIDUrl = self.did().to_url();
     service_id.set_fragment(Some(fragment))?;
@@ -328,11 +330,14 @@ where
     self.increment_actions();
     self.publish_internal(false, PublishOptions::default()).await?;
     Ok(())
+    */
   }
 
   /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
   /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
   pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+    futures::future::pending().await
+    /* 
     // Find the service to be updated.
     let mut service_id: IotaDIDUrl = self.did().to_url();
     service_id.set_fragment(Some(fragment))?;
@@ -342,6 +347,7 @@ where
     self.increment_actions();
     self.publish_internal(false, PublishOptions::default()).await?;
     Ok(())
+    */
   }
 
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
