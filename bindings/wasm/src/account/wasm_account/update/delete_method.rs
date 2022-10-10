@@ -25,7 +25,8 @@ impl WasmAccount {
     let promise: Promise = future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .update_identity()
         .delete_method()
         .fragment(fragment)

@@ -12,6 +12,7 @@ use identity_iota::account::UpdateError::MissingRequiredField;
 use identity_iota::client::Client;
 use identity_iota::did::MethodScope;
 use js_sys::Promise;
+use tokio::sync::RwLockWriteGuard;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
@@ -19,6 +20,7 @@ use wasm_bindgen_futures::future_to_promise;
 use crate::account::types::OptionMethodContent;
 use crate::account::types::WasmMethodContent;
 use crate::account::wasm_account::account::AccountRc;
+use crate::account::wasm_account::account::TokioLock;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
 use crate::did::OptionMethodScope;
@@ -43,9 +45,9 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("content"))
       .wasm_result()?;
 
-    let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
+    let account: Rc<TokioLock> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
-      let mut account: RefMut<AccountRc> = account.borrow_mut();
+      let mut account: RwLockWriteGuard<AccountRc> = account.write().await;
       let mut updater: IdentityUpdater<'_, Rc<Client>> = account.update_identity();
 
       let mut create_method: CreateMethodBuilder<'_, Rc<Client>> =

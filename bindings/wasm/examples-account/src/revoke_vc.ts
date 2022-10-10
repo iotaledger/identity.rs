@@ -30,7 +30,8 @@ async function revokeVC(storage?: Storage) {
     // ===========================================================================
 
     const builder = new AccountBuilder({
-        storage
+        storage: storage,
+        autopublish: true
     });
 
     // Create an identity for the issuer.
@@ -80,6 +81,26 @@ async function revokeVC(storage?: Storage) {
         ProofOptions.default()
     );
 
+    // Create one more credential to check that an attempt to concurrently mutate the state of the Account doesn't lead to a panic. 
+    const unsignedVc2 = new Credential({
+        id: "https://example.edu/credentials/3732",
+        type: "UniversityDegreeCredential",
+        credentialStatus: {
+            id: issuer.did() + "#my-revocation-service",
+            type: RevocationBitmap.type(),
+            revocationBitmapIndex: "4"
+        },
+        issuer: issuer.document().id(),
+        credentialSubject: subject
+    });
+
+    // Created a signed credential by the issuer.
+    const signedVc2 = await issuer.createSignedCredential(
+        "#key-1",
+        unsignedVc2,
+        ProofOptions.default()
+    );
+
     // ===========================================================================
     // Revoke the Verifiable Credential.
     // ===========================================================================
@@ -88,13 +109,10 @@ async function revokeVC(storage?: Storage) {
     // This revokes the credential's unique index.
 
     console.log("about to run revocation logic"); 
-    //await issuer.unrevokeCredentials("my-revocation-service", 4); 
-    //await issuer.revokeCredentials("my-revocation-service", 5);
-    await Promise.all([issuer.unrevokeCredentials("my-revocation-service", 4), issuer.revokeCredentials("my-revocation-service", 5)]);
+    await Promise.all([issuer.revokeCredentials("my-revocation-service", 5), issuer.revokeCredentials("my-revocation-service", 4)]);
 
     // Credential verification now fails.
     try {
-        console.log("got here");
         CredentialValidator.validate(
             signedVc,
             issuer.document(),

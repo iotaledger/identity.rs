@@ -14,6 +14,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::wasm_account::account::AccountRc;
+use crate::account::wasm_account::account::TokioLock;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
 use crate::error::Result;
@@ -45,11 +46,12 @@ impl WasmAccount {
       None
     };
 
-    let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
+    let account: Rc<TokioLock> = Rc::clone(&self.0);
 
     let promise: Promise = future_to_promise(async move {
       account
-        .borrow_mut()
+        .write()
+        .await
         .update_identity()
         .set_controller()
         .controllers(controller_set)

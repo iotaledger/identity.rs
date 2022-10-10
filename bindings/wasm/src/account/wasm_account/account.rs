@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::cell::RefCell;
+// use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -42,32 +42,33 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 pub(crate) type AccountRc = Account<Rc<Client>>;
+pub(crate) type TokioLock = tokio::sync::RwLock<AccountRc>;
 
 /// An account manages one identity.
 ///
 /// It handles private keys, writing to storage and
 /// publishing to the Tangle.
 #[wasm_bindgen(js_name = Account)]
-pub struct WasmAccount(pub(crate) Rc<RefCell<AccountRc>>);
+pub struct WasmAccount(pub(crate) Rc<TokioLock>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   /// Returns the {@link DID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
-    WasmDID::from(self.0.borrow().did().clone())
+    WasmDID::from(self.0.as_ref().blocking_read().did().clone())
   }
 
   /// Returns whether auto-publish is enabled.
   #[wasm_bindgen]
   pub fn autopublish(&self) -> bool {
-    self.0.borrow().autopublish()
+    self.0.as_ref().blocking_read().autopublish()
   }
 
   /// Returns the auto-save configuration value.
   #[wasm_bindgen]
   pub fn autosave(&self) -> WasmAutoSave {
-    WasmAutoSave(self.0.borrow().autosave())
+    WasmAutoSave(self.0.as_ref().blocking_read().autosave())
   }
 
   /// Returns a copy of the document managed by the `Account`.
@@ -77,19 +78,20 @@ impl WasmAccount {
   /// document from the Tangle.
   #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
-    let document: IotaDocument = self.0.borrow().document().clone();
+    let document: IotaDocument = self.0.as_ref().blocking_read().document().clone();
     WasmDocument::from(document)
   }
 
   /// Resolves the DID Document associated with this `Account` from the Tangle.
   #[wasm_bindgen(js_name = resolveIdentity)]
   pub fn resolve_identity(&self) -> PromiseResolvedDocument {
-    let account: Rc<RefCell<AccountRc>> = self.0.clone();
+    let account: Rc<TokioLock> = self.0.clone();
 
     let promise: Promise = future_to_promise(async move {
       account
         .as_ref()
-        .borrow()
+        .read()
+        .await
         .resolve_identity()
         .await
         .map(WasmResolvedDocument::from)
@@ -105,9 +107,10 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> PromiseVoid {
     // Get IotaDID and storage from the account.
-    let did: IotaDID = self.0.borrow().did().to_owned();
-    let storage: Arc<dyn Storage> = Arc::clone(self.0.borrow().storage());
-
+    let (did, storage): (IotaDID, Arc<dyn Storage>) = {
+      let account = self.0.blocking_read();
+      (account.did().to_owned(), Arc::clone(account.storage()))
+    };
     future_to_promise(async move {
       // Create a new account since `delete_identity` consumes it.
       let account: Result<AccountRc> = AccountBuilder::new()
@@ -132,7 +135,8 @@ impl WasmAccount {
     future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .publish_with_options(options)
         .await
         .map(|_| JsValue::undefined())
@@ -156,7 +160,8 @@ impl WasmAccount {
     future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .sign(fragment.as_str(), &mut credential, options)
         .await
         .wasm_result()?;
@@ -180,7 +185,8 @@ impl WasmAccount {
     future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .sign(fragment.as_str(), &mut document, options)
         .await
         .wasm_result()?;
@@ -204,7 +210,8 @@ impl WasmAccount {
     future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .sign(fragment.as_str(), &mut presentation, options)
         .await
         .wasm_result()?;
@@ -223,7 +230,8 @@ impl WasmAccount {
     let promise = future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .sign(fragment.as_str(), &mut verifiable_properties, options)
         .await
         .map(|_| JsValue::undefined())
@@ -247,7 +255,8 @@ impl WasmAccount {
     future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .update_document_unchecked(document_copy)
         .await
         .map(|_| JsValue::undefined())
@@ -266,7 +275,8 @@ impl WasmAccount {
     future_to_promise(async move {
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .fetch_document()
         .await
         .map(|_| JsValue::undefined())
@@ -286,7 +296,8 @@ impl WasmAccount {
 
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .revoke_credentials(&fragment, credentials_indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
@@ -306,7 +317,8 @@ impl WasmAccount {
 
       account
         .as_ref()
-        .borrow_mut()
+        .write()
+        .await
         .unrevoke_credentials(&fragment, credentials_indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
@@ -335,7 +347,8 @@ impl WasmAccount {
     future_to_promise(async move {
       let encrypted_data: EncryptedData = account
         .as_ref()
-        .borrow()
+        .read()
+        .await
         .encrypt_data(
           &plaintext,
           &associated_data,
@@ -370,7 +383,8 @@ impl WasmAccount {
     future_to_promise(async move {
       let data: Vec<u8> = account
         .as_ref()
-        .borrow()
+        .read()
+        .await
         .decrypt_data(data, &encryption_algorithm, &cek_algorithm, &fragment)
         .await
         .wasm_result()?;
@@ -382,7 +396,7 @@ impl WasmAccount {
 
 impl From<AccountRc> for WasmAccount {
   fn from(account: AccountRc) -> WasmAccount {
-    WasmAccount(Rc::new(RefCell::new(account)))
+    WasmAccount(Rc::new(TokioLock::new(account)))
   }
 }
 

@@ -12,11 +12,13 @@ use identity_iota::client::Client;
 use identity_iota::core::Object;
 use identity_iota::did::ServiceEndpoint;
 use js_sys::Promise;
+use tokio::sync::RwLockWriteGuard;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::wasm_account::account::AccountRc;
+use crate::account::wasm_account::account::TokioLock;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::deserialize_map_or_any;
 use crate::common::PromiseVoid;
@@ -37,9 +39,9 @@ impl WasmAccount {
     let endpoint: ServiceEndpoint = deserialize_map_or_any(&options.endpoint())?;
     let properties: Option<Object> = deserialize_map_or_any(&options.properties())?;
 
-    let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
+    let account: Rc<TokioLock> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
-      let mut account: RefMut<AccountRc> = account.borrow_mut();
+      let mut account: RwLockWriteGuard<AccountRc> = account.write().await;
       let mut updater: IdentityUpdater<'_, Rc<Client>> = account.update_identity();
       let mut create_service: CreateServiceBuilder<'_, Rc<Client>> = updater
         .create_service()

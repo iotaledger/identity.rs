@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use identity_iota::account::UpdateError::MissingRequiredField;
@@ -11,8 +10,7 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
-
-use crate::account::wasm_account::account::AccountRc;
+use crate::account::wasm_account::account::TokioLock;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
 use crate::did::WasmMethodRelationship;
@@ -41,13 +39,14 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
 
-    let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
+    let account: Rc<TokioLock> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       if relationships.is_empty() {
         return Ok(JsValue::undefined());
       }
       account
-        .borrow_mut()
+        .write()
+        .await
         .update_identity()
         .attach_method_relationship()
         .fragment(fragment)
