@@ -42,10 +42,10 @@ pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
   // async fn import(key_type: KeyType, private_key: PrivateKey) -> StorageResult<KeyAlias>;
   async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey>;
   // async fn delete(private_key: &KeyAlias) -> StorageResult<bool>;
-  async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
+  async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
     &self,
     private_key: &KeyAlias,
-    signing_algorithm: ST,
+    signing_algorithm: SIG,
     data: Vec<u8>,
   ) -> StorageResult<Signature>;
   // async fn encrypt(

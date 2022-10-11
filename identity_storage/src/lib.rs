@@ -11,6 +11,8 @@ mod key_alias;
 mod key_storage;
 mod memstore;
 mod method_content;
+// mod method_suite;
+mod jcs_ed25519;
 mod method_type1;
 mod signature;
 mod signature_handler;
@@ -28,6 +30,8 @@ pub use key_alias::*;
 pub use key_storage::*;
 pub use memstore::*;
 pub use method_content::*;
+// pub use method_suite::*;
+pub use jcs_ed25519::*;
 pub use method_type1::*;
 pub use signature::*;
 pub use signature_handler::*;
@@ -37,7 +41,15 @@ pub use storage_combinator::*;
 
 #[cfg(test)]
 mod tests2 {
+  use identity_core::common::Url;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
+  use identity_core::crypto::GetSignature;
+  use identity_core::json;
+  use identity_credential::credential::Credential;
+  use identity_credential::credential::Subject;
   use identity_did::did::CoreDID;
+  use identity_did::did::DID;
   use identity_did::document::CoreDocument;
 
   use crate::CoreDocumentExt;
@@ -46,6 +58,27 @@ mod tests2 {
   use crate::MemStore;
   use crate::MethodContent;
   use crate::MethodType1;
+
+  fn test_credential() -> Credential {
+    let issuer_did: CoreDID = "did:iota:0x0001".parse().unwrap();
+    let subject_did: CoreDID = "did:iota:0x0002".parse().unwrap();
+
+    let subject: Subject = Subject::from_json_value(json!({
+      "id": subject_did.as_str(),
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts"
+      }
+    }))
+    .unwrap();
+
+    Credential::builder(Default::default())
+      .issuer(Url::parse(issuer_did.as_str()).unwrap())
+      .type_("UniversityDegreeCredential")
+      .subject(subject)
+      .build()
+      .unwrap()
+  }
 
   #[tokio::test]
   async fn test_things() {
@@ -71,11 +104,17 @@ mod tests2 {
     // This adds an "Ed25519VerificationKey2018" -> JcsEd25519 handler mapping.
     suite.register(JcsEd25519);
 
+    let mut credential: Credential = test_credential();
+
     // Since `fragment` resolves to a method of type "Ed25519VerificationKey2018",
     // the JcsEd25519 handler is invoked to sign.
-    let signature = document.sign(fragment, b"data to be signed".to_vec(), &suite).await;
+    document
+      .sign(&mut credential, fragment, &suite, Default::default())
+      .await;
 
-    assert_eq!(signature.len(), 64);
+    assert!(credential.signature().is_some());
+
+    println!("{}", credential.to_json_pretty().unwrap());
   }
 }
 

@@ -2,18 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
+use identity_core::crypto::ProofOptions;
+use identity_core::crypto::SetSignature;
 use identity_did::document::CoreDocument;
+use serde::Serialize;
 
 use crate::identity_updater::IdentityUpdater;
 use crate::IdentitySuite;
 use crate::KeyStorage;
 use crate::MethodType1;
+use crate::Signable;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait CoreDocumentExt {
   fn update_identity(&mut self) -> IdentityUpdater;
-  async fn sign<K: KeyStorage>(&self, fragment: &str, data: Vec<u8>, suite: &IdentitySuite<K>) -> Vec<u8>;
+  async fn sign<K: KeyStorage, VAL>(
+    &self,
+    value: &mut VAL,
+    fragment: &str,
+    suite: &IdentitySuite<K>,
+    proof_options: ProofOptions,
+  ) where
+    VAL: Serialize + SetSignature + Clone + Into<Signable> + Send + 'static;
 }
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -23,7 +34,15 @@ impl CoreDocumentExt for CoreDocument {
     IdentityUpdater { document: self }
   }
 
-  async fn sign<K: KeyStorage>(&self, fragment: &str, data: Vec<u8>, suite: &IdentitySuite<K>) -> Vec<u8> {
+  async fn sign<K: KeyStorage, VAL>(
+    &self,
+    value: &mut VAL,
+    fragment: &str,
+    suite: &IdentitySuite<K>,
+    proof_options: ProofOptions,
+  ) where
+    VAL: Serialize + SetSignature + Clone + Into<Signable> + Send + 'static,
+  {
     let method = self.resolve_method(fragment, Default::default()).expect("TODO");
 
     // TODO: Remove after refactoring VerificationMethod to hold the new MethodType.
@@ -34,6 +53,10 @@ impl CoreDocumentExt for CoreDocument {
       identity_did::verification::MethodType::X25519KeyAgreementKey2019 => MethodType1::x25519_verification_key_2018(),
     };
 
-    suite.sign(&method_type, data).await
+    // TODO: Set only fragment as method_id?
+
+    suite
+      .sign(value, method.id().to_string(), &method_type, proof_options)
+      .await
   }
 }

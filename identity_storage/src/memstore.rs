@@ -198,10 +198,10 @@ impl KeyStorage for MemStore {
   //   Ok(vault.remove(location).is_some())
   // }
 
-  async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
+  async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
     &self,
     private_key: &KeyAlias,
-    signing_algorithm: ST,
+    signing_algorithm: SIG,
     data: Vec<u8>,
   ) -> StorageResult<Signature> {
     let signing_algorithm = signing_algorithm.into();
