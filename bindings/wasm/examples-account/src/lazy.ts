@@ -7,6 +7,7 @@ import {
     Storage
 } from '../../node';
 
+const { performance } = require('perf_hooks');
 /**
  * This example demonstrates how to take control over publishing DID updates manually,
  * instead of the default automated behavior.
@@ -20,14 +21,23 @@ async function lazy(storage?: Storage) {
         autopublish: false,
         storage,
     });
-    let account = await builder.createIdentity();
 
+    let createIdentityStartTime = performance.now();
+    let account = await builder.createIdentity();
+    let createIdentityEndTime = performance.now();
+    console.log(`call to createIdentity took ${createIdentityEndTime - createIdentityStartTime} ms`);
+
+
+    let createServiceStartTime = performance.now();
     // Add a new service to the local DID document.
     await account.createService({
         fragment: "example-service",
         type: "LinkedDomains",
         endpoint: "https://example.org"
-    })
+    });
+    let createServiceEndTime = performance.now();
+
+    console.log(`call to Account.createService took ${createServiceEndTime - createServiceStartTime} ms`);
 
     // Publish the newly created DID document,
     // including the new service, to the tangle.
@@ -41,15 +51,22 @@ async function lazy(storage?: Storage) {
     });
 
     // Delete the previously added service.
+    let deleteServiceStartTime = performance.now();
     await account.deleteService({
         fragment: "example-service"
     });
+    let deleteServiceEndTime = performance.now();
+
+    console.log(`call to Account.deleteService took ${deleteServiceEndTime - deleteServiceStartTime} ms`);
 
     // Publish the updates as one message to the tangle.
     await account.publish();
 
     // Retrieve the DID of the newly created identity.
+    let didStartTime = performance.now();
     let did = account.did();
+    let didEndTime = performance.now();
+    console.log(`call to Account.did took ${didEndTime - didStartTime} ms`);
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
