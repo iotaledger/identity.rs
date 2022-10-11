@@ -6,6 +6,7 @@ use identity_core::crypto::PublicKey;
 
 use crate::MethodType1;
 
+// TODO: Impl Zeroize.
 pub enum MethodContent {
   Generate(MethodType1),
   Private(MethodType1, PrivateKey),

@@ -29,7 +29,7 @@ use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 // use zeroize::Zeroize;
 
-use crate::Ed25519Signature;
+use crate::Ed25519SignatureAlgorithm;
 use crate::KeyAlias;
 // use crate::error::Error;
 // use crate::error::Result;
@@ -86,8 +86,8 @@ pub enum MemStoreSigningAlgorithm {
   Ed25519,
 }
 
-impl From<Ed25519Signature> for MemStoreSigningAlgorithm {
-  fn from(_: Ed25519Signature) -> Self {
+impl From<Ed25519SignatureAlgorithm> for MemStoreSigningAlgorithm {
+  fn from(_: Ed25519SignatureAlgorithm) -> Self {
     MemStoreSigningAlgorithm::Ed25519
   }
 }
