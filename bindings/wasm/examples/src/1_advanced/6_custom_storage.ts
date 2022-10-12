@@ -4,6 +4,7 @@ import {
     CoreDocumentRc,
     CoreVerificationMethod,
     Credential,
+    Ed25519SignatureAlgorithm,
     KeyAlias,
     KeyStorage,
     KeyType,
@@ -83,7 +84,7 @@ class JcsEd25519Signature implements SignatureHandler {
         // TODO: Not a proper JCS serialization because POC.
         const encoder = new TextEncoder();
         const json = encoder.encode(JSON.stringify(value.toJSON()));
-        const proof: Uint8Array = await keyStorage.sign(keyAlias, "Ed25519", json);
+        const proof: Uint8Array = await keyStorage.sign(keyAlias, Ed25519SignatureAlgorithm.toString(), json);
 
         const signature: string = Base58.encode(proof);
         return ProofValue.Signature(signature);

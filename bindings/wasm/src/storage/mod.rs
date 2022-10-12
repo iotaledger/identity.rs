@@ -7,6 +7,7 @@ mod key_storage;
 mod storage;
 mod wasm_method_suite;
 mod wasm_signable;
+mod signature_algorithms;
 
 pub use core_document_rc::*;
 pub use key_alias::*;
@@ -14,3 +15,4 @@ pub use key_storage::*;
 pub use storage::*;
 pub use wasm_method_suite::*;
 pub use wasm_signable::*;
+pub use signature_algorithms::*;

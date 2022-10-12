@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Ed25519, KeyAlias, KeyPair, KeyStorage, KeyType } from "../../../node";
+import { Ed25519, Ed25519SignatureAlgorithm, KeyAlias, KeyPair, KeyStorage, KeyType } from "../../../node";
 
 /** An insecure, in-memory `Storage` implementation that serves as an example.
 This can be passed to the `AccountBuilder` to create accounts with this as the storage. */
@@ -53,7 +53,7 @@ export class MemStore implements KeyStorage {
     public async sign(privateKey: KeyAlias, signing_algorithm: string, data: Uint8Array): Promise<Uint8Array> {
         const keyPair = this._keys.get(privateKey.toString());
 
-        if (keyPair && signing_algorithm == "Ed25519") {
+        if (keyPair && signing_algorithm == Ed25519SignatureAlgorithm.toString()) {
             // Use the `Ed25519` API to sign the given data with the private key.
             const signature: Uint8Array = Ed25519.sign(data, keyPair.private());
             return signature;
