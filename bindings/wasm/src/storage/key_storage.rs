@@ -3,7 +3,6 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use std::rc::Rc;
 
 // use identity_iota::account_storage::CekAlgorithm;
 // use identity_iota::account_storage::DIDType;
@@ -37,7 +36,7 @@ use wasm_bindgen_futures::JsFuture;
 // use crate::crypto::WasmKeyType;
 // use crate::did::WasmCoreDID;
 use crate::error::JsValueResult;
-use crate::key_alias::WasmKeyAlias;
+use crate::storage::WasmKeyAlias;
 use crate::util::uint8array_to_bytes;
 
 #[wasm_bindgen]

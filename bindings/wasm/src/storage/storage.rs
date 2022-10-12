@@ -19,8 +19,8 @@ use wasm_bindgen_futures::JsFuture;
 use crate::crypto::PromiseProofValue;
 use crate::crypto::WasmProofValue;
 use crate::error::Result;
-use crate::key_storage::WasmKeyStorage;
-use crate::wasm_signable::WasmSignable;
+use crate::storage::WasmKeyStorage;
+use crate::storage::WasmSignable;
 
 #[wasm_bindgen(js_name = SignatureSuite)]
 pub struct WasmSignatureSuite(pub(crate) Rc<SignatureSuite<WasmKeyStorage>>);

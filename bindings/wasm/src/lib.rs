@@ -20,17 +20,12 @@ mod macros;
 // Deactivated legacy packages.
 // pub mod account;
 
-pub mod wasm_signable;
-// pub mod wasm_method_suite;
 pub mod common;
-pub mod core_document_rc;
 pub mod credential;
 pub mod crypto;
 pub mod did;
 pub mod error;
 pub mod iota;
-pub mod key_alias;
-pub mod key_storage;
 pub mod resolver;
 pub mod revocation;
 pub mod storage;

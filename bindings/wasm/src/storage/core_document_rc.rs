@@ -12,7 +12,7 @@ use crate::did::OptionMethodType1;
 use crate::did::WasmCoreDocument;
 use crate::did::WasmMethodContent;
 use crate::error::Result;
-use crate::key_storage::WasmKeyStorage;
+use crate::storage::WasmKeyStorage;
 // use crate::wasm_method_suite::WasmMethodSuite;
 use identity_iota::did::CoreDocument;
 
