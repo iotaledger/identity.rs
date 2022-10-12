@@ -60,7 +60,7 @@ where
   }
 
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData) {
-    if let MethodContent::Generate(_) = method_content {
+    if let MethodContent::Generate = method_content {
       let key_type: K::KeyType = K::KeyType::from(Ed25519KeyType);
       let key_alias: KeyAlias = key_storage.generate(key_type).await.expect("TODO");
 
@@ -70,7 +70,7 @@ where
 
       (key_alias, method_data)
     } else {
-      unimplemented!()
+      unimplemented!("{method_content:?}")
     }
   }
 }

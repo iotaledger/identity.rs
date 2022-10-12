@@ -1,46 +1,38 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::KeyType;
+use identity_did::did::DID;
 use identity_did::document::CoreDocument;
+use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
 use crate::KeyStorage;
 use crate::MethodContent;
+use crate::MethodSuite;
 use crate::MethodType1;
-use crate::StorageError;
-use crate::StorageResult;
 
 pub struct CreateMethodBuilder<'builder, K>
 where
   K: KeyStorage,
-  K::KeyType: TryFrom<MethodType1>,
-  <K::KeyType as TryFrom<MethodType1>>::Error: std::error::Error + Send + Sync + 'static,
 {
   document: &'builder mut CoreDocument,
-  key_storage: Option<&'builder K>,
+  method_suite: Option<&'builder MethodSuite<K>>,
   content: Option<MethodContent>,
+  typ: Option<MethodType1>,
   fragment: Option<String>,
-  mapping_strategy: fn(MethodType1) -> StorageResult<K::KeyType>,
 }
 
 impl<'builder, K> CreateMethodBuilder<'builder, K>
 where
   K: KeyStorage,
-  K::KeyType: TryFrom<MethodType1>,
-  <K::KeyType as TryFrom<MethodType1>>::Error: std::error::Error + Send + Sync + 'static,
 {
   pub fn new(document: &'builder mut CoreDocument) -> Self {
     Self {
       document,
-      key_storage: None,
+      method_suite: None,
       content: None,
       fragment: None,
-      mapping_strategy: |method_type| {
-        K::KeyType::try_from(method_type).map_err(|err| {
-          StorageError::new_with_source(crate::StorageErrorKind::Other("could not convert".into()), err.into())
-        })
-      },
+      typ: None,
     }
   }
 
@@ -49,51 +41,51 @@ where
     self
   }
 
+  pub fn type_(mut self, typ: MethodType1) -> Self {
+    self.typ = Some(typ);
+    self
+  }
+
   pub fn fragment(mut self, fragment: &str) -> Self {
     self.fragment = Some(fragment.to_owned());
     self
   }
 
-  pub fn key_storage(mut self, key_storage: &'builder K) -> Self {
-    self.key_storage = Some(key_storage);
-    self
-  }
-
-  pub fn mapping_strategy(mut self, strategy: fn(MethodType1) -> StorageResult<K::KeyType>) -> Self {
-    self.mapping_strategy = strategy;
+  pub fn method_suite(mut self, method_suite: &'builder MethodSuite<K>) -> Self {
+    self.method_suite = Some(method_suite);
     self
   }
 
   pub async fn apply(self) {
-    let key_storage = self.key_storage.expect("TODO");
-    let (key_alias, key_type) = if let Some(MethodContent::Generate(method_type)) = self.content {
-      // TODO: Remove.
-      let key_type = match &method_type {
-        ty if ty == &MethodType1::ed25519_verification_key_2018() => KeyType::Ed25519,
-        ty if ty == &MethodType1::x25519_verification_key_2018() => KeyType::X25519,
-        _ => todo!("this will be gone after refactoring VerificationMethod"),
-      };
+    let method_suite = self.method_suite.expect("TODO");
+    let method_type = self.typ.expect("TODO");
+    let method_content = self.content.expect("TODO");
 
-      let ms = self.mapping_strategy;
-
-      let key_alias = key_storage
-        .generate(ms(method_type).expect("TODO"))
-        .await
-        .expect("TODO");
-
-      (key_alias, key_type)
-    } else {
-      unimplemented!()
+    // TODO: This will be gone after refactoring VerificationMethod to use MethodType1.
+    let legacy_method_type = match &method_type {
+      ty if ty == &MethodType1::ed25519_verification_key_2018() => MethodType::Ed25519VerificationKey2018,
+      ty if ty == &MethodType1::x25519_verification_key_2018() => MethodType::X25519KeyAgreementKey2019,
+      _ => todo!("legacy"),
     };
 
-    let public_key = key_storage.public(&key_alias).await.expect("TODO");
-    let method = VerificationMethod::new(
-      self.document.id().to_owned(),
-      key_type,
-      &public_key,
-      &self.fragment.expect("TODO"),
-    )
-    .expect("TODO");
+    // TODO: Store key_alias mapping to method id.
+    // TODO: Allow user or suite to also set method custom properties (?)
+    let (_key_alias, method_data) = method_suite.create(&method_type, method_content).await;
+
+    let method = VerificationMethod::builder(Default::default())
+      .id(
+        self
+          .document
+          .id()
+          .to_owned()
+          .join(self.fragment.expect("TODO"))
+          .expect("TODO"),
+      )
+      .controller(self.document.id().to_owned())
+      .data(method_data)
+      .type_(legacy_method_type)
+      .build()
+      .expect("TODO");
 
     self.document.insert_method(method, Default::default()).expect("TODO");
   }

@@ -8,10 +8,10 @@ use identity_did::document::CoreDocument;
 use serde::Serialize;
 
 use crate::identity_updater::IdentityUpdater;
-use crate::IdentitySuite;
 use crate::KeyStorage;
 use crate::MethodType1;
 use crate::Signable;
+use crate::SignatureSuite;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -21,7 +21,7 @@ pub trait CoreDocumentExt {
     &self,
     value: &mut VAL,
     fragment: &str,
-    suite: &IdentitySuite<K>,
+    suite: &SignatureSuite<K>,
     proof_options: ProofOptions,
   ) where
     VAL: Serialize + SetSignature + Clone + Into<Signable> + Send + 'static;
@@ -38,7 +38,7 @@ impl CoreDocumentExt for CoreDocument {
     &self,
     value: &mut VAL,
     fragment: &str,
-    suite: &IdentitySuite<K>,
+    suite: &SignatureSuite<K>,
     proof_options: ProofOptions,
   ) where
     VAL: Serialize + SetSignature + Clone + Into<Signable> + Send + 'static,

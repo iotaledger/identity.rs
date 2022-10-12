@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use identity_core::crypto::PublicKey;
 
@@ -62,4 +64,32 @@ pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
   //   cek_algorithm: &CekAlgorithm,
   // ) -> Vec<u8>;
   // async fn flush(&self) -> StorageResult<()>;
+}
+
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+impl<T> KeyStorage for Arc<T>
+where
+  T: KeyStorage,
+  T::KeyType: Send,
+{
+  type KeyType = T::KeyType;
+  type SigningAlgorithm = T::SigningAlgorithm;
+
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
+    T::generate(self, key_type).await
+  }
+
+  async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+    T::public(self, private_key).await
+  }
+
+  async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
+    &self,
+    private_key: &KeyAlias,
+    signing_algorithm: SIG,
+    data: Vec<u8>,
+  ) -> StorageResult<Signature> {
+    T::sign(self, private_key, signing_algorithm, data).await
+  }
 }

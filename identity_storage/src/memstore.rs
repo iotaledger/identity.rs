@@ -29,6 +29,7 @@ use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 // use zeroize::Zeroize;
 
+use crate::Ed25519KeyType;
 use crate::Ed25519SignatureAlgorithm;
 use crate::KeyAlias;
 // use crate::error::Error;
@@ -104,6 +105,12 @@ impl TryFrom<MethodType1> for KeyType {
         "unsupported key type {other}"
       )))),
     }
+  }
+}
+
+impl From<Ed25519KeyType> for KeyType {
+  fn from(_: Ed25519KeyType) -> Self {
+    KeyType::Ed25519
   }
 }
 

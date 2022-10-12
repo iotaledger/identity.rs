@@ -16,12 +16,12 @@ use crate::MethodType1;
 use crate::SignatureHandler;
 use crate::SignatureMethodType;
 
-pub struct IdentitySuite<K: KeyStorage> {
+pub struct SignatureSuite<K: KeyStorage> {
   key_storage: K,
   signature_handlers: HashMap<MethodType1, Box<dyn SignatureHandler<K>>>,
 }
 
-impl<K: KeyStorage> IdentitySuite<K> {
+impl<K: KeyStorage> SignatureSuite<K> {
   pub fn new(key_storage: K) -> Self {
     Self {
       key_storage,

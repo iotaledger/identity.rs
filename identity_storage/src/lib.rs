@@ -5,7 +5,6 @@ mod blob_storage;
 mod core_document_ext;
 mod create_method;
 mod error;
-mod identity_suite;
 mod identity_updater;
 mod jcs_ed25519;
 mod key_alias;
@@ -17,6 +16,7 @@ mod method_suite;
 mod method_type1;
 mod signature;
 mod signature_handler;
+mod signature_suite;
 mod signature_types;
 mod storage;
 mod storage_combinator;
@@ -25,7 +25,6 @@ pub use blob_storage::*;
 pub use core_document_ext::*;
 pub use create_method::*;
 pub use error::*;
-pub use identity_suite::*;
 pub use identity_updater::*;
 pub use jcs_ed25519::*;
 pub use key_alias::*;
@@ -37,12 +36,15 @@ pub use method_suite::*;
 pub use method_type1::*;
 pub use signature::*;
 pub use signature_handler::*;
+pub use signature_suite::*;
 pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
 
 #[cfg(test)]
 mod tests2 {
+  use std::sync::Arc;
+
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
@@ -55,11 +57,13 @@ mod tests2 {
   use identity_did::document::CoreDocument;
 
   use crate::CoreDocumentExt;
-  use crate::IdentitySuite;
+  use crate::Ed25519VerificationKey2018;
   use crate::JcsEd25519;
   use crate::MemStore;
   use crate::MethodContent;
+  use crate::MethodSuite;
   use crate::MethodType1;
+  use crate::SignatureSuite;
 
   fn test_credential() -> Credential {
     let issuer_did: CoreDID = "did:iota:0x0001".parse().unwrap();
@@ -84,34 +88,37 @@ mod tests2 {
 
   #[tokio::test]
   async fn test_things() {
-    let fragment = "my-key";
-    let key_storage = MemStore::new();
+    let fragment = "#my-key";
+    let key_storage = Arc::new(MemStore::new());
 
     let did = CoreDID::parse("did:iota:0x0000").unwrap();
     let mut document: CoreDocument = CoreDocument::builder(Default::default()).id(did).build().unwrap();
 
+    let mut method_suite = MethodSuite::new(Arc::clone(&key_storage));
+    method_suite.register(Ed25519VerificationKey2018);
+
     document
       .update_identity()
       .create_method()
-      .key_storage(&key_storage)
-      .content(MethodContent::Generate(MethodType1::ed25519_verification_key_2018()))
+      .method_suite(&method_suite)
+      .type_(MethodType1::ed25519_verification_key_2018())
+      .content(MethodContent::Generate)
       .fragment(fragment)
       .apply()
       .await;
 
     assert!(document.resolve_method(fragment, Default::default()).is_some());
 
-    let mut suite = IdentitySuite::new(key_storage);
-
+    let mut signature_suite = SignatureSuite::new(key_storage);
     // This adds an "Ed25519VerificationKey2018" -> JcsEd25519 handler mapping.
-    suite.register(JcsEd25519);
+    signature_suite.register(JcsEd25519);
 
     let mut credential: Credential = test_credential();
 
     // Since `fragment` resolves to a method of type "Ed25519VerificationKey2018",
     // the JcsEd25519 handler is invoked to sign.
     document
-      .sign(&mut credential, fragment, &suite, Default::default())
+      .sign(&mut credential, fragment, &signature_suite, Default::default())
       .await;
 
     assert!(credential.signature().is_some());
