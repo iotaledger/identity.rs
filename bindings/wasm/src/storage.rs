@@ -3,31 +3,34 @@
 
 use std::rc::Rc;
 
-use identity_storage::IdentitySuite;
+use identity_iota::crypto::ProofValue;
 use identity_storage::MethodType1;
+use identity_storage::Signable;
 use identity_storage::SignatureHandler;
-use js_sys::Function;
+use identity_storage::SignatureSuite;
+use identity_storage::StorageResult;
 use js_sys::Map;
 use js_sys::Promise;
-use js_sys::Uint8Array;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
-use crate::error::JsValueResult;
+use crate::crypto::PromiseProofValue;
+use crate::crypto::WasmProofValue;
 use crate::error::Result;
 use crate::key_storage::WasmKeyStorage;
+use crate::wasm_signable::WasmSignable;
 
-#[wasm_bindgen(js_name = IdentitySuite)]
-pub struct WasmIdentitySuite(pub(crate) Rc<IdentitySuite<WasmKeyStorage>>);
+#[wasm_bindgen(js_name = SignatureSuite)]
+pub struct WasmSignatureSuite(pub(crate) Rc<SignatureSuite<WasmKeyStorage>>);
 
-#[wasm_bindgen(js_class = IdentitySuite)]
-impl WasmIdentitySuite {
+#[wasm_bindgen(js_class = SignatureSuite)]
+impl WasmSignatureSuite {
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(storage: WasmKeyStorage, handlers: Option<MapSignatureHandler>) -> Result<WasmIdentitySuite> {
-    let mut id_suite = IdentitySuite::new(storage);
+  pub fn new(storage: WasmKeyStorage, handlers: Option<MapSignatureHandler>) -> Result<WasmSignatureSuite> {
+    let mut signature_suite = SignatureSuite::new(storage.into());
 
     if let Some(handlers) = handlers {
       let map: &Map = handlers.dyn_ref::<js_sys::Map>().expect("TODO");
@@ -35,14 +38,15 @@ impl WasmIdentitySuite {
       for key in map.keys() {
         if let Ok(js_method) = key {
           let js_handler: JsValue = map.get(&js_method);
-          let signature_identifier: String = js_method.as_string().expect("TODO");
-          let handler: Function = js_handler
-            .dyn_into::<Function>()
-            .map_err(|_| "could not construct TODO: the handler map contains a value which is not a function")?;
+          let method_type: String = js_method.as_string().expect("TODO");
 
-          id_suite.register_unchecked(
-            MethodType1::from(signature_identifier),
-            Box::new(WasmSignatureHandler(handler)),
+          // TODO: dyn_into fails, why?
+          let handler: WasmSignatureHandlerInterface = js_handler.unchecked_into::<WasmSignatureHandlerInterface>();
+          // .map_err(|_| "could not construct TODO: the handler map contains a value which is not a ...")?;
+
+          signature_suite.register_unchecked(
+            MethodType1::from(method_type),
+            Box::new(WasmSignatureHandler(handler.into())),
           );
         } else {
           todo!("error")
@@ -50,11 +54,11 @@ impl WasmIdentitySuite {
       }
     }
 
-    Ok(WasmIdentitySuite(Rc::new(id_suite)))
+    Ok(WasmSignatureSuite(Rc::new(signature_suite)))
   }
 }
 
-impl Clone for WasmIdentitySuite {
+impl Clone for WasmSignatureSuite {
   fn clone(&self) -> Self {
     Self(Rc::clone(&self.0))
   }
@@ -65,44 +69,67 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "MapSignatureHandler")]
   pub type MapSignatureHandler;
 
-  #[wasm_bindgen(typescript_type = "IdentitySuiteConfig")]
-  pub type WasmSuiteHandlers;
+  #[wasm_bindgen(typescript_type = "SignatureSuiteHandlers")]
+  pub type SignatureSuiteHandlers;
 
   #[wasm_bindgen(method, getter)]
-  pub(crate) fn handlers(this: &WasmSuiteHandlers) -> Option<MapSignatureHandler>;
+  pub(crate) fn handlers(this: &SignatureSuiteHandlers) -> Option<MapSignatureHandler>;
+
+  #[wasm_bindgen(typescript_type = "SignatureHandler")]
+  pub type WasmSignatureHandlerInterface;
+
+  #[wasm_bindgen(method)]
+  pub fn sign(
+    this: &WasmSignatureHandlerInterface,
+    value: WasmSignable,
+    keyStorage: WasmKeyStorage,
+  ) -> PromiseProofValue;
+
+  #[wasm_bindgen(method, js_name = "signatureName")]
+  pub fn signature_name(this: &WasmSignatureHandlerInterface) -> String;
 }
 
 // Workaround because JSDocs does not support arrows (=>) while TS does not support the "function" word in type
 // definitions (which would be accepted by JSDocs).
 #[wasm_bindgen(typescript_custom_section)]
-const HANDLERS: &'static str =
-  "export type MapSignatureHandler = Map<string, (data: Uint8Array, keyStorage: KeyStorage) => Promise<Uint8Array>>;";
+const TS_SECTION: &'static str = r#"
+export type MapSignatureHandler = Map<string, SignatureHandler>;
 
-#[wasm_bindgen(typescript_custom_section)]
-const TS_RESOLVER_CONFIG: &'static str = r#"
-export type WasmSuiteHandlers = {
-    handlers?: Map<string, (data: Uint8Array, keyStorage: KeyStorage) => Promise<Uint8Array>>;
+export type SignatureSuiteHandlers = {
+  handlers?: Map<string, SignatureHandler>;
 };
+
+export interface SignatureHandler {
+  sign(value: Signable, keyStorage: KeyStorage): Promise<ProofValue>;
+  signatureName(): string;
+}
 "#;
 
-pub struct WasmSignatureHandler(Function);
+pub struct WasmSignatureHandler(Rc<WasmSignatureHandlerInterface>);
+
+impl From<WasmSignatureHandlerInterface> for WasmSignatureHandler {
+  fn from(interface: WasmSignatureHandlerInterface) -> Self {
+    Self(Rc::new(interface))
+  }
+}
 
 #[async_trait::async_trait(?Send)]
 impl SignatureHandler<WasmKeyStorage> for WasmSignatureHandler {
-  async fn sign(&self, data: Vec<u8>, key_storage: &WasmKeyStorage) -> Vec<u8> {
-    let function_clone = self.0.clone();
+  fn signature_name(&self) -> String {
+    self.0.signature_name()
+  }
 
-    let js_data: JsValue = Uint8Array::from(data.as_slice()).into();
-    let promise: Promise = Promise::resolve(
-      &function_clone
-        .call2(&JsValue::null(), &js_data, key_storage)
-        .expect("TODO"),
-    );
+  async fn sign(&self, value: Signable, key_storage: &WasmKeyStorage) -> StorageResult<ProofValue> {
+    // let handler_clone: Rc<WasmSignatureHandlerInterface> = Rc::clone(&self.0);
+    let wasm_signable: WasmSignable = value.into();
+    let storage_clone: WasmKeyStorage = JsValue::clone(key_storage).unchecked_into();
 
-    let awaited_output: JsValue = JsValueResult::from(JsFuture::from(promise).await)
-      .stringify_error()
+    let result: WasmProofValue = JsFuture::from(Promise::resolve(&self.0.sign(wasm_signable, storage_clone)))
+      .await
+      .expect("TODO")
+      .into_serde()
       .expect("TODO");
 
-    crate::util::uint8array_to_bytes(awaited_output).expect("TODO")
+    Ok(result.into())
   }
 }

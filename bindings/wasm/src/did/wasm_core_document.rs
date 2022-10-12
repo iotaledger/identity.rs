@@ -1,11 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::DerefMut;
+use std::rc::Rc;
+
 use super::WasmCoreDID;
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
-use crate::common::PromiseUint8Array;
+use crate::common::PromiseVoid;
 use crate::common::UOneOrManyNumber;
 use crate::crypto::WasmProofOptions;
 use crate::did::wasm_core_service::WasmCoreService;
@@ -17,7 +20,8 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::storage::WasmIdentitySuite;
+use crate::storage::WasmSignatureSuite;
+use crate::wasm_signable::WasmSignable;
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OneOrSet;
@@ -459,15 +463,26 @@ impl WasmCoreDocument {
 
   #[allow(non_snake_case)]
   #[wasm_bindgen]
-  pub fn sign(&self, fragment: &str, data: Vec<u8>, suite: &WasmIdentitySuite) -> PromiseUint8Array {
+  pub fn sign(
+    &self,
+    signable: &WasmSignable,
+    fragment: &str,
+    suite: &WasmSignatureSuite,
+    proof_options: &WasmProofOptions,
+  ) -> PromiseVoid {
     let doc = self.0.clone();
     let fragment = fragment.to_owned();
     let suite_clone = suite.clone();
+    let proof_opts: ProofOptions = proof_options.0.clone();
+    let signable_clone = Rc::clone(&signable.0);
 
     future_to_promise(async move {
-      Ok(js_sys::Uint8Array::from(doc.sign(&fragment, data, &suite_clone.0).await.as_slice()).into())
+      let mut signable_ref_mut = signable_clone.borrow_mut();
+      let signable_mut_ref = signable_ref_mut.deref_mut();
+      doc.sign(signable_mut_ref, &fragment, &suite_clone.0, proof_opts).await;
+      Ok(JsValue::undefined())
     })
-    .unchecked_into::<PromiseUint8Array>()
+    .unchecked_into::<PromiseVoid>()
   }
 }
 

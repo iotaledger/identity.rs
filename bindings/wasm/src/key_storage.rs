@@ -3,6 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
+use std::rc::Rc;
 
 // use identity_iota::account_storage::CekAlgorithm;
 // use identity_iota::account_storage::DIDType;

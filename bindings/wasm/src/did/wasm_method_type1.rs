@@ -4,6 +4,12 @@
 use identity_storage::MethodType1;
 use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "MethodType1 | undefined")]
+  pub type OptionMethodType1;
+}
+
 /// Supported verification method types.
 #[wasm_bindgen(js_name = MethodType1, inspectable)]
 #[derive(Debug, Clone, Serialize, Deserialize)]

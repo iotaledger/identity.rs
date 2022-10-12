@@ -8,17 +8,19 @@ use std::rc::Rc;
 use crate::common::PromiseVoid;
 use crate::did::OptionMethodContent;
 use crate::did::OptionMethodScope;
+use crate::did::OptionMethodType1;
 use crate::did::WasmCoreDocument;
 use crate::did::WasmMethodContent;
 use crate::error::Result;
-use crate::error::WasmResult;
 use crate::key_storage::WasmKeyStorage;
+// use crate::wasm_method_suite::WasmMethodSuite;
 use identity_iota::did::CoreDocument;
 
 use identity_storage::CoreDocumentExt;
 use identity_storage::CreateMethodBuilder;
 use identity_storage::IdentityUpdater;
 use identity_storage::MethodContent;
+use identity_storage::MethodType1;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -46,11 +48,16 @@ impl WasmCoreDocumentRc {
     let content: MethodContent = options
       .content()
       .into_serde::<Option<WasmMethodContent>>()
-      .wasm_result()?
+      .expect("TODO")
       .map(MethodContent::from)
       .expect("TODO");
 
-    let key_storage: WasmKeyStorage = options.key_storage().expect("TODO");
+    let method_type: MethodType1 = options
+      .type_()
+      .into_serde::<Option<MethodType1>>()
+      .expect("TODO")
+      .expect("TODO");
+    // let key_storage: WasmKeyStorage = options.key_storage().expect("TODO");
 
     let document: Rc<RefCell<CoreDocument>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
@@ -59,8 +66,9 @@ impl WasmCoreDocumentRc {
 
       let create_method: CreateMethodBuilder<'_, WasmKeyStorage> = updater
         .create_method()
-        .key_storage(&key_storage)
+        // .key_storage(&key_storage)
         .content(content)
+        .type_(method_type.into())
         .fragment(&fragment);
 
       // TODO: Not implemented currently.
@@ -88,11 +96,17 @@ extern "C" {
   #[wasm_bindgen(getter, method)]
   pub fn scope(this: &CreateMethodOptions) -> OptionMethodScope;
 
+  #[wasm_bindgen(getter, method, js_name = type)]
+  pub fn type_(this: &CreateMethodOptions) -> OptionMethodType1;
+
   #[wasm_bindgen(getter, method)]
   pub fn content(this: &CreateMethodOptions) -> OptionMethodContent;
 
-  #[wasm_bindgen(getter, method)]
-  pub fn key_storage(this: &CreateMethodOptions) -> Option<WasmKeyStorage>;
+  // #[wasm_bindgen(getter, method)]
+  // pub fn key_storage(this: &CreateMethodOptions) -> Option<WasmKeyStorage>;
+
+  // #[wasm_bindgen(getter, method)]
+  // pub fn method_suite(this: &CreateMethodOptions) -> Option<WasmMethodSuite>;
 }
 
 // TODO: Match the above.
@@ -116,6 +130,8 @@ export type CreateMethodOptions = {
      * Method content for the new method.
      */
     content: MethodContent,
+
+    type: MethodType1,
 
     /** A KeyStorage implementation. */
     key_storage: KeyStorage

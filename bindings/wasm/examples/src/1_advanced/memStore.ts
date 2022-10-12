@@ -18,10 +18,10 @@ export class MemStore implements KeyStorage {
     public async generate(keyType: string): Promise<KeyAlias> {
         let supportedKeyType;
         switch (keyType) {
-            case "Ed25519VerificationKey2018":
+            case "Ed25519":
                 supportedKeyType = KeyType.Ed25519;
                 break;
-            case "X25519VerificationKey2019":
+            case "X25519":
                 supportedKeyType = KeyType.X25519;
                 break;
             default:

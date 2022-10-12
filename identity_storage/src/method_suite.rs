@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 
+use async_trait::async_trait;
 use identity_did::verification::MethodData;
 
 use crate::Ed25519KeyType;
@@ -46,10 +47,17 @@ pub trait MethodHandler<K: KeyStorage>: Send + Sync {
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData);
 }
 
+#[cfg(not(feature = "send-sync-storage"))]
+#[async_trait::async_trait(?Send)]
+pub trait MethodHandler<K: KeyStorage>: Send + Sync {
+  fn method_type(&self) -> MethodType1;
+  async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData);
+}
+
 pub struct Ed25519VerificationKey2018;
 
-#[cfg(feature = "send-sync-storage")]
-#[async_trait::async_trait]
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl<K> MethodHandler<K> for Ed25519VerificationKey2018
 where
   K: KeyStorage,

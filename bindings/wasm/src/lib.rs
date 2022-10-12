@@ -20,6 +20,8 @@ mod macros;
 // Deactivated legacy packages.
 // pub mod account;
 
+pub mod wasm_signable;
+// pub mod wasm_method_suite;
 pub mod common;
 pub mod core_document_rc;
 pub mod credential;

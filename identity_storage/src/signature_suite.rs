@@ -3,6 +3,8 @@
 
 use std::collections::HashMap;
 
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::Proof;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofValue;
@@ -37,8 +39,8 @@ impl<K: KeyStorage> SignatureSuite<K> {
   }
 
   #[cfg(target_family = "wasm")]
-  pub fn register_unchecked(&mut self, signature_name: MethodType1, handler: Box<dyn SignatureHandler<K>>) {
-    self.signature_handlers.insert(signature_name, handler);
+  pub fn register_unchecked(&mut self, method_type: MethodType1, handler: Box<dyn SignatureHandler<K>>) {
+    self.signature_handlers.insert(method_type, handler);
   }
 
   pub async fn sign<VAL>(
@@ -71,6 +73,7 @@ impl<K: KeyStorage> SignatureSuite<K> {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
 pub enum Signable {
   Credential(Credential),
   Presentation(Presentation),
@@ -92,6 +95,36 @@ impl From<Presentation> for Signable {
 impl From<serde_json::Value> for Signable {
   fn from(json: serde_json::Value) -> Self {
     Signable::Json(json)
+  }
+}
+
+impl GetSignature for Signable {
+  fn signature(&self) -> Option<&Proof> {
+    match self {
+      Signable::Credential(cred) => cred.signature(),
+      Signable::Presentation(pres) => pres.signature(),
+      Signable::Json(_) => None,
+    }
+  }
+}
+
+impl GetSignatureMut for Signable {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
+    match self {
+      Signable::Credential(cred) => cred.signature_mut(),
+      Signable::Presentation(pres) => pres.signature_mut(),
+      Signable::Json(_) => None,
+    }
+  }
+}
+
+impl SetSignature for Signable {
+  fn set_signature(&mut self, signature: Proof) {
+    match self {
+      Signable::Credential(cred) => cred.set_signature(signature),
+      Signable::Presentation(pres) => pres.set_signature(signature),
+      Signable::Json(_) => unimplemented!("fix me"),
+    }
   }
 }
 

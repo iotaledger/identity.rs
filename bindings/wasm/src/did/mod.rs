@@ -12,6 +12,7 @@ pub use self::wasm_method_scope::OptionMethodScope;
 pub use self::wasm_method_scope::RefMethodScope;
 pub use self::wasm_method_scope::WasmMethodScope;
 pub use self::wasm_method_type::WasmMethodType;
+pub use self::wasm_method_type1::OptionMethodType1;
 pub use self::wasm_method_type1::WasmMethodType1;
 pub use self::wasm_verifier_options::WasmVerifierOptions;
 

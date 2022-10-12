@@ -5,7 +5,7 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 
 // TODO: Impl Zeroize.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum MethodContent {
   Generate,
   Private(PrivateKey),
