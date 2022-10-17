@@ -14,6 +14,7 @@ mod method_scope;
 mod method_type;
 mod traits;
 mod verification_method;
+pub mod jwk;
 
 pub use self::builder::MethodBuilder;
 pub use self::method_data::MethodData;

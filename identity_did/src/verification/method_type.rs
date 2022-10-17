@@ -4,15 +4,18 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
+use std::borrow::Cow;
 
 use crate::error::Error;
 use crate::error::Result;
 
 /// Supported verification method types.
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub enum MethodType {
-  Ed25519VerificationKey2018,
-  X25519KeyAgreementKey2019,
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+pub struct MethodType(Cow<'static, str>); 
+
+impl MethodType{
+  pub const Ed25519VerificationKey2018: Self = Self("Ed25519VerificationKey2018".into());
+  pub const X25519KeyAgreementKey2019: Self = Self("X25519KeyAgreementKey2019".into());
   // Other(String),
 }
 

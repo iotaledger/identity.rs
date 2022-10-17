@@ -20,9 +20,6 @@
 #[macro_use]
 extern crate serde;
 
-#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-pub mod diff;
-
 pub mod did;
 pub mod document;
 pub mod error;

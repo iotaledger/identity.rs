@@ -8,6 +8,8 @@ use identity_core::utils::BaseEncoding;
 use crate::error::Error;
 use crate::error::Result;
 
+use super::jwk::Jwk;
+
 /// Supported verification method data formats.
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -15,6 +17,7 @@ use crate::error::Result;
 pub enum MethodData {
   PublicKeyMultibase(String),
   PublicKeyBase58(String),
+  PublicKeyJwk(Jwk), 
 }
 
 impl MethodData {
@@ -38,12 +41,15 @@ impl MethodData {
   ///
   /// Decoding can fail if `MethodData` has invalid content or cannot be
   /// represented as a vector of bytes.
+  /// 
+  //TODO: Rename try_decode_multibase, or split MethodData up into MultiBaseMethodData and JwkMethodData and implement this on the former variant
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
       Self::PublicKeyMultibase(input) => {
         BaseEncoding::decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase)
-      }
+      },
       Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
+      Self::PublicKeyJwk(..) => Err(Error::NotBaseEncodedError)
     }
   }
 }
@@ -53,6 +59,7 @@ impl Debug for MethodData {
     match self {
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({})", inner)),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({})", inner)),
+      Self::PublicKeyJwk(inner) => f.write_fmt(format_args!("PublicKeyJwk({:#?})", inner)),
     }
   }
 }

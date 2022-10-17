@@ -58,6 +58,9 @@ pub enum Error {
 
   #[error("unable to decode base64 string: `{0}`")]
   Base64DecodingError(String, #[source] identity_core::error::Error),
+  // TODO: Find a better error or refactor to avoid this variant altogether, 
+  #[error("unable to decode method data. The data is not encoded")]
+  NotBaseEncodedError, 
   #[error("revocation bitmap could not be deserialized or decompressed")]
   BitmapDecodingError(#[source] std::io::Error),
   #[error("revocation bitmap could not be serialized or compressed")]
