@@ -38,6 +38,11 @@ impl<K: KeyStorage> MethodSuite<K> {
       None => todo!("return missing handler error"),
     }
   }
+
+  #[cfg(target_family = "wasm")]
+  pub fn register_unchecked(&mut self, method_type: MethodType1, handler: Box<dyn MethodHandler<K>>) {
+    self.method_handlers.insert(method_type, handler);
+  }
 }
 
 #[cfg(feature = "send-sync-storage")]
@@ -49,7 +54,7 @@ pub trait MethodHandler<K: KeyStorage>: Send + Sync {
 
 #[cfg(not(feature = "send-sync-storage"))]
 #[async_trait::async_trait(?Send)]
-pub trait MethodHandler<K: KeyStorage>: Send + Sync {
+pub trait MethodHandler<K: KeyStorage> {
   fn method_type(&self) -> MethodType1;
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData);
 }

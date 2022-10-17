@@ -46,6 +46,35 @@ impl WasmMethodContent {
   pub fn public(publicKey: Vec<u8>) -> WasmMethodContent {
     Self(WasmMethodContentInner::Public(publicKey))
   }
+
+  #[wasm_bindgen(js_name = isGenerate)]
+  pub fn is_generate(&self) -> bool {
+    matches!(self.0, WasmMethodContentInner::Generate)
+  }
+
+  #[wasm_bindgen(js_name = privateKey, getter)]
+  pub fn private_key(&mut self) -> Option<Vec<u8>> {
+    match &mut self.0 {
+      WasmMethodContentInner::Private(ref mut private_key) => {
+        let mut swap = Vec::new();
+        std::mem::swap(&mut swap, private_key);
+        Some(swap)
+      }
+      _ => None,
+    }
+  }
+
+  #[wasm_bindgen(js_name = publicKey, getter)]
+  pub fn public_key(&mut self) -> Option<Vec<u8>> {
+    match &mut self.0 {
+      WasmMethodContentInner::Public(ref mut public_key) => {
+        let mut swap = Vec::new();
+        std::mem::swap(&mut swap, public_key);
+        Some(swap)
+      }
+      _ => None,
+    }
+  }
 }
 
 impl_wasm_json!(WasmMethodContent, MethodContent);
@@ -57,5 +86,15 @@ impl From<WasmMethodContent> for MethodContent {
       WasmMethodContentInner::Private(private_key) => MethodContent::Private(PrivateKey::from(private_key)),
       WasmMethodContentInner::Public(public_key) => MethodContent::Public(PublicKey::from(public_key)),
     }
+  }
+}
+
+impl From<MethodContent> for WasmMethodContent {
+  fn from(content: MethodContent) -> Self {
+    WasmMethodContent(match content {
+      MethodContent::Generate => WasmMethodContentInner::Generate,
+      MethodContent::Private(private_key) => WasmMethodContentInner::Private(private_key.as_ref().to_vec()),
+      MethodContent::Public(public_key) => WasmMethodContentInner::Public(public_key.as_ref().to_vec()),
+    })
   }
 }

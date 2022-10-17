@@ -2,13 +2,16 @@ import { Base58 } from "@iota/util.js";
 import {
     CoreDocument,
     CoreDocumentRc,
-    CoreVerificationMethod,
+    CreateMethodResult,
     Credential,
+    Ed25519KeyType,
     Ed25519SignatureAlgorithm,
     KeyAlias,
     KeyStorage,
-    KeyType,
-    MethodScope,
+    MethodContent,
+    MethodData,
+    MethodHandler,
+    MethodSuite,
     MethodType1,
     ProofOptions,
     ProofValue,
@@ -27,19 +30,17 @@ export async function customStorage() {
     const fragment = "#key-2";
     var document = new CoreDocument({ id: "did:iota:0x0002" });
 
-    // const documentRc = new CoreDocumentRc(document);
-    // await documentRc.createMethod({
-    //     fragment,
-    //     content: MethodContent.Generate(),
-    //     type: MethodType1.ed25519VerificationKey2018(),
-    // });
-    // document = documentRc.intoDocument();
+    const map = new Map();
+    map.set(MethodType1.ed25519VerificationKey2018().toString(), new Ed25519VerificationKey2018());
+    const methodSuite: MethodSuite = new MethodSuite(memStore, map);
 
-    let keyAlias = await memStore.generate("Ed25519");
-
-    let keyPublic = await memStore.public(keyAlias);
-    let method = new CoreVerificationMethod(document.id(), KeyType.Ed25519, keyPublic, fragment);
-    document.insertMethod(method, MethodScope.VerificationMethod());
+    const documentRc = new CoreDocumentRc(document);
+    await documentRc.createMethod(methodSuite, {
+        fragment,
+        content: MethodContent.Generate(),
+        type: MethodType1.ed25519VerificationKey2018(),
+    });
+    document = documentRc.intoDocument();
 
     let handlerMap: Map<string, SignatureHandler> = new Map();
     handlerMap.set(MethodType1.ed25519VerificationKey2018().toString(), new JcsEd25519Signature());
@@ -92,5 +93,22 @@ class JcsEd25519Signature implements SignatureHandler {
 
     signatureName(): string {
         return "JcsEd25519Signature2020";
+    }
+}
+
+class Ed25519VerificationKey2018 implements MethodHandler {
+    async create(methodContent: MethodContent, keyStorage: KeyStorage): Promise<CreateMethodResult> {
+        if (methodContent.isGenerate()) {
+            const keyAlias = await keyStorage.generate(Ed25519KeyType.toString());
+            const pubkey = await keyStorage.public(keyAlias);
+            const methodData = MethodData.newBase58(pubkey);
+            return new CreateMethodResult(keyAlias, methodData);
+        } else {
+            throw new Error("method creation from a private or public key not yet implemented");
+        }
+    }
+
+    methodType(): string {
+        return "Ed25519VerificationKey2018";
     }
 }

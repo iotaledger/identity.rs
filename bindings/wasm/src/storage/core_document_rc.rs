@@ -20,11 +20,14 @@ use identity_storage::CoreDocumentExt;
 use identity_storage::CreateMethodBuilder;
 use identity_storage::IdentityUpdater;
 use identity_storage::MethodContent;
+use identity_storage::MethodSuite;
 use identity_storage::MethodType1;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
+
+use super::WasmMethodSuite;
 
 #[wasm_bindgen(js_name = CoreDocumentRc)]
 pub struct WasmCoreDocumentRc(Rc<RefCell<CoreDocument>>);
@@ -41,8 +44,16 @@ impl WasmCoreDocumentRc {
     WasmCoreDocument(RefCell::borrow(&self.0).clone())
   }
 
+  // This needs to take the method_suite as a separate parameter. WasmMethodSuite is a type that cannot
+  // be serialized so we need a reference to it. An owned version cannot be passed due to the usage of weak-refs.
+  // But, in a duck-typed interface, such as CreateMethodOptions we can only return owned parameters.
+  // That's why method_suite cannot be part of CreateMethodOptions.
   #[wasm_bindgen(js_name = createMethod)]
-  pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<PromiseVoid> {
+  pub fn create_method(
+    &mut self,
+    method_suite: &WasmMethodSuite,
+    options: &CreateMethodOptions,
+  ) -> Result<PromiseVoid> {
     let fragment: String = options.fragment().expect("TODO");
     // let scope: Option<MethodScope> = options.scope().into_serde().expect("TODO");
     let content: MethodContent = options
@@ -57,18 +68,19 @@ impl WasmCoreDocumentRc {
       .into_serde::<Option<MethodType1>>()
       .expect("TODO")
       .expect("TODO");
-    // let key_storage: WasmKeyStorage = options.key_storage().expect("TODO");
+    let method_suite: WasmMethodSuite = method_suite.clone();
 
     let document: Rc<RefCell<CoreDocument>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       let mut document_ref: RefMut<CoreDocument> = document.borrow_mut();
       let mut updater: IdentityUpdater<'_> = document_ref.update_identity();
+      let method_suite: &MethodSuite<WasmKeyStorage> = method_suite.0.as_ref();
 
       let create_method: CreateMethodBuilder<'_, WasmKeyStorage> = updater
         .create_method()
-        // .key_storage(&key_storage)
         .content(content)
-        .type_(method_type.into())
+        .type_(method_type)
+        .method_suite(method_suite)
         .fragment(&fragment);
 
       // TODO: Not implemented currently.
@@ -101,12 +113,6 @@ extern "C" {
 
   #[wasm_bindgen(getter, method)]
   pub fn content(this: &CreateMethodOptions) -> OptionMethodContent;
-
-  // #[wasm_bindgen(getter, method)]
-  // pub fn key_storage(this: &CreateMethodOptions) -> Option<WasmKeyStorage>;
-
-  // #[wasm_bindgen(getter, method)]
-  // pub fn method_suite(this: &CreateMethodOptions) -> Option<WasmMethodSuite>;
 }
 
 // TODO: Match the above.
@@ -132,8 +138,5 @@ export type CreateMethodOptions = {
     content: MethodContent,
 
     type: MethodType1,
-
-    /** A KeyStorage implementation. */
-    key_storage: KeyStorage
   };
 "#;

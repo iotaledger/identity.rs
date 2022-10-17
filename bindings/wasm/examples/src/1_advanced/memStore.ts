@@ -1,7 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Ed25519, Ed25519SignatureAlgorithm, KeyAlias, KeyPair, KeyStorage, KeyType } from "../../../node";
+import {
+    Ed25519,
+    Ed25519KeyType,
+    Ed25519SignatureAlgorithm,
+    KeyAlias,
+    KeyPair,
+    KeyStorage,
+    KeyType,
+    X25519KeyType,
+} from "../../../node";
 
 /** An insecure, in-memory `Storage` implementation that serves as an example.
 This can be passed to the `AccountBuilder` to create accounts with this as the storage. */
@@ -18,10 +27,10 @@ export class MemStore implements KeyStorage {
     public async generate(keyType: string): Promise<KeyAlias> {
         let supportedKeyType;
         switch (keyType) {
-            case "Ed25519":
+            case Ed25519KeyType.toString():
                 supportedKeyType = KeyType.Ed25519;
                 break;
-            case "X25519":
+            case X25519KeyType.toString():
                 supportedKeyType = KeyType.X25519;
                 break;
             default:

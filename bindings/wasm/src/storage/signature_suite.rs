@@ -30,7 +30,7 @@ impl WasmSignatureSuite {
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
   pub fn new(storage: WasmKeyStorage, handlers: Option<MapSignatureHandler>) -> Result<WasmSignatureSuite> {
-    let mut signature_suite = SignatureSuite::new(storage.into());
+    let mut signature_suite = SignatureSuite::new(storage);
 
     if let Some(handlers) = handlers {
       let map: &Map = handlers.dyn_ref::<js_sys::Map>().expect("TODO");
