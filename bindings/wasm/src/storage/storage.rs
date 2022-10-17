@@ -89,14 +89,12 @@ extern "C" {
   pub fn signature_name(this: &WasmSignatureHandlerInterface) -> String;
 }
 
-// Workaround because JSDocs does not support arrows (=>) while TS does not support the "function" word in type
-// definitions (which would be accepted by JSDocs).
 #[wasm_bindgen(typescript_custom_section)]
 const TS_SECTION: &'static str = r#"
 export type MapSignatureHandler = Map<string, SignatureHandler>;
 
 export type SignatureSuiteHandlers = {
-  handlers?: Map<string, SignatureHandler>;
+  handlers?: MapSignatureHandler;
 };
 
 export interface SignatureHandler {
