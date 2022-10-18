@@ -6,6 +6,8 @@ use core::fmt::Formatter;
 use core::str::FromStr;
 use std::borrow::Cow;
 
+use identity_core::crypto::KeyType;
+
 use crate::error::Error;
 use crate::error::Result;
 
@@ -50,6 +52,27 @@ impl FromStr for MethodType {
 }
 
 //TODO: Also implement From<String>?
+
+// TODO: Is this the right place for this? Is this even needed?
+impl TryFrom<MethodType> for KeyType {
+  // TODO: Find a better error type.
+  type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
+
+  fn try_from(method_type: MethodType) -> Result<Self, Self::Error> {
+    match method_type {
+      ty if ty == MethodType::ED25519_VERIFICATION_KEY_2018 => Ok(KeyType::Ed25519),
+      ty if ty == MethodType::X25519_KEY_AGREEMENT_KEY_2019 => Ok(KeyType::X25519),
+      type_ if type_.as_str().starts_with("Ed25519") => Ok(KeyType::Ed25519),
+      other => Err(
+        format!(
+          "method type {} could not be converted to a KeyType recognized by the IOTA Identity framework",
+          other
+        )
+        .into(),
+      ),
+    }
+  }
+}
 
 #[cfg(test)]
 mod tests {

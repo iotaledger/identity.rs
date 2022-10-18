@@ -4,37 +4,6 @@
 use std::borrow::Cow;
 use std::fmt::Display;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-pub struct MethodType1(Cow<'static, str>);
+use identity_did::verification::MethodType;
 
-impl MethodType1 {
-  pub const fn ed25519_verification_key_2018() -> Self {
-    Self(Cow::Borrowed("Ed25519VerificationKey2018"))
-  }
-
-  pub const fn x25519_verification_key_2018() -> Self {
-    Self(Cow::Borrowed("X25519VerificationKey2018"))
-  }
-
-  pub fn as_str(&self) -> &str {
-    self.0.as_ref()
-  }
-}
-
-impl<S: AsRef<str>> From<S> for MethodType1 {
-  fn from(string: S) -> Self {
-    Self(Cow::Owned(string.as_ref().to_owned()))
-  }
-}
-
-impl Display for MethodType1 {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    Display::fmt(&self.0, f)
-  }
-}
-
-impl From<MethodType1> for String {
-  fn from(method_type: MethodType1) -> Self {
-    method_type.to_string()
-  }
-}
+pub type MethodType1 = MethodType;

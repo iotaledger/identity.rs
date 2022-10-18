@@ -43,6 +43,6 @@ where
 impl SignatureMethodType for JcsEd25519 {
   /// Returns the method type of a signature handler.
   fn method_type() -> MethodType1 {
-    MethodType1::ed25519_verification_key_2018()
+    MethodType1::ED25519_VERIFICATION_KEY_2018
   }
 }

@@ -46,19 +46,12 @@ impl CoreDocumentExt for CoreDocument {
     let method = self.resolve_method(fragment, Default::default()).expect("TODO");
 
     // TODO: Remove after refactoring VerificationMethod to hold the new MethodType.
-    let method_type = match method.type_() {
-      identity_did::verification::MethodType::ED25519_VERIFICATION_KEY_2018 => {
-        MethodType1::ed25519_verification_key_2018()
-      }
-      identity_did::verification::MethodType::X25519_KEY_AGREEMENT_KEY_2019 => {
-        MethodType1::x25519_verification_key_2018()
-      }
-    };
+    let method_type = method.type_();
 
     // TODO: Set only fragment as method_id?
 
     suite
-      .sign(value, method.id().to_string(), &method_type, proof_options)
+      .sign(value, method.id().to_string(), method_type, proof_options)
       .await
   }
 }
