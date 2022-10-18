@@ -16,7 +16,7 @@ impl<'updater> IdentityUpdater<'updater> {
   where
     K: KeyStorage,
     K::KeyType: TryFrom<MethodType1>,
-    <K::KeyType as TryFrom<MethodType1>>::Error: std::error::Error + Send + Sync + 'static,
+    <K::KeyType as TryFrom<MethodType1>>::Error: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     CreateMethodBuilder::new(self.document)
   }

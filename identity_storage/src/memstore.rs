@@ -93,21 +93,6 @@ impl From<Ed25519SignatureAlgorithm> for MemStoreSigningAlgorithm {
   }
 }
 
-impl TryFrom<MethodType1> for KeyType {
-  type Error = StorageError;
-
-  fn try_from(method_type: MethodType1) -> Result<Self, Self::Error> {
-    match method_type {
-      ty if ty == MethodType1::ed25519_verification_key_2018() => Ok(KeyType::Ed25519),
-      ty if ty == MethodType1::x25519_verification_key_2018() => Ok(KeyType::X25519),
-      type_ if type_.as_str().starts_with("Ed25519") => Ok(KeyType::Ed25519),
-      other => Err(StorageError::new(StorageErrorKind::NotSupported(format!(
-        "unsupported key type {other}"
-      )))),
-    }
-  }
-}
-
 impl From<Ed25519KeyType> for KeyType {
   fn from(_: Ed25519KeyType) -> Self {
     KeyType::Ed25519

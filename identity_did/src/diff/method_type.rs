@@ -10,7 +10,7 @@ impl Diff for MethodType {
   type Type = MethodType;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
-    Ok(*other)
+    Ok(other.clone())
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {

@@ -101,7 +101,7 @@ mod tests2 {
       .update_identity()
       .create_method()
       .method_suite(&method_suite)
-      .type_(MethodType1::ed25519_verification_key_2018())
+      .type_(MethodType1::ED25519_VERIFICATION_KEY_2018)
       .content(MethodContent::Generate)
       .fragment(fragment)
       .apply()

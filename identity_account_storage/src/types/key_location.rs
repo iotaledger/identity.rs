@@ -56,8 +56,8 @@ impl KeyLocation {
     let method_data: &MethodData = method.data();
 
     let key_type: KeyType = match method.type_() {
-      MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
-      MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
+      MethodType::ED25519_VERIFICATION_KEY_2018 => KeyType::Ed25519,
+      MethodType::X25519_KEY_AGREEMENT_KEY_2019 => KeyType::X25519,
     };
 
     let public_key: Vec<u8> = method_data.try_decode()?;
