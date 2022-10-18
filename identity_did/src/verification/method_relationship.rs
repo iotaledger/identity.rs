@@ -10,3 +10,5 @@ pub enum MethodRelationship {
   CapabilityDelegation,
   CapabilityInvocation,
 }
+
+// TODO: Document each variant

@@ -19,6 +19,7 @@ pub enum MethodData {
   PublicKeyBase58(String),
   PublicKeyJwk(Jwk),
 }
+// TODO: Document the ariants of this enum.
 
 impl MethodData {
   /// Creates a new `MethodData` variant with base58-encoded content.

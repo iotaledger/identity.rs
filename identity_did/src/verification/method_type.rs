@@ -14,6 +14,7 @@ use crate::error::Result;
 pub struct MethodType(Cow<'static, str>);
 
 impl MethodType {
+  //TODO: Document these public constants.
   pub const ED25519_VERIFICATION_KEY_2018: Self = Self(Cow::Borrowed("Ed25519VerificationKey2018"));
   pub const X25519_KEY_AGREEMENT_KEY_2019: Self = Self(Cow::Borrowed("X25519KeyAgreementKey2019"));
 }
