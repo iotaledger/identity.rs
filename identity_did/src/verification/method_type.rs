@@ -4,25 +4,32 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
+use std::borrow::Cow;
+
+use identity_core::crypto::KeyType;
 
 use crate::error::Error;
 use crate::error::Result;
 
 /// Supported verification method types.
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub enum MethodType {
-  Ed25519VerificationKey2018,
-  X25519KeyAgreementKey2019,
-  // Other(String),
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+pub struct MethodType(Cow<'static, str>);
+
+impl MethodType {
+  //TODO: Document these public constants.
+  pub const ED25519_VERIFICATION_KEY_2018: Self = Self(Cow::Borrowed("Ed25519VerificationKey2018"));
+  pub const X25519_KEY_AGREEMENT_KEY_2019: Self = Self(Cow::Borrowed("X25519KeyAgreementKey2019"));
 }
 
 impl MethodType {
   pub fn as_str(&self) -> &str {
-    match self {
-      Self::Ed25519VerificationKey2018 => "Ed25519VerificationKey2018",
-      Self::X25519KeyAgreementKey2019 => "X25519KeyAgreementKey2019",
-      // Self::Other(other) => other.as_str()
-    }
+    self.0.as_ref()
+  }
+}
+
+impl AsRef<str> for MethodType {
+  fn as_ref(&self) -> &str {
+    self.0.as_ref()
   }
 }
 
@@ -37,10 +44,32 @@ impl FromStr for MethodType {
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     match string {
-      "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
-      "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
-      // other => Ok(Self::Other(other.to_owned())),
-      _ => Err(Error::UnknownMethodType),
+      "Ed25519VerificationKey2018" => Ok(Self::ED25519_VERIFICATION_KEY_2018),
+      "X25519KeyAgreementKey2019" => Ok(Self::X25519_KEY_AGREEMENT_KEY_2019),
+      _ => Ok(Self(Cow::Owned(string.to_owned()))),
+    }
+  }
+}
+
+//TODO: Also implement From<String>?
+
+// TODO: Is this the right place for this? Is this even needed?
+impl TryFrom<MethodType> for KeyType {
+  // TODO: Find a better error type.
+  type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
+
+  fn try_from(method_type: MethodType) -> Result<Self, Self::Error> {
+    match method_type {
+      ty if ty == MethodType::ED25519_VERIFICATION_KEY_2018 => Ok(KeyType::Ed25519),
+      ty if ty == MethodType::X25519_KEY_AGREEMENT_KEY_2019 => Ok(KeyType::X25519),
+      type_ if type_.as_str().starts_with("Ed25519") => Ok(KeyType::Ed25519),
+      other => Err(
+        format!(
+          "method type {} could not be converted to a KeyType recognized by the IOTA Identity framework",
+          other
+        )
+        .into(),
+      ),
     }
   }
 }
@@ -54,8 +83,8 @@ mod tests {
   #[test]
   fn test_method_type_serde() {
     for method_type in [
-      MethodType::Ed25519VerificationKey2018,
-      MethodType::X25519KeyAgreementKey2019,
+      MethodType::ED25519_VERIFICATION_KEY_2018,
+      MethodType::X25519_KEY_AGREEMENT_KEY_2019,
     ] {
       let ser: Value = serde_json::to_value(&method_type).unwrap();
       assert_eq!(ser.as_str().unwrap(), method_type.as_str());

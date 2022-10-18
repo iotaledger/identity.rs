@@ -61,13 +61,6 @@ where
     let method_type = self.typ.expect("TODO");
     let method_content = self.content.expect("TODO");
 
-    // TODO: This will be gone after refactoring VerificationMethod to use MethodType1.
-    let legacy_method_type = match &method_type {
-      ty if ty == &MethodType1::ed25519_verification_key_2018() => MethodType::Ed25519VerificationKey2018,
-      ty if ty == &MethodType1::x25519_verification_key_2018() => MethodType::X25519KeyAgreementKey2019,
-      _ => todo!("legacy"),
-    };
-
     // TODO: Store key_alias mapping to method id.
     // TODO: Allow user or suite to also set method custom properties (?)
     let (_key_alias, method_data) = method_suite.create(&method_type, method_content).await;
@@ -83,7 +76,7 @@ where
       )
       .controller(self.document.id().to_owned())
       .data(method_data)
-      .type_(legacy_method_type)
+      .type_(method_type)
       .build()
       .expect("TODO");
 

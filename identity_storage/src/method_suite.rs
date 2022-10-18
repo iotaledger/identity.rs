@@ -69,7 +69,7 @@ where
   K::KeyType: From<Ed25519KeyType> + Send,
 {
   fn method_type(&self) -> MethodType1 {
-    MethodType1::ed25519_verification_key_2018()
+    MethodType1::ED25519_VERIFICATION_KEY_2018
   }
 
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData) {

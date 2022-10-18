@@ -29,7 +29,7 @@ pub trait SealedAbstractKeyType {}
 impl<T> SealedAbstractKeyType for T
 where
   T: TryFrom<MethodType1> + Send + Sync + 'static,
-  <T as TryFrom<MethodType1>>::Error: std::error::Error + Send + Sync,
+  <T as TryFrom<MethodType1>>::Error: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
 {
 }
 
