@@ -47,10 +47,12 @@ impl CoreDocumentExt for CoreDocument {
 
     // TODO: Remove after refactoring VerificationMethod to hold the new MethodType.
     let method_type = match method.type_() {
-      identity_did::verification::MethodType::Ed25519VerificationKey2018 => {
+      identity_did::verification::MethodType::ED25519_VERIFICATION_KEY_2018 => {
         MethodType1::ed25519_verification_key_2018()
       }
-      identity_did::verification::MethodType::X25519KeyAgreementKey2019 => MethodType1::x25519_verification_key_2018(),
+      identity_did::verification::MethodType::X25519_KEY_AGREEMENT_KEY_2019 => {
+        MethodType1::x25519_verification_key_2018()
+      }
     };
 
     // TODO: Set only fragment as method_id?

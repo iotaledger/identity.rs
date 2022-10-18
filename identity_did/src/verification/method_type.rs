@@ -11,21 +11,22 @@ use crate::error::Result;
 
 /// Supported verification method types.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub struct MethodType(Cow<'static, str>); 
+pub struct MethodType(Cow<'static, str>);
 
-impl MethodType{
-  pub const Ed25519VerificationKey2018: Self = Self("Ed25519VerificationKey2018".into());
-  pub const X25519KeyAgreementKey2019: Self = Self("X25519KeyAgreementKey2019".into());
-  // Other(String),
+impl MethodType {
+  pub const ED25519_VERIFICATION_KEY_2018: Self = Self(Cow::Borrowed("Ed25519VerificationKey2018"));
+  pub const X25519_KEY_AGREEMENT_KEY_2019: Self = Self(Cow::Borrowed("X25519KeyAgreementKey2019"));
 }
 
 impl MethodType {
   pub fn as_str(&self) -> &str {
-    match self {
-      Self::Ed25519VerificationKey2018 => "Ed25519VerificationKey2018",
-      Self::X25519KeyAgreementKey2019 => "X25519KeyAgreementKey2019",
-      // Self::Other(other) => other.as_str()
-    }
+    self.0.as_ref()
+  }
+}
+
+impl AsRef<str> for MethodType {
+  fn as_ref(&self) -> &str {
+    self.0.as_ref()
   }
 }
 
@@ -40,13 +41,14 @@ impl FromStr for MethodType {
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     match string {
-      "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
-      "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
-      // other => Ok(Self::Other(other.to_owned())),
-      _ => Err(Error::UnknownMethodType),
+      "Ed25519VerificationKey2018" => Ok(Self::ED25519_VERIFICATION_KEY_2018),
+      "X25519KeyAgreementKey2019" => Ok(Self::X25519_KEY_AGREEMENT_KEY_2019),
+      _ => Ok(Self(Cow::Owned(string.to_owned()))),
     }
   }
 }
+
+//TODO: Also implement From<String>?
 
 #[cfg(test)]
 mod tests {
@@ -57,8 +59,8 @@ mod tests {
   #[test]
   fn test_method_type_serde() {
     for method_type in [
-      MethodType::Ed25519VerificationKey2018,
-      MethodType::X25519KeyAgreementKey2019,
+      MethodType::ED25519_VERIFICATION_KEY_2018,
+      MethodType::X25519_KEY_AGREEMENT_KEY_2019,
     ] {
       let ser: Value = serde_json::to_value(&method_type).unwrap();
       assert_eq!(ser.as_str().unwrap(), method_type.as_str());

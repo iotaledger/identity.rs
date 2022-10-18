@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::*; 
+use super::*;
 /// JSON Web Key.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7517#section-4)
@@ -245,11 +245,10 @@ impl Jwk {
   }
 
   pub fn try_ec_params(&self) -> Option<&JwkParamsEc> {
-        match self.params() {
+    match self.params() {
       JwkParams::Ec(params) => Some(params),
       _ => None,
     }
-
   }
 
   pub fn try_ec_params_mut(&mut self) -> Option<&mut JwkParamsEc> {

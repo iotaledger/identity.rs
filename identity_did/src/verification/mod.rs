@@ -7,6 +7,7 @@
 //! `identity_iota_core_legacy` crate.
 
 mod builder;
+pub mod jwk;
 mod method_data;
 mod method_ref;
 mod method_relationship;
@@ -14,7 +15,6 @@ mod method_scope;
 mod method_type;
 mod traits;
 mod verification_method;
-pub mod jwk;
 
 pub use self::builder::MethodBuilder;
 pub use self::method_data::MethodData;

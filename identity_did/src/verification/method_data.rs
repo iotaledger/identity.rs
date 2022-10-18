@@ -17,7 +17,7 @@ use super::jwk::Jwk;
 pub enum MethodData {
   PublicKeyMultibase(String),
   PublicKeyBase58(String),
-  PublicKeyJwk(Jwk), 
+  PublicKeyJwk(Jwk),
 }
 
 impl MethodData {
@@ -41,15 +41,15 @@ impl MethodData {
   ///
   /// Decoding can fail if `MethodData` has invalid content or cannot be
   /// represented as a vector of bytes.
-  /// 
-  //TODO: Rename try_decode_multibase, or split MethodData up into MultiBaseMethodData and JwkMethodData and implement this on the former variant
+  //TODO: Rename try_decode_multibase, or split MethodData up into MultiBaseMethodData and JwkMethodData and implement
+  // this on the former variant
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
       Self::PublicKeyMultibase(input) => {
         BaseEncoding::decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase)
-      },
+      }
       Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
-      Self::PublicKeyJwk(..) => Err(Error::NotBaseEncodedError)
+      Self::PublicKeyJwk(..) => Err(Error::NotBaseEncodedError),
     }
   }
 }

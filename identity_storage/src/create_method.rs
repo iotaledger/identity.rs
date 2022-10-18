@@ -63,8 +63,8 @@ where
 
     // TODO: This will be gone after refactoring VerificationMethod to use MethodType1.
     let legacy_method_type = match &method_type {
-      ty if ty == &MethodType1::ed25519_verification_key_2018() => MethodType::Ed25519VerificationKey2018,
-      ty if ty == &MethodType1::x25519_verification_key_2018() => MethodType::X25519KeyAgreementKey2019,
+      ty if ty == &MethodType1::ed25519_verification_key_2018() => MethodType::ED25519_VERIFICATION_KEY_2018,
+      ty if ty == &MethodType1::x25519_verification_key_2018() => MethodType::X25519_KEY_AGREEMENT_KEY_2019,
       _ => todo!("legacy"),
     };
 

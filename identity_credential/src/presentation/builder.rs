@@ -180,7 +180,7 @@ mod tests {
     let method: VerificationMethod = MethodBuilder::default()
       .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::new_multibase(keypair.public()))
       .build()
       .unwrap();

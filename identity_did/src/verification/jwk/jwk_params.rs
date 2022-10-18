@@ -1,7 +1,5 @@
 use super::key_type::JwkType;
 
-
-
 /// Algorithm-specific parameters for JSON Web Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6)
