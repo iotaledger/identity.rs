@@ -12,12 +12,12 @@ pub struct WasmMethodType(pub(crate) MethodType);
 impl WasmMethodType {
   #[wasm_bindgen(js_name = Ed25519VerificationKey2018)]
   pub fn ed25519_verification_key_2018() -> WasmMethodType {
-    WasmMethodType(MethodType::Ed25519VerificationKey2018)
+    WasmMethodType(MethodType::ED25519_VERIFICATION_KEY_2018)
   }
 
   #[wasm_bindgen(js_name = X25519KeyAgreementKey2019)]
   pub fn x25519_key_agreement_key_2019() -> WasmMethodType {
-    WasmMethodType(MethodType::X25519KeyAgreementKey2019)
+    WasmMethodType(MethodType::X25519_KEY_AGREEMENT_KEY_2019)
   }
 
   /// Returns the `MethodType` as a string.

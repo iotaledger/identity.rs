@@ -96,7 +96,7 @@ where
       .type_
       .map(|value| self.type_().merge(value))
       .transpose()?
-      .unwrap_or_else(|| self.type_());
+      .unwrap_or_else(|| self.type_().clone());
 
     let properties: T = diff
       .properties
@@ -180,7 +180,7 @@ mod test {
     VerificationMethod::builder(Default::default())
       .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap()
@@ -284,14 +284,14 @@ mod test {
   fn test_type() {
     let method = test_method();
     let mut new = method.clone();
-    *new.type_mut() = MethodType::X25519KeyAgreementKey2019;
+    *new.type_mut() = MethodType::X25519_KEY_AGREEMENT_KEY_2019;
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
     assert!(diff.data.is_none());
     assert!(diff.properties.is_none());
-    assert_eq!(diff.type_, Some(MethodType::X25519KeyAgreementKey2019));
+    assert_eq!(diff.type_, Some(MethodType::X25519_KEY_AGREEMENT_KEY_2019));
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -372,7 +372,7 @@ mod test {
     assert!(diff_method.is_err());
 
     // add type_
-    *new.type_mut() = MethodType::X25519KeyAgreementKey2019;
+    *new.type_mut() = MethodType::X25519_KEY_AGREEMENT_KEY_2019;
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());

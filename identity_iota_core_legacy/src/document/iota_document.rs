@@ -77,7 +77,7 @@ impl TryMethod for IotaDocument {
 
 impl IotaDocument {
   // Method types allowed to sign a DID document update.
-  pub const UPDATE_METHOD_TYPES: &'static [MethodType] = &[MethodType::Ed25519VerificationKey2018];
+  pub const UPDATE_METHOD_TYPES: &'static [MethodType] = &[MethodType::ED25519_VERIFICATION_KEY_2018];
   pub const DEFAULT_METHOD_FRAGMENT: &'static str = "sign-0";
 
   /// Creates a new DID Document from the given [`KeyPair`].
@@ -421,11 +421,11 @@ impl IotaDocument {
 
     // Sign document.
     match method.type_() {
-      MethodType::Ed25519VerificationKey2018 => {
+      MethodType::ED25519_VERIFICATION_KEY_2018 => {
         JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), ProofOptions::default())
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
-      MethodType::X25519KeyAgreementKey2019 => {
+      MethodType::X25519_KEY_AGREEMENT_KEY_2019 => {
         // X25519 cannot be used to sign documents.
         return Err(Error::DocumentSignError(
           "X25519KeyAgreementKey2019 cannot sign documents",
@@ -785,7 +785,7 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
@@ -832,7 +832,7 @@ mod tests {
     assert_eq!(default_signing_method.id().to_string(), DID_METHOD_ID);
     assert_eq!(
       document.default_signing_method().unwrap().type_(),
-      MethodType::Ed25519VerificationKey2018
+      MethodType::ED25519_VERIFICATION_KEY_2018
     );
     assert_eq!(
       document.default_signing_method().unwrap().data(),
@@ -849,7 +849,7 @@ mod tests {
     );
     assert_eq!(
       document.default_signing_method().unwrap().type_(),
-      MethodType::Ed25519VerificationKey2018
+      MethodType::ED25519_VERIFICATION_KEY_2018
     );
     assert_eq!(
       document.default_signing_method().unwrap().data(),
@@ -943,7 +943,7 @@ mod tests {
     let expected = IotaVerificationMethod::builder(Default::default())
       .id(DID_METHOD_ID.parse().unwrap())
       .controller(valid_did())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyMultibase(
         "zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
       ))

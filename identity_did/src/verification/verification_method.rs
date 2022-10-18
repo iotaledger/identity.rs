@@ -119,8 +119,8 @@ where
   }
 
   /// Returns a reference to the `VerificationMethod` type.
-  pub fn type_(&self) -> MethodType {
-    self.type_
+  pub fn type_(&self) -> &MethodType {
+    &self.type_
   }
 
   /// Returns a mutable reference to the `VerificationMethod` type.
@@ -206,11 +206,11 @@ where
     let mut builder: MethodBuilder<D, T> = MethodBuilder::default().id(id).controller(did);
     match key_type {
       KeyType::Ed25519 => {
-        builder = builder.type_(MethodType::Ed25519VerificationKey2018);
+        builder = builder.type_(MethodType::ED25519_VERIFICATION_KEY_2018);
         builder = builder.data(MethodData::new_multibase(public_key));
       }
       KeyType::X25519 => {
-        builder = builder.type_(MethodType::X25519KeyAgreementKey2019);
+        builder = builder.type_(MethodType::X25519_KEY_AGREEMENT_KEY_2019);
         builder = builder.data(MethodData::new_multibase(public_key));
       }
     }

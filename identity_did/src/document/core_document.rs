@@ -783,13 +783,11 @@ where
   {
     let public_key: Vec<u8> = method.data().try_decode()?;
 
-    match method.type_() {
-      MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
-      }
-      MethodType::X25519KeyAgreementKey2019 => {
-        return Err(Error::InvalidMethodType);
-      }
+    // TODO: Update this method to reflect the new APIs.
+    if method.type_() == &MethodType::ED25519_VERIFICATION_KEY_2018 {
+      JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
+    } else {
+      return Err(Error::InvalidMethodType);
     }
 
     Ok(())
@@ -946,7 +944,7 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
