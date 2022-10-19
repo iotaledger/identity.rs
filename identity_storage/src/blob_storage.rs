@@ -6,9 +6,21 @@ use identity_did::did::CoreDID;
 
 use crate::StorageResult;
 
+#[cfg(not(feature = "send-sync-storage"))]
+mod storage_sub_trait {
+  pub trait StorageSendSyncMaybe {}
+  impl<S: super::BlobStorage> StorageSendSyncMaybe for S {}
+}
+
+#[cfg(feature = "send-sync-storage")]
+mod storage_sub_trait {
+  pub trait StorageSendSyncMaybe: Send + Sync {}
+  impl<S: Send + Sync + super::BlobStorage> StorageSendSyncMaybe for S {}
+}
+
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-pub trait BlobStorage {
+pub trait BlobStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Stores an arbitrary blob for the identity specified by `did`.
   ///
   /// Passing `None` means removing all data associated with the specified `did`.

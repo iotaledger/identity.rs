@@ -4,7 +4,6 @@
 use crate::Ed25519SignatureAlgorithm;
 use crate::KeyAlias;
 use crate::KeyStorage;
-use crate::MethodType1;
 use crate::Signable;
 use crate::SignatureHandler;
 use crate::SignatureMethodType;
@@ -13,6 +12,7 @@ use async_trait::async_trait;
 use identity_core::convert::ToJson;
 use identity_core::crypto::ProofValue;
 use identity_core::utils::BaseEncoding;
+use identity_did::verification::MethodType;
 
 pub struct JcsEd25519;
 
@@ -42,7 +42,7 @@ where
 
 impl SignatureMethodType for JcsEd25519 {
   /// Returns the method type of a signature handler.
-  fn method_type() -> MethodType1 {
-    MethodType1::ED25519_VERIFICATION_KEY_2018
+  fn method_type() -> MethodType {
+    MethodType::ED25519_VERIFICATION_KEY_2018
   }
 }

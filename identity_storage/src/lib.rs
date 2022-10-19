@@ -13,13 +13,14 @@ mod key_types;
 mod memstore;
 mod method_content;
 mod method_suite;
-mod method_type1;
 mod signature;
 mod signature_handler;
 mod signature_suite;
 mod signature_types;
 mod storage;
 mod storage_combinator;
+mod identity_state;
+mod method_hash;
 
 pub use blob_storage::*;
 pub use core_document_ext::*;
@@ -33,13 +34,13 @@ pub use key_types::*;
 pub use memstore::*;
 pub use method_content::*;
 pub use method_suite::*;
-pub use method_type1::*;
 pub use signature::*;
 pub use signature_handler::*;
 pub use signature_suite::*;
 pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
+pub use identity_state::*;
 
 #[cfg(test)]
 mod tests2 {
@@ -55,6 +56,7 @@ mod tests2 {
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
+use identity_did::verification::MethodType;
 
   use crate::CoreDocumentExt;
   use crate::Ed25519VerificationKey2018;
@@ -62,8 +64,7 @@ mod tests2 {
   use crate::MemStore;
   use crate::MethodContent;
   use crate::MethodSuite;
-  use crate::MethodType1;
-  use crate::SignatureSuite;
+   use crate::SignatureSuite;
 
   fn test_credential() -> Credential {
     let issuer_did: CoreDID = "did:iota:0x0001".parse().unwrap();
@@ -101,7 +102,7 @@ mod tests2 {
       .update_identity()
       .create_method()
       .method_suite(&method_suite)
-      .type_(MethodType1::ED25519_VERIFICATION_KEY_2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .content(MethodContent::Generate)
       .fragment(fragment)
       .apply()

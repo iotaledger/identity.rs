@@ -11,16 +11,16 @@ use identity_core::crypto::ProofValue;
 use identity_core::crypto::SetSignature;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_did::verification::MethodType;
 use serde::Serialize;
 
 use crate::KeyStorage;
-use crate::MethodType1;
 use crate::SignatureHandler;
 use crate::SignatureMethodType;
 
 pub struct SignatureSuite<K: KeyStorage> {
   key_storage: K,
-  signature_handlers: HashMap<MethodType1, Box<dyn SignatureHandler<K>>>,
+  signature_handlers: HashMap<MethodType, Box<dyn SignatureHandler<K>>>,
 }
 
 impl<K: KeyStorage> SignatureSuite<K> {
@@ -39,7 +39,7 @@ impl<K: KeyStorage> SignatureSuite<K> {
   }
 
   #[cfg(target_family = "wasm")]
-  pub fn register_unchecked(&mut self, method_type: MethodType1, handler: Box<dyn SignatureHandler<K>>) {
+  pub fn register_unchecked(&mut self, method_type: MethodType, handler: Box<dyn SignatureHandler<K>>) {
     self.signature_handlers.insert(method_type, handler);
   }
 
@@ -47,7 +47,7 @@ impl<K: KeyStorage> SignatureSuite<K> {
     &self,
     value: &mut VAL,
     method_id: impl Into<String>,
-    method_type: &MethodType1,
+    method_type: &MethodType,
     proof_options: ProofOptions,
   ) where
     VAL: Serialize + SetSignature + Clone + Into<Signable>,

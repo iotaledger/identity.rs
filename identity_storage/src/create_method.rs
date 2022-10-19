@@ -1,15 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::convert::FromJson;
+use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
+use crate::BlobStorage;
+use crate::IdentityState;
 use crate::KeyStorage;
 use crate::MethodContent;
 use crate::MethodSuite;
-use crate::MethodType1;
+use crate::Storage;
+use crate::StorageResult;
 
 pub struct CreateMethodBuilder<'builder, K>
 where
@@ -18,7 +23,7 @@ where
   document: &'builder mut CoreDocument,
   method_suite: Option<&'builder MethodSuite<K>>,
   content: Option<MethodContent>,
-  typ: Option<MethodType1>,
+  typ: Option<MethodType>,
   fragment: Option<String>,
 }
 
@@ -41,7 +46,7 @@ where
     self
   }
 
-  pub fn type_(mut self, typ: MethodType1) -> Self {
+  pub fn type_(mut self, typ: MethodType) -> Self {
     self.typ = Some(typ);
     self
   }
@@ -63,7 +68,10 @@ where
 
     // TODO: Store key_alias mapping to method id.
     // TODO: Allow user or suite to also set method custom properties (?)
-    let (_key_alias, method_data) = method_suite.create(&method_type, method_content).await;
+    let (key_alias, method_data) = method_suite.create(&method_type, method_content).await;
+
+    // let identity_state: IdentityState = self.load_identity_state(did_url, storage).await?;
+    // let mut method_index = identity_state.method_index().expect("TODO").unwrap_or_default();
 
     let method = VerificationMethod::builder(Default::default())
       .id(
@@ -82,4 +90,21 @@ where
 
     self.document.insert_method(method, Default::default()).expect("TODO");
   }
+
+  // async fn load_identity_state<B: BlobStorage>(
+  //   &self,
+  //   did_url: &CoreDIDUrl,
+  //   storage: &Storage<K, B>,
+  // ) -> StorageResult<IdentityState> {
+  //   let identity_state: IdentityState = match storage
+  //     .load(did_url.did())
+  //     .await?
+  //     .and_then(|serialize_state| Some(IdentityState::from_json_slice(&serialize_state)))
+  //   {
+  //     Some(deserialization_result) => deserialization_result.expect("TODO"),
+  //     None => IdentityState::new(None).expect("TODO"),
+  //   };
+
+  //   Ok(identity_state)
+  // }
 }

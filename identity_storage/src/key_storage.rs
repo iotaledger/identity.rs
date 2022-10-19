@@ -5,9 +5,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use identity_core::crypto::PublicKey;
+use identity_did::verification::MethodType;
 
 use crate::KeyAlias;
-use crate::MethodType1;
 use crate::Signature;
 use crate::StorageResult;
 
@@ -24,12 +24,12 @@ mod storage_sub_trait {
 }
 
 // TODO: Make sealed.
-pub trait SealedAbstractKeyType {}
+pub trait SealedAbstractKeyType: Send {}
 
 impl<T> SealedAbstractKeyType for T
 where
-  T: TryFrom<MethodType1> + Send + Sync + 'static,
-  <T as TryFrom<MethodType1>>::Error: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  T: TryFrom<MethodType> + Send + Sync + 'static,
+  <T as TryFrom<MethodType>>::Error: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
 {
 }
 

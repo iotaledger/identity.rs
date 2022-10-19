@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::ProofValue;
+use identity_did::verification::MethodType;
 
 use crate::KeyStorage;
-use crate::MethodType1;
 use crate::Signable;
 use crate::StorageResult;
 
@@ -23,5 +23,5 @@ pub trait SignatureHandler<K: KeyStorage> {
 }
 
 pub trait SignatureMethodType {
-  fn method_type() -> MethodType1;
+  fn method_type() -> MethodType;
 }

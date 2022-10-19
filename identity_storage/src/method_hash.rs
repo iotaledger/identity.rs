@@ -32,34 +32,32 @@ impl MethodHash {
   /// and the bytes of a public key.
   fn new(method_type: &MethodType, method_data: &MethodData) -> Self {
     let mut hasher = SeaHasher::new();
-    hasher.write(method_type);
+    hasher.write(method_type.as_str().as_bytes());
 
     match method_data {
       MethodData::PublicKeyMultibase(string) => {
-        hasher.write(string);
+        hasher.write(string.as_bytes());
       }
       MethodData::PublicKeyBase58(string) => {
-        hasher.write(string);
+        hasher.write(string.as_bytes());
       }
       _ => todo!("TODO: return error"),
     }
 
     let key_hash: u64 = hasher.finish();
 
-    Self {
-      hash: key_hash,
-    }
+    Self { hash: key_hash }
   }
 
   /// Obtain the location of a verification method's key in storage.
   pub fn from_verification_method(method: &VerificationMethod) -> Self {
-    Ok(MethodHash::new(method.type_(), method.data()))
+    MethodHash::new(&method.type_(), method.data())
   }
 }
 
 impl Display for MethodHash {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_str(&self.hash)
+    f.write_str(&self.hash.to_string())
   }
 }
 

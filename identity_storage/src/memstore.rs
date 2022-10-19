@@ -41,8 +41,6 @@ use crate::KeyAlias;
 // #[cfg(feature = "encryption")]
 // use crate::types::EncryptionAlgorithm;
 use crate::KeyStorage;
-use crate::MethodType1;
-use crate::StorageError;
 use crate::StorageErrorKind;
 use crate::StorageResult;
 // use crate::types::KeyLocation;

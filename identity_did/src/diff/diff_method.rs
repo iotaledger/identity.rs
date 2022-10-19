@@ -58,7 +58,7 @@ where
       type_: if self.type_() == other.type_() {
         None
       } else {
-        Some(self.type_().diff(&other.type_())?)
+        Some(self.type_().diff(other.type_())?)
       },
       data: if self.data() == other.data() {
         None

@@ -9,7 +9,6 @@ use serde::Serialize;
 
 use crate::identity_updater::IdentityUpdater;
 use crate::KeyStorage;
-use crate::MethodType1;
 use crate::Signable;
 use crate::SignatureSuite;
 
@@ -51,7 +50,7 @@ impl CoreDocumentExt for CoreDocument {
     // TODO: Set only fragment as method_id?
 
     suite
-      .sign(value, method.id().to_string(), method_type, proof_options)
+      .sign(value, method.id().to_string(), &method_type, proof_options)
       .await
   }
 }

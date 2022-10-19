@@ -5,16 +5,16 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use identity_did::verification::MethodData;
+use identity_did::verification::MethodType;
 
 use crate::Ed25519KeyType;
 use crate::KeyAlias;
 use crate::KeyStorage;
 use crate::MethodContent;
-use crate::MethodType1;
 
 pub struct MethodSuite<K: KeyStorage> {
   key_storage: K,
-  method_handlers: HashMap<MethodType1, Box<dyn MethodHandler<K>>>,
+  method_handlers: HashMap<MethodType, Box<dyn MethodHandler<K>>>,
 }
 
 impl<K: KeyStorage> MethodSuite<K> {
@@ -32,7 +32,7 @@ impl<K: KeyStorage> MethodSuite<K> {
     self.method_handlers.insert(handler.method_type(), Box::new(handler));
   }
 
-  pub async fn create(&self, method_type: &MethodType1, method_content: MethodContent) -> (KeyAlias, MethodData) {
+  pub async fn create(&self, method_type: &MethodType, method_content: MethodContent) -> (KeyAlias, MethodData) {
     match self.method_handlers.get(method_type) {
       Some(handler) => handler.create(method_content, &self.key_storage).await,
       None => todo!("return missing handler error"),
@@ -40,7 +40,7 @@ impl<K: KeyStorage> MethodSuite<K> {
   }
 
   #[cfg(target_family = "wasm")]
-  pub fn register_unchecked(&mut self, method_type: MethodType1, handler: Box<dyn MethodHandler<K>>) {
+  pub fn register_unchecked(&mut self, method_type: MethodType, handler: Box<dyn MethodHandler<K>>) {
     self.method_handlers.insert(method_type, handler);
   }
 }
@@ -48,14 +48,14 @@ impl<K: KeyStorage> MethodSuite<K> {
 #[cfg(feature = "send-sync-storage")]
 #[async_trait::async_trait]
 pub trait MethodHandler<K: KeyStorage>: Send + Sync {
-  fn method_type(&self) -> MethodType1;
+  fn method_type(&self) -> MethodType;
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData);
 }
 
 #[cfg(not(feature = "send-sync-storage"))]
 #[async_trait::async_trait(?Send)]
 pub trait MethodHandler<K: KeyStorage> {
-  fn method_type(&self) -> MethodType1;
+  fn method_type(&self) -> MethodType;
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData);
 }
 
@@ -68,8 +68,8 @@ where
   K: KeyStorage,
   K::KeyType: From<Ed25519KeyType> + Send,
 {
-  fn method_type(&self) -> MethodType1 {
-    MethodType1::ED25519_VERIFICATION_KEY_2018
+  fn method_type(&self) -> MethodType {
+    MethodType::ED25519_VERIFICATION_KEY_2018
   }
 
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData) {
