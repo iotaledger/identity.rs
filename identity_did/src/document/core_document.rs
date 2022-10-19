@@ -783,7 +783,7 @@ where
   {
     let public_key: Vec<u8> = method.data().try_decode()?;
 
-    // TODO: We need to figure out whether we want to keep this method.
+    // TODO: Update this method to reflect the new APIs.
     if method.type_() == &MethodType::ED25519_VERIFICATION_KEY_2018 {
       JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
     } else {

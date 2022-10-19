@@ -123,11 +123,11 @@ where
   where
     X: Serialize + SetSignature + TryMethod,
   {
+    // TODO: Update this method to reflect the new API.
     let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
     let method: &VerificationMethod<D, U> = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
     let method_uri: String = X::try_method(method)?;
 
-    // TODO: We need to figure out whether we want to keep this method etc.
     if method.type_() == &MethodType::ED25519_VERIFICATION_KEY_2018 {
       JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref(), self.options.clone())?;
     } else {

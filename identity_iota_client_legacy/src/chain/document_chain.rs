@@ -229,7 +229,7 @@ mod test {
       let signing_method: MethodRef<IotaDID> = MethodBuilder::default()
         .id(chain.id().to_url().join("#key-2").unwrap())
         .controller(chain.id().clone())
-        .type_(MethodType::Ed25519VerificationKey2018)
+        .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
         .data(MethodData::new_multibase(keypair.public()))
         .build()
         .map(Into::into)
