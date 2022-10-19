@@ -5,10 +5,9 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use identity_core::crypto::KeyType;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
-use identity_iota_core_legacy::document::IotaVerificationMethod;
+use identity_did::verification::VerificationMethod;
 use seahash::SeaHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
@@ -22,86 +21,57 @@ use std::hash::Hasher;
 /// situations like these.
 ///
 /// The string representation of that location can be obtained via `canonical_repr`.
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub struct KeyLocation {
-  /// The [`KeyType`] of the key.
-  pub key_type: KeyType,
-  /// The fragment of the key.
-  fragment: String,
-  /// The hash of the public key.
-  pub(in crate::types::key_location) key_hash: String,
+#[derive(Debug, Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+pub struct MethodHash {
+  /// The hash of method type and method data.
+  pub(crate) hash: u64,
 }
 
-impl KeyLocation {
+impl MethodHash {
   /// Create a location from a [`KeyType`], the fragment of a verification method
   /// and the bytes of a public key.
-  pub fn new(key_type: KeyType, fragment: String, public_key: &[u8]) -> Self {
+  fn new(method_type: &MethodType, method_data: &MethodData) -> Self {
     let mut hasher = SeaHasher::new();
-    hasher.write(public_key);
+    hasher.write(method_type);
+
+    match method_data {
+      MethodData::PublicKeyMultibase(string) => {
+        hasher.write(string);
+      }
+      MethodData::PublicKeyBase58(string) => {
+        hasher.write(string);
+      }
+      _ => todo!("TODO: return error"),
+    }
+
     let key_hash: u64 = hasher.finish();
 
     Self {
-      key_type,
-      fragment,
-      key_hash: key_hash.to_string(),
+      hash: key_hash,
     }
   }
 
   /// Obtain the location of a verification method's key in storage.
-  pub fn from_verification_method(method: &IotaVerificationMethod) -> crate::Result<Self> {
-    let fragment: &str = method
-      .id()
-      .fragment()
-      .ok_or(crate::Error::DIDError(identity_did::Error::MissingIdFragment))?;
-    let method_data: &MethodData = method.data();
-
-    let key_type: KeyType = match method.type_() {
-      MethodType::ED25519_VERIFICATION_KEY_2018 => KeyType::Ed25519,
-      MethodType::X25519_KEY_AGREEMENT_KEY_2019 => KeyType::X25519,
-    };
-
-    let public_key: Vec<u8> = method_data.try_decode()?;
-
-    Ok(KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref()))
-  }
-
-  /// Returns the canonical string representation of the location.
-  ///
-  /// This should be used as the representation for storage keys.
-  pub fn canonical(&self) -> String {
-    format!("{}:{}", self.fragment, self.key_hash)
+  pub fn from_verification_method(method: &VerificationMethod) -> Self {
+    Ok(MethodHash::new(method.type_(), method.data()))
   }
 }
 
-impl Display for KeyLocation {
+impl Display for MethodHash {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_str(&self.canonical())
+    f.write_str(&self.hash)
   }
 }
 
-// Custom Hash and Equality implementations to not include the key_type.
-
-impl Hash for KeyLocation {
-  fn hash<H: Hasher>(&self, state: &mut H) {
-    state.write(self.canonical().as_bytes());
-  }
-}
-
-impl PartialEq for KeyLocation {
-  fn eq(&self, other: &Self) -> bool {
-    self.fragment == other.fragment && self.key_hash == other.key_hash
-  }
-}
-
-impl Eq for KeyLocation {}
-
+// TODO:
+/*
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyType;
   use rand::distributions::DistString;
   use rand::rngs::OsRng;
 
-  use super::KeyLocation;
+  use super::MethodHash;
 
   // These same test vector should also be tested in Wasm
   // to ensure hashes are consistent across architectures.
@@ -127,7 +97,7 @@ mod tests {
     for (test_vector, expected_hash) in [TEST_VECTOR_1, TEST_VECTOR_2] {
       let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32);
 
-      let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.clone(), &test_vector);
+      let location: MethodHash = MethodHash::new(KeyType::Ed25519, fragment.clone(), &test_vector);
 
       let canonical_repr: String = location.canonical();
 
@@ -141,3 +111,4 @@ mod tests {
     }
   }
 }
+*/
