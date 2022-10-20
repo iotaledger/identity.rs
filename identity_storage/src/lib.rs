@@ -12,6 +12,7 @@ mod jcs_ed25519;
 mod key_alias;
 mod key_storage;
 mod key_types;
+mod mem_blob_store;
 mod memstore;
 mod method_content;
 mod method_hash;
@@ -22,7 +23,6 @@ mod signature_suite;
 mod signature_types;
 mod storage;
 mod storage_combinator;
-mod mem_blob_store;
 
 pub use blob_storage::*;
 pub use core_document_ext::*;
@@ -35,6 +35,7 @@ pub use jcs_ed25519::*;
 pub use key_alias::*;
 pub use key_storage::*;
 pub use key_types::*;
+pub use mem_blob_store::*;
 pub use memstore::*;
 pub use method_content::*;
 pub use method_suite::*;
@@ -44,11 +45,9 @@ pub use signature_suite::*;
 pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
-pub use mem_blob_store::*;
 
 #[cfg(test)]
 mod tests2 {
-  use std::sync::Arc;
 
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
@@ -66,11 +65,11 @@ mod tests2 {
   use crate::Ed25519VerificationKey2018;
   use crate::JcsEd25519;
   use crate::MemBlobStore;
-use crate::MemKeyStore;
+  use crate::MemKeyStore;
   use crate::MethodContent;
   use crate::MethodSuite;
   use crate::SignatureSuite;
-use crate::Storage;
+  use crate::Storage;
 
   fn test_credential() -> Credential {
     let issuer_did: CoreDID = "did:iota:0x0001".parse().unwrap();
@@ -103,7 +102,7 @@ use crate::Storage;
     let did = CoreDID::parse("did:iota:0x0000").unwrap();
     let mut document: CoreDocument = CoreDocument::builder(Default::default()).id(did).build().unwrap();
 
-    let mut method_suite = MethodSuite::new(&key_storage);
+    let mut method_suite = MethodSuite::new(storage.clone());
     method_suite.register(Ed25519VerificationKey2018);
 
     document
@@ -118,7 +117,7 @@ use crate::Storage;
 
     assert!(document.resolve_method(fragment, Default::default()).is_some());
 
-    let mut signature_suite = SignatureSuite::new(key_storage);
+    let mut signature_suite = SignatureSuite::new(storage);
     // This adds an "Ed25519VerificationKey2018" -> JcsEd25519 handler mapping.
     signature_suite.register(JcsEd25519);
 

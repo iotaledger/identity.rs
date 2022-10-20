@@ -12,21 +12,26 @@ use identity_core::crypto::SetSignature;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 use identity_did::verification::MethodType;
+use identity_did::verification::VerificationMethod;
 use serde::Serialize;
 
+use crate::method_hash::MethodHash;
+use crate::BlobStorage;
+use crate::KeyAlias;
 use crate::KeyStorage;
 use crate::SignatureHandler;
 use crate::SignatureMethodType;
+use crate::Storage;
 
-pub struct SignatureSuite<K: KeyStorage> {
-  key_storage: K,
+pub struct SignatureSuite<K: KeyStorage, B: BlobStorage> {
+  storage: Storage<K, B>,
   signature_handlers: HashMap<MethodType, Box<dyn SignatureHandler<K>>>,
 }
 
-impl<K: KeyStorage> SignatureSuite<K> {
-  pub fn new(key_storage: K) -> Self {
+impl<K: KeyStorage, B: BlobStorage> SignatureSuite<K, B> {
+  pub fn new(storage: Storage<K, B>) -> Self {
     Self {
-      key_storage,
+      storage,
       signature_handlers: HashMap::new(),
     }
   }
@@ -47,7 +52,7 @@ impl<K: KeyStorage> SignatureSuite<K> {
     &self,
     value: &mut VAL,
     method_id: impl Into<String>,
-    method_type: &MethodType,
+    method: &VerificationMethod,
     proof_options: ProofOptions,
   ) where
     VAL: Serialize + SetSignature + Clone + Into<Signable>,
@@ -55,11 +60,25 @@ impl<K: KeyStorage> SignatureSuite<K> {
     let proof_value: ProofValue = {
       let signable: Signable = value.clone().into();
 
-      match self.signature_handlers.get(method_type) {
+      let method_hash = MethodHash::from_verification_method(&method).expect("TODO");
+      let key_alias: KeyAlias = KeyAlias::try_from(
+        self
+          .storage
+          .load(&method_hash.to_string())
+          .await
+          .expect("TODO")
+          .expect("TODO"),
+      )
+      .expect("TODO");
+
+      match self.signature_handlers.get(method.type_()) {
         Some(handler) => {
           let signature: Proof = Proof::new_with_options(handler.signature_name(), method_id, proof_options);
           value.set_signature(signature);
-          handler.sign(signable, &self.key_storage).await.expect("TODO")
+          handler
+            .sign(signable, key_alias, &self.storage.key_storage)
+            .await
+            .expect("TODO")
         }
         None => todo!("return missing handler error"),
       }

@@ -16,8 +16,21 @@ where
   K: KeyStorage,
   B: BlobStorage,
 {
-  key_storage: Arc<K>,
+  pub(crate) key_storage: Arc<K>,
   blob_storage: Arc<B>,
+}
+
+impl<K, B> Clone for Storage<K, B>
+where
+  K: KeyStorage,
+  B: BlobStorage,
+{
+  fn clone(&self) -> Self {
+    Self {
+      key_storage: Arc::clone(&self.key_storage),
+      blob_storage: Arc::clone(&self.blob_storage),
+    }
+  }
 }
 
 impl<K, B> Storage<K, B>

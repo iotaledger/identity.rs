@@ -19,7 +19,7 @@ where
   K: KeyStorage,
   B: BlobStorage,
 {
-  storage: Storage<K, B>,
+  pub(crate) storage: Storage<K, B>,
   method_handlers: HashMap<MethodType, Box<dyn MethodHandler<K>>>,
 }
 
@@ -44,7 +44,7 @@ where
 
   pub async fn create(&self, method_type: &MethodType, method_content: MethodContent) -> (KeyAlias, MethodData) {
     match self.method_handlers.get(method_type) {
-      Some(handler) => handler.create(method_content, &self.storage).await,
+      Some(handler) => handler.create(method_content, &self.storage.key_storage).await,
       None => todo!("return missing handler error"),
     }
   }

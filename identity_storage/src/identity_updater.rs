@@ -5,7 +5,8 @@ use identity_did::document::CoreDocument;
 use identity_did::verification::MethodType;
 
 use crate::create_method::CreateMethodBuilder;
-use crate::{BlobStorage, KeyStorage};
+use crate::BlobStorage;
+use crate::KeyStorage;
 
 pub struct IdentityUpdater<'updater> {
   pub document: &'updater mut CoreDocument,

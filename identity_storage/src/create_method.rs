@@ -6,6 +6,7 @@ use identity_did::document::CoreDocument;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
+use crate::method_hash::MethodHash;
 use crate::BlobStorage;
 use crate::KeyStorage;
 use crate::MethodContent;
@@ -84,6 +85,13 @@ where
       .data(method_data)
       .type_(method_type)
       .build()
+      .expect("TODO");
+
+    let method_hash = MethodHash::from_verification_method(&method).expect("TODO");
+    method_suite
+      .storage
+      .store(&method_hash.to_string(), Some(key_alias.as_str().as_bytes().to_vec()))
+      .await
       .expect("TODO");
 
     self.document.insert_method(method, Default::default()).expect("TODO");

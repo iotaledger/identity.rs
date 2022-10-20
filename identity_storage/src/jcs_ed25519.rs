@@ -27,10 +27,7 @@ where
     "JcsEd25519Signature2020".to_owned()
   }
 
-  async fn sign(&self, data: Signable, key_storage: &K) -> StorageResult<ProofValue> {
-    // TODO: Alias needs to be passed in.
-    let private_key: KeyAlias = KeyAlias::new("random_string");
-
+  async fn sign(&self, data: Signable, private_key: KeyAlias, key_storage: &K) -> StorageResult<ProofValue> {
     let data: Vec<u8> = data.to_jcs().expect("TODO");
     let raw_signature: Vec<u8> = key_storage.sign(&private_key, Ed25519SignatureAlgorithm, data).await?.0;
 

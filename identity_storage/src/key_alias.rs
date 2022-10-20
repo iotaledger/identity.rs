@@ -11,6 +11,20 @@ impl KeyAlias {
   pub fn new(alias: impl Into<String>) -> Self {
     Self { alias: alias.into() }
   }
+
+  pub fn as_str(&self) -> &str {
+    &self.alias
+  }
+}
+
+impl TryFrom<Vec<u8>> for KeyAlias {
+  type Error = ();
+
+  fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
+    Ok(KeyAlias {
+      alias: String::from_utf8(bytes).expect("TODO"),
+    })
+  }
 }
 
 impl std::fmt::Display for KeyAlias {

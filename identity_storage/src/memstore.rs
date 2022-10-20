@@ -22,6 +22,7 @@ use identity_core::crypto::Sign;
 // #[cfg(feature = "encryption")]
 // use identity_core::crypto::X25519;
 use identity_did::did::CoreDID;
+use rand::distributions::DistString;
 // use rand::distributions::DistString;
 // use identity_iota_core_legacy::did::IotaDID;
 // use identity_iota_core_legacy::tangle::NetworkName;
@@ -111,11 +112,8 @@ impl KeyStorage for MemKeyStore {
     // Generate a new key pair for the given `key_type`.
     let keypair: KeyPair = KeyPair::new(key_type).expect("TODO");
 
-    // Derive the key location from the fragment and public key and set the `KeyType` of the location.
-    // TODO: Generate randomly:
-    // let random_string: String = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32);
-    // let alias: KeyAlias = KeyAlias::new(random_string);
-    let alias: KeyAlias = KeyAlias::new("random_string");
+    let random_string: String = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32);
+    let alias: KeyAlias = KeyAlias::new(random_string);
 
     store.insert(alias.clone(), keypair);
 
@@ -561,7 +559,7 @@ mod tests {
   }
 }
 
-mod shared {
+pub(crate) mod shared {
   // Copyright 2020-2022 IOTA Stiftung
   // SPDX-License-Identifier: Apache-2.0
 

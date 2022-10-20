@@ -8,6 +8,7 @@ use identity_did::document::CoreDocument;
 use serde::Serialize;
 
 use crate::identity_updater::IdentityUpdater;
+use crate::BlobStorage;
 use crate::KeyStorage;
 use crate::Signable;
 use crate::SignatureSuite;
@@ -16,11 +17,11 @@ use crate::SignatureSuite;
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait CoreDocumentExt {
   fn update_identity(&mut self) -> IdentityUpdater;
-  async fn sign<K: KeyStorage, VAL>(
+  async fn sign<K: KeyStorage, B: BlobStorage, VAL>(
     &self,
     value: &mut VAL,
     fragment: &str,
-    suite: &SignatureSuite<K>,
+    suite: &SignatureSuite<K, B>,
     proof_options: ProofOptions,
   ) where
     VAL: Serialize + SetSignature + Clone + Into<Signable> + Send + 'static;
@@ -33,24 +34,19 @@ impl CoreDocumentExt for CoreDocument {
     IdentityUpdater { document: self }
   }
 
-  async fn sign<K: KeyStorage, VAL>(
+  async fn sign<K: KeyStorage, B: BlobStorage, VAL>(
     &self,
     value: &mut VAL,
     fragment: &str,
-    suite: &SignatureSuite<K>,
+    suite: &SignatureSuite<K, B>,
     proof_options: ProofOptions,
   ) where
     VAL: Serialize + SetSignature + Clone + Into<Signable> + Send + 'static,
   {
     let method = self.resolve_method(fragment, Default::default()).expect("TODO");
 
-    // TODO: Remove after refactoring VerificationMethod to hold the new MethodType.
-    let method_type = method.type_();
-
     // TODO: Set only fragment as method_id?
 
-    suite
-      .sign(value, method.id().to_string(), &method_type, proof_options)
-      .await
+    suite.sign(value, method.id().to_string(), &method, proof_options).await
   }
 }
