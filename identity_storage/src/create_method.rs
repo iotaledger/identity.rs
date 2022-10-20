@@ -1,35 +1,33 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::convert::FromJson;
-use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
 use crate::BlobStorage;
-use crate::IdentityState;
 use crate::KeyStorage;
 use crate::MethodContent;
 use crate::MethodSuite;
 use crate::Storage;
-use crate::StorageResult;
 
-pub struct CreateMethodBuilder<'builder, K>
+pub struct CreateMethodBuilder<'builder, K, B>
 where
   K: KeyStorage,
+  B: BlobStorage,
 {
   document: &'builder mut CoreDocument,
-  method_suite: Option<&'builder MethodSuite<K>>,
+  method_suite: Option<&'builder MethodSuite<K, B>>,
   content: Option<MethodContent>,
   typ: Option<MethodType>,
   fragment: Option<String>,
 }
 
-impl<'builder, K> CreateMethodBuilder<'builder, K>
+impl<'builder, K, B> CreateMethodBuilder<'builder, K, B>
 where
   K: KeyStorage,
+  B: BlobStorage,
 {
   pub fn new(document: &'builder mut CoreDocument) -> Self {
     Self {
@@ -56,7 +54,7 @@ where
     self
   }
 
-  pub fn method_suite(mut self, method_suite: &'builder MethodSuite<K>) -> Self {
+  pub fn method_suite(mut self, method_suite: &'builder MethodSuite<K, B>) -> Self {
     self.method_suite = Some(method_suite);
     self
   }

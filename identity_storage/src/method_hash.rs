@@ -4,23 +4,17 @@
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 use seahash::SeaHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
+use std::str::FromStr;
 
-/// The storage location of a verification method key.
+/// The unique identifier of a verification method.
 ///
-/// A key is uniquely identified by the fragment and a hash of its public key.
-/// Importantly, the fragment alone is insufficient to represent the storage location.
-/// For example, when rotating a key, there will be two keys in storage for the
-/// same identity with the same fragment. The `key_hash` disambiguates the keys in
-/// situations like these.
-///
-/// The string representation of that location can be obtained via `canonical_repr`.
+/// A method is uniquely identified by a hash of the fragment, method type and method data.
 #[derive(Debug, Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct MethodHash {
   /// The hash of method type and method data.
@@ -30,10 +24,13 @@ pub struct MethodHash {
 impl MethodHash {
   /// Create a location from a [`KeyType`], the fragment of a verification method
   /// and the bytes of a public key.
-  fn new(method_type: &MethodType, method_data: &MethodData) -> Self {
+  fn new(fragment: &str, method_type: &MethodType, method_data: &MethodData) -> Self {
     let mut hasher = SeaHasher::new();
+    hasher.write(fragment.as_bytes());
     hasher.write(method_type.as_str().as_bytes());
 
+    // TODO: Perhaps use try_decode on `MethodData` instead to make
+    // it less likely to miss handling a new variant in MethodData.
     match method_data {
       MethodData::PublicKeyMultibase(string) => {
         hasher.write(string.as_bytes());
@@ -50,13 +47,27 @@ impl MethodHash {
   }
 
   /// Obtain the location of a verification method's key in storage.
-  pub fn from_verification_method(method: &VerificationMethod) -> Self {
-    MethodHash::new(&method.type_(), method.data())
+  pub fn from_verification_method(method: &VerificationMethod) -> crate::Result<Self> {
+    let fragment: &str = method
+      .id()
+      .fragment()
+      .ok_or_else(|| crate::Error::MethodHashConstruction("missing fragment on method".to_owned()))?;
+    Ok(MethodHash::new(fragment, &method.type_(), method.data()))
+  }
+}
+
+impl FromStr for MethodHash {
+  type Err = crate::Error;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    s.parse::<u64>()
+      .map_err(|e| crate::Error::MethodHashConstruction(e.to_string()))
+      .map(|hash| Self { hash })
   }
 }
 
 impl Display for MethodHash {
-  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_str(&self.hash.to_string())
   }
 }

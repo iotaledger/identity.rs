@@ -5,18 +5,19 @@ use identity_did::document::CoreDocument;
 use identity_did::verification::MethodType;
 
 use crate::create_method::CreateMethodBuilder;
-use crate::KeyStorage;
+use crate::{BlobStorage, KeyStorage};
 
 pub struct IdentityUpdater<'updater> {
   pub document: &'updater mut CoreDocument,
 }
 
 impl<'updater> IdentityUpdater<'updater> {
-  pub fn create_method<K>(&mut self) -> CreateMethodBuilder<'_, K>
+  pub fn create_method<K, B>(&mut self) -> CreateMethodBuilder<'_, K, B>
   where
     K: KeyStorage,
     K::KeyType: TryFrom<MethodType>,
     <K::KeyType as TryFrom<MethodType>>::Error: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+    B: BlobStorage,
   {
     CreateMethodBuilder::new(self.document)
   }

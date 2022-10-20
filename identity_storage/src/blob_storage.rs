@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_did::did::CoreDID;
 
 use crate::StorageResult;
 
@@ -24,11 +23,11 @@ pub trait BlobStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Stores an arbitrary blob for the identity specified by `did`.
   ///
   /// Passing `None` means removing all data associated with the specified `did`.
-  async fn store(&self, did: &CoreDID, blob: Option<Vec<u8>>) -> StorageResult<()>;
+  async fn store(&self, did: &str, blob: Option<Vec<u8>>) -> StorageResult<()>;
 
   /// Returns the blob stored by the identity specified by `did`, or `None`
   /// if no blob is stored.
-  async fn load(&self, did: &CoreDID) -> StorageResult<Option<Vec<u8>>>;
+  async fn load(&self, did: &str) -> StorageResult<Option<Vec<u8>>>;
 
   /// Persists any unsaved changes. Called before dropping a [`BlobStorage`], if at all.
   async fn flush(&self) -> StorageResult<()>;

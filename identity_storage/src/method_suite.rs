@@ -7,20 +7,30 @@ use async_trait::async_trait;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
 
+use crate::BlobStorage;
 use crate::Ed25519KeyType;
 use crate::KeyAlias;
 use crate::KeyStorage;
 use crate::MethodContent;
+use crate::Storage;
 
-pub struct MethodSuite<K: KeyStorage> {
-  key_storage: K,
+pub struct MethodSuite<K, B>
+where
+  K: KeyStorage,
+  B: BlobStorage,
+{
+  storage: Storage<K, B>,
   method_handlers: HashMap<MethodType, Box<dyn MethodHandler<K>>>,
 }
 
-impl<K: KeyStorage> MethodSuite<K> {
-  pub fn new(key_storage: K) -> Self {
+impl<K, B> MethodSuite<K, B>
+where
+  K: KeyStorage,
+  B: BlobStorage,
+{
+  pub fn new(storage: Storage<K, B>) -> Self {
     Self {
-      key_storage,
+      storage,
       method_handlers: HashMap::new(),
     }
   }
@@ -34,7 +44,7 @@ impl<K: KeyStorage> MethodSuite<K> {
 
   pub async fn create(&self, method_type: &MethodType, method_content: MethodContent) -> (KeyAlias, MethodData) {
     match self.method_handlers.get(method_type) {
-      Some(handler) => handler.create(method_content, &self.key_storage).await,
+      Some(handler) => handler.create(method_content, &self.storage).await,
       None => todo!("return missing handler error"),
     }
   }

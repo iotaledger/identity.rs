@@ -5,6 +5,8 @@ mod blob_storage;
 mod core_document_ext;
 mod create_method;
 mod error;
+mod error2;
+mod identity_state;
 mod identity_updater;
 mod jcs_ed25519;
 mod key_alias;
@@ -12,6 +14,7 @@ mod key_storage;
 mod key_types;
 mod memstore;
 mod method_content;
+mod method_hash;
 mod method_suite;
 mod signature;
 mod signature_handler;
@@ -19,13 +22,14 @@ mod signature_suite;
 mod signature_types;
 mod storage;
 mod storage_combinator;
-mod identity_state;
-mod method_hash;
+mod mem_blob_store;
 
 pub use blob_storage::*;
 pub use core_document_ext::*;
 pub use create_method::*;
 pub use error::*;
+pub use error2::*;
+pub use identity_state::*;
 pub use identity_updater::*;
 pub use jcs_ed25519::*;
 pub use key_alias::*;
@@ -40,7 +44,7 @@ pub use signature_suite::*;
 pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
-pub use identity_state::*;
+pub use mem_blob_store::*;
 
 #[cfg(test)]
 mod tests2 {
@@ -56,15 +60,17 @@ mod tests2 {
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
-use identity_did::verification::MethodType;
+  use identity_did::verification::MethodType;
 
   use crate::CoreDocumentExt;
   use crate::Ed25519VerificationKey2018;
   use crate::JcsEd25519;
-  use crate::MemStore;
+  use crate::MemBlobStore;
+use crate::MemKeyStore;
   use crate::MethodContent;
   use crate::MethodSuite;
-   use crate::SignatureSuite;
+  use crate::SignatureSuite;
+use crate::Storage;
 
   fn test_credential() -> Credential {
     let issuer_did: CoreDID = "did:iota:0x0001".parse().unwrap();
@@ -90,12 +96,14 @@ use identity_did::verification::MethodType;
   #[tokio::test]
   async fn test_things() {
     let fragment = "#my-key";
-    let key_storage = Arc::new(MemStore::new());
+    let key_storage = MemKeyStore::new();
+    let blob_storage = MemBlobStore::new();
+    let storage = Storage::new(key_storage, blob_storage);
 
     let did = CoreDID::parse("did:iota:0x0000").unwrap();
     let mut document: CoreDocument = CoreDocument::builder(Default::default()).id(did).build().unwrap();
 
-    let mut method_suite = MethodSuite::new(Arc::clone(&key_storage));
+    let mut method_suite = MethodSuite::new(&key_storage);
     method_suite.register(Ed25519VerificationKey2018);
 
     document

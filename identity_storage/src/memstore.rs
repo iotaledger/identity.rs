@@ -53,14 +53,14 @@ use shared::Shared;
 type KeyStore = HashMap<KeyAlias, KeyPair>;
 
 /// An insecure, in-memory [`Storage`] implementation that serves as an example and is used in tests.
-pub struct MemStore {
+pub struct MemKeyStore {
   // Controls whether to print the storages content when debugging.
   expand: bool,
   blobs: Shared<HashMap<CoreDID, Vec<u8>>>,
   store: Shared<KeyStore>,
 }
 
-impl MemStore {
+impl MemKeyStore {
   /// Creates a new, empty `MemStore` instance.
   pub fn new() -> Self {
     Self {
@@ -100,7 +100,7 @@ impl From<Ed25519KeyType> for KeyType {
 // Refer to the `Storage` interface docs for high-level documentation of the individual methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl KeyStorage for MemStore {
+impl KeyStorage for MemKeyStore {
   type KeyType = KeyType;
   type SigningAlgorithm = MemStoreSigningAlgorithm;
 
@@ -473,7 +473,7 @@ mod memstore_encryption {
   }
 }
 
-impl Debug for MemStore {
+impl Debug for MemKeyStore {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     if self.expand {
       f.debug_struct("MemStore")
@@ -486,7 +486,7 @@ impl Debug for MemStore {
   }
 }
 
-impl Default for MemStore {
+impl Default for MemKeyStore {
   fn default() -> Self {
     Self::new()
   }
@@ -498,10 +498,10 @@ mod tests {
   use crate::storage::Storage;
   use crate::storage::StorageTestSuite;
 
-  use super::MemStore;
+  use super::MemKeyStore;
 
   fn test_memstore() -> impl Storage {
-    MemStore::new()
+    MemKeyStore::new()
   }
 
   #[tokio::test]
