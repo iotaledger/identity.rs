@@ -10,6 +10,8 @@ members = [
   "identity_iota_core",
   "identity_resolver",
   "identity_storage",
+  "identity_jws", 
+  "identity_rdf", 
   "examples",
 ]
 
