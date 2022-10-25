@@ -60,7 +60,7 @@ impl<K: KeyStorage, B: BlobStorage> SignatureSuite<K, B> {
     let proof_value: ProofValue = {
       let signable: Signable = value.clone().into();
 
-      let method_hash = MethodHash::from_verification_method(&method).expect("TODO");
+      let method_hash = MethodHash::from_verification_method(method).expect("TODO");
       let key_alias: KeyAlias = KeyAlias::try_from(
         self
           .storage
@@ -80,7 +80,7 @@ impl<K: KeyStorage, B: BlobStorage> SignatureSuite<K, B> {
             .await
             .expect("TODO")
         }
-        None => todo!("return missing handler error"),
+        None => todo!("signature suite: return missing handler error"),
       }
     };
 

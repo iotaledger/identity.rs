@@ -20,14 +20,13 @@ mod storage_sub_trait {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait BlobStorage: storage_sub_trait::StorageSendSyncMaybe {
-  /// Stores an arbitrary blob for the identity specified by `did`.
+  /// Stores an arbitrary blob for the `key`.
   ///
-  /// Passing `None` means removing all data associated with the specified `did`.
-  async fn store(&self, did: &str, blob: Option<Vec<u8>>) -> StorageResult<()>;
+  /// Passing `None` removes all data associated with the specified `key`.
+  async fn store(&self, key: &str, blob: Option<Vec<u8>>) -> StorageResult<()>;
 
-  /// Returns the blob stored by the identity specified by `did`, or `None`
-  /// if no blob is stored.
-  async fn load(&self, did: &str) -> StorageResult<Option<Vec<u8>>>;
+  /// Returns the blob stored at `key`, or `None` if no blob is stored.
+  async fn load(&self, key: &str) -> StorageResult<Option<Vec<u8>>>;
 
   /// Persists any unsaved changes. Called before dropping a [`BlobStorage`], if at all.
   async fn flush(&self) -> StorageResult<()>;

@@ -5,7 +5,6 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use identity_core::crypto::PublicKey;
-use identity_did::verification::MethodType;
 
 use crate::KeyAlias;
 use crate::Signature;
@@ -23,21 +22,11 @@ mod storage_sub_trait {
   impl<S: Send + Sync + super::KeyStorage> StorageSendSyncMaybe for S {}
 }
 
-// TODO: Make sealed.
-pub trait SealedAbstractKeyType: Send {}
-
-impl<T> SealedAbstractKeyType for T
-where
-  T: TryFrom<MethodType> + Send + Sync + 'static,
-  <T as TryFrom<MethodType>>::Error: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
-{
-}
-
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 // TODO: Copy docs from legacy `Storage` interface.
 pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
-  type KeyType: SealedAbstractKeyType;
+  type KeyType: Send + Sync + 'static;
   type SigningAlgorithm: Send + Sync + 'static;
 
   async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias>;

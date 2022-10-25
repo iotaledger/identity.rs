@@ -46,3 +46,9 @@ impl BlobStorage for MemBlobStore {
     Ok(())
   }
 }
+
+impl Default for MemBlobStore {
+  fn default() -> Self {
+    Self::new()
+  }
+}

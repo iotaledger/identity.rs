@@ -1,35 +1,35 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_storage::MethodType1;
+use identity_iota::did::MethodType;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "MethodType1 | undefined")]
-  pub type OptionMethodType1;
+  #[wasm_bindgen(typescript_type = "MethodType | undefined")]
+  pub type OptionMethodType;
 }
 
 /// Supported verification method types.
-#[wasm_bindgen(js_name = MethodType1, inspectable)]
+#[wasm_bindgen(js_name = MethodType, inspectable)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WasmMethodType1(pub(crate) MethodType1);
+pub struct WasmMethodType(pub(crate) MethodType);
 
-#[wasm_bindgen(js_class = MethodType1)]
-impl WasmMethodType1 {
+#[wasm_bindgen(js_class = MethodType)]
+impl WasmMethodType {
   #[wasm_bindgen(js_name = ed25519VerificationKey2018)]
-  pub fn ed25519_verification_key_2018() -> WasmMethodType1 {
-    WasmMethodType1(MethodType1::ed25519_verification_key_2018())
+  pub fn ed25519_verification_key_2018() -> WasmMethodType {
+    WasmMethodType(MethodType::ED25519_VERIFICATION_KEY_2018)
   }
 
   #[wasm_bindgen(js_name = x25519KeyAgreementKey2019)]
-  pub fn x25519_key_agreement_key_2019() -> WasmMethodType1 {
-    WasmMethodType1(MethodType1::x25519_verification_key_2018())
+  pub fn x25519_key_agreement_key_2019() -> WasmMethodType {
+    WasmMethodType(MethodType::X25519_KEY_AGREEMENT_KEY_2019)
   }
 
   #[wasm_bindgen(js_name = fromString)]
-  pub fn from_string(string: String) -> WasmMethodType1 {
-    WasmMethodType1(MethodType1::from(string))
+  pub fn from_string(string: String) -> WasmMethodType {
+    WasmMethodType(MethodType::from(string))
   }
 
   /// Returns the `MethodType` as a string.
@@ -41,17 +41,17 @@ impl WasmMethodType1 {
   }
 }
 
-impl_wasm_json!(WasmMethodType1, MethodType1);
-impl_wasm_clone!(WasmMethodType1, MethodType1);
+impl_wasm_json!(WasmMethodType, MethodType);
+impl_wasm_clone!(WasmMethodType, MethodType);
 
-impl From<WasmMethodType1> for MethodType1 {
-  fn from(wasm_method_type: WasmMethodType1) -> Self {
+impl From<WasmMethodType> for MethodType {
+  fn from(wasm_method_type: WasmMethodType) -> Self {
     wasm_method_type.0
   }
 }
 
-impl From<MethodType1> for WasmMethodType1 {
-  fn from(method_type: MethodType1) -> Self {
-    WasmMethodType1(method_type)
+impl From<MethodType> for WasmMethodType {
+  fn from(method_type: MethodType) -> Self {
+    WasmMethodType(method_type)
   }
 }

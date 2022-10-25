@@ -8,20 +8,21 @@ use std::rc::Rc;
 use crate::common::PromiseVoid;
 use crate::did::OptionMethodContent;
 use crate::did::OptionMethodScope;
-use crate::did::OptionMethodType1;
+use crate::did::OptionMethodType;
 use crate::did::WasmCoreDocument;
 use crate::did::WasmMethodContent;
 use crate::error::Result;
+use crate::storage::WasmBlobStorage;
 use crate::storage::WasmKeyStorage;
 // use crate::wasm_method_suite::WasmMethodSuite;
 use identity_iota::did::CoreDocument;
 
+use identity_iota::did::MethodType;
 use identity_storage::CoreDocumentExt;
 use identity_storage::CreateMethodBuilder;
 use identity_storage::IdentityUpdater;
 use identity_storage::MethodContent;
 use identity_storage::MethodSuite;
-use identity_storage::MethodType1;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -63,9 +64,9 @@ impl WasmCoreDocumentRc {
       .map(MethodContent::from)
       .expect("TODO");
 
-    let method_type: MethodType1 = options
+    let method_type: MethodType = options
       .type_()
-      .into_serde::<Option<MethodType1>>()
+      .into_serde::<Option<MethodType>>()
       .expect("TODO")
       .expect("TODO");
     let method_suite: WasmMethodSuite = method_suite.clone();
@@ -74,9 +75,9 @@ impl WasmCoreDocumentRc {
     let promise: Promise = future_to_promise(async move {
       let mut document_ref: RefMut<CoreDocument> = document.borrow_mut();
       let mut updater: IdentityUpdater<'_> = document_ref.update_identity();
-      let method_suite: &MethodSuite<WasmKeyStorage> = method_suite.0.as_ref();
+      let method_suite: &MethodSuite<WasmKeyStorage, WasmBlobStorage> = method_suite.0.as_ref();
 
-      let create_method: CreateMethodBuilder<'_, WasmKeyStorage> = updater
+      let create_method: CreateMethodBuilder<'_, WasmKeyStorage, WasmBlobStorage> = updater
         .create_method()
         .content(content)
         .type_(method_type)
@@ -109,7 +110,7 @@ extern "C" {
   pub fn scope(this: &CreateMethodOptions) -> OptionMethodScope;
 
   #[wasm_bindgen(getter, method, js_name = type)]
-  pub fn type_(this: &CreateMethodOptions) -> OptionMethodType1;
+  pub fn type_(this: &CreateMethodOptions) -> OptionMethodType;
 
   #[wasm_bindgen(getter, method)]
   pub fn content(this: &CreateMethodOptions) -> OptionMethodContent;
@@ -137,6 +138,6 @@ export type CreateMethodOptions = {
      */
     content: MethodContent,
 
-    type: MethodType1,
+    type: MethodType,
   };
 "#;

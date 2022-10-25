@@ -8,11 +8,12 @@ use crate::did::WasmMethodData;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::did::MethodData;
+use identity_iota::did::MethodType;
 use identity_storage::KeyAlias;
 use identity_storage::MethodContent;
 use identity_storage::MethodHandler;
 use identity_storage::MethodSuite;
-use identity_storage::MethodType1;
+use identity_storage::Storage;
 use js_sys::Map;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -21,17 +22,22 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::storage::WasmKeyStorage;
 
+use super::WasmBlobStorage;
 use super::WasmKeyAlias;
 
 #[wasm_bindgen(js_name = MethodSuite)]
-pub struct WasmMethodSuite(pub(crate) Rc<MethodSuite<WasmKeyStorage>>);
+pub struct WasmMethodSuite(pub(crate) Rc<MethodSuite<WasmKeyStorage, WasmBlobStorage>>);
 
 #[wasm_bindgen(js_class = MethodSuite)]
 impl WasmMethodSuite {
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(storage: WasmKeyStorage, handlers: Option<MapMethodHandler>) -> Result<WasmMethodSuite> {
-    let mut method_suite = MethodSuite::new(storage);
+  pub fn new(
+    keyStorage: WasmKeyStorage,
+    blobStorage: WasmBlobStorage,
+    handlers: Option<MapMethodHandler>,
+  ) -> Result<WasmMethodSuite> {
+    let mut method_suite = MethodSuite::new(Storage::new(keyStorage, blobStorage));
 
     if let Some(handlers) = handlers {
       let map: &Map = handlers.dyn_ref::<Map>().expect("TODO");
@@ -46,7 +52,7 @@ impl WasmMethodSuite {
           // .map_err(|_| "could not construct TODO: the handler map contains a value which is not a ...")?;
 
           method_suite.register_unchecked(
-            MethodType1::from(method_type),
+            MethodType::from(method_type),
             Box::new(WasmMethodHandler(handler.into())),
           );
         } else {
@@ -151,7 +157,7 @@ impl From<WasmMethodHandlerInterface> for WasmMethodHandler {
 
 #[async_trait::async_trait(?Send)]
 impl MethodHandler<WasmKeyStorage> for WasmMethodHandler {
-  fn method_type(&self) -> MethodType1 {
+  fn method_type(&self) -> MethodType {
     self.0.method_type().into()
   }
 

@@ -11,7 +11,6 @@ use crate::BlobStorage;
 use crate::KeyStorage;
 use crate::MethodContent;
 use crate::MethodSuite;
-use crate::Storage;
 
 pub struct CreateMethodBuilder<'builder, K, B>
 where

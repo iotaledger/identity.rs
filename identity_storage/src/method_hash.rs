@@ -26,6 +26,9 @@ impl MethodHash {
   /// and the bytes of a public key.
   fn new(fragment: &str, method_type: &MethodType, method_data: &MethodData) -> Self {
     let mut hasher = SeaHasher::new();
+    // We use `hasher.write(slice)` instead of `slice.hash(&mut hasher)` because the latter
+    // writes the len of the slice into the hash which differs in length on 32- and 64-bit platforms,
+    // such as Wasm and x86_64, resulting in different hashes.
     hasher.write(fragment.as_bytes());
     hasher.write(method_type.as_str().as_bytes());
 
@@ -46,13 +49,14 @@ impl MethodHash {
     Self { hash: key_hash }
   }
 
-  /// Obtain the location of a verification method's key in storage.
+  /// Obtain the [`MethodHash`] of a verification method.
+  // TODO: Implement TryFrom<&VerificationMethod> instead?
   pub fn from_verification_method(method: &VerificationMethod) -> crate::Result<Self> {
     let fragment: &str = method
       .id()
       .fragment()
       .ok_or_else(|| crate::Error::MethodHashConstruction("missing fragment on method".to_owned()))?;
-    Ok(MethodHash::new(fragment, &method.type_(), method.data()))
+    Ok(MethodHash::new(fragment, method.type_(), method.data()))
   }
 }
 

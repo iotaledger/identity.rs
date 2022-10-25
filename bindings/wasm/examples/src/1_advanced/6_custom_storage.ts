@@ -12,7 +12,7 @@ import {
     MethodData,
     MethodHandler,
     MethodSuite,
-    MethodType1,
+    MethodType,
     ProofOptions,
     ProofValue,
     Signable,
@@ -30,24 +30,27 @@ export async function customStorage() {
     const fragment = "#key-2";
     var document = new CoreDocument({ id: "did:iota:0x0002" });
 
+    // TODO!
+    const blobStore = {};
+
     const map = new Map();
-    map.set(MethodType1.ed25519VerificationKey2018().toString(), new Ed25519VerificationKey2018());
-    const methodSuite: MethodSuite = new MethodSuite(memStore, map);
+    map.set(MethodType.ed25519VerificationKey2018().toString(), new Ed25519VerificationKey2018());
+    const methodSuite: MethodSuite = new MethodSuite(memStore, blobStore, map);
 
     const documentRc = new CoreDocumentRc(document);
     await documentRc.createMethod(methodSuite, {
         fragment,
         content: MethodContent.Generate(),
-        type: MethodType1.ed25519VerificationKey2018(),
+        type: MethodType.ed25519VerificationKey2018(),
     });
     document = documentRc.intoDocument();
 
     let handlerMap: Map<string, SignatureHandler> = new Map();
-    handlerMap.set(MethodType1.ed25519VerificationKey2018().toString(), new JcsEd25519Signature());
+    handlerMap.set(MethodType.ed25519VerificationKey2018().toString(), new JcsEd25519Signature());
 
     const credential = testCredential();
     const signable = Signable.Credential(credential);
-    const signatureSuite = new SignatureSuite(memStore, handlerMap);
+    const signatureSuite = new SignatureSuite(memStore, blobStore, handlerMap);
     await document.sign(
         signable,
         fragment,

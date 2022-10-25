@@ -47,6 +47,6 @@ impl CoreDocumentExt for CoreDocument {
 
     // TODO: Set only fragment as method_id?
 
-    suite.sign(value, method.id().to_string(), &method, proof_options).await
+    suite.sign(value, method.id().to_string(), method, proof_options).await
   }
 }

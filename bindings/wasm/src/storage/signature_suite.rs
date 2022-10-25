@@ -4,10 +4,12 @@
 use std::rc::Rc;
 
 use identity_iota::crypto::ProofValue;
-use identity_storage::MethodType1;
+use identity_iota::did::MethodType;
+use identity_storage::KeyAlias;
 use identity_storage::Signable;
 use identity_storage::SignatureHandler;
 use identity_storage::SignatureSuite;
+use identity_storage::Storage;
 use identity_storage::StorageResult;
 use js_sys::Map;
 use js_sys::Promise;
@@ -22,15 +24,21 @@ use crate::error::Result;
 use crate::storage::WasmKeyStorage;
 use crate::storage::WasmSignable;
 
+use super::WasmBlobStorage;
+
 #[wasm_bindgen(js_name = SignatureSuite)]
-pub struct WasmSignatureSuite(pub(crate) Rc<SignatureSuite<WasmKeyStorage>>);
+pub struct WasmSignatureSuite(pub(crate) Rc<SignatureSuite<WasmKeyStorage, WasmBlobStorage>>);
 
 #[wasm_bindgen(js_class = SignatureSuite)]
 impl WasmSignatureSuite {
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(storage: WasmKeyStorage, handlers: Option<MapSignatureHandler>) -> Result<WasmSignatureSuite> {
-    let mut signature_suite = SignatureSuite::new(storage);
+  pub fn new(
+    keyStorage: WasmKeyStorage,
+    blobStorage: WasmBlobStorage,
+    handlers: Option<MapSignatureHandler>,
+  ) -> Result<WasmSignatureSuite> {
+    let mut signature_suite = SignatureSuite::new(Storage::new(keyStorage, blobStorage));
 
     if let Some(handlers) = handlers {
       let map: &Map = handlers.dyn_ref::<js_sys::Map>().expect("TODO");
@@ -45,7 +53,7 @@ impl WasmSignatureSuite {
           // .map_err(|_| "could not construct TODO: the handler map contains a value which is not a ...")?;
 
           signature_suite.register_unchecked(
-            MethodType1::from(method_type),
+            MethodType::from(method_type),
             Box::new(WasmSignatureHandler(handler.into())),
           );
         } else {
@@ -117,7 +125,12 @@ impl SignatureHandler<WasmKeyStorage> for WasmSignatureHandler {
     self.0.signature_name()
   }
 
-  async fn sign(&self, value: Signable, key_storage: &WasmKeyStorage) -> StorageResult<ProofValue> {
+  async fn sign(
+    &self,
+    value: Signable,
+    key_alias: KeyAlias,
+    key_storage: &WasmKeyStorage,
+  ) -> StorageResult<ProofValue> {
     // let handler_clone: Rc<WasmSignatureHandlerInterface> = Rc::clone(&self.0);
     let wasm_signable: WasmSignable = value.into();
     let storage_clone: WasmKeyStorage = JsValue::clone(key_storage).unchecked_into();

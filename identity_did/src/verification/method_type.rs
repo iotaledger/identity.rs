@@ -51,7 +51,17 @@ impl FromStr for MethodType {
   }
 }
 
-//TODO: Also implement From<String>?
+// TODO: Remove FromStr impl as it cannot fail?
+
+impl From<String> for MethodType {
+  fn from(string: String) -> Self {
+    match string.as_str() {
+      "Ed25519VerificationKey2018" => Self::ED25519_VERIFICATION_KEY_2018,
+      "X25519KeyAgreementKey2019" => Self::X25519_KEY_AGREEMENT_KEY_2019,
+      _ => Self(Cow::Owned(string.to_owned())),
+    }
+  }
+}
 
 // TODO: Is this the right place for this? Is this even needed?
 impl TryFrom<MethodType> for KeyType {

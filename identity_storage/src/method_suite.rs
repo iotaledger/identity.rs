@@ -45,7 +45,7 @@ where
   pub async fn create(&self, method_type: &MethodType, method_content: MethodContent) -> (KeyAlias, MethodData) {
     match self.method_handlers.get(method_type) {
       Some(handler) => handler.create(method_content, &self.storage.key_storage).await,
-      None => todo!("return missing handler error"),
+      None => todo!("method suite: return missing handler error"),
     }
   }
 

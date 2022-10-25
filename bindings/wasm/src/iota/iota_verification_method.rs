@@ -63,13 +63,13 @@ impl WasmIotaVerificationMethod {
   /// Sets the `IotaVerificationMethod` type.
   #[wasm_bindgen(js_name = setType)]
   pub fn set_type(&mut self, type_: &WasmMethodType) {
-    *self.0.type_mut() = type_.0;
+    *self.0.type_mut() = type_.0.clone();
   }
 
   /// Returns a copy of the `IotaVerificationMethod` type.
   #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> WasmMethodType {
-    WasmMethodType::from(self.0.type_())
+    WasmMethodType::from(self.0.type_().clone())
   }
 
   /// Returns a copy of the `IotaVerificationMethod` public key data.

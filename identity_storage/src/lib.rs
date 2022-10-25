@@ -5,8 +5,6 @@ mod blob_storage;
 mod core_document_ext;
 mod create_method;
 mod error;
-mod error2;
-mod identity_state;
 mod identity_updater;
 mod jcs_ed25519;
 mod key_alias;
@@ -23,13 +21,12 @@ mod signature_suite;
 mod signature_types;
 mod storage;
 mod storage_combinator;
+mod storage_error;
 
 pub use blob_storage::*;
 pub use core_document_ext::*;
 pub use create_method::*;
 pub use error::*;
-pub use error2::*;
-pub use identity_state::*;
 pub use identity_updater::*;
 pub use jcs_ed25519::*;
 pub use key_alias::*;
@@ -45,6 +42,7 @@ pub use signature_suite::*;
 pub use signature_types::*;
 pub use storage::*;
 pub use storage_combinator::*;
+pub use storage_error::*;
 
 #[cfg(test)]
 mod tests2 {
