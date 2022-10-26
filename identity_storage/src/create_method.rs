@@ -64,9 +64,9 @@ where
     let method_type = self.typ.expect("TODO");
     let method_content = self.content.expect("TODO");
 
-    // TODO: Store key_alias mapping to method id.
+    // TODO: Store key_id mapping to method id.
     // TODO: Allow user or suite to also set method custom properties (?)
-    let (key_alias, method_data) = method_suite.create(&method_type, method_content).await;
+    let (key_id, method_data) = method_suite.create(&method_type, method_content).await;
 
     // let identity_state: IdentityState = self.load_identity_state(did_url, storage).await?;
     // let mut method_index = identity_state.method_index().expect("TODO").unwrap_or_default();
@@ -89,7 +89,7 @@ where
     let method_hash = MethodHash::from_verification_method(&method).expect("TODO");
     method_suite
       .storage
-      .store(&method_hash.to_string(), Some(key_alias.as_str().as_bytes().to_vec()))
+      .store(&method_hash.to_string(), Some(key_id.as_str().as_bytes().to_vec()))
       .await
       .expect("TODO");
 

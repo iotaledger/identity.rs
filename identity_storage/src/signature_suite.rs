@@ -61,7 +61,7 @@ impl<K: KeyStorage, B: BlobStorage> SignatureSuite<K, B> {
       let signable: Signable = value.clone().into();
 
       let method_hash = MethodHash::from_verification_method(method).expect("TODO");
-      let key_alias: KeyId = KeyId::try_from(
+      let key_id: KeyId = KeyId::try_from(
         self
           .storage
           .load(&method_hash.to_string())
@@ -76,7 +76,7 @@ impl<K: KeyStorage, B: BlobStorage> SignatureSuite<K, B> {
           let signature: Proof = Proof::new_with_options(handler.signature_name(), method_id, proof_options);
           value.set_signature(signature);
           handler
-            .sign(signable, key_alias, &self.storage.key_storage)
+            .sign(signable, key_id, &self.storage.key_storage)
             .await
             .expect("TODO")
         }

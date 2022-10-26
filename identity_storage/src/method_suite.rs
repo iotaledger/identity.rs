@@ -85,13 +85,13 @@ where
   async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyId, MethodData) {
     if let MethodContent::Generate = method_content {
       let key_type: K::KeyType = K::KeyType::from(Ed25519KeyType);
-      let key_alias: KeyId = key_storage.generate(key_type).await.expect("TODO");
+      let key_id: KeyId = key_storage.generate(key_type).await.expect("TODO");
 
-      let pubkey = key_storage.public(&key_alias).await.expect("TODO");
+      let pubkey = key_storage.public(&key_id).await.expect("TODO");
 
       let method_data: MethodData = MethodData::new_base58(pubkey.as_ref());
 
-      (key_alias, method_data)
+      (key_id, method_data)
     } else {
       unimplemented!("{method_content:?}")
     }

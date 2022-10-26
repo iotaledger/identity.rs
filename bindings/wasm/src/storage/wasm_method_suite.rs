@@ -74,7 +74,7 @@ impl Clone for WasmMethodSuite {
 #[wasm_bindgen(js_name = CreateMethodResult)]
 #[derive(Serialize, Deserialize)]
 pub struct WasmCreateMethodResult {
-  pub(crate) key_alias: KeyId,
+  pub(crate) key_id: KeyId,
   pub(crate) method_data: MethodData,
 }
 
@@ -84,7 +84,7 @@ impl WasmCreateMethodResult {
   #[wasm_bindgen(constructor)]
   pub fn new(KeyId: &WasmKeyId, methodData: &WasmMethodData) -> WasmCreateMethodResult {
     Self {
-      key_alias: KeyId.clone().into(),
+      key_id: KeyId.clone().into(),
       method_data: methodData.clone().into(),
     }
   }
@@ -172,6 +172,6 @@ impl MethodHandler<WasmKeyStorage> for WasmMethodHandler {
         .into_serde()
         .expect("TODO");
 
-    (result.key_alias, result.method_data)
+    (result.key_id, result.method_data)
   }
 }

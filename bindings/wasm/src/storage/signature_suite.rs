@@ -128,7 +128,7 @@ impl SignatureHandler<WasmKeyStorage> for WasmSignatureHandler {
   async fn sign(
     &self,
     value: Signable,
-    key_alias: KeyId,
+    key_id: KeyId,
     key_storage: &WasmKeyStorage,
   ) -> StorageResult<ProofValue> {
     // let handler_clone: Rc<WasmSignatureHandlerInterface> = Rc::clone(&self.0);
