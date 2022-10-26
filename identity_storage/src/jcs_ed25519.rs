@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Ed25519SignatureAlgorithm;
-use crate::KeyAlias;
+use crate::KeyId;
 use crate::KeyStorage;
 use crate::Signable;
 use crate::SignatureHandler;
@@ -27,7 +27,7 @@ where
     "JcsEd25519Signature2020".to_owned()
   }
 
-  async fn sign(&self, data: Signable, private_key: KeyAlias, key_storage: &K) -> StorageResult<ProofValue> {
+  async fn sign(&self, data: Signable, private_key: KeyId, key_storage: &K) -> StorageResult<ProofValue> {
     let data: Vec<u8> = data.to_jcs().expect("TODO");
     let raw_signature: Vec<u8> = key_storage.sign(&private_key, Ed25519SignatureAlgorithm, data).await?.0;
 

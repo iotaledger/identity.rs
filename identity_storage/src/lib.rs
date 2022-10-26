@@ -135,7 +135,7 @@ mod tests2 {
 
 // #[allow(dead_code, unused_variables)]
 // mod custom_user_impl {
-//   use crate::KeyAlias;
+//   use crate::KeyId;
 //   use crate::KeyStorage;
 //   use crate::Signature;
 //   use crate::SignatureHandler;
@@ -156,15 +156,15 @@ mod tests2 {
 //     type KeyType = ();
 //     type SigningAlgorithm = MySigningAlgorithm;
 
-//     async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyAlias> {
+//     async fn generate<KT: Send + Into<Self::KeyType>>(&self, key_type: KT) -> StorageResult<KeyId> {
 //       todo!()
 //     }
-//     async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+//     async fn public(&self, private_key: &KeyId) -> StorageResult<PublicKey> {
 //       todo!()
 //     }
 //     async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
 //       &self,
-//       private_key: &KeyAlias,
+//       private_key: &KeyId,
 //       signing_algorithm: ST,
 //       data: Vec<u8>,
 //     ) -> StorageResult<Signature> {
@@ -177,7 +177,7 @@ mod tests2 {
 //   impl SignatureHandler<MyStorage> for SecpSignatureHandler {
 //     async fn sign(&self, data: Vec<u8>, key_storage: &MyStorage) -> Vec<u8> {
 //       // TODO: Alias needs to be passed in.
-//       let private_key: KeyAlias = KeyAlias::new("random_string");
+//       let private_key: KeyId = KeyId::new("random_string");
 //       key_storage
 //         .sign(&private_key, MySigningAlgorithm::Secp, data)
 //         .await

@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use identity_iota::crypto::ProofValue;
 use identity_iota::did::MethodType;
-use identity_storage::KeyAlias;
+use identity_storage::KeyId;
 use identity_storage::Signable;
 use identity_storage::SignatureHandler;
 use identity_storage::SignatureSuite;
@@ -128,7 +128,7 @@ impl SignatureHandler<WasmKeyStorage> for WasmSignatureHandler {
   async fn sign(
     &self,
     value: Signable,
-    key_alias: KeyAlias,
+    key_alias: KeyId,
     key_storage: &WasmKeyStorage,
   ) -> StorageResult<ProofValue> {
     // let handler_clone: Rc<WasmSignatureHandlerInterface> = Rc::clone(&self.0);

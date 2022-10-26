@@ -4,7 +4,7 @@
 use identity_core::crypto::ProofValue;
 use identity_did::verification::MethodType;
 
-use crate::KeyAlias;
+use crate::KeyId;
 use crate::KeyStorage;
 use crate::Signable;
 use crate::StorageResult;
@@ -13,14 +13,14 @@ use crate::StorageResult;
 #[async_trait::async_trait]
 pub trait SignatureHandler<K: KeyStorage>: Send + Sync {
   fn signature_name(&self) -> String;
-  async fn sign(&self, value: Signable, key_alias: KeyAlias, key_storage: &K) -> StorageResult<ProofValue>;
+  async fn sign(&self, value: Signable, key_alias: KeyId, key_storage: &K) -> StorageResult<ProofValue>;
 }
 
 #[cfg(not(feature = "send-sync-storage"))]
 #[async_trait::async_trait(?Send)]
 pub trait SignatureHandler<K: KeyStorage> {
   fn signature_name(&self) -> String;
-  async fn sign(&self, value: Signable, key_alias: KeyAlias, key_storage: &K) -> StorageResult<ProofValue>;
+  async fn sign(&self, value: Signable, key_alias: KeyId, key_storage: &K) -> StorageResult<ProofValue>;
 }
 
 pub trait SignatureMethodType {

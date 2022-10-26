@@ -9,7 +9,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::did::MethodData;
 use identity_iota::did::MethodType;
-use identity_storage::KeyAlias;
+use identity_storage::KeyId;
 use identity_storage::MethodContent;
 use identity_storage::MethodHandler;
 use identity_storage::MethodSuite;
@@ -23,7 +23,7 @@ use wasm_bindgen_futures::JsFuture;
 use crate::storage::WasmKeyStorage;
 
 use super::WasmBlobStorage;
-use super::WasmKeyAlias;
+use super::WasmKeyId;
 
 #[wasm_bindgen(js_name = MethodSuite)]
 pub struct WasmMethodSuite(pub(crate) Rc<MethodSuite<WasmKeyStorage, WasmBlobStorage>>);
@@ -74,7 +74,7 @@ impl Clone for WasmMethodSuite {
 #[wasm_bindgen(js_name = CreateMethodResult)]
 #[derive(Serialize, Deserialize)]
 pub struct WasmCreateMethodResult {
-  pub(crate) key_alias: KeyAlias,
+  pub(crate) key_alias: KeyId,
   pub(crate) method_data: MethodData,
 }
 
@@ -82,9 +82,9 @@ pub struct WasmCreateMethodResult {
 impl WasmCreateMethodResult {
   #[allow(non_snake_case)]
   #[wasm_bindgen(constructor)]
-  pub fn new(keyAlias: &WasmKeyAlias, methodData: &WasmMethodData) -> WasmCreateMethodResult {
+  pub fn new(KeyId: &WasmKeyId, methodData: &WasmMethodData) -> WasmCreateMethodResult {
     Self {
-      key_alias: keyAlias.clone().into(),
+      key_alias: KeyId.clone().into(),
       method_data: methodData.clone().into(),
     }
   }
@@ -161,7 +161,7 @@ impl MethodHandler<WasmKeyStorage> for WasmMethodHandler {
     self.0.method_type().into()
   }
 
-  async fn create(&self, method_content: MethodContent, key_storage: &WasmKeyStorage) -> (KeyAlias, MethodData) {
+  async fn create(&self, method_content: MethodContent, key_storage: &WasmKeyStorage) -> (KeyId, MethodData) {
     let wasm_method_content: WasmMethodContent = method_content.into();
     let storage_clone: WasmKeyStorage = JsValue::clone(key_storage).unchecked_into();
 

@@ -17,7 +17,7 @@ use serde::Serialize;
 
 use crate::method_hash::MethodHash;
 use crate::BlobStorage;
-use crate::KeyAlias;
+use crate::KeyId;
 use crate::KeyStorage;
 use crate::SignatureHandler;
 use crate::SignatureMethodType;
@@ -61,7 +61,7 @@ impl<K: KeyStorage, B: BlobStorage> SignatureSuite<K, B> {
       let signable: Signable = value.clone().into();
 
       let method_hash = MethodHash::from_verification_method(method).expect("TODO");
-      let key_alias: KeyAlias = KeyAlias::try_from(
+      let key_alias: KeyId = KeyId::try_from(
         self
           .storage
           .load(&method_hash.to_string())

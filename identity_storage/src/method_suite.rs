@@ -9,7 +9,7 @@ use identity_did::verification::MethodType;
 
 use crate::BlobStorage;
 use crate::Ed25519KeyType;
-use crate::KeyAlias;
+use crate::KeyId;
 use crate::KeyStorage;
 use crate::MethodContent;
 use crate::Storage;
@@ -42,7 +42,7 @@ where
     self.method_handlers.insert(handler.method_type(), Box::new(handler));
   }
 
-  pub async fn create(&self, method_type: &MethodType, method_content: MethodContent) -> (KeyAlias, MethodData) {
+  pub async fn create(&self, method_type: &MethodType, method_content: MethodContent) -> (KeyId, MethodData) {
     match self.method_handlers.get(method_type) {
       Some(handler) => handler.create(method_content, &self.storage.key_storage).await,
       None => todo!("method suite: return missing handler error"),
@@ -59,14 +59,14 @@ where
 #[async_trait::async_trait]
 pub trait MethodHandler<K: KeyStorage>: Send + Sync {
   fn method_type(&self) -> MethodType;
-  async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData);
+  async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyId, MethodData);
 }
 
 #[cfg(not(feature = "send-sync-storage"))]
 #[async_trait::async_trait(?Send)]
 pub trait MethodHandler<K: KeyStorage> {
   fn method_type(&self) -> MethodType;
-  async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData);
+  async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyId, MethodData);
 }
 
 pub struct Ed25519VerificationKey2018;
@@ -82,10 +82,10 @@ where
     MethodType::ED25519_VERIFICATION_KEY_2018
   }
 
-  async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyAlias, MethodData) {
+  async fn create(&self, method_content: MethodContent, key_storage: &K) -> (KeyId, MethodData) {
     if let MethodContent::Generate = method_content {
       let key_type: K::KeyType = K::KeyType::from(Ed25519KeyType);
-      let key_alias: KeyAlias = key_storage.generate(key_type).await.expect("TODO");
+      let key_alias: KeyId = key_storage.generate(key_type).await.expect("TODO");
 
       let pubkey = key_storage.public(&key_alias).await.expect("TODO");
 

@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use crate::BlobStorage;
-use crate::KeyAlias;
+use crate::KeyId;
 use crate::KeyStorage;
 use crate::Signature;
 use crate::StorageResult;
@@ -69,17 +69,17 @@ impl<K: KeyStorage, B: BlobStorage> KeyStorage for Storage<K, B> {
   type KeyType = K::KeyType;
   type SigningAlgorithm = K::SigningAlgorithm;
 
-  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyId> {
     self.key_storage.generate(key_type).await
   }
 
-  async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+  async fn public(&self, private_key: &KeyId) -> StorageResult<PublicKey> {
     self.key_storage.public(private_key).await
   }
 
   async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
     &self,
-    private_key: &KeyAlias,
+    private_key: &KeyId,
     signing_algorithm: SIG,
     data: Vec<u8>,
   ) -> StorageResult<Signature> {

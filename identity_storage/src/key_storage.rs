@@ -6,7 +6,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use identity_core::crypto::PublicKey;
 
-use crate::KeyAlias;
+use crate::KeyId;
 use crate::Signature;
 use crate::StorageResult;
 
@@ -29,13 +29,13 @@ pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
   type KeyType: Send + Sync + 'static;
   type SigningAlgorithm: Send + Sync + 'static;
 
-  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias>;
-  // async fn import(key_type: KeyType, private_key: PrivateKey) -> StorageResult<KeyAlias>;
-  async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey>;
-  // async fn delete(private_key: &KeyAlias) -> StorageResult<bool>;
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyId>;
+  // async fn import(key_type: KeyType, private_key: PrivateKey) -> StorageResult<KeyId>;
+  async fn public(&self, private_key: &KeyId) -> StorageResult<PublicKey>;
+  // async fn delete(private_key: &KeyId) -> StorageResult<bool>;
   async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
     &self,
-    private_key: &KeyAlias,
+    private_key: &KeyId,
     signing_algorithm: SIG,
     data: Vec<u8>,
   ) -> StorageResult<Signature>;
@@ -47,7 +47,7 @@ pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
   //   public_key: PublicKey,
   // ) -> StorageResult<EncryptedData>;
   // async fn decrypt(
-  //   private_key: &KeyAlias,
+  //   private_key: &KeyId,
   //   data: EncryptedData,
   //   encryption_algorithm: &EncryptionAlgorithm,
   //   cek_algorithm: &CekAlgorithm,
@@ -65,17 +65,17 @@ where
   type KeyType = T::KeyType;
   type SigningAlgorithm = T::SigningAlgorithm;
 
-  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyId> {
     T::generate(self, key_type).await
   }
 
-  async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+  async fn public(&self, private_key: &KeyId) -> StorageResult<PublicKey> {
     T::public(self, private_key).await
   }
 
   async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
     &self,
-    private_key: &KeyAlias,
+    private_key: &KeyId,
     signing_algorithm: SIG,
     data: Vec<u8>,
   ) -> StorageResult<Signature> {

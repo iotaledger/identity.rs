@@ -3,7 +3,7 @@
 
 use std::borrow::Cow;
 
-use crate::KeyAlias;
+use crate::KeyId;
 
 pub type StorageResult<T> = Result<T, StorageError>;
 
@@ -42,12 +42,12 @@ impl StorageError {
 pub enum StorageErrorKind {
   /// The key with the given alias was not found.
   #[error("key `{0}` not found")]
-  KeyNotFound(KeyAlias),
+  KeyNotFound(KeyId),
   /// A provided or derived key, or one loaded from storage did not meet the expected requirements.
   ///
   /// The `String` parameter describes why the key was invalid.
   #[error("invalid key `{0}`: {0}")]
-  InvalidKey(KeyAlias, String),
+  InvalidKey(KeyId, String),
   /// Error during encryption.
   #[error("encryption error: {0}")]
   EncryptionError(String),

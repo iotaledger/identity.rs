@@ -32,7 +32,7 @@ use tokio::sync::RwLockWriteGuard;
 
 use crate::Ed25519KeyType;
 use crate::Ed25519SignatureAlgorithm;
-use crate::KeyAlias;
+use crate::KeyId;
 // use crate::error::Error;
 // use crate::error::Result;
 // #[cfg(feature = "encryption")]
@@ -51,7 +51,7 @@ use shared::Shared;
 // The map from DIDs to vaults.
 // type Vaults = HashMap<CoreDID, MemVault>;
 // The map from key locations to key pairs, that lives within a DID partition.
-type KeyStore = HashMap<KeyAlias, KeyPair>;
+type KeyStore = HashMap<KeyId, KeyPair>;
 
 /// An insecure, in-memory [`Storage`] implementation that serves as an example and is used in tests.
 pub struct MemKeyStore {
@@ -105,7 +105,7 @@ impl KeyStorage for MemKeyStore {
   type KeyType = KeyType;
   type SigningAlgorithm = MemStoreSigningAlgorithm;
 
-  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyId> {
     // Obtain exclusive access to the vaults.
     let mut store: RwLockWriteGuard<'_, KeyStore> = self.store.write().await;
 
@@ -113,7 +113,7 @@ impl KeyStorage for MemKeyStore {
     let keypair: KeyPair = KeyPair::new(key_type).expect("TODO");
 
     let random_string: String = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32);
-    let alias: KeyAlias = KeyAlias::new(random_string);
+    let alias: KeyId = KeyId::new(random_string);
 
     store.insert(alias.clone(), keypair);
 
@@ -163,7 +163,7 @@ impl KeyStorage for MemKeyStore {
   //   Ok(false)
   // }
 
-  async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+  async fn public(&self, private_key: &KeyId) -> StorageResult<PublicKey> {
     // Obtain read access to the vaults.
     let store: RwLockReadGuard<'_, KeyStore> = self.store.read().await;
     // Lookup the vault for the given DID.
@@ -188,7 +188,7 @@ impl KeyStorage for MemKeyStore {
 
   async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
     &self,
-    private_key: &KeyAlias,
+    private_key: &KeyId,
     signing_algorithm: SIG,
     data: Vec<u8>,
   ) -> StorageResult<Signature> {

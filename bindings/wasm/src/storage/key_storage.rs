@@ -18,7 +18,7 @@ use identity_iota::crypto::PublicKey;
 // use identity_iota::did::CoreDID;
 // use identity_iota::iota::NetworkName;
 // use identity_iota::prelude::KeyType;
-use identity_storage::KeyAlias;
+use identity_storage::KeyId;
 use identity_storage::KeyStorage;
 use identity_storage::Signature;
 use identity_storage::StorageResult;
@@ -36,15 +36,15 @@ use wasm_bindgen_futures::JsFuture;
 // use crate::crypto::WasmKeyType;
 // use crate::did::WasmCoreDID;
 use crate::error::JsValueResult;
-use crate::storage::WasmKeyAlias;
+use crate::storage::WasmKeyId;
 use crate::util::uint8array_to_bytes;
 
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromisePublicKey;
-  #[wasm_bindgen(typescript_type = "Promise<KeyAlias>")]
-  pub type PromiseKeyAlias;
+  #[wasm_bindgen(typescript_type = "Promise<KeyId>")]
+  pub type PromiseKeyId;
 
   // TODO: Change to signature type.
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
@@ -74,15 +74,15 @@ extern "C" {
   pub type WasmKeyStorage;
 
   #[wasm_bindgen(method, js_name = generate)]
-  pub fn generate(this: &WasmKeyStorage, key_type: WasmNewKeyType) -> PromiseKeyAlias;
+  pub fn generate(this: &WasmKeyStorage, key_type: WasmNewKeyType) -> PromiseKeyId;
 
   #[wasm_bindgen(method, js_name = public)]
-  pub fn public(this: &WasmKeyStorage, alias: WasmKeyAlias) -> PromisePublicKey;
+  pub fn public(this: &WasmKeyStorage, alias: WasmKeyId) -> PromisePublicKey;
 
   #[wasm_bindgen(method, js_name = sign)]
   pub fn sign(
     this: &WasmKeyStorage,
-    privateKey: WasmKeyAlias,
+    privateKey: WasmKeyId,
     signing_algorithm: WasmSigningAlgorithm,
     data: Vec<u8>,
   ) -> PromiseSignature;
@@ -99,14 +99,14 @@ impl KeyStorage for WasmKeyStorage {
   type KeyType = WasmNewKeyType;
   type SigningAlgorithm = WasmSigningAlgorithm;
 
-  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyAlias> {
+  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyId> {
     let promise: Promise = Promise::resolve(&self.generate(key_type));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let alias: KeyAlias = result.0.expect("TODO").into_serde().expect("TODO");
+    let alias: KeyId = result.0.expect("TODO").into_serde().expect("TODO");
     Ok(alias)
   }
 
-  async fn public(&self, private_key: &KeyAlias) -> StorageResult<PublicKey> {
+  async fn public(&self, private_key: &KeyId) -> StorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.public(private_key.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = uint8array_to_bytes(result.0.expect("TODO"))?;
@@ -115,7 +115,7 @@ impl KeyStorage for WasmKeyStorage {
 
   async fn sign<ST: Send + Into<Self::SigningAlgorithm>>(
     &self,
-    private_key: &KeyAlias,
+    private_key: &KeyId,
     signing_algorithm: ST,
     data: Vec<u8>,
   ) -> StorageResult<Signature> {
@@ -131,7 +131,7 @@ impl KeyStorage for WasmKeyStorage {
 const STORAGE: &'static str = r#"
 interface KeyStorage {
   // TODO: This can be made more type safe.
-  generate: (keyType: string) => Promise<KeyAlias>;
-  public: (privateKey: KeyAlias) => Promise<Uint8Array>;
-  sign: (privateKey: KeyAlias, signing_algorithm: string, data: Uint8Array) => Promise<Uint8Array>;
+  generate: (keyType: string) => Promise<KeyId>;
+  public: (privateKey: KeyId) => Promise<Uint8Array>;
+  sign: (privateKey: KeyId, signing_algorithm: string, data: Uint8Array) => Promise<Uint8Array>;
 }"#;
