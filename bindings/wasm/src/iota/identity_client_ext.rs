@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::output::RentStructureBuilder;
+use iota_types::block::output::RentStructureBuilder;
 use identity_iota::iota::block::address::dto::AddressDto;
 use identity_iota::iota::block::address::Address;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
