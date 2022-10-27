@@ -4,9 +4,9 @@
 #![forbid(unsafe_code)]
 #![allow(clippy::upper_case_acronyms)]
 
-// Re-export the `iota_types::block` module for implementer convenience.
 #[cfg(feature = "iota-client")]
 pub use iota_client::block;
+// Re-export the `iota_types::block` module for implementer convenience.
 #[cfg(all(feature = "client", not(feature = "iota-client")))]
 pub use iota_types::block;
 
