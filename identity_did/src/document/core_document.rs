@@ -1251,37 +1251,6 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_duplicate_method_different_scopes() {
-    const JSON_VERIFICATION_METHOD_KEY_AGREEMENT_DUPLICATE: &str = r#"{
-      "id": "did:example:1234",
-      "verificationMethod": [
-        {
-          "id": "did:example:1234#key1",
-          "controller": "did:example:1234",
-          "type": "Ed25519VerificationKey2018",
-          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
-        }
-      ],
-      "keyAgreement": [
-        {
-          "id": "did:example:1234#key1",
-          "controller": "did:example:1234",
-          "type": "X25519KeyAgreementKey2019",
-          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
-        }
-      ]
-    }"#;
-
-    let verifier = |json: &str| {
-      let result: std::result::Result<CoreDocument, Box<dyn std::error::Error>> =
-        CoreDocument::from_json(json).map_err(Into::into);
-      assert!(result.is_err());
-    };
-
-    verifier(JSON_VERIFICATION_METHOD_KEY_AGREEMENT_DUPLICATE);
-  }
-
-  #[test]
   fn test_method_remove_existence() {
     let mut document: CoreDocument = document();
 
@@ -1369,8 +1338,8 @@ mod tests {
 
   #[test]
   fn deserialize_valid() {
-    // The verification method types here are really Ed25519VerificationKey2020, changed to be compatible 
-    // with the current version of this library. 
+    // The verification method types here are really Ed25519VerificationKey2020, changed to be compatible
+    // with the current version of this library.
     const JSON_DOCUMENT: &str = r#"{
       "@context": [
         "https://www.w3.org/ns/did/v1",
@@ -1412,7 +1381,128 @@ mod tests {
   }"#;
     let doc: std::result::Result<CoreDocument, Box<dyn std::error::Error>> =
       CoreDocument::from_json(JSON_DOCUMENT).map_err(Into::into);
-      dbg!(&doc);
+    dbg!(&doc);
     assert!(doc.is_ok());
+  }
+
+  #[test]
+  fn deserialize_duplicate_method_different_scopes() {
+    const JSON_VERIFICATION_METHOD_KEY_AGREEMENT: &str = r#"{
+      "id": "did:example:1234",
+      "verificationMethod": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
+        }
+      ],
+      "keyAgreement": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "X25519KeyAgreementKey2019",
+          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+        }
+      ]
+    }"#;
+
+    const JSON_KEY_AGREEMENT_CAPABILITY_INVOCATION: &str = r#"{
+      "id": "did:example:1234",
+      "capabilityInvocation": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
+        }
+      ],
+      "keyAgreement": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "X25519KeyAgreementKey2019",
+          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+        }
+      ]
+    }"#;
+
+    const JSON_ASSERTION_METHOD_CAPABILITY_INVOCATION: &str = r#"{
+      "id": "did:example:1234",
+      "assertionMethod": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "X25519KeyAgreementKey2019",
+          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+        }
+      ],
+      "capabilityInvocation": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
+        }
+      ]
+    }"#;
+
+    const JSON_VERIFICATION_METHOD_AUTHENTICATION: &str = r#"{
+      "id": "did:example:1234",
+      "verificationMethod": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
+        }
+      ],
+      "authentication": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "X25519KeyAgreementKey2019",
+          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+        }
+      ]
+    }"#;
+
+    const JSON_CAPABILITY_DELEGATION_ASSERTION_METHOD: &str = r#"{
+      "id": "did:example:1234",
+      "capabilityDelegation": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
+        }
+      ],
+      "assertionMethod": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "X25519KeyAgreementKey2019",
+          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+        }
+      ]
+    }"#;
+
+    let verifier = |json: &str| {
+      let result: std::result::Result<CoreDocument, Box<dyn std::error::Error>> =
+        CoreDocument::from_json(json).map_err(Into::into);
+      // Print the json if the test fails to aid debugging.
+      println!("the following non-spec compliant document was deserialized: \n {json}");
+      assert!(result.is_err());
+    };
+
+    for json in [
+      JSON_VERIFICATION_METHOD_KEY_AGREEMENT,
+      JSON_KEY_AGREEMENT_CAPABILITY_INVOCATION,
+      JSON_ASSERTION_METHOD_CAPABILITY_INVOCATION,
+      JSON_VERIFICATION_METHOD_AUTHENTICATION,
+      JSON_CAPABILITY_DELEGATION_ASSERTION_METHOD
+    ] {
+      verifier(json);
+    }
   }
 }
