@@ -102,10 +102,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -148,6 +144,10 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -4055,14 +4055,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4140,6 +4132,14 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 
