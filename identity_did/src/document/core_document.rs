@@ -1381,6 +1381,7 @@ mod tests {
   }"#;
     let doc: std::result::Result<CoreDocument, Box<dyn std::error::Error>> =
       CoreDocument::from_json(JSON_DOCUMENT).map_err(Into::into);
+    // Print debug representation if the test fails.
     dbg!(&doc);
     assert!(doc.is_ok());
   }
@@ -1433,8 +1434,8 @@ mod tests {
         {
           "id": "did:example:1234#key1",
           "controller": "did:example:1234",
-          "type": "X25519KeyAgreementKey2019",
-          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
         }
       ],
       "capabilityInvocation": [
@@ -1461,8 +1462,8 @@ mod tests {
         {
           "id": "did:example:1234#key1",
           "controller": "did:example:1234",
-          "type": "X25519KeyAgreementKey2019",
-          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
         }
       ]
     }"#;
@@ -1476,6 +1477,93 @@ mod tests {
           "type": "Ed25519VerificationKey2018",
           "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
         }
+      ],
+      "assertionMethod": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        }
+      ]
+    }"#;
+
+    let verifier = |json: &str| {
+      let result: std::result::Result<CoreDocument, Box<dyn std::error::Error>> =
+        CoreDocument::from_json(json).map_err(Into::into);
+      // Print the json if the test fails to aid debugging.
+      println!("the following non-spec compliant document was deserialized: \n {json}");
+      assert!(result.is_err());
+    };
+
+    for json in [
+      JSON_VERIFICATION_METHOD_KEY_AGREEMENT,
+      JSON_KEY_AGREEMENT_CAPABILITY_INVOCATION,
+      JSON_ASSERTION_METHOD_CAPABILITY_INVOCATION,
+      JSON_VERIFICATION_METHOD_AUTHENTICATION,
+      JSON_CAPABILITY_DELEGATION_ASSERTION_METHOD,
+    ] {
+      verifier(json);
+    }
+  }
+
+  #[test]
+  fn deserialize_invalid_id_references() {
+    const JSON_KEY_AGREEMENT_CAPABILITY_INVOCATION: &str = r#"{
+      "id": "did:example:1234",
+      "capabilityInvocation": [
+        "did:example:1234#key1"
+      ],
+      "keyAgreement": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "X25519KeyAgreementKey2019",
+          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+        }
+      ]
+    }"#;
+
+    const JSON_ASSERTION_METHOD_CAPABILITY_INVOCATION: &str = r#"{
+      "id": "did:example:1234",
+      "assertionMethod": [
+        "did:example:1234#key1", 
+        {
+          "id": "did:example:1234#key2",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        }
+      ],
+      "capabilityInvocation": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
+        }
+      ]
+    }"#;
+
+    const JSON_AUTHENTICATION_KEY_AGREEMENT: &str = r#"{
+      "id": "did:example:1234",
+      "keyAgreement": [
+         "did:example:1234#key1"
+      ],
+      "authentication": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        }
+      ]
+    }"#;
+
+    const JSON_CAPABILITY_DELEGATION_ASSERTION_METHOD: &str = r#"{
+      "id": "did:example:1234",
+      "capabilityDelegation": [
+        "did:example:1234#key1"
       ],
       "assertionMethod": [
         {
@@ -1496,11 +1584,10 @@ mod tests {
     };
 
     for json in [
-      JSON_VERIFICATION_METHOD_KEY_AGREEMENT,
       JSON_KEY_AGREEMENT_CAPABILITY_INVOCATION,
       JSON_ASSERTION_METHOD_CAPABILITY_INVOCATION,
-      JSON_VERIFICATION_METHOD_AUTHENTICATION,
-      JSON_CAPABILITY_DELEGATION_ASSERTION_METHOD
+      JSON_AUTHENTICATION_KEY_AGREEMENT,
+      JSON_CAPABILITY_DELEGATION_ASSERTION_METHOD,
     ] {
       verifier(json);
     }
