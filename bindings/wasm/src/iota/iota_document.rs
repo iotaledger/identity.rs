@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_api_types::responses::ProtocolResponse;
-use bee_block::protocol::ProtocolParameters;
 use identity_iota::core::FromJson;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
@@ -22,6 +20,8 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
+use iota_types::api::response::ProtocolResponse;
+use iota_types::block::protocol::ProtocolParameters;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -431,7 +431,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = unpackFromBlock)]
   pub fn unpack_from_block(network: String, block: &IBlock, protocolResponseJson: String) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    let block_dto: bee_block::BlockDto = block
+    let block_dto: iota_types::block::BlockDto = block
       .into_serde()
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
@@ -440,7 +440,7 @@ impl WasmIotaDocument {
 
     let protocol_response: ProtocolResponse = ProtocolResponse::from_json(&protocolResponseJson).wasm_result()?;
     let protocol_parameters: ProtocolParameters = ProtocolParameters::try_from(protocol_response).wasm_result()?;
-    let block: bee_block::Block = bee_block::Block::try_from_dto(&block_dto, &protocol_parameters)
+    let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
       })

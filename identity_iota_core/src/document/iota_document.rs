@@ -475,7 +475,6 @@ impl TryMethod for IotaDocument {
 
 #[cfg(test)]
 mod tests {
-  use bee_block::protocol::ProtocolParameters;
   use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
@@ -485,6 +484,7 @@ mod tests {
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
+  use iota_types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;
   use crate::block::address::AliasAddress;

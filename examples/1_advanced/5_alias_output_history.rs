@@ -21,7 +21,7 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClient;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaService;
-use iota_client::api_types::responses::OutputMetadataResponse;
+use iota_client::api_types::response::OutputMetadataResponse;
 use iota_client::block::input::Input;
 use iota_client::block::output::AliasId;
 use iota_client::block::output::AliasOutput;
