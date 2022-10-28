@@ -1,13 +1,5 @@
 # Changelog
 
-## [wasm-v0.7.0-alpha.3](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.3) (2022-09-30)
-
-[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.2...wasm-v0.7.0-alpha.3)
- 
-### Changed
-
-- Update iota client 2.0.1 rc.3 [\#1062](https://github.com/iotaledger/identity.rs/pull/1062)
-
 ## [wasm-v0.7.0-alpha.2](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.2) (2022-09-30)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.1...wasm-v0.7.0-alpha.2)
