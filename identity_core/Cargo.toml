@@ -1,6 +1,6 @@
 [package]
 name = "identity_core"
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -11,7 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
-identity-diff = { version = "=0.7.0-alpha.2", path = "../identity_diff", default-features = false }
+identity-diff = { version = "=0.7.0-alpha.3", path = "../identity_diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_jcs = { version = "0.1", default-features = false }
