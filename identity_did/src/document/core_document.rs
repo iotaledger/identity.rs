@@ -934,6 +934,8 @@ where
 
 #[cfg(test)]
 mod tests {
+  use identity_core::convert::FromJson;
+
   use crate::verification::MethodData;
 
   use super::*;
@@ -1249,6 +1251,37 @@ mod tests {
   }
 
   #[test]
+  fn deserialize_duplicate_method_different_scopes() {
+    const JSON_VERIFICATION_METHOD_KEY_AGREEMENT_DUPLICATE: &str = r#"{
+      "id": "did:example:1234",
+      "verificationMethod": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyBase58": "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J"
+        }
+      ],
+      "keyAgreement": [
+        {
+          "id": "did:example:1234#key1",
+          "controller": "did:example:1234",
+          "type": "X25519KeyAgreementKey2019",
+          "publicKeyBase58": "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x"
+        }
+      ]
+    }"#;
+
+    let verifier = |json: &str| {
+      let result: std::result::Result<CoreDocument, Box<dyn std::error::Error>> =
+        CoreDocument::from_json(json).map_err(Into::into);
+      assert!(result.is_err());
+    };
+
+    verifier(JSON_VERIFICATION_METHOD_KEY_AGREEMENT_DUPLICATE);
+  }
+
+  #[test]
   fn test_method_remove_existence() {
     let mut document: CoreDocument = document();
 
@@ -1332,5 +1365,54 @@ mod tests {
     for index in indices_1 {
       assert!(!decoded_bitmap.is_revoked(index));
     }
+  }
+
+  #[test]
+  fn deserialize_valid() {
+    // The verification method types here are really Ed25519VerificationKey2020, changed to be compatible 
+    // with the current version of this library. 
+    const JSON_DOCUMENT: &str = r#"{
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/ed25519-2020/v1"
+      ],
+      "id": "did:example:123",
+      "authentication": [
+        {
+          "id": "did:example:123#z6MkecaLyHuYWkayBDLw5ihndj3T1m6zKTGqau3A51G7RBf3",
+          "type": "Ed25519VerificationKey2018",
+          "controller": "did:example:123",
+          "publicKeyMultibase": "zAKJP3f7BD6W4iWEQ9jwndVTCBq8ua2Utt8EEjJ6Vxsf"
+        }
+      ],
+      "capabilityInvocation": [
+        {
+          "id": "did:example:123#z6MkhdmzFu659ZJ4XKj31vtEDmjvsi5yDZG5L7Caz63oP39k",
+          "type": "Ed25519VerificationKey2018",
+          "controller": "did:example:123",
+          "publicKeyMultibase": "z4BWwfeqdp1obQptLLMvPNgBw48p7og1ie6Hf9p5nTpNN"
+        }
+      ],
+      "capabilityDelegation": [
+        {
+          "id": "did:example:123#z6Mkw94ByR26zMSkNdCUi6FNRsWnc2DFEeDXyBGJ5KTzSWyi",
+          "type": "Ed25519VerificationKey2018",
+          "controller": "did:example:123",
+          "publicKeyMultibase": "zHgo9PAmfeoxHG8Mn2XHXamxnnSwPpkyBHAMNF3VyXJCL"
+        }
+      ],
+      "assertionMethod": [
+        {
+          "id": "did:example:123#z6MkiukuAuQAE8ozxvmahnQGzApvtW7KT5XXKfojjwbdEomY",
+          "type": "Ed25519VerificationKey2018",
+          "controller": "did:example:123",
+          "publicKeyMultibase": "z5TVraf9itbKXrRvt2DSS95Gw4vqU3CHAdetoufdcKazA"
+        }
+      ]
+  }"#;
+    let doc: std::result::Result<CoreDocument, Box<dyn std::error::Error>> =
+      CoreDocument::from_json(JSON_DOCUMENT).map_err(Into::into);
+      dbg!(&doc);
+    assert!(doc.is_ok());
   }
 }

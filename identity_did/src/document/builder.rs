@@ -162,7 +162,9 @@ mod tests {
       .id(id.clone())
       .controller(did.clone())
       .type_(MethodType::Ed25519VerificationKey2018)
-      .data(MethodData::new_multibase("test"))
+      .data(MethodData::PublicKeyBase58(
+        "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
+      ))
       .build()
       .unwrap();
 
@@ -170,7 +172,9 @@ mod tests {
       .id(id.clone())
       .controller(did.clone())
       .type_(MethodType::X25519KeyAgreementKey2019)
-      .data(MethodData::new_multibase("test"))
+      .data(MethodData::PublicKeyBase58(
+        "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x".into(),
+      ))
       .build()
       .unwrap();
 
@@ -179,6 +183,16 @@ mod tests {
       .verification_method(method1)
       .key_agreement(method2)
       .build();
+    // TODO: Remove match once this test passes
+    match result {
+      Ok(ref doc) => {
+        println!(
+          "{}",
+          <CoreDocument as identity_core::convert::ToJson>::to_json_pretty(doc).unwrap()
+        );
+      }
+      _ => (),
+    };
     assert!(result.is_err());
   }
 }
