@@ -1,9 +1,16 @@
 # Changelog
 
+## [v0.7.0-alpha.3](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.3) (2022-09-30)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.2...v0.7.0-alpha.3)
+ 
+### Changed
+
+- Update iota client 2.0.1 rc.3 [\#1062](https://github.com/iotaledger/identity.rs/pull/1062)
 ## [v0.7.0-alpha.2](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.2) (2022-09-30)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.1...v0.7.0-alpha.2)
- 
+
 ### Changed
 
 - Use Bech32-encoded state controller and governor addresses [\#1044](https://github.com/iotaledger/identity.rs/pull/1044)

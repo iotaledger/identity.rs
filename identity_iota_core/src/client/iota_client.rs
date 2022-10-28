@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::api_types::responses::OutputResponse;
+use iota_client::api_types::response::OutputResponse;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 

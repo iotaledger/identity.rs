@@ -17,11 +17,9 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-bee-api-types = { version = "1.0", default-features = false }
-# Ensure bee-block always matches the version used by iota-client.
-bee-block = { version = "1.0", default-features = false, features = ["dto"] }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
+iota-types = { version = "1.0.0-rc.1", default-features = false, features = ["block", "api", "dto", "std"] }
 js-sys = { version = "0.3.60" }
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
@@ -31,7 +29,7 @@ wasm-bindgen = { version = "0.2.83", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity_iota]
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 path = "../../identity_iota"
 default-features = false
 features = ["client", "revocation-bitmap", "resolver"]

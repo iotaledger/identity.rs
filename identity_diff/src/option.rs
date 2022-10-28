@@ -10,7 +10,7 @@ use std::fmt::Formatter;
 use crate::Diff;
 
 /// A `DiffOption<T>` type which represents a Diffed `Option<T>`.  By default this value is untagged for `serde`. It
-/// also converts `to` and `from` Option<T> when serialized/deserialized
+/// also converts `to` and `from` `Option<T>` when serialized/deserialized
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged, into = "Option<T>", from = "Option<T>")]
 pub enum DiffOption<T: Diff> {

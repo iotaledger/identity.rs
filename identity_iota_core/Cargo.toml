@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota_core"
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -12,15 +12,14 @@ rust-version = "1.62"
 description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
-# Ensure bee-block always matches the version used by iota-client.
-bee-block = { version = "1.0", default-features = false, features = ["std"], optional = true }
-identity_core = { version = "=0.7.0-alpha.2", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.2", path = "../identity_credential", default-features = false, features = ["validator"] }
-identity_did = { version = "=0.7.0-alpha.2", path = "../identity_did", default-features = false }
+identity_core = { version = "=0.7.0-alpha.3", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.3", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=0.7.0-alpha.3", path = "../identity_did", default-features = false }
+iota-types = { version = "1.0.0-rc.1", default-features = false, features = ["block", "std"], optional = true }
 
 async-trait = { version = "0.1.56", default-features = false, optional = true }
 futures = { version = "0.3" }
-iota-client = { version = "2.0.1-rc.1", default-features = false, features = ["tls"], optional = true }
+iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls"], optional = true }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
@@ -44,7 +43,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 default = ["client", "iota-client", "revocation-bitmap", "send-sync-client-ext"]
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
-client = ["dep:async-trait", "dep:bee-block"]
+client = ["dep:async-trait", "dep:iota-types"]
 # Enables the iota-client dependency, the client trait implementations for it, and the `IotaClientExt` trait.
 iota-client = ["dep:iota-client", "client"]
 # Enables revocation with `RevocationBitmap2022`.

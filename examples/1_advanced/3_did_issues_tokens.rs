@@ -18,7 +18,7 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
-use iota_client::api_types::responses::OutputResponse;
+use iota_client::api_types::response::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
 use iota_client::block::output::unlock_condition::ImmutableAliasAddressUnlockCondition;
