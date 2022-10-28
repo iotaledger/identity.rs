@@ -1773,7 +1773,7 @@ The default Tangle network (`"iota"`).
 <a name="IotaDID.fromAliasId"></a>
 
 ### IotaDID.fromAliasId(aliasId, network) ⇒ [<code>IotaDID</code>](#IotaDID)
-Constructs a new `IotaDID` from a hex representation of the tag and the given
+Constructs a new `IotaDID` from a hex representation of an Alias Id and the given
 network name.
 
 **Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
@@ -2012,7 +2012,7 @@ Deserializes an instance from a JSON object.
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-        * [.unpackFromBlock(network, block, protocolParametersJSON)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+        * [.unpackFromBlock(network, block, protocolResponseJson)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
         * [.fromJSON(json)](#IotaDocument.fromJSON) ⇒ [<code>IotaDocument</code>](#IotaDocument)
 
 <a name="new_IotaDocument_new"></a>
@@ -2438,13 +2438,13 @@ encoded in the `AliasId` alone.
 
 <a name="IotaDocument.unpackFromBlock"></a>
 
-### IotaDocument.unpackFromBlock(network, block, protocolParametersJSON) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+### IotaDocument.unpackFromBlock(network, block, protocolResponseJson) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
 Returns all DID documents of the Alias Outputs contained in the block's transaction payload
 outputs, if any.
 
 Errors if any Alias Output does not contain a valid or empty DID Document.
 
-protocolParametersJSON can be obtained from a `Client`.
+`protocolResponseJson` can be obtained from a `Client`.
 
 **Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
 
@@ -2452,7 +2452,7 @@ protocolParametersJSON can be obtained from a `Client`.
 | --- | --- |
 | network | <code>string</code> | 
 | block | <code>IBlock</code> | 
-| protocolParametersJSON | <code>string</code> | 
+| protocolResponseJson | <code>string</code> | 
 
 <a name="IotaDocument.fromJSON"></a>
 
@@ -3676,7 +3676,7 @@ Constructs a new `Resolver`.
 
 # Errors
 If both a `client` is given and the `handlers` map contains the "iota" key the construction process
-will throw an error as it is then ambiguous what should be .
+will throw an error because the handler for the "iota" method then becomes ambiguous.
 
 
 | Param | Type |
