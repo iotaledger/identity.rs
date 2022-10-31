@@ -75,8 +75,21 @@ pub(crate) struct CoreDocumentData<D = CoreDID, T = Object, U = Object, V = Obje
 
 impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
   fn check_id_constraints(&self) -> Result<()> {
+    // Algorithm:
+    // 1: Create two empty sets: `embedded_method_ids` and `id_references`.
+    // 2: Loop through all the scoped verification methods and push the ids of the embedded methods and references into
+    // `embedded_method_ids` and `id_references` respectively. If a duplicate embedded method is encountered (that
+    // is an embedded method, identified by id, exists in two different scopes) then immediately throw an error.
+    // 3: Ensure that the two constructed sets have an empty intersection, otherwise an embedded method is being
+    // referenced and an error needs to be thrown. 4: Create a new set that is the union of the
+    // `embedded_method_ids` and the set of ids of the unscoped methods (the remaining methods). If the two
+    // aforementioned sets have a non trivial intersection there is a duplicate method and an error must be thrown.
+    // 5: Create a set of all ids (embedded, references, and unscoped).
+    // 6: Loop through all services and check that their ids are not contained in the set constructed in the previous
+    // step.
+
+    let mut embedded_method_ids: HashSet<&DIDUrl<D>> = HashSet::new();
     let mut id_references: HashSet<&DIDUrl<D>> = HashSet::new();
-    let mut scoped_method_ids: HashSet<&DIDUrl<D>> = HashSet::new();
     for method_ref in self
       .authentication
       .iter()
@@ -87,8 +100,8 @@ impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
     {
       match method_ref {
         MethodRef::Embed(method) => {
-          if !scoped_method_ids.insert(method.id()) {
-            //TODO: Consider renaming error to DuplicateMethodAttempt
+          if !embedded_method_ids.insert(method.id()) {
+            //TODO: Consider renaming error or adding a MethodDuplicationAttempt error variant,
             return Err(Error::MethodAlreadyExists);
           }
         }
@@ -97,24 +110,28 @@ impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
         }
       }
     }
-    if !scoped_method_ids.is_disjoint(&id_references) {
+    if !embedded_method_ids.is_disjoint(&id_references) {
       // TODO: Consider renaming InvalidMethodEmbedded or create a new error variant
       return Err(Error::InvalidMethodEmbedded);
     }
 
-    let num_scoped = scoped_method_ids.len();
+    // Create the union of method ids that belong to embedded methods and those that belong to an unscoped verification
+    // method. If the number of elements in the union is not equal to the sum of the number of elements in each of
+    // the two aforementioned sets there is a non trivial intersection.
+    let num_embedded = embedded_method_ids.len();
     let num_non_scoped = self.verification_method.len();
     let mut method_ids = {
-      scoped_method_ids.extend(self.verification_method.iter().map(|method| method.id()));
-      scoped_method_ids
+      embedded_method_ids.extend(self.verification_method.iter().map(|method| method.id()));
+      embedded_method_ids
     };
-    if method_ids.len() < num_scoped + num_non_scoped {
+    if method_ids.len() < num_embedded + num_non_scoped {
       return Err(Error::MethodAlreadyExists);
     }
     method_ids.extend(id_references);
 
     for service_id in self.service.iter().map(|service| service.id()) {
       if method_ids.contains(service_id) {
+        // TODO: consider using another error variant
         return Err(Error::InvalidService(
           "the service id is shared with a verification method",
         ));
