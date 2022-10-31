@@ -4,6 +4,7 @@
 use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
+use std::collections::HashSet;
 
 use serde::Serialize;
 
@@ -42,12 +43,9 @@ use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
 
-/// A DID Document.
-///
-/// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
+pub(crate) struct CoreDocumentInner<D = CoreDID, T = Object, U = Object, V = Object>
   where
     D: DID + KeyComparable
 {
@@ -74,12 +72,25 @@ pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   pub(crate) properties: T,
 }
 
+/// A DID Document.
+///
+/// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[rustfmt::skip]
+#[serde(transparent)]
+pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
+  where
+    D: DID + KeyComparable
+{
+  pub(crate) inner: CoreDocumentInner<D,T,U,V>, 
+}
+
 // Workaround for lifetime issues with a mutable reference to self preventing closures from being used.
 macro_rules! method_ref_mut_helper {
   ($doc:ident, $method: ident, $query: ident) => {
-    match $doc.$method.query_mut($query.into())? {
+    match $doc.inner.$method.query_mut($query.into())? {
       MethodRef::Embed(method) => Some(method),
-      MethodRef::Refer(ref did) => $doc.verification_method.query_mut(did),
+      MethodRef::Refer(ref did) => $doc.inner.verification_method.query_mut(did),
     }
   };
 }
@@ -98,156 +109,158 @@ where
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
   pub fn from_builder(builder: DocumentBuilder<D, T, U, V>) -> Result<Self> {
     Ok(Self {
-      id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
-      controller: Some(builder.controller)
-        .filter(|controllers| !controllers.is_empty())
-        .map(TryFrom::try_from)
-        .transpose()
-        .map_err(|err| Error::InvalidDocument("controller", Some(err)))?,
-      also_known_as: builder
-        .also_known_as
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("also_known_as", Some(err)))?,
-      verification_method: builder
-        .verification_method
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("verification_method", Some(err)))?,
-      authentication: builder
-        .authentication
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("authentication", Some(err)))?,
-      assertion_method: builder
-        .assertion_method
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("assertion_method", Some(err)))?,
-      key_agreement: builder
-        .key_agreement
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("key_agreement", Some(err)))?,
-      capability_delegation: builder
-        .capability_delegation
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("capability_delegation", Some(err)))?,
-      capability_invocation: builder
-        .capability_invocation
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("capability_invocation", Some(err)))?,
-      service: builder
-        .service
-        .try_into()
-        .map_err(|err| Error::InvalidDocument("service", Some(err)))?,
-      properties: builder.properties,
+      inner: CoreDocumentInner {
+        id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
+        controller: Some(builder.controller)
+          .filter(|controllers| !controllers.is_empty())
+          .map(TryFrom::try_from)
+          .transpose()
+          .map_err(|err| Error::InvalidDocument("controller", Some(err)))?,
+        also_known_as: builder
+          .also_known_as
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("also_known_as", Some(err)))?,
+        verification_method: builder
+          .verification_method
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("verification_method", Some(err)))?,
+        authentication: builder
+          .authentication
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("authentication", Some(err)))?,
+        assertion_method: builder
+          .assertion_method
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("assertion_method", Some(err)))?,
+        key_agreement: builder
+          .key_agreement
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("key_agreement", Some(err)))?,
+        capability_delegation: builder
+          .capability_delegation
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("capability_delegation", Some(err)))?,
+        capability_invocation: builder
+          .capability_invocation
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("capability_invocation", Some(err)))?,
+        service: builder
+          .service
+          .try_into()
+          .map_err(|err| Error::InvalidDocument("service", Some(err)))?,
+        properties: builder.properties,
+      },
     })
   }
 
   /// Returns a reference to the `CoreDocument` id.
   pub fn id(&self) -> &D {
-    &self.id
+    &self.inner.id
   }
 
   /// Returns a mutable reference to the `CoreDocument` id.
   pub fn id_mut(&mut self) -> &mut D {
-    &mut self.id
+    &mut self.inner.id
   }
 
   /// Returns a reference to the `CoreDocument` controller.
   pub fn controller(&self) -> Option<&OneOrSet<D>> {
-    self.controller.as_ref()
+    self.inner.controller.as_ref()
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
   pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<D>> {
-    &mut self.controller
+    &mut self.inner.controller
   }
 
   /// Returns a reference to the `CoreDocument` alsoKnownAs set.
   pub fn also_known_as(&self) -> &OrderedSet<Url> {
-    &self.also_known_as
+    &self.inner.also_known_as
   }
 
   /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
   pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
-    &mut self.also_known_as
+    &mut self.inner.also_known_as
   }
 
   /// Returns a reference to the `CoreDocument` verificationMethod set.
   pub fn verification_method(&self) -> &OrderedSet<VerificationMethod<D, U>> {
-    &self.verification_method
+    &self.inner.verification_method
   }
 
   /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
   pub fn verification_method_mut(&mut self) -> &mut OrderedSet<VerificationMethod<D, U>> {
-    &mut self.verification_method
+    &mut self.inner.verification_method
   }
 
   /// Returns a reference to the `CoreDocument` authentication set.
   pub fn authentication(&self) -> &OrderedSet<MethodRef<D, U>> {
-    &self.authentication
+    &self.inner.authentication
   }
 
   /// Returns a mutable reference to the `CoreDocument` authentication set.
   pub fn authentication_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.authentication
+    &mut self.inner.authentication
   }
 
   /// Returns a reference to the `CoreDocument` assertionMethod set.
   pub fn assertion_method(&self) -> &OrderedSet<MethodRef<D, U>> {
-    &self.assertion_method
+    &self.inner.assertion_method
   }
 
   /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
   pub fn assertion_method_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.assertion_method
+    &mut self.inner.assertion_method
   }
 
   /// Returns a reference to the `CoreDocument` keyAgreement set.
   pub fn key_agreement(&self) -> &OrderedSet<MethodRef<D, U>> {
-    &self.key_agreement
+    &self.inner.key_agreement
   }
 
   /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
   pub fn key_agreement_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.key_agreement
+    &mut self.inner.key_agreement
   }
 
   /// Returns a reference to the `CoreDocument` capabilityDelegation set.
   pub fn capability_delegation(&self) -> &OrderedSet<MethodRef<D, U>> {
-    &self.capability_delegation
+    &self.inner.capability_delegation
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
   pub fn capability_delegation_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.capability_delegation
+    &mut self.inner.capability_delegation
   }
 
   /// Returns a reference to the `CoreDocument` capabilityInvocation set.
   pub fn capability_invocation(&self) -> &OrderedSet<MethodRef<D, U>> {
-    &self.capability_invocation
+    &self.inner.capability_invocation
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
   pub fn capability_invocation_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.capability_invocation
+    &mut self.inner.capability_invocation
   }
 
   /// Returns a reference to the `CoreDocument` service set.
   pub fn service(&self) -> &OrderedSet<Service<D, V>> {
-    &self.service
+    &self.inner.service
   }
 
   /// Returns a mutable reference to the `CoreDocument` service set.
   pub fn service_mut(&mut self) -> &mut OrderedSet<Service<D, V>> {
-    &mut self.service
+    &mut self.inner.service
   }
 
   /// Returns a reference to the custom `CoreDocument` properties.
   pub fn properties(&self) -> &T {
-    &self.properties
+    &self.inner.properties
   }
 
   /// Returns a mutable reference to the custom `CoreDocument` properties.
   pub fn properties_mut(&mut self) -> &mut T {
-    &mut self.properties
+    &mut self.inner.properties
   }
 
   /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields
@@ -258,42 +271,51 @@ where
     F: FnMut(D) -> C,
     G: FnOnce(T) -> S,
   {
+    let current_inner = self.inner;
     CoreDocument {
-      id: f(self.id),
-      controller: self.controller.map(|controller_set| controller_set.map(&mut f)),
-      also_known_as: self.also_known_as,
-      verification_method: self
-        .verification_method
-        .into_iter()
-        .map(|method| method.map(&mut f))
-        .collect(),
-      authentication: self
-        .authentication
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      assertion_method: self
-        .assertion_method
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      key_agreement: self
-        .key_agreement
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      capability_delegation: self
-        .capability_delegation
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      capability_invocation: self
-        .capability_invocation
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      service: self.service.into_iter().map(|service| service.map(&mut f)).collect(),
-      properties: g(self.properties),
+      inner: CoreDocumentInner {
+        id: f(current_inner.id),
+        controller: current_inner
+          .controller
+          .map(|controller_set| controller_set.map(&mut f)),
+        also_known_as: current_inner.also_known_as,
+        verification_method: current_inner
+          .verification_method
+          .into_iter()
+          .map(|method| method.map(&mut f))
+          .collect(),
+        authentication: current_inner
+          .authentication
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        assertion_method: current_inner
+          .assertion_method
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        key_agreement: current_inner
+          .key_agreement
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        capability_delegation: current_inner
+          .capability_delegation
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        capability_invocation: current_inner
+          .capability_invocation
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        service: current_inner
+          .service
+          .into_iter()
+          .map(|service| service.map(&mut f))
+          .collect(),
+        properties: g(current_inner.properties),
+      },
     }
   }
 
@@ -308,49 +330,52 @@ where
     F: FnMut(D) -> Result<C, E>,
     G: FnOnce(T) -> Result<S, E>,
   {
+    let current_inner = self.inner;
     Ok(CoreDocument {
-      id: f(self.id)?,
-      controller: self
-        .controller
-        .map(|controller_set| controller_set.try_map(&mut f))
-        .transpose()?,
-      also_known_as: self.also_known_as,
-      verification_method: self
-        .verification_method
-        .into_iter()
-        .map(|method| method.try_map(&mut f))
-        .collect::<Result<_, E>>()?,
-      authentication: self
-        .authentication
-        .into_iter()
-        .map(|method_ref| method_ref.try_map(&mut f))
-        .collect::<Result<_, E>>()?,
-      assertion_method: self
-        .assertion_method
-        .into_iter()
-        .map(|method_ref| method_ref.try_map(&mut f))
-        .collect::<Result<_, E>>()?,
-      key_agreement: self
-        .key_agreement
-        .into_iter()
-        .map(|method_ref| method_ref.try_map(&mut f))
-        .collect::<Result<_, E>>()?,
-      capability_delegation: self
-        .capability_delegation
-        .into_iter()
-        .map(|method_ref| method_ref.try_map(&mut f))
-        .collect::<Result<_, E>>()?,
-      capability_invocation: self
-        .capability_invocation
-        .into_iter()
-        .map(|method_ref| method_ref.try_map(&mut f))
-        .collect::<Result<_, E>>()?,
-      service: self
-        .service
-        .into_iter()
-        .map(|service| service.try_map(&mut f))
-        .collect::<Result<_, E>>()?,
-      properties: g(self.properties)?,
+      inner: CoreDocumentInner {
+        id: f(current_inner.id)?,
+        controller: current_inner
+          .controller
+          .map(|controller_set| controller_set.try_map(&mut f))
+          .transpose()?,
+        also_known_as: current_inner.also_known_as,
+        verification_method: current_inner
+          .verification_method
+          .into_iter()
+          .map(|method| method.try_map(&mut f))
+          .collect::<Result<_, E>>()?,
+        authentication: current_inner
+          .authentication
+          .into_iter()
+          .map(|method_ref| method_ref.try_map(&mut f))
+          .collect::<Result<_, E>>()?,
+        assertion_method: current_inner
+          .assertion_method
+          .into_iter()
+          .map(|method_ref| method_ref.try_map(&mut f))
+          .collect::<Result<_, E>>()?,
+        key_agreement: current_inner
+          .key_agreement
+          .into_iter()
+          .map(|method_ref| method_ref.try_map(&mut f))
+          .collect::<Result<_, E>>()?,
+        capability_delegation: current_inner
+          .capability_delegation
+          .into_iter()
+          .map(|method_ref| method_ref.try_map(&mut f))
+          .collect::<Result<_, E>>()?,
+        capability_invocation: current_inner
+          .capability_invocation
+          .into_iter()
+          .map(|method_ref| method_ref.try_map(&mut f))
+          .collect::<Result<_, E>>()?,
+        service: current_inner
+          .service
+          .into_iter()
+          .map(|service| service.try_map(&mut f))
+          .collect::<Result<_, E>>()?,
+        properties: g(current_inner.properties)?,
+      },
     })
   }
 
@@ -365,21 +390,21 @@ where
     }
 
     match scope {
-      MethodScope::VerificationMethod => self.verification_method.append(method),
+      MethodScope::VerificationMethod => self.inner.verification_method.append(method),
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
-        self.authentication.append(MethodRef::Embed(method))
+        self.inner.authentication.append(MethodRef::Embed(method))
       }
       MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
-        self.assertion_method.append(MethodRef::Embed(method))
+        self.inner.assertion_method.append(MethodRef::Embed(method))
       }
       MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
-        self.key_agreement.append(MethodRef::Embed(method))
+        self.inner.key_agreement.append(MethodRef::Embed(method))
       }
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => {
-        self.capability_delegation.append(MethodRef::Embed(method))
+        self.inner.capability_delegation.append(MethodRef::Embed(method))
       }
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => {
-        self.capability_invocation.append(MethodRef::Embed(method))
+        self.inner.capability_invocation.append(MethodRef::Embed(method))
       }
     };
 
@@ -393,12 +418,12 @@ where
   /// Returns an error if the method does not exist.
   pub fn remove_method(&mut self, did: &DIDUrl<D>) -> Result<()> {
     let was_removed: bool = [
-      self.authentication.remove(did),
-      self.assertion_method.remove(did),
-      self.key_agreement.remove(did),
-      self.capability_delegation.remove(did),
-      self.capability_invocation.remove(did),
-      self.verification_method.remove(did),
+      self.inner.authentication.remove(did),
+      self.inner.assertion_method.remove(did),
+      self.inner.key_agreement.remove(did),
+      self.inner.capability_delegation.remove(did),
+      self.inner.capability_invocation.remove(did),
+      self.inner.verification_method.remove(did),
     ]
     .contains(&true);
 
@@ -539,13 +564,14 @@ where
     }
 
     self
+      .inner
       .verification_method
       .iter()
-      .chain(self.authentication.iter().filter_map(__filter_ref))
-      .chain(self.assertion_method.iter().filter_map(__filter_ref))
-      .chain(self.key_agreement.iter().filter_map(__filter_ref))
-      .chain(self.capability_delegation.iter().filter_map(__filter_ref))
-      .chain(self.capability_invocation.iter().filter_map(__filter_ref))
+      .chain(self.inner.authentication.iter().filter_map(__filter_ref))
+      .chain(self.inner.assertion_method.iter().filter_map(__filter_ref))
+      .chain(self.inner.key_agreement.iter().filter_map(__filter_ref))
+      .chain(self.inner.capability_delegation.iter().filter_map(__filter_ref))
+      .chain(self.inner.capability_invocation.iter().filter_map(__filter_ref))
   }
 
   /// Returns an iterator over all verification relationships.
@@ -553,12 +579,13 @@ where
   /// This includes embedded and referenced [`VerificationMethods`](VerificationMethod).
   pub fn verification_relationships(&self) -> impl Iterator<Item = &MethodRef<D, U>> {
     self
+      .inner
       .authentication
       .iter()
-      .chain(self.assertion_method.iter())
-      .chain(self.key_agreement.iter())
-      .chain(self.capability_delegation.iter())
-      .chain(self.capability_invocation.iter())
+      .chain(self.inner.assertion_method.iter())
+      .chain(self.inner.key_agreement.iter())
+      .chain(self.inner.capability_delegation.iter())
+      .chain(self.inner.capability_invocation.iter())
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
@@ -576,21 +603,29 @@ where
         let resolve_ref_helper = |method_ref: &'me MethodRef<D, U>| self.resolve_method_ref(method_ref);
 
         match scope {
-          MethodScope::VerificationMethod => self.verification_method.query(query.into()),
-          MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
-            self.authentication.query(query.into()).and_then(resolve_ref_helper)
-          }
-          MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
-            self.assertion_method.query(query.into()).and_then(resolve_ref_helper)
-          }
-          MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
-            self.key_agreement.query(query.into()).and_then(resolve_ref_helper)
-          }
+          MethodScope::VerificationMethod => self.inner.verification_method.query(query.into()),
+          MethodScope::VerificationRelationship(MethodRelationship::Authentication) => self
+            .inner
+            .authentication
+            .query(query.into())
+            .and_then(resolve_ref_helper),
+          MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => self
+            .inner
+            .assertion_method
+            .query(query.into())
+            .and_then(resolve_ref_helper),
+          MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => self
+            .inner
+            .key_agreement
+            .query(query.into())
+            .and_then(resolve_ref_helper),
           MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
+            .inner
             .capability_delegation
             .query(query.into())
             .and_then(resolve_ref_helper),
           MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
+            .inner
             .capability_invocation
             .query(query.into())
             .and_then(resolve_ref_helper),
@@ -612,7 +647,7 @@ where
   {
     match scope {
       Some(scope) => match scope {
-        MethodScope::VerificationMethod => self.verification_method.query_mut(query.into()),
+        MethodScope::VerificationMethod => self.inner.verification_method.query_mut(query.into()),
         MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
           method_ref_mut_helper!(self, authentication, query)
         }
@@ -637,7 +672,7 @@ where
   pub fn resolve_method_ref<'a>(&'a self, method_ref: &'a MethodRef<D, U>) -> Option<&'a VerificationMethod<D, U>> {
     match method_ref {
       MethodRef::Embed(method) => Some(method),
-      MethodRef::Refer(did) => self.verification_method.query(did),
+      MethodRef::Refer(did) => self.inner.verification_method.query(did),
     }
   }
 
@@ -645,29 +680,29 @@ where
     let mut method: Option<&MethodRef<D, U>> = None;
 
     if method.is_none() {
-      method = self.authentication.query(query.clone());
+      method = self.inner.authentication.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.assertion_method.query(query.clone());
+      method = self.inner.assertion_method.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.key_agreement.query(query.clone());
+      method = self.inner.key_agreement.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_delegation.query(query.clone());
+      method = self.inner.capability_delegation.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_invocation.query(query.clone());
+      method = self.inner.capability_invocation.query(query.clone());
     }
 
     match method {
       Some(MethodRef::Embed(method)) => Some(method),
-      Some(MethodRef::Refer(did)) => self.verification_method.query(&did.to_string()),
-      None => self.verification_method.query(query),
+      Some(MethodRef::Refer(did)) => self.inner.verification_method.query(&did.to_string()),
+      None => self.inner.verification_method.query(query),
     }
   }
 
@@ -675,30 +710,81 @@ where
     let mut method: Option<&mut MethodRef<D, U>> = None;
 
     if method.is_none() {
-      method = self.authentication.query_mut(query.clone());
+      method = self.inner.authentication.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.assertion_method.query_mut(query.clone());
+      method = self.inner.assertion_method.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.key_agreement.query_mut(query.clone());
+      method = self.inner.key_agreement.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_delegation.query_mut(query.clone());
+      method = self.inner.capability_delegation.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_invocation.query_mut(query.clone());
+      method = self.inner.capability_invocation.query_mut(query.clone());
     }
 
     match method {
       Some(MethodRef::Embed(method)) => Some(method),
-      Some(MethodRef::Refer(did)) => self.verification_method.query_mut(&did.to_string()),
-      None => self.verification_method.query_mut(query),
+      Some(MethodRef::Refer(did)) => self.inner.verification_method.query_mut(&did.to_string()),
+      None => self.inner.verification_method.query_mut(query),
     }
+  }
+
+  fn check_id_constraints(&self) -> Result<()> {
+    let mut id_references: HashSet<&DIDUrl<D>> = HashSet::new();
+    let mut scoped_method_ids: HashSet<&DIDUrl<D>> = HashSet::new();
+    for method_ref in self
+      .inner
+      .authentication
+      .iter()
+      .chain(self.inner.assertion_method.iter())
+      .chain(self.inner.key_agreement.iter())
+      .chain(self.inner.capability_delegation.iter())
+      .chain(self.inner.capability_invocation.iter())
+    {
+      match method_ref {
+        MethodRef::Embed(method) => {
+          if !scoped_method_ids.insert(method.id()) {
+            //TODO: Consider renaming error to DuplicateMethodAttempt
+            return Err(Error::MethodAlreadyExists);
+          }
+        }
+        MethodRef::Refer(id) => {
+          id_references.insert(id);
+        }
+      }
+    }
+    if !scoped_method_ids.is_disjoint(&id_references) {
+      // TODO: Consider renaming InvalidMethodEmbedded or create a new error variant
+      return Err(Error::InvalidMethodEmbedded);
+    }
+
+    let num_scoped = scoped_method_ids.len();
+    let num_non_scoped = self.inner.verification_method.len();
+    let mut method_ids = {
+      scoped_method_ids.extend(self.inner.verification_method.iter().map(|method| method.id()));
+      scoped_method_ids
+    };
+    if method_ids.len() < num_scoped + num_non_scoped {
+      return Err(Error::MethodAlreadyExists);
+    }
+    method_ids.extend(id_references);
+
+    for service_id in self.inner.service.iter().map(|service| service.id()) {
+      if method_ids.contains(service_id) {
+        return Err(Error::InvalidService(
+          "the service id is shared with a verification method",
+        ));
+      }
+    }
+
+    Ok(())
   }
 }
 
