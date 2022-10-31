@@ -17,7 +17,7 @@ use identity_core::diff::Result;
 use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
-use crate::document::CoreDocumentInner;
+use crate::document::CoreDocumentData;
 use crate::service::Service;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
@@ -202,7 +202,7 @@ where
       .unwrap_or_else(|| self.properties().clone());
 
     Ok(CoreDocument {
-      inner: CoreDocumentInner {
+      inner: CoreDocumentData {
         id,
         controller,
         also_known_as,
@@ -285,7 +285,7 @@ where
     let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 
     Ok(CoreDocument {
-      inner: CoreDocumentInner {
+      inner: CoreDocumentData {
         id,
         controller,
         also_known_as,

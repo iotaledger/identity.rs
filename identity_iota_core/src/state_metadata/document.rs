@@ -40,7 +40,7 @@ impl StateMetadataDocument {
   /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
   pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
-    let core_document: IotaCoreDocument = document.try_map(
+    let core_document_result: Result<IotaCoreDocument, identity_did::Error> = document.try_map(
       // Replace placeholder identifiers.
       |did| {
         if did == PLACEHOLDER_DID.as_ref() {
@@ -53,6 +53,8 @@ impl StateMetadataDocument {
       // Do not modify properties.
       Ok,
     )?;
+    let core_document: IotaCoreDocument = core_document_result.map_err(|error| crate::Error::InvalidDoc(error))?;
+
     Ok(IotaDocument::from((core_document, metadata)))
   }
 

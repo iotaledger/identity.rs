@@ -22,6 +22,7 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Verifier;
+use serde::Serializer;
 
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
@@ -45,7 +46,7 @@ use crate::verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub(crate) struct CoreDocumentInner<D = CoreDID, T = Object, U = Object, V = Object>
+pub(crate) struct CoreDocumentData<D = CoreDID, T = Object, U = Object, V = Object>
   where
     D: DID + KeyComparable
 {
@@ -72,17 +73,85 @@ pub(crate) struct CoreDocumentInner<D = CoreDID, T = Object, U = Object, V = Obj
   pub(crate) properties: T,
 }
 
+impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
+  fn check_id_constraints(&self) -> Result<()> {
+    let mut id_references: HashSet<&DIDUrl<D>> = HashSet::new();
+    let mut scoped_method_ids: HashSet<&DIDUrl<D>> = HashSet::new();
+    for method_ref in self
+      .authentication
+      .iter()
+      .chain(self.assertion_method.iter())
+      .chain(self.key_agreement.iter())
+      .chain(self.capability_delegation.iter())
+      .chain(self.capability_invocation.iter())
+    {
+      match method_ref {
+        MethodRef::Embed(method) => {
+          if !scoped_method_ids.insert(method.id()) {
+            //TODO: Consider renaming error to DuplicateMethodAttempt
+            return Err(Error::MethodAlreadyExists);
+          }
+        }
+        MethodRef::Refer(id) => {
+          id_references.insert(id);
+        }
+      }
+    }
+    if !scoped_method_ids.is_disjoint(&id_references) {
+      // TODO: Consider renaming InvalidMethodEmbedded or create a new error variant
+      return Err(Error::InvalidMethodEmbedded);
+    }
+
+    let num_scoped = scoped_method_ids.len();
+    let num_non_scoped = self.verification_method.len();
+    let mut method_ids = {
+      scoped_method_ids.extend(self.verification_method.iter().map(|method| method.id()));
+      scoped_method_ids
+    };
+    if method_ids.len() < num_scoped + num_non_scoped {
+      return Err(Error::MethodAlreadyExists);
+    }
+    method_ids.extend(id_references);
+
+    for service_id in self.service.iter().map(|service| service.id()) {
+      if method_ids.contains(service_id) {
+        return Err(Error::InvalidService(
+          "the service id is shared with a verification method",
+        ));
+      }
+    }
+
+    Ok(())
+  }
+}
+
 /// A DID Document.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[rustfmt::skip]
-#[serde(transparent)]
+#[serde(try_from = "CoreDocumentData<D,T,U,V>")]
 pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   where
     D: DID + KeyComparable
 {
-  pub(crate) inner: CoreDocumentInner<D,T,U,V>, 
+  pub(crate) inner: CoreDocumentData<D,T,U,V>, 
+}
+
+//Forward serialization to inner
+impl<D, T, U, V> Serialize for CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable + Serialize,
+  T: Serialize,
+  U: Serialize,
+  V: Serialize,
+{
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    self.inner.serialize(serializer)
+  }
 }
 
 // Workaround for lifetime issues with a mutable reference to self preventing closures from being used.
@@ -108,48 +177,46 @@ where
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
   pub fn from_builder(builder: DocumentBuilder<D, T, U, V>) -> Result<Self> {
-    Ok(Self {
-      inner: CoreDocumentInner {
-        id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
-        controller: Some(builder.controller)
-          .filter(|controllers| !controllers.is_empty())
-          .map(TryFrom::try_from)
-          .transpose()
-          .map_err(|err| Error::InvalidDocument("controller", Some(err)))?,
-        also_known_as: builder
-          .also_known_as
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("also_known_as", Some(err)))?,
-        verification_method: builder
-          .verification_method
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("verification_method", Some(err)))?,
-        authentication: builder
-          .authentication
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("authentication", Some(err)))?,
-        assertion_method: builder
-          .assertion_method
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("assertion_method", Some(err)))?,
-        key_agreement: builder
-          .key_agreement
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("key_agreement", Some(err)))?,
-        capability_delegation: builder
-          .capability_delegation
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("capability_delegation", Some(err)))?,
-        capability_invocation: builder
-          .capability_invocation
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("capability_invocation", Some(err)))?,
-        service: builder
-          .service
-          .try_into()
-          .map_err(|err| Error::InvalidDocument("service", Some(err)))?,
-        properties: builder.properties,
-      },
+    Self::try_from(CoreDocumentData {
+      id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
+      controller: Some(builder.controller)
+        .filter(|controllers| !controllers.is_empty())
+        .map(TryFrom::try_from)
+        .transpose()
+        .map_err(|err| Error::InvalidDocument("controller", Some(err)))?,
+      also_known_as: builder
+        .also_known_as
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("also_known_as", Some(err)))?,
+      verification_method: builder
+        .verification_method
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("verification_method", Some(err)))?,
+      authentication: builder
+        .authentication
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("authentication", Some(err)))?,
+      assertion_method: builder
+        .assertion_method
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("assertion_method", Some(err)))?,
+      key_agreement: builder
+        .key_agreement
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("key_agreement", Some(err)))?,
+      capability_delegation: builder
+        .capability_delegation
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("capability_delegation", Some(err)))?,
+      capability_invocation: builder
+        .capability_invocation
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("capability_invocation", Some(err)))?,
+      service: builder
+        .service
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("service", Some(err)))?,
+      properties: builder.properties,
     })
   }
 
@@ -265,6 +332,10 @@ where
 
   /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields
   /// and another function `g` to the custom properties.
+  ///
+  /// # Panics
+  /// Panics if the mapping `f` introduces methods referencing embedded method identifiers,
+  /// or services with identifiers matching method identifiers.
   pub fn map<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
   where
     C: DID + KeyComparable,
@@ -272,67 +343,68 @@ where
     G: FnOnce(T) -> S,
   {
     let current_inner = self.inner;
-    CoreDocument {
-      inner: CoreDocumentInner {
-        id: f(current_inner.id),
-        controller: current_inner
-          .controller
-          .map(|controller_set| controller_set.map(&mut f)),
-        also_known_as: current_inner.also_known_as,
-        verification_method: current_inner
-          .verification_method
-          .into_iter()
-          .map(|method| method.map(&mut f))
-          .collect(),
-        authentication: current_inner
-          .authentication
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut f))
-          .collect(),
-        assertion_method: current_inner
-          .assertion_method
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut f))
-          .collect(),
-        key_agreement: current_inner
-          .key_agreement
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut f))
-          .collect(),
-        capability_delegation: current_inner
-          .capability_delegation
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut f))
-          .collect(),
-        capability_invocation: current_inner
-          .capability_invocation
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut f))
-          .collect(),
-        service: current_inner
-          .service
-          .into_iter()
-          .map(|service| service.map(&mut f))
-          .collect(),
-        properties: g(current_inner.properties),
-      },
-    }
+    CoreDocument::try_from(CoreDocumentData {
+      id: f(current_inner.id),
+      controller: current_inner
+        .controller
+        .map(|controller_set| controller_set.map(&mut f)),
+      also_known_as: current_inner.also_known_as,
+      verification_method: current_inner
+        .verification_method
+        .into_iter()
+        .map(|method| method.map(&mut f))
+        .collect(),
+      authentication: current_inner
+        .authentication
+        .into_iter()
+        .map(|method_ref| method_ref.map(&mut f))
+        .collect(),
+      assertion_method: current_inner
+        .assertion_method
+        .into_iter()
+        .map(|method_ref| method_ref.map(&mut f))
+        .collect(),
+      key_agreement: current_inner
+        .key_agreement
+        .into_iter()
+        .map(|method_ref| method_ref.map(&mut f))
+        .collect(),
+      capability_delegation: current_inner
+        .capability_delegation
+        .into_iter()
+        .map(|method_ref| method_ref.map(&mut f))
+        .collect(),
+      capability_invocation: current_inner
+        .capability_invocation
+        .into_iter()
+        .map(|method_ref| method_ref.map(&mut f))
+        .collect(),
+      service: current_inner
+        .service
+        .into_iter()
+        .map(|service| service.map(&mut f))
+        .collect(),
+      properties: g(current_inner.properties),
+    })
+    .unwrap()
   }
 
   /// Fallible version of [`CoreDocument::map`].
   ///
   /// # Errors
   ///
-  /// `try_map` can fail if either of the provided functions fail.
-  pub fn try_map<S, C, F, G, E>(self, mut f: F, g: G) -> Result<CoreDocument<C, S, U, V>, E>
+  /// `try_map` can fail if either of the provided functions fail or if the mapping `f`
+  /// introduces methods referencing embedded method identifiers, or services with identifiers matching method
+  /// identifiers..
+  pub fn try_map<S, C, F, G, E>(self, mut f: F, g: G) -> Result<Result<CoreDocument<C, S, U, V>, Error>, E>
   where
     C: DID + KeyComparable,
     F: FnMut(D) -> Result<C, E>,
     G: FnOnce(T) -> Result<S, E>,
   {
     let current_inner = self.inner;
-    Ok(CoreDocument {
-      inner: CoreDocumentInner {
+    let helper = || -> Result<CoreDocumentData<C, S, U, V>, E> {
+      Ok(CoreDocumentData {
         id: f(current_inner.id)?,
         controller: current_inner
           .controller
@@ -375,8 +447,9 @@ where
           .map(|service| service.try_map(&mut f))
           .collect::<Result<_, E>>()?,
         properties: g(current_inner.properties)?,
-      },
-    })
+      })
+    };
+    helper().map(|data| CoreDocument::try_from(data))
   }
 
   /// Adds a new [`VerificationMethod`] to the document in the given [`MethodScope`].
@@ -735,57 +808,6 @@ where
       None => self.inner.verification_method.query_mut(query),
     }
   }
-
-  fn check_id_constraints(&self) -> Result<()> {
-    let mut id_references: HashSet<&DIDUrl<D>> = HashSet::new();
-    let mut scoped_method_ids: HashSet<&DIDUrl<D>> = HashSet::new();
-    for method_ref in self
-      .inner
-      .authentication
-      .iter()
-      .chain(self.inner.assertion_method.iter())
-      .chain(self.inner.key_agreement.iter())
-      .chain(self.inner.capability_delegation.iter())
-      .chain(self.inner.capability_invocation.iter())
-    {
-      match method_ref {
-        MethodRef::Embed(method) => {
-          if !scoped_method_ids.insert(method.id()) {
-            //TODO: Consider renaming error to DuplicateMethodAttempt
-            return Err(Error::MethodAlreadyExists);
-          }
-        }
-        MethodRef::Refer(id) => {
-          id_references.insert(id);
-        }
-      }
-    }
-    if !scoped_method_ids.is_disjoint(&id_references) {
-      // TODO: Consider renaming InvalidMethodEmbedded or create a new error variant
-      return Err(Error::InvalidMethodEmbedded);
-    }
-
-    let num_scoped = scoped_method_ids.len();
-    let num_non_scoped = self.inner.verification_method.len();
-    let mut method_ids = {
-      scoped_method_ids.extend(self.inner.verification_method.iter().map(|method| method.id()));
-      scoped_method_ids
-    };
-    if method_ids.len() < num_scoped + num_non_scoped {
-      return Err(Error::MethodAlreadyExists);
-    }
-    method_ids.extend(id_references);
-
-    for service_id in self.inner.service.iter().map(|service| service.id()) {
-      if method_ids.contains(service_id) {
-        return Err(Error::InvalidService(
-          "the service id is shared with a verification method",
-        ));
-      }
-    }
-
-    Ok(())
-  }
 }
 
 impl<D, T, U, V> CoreDocument<D, T, U, V>
@@ -920,6 +942,19 @@ where
   }
 }
 
+impl<D, T, U, V> TryFrom<CoreDocumentData<D, T, U, V>> for CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
+  type Error = crate::Error;
+  fn try_from(value: CoreDocumentData<D, T, U, V>) -> Result<Self, Self::Error> {
+    match value.check_id_constraints() {
+      Ok(_) => Ok(Self { inner: value }),
+      Err(err) => Err(err),
+    }
+  }
+}
+
 #[cfg(feature = "revocation-bitmap")]
 mod core_document_revocation {
   use identity_core::common::KeyComparable;
@@ -1021,6 +1056,7 @@ where
 #[cfg(test)]
 mod tests {
   use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   use crate::verification::MethodData;
 
@@ -1420,6 +1456,18 @@ mod tests {
     for index in indices_1 {
       assert!(!decoded_bitmap.is_revoked(index));
     }
+  }
+
+  #[test]
+  fn serialize_deserialize_roundtrip() {
+    let document: CoreDocument = document();
+    let doc_json: String = document.to_json().unwrap();
+    let doc_json_value: serde_json::Value = document.to_json_value().unwrap();
+    let doc_json_vec: Vec<u8> = document.to_json_vec().unwrap();
+    assert_eq!(document, CoreDocument::from_json(&doc_json).unwrap());
+    assert_eq!(document, CoreDocument::from_json_value(doc_json_value).unwrap());
+
+    assert_eq!(document, CoreDocument::from_json_slice(&doc_json_vec).unwrap());
   }
 
   #[test]
