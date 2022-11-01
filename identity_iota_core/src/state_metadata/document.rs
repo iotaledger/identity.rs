@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::CoreDID;
@@ -40,20 +41,20 @@ impl StateMetadataDocument {
   /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
   pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
-    let core_document_result: Result<IotaCoreDocument, identity_did::Error> = document.try_map(
+    let core_document: IotaCoreDocument = document.try_map(
       // Replace placeholder identifiers.
       |did| {
         if did == PLACEHOLDER_DID.as_ref() {
           Ok(original_did.clone())
         } else {
           // TODO: wrap error?
-          IotaDID::try_from_core(did)
+          IotaDID::try_from_core(did).map_err(crate::error::Error::DIDSyntaxError)
         }
       },
       // Do not modify properties.
-      Ok,
+      Result::<Object, crate::error::Error>::Ok,
+      crate::error::Error::InvalidDoc,
     )?;
-    let core_document: IotaCoreDocument = core_document_result.map_err(|error| crate::Error::InvalidDoc(error))?;
 
     Ok(IotaDocument::from((core_document, metadata)))
   }

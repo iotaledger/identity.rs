@@ -416,12 +416,14 @@ where
   ///
   /// `try_map` can fail if either of the provided functions fail or if the mapping `f`
   /// introduces methods referencing embedded method identifiers, or services with identifiers matching method
-  /// identifiers..
-  pub fn try_map<S, C, F, G, E>(self, mut f: F, g: G) -> Result<Result<CoreDocument<C, S, U, V>, Error>, E>
+  /// identifiers. In the case of the latter the provided function `h` will be called to construct an error.
+  pub fn try_map<S, C, F, G, E, H>(self, mut f: F, g: G, h: H) -> std::result::Result<CoreDocument<C, S, U, V>, E>
   where
     C: DID + KeyComparable,
     F: FnMut(D) -> Result<C, E>,
     G: FnOnce(T) -> Result<S, E>,
+    H: FnOnce(crate::error::Error) -> E,
+    E: std::error::Error,
   {
     let current_inner = self.data;
     let helper = || -> Result<CoreDocumentData<C, S, U, V>, E> {
@@ -470,7 +472,7 @@ where
         properties: g(current_inner.properties)?,
       })
     };
-    helper().map(CoreDocument::try_from)
+    helper().and_then(|data| CoreDocument::try_from(data).map_err(h))
   }
 
   /// Adds a new [`VerificationMethod`] to the document in the given [`MethodScope`].
@@ -995,7 +997,7 @@ impl<D, T, U, V> TryFrom<CoreDocumentData<D, T, U, V>> for CoreDocument<D, T, U,
 where
   D: DID + KeyComparable,
 {
-  type Error = crate::Error;
+  type Error = crate::error::Error;
   fn try_from(value: CoreDocumentData<D, T, U, V>) -> Result<Self, Self::Error> {
     match value.check_id_constraints() {
       Ok(_) => Ok(Self { data: value }),

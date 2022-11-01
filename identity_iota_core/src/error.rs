@@ -11,7 +11,7 @@ pub enum Error {
   #[error("{0}")]
   DIDSyntaxError(#[from] identity_did::did::DIDError),
   #[error("{0}")]
-  InvalidDoc(#[from] identity_did::Error),
+  InvalidDoc(#[from] identity_did::error::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID update: {0}")]
   DIDUpdateError(&'static str, #[source] Option<iota_client::error::Error>),
