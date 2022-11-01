@@ -60,7 +60,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      * The `address` will be set as the state controller and governor unlock conditions.
      * The minimum required token deposit amount will be set according to the given
      * `rent_structure`, which will be fetched from the node if not provided.
-     * The returned Alias Output can be further customised before publication, if desired.
+     * The returned Alias Output can be further customized before publication, if desired.
      *
      * NOTE: this does *not* publish the Alias Output.
      */
