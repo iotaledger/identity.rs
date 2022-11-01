@@ -4,7 +4,7 @@
 use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use serde::Serialize;
 
@@ -75,65 +75,65 @@ pub(crate) struct CoreDocumentData<D = CoreDID, T = Object, U = Object, V = Obje
 
 impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
   fn check_id_constraints(&self) -> Result<()> {
-    // Algorithm:
-    // 1: Create two empty sets: `embedded_method_ids` and `id_references`.
-    // 2: Loop through all the scoped verification methods and push the ids of the embedded methods and references into
-    // `embedded_method_ids` and `id_references` respectively. If a duplicate embedded method is encountered (that
-    // is an embedded method, identified by id, exists in two different scopes) then immediately throw an error.
-    // 3: Ensure that the two constructed sets have an empty intersection, otherwise an embedded method is being
-    // referenced and an error needs to be thrown. 4: Create a new set that is the union of the
-    // `embedded_method_ids` and the set of ids of the unscoped methods (the remaining methods). If the two
-    // aforementioned sets have a non trivial intersection there is a duplicate method and an error must be thrown.
-    // 5: Create a set of all ids (embedded, references, and unscoped).
-    // 6: Loop through all services and check that their ids are not contained in the set constructed in the previous
-    // step.
+    let max_unique_method_ids = self.verification_method.len()
+      + self.authentication.len()
+      + self.assertion_method.len()
+      + self.key_agreement.len()
+      + self.capability_delegation.len()
+      + self.capability_invocation.len();
 
-    let mut embedded_method_ids: HashSet<&DIDUrl<D>> = HashSet::new();
-    let mut id_references: HashSet<&DIDUrl<D>> = HashSet::new();
-    for method_ref in self
+    // Value = true => the identifier belongs to an embedded method, false means it belongs to a method reference or a
+    // general purpose verification method
+    let mut method_identifiers: HashMap<&DIDUrl<D>, bool> = HashMap::with_capacity(max_unique_method_ids);
+
+    for (id, is_embedded) in self
       .authentication
       .iter()
       .chain(self.assertion_method.iter())
       .chain(self.key_agreement.iter())
       .chain(self.capability_delegation.iter())
       .chain(self.capability_invocation.iter())
+      .map(|method_ref| match method_ref {
+        MethodRef::Embed(_) => (method_ref.id(), true),
+        MethodRef::Refer(_) => (method_ref.id(), false),
+      })
     {
-      match method_ref {
-        MethodRef::Embed(method) => {
-          if !embedded_method_ids.insert(method.id()) {
-            //TODO: Consider renaming error or adding a MethodDuplicationAttempt error variant,
-            return Err(Error::MethodAlreadyExists);
+      if let Some(previous) = method_identifiers.insert(id, is_embedded) {
+        match previous {
+          // An embedded method with the same id has previously been encountered
+          true => {
+            return Err(Error::InvalidDocument(
+              "attempted to construct document with a duplicated or aliased embedded method",
+              None,
+            ));
           }
-        }
-        MethodRef::Refer(id) => {
-          id_references.insert(id);
+          // A method reference to the identifier has previously been encountered
+          false => {
+            if is_embedded {
+              return Err(Error::InvalidDocument(
+                "attempted to construct document with an aliased embedded method",
+                None,
+              ));
+            }
+          }
         }
       }
     }
-    if !embedded_method_ids.is_disjoint(&id_references) {
-      // TODO: Consider renaming InvalidMethodEmbedded or create a new error variant
-      return Err(Error::InvalidMethodEmbedded);
-    }
 
-    // Create the union of method ids that belong to embedded methods and those that belong to an unscoped verification
-    // method. If the number of elements in the union is not equal to the sum of the number of elements in each of
-    // the two aforementioned sets there is a non trivial intersection.
-    let num_embedded = embedded_method_ids.len();
-    let num_non_scoped = self.verification_method.len();
-    let mut method_ids = {
-      embedded_method_ids.extend(self.verification_method.iter().map(|method| method.id()));
-      embedded_method_ids
-    };
-    if method_ids.len() < num_embedded + num_non_scoped {
-      return Err(Error::MethodAlreadyExists);
+    for method_id in self.verification_method.iter().map(|method| method.id()) {
+      if let Some(_) = method_identifiers.insert(method_id, false).filter(|value| *value) {
+        return Err(Error::InvalidDocument(
+          "attempted to construct document with a duplicated embedded method",
+          None,
+        ));
+      }
     }
-    method_ids.extend(id_references);
 
     for service_id in self.service.iter().map(|service| service.id()) {
-      if method_ids.contains(service_id) {
-        // TODO: consider using another error variant
-        return Err(Error::InvalidService(
-          "the service id is shared with a verification method",
+      if method_identifiers.contains_key(service_id) {
+        return Err(Error::InvalidDocument(
+          "attempted to construct document with a service identifier shared with a verification method",
+          None,
         ));
       }
     }
@@ -473,12 +473,12 @@ where
   ///
   /// # Errors
   ///
-  /// Returns an error if a method with the same fragment already exists.
+  /// Returns an error if a method or service with the same fragment already exists.
   pub fn insert_method(&mut self, method: VerificationMethod<D, U>, scope: MethodScope) -> Result<()> {
-    if self.resolve_method(method.id(), None).is_some() {
-      return Err(Error::MethodAlreadyExists);
+    // check that the method identifier is not already in use by an existing method or service.
+    if self.resolve_method(method.id(), None).is_some() || self.service().query(method.id()).is_some() {
+      return Err(Error::MethodInsertionError);
     }
-
     match scope {
       MethodScope::VerificationMethod => self.inner.verification_method.append(method),
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
@@ -524,6 +524,36 @@ where
     }
   }
 
+  /// Adds a new [`Service`] to the document.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if there already exists a service or (verification) method with the same identifier.
+  pub fn insert_service(&mut self, service: Service<D, V>) -> Result<()> {
+    let service_id = service.id();
+    let id_shared_with_method = self
+      .verification_relationships()
+      .map(|method_ref| method_ref.id())
+      .chain(self.verification_method().iter().map(|method| method.id()))
+      .any(|id| id == service_id);
+
+    ((!id_shared_with_method) && self.service_mut().append(service))
+      .then_some(())
+      .ok_or(Error::InvalidServiceInsertion)
+  }
+
+  /// Removes a [`Service`] from the document.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if the service does not exist.
+  pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Result<()> {
+    self
+      .service_mut()
+      .remove(id)
+      .then_some(())
+      .ok_or(Error::ServiceNotFound)
+  }
   /// Attaches the relationship to the method resolved by `method_query`.
   ///
   /// # Errors
@@ -1075,6 +1105,8 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
 
+  use crate::service::ServiceBuilder;
+  use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
 
   use super::*;
@@ -1473,6 +1505,79 @@ mod tests {
     for index in indices_1 {
       assert!(!decoded_bitmap.is_revoked(index));
     }
+  }
+
+  #[test]
+  fn test_service_updates() {
+    let mut document = document();
+    let service_id = document.id().to_url().join("#service-update-test").unwrap();
+    let service_type = "test";
+    let service_endpoint = Url::parse("https://example.com").unwrap();
+
+    let service: Service = ServiceBuilder::default()
+      .id(service_id.clone())
+      .type_(service_type)
+      .service_endpoint(service_endpoint)
+      .build()
+      .unwrap();
+    // inserting a service with an identifier not present in the document should be Ok.
+    assert!(document.insert_service(service.clone()).is_ok());
+    // inserting a service with the same identifier as an already existing service should fail.
+    let mut service_clone = service.clone();
+    *service_clone.service_endpoint_mut() = Url::parse("https://other-example.com").unwrap().into();
+    assert!(document.insert_service(service_clone).is_err());
+    // removing an existing service should succeed
+    assert!(document.remove_service(service.id()).is_ok());
+    // it should now be possible to insert the service again
+    assert!(document.insert_service(service.clone()).is_ok());
+
+    // inserting a method with the same identifier as an existing service should fail
+    let method: VerificationMethod = MethodBuilder::default()
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyBase58(
+        "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
+      ))
+      .id(service.id().clone())
+      .controller(document.id().clone())
+      .build()
+      .unwrap();
+
+    let method_scopes = [
+      MethodScope::VerificationMethod,
+      MethodScope::assertion_method(),
+      MethodScope::authentication(),
+      MethodScope::key_agreement(),
+      MethodScope::capability_delegation(),
+      MethodScope::capability_invocation(),
+    ];
+    for scope in method_scopes {
+      let mut document_clone = document.clone();
+      assert!(document_clone.insert_method(method.clone(), scope).is_err());
+      // should succeed after removing the service
+      assert!(document_clone.remove_service(service.id()).is_ok());
+      assert!(document_clone.insert_method(method.clone(), scope).is_ok());
+    }
+
+    // inserting a service with the same identifier as a method should fail
+    for scope in method_scopes {
+      let mut doc_clone = document.clone();
+      let valid_method_id = document.id().to_url().join("#valid-method-identifier").unwrap();
+      let mut valid_method = method.clone();
+      valid_method.set_id(valid_method_id.clone()).unwrap();
+      // make sure that the method actually gets inserted
+      assert!(doc_clone.insert_method(valid_method.clone(), scope).is_ok());
+      let mut service_clone = service.clone();
+      service_clone.set_id(valid_method_id).unwrap();
+      assert!(doc_clone.insert_service(service_clone.clone()).is_err());
+      // but should work after the method has been removed
+      assert!(doc_clone.remove_method(valid_method.id()).is_ok());
+      assert!(doc_clone.insert_service(service_clone).is_ok());
+    }
+
+    //removing a service that does not exist should fail
+    assert!(document
+      .remove_service(&service.id().join("#service-does-not-exist").unwrap())
+      .is_err());
   }
 
   #[test]

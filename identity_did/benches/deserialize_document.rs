@@ -221,12 +221,16 @@ fn deserialize_json_document(c: &mut Criterion) {
     (JSON_DOCUMENT_LARGE, "large document"),
   ] {
     group.throughput(Throughput::Bytes(json.as_bytes().len() as u64));
-    group.bench_with_input(BenchmarkId::from_parameter(name), json, |b, json| {
-      b.iter(|| {
-        let doc: Result<CoreDocument, _> = CoreDocument::from_json(json);
-        assert!(doc.is_ok(), "bench {name} failed: {:#?}", doc);
-      })
-    });
+    group.bench_with_input(
+      BenchmarkId::from_parameter(format!("{name}, document size: {} bytes", json.as_bytes().len())),
+      json,
+      |b, json| {
+        b.iter(|| {
+          let doc: Result<CoreDocument, _> = CoreDocument::from_json(json);
+          assert!(doc.is_ok(), "bench {name} failed: {:#?}", doc);
+        })
+      },
+    );
   }
   group.finish();
 }
