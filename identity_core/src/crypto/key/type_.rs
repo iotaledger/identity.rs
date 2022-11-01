@@ -59,7 +59,7 @@ mod tests {
   #[test]
   fn test_key_type_serde() {
     for key_type in [KeyType::Ed25519, KeyType::X25519] {
-      let ser: Value = serde_json::to_value(&key_type).unwrap();
+      let ser: Value = serde_json::to_value(key_type).unwrap();
       assert_eq!(ser.as_str().unwrap(), key_type.as_str());
       let de: KeyType = serde_json::from_value(ser.clone()).unwrap();
       assert_eq!(de, key_type);

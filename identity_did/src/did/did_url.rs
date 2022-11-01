@@ -596,11 +596,11 @@ where
     self
       .to_string()
       .merge(diff)
-      .and_then(|this| Self::parse(&this).map_err(identity_core::diff::Error::merge))
+      .and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::merge))
   }
 
   fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(identity_core::diff::Error::convert))
+    String::from_diff(diff).and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::convert))
   }
 
   fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
@@ -871,7 +871,7 @@ mod tests {
     #[test]
     fn test_fuzz_join_no_panic(s in "\\PC*") {
       let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-      let _ = did_url.join(&s);
+      let _ = did_url.join(s);
     }
 
     #[test]

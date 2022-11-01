@@ -75,12 +75,12 @@ impl Proof {
 
   /// Returns the `type` property of the proof.
   pub fn type_(&self) -> &str {
-    &*self.type_
+    &self.type_
   }
 
   /// Returns the identifier of the DID method used to create this proof.
   pub fn verification_method(&self) -> &str {
-    &*self.method
+    &self.method
   }
 
   /// Returns a reference to the proof `value`.

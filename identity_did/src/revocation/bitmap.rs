@@ -109,7 +109,7 @@ impl RevocationBitmap {
   /// Serializes and compressess [`RevocationBitmap`] as a base64-encoded `String`.
   pub(crate) fn serialize_compressed_base64(&self) -> Result<String> {
     let serialized_data: Vec<u8> = self.serialize_vec()?;
-    Self::compress_zlib(&serialized_data).map(|data| BaseEncoding::encode(&data, Base::Base64Url))
+    Self::compress_zlib(serialized_data).map(|data| BaseEncoding::encode(&data, Base::Base64Url))
   }
 
   /// Deserializes [`RevocationBitmap`] from a slice of bytes.

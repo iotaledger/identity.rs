@@ -20,7 +20,7 @@ use crate::credential::Subject;
 
 pub(super) fn generate_document_with_keys() -> (CoreDocument, KeyPair) {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let did: CoreDID = CoreDID::parse(&format!(
+  let did: CoreDID = CoreDID::parse(format!(
     "did:example:{}",
     BaseEncoding::encode_base58(keypair.public())
   ))
