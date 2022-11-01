@@ -121,7 +121,11 @@ impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
     }
 
     for method_id in self.verification_method.iter().map(|method| method.id()) {
-      if let Some(_) = method_identifiers.insert(method_id, false).filter(|value| *value) {
+      if method_identifiers
+        .insert(method_id, false)
+        .filter(|value| *value)
+        .is_some()
+      {
         return Err(Error::InvalidDocument(
           "attempted to construct document with a duplicated embedded method",
           None,
@@ -466,7 +470,7 @@ where
         properties: g(current_inner.properties)?,
       })
     };
-    helper().map(|data| CoreDocument::try_from(data))
+    helper().map(CoreDocument::try_from)
   }
 
   /// Adds a new [`VerificationMethod`] to the document in the given [`MethodScope`].

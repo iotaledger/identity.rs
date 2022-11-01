@@ -186,7 +186,7 @@ where
 
   /// Returns a reference to the contents as a slice.
   pub fn as_slice(&self) -> &[T] {
-    &**self
+    self
   }
 
   /// Consumes the [`OneOrSet`] and returns the contents as a [`Vec`].
