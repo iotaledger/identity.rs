@@ -14,7 +14,7 @@ pub enum Error {
   InvalidDoc(#[from] identity_did::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID update: {0}")]
-  DIDUpdateError(&'static str, #[source] Option<iota_client::error::Error>),
+  DIDUpdateError(&'static str, #[source] Option<Box<iota_client::error::Error>>),
   #[cfg(feature = "iota-client")]
   #[error("DID resolution failed")]
   DIDResolutionError(#[source] iota_client::error::Error),
@@ -46,4 +46,41 @@ pub enum Error {
   #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
   #[error("JavaScript function threw an exception: {0}")]
   JsError(String),
+}
+
+#[cfg(test)]
+mod tests {
+  
+  fn sizes() {
+    const SERILAIZATION_ERROR_SIZE: usize = std::mem::size_of::<(&'static str, Option<identity_core::Error>)>();
+    const DID_SYNTAX_ERROR_SIZE: usize = std::mem::size_of::<identity_did::did::DIDError>();
+    const INVALID_DOC_SIZE: usize = std::mem::size_of::<identity_did::Error>();
+    const DID_UPDATE_ERROR_SIZE: usize = std::mem::size_of::<(&'static str, iota_client::error::Error)>();
+    const DID_RESOLUTION_ERROR_SIZE: usize = std::mem::size_of::<iota_client::error::Error>();
+    const DID_BASIC_OUTPUT_BUILD_ERROR_SIZE: usize = std::mem::size_of::<iota_client::block::Error>();
+    #[cfg(feature = "client")]
+    const ALIAS_OUTPUT_BUILD_ERROR_SIZE: usize = std::mem::size_of::<crate::block::Error>();
+    #[cfg(feature = "iota-client")]
+    const NOT_AN_ALIAS_OUTPUT_ERROR_SIZE: usize = std::mem::size_of::<iota_client::block::output::OutputId>();
+    #[cfg(feature = "iota-client")]
+    const OUTPUT_CONVERSION_ERROR_SIZE: usize = std::mem::size_of::<iota_client::block::DtoError>();
+    const SIZE_OF_ERROR: usize = std::mem::size_of::<crate::Error>();
+
+    dbg!(SERILAIZATION_ERROR_SIZE);
+    dbg!(DID_SYNTAX_ERROR_SIZE);
+    dbg!(INVALID_DOC_SIZE);
+    dbg!(DID_UPDATE_ERROR_SIZE);
+    dbg!(DID_RESOLUTION_ERROR_SIZE);
+    dbg!(DID_BASIC_OUTPUT_BUILD_ERROR_SIZE);
+    #[cfg(feature = "client")]
+    dbg!(ALIAS_OUTPUT_BUILD_ERROR_SIZE);
+    #[cfg(feature = "iota-client")]
+    dbg!(NOT_AN_ALIAS_OUTPUT_ERROR_SIZE);
+    #[cfg(feature = "iota-client")]
+    dbg!(OUTPUT_CONVERSION_ERROR_SIZE);
+
+    dbg!(SIZE_OF_ERROR);
+
+    panic!();
+  }
 }
