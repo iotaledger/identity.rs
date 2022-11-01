@@ -1,6 +1,6 @@
 [package]
 name = "identity_wasm"
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -29,7 +29,7 @@ wasm-bindgen = { version = "0.2.83", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity_iota]
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 path = "../../identity_iota"
 default-features = false
 features = ["client", "revocation-bitmap", "resolver"]

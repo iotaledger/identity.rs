@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_types::block::protocol::ProtocolParameters;
 use identity_iota::core::FromJson;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
@@ -22,6 +21,7 @@ use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
 use iota_types::api::response::ProtocolResponse;
+use iota_types::block::protocol::ProtocolParameters;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 

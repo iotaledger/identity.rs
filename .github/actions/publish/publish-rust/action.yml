@@ -24,7 +24,7 @@ runs:
       uses: actions-rs/cargo@v1
       with:
         command: install
-        args: cargo-release
+        args: --version ^0.21 cargo-release
 
     - name: Publish library to crates.io
       shell: sh

@@ -1,13 +1,13 @@
 {
-    "extends": "../tsconfig.json",
-    "compilerOptions": {
-        "baseUrl": "./",
-        "paths": {
-            "~identity_wasm": ["../web/identity_wasm"],
-            "~iota-client-wasm": ["../node_modules/@iota/iota-client-wasm/web"],
-        },
-        "outDir": "../web",
-        "declarationDir": "../web",
-        "module": "ES2020"
-    }
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "~identity_wasm": ["../web/identity_wasm"],
+      "~iota-client-wasm": ["../node_modules/@iota/iota-client-wasm/web", "@iota/iota-client-wasm/web"]
+    },
+    "outDir": "../web",
+    "declarationDir": "../web",
+    "module": "ES2020"
+  }
 }

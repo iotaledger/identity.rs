@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota_core"
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -12,9 +12,9 @@ rust-version = "1.62"
 description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
-identity_core = { version = "=0.7.0-alpha.2", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.2", path = "../identity_credential", default-features = false, features = ["validator"] }
-identity_did = { version = "=0.7.0-alpha.2", path = "../identity_did", default-features = false }
+identity_core = { version = "=0.7.0-alpha.3", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.3", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=0.7.0-alpha.3", path = "../identity_did", default-features = false }
 iota-types = { version = "1.0.0-rc.1", default-features = false, features = ["block", "std"], optional = true }
 
 async-trait = { version = "0.1.56", default-features = false, optional = true }
