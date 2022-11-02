@@ -871,7 +871,7 @@ mod tests {
     #[test]
     fn test_fuzz_join_no_panic(s in "\\PC*") {
       let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-      let _ = did_url.join(&s);
+      let _ = did_url.join(s);
     }
 
     #[test]

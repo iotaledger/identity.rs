@@ -87,7 +87,7 @@ pub struct Credential<T = Object> {
 impl<T> Credential<T> {
   /// Returns the base JSON-LD context.
   pub fn base_context() -> &'static Context {
-    &*BASE_CONTEXT
+    &BASE_CONTEXT
   }
 
   /// Returns the base type.

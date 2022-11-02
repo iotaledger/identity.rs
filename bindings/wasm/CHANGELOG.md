@@ -1,5 +1,18 @@
 # Changelog
 
+## [wasm-v0.7.0-alpha.3](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.3) (2022-11-01)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.2...wasm-v0.7.0-alpha.3)
+
+### Added
+
+- Add `IotaDID.fromAliasId` to the Wasm bindings [\#1048](https://github.com/iotaledger/identity.rs/pull/1048)
+
+### Patch
+
+- Fix unresolved import in TS artifacts [\#1066](https://github.com/iotaledger/identity.rs/pull/1066)
+
+
 ## [wasm-v0.7.0-alpha.2](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.2) (2022-09-30)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.1...wasm-v0.7.0-alpha.2)

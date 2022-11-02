@@ -14,7 +14,7 @@ pub enum Error {
   InvalidDoc(#[from] identity_did::error::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID update: {0}")]
-  DIDUpdateError(&'static str, #[source] Option<iota_client::error::Error>),
+  DIDUpdateError(&'static str, #[source] Option<Box<iota_client::error::Error>>),
   #[cfg(feature = "iota-client")]
   #[error("DID resolution failed")]
   DIDResolutionError(#[source] iota_client::error::Error),

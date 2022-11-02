@@ -434,7 +434,7 @@ mod tests {
         network_name
       );
       let did_core: CoreDID = {
-        match CoreDID::parse(&did_string) {
+        match CoreDID::parse(did_string) {
           Ok(did_core) => did_core,
           Err(_) => continue,
         }
@@ -464,8 +464,8 @@ mod tests {
     // nothing/normalized)>:<alias_id>
     let did_other_string: String = format!("did:method:{}", VALID_ALIAS_ID_STR);
     let did_other_with_network: String = format!("did:method:test:{}", VALID_ALIAS_ID_STR);
-    let did_other_core: CoreDID = CoreDID::parse(&did_other_string).unwrap();
-    let did_other_with_network_core: CoreDID = CoreDID::parse(&did_other_with_network).unwrap();
+    let did_other_core: CoreDID = CoreDID::parse(did_other_string).unwrap();
+    let did_other_with_network_core: CoreDID = CoreDID::parse(did_other_with_network).unwrap();
 
     assert!(IotaDID::check_tag(&did_other_core).is_ok());
     assert!(IotaDID::check_tag(&did_other_with_network_core).is_ok());
@@ -541,7 +541,7 @@ mod tests {
   #[test]
   fn parse_valid() {
     for did_str in VALID_IOTA_DID_STRINGS.iter() {
-      assert!(IotaDID::parse(&did_str).is_ok());
+      assert!(IotaDID::parse(did_str).is_ok());
     }
   }
 
@@ -609,7 +609,7 @@ mod tests {
     #[test]
     fn property_based_valid_parse(alias_id in arbitrary_alias_id()) {
       let did: String = format!("did:{}:{}",IotaDID::METHOD, alias_id);
-      assert!(IotaDID::parse(&did).is_ok());
+      assert!(IotaDID::parse(did).is_ok());
     }
   }
 

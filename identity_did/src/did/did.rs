@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn test_fuzz_core_did_no_panic(s in "\\PC*") {
-      assert!(CoreDID::parse(&s).is_err());
+      assert!(CoreDID::parse(s).is_err());
     }
 
     #[test]
