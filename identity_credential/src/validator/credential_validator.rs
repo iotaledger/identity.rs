@@ -134,7 +134,7 @@ impl CredentialValidator {
       OneOrMany::One(ref credential_subject) => credential_subject.id.as_ref() == Some(holder),
       OneOrMany::Many(subjects) => {
         // need to check the case where the Many variant holds a vector of exactly one subject
-        if let &[ref credential_subject] = subjects.as_slice() {
+        if let [credential_subject] = subjects.as_slice() {
           credential_subject.id.as_ref() == Some(holder)
         } else {
           // zero or > 1 subjects is interpreted to mean that the holder is not the subject

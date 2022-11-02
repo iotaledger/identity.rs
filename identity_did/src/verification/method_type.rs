@@ -54,7 +54,7 @@ mod tests {
       MethodType::Ed25519VerificationKey2018,
       MethodType::X25519KeyAgreementKey2019,
     ] {
-      let ser: Value = serde_json::to_value(&method_type).unwrap();
+      let ser: Value = serde_json::to_value(method_type).unwrap();
       assert_eq!(ser.as_str().unwrap(), method_type.as_str());
       let de: MethodType = serde_json::from_value(ser.clone()).unwrap();
       assert_eq!(de, method_type);

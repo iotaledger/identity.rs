@@ -20,11 +20,7 @@ use crate::credential::Subject;
 
 pub(super) fn generate_document_with_keys() -> (CoreDocument, KeyPair) {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let did: CoreDID = CoreDID::parse(&format!(
-    "did:example:{}",
-    BaseEncoding::encode_base58(keypair.public())
-  ))
-  .unwrap();
+  let did: CoreDID = CoreDID::parse(format!("did:example:{}", BaseEncoding::encode_base58(keypair.public()))).unwrap();
   let document: CoreDocument = CoreDocument::builder(Object::new())
     .id(did.clone())
     .verification_method(VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "#root").unwrap())
