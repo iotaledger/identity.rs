@@ -102,6 +102,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -147,8 +149,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -2012,7 +2012,7 @@ Deserializes an instance from a JSON object.
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-        * [.unpackFromBlock(network, block, protocolResponseJson)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+        * [.unpackFromBlock(network, block, protocol_parameters)](#IotaDocument.unpackFromBlock) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
         * [.fromJSON(json)](#IotaDocument.fromJSON) ⇒ [<code>IotaDocument</code>](#IotaDocument)
 
 <a name="new_IotaDocument_new"></a>
@@ -2438,7 +2438,7 @@ encoded in the `AliasId` alone.
 
 <a name="IotaDocument.unpackFromBlock"></a>
 
-### IotaDocument.unpackFromBlock(network, block, protocolResponseJson) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
+### IotaDocument.unpackFromBlock(network, block, protocol_parameters) ⇒ [<code>Array.&lt;IotaDocument&gt;</code>](#IotaDocument)
 Returns all DID documents of the Alias Outputs contained in the block's transaction payload
 outputs, if any.
 
@@ -2452,7 +2452,7 @@ Errors if any Alias Output does not contain a valid or empty DID Document.
 | --- | --- |
 | network | <code>string</code> | 
 | block | <code>IBlock</code> | 
-| protocolResponseJson | <code>string</code> | 
+| protocol_parameters | <code>INodeInfoProtocol</code> | 
 
 <a name="IotaDocument.fromJSON"></a>
 
@@ -4055,6 +4055,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4140,10 +4144,6 @@ Return after the first error occurs.
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

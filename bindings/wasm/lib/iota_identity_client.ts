@@ -13,6 +13,7 @@ import {
     IUTXOInput,
     TransactionHelper,
 } from "@iota/iota.js";
+import type { INodeInfoProtocol } from "@iota/types";
 import type { Client, INodeInfoWrapper, SecretManager } from "~iota-client-wasm";
 
 /** Provides operations for IOTA DID Documents with Alias Outputs. */
@@ -47,12 +48,19 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         return info.nodeInfo.protocol.rentStructure;
     }
 
-    async getTokenSupply(): Promise<BigInt> {
+    async getTokenSupply(): Promise<string> {
         return await this.client.getTokenSupply();
     }
 
+    /*
     async getProtocolResponse(): Promise<string> {
         return await this.client.getProtocolResponse();
+    }
+    */
+
+    async getProtocolParameters(): Promise<INodeInfoProtocol> {
+        const protocolParameters: INodeInfoProtocol = await this.client.getProtocolParameters();
+        return protocolParameters;
     }
 
     /** Create a DID with a new Alias Output containing the given `document`.
@@ -121,7 +129,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         });
         await this.client.retryUntilIncluded(blockId);
 
-        const protocolParams = await this.client.getProtocolResponse();
+        const protocolParams = await this.client.getProtocolParameters();
 
         // Extract document with computed AliasId.
         const documents = IotaDocument.unpackFromBlock(networkHrp, block, protocolParams);

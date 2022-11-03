@@ -26,7 +26,7 @@ export async function keyExchange() {
     // ==============================
 
     // Create a new Client to interact with the IOTA ledger.
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

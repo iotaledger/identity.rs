@@ -8,7 +8,7 @@ import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. */
 export async function deleteIdentity() {
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

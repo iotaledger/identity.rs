@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::core::FromJson;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
@@ -20,7 +19,6 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
-use iota_types::api::response::ProtocolResponse;
 use iota_types::block::protocol::ProtocolParameters;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -429,7 +427,11 @@ impl WasmIotaDocument {
   /// `protocolResponseJson` can be obtained from a `Client`.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = unpackFromBlock)]
-  pub fn unpack_from_block(network: String, block: &IBlock, protocolResponseJson: String) -> Result<ArrayIotaDocument> {
+  pub fn unpack_from_block(
+    network: String,
+    block: &IBlock,
+    protocol_parameters: &INodeInfoProtocol,
+  ) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
     let block_dto: iota_types::block::BlockDto = block
       .into_serde()
@@ -438,8 +440,16 @@ impl WasmIotaDocument {
       })
       .wasm_result()?;
 
-    let protocol_response: ProtocolResponse = ProtocolResponse::from_json(&protocolResponseJson).wasm_result()?;
-    let protocol_parameters: ProtocolParameters = ProtocolParameters::try_from(protocol_response).wasm_result()?;
+    let protocol_parameters: ProtocolParameters = protocol_parameters
+      .into_serde()
+      .map_err(|err| {
+        identity_iota::iota::Error::JsError(format!(
+          "unpackFromBlock failed to deserialize protocolParameters: {}",
+          err
+        ))
+      })
+      .wasm_result()?;
+
     let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
@@ -600,7 +610,11 @@ extern "C" {
   // External interface from `@iota/types`, must be deserialized via BlockDto.
   #[wasm_bindgen(typescript_type = "IBlock")]
   pub type IBlock;
+
+  // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
+  #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
+  pub type INodeInfoProtocol;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import type { IBlock } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { IBlock, INodeInfoProtocol } from '@iota/types';"#;

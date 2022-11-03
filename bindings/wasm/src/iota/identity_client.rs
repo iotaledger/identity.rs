@@ -35,8 +35,8 @@ extern "C" {
   #[wasm_bindgen(method, js_name = getTokenSupply)]
   pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
 
-  #[wasm_bindgen(method, js_name = getProtocolResponse)]
-  pub fn get_protocol_response(this: &WasmIotaIdentityClient) -> JsValue;
+  #[wasm_bindgen(method, js_name = getProtocolParameters)]
+  pub fn get_protocol_parameters(this: &WasmIotaIdentityClient) -> JsValue;
 }
 
 impl Debug for WasmIotaIdentityClient {
@@ -119,8 +119,8 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       JsValueResult::from(JsFuture::from(promise).await)
         .to_iota_core_error()
         .and_then(|value| {
-          if let Some(big_int) = value.as_f64() {
-            Ok(big_int as u64)
+          if let Some(big_int) = value.as_string().and_then(|converted_string| converted_string.parse().ok()) {
+            Ok(big_int)
           } else {
             Err(identity_iota::iota::Error::JsError(
               "could not retrieve a token supply of the required type".into(),
@@ -150,8 +150,8 @@ interface IIotaIdentityClient {
   getRentStructure(): Promise<IRent>;
 
   /** Gets the token supply of the node we're connecting to. */
-  getTokenSupply(): Promise<BigInt>;
+  getTokenSupply(): Promise<string>;
 
-  /** Returns the protocol response as a JSON string. */
-  getProtocolResponse(): Promise<string>;
+  /** Returns the protocol parameters. */
+  getProtocolParameters(): Promise<INodeInfoProtocol>; 
 }"#;
