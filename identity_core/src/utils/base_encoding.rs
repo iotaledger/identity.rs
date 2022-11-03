@@ -134,7 +134,7 @@ impl BaseEncoding {
     if data.as_ref().is_empty() {
       return Ok(Vec::new());
     }
-    multibase::decode(&data)
+    multibase::decode(data)
       .map(|(_base, output)| output)
       .map_err(Error::DecodeMultibase)
   }

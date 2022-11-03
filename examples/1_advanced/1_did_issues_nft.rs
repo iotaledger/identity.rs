@@ -120,7 +120,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Reconstruct the manufacturer's DID from the Alias Id.
   let network: NetworkName = client.network_name().await?;
-  let manufacturer_did: IotaDID = IotaDID::new(&*manufacturer_alias_id, &network);
+  let manufacturer_did: IotaDID = IotaDID::new(&manufacturer_alias_id, &network);
 
   // Resolve the issuer of the NFT.
   let manufacturer_document: IotaDocument = client.resolve_did(&manufacturer_did).await?;

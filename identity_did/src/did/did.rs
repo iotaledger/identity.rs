@@ -253,11 +253,11 @@ impl Diff for CoreDID {
     self
       .to_string()
       .merge(diff)
-      .and_then(|this| Self::parse(&this).map_err(identity_core::diff::Error::merge))
+      .and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::merge))
   }
 
   fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(identity_core::diff::Error::convert))
+    String::from_diff(diff).and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::convert))
   }
 
   fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn test_fuzz_core_did_no_panic(s in "\\PC*") {
-      assert!(CoreDID::parse(&s).is_err());
+      assert!(CoreDID::parse(s).is_err());
     }
 
     #[test]
