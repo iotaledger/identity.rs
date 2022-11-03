@@ -122,7 +122,6 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      */
     async publishDidOutput(secretManager: SecretManager, aliasOutput: IAliasOutput): Promise<IotaDocument> {
         const networkHrp = await this.getNetworkHrp();
-
         // Publish block.
         const [blockId, block] = await this.client.buildAndPostBlock(secretManager, {
             outputs: [aliasOutput],
@@ -130,7 +129,6 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         await this.client.retryUntilIncluded(blockId);
 
         const protocolParams = await this.client.getProtocolParameters();
-
         // Extract document with computed AliasId.
         const documents = IotaDocument.unpackFromBlock(networkHrp, block, protocolParams);
         if (documents.length < 1) {

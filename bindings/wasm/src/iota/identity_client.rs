@@ -119,7 +119,10 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       JsValueResult::from(JsFuture::from(promise).await)
         .to_iota_core_error()
         .and_then(|value| {
-          if let Some(big_int) = value.as_string().and_then(|converted_string| converted_string.parse().ok()) {
+          if let Some(big_int) = value
+            .as_string()
+            .and_then(|converted_string| converted_string.parse().ok())
+          {
             Ok(big_int)
           } else {
             Err(identity_iota::iota::Error::JsError(
