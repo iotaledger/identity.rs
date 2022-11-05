@@ -28,6 +28,7 @@ serde = { version = "1.0", default-features = false, features = ["std", "derive"
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
 iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }

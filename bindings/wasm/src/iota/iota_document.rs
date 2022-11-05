@@ -440,6 +440,7 @@ impl WasmIotaDocument {
       })
       .wasm_result()?;
 
+    log::debug!("INodeInfoProtocol: {:#?}", protocol_parameters.obj); 
     let protocol_parameters: ProtocolParameters = protocol_parameters
       .into_serde()
       .map_err(|err| {
