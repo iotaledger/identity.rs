@@ -31,27 +31,30 @@ pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub async fn create_did(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<(Address, IotaDID)> {
+pub async fn create_did(
+  client: &Client,
+  secret_manager: &mut SecretManager,
+) -> anyhow::Result<(Address, IotaDocument, KeyPair)> {
   let address: Address = get_address_with_funds(client, secret_manager, FAUCET_ENDPOINT)
     .await
     .context("failed to get address with funds")?;
 
   let network_name: NetworkName = client.network_name().await?;
 
-  let document: IotaDocument = create_did_document(&network_name)?;
+  let (document, key_pair): (IotaDocument, KeyPair) = create_did_document(&network_name)?;
 
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
   let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
 
-  Ok((address, document.id().clone()))
+  Ok((address, document, key_pair))
 }
 
 /// Creates an example DID document with the given `network_name`.
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<IotaDocument> {
+pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<(IotaDocument, KeyPair)> {
   let mut document: IotaDocument = IotaDocument::new(network_name);
 
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
@@ -61,7 +64,7 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<IotaDoc
 
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
-  Ok(document)
+  Ok((document, keypair))
 }
 
 /// Generates an address from the given [`SecretManager`] and adds funds from the faucet.

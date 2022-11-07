@@ -4,6 +4,7 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
+use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::output::feature::MetadataFeature;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
@@ -52,7 +53,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the manufacturer.
-  let (_, manufacturer_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, manufacturer_document, _): (Address, IotaDocument, KeyPair) =
+    create_did(&client, &mut secret_manager).await?;
+  let manufacturer_did = manufacturer_document.id().clone();
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure()?;

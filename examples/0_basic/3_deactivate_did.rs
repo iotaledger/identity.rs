@@ -4,6 +4,7 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
+use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::address::Address;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDID;
@@ -29,10 +30,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
-
-  // Resolve the latest state of the DID document, so we can reactivate it later.
-  let document: IotaDocument = client.resolve_did(&did).await?;
+  let (_, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let did: IotaDID = document.id().clone();
 
   // Deactivate the DID by publishing an empty document.
   // This process can be reversed since the Alias Output is not destroyed.

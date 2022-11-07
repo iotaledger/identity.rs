@@ -4,9 +4,11 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
+use identity_iota::crypto::KeyPair;
 use identity_iota::iota::Error;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use iota_client::block::address::Address;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -27,7 +29,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (address, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (address, document, key_pair): (Address, IotaDocument, KeyPair) =
+    create_did(&client, &mut secret_manager).await?;
+  let did = document.id().clone();
 
   // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.
   // This operation is *not* reversible.

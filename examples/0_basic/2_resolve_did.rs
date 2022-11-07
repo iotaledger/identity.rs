@@ -4,6 +4,7 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
+use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::address::Address;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
@@ -28,7 +29,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to resolve.
-  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let did = document.id().clone();
 
   // We can resolve a `IotaDID` with the client itself.
   // Resolve the associated Alias Output and extract the DID document from it.
