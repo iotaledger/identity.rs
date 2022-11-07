@@ -9,7 +9,6 @@ use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
 use identity_iota::did::MethodScope;
 use identity_iota::iota::IotaClientExt;
-use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaVerificationMethod;
@@ -57,14 +56,14 @@ pub async fn create_did(
 pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<(IotaDocument, KeyPair)> {
   let mut document: IotaDocument = IotaDocument::new(network_name);
 
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+  let key_pair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+    IotaVerificationMethod::new(document.id().clone(), key_pair.type_(), key_pair.public(), "#key-1")?;
 
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
-  Ok((document, keypair))
+  Ok((document, key_pair))
 }
 
 /// Generates an address from the given [`SecretManager`] and adds funds from the faucet.

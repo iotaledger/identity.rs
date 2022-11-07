@@ -1,6 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_client::block::address::Address;
+use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
+
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
@@ -22,25 +27,10 @@ use identity_iota::credential::PresentationValidator;
 use identity_iota::credential::Subject;
 use identity_iota::credential::SubjectHolderRelationship;
 use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifierOptions;
-use identity_iota::did::MethodRelationship;
-use identity_iota::did::MethodScope;
 use identity_iota::did::DID;
-use identity_iota::iota::block::output::AliasOutput;
-use identity_iota::iota::block::output::AliasOutputBuilder;
-use identity_iota::iota::block::output::RentStructure;
-use identity_iota::iota::IotaClientExt;
-use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaVerificationMethod;
-use identity_iota::resolver::Resolver;
-use iota_client::block::address::Address;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -57,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
       .password("secure_password_1")
       .build(random_stronghold_path())?,
   );
-  let (_, mut issuer_document, key_pair_issuer): (Address, IotaDocument, KeyPair) =
+  let (_, issuer_document, key_pair_issuer): (Address, IotaDocument, KeyPair) =
     create_did(&client, &mut secret_manager_issuer).await?;
 
   // Create an identity for the holder, in this case also the subject.
@@ -66,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
       .password("secure_password_2")
       .build(random_stronghold_path())?,
   );
-  let (_, mut alice_document, key_pair_alice): (Address, IotaDocument, KeyPair) =
+  let (_, alice_document, key_pair_alice): (Address, IotaDocument, KeyPair) =
     create_did(&client, &mut secret_manager_alice).await?;
 
   // ===========================================================================
@@ -75,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
-    "id": "did:iota:blabla",
+    "id": alice_document.id().as_str(),
     "name": "Alice",
     "degree": {
       "type": "BachelorDegree",
@@ -88,7 +78,6 @@ async fn main() -> anyhow::Result<()> {
   let mut credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer_document.id().as_str())?)
-    // .issuer(Url::parse("did:iota:blbla22")?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;
@@ -99,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
     key_pair_issuer.private(),
     "#key-1",
     ProofOptions::default(),
-  );
+  )?;
   println!("Credential JSON > {:#}", credential);
 
   // Before sending this credential to the holder the issuer wants to validate that some properties
@@ -155,8 +144,8 @@ async fn main() -> anyhow::Result<()> {
     &mut presentation,
     key_pair_alice.private(),
     "#key-1",
-    ProofOptions::default(),
-  );
+    ProofOptions::new().challenge(challenge.to_string()).expires(expires),
+  )?;
 
   // ===========================================================================
   // Step 6: Holder sends a verifiable presentation to the verifier.
@@ -197,7 +186,7 @@ async fn main() -> anyhow::Result<()> {
     &[issuer_document],
     &presentation_validation_options,
     FailFast::FirstError,
-  );
+  )?;
 
   // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
   println!("VP successfully validated");

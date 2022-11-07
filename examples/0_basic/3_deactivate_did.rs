@@ -33,6 +33,9 @@ async fn main() -> anyhow::Result<()> {
   let (_, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
   let did: IotaDID = document.id().clone();
 
+  // Resolve the latest state of the DID document.
+  let document: IotaDocument = client.resolve_did(&did).await?;
+
   // Deactivate the DID by publishing an empty document.
   // This process can be reversed since the Alias Output is not destroyed.
   // Deactivation may only be performed by the state controller of the Alias Output.

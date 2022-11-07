@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<String> {
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
-    "id": "did:iota:blabla",
+    "id": alice_document.id().as_str(),
     "name": "Alice",
     "degree": {
       "type": "BachelorDegree",
@@ -72,7 +72,6 @@ async fn main() -> anyhow::Result<String> {
   let mut credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer_document.id().as_str())?)
-    // .issuer(Url::parse("did:iota:blbla22")?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;

@@ -29,8 +29,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (address, document, key_pair): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager).await?;
+  let (address, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
   let did = document.id().clone();
 
   // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.
