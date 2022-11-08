@@ -74,6 +74,10 @@ pub(crate) struct CoreDocumentData<D = CoreDID, T = Object, U = Object, V = Obje
 }
 
 impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
+  /// Checks the following:
+  /// - There are no scoped method references to an embedded method in the document
+  /// - The ids of verification methods (scoped/embedded or general purpose) and services are unique across the
+  ///   document.
   fn check_id_constraints(&self) -> Result<()> {
     let max_unique_method_ids = self.verification_method.len()
       + self.authentication.len()
@@ -249,7 +253,7 @@ where
   /// Returns a mutable reference to the `CoreDocument` id.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken URI dereferencing.
   pub fn id_mut_unchecked(&mut self) -> &mut D {
     &mut self.data.id
   }
@@ -262,7 +266,7 @@ where
   /// Returns a mutable reference to the `CoreDocument` controller.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken URI dereferencing
   pub fn controller_mut_unchecked(&mut self) -> &mut Option<OneOrSet<D>> {
     &mut self.data.controller
   }
@@ -274,7 +278,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken URI dereferencing
   pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
     &mut self.data.also_known_as
   }
@@ -286,7 +290,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
   /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method())
   /// apis instead.
   pub fn verification_method_mut_unchecked(&mut self) -> &mut OrderedSet<VerificationMethod<D, U>> {
@@ -301,7 +305,7 @@ where
   /// Returns a mutable reference to the `CoreDocument` authentication set.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
   /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
   /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
   /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
@@ -317,7 +321,7 @@ where
   /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
   /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
   /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
   /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
@@ -333,7 +337,7 @@ where
   /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
   /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
   /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
   /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
@@ -349,7 +353,7 @@ where
   /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
   /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
   /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
   /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
@@ -365,7 +369,7 @@ where
   /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
   /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
   /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
   /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
@@ -380,7 +384,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` service set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
   /// [`Self::insert_service`](CoreDocument::insert_service()) and
   /// [`Self::remove_service`](CoreDocument::remove_service) methods instead.
   pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D, V>> {
@@ -568,8 +572,11 @@ where
       self.data.key_agreement.remove(did),
       self.data.capability_delegation.remove(did),
       self.data.capability_invocation.remove(did),
-    ] {
-      if let Some(MethodRef::<D, U>::Embed(embedded_method)) = method_ref {
+    ]
+    .into_iter()
+    .flatten()
+    {
+      if let MethodRef::<D, U>::Embed(embedded_method) = method_ref {
         // embedded methods cannot be referenced, or be in the set of general purpose verification methods hence the
         // search is complete
         return Some(embedded_method);
@@ -809,7 +816,7 @@ where
   /// matching the provided `query`.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken URI dereferencing
   pub fn resolve_method_mut<'query, 'me, Q>(
     &'me mut self,
     query: Q,

@@ -107,7 +107,7 @@ impl IotaDocument {
   /// Returns a mutable reference to the `alsoKnownAs` set.
   ///
   /// # Warning
-  /// Incorrect use can lead to broken invariants.
+  /// Incorrect use can lead to broken URI dereferencing.
   pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
     self.document.also_known_as_mut_unchecked()
   }
@@ -155,9 +155,9 @@ impl IotaDocument {
   pub fn insert_service(&mut self, service: IotaService) -> Result<()> {
     // TODO: Why was this check added here, but not in CoreDocument?
     if service.id().fragment().is_none() {
-      return Err(Error::InvalidDoc(identity_did::Error::InvalidDID(
+      Err(Error::InvalidDoc(identity_did::Error::InvalidDID(
         identity_did::did::DIDError::InvalidFragment,
-      )));
+      )))
     } else {
       self
         .core_document_mut()
