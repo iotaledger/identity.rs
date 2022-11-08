@@ -389,7 +389,7 @@ mod tests {
     assert!(!set.contains(&cs4));
   }
 
-  #[derive(Clone, Copy, PartialEq, Eq)]
+  #[derive(Clone, Copy, PartialEq, Eq, Debug)]
   struct ComparableStruct {
     key: u8,
     value: i32,
@@ -463,12 +463,11 @@ mod tests {
     assert_eq!(set.head().unwrap().value, cs2.value);
   }
 
-  //
-  fn set_with_elements<T: KeyComparable + proptest::arbitrary::Arbitrary + Clone>(
-  ) -> impl Strategy<Value = OrderedSet<T>> {
-    proptest::prelude::any::<Vec<T>>().prop_map(|init| init.into_iter().collect::<OrderedSet<T>>())
+  fn arbitrary_set_comparable_struct() -> impl Strategy<Value = OrderedSet<ComparableStruct>> {
+    proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|values| values.into_iter().map(|(key, value)| ComparableStruct{key, value}).collect())
   }
-
+  
+ 
   #[test]
   fn append_preserves_invariant() {}
 }
