@@ -174,19 +174,26 @@ impl<T> OrderedSet<T> {
     self.change(update, |item, update| item.key() == update.key())
   }
 
-  /// Removes all matching items from the set.
+  /// Removes and returns the matching item from the set, if it exists.  
   #[inline]
-  pub fn remove<U>(&mut self, item: &U) -> bool
+  pub fn remove<U>(&mut self, item: &U) -> Option<T>
   where
     T: KeyComparable,
     U: KeyComparable<Key = T::Key>,
   {
+      self.iter().enumerate().find(|(_, entry)| entry.key() == item.key()).map(|(idx,_)| idx).map(|idx| self.0.remove(idx))
+      //Some(self.0.remove(idx))
+
+
+    /* 
     if self.contains(item) {
       self.0.retain(|this| this.borrow().key() != item.key());
       true
     } else {
       false
     }
+    */
+    
   }
 
   fn change<F>(&mut self, data: T, f: F) -> bool
@@ -312,6 +319,9 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
+  use proptest::prelude::Rng;
+use proptest::strategy::Strategy;
+  use proptest::*;
 
   #[test]
   fn test_ordered_set_works() {
@@ -456,4 +466,17 @@ mod tests {
     assert_eq!(set.head().unwrap().key, cs2.key);
     assert_eq!(set.head().unwrap().value, cs2.value);
   }
+
+
+
+  // 
+  fn set_with_elements<T: KeyComparable + proptest::arbitrary::Arbitrary + Clone>() -> impl Strategy<Value = (OrderedSet<T>, T, T)> {
+   proptest::prelude::any::<Vec<T>>().prop_map(|init|init.into_iter().collect::<OrderedSet<T>>())
+  }
+
+  #[test]
+  fn append_preserves_invariant() {
+    
+  }
 }
+

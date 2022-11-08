@@ -774,7 +774,7 @@ mod tests {
 
     // Add a RevocationBitmap service to the issuer.
     let bitmap: RevocationBitmap = RevocationBitmap::new();
-    assert!(issuer_doc.service_mut().append(
+    assert!(issuer_doc.service_mut_unchecked().append(
       Service::builder(Object::new())
         .id(service_url.clone())
         .type_(RevocationBitmap::TYPE)

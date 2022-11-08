@@ -247,7 +247,10 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` id.
-  pub fn id_mut(&mut self) -> &mut D {
+  /// 
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn id_mut_unchecked(&mut self) -> &mut D {
     &mut self.data.id
   }
 
@@ -257,7 +260,10 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<D>> {
+  /// 
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn controller_mut_unchecked(&mut self) -> &mut Option<OneOrSet<D>> {
     &mut self.data.controller
   }
 
@@ -267,7 +273,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
-  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
     &mut self.data.also_known_as
   }
 
@@ -277,7 +285,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
-  pub fn verification_method_mut(&mut self) -> &mut OrderedSet<VerificationMethod<D, U>> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn verification_method_mut_unchecked(&mut self) -> &mut OrderedSet<VerificationMethod<D, U>> {
     &mut self.data.verification_method
   }
 
@@ -287,7 +297,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` authentication set.
-  pub fn authentication_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn authentication_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.authentication
   }
 
@@ -297,7 +309,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
-  pub fn assertion_method_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn assertion_method_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.assertion_method
   }
 
@@ -307,7 +321,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
-  pub fn key_agreement_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn key_agreement_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.key_agreement
   }
 
@@ -317,7 +333,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
-  pub fn capability_delegation_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn capability_delegation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.capability_delegation
   }
 
@@ -327,7 +345,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
-  pub fn capability_invocation_mut(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn capability_invocation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.capability_invocation
   }
 
@@ -337,7 +357,10 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` service set.
-  pub fn service_mut(&mut self) -> &mut OrderedSet<Service<D, V>> {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer [`Self::insert_service`](CoreDocument::insert_service())/ [`Self::remove_service`](CoreDocument::remove_service)
+  /// API(s) instead. 
+  pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D, V>> {
     &mut self.data.service
   }
 
@@ -347,24 +370,26 @@ where
   }
 
   /// Returns a mutable reference to the custom `CoreDocument` properties.
-  pub fn properties_mut(&mut self) -> &mut T {
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
+  pub fn properties_mut_unchecked(&mut self) -> &mut T {
     &mut self.data.properties
   }
 
   /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields
   /// and another function `g` to the custom properties.
   ///
-  /// # Panics
-  /// Panics if the mapping `f` introduces methods referencing embedded method identifiers,
-  /// or services with identifiers matching method identifiers.
-  pub fn map<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
+  /// # Warning
+  /// Can lead to broken invariants if used incorrectly. See [`Self::try_map`](CoreDocument::try_map()) for a fallible version with additional built-in checks. 
+  pub fn map_unchecked<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
   where
     C: DID + KeyComparable,
     F: FnMut(D) -> C,
     G: FnOnce(T) -> S,
   {
     let current_inner = self.data;
-    CoreDocument::try_from(CoreDocumentData {
+    CoreDocument::<C,S,U,V>{
+      data: CoreDocumentData {
       id: f(current_inner.id),
       controller: current_inner
         .controller
@@ -406,8 +431,8 @@ where
         .map(|service| service.map(&mut f))
         .collect(),
       properties: g(current_inner.properties),
-    })
-    .unwrap()
+    }
+  }
   }
 
   /// Fallible version of [`CoreDocument::map`].
@@ -416,7 +441,7 @@ where
   ///
   /// `try_map` can fail if either of the provided functions fail or if the mapping `f`
   /// introduces methods referencing embedded method identifiers, or services with identifiers matching method
-  /// identifiers. In the case of the latter the provided function `h` will be called to construct an error.
+  /// identifiers. In the case of the latter the provided function `h` will be called to construct a compatible error.
   pub fn try_map<S, C, F, G, E, H>(self, mut f: F, g: G, h: H) -> std::result::Result<CoreDocument<C, S, U, V>, E>
   where
     C: DID + KeyComparable,
@@ -543,7 +568,7 @@ where
       .chain(self.verification_method().iter().map(|method| method.id()))
       .any(|id| id == service_id);
 
-    ((!id_shared_with_method) && self.service_mut().append(service))
+    ((!id_shared_with_method) && self.service_mut_unchecked().append(service))
       .then_some(())
       .ok_or(Error::InvalidServiceInsertion)
   }
@@ -555,7 +580,7 @@ where
   /// Returns an error if the service does not exist.
   pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Result<()> {
     self
-      .service_mut()
+      .service_mut_unchecked()
       .remove(id)
       .then_some(())
       .ok_or(Error::ServiceNotFound)
@@ -586,11 +611,11 @@ where
         let method_ref = MethodRef::Refer(method.id().clone());
 
         let was_attached = match relationship {
-          MethodRelationship::Authentication => self.authentication_mut().append(method_ref),
-          MethodRelationship::AssertionMethod => self.assertion_method_mut().append(method_ref),
-          MethodRelationship::KeyAgreement => self.key_agreement_mut().append(method_ref),
-          MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().append(method_ref),
-          MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().append(method_ref),
+          MethodRelationship::Authentication => self.authentication_mut_unchecked().append(method_ref),
+          MethodRelationship::AssertionMethod => self.assertion_method_mut_unchecked().append(method_ref),
+          MethodRelationship::KeyAgreement => self.key_agreement_mut_unchecked().append(method_ref),
+          MethodRelationship::CapabilityDelegation => self.capability_delegation_mut_unchecked().append(method_ref),
+          MethodRelationship::CapabilityInvocation => self.capability_invocation_mut_unchecked().append(method_ref),
         };
 
         Ok(was_attached)
@@ -622,11 +647,11 @@ where
         let did_url: DIDUrl<D> = method.id().clone();
 
         let was_detached = match relationship {
-          MethodRelationship::Authentication => self.authentication_mut().remove(&did_url),
-          MethodRelationship::AssertionMethod => self.assertion_method_mut().remove(&did_url),
-          MethodRelationship::KeyAgreement => self.key_agreement_mut().remove(&did_url),
-          MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().remove(&did_url),
-          MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().remove(&did_url),
+          MethodRelationship::Authentication => self.authentication_mut_unchecked().remove(&did_url),
+          MethodRelationship::AssertionMethod => self.assertion_method_mut_unchecked().remove(&did_url),
+          MethodRelationship::KeyAgreement => self.key_agreement_mut_unchecked().remove(&did_url),
+          MethodRelationship::CapabilityDelegation => self.capability_delegation_mut_unchecked().remove(&did_url),
+          MethodRelationship::CapabilityInvocation => self.capability_invocation_mut_unchecked().remove(&did_url),
         };
 
         Ok(was_detached)
@@ -761,6 +786,9 @@ where
 
   /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
   /// matching the provided `query`.
+  /// 
+  /// # Warning
+  /// Incorrect use of this method can lead to broken invariants. 
   pub fn resolve_method_mut<'query, 'me, Q>(
     &'me mut self,
     query: Q,
@@ -1056,7 +1084,7 @@ mod core_document_revocation {
       Q: Into<DIDUrlQuery<'query>>,
     {
       let service: &mut Service<D, V> = self
-        .service_mut()
+        .service_mut_unchecked()
         .query_mut(service_query)
         .ok_or(Error::InvalidService("invalid id - service not found"))?;
 
@@ -1150,10 +1178,10 @@ mod tests {
     {
       let mut document: CoreDocument = document();
       let expected: CoreDID = CoreDID::parse("did:example:one1234").unwrap();
-      *document.controller_mut() = Some(OneOrSet::new_one(expected.clone()));
+      *document.controller_mut_unchecked() = Some(OneOrSet::new_one(expected.clone()));
       assert_eq!(document.controller().unwrap().as_slice(), &[expected]);
       // Unset.
-      *document.controller_mut() = None;
+      *document.controller_mut_unchecked() = None;
       assert!(document.controller().is_none());
     }
 
@@ -1165,10 +1193,10 @@ mod tests {
         CoreDID::parse("did:example:many4567").unwrap(),
         CoreDID::parse("did:example:many8910").unwrap(),
       ];
-      *document.controller_mut() = Some(expected_controllers.clone().try_into().unwrap());
+      *document.controller_mut_unchecked() = Some(expected_controllers.clone().try_into().unwrap());
       assert_eq!(document.controller().unwrap().as_slice(), &expected_controllers);
       // Unset.
-      *document.controller_mut() = None;
+      *document.controller_mut_unchecked() = None;
       assert!(document.controller().is_none());
     }
   }
@@ -1477,7 +1505,7 @@ mod tests {
     for index in indices_1.iter() {
       bitmap.revoke(*index);
     }
-    assert!(document.service_mut().append(
+    assert!(document.service_mut_unchecked().append(
       Service::builder(Object::new())
         .id(service_id.clone())
         .type_(crate::revocation::RevocationBitmap::TYPE)

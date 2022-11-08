@@ -105,7 +105,7 @@ impl IotaDocument {
 
   /// Returns a mutable reference to the `alsoKnownAs` set.
   pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
-    self.document.also_known_as_mut()
+    self.document.also_known_as_mut_unchecked()
   }
 
   /// Returns a reference to the underlying [`IotaCoreDocument`].
@@ -128,7 +128,7 @@ impl IotaDocument {
 
   /// Returns a mutable reference to the custom DID Document properties.
   pub fn properties_mut(&mut self) -> &mut Object {
-    self.document.properties_mut()
+    self.document.properties_mut_unchecked()
   }
 
   // ===========================================================================
@@ -147,7 +147,7 @@ impl IotaDocument {
     if service.id().fragment().is_none() {
       false
     } else {
-      self.core_document_mut().service_mut().append(service)
+      self.core_document_mut().service_mut_unchecked().append(service)
     }
   }
 
@@ -155,7 +155,7 @@ impl IotaDocument {
   ///
   /// Returns `true` if a service was removed.
   pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
-    self.core_document_mut().service_mut().remove(did_url)
+    self.core_document_mut().service_mut_unchecked().remove(did_url)
   }
 
   // ===========================================================================
@@ -334,7 +334,7 @@ mod client_document {
         Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
         _ => None,
       };
-      *self.core_document_mut().controller_mut() = controller_did.map(OneOrSet::new_one);
+      *self.core_document_mut().controller_mut_unchecked() = controller_did.map(OneOrSet::new_one);
     }
 
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
@@ -453,7 +453,7 @@ impl From<IotaDocument> for IotaCoreDocument {
 
 impl From<IotaDocument> for CoreDocument {
   fn from(document: IotaDocument) -> Self {
-    document.document.map(Into::into, |id| id)
+    document.document.map_unchecked(Into::into, |id| id)
   }
 }
 
