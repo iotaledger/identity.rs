@@ -30,6 +30,7 @@ use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
 
 use crate::error::Result;
+use crate::Error;
 use crate::IotaDID;
 use crate::IotaDIDUrl;
 use crate::IotaDocumentMetadata;
@@ -142,20 +143,28 @@ impl IotaDocument {
 
   /// Add a new [`IotaService`] to the document.
   ///
-  /// Returns `true` if the service was added.
-  pub fn insert_service(&mut self, service: IotaService) -> bool {
+  /// # Errors
+  /// An error is returned if there already exists a service or (verification) method with
+  /// the same URL in the document.  
+  pub fn insert_service(&mut self, service: IotaService) -> Result<()> {
+    // TODO: Why was this check added here, but not in CoreDocument?
     if service.id().fragment().is_none() {
-      false
+      return Err(Error::InvalidDoc(identity_did::Error::InvalidDID(
+        identity_did::did::DIDError::InvalidFragment,
+      )));
     } else {
-      self.core_document_mut().service_mut_unchecked().append(service)
+      self
+        .core_document_mut()
+        .insert_service(service)
+        .map_err(Error::InvalidDoc)
     }
   }
 
   /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
   ///
   /// Returns `true` if a service was removed.
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
-    self.core_document_mut().service_mut_unchecked().remove(did_url)
+  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Option<IotaService> {
+    self.core_document_mut().remove_service(did_url)
   }
 
   // ===========================================================================
@@ -183,8 +192,8 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Returns an error if the method does not exist.
-  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    Ok(self.core_document_mut().remove_method(did_url)?)
+  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Option<IotaVerificationMethod> {
+    self.core_document_mut().remove_method(did_url)
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -654,7 +663,7 @@ mod tests {
       url1
     ))
     .unwrap();
-    document.insert_service(service1.clone());
+    assert!(document.insert_service(service1.clone()).is_ok());
     assert_eq!(1, document.service().len());
     assert_eq!(document.resolve_service(&url1), Some(&service1));
     assert_eq!(document.resolve_service("#linked-domain"), Some(&service1));
@@ -673,7 +682,7 @@ mod tests {
       url2
     ))
     .unwrap();
-    document.insert_service(service2.clone());
+    assert!(document.insert_service(service2.clone()).is_ok());
     assert_eq!(2, document.service().len());
     assert_eq!(document.resolve_service(&url2), Some(&service2));
     assert_eq!(document.resolve_service("#revocation"), Some(&service2));
@@ -691,19 +700,19 @@ mod tests {
       url1
     ))
     .unwrap();
-    assert!(!document.insert_service(duplicate.clone()));
+    assert!(document.insert_service(duplicate.clone()).is_err());
     assert_eq!(2, document.service().len());
     let resolved: &IotaService = document.resolve_service(&url1).unwrap();
     assert_eq!(resolved, &service1);
     assert_ne!(resolved, &duplicate);
 
     // VALID: remove services.
-    assert!(document.remove_service(&url1));
+    assert_eq!(service1, document.remove_service(&url1).unwrap());
     assert_eq!(1, document.service().len());
     let last_service: &IotaService = document.resolve_service(&url2).unwrap();
     assert_eq!(last_service, &service2);
 
-    assert!(document.remove_service(&url2));
+    assert_eq!(service2, document.remove_service(&url2).unwrap());
     assert_eq!(0, document.service().len());
   }
 

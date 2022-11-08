@@ -8,9 +8,9 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 pub enum Error {
   #[error("serialization error")]
   SerializationError(&'static str, #[source] Option<identity_core::Error>),
-  #[error("{0}")]
+  #[error("invalid did")]
   DIDSyntaxError(#[from] identity_did::did::DIDError),
-  #[error("{0}")]
+  #[error("invalid document")]
   InvalidDoc(#[from] identity_did::error::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID update: {0}")]

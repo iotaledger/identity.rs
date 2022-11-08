@@ -232,23 +232,27 @@ mod tests {
       )
       .unwrap();
 
-    assert!(document.insert_service(
-      IotaService::builder(Object::new())
-        .id(document.id().to_url().join("#my-service").unwrap())
-        .type_("RevocationList2022")
-        .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
-        .build()
-        .unwrap()
-    ));
+    assert!(document
+      .insert_service(
+        IotaService::builder(Object::new())
+          .id(document.id().to_url().join("#my-service").unwrap())
+          .type_("RevocationList2022")
+          .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
+          .build()
+          .unwrap()
+      )
+      .is_ok());
 
-    assert!(document.insert_service(
-      IotaService::builder(Object::new())
-        .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
-        .type_("RevocationList2022")
-        .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
-        .build()
-        .unwrap()
-    ));
+    assert!(document
+      .insert_service(
+        IotaService::builder(Object::new())
+          .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
+          .type_("RevocationList2022")
+          .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
+          .build()
+          .unwrap()
+      )
+      .is_ok());
 
     document
       .also_known_as_mut()

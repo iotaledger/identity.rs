@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
   ];
   for service in services {
     let service: IotaService = Service::from_json_value(service)?;
-    assert!(document.insert_service(service));
+    assert!(document.insert_service(service).is_ok());
     document.metadata.updated = Some(Timestamp::now_utc());
 
     // Increase the storage deposit and publish the update.
