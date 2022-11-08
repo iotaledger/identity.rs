@@ -317,6 +317,7 @@ mod tests {
   use super::*;
   use proptest::prelude::Rng;
   use proptest::strategy::Strategy;
+  use proptest::test_runner::TestRng;
   use proptest::*;
 
   #[test]
@@ -467,41 +468,80 @@ mod tests {
   // Test key uniqueness invariant with randomly generated input
   // ===========================================================================================================================
 
-  fn arbitrary_set_comparable_struct() -> impl Strategy<Value = OrderedSet<ComparableStruct>> {
-    proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|values| {
-      values
-        .into_iter()
-        .map(|(key, value)| ComparableStruct { key, value })
-        .collect()
+  fn arbitrary_sets_comparable_struct(
+  ) -> impl Strategy<Value = (OrderedSet<ComparableStruct>, OrderedSet<ComparableStruct>)> {
+    proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|mut x_vec| {
+      let half = x_vec.len() / 2;
+      let y_vec = x_vec.split_off(half);
+      let mapper = |(key, value)| ComparableStruct { key, value };
+      (
+        x_vec.into_iter().map(mapper).collect(),
+        y_vec.into_iter().map(mapper).collect(),
+      )
     })
   }
 
-  fn arbitrary_set_u128() -> impl Strategy<Value = OrderedSet<u128>> {
-    proptest::arbitrary::any::<Vec<u128>>().prop_map(|vector| vector.into_iter().collect())
+  fn arbitrary_sets_u128() -> impl Strategy<Value = (OrderedSet<u128>, OrderedSet<u128>)> {
+    proptest::arbitrary::any::<Vec<u128>>().prop_map(|mut x_vec| {
+      let half = x_vec.len() / 2;
+      let y_vec = x_vec.split_off(half);
+      (x_vec.into_iter().collect(), y_vec.into_iter().collect())
+    })
   }
 
-  // construct a set together with a pair of values. Given one of these values there is a 50% chance that it is
-  // contained in the set.
+  trait ReplaceKey: KeyComparable {
+    fn set_key(&mut self, key: Self::Key);
+  }
+
+  impl ReplaceKey for ComparableStruct {
+    fn set_key(&mut self, key: Self::Key) {
+      let ComparableStruct { key: current_key, .. } = self;
+      *current_key = key;
+    }
+  }
+
+  impl ReplaceKey for u128 {
+    fn set_key(&mut self, key: Self::Key) {
+      *self = key;
+    }
+  }
+
+  // Produces an ordered set and two values as follows:
+  // 1. Call `f` to get a pair of sets (x,y).
+  // 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty Default
+  // is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
+  // 4. Toss a coin to decide whether to swap the keys of a and b.
+  // 5. return (x,a,b)
   fn set_with_values<F, T, U>(f: F) -> impl Strategy<Value = (OrderedSet<T>, T, T)>
   where
-    T: KeyComparable + Default + Debug + Clone,
+    T: KeyComparable + Default + Debug + Clone + ReplaceKey,
+    <T as KeyComparable>::Key: Clone,
     U: Strategy<Value = (OrderedSet<T>, OrderedSet<T>)>,
     F: Fn() -> U,
   {
-    f().prop_perturb(|(s0, s1), mut rng| {
-      let sets = [&s0, &s1];
-      let mut pick_value = || {
-        let set_idx = usize::from(rng.gen_bool(0.5));
-        let set_range = if set_idx == 0 { 0..s0.len() } else { 0..s1.len() };
+    f().prop_perturb(|(x, y), mut rng| {
+      let sets = [&x, &y];
+
+      let sample = |generator: &mut TestRng| {
+        let set_idx = usize::from(generator.gen_bool(0.5));
+        let set_range = if set_idx == 0 { 0..x.len() } else { 0..y.len() };
         if set_range.is_empty() {
           T::default()
         } else {
-          let entry_idx = rng.gen_range(set_range);
+          let entry_idx = generator.gen_range(set_range);
           (sets[set_idx])[entry_idx].clone()
         }
       };
-      let (v0, v1) = (pick_value(), pick_value());
-      (s0, v0, v1)
+
+      let (mut a, mut b) = (sample(&mut rng), sample(&mut rng));
+      if rng.gen_bool(0.5) {
+        let key_a = a.key().clone();
+        let key_b = b.key().clone();
+        a.set_key(key_b);
+        b.set_key(key_a);
+      }
+
+      (x, a, b)
     })
   }
 }
