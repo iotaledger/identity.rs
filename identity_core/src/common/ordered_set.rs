@@ -463,6 +463,10 @@ mod tests {
     assert_eq!(set.head().unwrap().value, cs2.value);
   }
 
+  // ===========================================================================================================================
+  // Test key uniqueness invariant with randomly generated input
+  // ===========================================================================================================================
+
   fn arbitrary_set_comparable_struct() -> impl Strategy<Value = OrderedSet<ComparableStruct>> {
     proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|values| {
       values
@@ -476,14 +480,21 @@ mod tests {
     proptest::arbitrary::any::<Vec<u128>>().prop_map(|vector| vector.into_iter().collect())
   }
 
-  fn set_with_values() -> impl Strategy<Value = (OrderedSet<ComparableStruct>, ComparableStruct, ComparableStruct)> {
-    (arbitrary_set_comparable_struct(), arbitrary_set_comparable_struct()).prop_perturb(|(s0, s1), mut rng| {
+  // construct a set together with a pair of values. Given one of these values there is a 50% chance that it is
+  // contained in the set.
+  fn set_with_values<F, T, U>(f: F) -> impl Strategy<Value = (OrderedSet<T>, T, T)>
+  where
+    T: KeyComparable + Default + Debug + Clone,
+    U: Strategy<Value = (OrderedSet<T>, OrderedSet<T>)>,
+    F: Fn() -> U,
+  {
+    f().prop_perturb(|(s0, s1), mut rng| {
       let sets = [&s0, &s1];
       let mut pick_value = || {
         let set_idx = usize::from(rng.gen_bool(0.5));
         let set_range = if set_idx == 0 { 0..s0.len() } else { 0..s1.len() };
         if set_range.is_empty() {
-          ComparableStruct::default()
+          T::default()
         } else {
           let entry_idx = rng.gen_range(set_range);
           (sets[set_idx])[entry_idx].clone()
@@ -493,5 +504,4 @@ mod tests {
       (s0, v0, v1)
     })
   }
-
 }
