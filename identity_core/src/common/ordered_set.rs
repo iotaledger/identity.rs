@@ -78,6 +78,9 @@ impl<T> OrderedSet<T> {
 
   /// Returns a mutable referece to the first element in the set, or `None` if
   /// the set is empty.
+  ///
+  /// # Warning
+  /// Incorrect use of this can break the invariants of [`OrderedSet`].
   #[inline]
   pub fn head_mut(&mut self) -> Option<&mut T> {
     self.0.first_mut()
@@ -91,6 +94,9 @@ impl<T> OrderedSet<T> {
 
   /// Returns a mutable reference the last element in the set, or `None` if the
   /// set is empty.
+  ///
+  /// # Warning
+  /// Incorrect use of this can break the invariants of [`OrderedSet`].
   #[inline]
   pub fn tail_mut(&mut self) -> Option<&mut T> {
     self.0.last_mut()
@@ -314,6 +320,9 @@ where
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashSet;
+  use std::hash::Hash;
+
   use super::*;
   use proptest::prelude::Rng;
   use proptest::strategy::Strategy;
@@ -468,6 +477,7 @@ mod tests {
   // Test key uniqueness invariant with randomly generated input
   // ===========================================================================================================================
 
+  // Produce a strategy for generating a pair of ordered sets of ComparableStruct
   fn arbitrary_sets_comparable_struct(
   ) -> impl Strategy<Value = (OrderedSet<ComparableStruct>, OrderedSet<ComparableStruct>)> {
     proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|mut x_vec| {
@@ -481,6 +491,7 @@ mod tests {
     })
   }
 
+  // Produce a strategy for generating a pair of ordered sets of u128
   fn arbitrary_sets_u128() -> impl Strategy<Value = (OrderedSet<u128>, OrderedSet<u128>)> {
     proptest::arbitrary::any::<Vec<u128>>().prop_map(|mut x_vec| {
       let half = x_vec.len() / 2;
@@ -489,6 +500,7 @@ mod tests {
     })
   }
 
+  // Trait for replacing the key of a KeyComparable value
   trait ReplaceKey: KeyComparable {
     fn set_key(&mut self, key: Self::Key);
   }
@@ -506,7 +518,7 @@ mod tests {
     }
   }
 
-  // Produces an ordered set and two values as follows:
+  // Produces a strategy ofr generating an ordered set together with two values according to the following algorithm:
   // 1. Call `f` to get a pair of sets (x,y).
   // 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty Default
   // is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
@@ -543,5 +555,69 @@ mod tests {
 
       (x, a, b)
     })
+  }
+
+  fn set_with_values_comparable_struct(
+  ) -> impl Strategy<Value = (OrderedSet<ComparableStruct>, ComparableStruct, ComparableStruct)> {
+    set_with_values(arbitrary_sets_comparable_struct)
+  }
+
+  fn set_with_values_u128() -> impl Strategy<Value = (OrderedSet<u128>, u128, u128)> {
+    set_with_values(arbitrary_sets_u128)
+  }
+
+  fn assert_operation_preserves_invariant<F, T, S>(mut set: OrderedSet<T>, operation: F, val: T)
+  where
+    T: KeyComparable,
+    T::Key: Hash + Eq,
+    F: Fn(&mut OrderedSet<T>, T) -> S,
+  {
+    operation(&mut set, val);
+    let mut keys: HashSet<&T::Key> = HashSet::new();
+    for key in set.as_slice().iter().map(KeyComparable::key) {
+      assert!(keys.insert(key));
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_append_comparable_struct((set, element, _) in set_with_values_comparable_struct()) {
+      assert_operation_preserves_invariant(set,OrderedSet::append, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_append_u128((set, element, _) in set_with_values_u128()) {
+      assert_operation_preserves_invariant(set,OrderedSet::append, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_prepend_comparable_struct((set, element, _) in set_with_values_comparable_struct()) {
+      assert_operation_preserves_invariant(set,OrderedSet::prepend, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_prepend_u128((set, element, _) in set_with_values_u128()) {
+      assert_operation_preserves_invariant(set,OrderedSet::prepend, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_update_comparable_struct((set, element, _) in set_with_values_comparable_struct()) {
+      assert_operation_preserves_invariant(set,OrderedSet::update, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_update_u128((set, element, _) in set_with_values_u128()) {
+      assert_operation_preserves_invariant(set,OrderedSet::update, element);
+    }
   }
 }
