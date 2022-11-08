@@ -23,7 +23,6 @@ use identity_iota::credential::FailFast;
 use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationBuilder;
 use identity_iota::credential::PresentationValidationOptions;
-use identity_iota::credential::PresentationValidator;
 use identity_iota::credential::Subject;
 use identity_iota::credential::SubjectHolderRelationship;
 use identity_iota::crypto::KeyPair;
@@ -31,6 +30,7 @@ use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifierOptions;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDocument;
+use identity_iota::resolver::Resolver;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -180,13 +180,19 @@ async fn main() -> anyhow::Result<()> {
     .shared_validation_options(credential_validation_options)
     .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
-  PresentationValidator::validate(
-    &presentation,
-    &alice_document,
-    &[issuer_document],
-    &presentation_validation_options,
-    FailFast::FirstError,
-  )?;
+  // Resolve issuer and holder documents and verify presentation.
+  // Passing the holder and issuer to `verify_presentation` will bypass the resolution step.
+  let mut resolver: Resolver<IotaDocument> = Resolver::new();
+  resolver.attach_iota_handler(client);
+  resolver
+    .verify_presentation(
+      &presentation,
+      &presentation_validation_options,
+      FailFast::FirstError,
+      None,
+      None,
+    )
+    .await?;
 
   // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
   println!("VP successfully validated");
