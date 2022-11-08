@@ -56,9 +56,12 @@ impl WasmCoreDocument {
   }
 
   /// Sets the DID of the document.
+  ///
+  ///
+  /// Warning: Improper use can lead to broken URI dereferencing.
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmCoreDID) {
-    *self.0.id_mut() = id.0.clone();
+    *self.0.id_mut_unchecked() = id.0.clone();
   }
 
   /// Returns a copy of the document controllers.
@@ -79,7 +82,8 @@ impl WasmCoreDocument {
   /// Sets the controllers of the DID Document.
   ///
   /// Note: Duplicates will be ignored.
-  /// Use `null` to remove all controllers.
+  /// Use `null` to remove all controllers. Furthermore improper use can lead to
+  /// broken URI dereferencing.
   #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, controllers: &OptionOneOrManyCoreDID) -> Result<()> {
     let controllers: Option<OneOrMany<CoreDID>> = controllers.into_serde().wasm_result()?;
@@ -92,7 +96,7 @@ impl WasmCoreDocument {
     } else {
       None
     };
-    *self.0.controller_mut() = controller_set;
+    *self.0.controller_mut_unchecked() = controller_set;
     Ok(())
   }
 
@@ -110,6 +114,8 @@ impl WasmCoreDocument {
   }
 
   /// Sets the `alsoKnownAs` property in the DID document.
+  ///
+  /// Warning: Improper use can lead to broken URI dereferencing.
   #[wasm_bindgen(js_name = setAlsoKnownAs)]
   pub fn set_also_known_as(&mut self, urls: &OptionOneOrManyString) -> Result<()> {
     let urls: Option<OneOrMany<String>> = urls.into_serde().wasm_result()?;
@@ -119,7 +125,7 @@ impl WasmCoreDocument {
         urls_set.append(Url::parse(url).wasm_result()?);
       }
     }
-    *self.0.also_known_as_mut() = urls_set;
+    *self.0.also_known_as_mut_unchecked() = urls_set;
     Ok(())
   }
 
@@ -233,10 +239,10 @@ impl WasmCoreDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut().insert(key, value);
+        self.0.properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.properties_mut().remove(&key);
+        self.0.properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -262,10 +268,10 @@ impl WasmCoreDocument {
 
   /// Add a new {@link CoreService} to the document.
   ///
-  /// Returns `true` if the service was added.
+  /// Errors if there already exists a service or (verification) method with the same id.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmCoreService) -> bool {
-    self.0.service_mut().append(service.0.clone())
+  pub fn insert_service(&mut self, service: &WasmCoreService) -> Result<()> {
+    self.0.insert_service(service.0.clone()).wasm_result()
   }
 
   /// Remoce a {@link CoreService} identified by the given {@link CoreDIDUrl} from the document.
@@ -273,8 +279,8 @@ impl WasmCoreDocument {
   /// Returns `true` if the service was removed.
   #[wasm_bindgen(js_name = removeService)]
   #[allow(non_snake_case)]
-  pub fn remove_service(&mut self, didUrl: &WasmCoreDIDUrl) -> bool {
-    self.0.service_mut().remove(&didUrl.0.clone())
+  pub fn remove_service(&mut self, didUrl: &WasmCoreDIDUrl) -> Option<WasmCoreService> {
+    self.0.remove_service(&didUrl.0.clone()).map(Into::into)
   }
 
   /// Returns the first {@link CoreService} with an `id` property matching the provided `query`,
@@ -330,14 +336,13 @@ impl WasmCoreDocument {
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmCoreVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
-    Ok(())
+    self.0.insert_method(method.0.clone(), scope.0).wasm_result()
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmCoreDIDUrl) -> Result<()> {
-    self.0.remove_method(&did.0).wasm_result()
+  pub fn remove_method(&mut self, did: &WasmCoreDIDUrl) -> Option<WasmCoreVerificationMethod> {
+    self.0.remove_method(&did.0).map(Into::into)
   }
 
   /// Returns a copy of the first verification method with an `id` property
