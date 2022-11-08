@@ -1,12 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_client::block::address::Address;
+use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
+
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
-use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
@@ -16,26 +20,12 @@ use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::FailFast;
 use identity_iota::credential::Subject;
 use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
 use identity_iota::crypto::ProofOptions;
-use identity_iota::did::MethodRelationship;
-use identity_iota::did::MethodScope;
 use identity_iota::did::DID;
-use identity_iota::iota::block::output::AliasOutput;
-use identity_iota::iota::block::output::AliasOutputBuilder;
-use identity_iota::iota::block::output::RentStructure;
-use identity_iota::iota::IotaClientExt;
-use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaVerificationMethod;
-use iota_client::block::address::Address;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<String> {
+async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
 
@@ -45,7 +35,7 @@ async fn main() -> anyhow::Result<String> {
       .password("secure_password_1")
       .build(random_stronghold_path())?,
   );
-  let (_, mut issuer_document, key_pair): (Address, IotaDocument, KeyPair) =
+  let (_, issuer_document, key_pair): (Address, IotaDocument, KeyPair) =
     create_did(&client, &mut secret_manager_issuer).await?;
 
   // Create an identity for the holder, in this case also the subject.
@@ -54,8 +44,7 @@ async fn main() -> anyhow::Result<String> {
       .password("secure_password_2")
       .build(random_stronghold_path())?,
   );
-  let (_, mut alice_document, _): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager_alice).await?;
+  let (_, alice_document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager_alice).await?;
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
@@ -77,7 +66,7 @@ async fn main() -> anyhow::Result<String> {
     .build()?;
 
   // Sign the Credential with the issuer's verification method.
-  issuer_document.sign_data(&mut credential, key_pair.private(), "#key-1", ProofOptions::default());
+  issuer_document.sign_data(&mut credential, key_pair.private(), "#key-1", ProofOptions::default())?;
   println!("Credential JSON > {:#}", credential);
 
   // Before sending this credential to the holder the issuer wants to validate that some properties
@@ -97,6 +86,6 @@ async fn main() -> anyhow::Result<String> {
 
   // The issuer is now sure that the credential they are about to issue satisfies their expectations.
   // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
-  let credential_json: String = credential.to_json()?;
-  return Ok(credential_json);
+  let _credential_json: String = credential.to_json()?;
+  Ok(())
 }
