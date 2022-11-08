@@ -46,10 +46,6 @@ pub enum Error {
   #[error("unable to insert service: the id is already in use")]
   InvalidServiceInsertion,
 
-  /// Caused by attempting to remove a service that cannot be found in the document.
-  #[error("service not found")]
-  ServiceNotFound,
-
   #[error("Unknown Method Scope")]
   UnknownMethodScope,
   #[error("Unknown Method Type")]
