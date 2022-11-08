@@ -105,7 +105,10 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the `alsoKnownAs` set.
-  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
+  ///
+  /// # Warning
+  /// Incorrect use can lead to broken invariants.
+  pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
     self.document.also_known_as_mut_unchecked()
   }
 
@@ -128,7 +131,10 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the custom DID Document properties.
-  pub fn properties_mut(&mut self) -> &mut Object {
+  ///
+  /// # Warning
+  /// Incorrect use can lead to broken invariants.
+  pub fn properties_mut_unchecked(&mut self) -> &mut Object {
     self.document.properties_mut_unchecked()
   }
 
@@ -160,9 +166,9 @@ impl IotaDocument {
     }
   }
 
-  /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
+  /// Remove and return the [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
   ///
-  /// Returns `true` if a service was removed.
+  /// `None` is returned if the service does not exist in the document.
   pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Option<IotaService> {
     self.core_document_mut().remove_service(did_url)
   }
