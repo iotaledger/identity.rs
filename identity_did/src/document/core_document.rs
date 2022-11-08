@@ -463,7 +463,7 @@ where
     }
   }
 
-  /// Fallible version of [`CoreDocument::map`].
+  /// Fallible version of [`CoreDocument::map_unchecked`] with additional identifier uniqueness checks.
   ///
   /// # Errors
   ///
