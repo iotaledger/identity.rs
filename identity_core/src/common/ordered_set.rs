@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::borrow::Borrow;
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Formatter;
@@ -180,22 +179,20 @@ impl<T> OrderedSet<T> {
     self.change(update, |item, update| item.key() == update.key())
   }
 
-  /// Removes and returns the matching item from the set, if it exists.  
+  /// Removes and returns the item with the matching key from the set, if it exists.
   #[inline]
-  pub fn remove<U>(&mut self, item: &U) -> bool
+  pub fn remove<U>(&mut self, item: &U) -> Option<T>
   where
     T: KeyComparable,
     U: KeyComparable<Key = T::Key>,
   {
-    // self.iter().enumerate().find(|(_, entry)| entry.key() == item.key()).map(|(idx,_)| idx).map(|idx|
-    // self.0.remove(idx))
-
-    if self.contains(item) {
-      self.0.retain(|this| this.borrow().key() != item.key());
-      true
-    } else {
-      false
-    }
+    self
+      .0
+      .iter()
+      .enumerate()
+      .find(|(_, entry)| entry.key() == item.key())
+      .map(|(idx, _)| idx)
+      .map(|idx| self.0.remove(idx))
   }
 
   fn change<F>(&mut self, data: T, f: F) -> bool
@@ -520,8 +517,8 @@ mod tests {
 
   /// Produces a strategy ofr generating an ordered set together with two values according to the following algorithm:
   /// 1. Call `f` to get a pair of sets (x,y).
-  /// 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty Default
-  /// is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
+  /// 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty
+  /// Default is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
   /// 4. Toss a coin to decide whether to swap the keys of a and b.
   /// 5. return (x,a,b)
   fn set_with_values<F, T, U>(f: F) -> impl Strategy<Value = (OrderedSet<T>, T, T)>

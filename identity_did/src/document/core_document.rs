@@ -286,7 +286,9 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method())
+  /// apis instead.
   pub fn verification_method_mut_unchecked(&mut self) -> &mut OrderedSet<VerificationMethod<D, U>> {
     &mut self.data.verification_method
   }
@@ -297,8 +299,12 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` authentication set.
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
+  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
+  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
   pub fn authentication_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.authentication
   }
@@ -309,8 +315,12 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
+  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
+  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
   pub fn assertion_method_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.assertion_method
   }
@@ -321,8 +331,12 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
+  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
+  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
   pub fn key_agreement_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.key_agreement
   }
@@ -333,8 +347,12 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
+  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
+  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
   pub fn capability_delegation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.capability_delegation
   }
@@ -345,8 +363,12 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
+  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
+  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
   pub fn capability_invocation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.capability_invocation
   }
@@ -359,8 +381,8 @@ where
   /// Returns a mutable reference to the `CoreDocument` service set.
   /// # Warning
   /// Incorrect use of this method can lead to broken invariants. Consider using the safer
-  /// [`Self::insert_service`](CoreDocument::insert_service())/ [`Self::remove_service`](CoreDocument::remove_service)
-  /// API(s) instead.
+  /// [`Self::insert_service`](CoreDocument::insert_service()) and
+  /// [`Self::remove_service`](CoreDocument::remove_service) methods instead.
   pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D, V>> {
     &mut self.data.service
   }
@@ -534,27 +556,27 @@ where
     Ok(())
   }
 
-  /// Removes all references to the specified [`VerificationMethod`].
+  /// Removes and returns the [`VerificationMethod`] from the document.
   ///
-  /// # Errors
-  ///
-  /// Returns an error if the method does not exist.
-  pub fn remove_method(&mut self, did: &DIDUrl<D>) -> Result<()> {
-    let was_removed: bool = [
+  /// # Note
+  /// All references to the method found in the document will be removed (also in the case where the method is not
+  /// contained in this document).
+  pub fn remove_method(&mut self, did: &DIDUrl<D>) -> Option<VerificationMethod<D, U>> {
+    for method_ref in [
       self.data.authentication.remove(did),
       self.data.assertion_method.remove(did),
       self.data.key_agreement.remove(did),
       self.data.capability_delegation.remove(did),
       self.data.capability_invocation.remove(did),
-      self.data.verification_method.remove(did),
-    ]
-    .contains(&true);
-
-    if was_removed {
-      Ok(())
-    } else {
-      Err(Error::MethodNotFound)
+    ] {
+      if let Some(MethodRef::<D, U>::Embed(embedded_method)) = method_ref {
+        // embedded methods cannot be referenced, or be in the set of general purpose verification methods hence the
+        // search is complete
+        return Some(embedded_method);
+      }
     }
+
+    self.data.verification_method.remove(did)
   }
 
   /// Adds a new [`Service`] to the document.
@@ -575,17 +597,9 @@ where
       .ok_or(Error::InvalidServiceInsertion)
   }
 
-  /// Removes a [`Service`] from the document.
-  ///
-  /// # Errors
-  ///
-  /// Returns an error if the service does not exist.
-  pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Result<()> {
-    self
-      .service_mut_unchecked()
-      .remove(id)
-      .then_some(())
-      .ok_or(Error::ServiceNotFound)
+  /// Removes and returns a [`Service`] from the document if it exists.
+  pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Option<Service<D, V>> {
+    self.service_mut_unchecked().remove(id)
   }
   /// Attaches the relationship to the method resolved by `method_query`.
   ///
@@ -631,6 +645,11 @@ where
   ///
   /// Returns an error if the method does not exist or is embedded.
   /// To remove an embedded method, use [`Self::remove_method`].
+  ///
+  /// # Note
+  /// If the method is referenced in the given scope, but the document does not contain the referenced verification
+  /// method, then the reference will persist in the document (i.e. it is not removed).
+  // TODO: Is this the behaviour we want?
   pub fn detach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
@@ -656,7 +675,7 @@ where
           MethodRelationship::CapabilityInvocation => self.capability_invocation_mut_unchecked().remove(&did_url),
         };
 
-        Ok(was_detached)
+        Ok(was_detached.is_some())
       }
     }
   }
@@ -1464,14 +1483,14 @@ mod tests {
     assert!(document
       .insert_method(method1.clone(), MethodScope::VerificationMethod)
       .is_ok());
-    assert!(document.remove_method(method1.id()).is_ok());
-    assert!(document.remove_method(method1.id()).is_err());
+    assert_eq!(method1, document.remove_method(method1.id()).unwrap());
+    assert!(document.remove_method(method1.id()).is_none());
 
     let fragment = "#existence-test-2";
     let method2 = method(document.id(), fragment);
     assert!(document.insert_method(method2, MethodScope::assertion_method()).is_ok());
-    assert!(document.remove_method(method1.id()).is_err());
-    assert!(document.remove_method(method1.id()).is_err());
+    assert!(document.remove_method(method1.id()).is_none());
+    assert!(document.remove_method(method1.id()).is_none());
 
     let fragment = "#removal-test-3";
     let method3 = method(document.id(), fragment);
@@ -1482,7 +1501,7 @@ mod tests {
       .attach_method_relationship(fragment, MethodRelationship::CapabilityDelegation)
       .is_ok());
 
-    assert!(document.remove_method(method3.id()).is_ok());
+    assert_eq!(method3, document.remove_method(method3.id()).unwrap());
 
     // Ensure *all* references were removed.
     assert!(document.capability_delegation().query(method3.id()).is_none());
@@ -1561,7 +1580,7 @@ mod tests {
     *service_clone.service_endpoint_mut() = Url::parse("https://other-example.com").unwrap().into();
     assert!(document.insert_service(service_clone).is_err());
     // removing an existing service should succeed
-    assert!(document.remove_service(service.id()).is_ok());
+    assert_eq!(service, document.remove_service(service.id()).unwrap());
     // it should now be possible to insert the service again
     assert!(document.insert_service(service.clone()).is_ok());
 
@@ -1588,7 +1607,7 @@ mod tests {
       let mut document_clone = document.clone();
       assert!(document_clone.insert_method(method.clone(), scope).is_err());
       // should succeed after removing the service
-      assert!(document_clone.remove_service(service.id()).is_ok());
+      assert!(document_clone.remove_service(service.id()).is_some());
       assert!(document_clone.insert_method(method.clone(), scope).is_ok());
     }
 
@@ -1604,14 +1623,14 @@ mod tests {
       service_clone.set_id(valid_method_id).unwrap();
       assert!(doc_clone.insert_service(service_clone.clone()).is_err());
       // but should work after the method has been removed
-      assert!(doc_clone.remove_method(valid_method.id()).is_ok());
+      assert!(doc_clone.remove_method(valid_method.id()).is_some());
       assert!(doc_clone.insert_service(service_clone).is_ok());
     }
 
     //removing a service that does not exist should fail
     assert!(document
       .remove_service(&service.id().join("#service-does-not-exist").unwrap())
-      .is_err());
+      .is_none());
   }
 
   #[test]
