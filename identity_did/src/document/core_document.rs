@@ -247,9 +247,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` id.
-  /// 
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn id_mut_unchecked(&mut self) -> &mut D {
     &mut self.data.id
   }
@@ -260,9 +260,9 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  /// 
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn controller_mut_unchecked(&mut self) -> &mut Option<OneOrSet<D>> {
     &mut self.data.controller
   }
@@ -274,7 +274,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
     &mut self.data.also_known_as
   }
@@ -286,7 +286,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn verification_method_mut_unchecked(&mut self) -> &mut OrderedSet<VerificationMethod<D, U>> {
     &mut self.data.verification_method
   }
@@ -298,7 +298,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` authentication set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn authentication_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.authentication
   }
@@ -310,7 +310,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn assertion_method_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.assertion_method
   }
@@ -322,7 +322,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn key_agreement_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.key_agreement
   }
@@ -334,7 +334,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn capability_delegation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.capability_delegation
   }
@@ -346,7 +346,7 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn capability_invocation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
     &mut self.data.capability_invocation
   }
@@ -358,8 +358,9 @@ where
 
   /// Returns a mutable reference to the `CoreDocument` service set.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. Consider using the safer [`Self::insert_service`](CoreDocument::insert_service())/ [`Self::remove_service`](CoreDocument::remove_service)
-  /// API(s) instead. 
+  /// Incorrect use of this method can lead to broken invariants. Consider using the safer
+  /// [`Self::insert_service`](CoreDocument::insert_service())/ [`Self::remove_service`](CoreDocument::remove_service)
+  /// API(s) instead.
   pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D, V>> {
     &mut self.data.service
   }
@@ -371,7 +372,7 @@ where
 
   /// Returns a mutable reference to the custom `CoreDocument` properties.
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn properties_mut_unchecked(&mut self) -> &mut T {
     &mut self.data.properties
   }
@@ -380,7 +381,8 @@ where
   /// and another function `g` to the custom properties.
   ///
   /// # Warning
-  /// Can lead to broken invariants if used incorrectly. See [`Self::try_map`](CoreDocument::try_map()) for a fallible version with additional built-in checks. 
+  /// Can lead to broken invariants if used incorrectly. See [`Self::try_map`](CoreDocument::try_map()) for a fallible
+  /// version with additional built-in checks.
   pub fn map_unchecked<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
   where
     C: DID + KeyComparable,
@@ -388,51 +390,51 @@ where
     G: FnOnce(T) -> S,
   {
     let current_inner = self.data;
-    CoreDocument::<C,S,U,V>{
+    CoreDocument::<C, S, U, V> {
       data: CoreDocumentData {
-      id: f(current_inner.id),
-      controller: current_inner
-        .controller
-        .map(|controller_set| controller_set.map(&mut f)),
-      also_known_as: current_inner.also_known_as,
-      verification_method: current_inner
-        .verification_method
-        .into_iter()
-        .map(|method| method.map(&mut f))
-        .collect(),
-      authentication: current_inner
-        .authentication
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      assertion_method: current_inner
-        .assertion_method
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      key_agreement: current_inner
-        .key_agreement
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      capability_delegation: current_inner
-        .capability_delegation
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      capability_invocation: current_inner
-        .capability_invocation
-        .into_iter()
-        .map(|method_ref| method_ref.map(&mut f))
-        .collect(),
-      service: current_inner
-        .service
-        .into_iter()
-        .map(|service| service.map(&mut f))
-        .collect(),
-      properties: g(current_inner.properties),
+        id: f(current_inner.id),
+        controller: current_inner
+          .controller
+          .map(|controller_set| controller_set.map(&mut f)),
+        also_known_as: current_inner.also_known_as,
+        verification_method: current_inner
+          .verification_method
+          .into_iter()
+          .map(|method| method.map(&mut f))
+          .collect(),
+        authentication: current_inner
+          .authentication
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        assertion_method: current_inner
+          .assertion_method
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        key_agreement: current_inner
+          .key_agreement
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        capability_delegation: current_inner
+          .capability_delegation
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        capability_invocation: current_inner
+          .capability_invocation
+          .into_iter()
+          .map(|method_ref| method_ref.map(&mut f))
+          .collect(),
+        service: current_inner
+          .service
+          .into_iter()
+          .map(|service| service.map(&mut f))
+          .collect(),
+        properties: g(current_inner.properties),
+      },
     }
-  }
   }
 
   /// Fallible version of [`CoreDocument::map`].
@@ -786,9 +788,9 @@ where
 
   /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
   /// matching the provided `query`.
-  /// 
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants. 
+  /// Incorrect use of this method can lead to broken invariants.
   pub fn resolve_method_mut<'query, 'me, Q>(
     &'me mut self,
     query: Q,
