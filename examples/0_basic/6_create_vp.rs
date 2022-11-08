@@ -176,7 +176,7 @@ async fn main() -> anyhow::Result<()> {
     .earliest_expiry_date(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap());
 
   let presentation_validation_options = PresentationValidationOptions::default()
-    .presentation_verifier_options(presentation_verifier_options.clone())
+    .presentation_verifier_options(presentation_verifier_options)
     .shared_validation_options(credential_validation_options)
     .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
@@ -194,5 +194,5 @@ async fn main() -> anyhow::Result<()> {
   // Note that we did not declare a latest allowed issuance date for credentials. This is because we only want to check
   // that the credentials do not have an issuance date in the future which is a default check.
 
-  return Ok(());
+  Ok(())
 }

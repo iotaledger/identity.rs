@@ -6,7 +6,7 @@ use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
 use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::address::Address;
-use identity_iota::iota::IotaDID;
+
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::prelude::Resolver;

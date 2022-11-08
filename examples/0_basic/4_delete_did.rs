@@ -7,7 +7,7 @@ use examples::API_ENDPOINT;
 use identity_iota::crypto::KeyPair;
 use identity_iota::iota::Error;
 use identity_iota::iota::IotaClientExt;
-use identity_iota::iota::IotaDID;
+
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use iota_client::block::address::Address;
