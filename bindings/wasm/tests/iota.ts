@@ -160,7 +160,7 @@ describe("IotaDocument", function() {
             assert.deepStrictEqual(list[0].toJSON(), resolved.toJSON());
             // Remove
             const remove = doc.removeService(resolved.id());
-            assert.deepStrictEqual(remove, true);
+            assert.deepStrictEqual(remove, resolved);
             assert.deepStrictEqual(doc.resolveService(fragment1), undefined);
             assert.deepStrictEqual(doc.service().length, 0);
         });
