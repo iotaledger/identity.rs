@@ -389,7 +389,7 @@ mod tests {
     assert!(!set.contains(&cs4));
   }
 
-  #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+  #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
   struct ComparableStruct {
     key: u8,
     value: i32,
@@ -464,10 +464,34 @@ mod tests {
   }
 
   fn arbitrary_set_comparable_struct() -> impl Strategy<Value = OrderedSet<ComparableStruct>> {
-    proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|values| values.into_iter().map(|(key, value)| ComparableStruct{key, value}).collect())
+    proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|values| {
+      values
+        .into_iter()
+        .map(|(key, value)| ComparableStruct { key, value })
+        .collect()
+    })
   }
-  
- 
-  #[test]
-  fn append_preserves_invariant() {}
+
+  fn arbitrary_set_u128() -> impl Strategy<Value = OrderedSet<u128>> {
+    proptest::arbitrary::any::<Vec<u128>>().prop_map(|vector| vector.into_iter().collect())
+  }
+
+  fn set_with_values() -> impl Strategy<Value = (OrderedSet<ComparableStruct>, ComparableStruct, ComparableStruct)> {
+    (arbitrary_set_comparable_struct(), arbitrary_set_comparable_struct()).prop_perturb(|(s0, s1), mut rng| {
+      let sets = [&s0, &s1];
+      let mut pick_value = || {
+        let set_idx = usize::from(rng.gen_bool(0.5));
+        let set_range = if set_idx == 0 { 0..s0.len() } else { 0..s1.len() };
+        if set_range.is_empty() {
+          ComparableStruct::default()
+        } else {
+          let entry_idx = rng.gen_range(set_range);
+          (sets[set_idx])[entry_idx].clone()
+        }
+      };
+      let (v0, v1) = (pick_value(), pick_value());
+      (s0, v0, v1)
+    })
+  }
+
 }
