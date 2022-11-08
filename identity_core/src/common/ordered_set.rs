@@ -477,7 +477,7 @@ mod tests {
   // Test key uniqueness invariant with randomly generated input
   // ===========================================================================================================================
 
-  // Produce a strategy for generating a pair of ordered sets of ComparableStruct
+  /// Produce a strategy for generating a pair of ordered sets of ComparableStruct
   fn arbitrary_sets_comparable_struct(
   ) -> impl Strategy<Value = (OrderedSet<ComparableStruct>, OrderedSet<ComparableStruct>)> {
     proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|mut x_vec| {
@@ -491,7 +491,7 @@ mod tests {
     })
   }
 
-  // Produce a strategy for generating a pair of ordered sets of u128
+  /// Produce a strategy for generating a pair of ordered sets of u128
   fn arbitrary_sets_u128() -> impl Strategy<Value = (OrderedSet<u128>, OrderedSet<u128>)> {
     proptest::arbitrary::any::<Vec<u128>>().prop_map(|mut x_vec| {
       let half = x_vec.len() / 2;
@@ -500,7 +500,7 @@ mod tests {
     })
   }
 
-  // Trait for replacing the key of a KeyComparable value
+  /// Trait for replacing the key of a KeyComparable value
   trait ReplaceKey: KeyComparable {
     fn set_key(&mut self, key: Self::Key);
   }
@@ -518,12 +518,12 @@ mod tests {
     }
   }
 
-  // Produces a strategy ofr generating an ordered set together with two values according to the following algorithm:
-  // 1. Call `f` to get a pair of sets (x,y).
-  // 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty Default
-  // is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
-  // 4. Toss a coin to decide whether to swap the keys of a and b.
-  // 5. return (x,a,b)
+  /// Produces a strategy ofr generating an ordered set together with two values according to the following algorithm:
+  /// 1. Call `f` to get a pair of sets (x,y).
+  /// 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty Default
+  /// is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
+  /// 4. Toss a coin to decide whether to swap the keys of a and b.
+  /// 5. return (x,a,b)
   fn set_with_values<F, T, U>(f: F) -> impl Strategy<Value = (OrderedSet<T>, T, T)>
   where
     T: KeyComparable + Default + Debug + Clone + ReplaceKey,
@@ -573,6 +573,14 @@ mod tests {
     F: Fn(&mut OrderedSet<T>, T) -> S,
   {
     operation(&mut set, val);
+    assert_unique_keys(set);
+  }
+
+  fn assert_unique_keys<T>(set: OrderedSet<T>)
+  where
+    T: KeyComparable,
+    T::Key: Hash + Eq,
+  {
     let mut keys: HashSet<&T::Key> = HashSet::new();
     for key in set.as_slice().iter().map(KeyComparable::key) {
       assert!(keys.insert(key));
@@ -618,6 +626,38 @@ mod tests {
     #[test]
     fn preserves_invariant_update_u128((set, element, _) in set_with_values_u128()) {
       assert_operation_preserves_invariant(set,OrderedSet::update, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_replace_comparable_struct((mut set, current, update) in set_with_values_comparable_struct()) {
+      set.replace(current.key(), update);
+      assert_unique_keys(set);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_replace_u128((mut set, current, update) in set_with_values_u128()) {
+      set.replace(current.key(), update);
+      assert_unique_keys(set);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_remove_u128((mut set, element, _) in set_with_values_u128()) {
+      set.remove(element.key());
+      assert_unique_keys(set);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_remove_comparable_struct((mut set, element, _) in set_with_values_comparable_struct()) {
+      set.remove(element.key());
+      assert_unique_keys(set);
     }
   }
 }
