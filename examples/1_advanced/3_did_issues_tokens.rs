@@ -8,6 +8,7 @@ use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
 use identity_iota::core::Duration;
 use identity_iota::core::Timestamp;
+use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::output::unlock_condition::AddressUnlockCondition;
 use identity_iota::iota::block::output::unlock_condition::ExpirationUnlockCondition;
 use identity_iota::iota::block::output::BasicOutput;
@@ -62,7 +63,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the authority.
-  let (_, authority_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, authority_document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let authority_did = authority_document.id().clone();
 
   let rent_structure: RentStructure = client.get_rent_structure()?;
 

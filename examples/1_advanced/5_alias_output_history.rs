@@ -10,6 +10,7 @@ use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
+use identity_iota::crypto::KeyPair;
 use identity_iota::did::MethodRelationship;
 use identity_iota::did::Service;
 use identity_iota::did::DID;
@@ -51,7 +52,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
   let mut document: IotaDocument = client.resolve_did(&did).await?;
