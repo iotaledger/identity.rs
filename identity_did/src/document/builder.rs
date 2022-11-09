@@ -156,7 +156,7 @@ mod tests {
   fn duplicate_id_different_scopes() {
     let did: CoreDID = "did:example:1234".parse().unwrap();
     let fragment = "#key1";
-    let id = did.clone().to_url().join(fragment).unwrap();
+    let id = did.to_url().join(fragment).unwrap();
 
     let method1: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(id.clone())
@@ -169,7 +169,7 @@ mod tests {
       .unwrap();
 
     let method2: VerificationMethod = VerificationMethod::builder(Default::default())
-      .id(id.clone())
+      .id(id)
       .controller(did.clone())
       .type_(MethodType::X25519KeyAgreementKey2019)
       .data(MethodData::PublicKeyBase58(
@@ -183,16 +183,6 @@ mod tests {
       .verification_method(method1)
       .key_agreement(method2)
       .build();
-    // TODO: Remove match once this test passes
-    match result {
-      Ok(ref doc) => {
-        println!(
-          "{}",
-          <CoreDocument as identity_core::convert::ToJson>::to_json_pretty(doc).unwrap()
-        );
-      }
-      _ => (),
-    };
     assert!(result.is_err());
   }
 }

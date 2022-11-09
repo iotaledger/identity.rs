@@ -1575,7 +1575,7 @@ mod tests {
     let service_endpoint = Url::parse("https://example.com").unwrap();
 
     let service: Service = ServiceBuilder::default()
-      .id(service_id.clone())
+      .id(service_id)
       .type_(service_type)
       .service_endpoint(service_endpoint)
       .build()
