@@ -515,7 +515,7 @@ mod tests {
     }
   }
 
-  /// Produces a strategy ofr generating an ordered set together with two values according to the following algorithm:
+  /// Produces a strategy for generating an ordered set together with two values according to the following algorithm:
   /// 1. Call `f` to get a pair of sets (x,y).
   /// 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty
   /// Default is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
