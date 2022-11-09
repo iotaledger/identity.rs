@@ -47,7 +47,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the company.
-  let (_, company_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, company_document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let company_did = company_document.id().clone();
 
   // Get the current byte costs and network name.
   let rent_structure: RentStructure = client.get_rent_structure()?;

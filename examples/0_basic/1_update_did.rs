@@ -43,7 +43,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
   let mut document: IotaDocument = client.resolve_did(&did).await?;

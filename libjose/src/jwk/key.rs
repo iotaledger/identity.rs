@@ -344,7 +344,7 @@ impl Jwk {
   ///
   /// The thumbprint is returned as a base64url-encoded string.
   pub fn thumbprint_b64(&self) -> Result<String> {
-    self.thumbprint_raw().map(|thumbprint| encode_b64(&thumbprint))
+    self.thumbprint_raw().map(encode_b64)
   }
 
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).

@@ -38,6 +38,14 @@ path = "0_basic/4_delete_did.rs"
 name = "4_delete_did"
 
 [[example]]
+path = "0_basic/5_create_vc.rs"
+name = "5_create_vc"
+
+[[example]]
+path = "0_basic/6_create_vp.rs"
+name = "6_create_vp"
+
+[[example]]
 path = "1_advanced/0_did_controls_did.rs"
 name = "0_did_controls_did"
 
