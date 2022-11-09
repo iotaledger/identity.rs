@@ -207,7 +207,7 @@ impl IotaDocument {
 
   /// Returns a mutable reference to the [`IotaDocument`] controllers.
   pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<IotaDID>> {
-    self.document.controller_mut()
+    self.document.controller_mut_unchecked()
   }
 
   /// Returns a reference to the [`IotaDocument`] alsoKnownAs set.
@@ -217,7 +217,7 @@ impl IotaDocument {
 
   /// Returns a mutable reference to the [`IotaDocument`] alsoKnownAs set.
   pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
-    self.document.also_known_as_mut()
+    self.document.also_known_as_mut_unchecked()
   }
 
   /// Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
@@ -238,7 +238,7 @@ impl IotaDocument {
 
   /// Returns a mutable reference to the custom DID Document properties.
   pub fn properties_mut(&mut self) -> &mut Object {
-    self.document.properties_mut()
+    self.document.properties_mut_unchecked()
   }
 
   // ===========================================================================
@@ -257,7 +257,7 @@ impl IotaDocument {
     if service.id().fragment().is_none() {
       false
     } else {
-      self.document.service_mut().append(service)
+      self.document.service_mut_unchecked().append(service)
     }
   }
 
@@ -265,7 +265,7 @@ impl IotaDocument {
   ///
   /// Returns `true` if a service was removed.
   pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
-    self.document.service_mut().remove(did_url)
+    self.document.service_mut_unchecked().remove(did_url).is_some()
   }
 
   // ===========================================================================
@@ -292,7 +292,11 @@ impl IotaDocument {
   ///
   /// Returns an error if the method does not exist.
   pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    Ok(self.document.remove_method(did_url)?)
+    self
+      .document
+      .remove_method(did_url)
+      .map(|_| ())
+      .ok_or(Error::Compatibility)
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -908,10 +912,10 @@ mod tests {
       let controller: IotaDID = valid_did();
       let mut document: IotaDocument = valid_iota_document(&controller);
       let expected: IotaDID = IotaDID::new(&[0; 32]).unwrap();
-      *document.controller_mut() = Some(OneOrSet::new_one(expected.clone()));
+      *document.controller_mut_unchecked() = Some(OneOrSet::new_one(expected.clone()));
       assert_eq!(document.controller().unwrap().as_slice(), &[expected]);
       // Unset.
-      *document.controller_mut() = None;
+      *document.controller_mut_unchecked() = None;
       assert!(document.controller().is_none());
     }
 
@@ -925,10 +929,10 @@ mod tests {
         IotaDID::new(&[1; 32]).unwrap(),
         IotaDID::new(&[2; 32]).unwrap(),
       ];
-      *document.controller_mut() = Some(expected_controllers.clone().try_into().unwrap());
+      *document.controller_mut_unchecked() = Some(expected_controllers.clone().try_into().unwrap());
       assert_eq!(document.controller().unwrap().as_slice(), &expected_controllers);
       // Unset.
-      *document.controller_mut() = None;
+      *document.controller_mut_unchecked() = None;
       assert!(document.controller().is_none());
     }
   }

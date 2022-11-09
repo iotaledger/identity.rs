@@ -29,4 +29,8 @@ pub enum Error {
   MissingSigningKey,
   #[error("credential revocation error")]
   RevocationError(#[source] identity_did::Error),
+
+  //New errors from active identity dependencies can go here to pass CI checks
+  #[error("")]
+  Compatibility,
 }

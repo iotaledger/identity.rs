@@ -273,8 +273,14 @@ mod test {
     {
       let new: ResolvedIotaDocument = {
         let mut this: ResolvedIotaDocument = chain.current().clone();
-        this.document.properties_mut().insert("foo".into(), 123.into());
-        this.document.properties_mut().insert("bar".into(), 456.into());
+        this
+          .document
+          .properties_mut_unchecked()
+          .insert("foo".into(), 123.into());
+        this
+          .document
+          .properties_mut_unchecked()
+          .insert("bar".into(), 456.into());
         this.document.metadata.updated = Some(Timestamp::now_utc());
         this
       };
@@ -309,7 +315,10 @@ mod test {
     // Create DiffMessage Removing the Capability Invocation Method
     // =========================================================================
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
-    new_resolved.document.properties_mut().insert("foo".into(), 123.into());
+    new_resolved
+      .document
+      .properties_mut_unchecked()
+      .insert("foo".into(), 123.into());
     new_resolved
       .document
       .core_document_mut()
