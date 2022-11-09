@@ -128,7 +128,7 @@ fn test_rfc7518() {
       .__test_decrypt_key(&header)
       .unwrap();
 
-    assert_eq!(encode_b64(&encryption_key), tv.derived_key_b64);
+    assert_eq!(encode_b64(encryption_key), tv.derived_key_b64);
   }
 }
 

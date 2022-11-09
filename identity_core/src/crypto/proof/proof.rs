@@ -145,11 +145,11 @@ impl Serialize for Proof {
     } else {
       3 // type + method + value
     };
-    count_fields += if self.created.is_some() { 1 } else { 0 };
-    count_fields += if self.expires.is_some() { 1 } else { 0 };
-    count_fields += if self.challenge.is_some() { 1 } else { 0 };
-    count_fields += if self.domain.is_some() { 1 } else { 0 };
-    count_fields += if self.purpose.is_some() { 1 } else { 0 };
+    count_fields += usize::from(self.created.is_some());
+    count_fields += usize::from(self.expires.is_some());
+    count_fields += usize::from(self.challenge.is_some());
+    count_fields += usize::from(self.domain.is_some());
+    count_fields += usize::from(self.purpose.is_some());
     let mut state: S::SerializeMap = serializer.serialize_map(Some(count_fields))?;
 
     state.serialize_entry("type", &self.type_)?;

@@ -13,6 +13,7 @@ use examples::API_ENDPOINT;
 use identity_iota::core::FromJson;
 use identity_iota::core::ToJson;
 use identity_iota::credential::AbstractThreadSafeValidatorDocument;
+use identity_iota::crypto::KeyPair as IotaKeyPair;
 use identity_iota::did::CoreDID;
 use identity_iota::did::CoreDocument;
 use identity_iota::did::DID;
@@ -51,7 +52,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for us to resolve.
-  let (_, iota_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, iota_document, _): (Address, IotaDocument, IotaKeyPair) = create_did(&client, &mut secret_manager).await?;
+  let iota_did: IotaDID = iota_document.id().clone();
 
   // Resolve did_key to get an abstract document.
   let did_key_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&did_key).await?;
