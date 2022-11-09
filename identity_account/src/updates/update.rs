@@ -118,7 +118,7 @@ impl Update {
         // Check method identifier is not duplicated.
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
         if document.resolve_method(method_url, None).is_some() {
-          return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
+          return Err(crate::Error::DIDError(identity_did::Error::MethodInsertionError));
         }
 
         // Generate or extract the private key and/or retrieve the public key.

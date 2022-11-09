@@ -206,7 +206,7 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the [`IotaDocument`] controllers.
-  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<IotaDID>> {
+  pub fn controller_mut_unchecked(&mut self) -> &mut Option<OneOrSet<IotaDID>> {
     self.document.controller_mut_unchecked()
   }
 
@@ -216,7 +216,7 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the [`IotaDocument`] alsoKnownAs set.
-  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
+  pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
     self.document.also_known_as_mut_unchecked()
   }
 
@@ -1207,7 +1207,7 @@ mod tests {
     // Add a new property on the document.
     let doc2 = {
       let mut doc2: IotaDocument = doc1.clone();
-      doc2.properties_mut().insert("foo".into(), 123.into());
+      doc2.properties_mut_unchecked().insert("foo".into(), 123.into());
       let diff2: DiffMessage = doc1
         .diff(
           &doc2,
@@ -1227,7 +1227,7 @@ mod tests {
     // Mutate a property on the document.
     let doc3 = {
       let mut doc3: IotaDocument = doc2.clone();
-      *doc3.properties_mut().get_mut("foo").unwrap() = 456.into();
+      *doc3.properties_mut_unchecked().get_mut("foo").unwrap() = 456.into();
       let diff3: DiffMessage = doc2
         .diff(
           &doc3,
@@ -1247,7 +1247,7 @@ mod tests {
     // Remove a property on the document.
     {
       let mut doc4: IotaDocument = doc3.clone();
-      assert_eq!(doc4.properties_mut().remove("foo").unwrap(), Value::from(456));
+      assert_eq!(doc4.properties_mut_unchecked().remove("foo").unwrap(), Value::from(456));
       let diff4: DiffMessage = doc3
         .diff(
           &doc4,

@@ -234,11 +234,15 @@ mod test {
         .build()
         .map(Into::into)
         .unwrap();
-      new.document.core_document_mut().capability_invocation_mut().clear();
       new
         .document
         .core_document_mut()
-        .capability_invocation_mut()
+        .capability_invocation_mut_unchecked()
+        .clear();
+      new
+        .document
+        .core_document_mut()
+        .capability_invocation_mut_unchecked()
         .append(signing_method);
 
       new.document.metadata.updated = Some(Timestamp::now_utc());
@@ -322,7 +326,7 @@ mod test {
     new_resolved
       .document
       .core_document_mut()
-      .capability_invocation_mut()
+      .capability_invocation_mut_unchecked()
       .clear();
     new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
@@ -394,7 +398,7 @@ mod test {
     match new_resolved
       .document
       .core_document_mut()
-      .capability_invocation_mut()
+      .capability_invocation_mut_unchecked()
       .head_mut()
       .unwrap()
     {
