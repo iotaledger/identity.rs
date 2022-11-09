@@ -21,7 +21,8 @@ export async function resolveIdentity() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    const { did } = await createDid(client, secretManager);
+    const { document } = await createDid(client, secretManager);
+    const did = document.id();
 
     // Resolve the associated Alias Output and extract the DID document from it.
     const resolved: IotaDocument = await didClient.resolveDid(did);

@@ -19,7 +19,8 @@ Its functionality is equivalent to the "create DID" example
 and exists for convenient calling from the other examples. */
 export async function createDid(client: Client, secretManager: SecretManager): Promise<{
     address: AddressTypes;
-    did: IotaDID;
+    document: IotaDocument;
+    keypair: KeyPair
 }> {
     const didClient = new IotaIdentityClient(client);
     const networkHrp: string = await didClient.getNetworkHrp();
@@ -53,7 +54,7 @@ export async function createDid(client: Client, secretManager: SecretManager): P
     // Publish the Alias Output and get the published DID document.
     const published = await didClient.publishDidOutput(secretManager, aliasOutput);
 
-    return { address, did: published.id() };
+    return { address, document: published, keypair };
 }
 
 /** Request funds from the faucet API, if needed, and wait for them to show in the wallet. */
