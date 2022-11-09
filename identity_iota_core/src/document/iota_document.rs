@@ -151,7 +151,7 @@ impl IotaDocument {
   ///
   /// # Errors
   /// An error is returned if there already exists a service or (verification) method with
-  /// the same URL in the document.  
+  /// the same identifier in the document.  
   pub fn insert_service(&mut self, service: IotaService) -> Result<()> {
     // TODO: Why was this check added here, but not in CoreDocument?
     if service.id().fragment().is_none() {
