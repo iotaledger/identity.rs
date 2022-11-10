@@ -3,7 +3,7 @@
 
 import { Bip39 } from "@iota/crypto.js";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { Credential, ProofOptions, CredentialValidator, CredentialValidationOptions, FailFast } from "../../../node";
+import { Credential, CredentialValidationOptions, CredentialValidator, FailFast, ProofOptions } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -15,12 +15,12 @@ import { API_ENDPOINT, createDid } from "../util";
 export async function createVC() {
     const client = await Client.new({
         primaryNode: API_ENDPOINT,
-        localPow: true
+        localPow: true,
     });
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic()
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
@@ -35,7 +35,7 @@ export async function createVC() {
         name: "Alice",
         degreeName: "Bachelor of Science and Arts",
         degreeType: "BachelorDegree",
-        GPA: "4.0"
+        GPA: "4.0",
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
@@ -43,7 +43,7 @@ export async function createVC() {
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuerDocument.id(),
-        credentialSubject: subject
+        credentialSubject: subject,
     });
 
     // Sign Credential.

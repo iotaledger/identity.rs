@@ -5,17 +5,17 @@ import { Bip39 } from "@iota/crypto.js";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import {
     Credential,
-    ProofOptions,
     CredentialValidationOptions,
-    FailFast,
-    Timestamp,
     Duration,
+    FailFast,
+    IotaIdentityClient,
     Presentation,
-    VerifierOptions,
-    SubjectHolderRelationship,
     PresentationValidationOptions,
+    ProofOptions,
     Resolver,
-    IotaIdentityClient
+    SubjectHolderRelationship,
+    Timestamp,
+    VerifierOptions,
 } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
 
@@ -31,13 +31,13 @@ export async function createVP() {
 
     const client = await Client.new({
         primaryNode: API_ENDPOINT,
-        localPow: true
+        localPow: true,
     });
     const didClient = new IotaIdentityClient(client);
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic()
+        mnemonic: Bip39.randomMnemonic(),
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
@@ -55,7 +55,7 @@ export async function createVP() {
         name: "Alice",
         degreeName: "Bachelor of Science and Arts",
         degreeType: "BachelorDegree",
-        GPA: "4.0"
+        GPA: "4.0",
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
@@ -63,7 +63,7 @@ export async function createVP() {
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuerDocument.id(),
-        credentialSubject: subject
+        credentialSubject: subject,
     });
 
     // Created a signed credential by the issuer.
@@ -99,7 +99,7 @@ export async function createVP() {
     // Create a Verifiable Presentation from the Credential
     const unsignedVp = new Presentation({
         holder: aliceDocument.id(),
-        verifiableCredential: receivedVc
+        verifiableCredential: receivedVc,
     });
 
     // Sign the verifiable presentation using the holder's verification method
@@ -110,8 +110,8 @@ export async function createVP() {
         "#key-1",
         new ProofOptions({
             challenge: challenge,
-            expires
-        })
+            expires,
+        }),
     );
 
     // ===========================================================================
@@ -137,13 +137,13 @@ export async function createVP() {
     // Declare that the challenge must match our expectation:
     const presentationVerifierOptions = new VerifierOptions({
         challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440",
-        allowExpired: false
+        allowExpired: false,
     });
 
     // Declare that any credential contained in the presentation are not allowed to expire within the next 10 hours:
     const earliestExpiryDate = Timestamp.nowUTC().checkedAdd(Duration.hours(10));
     const credentialValidationOptions = new CredentialValidationOptions({
-        earliestExpiryDate: earliestExpiryDate
+        earliestExpiryDate: earliestExpiryDate,
     });
 
     // Declare that the presentation holder's DID must match the subject ID on all credentials in the presentation.
@@ -152,13 +152,13 @@ export async function createVP() {
     const presentationValidationOptions = new PresentationValidationOptions({
         sharedValidationOptions: credentialValidationOptions,
         presentationVerifierOptions: presentationVerifierOptions,
-        subjectHolderRelationship: subjectHolderRelationship
+        subjectHolderRelationship: subjectHolderRelationship,
     });
 
     // In order to validate presentations and credentials one needs to resolve the DID Documents of
     // the presentation holder and of credential issuers. This is something the `Resolver` can help with.
     const resolver = new Resolver({
-        client: didClient
+        client: didClient,
     });
 
     // Validate the presentation and all the credentials included in it according to the validation options
@@ -167,7 +167,7 @@ export async function createVP() {
         presentationValidationOptions,
         FailFast.FirstError,
         undefined,
-        undefined
+        undefined,
     );
 
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful.

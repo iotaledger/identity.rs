@@ -20,7 +20,7 @@ and exists for convenient calling from the other examples. */
 export async function createDid(client: Client, secretManager: SecretManager): Promise<{
     address: AddressTypes;
     document: IotaDocument;
-    keypair: KeyPair
+    keypair: KeyPair;
 }> {
     const didClient = new IotaIdentityClient(client);
     const networkHrp: string = await didClient.getNetworkHrp();
