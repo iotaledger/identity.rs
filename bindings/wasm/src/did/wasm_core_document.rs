@@ -268,7 +268,7 @@ impl WasmCoreDocument {
 
   /// Add a new {@link CoreService} to the document.
   ///
-  /// Errors if there already exists a service or (verification) method with the same id.
+  /// Errors if there already exists a service or verification method with the same id.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &WasmCoreService) -> Result<()> {
     self.0.insert_service(service.0.clone()).wasm_result()
