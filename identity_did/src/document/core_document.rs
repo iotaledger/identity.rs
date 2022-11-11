@@ -288,15 +288,6 @@ where
     &self.data.verification_method
   }
 
-  /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
-  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method())
-  /// apis instead.
-  pub fn verification_method_mut_unchecked(&mut self) -> &mut OrderedSet<VerificationMethod<D, U>> {
-    &mut self.data.verification_method
-  }
-
   /// Returns a reference to the `CoreDocument` authentication set.
   pub fn authentication(&self) -> &OrderedSet<MethodRef<D, U>> {
     &self.data.authentication

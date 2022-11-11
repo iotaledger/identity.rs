@@ -464,9 +464,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    assert!(new
-      .verification_method_mut_unchecked()
-      .append(method(&doc.data.id, "#key-diff")));
+    assert!(new.data.verification_method.append(method(&doc.data.id, "#key-diff")));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -481,7 +479,8 @@ mod test {
     // update method
     let first = new.verification_method().first().unwrap().clone();
     new
-      .verification_method_mut_unchecked()
+      .data
+      .verification_method
       .replace(&first, method(&"did:diff:1234".parse().unwrap(), "#key-diff"));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -496,7 +495,7 @@ mod test {
 
     // remove method
     let first = new.verification_method().first().unwrap().clone();
-    new.verification_method_mut_unchecked().remove(&first);
+    new.data.verification_method.remove(&first);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
