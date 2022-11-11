@@ -725,7 +725,7 @@ mod test {
 
     // Add new service
     let service = service(doc.data.id.to_url().join("#key-diff").unwrap());
-    assert!(new.service_mut_unchecked().append(service));
+    assert!(new.insert_service(service).is_ok());
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -740,7 +740,8 @@ mod test {
     // add new service
     let service = service(doc.data.id.to_url().join("#key-diff").unwrap());
     let first = new.service().first().unwrap().clone();
-    new.service_mut_unchecked().replace(&first, service);
+    assert!(new.remove_service(&first.id()).is_some());
+    assert!(new.insert_service(service).is_ok());
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -754,7 +755,7 @@ mod test {
 
     // remove method
     let first = new.service().first().unwrap().clone();
-    new.service_mut_unchecked().remove(&first);
+    new.remove_service(&first.id());
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();

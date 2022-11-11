@@ -327,15 +327,6 @@ where
     &self.data.service
   }
 
-  /// Returns a mutable reference to the `CoreDocument` service set.
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
-  /// [`Self::insert_service`](CoreDocument::insert_service()) and
-  /// [`Self::remove_service`](CoreDocument::remove_service) methods instead.
-  pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D, V>> {
-    &mut self.data.service
-  }
-
   /// Returns a reference to the custom `CoreDocument` properties.
   pub fn properties(&self) -> &T {
     &self.data.properties
@@ -544,14 +535,14 @@ where
       .chain(self.verification_method().iter().map(|method| method.id()))
       .any(|id| id == service_id);
 
-    ((!id_shared_with_method) && self.service_mut_unchecked().append(service))
+    ((!id_shared_with_method) && self.data.service.append(service))
       .then_some(())
       .ok_or(Error::InvalidServiceInsertion)
   }
 
   /// Removes and returns a [`Service`] from the document if it exists.
   pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Option<Service<D, V>> {
-    self.service_mut_unchecked().remove(id)
+    self.data.service.remove(id)
   }
   /// Attaches the relationship to the method resolved by `method_query`.
   ///
@@ -1057,7 +1048,8 @@ mod core_document_revocation {
       Q: Into<DIDUrlQuery<'query>>,
     {
       let service: &mut Service<D, V> = self
-        .service_mut_unchecked()
+        .data
+        .service
         .query_mut(service_query)
         .ok_or(Error::InvalidService("invalid id - service not found"))?;
 
@@ -1478,14 +1470,16 @@ mod tests {
     for index in indices_1.iter() {
       bitmap.revoke(*index);
     }
-    assert!(document.service_mut_unchecked().append(
-      Service::builder(Object::new())
-        .id(service_id.clone())
-        .type_(crate::revocation::RevocationBitmap::TYPE)
-        .service_endpoint(bitmap.to_endpoint().unwrap())
-        .build()
-        .unwrap()
-    ));
+    assert!(document
+      .insert_service(
+        Service::builder(Object::new())
+          .id(service_id.clone())
+          .type_(crate::revocation::RevocationBitmap::TYPE)
+          .service_endpoint(bitmap.to_endpoint().unwrap())
+          .build()
+          .unwrap()
+      )
+      .is_ok());
 
     // Revoke indices_2.
     document.revoke_credentials(&service_id, &indices_2).unwrap();
