@@ -563,8 +563,9 @@ where
   /// Removes and returns the [`VerificationMethod`] from the document.
   ///
   /// # Note
-  /// All references to the method found in the document will be removed (also in the case where the method is not
-  /// contained in this document).
+  ///
+  /// All _references to the method_ found in the document will be removed.
+  /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method(&mut self, did: &DIDUrl<D>) -> Option<VerificationMethod<D, U>> {
     for method_ref in [
       self.data.authentication.remove(did),
