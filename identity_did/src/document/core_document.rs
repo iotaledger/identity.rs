@@ -590,7 +590,7 @@ where
   ///
   /// # Errors
   ///
-  /// Returns an error if there already exists a service or (verification) method with the same identifier.
+  /// Returns an error if there already exists a service or verification method with the same identifier.
   pub fn insert_service(&mut self, service: Service<D, V>) -> Result<()> {
     let service_id = service.id();
     let id_shared_with_method = self
