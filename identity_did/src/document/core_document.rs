@@ -302,31 +302,9 @@ where
     &self.data.authentication
   }
 
-  /// Returns a mutable reference to the `CoreDocument` authentication set.
-  ///
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
-  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
-  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
-  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
-  pub fn authentication_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.data.authentication
-  }
-
   /// Returns a reference to the `CoreDocument` assertionMethod set.
   pub fn assertion_method(&self) -> &OrderedSet<MethodRef<D, U>> {
     &self.data.assertion_method
-  }
-
-  /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
-  ///
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
-  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
-  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
-  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
-  pub fn assertion_method_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.data.assertion_method
   }
 
   /// Returns a reference to the `CoreDocument` keyAgreement set.
@@ -334,47 +312,14 @@ where
     &self.data.key_agreement
   }
 
-  /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
-  ///
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
-  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
-  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
-  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
-  pub fn key_agreement_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.data.key_agreement
-  }
-
   /// Returns a reference to the `CoreDocument` capabilityDelegation set.
   pub fn capability_delegation(&self) -> &OrderedSet<MethodRef<D, U>> {
     &self.data.capability_delegation
   }
 
-  /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
-  ///
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
-  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
-  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
-  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
-  pub fn capability_delegation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.data.capability_delegation
-  }
-
   /// Returns a reference to the `CoreDocument` capabilityInvocation set.
   pub fn capability_invocation(&self) -> &OrderedSet<MethodRef<D, U>> {
     &self.data.capability_invocation
-  }
-
-  /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
-  ///
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing Consider using the safer
-  /// [`Self::insert_method`](CoreDocument::insert_method()), [`Self::remove_method`](CoreDocument::remove_method()),
-  /// [`Self::attach_method_relationship`](CoreDocument::attach_method_relationship()) and
-  /// [`Self::detach_method_relationship`](CoreDocument::detach_method_relationship()) methods instead.
-  pub fn capability_invocation_mut_unchecked(&mut self) -> &mut OrderedSet<MethodRef<D, U>> {
-    &mut self.data.capability_invocation
   }
 
   /// Returns a reference to the `CoreDocument` service set.
@@ -634,11 +579,11 @@ where
         let method_ref = MethodRef::Refer(method.id().clone());
 
         let was_attached = match relationship {
-          MethodRelationship::Authentication => self.authentication_mut_unchecked().append(method_ref),
-          MethodRelationship::AssertionMethod => self.assertion_method_mut_unchecked().append(method_ref),
-          MethodRelationship::KeyAgreement => self.key_agreement_mut_unchecked().append(method_ref),
-          MethodRelationship::CapabilityDelegation => self.capability_delegation_mut_unchecked().append(method_ref),
-          MethodRelationship::CapabilityInvocation => self.capability_invocation_mut_unchecked().append(method_ref),
+          MethodRelationship::Authentication => self.data.authentication.append(method_ref),
+          MethodRelationship::AssertionMethod => self.data.assertion_method.append(method_ref),
+          MethodRelationship::KeyAgreement => self.data.key_agreement.append(method_ref),
+          MethodRelationship::CapabilityDelegation => self.data.capability_delegation.append(method_ref),
+          MethodRelationship::CapabilityInvocation => self.data.capability_invocation.append(method_ref),
         };
 
         Ok(was_attached)
@@ -675,11 +620,11 @@ where
         let did_url: DIDUrl<D> = method.id().clone();
 
         let was_detached = match relationship {
-          MethodRelationship::Authentication => self.authentication_mut_unchecked().remove(&did_url),
-          MethodRelationship::AssertionMethod => self.assertion_method_mut_unchecked().remove(&did_url),
-          MethodRelationship::KeyAgreement => self.key_agreement_mut_unchecked().remove(&did_url),
-          MethodRelationship::CapabilityDelegation => self.capability_delegation_mut_unchecked().remove(&did_url),
-          MethodRelationship::CapabilityInvocation => self.capability_invocation_mut_unchecked().remove(&did_url),
+          MethodRelationship::Authentication => self.data.authentication.remove(&did_url),
+          MethodRelationship::AssertionMethod => self.data.assertion_method.remove(&did_url),
+          MethodRelationship::KeyAgreement => self.data.key_agreement.remove(&did_url),
+          MethodRelationship::CapabilityDelegation => self.data.capability_delegation.remove(&did_url),
+          MethodRelationship::CapabilityInvocation => self.data.capability_invocation.remove(&did_url),
         };
 
         Ok(was_detached.is_some())

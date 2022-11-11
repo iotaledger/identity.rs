@@ -510,7 +510,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
-    assert!(new.authentication_mut_unchecked().append(method_ref));
+    assert!(new.data.authentication.append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -525,7 +525,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
     let first = new.authentication().first().unwrap().clone();
-    new.authentication_mut_unchecked().replace(&first, method_ref);
+    new.data.authentication.replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -539,7 +539,7 @@ mod test {
 
     // remove method
     let first = new.authentication().first().unwrap().clone();
-    new.authentication_mut_unchecked().remove(&first);
+    new.data.authentication.remove(&first);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -553,7 +553,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
-    assert!(new.assertion_method_mut_unchecked().append(method_ref));
+    assert!(new.data.assertion_method.append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -568,7 +568,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
     let first = new.assertion_method().first().unwrap().clone();
-    new.assertion_method_mut_unchecked().replace(&first, method_ref);
+    new.data.assertion_method.replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -582,7 +582,7 @@ mod test {
 
     // remove method
     let first = new.assertion_method().first().unwrap().clone();
-    new.assertion_method_mut_unchecked().remove(&first);
+    new.data.assertion_method.remove(&first);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -596,7 +596,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
-    assert!(new.key_agreement_mut_unchecked().append(method_ref));
+    assert!(new.data.key_agreement.append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -611,7 +611,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
     let first = new.key_agreement().first().unwrap().clone();
-    new.key_agreement_mut_unchecked().replace(&first, method_ref);
+    new.data.key_agreement.replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -625,7 +625,7 @@ mod test {
 
     // remove method
     let first = new.key_agreement().first().unwrap().clone();
-    new.key_agreement_mut_unchecked().remove(&first);
+    new.data.key_agreement.remove(&first);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -639,7 +639,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
-    assert!(new.capability_delegation_mut_unchecked().append(method_ref));
+    assert!(new.data.capability_delegation.append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -654,7 +654,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
     let first = new.capability_delegation().first().unwrap().clone();
-    new.capability_delegation_mut_unchecked().replace(&first, method_ref);
+    new.data.capability_delegation.replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -668,7 +668,7 @@ mod test {
 
     // remove method
     let first = new.capability_delegation().first().unwrap().clone();
-    new.capability_delegation_mut_unchecked().remove(&first);
+    new.data.capability_delegation.remove(&first);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -682,7 +682,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
-    assert!(new.capability_invocation_mut_unchecked().append(method_ref));
+    assert!(new.data.capability_invocation.append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -697,7 +697,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.data.id, "#key-diff").into();
     let first = new.capability_invocation().first().unwrap().clone();
-    new.capability_invocation_mut_unchecked().replace(&first, method_ref);
+    new.data.capability_invocation.replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -711,7 +711,7 @@ mod test {
 
     // remove method
     let first = new.capability_invocation().first().unwrap().clone();
-    new.capability_invocation_mut_unchecked().remove(&first);
+    new.data.capability_invocation.remove(&first);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -813,7 +813,7 @@ mod test {
     let mut new = doc.clone();
 
     let first: CoreDIDUrl = new.capability_invocation().first().unwrap().as_ref().clone();
-    new.capability_invocation_mut_unchecked().remove(&first);
+    new.data.capability_invocation.remove(&first);
 
     let method_ref: MethodRef = MethodBuilder::default()
       .id(first)
@@ -824,7 +824,7 @@ mod test {
       .unwrap()
       .into();
 
-    assert!(new.capability_invocation_mut_unchecked().append(method_ref));
+    assert!(new.data.capability_invocation.append(method_ref));
 
     assert_ne!(doc, new);
 
