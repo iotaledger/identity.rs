@@ -41,7 +41,7 @@ pub enum Error {
   #[error("unable to modify relationships on embedded methods, use insert or remove instead")]
   InvalidMethodEmbedded,
 
-  /// Caused by attempting to insert a service whose id overlaps with a (verification) method or an already existing
+  /// Caused by attempting to insert a service whose id overlaps with a verification method or an already existing
   /// service.
   #[error("unable to insert service: the id is already in use")]
   InvalidServiceInsertion,
