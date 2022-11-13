@@ -8,7 +8,7 @@ import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.
- * In this example, alice takes the role of the subject, while we also have an issuer.
+ * In this example, Alice takes the role of the subject, while we also have an issuer.
  * The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
  * This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
  */
@@ -63,4 +63,5 @@ export async function createVC() {
     // The credential is then serialized to JSON and transmitted to the holder in a secure manner.
     // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
     const credentialJSON = signedVc.toJSON();
+    console.log(`Issued credential: ${credentialJSON}`);
 }
