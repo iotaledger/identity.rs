@@ -21,12 +21,14 @@ cargo run --example 0_create_did
 The following basic CRUD (Create, Read, Update, Delete) examples are available:
 
 | Name                                              | Information                                                                          |
-| :------------------------------------------------ | :----------------------------------------------------------------------------------- |
+|:--------------------------------------------------|:-------------------------------------------------------------------------------------|
 | [0_create_did](./0_basic/0_create_did.rs)         | Demonstrates how to create a DID Document and publish it in a new Alias Output.      |
 | [1_update_did](./0_basic/1_update_did.rs)         | Demonstrates how to update a DID document in an existing Alias Output.               |
 | [2_resolve_did](./0_basic/2_resolve_did.rs)       | Demonstrates how to resolve an existing DID in an Alias Output.                      |
 | [3_deactivate_did](./0_basic/3_deactivate_did.rs) | Demonstrates how to deactivate a DID in an Alias Output.                             |
 | [4_delete_did](./0_basic/4_delete_did.rs)         | Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. |
+| [5_create_vc](./0_basic/5_create_vc.rs)           | Demonstrates how to create and verify verifiable credentials.                        |
+| [4_create_vp](./0_basic/4_create_vp.rs)           | Demonstrates how to create and verify verifiable presentations.                      |
 
 ## Advanced Examples
 

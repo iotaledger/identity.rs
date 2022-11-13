@@ -1,6 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! This example shows how to create a Verifiable Credential and validate it.
+//! In this example, alice takes the role of the subject, while we also have an issuer.
+//! The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
+//! This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with
+//! whomever they please.
+//!
+//! cargo run --example 5_create_vc
+
 use iota_client::block::address::Address;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
@@ -67,7 +75,6 @@ async fn main() -> anyhow::Result<()> {
 
   // Sign the Credential with the issuer's verification method.
   issuer_document.sign_data(&mut credential, key_pair.private(), "#key-1", ProofOptions::default())?;
-  println!("Credential JSON > {:#}", credential);
 
   // Before sending this credential to the holder the issuer wants to validate that some properties
   // of the credential satisfy their expectations.
@@ -87,5 +94,8 @@ async fn main() -> anyhow::Result<()> {
   // The issuer is now sure that the credential they are about to issue satisfies their expectations.
   // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
   let _credential_json: String = credential.to_json()?;
+
+  println!("Credential JSON > {:#}", credential);
+
   Ok(())
 }

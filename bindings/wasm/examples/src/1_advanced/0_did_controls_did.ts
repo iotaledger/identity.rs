@@ -47,7 +47,8 @@ export async function didControlsDid() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    var { did: companyDid } = await createDid(client, secretManager);
+    var { document } = await createDid(client, secretManager);
+    let companyDid = document.id();
 
     // Get the current byte costs.
     const rentStructure: IRent = await didClient.getRentStructure();
