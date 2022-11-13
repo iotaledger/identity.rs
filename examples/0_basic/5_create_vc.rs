@@ -4,7 +4,8 @@
 //! This example shows how to create a Verifiable Credential and validate it.
 //! In this example, alice takes the role of the subject, while we also have an issuer.
 //! The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
-//! This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
+//! This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with
+//! whomever they please.
 //!
 //! cargo run --example 5_create_vc
 
@@ -30,7 +31,6 @@ use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDocument;
-
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
