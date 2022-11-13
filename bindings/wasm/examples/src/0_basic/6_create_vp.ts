@@ -175,5 +175,4 @@ export async function createVP() {
 
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful.
     console.log(`VP successfully validated`);
-
 }

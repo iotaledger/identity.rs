@@ -1,6 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//!  This example shows how to create a Verifiable Presentation and validate it.
+//!  A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared.
+//!  It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
+//!
+//! cargo run --example 6_create_vp
+
 use iota_client::block::address::Address;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_client::secret::SecretManager;
