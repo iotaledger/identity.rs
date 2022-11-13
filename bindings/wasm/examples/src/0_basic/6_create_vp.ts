@@ -162,6 +162,9 @@ export async function createVP() {
     });
 
     // Validate the presentation and all the credentials included in it according to the validation options
+    // Note that the `verifyPresentation` method we called automatically resolves all DID Documents that are necessary to validate the presentation.
+    // It is also possible to supply extra arguments to avoid some resolutions if one already has up-to-date resolved documents of
+    // either the holder or issuers (see the method's documentation).
     await resolver.verifyPresentation(
         presentation,
         presentationValidationOptions,
@@ -173,7 +176,4 @@ export async function createVP() {
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful.
     console.log(`VP successfully validated`);
 
-    // Note that the `verifyPresentation` method we called automatically resolved all DID Documents that are necessary to validate the presentation.
-    // It is also possible to supply extra arguments to avoid some resolutions if one already has up-to-date resolved documents of
-    // either the holder or issuers (see the method's documentation).
 }

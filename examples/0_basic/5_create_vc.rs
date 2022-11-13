@@ -67,7 +67,6 @@ async fn main() -> anyhow::Result<()> {
 
   // Sign the Credential with the issuer's verification method.
   issuer_document.sign_data(&mut credential, key_pair.private(), "#key-1", ProofOptions::default())?;
-  println!("Credential JSON > {:#}", credential);
 
   // Before sending this credential to the holder the issuer wants to validate that some properties
   // of the credential satisfy their expectations.
@@ -87,5 +86,8 @@ async fn main() -> anyhow::Result<()> {
   // The issuer is now sure that the credential they are about to issue satisfies their expectations.
   // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
   let _credential_json: String = credential.to_json()?;
+
+  println!("Credential JSON > {:#}", credential);
+
   Ok(())
 }

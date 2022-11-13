@@ -63,5 +63,5 @@ export async function createVC() {
     // The credential is then serialized to JSON and transmitted to the holder in a secure manner.
     // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
     const credentialJSON = signedVc.toJSON();
-    console.log(`Issued credential: ${credentialJSON}`);
+    console.log(`Issued credential: ${JSON.stringify(credentialJSON, null, 2)}`);
 }
