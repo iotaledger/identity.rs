@@ -57,8 +57,11 @@ impl WasmCoreDocument {
 
   /// Sets the DID of the document.
   ///
-  ///
-  /// Warning: Improper use can lead to broken URI dereferencing.
+  /// ### Warning 
+  /// 
+  /// Changing the identifier can drastically alter the results of 
+  /// [`Self::resolve_method`](CoreDocument::resolve_method()), [`Self::resolve_service`](CoreDocument::resolve_service()) and 
+  /// the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm. 
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmCoreDID) {
     *self.0.id_mut_unchecked() = id.0.clone();

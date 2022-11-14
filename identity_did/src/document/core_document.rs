@@ -253,7 +253,10 @@ where
   /// Returns a mutable reference to the `CoreDocument` id.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing.
+  ///
+  /// Changes to the identifier can drastically alter the results of
+  /// [`Self::resolve_method`](CoreDocument::resolve_method()),
+  /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
   pub fn id_mut_unchecked(&mut self) -> &mut D {
     &mut self.data.id
   }
