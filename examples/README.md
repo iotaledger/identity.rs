@@ -28,7 +28,8 @@ The following basic CRUD (Create, Read, Update, Delete) examples are available:
 | [3_deactivate_did](./0_basic/3_deactivate_did.rs) | Demonstrates how to deactivate a DID in an Alias Output.                             |
 | [4_delete_did](./0_basic/4_delete_did.rs)         | Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. |
 | [5_create_vc](./0_basic/5_create_vc.rs)           | Demonstrates how to create and verify verifiable credentials.                        |
-| [4_create_vp](./0_basic/4_create_vp.rs)           | Demonstrates how to create and verify verifiable presentations.                      |
+| [6_create_vp](./0_basic/6_create_vp.rs)           | Demonstrates how to create and verify verifiable presentations.                      |
+| [7_revoke_vc](./0_basic/7_revoke_vc.rs)           | Demonstrates how to revoke a verifiable credential.                                  |
 
 ## Advanced Examples
 
