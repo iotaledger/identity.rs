@@ -264,10 +264,7 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  ///
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing
-  pub fn controller_mut_unchecked(&mut self) -> &mut Option<OneOrSet<D>> {
+  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<D>> {
     &mut self.data.controller
   }
 
@@ -582,6 +579,7 @@ where
   /// To remove an embedded method, use [`Self::remove_method`].
   ///
   /// # Note
+  ///
   /// If the method is referenced in the given scope, but the document does not contain the referenced verification
   /// method, then the reference will persist in the document (i.e. it is not removed).
   // TODO: Is this the behaviour we want?
@@ -1135,10 +1133,10 @@ mod tests {
     {
       let mut document: CoreDocument = document();
       let expected: CoreDID = CoreDID::parse("did:example:one1234").unwrap();
-      *document.controller_mut_unchecked() = Some(OneOrSet::new_one(expected.clone()));
+      *document.controller_mut() = Some(OneOrSet::new_one(expected.clone()));
       assert_eq!(document.controller().unwrap().as_slice(), &[expected]);
       // Unset.
-      *document.controller_mut_unchecked() = None;
+      *document.controller_mut() = None;
       assert!(document.controller().is_none());
     }
 
@@ -1150,10 +1148,10 @@ mod tests {
         CoreDID::parse("did:example:many4567").unwrap(),
         CoreDID::parse("did:example:many8910").unwrap(),
       ];
-      *document.controller_mut_unchecked() = Some(expected_controllers.clone().try_into().unwrap());
+      *document.controller_mut() = Some(expected_controllers.clone().try_into().unwrap());
       assert_eq!(document.controller().unwrap().as_slice(), &expected_controllers);
       // Unset.
-      *document.controller_mut_unchecked() = None;
+      *document.controller_mut() = None;
       assert!(document.controller().is_none());
     }
   }

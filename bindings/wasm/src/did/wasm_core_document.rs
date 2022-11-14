@@ -82,8 +82,7 @@ impl WasmCoreDocument {
   /// Sets the controllers of the DID Document.
   ///
   /// Note: Duplicates will be ignored.
-  /// Use `null` to remove all controllers. Furthermore improper use can lead to
-  /// broken URI dereferencing.
+  /// Use `null` to remove all controllers. 
   #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, controllers: &OptionOneOrManyCoreDID) -> Result<()> {
     let controllers: Option<OneOrMany<CoreDID>> = controllers.into_serde().wasm_result()?;
@@ -96,7 +95,7 @@ impl WasmCoreDocument {
     } else {
       None
     };
-    *self.0.controller_mut_unchecked() = controller_set;
+    *self.0.controller_mut() = controller_set;
     Ok(())
   }
 

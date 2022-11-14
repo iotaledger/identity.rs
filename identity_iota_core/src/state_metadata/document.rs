@@ -65,7 +65,7 @@ impl StateMetadataDocument {
     // Unset Governor and State Controller Addresses to avoid bloating the payload
     self.metadata.governor_address = None;
     self.metadata.state_controller_address = None;
-    *self.document.controller_mut_unchecked() = None;
+    *self.document.controller_mut() = None;
 
     let encoded_message_data: Vec<u8> = match encoding {
       StateMetadataEncoding::Json => self
@@ -262,7 +262,7 @@ mod tests {
       .append(Url::parse("did:example:xyz").unwrap());
 
     let controllers = OneOrSet::try_from(vec![did_foreign.clone(), did_self.clone()]).unwrap();
-    *document.core_document_mut().controller_mut_unchecked() = Some(controllers);
+    *document.core_document_mut().controller_mut() = Some(controllers);
 
     TestSetup {
       document,
@@ -388,7 +388,7 @@ mod tests {
     let mut state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document);
     let packed: Vec<u8> = state_metadata_doc.clone().pack(StateMetadataEncoding::Json).unwrap();
     // Controller and State Controller are set to None when packing
-    *state_metadata_doc.document.controller_mut_unchecked() = None;
+    *state_metadata_doc.document.controller_mut() = None;
     state_metadata_doc.metadata.governor_address = None;
     state_metadata_doc.metadata.state_controller_address = None;
     let expected_payload: String = format!(

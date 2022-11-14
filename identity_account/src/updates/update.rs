@@ -235,7 +235,7 @@ impl Update {
         document.remove_service(&service_url);
       }
       Self::SetController { controllers } => {
-        *document.controller_mut_unchecked() = controllers;
+        *document.controller_mut() = controllers;
       }
 
       Self::SetAlsoKnownAs { urls } => {

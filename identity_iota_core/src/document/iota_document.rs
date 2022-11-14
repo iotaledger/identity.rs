@@ -349,7 +349,7 @@ mod client_document {
         Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
         _ => None,
       };
-      *self.core_document_mut().controller_mut_unchecked() = controller_did.map(OneOrSet::new_one);
+      *self.core_document_mut().controller_mut() = controller_did.map(OneOrSet::new_one);
     }
 
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload

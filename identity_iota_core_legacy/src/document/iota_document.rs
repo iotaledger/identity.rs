@@ -206,8 +206,8 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the [`IotaDocument`] controllers.
-  pub fn controller_mut_unchecked(&mut self) -> &mut Option<OneOrSet<IotaDID>> {
-    self.document.controller_mut_unchecked()
+  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<IotaDID>> {
+    self.document.controller_mut()
   }
 
   /// Returns a reference to the [`IotaDocument`] alsoKnownAs set.
@@ -912,10 +912,10 @@ mod tests {
       let controller: IotaDID = valid_did();
       let mut document: IotaDocument = valid_iota_document(&controller);
       let expected: IotaDID = IotaDID::new(&[0; 32]).unwrap();
-      *document.controller_mut_unchecked() = Some(OneOrSet::new_one(expected.clone()));
+      *document.controller_mut() = Some(OneOrSet::new_one(expected.clone()));
       assert_eq!(document.controller().unwrap().as_slice(), &[expected]);
       // Unset.
-      *document.controller_mut_unchecked() = None;
+      *document.controller_mut() = None;
       assert!(document.controller().is_none());
     }
 
@@ -929,10 +929,10 @@ mod tests {
         IotaDID::new(&[1; 32]).unwrap(),
         IotaDID::new(&[2; 32]).unwrap(),
       ];
-      *document.controller_mut_unchecked() = Some(expected_controllers.clone().try_into().unwrap());
+      *document.controller_mut() = Some(expected_controllers.clone().try_into().unwrap());
       assert_eq!(document.controller().unwrap().as_slice(), &expected_controllers);
       // Unset.
-      *document.controller_mut_unchecked() = None;
+      *document.controller_mut() = None;
       assert!(document.controller().is_none());
     }
   }

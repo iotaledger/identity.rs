@@ -407,7 +407,7 @@ mod test {
     let doc: CoreDocument = document();
     let mut new: CoreDocument = doc.clone();
     let new_controller: CoreDID = "did:diff:1234".parse().unwrap();
-    *new.controller_mut_unchecked() = Some(OneOrSet::new_one(new_controller));
+    *new.controller_mut() = Some(OneOrSet::new_one(new_controller));
     assert_ne!(doc, new);
 
     let diff: DiffDocument = doc.diff(&new).unwrap();
@@ -424,7 +424,7 @@ mod test {
       "did:diff:5678".parse().unwrap(),
       "did:diff:9012".parse().unwrap(),
     ];
-    *new.controller_mut_unchecked() = Some(new_controllers.try_into().unwrap());
+    *new.controller_mut() = Some(new_controllers.try_into().unwrap());
     assert_ne!(doc, new);
 
     let diff: DiffDocument = doc.diff(&new).unwrap();
@@ -436,7 +436,7 @@ mod test {
   fn test_controller_unset() {
     let doc: CoreDocument = document();
     let mut new: CoreDocument = doc.clone();
-    *new.controller_mut_unchecked() = None;
+    *new.controller_mut() = None;
     assert_ne!(doc, new);
 
     let diff: DiffDocument = doc.diff(&new).unwrap();
