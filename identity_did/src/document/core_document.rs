@@ -319,8 +319,12 @@ where
   }
 
   /// Returns a mutable reference to the custom `CoreDocument` properties.
+  ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken invariants.
+  ///
+  /// The properties returned are not checked against the standard fields in a [`CoreDocument`]. Incautious use can have
+  /// undesired consequences such as key collision when attempting to serialize the document or distinct resources (such
+  /// as services and methods) being identified by the same DID URL.  
   pub fn properties_mut_unchecked(&mut self) -> &mut T {
     &mut self.data.properties
   }
@@ -329,6 +333,7 @@ where
   /// and another function `g` to the custom properties.
   ///
   /// # Warning
+  ///
   /// Can lead to broken invariants if used incorrectly. See [`Self::try_map`](CoreDocument::try_map()) for a fallible
   /// version with additional built-in checks.
   pub fn map_unchecked<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>

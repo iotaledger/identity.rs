@@ -140,6 +140,7 @@ impl WasmIotaDocument {
   /// If the value is set to `null`, the custom property will be removed.
   ///
   /// ### WARNING
+  /// 
   /// This method can overwrite existing properties like `id` and result in an invalid document.
   #[wasm_bindgen(js_name = setPropertyUnchecked)]
   pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {

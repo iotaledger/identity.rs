@@ -130,7 +130,10 @@ impl IotaDocument {
   /// Returns a mutable reference to the custom DID Document properties.
   ///
   /// # Warning
-  /// Incorrect use can lead to broken invariants.
+  ///
+  /// The properties returned are not checked against the standard fields in a [`CoreDocument`]. Incautious use can have
+  /// undesired consequences such as key collision when attempting to serialize the document or distinct resources (such
+  /// as services and methods) being identified by the same DID URL.  
   pub fn properties_mut_unchecked(&mut self) -> &mut Object {
     self.document.properties_mut_unchecked()
   }
