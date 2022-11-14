@@ -750,7 +750,8 @@ where
   /// matching the provided `query`.
   ///
   /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing
+  ///
+  /// Incorrect use of this method can lead to distinct document resources being identified by the same DID URL.
   pub fn resolve_method_mut<'query, 'me, Q>(
     &'me mut self,
     query: Q,

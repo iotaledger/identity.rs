@@ -226,8 +226,9 @@ impl IotaDocument {
   /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
   ///
-  /// WARNING: improper usage of this allows violating the uniqueness of the verification method
-  /// sets.
+  /// # Warning
+  ///
+  /// Incorrect use of this method can lead to distinct document resources being identified by the same DID URL.
   pub fn resolve_method_mut<'query, Q>(
     &mut self,
     query: Q,
