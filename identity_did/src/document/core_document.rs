@@ -400,6 +400,8 @@ where
   /// `try_map` can fail if either of the provided functions fail or if the mapping `f`
   /// introduces methods referencing embedded method identifiers, or services with identifiers matching method
   /// identifiers. In the case of the latter the provided function `h` will be called to construct a compatible error.
+  /// Note that custom properties are still not checked (see the documentation for
+  /// [`Self::properties_mut_unchecked`](CoreDocument::properties_mut_unchecked())).
   pub fn try_map<S, C, F, G, E, H>(self, mut f: F, g: G, h: H) -> std::result::Result<CoreDocument<C, S, U, V>, E>
   where
     C: DID + KeyComparable,
