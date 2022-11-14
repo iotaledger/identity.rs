@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
+use std::str::FromStr;
 
 use identity_core::crypto::Proof;
 
 use crate::did::CoreDID;
+use crate::did::DIDError;
 use crate::did::DIDUrl;
 use crate::did::RelativeDIDUrl;
 use crate::did::DID;
@@ -65,6 +67,19 @@ impl<'query> DIDUrlQuery<'query> {
       Some(query)
     };
     fragment_maybe.filter(|fragment| !fragment.is_empty())
+  }
+
+  /// Convert the Query to a DIDUrl using a default base did if the query does not conform to the DID scheme.
+  pub(crate) fn to_url_with_default_did<D: DID>(&self, default_did: &D) -> Result<DIDUrl<D>, DIDError> {
+    let inner = self.0.as_ref();
+    if self.0.as_ref().starts_with(CoreDID::SCHEME) {
+      DIDUrl::<D>::from_str(inner)
+    } else if inner.starts_with(|c| c == '?' || c == '/' || c == '#') {
+      default_did.to_url().join(inner)
+    } else {
+      // assume the entire string is a fragment
+      default_did.to_url().join(&format!("#{}", inner))
+    }
   }
 }
 

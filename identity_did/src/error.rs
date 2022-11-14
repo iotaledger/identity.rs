@@ -18,6 +18,9 @@ pub enum Error {
   #[error("Verification Method Not Found")]
   MethodNotFound,
 
+  #[error("the provided query could not be processed")]
+  InvalidQuery,
+
   /// Caused by invalid or missing properties when constructing a [`CoreDocument`](crate::document::CoreDocument).
   #[error("invalid document property: {0}")]
   InvalidDocument(&'static str, #[source] Option<::identity_core::Error>),

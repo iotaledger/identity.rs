@@ -195,6 +195,16 @@ impl<T> OrderedSet<T> {
       .map(|idx| self.0.remove(idx))
   }
 
+  /// Removes all elements for which `f` returns false and retains all other elements.
+  ///
+  /// This method operates in place and preserves the order of the retained elements.
+  pub fn retain<F>(&mut self, f: F)
+  where
+    F: FnMut(&T) -> bool,
+  {
+    self.0.retain(f)
+  }
+
   fn change<F>(&mut self, data: T, f: F) -> bool
   where
     F: Fn(&T, &T) -> bool,

@@ -579,18 +579,29 @@ where
     }
   }
 
-  /// Detaches the relationship from the method resolved by `method_query`.
+  /// Detaches the relationship from the method in accordance with the `method_query`.
+  ///
+  /// The following rules apply:
+  ///
+  /// - Embedded verification methods do *not* get removed by calls to this method, even when the identifier matches the
+  ///   `method_query`. Any such attempt will result in an error. If you want to remove an embedded method
+  /// see [`Self::remove_method`](CoreDocument::remove_method()).
+  ///
+  /// - If the `method_query` is a full DID URL the verification method reference is detached from the provided
+  ///   relationship set regardless of
+  /// whether the referenced method exists in this document or another.
+  ///
+  /// - If the `method_query` is just a fragment the verification method reference of the form <document did>#<fragment
+  ///   from `method_query`> is detached
+  /// from the provided relationship set.
+  ///
+  /// - If a method reference matching the query was successfully removed from the specified relationship set `true` is
+  ///   returned.
   ///
   /// # Errors
   ///
-  /// Returns an error if the method does not exist or is embedded.
-  /// To remove an embedded method, use [`Self::remove_method`].
-  ///
-  /// # Note
-  ///
-  /// If the method is referenced in the given scope, but the document does not contain the referenced verification
-  /// method, then the reference will persist in the document (i.e. it is not removed).
-  // TODO: Is this the behaviour we want?
+  /// Errors if the `method_query` cannot be interpreted as either a fragment or
+  /// full DID URL or if the query corresponds to an embedded method.
   pub fn detach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
@@ -600,24 +611,48 @@ where
     Q: Into<DIDUrlQuery<'query>>,
   {
     let method_query: DIDUrlQuery<'query> = method_query.into();
-    match self.resolve_method(method_query.clone(), Some(MethodScope::VerificationMethod)) {
-      None => match self.resolve_method(method_query, None) {
-        Some(_) => Err(Error::InvalidMethodEmbedded),
-        None => Err(Error::MethodNotFound),
-      },
-      Some(method) => {
-        let did_url: DIDUrl<D> = method.id().clone();
+    let did_url: DIDUrl<D> = method_query
+      .to_url_with_default_did(self.id())
+      .map_err(|_| Error::InvalidQuery)?;
 
-        let was_detached = match relationship {
-          MethodRelationship::Authentication => self.data.authentication.remove(&did_url),
-          MethodRelationship::AssertionMethod => self.data.assertion_method.remove(&did_url),
-          MethodRelationship::KeyAgreement => self.data.key_agreement.remove(&did_url),
-          MethodRelationship::CapabilityDelegation => self.data.capability_delegation.remove(&did_url),
-          MethodRelationship::CapabilityInvocation => self.data.capability_invocation.remove(&did_url),
-        };
+    let mut is_embedded: bool = false;
+    let mut was_removed: bool = false;
 
-        Ok(was_detached.is_some())
+    let predicate = |method_ref: &MethodRef<D, U>| -> bool {
+      match method_ref {
+        MethodRef::Embed(embedded_method) => {
+          if embedded_method.id() == &did_url {
+            is_embedded = true;
+            true
+          } else {
+            true
+          }
+        }
+        MethodRef::Refer(referred) => {
+          if referred == &did_url {
+            was_removed = true;
+            false
+          } else {
+            true
+          }
+        }
       }
+    };
+
+    match relationship {
+      MethodRelationship::Authentication => self.data.authentication.retain(predicate),
+      MethodRelationship::AssertionMethod => self.data.assertion_method.retain(predicate),
+      MethodRelationship::KeyAgreement => self.data.key_agreement.retain(predicate),
+      MethodRelationship::CapabilityDelegation => self.data.capability_delegation.retain(predicate),
+      MethodRelationship::CapabilityInvocation => self.data.capability_invocation.retain(predicate),
+    };
+
+    if is_embedded {
+      Err(Error::InvalidMethodEmbedded)
+    } else if !was_removed {
+      Ok(false)
+    } else {
+      Ok(true)
     }
   }
 
@@ -1381,13 +1416,14 @@ mod tests {
     // len is still 1.
     assert_eq!(document.verification_relationships().count(), 3);
 
-    // Attempting to detach a relationship from a non-existing method fails.
-    assert!(document
-      .detach_method_relationship(
+    // Attempting to detach a relationship from a non-existing method returns false.
+    assert!(matches!(
+      document.detach_method_relationship(
         document.id().to_url().join("#doesNotExist").unwrap(),
         MethodRelationship::AssertionMethod,
-      )
-      .is_err());
+      ),
+      Ok(false)
+    ));
   }
 
   #[test]
@@ -1459,6 +1495,80 @@ mod tests {
     assert!(document.insert_service(service.clone()).is_ok());
     // Query for this service
     assert_eq!(Some(&service), document.resolve_service(fragment));
+  }
+
+  #[test]
+  fn detach_method_relationship_method_outside_of_document() {
+    const JSON_DOCUMENT: &str = r#"{
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/ed25519-2020/v1"
+      ],
+      "id": "did:example:123",
+      "authentication": [
+        "did:example:456#z6MkecaLyHuYWkayBDLw5ihndj3T1m6zKTGqau3A51G7RBf3"
+      ],
+      "capabilityInvocation": [
+        "did:example:456#z6MkhdmzFu659ZJ4XKj31vtEDmjvsi5yDZG5L7Caz63oP39k"
+      ],
+      "capabilityDelegation": [
+         "did:example:456#z6MkhdmzFu659ZJ4XKj31vtEDmjvsi5yDZG5L7Caz63oP39k"
+      ],
+      "assertionMethod": [
+        "did:example:456#z6MkecaLyHuYWkayBDLw5ihndj3T1m6zKTGqau3A51G7RBf3"
+      ]
+  }"#;
+    let mut doc: CoreDocument = CoreDocument::from_json(JSON_DOCUMENT).unwrap();
+    let full_queries = [
+      (
+        "did:example:456#z6MkecaLyHuYWkayBDLw5ihndj3T1m6zKTGqau3A51G7RBf3",
+        MethodRelationship::Authentication,
+      ),
+      (
+        "did:example:456#z6MkhdmzFu659ZJ4XKj31vtEDmjvsi5yDZG5L7Caz63oP39k",
+        MethodRelationship::CapabilityInvocation,
+      ),
+      (
+        "did:example:456#z6MkhdmzFu659ZJ4XKj31vtEDmjvsi5yDZG5L7Caz63oP39k",
+        MethodRelationship::CapabilityDelegation,
+      ),
+      (
+        "did:example:456#z6MkecaLyHuYWkayBDLw5ihndj3T1m6zKTGqau3A51G7RBf3",
+        MethodRelationship::AssertionMethod,
+      ),
+    ];
+
+    let mut doc_clone = doc.clone();
+
+    for (query, relationship) in full_queries {
+      assert!(matches!(
+        doc_clone.detach_method_relationship(query, relationship),
+        Ok(true)
+      ));
+    }
+
+    let fragment_queries = [
+      (
+        "#z6MkecaLyHuYWkayBDLw5ihndj3T1m6zKTGqau3A51G7RBf3",
+        MethodRelationship::Authentication,
+      ),
+      (
+        "z6MkhdmzFu659ZJ4XKj31vtEDmjvsi5yDZG5L7Caz63oP39k",
+        MethodRelationship::CapabilityInvocation,
+      ),
+      (
+        "#z6MkhdmzFu659ZJ4XKj31vtEDmjvsi5yDZG5L7Caz63oP39k",
+        MethodRelationship::CapabilityDelegation,
+      ),
+      (
+        "z6MkecaLyHuYWkayBDLw5ihndj3T1m6zKTGqau3A51G7RBf3",
+        MethodRelationship::AssertionMethod,
+      ),
+    ];
+    for (query, relationship) in fragment_queries {
+      let result = doc.detach_method_relationship(query, relationship);
+      assert!(matches!(result, Ok(false)));
+    }
   }
 
   #[test]
