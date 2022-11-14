@@ -274,9 +274,7 @@ where
   }
 
   /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
-  /// # Warning
-  /// Incorrect use of this method can lead to broken URI dereferencing
-  pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
+  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
     &mut self.data.also_known_as
   }
 

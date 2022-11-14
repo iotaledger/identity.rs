@@ -448,9 +448,7 @@ mod test {
   fn test_also_known_as() {
     let doc = document();
     let mut new = doc.clone();
-    new
-      .also_known_as_mut_unchecked()
-      .append("diff:diff:1234".parse().unwrap());
+    new.also_known_as_mut().append("diff:diff:1234".parse().unwrap());
     assert_ne!(doc, new);
 
     let diff = doc.diff(&new).unwrap();

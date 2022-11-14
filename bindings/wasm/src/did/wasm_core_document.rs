@@ -113,8 +113,6 @@ impl WasmCoreDocument {
   }
 
   /// Sets the `alsoKnownAs` property in the DID document.
-  ///
-  /// Warning: Improper use can lead to broken URI dereferencing.
   #[wasm_bindgen(js_name = setAlsoKnownAs)]
   pub fn set_also_known_as(&mut self, urls: &OptionOneOrManyString) -> Result<()> {
     let urls: Option<OneOrMany<String>> = urls.into_serde().wasm_result()?;
@@ -124,7 +122,7 @@ impl WasmCoreDocument {
         urls_set.append(Url::parse(url).wasm_result()?);
       }
     }
-    *self.0.also_known_as_mut_unchecked() = urls_set;
+    *self.0.also_known_as_mut() = urls_set;
     Ok(())
   }
 

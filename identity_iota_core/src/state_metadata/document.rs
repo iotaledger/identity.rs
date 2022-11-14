@@ -255,10 +255,10 @@ mod tests {
       .is_ok());
 
     document
-      .also_known_as_mut_unchecked()
+      .also_known_as_mut()
       .append(Url::parse("did:example:abc").unwrap());
     document
-      .also_known_as_mut_unchecked()
+      .also_known_as_mut()
       .append(Url::parse("did:example:xyz").unwrap());
 
     let controllers = OneOrSet::try_from(vec![did_foreign.clone(), did_self.clone()]).unwrap();

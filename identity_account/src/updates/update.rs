@@ -239,7 +239,7 @@ impl Update {
       }
 
       Self::SetAlsoKnownAs { urls } => {
-        *document.also_known_as_mut_unchecked() = urls;
+        *document.also_known_as_mut() = urls;
       }
     }
 

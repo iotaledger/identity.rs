@@ -126,7 +126,7 @@ impl WasmIotaDocument {
         urls_set.append(Url::parse(url).wasm_result()?);
       }
     }
-    *self.0.also_known_as_mut_unchecked() = urls_set;
+    *self.0.also_known_as_mut() = urls_set;
     Ok(())
   }
 

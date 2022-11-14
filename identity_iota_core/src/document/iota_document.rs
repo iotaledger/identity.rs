@@ -105,11 +105,8 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the `alsoKnownAs` set.
-  ///
-  /// # Warning
-  /// Incorrect use can lead to broken URI dereferencing.
-  pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
-    self.document.also_known_as_mut_unchecked()
+  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
+    self.document.also_known_as_mut()
   }
 
   /// Returns a reference to the underlying [`IotaCoreDocument`].

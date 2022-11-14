@@ -216,8 +216,8 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the [`IotaDocument`] alsoKnownAs set.
-  pub fn also_known_as_mut_unchecked(&mut self) -> &mut OrderedSet<Url> {
-    self.document.also_known_as_mut_unchecked()
+  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
+    self.document.also_known_as_mut()
   }
 
   /// Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
