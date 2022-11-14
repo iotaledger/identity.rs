@@ -1418,6 +1418,39 @@ mod tests {
   }
 
   #[test]
+  fn insert_method_other_did_same_fragment() {
+    let mut document: CoreDocument = document();
+    let fragment = "#same-fragment";
+    let method_other_did = method(&"did:other:123".parse().unwrap(), fragment);
+    let service: Service = ServiceBuilder::default()
+      .id(DIDUrl::parse("did:other:456").unwrap().join(fragment).unwrap())
+      .type_("testService")
+      .service_endpoint(Url::parse("http://example.com").unwrap())
+      .build()
+      .unwrap();
+    assert!(document
+      .insert_method(method_other_did, MethodScope::VerificationMethod)
+      .is_ok());
+    assert!(document.insert_service(service).is_ok());
+
+    let scopes = [
+      MethodScope::VerificationMethod,
+      MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod),
+      MethodScope::VerificationRelationship(MethodRelationship::Authentication),
+      MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement),
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation),
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation),
+    ];
+
+    for scope in scopes {
+      let new_method = method(document.id(), fragment);
+      let result = document.insert_method(new_method, scope);
+      dbg!(&result);
+      assert!(result.is_ok());
+    }
+  }
+
+  #[test]
   fn test_method_remove_existence() {
     let mut document: CoreDocument = document();
 
