@@ -57,11 +57,11 @@ impl WasmCoreDocument {
 
   /// Sets the DID of the document.
   ///
-  /// ### Warning 
-  /// 
-  /// Changing the identifier can drastically alter the results of 
-  /// [`Self::resolve_method`](CoreDocument::resolve_method()), [`Self::resolve_service`](CoreDocument::resolve_service()) and 
-  /// the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm. 
+  /// ### Warning
+  ///
+  /// Changing the identifier can drastically alter the results of
+  /// [`Self::resolve_method`](CoreDocument::resolve_method()),
+  /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmCoreDID) {
     *self.0.id_mut_unchecked() = id.0.clone();
@@ -85,7 +85,7 @@ impl WasmCoreDocument {
   /// Sets the controllers of the DID Document.
   ///
   /// Note: Duplicates will be ignored.
-  /// Use `null` to remove all controllers. 
+  /// Use `null` to remove all controllers.
   #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, controllers: &OptionOneOrManyCoreDID) -> Result<()> {
     let controllers: Option<OneOrMany<CoreDID>> = controllers.into_serde().wasm_result()?;
@@ -233,7 +233,7 @@ impl WasmCoreDocument {
   /// If the value is set to `null`, the custom property will be removed.
   ///
   /// ### WARNING
-  /// 
+  ///
   /// This method can overwrite existing properties like `id` and result in an invalid document.
   #[wasm_bindgen(js_name = setPropertyUnchecked)]
   pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
