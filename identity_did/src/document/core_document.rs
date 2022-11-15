@@ -1418,13 +1418,11 @@ mod tests {
   }
 
   #[test]
-  fn test_behaviour_duplicate_fragment_different_dids() {
+  fn insert_method_other_did_same_fragment() {
     let mut document: CoreDocument = document();
-    // insert a method and a service into the document with the same fragment, but with DIDs different from the
-    // document's.
     let fragment = "#same-fragment";
     let method_other_did = method(&"did:other:123".parse().unwrap(), fragment);
-    let mut service: Service = ServiceBuilder::default()
+    let service: Service = ServiceBuilder::default()
       .id(DIDUrl::parse("did:other:456").unwrap().join(fragment).unwrap())
       .type_("testService")
       .service_endpoint(Url::parse("http://example.com").unwrap())
@@ -1433,7 +1431,7 @@ mod tests {
     assert!(document
       .insert_method(method_other_did, MethodScope::VerificationMethod)
       .is_ok());
-    assert!(document.insert_service(service.clone()).is_ok());
+    assert!(document.insert_service(service).is_ok());
 
     let scopes = [
       MethodScope::VerificationMethod,
@@ -1445,20 +1443,11 @@ mod tests {
     ];
 
     for scope in scopes {
-      // insert a method with the same fragment, but using the document's DID this time.
-      let mut document_clone = document.clone();
       let new_method = method(document.id(), fragment);
-      let result = document_clone.insert_method(new_method.clone(), scope);
+      let result = document.insert_method(new_method, scope);
+      dbg!(&result);
       assert!(result.is_ok());
-      // now query for this method by fragment
-      assert_eq!(Some(&new_method), document_clone.resolve_method(fragment, Some(scope)));
     }
-
-    // Now finally we insert another service with the same fragment, but using the document's DID.
-    assert!(service.set_id(document.id().to_url().join(fragment).unwrap()).is_ok());
-    assert!(document.insert_service(service.clone()).is_ok());
-    // Query for this service
-    assert_eq!(Some(&service), document.resolve_service(fragment));
   }
 
   #[test]
