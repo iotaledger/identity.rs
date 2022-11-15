@@ -774,14 +774,16 @@ mod tests {
 
     // Add a RevocationBitmap service to the issuer.
     let bitmap: RevocationBitmap = RevocationBitmap::new();
-    assert!(issuer_doc.service_mut().append(
-      Service::builder(Object::new())
-        .id(service_url.clone())
-        .type_(RevocationBitmap::TYPE)
-        .service_endpoint(bitmap.to_endpoint().unwrap())
-        .build()
-        .unwrap()
-    ));
+    assert!(issuer_doc
+      .insert_service(
+        Service::builder(Object::new())
+          .id(service_url.clone())
+          .type_(RevocationBitmap::TYPE)
+          .service_endpoint(bitmap.to_endpoint().unwrap())
+          .build()
+          .unwrap()
+      )
+      .is_ok());
 
     // 3: un-revoked index always succeeds.
     for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {

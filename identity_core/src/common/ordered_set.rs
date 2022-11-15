@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::borrow::Borrow;
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Formatter;
@@ -78,6 +77,9 @@ impl<T> OrderedSet<T> {
 
   /// Returns a mutable referece to the first element in the set, or `None` if
   /// the set is empty.
+  ///
+  /// # Warning
+  /// Incorrect use of this can break the invariants of [`OrderedSet`].
   #[inline]
   pub fn head_mut(&mut self) -> Option<&mut T> {
     self.0.first_mut()
@@ -91,6 +93,9 @@ impl<T> OrderedSet<T> {
 
   /// Returns a mutable reference the last element in the set, or `None` if the
   /// set is empty.
+  ///
+  /// # Warning
+  /// Incorrect use of this can break the invariants of [`OrderedSet`].
   #[inline]
   pub fn tail_mut(&mut self) -> Option<&mut T> {
     self.0.last_mut()
@@ -174,19 +179,20 @@ impl<T> OrderedSet<T> {
     self.change(update, |item, update| item.key() == update.key())
   }
 
-  /// Removes all matching items from the set.
+  /// Removes and returns the item with the matching key from the set, if it exists.
   #[inline]
-  pub fn remove<U>(&mut self, item: &U) -> bool
+  pub fn remove<U>(&mut self, item: &U) -> Option<T>
   where
     T: KeyComparable,
     U: KeyComparable<Key = T::Key>,
   {
-    if self.contains(item) {
-      self.0.retain(|this| this.borrow().key() != item.key());
-      true
-    } else {
-      false
-    }
+    self
+      .0
+      .iter()
+      .enumerate()
+      .find(|(_, entry)| entry.key() == item.key())
+      .map(|(idx, _)| idx)
+      .map(|idx| self.0.remove(idx))
   }
 
   fn change<F>(&mut self, data: T, f: F) -> bool
@@ -311,7 +317,14 @@ where
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashSet;
+  use std::hash::Hash;
+
   use super::*;
+  use proptest::prelude::Rng;
+  use proptest::strategy::Strategy;
+  use proptest::test_runner::TestRng;
+  use proptest::*;
 
   #[test]
   fn test_ordered_set_works() {
@@ -383,7 +396,7 @@ mod tests {
     assert!(!set.contains(&cs4));
   }
 
-  #[derive(Clone, Copy, PartialEq, Eq)]
+  #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
   struct ComparableStruct {
     key: u8,
     value: i32,
@@ -455,5 +468,193 @@ mod tests {
     assert_eq!(set.len(), 1);
     assert_eq!(set.head().unwrap().key, cs2.key);
     assert_eq!(set.head().unwrap().value, cs2.value);
+  }
+
+  // ===========================================================================================================================
+  // Test key uniqueness invariant with randomly generated input
+  // ===========================================================================================================================
+
+  /// Produce a strategy for generating a pair of ordered sets of ComparableStruct
+  fn arbitrary_sets_comparable_struct(
+  ) -> impl Strategy<Value = (OrderedSet<ComparableStruct>, OrderedSet<ComparableStruct>)> {
+    proptest::arbitrary::any::<Vec<(u8, i32)>>().prop_map(|mut x_vec| {
+      let half = x_vec.len() / 2;
+      let y_vec = x_vec.split_off(half);
+      let mapper = |(key, value)| ComparableStruct { key, value };
+      (
+        x_vec.into_iter().map(mapper).collect(),
+        y_vec.into_iter().map(mapper).collect(),
+      )
+    })
+  }
+
+  /// Produce a strategy for generating a pair of ordered sets of u128
+  fn arbitrary_sets_u128() -> impl Strategy<Value = (OrderedSet<u128>, OrderedSet<u128>)> {
+    proptest::arbitrary::any::<Vec<u128>>().prop_map(|mut x_vec| {
+      let half = x_vec.len() / 2;
+      let y_vec = x_vec.split_off(half);
+      (x_vec.into_iter().collect(), y_vec.into_iter().collect())
+    })
+  }
+
+  /// Trait for replacing the key of a KeyComparable value
+  trait ReplaceKey: KeyComparable {
+    fn set_key(&mut self, key: Self::Key);
+  }
+
+  impl ReplaceKey for ComparableStruct {
+    fn set_key(&mut self, key: Self::Key) {
+      let ComparableStruct { key: current_key, .. } = self;
+      *current_key = key;
+    }
+  }
+
+  impl ReplaceKey for u128 {
+    fn set_key(&mut self, key: Self::Key) {
+      *self = key;
+    }
+  }
+
+  /// Produces a strategy for generating an ordered set together with two values according to the following algorithm:
+  /// 1. Call `f` to get a pair of sets (x,y).
+  /// 2. Toss a coin to decide whether to pick an element from x at random, or from y (if the chosen set is empty
+  /// Default is called). 3. Repeat step 2 and let the two outcomes be denoted a and b.
+  /// 4. Toss a coin to decide whether to swap the keys of a and b.
+  /// 5. return (x,a,b)
+  fn set_with_values<F, T, U>(f: F) -> impl Strategy<Value = (OrderedSet<T>, T, T)>
+  where
+    T: KeyComparable + Default + Debug + Clone + ReplaceKey,
+    <T as KeyComparable>::Key: Clone,
+    U: Strategy<Value = (OrderedSet<T>, OrderedSet<T>)>,
+    F: Fn() -> U,
+  {
+    f().prop_perturb(|(x, y), mut rng| {
+      let sets = [&x, &y];
+
+      let sample = |generator: &mut TestRng| {
+        let set_idx = usize::from(generator.gen_bool(0.5));
+        let set_range = if set_idx == 0 { 0..x.len() } else { 0..y.len() };
+        if set_range.is_empty() {
+          T::default()
+        } else {
+          let entry_idx = generator.gen_range(set_range);
+          (sets[set_idx])[entry_idx].clone()
+        }
+      };
+
+      let (mut a, mut b) = (sample(&mut rng), sample(&mut rng));
+      if rng.gen_bool(0.5) {
+        let key_a = a.key().clone();
+        let key_b = b.key().clone();
+        a.set_key(key_b);
+        b.set_key(key_a);
+      }
+
+      (x, a, b)
+    })
+  }
+
+  fn set_with_values_comparable_struct(
+  ) -> impl Strategy<Value = (OrderedSet<ComparableStruct>, ComparableStruct, ComparableStruct)> {
+    set_with_values(arbitrary_sets_comparable_struct)
+  }
+
+  fn set_with_values_u128() -> impl Strategy<Value = (OrderedSet<u128>, u128, u128)> {
+    set_with_values(arbitrary_sets_u128)
+  }
+
+  fn assert_operation_preserves_invariant<F, T, S>(mut set: OrderedSet<T>, operation: F, val: T)
+  where
+    T: KeyComparable,
+    T::Key: Hash + Eq,
+    F: Fn(&mut OrderedSet<T>, T) -> S,
+  {
+    operation(&mut set, val);
+    assert_unique_keys(set);
+  }
+
+  fn assert_unique_keys<T>(set: OrderedSet<T>)
+  where
+    T: KeyComparable,
+    T::Key: Hash + Eq,
+  {
+    let mut keys: HashSet<&T::Key> = HashSet::new();
+    for key in set.as_slice().iter().map(KeyComparable::key) {
+      assert!(keys.insert(key));
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_append_comparable_struct((set, element, _) in set_with_values_comparable_struct()) {
+      assert_operation_preserves_invariant(set,OrderedSet::append, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_append_u128((set, element, _) in set_with_values_u128()) {
+      assert_operation_preserves_invariant(set,OrderedSet::append, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_prepend_comparable_struct((set, element, _) in set_with_values_comparable_struct()) {
+      assert_operation_preserves_invariant(set,OrderedSet::prepend, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_prepend_u128((set, element, _) in set_with_values_u128()) {
+      assert_operation_preserves_invariant(set,OrderedSet::prepend, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_update_comparable_struct((set, element, _) in set_with_values_comparable_struct()) {
+      assert_operation_preserves_invariant(set,OrderedSet::update, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_update_u128((set, element, _) in set_with_values_u128()) {
+      assert_operation_preserves_invariant(set,OrderedSet::update, element);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_replace_comparable_struct((mut set, current, update) in set_with_values_comparable_struct()) {
+      set.replace(current.key(), update);
+      assert_unique_keys(set);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_replace_u128((mut set, current, update) in set_with_values_u128()) {
+      set.replace(current.key(), update);
+      assert_unique_keys(set);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_remove_u128((mut set, element, _) in set_with_values_u128()) {
+      set.remove(element.key());
+      assert_unique_keys(set);
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn preserves_invariant_remove_comparable_struct((mut set, element, _) in set_with_values_comparable_struct()) {
+      set.remove(element.key());
+      assert_unique_keys(set);
+    }
   }
 }

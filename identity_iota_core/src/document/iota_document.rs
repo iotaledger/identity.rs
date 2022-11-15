@@ -30,6 +30,7 @@ use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
 
 use crate::error::Result;
+use crate::Error;
 use crate::IotaDID;
 use crate::IotaDIDUrl;
 use crate::IotaDocumentMetadata;
@@ -127,8 +128,14 @@ impl IotaDocument {
   }
 
   /// Returns a mutable reference to the custom DID Document properties.
-  pub fn properties_mut(&mut self) -> &mut Object {
-    self.document.properties_mut()
+  ///
+  /// # Warning
+  ///
+  /// The properties returned are not checked against the standard fields in a [`CoreDocument`]. Incautious use can have
+  /// undesired consequences such as key collision when attempting to serialize the document or distinct resources (such
+  /// as services and methods) being identified by the same DID URL.  
+  pub fn properties_mut_unchecked(&mut self) -> &mut Object {
+    self.document.properties_mut_unchecked()
   }
 
   // ===========================================================================
@@ -142,20 +149,21 @@ impl IotaDocument {
 
   /// Add a new [`IotaService`] to the document.
   ///
-  /// Returns `true` if the service was added.
-  pub fn insert_service(&mut self, service: IotaService) -> bool {
-    if service.id().fragment().is_none() {
-      false
-    } else {
-      self.core_document_mut().service_mut().append(service)
-    }
+  /// # Errors
+  /// An error is returned if there already exists a service or (verification) method with
+  /// the same identifier in the document.  
+  pub fn insert_service(&mut self, service: IotaService) -> Result<()> {
+    self
+      .core_document_mut()
+      .insert_service(service)
+      .map_err(Error::InvalidDoc)
   }
 
-  /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
+  /// Remove and return the [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
   ///
-  /// Returns `true` if a service was removed.
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
-    self.core_document_mut().service_mut().remove(did_url)
+  /// `None` is returned if the service does not exist in the document.
+  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Option<IotaService> {
+    self.core_document_mut().remove_service(did_url)
   }
 
   // ===========================================================================
@@ -175,7 +183,10 @@ impl IotaDocument {
   ///
   /// Returns an error if a method with the same fragment already exists.
   pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
-    Ok(self.core_document_mut().insert_method(method, scope)?)
+    self
+      .core_document_mut()
+      .insert_method(method, scope)
+      .map_err(Error::InvalidDoc)
   }
 
   /// Removes all references to the specified [`IotaVerificationMethod`].
@@ -183,8 +194,8 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Returns an error if the method does not exist.
-  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    Ok(self.core_document_mut().remove_method(did_url)?)
+  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Option<IotaVerificationMethod> {
+    self.core_document_mut().remove_method(did_url)
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -192,27 +203,26 @@ impl IotaDocument {
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
   pub fn attach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
-    Ok(
-      self
-        .core_document_mut()
-        .attach_method_relationship(did_url, relationship)?,
-    )
+    self
+      .core_document_mut()
+      .attach_method_relationship(did_url, relationship)
+      .map_err(Error::InvalidDoc)
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
   pub fn detach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
-    Ok(
-      self
-        .core_document_mut()
-        .detach_method_relationship(did_url, relationship)?,
-    )
+    self
+      .core_document_mut()
+      .detach_method_relationship(did_url, relationship)
+      .map_err(Error::InvalidDoc)
   }
 
   /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
   ///
-  /// WARNING: improper usage of this allows violating the uniqueness of the verification method
-  /// sets.
+  /// # Warning
+  ///
+  /// Incorrect use of this method can lead to distinct document resources being identified by the same DID URL.
   pub fn resolve_method_mut<'query, Q>(
     &mut self,
     query: Q,
@@ -260,7 +270,7 @@ impl IotaDocument {
       .method(method_query)
       .options(options)
       .sign(data)
-      .map_err(Into::into)
+      .map_err(|err| Error::SigningError(err.into()))
   }
 
   // ===========================================================================
@@ -453,7 +463,7 @@ impl From<IotaDocument> for IotaCoreDocument {
 
 impl From<IotaDocument> for CoreDocument {
   fn from(document: IotaDocument) -> Self {
-    document.document.map(Into::into, |id| id)
+    document.document.map_unchecked(Into::into, |id| id)
   }
 }
 
@@ -654,7 +664,7 @@ mod tests {
       url1
     ))
     .unwrap();
-    document.insert_service(service1.clone());
+    assert!(document.insert_service(service1.clone()).is_ok());
     assert_eq!(1, document.service().len());
     assert_eq!(document.resolve_service(&url1), Some(&service1));
     assert_eq!(document.resolve_service("#linked-domain"), Some(&service1));
@@ -673,7 +683,7 @@ mod tests {
       url2
     ))
     .unwrap();
-    document.insert_service(service2.clone());
+    assert!(document.insert_service(service2.clone()).is_ok());
     assert_eq!(2, document.service().len());
     assert_eq!(document.resolve_service(&url2), Some(&service2));
     assert_eq!(document.resolve_service("#revocation"), Some(&service2));
@@ -691,19 +701,19 @@ mod tests {
       url1
     ))
     .unwrap();
-    assert!(!document.insert_service(duplicate.clone()));
+    assert!(document.insert_service(duplicate.clone()).is_err());
     assert_eq!(2, document.service().len());
     let resolved: &IotaService = document.resolve_service(&url1).unwrap();
     assert_eq!(resolved, &service1);
     assert_ne!(resolved, &duplicate);
 
     // VALID: remove services.
-    assert!(document.remove_service(&url1));
+    assert_eq!(service1, document.remove_service(&url1).unwrap());
     assert_eq!(1, document.service().len());
     let last_service: &IotaService = document.resolve_service(&url2).unwrap();
     assert_eq!(last_service, &service2);
 
-    assert!(document.remove_service(&url2));
+    assert_eq!(service2, document.remove_service(&url2).unwrap());
     assert_eq!(0, document.service().len());
   }
 
