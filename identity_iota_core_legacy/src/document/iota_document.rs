@@ -254,18 +254,14 @@ impl IotaDocument {
   ///
   /// Returns `true` if the service was added.
   pub fn insert_service(&mut self, service: IotaService) -> bool {
-    if service.id().fragment().is_none() {
-      false
-    } else {
-      self.document.service_mut_unchecked().append(service)
-    }
+    self.document.insert_service(service).is_ok()
   }
 
   /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
   ///
   /// Returns `true` if a service was removed.
   pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
-    self.document.service_mut_unchecked().remove(did_url).is_some()
+    self.document.remove_service(did_url).is_some()
   }
 
   // ===========================================================================
