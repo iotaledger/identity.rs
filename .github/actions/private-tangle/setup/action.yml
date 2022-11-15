@@ -3,6 +3,10 @@ description: 'Setup a private tangle'
 runs:
   using: "composite"
   steps:
+    - name: Cache Docker images
+      uses: ScribeMD/docker-cache@0.2.6
+      with:
+        key: docker-privateTangle
     - name: Setup private tangle
       shell: bash
       run: |
