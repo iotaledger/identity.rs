@@ -466,7 +466,10 @@ where
   ///
   /// Returns an error if a method or service with the same fragment already exists.
   pub fn insert_method(&mut self, method: VerificationMethod<D, U>, scope: MethodScope) -> Result<()> {
-    // check that the method identifier is not already in use by an existing method or service.
+    // Check that the method identifier is not already in use by an existing method or service.
+    //
+    // NOTE: this check cannot be relied upon if the document contains methods or services whose ids are
+    // of the form <did different from this document's>#<fragment>.
     if self.resolve_method(method.id(), None).is_some() || self.service().query(method.id()).is_some() {
       return Err(Error::MethodInsertionError);
     }
@@ -703,6 +706,8 @@ where
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
+  // whose ids are of the form <did different from this document's>#<fragment>.
   pub fn resolve_method<'query, 'me, Q>(
     &'me self,
     query: Q,
@@ -752,6 +757,9 @@ where
   /// # Warning
   ///
   /// Incorrect use of this method can lead to distinct document resources being identified by the same DID URL.
+  ///
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
+  // whose ids are of the form <did different from this document's>#<fragment>.
   pub fn resolve_method_mut<'query, 'me, Q>(
     &'me mut self,
     query: Q,
@@ -958,6 +966,8 @@ where
     CoreDocument::id(self)
   }
 
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
+  // services whose ids are of the form <did different from this document's>#<fragment>.
   fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
   where
     Q: Into<DIDUrlQuery<'query>>,
@@ -965,6 +975,8 @@ where
     self.service().query(query.into())
   }
 
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
+  // methods whose ids are of the form <did different from this document's>#<fragment>.
   fn resolve_method<'query, 'me, Q>(
     &'me self,
     query: Q,
