@@ -22,7 +22,7 @@ runs:
     - name: Cache Docker images
       uses: ScribeMD/docker-cache@0.2.6
       with:
-        key: docker-privateTangle-${{ hashFiles(./) }}
+        key: docker-privateTangle-${{ hashFiles('./') }}
     - name: Setup private tangle
       shell: bash
       run: |
