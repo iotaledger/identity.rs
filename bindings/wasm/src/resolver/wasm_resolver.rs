@@ -92,7 +92,7 @@ impl WasmResolver {
       let handler = move |did: CoreDID| {
         let rc_client_clone: Rc<WasmIotaIdentityClient> = rc_client.clone();
         async move {
-          let iota_did: IotaDID = IotaDID::parse(did)?;
+          let iota_did: IotaDID = IotaDID::parse(did).map_err(identity_iota::iota::Error::DIDSyntaxError)?;
           Self::client_as_handler(rc_client_clone.as_ref(), iota_did.into()).await
         }
       };

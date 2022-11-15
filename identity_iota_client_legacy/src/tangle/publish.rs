@@ -221,7 +221,7 @@ mod test {
 
     assert!(new_doc
       .core_document_mut()
-      .capability_invocation_mut()
+      .capability_invocation_mut_unchecked()
       .update(method_new.into()));
 
     assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));

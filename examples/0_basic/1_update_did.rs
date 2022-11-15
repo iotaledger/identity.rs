@@ -67,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org/"
   }))?;
-  assert!(document.insert_service(service));
+  assert!(document.insert_service(service).is_ok());
   document.metadata.updated = Some(Timestamp::now_utc());
 
   // Remove a verification method.

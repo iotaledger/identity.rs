@@ -56,9 +56,15 @@ impl WasmCoreDocument {
   }
 
   /// Sets the DID of the document.
+  ///
+  /// ### Warning
+  ///
+  /// Changing the identifier can drastically alter the results of
+  /// [`Self::resolve_method`](CoreDocument::resolve_method()),
+  /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmCoreDID) {
-    *self.0.id_mut() = id.0.clone();
+    *self.0.id_mut_unchecked() = id.0.clone();
   }
 
   /// Returns a copy of the document controllers.
@@ -227,16 +233,17 @@ impl WasmCoreDocument {
   /// If the value is set to `null`, the custom property will be removed.
   ///
   /// ### WARNING
+  ///
   /// This method can overwrite existing properties like `id` and result in an invalid document.
   #[wasm_bindgen(js_name = setPropertyUnchecked)]
   pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut().insert(key, value);
+        self.0.properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.properties_mut().remove(&key);
+        self.0.properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -262,10 +269,10 @@ impl WasmCoreDocument {
 
   /// Add a new {@link CoreService} to the document.
   ///
-  /// Returns `true` if the service was added.
+  /// Errors if there already exists a service or verification method with the same id.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmCoreService) -> bool {
-    self.0.service_mut().append(service.0.clone())
+  pub fn insert_service(&mut self, service: &WasmCoreService) -> Result<()> {
+    self.0.insert_service(service.0.clone()).wasm_result()
   }
 
   /// Remoce a {@link CoreService} identified by the given {@link CoreDIDUrl} from the document.
@@ -273,8 +280,8 @@ impl WasmCoreDocument {
   /// Returns `true` if the service was removed.
   #[wasm_bindgen(js_name = removeService)]
   #[allow(non_snake_case)]
-  pub fn remove_service(&mut self, didUrl: &WasmCoreDIDUrl) -> bool {
-    self.0.service_mut().remove(&didUrl.0.clone())
+  pub fn remove_service(&mut self, didUrl: &WasmCoreDIDUrl) -> Option<WasmCoreService> {
+    self.0.remove_service(&didUrl.0.clone()).map(Into::into)
   }
 
   /// Returns the first {@link CoreService} with an `id` property matching the provided `query`,
@@ -330,14 +337,13 @@ impl WasmCoreDocument {
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmCoreVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
-    Ok(())
+    self.0.insert_method(method.0.clone(), scope.0).wasm_result()
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmCoreDIDUrl) -> Result<()> {
-    self.0.remove_method(&did.0).wasm_result()
+  pub fn remove_method(&mut self, did: &WasmCoreDIDUrl) -> Option<WasmCoreVerificationMethod> {
+    self.0.remove_method(&did.0).map(Into::into)
   }
 
   /// Returns a copy of the first verification method with an `id` property
