@@ -3,9 +3,11 @@ description: 'Setup a private tangle'
 runs:
   using: "composite"
   steps:
+
     - name: Download private tangle
       shell: bash
       run: |
+
         # TODO: use next lines when a working hornet release is published
         # # Download the private_tangle setup from the hornet repo.
         # mkdir private_tangle
@@ -19,13 +21,22 @@ runs:
         # TODO: remove next lines when a working hornet release is published
         git clone https://github.com/iotaledger/hornet.git
         cd hornet/private_tangle
+
     - name: Cache Docker images
       uses: ScribeMD/docker-cache@70723b070f0541d281d40017fd2e874d677357aa #0.2.6
       with:
         key: docker-privateTangle-${{ hashFiles('**/private_tangle/**') }}
+
     - name: Setup private tangle
       shell: bash
       run: |
+
+        # TODO: use next lines when a working hornet release is published
+        # cd private_tangle
+
+        # TODO: remove next lines when a working hornet release is published
+        cd hornet/private_tangle
+
         # Set minPoWScore = 1 since the default (0) doesn't work with wasm_miner.rs in iota.rs currently.
         jq '.minPoWScore = $val' --argjson val 1 protocol_parameters.json > tmp.json && mv tmp.json protocol_parameters.json
         jq --color-output . protocol_parameters.json
@@ -38,11 +49,13 @@ runs:
         sudo ./cleanup.sh
         sudo ./bootstrap.sh
         sudo ./run.sh -d
+
     - name: Wait for tangle to start
       shell: bash
       run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- -t 60 http://localhost:14265/health -- echo "Tangle is up"
       env:
         WAIT_FOR_VERSION: 4df3f9262d84cab0039c07bf861045fbb3c20ab7 # v2.2.3
+        
     - name: Wait for faucet to start
       shell: bash
       run: wget -qO- https://raw.githubusercontent.com/eficode/wait-for/$WAIT_FOR_VERSION/wait-for | sh -s -- -t 60 http://localhost:8091/api/info -- echo "Faucet is up"
