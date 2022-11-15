@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
     "type": RevocationBitmap::TYPE,
     "serviceEndpoint": revocation_bitmap.to_endpoint()?
   }))?;
-  issuer_document.insert_service(service);
+  assert!(issuer_document.insert_service(service));
 
   // Resolve the latest output and update it with the given document.
   let alias_output: AliasOutput = client.update_did_output(issuer_document.clone()).await?;
