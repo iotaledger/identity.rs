@@ -184,9 +184,9 @@ impl IotaDocument {
   /// Returns an error if a method with the same fragment already exists.
   pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
     self
-        .core_document_mut()
-        .insert_method(method, scope)
-        .map_err(Error::InvalidDoc)
+      .core_document_mut()
+      .insert_method(method, scope)
+      .map_err(Error::InvalidDoc)
   }
 
   /// Removes all references to the specified [`IotaVerificationMethod`].
@@ -204,17 +204,17 @@ impl IotaDocument {
   /// so it cannot be an embedded one.
   pub fn attach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     self
-        .core_document_mut()
-        .attach_method_relationship(did_url, relationship)
-        .map_err(Error::InvalidDoc)
+      .core_document_mut()
+      .attach_method_relationship(did_url, relationship)
+      .map_err(Error::InvalidDoc)
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
   pub fn detach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     self
-        .core_document_mut()
-        .detach_method_relationship(did_url, relationship)
-        .map_err(Error::InvalidDoc)
+      .core_document_mut()
+      .detach_method_relationship(did_url, relationship)
+      .map_err(Error::InvalidDoc)
   }
 
   /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
