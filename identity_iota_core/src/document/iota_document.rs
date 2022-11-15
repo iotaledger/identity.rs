@@ -153,17 +153,10 @@ impl IotaDocument {
   /// An error is returned if there already exists a service or (verification) method with
   /// the same identifier in the document.  
   pub fn insert_service(&mut self, service: IotaService) -> Result<()> {
-    // TODO: Why was this check added here, but not in CoreDocument?
-    if service.id().fragment().is_none() {
-      Err(Error::InvalidDoc(identity_did::Error::InvalidDID(
-        identity_did::did::DIDError::InvalidFragment,
-      )))
-    } else {
-      self
-        .core_document_mut()
-        .insert_service(service)
-        .map_err(Error::InvalidDoc)
-    }
+    self
+      .core_document_mut()
+      .insert_service(service)
+      .map_err(Error::InvalidDoc)
   }
 
   /// Remove and return the [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.

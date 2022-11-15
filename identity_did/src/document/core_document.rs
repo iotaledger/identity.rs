@@ -529,13 +529,13 @@ where
   /// Returns an error if there already exists a service or verification method with the same identifier.
   pub fn insert_service(&mut self, service: Service<D, V>) -> Result<()> {
     let service_id = service.id();
-    let id_shared_with_method = self
+    let id_exists = self
       .verification_relationships()
       .map(|method_ref| method_ref.id())
       .chain(self.verification_method().iter().map(|method| method.id()))
       .any(|id| id == service_id);
 
-    ((!id_shared_with_method) && self.data.service.append(service))
+    ((!id_exists) && self.data.service.append(service))
       .then_some(())
       .ok_or(Error::InvalidServiceInsertion)
   }
@@ -757,7 +757,6 @@ where
   /// # Warning
   ///
   /// Incorrect use of this method can lead to distinct document resources being identified by the same DID URL.
-  ///
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
   // whose ids are of the form <did different from this document's>#<fragment>.
   pub fn resolve_method_mut<'query, 'me, Q>(
