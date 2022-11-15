@@ -82,37 +82,52 @@ impl StateMetadataDocument {
   /// Unpack bytes into a [`StateMetadataDocument`].
   pub fn unpack(data: &[u8]) -> Result<Self> {
     // Check marker.
-    let marker: &[u8] = data.get(0..=2).ok_or(identity_did::Error::InvalidDocument(
-      "state metadata decoding: expected DID marker at offset [0..=2]",
-      None,
-    ))?;
+    let marker: &[u8] = data
+      .get(0..=2)
+      .ok_or(identity_did::Error::InvalidDocument(
+        "state metadata decoding: expected DID marker at offset [0..=2]",
+        None,
+      ))
+      .map_err(Error::InvalidDoc)?;
     if marker != DID_MARKER {
       return Err(Error::InvalidStateMetadata("missing `DID` marker"));
     }
 
     // Check version.
-    let version: StateMetadataVersion = StateMetadataVersion::try_from(*data.get(3).ok_or(
-      identity_did::Error::InvalidDocument("state metadata decoding: expected version at offset 3", None),
-    )?)?;
+    let version: StateMetadataVersion = StateMetadataVersion::try_from(
+      *data
+        .get(3)
+        .ok_or(identity_did::Error::InvalidDocument(
+          "state metadata decoding: expected version at offset 3",
+          None,
+        ))
+        .map_err(Error::InvalidDoc)?,
+    )?;
     if version != StateMetadataVersion::V1 {
       return Err(Error::InvalidStateMetadata("unsupported version"));
     }
 
     // Decode data.
-    let encoding: StateMetadataEncoding = StateMetadataEncoding::try_from(*data.get(4).ok_or(
-      identity_did::Error::InvalidDocument("state metadata decoding: expected encoding at offset 4", None),
-    )?)?;
+    let encoding: StateMetadataEncoding = StateMetadataEncoding::try_from(
+      *data
+        .get(4)
+        .ok_or(identity_did::Error::InvalidDocument(
+          "state metadata decoding: expected encoding at offset 4",
+          None,
+        ))
+        .map_err(Error::InvalidDoc)?,
+    )?;
 
     let data_len_packed: [u8; 2] = data
       .get(5..=6)
       .ok_or(identity_did::Error::InvalidDocument(
         "state metadata decoding: expected data length at offset [5..=6]",
         None,
-      ))?
+      ))
+      .map_err(Error::InvalidDoc)?
       .try_into()
-      .map_err(|_| {
-        identity_did::Error::InvalidDocument("state metadata decoding: data length conversion error", None)
-      })?;
+      .map_err(|_| identity_did::Error::InvalidDocument("state metadata decoding: data length conversion error", None))
+      .map_err(Error::InvalidDoc)?;
     let data_len: u16 = u16::from_le_bytes(data_len_packed);
 
     let data: &[u8] = data
@@ -120,7 +135,8 @@ impl StateMetadataDocument {
       .ok_or(identity_did::Error::InvalidDocument(
         "state metadata decoding: encoded document shorter than length prefix",
         None,
-      ))?;
+      ))
+      .map_err(Error::InvalidDoc)?;
 
     match encoding {
       StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(data).map_err(|err| {

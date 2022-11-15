@@ -9,9 +9,9 @@ pub enum Error {
   #[error("serialization error")]
   SerializationError(&'static str, #[source] Option<identity_core::Error>),
   #[error("invalid did")]
-  DIDSyntaxError(#[from] identity_did::did::DIDError),
+  DIDSyntaxError(#[source] identity_did::did::DIDError),
   #[error("invalid document")]
-  InvalidDoc(#[from] identity_did::error::Error),
+  InvalidDoc(#[source] identity_did::error::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID update: {0}")]
   DIDUpdateError(&'static str, #[source] Option<Box<iota_client::error::Error>>),
@@ -46,4 +46,6 @@ pub enum Error {
   #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
   #[error("JavaScript function threw an exception: {0}")]
   JsError(String),
+  #[error("could not sign the data")]
+  SigningError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }

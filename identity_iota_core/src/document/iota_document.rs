@@ -183,7 +183,12 @@ impl IotaDocument {
   ///
   /// Returns an error if a method with the same fragment already exists.
   pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
-    Ok(self.core_document_mut().insert_method(method, scope)?)
+    Ok(
+      self
+        .core_document_mut()
+        .insert_method(method, scope)
+        .map_err(Error::InvalidDoc)?,
+    )
   }
 
   /// Removes all references to the specified [`IotaVerificationMethod`].
@@ -203,7 +208,8 @@ impl IotaDocument {
     Ok(
       self
         .core_document_mut()
-        .attach_method_relationship(did_url, relationship)?,
+        .attach_method_relationship(did_url, relationship)
+        .map_err(Error::InvalidDoc)?,
     )
   }
 
@@ -212,7 +218,8 @@ impl IotaDocument {
     Ok(
       self
         .core_document_mut()
-        .detach_method_relationship(did_url, relationship)?,
+        .detach_method_relationship(did_url, relationship)
+        .map_err(Error::InvalidDoc)?,
     )
   }
 
@@ -269,7 +276,7 @@ impl IotaDocument {
       .method(method_query)
       .options(options)
       .sign(data)
-      .map_err(Into::into)
+      .map_err(|err| Error::SigningError(err.into()))
   }
 
   // ===========================================================================
