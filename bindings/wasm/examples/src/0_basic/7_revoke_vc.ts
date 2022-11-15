@@ -89,7 +89,7 @@ export async function revokeVC() {
         credentialStatus: {
             id: issuerDocument.id() + "#my-revocation-service",
             type: RevocationBitmap.type(),
-            revocationBitmapIndex: CREDENTIAL_INDEX,
+            revocationBitmapIndex: CREDENTIAL_INDEX.toString(),
         },
         issuer: issuerDocument.id(),
         credentialSubject: subject,
@@ -98,6 +98,9 @@ export async function revokeVC() {
     // Sign Credential.
     let signedVc = issuerDocument.signCredential(unsignedVc, keypairIssuer.private(), "#key-1", ProofOptions.default());
     console.log(`Credential JSON > ${JSON.stringify(signedVc, null, 2)}`);
+
+    // Validate the credential's signature using the issuer's DID Document.
+    CredentialValidator.validate(signedVc, issuerDocument, CredentialValidationOptions.default(), FailFast.AllErrors);
 
     // ===========================================================================
     // Revocation of the Verifiable Credential.

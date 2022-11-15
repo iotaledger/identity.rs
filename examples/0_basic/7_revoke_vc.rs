@@ -16,7 +16,6 @@ use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
-use identity_iota::credential::AbstractThreadSafeValidatorDocument;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::CredentialValidationOptions;
@@ -127,6 +126,15 @@ async fn main() -> anyhow::Result<()> {
   issuer_document.sign_data(&mut credential, key_pair.private(), "#key-1", ProofOptions::default())?;
   println!("Credential JSON > {:#}", credential);
 
+  // Validate the credential's signature using the issuer's DID Document.
+  CredentialValidator::validate(
+    &credential,
+    &issuer_document,
+    &CredentialValidationOptions::default(),
+    FailFast::FirstError,
+  )
+  .unwrap();
+
   // ===========================================================================
   // Revocation of the Verifiable Credential.
   // ===========================================================================
@@ -171,10 +179,9 @@ async fn main() -> anyhow::Result<()> {
   client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
   // We expect the verifiable credential to be revoked.
-  let mut resolver: Resolver = Resolver::new();
+  let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
-  let resolved_issuer_doc: AbstractThreadSafeValidatorDocument =
-    resolver.resolve_credential_issuer(&credential).await?;
+  let resolved_issuer_doc: IotaDocument = resolver.resolve_credential_issuer(&credential).await?;
 
   let validation_result = CredentialValidator::validate(
     &credential,
