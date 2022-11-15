@@ -379,29 +379,7 @@ impl WasmCoreDocument {
       .wasm_result()
   }
 
-  /// Detaches the relationship from the method in accordance with the `method_query`.
-  ///
-  /// The following rules apply:
-  ///
-  /// - Embedded verification methods do *not* get removed by calls to this method, even when the identifier matches the
-  ///   `method_query`. Any such attempt will result in an error. If you want to remove an embedded method
-  /// see [`Self::remove_method`](CoreDocument::remove_method()).
-  ///
-  /// - If the `method_query` is a full DID URL the verification method reference is detached from the provided
-  ///   relationship set regardless of
-  /// whether the referenced method exists in this document or another.
-  ///
-  /// - If the `method_query` is just a fragment the verification method reference of the form <document did>#<fragment
-  ///   from `method_query`> is detached
-  /// from the provided relationship set.
-  ///
-  /// - If a method reference matching the query was successfully removed from the specified relationship set `true` is
-  ///   returned.
-  ///
-  /// ### Errors
-  ///
-  /// Errors if the `method_query` cannot be interpreted as either a fragment or
-  /// full DID URL or if the query corresponds to an embedded method.
+  /// Detaches the given relationship from the given method, if the method exists.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
