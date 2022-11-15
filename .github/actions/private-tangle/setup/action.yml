@@ -3,11 +3,7 @@ description: 'Setup a private tangle'
 runs:
   using: "composite"
   steps:
-    - name: Cache Docker images
-      uses: ScribeMD/docker-cache@0.2.6
-      with:
-        key: docker-privateTangle
-    - name: Setup private tangle
+    - name: Download private tangle
       shell: bash
       run: |
         # TODO: use next lines when a working hornet release is published
@@ -23,7 +19,13 @@ runs:
         # TODO: remove next lines when a working hornet release is published
         git clone https://github.com/iotaledger/hornet.git
         cd hornet/private_tangle
-
+    - name: Cache Docker images
+      uses: ScribeMD/docker-cache@0.2.6
+      with:
+        key: docker-privateTangle-${{ hashFiles(./) }}
+    - name: Setup private tangle
+      shell: bash
+      run: |
         # Set minPoWScore = 1 since the default (0) doesn't work with wasm_miner.rs in iota.rs currently.
         jq '.minPoWScore = $val' --argjson val 1 protocol_parameters.json > tmp.json && mv tmp.json protocol_parameters.json
         jq --color-output . protocol_parameters.json
