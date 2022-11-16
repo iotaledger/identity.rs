@@ -44,7 +44,10 @@ impl IotaDID {
   /// The default network name (`"iota"`).
   pub const DEFAULT_NETWORK: &'static str = "iota";
 
-  // The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
+  /// The string tag of the placeholder DID.
+  pub const PLACEHOLDER_TAG: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+  /// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
 
   // ===========================================================================
@@ -90,8 +93,24 @@ impl IotaDID {
   /// #
   /// let placeholder = IotaDID::placeholder(&NetworkName::try_from("smr").unwrap());
   /// assert_eq!(placeholder.as_str(), "did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000");
+  /// assert!(placeholder.is_placeholder());
   pub fn placeholder(network_name: &NetworkName) -> Self {
     Self::new(&[0; 32], network_name)
+  }
+
+  /// Returns whether this is the placeholder DID.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// # use identity_did::did::DID;
+  /// # use identity_iota_core::NetworkName;
+  /// # use identity_iota_core::IotaDID;
+  /// #
+  /// let placeholder = IotaDID::placeholder(&NetworkName::try_from("smr").unwrap());
+  /// assert!(placeholder.is_placeholder());
+  pub fn is_placeholder(&self) -> bool {
+    self.tag() == Self::PLACEHOLDER_TAG
   }
 
   /// Parses an [`IotaDID`] from the given `input`.
@@ -324,8 +343,6 @@ mod tests {
   // Reusable constants and statics
   // ===========================================================================================================================
 
-  const PLACEHOLDER_TAG: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
   // obtained AliasID from a valid OutputID string
   // output_id copied from https://github.com/iotaledger/bee/blob/30cab4f02e9f5d72ffe137fd9eb09723b4f0fdb6/bee-block/tests/output_id.rs
   // value of AliasID computed from AliasId::from(OutputId).to_string()
@@ -359,7 +376,7 @@ mod tests {
     let valid_strings: Vec<String> = VALID_NETWORK_NAMES
       .iter()
       .flat_map(|network| {
-        [VALID_ALIAS_ID_STR, PLACEHOLDER_TAG]
+        [VALID_ALIAS_ID_STR, IotaDID::PLACEHOLDER_TAG]
           .iter()
           .map(move |tag| network_tag_to_did(network, tag))
       })
@@ -505,7 +522,7 @@ mod tests {
   fn placeholder_produces_a_did_with_expected_string_representation() {
     assert_eq!(
       IotaDID::placeholder(&NetworkName::try_from(IotaDID::DEFAULT_NETWORK).unwrap()).as_str(),
-      format!("did:{}:{}", IotaDID::METHOD, PLACEHOLDER_TAG)
+      format!("did:{}:{}", IotaDID::METHOD, IotaDID::PLACEHOLDER_TAG)
     );
 
     for name in VALID_NETWORK_NAMES
@@ -516,7 +533,7 @@ mod tests {
       let did: IotaDID = IotaDID::placeholder(&network_name);
       assert_eq!(
         did.as_str(),
-        format!("did:{}:{}:{}", IotaDID::METHOD, name, PLACEHOLDER_TAG)
+        format!("did:{}:{}:{}", IotaDID::METHOD, name, IotaDID::PLACEHOLDER_TAG)
       );
     }
   }
@@ -583,7 +600,7 @@ mod tests {
       ));
     };
 
-    execute_assertions(PLACEHOLDER_TAG);
+    execute_assertions(IotaDID::PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -730,7 +747,7 @@ mod tests {
       assert_eq!(did.network_str(), "custom");
     };
 
-    execute_assertions(PLACEHOLDER_TAG);
+    execute_assertions(IotaDID::PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -760,7 +777,7 @@ mod tests {
         .unwrap();
       assert_eq!(did.tag(), valid_alias_id);
     };
-    execute_assertions(PLACEHOLDER_TAG);
+    execute_assertions(IotaDID::PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -831,7 +848,7 @@ mod tests {
       ))
       .is_ok());
     };
-    execute_assertions(PLACEHOLDER_TAG);
+    execute_assertions(IotaDID::PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 
@@ -850,7 +867,7 @@ mod tests {
       assert_eq!(did_url.query(), Some("diff=true"));
       assert_eq!(did_url.fragment(), Some("foo"));
     };
-    execute_assertions(PLACEHOLDER_TAG);
+    execute_assertions(IotaDID::PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
   }
 }
