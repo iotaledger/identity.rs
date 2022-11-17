@@ -12,8 +12,8 @@ import {
     KeyPair,
     KeyType,
     MethodScope,
-} from "../../../node";
-import { API_ENDPOINT, createDid, ensureAddressHasFunds } from "../util";
+} from "@iota/identity-wasm/node";
+import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{

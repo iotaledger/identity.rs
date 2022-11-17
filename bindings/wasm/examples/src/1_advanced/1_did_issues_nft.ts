@@ -22,7 +22,7 @@ import {
     TransactionHelper,
 } from "@iota/iota.js";
 import { Converter } from "@iota/util.js";
-import { IotaDID, IotaDocument, IotaIdentityClient } from "../../../node";
+import { IotaDID, IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and own NFTs,
