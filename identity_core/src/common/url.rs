@@ -102,11 +102,11 @@ impl Diff for Url {
     self
       .to_string()
       .merge(diff)
-      .and_then(|this| Self::parse(&this).map_err(diff::Error::merge))
+      .and_then(|this| Self::parse(this).map_err(diff::Error::merge))
   }
 
   fn from_diff(diff: Self::Type) -> diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(diff::Error::convert))
+    String::from_diff(diff).and_then(|this| Self::parse(this).map_err(diff::Error::convert))
   }
 
   fn into_diff(self) -> diff::Result<Self::Type> {

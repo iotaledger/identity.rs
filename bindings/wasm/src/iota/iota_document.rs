@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_api_types::responses::ProtocolResponse;
-use bee_block::protocol::ProtocolParameters;
 use identity_iota::core::FromJson;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
@@ -22,6 +20,8 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
+use iota_types::api::response::ProtocolResponse;
+use iota_types::block::protocol::ProtocolParameters;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -140,16 +140,17 @@ impl WasmIotaDocument {
   /// If the value is set to `null`, the custom property will be removed.
   ///
   /// ### WARNING
+  ///
   /// This method can overwrite existing properties like `id` and result in an invalid document.
   #[wasm_bindgen(js_name = setPropertyUnchecked)]
   pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut().insert(key, value);
+        self.0.properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.properties_mut().remove(&key);
+        self.0.properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -177,16 +178,16 @@ impl WasmIotaDocument {
   ///
   /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmIotaService) -> bool {
-    self.0.insert_service(service.0.clone())
+  pub fn insert_service(&mut self, service: &WasmIotaService) -> Result<()> {
+    self.0.insert_service(service.0.clone()).wasm_result()
   }
 
   /// Remove a {@link IotaService} identified by the given {@link IotaDIDUrl} from the document.
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmIotaDIDUrl) -> bool {
-    self.0.remove_service(&did.0)
+  pub fn remove_service(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaService> {
+    self.0.remove_service(&did.0).map(Into::into)
   }
 
   /// Returns the first {@link IotaService} with an `id` property matching the provided `query`,
@@ -233,8 +234,8 @@ impl WasmIotaDocument {
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmIotaDIDUrl) -> Result<()> {
-    self.0.remove_method(&did.0).wasm_result()
+  pub fn remove_method(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaVerificationMethod> {
+    self.0.remove_method(&did.0).map(Into::into)
   }
 
   /// Returns a copy of the first verification method with an `id` property
@@ -431,7 +432,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = unpackFromBlock)]
   pub fn unpack_from_block(network: String, block: &IBlock, protocolResponseJson: String) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    let block_dto: bee_block::BlockDto = block
+    let block_dto: iota_types::block::BlockDto = block
       .into_serde()
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
@@ -440,7 +441,7 @@ impl WasmIotaDocument {
 
     let protocol_response: ProtocolResponse = ProtocolResponse::from_json(&protocolResponseJson).wasm_result()?;
     let protocol_parameters: ProtocolParameters = ProtocolParameters::try_from(protocol_response).wasm_result()?;
-    let block: bee_block::Block = bee_block::Block::try_from_dto(&block_dto, &protocol_parameters)
+    let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
       })

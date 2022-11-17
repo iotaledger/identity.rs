@@ -49,7 +49,8 @@ export async function didIssuesTokens() {
     };
 
     // Create a new DID for the authority. (see "0_create_did" example).
-    var { did: authorityDid } = await createDid(client, secretManager);
+    const { document } = await createDid(client, secretManager);
+    let authorityDid = document.id();
 
     // Get the current byte costs.
     const rentStructure: IRent = await didClient.getRentStructure();

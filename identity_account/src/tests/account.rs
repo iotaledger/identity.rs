@@ -478,8 +478,8 @@ async fn test_account_sync_integration_msg_update() {
 
       let client: Client = Client::builder().network(network).build().await.unwrap();
       let mut new_doc: IotaDocument = account.document().clone();
-      new_doc.properties_mut().insert("foo".into(), 123u32.into());
-      new_doc.properties_mut().insert("bar".into(), 456u32.into());
+      new_doc.properties_mut_unchecked().insert("foo".into(), 123u32.into());
+      new_doc.properties_mut_unchecked().insert("bar".into(), 456u32.into());
       new_doc.metadata.previous_message_id = *account.chain_state().last_integration_message_id();
       new_doc.metadata.updated = Some(Timestamp::now_utc());
       account
@@ -521,8 +521,8 @@ async fn test_account_sync_diff_msg_update() {
 
       let client: Client = Client::builder().network(network).build().await.unwrap();
       let mut new_doc: IotaDocument = account.document().clone();
-      new_doc.properties_mut().insert("foo".into(), 123u32.into());
-      new_doc.properties_mut().insert("bar".into(), 456u32.into());
+      new_doc.properties_mut_unchecked().insert("foo".into(), 123u32.into());
+      new_doc.properties_mut_unchecked().insert("bar".into(), 456u32.into());
       new_doc.metadata.updated = Some(Timestamp::now_utc());
       let mut diff_msg: DiffMessage = DiffMessage::new(
         account.document(),

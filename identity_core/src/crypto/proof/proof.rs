@@ -75,12 +75,12 @@ impl Proof {
 
   /// Returns the `type` property of the proof.
   pub fn type_(&self) -> &str {
-    &*self.type_
+    &self.type_
   }
 
   /// Returns the identifier of the DID method used to create this proof.
   pub fn verification_method(&self) -> &str {
-    &*self.method
+    &self.method
   }
 
   /// Returns a reference to the proof `value`.
@@ -145,11 +145,11 @@ impl Serialize for Proof {
     } else {
       3 // type + method + value
     };
-    count_fields += if self.created.is_some() { 1 } else { 0 };
-    count_fields += if self.expires.is_some() { 1 } else { 0 };
-    count_fields += if self.challenge.is_some() { 1 } else { 0 };
-    count_fields += if self.domain.is_some() { 1 } else { 0 };
-    count_fields += if self.purpose.is_some() { 1 } else { 0 };
+    count_fields += usize::from(self.created.is_some());
+    count_fields += usize::from(self.expires.is_some());
+    count_fields += usize::from(self.challenge.is_some());
+    count_fields += usize::from(self.domain.is_some());
+    count_fields += usize::from(self.purpose.is_some());
     let mut state: S::SerializeMap = serializer.serialize_map(Some(count_fields))?;
 
     state.serialize_entry("type", &self.type_)?;

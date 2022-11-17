@@ -234,11 +234,15 @@ mod test {
         .build()
         .map(Into::into)
         .unwrap();
-      new.document.core_document_mut().capability_invocation_mut().clear();
       new
         .document
         .core_document_mut()
-        .capability_invocation_mut()
+        .capability_invocation_mut_unchecked()
+        .clear();
+      new
+        .document
+        .core_document_mut()
+        .capability_invocation_mut_unchecked()
         .append(signing_method);
 
       new.document.metadata.updated = Some(Timestamp::now_utc());
@@ -273,8 +277,14 @@ mod test {
     {
       let new: ResolvedIotaDocument = {
         let mut this: ResolvedIotaDocument = chain.current().clone();
-        this.document.properties_mut().insert("foo".into(), 123.into());
-        this.document.properties_mut().insert("bar".into(), 456.into());
+        this
+          .document
+          .properties_mut_unchecked()
+          .insert("foo".into(), 123.into());
+        this
+          .document
+          .properties_mut_unchecked()
+          .insert("bar".into(), 456.into());
         this.document.metadata.updated = Some(Timestamp::now_utc());
         this
       };
@@ -309,11 +319,14 @@ mod test {
     // Create DiffMessage Removing the Capability Invocation Method
     // =========================================================================
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
-    new_resolved.document.properties_mut().insert("foo".into(), 123.into());
+    new_resolved
+      .document
+      .properties_mut_unchecked()
+      .insert("foo".into(), 123.into());
     new_resolved
       .document
       .core_document_mut()
-      .capability_invocation_mut()
+      .capability_invocation_mut_unchecked()
       .clear();
     new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
@@ -385,7 +398,7 @@ mod test {
     match new_resolved
       .document
       .core_document_mut()
-      .capability_invocation_mut()
+      .capability_invocation_mut_unchecked()
       .head_mut()
       .unwrap()
     {

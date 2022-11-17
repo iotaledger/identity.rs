@@ -12,7 +12,7 @@ use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
-use iota_client::api_types::responses::OutputResponse;
+use iota_client::api_types::response::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::output::unlock_condition::AddressUnlockCondition;
 use iota_client::block::output::NftId;
@@ -79,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
   let network: NetworkName = client.network_name().await?;
 
   // Construct a DID document for the car.
-  let car_document: IotaDocument = create_did_document(&network)?;
+  let (car_document, _): (IotaDocument, _) = create_did_document(&network)?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client

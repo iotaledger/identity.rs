@@ -10,6 +10,7 @@ use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
+use identity_iota::crypto::KeyPair;
 use identity_iota::did::MethodRelationship;
 use identity_iota::did::Service;
 use identity_iota::did::DID;
@@ -21,7 +22,7 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClient;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaService;
-use iota_client::api_types::responses::OutputMetadataResponse;
+use iota_client::api_types::response::OutputMetadataResponse;
 use iota_client::block::input::Input;
 use iota_client::block::output::AliasId;
 use iota_client::block::output::AliasOutput;
@@ -51,7 +52,8 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
   let mut document: IotaDocument = client.resolve_did(&did).await?;
@@ -68,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
   ];
   for service in services {
     let service: IotaService = Service::from_json_value(service)?;
-    assert!(document.insert_service(service));
+    assert!(document.insert_service(service).is_ok());
     document.metadata.updated = Some(Timestamp::now_utc());
 
     // Increase the storage deposit and publish the update.

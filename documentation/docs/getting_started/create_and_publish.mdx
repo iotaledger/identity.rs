@@ -1,51 +1,36 @@
 ---
 title: Create a Decentralized Identity
 sidebar_label: Create a DID Document
-description: Create DID Documents and publish them to the Tangle
+description: Create DID Documents and publish them
 image: /img/Identity_icon.png
 keywords:
 - Documents
 - DID
-- Tangle
 - Create
 - Publish
 ---
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
-import createDidRustExample from  '!!raw-loader!../../../examples_legacy/account/create_did.rs';
+import create_did_rust from "!!raw-loader!../../../examples/0_basic/0_create_did.rs";
+import create_did_node from "!!raw-loader!../../../bindings/wasm/examples/src/0_basic/0_create_did.ts";
 
-If you want to benefit from Self-Sovereign Identity, you need to create a [Decentralized Identity](../concepts/decentralized_identifiers/overview). This identity consists of many parts that have different functions. This page will cover the basics about identity creation and publishing to the Tangle.
+If you want to benefit from Self-Sovereign Identity, you need to create a [Decentralized Identity](../concepts/decentralized_identifiers/overview). This identity consists of many parts that have different functions. This page will cover the basics about identity creation and publishing.
 
 ## Identity Generation Process
+1. The generation of an identity requires a address with funds to cover the [Storage Deposit](../concepts/decentralized_identifiers/alias#storage-deposit). In test networks, a faucet can be used to request funds.
+2. Create the content of the DID Document, a minimal document contains one verification method.
+3. Construct a new [Alias Output](../concepts/decentralized_identifiers/alias) that includes the DID Document in the [State Metadata](../concepts/decentralized_identifiers/alias).
+4. Publish the generated Alias Output.
 
-The generation of an identity starts with a randomly generated [asymmetric key pair](https://en.wikipedia.org/wiki/Public-key_cryptography). You can generate it with the IOTA Identity framework, or you can provide it as a parameter during the creation process. The public key is hashed using the [`Blake2b-256` algorithm](https://en.wikipedia.org/wiki/BLAKE_(hash_function)). This hash becomes the DID, creating a permanent and provable link between the initial keypair and the DID. The public key is then embedded into the initial DID Document and is used for verifying signatures created with the corresponding private key.
+The DID is only known once the [Alias Output](../concepts/decentralized_identifiers/alias) is successfully published, since the DID's [Tag](../specs/did/iota_did_method_spec#iota-tag) contains the [Alias ID](../concepts/decentralized_identifiers/alias#alias-id).
 
-## Using the Account Module
+See the example below to create an identity in Rust or Node.js.
 
-The following example uses the high-level account module of the IOTA Identity framework to create an identity. You should use the account module for most of your use cases, but a lower-level API is also available should you need more flexibility at the cost of more complexity. For more information on APIs please visit the [Rust API Reference](../libraries/rust/getting_started#api-reference) or the [WASM API Reference](../libraries/wasm/api_reference).
+As this page is a simple overview about creating an identity, further wiki pages are available for more in-depth explanation. Note that the Iota Identity Framework follows [IOTA DID Method Specification](../specs/did/iota_did_method_spec).
 
-:::tip Using Replit
-
-Select your programming language of choice and press the green play button to execute the example.
-
-:::
-
-<CodeSnippet 
-    nodeReplitLink="https://repl.it/@IOTAFoundation/create-did?lite=true"
-    rustContent={createDidRustExample}
-    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples-account/src/create_did.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples_legacy/account/create_did.rs"
+<CodeSnippet
+    nodeContent={create_did_node}
+    rustContent={create_did_rust}
+    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/src/0_basic/0_create_did.ts"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples/0_basic/0_create_did.rs"
 />
 
-The first step in this example is the creation of an account. The account is a stateful object that manages one or more identities. The account provides an interface to execute high-level operations on identities, such as [creating](../concepts/decentralized_identifiers/create) and [updating](../concepts/decentralized_identifiers/update)) them.
-
-Next, the identity is created and published to the IOTA Tangle. This operation will:
-
-1. Generate a private key.
-2. Store it in the account.
-3. Generate a DID.
-4. Generate a DID Document.
-5. Publish it to the Tangle.
-
-Once the DID Document is uploaded to the Tangle, it becomes immutable, meaning that this version of the identity can never be altered or removed. The only way to update or delete an identity is by publishing a new version, which we will discuss in the next section. This immutability is what makes a Decentralized Identity solution based on Distributed Ledger Technology (DLT) trustworthy. The public keys inside the DID Document can never be changed without having access to the private key, allowing the users to completely control their own identities.
-
-The rest of the example shows how to retrieve (resolve) the identity from the Tangle and how it can be deleted.

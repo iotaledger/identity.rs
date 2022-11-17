@@ -134,7 +134,7 @@ impl CredentialValidator {
       OneOrMany::One(ref credential_subject) => credential_subject.id.as_ref() == Some(holder),
       OneOrMany::Many(subjects) => {
         // need to check the case where the Many variant holds a vector of exactly one subject
-        if let &[ref credential_subject] = subjects.as_slice() {
+        if let [credential_subject] = subjects.as_slice() {
           credential_subject.id.as_ref() == Some(holder)
         } else {
           // zero or > 1 subjects is interpreted to mean that the holder is not the subject
@@ -774,14 +774,16 @@ mod tests {
 
     // Add a RevocationBitmap service to the issuer.
     let bitmap: RevocationBitmap = RevocationBitmap::new();
-    assert!(issuer_doc.service_mut().append(
-      Service::builder(Object::new())
-        .id(service_url.clone())
-        .type_(RevocationBitmap::TYPE)
-        .service_endpoint(bitmap.to_endpoint().unwrap())
-        .build()
-        .unwrap()
-    ));
+    assert!(issuer_doc
+      .insert_service(
+        Service::builder(Object::new())
+          .id(service_url.clone())
+          .type_(RevocationBitmap::TYPE)
+          .service_endpoint(bitmap.to_endpoint().unwrap())
+          .build()
+          .unwrap()
+      )
+      .is_ok());
 
     // 3: un-revoked index always succeeds.
     for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {

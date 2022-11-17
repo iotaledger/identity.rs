@@ -147,7 +147,7 @@ where
 #[tokio::test]
 async fn missing_handler_errors() {
   let method_name: String = "foo".to_owned();
-  let bad_did: CoreDID = CoreDID::parse(&format!("did:{method_name}:1234")).unwrap();
+  let bad_did: CoreDID = CoreDID::parse(format!("did:{method_name}:1234")).unwrap();
   let other_method: String = "bar".to_owned();
   let good_did: CoreDID = CoreDID::parse(format!("did:{other_method}:1234")).unwrap();
   // configure `resolver` to resolve the "bar" method

@@ -1,11 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_block::output::AliasId;
 use identity_iota::did::DIDError;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::NetworkName;
+use iota_types::block::output::AliasId;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;

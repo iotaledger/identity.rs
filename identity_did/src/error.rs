@@ -33,13 +33,18 @@ pub enum Error {
   MissingIdFragment,
   #[error("Invalid Verification Method Type")]
   InvalidMethodType,
-  /// Caused by attempting to add a verification method to a document, where a method with the same fragment already
-  /// exists.
-  #[error("verification method already exists")]
-  MethodAlreadyExists,
+  /// Caused by attempting to add a verification method to a document, where a method or service with the same fragment
+  /// already exists.
+  #[error("unable to insert method: the id is already in use")]
+  MethodInsertionError,
   /// Caused by attempting to attach or detach a relationship on an embedded method.
   #[error("unable to modify relationships on embedded methods, use insert or remove instead")]
   InvalidMethodEmbedded,
+
+  /// Caused by attempting to insert a service whose id overlaps with a verification method or an already existing
+  /// service.
+  #[error("unable to insert service: the id is already in use")]
+  InvalidServiceInsertion,
 
   #[error("Unknown Method Scope")]
   UnknownMethodScope,

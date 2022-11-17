@@ -1,6 +1,6 @@
 [package]
 name = "examples"
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
@@ -10,8 +10,10 @@ anyhow = "1.0.62"
 async-trait = "*"
 did-key = { version = "0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
-iota-client = { version = "2.0.1-rc.1", default-features = false, features = ["tls", "stronghold"] }
-primitive-types = "0.11.1"
+iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls", "stronghold"] }
+# Remove once iota-client 2.0.1-rc.4 is released.
+iota-types = { version = "=1.0.0-rc.1", default-features = false, features = ["block", "std"], optional = true }
+primitive-types = "0.12.1"
 rand = "0.8.5"
 thiserror = "*"
 tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
@@ -38,6 +40,18 @@ name = "3_deactivate_did"
 [[example]]
 path = "0_basic/4_delete_did.rs"
 name = "4_delete_did"
+
+[[example]]
+path = "0_basic/5_create_vc.rs"
+name = "5_create_vc"
+
+[[example]]
+path = "0_basic/6_create_vp.rs"
+name = "6_create_vp"
+
+[[example]]
+path = "0_basic/7_revoke_vc.rs"
+name = "7_revoke_vc"
 
 [[example]]
 path = "1_advanced/0_did_controls_did.rs"

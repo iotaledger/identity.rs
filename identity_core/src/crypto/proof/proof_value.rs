@@ -51,9 +51,9 @@ impl ProofValue {
   pub fn as_str(&self) -> &str {
     match self {
       Self::None => "",
-      Self::Jws(inner) => &**inner,
-      Self::Proof(inner) => &**inner,
-      Self::Signature(inner) => &**inner,
+      Self::Jws(inner) => inner,
+      Self::Proof(inner) => inner,
+      Self::Signature(inner) => inner,
     }
   }
 

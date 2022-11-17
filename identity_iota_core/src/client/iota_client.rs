@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::api_types::responses::OutputResponse;
+use iota_client::api_types::response::OutputResponse;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
@@ -63,7 +63,7 @@ impl IotaClientExt for Client {
   ) -> Result<IotaDocument> {
     let block: Block = publish_output(self, secret_manager, alias_output)
       .await
-      .map_err(|err| Error::DIDUpdateError("publish_did_output: publish failed", Some(err)))?;
+      .map_err(|err| Error::DIDUpdateError("publish_did_output: publish failed", Some(Box::new(err))))?;
     let network: NetworkName = self.network_name().await?;
 
     IotaDocument::unpack_from_block(&network, &block)?
@@ -92,17 +92,22 @@ impl IotaClientExt for Client {
       .block()
       .with_secret_manager(secret_manager)
       .with_input(output_id.into())
-      .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block input", Some(err)))?
+      .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block input", Some(Box::new(err))))?
       .with_outputs(vec![basic_output])
-      .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block output", Some(err)))?
+      .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block output", Some(Box::new(err))))?
       .with_burning_allowed(true)
       .finish()
       .await
-      .map_err(|err| Error::DIDUpdateError("delete_did_output: publish failed", Some(err)))?;
+      .map_err(|err| Error::DIDUpdateError("delete_did_output: publish failed", Some(Box::new(err))))?;
     let _ = self
       .retry_until_included(&block.id(), None, None)
       .await
-      .map_err(|err| Error::DIDUpdateError("delete_did_output: publish retry failed or timed-out", Some(err)))?;
+      .map_err(|err| {
+        Error::DIDUpdateError(
+          "delete_did_output: publish retry failed or timed-out",
+          Some(Box::new(err)),
+        )
+      })?;
 
     Ok(())
   }
@@ -132,7 +137,8 @@ impl IotaIdentityClient for Client {
   }
 
   async fn get_rent_structure(&self) -> Result<RentStructure> {
-    Client::get_rent_structure(self).map_err(|err| Error::DIDUpdateError("get_rent_structure failed", Some(err)))
+    Client::get_rent_structure(self)
+      .map_err(|err| Error::DIDUpdateError("get_rent_structure failed", Some(Box::new(err))))
   }
   async fn get_token_supply(&self) -> Result<u64> {
     self.get_token_supply().map_err(Error::TokenSupplyError)

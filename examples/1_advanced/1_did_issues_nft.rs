@@ -4,12 +4,13 @@
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
+use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::output::feature::MetadataFeature;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
-use iota_client::api_types::responses::OutputResponse;
+use iota_client::api_types::response::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
 use iota_client::block::output::feature::IssuerFeature;
@@ -52,7 +53,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the manufacturer.
-  let (_, manufacturer_did): (Address, IotaDID) = create_did(&client, &mut secret_manager).await?;
+  let (_, manufacturer_document, _): (Address, IotaDocument, KeyPair) =
+    create_did(&client, &mut secret_manager).await?;
+  let manufacturer_did = manufacturer_document.id().clone();
 
   // Get the current byte cost.
   let rent_structure: RentStructure = client.get_rent_structure()?;
@@ -120,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Reconstruct the manufacturer's DID from the Alias Id.
   let network: NetworkName = client.network_name().await?;
-  let manufacturer_did: IotaDID = IotaDID::new(&*manufacturer_alias_id, &network);
+  let manufacturer_did: IotaDID = IotaDID::new(&manufacturer_alias_id, &network);
 
   // Resolve the issuer of the NFT.
   let manufacturer_document: IotaDocument = client.resolve_did(&manufacturer_did).await?;

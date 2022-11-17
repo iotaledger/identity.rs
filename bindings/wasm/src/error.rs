@@ -160,16 +160,16 @@ impl From<serde_json::Error> for WasmError<'_> {
 impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {
-      name: Cow::Borrowed("bee_block::Error"),
+      name: Cow::Borrowed("iota_types::block::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }
 }
 
-impl From<bee_api_types::error::Error> for WasmError<'_> {
-  fn from(error: bee_api_types::error::Error) -> Self {
+impl From<iota_types::api::error::Error> for WasmError<'_> {
+  fn from(error: iota_types::api::error::Error) -> Self {
     Self {
-      name: Cow::Borrowed("bee_api_types::Error"),
+      name: Cow::Borrowed("iota_types::api::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }

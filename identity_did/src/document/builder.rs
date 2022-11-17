@@ -142,11 +142,47 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::verification::MethodData;
+  use crate::verification::MethodType;
   use crate::Error;
 
   #[test]
   fn test_missing_id() {
     let result: Result<CoreDocument> = DocumentBuilder::default().build();
     assert!(matches!(result.unwrap_err(), Error::InvalidDocument(_, None)));
+  }
+
+  #[test]
+  fn duplicate_id_different_scopes() {
+    let did: CoreDID = "did:example:1234".parse().unwrap();
+    let fragment = "#key1";
+    let id = did.to_url().join(fragment).unwrap();
+
+    let method1: VerificationMethod = VerificationMethod::builder(Default::default())
+      .id(id.clone())
+      .controller(did.clone())
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyBase58(
+        "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
+      ))
+      .build()
+      .unwrap();
+
+    let method2: VerificationMethod = VerificationMethod::builder(Default::default())
+      .id(id)
+      .controller(did.clone())
+      .type_(MethodType::X25519KeyAgreementKey2019)
+      .data(MethodData::PublicKeyBase58(
+        "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x".into(),
+      ))
+      .build()
+      .unwrap();
+
+    let result: Result<CoreDocument> = DocumentBuilder::default()
+      .id(did)
+      .verification_method(method1)
+      .key_agreement(method2)
+      .build();
+    assert!(result.is_err());
   }
 }

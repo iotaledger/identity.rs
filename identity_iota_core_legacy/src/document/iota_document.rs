@@ -238,7 +238,7 @@ impl IotaDocument {
 
   /// Returns a mutable reference to the custom DID Document properties.
   pub fn properties_mut(&mut self) -> &mut Object {
-    self.document.properties_mut()
+    self.document.properties_mut_unchecked()
   }
 
   // ===========================================================================
@@ -254,18 +254,14 @@ impl IotaDocument {
   ///
   /// Returns `true` if the service was added.
   pub fn insert_service(&mut self, service: IotaService) -> bool {
-    if service.id().fragment().is_none() {
-      false
-    } else {
-      self.document.service_mut().append(service)
-    }
+    self.document.insert_service(service).is_ok()
   }
 
   /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
   ///
   /// Returns `true` if a service was removed.
   pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
-    self.document.service_mut().remove(did_url)
+    self.document.remove_service(did_url).is_some()
   }
 
   // ===========================================================================
@@ -292,7 +288,11 @@ impl IotaDocument {
   ///
   /// Returns an error if the method does not exist.
   pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    Ok(self.document.remove_method(did_url)?)
+    self
+      .document
+      .remove_method(did_url)
+      .map(|_| ())
+      .ok_or(Error::Compatibility)
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -1203,7 +1203,7 @@ mod tests {
     // Add a new property on the document.
     let doc2 = {
       let mut doc2: IotaDocument = doc1.clone();
-      doc2.properties_mut().insert("foo".into(), 123.into());
+      doc2.properties_mut_unchecked().insert("foo".into(), 123.into());
       let diff2: DiffMessage = doc1
         .diff(
           &doc2,
@@ -1223,7 +1223,7 @@ mod tests {
     // Mutate a property on the document.
     let doc3 = {
       let mut doc3: IotaDocument = doc2.clone();
-      *doc3.properties_mut().get_mut("foo").unwrap() = 456.into();
+      *doc3.properties_mut_unchecked().get_mut("foo").unwrap() = 456.into();
       let diff3: DiffMessage = doc2
         .diff(
           &doc3,
@@ -1243,7 +1243,7 @@ mod tests {
     // Remove a property on the document.
     {
       let mut doc4: IotaDocument = doc3.clone();
-      assert_eq!(doc4.properties_mut().remove("foo").unwrap(), Value::from(456));
+      assert_eq!(doc4.properties_mut_unchecked().remove("foo").unwrap(), Value::from(456));
       let diff4: DiffMessage = doc3
         .diff(
           &doc4,
