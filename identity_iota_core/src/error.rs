@@ -28,6 +28,9 @@ pub enum Error {
   TokenSupplyError(#[source] iota_client::Error),
   #[error("unable to resolve a `{expected}` DID on network `{actual}`")]
   NetworkMismatch { expected: String, actual: String },
+  #[error("could not fetch protocol parameters")]
+  #[cfg(feature = "iota-client")]
+  ProtocolParametersError(#[source] iota_client::Error), 
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]
