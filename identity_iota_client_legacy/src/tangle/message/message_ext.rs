@@ -77,7 +77,7 @@ pub(crate) fn pack_did_message<T: ToJson>(data: &T, encoding: DIDMessageEncoding
   // Encode data.
   let encoded_message_data: Vec<u8> = match encoding {
     DIDMessageEncoding::Json => data.to_json_vec()?,
-    DIDMessageEncoding::JsonBrotli => compression_brotli::compress_brotli(&data.to_json()?)?,
+    DIDMessageEncoding::JsonBrotli => compression_brotli::compress_brotli(data.to_json()?)?,
   };
 
   // Prepend flags.

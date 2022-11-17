@@ -138,16 +138,17 @@ impl WasmIotaDocument {
   /// If the value is set to `null`, the custom property will be removed.
   ///
   /// ### WARNING
+  ///
   /// This method can overwrite existing properties like `id` and result in an invalid document.
   #[wasm_bindgen(js_name = setPropertyUnchecked)]
   pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut().insert(key, value);
+        self.0.properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.properties_mut().remove(&key);
+        self.0.properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -175,16 +176,16 @@ impl WasmIotaDocument {
   ///
   /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmIotaService) -> bool {
-    self.0.insert_service(service.0.clone())
+  pub fn insert_service(&mut self, service: &WasmIotaService) -> Result<()> {
+    self.0.insert_service(service.0.clone()).wasm_result()
   }
 
   /// Remove a {@link IotaService} identified by the given {@link IotaDIDUrl} from the document.
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmIotaDIDUrl) -> bool {
-    self.0.remove_service(&did.0)
+  pub fn remove_service(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaService> {
+    self.0.remove_service(&did.0).map(Into::into)
   }
 
   /// Returns the first {@link IotaService} with an `id` property matching the provided `query`,
@@ -231,8 +232,8 @@ impl WasmIotaDocument {
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmIotaDIDUrl) -> Result<()> {
-    self.0.remove_method(&did.0).wasm_result()
+  pub fn remove_method(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaVerificationMethod> {
+    self.0.remove_method(&did.0).map(Into::into)
   }
 
   /// Returns a copy of the first verification method with an `id` property

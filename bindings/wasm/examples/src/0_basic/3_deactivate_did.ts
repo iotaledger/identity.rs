@@ -21,10 +21,12 @@ export async function deactivateIdentity() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    const { did } = await createDid(client, secretManager);
+    let { document } = await createDid(client, secretManager);
+    const did = document.id();
 
     // Resolve the latest state of the DID document, so we can reactivate it later.
-    let document: IotaDocument = await didClient.resolveDid(did);
+    // Technically this is equivalent to the document above.
+    document = await didClient.resolveDid(did);
 
     // Deactivate the DID by publishing an empty document.
     // This process can be reversed since the Alias Output is not destroyed.

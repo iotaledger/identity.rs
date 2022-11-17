@@ -45,7 +45,8 @@ export async function customResolution() {
     };
 
     // Creates a new wallet and identity for us to resolve (see "0_create_did" example).
-    const { did } = await createDid(client, secretManager);
+    const { document } = await createDid(client, secretManager);
+    const did = document.id();
 
     // Resolve didKey into a DID document.
     const didKeyDoc = await resolver.resolve(didKey);

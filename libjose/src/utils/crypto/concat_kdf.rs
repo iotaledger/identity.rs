@@ -19,25 +19,25 @@ pub fn concat_kdf(alg: &str, len: usize, z: &[u8], apu: &[u8], apv: &[u8]) -> Re
 
   for count in 0..rounds {
     // Iteration Count
-    digest.update(&(count as u32 + 1).to_be_bytes());
+    digest.update((count + 1).to_be_bytes());
 
     // Derived Secret
     digest.update(z);
 
     // AlgorithmId
-    digest.update(&(alg.len() as u32).to_be_bytes());
+    digest.update((alg.len() as u32).to_be_bytes());
     digest.update(alg.as_bytes());
 
     // PartyUInfo
-    digest.update(&(apu.len() as u32).to_be_bytes());
+    digest.update((apu.len() as u32).to_be_bytes());
     digest.update(apu);
 
     // PartyVInfo
-    digest.update(&(apv.len() as u32).to_be_bytes());
+    digest.update((apv.len() as u32).to_be_bytes());
     digest.update(apv);
 
     // Shared Key Length
-    digest.update(&((len * 8) as u32).to_be_bytes());
+    digest.update(((len * 8) as u32).to_be_bytes());
 
     output.extend_from_slice(&digest.finalize_reset());
   }

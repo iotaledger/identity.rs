@@ -31,11 +31,12 @@ export async function updateIdentity() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    const { did } = await createDid(client, secretManager);
+    let { document } = await createDid(client, secretManager);
+    const did = document.id();
 
     // Resolve the latest state of the document.
     // Technically this is equivalent to the document above.
-    const document: IotaDocument = await didClient.resolveDid(did);
+    document = await didClient.resolveDid(did);
 
     // Insert a new Ed25519 verification method in the DID document.
     let keypair = new KeyPair(KeyType.Ed25519);

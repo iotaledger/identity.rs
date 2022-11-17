@@ -6,6 +6,9 @@ import { updateIdentity } from "./0_basic/1_update_did";
 import { resolveIdentity } from "./0_basic/2_resolve_did";
 import { deactivateIdentity } from "./0_basic/3_deactivate_did";
 import { deleteIdentity } from "./0_basic/4_delete_did";
+import { createVC } from "./0_basic/5_create_vc";
+import { createVP } from "./0_basic/6_create_vp";
+import { revokeVC } from "./0_basic/7_revoke_vc";
 import { didControlsDid } from "./1_advanced/0_did_controls_did";
 import { didIssuesNft } from "./1_advanced/1_did_issues_nft";
 import { nftOwnsDid } from "./1_advanced/2_nft_owns_did";
@@ -31,6 +34,12 @@ async function main() {
             return await deactivateIdentity();
         case "4_delete_did":
             return await deleteIdentity();
+        case "5_create_vc":
+            return await createVC();
+        case "6_create_vp":
+            return await createVP();
+        case "7_revoke_vc":
+            return await revokeVC();
         case "0_did_controls_did":
             return await didControlsDid();
         case "1_did_issues_nft":

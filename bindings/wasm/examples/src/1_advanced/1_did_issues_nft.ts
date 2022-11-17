@@ -48,7 +48,8 @@ export async function didIssuesNft() {
     };
 
     // Create a new DID for the manufacturer. (see "0_create_did" example).
-    var { did: manufacturerDid } = await createDid(client, secretManager);
+    var { document } = await createDid(client, secretManager);
+    let manufacturerDid = document.id();
 
     // Get the current byte costs.
     const rentStructure: IRent = await didClient.getRentStructure();

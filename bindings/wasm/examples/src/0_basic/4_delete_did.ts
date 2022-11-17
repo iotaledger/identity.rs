@@ -20,7 +20,8 @@ export async function deleteIdentity() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    const { address, did } = await createDid(client, secretManager);
+    const { address, document } = await createDid(client, secretManager);
+    const did = document.id();
 
     // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.
     // This operation is *not* reversible.

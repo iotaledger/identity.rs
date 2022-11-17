@@ -23,6 +23,7 @@ strum = { version = "0.24.0", default-features = false, features = ["std", "deri
 thiserror = { version = "1.0", default-features = false }
 
 [dev-dependencies]
+criterion = { version = "0.4.0", default-features = false, features = ["cargo_bench_support"] }
 proptest = { version = "1.0" }
 serde_json = { version = "1.0", default-features = false }
 
@@ -35,3 +36,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 default = ["revocation-bitmap"]
 revocation-bitmap = ["dataurl", "flate2", "roaring"]
+
+[[bench]]
+name = "deserialize_document"
+harness = false
