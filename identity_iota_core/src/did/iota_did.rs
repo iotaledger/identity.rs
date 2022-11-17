@@ -44,8 +44,8 @@ impl IotaDID {
   /// The default network name (`"iota"`).
   pub const DEFAULT_NETWORK: &'static str = "iota";
 
-  /// The string tag of the placeholder DID.
-  pub const PLACEHOLDER_TAG: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+  /// The tag of the placeholder DID.
+  pub const PLACEHOLDER_TAG: &'static str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   /// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
