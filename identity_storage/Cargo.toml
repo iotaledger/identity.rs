@@ -1,6 +1,6 @@
 [package]
 name = "identity_storage"
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -14,9 +14,9 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 [dependencies]
 async-trait = "0.1"
 bee-block = { version = "1.0", default-features = false, features = ["std"], optional = true }
-identity_core = { version = "=0.7.0-alpha.2", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.2", path = "../identity_credential", default-features = false, features = ["validator"] }
-identity_did = { version = "=0.7.0-alpha.2", path = "../identity_did", default-features = false }
+identity_core = { version = "=0.7.0-alpha.3", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.3", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_did = { version = "=0.7.0-alpha.3", path = "../identity_did", default-features = false }
 rand = "0.8"
 seahash = { version = "4.1.0", default-features = false }
 serde = "1.0.145"
