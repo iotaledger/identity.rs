@@ -9,7 +9,8 @@ keywords:
 - Create
 - sign
 ---
-import create_vc_rs from  '!!raw-loader!../../../../examples_legacy/account/create_vc.rs';
+import create_vc_ts from '!!raw-loader!../../../../bindings/wasm/examples/src/0_basic/5_create_vc.ts'
+import create_vc_rs from  '!!raw-loader!../../../../examples/0_basic/5_create_vc.rs';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
 
 A [verifiable credential (VC)](./overview.md) can represent all information that a physical credential represents, such as a passport or university degree. However, by allowing other parties to cryptographically verify the authorship and integrity of the claims, verifiable credentials can be seen as more tamper-evident and more trustworthy than their physical counterparts.
@@ -79,8 +80,8 @@ The following code exemplifies how an issuer can create, sign, and validate a ve
 This Verifiable Credential can be [verified by anyone](./verifiable_presentations.mdx), allowing Alice to take control of it and share it with anyone.
 
 <CodeSnippet 
-    nodeReplitLink="https://repl.it/@IOTAFoundation/create-vc?lite=true"
+    nodeContent={create_vc_ts}
     rustContent={create_vc_rs}
-    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples-account/src/create_vc.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples_legacy/account/create_vc.rs"
+    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/src/0_basic/5_create_vc.ts"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples/0_basic/5_create_vc.rs"
 />
