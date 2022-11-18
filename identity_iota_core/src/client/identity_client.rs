@@ -212,7 +212,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     self
       .get_protocol_parameters()
       .await
-      .map(|parameters| parameters.network_name().to_owned())
+      .map(|parameters| parameters.bech32_hrp().to_owned())
   }
 }
 

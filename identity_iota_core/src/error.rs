@@ -21,7 +21,7 @@ pub enum Error {
   #[cfg(feature = "iota-client")]
   #[error("{0}")]
   BasicOutputBuildError(#[source] iota_client::block::Error),
-  #[error("\"{0}\" is not a valid network name")]
+  #[error("\"{0}\" is not a valid network name in the context of the `iota` did method")]
   InvalidNetworkName(String),
   #[cfg(feature = "iota-client")]
   #[error("unable to obtain the token supply from the client")]
