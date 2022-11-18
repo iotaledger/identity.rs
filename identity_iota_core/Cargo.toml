@@ -15,7 +15,7 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 identity_core = { version = "=0.7.0-alpha.3", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.7.0-alpha.3", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.7.0-alpha.3", path = "../identity_did", default-features = false }
-# Pin until iota-client v2.0.1-rc.4 is released 
+# Pin until iota-client v2.0.1-rc.4 is released
 iota-types = { version = "1.0.0-rc.2", default-features = false, features = ["block", "std"], optional = true }
 
 async-trait = { version = "0.1.56", default-features = false, optional = true }

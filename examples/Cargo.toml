@@ -9,9 +9,10 @@ publish = false
 anyhow = "1.0.62"
 # did-key = { version = "0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
-iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls", "stronghold"] }
+# iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls", "stronghold"] }
+iota-client = { git = "https://github.com/thibault-martinez/iota.rs.git", branch = "protocol-parameters-dto", default-features = false, features = ["tls", "stronghold"] }
 # Remove once iota-client 2.0.1-rc.4 is released.
-iota-types = { version = "1.0.0-rc.2", default-features = false, features = ["block", "std"], optional = true }
+# iota-types = { version = "1.0.0-rc.2", default-features = false, features = ["block", "std"], optional = true }
 primitive-types = "0.12.1"
 rand = "0.8.5"
 tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
@@ -75,6 +76,6 @@ name = "4_key_exchange"
 path = "1_advanced/5_alias_output_history.rs"
 name = "5_alias_output_history"
 
-#[[example]]
-#path = "1_advanced/6_custom_resolution.rs"
-#name = "6_custom_resolution"
+# [[example]]
+# path = "1_advanced/6_custom_resolution.rs"
+# name = "6_custom_resolution"

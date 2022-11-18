@@ -23,8 +23,8 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use rand::distributions::DistString;
 
-pub static API_ENDPOINT: &str = "http://localhost:14265";
-pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
+pub static API_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
+pub static FAUCET_ENDPOINT: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 /// Creates a DID Document and publishes it in a new Alias Output.
 ///
@@ -74,9 +74,14 @@ pub async fn get_address_with_funds(
 ) -> anyhow::Result<Address> {
   let address: Address = get_address(client, stronghold).await?;
 
-  request_faucet_funds(client, address, client.get_bech32_hrp()?.as_str(), faucet_endpoint)
-    .await
-    .context("failed to request faucet funds")?;
+  request_faucet_funds(
+    client,
+    address,
+    client.get_bech32_hrp().await?.as_str(),
+    faucet_endpoint,
+  )
+  .await
+  .context("failed to request faucet funds")?;
 
   Ok(address)
 }
@@ -149,7 +154,7 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
 
   let mut total_amount = 0;
   for output_response in outputs_responses {
-    let output = Output::try_from_dto(&output_response.output, client.get_token_supply()?)?;
+    let output = Output::try_from_dto(&output_response.output, client.get_token_supply().await?)?;
     total_amount += output.amount();
   }
 

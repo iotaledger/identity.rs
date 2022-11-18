@@ -31,12 +31,12 @@ mod state_metadata;
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "iota-client")]
-    #[test]
-    fn test_deserialize() {
-        use iota_client::block::protocol::ProtocolParameters;
+  #[cfg(feature = "iota-client")]
+  #[test]
+  fn test_deserialize() {
+    use iota_client::block::protocol::ProtocolParameters;
 
-        let json: &str = r#"{
+    let json: &str = r#"{
             "version":2,
             "networkName":"testnet",
             "bech32Hrp":"rms",
@@ -45,7 +45,7 @@ mod tests {
             "rentStructure":{"vByteCost":100,"vByteFactorKey":10,"vByteFactorData":1},
             "tokenSupply":"1450896407249092"
             }"#;
-        let protocol_parameters: Result<ProtocolParameters,_> = serde_json::from_str(json);
-        assert!(protocol_parameters.is_ok()); 
-    }
+    let protocol_parameters: Result<ProtocolParameters, _> = serde_json::from_str(json);
+    assert!(protocol_parameters.is_ok());
+  }
 }

@@ -22,6 +22,7 @@ use identity_iota::iota::NetworkName;
 use iota_client::api_types::response::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
+use iota_client::block::output::dto::OutputDto;
 use iota_client::block::output::unlock_condition::ImmutableAliasAddressUnlockCondition;
 use iota_client::block::output::AliasId;
 use iota_client::block::output::AliasOutput;
@@ -66,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
   let (_, authority_document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
   let authority_did = authority_document.id().clone();
 
-  let rent_structure: RentStructure = client.get_rent_structure()?;
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // We want to update the foundry counter of the authority's Alias Output, so we create an
   // updated version of the output. We pass in the previous document,
@@ -77,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
   // We will add one foundry to this Alias Output.
   let authority_alias_output = AliasOutputBuilder::from(&authority_alias_output)
     .with_foundry_counter(1)
-    .finish(client.get_token_supply()?)?;
+    .finish(client.get_token_supply().await?)?;
 
   // Create a token foundry that represents carbon credits.
   let token_scheme = TokenScheme::Simple(SimpleTokenScheme::new(
@@ -102,7 +103,7 @@ async fn main() -> anyhow::Result<()> {
       .add_unlock_condition(UnlockCondition::ImmutableAliasAddress(
         ImmutableAliasAddressUnlockCondition::new(AliasAddress::new(AliasId::from(&authority_did))),
       ))
-      .finish(client.get_token_supply()?)?;
+      .finish(client.get_token_supply().await?)?;
 
   let carbon_credits_foundry_id: FoundryId = carbon_credits_foundry.id();
 
@@ -121,9 +122,11 @@ async fn main() -> anyhow::Result<()> {
 
   // Get the latest output that contains the foundry.
   let foundry_output_id: OutputId = client.foundry_output_id(carbon_credits_foundry_id).await?;
-  let carbon_credits_foundry: OutputResponse = client.get_output(&foundry_output_id).await?;
-  let carbon_credits_foundry: Output =
-    Output::try_from_dto(&carbon_credits_foundry.output, client.get_token_supply()?)?;
+  let carbon_credits_foundry: OutputDto = client
+    .get_output(&foundry_output_id)
+    .await
+    .map(|response| response.output)?;
+  let carbon_credits_foundry: Output = Output::try_from_dto(&carbon_credits_foundry, client.get_token_supply().await?)?;
 
   let carbon_credits_foundry: FoundryOutput = if let Output::Foundry(foundry_output) = carbon_credits_foundry {
     foundry_output
@@ -167,7 +170,7 @@ async fn main() -> anyhow::Result<()> {
       Address::Alias(AliasAddress::new(*authority_alias_id)),
       tomorrow,
     )?))
-    .finish(client.get_token_supply()?)?;
+    .finish(client.get_token_supply().await?)?;
 
   // Reduce the carbon credits in the foundry by the amount that is sent to the company.
   let carbon_credits_foundry = FoundryOutputBuilder::from(&carbon_credits_foundry)
@@ -175,7 +178,7 @@ async fn main() -> anyhow::Result<()> {
       carbon_credits_foundry.token_id(),
       U256::from(499_000u32),
     )?])
-    .finish(client.get_token_supply()?)?;
+    .finish(client.get_token_supply().await?)?;
 
   // Publish the output, transferring the carbon credits.
   let block: Block = client

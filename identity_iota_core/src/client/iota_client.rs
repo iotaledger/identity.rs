@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use iota_client::api_types::response::OutputResponse;
+use iota_client::block::output::dto::OutputDto;
 use iota_client::block::protocol::ProtocolParameters;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
@@ -86,7 +87,7 @@ impl IotaClientExt for Client {
       .map_err(Error::BasicOutputBuildError)?
       .with_native_tokens(alias_output.native_tokens().clone())
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-      .finish_output(self.get_token_supply().map_err(Error::TokenSupplyError)?)
+      .finish_output(self.get_token_supply().await.map_err(Error::TokenSupplyError)?)
       .map_err(Error::BasicOutputBuildError)?;
 
     let block: Block = self
@@ -117,22 +118,29 @@ impl IotaClientExt for Client {
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl IotaIdentityClient for Client {
-  /* 
+  /*
   async fn get_network_hrp(&self) -> Result<String> {
     self.get_bech32_hrp().map_err(Error::DIDResolutionError)
   }
   */
 
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters> {
-    self.get_protocol_parameters().await.map_err(|error|Error::ProtocolParametersError(error))
+    self
+      .get_protocol_parameters()
+      .await
+      .map_err(|error| Error::ProtocolParametersError(error))
   }
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {
     let output_id: OutputId = self.alias_output_id(id).await.map_err(Error::DIDResolutionError)?;
-    let output_response: OutputResponse = self.get_output(&output_id).await.map_err(Error::DIDResolutionError)?;
+    let output_dto: OutputDto = self
+      .get_output(&output_id)
+      .await
+      .map(|response| response.output)
+      .map_err(Error::DIDResolutionError)?;
     let output: Output = Output::try_from_dto(
-      &output_response.output,
-      <Self as IotaIdentityClient>::get_token_supply(self).await?,
+      &output_dto,
+      <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
     )
     .map_err(Error::OutputConversionError)?;
 
@@ -143,18 +151,18 @@ impl IotaIdentityClient for Client {
     }
   }
 
-  /* 
+  /*
   async fn get_rent_structure(&self) -> Result<RentStructure> {
     Client::get_rent_structure(self)
       .map_err(|err| Error::DIDUpdateError("get_rent_structure failed", Some(Box::new(err))))
   }
   */
 
-  /* 
+  /*
   async fn get_token_supply(&self) -> Result<u64> {
     self.get_token_supply().map_err(Error::TokenSupplyError)
   }
-  
+
   */
 }
 
