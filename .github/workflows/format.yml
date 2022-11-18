@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install rustfmt with nightly toolchain
+      - name: Install rustfmt with toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
