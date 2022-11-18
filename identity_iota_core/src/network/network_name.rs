@@ -21,7 +21,7 @@ use crate::error::Result;
 pub struct NetworkName(Cow<'static, str>);
 
 impl NetworkName {
-  pub const MAX_LENGTH: usize = 6;
+  pub const MAX_LENGTH: usize = 7;
 
   /// Creates a new [`NetworkName`] if the name passes validation.
   pub fn try_from<T>(name: T) -> Result<Self>
