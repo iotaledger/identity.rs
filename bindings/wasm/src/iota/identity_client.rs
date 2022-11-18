@@ -22,19 +22,21 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IIotaIdentityClient")]
   pub type WasmIotaIdentityClient;
 
+  /* 
   #[wasm_bindgen(method, js_name = getNetworkHrp)]
   pub fn get_network_hrp(this: &WasmIotaIdentityClient) -> JsValue;
+*/
 
   #[allow(non_snake_case)]
   #[wasm_bindgen(method, js_name = getAliasOutput)]
   pub fn get_alias_output(this: &WasmIotaIdentityClient, aliasId: String) -> JsValue;
-
+  /* 
   #[wasm_bindgen(method, js_name = getRentStructure)]
   pub fn get_rent_structure(this: &WasmIotaIdentityClient) -> JsValue;
 
   #[wasm_bindgen(method, js_name = getTokenSupply)]
   pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
-
+  */
   #[wasm_bindgen(method, js_name = getProtocolParameters)]
   pub fn get_protocol_parameters(this: &WasmIotaIdentityClient) -> JsValue;
 }

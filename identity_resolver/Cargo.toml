@@ -30,7 +30,7 @@ features = ["send-sync-client-ext", "iota-client"]
 optional = true
 
 [dev-dependencies]
-iota-client = { version = "2.0.1-rc.1", default-features = false, features = ["tls"] }
+iota-client = { git = "https://github.com/iotaledger/iota.rs", rev = "355fecdb0f77e019a41f42a416a66bcc5ff6c0d5", default-features = false, features = ["tls"] }
 tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [features]
