@@ -26,10 +26,10 @@ jobs:
           yarn install --immutable
           yarn build
 
-      - name: Install Rust nightly toolchain
+      - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
 
       - name: Test Rust Documentation
@@ -38,5 +38,5 @@ jobs:
           RUSTDOCFLAGS: "-D warnings --cfg docsrs"
         with:
           command: doc
-          toolchain: nightly
+          toolchain: stable
           args: --all-features --no-deps --workspace
