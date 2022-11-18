@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::api_types::response::OutputResponse;
 use iota_client::block::output::dto::OutputDto;
 use iota_client::block::protocol::ProtocolParameters;
 use iota_client::secret::SecretManager;
@@ -14,7 +13,6 @@ use crate::block::output::AliasOutput;
 use crate::block::output::BasicOutputBuilder;
 use crate::block::output::Output;
 use crate::block::output::OutputId;
-use crate::block::output::RentStructure;
 use crate::block::output::UnlockCondition;
 use crate::block::Block;
 use crate::client::identity_client::validate_network;
