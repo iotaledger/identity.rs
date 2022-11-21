@@ -26,10 +26,11 @@ jobs:
           yarn install --immutable
           yarn build
 
-      - name: Install Rust toolchain
+      # docs.rs also uses nightly so it makes sense to mirror that
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           override: true
 
       - name: Test Rust Documentation

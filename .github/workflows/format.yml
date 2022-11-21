@@ -21,7 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      # docs.rs also uses nightly so it makes sense to mirror that
+
+      # we use nightly to get access to advanced format capabilities
       - name: Install rustfmt with nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
