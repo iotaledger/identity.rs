@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::task::Poll;
 
 use futures::pin_mut;
-use identity_iota_core::did::IotaDID;
+use identity_iota_core::IotaDID;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 
@@ -123,7 +123,7 @@ async fn test_unknown_request_returns_error() -> AgentResult<()> {
     .send_request(
       agent_id,
       IdentityGet(
-        "did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942"
+        "did:iota:rms:0xdfda8bcfb959c3e6ef261343c3e1a8310e9c8294eeafee326a4e96d65dbeaca0"
           .try_into()
           .unwrap(),
       ),
