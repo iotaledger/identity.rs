@@ -29,8 +29,8 @@ const DID_MARKER: &[u8] = b"DID";
 /// an Alias Output.
 ///
 /// DID instances in the document are replaced by the `PLACEHOLDER_DID`.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub(crate) struct StateMetadataDocument {
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct StateMetadataDocument {
   #[serde(rename = "doc")]
   pub(crate) document: CoreDocument,
   #[serde(rename = "meta")]
