@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
+import { IotaDID, IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
@@ -24,7 +25,6 @@ import {
 import type { IFoundryOutput } from "@iota/types";
 import { HexHelper } from "@iota/util.js";
 import bigInt from "big-integer";
-import { IotaDID, IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and control a Token Foundry and its tokens.

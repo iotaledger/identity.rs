@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
+import { IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import type { IAliasOutput } from "@iota/iota.js";
-import { IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to resolve an existing DID in an Alias Output. */

@@ -26,7 +26,8 @@
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
     "test:unit": "wasm-pack test --release --node",
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
-    "cypress": "cypress open"
+    "cypress": "cypress open",
+    "fmt": "dprint fmt"
   },
   "config": {
     "CYPRESS_VERIFY_TIMEOUT": 100000
@@ -60,6 +61,7 @@
     "copy-webpack-plugin": "^7.0.0",
     "cypress": "^10.6.0",
     "cypress-parallel": "^0.9.1",
+    "dprint": "^0.33.0",
     "fs-extra": "^10.1.0",
     "jsdoc-to-markdown": "^7.1.1",
     "mocha": "^9.2.0",
