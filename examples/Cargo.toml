@@ -7,7 +7,6 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-did-key = { version = "0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
 iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls", "stronghold"] }
 # Remove once iota-client 2.0.1-rc.4 is released.
