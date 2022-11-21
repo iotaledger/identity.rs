@@ -9,10 +9,9 @@ keywords:
   - revoke
   - revocation
 ---
-
+import revoke_vc_ts from '!!raw-loader!../../../../bindings/wasm/examples/src/0_basic/7_revoke_vc.ts'
+import revoke_vc_rs from "!!raw-loader!../../../../examples/0_basic/7_revoke_vc.rs";
 import CodeSnippet from "../../../src/components/CodeSnippetComponent";
-import revoke_vc_rs from '!!raw-loader!../../../../examples/0_basic/7_revoke_vc.rs';
-import revoke_vc_node from '!!raw-loader!../../../../bindings/wasm/examples/src/0_basic/7_revoke_vc.ts';
 
 ## Overview
 
@@ -56,7 +55,7 @@ A less efficient alternative is to remove the verification method that signed th
 The following code exemplifies how you can revoke a [Verifiable Credential (VC)](overview).
 
 <CodeSnippet 
-    nodeContent={revoke_vc_node}
+    nodeContent={revoke_vc_ts}
     rustContent={revoke_vc_rs}
     nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/src/0_basic/7_revoke_vc.ts"
     rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples/0_basic/7_revoke_vc.rs"
