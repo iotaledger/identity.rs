@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
+import {
+    IotaDID,
+    IotaDocument,
+    IotaIdentityClient,
+    IotaVerificationMethod,
+    KeyPair,
+    KeyType,
+    MethodScope,
+} from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import {
     AddressTypes,
@@ -15,15 +24,6 @@ import {
     TransactionHelper,
 } from "@iota/iota.js";
 import { Converter } from "@iota/util.js";
-import {
-    IotaDID,
-    IotaDocument,
-    IotaIdentityClient,
-    IotaVerificationMethod,
-    KeyPair,
-    KeyType,
-    MethodScope,
-} from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can control another identity.
