@@ -39,5 +39,5 @@ jobs:
           RUSTDOCFLAGS: "-D warnings --cfg docsrs"
         with:
           command: doc
-          toolchain: stable
+          toolchain: nightly
           args: --all-features --no-deps --workspace
