@@ -7,7 +7,8 @@ keywords:
 - verifiable
 - presentations
 ---
-import create_vp_rs from  '!!raw-loader!../../../../examples_legacy/account/create_vp.rs';
+import create_vp_ts from '!!raw-loader!../../../../bindings/wasm/examples/src/0_basic/6_create_vp.ts'
+import create_vp_rs from  '!!raw-loader!../../../../examples/0_basic/6_create_vp.rs';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
 
 A verifiable presentation is the recommended data format for sharing one or more [verifiable credentials](./overview.md).
@@ -166,8 +167,8 @@ The following code demonstrates how to use the IOTA Identity Framework end-to-en
 serialize it to JSON for transmission, deserialize it on the receiving side as a verifier, and finally validate it with various options.
 
 <CodeSnippet
-    nodeReplitLink="https://repl.it/@IOTAFoundation/create-vp?lite=true"
+    nodeContent={create_vp_ts}
     rustContent={create_vp_rs}
-    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples-account/src/create_vp.ts"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples_legacy/account/create_vp.rs"
+    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/src/0_basic/6_create_vp.ts"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples/0_basic/6_create_vp.rs"
 />

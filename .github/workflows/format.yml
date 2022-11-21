@@ -51,11 +51,12 @@ jobs:
           command: fmt
           args: --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
 
-      - name: stronghold-nodejs fmt check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all -- --check
+      # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
+      # - name: stronghold-nodejs fmt check
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     command: fmt
+      #     args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all -- --check
 
       - name: libjose fmt check
         uses: actions-rs/cargo@v1

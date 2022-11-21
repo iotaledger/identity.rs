@@ -45,50 +45,6 @@ runs:
       run: |
         cargo set-version ${{ inputs.version }}
 
-    # cargo workspaces ignores examples_legacy/ but cargo release still tries to version it during publishing.
-    - name: Bump Rust examples_legacy version
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      working-directory: examples_legacy
-      run: |
-        cargo set-version ${{ inputs.version }}
-
-    # cargo workspaces ignores the legacy crates because they are excluded from the workspace.
-    # Bump versions for consistency.
-    # - name: Bump Rust legacy crates' version
-    #   shell: bash
-    #   if: ${{inputs.release-target == 'rust'}}
-    #   run: |
-    #     cargo set-version --manifest-path identity_account_storage/Cargo.toml ${{ inputs.version }}
-    #     cargo set-version --manifest-path identity_iota_client_legacy/Cargo.toml ${{ inputs.version }}
-    #     cargo set-version --manifest-path identity_iota_core_legacy/Cargo.toml ${{ inputs.version }}
-    #     cargo set-version --manifest-path identity_account/Cargo.toml ${{ inputs.version }}
-    #     cargo add --manifest-path identity_account_storage/Cargo.toml --path identity_core
-    #     cargo add --manifest-path identity_account_storage/Cargo.toml --path identity_did
-    #     cargo add --manifest-path identity_account_storage/Cargo.toml --path identity_iota_core_legacy
-    #     cargo add --manifest-path identity_account/Cargo.toml --path identity_account_storage
-    #     cargo add --manifest-path identity_account/Cargo.toml --path identity_core
-    #     cargo add --manifest-path identity_account/Cargo.toml --path identity_credential
-    #     cargo add --manifest-path identity_account/Cargo.toml --path identity_did
-    #     cargo add --manifest-path identity_account/Cargo.toml --path identity_iota_client_legacy
-    #     cargo add --manifest-path identity_account/Cargo.toml --path identity_iota_core_legacy
-    #     cargo add --manifest-path identity_iota_core_legacy/Cargo.toml --path identity_core
-    #     cargo add --manifest-path identity_iota_core_legacy/Cargo.toml --path identity_did
-    #     cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_core
-    #     cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_credential
-    #     cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_did
-    #     cargo add --manifest-path identity_iota_client_legacy/Cargo.toml --path identity_iota_core_legacy
-
-    # cargo workspaces ignores identity_agent because it is excluded from the workspace.
-    # Bump versions for consistency.
-    # - name: Bump Rust agent version
-    #   shell: bash
-    #   if: ${{inputs.release-target == 'rust'}}
-    #   working-directory: identity_agent
-    #   run: |
-    #     cargo set-version ${{ inputs.version }}
-    #     cargo add --path ../identity_core
-
     - name: Bump Wasm bindings crate version
       shell: bash
       if: ${{inputs.release-target == 'wasm'}}
@@ -96,12 +52,13 @@ runs:
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y -a
 
-    - name: Bump stronghold nodejs bindings crate version
-      shell: bash
-      if: ${{inputs.release-target == 'wasm'}}
-      working-directory: bindings/stronghold-nodejs
-      run: |
-        cargo set-version ${{ inputs.version }}
+    # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
+    # - name: Bump stronghold nodejs bindings crate version
+    #   shell: bash
+    #   if: ${{inputs.release-target == 'wasm'}}
+    #   working-directory: bindings/stronghold-nodejs
+    #   run: |
+    #     cargo set-version ${{ inputs.version }}
 
     - name: Replace identity_iota version in Wasm bindings
       shell: bash
@@ -110,15 +67,15 @@ runs:
       run: |
         cargo add identity_iota --path=../../identity_iota
 
-    - name: Replace identity versions in stronghold nodejs bindings
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      working-directory: bindings/stronghold-nodejs
-      run: |
-        cargo add identity_core --path=../../identity_core
-        cargo add identity_did --path=../../identity_did
-        cargo add identity_iota_core_legacy --path=../../identity_iota_core_legacy
-        cargo add identity_account_storage --path=../../identity_account_storage
+    # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
+    # - name: Replace identity versions in stronghold nodejs bindings
+    #   shell: bash
+    #   if: ${{inputs.release-target == 'rust'}}
+    #   working-directory: bindings/stronghold-nodejs
+    #   run: |
+    #     cargo add identity_core --path=../../identity_core
+    #     cargo add identity_did --path=../../identity_did
+    #     cargo add identity_iota_core_legacy --path=../../identity_iota_core_legacy
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
@@ -134,11 +91,12 @@ runs:
       run: |
         npm version ${{ inputs.version }}
 
-    - name: Bump stronghold nodejs npm package version
-      shell: bash
-      if: ${{inputs.release-target == 'wasm'}}
-      working-directory: bindings/stronghold-nodejs
-      run: |
-        npm version ${{ inputs.version }}
-        # set peer dependency version
-        echo "`jq '.peerDependencies."@iota/identity-wasm"="${{ inputs.version }}"' package.json`" > package.json
+    # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
+    # - name: Bump stronghold nodejs npm package version
+    #   shell: bash
+    #   if: ${{inputs.release-target == 'wasm'}}
+    #   working-directory: bindings/stronghold-nodejs
+    #   run: |
+    #     npm version ${{ inputs.version }}
+    #     # set peer dependency version
+    #     echo "`jq '.peerDependencies."@iota/identity-wasm"="${{ inputs.version }}"' package.json`" > package.json

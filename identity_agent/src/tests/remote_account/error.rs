@@ -7,12 +7,6 @@
 pub(crate) enum RemoteAccountError {
   #[error("identity not found")]
   IdentityNotFound,
-  #[error("{0}")]
-  AccountError(String),
-}
-
-impl From<identity_account::Error> for RemoteAccountError {
-  fn from(err: identity_account::Error) -> Self {
-    Self::AccountError(err.to_string())
-  }
+  #[error("placeholder DIDs cannot be managed")]
+  PlaceholderDID,
 }
