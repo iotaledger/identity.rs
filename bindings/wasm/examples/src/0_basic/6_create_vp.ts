@@ -16,7 +16,7 @@ import {
     SubjectHolderRelationship,
     Timestamp,
     VerifierOptions,
-} from "../../../node";
+} from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**

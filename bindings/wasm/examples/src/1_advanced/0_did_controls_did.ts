@@ -23,7 +23,7 @@ import {
     KeyPair,
     KeyType,
     MethodScope,
-} from "../../../node";
+} from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can control another identity.

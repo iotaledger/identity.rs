@@ -12,7 +12,7 @@ import {
     KeyType,
     MethodScope,
     X25519,
-} from "../../../node";
+} from "@iota/identity-wasm/node";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.

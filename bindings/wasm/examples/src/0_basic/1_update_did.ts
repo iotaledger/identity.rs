@@ -14,7 +14,7 @@ import {
     MethodRelationship,
     MethodScope,
     Timestamp,
-} from "../../../node";
+} from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */

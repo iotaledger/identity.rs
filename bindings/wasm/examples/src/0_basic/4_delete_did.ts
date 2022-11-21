@@ -3,7 +3,7 @@
 
 import { Bip39 } from "@iota/crypto.js";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { IotaIdentityClient } from "../../../node";
+import { IotaIdentityClient } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. */
