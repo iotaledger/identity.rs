@@ -7,7 +7,6 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-did-key = { version = "0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
 iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls", "stronghold"] }
 # Remove once iota-client 2.0.1-rc.4 is released.
@@ -46,6 +45,10 @@ name = "5_create_vc"
 [[example]]
 path = "0_basic/6_create_vp.rs"
 name = "6_create_vp"
+
+[[example]]
+path = "0_basic/7_revoke_vc.rs"
+name = "7_revoke_vc"
 
 [[example]]
 path = "1_advanced/0_did_controls_did.rs"

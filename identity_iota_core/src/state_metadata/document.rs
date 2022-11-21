@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::CoreDID;
@@ -47,12 +48,14 @@ impl StateMetadataDocument {
           Ok(original_did.clone())
         } else {
           // TODO: wrap error?
-          IotaDID::try_from_core(did)
+          IotaDID::try_from_core(did).map_err(crate::error::Error::DIDSyntaxError)
         }
       },
       // Do not modify properties.
-      Ok,
+      Result::<Object, crate::error::Error>::Ok,
+      crate::error::Error::InvalidDoc,
     )?;
+
     Ok(IotaDocument::from((core_document, metadata)))
   }
 
@@ -79,37 +82,52 @@ impl StateMetadataDocument {
   /// Unpack bytes into a [`StateMetadataDocument`].
   pub fn unpack(data: &[u8]) -> Result<Self> {
     // Check marker.
-    let marker: &[u8] = data.get(0..=2).ok_or(identity_did::Error::InvalidDocument(
-      "state metadata decoding: expected DID marker at offset [0..=2]",
-      None,
-    ))?;
+    let marker: &[u8] = data
+      .get(0..=2)
+      .ok_or(identity_did::Error::InvalidDocument(
+        "state metadata decoding: expected DID marker at offset [0..=2]",
+        None,
+      ))
+      .map_err(Error::InvalidDoc)?;
     if marker != DID_MARKER {
       return Err(Error::InvalidStateMetadata("missing `DID` marker"));
     }
 
     // Check version.
-    let version: StateMetadataVersion = StateMetadataVersion::try_from(*data.get(3).ok_or(
-      identity_did::Error::InvalidDocument("state metadata decoding: expected version at offset 3", None),
-    )?)?;
+    let version: StateMetadataVersion = StateMetadataVersion::try_from(
+      *data
+        .get(3)
+        .ok_or(identity_did::Error::InvalidDocument(
+          "state metadata decoding: expected version at offset 3",
+          None,
+        ))
+        .map_err(Error::InvalidDoc)?,
+    )?;
     if version != StateMetadataVersion::V1 {
       return Err(Error::InvalidStateMetadata("unsupported version"));
     }
 
     // Decode data.
-    let encoding: StateMetadataEncoding = StateMetadataEncoding::try_from(*data.get(4).ok_or(
-      identity_did::Error::InvalidDocument("state metadata decoding: expected encoding at offset 4", None),
-    )?)?;
+    let encoding: StateMetadataEncoding = StateMetadataEncoding::try_from(
+      *data
+        .get(4)
+        .ok_or(identity_did::Error::InvalidDocument(
+          "state metadata decoding: expected encoding at offset 4",
+          None,
+        ))
+        .map_err(Error::InvalidDoc)?,
+    )?;
 
     let data_len_packed: [u8; 2] = data
       .get(5..=6)
       .ok_or(identity_did::Error::InvalidDocument(
         "state metadata decoding: expected data length at offset [5..=6]",
         None,
-      ))?
+      ))
+      .map_err(Error::InvalidDoc)?
       .try_into()
-      .map_err(|_| {
-        identity_did::Error::InvalidDocument("state metadata decoding: data length conversion error", None)
-      })?;
+      .map_err(|_| identity_did::Error::InvalidDocument("state metadata decoding: data length conversion error", None))
+      .map_err(Error::InvalidDoc)?;
     let data_len: u16 = u16::from_le_bytes(data_len_packed);
 
     let data: &[u8] = data
@@ -117,7 +135,8 @@ impl StateMetadataDocument {
       .ok_or(identity_did::Error::InvalidDocument(
         "state metadata decoding: encoded document shorter than length prefix",
         None,
-      ))?;
+      ))
+      .map_err(Error::InvalidDoc)?;
 
     match encoding {
       StateMetadataEncoding::Json => StateMetadataDocument::from_json_slice(data).map_err(|err| {
@@ -155,7 +174,7 @@ impl From<IotaDocument> for StateMetadataDocument {
   fn from(document: IotaDocument) -> Self {
     let IotaDocument { document, metadata } = document;
     let id: IotaDID = document.id().clone();
-    let core_document: CoreDocument = document.map(
+    let core_document: CoreDocument = document.map_unchecked(
       // Replace self-referential identifiers with a placeholder, but not others.
       |did| {
         if did == id {
@@ -229,23 +248,27 @@ mod tests {
       )
       .unwrap();
 
-    assert!(document.insert_service(
-      IotaService::builder(Object::new())
-        .id(document.id().to_url().join("#my-service").unwrap())
-        .type_("RevocationList2022")
-        .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
-        .build()
-        .unwrap()
-    ));
+    assert!(document
+      .insert_service(
+        IotaService::builder(Object::new())
+          .id(document.id().to_url().join("#my-service").unwrap())
+          .type_("RevocationList2022")
+          .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
+          .build()
+          .unwrap()
+      )
+      .is_ok());
 
-    assert!(document.insert_service(
-      IotaService::builder(Object::new())
-        .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
-        .type_("RevocationList2022")
-        .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
-        .build()
-        .unwrap()
-    ));
+    assert!(document
+      .insert_service(
+        IotaService::builder(Object::new())
+          .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
+          .type_("RevocationList2022")
+          .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
+          .build()
+          .unwrap()
+      )
+      .is_ok());
 
     document
       .also_known_as_mut()

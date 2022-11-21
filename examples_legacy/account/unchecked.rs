@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
 
   // Add a custom property to the document.
   document
-    .properties_mut()
+    .properties_mut_unchecked()
     .insert("myCustomPropertyKey".into(), "value".into());
 
   // Override the updated field timestamp to 24 hours (= 86400 seconds) in the future,
