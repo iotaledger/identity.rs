@@ -25,7 +25,7 @@ runs:
     - name: Cache Docker images
       uses: ScribeMD/docker-cache@70723b070f0541d281d40017fd2e874d677357aa #0.2.6
       with:
-        key: docker-privateTangle-${{ hashFiles('**/private_tangle/*.*') }}
+        key: docker-privateTangle-${{ hashFiles('hornet/private_tangle/**') }}
 
     - name: Setup private tangle
       shell: bash
