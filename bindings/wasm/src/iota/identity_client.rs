@@ -4,13 +4,16 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use identity_iota::core::FromJson;
+use identity_iota::core::ToJson;
+use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::OutputId;
 use identity_iota::iota::IotaIdentityClient;
 use iota_client::block::protocol::dto::ProtocolParametersDto; 
-use iota_client::block::protocol::ProtocolParameters;
+use iota_types::block::protocol::ProtocolParameters;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
@@ -89,7 +92,8 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
         ))
       })?;
 
-    let token_supply_promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_token_supply(self));
+    /* 
+    let token_supply_promise: Promise = Promise::resolve(&<WasmIotaIdentityClient as IotaIdentityClientExt>::get_token_supply(self));
     let token_supply: u64 = JsValueResult::from(JsFuture::from(token_supply_promise).await)
       .to_iota_core_error()
       .and_then(|value| {
@@ -101,8 +105,9 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
           ))
         }
       })?;
+      */
 
-    let alias_output = AliasOutput::try_from_dto(&alias_dto, token_supply).map_err(|err| {
+    let alias_output = AliasOutput::try_from_dto(&alias_dto, <Self as IotaIdentityClientExt>::get_token_supply(self).await?).map_err(|err| {
       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
     })?;
     Ok((output_id, alias_output))
@@ -142,10 +147,12 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_protocol_parameters(self));
     let result: JsValueResult = JsFuture::from(promise).await.into(); 
     let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| parameters.into_serde().map_err(|_|identity_iota::iota::Error::SerializationError("TODO", None)))?; 
-    ProtocolParameters::try_from(protocol_parameters)
-    .map_err(|error|identity_iota::iota::Error::ProtocolParametersError(error))
-
-
+    // TODO: Remove this serde flavoured hack once ProtocolParametersDto becomes available in iota_types. 
+    let parameters_iota_client = iota_client::block::protocol::ProtocolParameters::try_from(protocol_parameters)
+    .map_err(|_| identity_iota::iota::Error::JsError("Could not get protocol parameters".into()))?;
+    let protocol_parameters_json: Vec<u8> = parameters_iota_client.to_json_vec().map_err(|_| identity_iota::iota::Error::JsError("Could not serialize protocol parameters".into()))?;
+    let parameters_iota_types: ProtocolParameters = ProtocolParameters::from_json_slice(&protocol_parameters_json).map_err(|_| identity_iota::iota::Error::JsError("could not deserialize protocol parameters".into()))?;
+    Ok(parameters_iota_types)
   }
 }
 
