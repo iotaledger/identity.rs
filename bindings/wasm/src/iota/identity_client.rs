@@ -8,9 +8,9 @@ use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::OutputId;
-use identity_iota::iota::block::output::RentStructure;
-use identity_iota::iota::block::output::RentStructureBuilder;
 use identity_iota::iota::IotaIdentityClient;
+use iota_client::block::protocol::dto::ProtocolParametersDto; 
+use iota_client::block::protocol::ProtocolParameters;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
@@ -49,6 +49,7 @@ impl Debug for WasmIotaIdentityClient {
 
 #[async_trait::async_trait(?Send)]
 impl IotaIdentityClient for WasmIotaIdentityClient {
+  /* 
   async fn get_network_hrp(&self) -> Result<String, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_network_hrp(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -61,6 +62,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     };
     Ok(network_hrp)
   }
+  */
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput), identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_alias_output(self, id.to_string()));
@@ -106,6 +108,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     Ok((output_id, alias_output))
   }
 
+  /* 
   async fn get_rent_structure(&self) -> Result<RentStructure, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_rent_structure(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -133,6 +136,16 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
           }
         })?,
     )
+  }
+  */
+  async fn get_protocol_parameters(&self) -> Result<ProtocolParameters, identity_iota::iota::Error> {
+    let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_protocol_parameters(self));
+    let result: JsValueResult = JsFuture::from(promise).await.into(); 
+    let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| parameters.into_serde().map_err(|_|identity_iota::iota::Error::SerializationError("TODO", None)))?; 
+    ProtocolParameters::try_from(protocol_parameters)
+    .map_err(|error|identity_iota::iota::Error::ProtocolParametersError(error))
+
+
   }
 }
 
