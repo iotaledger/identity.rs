@@ -29,7 +29,7 @@ export async function createVP() {
     // Step 1: Create identities for the issuer and the holder.
     // ===========================================================================
 
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

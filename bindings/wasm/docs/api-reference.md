@@ -102,6 +102,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -144,8 +146,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
@@ -510,13 +510,13 @@ A method-agnostic DID Document.
         * [.properties()](#CoreDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.setPropertyUnchecked(key, value)](#CoreDocument+setPropertyUnchecked)
         * [.service()](#CoreDocument+service) ⇒ [<code>Array.&lt;CoreService&gt;</code>](#CoreService)
-        * [.insertService(service)](#CoreDocument+insertService) ⇒ <code>boolean</code>
-        * [.removeService(didUrl)](#CoreDocument+removeService) ⇒ <code>boolean</code>
+        * [.insertService(service)](#CoreDocument+insertService)
+        * [.removeService(didUrl)](#CoreDocument+removeService) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
         * [.resolveService(query)](#CoreDocument+resolveService) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
         * [.methods(scope)](#CoreDocument+methods) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
         * [.verificationRelationships()](#CoreDocument+verificationRelationships) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
         * [.insertMethod(method, scope)](#CoreDocument+insertMethod)
-        * [.removeMethod(did)](#CoreDocument+removeMethod)
+        * [.removeMethod(did)](#CoreDocument+removeMethod) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
         * [.resolveMethod(query, scope)](#CoreDocument+resolveMethod) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
@@ -549,6 +549,12 @@ Returns a copy of the DID Document `id`.
 
 ### coreDocument.setId(id)
 Sets the DID of the document.
+
+### Warning
+
+Changing the identifier can drastically alter the results of
+[`Self::resolve_method`](CoreDocument::resolve_method()),
+[`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -642,6 +648,7 @@ Sets a custom property in the DID Document.
 If the value is set to `null`, the custom property will be removed.
 
 ### WARNING
+
 This method can overwrite existing properties like `id` and result in an invalid document.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -659,10 +666,10 @@ Returns a set of all [CoreService](#CoreService) in the document.
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+insertService"></a>
 
-### coreDocument.insertService(service) ⇒ <code>boolean</code>
+### coreDocument.insertService(service)
 Add a new [CoreService](#CoreService) to the document.
 
-Returns `true` if the service was added.
+Errors if there already exists a service or verification method with the same id.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -672,7 +679,7 @@ Returns `true` if the service was added.
 
 <a name="CoreDocument+removeService"></a>
 
-### coreDocument.removeService(didUrl) ⇒ <code>boolean</code>
+### coreDocument.removeService(didUrl) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
 Remoce a [CoreService](#CoreService) identified by the given [CoreDIDUrl](#CoreDIDUrl) from the document.
 
 Returns `true` if the service was removed.
@@ -729,7 +736,7 @@ Adds a new `method` to the document in the given `scope`.
 
 <a name="CoreDocument+removeMethod"></a>
 
-### coreDocument.removeMethod(did)
+### coreDocument.removeMethod(did) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
 Removes all references to the specified Verification Method.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -1980,12 +1987,12 @@ Deserializes an instance from a JSON object.
         * [.properties()](#IotaDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.setPropertyUnchecked(key, value)](#IotaDocument+setPropertyUnchecked)
         * [.service()](#IotaDocument+service) ⇒ [<code>Array.&lt;IotaService&gt;</code>](#IotaService)
-        * [.insertService(service)](#IotaDocument+insertService) ⇒ <code>boolean</code>
-        * [.removeService(did)](#IotaDocument+removeService) ⇒ <code>boolean</code>
+        * [.insertService(service)](#IotaDocument+insertService)
+        * [.removeService(did)](#IotaDocument+removeService) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
         * [.resolveService(query)](#IotaDocument+resolveService) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
         * [.methods(scope)](#IotaDocument+methods) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
         * [.insertMethod(method, scope)](#IotaDocument+insertMethod)
-        * [.removeMethod(did)](#IotaDocument+removeMethod)
+        * [.removeMethod(did)](#IotaDocument+removeMethod) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
         * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
@@ -2071,6 +2078,7 @@ Sets a custom property in the DID Document.
 If the value is set to `null`, the custom property will be removed.
 
 ### WARNING
+
 This method can overwrite existing properties like `id` and result in an invalid document.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
@@ -2088,7 +2096,7 @@ Return a set of all [IotaService](#IotaService) in the document.
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+insertService"></a>
 
-### iotaDocument.insertService(service) ⇒ <code>boolean</code>
+### iotaDocument.insertService(service)
 Add a new [IotaService](#IotaService) to the document.
 
 Returns `true` if the service was added.
@@ -2101,7 +2109,7 @@ Returns `true` if the service was added.
 
 <a name="IotaDocument+removeService"></a>
 
-### iotaDocument.removeService(did) ⇒ <code>boolean</code>
+### iotaDocument.removeService(did) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
 Remove a [IotaService](#IotaService) identified by the given [IotaDIDUrl](#IotaDIDUrl) from the document.
 
 Returns `true` if a service was removed.
@@ -2152,7 +2160,7 @@ Adds a new `method` to the document in the given `scope`.
 
 <a name="IotaDocument+removeMethod"></a>
 
-### iotaDocument.removeMethod(did)
+### iotaDocument.removeMethod(did) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
 Removes all references to the specified Verification Method.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
@@ -4055,6 +4063,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4132,10 +4144,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="KeyType"></a>
 

@@ -1,9 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::core::FromJson;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
+use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::Presentation;
@@ -441,8 +443,8 @@ impl WasmIotaDocument {
       })
       .wasm_result()?;
 
-    log::debug!("INodeInfoProtocol: {:#?}", protocol_parameters.obj); 
-    let protocol_parameters: ProtocolParameters = protocol_parameters
+    log::debug!("INodeInfoProtocol: {:#?}", protocol_parameters.obj);
+    let protocol_parameters_dto: iota_client::block::protocol::dto::ProtocolParametersDto = protocol_parameters
       .into_serde()
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!(
@@ -452,6 +454,19 @@ impl WasmIotaDocument {
       })
       .wasm_result()?;
 
+    // TODO: Remove this hack once iota_types gets ProtocolParametersDto.
+    let protocol_parameters_iota_client =
+      iota_client::block::protocol::ProtocolParameters::try_from(protocol_parameters_dto)
+        .map_err(|_| {
+          identity_iota::iota::Error::JsError("failed to get protocol parameters from protocol parameters dto".into())
+        })
+        .wasm_result()?;
+
+    let protocol_parameters: ProtocolParameters = protocol_parameters_iota_client
+      .to_json_vec()
+      .and_then(|bytes| ProtocolParameters::from_json_slice(&bytes))
+      .map_err(|_| identity_iota::iota::Error::JsError("failed to deserialize protocol parameters".into()))
+      .wasm_result()?;
     let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))

@@ -21,7 +21,7 @@ iota-types = { version = "1.0.0-rc.2", default-features = false, features = ["bl
 async-trait = { version = "0.1.56", default-features = false, optional = true }
 futures = { version = "0.3" }
 # iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls"], optional = true }
-iota-client = { git = "https://github.com/iotaledger/iota.rs", rev = "355fecdb0f77e019a41f42a416a66bcc5ff6c0d5", default-features = false, features = ["tls" ], optional = true }
+iota-client = { git = "https://github.com/iotaledger/iota.rs", rev = "355fecdb0f77e019a41f42a416a66bcc5ff6c0d5", default-features = false, features = ["tls"], optional = true }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }

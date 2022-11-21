@@ -225,7 +225,7 @@ where
   let network_hrp: String = client
     .get_protocol_parameters()
     .await
-    .map(|parameters| parameters.network_name().to_owned())?;
+    .map(|parameters| parameters.bech32_hrp().to_owned())?;
   if did.network_str() != network_hrp.as_str() {
     return Err(Error::NetworkMismatch {
       expected: did.network_str().to_owned(),

@@ -6,13 +6,13 @@ use core::fmt::Formatter;
 
 use identity_iota::core::FromJson;
 use identity_iota::core::ToJson;
-use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::OutputId;
 use identity_iota::iota::IotaIdentityClient;
-use iota_client::block::protocol::dto::ProtocolParametersDto; 
+use identity_iota::iota::IotaIdentityClientExt;
+use iota_client::block::protocol::dto::ProtocolParametersDto;
 use iota_types::block::protocol::ProtocolParameters;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -25,15 +25,15 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IIotaIdentityClient")]
   pub type WasmIotaIdentityClient;
 
-  /* 
-  #[wasm_bindgen(method, js_name = getNetworkHrp)]
-  pub fn get_network_hrp(this: &WasmIotaIdentityClient) -> JsValue;
-*/
+  /*
+    #[wasm_bindgen(method, js_name = getNetworkHrp)]
+    pub fn get_network_hrp(this: &WasmIotaIdentityClient) -> JsValue;
+  */
 
   #[allow(non_snake_case)]
   #[wasm_bindgen(method, js_name = getAliasOutput)]
   pub fn get_alias_output(this: &WasmIotaIdentityClient, aliasId: String) -> JsValue;
-  /* 
+  /*
   #[wasm_bindgen(method, js_name = getRentStructure)]
   pub fn get_rent_structure(this: &WasmIotaIdentityClient) -> JsValue;
 
@@ -52,7 +52,7 @@ impl Debug for WasmIotaIdentityClient {
 
 #[async_trait::async_trait(?Send)]
 impl IotaIdentityClient for WasmIotaIdentityClient {
-  /* 
+  /*
   async fn get_network_hrp(&self) -> Result<String, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_network_hrp(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -92,7 +92,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
         ))
       })?;
 
-    /* 
+    /*
     let token_supply_promise: Promise = Promise::resolve(&<WasmIotaIdentityClient as IotaIdentityClientExt>::get_token_supply(self));
     let token_supply: u64 = JsValueResult::from(JsFuture::from(token_supply_promise).await)
       .to_iota_core_error()
@@ -107,13 +107,17 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       })?;
       */
 
-    let alias_output = AliasOutput::try_from_dto(&alias_dto, <Self as IotaIdentityClientExt>::get_token_supply(self).await?).map_err(|err| {
+    let alias_output = AliasOutput::try_from_dto(
+      &alias_dto,
+      <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
+    )
+    .map_err(|err| {
       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
     })?;
     Ok((output_id, alias_output))
   }
 
-  /* 
+  /*
   async fn get_rent_structure(&self) -> Result<RentStructure, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_rent_structure(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -145,13 +149,20 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
   */
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_protocol_parameters(self));
-    let result: JsValueResult = JsFuture::from(promise).await.into(); 
-    let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| parameters.into_serde().map_err(|_|identity_iota::iota::Error::SerializationError("TODO", None)))?; 
-    // TODO: Remove this serde flavoured hack once ProtocolParametersDto becomes available in iota_types. 
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| {
+      parameters
+        .into_serde()
+        .map_err(|_| identity_iota::iota::Error::SerializationError("TODO", None))
+    })?;
+    // TODO: Remove this serde flavoured hack once ProtocolParametersDto becomes available in iota_types.
     let parameters_iota_client = iota_client::block::protocol::ProtocolParameters::try_from(protocol_parameters)
-    .map_err(|_| identity_iota::iota::Error::JsError("Could not get protocol parameters".into()))?;
-    let protocol_parameters_json: Vec<u8> = parameters_iota_client.to_json_vec().map_err(|_| identity_iota::iota::Error::JsError("Could not serialize protocol parameters".into()))?;
-    let parameters_iota_types: ProtocolParameters = ProtocolParameters::from_json_slice(&protocol_parameters_json).map_err(|_| identity_iota::iota::Error::JsError("could not deserialize protocol parameters".into()))?;
+      .map_err(|_| identity_iota::iota::Error::JsError("Could not get protocol parameters".into()))?;
+    let protocol_parameters_json: Vec<u8> = parameters_iota_client
+      .to_json_vec()
+      .map_err(|_| identity_iota::iota::Error::JsError("Could not serialize protocol parameters".into()))?;
+    let parameters_iota_types: ProtocolParameters = ProtocolParameters::from_json_slice(&protocol_parameters_json)
+      .map_err(|_| identity_iota::iota::Error::JsError("could not deserialize protocol parameters".into()))?;
     Ok(parameters_iota_types)
   }
 }
@@ -161,21 +172,9 @@ const I_IOTA_IDENTITY_CLIENT: &'static str = r#"
 import type { IAliasOutput, IRent } from '@iota/types';
 /** Helper interface necessary for `IotaIdentityClientExt`. */
 interface IIotaIdentityClient {
-  /**
-   * Return the Bech32 human-readable part (HRP) of the network.
-   *
-   * E.g. "iota", "atoi", "smr", "rms".
-   */
-  getNetworkHrp(): Promise<string>;
 
   /** Resolve an Alias identifier, returning its latest `OutputId` and `AliasOutput`. */
   getAliasOutput(aliasId: string): Promise<[string, IAliasOutput]>;
-
-  /** Return the rent structure of the network, indicating the byte costs for outputs. */
-  getRentStructure(): Promise<IRent>;
-
-  /** Gets the token supply of the node we're connecting to. */
-  getTokenSupply(): Promise<string>;
 
   /** Returns the protocol parameters. */
   getProtocolParameters(): Promise<INodeInfoProtocol>; 

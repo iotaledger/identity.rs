@@ -56,7 +56,8 @@ export class IotaIdentityClient implements IIotaIdentityClient {
     async getProtocolResponse(): Promise<string> {
         return await this.client.getProtocolResponse();
     }
-    */
+
+   */
 
     async getProtocolParameters(): Promise<INodeInfoProtocol> {
         const protocolParameters: INodeInfoProtocol = await this.client.getProtocolParameters();
