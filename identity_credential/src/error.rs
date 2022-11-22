@@ -21,6 +21,12 @@ pub enum Error {
   /// Caused when constructing a credential without a subject.
   #[error("missing Credential subject")]
   MissingSubject,
+  /// Caused when constructing a well-known credential without an expiration date.
+  #[error("missing expiration Date")]
+  MissingExpirationDate,
+  /// Caused when constructing a well-known credential without an origin.
+  #[error("missing Origin")]
+  MissingOrigin,
   /// Caused when constructing a credential with a malformed subject.
   #[error("invalid credential subject")]
   InvalidSubject,
