@@ -5,6 +5,6 @@ mod document;
 mod encoding;
 mod version;
 
-pub(crate) use document::*;
+pub use document::*;
 pub use encoding::*;
 pub(crate) use version::*;
