@@ -19,11 +19,9 @@ crate-type = ["cdylib", "rlib"]
 async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
-# Pin until iota-client v2.0.1-rc.4 is released
-iota-types = { version = "1.0.0-rc.2", default-features = false, features = ["block", "api", "dto", "std"] }
 
-# Remove after ProtocolParametersDto becomes available in the iota-types crate
-iota-client = { git = "https://github.com/iotaledger/iota.rs", rev = "355fecdb0f77e019a41f42a416a66bcc5ff6c0d5", default-features = false, features = ["tls"] }
+iota-types = { version = "1.0.0-rc.3", default-features = false, features = ["block", "api", "dto", "std"] }
+
 
 js-sys = { version = "0.3.60" }
 log = "0.4.6"

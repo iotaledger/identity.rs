@@ -8,7 +8,8 @@ publish = false
 [dependencies]
 anyhow = "1.0.62"
 identity_iota = { path = "../identity_iota" }
-iota-client = { git = "https://github.com/iotaledger/iota.rs", rev = "355fecdb0f77e019a41f42a416a66bcc5ff6c0d5", default-features = false, features = ["tls", "stronghold"] }
+
+iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls", "stronghold"] }
 
 primitive-types = "0.12.1"
 rand = "0.8.5"
