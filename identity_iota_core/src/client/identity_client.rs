@@ -26,6 +26,7 @@ use crate::Result;
 pub trait IotaIdentityClient {
   /// Resolve an Alias identifier, returning its latest [`OutputId`] and [`AliasOutput`].
   async fn get_alias_output(&self, alias_id: AliasId) -> Result<(OutputId, AliasOutput)>;
+  /// Get the protocol parameters of the node we are trying to connect to.
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters>;
 
   /*

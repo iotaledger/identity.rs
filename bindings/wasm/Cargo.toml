@@ -22,16 +22,13 @@ futures = { version = "0.3" }
 
 iota-types = { version = "1.0.0-rc.3", default-features = false, features = ["block", "api", "dto", "std"] }
 
-
 js-sys = { version = "0.3.60" }
-log = "0.4.6"
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
 wasm-bindgen = { version = "0.2.83", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
-wasm-logger = "0.2.0"
 
 [dependencies.identity_iota]
 version = "0.7.0-alpha.3"
