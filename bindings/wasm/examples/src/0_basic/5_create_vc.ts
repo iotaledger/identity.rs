@@ -2,8 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
+import {
+    Credential,
+    CredentialValidationOptions,
+    CredentialValidator,
+    FailFast,
+    ProofOptions,
+} from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { Credential, CredentialValidationOptions, CredentialValidator, FailFast, ProofOptions } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**

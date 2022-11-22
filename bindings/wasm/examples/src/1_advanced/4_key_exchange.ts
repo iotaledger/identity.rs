@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
-import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { AddressTypes, Bech32Helper, IRent, OutputTypes } from "@iota/iota.js";
 import {
     IotaDocument,
     IotaIdentityClient,
@@ -12,7 +10,9 @@ import {
     KeyType,
     MethodScope,
     X25519,
-} from "../../../node";
+} from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
+import { AddressTypes, Bech32Helper, IRent, OutputTypes } from "@iota/iota.js";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.
