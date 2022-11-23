@@ -74,7 +74,6 @@
     "wasm-pack": "0.10.1"
   },
   "dependencies": {
-    "@iota/iota-client-wasm": "^0.5.0-alpha.6",
     "@iota/types": "^1.0.0-beta.11",
     "@types/node-fetch": "^2.6.2",
     "node-fetch": "^2.6.7"
