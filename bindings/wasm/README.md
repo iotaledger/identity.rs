@@ -78,7 +78,7 @@ const API_ENDPOINT = "http://127.0.0.1:14265";
 /** Demonstrate how to create a DID Document. */
 async function main() {
   // Create a new client with the given network endpoint.
-  const client = await Client.new({
+  const client = new Client({
     primaryNode: API_ENDPOINT,
     localPow: true,
   });
