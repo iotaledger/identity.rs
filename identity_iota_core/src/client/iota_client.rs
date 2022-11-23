@@ -126,7 +126,7 @@ impl IotaIdentityClient for Client {
     self
       .get_protocol_parameters()
       .await
-      .map_err(|error| Error::ProtocolParametersError(error))
+      .map_err(Error::ProtocolParametersError)
   }
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {
