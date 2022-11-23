@@ -116,12 +116,6 @@ impl IotaClientExt for Client {
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl IotaIdentityClient for Client {
-  /*
-  async fn get_network_hrp(&self) -> Result<String> {
-    self.get_bech32_hrp().map_err(Error::DIDResolutionError)
-  }
-  */
-
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters> {
     self
       .get_protocol_parameters()
@@ -148,20 +142,6 @@ impl IotaIdentityClient for Client {
       Err(Error::NotAnAliasOutput(output_id))
     }
   }
-
-  /*
-  async fn get_rent_structure(&self) -> Result<RentStructure> {
-    Client::get_rent_structure(self)
-      .map_err(|err| Error::DIDUpdateError("get_rent_structure failed", Some(Box::new(err))))
-  }
-  */
-
-  /*
-  async fn get_token_supply(&self) -> Result<u64> {
-    self.get_token_supply().map_err(Error::TokenSupplyError)
-  }
-
-  */
 }
 
 /// Publishes an `alias_output`.

@@ -28,22 +28,6 @@ pub trait IotaIdentityClient {
   async fn get_alias_output(&self, alias_id: AliasId) -> Result<(OutputId, AliasOutput)>;
   /// Get the protocol parameters of the node we are trying to connect to.
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters>;
-
-  /*
-  // get_rent_structure and get_token_supply technically don't need to be async, but the JS Client only has async
-  // versions of these so we use async here as well to avoid compatibility issues.
-
-  /// Return the rent structure of the network, indicating the byte costs for outputs.
-  async fn get_rent_structure(&self) -> Result<RentStructure>;
-
-  /// Gets the token supply of the node we're connecting to.
-  async fn get_token_supply(&self) -> Result<u64>;
-
-  /// Return the Bech32 human-readable part (HRP) of the network.
-  ///
-  /// E.g. "iota", "atoi", "smr", "rms".
-  async fn get_network_hrp(&self) -> Result<String>;
-  */
 }
 
 /// An extension trait that provides helper functions for publication
@@ -186,9 +170,6 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   async fn network_name(&self) -> Result<NetworkName> {
     self.get_network_hrp().await.and_then(NetworkName::try_from)
   }
-
-  // get_rent_structure and get_token_supply technically don't need to be async, but the JS Client only has async
-  // versions of these so we use async here as well to avoid compatibility issues.
 
   /// Return the rent structure of the network, indicating the byte costs for outputs.
   async fn get_rent_structure(&self) -> Result<RentStructure> {
