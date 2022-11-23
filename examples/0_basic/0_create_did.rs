@@ -27,13 +27,11 @@ use iota_client::Client;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // The API endpoint of an IOTA node, e.g. Hornet.
-  //let api_endpoint: &str = "http://127.0.0.1:14265";
-  let api_endpoint = examples::API_ENDPOINT;
+  let api_endpoint: &str = "http://127.0.0.1:14265";
 
   // The faucet endpoint allows requesting funds for testing purposes.
-  //let faucet_endpoint: &str = "http://127.0.0.1:8091/api/enqueue";
+  let faucet_endpoint: &str = "http://127.0.0.1:8091/api/enqueue";
 
-  let faucet_endpoint = examples::FAUCET_ENDPOINT;
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(api_endpoint, None)?.finish()?;
 
