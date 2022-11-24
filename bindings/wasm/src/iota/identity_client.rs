@@ -8,9 +8,10 @@ use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::OutputId;
-use identity_iota::iota::block::output::RentStructure;
-use identity_iota::iota::block::output::RentStructureBuilder;
 use identity_iota::iota::IotaIdentityClient;
+use identity_iota::iota::IotaIdentityClientExt;
+use iota_types::block::protocol::dto::ProtocolParametersDto;
+use iota_types::block::protocol::ProtocolParameters;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
@@ -22,21 +23,12 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IIotaIdentityClient")]
   pub type WasmIotaIdentityClient;
 
-  #[wasm_bindgen(method, js_name = getNetworkHrp)]
-  pub fn get_network_hrp(this: &WasmIotaIdentityClient) -> JsValue;
-
   #[allow(non_snake_case)]
   #[wasm_bindgen(method, js_name = getAliasOutput)]
   pub fn get_alias_output(this: &WasmIotaIdentityClient, aliasId: String) -> JsValue;
 
-  #[wasm_bindgen(method, js_name = getRentStructure)]
-  pub fn get_rent_structure(this: &WasmIotaIdentityClient) -> JsValue;
-
-  #[wasm_bindgen(method, js_name = getTokenSupply)]
-  pub fn get_token_supply(this: &WasmIotaIdentityClient) -> JsValue;
-
-  #[wasm_bindgen(method, js_name = getProtocolResponse)]
-  pub fn get_protocol_response(this: &WasmIotaIdentityClient) -> JsValue;
+  #[wasm_bindgen(method, js_name = getProtocolParameters)]
+  pub fn get_protocol_parameters(this: &WasmIotaIdentityClient) -> JsValue;
 }
 
 impl Debug for WasmIotaIdentityClient {
@@ -47,19 +39,6 @@ impl Debug for WasmIotaIdentityClient {
 
 #[async_trait::async_trait(?Send)]
 impl IotaIdentityClient for WasmIotaIdentityClient {
-  async fn get_network_hrp(&self) -> Result<String, identity_iota::iota::Error> {
-    let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_network_hrp(self));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js: JsValue = result.to_iota_core_error()?;
-    let network_hrp = match js.as_string() {
-      Some(hrp) => hrp,
-      None => js.into_serde().map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("get_network_hrp failed to deserialize String: {}", err))
-      })?,
-    };
-    Ok(network_hrp)
-  }
-
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput), identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_alias_output(self, id.to_string()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -85,49 +64,26 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
         ))
       })?;
 
-    let token_supply_promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_token_supply(self));
-    let token_supply: u64 = JsValueResult::from(JsFuture::from(token_supply_promise).await)
-      .to_iota_core_error()
-      .and_then(|value| {
-        if let Some(big_int) = value.as_f64() {
-          Ok(big_int as u64)
-        } else {
-          Err(identity_iota::iota::Error::JsError(
-            "could not retrieve a token supply of the required type".into(),
-          ))
-        }
-      })?;
-
-    let alias_output = AliasOutput::try_from_dto(&alias_dto, token_supply).map_err(|err| {
+    let alias_output = AliasOutput::try_from_dto(
+      &alias_dto,
+      <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
+    )
+    .map_err(|err| {
       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
     })?;
     Ok((output_id, alias_output))
   }
 
-  async fn get_rent_structure(&self) -> Result<RentStructure, identity_iota::iota::Error> {
-    let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_rent_structure(self));
+  async fn get_protocol_parameters(&self) -> Result<ProtocolParameters, identity_iota::iota::Error> {
+    let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_protocol_parameters(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let rent_structure: RentStructureBuilder = result.to_iota_core_error()?.into_serde().map_err(|err| {
-      identity_iota::iota::Error::JsError(format!("get_rent_structure failed to deserialize: {}", err))
+    let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| {
+      parameters
+        .into_serde()
+        .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {}", err)))
     })?;
-    Ok(rent_structure.finish())
-  }
-
-  async fn get_token_supply(&self) -> Result<u64, identity_iota::iota::Error> {
-    let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_token_supply(self));
-    Ok(
-      JsValueResult::from(JsFuture::from(promise).await)
-        .to_iota_core_error()
-        .and_then(|value| {
-          if let Some(big_int) = value.as_f64() {
-            Ok(big_int as u64)
-          } else {
-            Err(identity_iota::iota::Error::JsError(
-              "could not retrieve a token supply of the required type".into(),
-            ))
-          }
-        })?,
-    )
+    ProtocolParameters::try_from(protocol_parameters)
+      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {}", err)))
   }
 }
 
@@ -136,22 +92,10 @@ const I_IOTA_IDENTITY_CLIENT: &'static str = r#"
 import type { IAliasOutput, IRent } from '@iota/types';
 /** Helper interface necessary for `IotaIdentityClientExt`. */
 interface IIotaIdentityClient {
-  /**
-   * Return the Bech32 human-readable part (HRP) of the network.
-   *
-   * E.g. "iota", "atoi", "smr", "rms".
-   */
-  getNetworkHrp(): Promise<string>;
 
   /** Resolve an Alias identifier, returning its latest `OutputId` and `AliasOutput`. */
   getAliasOutput(aliasId: string): Promise<[string, IAliasOutput]>;
 
-  /** Return the rent structure of the network, indicating the byte costs for outputs. */
-  getRentStructure(): Promise<IRent>;
-
-  /** Gets the token supply of the node we're connecting to. */
-  getTokenSupply(): Promise<BigInt>;
-
-  /** Returns the protocol response as a JSON string. */
-  getProtocolResponse(): Promise<string>;
+  /** Returns the protocol parameters. */
+  getProtocolParameters(): Promise<INodeInfoProtocol>; 
 }"#;

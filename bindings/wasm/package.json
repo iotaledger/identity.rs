@@ -79,8 +79,8 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/iota-client-wasm": "^0.5.0-alpha.5",
-    "@iota/iota.js": "^1.9.0-stardust.25"
+    "@iota/iota.js": "^1.9.0-stardust.25",
+    "@iota/iota-client-wasm": "^0.5.0-alpha.6"
   },
   "engines": {
     "node": ">=16"

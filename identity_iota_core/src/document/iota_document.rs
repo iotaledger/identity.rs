@@ -361,7 +361,7 @@ mod client_document {
           if let Output::Alias(alias_output) = output {
             let alias_id = if alias_output.alias_id().is_null() {
               AliasId::from(
-                OutputId::new(
+                &OutputId::new(
                   tx_payload.id(),
                   index
                     .try_into()

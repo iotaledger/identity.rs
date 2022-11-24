@@ -20,7 +20,7 @@ identity_resolver = { version = "=0.7.0-alpha.3", path = "../identity_resolver",
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-client = { version = "2.0.1-rc.1", default-features = false, features = ["tls", "stronghold"] }
+iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls", "stronghold"] }
 tokio = { version = "1.17.0", features = ["full"] }
 
 [features]

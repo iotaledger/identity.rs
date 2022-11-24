@@ -32,7 +32,7 @@ export async function revokeVC() {
     // Create a Verifiable Credential.
     // ===========================================================================
 
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
