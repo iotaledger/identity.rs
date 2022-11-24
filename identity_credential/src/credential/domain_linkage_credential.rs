@@ -16,10 +16,10 @@ use crate::credential::Subject;
 use crate::error::Result;
 use crate::Error;
 
-static BASE_CONTEXT: &'static str = "https://www.w3.org/2018/credentials/v1";
-static WELL_KNOWN_CONTEXT: &'static str = "https://identity.foundation/.well-known/did-configuration/v1";
-static TYPE_1: &'static str = "VerifiableCredential";
-static TYPE_2: &'static str = "DomainLinkageCredential";
+static BASE_CONTEXT: &str = "https://www.w3.org/2018/credentials/v1";
+static WELL_KNOWN_CONTEXT: &str = "https://identity.foundation/.well-known/did-configuration/v1";
+static TYPE_1: &str = "VerifiableCredential";
+static TYPE_2: &str = "DomainLinkageCredential";
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
 ///
@@ -36,11 +36,12 @@ impl Display for DIDConfigurationResource {
     self.fmt_json(f)
   }
 }
+
 impl DIDConfigurationResource {
   /// Creates a new DID Configuration Resource.
   pub fn new(linked_dids: Vec<Credential>) -> Self {
     Self {
-      context: Context::Url(Url::parse(WELL_KNOWN_CONTEXT.to_owned()).unwrap()),
+      context: Context::Url(Url::parse(WELL_KNOWN_CONTEXT).unwrap()),
       linked_dids,
     }
   }
@@ -59,6 +60,7 @@ impl DIDConfigurationResource {
 /// Convenient builder to create a spec compliant Linked Data Domain Linkage Credential.
 ///
 /// See: https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format
+#[derive(Debug, Default)]
 pub struct DomainLinkageCredentialBuilder {
   pub(crate) issuer: Option<Url>,
   pub(crate) issuance_date: Option<Timestamp>,
@@ -69,26 +71,25 @@ pub struct DomainLinkageCredentialBuilder {
 impl DomainLinkageCredentialBuilder {
   /// Creates a new `DomainLinkageCredentialBuilder`.
   pub fn new() -> Self {
-    Self {
-      issuer: None,
-      issuance_date: None,
-      expiration_date: None,
-      origin: None,
-    }
+    Self::default()
   }
 
   fn base_context() -> Context {
-    Context::Url(Url::parse(BASE_CONTEXT.to_owned()).unwrap())
+    Context::Url(Url::parse(BASE_CONTEXT).unwrap())
   }
 
   fn well_known_context() -> Context {
-    Context::Url(Url::parse(WELL_KNOWN_CONTEXT.to_owned()).unwrap())
+    Context::Url(Url::parse(WELL_KNOWN_CONTEXT).unwrap())
   }
 
   /// Sets the value of the `issuer`, only the URL is used, other properties are ignored.
   #[must_use]
   pub fn issuer(mut self, value: Issuer) -> Self {
-    self.issuer = Some(value.into());
+    let issuer: Url = match value {
+      Issuer::Url(url) => url,
+      Issuer::Obj(data) => data.id,
+    };
+    self.issuer = Some(issuer);
     self
   }
 
@@ -121,12 +122,12 @@ impl DomainLinkageCredentialBuilder {
     let issuer: Url = self.issuer.ok_or(Error::MissingIssuer)?;
 
     Ok(Credential {
-      context: OneOrMany::Many(vec![Self::base_context(), Self::well_known_context().clone()]),
+      context: OneOrMany::Many(vec![Self::base_context(), Self::well_known_context()]),
       id: None,
       types: OneOrMany::Many(vec![TYPE_1.to_owned(), TYPE_2.to_owned()]),
       credential_subject: OneOrMany::One(Subject::with_id_and_properties(issuer.clone(), properties)),
       issuer: Issuer::Url(issuer),
-      issuance_date: self.issuance_date.unwrap_or(Timestamp::now_utc()),
+      issuance_date: self.issuance_date.unwrap_or_else(Timestamp::now_utc),
       expiration_date: Some(self.expiration_date.ok_or(Error::MissingExpirationDate)?),
       credential_status: None,
       credential_schema: Vec::new().into(),
