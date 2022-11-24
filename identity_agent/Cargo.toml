@@ -25,7 +25,7 @@ uuid = { version = "0.8", default-features = false, features = ["v4", "serde"] }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
-identity_iota_core = { path = "../identity_iota_core", version = "=0.7.0-alpha.4", default-features = false }
+identity_iota_core = { path = "../identity_iota_core", default-features = false }
 pretty_env_logger = { version = "0.4", default-features = false }
 rand = "0.8.5"
 tokio = { version = "*", default-features = false, features = ["sync", "macros"] }
