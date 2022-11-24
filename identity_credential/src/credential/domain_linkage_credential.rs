@@ -23,7 +23,7 @@ static TYPE_2: &str = "DomainLinkageCredential";
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
 ///
-/// See: https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource
+/// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DIDConfigurationResource {
   #[serde(rename = "@context")]
@@ -59,7 +59,7 @@ impl DIDConfigurationResource {
 
 /// Convenient builder to create a spec compliant Linked Data Domain Linkage Credential.
 ///
-/// See: https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format
+/// See: <https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format>
 #[derive(Debug, Default)]
 pub struct DomainLinkageCredentialBuilder {
   pub(crate) issuer: Option<Url>,
