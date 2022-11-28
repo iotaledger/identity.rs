@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
-import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import {
     Credential,
     CredentialValidationOptions,
@@ -16,7 +15,8 @@ import {
     SubjectHolderRelationship,
     Timestamp,
     VerifierOptions,
-} from "../../../node";
+} from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -29,7 +29,7 @@ export async function createVP() {
     // Step 1: Create identities for the issuer and the holder.
     // ===========================================================================
 
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

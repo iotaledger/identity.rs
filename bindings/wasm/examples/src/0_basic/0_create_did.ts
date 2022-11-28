@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
-import { Client, MnemonicSecretManager, SecretManager } from "@iota/iota-client-wasm/node";
-import { Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import {
     IotaDID,
     IotaDocument,
@@ -12,8 +10,10 @@ import {
     KeyPair,
     KeyType,
     MethodScope,
-} from "../../../node";
-import { API_ENDPOINT, createDid, ensureAddressHasFunds } from "../util";
+} from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager, SecretManager } from "@iota/iota-client-wasm/node";
+import { Bech32Helper, IAliasOutput } from "@iota/iota.js";
+import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
 export async function createIdentity(): Promise<{
@@ -22,7 +22,7 @@ export async function createIdentity(): Promise<{
     walletAddressBech32: string;
     did: IotaDID;
 }> {
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

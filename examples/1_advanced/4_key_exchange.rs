@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
     .context("failed to get address with funds")?;
 
   let network: NetworkName = client.network_name().await?;
-  let rent_structure: RentStructure = client.get_rent_structure()?;
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // Alice creates and publishes their DID Document.
   let (alice_did, alice_x25519): (IotaDID, KeyPair) = {

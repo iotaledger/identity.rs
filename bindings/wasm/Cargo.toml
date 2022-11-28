@@ -1,6 +1,6 @@
 [package]
 name = "identity_wasm"
-version = "0.7.0-alpha.3"
+version = "0.7.0-alpha.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -19,9 +19,8 @@ crate-type = ["cdylib", "rlib"]
 async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
+iota-types = { version = "1.0.0-rc.3", default-features = false, features = ["block", "api", "dto", "std"] }
 identity_storage = { version = "0.7.0-alpha.2", path = "../../identity_storage", default-features = false }
-# Pin until iota-client v2.0.1-rc.4 is released
-iota-types = { version = "=1.0.0-rc.1", default-features = false, features = ["block", "api", "dto", "std"] }
 js-sys = { version = "0.3.60" }
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
@@ -31,7 +30,7 @@ wasm-bindgen = { version = "0.2.83", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity_iota]
-version = "0.7.0-alpha.3"
+version = "0.7.0-alpha.4"
 path = "../../identity_iota"
 default-features = false
 features = ["client", "revocation-bitmap", "resolver"]

@@ -2,8 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
+import {
+    Credential,
+    CredentialValidationOptions,
+    CredentialValidator,
+    FailFast,
+    ProofOptions,
+} from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { Credential, CredentialValidationOptions, CredentialValidator, FailFast, ProofOptions } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -13,7 +19,7 @@ import { API_ENDPOINT, createDid } from "../util";
  * This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
  */
 export async function createVC() {
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

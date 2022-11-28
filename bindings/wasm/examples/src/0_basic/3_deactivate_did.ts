@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
+import { IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
-import { IotaDocument, IotaIdentityClient } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
 export async function deactivateIdentity() {
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

@@ -1,18 +1,15 @@
 [package]
 name = "examples"
-version = "0.7.0-alpha.3"
+version = "0.7.0-alpha.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-async-trait = "*"
-did-key = { version = "0.1.1", default-features = false }
 identity_iota = { path = "../identity_iota" }
-iota-client = { version = "2.0.1-rc.3", default-features = false, features = ["tls", "stronghold"] }
-# Remove once iota-client 2.0.1-rc.4 is released.
-iota-types = { version = "=1.0.0-rc.1", default-features = false, features = ["block", "std"], optional = true }
+async-trait = "*"
+iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls", "stronghold"] }
 primitive-types = "0.12.1"
 rand = "0.8.5"
 thiserror = "*"

@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "identity_agent",
   # "identity_comm",
   "identity_core",
   "identity_credential",
@@ -14,10 +15,6 @@ members = [
 ]
 
 exclude = [
-  "identity_account",
-  "identity_account_storage",
-  "identity_agent",
-  "examples_legacy",
   "identity_iota_core_legacy",
   "bindings/stronghold-nodejs",
   "bindings/wasm",

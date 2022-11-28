@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
+import { IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
@@ -23,7 +24,6 @@ import {
     TransactionHelper,
 } from "@iota/iota.js";
 import { Converter } from "@iota/util.js";
-import { IotaDocument, IotaIdentityClient } from "../../../node";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrates how an identity can be owned by NFTs,
@@ -37,7 +37,7 @@ export async function nftOwnsDid() {
     // =============================
 
     // Create a new Client to interact with the IOTA ledger.
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

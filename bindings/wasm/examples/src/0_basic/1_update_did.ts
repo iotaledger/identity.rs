@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Bip39 } from "@iota/crypto.js";
-import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
 import {
     IotaDocument,
     IotaIdentityClient,
@@ -14,12 +12,14 @@ import {
     MethodRelationship,
     MethodScope,
     Timestamp,
-} from "../../../node";
+} from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
+import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

@@ -75,10 +75,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Increase the storage deposit and publish the update.
     let alias_output: AliasOutput = client.update_did_output(document.clone()).await?;
-    let rent_structure: RentStructure = client.get_rent_structure()?;
+    let rent_structure: RentStructure = client.get_rent_structure().await?;
     let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
       .with_minimum_storage_deposit(rent_structure)
-      .finish(client.get_token_supply()?)?;
+      .finish(client.get_token_supply().await?)?;
     client.publish_did_output(&secret_manager, alias_output).await?;
   }
 
@@ -149,7 +149,7 @@ fn block_alias_output(block: &Block, alias_id: &AliasId) -> anyhow::Result<Alias
           match output {
             Output::Alias(alias_output) => {
               if &alias_output.alias_id().or_from_output_id(
-                OutputId::new(
+                &OutputId::new(
                   transaction_payload.id(),
                   index.try_into().context("output index must fit into a u16")?,
                 )

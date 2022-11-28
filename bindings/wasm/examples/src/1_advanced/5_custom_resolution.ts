@@ -1,6 +1,6 @@
 import { Bip39 } from "@iota/crypto.js";
+import { CoreDocument, IotaDocument, IotaIdentityClient, Resolver } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
-import { CoreDocument, IotaDocument, IotaIdentityClient, Resolver } from "../../../node";
 import { API_ENDPOINT, createDid } from "../util";
 
 // Use this external package to avoid implementing the entire did:key method in this example.
@@ -19,7 +19,7 @@ export async function customResolution() {
     };
 
     // Create a new Client to interact with the IOTA ledger.
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });

@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account::types::IdentitySetup;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
+use identity_iota_core::IotaDID;
+use identity_iota_core::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -11,18 +10,12 @@ use crate::agent::Endpoint;
 use crate::agent::HandlerRequest;
 use crate::tests::remote_account::RemoteAccountError;
 
-/// Can be sent to a `RemoteAccount` to instruct it to create an identity.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub(crate) struct IdentityCreate;
-
-impl From<IdentityCreate> for IdentitySetup {
-  fn from(_: IdentityCreate) -> Self {
-    IdentitySetup::default()
-  }
-}
+/// Can be sent to a `RemoteAccount` to instruct it to add a document.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct IdentityCreate(pub(crate) IotaDocument);
 
 impl HandlerRequest for IdentityCreate {
-  type Response = Result<IotaDocument, RemoteAccountError>;
+  type Response = Result<(), RemoteAccountError>;
 
   fn endpoint() -> Endpoint {
     "remote_account/create".try_into().unwrap()

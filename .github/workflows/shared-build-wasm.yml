@@ -51,6 +51,7 @@ jobs:
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
+          override: true
 
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli

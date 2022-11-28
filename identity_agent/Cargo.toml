@@ -1,11 +1,12 @@
 [package]
 name = "identity_agent"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "p2p", "agent"]
 license = "Apache-2.0"
+publish = false
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 description = "A peer-to-peer communication framework for building SSI agents on IOTA Identity"
@@ -14,20 +15,21 @@ description = "A peer-to-peer communication framework for building SSI agents on
 async-trait = { version = "0.1", default-features = false }
 dashmap = { version = "5.3", default-features = false }
 futures = { version = "0.3", default-features = false }
-identity_core = { version = "0.7.0-alpha.1", path = "../identity_core", default-features = false }
+identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 libp2p = { version = "0.45", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 thiserror = { version = "1.0", default-features = false }
-tokio = { version = "1.15", default-features = false, features = ["rt", "time"] }
+tokio = { version = "1.21", default-features = false, features = ["rt", "time"] }
 uuid = { version = "0.8", default-features = false, features = ["v4", "serde"] }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
-identity_account = { version = "=0.6.1", default-features = false, features = ["send-sync-storage", "encryption", "async", "revocation-bitmap"] }
-identity_iota_core = { version = "=0.6.1", default-features = false }
+identity_iota_core = { path = "../identity_iota_core", default-features = false }
 pretty_env_logger = { version = "0.4", default-features = false }
+rand = "0.8.5"
+tokio = { version = "*", default-features = false, features = ["sync", "macros"] }
 
 [[bench]]
 name = "agent"
