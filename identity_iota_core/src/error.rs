@@ -21,13 +21,16 @@ pub enum Error {
   #[cfg(feature = "iota-client")]
   #[error("{0}")]
   BasicOutputBuildError(#[source] iota_client::block::Error),
-  #[error("\"{0}\" is not a valid network name")]
+  #[error("\"{0}\" is not a valid network name in the context of the `iota` did method")]
   InvalidNetworkName(String),
   #[cfg(feature = "iota-client")]
   #[error("unable to obtain the token supply from the client")]
   TokenSupplyError(#[source] iota_client::Error),
   #[error("unable to resolve a `{expected}` DID on network `{actual}`")]
   NetworkMismatch { expected: String, actual: String },
+  #[cfg(feature = "iota-client")]
+  #[error("could not fetch protocol parameters")]
+  ProtocolParametersError(#[source] iota_client::Error),
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]

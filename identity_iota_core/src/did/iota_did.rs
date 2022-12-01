@@ -617,7 +617,7 @@ mod tests {
       .prop_map(|(bytes, idx)| {
         let transaction_id = iota_client::block::payload::transaction::TransactionId::new(bytes);
         let output_id = iota_client::block::output::OutputId::new(transaction_id, idx).unwrap();
-        iota_client::block::output::AliasId::from(output_id)
+        iota_client::block::output::AliasId::from(&output_id)
       })
   }
 

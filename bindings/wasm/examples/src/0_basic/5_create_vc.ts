@@ -19,7 +19,7 @@ import { API_ENDPOINT, createDid } from "../util";
  * This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
  */
 export async function createVC() {
-    const client = await Client.new({
+    const client = new Client({
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
