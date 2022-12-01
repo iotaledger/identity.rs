@@ -21,6 +21,8 @@ identity_did = { version = "=0.7.0-alpha.3", path = "../identity_did", default-f
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [dependencies.identity_iota_core]
 version = "=0.7.0-alpha.3"
@@ -31,7 +33,6 @@ optional = true
 
 [dev-dependencies]
 iota-client = { version = "2.0.1-rc.1", default-features = false, features = ["tls"] }
-tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [features]
 default = ["revocation-bitmap", "iota"]

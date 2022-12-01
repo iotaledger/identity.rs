@@ -97,6 +97,9 @@ pub enum ErrorCause {
   /// [`Resolver`](crate::resolution::Resolver).
   #[error("did resolution failed: the DID method \"{method}\" is not supported by the resolver")]
   UnsupportedMethodError { method: String },
+
+  #[error("DNS verification error")]
+  DNSVerificationError { reason: String },
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

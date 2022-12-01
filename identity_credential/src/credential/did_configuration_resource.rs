@@ -4,9 +4,14 @@
 use identity_core::common::Context;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
+use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_did::did::DIDUrl;
+use identity_did::did::DID;
+use identity_did::service::Service;
+use identity_did::service::ServiceEndpoint;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
@@ -15,6 +20,7 @@ use crate::credential::Issuer;
 use crate::credential::Subject;
 use crate::error::Result;
 use crate::Error;
+use indexmap::map::IndexMap;
 
 static BASE_CONTEXT: &str = "https://www.w3.org/2018/credentials/v1";
 static WELL_KNOWN_CONTEXT: &str = "https://identity.foundation/.well-known/did-configuration/v1";
@@ -26,9 +32,14 @@ static TYPE_2: &str = "DomainLinkageCredential";
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DIDConfigurationResource {
+  /// Fixed context.
   #[serde(rename = "@context")]
   context: Context,
+  /// LInked credentials.
   linked_dids: Vec<Credential>,
+  /// Further properties, must be empty.
+  #[serde(flatten)]
+  pub properties: Object,
 }
 
 impl Display for DIDConfigurationResource {
@@ -43,6 +54,7 @@ impl DIDConfigurationResource {
     Self {
       context: Context::Url(Url::parse(WELL_KNOWN_CONTEXT).unwrap()),
       linked_dids,
+      properties: Object::new(),
     }
   }
 
@@ -54,6 +66,39 @@ impl DIDConfigurationResource {
   /// List of domain Linkage Credentials.
   pub fn linked_dids_mut(&mut self) -> &mut Vec<Credential> {
     &mut self.linked_dids
+  }
+
+  /// List of extra properties (should be empty to be spec compliant).
+  pub fn properties(&self) -> &Object {
+    &self.properties
+  }
+
+  /// List of extra properties (should be empty to be spec compliant).
+  pub fn properties_mut(&mut self) -> &mut Object {
+    &mut self.properties
+  }
+
+  /// Convenient function to create a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
+  pub fn create_linked_domain_service<D: DID>(
+    did_url: DIDUrl<D>,
+    domains: impl Into<OrderedSet<Url>>,
+  ) -> identity_did::error::Result<Service<D, Object>> {
+    // Todo check if scheme is `https`?
+    let domains: OrderedSet<Url> = domains.into();
+    if domains.len() == 1 {
+      return Service::builder(Object::new())
+        .id(did_url)
+        .type_("LinkedDomains")
+        .service_endpoint(ServiceEndpoint::One(domains.head().unwrap().clone()))
+        .build();
+    }
+    let mut map: IndexMap<String, OrderedSet<Url>> = IndexMap::new();
+    map.insert("origins".to_owned(), domains);
+    Service::builder(Object::new())
+      .id(did_url)
+      .type_("LinkedDomains")
+      .service_endpoint(ServiceEndpoint::Map(map))
+      .build()
   }
 }
 
@@ -143,15 +188,20 @@ impl DomainLinkageCredentialBuilder {
 
 #[cfg(test)]
 mod tests {
-  use crate::credential::domain_linkage_credential::DIDConfigurationResource;
-  use crate::credential::domain_linkage_credential::DomainLinkageCredentialBuilder;
+  use crate::credential::did_configuration_resource::DIDConfigurationResource;
+  use crate::credential::did_configuration_resource::DomainLinkageCredentialBuilder;
   use crate::credential::Credential;
   use crate::credential::Issuer;
   use crate::error::Result;
   use crate::Error;
+  use identity_core::common::{Object, OrderedSet};
   use identity_core::common::Timestamp;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
+  use identity_did::did::CoreDID;
+  use identity_did::did::CoreDIDUrl;
+  use identity_did::service::Service;
+  use serde_json::json;
 
   #[test]
   fn builder() {
@@ -205,5 +255,48 @@ mod tests {
   fn from_json() {
     const JSON1: &str = include_str!("../../tests/fixtures/well-known-configuration.json");
     let _well_known: DIDConfigurationResource = DIDConfigurationResource::from_json(JSON1).unwrap();
+  }
+
+  #[test]
+  fn create_service_multiple_origins() {
+    let mut domains = OrderedSet::new();
+    domains.append(Url::parse("https://foo.example-1.com").unwrap());
+    domains.append(Url::parse("https://bar.example-2.com").unwrap());
+
+    let service: Service<CoreDID, Object> = DIDConfigurationResource::create_linked_domain_service(
+      CoreDIDUrl::parse("did:example:123#foo").unwrap(),
+      domains,
+    ).unwrap();
+
+    // Add a new Service.
+    let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": {
+          "origins": ["https://foo.example-1.com", "https://bar.example-2.com"]
+        }
+    }))
+    .unwrap();
+    assert_eq!(service, service_from_json);
+  }
+
+  #[test]
+  fn create_service_single_origin() {
+    let mut domains = OrderedSet::new();
+    domains.append(Url::parse("https://foo.example-1.com").unwrap());
+
+    let service: Service<CoreDID, Object>= DIDConfigurationResource::create_linked_domain_service(
+      CoreDIDUrl::parse("did:example:123#foo").unwrap(),
+      domains,
+    ).unwrap();
+
+    // Add a new Service.
+    let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://foo.example-1.com"
+    }))
+    .unwrap();
+    assert_eq!(service, service_from_json);
   }
 }
