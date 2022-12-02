@@ -10,9 +10,9 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
-use iota_client::api_types::response::OutputResponse;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
+use iota_client::block::output::dto::OutputDto;
 use iota_client::block::output::feature::IssuerFeature;
 use iota_client::block::output::unlock_condition::AddressUnlockCondition;
 use iota_client::block::output::AliasId;
@@ -58,7 +58,7 @@ async fn main() -> anyhow::Result<()> {
   let manufacturer_did = manufacturer_document.id().clone();
 
   // Get the current byte cost.
-  let rent_structure: RentStructure = client.get_rent_structure()?;
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // Create a Digital Product Passport NFT issued by the manufacturer.
   let product_passport_nft: NftOutput =
@@ -75,7 +75,7 @@ async fn main() -> anyhow::Result<()> {
       .add_immutable_feature(Feature::Metadata(MetadataFeature::new(
         b"Digital Product Passport Metadata".to_vec(),
       )?))
-      .finish(client.get_token_supply()?)?;
+      .finish(client.get_token_supply().await?)?;
 
   // Publish the NFT.
   let block: Block = client
@@ -91,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
   // ========================================================
 
   // Extract the identifier of the NFT from the published block.
-  let nft_id: NftId = NftId::from(get_nft_output_id(
+  let nft_id: NftId = NftId::from(&get_nft_output_id(
     block
       .payload()
       .ok_or_else(|| anyhow::anyhow!("expected block to contain a payload"))?,
@@ -99,8 +99,11 @@ async fn main() -> anyhow::Result<()> {
 
   // Fetch the NFT Output.
   let nft_output_id: OutputId = client.nft_output_id(nft_id).await?;
-  let output_response: OutputResponse = client.get_output(&nft_output_id).await?;
-  let output: Output = Output::try_from_dto(&output_response.output, client.get_token_supply()?)?;
+  let output_dto: OutputDto = client
+    .get_output(&nft_output_id)
+    .await
+    .map(|response| response.output)?;
+  let output: Output = Output::try_from_dto(&output_dto, client.get_token_supply().await?)?;
 
   // Extract the issuer of the NFT.
   let nft_output: NftOutput = if let Output::Nft(nft_output) = output {

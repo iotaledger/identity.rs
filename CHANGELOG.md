@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.7.0-alpha.4](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.4) (2022-11-24)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.3...v0.7.0-alpha.4)
+
+### Added
+
+- Make `StateMetadataDocument` public [#1085](https://github.com/iotaledger/identity.rs/pull/1085)
+- Add v. credentials and presentations examples [#1070](https://github.com/iotaledger/identity.rs/pull/1070)
+- Add revocation examples [#1076](https://github.com/iotaledger/identity.rs/pull/1076)
+
+### Changed 
+- More identifier checks in `CoreDocument` [#1067](https://github.com/iotaledger/identity.rs/pull/1067)
+- Update to `iota-client` 2.0.1-rc.4 and `iota-client-wasm` 0.5.0-alpha.6 [#1088](https://github.com/iotaledger/identity.rs/pull/1088)
+### Patch
+
+- Remove legacy crates [#1080](https://github.com/iotaledger/identity.rs/pull/1080)
+
 ## [v0.7.0-alpha.3](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.3) (2022-09-30)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.2...v0.7.0-alpha.3)

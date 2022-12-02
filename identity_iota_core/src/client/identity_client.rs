@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::block::protocol::ProtocolParameters;
+
 use crate::block::address::Address;
 use crate::block::output::feature::SenderFeature;
 use crate::block::output::unlock_condition::GovernorAddressUnlockCondition;
@@ -22,22 +24,10 @@ use crate::Result;
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait IotaIdentityClient {
-  /// Return the Bech32 human-readable part (HRP) of the network.
-  ///
-  /// E.g. "iota", "atoi", "smr", "rms".
-  async fn get_network_hrp(&self) -> Result<String>;
-
   /// Resolve an Alias identifier, returning its latest [`OutputId`] and [`AliasOutput`].
   async fn get_alias_output(&self, alias_id: AliasId) -> Result<(OutputId, AliasOutput)>;
-
-  // get_rent_structure and get_token_supply technically don't need to be async, but the JS Client only has async
-  // versions of these so we use async here as well to avoid compatibility issues.
-
-  /// Return the rent structure of the network, indicating the byte costs for outputs.
-  async fn get_rent_structure(&self) -> Result<RentStructure>;
-
-  /// Gets the token supply of the node we're connecting to.
-  async fn get_token_supply(&self) -> Result<u64>;
+  /// Get the protocol parameters of the node we are trying to connect to.
+  async fn get_protocol_parameters(&self) -> Result<ProtocolParameters>;
 }
 
 /// An extension trait that provides helper functions for publication
@@ -180,6 +170,32 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   async fn network_name(&self) -> Result<NetworkName> {
     self.get_network_hrp().await.and_then(NetworkName::try_from)
   }
+
+  /// Return the rent structure of the network, indicating the byte costs for outputs.
+  async fn get_rent_structure(&self) -> Result<RentStructure> {
+    self
+      .get_protocol_parameters()
+      .await
+      .map(|parameters| parameters.rent_structure().clone())
+  }
+
+  /// Gets the token supply of the node we're connecting to.
+  async fn get_token_supply(&self) -> Result<u64> {
+    self
+      .get_protocol_parameters()
+      .await
+      .map(|parameters| parameters.token_supply())
+  }
+
+  /// Return the Bech32 human-readable part (HRP) of the network.
+  ///
+  /// E.g. "iota", "atoi", "smr", "rms".
+  async fn get_network_hrp(&self) -> Result<String> {
+    self
+      .get_protocol_parameters()
+      .await
+      .map(|parameters| parameters.bech32_hrp().to_owned())
+  }
 }
 
 impl<T> IotaIdentityClientExt for T where T: IotaIdentityClient {}
@@ -188,7 +204,10 @@ pub(super) async fn validate_network<T>(client: &T, did: &IotaDID) -> Result<()>
 where
   T: IotaIdentityClient + ?Sized,
 {
-  let network_hrp: String = client.get_network_hrp().await?;
+  let network_hrp: String = client
+    .get_protocol_parameters()
+    .await
+    .map(|parameters| parameters.bech32_hrp().to_owned())?;
   if did.network_str() != network_hrp.as_str() {
     return Err(Error::NetworkMismatch {
       expected: did.network_str().to_owned(),

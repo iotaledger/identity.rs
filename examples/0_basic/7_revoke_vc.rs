@@ -88,10 +88,10 @@ async fn main() -> anyhow::Result<()> {
 
   // Because the size of the DID document increased, we have to increase the allocated storage deposit.
   // This increases the deposit amount to the new minimum.
-  let rent_structure: RentStructure = client.get_rent_structure()?;
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
   let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply()?)?;
+    .finish(client.get_token_supply().await?)?;
 
   // Publish the updated Alias Output.
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
@@ -145,10 +145,10 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the changes.
   let alias_output: AliasOutput = client.update_did_output(issuer_document.clone()).await?;
-  let rent_structure: RentStructure = client.get_rent_structure()?;
+  let rent_structure: RentStructure = client.get_rent_structure().await?;
   let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply()?)?;
+    .finish(client.get_token_supply().await?)?;
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
   let validation_result = CredentialValidator::validate(
@@ -175,7 +175,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the changes.
   let alias_output: AliasOutput = client.update_did_output(issuer_document.clone()).await?;
-  let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output).finish(client.get_token_supply()?)?;
+  let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output).finish(client.get_token_supply().await?)?;
   client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
   // We expect the verifiable credential to be revoked.
