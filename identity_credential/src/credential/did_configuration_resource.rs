@@ -29,13 +29,15 @@ static TYPE_2: &str = "DomainLinkageCredential";
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
 ///
+/// It can be placed in an origin's `.well-known` directory to prove linkage between the origin and a DID.
+///
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DIDConfigurationResource {
   /// Fixed context.
   #[serde(rename = "@context")]
   context: Context,
-  /// LInked credentials.
+  /// Linked credentials.
   linked_dids: Vec<Credential>,
   /// Further properties, must be empty.
   #[serde(flatten)]
@@ -254,7 +256,7 @@ mod tests {
   #[test]
   fn from_json() {
     const JSON1: &str = include_str!("../../tests/fixtures/well-known-configuration.json");
-    let _well_known: DIDConfigurationResource = DIDConfigurationResource::from_json(JSON1).unwrap();
+    DIDConfigurationResource::from_json(JSON1).unwrap();
   }
 
   #[test]
@@ -268,7 +270,6 @@ mod tests {
       domains,
     ).unwrap();
 
-    // Add a new Service.
     let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",

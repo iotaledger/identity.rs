@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
       .build(random_stronghold_path())?,
   );
 
-  // Create a DID for an entity;
+  // Create a DID for an entity.
   let (_, mut did_document, keypair): (Address, IotaDocument, KeyPair) =
     create_did(&client, &mut secret_manager).await?;
 
@@ -57,14 +57,14 @@ async fn main() -> anyhow::Result<()> {
   let mut domains: OrderedSet<Url> = OrderedSet::new();
   domains.append(origin_1.clone());
   domains.append(origin_2.clone());
-  let service_url: IotaDIDUrl = IotaDIDUrl::parse(did_document.did_str().to_owned() + "#domain-linkage")?;
+  let service_url: IotaDIDUrl = did_document.id().to_owned().join("#domain-linkage")?;
 
   let linked_domain_service: IotaService =
     DIDConfigurationResource::create_linked_domain_service(service_url, domains)?;
   did_document.insert_service(linked_domain_service)?;
 
   let updated_did_document: IotaDocument = publish_document(client.clone(), secret_manager, did_document).await?;
-  println!("DID document with linked domain service >>: {:#}", updated_did_document);
+  println!("DID document with linked domain service: {:#}", updated_did_document);
 
   ////////////////////////////////////////////////////////////
   // Create DID Configuration resource
@@ -72,10 +72,11 @@ async fn main() -> anyhow::Result<()> {
 
   // Create DID Configuration resource for the first domain containing a signed Domain Linkage Credential.
   let mut domain_linkage_credential: Credential = DomainLinkageCredentialBuilder::new()
-    .issuer(Issuer::Url(Url::parse(updated_did_document.id().to_string())?))
+    .issuer(Issuer::Url(updated_did_document.id().to_url().into()))
     .origin(origin_1)
     .issuance_date(Timestamp::now_utc())
-    .expiration_date(Timestamp::now_utc().checked_add(Duration::days(365 * 5)).unwrap()) //expires after roughly 5 years.
+     // Expires after a year.
+    .expiration_date(Timestamp::now_utc().checked_add(Duration::days(365)).unwrap())
     .build()?;
 
   updated_did_document.sign_data(
@@ -110,7 +111,7 @@ async fn main() -> anyhow::Result<()> {
   // Verify the "fetched" DID Configuration resource.
   let verification_result = verifier.verify_configuration(&configuration_resource).await;
 
-  // Verification returns ok
+  // Verification succeeds.
   assert!(verification_result.is_ok());
   Ok(())
 }

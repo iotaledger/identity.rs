@@ -201,6 +201,7 @@ impl DomainLinkageVerifier {
   }
 }
 
+#[cfg(test)]
 mod tests {
   use identity_core::convert::FromJson;
   use crate::error::Result;

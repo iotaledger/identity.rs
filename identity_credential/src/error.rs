@@ -19,13 +19,13 @@ pub enum Error {
   #[error("missing credential issuer")]
   MissingIssuer,
   /// Caused when constructing a credential without a subject.
-  #[error("missing Credential subject")]
+  #[error("missing credential subject")]
   MissingSubject,
-  /// Caused when constructing a well-known credential without an expiration date.
-  #[error("missing expiration Date")]
+  /// Caused when constructing a Domain Linkage credential without an expiration date.
+  #[error("missing expiration date")]
   MissingExpirationDate,
-  /// Caused when constructing a well-known credential without an origin.
-  #[error("missing Origin")]
+  /// Caused when constructing a Domain Linkage credential without an origin.
+  #[error("missing origin")]
   MissingOrigin,
   /// Caused when constructing a credential with a malformed subject.
   #[error("invalid credential subject")]
