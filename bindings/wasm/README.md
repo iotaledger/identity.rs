@@ -70,7 +70,7 @@ const {
   MethodRelationship,
   IotaIdentityClient,
 } = require('@iota/identity-wasm/node');
-const { Client } = require('@iota/iota-client-wasm/node');
+const { Client } = require('@iota/client-wasm/node');
 
 // The endpoint of the IOTA node to use.
 const API_ENDPOINT = "http://127.0.0.1:14265";
@@ -178,7 +178,7 @@ import copy from "rollup-plugin-copy";
 copy({
   targets: [
     {
-      src: "node_modules/@iota/iota-client-wasm/web/wasm/client_wasm_bg.wasm",
+      src: "node_modules/@iota/client-wasm/web/wasm/client_wasm_bg.wasm",
       dest: "public",
       rename: "client_wasm_bg.wasm",
     },
@@ -208,7 +208,7 @@ const CopyWebPlugin= require('copy-webpack-plugin');
 new CopyWebPlugin({
   patterns: [
     {
-      from: 'node_modules/@iota/iota-client-wasm/web/wasm/client_wasm_bg.wasm',
+      from: 'node_modules/@iota/client-wasm/web/wasm/client_wasm_bg.wasm',
       to: 'client_wasm_bg.wasm'
     },
     {
@@ -222,7 +222,7 @@ new CopyWebPlugin({
 ### Web Usage
 
 ```typescript
-import * as client from "@iota/iota-client-wasm/web";
+import * as client from "@iota/client-wasm/web";
 import * as identity from "@iota/identity-wasm/web";
 
 /** Demonstrate how to create a DID Document. */

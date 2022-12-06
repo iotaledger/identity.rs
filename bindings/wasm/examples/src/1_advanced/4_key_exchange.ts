@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDocument,
@@ -11,7 +12,6 @@ import {
     MethodScope,
     X25519,
 } from "@iota/identity-wasm/node";
-import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import { AddressTypes, Bech32Helper, IRent, OutputTypes } from "@iota/iota.js";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
