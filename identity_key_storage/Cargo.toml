@@ -1,0 +1,13 @@
+[package]
+name = "identity_key_storage"
+version = "0.7.0-alpha.4"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1"
+serde = "1.0.145"
+serde_json = "1.0.86"
+identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
+thiserror = "1"
