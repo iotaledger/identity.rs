@@ -131,7 +131,7 @@ impl KeyStorageError {
   }
 
   /// Updates the `source` of the [`KeyStorageError`].
-  pub fn with_source(mut self, source: impl Into<Box<dyn Error + Send + Sync + 'static>>) -> Self {
+  pub fn with_source(self, source: impl Into<Box<dyn Error + Send + Sync + 'static>>) -> Self {
     self._with_source(source.into())
   }
 
@@ -142,7 +142,7 @@ impl KeyStorageError {
   }
 
   /// Updates the custom message of the [`KeyStorageError`].
-  pub fn with_custom_message(mut self, message: impl Into<Cow<'static, str>>) -> Self {
+  pub fn with_custom_message(self, message: impl Into<Cow<'static, str>>) -> Self {
     self._with_custom_message(message.into())
   }
 
