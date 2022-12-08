@@ -9,7 +9,7 @@ use crate::key_generation_schema::MultikeySchema;
 
 #[async_trait(?Send)]
 trait KeyStorage {
-    type SigningAlgorithm: std::fmt::Display + FromStr + TryFrom<String> + AsRef<str>;
-    
-    async fn generate_multikey(schema: &MultikeySchema); 
+  type SigningAlgorithm: std::fmt::Display + FromStr + TryFrom<String> + AsRef<str>;
+
+  async fn generate_multikey(schema: &MultikeySchema);
 }

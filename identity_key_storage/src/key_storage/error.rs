@@ -2,152 +2,224 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
+use std::error::Error;
+use std::fmt::Display;
 
-/// An error explaining how [`KeyStorage`] operations went wrong.
-#[derive(Debug)] 
+/// The error type for KeyStorage operations.
+///
+/// Instances always carry a corresponding [`StorageErrorKind`] and may be extended with custom error messages and
+/// source.
+#[derive(Debug)]
 pub struct KeyStorageError {
-    repr: Repr
+  repr: Repr,
 }
 
+impl Display for KeyStorageError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self.repr {
+      Repr::Simple(ref cause) => write!(f, "{}", cause.as_str()),
+      Repr::Extensive(ref extensive) => {
+        write!(f, "{}", extensive.cause.as_str())?;
+        let Some(ref message) = extensive.message else {return Ok(())};
+        write!(f, " message: {}", message.as_ref())
+      }
+    }
+  }
+}
+
+impl Error for KeyStorageError {
+  fn source(&self) -> Option<&(dyn Error + 'static)> {
+    self.source_as_dyn()
+  }
+}
 #[derive(Debug)]
 struct Extensive {
-    cause: StorageErrorCause, 
-    source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
-    message: Option<Cow<'static, str>>
+  cause: StorageErrorCause,
+  source: Option<Box<dyn Error + Send + Sync + 'static>>,
+  message: Option<Cow<'static, str>>,
 }
 
 #[derive(Debug)]
 enum Repr {
-    Simple(StorageErrorCause), 
-    Extensive(Box<Extensive>)
+  Simple(StorageErrorCause),
+  Extensive(Box<Extensive>),
 }
 
 impl From<StorageErrorCause> for KeyStorageError {
-    fn from(cause: StorageErrorCause) -> Self {
-        Self::new(cause)
-    }
+  fn from(cause: StorageErrorCause) -> Self {
+    Self::new(cause)
+  }
 }
 
 impl From<Box<Extensive>> for KeyStorageError {
-    fn from(extensive: Box<Extensive>) -> Self {
-        Self {
-            repr: Repr::Extensive(extensive)
-        }
+  fn from(extensive: Box<Extensive>) -> Self {
+    Self {
+      repr: Repr::Extensive(extensive),
     }
+  }
 }
 
 impl KeyStorageError {
-    /// Constructs a new [`KeyStorageError`].  
-    pub fn new(cause: StorageErrorCause) -> Self {
-        Self { repr: Repr::Simple(cause) }
+  /// Constructs a new [`KeyStorageError`].  
+  pub fn new(cause: StorageErrorCause) -> Self {
+    Self {
+      repr: Repr::Simple(cause),
     }
+  }
 
-    /// Returns a reference to corresponding [`StorageErrorCause`] for this error. 
-    pub fn cause(&self) -> &StorageErrorCause {
-        match self.repr {
-            Repr::Simple(ref cause) => cause, 
-            Repr::Extensive(ref extensive) => &extensive.cause
-        }
+  /// Returns a reference to corresponding [`StorageErrorCause`] for this error.
+  pub fn cause(&self) -> &StorageErrorCause {
+    match self.repr {
+      Repr::Simple(ref cause) => cause,
+      Repr::Extensive(ref extensive) => &extensive.cause,
     }
+  }
 
-    /// Converts this error into the corresponding [`StorageErrorCause`]. 
-    pub fn into_cause(self) -> StorageErrorCause {
-        match self.repr {
-            Repr::Simple(cause) => cause, 
-            Repr::Extensive(extensive) => extensive.cause
-        }
+  /// Converts this error into the corresponding [`StorageErrorCause`].
+  pub fn into_cause(self) -> StorageErrorCause {
+    match self.repr {
+      Repr::Simple(cause) => cause,
+      Repr::Extensive(extensive) => extensive.cause,
     }
+  }
 
-    /// Returns a reference to the custom message of the [`KeyStorageError`] if it was set. 
-    pub fn custom_message(&self) -> Option<&str> {
-        self.extensive().into_iter().flat_map(|extensive| extensive.message.as_deref()).next()
+  /// Returns a reference to the custom message of the [`KeyStorageError`] if it was set.
+  pub fn custom_message(&self) -> Option<&str> {
+    self
+      .extensive()
+      .into_iter()
+      .flat_map(|extensive| extensive.message.as_deref())
+      .next()
+  }
+
+  /// Returns a reference to the attached source of the [`KeyStorageError`] if it was set.
+  pub fn source_ref(&self) -> Option<&(dyn Error + Send + Sync + 'static)> {
+    self.extensive().and_then(|extensive| extensive.source.as_deref())
+  }
+
+  fn source_as_dyn(&self) -> Option<&(dyn Error + 'static)> {
+    fn cast<'a>(error: &'a (dyn Error + Send + Sync + 'static)) -> &'a (dyn Error + 'static) {
+      error
     }
+    self
+      .extensive()
+      .and_then(|extensive| extensive.source.as_deref())
+      .map(cast)
+  }
 
-    fn extensive(&self) -> Option<&Extensive> {
-        match self.repr {
-            Repr::Extensive(ref extensive) => Some(extensive.as_ref()),
-            _ => None 
-        }
+  /// Converts this error into the source error if it was set.
+  pub fn into_source(self) -> Option<Box<dyn Error + Send + Sync + 'static>> {
+    self.into_extensive().source
+  }
+
+  fn extensive(&self) -> Option<&Extensive> {
+    match self.repr {
+      Repr::Extensive(ref extensive) => Some(extensive.as_ref()),
+      _ => None,
     }
+  }
 
-    fn into_extensive(self) -> Box<Extensive> {
-        match self.repr {
-            Repr::Extensive(extensive) => extensive, 
-            Repr::Simple(cause) => Box::new(Extensive { cause, source: None, message: None })
-        }
+  fn into_extensive(self) -> Box<Extensive> {
+    match self.repr {
+      Repr::Extensive(extensive) => extensive,
+      Repr::Simple(cause) => Box::new(Extensive {
+        cause,
+        source: None,
+        message: None,
+      }),
     }
+  }
 
-    /// Updates the `source` of the [`KeyStorageError`]. 
-    pub fn with_source(mut self, source: impl Into<Box<dyn std::error::Error + Send + Sync + 'static>>) -> Self {
-        self._with_source(source.into())
-    } 
+  /// Updates the `source` of the [`KeyStorageError`].
+  pub fn with_source(mut self, source: impl Into<Box<dyn Error + Send + Sync + 'static>>) -> Self {
+    self._with_source(source.into())
+  }
 
-    fn _with_source(self, source: Box<dyn std::error::Error + Send + Sync + 'static>) -> Self {
-        let mut extensive = self.into_extensive();
-        extensive.as_mut().source = Some(source); 
-        Self::from(extensive)
-        }
-    
-    /// Updates the custom message of the [`KeyStorageError`]. 
-    pub fn with_custom_message(mut self, message: impl Into<Cow<'static, str>>) -> Self {
-        self._with_custom_message(message.into())
-    }
+  fn _with_source(self, source: Box<dyn Error + Send + Sync + 'static>) -> Self {
+    let mut extensive = self.into_extensive();
+    extensive.as_mut().source = Some(source);
+    Self::from(extensive)
+  }
 
-    fn _with_custom_message(self, message: Cow<'static, str>) -> Self {
-        let mut extensive = self.into_extensive();
-        extensive.as_mut().message = Some(message);
-        Self::from(extensive)
-    }
-   
+  /// Updates the custom message of the [`KeyStorageError`].
+  pub fn with_custom_message(mut self, message: impl Into<Cow<'static, str>>) -> Self {
+    self._with_custom_message(message.into())
+  }
+
+  fn _with_custom_message(self, message: Cow<'static, str>) -> Self {
+    let mut extensive = self.into_extensive();
+    extensive.as_mut().message = Some(message);
+    Self::from(extensive)
+  }
 }
 
 /// The cause of the failed [`KeyStorage`] operation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum StorageErrorCause {
-    /// Occurs when a user tries to generate a key with a [`MultikeySchema`] which the [`KeyStorage`] implementation does not support. 
-    UnsupportedMultikeySchema,
+  /// Indicates that a user tried to generate a key with a [`MultikeySchema`] which the [`KeyStorage`] implementation
+  /// does not support.
+  UnsupportedMultikeySchema,
 
-    /// Occurs when trying to sign with a key type that the [`KeyStorage`] implementation deems incompatible with the given signature algorithm. 
-    UnsupportedSigningKey,
+  /// Indicates an attempt to sign with a key type that the [`KeyStorage`] implementation deems incompatible with the
+  /// given signature algorithm.
+  UnsupportedSigningKey,
 
-    /// Any error occurring while attempting to generate a new key.  
-    /// 
-    /// # Note 
-    /// It is recommended to only use this variant in situations where there is no other variant of this type providing more 
-    /// precise information about why key generation failed. Examples could be [`Self::UnsupportedMultikeySchema`] or [`Self::UnavailableKeyStorage`]. 
-    UnsuccessfulKeyGeneration,
- 
-    /// Any error occurring while attempting to remove a key from the [`KeyStorage`] implementation.
-    /// 
-    /// # Note 
-    /// It is recommended to only use this variant in situations where there is no other variant of this type providing more 
-    /// precise information about why key removal failed. Examples could be [`Self::KeyNotFound`] or [`Self::UnavailableKeyStorage`].  
-    UnsuccessfulKeyRemoval,
-   
-    /// Occurs when the [`KeyStorage`] implementation is not able to find the requested key material. 
-    KeyNotFound,  
-    
-    /// Occurs if the storage becomes unavailable for an unpredictable amount of time. 
-    /// 
-    /// Occurrences of this variant should hopefully be rare, but could occur if hardware fails, or a subscription with a cloud provider ceases during for example. 
-    UnavailableKeyStorage,
+  /// Indicates any error occurring while attempting to generate a new key.  
+  ///
+  /// # Note
+  /// It is recommended to only use this variant in situations where there is no other variant of this type providing
+  /// more precise information about why key generation failed. Examples could be
+  /// [`Self::UnsupportedMultikeySchema`], [`Self::UnavailableKeyStorage`] or [`Self::CouldNotAuthenticate`].
+  UnsuccessfulKeyGeneration,
+
+  /// Indicates any error occurring while attempting to remove a key from the [`KeyStorage`] implementation.
+  ///
+  /// # Note
+  /// It is recommended to only use this variant in situations where there is no other variant of this type providing
+  /// more precise information about why key removal failed. Examples could be [`Self::KeyNotFound`],
+  /// [`Self::UnavailableKeyStorage`] or [`Self::CouldNotAuthenticate`].
+  UnsuccessfulKeyRemoval,
+
+  /// Indicates that the [`KeyStorage`] implementation is not able to find the requested key.
+  KeyNotFound,
+
+  /// Indicates that the storage is unavailable for an unpredictable amount of time.
+  ///
+  /// Occurrences of this variant should hopefully be rare, but could occur if hardware fails, or a hosted key store
+  /// goes offline.
+  UnavailableKeyStorage,
+
+  /// Indicates that an attempt was made to authenticate with the key storage, but this operation did not succeed.
+  CouldNotAuthenticate,
+
+  /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
+  ///
+  /// When using this variant one may want to attach additional context to the corresponding [`KeyStorageError`]. See
+  /// [`KeyStorageError::with_message`](KeyStorageError::with_message()) and
+  /// [`KeyStorageError::with_source`](KeyStorageError::with_source()).
+  Unspecified,
 }
 
 impl StorageErrorCause {
-    fn as_str(&self) -> &str {
-        match self {
-            Self::UnsupportedMultikeySchema =>  "key generation does not support the provided multikey schema",
-            Self::UnsupportedSigningKey =>  "the signing algorithm does not support the provided key type",
-            Self::UnsuccessfulKeyGeneration =>  "the key generation operation did not succeed", 
-            Self::UnsuccessfulKeyRemoval => "the key removal operation did not succeed",
-            Self::KeyNotFound => "could not find key", 
-            Self::UnavailableKeyStorage =>  "the key storage is not available"
-        }
+  fn as_str(&self) -> &str {
+    match self {
+      Self::UnsupportedMultikeySchema => "key generation failed: the provided multikey schema is not supported",
+      Self::UnsupportedSigningKey => {
+        "signing failed: the specified signing algorithm does not support the provided key type"
+      }
+      Self::UnsuccessfulKeyGeneration => "key generation failed",
+      Self::UnsuccessfulKeyRemoval => "key removal failed",
+      Self::KeyNotFound => "key not found",
+      Self::UnavailableKeyStorage => "key storage unavailable",
+      Self::CouldNotAuthenticate => "authentication with the key storage failed",
+      Self::Unspecified => "operation failed",
     }
+  }
 }
 
-impl std::fmt::Display for StorageErrorCause {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-       write!(f, "{}", self.as_str())
-    }
+impl Display for StorageErrorCause {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.as_str())
+  }
 }

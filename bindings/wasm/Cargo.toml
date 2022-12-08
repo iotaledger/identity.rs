@@ -19,8 +19,8 @@ crate-type = ["cdylib", "rlib"]
 async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
-iota-types = { version = "1.0.0-rc.3", default-features = false, features = ["block", "api", "dto", "std"] }
 identity_storage = { version = "0.7.0-alpha.2", path = "../../identity_storage", default-features = false }
+iota-types = { version = "1.0.0-rc.3", default-features = false, features = ["block", "api", "dto", "std"] }
 js-sys = { version = "0.3.60" }
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
