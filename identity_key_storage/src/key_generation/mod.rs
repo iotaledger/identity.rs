@@ -4,5 +4,5 @@ mod key_identification;
 mod multikey;
 
 pub use key_identification::KeyId;
+pub use multikey::MultikeyOutput;
 pub use multikey::MultikeySchema;
-pub use multikey::MultikeyOutput; 

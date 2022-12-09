@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use identity_data_integrity_types::verification_material::PublicKeyMultibase;
+use identity_data_integrity_types::verification_material::VerificationMaterial;
 
 use crate::key_generation::KeyId;
 use crate::key_generation::MultikeyOutput;
@@ -25,6 +26,15 @@ trait KeyStorage {
   /// corresponding to the private key.
   async fn generate_multikey(schema: &MultikeySchema) -> KeyStorageResult<MultikeyOutput>;
 
-  /// Sign the provided data using the private key corresponding to the given `key_id` with the specified `algorithm`. 
-  async fn sign(data: &[u8], key_id: &KeyId, algorithm: &Self::SigningAlgorithm) -> KeyStorageResult<Signature>; 
+  /// Sign the provided data using the private key corresponding to the given `key_id` with the specified `algorithm`.
+  async fn sign(data: &[u8], key_identifier: &KeyId, algorithm: &Self::SigningAlgorithm) -> KeyStorageResult<Signature>;
+
+  /// Returns the public key associated with the provided `key_identifier`. 
+  async fn public(key_identifier: &KeyId) -> KeyStorageResult<VerificationMaterial>;
+
+  /// Deletes the secured keys associated with the provided `key_identifier`.
+  /// 
+  /// # Warning
+  /// This operation cannot be undone. The keys associated with `key_identifier` will be lost forever. 
+  async fn delete(key_identifier: &KeyId) -> KeyStorageResult<()>;
 }
