@@ -16,6 +16,7 @@ did_url = { version = "0.1", default-features = false, features = ["std", "serde
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
 form_urlencoded = { version = "1.0.1", default-features = false }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core" }
+identity_data_integrity_types = { version = "=0.7.0-alpha.4", path = "../identity_data_integrity_types" }
 indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 roaring = { version = "0.9.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }

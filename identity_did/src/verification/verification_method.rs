@@ -4,6 +4,7 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use identity_data_integrity_types::verification_material::VerificationMaterial;
 use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
@@ -41,6 +42,9 @@ where
   pub(crate) data: MethodData,
   #[serde(flatten)]
   pub(crate) properties: T,
+  #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+  // TODO: This should replace `MethodData` and should not be wrapped in an Option.
+  material: Option<VerificationMaterial>,
 }
 
 /// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
@@ -84,6 +88,7 @@ where
       type_: builder.type_.ok_or(Error::InvalidMethod("missing type"))?,
       data: builder.data.ok_or(Error::InvalidMethod("missing data"))?,
       properties: builder.properties,
+      material: builder.material,
     })
   }
 
@@ -133,6 +138,16 @@ where
     &self.data
   }
 
+  /// Returns a reference to the `VerificationMaterial`.
+  pub fn material(&self) -> Option<&VerificationMaterial> {
+    self.material.iter().next()
+  }
+
+  /// Returns a mutable reference to the `VerificationMaterial`.
+  pub fn material_mut(&mut self) -> &mut Option<VerificationMaterial> {
+    &mut self.material
+  }
+
   /// Returns a mutable reference to the `VerificationMethod` data.
   pub fn data_mut(&mut self) -> &mut MethodData {
     &mut self.data
@@ -166,6 +181,7 @@ where
       type_: self.type_,
       data: self.data,
       properties: self.properties,
+      material: self.material,
     }
   }
 
@@ -181,6 +197,7 @@ where
       type_: self.type_,
       data: self.data,
       properties: self.properties,
+      material: self.material,
     })
   }
 }

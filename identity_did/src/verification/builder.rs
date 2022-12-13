@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
+use identity_data_integrity_types::verification_material::VerificationMaterial;
 
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
@@ -22,6 +23,8 @@ where
   pub(crate) type_: Option<MethodType>,
   pub(crate) data: Option<MethodData>,
   pub(crate) properties: T,
+  // TODO: Should replace `data`.
+  pub(crate) material: Option<VerificationMaterial>,
 }
 
 impl<D, T> MethodBuilder<D, T>
@@ -36,6 +39,7 @@ where
       type_: None,
       data: None,
       properties,
+      material: None,
     }
   }
 
@@ -67,6 +71,12 @@ where
     self
   }
 
+  /// Sets the `material` value of the generated `VerificationMethod`.
+  pub fn material(mut self, value: VerificationMaterial) -> Self {
+    self.material = Some(value);
+    self
+  }
+
   /// Returns a new `VerificationMethod` based on the `MethodBuilder` configuration.
   pub fn build(self) -> Result<VerificationMethod<D, T>> {
     VerificationMethod::from_builder(self)
@@ -85,6 +95,7 @@ where
       type_: None,
       data: None,
       properties: Default::default(),
+      material: None,
     }
   }
 }

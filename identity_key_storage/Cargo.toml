@@ -9,6 +9,8 @@ edition = "2021"
 async-trait = "0.1"
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 identity_data_integrity_types = { version = "=0.7.0-alpha.4", path = "../identity_data_integrity_types", default-features = false }
+identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
+iota-crypto = { version = "0.15", default-features = false, features = ["blake2b"] }
 serde = "1.0.145"
 serde_json = "1.0.86"
 thiserror = "1"

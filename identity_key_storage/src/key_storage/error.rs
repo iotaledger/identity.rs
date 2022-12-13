@@ -165,22 +165,6 @@ pub enum StorageErrorCause {
   /// given signature algorithm.
   UnsupportedSigningKey,
 
-  /// Indicates any error occurring while attempting to generate a new key.  
-  ///
-  /// # Note
-  /// It is recommended to only use this variant in situations where there is no other variant of this type providing
-  /// more precise information about why key generation failed. Examples could be
-  /// [`Self::UnsupportedMultikeySchema`], [`Self::UnavailableKeyStorage`] or [`Self::CouldNotAuthenticate`].
-  UnsuccessfulKeyGeneration,
-
-  /// Indicates any error occurring while attempting to remove a key from the [`KeyStorage`] implementation.
-  ///
-  /// # Note
-  /// It is recommended to only use this variant in situations where there is no other variant of this type providing
-  /// more precise information about why key removal failed. Examples could be [`Self::KeyNotFound`],
-  /// [`Self::UnavailableKeyStorage`] or [`Self::CouldNotAuthenticate`].
-  UnsuccessfulKeyRemoval,
-
   /// Indicates that the [`KeyStorage`] implementation is not able to find the requested key.
   KeyNotFound,
 
@@ -192,6 +176,12 @@ pub enum StorageErrorCause {
 
   /// Indicates that an attempt was made to authenticate with the key storage, but this operation did not succeed.
   CouldNotAuthenticate,
+
+  /// Indicates an unsuccessful I/O operation that may be retried, such as temporary connection failure or timeouts.
+  ///
+  /// Returning this error signals to the caller that the operation may be retried with a chance of success.
+  /// It is at the caller's discretion whether to retry or not, and how often.
+  RetryableIOFailure,
 
   /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
   ///
@@ -208,12 +198,11 @@ impl StorageErrorCause {
       Self::UnsupportedSigningKey => {
         "signing failed: the specified signing algorithm does not support the provided key type"
       }
-      Self::UnsuccessfulKeyGeneration => "key generation failed",
-      Self::UnsuccessfulKeyRemoval => "key removal failed",
       Self::KeyNotFound => "key not found",
       Self::UnavailableKeyStorage => "key storage unavailable",
       Self::CouldNotAuthenticate => "authentication with the key storage failed",
       Self::Unspecified => "operation failed",
+      Self::RetryableIOFailure => "key storage was unsuccessful because of an I/O failure",
     }
   }
 }
