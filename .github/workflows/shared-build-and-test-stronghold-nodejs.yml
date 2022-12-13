@@ -39,6 +39,15 @@ jobs:
         fail-fast: false
         matrix:
           settings:
+            - host: ubuntu-latest
+              container: multiarch/qemu-user-static:register
+              target: aarch64-unknown-linux-gnu
+              architecture: arm64
+              build: |
+                npm run build
+                strip -x dist/*.node
+              test: |
+                npm run test
             - host: macos-latest
               container: null
               target: x86_64-apple-darwin
