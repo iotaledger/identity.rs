@@ -43,6 +43,8 @@ jobs:
               container: null
               target: aarch64-unknown-linux-gnu
               architecture: arm64
+              setup: |
+                
               build: |
                 export NPM_BUILD_NAPI_ARGS=--target=aarch64-unknown-linux-gnu
                 npm run build
@@ -107,8 +109,6 @@ jobs:
         - name: Set up QEMU
           uses: docker/setup-qemu-action@v2
           if: ${{ matrix.settings.target == 'aarch64-unknown-linux-gnu'}}
-          with:
-            platforms: arm64
 
         - uses: actions/checkout@v3
 
