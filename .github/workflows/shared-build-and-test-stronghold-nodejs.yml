@@ -106,7 +106,7 @@ jobs:
       steps:
         - name: Set up QEMU
           uses: docker/setup-qemu-action@v2
-          if: ${{ matrix.settings.target == "aarch64-unknown-linux-gnu"}}
+          if: ${{ matrix.settings.target == 'arch64-unknown-linux-gnu'}}
           with:
             platforms: arm64
 
