@@ -47,6 +47,7 @@ jobs:
                 sudo apt-get update
                 sudo apt-get install gcc-aarch64-linux-gnu 
                 sudo apt-get install g++-aarch64-linux-gnu
+                which ld
               build: |
                 export NPM_BUILD_NAPI_ARGS=--target=aarch64-unknown-linux-gnu
                 npm run build
