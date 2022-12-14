@@ -5,16 +5,19 @@ use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::Display;
 
-/// The error type for KeyStorage operations.
+// TODO: This follows the same pattern as KeyStorageError. Might be an idea to make a macro_rules macro for this sort of
+// thing.
+
+/// The error type for IdentityStorage operations.
 ///
 /// Instances always carry a corresponding [`StorageErrorKind`] and may be extended with custom error messages and
 /// source.
 #[derive(Debug)]
-pub struct KeyStorageError {
+pub struct IdentityStorageError {
   repr: Repr,
 }
 
-impl Display for KeyStorageError {
+impl Display for IdentityStorageError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self.repr {
       Repr::Simple(ref cause) => write!(f, "{}", cause.as_str()),
@@ -27,31 +30,31 @@ impl Display for KeyStorageError {
   }
 }
 
-impl Error for KeyStorageError {
+impl Error for IdentityStorageError {
   fn source(&self) -> Option<&(dyn Error + 'static)> {
     self.source_as_dyn()
   }
 }
 #[derive(Debug)]
 struct Extensive {
-  cause: KeyStorageErrorKind,
+  cause: IdentityStorageErrorKind,
   source: Option<Box<dyn Error + Send + Sync + 'static>>,
   message: Option<Cow<'static, str>>,
 }
 
 #[derive(Debug)]
 enum Repr {
-  Simple(KeyStorageErrorKind),
+  Simple(IdentityStorageErrorKind),
   Extensive(Box<Extensive>),
 }
 
-impl From<KeyStorageErrorKind> for KeyStorageError {
-  fn from(cause: KeyStorageErrorKind) -> Self {
+impl From<IdentityStorageErrorKind> for IdentityStorageError {
+  fn from(cause: IdentityStorageErrorKind) -> Self {
     Self::new(cause)
   }
 }
 
-impl From<Box<Extensive>> for KeyStorageError {
+impl From<Box<Extensive>> for IdentityStorageError {
   fn from(extensive: Box<Extensive>) -> Self {
     Self {
       repr: Repr::Extensive(extensive),
@@ -59,31 +62,31 @@ impl From<Box<Extensive>> for KeyStorageError {
   }
 }
 
-impl KeyStorageError {
-  /// Constructs a new [`KeyStorageError`].  
-  pub fn new(cause: KeyStorageErrorKind) -> Self {
+impl IdentityStorageError {
+  /// Constructs a new [`IdentityStorageError`].  
+  pub fn new(cause: IdentityStorageErrorKind) -> Self {
     Self {
       repr: Repr::Simple(cause),
     }
   }
 
-  /// Returns a reference to corresponding [`StorageErrorCause`] for this error.
-  pub fn cause(&self) -> &KeyStorageErrorKind {
+  /// Returns a reference to corresponding [`IdentityStorageErrorCause`] for this error.
+  pub fn cause(&self) -> &IdentityStorageErrorKind {
     match self.repr {
       Repr::Simple(ref cause) => cause,
       Repr::Extensive(ref extensive) => &extensive.cause,
     }
   }
 
-  /// Converts this error into the corresponding [`StorageErrorCause`].
-  pub fn into_cause(self) -> KeyStorageErrorKind {
+  /// Converts this error into the corresponding [`IdentityStorageErrorCause`].
+  pub fn into_cause(self) -> IdentityStorageErrorKind {
     match self.repr {
       Repr::Simple(cause) => cause,
       Repr::Extensive(extensive) => extensive.cause,
     }
   }
 
-  /// Returns a reference to the custom message of the [`KeyStorageError`] if it was set.
+  /// Returns a reference to the custom message of the [`IdentityStorageError`] if it was set.
   pub fn custom_message(&self) -> Option<&str> {
     self
       .extensive()
@@ -92,7 +95,7 @@ impl KeyStorageError {
       .next()
   }
 
-  /// Returns a reference to the attached source of the [`KeyStorageError`] if it was set.
+  /// Returns a reference to the attached source of the [`IdentityStorageError`] if it was set.
   pub fn source_ref(&self) -> Option<&(dyn Error + Send + Sync + 'static)> {
     self.extensive().and_then(|extensive| extensive.source.as_deref())
   }
@@ -130,7 +133,7 @@ impl KeyStorageError {
     }
   }
 
-  /// Updates the `source` of the [`KeyStorageError`].
+  /// Updates the `source` of the [`IdentityStorageError`].
   pub fn with_source(self, source: impl Into<Box<dyn Error + Send + Sync + 'static>>) -> Self {
     self._with_source(source.into())
   }
@@ -141,7 +144,7 @@ impl KeyStorageError {
     Self::from(extensive)
   }
 
-  /// Updates the custom message of the [`KeyStorageError`].
+  /// Updates the custom message of the [`IdentityStorageError`].
   pub fn with_custom_message(self, message: impl Into<Cow<'static, str>>) -> Self {
     self._with_custom_message(message.into())
   }
@@ -153,28 +156,24 @@ impl KeyStorageError {
   }
 }
 
-/// The cause of the failed [`KeyStorage`] operation.
-#[derive(Debug, Clone)]
+pub type IdentityStorageResult<T> = Result<T, IdentityStorageError>;
+
 #[non_exhaustive]
-pub enum KeyStorageErrorKind {
-  /// Indicates that a user tried to generate a key with a [`MultikeySchema`] which the [`KeyStorage`] implementation
-  /// does not support.
-  UnsupportedMultikeySchema,
-
-  /// Indicates an attempt to sign with a key type that the [`KeyStorage`] implementation deems incompatible with the
-  /// given signature algorithm.
-  UnsupportedSigningKey,
-
-  /// Indicates that the [`KeyStorage`] implementation is not able to find the requested key.
-  KeyNotFound,
-
+#[derive(Debug)]
+/// The cause of the failed [`IdentityStorage`](crate::identity_storage::IdentityStorage) operation.
+pub enum IdentityStorageErrorKind {
+  /// Indicates that the given [`MethodIdx`](crate::identifiers::MethodIdx) already exists in storage.
+  MethodIdxAlreadyExists,
+  /// Indicates that the storages could not find an entry corresponding to the given
+  /// [`MethodIdx`](crate::identifiers::MethodIdx).
+  MethodIdxNotFound,
   /// Indicates that the storage is unavailable for an unpredictable amount of time.
   ///
-  /// Occurrences of this variant should hopefully be rare, but could occur if hardware fails, or a hosted key store
+  /// Occurrences of this variant should hopefully be rare, but could occur if hardware fails, or a hosted storage
   /// goes offline.
-  UnavailableKeyStorage,
+  UnavailableIdentityStorage,
 
-  /// Indicates that an attempt was made to authenticate with the key storage, but this operation did not succeed.
+  /// Indicates that an attempt was made to authenticate with the identity storage, but this operation did not succeed.
   CouldNotAuthenticate,
 
   /// Indicates an unsuccessful I/O operation that may be retried, such as temporary connection failure or timeouts.
@@ -185,31 +184,22 @@ pub enum KeyStorageErrorKind {
 
   /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
   ///
-  /// When using this variant one may want to attach additional context to the corresponding [`KeyStorageError`]. See
-  /// [`KeyStorageError::with_message`](KeyStorageError::with_message()) and
-  /// [`KeyStorageError::with_source`](KeyStorageError::with_source()).
+  /// When using this variant one may want to attach additional context to the corresponding [`IdentityStorageError`].
+  /// See [`IdentityStorageError::with_message`](IdentityStorageError::with_message()) and
+  /// [`IdentityStorageError::with_source`](IdentityStorageError::with_source()).
   Unspecified,
 }
 
-impl KeyStorageErrorKind {
-  /// Returns a report friendly representation of the [`KeyStorageErrorCause`].
+impl IdentityStorageErrorKind {
+  /// Returns a report friendly representation of the [`IdentityStorageErrorCause`].
   const fn as_str(&self) -> &str {
     match self {
-      Self::UnsupportedMultikeySchema => "key generation failed: the provided multikey schema is not supported",
-      Self::UnsupportedSigningKey => {
-        "signing failed: the specified signing algorithm does not support the provided key type"
-      }
-      Self::KeyNotFound => "key not found",
-      Self::UnavailableKeyStorage => "key storage unavailable",
-      Self::CouldNotAuthenticate => "authentication with the key storage failed",
-      Self::Unspecified => "key storage operation failed",
-      Self::RetryableIOFailure => "key storage was unsuccessful because of an I/O failure",
+      Self::UnavailableIdentityStorage => "unavailable identity storage",
+      Self::CouldNotAuthenticate => "authentication with the identity storage failed",
+      Self::MethodIdxAlreadyExists => "method index already exists",
+      Self::MethodIdxNotFound => "method index not found",
+      Self::RetryableIOFailure => "identity storage operation was unsuccessful because of an I/O failure",
+      Self::Unspecified => "identity storage operation failed",
     }
-  }
-}
-
-impl Display for KeyStorageErrorKind {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.as_str())
   }
 }

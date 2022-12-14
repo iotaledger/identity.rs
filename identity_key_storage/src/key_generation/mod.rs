@@ -2,6 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 mod multikey;
 
-use crate::key_identification::KeyId;
+use crate::identifiers::KeyId;
 pub use multikey::MultikeyOutput;
 pub use multikey::MultikeySchema;
