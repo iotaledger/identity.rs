@@ -67,16 +67,16 @@ impl KeyStorageError {
     }
   }
 
-  /// Returns a reference to corresponding [`StorageErrorCause`] for this error.
-  pub fn cause(&self) -> &KeyStorageErrorKind {
+  /// Returns a reference to corresponding [`KeyStorageErrorKind`] of this error.
+  pub fn kind(&self) -> &KeyStorageErrorKind {
     match self.repr {
       Repr::Simple(ref cause) => cause,
       Repr::Extensive(ref extensive) => &extensive.cause,
     }
   }
 
-  /// Converts this error into the corresponding [`StorageErrorCause`].
-  pub fn into_cause(self) -> KeyStorageErrorKind {
+  /// Converts this error into the corresponding [`KeyStorageErrorKind`] of this error.
+  pub fn into_kind(self) -> KeyStorageErrorKind {
     match self.repr {
       Repr::Simple(cause) => cause,
       Repr::Extensive(extensive) => extensive.cause,

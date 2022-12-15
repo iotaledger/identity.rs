@@ -6,7 +6,7 @@ use crate::key_storage::KeyStorage;
 use std::sync::Arc;
 
 // TODO: Write decent documentation explaining what this is for at a high level.
-struct Storage<K, I>
+pub struct Storage<K, I>
 where
   K: KeyStorage,
   I: IdentityStorage,

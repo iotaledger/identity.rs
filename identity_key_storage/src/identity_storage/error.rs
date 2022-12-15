@@ -70,16 +70,16 @@ impl IdentityStorageError {
     }
   }
 
-  /// Returns a reference to corresponding [`IdentityStorageErrorCause`] for this error.
-  pub fn cause(&self) -> &IdentityStorageErrorKind {
+  /// Returns a reference to the corresponding [`IdentityStorageErrorKind`] of this error.
+  pub fn kind(&self) -> &IdentityStorageErrorKind {
     match self.repr {
       Repr::Simple(ref cause) => cause,
       Repr::Extensive(ref extensive) => &extensive.cause,
     }
   }
 
-  /// Converts this error into the corresponding [`IdentityStorageErrorCause`].
-  pub fn into_cause(self) -> IdentityStorageErrorKind {
+  /// Converts this error into the corresponding [`IdentityStorageErrorKind`].
+  pub fn into_kind(self) -> IdentityStorageErrorKind {
     match self.repr {
       Repr::Simple(cause) => cause,
       Repr::Extensive(extensive) => extensive.cause,
