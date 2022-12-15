@@ -70,12 +70,14 @@ jobs:
         # ignore peer dependencies, because in the case of publishing the identity-wasm peer dependency is not released yet
         run: |
           npm ci --ignore-scripts --legacy-peer-deps && npm link @iota/identity-wasm
+        working-directory: ./bindings/stronghold-nodejs
 
       - name: 'Build TypeScript'
         run: |
           export NPM_BUILD_NAPI_ARGS=--target=aarch64-unknown-linux-gnu
           npm run build
           strip -x dist/*.node
+        working-directory: ./bindings/stronghold-nodejs
 
       # - name: Setup and run tests
       #   uses: addnab/docker-run-action@v3
@@ -96,17 +98,6 @@ jobs:
         fail-fast: false
         matrix:
           settings:
-            - host: ubuntu-latest
-              container: null
-              target: aarch64-unknown-linux-gnu
-              architecture: x64
-              build: |
-                # export LD_LIBRARY_PATH=/usr/bin/ld
-                export NPM_BUILD_NAPI_ARGS=--target=aarch64-unknown-linux-gnu
-                npm run build
-                strip -x dist/*.node
-              test: |
-                npm run test
             - host: macos-latest
               container: null
               target: x86_64-apple-darwin
