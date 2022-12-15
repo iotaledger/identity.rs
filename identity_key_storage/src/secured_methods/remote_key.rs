@@ -16,7 +16,7 @@ pub struct RemoteKey<F> {
 }
 
 impl<F> RemoteKey<F> {
-  /// Sign the given `data` according to the provided `signing_algorithm`. 
+  /// Sign the given `data` according to the provided `signing_algorithm`.
   pub async fn sign<T>(&self, signing_algorithm: &str, data: Vec<u8>) -> KeyStorageResult<Signature>
   where
     F: Fn(&str, Vec<u8>) -> T,
@@ -26,13 +26,11 @@ impl<F> RemoteKey<F> {
   }
 
   #[cfg(test)]
-  /// A mock constructor that [`Cryptosuite`](crate::secured_methods::CryptoSuite) implementors may use in tests. 
+  /// A mock constructor that [`Cryptosuite`](crate::secured_methods::CryptoSuite) implementors may use in tests.
   ///
-  /// # Warning 
-  ///  This method is not covered by SemVer. 
+  /// # Warning
+  ///  This method is not covered by SemVer.
   pub fn mock(signer: F) -> Self {
-    Self {
-        signer
-    }
+    Self { signer }
   }
 }

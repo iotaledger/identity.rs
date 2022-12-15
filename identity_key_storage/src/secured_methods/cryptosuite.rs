@@ -4,7 +4,4 @@
 use async_trait::async_trait;
 
 #[async_trait(?Send)]
-pub trait CryptoSuite {
-
-    
-} 
+pub trait CryptoSuite {}
