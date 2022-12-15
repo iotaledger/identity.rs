@@ -63,6 +63,7 @@ jobs:
       - name: Setup
         run: |
           sudo apt install libc6-dev
+          sudo apt install build-essential
 
       - name: Prepare Wasm bindings link
         run: |
@@ -86,6 +87,7 @@ jobs:
       - name: Log
         if: always()
         run: |
+          ls -al /var/log
           cat config.log
         working-directory: ./bindings/stronghold-nodejs
 
