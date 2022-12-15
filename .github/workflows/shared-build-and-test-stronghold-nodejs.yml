@@ -60,6 +60,10 @@ jobs:
           name: ${{ inputs.input-artifact-name }}
           path: bindings/wasm
 
+      - name: Setup
+        run: |
+          sudo apt install libc6-dev
+
       - name: Prepare Wasm bindings link
         run: |
           npm ci
