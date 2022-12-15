@@ -42,7 +42,7 @@ jobs:
             - host: ubuntu-latest
               container: null
               target: aarch64-unknown-linux-gnu
-              architecture: arm64
+              architecture: x64
               setup: |
                 sudo apt-get update
                 sudo apt-get install gcc-aarch64-linux-gnu 
