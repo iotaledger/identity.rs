@@ -49,6 +49,7 @@ jobs:
                 sudo apt-get install g++-aarch64-linux-gnu
                 which ld
               build: |
+                export LD_LIBRARY_PATH=/usr/bin/ld
                 export NPM_BUILD_NAPI_ARGS=--target=aarch64-unknown-linux-gnu
                 npm run build
                 strip -x dist/*.node
@@ -140,13 +141,16 @@ jobs:
 
         - name: Prepare Wasm bindings link
           run: |
+            export LD_LIBRARY_PATH=/usr/bin/ld
             npm ci
             npm link
           working-directory: ./bindings/wasm
 
         - name: Install dependencies
           # ignore peer dependencies, because in the case of publishing the identity-wasm peer dependency is not released yet
-          run: npm ci --ignore-scripts --legacy-peer-deps && npm link @iota/identity-wasm
+          run: |
+            export LD_LIBRARY_PATH=/usr/bin/ld
+            npm ci --ignore-scripts --legacy-peer-deps && npm link @iota/identity-wasm
 
         - name: Build
           run: ${{ matrix.settings.build }}
