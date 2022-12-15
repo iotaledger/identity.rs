@@ -76,11 +76,17 @@ jobs:
           npm ci --ignore-scripts --legacy-peer-deps && npm link @iota/identity-wasm
         working-directory: ./bindings/stronghold-nodejs
 
-      - name: 'Build TypeScript'
+      - name: Build
         run: |
           export NPM_BUILD_NAPI_ARGS=--target=aarch64-unknown-linux-gnu
           npm run build
           strip -x dist/*.node
+        working-directory: ./bindings/stronghold-nodejs
+
+      - name: Log
+        if: always()
+        run: |
+          cat config.log
         working-directory: ./bindings/stronghold-nodejs
 
       # - name: Setup and run tests
