@@ -7,7 +7,7 @@ pub use error::KeyStorageErrorKind;
 use std::str::FromStr;
 
 use async_trait::async_trait;
-use identity_data_integrity_types::verification_material::VerificationMaterial;
+use identity_data_integrity::verification_material::VerificationMaterial;
 
 use crate::identifiers::KeyId;
 use crate::key_generation::MultikeyOutput;

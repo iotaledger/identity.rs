@@ -4,7 +4,7 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
-use identity_data_integrity_types::verification_material::VerificationMaterial;
+use identity_data_integrity::verification_material::VerificationMaterial;
 use serde::de;
 use serde::Deserialize;
 use serde::Serialize;

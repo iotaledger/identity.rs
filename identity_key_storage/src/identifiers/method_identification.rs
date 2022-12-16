@@ -3,7 +3,7 @@
 
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
-use identity_data_integrity_types::verification_material::PublicKeyMultibase;
+use identity_data_integrity::verification_material::PublicKeyMultibase;
 /// An index used to look up metadata stored in [`IdentityStorage`](crate::identity_storage::IdentityStorage) associated
 /// with a [`VerificationMethod`].
 pub struct MethodIdx(Repr);

@@ -1569,7 +1569,7 @@ mod tests {
 
     // inserting a method with the same identifier as an existing service should fail
     let method: VerificationMethod = MethodBuilder::default()
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyBase58(
         "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
       ))
