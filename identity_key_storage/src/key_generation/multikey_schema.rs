@@ -4,7 +4,6 @@
 use std::borrow::Cow;
 
 use identity_core::utils::Base;
-
 use identity_data_integrity_types::verification_material::PublicKeyMultibase;
 
 use super::KeyId;

@@ -1,6 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+mod multikey;
 mod public_key_multibase;
+
+pub use multikey::*;
 
 pub use public_key_multibase::PublicKeyMultibase;
 use serde::Deserialize;

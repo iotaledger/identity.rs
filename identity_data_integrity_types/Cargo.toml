@@ -6,4 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+strum = { version = "0.24.1", default-features = false }
+thiserror = { version = "1.0.37", default-features = false }
+unsigned-varint = { version = "0.7.1", default-features = false, features = ["std"] }
