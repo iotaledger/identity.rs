@@ -38,6 +38,9 @@ impl MethodCreationError {
 
   /// Returns a reference to an underlying [`KeyStorageError`] if it was set.
   ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`KeyStorage`](crate::key_storage::KeyStorage).
+  ///
   /// # Important
   ///
   /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
@@ -49,6 +52,9 @@ impl MethodCreationError {
 
   /// Converts the error into the underlying [`KeyStorageError`] if it was set.
   ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`KeyStorage`](crate::key_storage::KeyStorage).
+  ///
   /// # Important
   ///
   /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
@@ -59,6 +65,9 @@ impl MethodCreationError {
   }
 
   /// Returns a reference to an underlying [`IdentityStorageError`] if it was set.
+  ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`IdentityStorage`](crate::identity_storage::IdentityStorage).
   ///
   /// # Important
   ///
@@ -73,6 +82,9 @@ impl MethodCreationError {
 
   /// Converts the error into the underlying [`IdentityStorageError`] if it was set.
   ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`IdentityStorage`](crate::identity_storage::IdentityStorage).
+  /// 
   /// # Important
   ///
   /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
