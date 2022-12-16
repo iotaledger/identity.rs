@@ -14,7 +14,7 @@ members = [
   "identity_storage",
   # TODO: Rename to `identity_storage`
   "identity_key_storage",
-  "identity_data_integrity_types",
+  "identity_data_integrity",
   "examples",
 ]
 

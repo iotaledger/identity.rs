@@ -1,5 +1,5 @@
 [package]
-name = "identity_data_integrity_types"
+name = "identity_data_integrity"
 version = "0.7.0-alpha.4"
 edition = "2021"
 

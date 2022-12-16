@@ -73,6 +73,7 @@ impl Codec {
 /// A lazily-evaluated implementation of a Multikey.
 ///
 /// A Multikey is multibase-encoded multicodec-prefixed key material.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Multikey(String);
 
 impl Multikey {

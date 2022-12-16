@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
-use identity_data_integrity_types::verification_material::VerificationMaterial;
+use identity_data_integrity::verification_material::VerificationMaterial;
 
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
