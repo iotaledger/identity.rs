@@ -84,7 +84,7 @@ impl MethodCreationError {
   ///
   /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
   /// handle the errors returned from the underlying [`IdentityStorage`](crate::identity_storage::IdentityStorage).
-  /// 
+  ///
   /// # Important
   ///
   /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
@@ -139,14 +139,14 @@ pub enum MethodCreationErrorKind {
   /// Indicates that an attempt was made to authenticate with the identity storage, but this operation did not succeed.
   IdentityStorageAuthenticationFailure,
 
-  /// The [`Storage`] is currently unavailable.
+  /// The [`Storage`](crate::storage::Storage) is currently unavailable.
   ///
   /// This could error could be caused by either of its components. See
   /// [`KeyStorageErrorKind::UnavailableKeyStorage`](crate::key_storage::error::KeyStorageErrorKind::UnavailableKeyStorage),
   /// [`IdentityStorageErrorKind::UnavailableKeyStorage`](crate::identity_storage::error::IdentityStorageErrorKind::UnavailableIdentityStorage).
   UnavailableStorage,
 
-  /// The [`Storage`] failed in an unspecified manner.
+  /// The [`Storage`](crate::storage::Storage) failed in an unspecified manner.
   UnspecifiedStorageFailure,
 
   /// Caused by an attempt to create a method
