@@ -157,11 +157,9 @@ pub enum MethodCreationErrorKind {
   /// When this variant occurs one may want to try to extract more information from
   /// [`MethodCreationError::key_storage_error`](MethodCreationError::key_storage_error())
   /// and [`MethodCreationError::identity_storage_error`](MethodCreationError::identity_storage_error()).
-  ///
   // TODO: Do we want to communicate this?
   // TODO: Should the variant wrap the `KeyId` so users can try deleting the corresponding key
   // at a later point themselves?
-  // TODO: What expectations do we have for `MethodCreationError::source()` whenever this variant is encountered?
   TransactionRollbackFailure,
 }
 
