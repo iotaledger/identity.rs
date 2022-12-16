@@ -4,7 +4,6 @@
 use async_trait::async_trait;
 use identity_core::common::KeyComparable;
 use identity_data_integrity::verification_material::VerificationMaterial;
-use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::verification::MethodBuilder;
@@ -107,12 +106,12 @@ where
         let error_kind: MethodCreationErrorKind = match key_storage_error.kind() {
           KeyStorageErrorKind::CouldNotAuthenticate => MethodCreationErrorKind::KeyStorageAuthenticationFailure,
           KeyStorageErrorKind::RetryableIOFailure => MethodCreationErrorKind::RetryableIOFailure,
-          KeyStorageErrorKind::UnavailableKeyStorage => MethodCreationErrorKind::UnavailableKeyStorage,
+          KeyStorageErrorKind::UnavailableKeyStorage => MethodCreationErrorKind::UnavailableStorage,
           KeyStorageErrorKind::UnsupportedMultikeySchema => MethodCreationErrorKind::UnsupportedMultikeySchema,
-          KeyStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedKeyStorageFailure,
+          KeyStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedStorageFailure,
           // The other variants should not be relevant for this operation
           KeyStorageErrorKind::KeyNotFound | KeyStorageErrorKind::UnsupportedSigningKey => {
-            MethodCreationErrorKind::UnspecifiedKeyStorageFailure
+            MethodCreationErrorKind::UnspecifiedStorageFailure
           }
         };
         return Err(MethodCreationError::new(
@@ -140,10 +139,10 @@ where
           }
           IdentityStorageErrorKind::MethodIdxAlreadyExists => MethodCreationErrorKind::MethodMetadataAlreadyStored,
           IdentityStorageErrorKind::RetryableIOFailure => MethodCreationErrorKind::RetryableIOFailure,
-          IdentityStorageErrorKind::UnavailableIdentityStorage => MethodCreationErrorKind::UnavailableIdentityStorage,
-          IdentityStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedIdentityStorageFailure,
+          IdentityStorageErrorKind::UnavailableIdentityStorage => MethodCreationErrorKind::UnavailableStorage,
+          IdentityStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedStorageFailure,
           // The other variants should not be relevant for this operation
-          IdentityStorageErrorKind::MethodIdxNotFound => MethodCreationErrorKind::UnspecifiedIdentityStorageFailure,
+          IdentityStorageErrorKind::MethodIdxNotFound => MethodCreationErrorKind::UnspecifiedStorageFailure,
         };
         return Err(MethodCreationError::new(
           error_kind,

@@ -116,19 +116,8 @@ pub enum MethodCreationErrorKind {
   /// The provided [`KeyStorage`] implementation does not support generating keys of the given form.
   UnsupportedMultikeySchema,
 
-  /// Caused by an attempt to create a method
-  /// whose metadata has already been persisted.
-  ///
-  /// This could be caused by the [`KeyStorage`] returning a previously
-  /// generated key rather than generating a new one contrary to the prescribed behaviour.
-  /// Using the same verification material in different verification methods goes against SSI principles.
-  /// If you want to use the same verification material across different context consider [referring to a single verification method](https://www.w3.org/TR/did-core/#referring-to-verification-methods)
-  /// containing the given verification material instead.
-  MethodMetadataAlreadyStored,
-
   /// Caused by an unsuccessful I/O operation that may be retried, such as temporary connection failure or timeouts.
   ///
-  /// Returning this error signals to the caller that the operation may be retried with a chance of success.
   /// It is at the caller's discretion whether to retry or not, and how often.
   RetryableIOFailure,
 
@@ -138,18 +127,25 @@ pub enum MethodCreationErrorKind {
   /// Indicates that an attempt was made to authenticate with the identity storage, but this operation did not succeed.
   IdentityStorageAuthenticationFailure,
 
-  /// The key storage is currently not available. See
-  /// [`KeyStorageErrorKind::UnavailableKeyStorage`](crate::key_storage::error::KeyStorageErrorKind::UnavailableKeyStorage).
-  UnavailableKeyStorage,
-  /// The identity storage is currently not available. See
+  /// The [`Storage`] is currently unavailable.
+  ///
+  /// This could error could be caused by either of its components. See
+  /// [`KeyStorageErrorKind::UnavailableKeyStorage`](crate::key_storage::error::KeyStorageErrorKind::UnavailableKeyStorage),
   /// [`IdentityStorageErrorKind::UnavailableKeyStorage`](crate::identity_storage::error::IdentityStorageErrorKind::UnavailableIdentityStorage).
-  UnavailableIdentityStorage,
+  UnavailableStorage,
 
-  /// The key storage failed in an unspecified manner.
-  UnspecifiedKeyStorageFailure,
+  /// The [`Storage`] failed in an unspecified manner.
+  UnspecifiedStorageFailure,
 
-  /// The identity storage failed in an unspecified manner.
-  UnspecifiedIdentityStorageFailure,
+  /// Caused by an attempt to create a method
+  /// whose metadata has already been persisted.
+  ///
+  /// This could be caused by the [`KeyStorage`] returning a previously
+  /// generated key rather than generating a new one contrary to the prescribed behaviour.
+  /// Using the same verification material in different verification methods goes against SSI principles.
+  /// If you want to use the same verification material across different context consider [referring to a single verification method](https://www.w3.org/TR/did-core/#referring-to-verification-methods)
+  /// containing the given verification material instead.
+  MethodMetadataAlreadyStored,
 
   /// A key was generated, but the necessary metadata could not be persisted in the [`IdentityStorage`],
   /// the follow up attempt to remove the generated key from storage did not succeed.
@@ -179,10 +175,8 @@ impl MethodCreationErrorKind {
       Self::IdentityStorageAuthenticationFailure => {
         "method creation failed: authentication with the identity storage failed"
       }
-      Self::UnavailableKeyStorage => "method creation failed: key storage unavailable",
-      Self::UnavailableIdentityStorage => "method creation failed: identity storage unavailable",
-      Self::UnspecifiedKeyStorageFailure => "method creation failed: key storage failed",
-      Self::UnspecifiedIdentityStorageFailure => "method creation failed: identity storage failed",
+      Self::UnavailableStorage => "method creation failed: the storage is currently unavailable",
+      Self::UnspecifiedStorageFailure => "method creation failed: the storage failed in an unspecified manner",
       Self::TransactionRollbackFailure => {
         "method creation failed: unable to persist generated metadata: could not rollback key generation"
       }
