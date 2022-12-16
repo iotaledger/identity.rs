@@ -54,7 +54,7 @@ impl MethodCreationError {
   /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
   /// [`KeyStorage`](crate::key_storage::KeyStorage) do not necessarily imply the return of the `Some` variant unless
   /// explicitly documented.
-  pub fn into_key_storage_Error(self) -> Option<KeyStorageError> {
+  pub fn into_key_storage_error(self) -> Option<KeyStorageError> {
     self.storage_error.and_then(StorageError::into_key_storage_error)
   }
 
