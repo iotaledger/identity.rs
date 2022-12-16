@@ -8,7 +8,7 @@ use crate::error::Result;
 
 /// A multicodec code that can be encoded as an [unsigned varint](https://github.com/multiformats/unsigned-varint).
 // The internal representation is a u64 because of: https://github.com/multiformats/unsigned-varint#practical-maximum-of-9-bytes-for-security.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub struct Multicodec(u64);
 
