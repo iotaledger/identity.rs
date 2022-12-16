@@ -4,6 +4,7 @@
 use async_trait::async_trait;
 use identity_core::common::KeyComparable;
 use identity_data_integrity::verification_material::VerificationMaterial;
+use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::verification::MethodBuilder;
@@ -26,6 +27,12 @@ use super::MethodCreationErrorKind;
 
 #[async_trait(?Send)]
 pub trait CoreDocumentExt: private::Sealed {
+  /// Create a new verification method of type `Multikey`
+  /// whose key material is backed by a [`Storage`](crate::storage::Storage).  
+  ///
+  /// The `schema` parameter declares what kind of key you wish the
+  /// storage to generate, while `fragment` defines the fragment of the created method's relative DIDUrl and `scope`
+  /// declares what purpose the created method can be used for. See the section on verification relationships in [the data integrity specification](https://w3c.github.io/vc-data-integrity/#verification-relationships).
   async fn create_multikey_method<K, I>(
     &mut self,
     fragment: &str,
@@ -36,6 +43,14 @@ pub trait CoreDocumentExt: private::Sealed {
   where
     K: KeyStorage,
     I: IdentityStorage;
+
+  /*
+  async fn purge_method<K,I>(
+    &mut self,
+    did_url: &DIDUrl<D>,
+    storage: &Storage<K, I>,
+  ) -> Result<(), MethodRemovalError>
+  */
 
   /*
   async fn purge_method<K,I>(&mut self, fragment: &str, storage: &Storage<K,I>) -> Result<()>

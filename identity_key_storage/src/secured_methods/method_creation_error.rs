@@ -153,6 +153,11 @@ pub enum MethodCreationErrorKind {
 
   /// A key was generated, but the necessary metadata could not be persisted in the [`IdentityStorage`],
   /// the follow up attempt to remove the generated key from storage did not succeed.
+  ///
+  /// When this variant occurs one may want to try to extract more information from
+  /// [`MethodCreationError::key_storage_error`](MethodCreationError::key_storage_error())
+  /// and [`MethodCreationError::identity_storage_error`](MethodCreationError::identity_storage_error()).
+  ///
   // TODO: Do we want to communicate this?
   // TODO: Should the variant wrap the `KeyId` so users can try deleting the corresponding key
   // at a later point themselves?
