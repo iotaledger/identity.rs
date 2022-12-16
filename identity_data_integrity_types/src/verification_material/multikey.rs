@@ -39,8 +39,8 @@ impl Codec {
 
     let mut encoded_vec: Vec<u8> = Vec::with_capacity(required_len);
     for byte in encoded {
-      // Output must have at least len 1.
-      if encoded_vec.len() >= 1 && byte == 0 {
+      // Output must be non-empty.
+      if !encoded_vec.is_empty() && byte == 0 {
         break;
       }
 
@@ -59,7 +59,7 @@ impl Codec {
   /// Returns an error when the input is too long or too short.
   pub fn decode(varint: &[u8]) -> Result<(Self, &[u8])> {
     // Attempt to decode the vector into a `u64` which succeeds for all validly encoded varints.
-    unsigned_varint::decode::u64(&varint)
+    unsigned_varint::decode::u64(varint)
       .map_err(|err| Error::MultikeyDecode("invalid multicodec prefix", Some(Box::new(err))))
       .map(|(code, tail)| (Self(code), tail))
   }
