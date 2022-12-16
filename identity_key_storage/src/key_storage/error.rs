@@ -98,13 +98,10 @@ impl KeyStorageError {
   }
 
   fn source_as_dyn(&self) -> Option<&(dyn Error + 'static)> {
-    fn cast<'a>(error: &'a (dyn Error + Send + Sync + 'static)) -> &'a (dyn Error + 'static) {
-      error
-    }
     self
       .extensive()
       .and_then(|extensive| extensive.source.as_deref())
-      .map(cast)
+      .map(crate::error_utils::cast)
   }
 
   /// Converts this error into the source error if it was set.

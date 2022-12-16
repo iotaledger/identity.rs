@@ -4,6 +4,7 @@
 mod cryptosuite;
 mod document_ext;
 mod method_creation_error;
+mod method_removal_error;
 mod remote_key;
 mod storage_error;
 pub use method_creation_error::MethodCreationError;
