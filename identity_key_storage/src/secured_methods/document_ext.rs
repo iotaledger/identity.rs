@@ -3,8 +3,7 @@
 
 use async_trait::async_trait;
 use identity_core::common::KeyComparable;
-use identity_data_integrity_types::verification_material::VerificationMaterial;
-use identity_did::did::DIDUrl;
+use identity_data_integrity::verification_material::VerificationMaterial;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::verification::MethodBuilder;
@@ -12,7 +11,6 @@ use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 
-use crate::identifiers::KeyId;
 use crate::identifiers::MethodIdx;
 use crate::identity_storage::IdentityStorage;
 use crate::identity_storage::IdentityStorageErrorKind;
