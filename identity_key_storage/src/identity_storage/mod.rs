@@ -32,6 +32,9 @@ pub trait IdentityStorage {
   /// behaviour and subtle bugs.
   async fn store_key_id(&self, idx: MethodIdx, key_id: &KeyId) -> IdentityStorageResult<()>;
 
+  /// Retrieve the stored [`KeyId`] previously saved under the given `idx`.
+  async fn get_key_id(&self, idx: MethodIdx) -> IdentityStorageResult<KeyId>;
+
   /// Deletes the [`KeyId`] associated with the given [`MethodIdx`](crate::method_identifier::MethodIdx).
   ///
   /// # Warning

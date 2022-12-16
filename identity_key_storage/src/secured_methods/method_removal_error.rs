@@ -14,6 +14,17 @@ impl MethodRemovalError {
   pub const fn kind(&self) -> &MethodRemovalErrorKind {
     &self.kind
   }
+
+  pub(super) fn from_kind(kind: MethodRemovalErrorKind) -> Self {
+    Self { kind, source: None }
+  }
+
+  pub(super) fn new(kind: MethodRemovalErrorKind, source: Box<dyn Error + Send + Sync + 'static>) -> Self {
+    Self {
+      kind,
+      source: Some(source),
+    }
+  }
 }
 
 impl Display for MethodRemovalError {
