@@ -3,29 +3,83 @@
 
 use std::error::Error;
 use std::fmt::Display;
+
+use crate::identity_storage::IdentityStorageError;
+use crate::key_storage::KeyStorageError;
+
+use super::storage_error::StorageError;
 /// An error representing an unsuccessful attempt to create a method whose
 /// key material is backed by a [`Storage`](crate::storage::Storage).
 #[derive(Debug)]
 pub struct MethodCreationError {
   kind: MethodCreationErrorKind,
-  source: Option<Box<dyn Error + Send + Sync + 'static>>,
+  storage_error: Option<StorageError>,
 }
 
 impl MethodCreationError {
-  pub(crate) fn new(kind: MethodCreationErrorKind, source: impl Into<Box<dyn Error + Send + Sync + 'static>>) -> Self {
+  pub(super) fn new(kind: MethodCreationErrorKind, source: StorageError) -> Self {
     Self {
       kind,
-      source: Some(source.into()),
+      storage_error: Some(source),
     }
   }
 
-  pub(crate) fn from_kind(kind: MethodCreationErrorKind) -> Self {
-    Self { kind, source: None }
+  pub(super) fn from_kind(kind: MethodCreationErrorKind) -> Self {
+    Self {
+      kind,
+      storage_error: None,
+    }
   }
 
   /// Get the [`MethodCreationErrorKind`] of the error.
   pub const fn kind(&self) -> &MethodCreationErrorKind {
     &self.kind
+  }
+
+  /// Returns a reference to an underlying [`KeyStorageError`] if it was set.
+  ///
+  /// # Important
+  ///
+  /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
+  /// [`KeyStorage`](crate::key_storage::KeyStorage) do not necessarily imply the return of the `Some` variant unless
+  /// this is explicitly documented.
+  pub fn key_storage_error(&self) -> Option<&KeyStorageError> {
+    (&self.storage_error).as_ref().and_then(StorageError::key_storage_err)
+  }
+
+  /// Converts the error into the underlying [`KeyStorageError`] if it was set.
+  ///
+  /// # Important
+  ///
+  /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
+  /// [`KeyStorage`](crate::key_storage::KeyStorage) do not necessarily imply the return of the `Some` variant unless
+  /// explicitly documented.
+  pub fn into_key_storage_Error(self) -> Option<KeyStorageError> {
+    self.storage_error.and_then(StorageError::into_key_storage_error)
+  }
+
+  /// Returns a reference to an underlying [`IdentityStorageError`] if it was set.
+  ///
+  /// # Important
+  ///
+  /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
+  /// [`IdentityStorage`](crate::identity_storage::IdentityStorage) do not necessarily imply the return of the `Some`
+  /// variant unless explicitly documented.
+  pub fn identity_storage_error(&self) -> Option<&IdentityStorageError> {
+    (&self.storage_error)
+      .as_ref()
+      .and_then(StorageError::identity_storage_err)
+  }
+
+  /// Converts the error into the underlying [`IdentityStorageError`] if it was set.
+  ///
+  /// # Important
+  ///
+  /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
+  /// [`IdentityStorage`](crate::identity_storage::IdentityStorage) do not necessarily imply the return of the `Some`
+  /// variant unless explicitly documented.
+  pub fn into_identity_storage_error(self) -> Option<IdentityStorageError> {
+    self.storage_error.and_then(StorageError::into_identity_storage_error)
   }
 }
 
@@ -37,10 +91,16 @@ impl Display for MethodCreationError {
 
 impl Error for MethodCreationError {
   fn source(&self) -> Option<&(dyn Error + 'static)> {
-    fn cast<'a>(error: &'a (dyn Error + Send + Sync + 'static)) -> &'a (dyn Error + 'static) {
-      error
+    let Some(ref storage_error) = self.storage_error else {return None;};
+    match storage_error {
+      StorageError::KeyStorage(ref key_storage_err) => Some(key_storage_err as &dyn Error),
+      StorageError::IdentityStorage(ref identity_storage_err) => Some(identity_storage_err as &dyn Error),
+      StorageError::Both(ref both) => {
+        // We define the IdentityStorageError as the source because that is the reason method creation did not succeed.
+        let err: &IdentityStorageError = &both.1;
+        Some(err as &dyn Error)
+      }
     }
-    self.source.as_deref().map(cast)
   }
 }
 
