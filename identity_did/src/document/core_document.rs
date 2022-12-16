@@ -540,6 +540,35 @@ where
       .ok_or(Error::InvalidServiceInsertion)
   }
 
+  /// Checks whether the given `fragment` refers to a sub-resource of this DID Document.
+  ///
+  /// A sub-resource is here defined to be either a verification method, verification method reference or service, no
+  /// other properties are checked.
+  pub fn refers_to_sub_resource(&self, fragment: &str) -> bool {
+    let fragment = fragment.strip_prefix('#').unwrap_or(fragment);
+    let method_ref_iter = self
+      .verification_relationships()
+      .map(|method_ref| method_ref.id())
+      .filter(|id| (id.did() == self.id()));
+
+    let methods_iter = self
+      .verification_method()
+      .iter()
+      .map(|method| method.id())
+      .filter(|id| id.did() == self.id());
+
+    let services_iter = self
+      .service()
+      .iter()
+      .map(|service| service.id())
+      .filter(|id| id.did() == self.id());
+
+    method_ref_iter
+      .chain(methods_iter)
+      .chain(services_iter)
+      .any(|id| id.fragment() == Some(fragment))
+  }
+
   /// Removes and returns a [`Service`] from the document if it exists.
   pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Option<Service<D, V>> {
     self.data.service.remove(id)

@@ -44,8 +44,8 @@ impl MultikeySchema {
 ///
 /// See [`KeyStorage::generate_multikey`](crate::key_storage::KeyStorage::generate_multikey()).
 pub struct MultikeyOutput {
-  identifier: KeyId,
-  public_key: PublicKeyMultibase,
+  pub(crate) key_id: KeyId,
+  pub(crate) public_key: PublicKeyMultibase,
 }
 
 impl MultikeyOutput {
@@ -54,6 +54,9 @@ impl MultikeyOutput {
   /// # Important
   /// It is crucial that the provided `identifier` corresponds to the same public key as `public_key`.
   pub fn new(identifier: KeyId, public_key: PublicKeyMultibase) -> Self {
-    Self { identifier, public_key }
+    Self {
+      key_id: identifier,
+      public_key,
+    }
   }
 }

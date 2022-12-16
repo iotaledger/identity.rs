@@ -8,6 +8,7 @@ use crate::identifiers::MethodIdx;
 use async_trait::async_trait;
 
 pub use self::error::IdentityStorageError;
+pub use self::error::IdentityStorageErrorKind;
 pub use self::error::IdentityStorageResult;
 
 #[async_trait(?Send)]
@@ -29,12 +30,12 @@ pub trait IdentityStorage {
   /// # Note
   /// This method is only intended to be called by the IOTA Identity library. All other usage may lead to undesired
   /// behaviour and subtle bugs.
-  async fn store_key_id(idx: &MethodIdx, key_id: &KeyId) -> IdentityStorageResult<()>;
+  async fn store_key_id(&self, idx: MethodIdx, key_id: &KeyId) -> IdentityStorageResult<()>;
 
   /// Deletes the [`KeyId`] associated with the given [`MethodIdx`](crate::method_identifier::MethodIdx).
   ///
   /// # Warning
   /// This method is only intended to be called by the IOTA Identity library. All other usage may lead to undesired
   /// behaviour and subtle bugs.
-  async fn delete_key_id(method_idx: &MethodIdx) -> IdentityStorageResult<()>;
+  async fn delete_key_id(&self, method_idx: MethodIdx) -> IdentityStorageResult<()>;
 }

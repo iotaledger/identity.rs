@@ -3,15 +3,28 @@
 
 use async_trait::async_trait;
 use identity_core::common::KeyComparable;
+use identity_data_integrity_types::verification_material::VerificationMaterial;
+use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
+use identity_did::verification::MethodBuilder;
+use identity_did::verification::MethodData;
+use identity_did::verification::MethodScope;
+use identity_did::verification::MethodType;
 
+use crate::identifiers::KeyId;
+use crate::identifiers::MethodIdx;
 use crate::identity_storage::IdentityStorage;
+use crate::identity_storage::IdentityStorageErrorKind;
+use crate::key_generation::MultikeyOutput;
 use crate::key_generation::MultikeySchema;
 use crate::key_storage::KeyStorage;
+use crate::key_storage::KeyStorageErrorKind;
 use crate::storage::Storage;
 
 use super::method_creation_error::MethodCreationError;
+use super::storage_error::StorageError;
+use super::MethodCreationErrorKind;
 
 #[async_trait(?Send)]
 pub trait CoreDocumentExt: private::Sealed {
@@ -20,6 +33,7 @@ pub trait CoreDocumentExt: private::Sealed {
     fragment: &str,
     schema: &MultikeySchema,
     storage: &Storage<K, I>,
+    scope: MethodScope,
   ) -> Result<(), MethodCreationError>
   where
     K: KeyStorage,
@@ -44,19 +58,99 @@ mod private {
 }
 
 #[async_trait(?Send)]
-impl<D: DID + KeyComparable, T, U, V> CoreDocumentExt for CoreDocument<D, T, U, V> {
+impl<D: DID + KeyComparable, T, U, V> CoreDocumentExt for CoreDocument<D, T, U, V>
+where
+  U: Default,
+{
   async fn create_multikey_method<K, I>(
     &mut self,
     fragment: &str,
     schema: &MultikeySchema,
     storage: &Storage<K, I>,
+    scope: MethodScope,
   ) -> Result<(), MethodCreationError>
   where
     K: KeyStorage,
     I: IdentityStorage,
   {
-    // check if the fragment already exists:
-    todo!()
+    // Check if the fragment already exists
+    if self.refers_to_sub_resource(fragment) {
+      return Err(MethodCreationError::from_kind(MethodCreationErrorKind::FragmentInUse));
+    }
+
+    let did_url = {
+      let mut did_url = self.id().to_url();
+      did_url
+        .set_fragment(Some(&fragment))
+        .map_err(|_| MethodCreationError::from_kind(MethodCreationErrorKind::InvalidFragmentSyntax))?;
+      did_url
+    };
+
+    // Use the key storage to generate a multikey:
+
+    let MultikeyOutput { public_key, key_id } = match storage.key_storage().generate_multikey(schema).await {
+      Ok(output) => output,
+      Err(key_storage_error) => {
+        let error_kind: MethodCreationErrorKind = match key_storage_error.kind() {
+          KeyStorageErrorKind::CouldNotAuthenticate => MethodCreationErrorKind::KeyStorageAuthenticationFailure,
+          KeyStorageErrorKind::RetryableIOFailure => MethodCreationErrorKind::RetryableIOFailure,
+          KeyStorageErrorKind::UnavailableKeyStorage => MethodCreationErrorKind::UnavailableKeyStorage,
+          KeyStorageErrorKind::UnsupportedMultikeySchema => MethodCreationErrorKind::UnsupportedMultikeySchema,
+          KeyStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedKeyStorageFailure,
+          // The other variants should not be relevant for this operation
+          KeyStorageErrorKind::KeyNotFound | KeyStorageErrorKind::UnsupportedSigningKey => {
+            MethodCreationErrorKind::UnspecifiedKeyStorageFailure
+          }
+        };
+        return Err(MethodCreationError::new(
+          error_kind,
+          StorageError::KeyStorage(key_storage_error),
+        ));
+      }
+    };
+
+    let method_idx: MethodIdx = MethodIdx::new_from_multikey(fragment, &public_key);
+
+    if let Err(identity_storage_error) = storage.identity_storage().store_key_id(method_idx, &key_id).await {
+      // Attempt to rollback key generation
+      if let Err(key_storage_error) = storage.key_storage().delete(&key_id).await {
+        let error_kind: MethodCreationErrorKind = MethodCreationErrorKind::TransactionRollbackFailure;
+        return Err(MethodCreationError::new(
+          error_kind,
+          StorageError::Both(Box::new((key_storage_error, identity_storage_error))),
+        ));
+      } else {
+        // Rollback succeeded, only need to report the identity storage error
+        let error_kind = match identity_storage_error.kind() {
+          IdentityStorageErrorKind::CouldNotAuthenticate => {
+            MethodCreationErrorKind::IdentityStorageAuthenticationFailure
+          }
+          IdentityStorageErrorKind::MethodIdxAlreadyExists => MethodCreationErrorKind::MethodMetadataAlreadyStored,
+          IdentityStorageErrorKind::RetryableIOFailure => MethodCreationErrorKind::RetryableIOFailure,
+          IdentityStorageErrorKind::UnavailableIdentityStorage => MethodCreationErrorKind::UnavailableIdentityStorage,
+          IdentityStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedIdentityStorageFailure,
+          // The other variants should not be relevant for this operation
+          IdentityStorageErrorKind::MethodIdxNotFound => MethodCreationErrorKind::UnspecifiedIdentityStorageFailure,
+        };
+        return Err(MethodCreationError::new(
+          error_kind,
+          StorageError::IdentityStorage(identity_storage_error),
+        ));
+      }
+    }
+
+    let method = MethodBuilder::<D, U>::default()
+      .id(did_url)
+      .type_(MethodType::MULTIKEY)
+      // This line should be removed once we replace MethodData with VerificationMaterial
+      .data(MethodData::PublicKeyMultibase(public_key.as_str().to_owned()))
+      .material(VerificationMaterial::PublicKeyMultibase(public_key))
+      .build()
+      .expect("building a method with valid data should be fine");
+
+    self
+      .insert_method(method, scope)
+      .map_err(|_| MethodCreationError::from_kind(MethodCreationErrorKind::FragmentInUse))
   }
 
   /*

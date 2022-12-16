@@ -49,4 +49,10 @@ impl MethodIdx {
     repr_inner[0] = MethodIdxVersion::CURRENT as u8;
     Self(Repr::MultiKeyV1(repr_inner))
   }
+
+  // TODO: Would it be useful for implementers to know some more representation details,
+  // i.e. that the length of self.as_ref() is 33?
+  // TODO: Do we need some public constructor available under cfg(test) for implementers?
+  // Going by the "only test public methods" sentiment we may not need a public constructor
+  // As one should then test against `CoreDocumentExt::create_multikey`.
 }
