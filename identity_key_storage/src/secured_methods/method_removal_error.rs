@@ -4,6 +4,8 @@
 use std::error::Error;
 use std::fmt::Display;
 
+use crate::error_utils::AsDynError;
+
 #[derive(Debug)]
 pub struct MethodRemovalError {
   kind: MethodRemovalErrorKind,
@@ -35,7 +37,7 @@ impl Display for MethodRemovalError {
 
 impl Error for MethodRemovalError {
   fn source(&self) -> Option<&(dyn Error + 'static)> {
-    (&self.source).as_deref().map(crate::error_utils::cast)
+    self.source.as_dyn_err()
   }
 }
 
@@ -88,3 +90,5 @@ impl MethodRemovalErrorKind {
     }
   }
 }
+
+crate::error_utils::impl_from_common_error_kind_variants!(MethodRemovalErrorKind);

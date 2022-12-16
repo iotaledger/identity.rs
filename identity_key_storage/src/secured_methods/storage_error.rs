@@ -1,5 +1,3 @@
-use std::error::Error;
-
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use crate::identity_storage::IdentityStorageError;

@@ -15,11 +15,11 @@ use identity_did::verification::VerificationMethod;
 
 use crate::identifiers::MethodIdx;
 use crate::identity_storage::IdentityStorage;
-use crate::identity_storage::IdentityStorageErrorKind;
+use crate::identity_storage::IdentityStorageErrorKindSplit;
 use crate::key_generation::MultikeyOutput;
 use crate::key_generation::MultikeySchema;
 use crate::key_storage::KeyStorage;
-use crate::key_storage::KeyStorageErrorKind;
+use crate::key_storage::KeyStorageErrorKindSplit;
 use crate::storage::Storage;
 
 use super::method_creation_error::MethodCreationError;
@@ -29,6 +29,8 @@ use super::MethodCreationErrorKind;
 use super::MethodRemovalErrorKind;
 
 #[async_trait(?Send)]
+/// Extension trait enabling [`CoreDocument`] to utilize
+/// key material secured by a [`Storage`](crate::storage::Storage).
 pub trait CoreDocumentExt: private::Sealed {
   type D: DID + KeyComparable;
   /// Create a new verification method of type `Multikey`
@@ -52,7 +54,16 @@ pub trait CoreDocumentExt: private::Sealed {
   /// the corresponding keys and metadata from the [`Storage`](crate::storage::Storage).
   ///
   /// # Warning
+  ///
   /// This operation cannot be undone.
+  ///
+  /// # Behaviour
+  ///
+  /// If the key material corresponding to the verification method is successfully removed from the underlying
+  /// [`KeyStorage`] the verification method will also be removed from the document. There is still a non-zero chance
+  /// that the [`IdentityStorage`] fails to delete the metadata of the verification method in which case an error is
+  /// returned. In other words the absence of an `Ok`, does not necessarily mean that the method still exists in the
+  /// document.
   async fn purge_method<K, I>(
     &mut self,
     did_url: &DIDUrl<Self::D>,
@@ -108,14 +119,11 @@ where
     let MultikeyOutput { public_key, key_id } = match storage.key_storage().generate_multikey(schema).await {
       Ok(output) => output,
       Err(key_storage_error) => {
-        let error_kind: MethodCreationErrorKind = match key_storage_error.kind() {
-          KeyStorageErrorKind::CouldNotAuthenticate => MethodCreationErrorKind::KeyStorageAuthenticationFailure,
-          KeyStorageErrorKind::RetryableIOFailure => MethodCreationErrorKind::RetryableIOFailure,
-          KeyStorageErrorKind::UnavailableKeyStorage => MethodCreationErrorKind::UnavailableStorage,
-          KeyStorageErrorKind::UnsupportedMultikeySchema => MethodCreationErrorKind::UnsupportedMultikeySchema,
-          KeyStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedStorageFailure,
+        let error_kind: MethodCreationErrorKind = match key_storage_error.kind().split() {
+          KeyStorageErrorKindSplit::Common(common) => common.into(),
+          KeyStorageErrorKindSplit::UnsupportedMultikeySchema => MethodCreationErrorKind::UnsupportedMultikeySchema,
           // The other variants should not be relevant for this operation
-          KeyStorageErrorKind::KeyNotFound | KeyStorageErrorKind::UnsupportedSigningKey => {
+          KeyStorageErrorKindSplit::KeyNotFound | KeyStorageErrorKindSplit::UnsupportedSigningKey => {
             MethodCreationErrorKind::UnspecifiedStorageFailure
           }
         };
@@ -138,16 +146,11 @@ where
         ));
       } else {
         // Rollback succeeded, only need to report the identity storage error
-        let error_kind = match identity_storage_error.kind() {
-          IdentityStorageErrorKind::CouldNotAuthenticate => {
-            MethodCreationErrorKind::IdentityStorageAuthenticationFailure
-          }
-          IdentityStorageErrorKind::MethodIdxAlreadyExists => MethodCreationErrorKind::MethodMetadataAlreadyStored,
-          IdentityStorageErrorKind::RetryableIOFailure => MethodCreationErrorKind::RetryableIOFailure,
-          IdentityStorageErrorKind::UnavailableIdentityStorage => MethodCreationErrorKind::UnavailableStorage,
-          IdentityStorageErrorKind::Unspecified => MethodCreationErrorKind::UnspecifiedStorageFailure,
+        let error_kind = match identity_storage_error.kind().split() {
+          IdentityStorageErrorKindSplit::Common(common) => common.into(),
+          IdentityStorageErrorKindSplit::MethodIdxAlreadyExists => MethodCreationErrorKind::MethodMetadataAlreadyStored,
           // The other variants should not be relevant for this operation
-          IdentityStorageErrorKind::MethodIdxNotFound => MethodCreationErrorKind::UnspecifiedStorageFailure,
+          IdentityStorageErrorKindSplit::MethodIdxNotFound => MethodCreationErrorKind::UnspecifiedStorageFailure,
         };
         return Err(MethodCreationError::new(
           error_kind,
@@ -179,48 +182,59 @@ where
     let public_key_multibase = self
       .resolve_method(did_url, None)
       .and_then(VerificationMethod::material)
-      .map(|material| match material {
-        VerificationMaterial::PublicKeyMultibase(ref public_key_multibase) => public_key_multibase,
+      .and_then(|material| match material {
+        VerificationMaterial::PublicKeyMultibase(ref public_key_multibase) => Some(public_key_multibase),
+        _ => None,
       })
       .ok_or_else(|| MethodRemovalError::from_kind(MethodRemovalErrorKind::MethodNotFound))?;
 
     let method_idx = MethodIdx::new_from_multikey(did_url.fragment().unwrap_or_default(), public_key_multibase);
 
-    match storage.identity_storage().get_key_id(method_idx).await {
+    match storage.identity_storage().get_key_id(&method_idx).await {
       Ok(key_id) => {
         if let Err(key_storage_error) = storage.key_storage().delete(&key_id).await {
-          let error_kind = match key_storage_error.kind() {
-            KeyStorageErrorKind::KeyNotFound => MethodRemovalErrorKind::KeyNotFound,
-            KeyStorageErrorKind::CouldNotAuthenticate => MethodRemovalErrorKind::KeyStorageAuthenticationFailure,
-            KeyStorageErrorKind::RetryableIOFailure => MethodRemovalErrorKind::RetryableIOFailure,
-            KeyStorageErrorKind::UnavailableKeyStorage => MethodRemovalErrorKind::UnavailableStorage,
-            KeyStorageErrorKind::Unspecified => MethodRemovalErrorKind::UnspecifiedStorageFailure,
+          let error_kind = match key_storage_error.kind().split() {
+            KeyStorageErrorKindSplit::Common(common) => common.into(),
+            KeyStorageErrorKindSplit::KeyNotFound => MethodRemovalErrorKind::KeyNotFound,
             // Other variants are irrelevant
-            KeyStorageErrorKind::UnsupportedMultikeySchema | KeyStorageErrorKind::UnsupportedSigningKey => {
+            KeyStorageErrorKindSplit::UnsupportedMultikeySchema | KeyStorageErrorKindSplit::UnsupportedSigningKey => {
               MethodRemovalErrorKind::UnspecifiedStorageFailure
             }
           };
           return Err(MethodRemovalError::new(error_kind, key_storage_error.into()));
         } else {
           // The key material has been removed
-          //TODO: Also delete from IdentityStorage
+          let key_id_removal_result =
+            storage
+              .identity_storage()
+              .delete_key_id(method_idx)
+              .await
+              .map_err(|identity_storage_error| {
+                let error_kind: MethodRemovalErrorKind = match identity_storage_error.kind().split() {
+                  IdentityStorageErrorKindSplit::Common(common) => common.into(),
+                  // It is very unlikely for this to happen as we found an entry under this id previously when looking
+                  // up the key_id
+                  IdentityStorageErrorKindSplit::MethodIdxNotFound => MethodRemovalErrorKind::UnspecifiedStorageFailure,
+                  // This variant is irrelevant for this operation
+                  IdentityStorageErrorKindSplit::MethodIdxAlreadyExists => {
+                    MethodRemovalErrorKind::UnspecifiedStorageFailure
+                  }
+                };
+                MethodRemovalError::new(error_kind, identity_storage_error.into())
+              });
+          // Proceed with removing the method regardless of whether the `key_id` was purged.
           self
             .remove_method(did_url)
             .ok_or_else(|| MethodRemovalError::from_kind(MethodRemovalErrorKind::MethodNotFound))?;
-          Ok(())
+          key_id_removal_result
         }
       }
       Err(identity_storage_error) => {
-        let error_kind = match identity_storage_error.kind() {
-          IdentityStorageErrorKind::CouldNotAuthenticate => {
-            MethodRemovalErrorKind::IdentityStorageAuthenticationFailure
-          }
-          IdentityStorageErrorKind::MethodIdxNotFound => MethodRemovalErrorKind::MethodMetadataNotFound,
-          IdentityStorageErrorKind::RetryableIOFailure => MethodRemovalErrorKind::RetryableIOFailure,
-          IdentityStorageErrorKind::UnavailableIdentityStorage => MethodRemovalErrorKind::UnavailableStorage,
-          IdentityStorageErrorKind::Unspecified => MethodRemovalErrorKind::UnspecifiedStorageFailure,
+        let error_kind = match identity_storage_error.kind().split() {
+          IdentityStorageErrorKindSplit::Common(common) => common.into(),
+          IdentityStorageErrorKindSplit::MethodIdxNotFound => MethodRemovalErrorKind::MethodMetadataNotFound,
           // Other variants are irrelevant
-          IdentityStorageErrorKind::MethodIdxAlreadyExists => MethodRemovalErrorKind::UnspecifiedStorageFailure,
+          IdentityStorageErrorKindSplit::MethodIdxAlreadyExists => MethodRemovalErrorKind::UnspecifiedStorageFailure,
         };
         Err(MethodRemovalError::new(error_kind, identity_storage_error.into()))
       }

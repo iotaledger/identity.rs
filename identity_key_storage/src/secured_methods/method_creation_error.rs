@@ -195,3 +195,5 @@ impl MethodCreationErrorKind {
     }
   }
 }
+
+crate::error_utils::impl_from_common_error_kind_variants!(MethodCreationErrorKind);

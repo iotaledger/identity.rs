@@ -3,6 +3,7 @@
 mod error;
 pub use error::KeyStorageError;
 pub use error::KeyStorageErrorKind;
+pub(crate) use error::KeyStorageErrorKindSplit;
 
 use std::str::FromStr;
 
@@ -13,7 +14,6 @@ use crate::identifiers::KeyId;
 use crate::key_generation::MultikeyOutput;
 use crate::key_generation::MultikeySchema;
 use crate::signature::Signature;
-
 pub type KeyStorageResult<T> = Result<T, crate::key_storage::KeyStorageError>;
 
 #[async_trait(?Send)]

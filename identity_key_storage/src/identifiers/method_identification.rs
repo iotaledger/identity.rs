@@ -38,7 +38,7 @@ impl MethodIdxVersion {
 impl MethodIdx {
   /// Generate the [`MethodIdx`] corresponding to be used with verification methods of type `Multikey`.
   pub(crate) fn new_from_multikey(fragment: &str, material: &PublicKeyMultibase) -> Self {
-    let mut hasher = Blake2b256::new();
+    let hasher = Blake2b256::new();
     let output = hasher
       .chain_update(fragment.as_bytes())
       .chain_update(material.as_bytes())

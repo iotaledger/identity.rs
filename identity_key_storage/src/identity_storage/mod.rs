@@ -9,6 +9,7 @@ use async_trait::async_trait;
 
 pub use self::error::IdentityStorageError;
 pub use self::error::IdentityStorageErrorKind;
+pub(crate) use self::error::IdentityStorageErrorKindSplit;
 pub use self::error::IdentityStorageResult;
 
 #[async_trait(?Send)]
@@ -33,7 +34,7 @@ pub trait IdentityStorage {
   async fn store_key_id(&self, idx: MethodIdx, key_id: &KeyId) -> IdentityStorageResult<()>;
 
   /// Retrieve the stored [`KeyId`] previously saved under the given `idx`.
-  async fn get_key_id(&self, idx: MethodIdx) -> IdentityStorageResult<KeyId>;
+  async fn get_key_id(&self, idx: &MethodIdx) -> IdentityStorageResult<KeyId>;
 
   /// Deletes the [`KeyId`] associated with the given [`MethodIdx`](crate::method_identifier::MethodIdx).
   ///
