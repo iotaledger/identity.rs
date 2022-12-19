@@ -85,6 +85,11 @@ impl Multikey {
     Multikey::new_with_base(Base::Base58Btc, codec, key)
   }
 
+  /// Warning: Does not check.
+  pub fn from_multibase_string(string: String) -> Self {
+    Self(string)
+  }
+
   /// Creates a new Multikey of the given multibase encoding, multicodec type and raw key material.
   pub fn new_with_base(base: Base, codec: Multicodec, key: &[u8]) -> Self {
     let mut input: Vec<u8> = codec.encode();
@@ -105,6 +110,14 @@ impl Multikey {
     let _ = decoded.drain(..(decoded.len() - tail.len()));
 
     Ok((codec, decoded))
+  }
+
+  pub fn into_multibase_string(self) -> String {
+    self.0
+  }
+
+  pub fn as_multibase_str(&self) -> &str {
+    &self.0
   }
 }
 

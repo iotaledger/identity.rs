@@ -38,6 +38,9 @@ impl MethodCreationError {
 
   /// Returns a reference to an underlying [`KeyStorageError`] if it was set.
   ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`KeyStorage`](crate::key_storage::KeyStorage).
+  ///
   /// # Important
   ///
   /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
@@ -49,16 +52,22 @@ impl MethodCreationError {
 
   /// Converts the error into the underlying [`KeyStorageError`] if it was set.
   ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`KeyStorage`](crate::key_storage::KeyStorage).
+  ///
   /// # Important
   ///
   /// Values of [Self::kind](Self::kind()) indicating the problem was caused by
   /// [`KeyStorage`](crate::key_storage::KeyStorage) do not necessarily imply the return of the `Some` variant unless
   /// explicitly documented.
-  pub fn into_key_storage_Error(self) -> Option<KeyStorageError> {
+  pub fn into_key_storage_error(self) -> Option<KeyStorageError> {
     self.storage_error.and_then(StorageError::into_key_storage_error)
   }
 
   /// Returns a reference to an underlying [`IdentityStorageError`] if it was set.
+  ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`IdentityStorage`](crate::identity_storage::IdentityStorage).
   ///
   /// # Important
   ///
@@ -72,6 +81,9 @@ impl MethodCreationError {
   }
 
   /// Converts the error into the underlying [`IdentityStorageError`] if it was set.
+  ///
+  /// This method should only be sought if the information provided by [`Self::kind`](Self::kind()) is not sufficient to
+  /// handle the errors returned from the underlying [`IdentityStorage`](crate::identity_storage::IdentityStorage).
   ///
   /// # Important
   ///
@@ -116,6 +128,27 @@ pub enum MethodCreationErrorKind {
   /// The provided [`KeyStorage`] implementation does not support generating keys of the given form.
   UnsupportedMultikeySchema,
 
+  /// Caused by an unsuccessful I/O operation that may be retried, such as temporary connection failure or timeouts.
+  ///
+  /// It is at the caller's discretion whether to retry or not, and how often.
+  RetryableIOFailure,
+
+  /// An attempt was made to authenticate with the key storage, but this operation did not succeed.
+  KeyStorageAuthenticationFailure,
+
+  /// Indicates that an attempt was made to authenticate with the identity storage, but this operation did not succeed.
+  IdentityStorageAuthenticationFailure,
+
+  /// The [`Storage`](crate::storage::Storage) is currently unavailable.
+  ///
+  /// This could error could be caused by either of its components. See
+  /// [`KeyStorageErrorKind::UnavailableKeyStorage`](crate::key_storage::error::KeyStorageErrorKind::UnavailableKeyStorage),
+  /// [`IdentityStorageErrorKind::UnavailableKeyStorage`](crate::identity_storage::error::IdentityStorageErrorKind::UnavailableIdentityStorage).
+  UnavailableStorage,
+
+  /// The [`Storage`](crate::storage::Storage) failed in an unspecified manner.
+  UnspecifiedStorageFailure,
+
   /// Caused by an attempt to create a method
   /// whose metadata has already been persisted.
   ///
@@ -126,37 +159,15 @@ pub enum MethodCreationErrorKind {
   /// containing the given verification material instead.
   MethodMetadataAlreadyStored,
 
-  /// Caused by an unsuccessful I/O operation that may be retried, such as temporary connection failure or timeouts.
-  ///
-  /// Returning this error signals to the caller that the operation may be retried with a chance of success.
-  /// It is at the caller's discretion whether to retry or not, and how often.
-  RetryableIOFailure,
-
-  /// An attempt was made to authenticate with the key storage, but this operation did not succeed.
-  KeyStorageAuthenticationFailure,
-
-  /// Indicates that an attempt was made to authenticate with the identity storage, but this operation did not succeed.
-  IdentityStorageAuthenticationFailure,
-
-  /// The key storage is currently not available. See
-  /// [`KeyStorageErrorKind::UnavailableKeyStorage`](crate::key_storage::error::KeyStorageErrorKind::UnavailableKeyStorage).
-  UnavailableKeyStorage,
-  /// The identity storage is currently not available. See
-  /// [`IdentityStorageErrorKind::UnavailableKeyStorage`](crate::identity_storage::error::IdentityStorageErrorKind::UnavailableIdentityStorage).
-  UnavailableIdentityStorage,
-
-  /// The key storage failed in an unspecified manner.
-  UnspecifiedKeyStorageFailure,
-
-  /// The identity storage failed in an unspecified manner.
-  UnspecifiedIdentityStorageFailure,
-
   /// A key was generated, but the necessary metadata could not be persisted in the [`IdentityStorage`],
   /// the follow up attempt to remove the generated key from storage did not succeed.
+  ///
+  /// When this variant occurs one may want to try to extract more information from
+  /// [`MethodCreationError::key_storage_error`](MethodCreationError::key_storage_error())
+  /// and [`MethodCreationError::identity_storage_error`](MethodCreationError::identity_storage_error()).
   // TODO: Do we want to communicate this?
   // TODO: Should the variant wrap the `KeyId` so users can try deleting the corresponding key
   // at a later point themselves?
-  // TODO: What expectations do we have for `MethodCreationError::source()` whenever this variant is encountered?
   TransactionRollbackFailure,
 }
 
@@ -176,13 +187,13 @@ impl MethodCreationErrorKind {
       Self::IdentityStorageAuthenticationFailure => {
         "method creation failed: authentication with the identity storage failed"
       }
-      Self::UnavailableKeyStorage => "method creation failed: key storage unavailable",
-      Self::UnavailableIdentityStorage => "method creation failed: identity storage unavailable",
-      Self::UnspecifiedKeyStorageFailure => "method creation failed: key storage failed",
-      Self::UnspecifiedIdentityStorageFailure => "method creation failed: identity storage failed",
+      Self::UnavailableStorage => "method creation failed: the storage is currently unavailable",
+      Self::UnspecifiedStorageFailure => "method creation failed: the storage failed in an unspecified manner",
       Self::TransactionRollbackFailure => {
         "method creation failed: unable to persist generated metadata: could not rollback key generation"
       }
     }
   }
 }
+
+crate::error_utils::impl_from_common_error_kind_variants!(MethodCreationErrorKind);

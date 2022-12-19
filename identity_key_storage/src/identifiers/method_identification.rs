@@ -3,7 +3,7 @@
 
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
-use identity_data_integrity::verification_material::PublicKeyMultibase;
+use identity_data_integrity::verification_material::Multikey;
 /// An index used to look up metadata stored in [`IdentityStorage`](crate::identity_storage::IdentityStorage) associated
 /// with a [`VerificationMethod`].
 pub struct MethodIdx(Repr);
@@ -37,11 +37,11 @@ impl MethodIdxVersion {
 }
 impl MethodIdx {
   /// Generate the [`MethodIdx`] corresponding to be used with verification methods of type `Multikey`.
-  pub(crate) fn new_from_multikey(fragment: &str, material: &PublicKeyMultibase) -> Self {
-    let mut hasher = Blake2b256::new();
+  pub(crate) fn new_from_multikey(fragment: &str, multikey: &Multikey) -> Self {
+    let hasher = Blake2b256::new();
     let output = hasher
       .chain_update(fragment.as_bytes())
-      .chain_update(material.as_bytes())
+      .chain_update(multikey.as_multibase_str().as_bytes())
       .finalize();
     let arr: [u8; MULTIKEY_METHOD_IDX_V1_LENGTH - 1] = output.into();
     let mut repr_inner = [0_u8; MULTIKEY_METHOD_IDX_V1_LENGTH];
@@ -49,4 +49,10 @@ impl MethodIdx {
     repr_inner[0] = MethodIdxVersion::CURRENT as u8;
     Self(Repr::MultiKeyV1(repr_inner))
   }
+
+  // TODO: Would it be useful for implementers to know some more representation details,
+  // i.e. that the length of self.as_ref() is 33?
+  // TODO: Do we need some public constructor available under cfg(test) for implementers?
+  // Going by the "only test public methods" sentiment we may not need a public constructor
+  // As one should then test against `CoreDocumentExt::create_multikey`.
 }
