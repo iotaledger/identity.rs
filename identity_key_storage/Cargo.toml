@@ -16,5 +16,5 @@ serde_json = "1.0.86"
 thiserror = "1"
 
 [dev-dependencies]
-rand = { version = "0.8.5", default-features = false }
-tokio = { version = "1.23.0", default-features = false, features = ["sync"] }
+rand = { version = "0.8.5" }
+tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync", "rt"] }

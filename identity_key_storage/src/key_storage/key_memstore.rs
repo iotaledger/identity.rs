@@ -183,8 +183,12 @@ impl KeyStorage for MemKeyStore {
     Ok(keypair.public().clone())
   }
 
-  async fn delete(&self, _key_identifier: &KeyId) -> KeyStorageResult<()> {
-    unimplemented!()
+  async fn delete(&self, key_identifier: &KeyId) -> KeyStorageResult<()> {
+    let mut store: RwLockWriteGuard<'_, KeyStore> = self.store.write().await;
+
+    store.remove(key_identifier);
+
+    Ok(())
   }
 
   // async fn key_delete(&self, did: &CoreDID, location: &KeyLocation) -> Result<bool> {

@@ -6,6 +6,7 @@ use crypto::hashes::Digest;
 use identity_data_integrity::verification_material::Multikey;
 /// An index used to look up metadata stored in [`IdentityStorage`](crate::identity_storage::IdentityStorage) associated
 /// with a [`VerificationMethod`].
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct MethodId(Repr);
 
 /// Length necessary for verification methods of type `Multikey`.
@@ -13,6 +14,8 @@ pub struct MethodId(Repr);
 /// The length corresponds to version_byte + Blake2b256 digest length. Due to limitations of const generics in traits
 /// this cannot be expressed more elegantly.
 const MULTIKEY_METHOD_IDX_V1_LENGTH: usize = 33;
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 enum Repr {
   MultiKeyV1([u8; MULTIKEY_METHOD_IDX_V1_LENGTH]),
 }

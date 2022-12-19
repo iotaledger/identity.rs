@@ -14,7 +14,11 @@ pub struct MultikeySchema {
 }
 
 impl MultikeySchema {
-  pub fn new(multicodec: Multicodec, multibase: Base) -> Self {
+  pub fn new(multicodec: Multicodec) -> Self {
+    MultikeySchema::new_with_base(multicodec, Base::Base58Btc)
+  }
+
+  pub fn new_with_base(multicodec: Multicodec, multibase: Base) -> Self {
     MultikeySchema { multicodec, multibase }
   }
 

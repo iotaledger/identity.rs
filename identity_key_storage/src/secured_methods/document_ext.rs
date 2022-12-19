@@ -137,9 +137,9 @@ where
       }
     };
 
-    let method_id: MethodId = MethodId::new_from_multikey(fragment, &public_key);
+    let method_id: MethodId = MethodId::new_from_multikey(fragment.strip_prefix('#').unwrap_or(fragment), &public_key);
 
-    if let Err(identity_storage_error) = storage.identity_storage().store_key_id(method_id, &key_id).await {
+    if let Err(identity_storage_error) = storage.identity_storage().store_key_id(method_id, key_id.clone()).await {
       // Attempt to rollback key generation
       if let Err(key_storage_error) = storage.key_storage().delete(&key_id).await {
         let error_kind: MethodCreationErrorKind = MethodCreationErrorKind::TransactionRollbackFailure;
@@ -163,6 +163,7 @@ where
     }
 
     let method = MethodBuilder::<D, U>::default()
+      .controller(did_url.did().to_owned())
       .id(did_url)
       .type_(MethodType::MULTIKEY)
       // This line should be removed once we replace MethodData with VerificationMaterial
@@ -198,7 +199,7 @@ where
       &Multikey::from_multibase_string(public_key_multibase.as_str().to_owned()),
     );
 
-    match storage.identity_storage().get_key_id(&method_idx).await {
+    match storage.identity_storage().load_key_id(&method_idx).await {
       Ok(key_id) => {
         if let Err(key_storage_error) = storage.key_storage().delete(&key_id).await {
           let error_kind = match key_storage_error.kind().split() {
@@ -215,7 +216,7 @@ where
           let key_id_removal_result =
             storage
               .identity_storage()
-              .delete_key_id(method_idx)
+              .delete_key_id(&method_idx)
               .await
               .map_err(|identity_storage_error| {
                 let error_kind: MethodRemovalErrorKind = match identity_storage_error.kind().split() {
@@ -247,5 +248,64 @@ where
         Err(MethodRemovalError::new(error_kind, identity_storage_error.into()))
       }
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_data_integrity::verification_material::Multicodec;
+  use identity_did::did::CoreDID;
+  use identity_did::did::DID;
+  use identity_did::document::CoreDocument;
+  use identity_did::verification::MethodRelationship;
+  use identity_did::verification::MethodScope;
+
+  use crate::identity_storage::MemIdentityStore;
+  use crate::key_generation::MultikeySchema;
+  use crate::key_storage::MemKeyStore;
+  use crate::storage::Storage;
+
+  use super::CoreDocumentExt;
+
+  #[tokio::test]
+  async fn test_method_creation_deletion() {
+    let fragment = "#multikey";
+    let key_storage = MemKeyStore::new();
+    let blob_storage = MemIdentityStore::new();
+    let storage = Storage::new(key_storage, blob_storage);
+
+    let did = CoreDID::parse("did:iota:0x0000").unwrap();
+    let mut document: CoreDocument = CoreDocument::builder(Default::default()).id(did).build().unwrap();
+
+    document
+      .create_multikey_method(
+        fragment,
+        &MultikeySchema::new(Multicodec::ED25519_PUB),
+        &storage,
+        MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod),
+      )
+      .await
+      .unwrap();
+
+    assert!(document
+      .resolve_method(
+        fragment,
+        Some(MethodScope::VerificationRelationship(
+          MethodRelationship::AssertionMethod
+        )),
+      )
+      .is_some());
+
+    let did_url = document.id().to_url().join(fragment).unwrap();
+    document.purge_method(&did_url, &storage).await.unwrap();
+
+    assert!(document
+      .resolve_method(
+        fragment,
+        Some(MethodScope::VerificationRelationship(
+          MethodRelationship::AssertionMethod
+        )),
+      )
+      .is_none());
   }
 }
