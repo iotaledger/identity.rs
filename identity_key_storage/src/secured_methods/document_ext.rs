@@ -15,7 +15,7 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
-use crate::identifiers::MethodIdx;
+use crate::identifiers::MethodId;
 use crate::identity_storage::IdentityStorage;
 use crate::identity_storage::IdentityStorageErrorKindSplit;
 use crate::key_generation::MultikeyOutput;
@@ -92,6 +92,7 @@ where
   U: Default,
 {
   type D = D;
+
   async fn create_multikey_method<K, I>(
     &mut self,
     fragment: &str,
@@ -136,9 +137,9 @@ where
       }
     };
 
-    let method_idx: MethodIdx = MethodIdx::new_from_multikey(fragment, &public_key);
+    let method_id: MethodId = MethodId::new_from_multikey(fragment, &public_key);
 
-    if let Err(identity_storage_error) = storage.identity_storage().store_key_id(method_idx, &key_id).await {
+    if let Err(identity_storage_error) = storage.identity_storage().store_key_id(method_id, &key_id).await {
       // Attempt to rollback key generation
       if let Err(key_storage_error) = storage.key_storage().delete(&key_id).await {
         let error_kind: MethodCreationErrorKind = MethodCreationErrorKind::TransactionRollbackFailure;
@@ -192,7 +193,7 @@ where
       })
       .ok_or_else(|| MethodRemovalError::from_kind(MethodRemovalErrorKind::MethodNotFound))?;
 
-    let method_idx = MethodIdx::new_from_multikey(
+    let method_idx = MethodId::new_from_multikey(
       did_url.fragment().unwrap_or_default(),
       &Multikey::from_multibase_string(public_key_multibase.as_str().to_owned()),
     );

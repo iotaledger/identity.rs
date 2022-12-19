@@ -19,6 +19,8 @@ use identity_core::crypto::KeyType;
 // use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
+use identity_data_integrity::verification_material::Multicodec;
+use identity_data_integrity::verification_material::Multikey;
 // #[cfg(feature = "encryption")]
 // use identity_core::crypto::X25519;
 use identity_did::did::CoreDID;
@@ -30,9 +32,10 @@ use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 // use zeroize::Zeroize;
 
-use crate::Ed25519KeyType;
-use crate::Ed25519SignatureAlgorithm;
-use crate::KeyId;
+use crate::identifiers::KeyId;
+use crate::key_generation::MultikeyOutput;
+use crate::key_generation::MultikeySchema;
+use crate::key_storage::Ed25519SignatureAlgorithm;
 // use crate::error::Error;
 // use crate::error::Result;
 // #[cfg(feature = "encryption")]
@@ -41,12 +44,17 @@ use crate::KeyId;
 // use crate::types::EncryptedData;
 // #[cfg(feature = "encryption")]
 // use crate::types::EncryptionAlgorithm;
-use crate::KeyStorage;
-use crate::StorageErrorKind;
-use crate::StorageResult;
+use crate::key_storage::KeyStorage;
+use crate::signature::Signature;
+// use crate::StorageErrorKind;
+// use crate::StorageResult;
 // use crate::types::KeyLocation;
-use crate::Signature;
+// use crate::Signature;
 use shared::Shared;
+
+use super::KeyStorageError;
+use super::KeyStorageErrorKind;
+use super::KeyStorageResult;
 
 // The map from DIDs to vaults.
 // type Vaults = HashMap<CoreDID, MemVault>;
@@ -71,15 +79,15 @@ impl MemKeyStore {
     }
   }
 
-  /// Returns whether to expand the debug representation.
-  pub fn expand(&self) -> bool {
-    self.expand
-  }
+  // /// Returns whether to expand the debug representation.
+  // pub(crate) fn expand(&self) -> bool {
+  //   self.expand
+  // }
 
-  /// Sets whether to expand the debug representation.
-  pub fn set_expand(&mut self, value: bool) {
-    self.expand = value;
-  }
+  // /// Sets whether to expand the debug representation.
+  // pub(crate) fn set_expand(&mut self, value: bool) {
+  //   self.expand = value;
+  // }
 }
 
 pub enum MemStoreSigningAlgorithm {
@@ -92,33 +100,33 @@ impl From<Ed25519SignatureAlgorithm> for MemStoreSigningAlgorithm {
   }
 }
 
-impl From<Ed25519KeyType> for KeyType {
-  fn from(_: Ed25519KeyType) -> Self {
-    KeyType::Ed25519
-  }
-}
-
 // Refer to the `Storage` interface docs for high-level documentation of the individual methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl KeyStorage for MemKeyStore {
-  type KeyType = KeyType;
   type SigningAlgorithm = MemStoreSigningAlgorithm;
 
-  async fn generate(&self, key_type: Self::KeyType) -> StorageResult<KeyId> {
+  async fn generate_multikey(&self, schema: &MultikeySchema) -> KeyStorageResult<MultikeyOutput> {
     // Obtain exclusive access to the vaults.
     let mut store: RwLockWriteGuard<'_, KeyStore> = self.store.write().await;
+
+    let key_type = match schema.multicodec() {
+      Multicodec::ED25519_PUB => KeyType::Ed25519,
+      _ => return Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedMultikeySchema)),
+    };
 
     // Generate a new key pair for the given `key_type`.
     let keypair: KeyPair = KeyPair::new(key_type).expect("TODO");
 
     let random_string: String = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32);
-    let alias: KeyId = KeyId::new(random_string);
+    let alias: KeyId = KeyId(random_string);
+
+    let public_key: &PublicKey = keypair.public();
+    let multikey: Multikey = Multikey::new(schema.multicodec(), public_key.as_ref());
 
     store.insert(alias.clone(), keypair);
 
-    // Return the alias.
-    Ok(alias)
+    Ok(MultikeyOutput::new(alias, multikey))
   }
 
   // async fn key_insert(&self, did: &CoreDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<()> {
@@ -163,16 +171,20 @@ impl KeyStorage for MemKeyStore {
   //   Ok(false)
   // }
 
-  async fn public(&self, private_key: &KeyId) -> StorageResult<PublicKey> {
+  async fn public(&self, key_identifier: &KeyId) -> KeyStorageResult<PublicKey> {
     // Obtain read access to the vaults.
     let store: RwLockReadGuard<'_, KeyStore> = self.store.read().await;
     // Lookup the vault for the given DID.
     let keypair: &KeyPair = store
-      .get(private_key)
-      .ok_or_else(|| StorageErrorKind::KeyNotFound(private_key.clone()))?;
+      .get(key_identifier)
+      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
     // Return the public key.
     Ok(keypair.public().clone())
+  }
+
+  async fn delete(&self, _key_identifier: &KeyId) -> KeyStorageResult<()> {
+    unimplemented!()
   }
 
   // async fn key_delete(&self, did: &CoreDID, location: &KeyLocation) -> Result<bool> {
@@ -185,30 +197,27 @@ impl KeyStorage for MemKeyStore {
   //   // if it exists and return whether it was actually deleted during this operation.
   //   Ok(vault.remove(location).is_some())
   // }
-
-  async fn sign<SIG: Send + Into<Self::SigningAlgorithm>>(
+  async fn sign(
     &self,
-    private_key: &KeyId,
-    signing_algorithm: SIG,
+    key_identifier: &KeyId,
+    algorithm: &Self::SigningAlgorithm,
     data: Vec<u8>,
-  ) -> StorageResult<Signature> {
-    let signing_algorithm = signing_algorithm.into();
-
+  ) -> KeyStorageResult<Signature> {
     // Obtain read access to the vaults.
     let store: RwLockReadGuard<'_, KeyStore> = self.store.read().await;
     // Lookup the key pair within the vault.
     let keypair: &KeyPair = store
-      .get(private_key)
-      .ok_or_else(|| StorageErrorKind::KeyNotFound(private_key.clone()))?;
+      .get(key_identifier)
+      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-    match signing_algorithm {
+    match algorithm {
       MemStoreSigningAlgorithm::Ed25519 => {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
         // Use the `Ed25519` API to sign the given data with the private key.
         let signature: [u8; 64] = Ed25519::sign(&data, keypair.private()).expect("TODO");
         // Construct a new `Signature` wrapper with the returned signature bytes.
-        let signature: Signature = Signature::new(signature.to_vec());
+        let signature: Signature = Signature(signature.to_vec());
         Ok(signature)
       }
     }

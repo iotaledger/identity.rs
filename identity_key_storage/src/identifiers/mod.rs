@@ -4,4 +4,4 @@ mod key_identification;
 mod method_identification;
 
 pub use key_identification::KeyId;
-pub use method_identification::MethodIdx;
+pub use method_identification::MethodId;

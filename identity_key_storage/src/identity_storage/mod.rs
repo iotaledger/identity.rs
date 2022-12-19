@@ -4,7 +4,7 @@
 mod error;
 
 use crate::identifiers::KeyId;
-use crate::identifiers::MethodIdx;
+use crate::identifiers::MethodId;
 use async_trait::async_trait;
 
 pub use self::error::IdentityStorageError;
@@ -31,15 +31,15 @@ pub trait IdentityStorage {
   /// # Note
   /// This method is only intended to be called by the IOTA Identity library. All other usage may lead to undesired
   /// behaviour and subtle bugs.
-  async fn store_key_id(&self, idx: MethodIdx, key_id: &KeyId) -> IdentityStorageResult<()>;
+  async fn store_key_id(&self, idx: MethodId, key_id: &KeyId) -> IdentityStorageResult<()>;
 
   /// Retrieve the stored [`KeyId`] previously saved under the given `idx`.
-  async fn get_key_id(&self, idx: &MethodIdx) -> IdentityStorageResult<KeyId>;
+  async fn get_key_id(&self, idx: &MethodId) -> IdentityStorageResult<KeyId>;
 
   /// Deletes the [`KeyId`] associated with the given [`MethodIdx`](crate::method_identifier::MethodIdx).
   ///
   /// # Warning
   /// This method is only intended to be called by the IOTA Identity library. All other usage may lead to undesired
   /// behaviour and subtle bugs.
-  async fn delete_key_id(&self, method_idx: MethodIdx) -> IdentityStorageResult<()>;
+  async fn delete_key_id(&self, method_idx: MethodId) -> IdentityStorageResult<()>;
 }

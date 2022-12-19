@@ -5,5 +5,5 @@
 ///
 /// This type is expected to be returned by a [`KeyStorage`](crate::key_storage::KeyStorage) implementation when
 /// generating cryptographic key pairs, and later used when signing data.  
-#[derive(Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct KeyId(pub String);

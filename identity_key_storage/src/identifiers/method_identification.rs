@@ -6,7 +6,7 @@ use crypto::hashes::Digest;
 use identity_data_integrity::verification_material::Multikey;
 /// An index used to look up metadata stored in [`IdentityStorage`](crate::identity_storage::IdentityStorage) associated
 /// with a [`VerificationMethod`].
-pub struct MethodIdx(Repr);
+pub struct MethodId(Repr);
 
 /// Length necessary for verification methods of type `Multikey`.
 ///
@@ -17,7 +17,7 @@ enum Repr {
   MultiKeyV1([u8; MULTIKEY_METHOD_IDX_V1_LENGTH]),
 }
 
-impl AsRef<[u8]> for MethodIdx {
+impl AsRef<[u8]> for MethodId {
   fn as_ref(&self) -> &[u8] {
     let Repr::MultiKeyV1(ref bytes) = self.0;
     bytes.as_slice()
@@ -35,7 +35,7 @@ enum MethodIdxVersion {
 impl MethodIdxVersion {
   const CURRENT: Self = Self::One;
 }
-impl MethodIdx {
+impl MethodId {
   /// Generate the [`MethodIdx`] corresponding to be used with verification methods of type `Multikey`.
   pub(crate) fn new_from_multikey(fragment: &str, multikey: &Multikey) -> Self {
     let hasher = Blake2b256::new();
