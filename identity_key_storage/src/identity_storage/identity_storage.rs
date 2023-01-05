@@ -4,7 +4,6 @@ use async_trait::async_trait;
 
 pub use super::error::IdentityStorageError;
 pub use super::error::IdentityStorageErrorKind;
-pub(crate) use super::error::IdentityStorageErrorKindSplit;
 pub use super::error::IdentityStorageResult;
 
 #[async_trait(?Send)]

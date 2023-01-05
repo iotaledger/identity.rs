@@ -1,6 +1,5 @@
 pub use super::error::KeyStorageError;
 pub use super::error::KeyStorageErrorKind;
-pub(crate) use super::error::KeyStorageErrorKindSplit;
 
 use async_trait::async_trait;
 use identity_core::crypto::PublicKey;

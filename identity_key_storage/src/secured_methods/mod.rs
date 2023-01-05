@@ -8,5 +8,4 @@ mod method_removal_error;
 mod remote_key;
 pub use method_creation_error::MethodCreationError;
 pub use method_removal_error::MethodRemovalError;
-pub use method_removal_error::MethodRemovalErrorKind;
 pub use remote_key::RemoteKey;

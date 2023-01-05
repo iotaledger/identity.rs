@@ -6,7 +6,6 @@ use std::error::Error;
 use std::fmt::Display;
 
 use crate::error_utils::AsDynError;
-use crate::error_utils::CommonErrorKindVariants;
 
 /// The error type for KeyStorage operations.
 ///
@@ -203,42 +202,10 @@ impl KeyStorageErrorKind {
       Self::RetryableIOFailure => "key storage was unsuccessful because of an I/O failure",
     }
   }
-
-  /// Internal method that splits this error kind into an enum with flattened variants for cases that need to be handled
-  /// on a case by case basis for the various higher level errors in the crate, and a variant wrapping the common
-  /// cases that are handled the same way.
-  pub(crate) const fn split(&self) -> KeyStorageErrorKindSplit {
-    match self {
-      KeyStorageErrorKind::KeyNotFound => KeyStorageErrorKindSplit::KeyNotFound,
-      KeyStorageErrorKind::UnsupportedSigningKey => KeyStorageErrorKindSplit::UnsupportedSigningKey,
-      KeyStorageErrorKind::UnsupportedMultikeySchema => KeyStorageErrorKindSplit::UnsupportedMultikeySchema,
-      KeyStorageErrorKind::CouldNotAuthenticate => {
-        KeyStorageErrorKindSplit::Common(CommonErrorKindVariants::KeyStorageAuthenticationFailure)
-      }
-      KeyStorageErrorKind::RetryableIOFailure => {
-        KeyStorageErrorKindSplit::Common(CommonErrorKindVariants::RetryableIOFailure)
-      }
-      KeyStorageErrorKind::UnavailableKeyStorage => {
-        KeyStorageErrorKindSplit::Common(CommonErrorKindVariants::UnavailableStorage)
-      }
-      KeyStorageErrorKind::Unspecified => {
-        KeyStorageErrorKindSplit::Common(CommonErrorKindVariants::UnspecifiedStorageFailure)
-      }
-    }
-  }
 }
 
 impl Display for KeyStorageErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}", self.as_str())
   }
-}
-
-// Internal transformation helper code
-// used to map KeyStorageError to higher level errors.
-pub(crate) enum KeyStorageErrorKindSplit {
-  UnsupportedMultikeySchema,
-  KeyNotFound,
-  UnsupportedSigningKey,
-  Common(CommonErrorKindVariants),
 }

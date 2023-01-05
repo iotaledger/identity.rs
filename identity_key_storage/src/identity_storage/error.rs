@@ -6,7 +6,6 @@ use std::error::Error;
 use std::fmt::Display;
 
 use crate::error_utils::AsDynError;
-use crate::error_utils::CommonErrorKindVariants;
 
 // TODO: This follows the same pattern as KeyStorageError. Might be an idea to make a macro_rules macro for this sort of
 // thing.
@@ -199,34 +198,4 @@ impl IdentityStorageErrorKind {
       Self::Unspecified => "identity storage operation failed",
     }
   }
-
-  /// Internal method that splits this error kind into an enum with flattened variants for cases that need to be handled
-  /// on a case by case basis for the various higher level errors in the crate, and a variant wrapping the common
-  /// cases that are handled the same way.
-  pub(crate) const fn split(&self) -> IdentityStorageErrorKindSplit {
-    match self {
-      IdentityStorageErrorKind::MethodIdxNotFound => IdentityStorageErrorKindSplit::MethodIdxNotFound,
-      IdentityStorageErrorKind::MethodIdxAlreadyExists => IdentityStorageErrorKindSplit::MethodIdxAlreadyExists,
-      IdentityStorageErrorKind::CouldNotAuthenticate => {
-        IdentityStorageErrorKindSplit::Common(CommonErrorKindVariants::IdentityStorageAuthenticationFailure)
-      }
-      IdentityStorageErrorKind::RetryableIOFailure => {
-        IdentityStorageErrorKindSplit::Common(CommonErrorKindVariants::RetryableIOFailure)
-      }
-      IdentityStorageErrorKind::UnavailableIdentityStorage => {
-        IdentityStorageErrorKindSplit::Common(CommonErrorKindVariants::UnavailableStorage)
-      }
-      IdentityStorageErrorKind::Unspecified => {
-        IdentityStorageErrorKindSplit::Common(CommonErrorKindVariants::UnspecifiedStorageFailure)
-      }
-    }
-  }
-}
-
-// Internal transformation helper code
-// used to map KeyStorageError to higher level errors.
-pub(crate) enum IdentityStorageErrorKindSplit {
-  MethodIdxAlreadyExists,
-  MethodIdxNotFound,
-  Common(CommonErrorKindVariants),
 }

@@ -1,10 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::error::Error;
-use std::fmt::Display;
-
-use crate::identifiers::KeyId;
 use crate::identity_storage::IdentityStorageError;
 use crate::key_storage::KeyStorageError;
 

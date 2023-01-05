@@ -17,16 +17,14 @@ use identity_did::verification::VerificationMethod;
 
 use crate::identifiers::MethodId;
 use crate::identity_storage::IdentityStorage;
-use crate::identity_storage::IdentityStorageErrorKindSplit;
 use crate::key_generation::MultikeyOutput;
 use crate::key_generation::MultikeySchema;
 use crate::key_storage::KeyStorage;
-use crate::key_storage::KeyStorageErrorKindSplit;
+
 use crate::storage::Storage;
 
 use super::method_creation_error::MethodCreationError;
 use super::method_removal_error::MethodRemovalError;
-use super::MethodRemovalErrorKind;
 
 #[async_trait(?Send)]
 /// Extension trait enabling [`CoreDocument`] to utilize
@@ -162,62 +160,38 @@ where
         VerificationMaterial::PublicKeyMultibase(ref public_key_multibase) => Some(public_key_multibase),
         _ => None,
       })
-      .ok_or_else(|| MethodRemovalError::from_kind(MethodRemovalErrorKind::MethodNotFound))?;
+      .ok_or_else(|| MethodRemovalError::MethodNotFound)?;
 
     let method_idx = MethodId::new_from_multikey(
       did_url.fragment().unwrap_or_default(),
       &Multikey::from_multibase_string(public_key_multibase.as_str().to_owned()),
     );
 
-    match storage.identity_storage().load_key_id(&method_idx).await {
-      Ok(key_id) => {
-        if let Err(key_storage_error) = storage.key_storage().delete(&key_id).await {
-          let error_kind = match key_storage_error.kind().split() {
-            KeyStorageErrorKindSplit::Common(common) => common.into(),
-            KeyStorageErrorKindSplit::KeyNotFound => MethodRemovalErrorKind::KeyNotFound,
-            // Other variants are irrelevant
-            KeyStorageErrorKindSplit::UnsupportedMultikeySchema | KeyStorageErrorKindSplit::UnsupportedSigningKey => {
-              MethodRemovalErrorKind::UnspecifiedStorageFailure
-            }
-          };
-          return Err(MethodRemovalError::new(error_kind, key_storage_error.into()));
-        } else {
-          // The key material has been removed
-          let key_id_removal_result =
-            storage
-              .identity_storage()
-              .delete_key_id(&method_idx)
-              .await
-              .map_err(|identity_storage_error| {
-                let error_kind: MethodRemovalErrorKind = match identity_storage_error.kind().split() {
-                  IdentityStorageErrorKindSplit::Common(common) => common.into(),
-                  // It is very unlikely for this to happen as we found an entry under this id previously when looking
-                  // up the key_id
-                  IdentityStorageErrorKindSplit::MethodIdxNotFound => MethodRemovalErrorKind::UnspecifiedStorageFailure,
-                  // This variant is irrelevant for this operation
-                  IdentityStorageErrorKindSplit::MethodIdxAlreadyExists => {
-                    MethodRemovalErrorKind::UnspecifiedStorageFailure
-                  }
-                };
-                MethodRemovalError::new(error_kind, identity_storage_error.into())
-              });
-          // Proceed with removing the method regardless of whether the `key_id` was purged.
-          self
-            .remove_method(did_url)
-            .ok_or_else(|| MethodRemovalError::from_kind(MethodRemovalErrorKind::MethodNotFound))?;
-          key_id_removal_result
-        }
-      }
-      Err(identity_storage_error) => {
-        let error_kind = match identity_storage_error.kind().split() {
-          IdentityStorageErrorKindSplit::Common(common) => common.into(),
-          IdentityStorageErrorKindSplit::MethodIdxNotFound => MethodRemovalErrorKind::MethodMetadataNotFound,
-          // Other variants are irrelevant
-          IdentityStorageErrorKindSplit::MethodIdxAlreadyExists => MethodRemovalErrorKind::UnspecifiedStorageFailure,
-        };
-        Err(MethodRemovalError::new(error_kind, identity_storage_error.into()))
-      }
-    }
+    let key_id = storage
+      .identity_storage()
+      .load_key_id(&method_idx)
+      .await
+      .map_err(|err| MethodRemovalError::MetadataLookup(err))?;
+
+    storage
+      .key_storage()
+      .delete(&key_id)
+      .await
+      .map_err(|err| MethodRemovalError::KeyRemoval(err))?;
+
+    // The key material has been removed. Now attempt to remove metadata.
+    let key_id_removal_result = storage
+      .identity_storage()
+      .delete_key_id(&method_idx)
+      .await
+      .map_err(|identity_storage_error| MethodRemovalError::PartialRemoval(identity_storage_error));
+
+    // Proceed with removing the method regardless of whether the `key_id` was purged from the identity storage.
+    self
+      .remove_method(did_url)
+      .expect("removing a method known to be contained in the document should be fine");
+
+    key_id_removal_result
   }
 }
 
