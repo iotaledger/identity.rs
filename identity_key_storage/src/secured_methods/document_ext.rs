@@ -26,8 +26,6 @@ use crate::storage::Storage;
 
 use super::method_creation_error::MethodCreationError;
 use super::method_removal_error::MethodRemovalError;
-use super::storage_error::StorageError;
-use super::MethodCreationErrorKind;
 use super::MethodRemovalErrorKind;
 
 #[async_trait(?Send)]
@@ -106,61 +104,31 @@ where
   {
     // Check if the fragment already exists
     if self.refers_to_sub_resource(fragment) {
-      return Err(MethodCreationError::from_kind(MethodCreationErrorKind::FragmentInUse));
+      return Err(MethodCreationError::FragmentInUse);
     }
 
     let did_url = {
       let mut did_url = self.id().to_url();
       did_url
         .set_fragment(Some(&fragment))
-        .map_err(|_| MethodCreationError::from_kind(MethodCreationErrorKind::InvalidFragmentSyntax))?;
+        .map_err(|_| MethodCreationError::InvalidFragmentSyntax)?;
       did_url
     };
 
     // Use the key storage to generate a multikey:
-
-    let MultikeyOutput { public_key, key_id } = match storage.key_storage().generate_multikey(schema).await {
-      Ok(output) => output,
-      Err(key_storage_error) => {
-        let error_kind: MethodCreationErrorKind = match key_storage_error.kind().split() {
-          KeyStorageErrorKindSplit::Common(common) => common.into(),
-          KeyStorageErrorKindSplit::UnsupportedMultikeySchema => MethodCreationErrorKind::UnsupportedMultikeySchema,
-          // The other variants should not be relevant for this operation
-          KeyStorageErrorKindSplit::KeyNotFound | KeyStorageErrorKindSplit::UnsupportedSigningKey => {
-            MethodCreationErrorKind::UnspecifiedStorageFailure
-          }
-        };
-        return Err(MethodCreationError::new(
-          error_kind,
-          StorageError::KeyStorage(key_storage_error),
-        ));
-      }
-    };
+    let MultikeyOutput { public_key, key_id } = storage
+      .key_storage()
+      .generate_multikey(schema)
+      .await
+      .map_err(|key_storage_err| MethodCreationError::KeyGeneration(key_storage_err))?;
 
     let method_id: MethodId = MethodId::new_from_multikey(fragment.strip_prefix('#').unwrap_or(fragment), &public_key);
 
-    if let Err(identity_storage_error) = storage.identity_storage().store_key_id(method_id, key_id.clone()).await {
-      // Attempt to rollback key generation
-      if let Err(key_storage_error) = storage.key_storage().delete(&key_id).await {
-        let error_kind: MethodCreationErrorKind = MethodCreationErrorKind::TransactionRollbackFailure;
-        return Err(MethodCreationError::new(
-          error_kind,
-          StorageError::Both(Box::new((key_storage_error, identity_storage_error))),
-        ));
-      } else {
-        // Rollback succeeded, only need to report the identity storage error
-        let error_kind = match identity_storage_error.kind().split() {
-          IdentityStorageErrorKindSplit::Common(common) => common.into(),
-          IdentityStorageErrorKindSplit::MethodIdxAlreadyExists => MethodCreationErrorKind::MethodMetadataAlreadyStored,
-          // The other variants should not be relevant for this operation
-          IdentityStorageErrorKindSplit::MethodIdxNotFound => MethodCreationErrorKind::UnspecifiedStorageFailure,
-        };
-        return Err(MethodCreationError::new(
-          error_kind,
-          StorageError::IdentityStorage(identity_storage_error),
-        ));
-      }
-    }
+    storage
+      .identity_storage()
+      .store_key_id(method_id, key_id.clone())
+      .await
+      .map_err(|err| MethodCreationError::MetadataPersistence(err))?;
 
     let method = MethodBuilder::<D, U>::default()
       .controller(did_url.did().to_owned())
@@ -174,9 +142,11 @@ where
       .build()
       .expect("building a method with valid data should be fine");
 
-    self
-      .insert_method(method, scope)
-      .map_err(|_| MethodCreationError::from_kind(MethodCreationErrorKind::FragmentInUse))
+    Ok(
+      self
+        .insert_method(method, scope)
+        .expect("inserting a method with a unique identifier should be fine"),
+    )
   }
 
   async fn purge_method<K, I>(&mut self, did_url: &DIDUrl<D>, storage: &Storage<K, I>) -> Result<(), MethodRemovalError>
