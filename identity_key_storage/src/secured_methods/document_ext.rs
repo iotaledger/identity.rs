@@ -122,6 +122,8 @@ where
 
     let method_id: MethodId = MethodId::new_from_multikey(fragment.strip_prefix('#').unwrap_or(fragment), &public_key);
 
+    // Note: If metadata cannot be persisted, then the generated key will be "stuck" in storage.
+    // TODO: Do we need to provide a way for users to manually delete the key material from storage when this occurs?
     storage
       .identity_storage()
       .store_key_id(method_id, key_id.clone())
@@ -179,7 +181,10 @@ where
       .await
       .map_err(|err| MethodRemovalError::KeyRemoval(err))?;
 
-    // The key material has been removed. Now attempt to remove metadata.
+    // Attempt to remove metadata.
+    // Note: If this operation fails redundant metadata is "stuck" in the identity storage.
+    // TODO: Do we need to provide a way for users to manually delete the (method_id, key_id) from storage whenever this
+    // occurs?
     let key_id_removal_result = storage
       .identity_storage()
       .delete_key_id(&method_idx)
