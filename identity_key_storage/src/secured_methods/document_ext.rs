@@ -25,6 +25,9 @@ use crate::storage::Storage;
 
 use super::method_creation_error::MethodCreationError;
 use super::method_removal_error::MethodRemovalError;
+use super::signing_material::SigningMaterial;
+use super::KeyLookupError;
+use super::RemoteKey;
 
 #[async_trait(?Send)]
 /// Extension trait enabling [`CoreDocument`] to utilize
@@ -67,6 +70,16 @@ pub trait CoreDocumentExt: private::Sealed {
     did_url: &DIDUrl<Self::D>,
     storage: &Storage<K, I>,
   ) -> Result<(), MethodRemovalError>
+  where
+    K: KeyStorage,
+    I: IdentityStorage;
+
+  /// Extracts the [`SigningMaterial`] corresponding to the verification method with the given `fragment`.   
+  async fn signing_material<K, I, F>(
+    &self,
+    fragment: &str,
+    storage: &Storage<K, I>,
+  ) -> Result<SigningMaterial<F>, KeyLookupError>
   where
     K: KeyStorage,
     I: IdentityStorage;
@@ -118,7 +131,7 @@ where
       .key_storage()
       .generate_multikey(schema)
       .await
-      .map_err(|key_storage_err| MethodCreationError::KeyGeneration(key_storage_err))?;
+      .map_err(|key_storage_err| MethodCreationError::KeyGenerationFailure(key_storage_err))?;
 
     let method_id: MethodId = MethodId::new_from_multikey(fragment.strip_prefix('#').unwrap_or(fragment), &public_key);
 
@@ -128,7 +141,7 @@ where
       .identity_storage()
       .store_key_id(method_id, key_id.clone())
       .await
-      .map_err(|err| MethodCreationError::MetadataPersistence(err))?;
+      .map_err(|err| MethodCreationError::MetadataPersistenceFailure(err))?;
 
     let method = MethodBuilder::<D, U>::default()
       .controller(did_url.did().to_owned())
@@ -164,6 +177,8 @@ where
       })
       .ok_or_else(|| MethodRemovalError::MethodNotFound)?;
 
+    // TODO: This only works when type is Multikey, generalize this when we start supporting publicKeyJwk as well.
+    // TODO: Introduce a function for extracting a MethodId from a given verification method.
     let method_idx = MethodId::new_from_multikey(
       did_url.fragment().unwrap_or_default(),
       &Multikey::from_multibase_string(public_key_multibase.as_str().to_owned()),
@@ -173,13 +188,13 @@ where
       .identity_storage()
       .load_key_id(&method_idx)
       .await
-      .map_err(|err| MethodRemovalError::MetadataLookup(err))?;
+      .map_err(|err| MethodRemovalError::MetadataLookupFailure(err))?;
 
     storage
       .key_storage()
       .delete(&key_id)
       .await
-      .map_err(|err| MethodRemovalError::KeyRemoval(err))?;
+      .map_err(|err| MethodRemovalError::KeyRemovalFailure(err))?;
 
     // Attempt to remove metadata.
     // Note: If this operation fails redundant metadata is "stuck" in the identity storage.
@@ -197,6 +212,40 @@ where
       .expect("removing a method known to be contained in the document should be fine");
 
     key_id_removal_result
+  }
+
+  async fn signing_material<K, I, F>(
+    &self,
+    fragment: &str,
+    storage: &Storage<K, I>,
+  ) -> Result<SigningMaterial<F>, KeyLookupError>
+  where
+    K: KeyStorage,
+    I: IdentityStorage,
+  {
+    let method = self
+      .resolve_method(fragment, None)
+      .ok_or(KeyLookupError::MethodNotFound)?;
+
+    // TODO: This only works when type is Multikey, generalize this when we start supporting publicKeyJwk as well.
+    // TODO: Introduce a function for extracting a MethodId from a verification method.
+    let (Some(method_fragment), Some(public_key_multibase)) = (
+      method.id().fragment(),
+       method.material().and_then(|material| match material {VerificationMaterial::PublicKeyMultibase(ref key) => Some(key), _=> None})) else {
+      return Err(KeyLookupError::MethodNotFound); 
+    };
+    let method_id = MethodId::new_from_multikey(
+      method_fragment,
+      &Multikey::from_multibase_string(public_key_multibase.as_str().to_owned()),
+    );
+
+    let key_id = storage
+      .identity_storage()
+      .load_key_id(&method_id)
+      .await
+      .map_err(|err| KeyLookupError::KeyIdRetrievalFailure(err))?;
+
+    todo!();
   }
 }
 

@@ -1,31 +1,25 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt;
-use core::fmt::Display;
-use core::str::FromStr;
-
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::common::Timestamp;
-use crate::convert::FmtJson;
-use crate::Error;
+use crate::identity_core::common::Timestamp;
 
 /// Holds attributes for a new [`Proof`](crate::crypto::Proof).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ProofOptions {
   /// [`Proof::created`](crate::crypto::Proof::created)
-  pub created: Option<Timestamp>,
-  /// [`Proof::expires`](crate::crypto::Proof::expires)
-  pub expires: Option<Timestamp>,
+  pub created: Timestamp,
   /// [`Proof::challenge`](crate::crypto::Proof::challenge)
   pub challenge: Option<String>,
   /// [`Proof::domain`](crate::crypto::Proof::domain)
   pub domain: Option<String>,
   /// [`Proof::purpose`](crate::crypto::Proof::purpose)
   pub purpose: Option<ProofPurpose>,
+  #[serde(rename = "verificationMethod")]
+  pub verification_method: Option<DIDUrl>, 
 }
 
 impl ProofOptions {

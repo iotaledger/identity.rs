@@ -12,11 +12,11 @@ pub enum MethodRemovalError {
 
   /// Unable to retrieve the persisted metadata associated with the method.
   #[error("method removal failed: could not retrieve method metadata from storage")]
-  MetadataLookup(#[source] IdentityStorageError),
+  MetadataLookupFailure(#[source] IdentityStorageError),
 
   /// Unable to remove the key associated with the specified method.
   #[error("method removal failed: could not remove key material from storage")]
-  KeyRemoval(#[source] KeyStorageError),
+  KeyRemovalFailure(#[source] KeyStorageError),
 
   /// The method's associated key material was removed from the key storage, but
   /// the method's metadata could not be removed the identity storage.

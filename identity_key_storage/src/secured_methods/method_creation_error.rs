@@ -17,9 +17,9 @@ pub enum MethodCreationError {
 
   /// The provided [`Storage`] was unable to generate a new key pair.
   #[error("method creation failed: storage failed to generate a new key pair")]
-  KeyGeneration(#[source] KeyStorageError),
+  KeyGenerationFailure(#[source] KeyStorageError),
 
   #[error("method creation failed: unable to persist metadata")]
   /// Could not persist cryptographic metadata.
-  MetadataPersistence(#[source] IdentityStorageError),
+  MetadataPersistenceFailure(#[source] IdentityStorageError),
 }

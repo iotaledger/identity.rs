@@ -12,7 +12,7 @@ use crate::signature::Signature;
 /// This type does not load the secured private key into memory, but may hold the corresponding
 /// [`KeyId`](crate::identifiers::KeyId) in memory until dropped.
 pub struct RemoteKey<F> {
-  signer: F,
+  pub(crate) signer: F,
 }
 
 impl<F> RemoteKey<F> {

@@ -8,3 +8,4 @@ pub mod key_storage;
 pub mod secured_methods;
 pub mod signature;
 pub mod storage;
+pub use secured_methods::CoreDocumentExt;
