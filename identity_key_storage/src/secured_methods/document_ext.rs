@@ -11,7 +11,7 @@ use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::verification::MethodBuilder;
 use identity_did::verification::MethodData;
-use identity_did::verification::MethodScope;
+use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
@@ -78,6 +78,7 @@ pub trait CoreDocumentExt: private::Sealed {
   async fn signing_material<K, I, F>(
     &self,
     fragment: &str,
+    scope: MethodRelationship,
     storage: &Storage<K, I>,
   ) -> Result<SigningMaterial<F>, KeyLookupError>
   where
@@ -217,6 +218,7 @@ where
   async fn signing_material<K, I, F>(
     &self,
     fragment: &str,
+    scope: MethodRelationship,
     storage: &Storage<K, I>,
   ) -> Result<SigningMaterial<F>, KeyLookupError>
   where
@@ -224,7 +226,7 @@ where
     I: IdentityStorage,
   {
     let method = self
-      .resolve_method(fragment, None)
+      .resolve_method(fragment, Some(scope))
       .ok_or(KeyLookupError::MethodNotFound)?;
 
     // TODO: This only works when type is Multikey, generalize this when we start supporting publicKeyJwk as well.
