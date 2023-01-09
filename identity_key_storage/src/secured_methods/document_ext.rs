@@ -3,6 +3,7 @@
 
 use async_trait::async_trait;
 use identity_core::common::KeyComparable;
+use identity_data_integrity::proof::ProofPurpose;
 use identity_data_integrity::verification_material::Multikey;
 use identity_data_integrity::verification_material::PublicKeyMultibase;
 use identity_data_integrity::verification_material::VerificationMaterial;
@@ -12,6 +13,7 @@ use identity_did::document::CoreDocument;
 use identity_did::verification::MethodBuilder;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodRelationship;
+use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
@@ -74,11 +76,13 @@ pub trait CoreDocumentExt: private::Sealed {
     K: KeyStorage,
     I: IdentityStorage;
 
-  /// Extracts the [`SigningMaterial`] corresponding to the verification method with the given `fragment`.   
+  /// Extracts the [`SigningMaterial`] corresponding to the verification method with the given `fragment`. 
+  /// 
+  /// If the verification method is an embedded method restricted to a method relationship not matching the [`ProofPurpose`] an error will be thrown.    
   async fn signing_material<K, I, F>(
     &self,
     fragment: &str,
-    scope: MethodRelationship,
+    purpose: ProofPurpose,
     storage: &Storage<K, I>,
   ) -> Result<SigningMaterial<F>, KeyLookupError>
   where
@@ -218,16 +222,16 @@ where
   async fn signing_material<K, I, F>(
     &self,
     fragment: &str,
-    scope: MethodRelationship,
+    purpose: ProofPurpose,
     storage: &Storage<K, I>,
   ) -> Result<SigningMaterial<F>, KeyLookupError>
   where
     K: KeyStorage,
     I: IdentityStorage,
   {
-    let method = self
-      .resolve_method(fragment, Some(scope))
-      .ok_or(KeyLookupError::MethodNotFound)?;
+    // Extract the method. First try to find it under a scope corresponding to the proof purpose, if that fails we look it up under the general purpose verification methods registered 
+    // in the document. 
+    let method = MethodRelationship::try_from(&purpose).ok().and_then(|relationship| relationship.extract_methods(&self).find(||))
 
     // TODO: This only works when type is Multikey, generalize this when we start supporting publicKeyJwk as well.
     // TODO: Introduce a function for extracting a MethodId from a verification method.

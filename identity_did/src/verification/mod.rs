@@ -19,6 +19,7 @@ pub use self::builder::MethodBuilder;
 pub use self::method_data::MethodData;
 pub use self::method_ref::MethodRef;
 pub use self::method_relationship::MethodRelationship;
+pub use self::method_relationship::MethodRelationshipConversionError;
 pub use self::method_scope::MethodScope;
 pub use self::method_type::MethodType;
 pub use self::traits::MethodUriType;

@@ -15,5 +15,5 @@ use super::RemoteKey;
 pub struct SigningMaterial<F> {
   pub remote_key: RemoteKey<F>,
   pub verification_method: CoreDIDUrl,
-  pub proof_purpose: ProofPurpose,
+  pub proof_purpose: Option<ProofPurpose>,
 }
