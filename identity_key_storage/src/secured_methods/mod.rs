@@ -10,6 +10,10 @@ mod remote_key;
 mod signing_material;
 pub use document_ext::CoreDocumentExt;
 pub use key_lookup_error::KeyLookupError;
+mod eddsa_2020;
+mod signable;
+
 pub use method_creation_error::MethodCreationError;
 pub use method_removal_error::MethodRemovalError;
 pub use remote_key::RemoteKey;
+pub use signable::*;

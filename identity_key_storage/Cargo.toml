@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1"
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.4", path = "../identity_credential", default-features = false }
 identity_data_integrity = { version = "=0.7.0-alpha.4", path = "../identity_data_integrity", default-features = false }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
 iota-crypto = { version = "0.15", default-features = false, features = ["blake2b"] }

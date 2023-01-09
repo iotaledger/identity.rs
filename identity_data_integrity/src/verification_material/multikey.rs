@@ -182,4 +182,13 @@ mod tests {
     assert!(codec.is_code(codec_code));
     assert_eq!(key.to_vec(), decoded_key);
   }
+
+  #[test]
+  fn test_multikey_test_vector() {
+    // Taken from https://w3c-ccg.github.io/di-eddsa-2020/#example-an-ed25519-public-key-encoded-as-a-multikey.
+    let multikey = Multikey::from_multibase_string("z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP".to_owned());
+    let (multicodec, key) = multikey.decode().unwrap();
+    assert_eq!(multicodec, Multicodec::ED25519_PUB);
+    assert_eq!(key.len(), 32);
+  }
 }
