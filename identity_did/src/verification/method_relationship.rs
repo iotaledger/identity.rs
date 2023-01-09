@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::KeyComparable;
+use identity_core::common::OrderedSet;
 use identity_data_integrity::proof::ProofPurpose;
 
 use super::MethodRef;
@@ -21,28 +22,16 @@ pub enum MethodRelationship {
 
 impl MethodRelationship {
   /// Extract embedded verification methods
-  pub fn extract_methods<'a, D, T, U, V>(
-    &self,
-    doc: &'a CoreDocument<D, T, U, V>,
-  ) -> impl Iterator<Item = &'a VerificationMethod<D, U>>
+  pub fn extract_methods<'a, D, T, U, V>(&self, doc: &'a CoreDocument<D, T, U, V>) -> &'a OrderedSet<MethodRef<D, U>>
   where
     D: DID + KeyComparable,
   {
-    fn embedded<D, U>(method_ref: &MethodRef<D, U>) -> Option<&VerificationMethod<D, U>>
-    where
-      D: DID + KeyComparable,
-    {
-      match method_ref {
-        MethodRef::Embed(method) => Some(method),
-        _ => None,
-      }
-    }
     match self {
-      Self::AssertionMethod => doc.assertion_method().iter().filter_map(embedded),
-      Self::Authentication => doc.authentication().iter().filter_map(embedded),
-      Self::CapabilityDelegation => doc.capability_delegation().iter().filter_map(embedded),
-      Self::CapabilityInvocation => doc.capability_invocation().iter().filter_map(embedded),
-      Self::KeyAgreement => doc.key_agreement().iter().filter_map(embedded),
+      Self::AssertionMethod => doc.assertion_method(),
+      Self::Authentication => doc.authentication(),
+      Self::CapabilityDelegation => doc.capability_delegation(),
+      Self::CapabilityInvocation => doc.capability_invocation(),
+      Self::KeyAgreement => doc.key_agreement(),
     }
   }
 }
