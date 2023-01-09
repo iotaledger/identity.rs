@@ -5,21 +5,22 @@ use core::fmt;
 use core::fmt::Display;
 use core::str::FromStr;
 
+use identity_core::common::Timestamp;
+use identity_core::convert::FmtJson;
+use identity_core::Error;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::common::Timestamp;
-use crate::convert::FmtJson;
-use crate::Error;
-
+// Implementation details
+// This type is implemented according to https://www.w3.org/TR/vc-data-integrity/#generate-proof.
+// - The type is meant to be user-facing, so UX is taken into account..
 /// Holds attributes for a new [`Proof`](crate::crypto::Proof).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ProofOptions {
+  // TODO: Describe what requirements the fields must satisfy, e.g. purpose must match the verif. relationship.
   /// [`Proof::created`](crate::crypto::Proof::created)
   pub created: Option<Timestamp>,
-  /// [`Proof::expires`](crate::crypto::Proof::expires)
-  pub expires: Option<Timestamp>,
   /// [`Proof::challenge`](crate::crypto::Proof::challenge)
   pub challenge: Option<String>,
   /// [`Proof::domain`](crate::crypto::Proof::domain)
@@ -33,7 +34,6 @@ impl ProofOptions {
   pub fn new() -> Self {
     Self {
       created: None,
-      expires: None,
       challenge: None,
       domain: None,
       purpose: None,
@@ -44,14 +44,6 @@ impl ProofOptions {
   #[must_use]
   pub fn created(mut self, created: Timestamp) -> Self {
     self.created = Some(created);
-    self
-  }
-
-  /// Sets the [`Proof::expires`](crate::crypto::Proof::expires) field.
-  /// The signature will fail validation after the specified datetime.
-  #[must_use]
-  pub fn expires(mut self, expires: Timestamp) -> Self {
-    self.expires = Some(expires);
     self
   }
 

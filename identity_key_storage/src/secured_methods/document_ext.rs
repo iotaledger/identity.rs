@@ -3,6 +3,8 @@
 
 use async_trait::async_trait;
 use identity_core::common::KeyComparable;
+use identity_data_integrity::proof::DataIntegrityProof;
+use identity_data_integrity::proof::ProofOptions;
 use identity_data_integrity::verification_material::Multikey;
 use identity_data_integrity::verification_material::PublicKeyMultibase;
 use identity_data_integrity::verification_material::VerificationMaterial;
@@ -15,6 +17,7 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
+use crate::identifiers::KeyId;
 use crate::identifiers::MethodId;
 use crate::identity_storage::IdentityStorage;
 use crate::identity_storage::IdentityStorageErrorKindSplit;
@@ -23,12 +26,15 @@ use crate::key_generation::MultikeySchema;
 use crate::key_storage::KeyStorage;
 use crate::key_storage::KeyStorageErrorKindSplit;
 use crate::storage::Storage;
+use crate::storage_error::SimpleStorageError;
 
+use super::cryptosuite::CryptoSuite;
 use super::method_creation_error::MethodCreationError;
 use super::method_removal_error::MethodRemovalError;
 use super::storage_error::StorageError;
 use super::MethodCreationErrorKind;
 use super::MethodRemovalErrorKind;
+use super::Signable;
 
 #[async_trait(?Send)]
 /// Extension trait enabling [`CoreDocument`] to utilize
@@ -74,6 +80,20 @@ pub trait CoreDocumentExt: private::Sealed {
   where
     K: KeyStorage,
     I: IdentityStorage;
+
+  /// Signs the given data with a `DataIntegrityProof`.
+  async fn sign_data_integrity<K, I, C, 'signable>(
+    &self,
+    did_url: &DIDUrl<Self::D>,
+    data: Signable<'signable>,
+    proof_options: ProofOptions,
+    storage: &Storage<K, I>,
+    cryptosuite: &C,
+  ) -> Result<DataIntegrityProof, SimpleStorageError>
+  where
+    K: KeyStorage,
+    I: IdentityStorage,
+    C: CryptoSuite<K>;
 }
 
 mod private {
@@ -248,6 +268,45 @@ where
         Err(MethodRemovalError::new(error_kind, identity_storage_error.into()))
       }
     }
+  }
+
+  async fn sign_data_integrity<K, I, C, 'signable>(
+    &self,
+    did_url: &DIDUrl<Self::D>,
+    data: Signable<'signable>,
+    proof_options: ProofOptions,
+    storage: &Storage<K, I>,
+    cryptosuite: &C,
+  ) -> Result<DataIntegrityProof, SimpleStorageError>
+  where
+    K: KeyStorage,
+    I: IdentityStorage,
+    C: CryptoSuite<K>,
+    'signable: 'async_trait,
+  {
+    let method = match self.resolve_method(did_url, None) {
+      Some(method) => method,
+      None => {
+        return Err(SimpleStorageError::new(
+          crate::storage_error::StorageErrorKind::NotSupported("()".into()),
+        ));
+      }
+    };
+
+    let method_id = MethodId::try_from(method).expect("TODO");
+    let key_id: KeyId = storage.identity_storage().load_key_id(&method_id).await.expect("TODO");
+
+    // TODO: The user passed the cryptosuite explicitly for use with the method resolved from `did_url`.
+    // However, we might still want to provide additional safety guards by calling into cryptosuite to check if
+    // the suite can sign with that method. Perhaps something like `cryptosuite.can_sign_with(method);`
+    // This allows the cryptosuite to reject incompatible MethodTypes or Multicodecs.
+
+    let _signature = cryptosuite
+      .sign_data_integrity(&key_id, data, proof_options, storage.key_storage())
+      .await
+      .expect("TODO");
+
+    Ok(DataIntegrityProof::new())
   }
 }
 

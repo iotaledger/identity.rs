@@ -3,7 +3,12 @@
 
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
+use identity_core::common::Object;
 use identity_data_integrity::verification_material::Multikey;
+use identity_data_integrity::verification_material::VerificationMaterial;
+use identity_did::did::DID;
+use identity_did::verification::MethodType;
+use identity_did::verification::VerificationMethod;
 /// An index used to look up metadata stored in [`IdentityStorage`](crate::identity_storage::IdentityStorage) associated
 /// with a [`VerificationMethod`].
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -58,4 +63,29 @@ impl MethodId {
   // TODO: Do we need some public constructor available under cfg(test) for implementers?
   // Going by the "only test public methods" sentiment we may not need a public constructor
   // As one should then test against `CoreDocumentExt::create_multikey`.
+}
+
+impl<D: DID, U> TryFrom<&VerificationMethod<D, U>> for MethodId {
+  type Error = ();
+
+  fn try_from(method: &VerificationMethod<D, U>) -> Result<Self, Self::Error> {
+    // TODO: match doesn't work here, why?
+    if method.type_() == &MethodType::MULTIKEY {
+      let material = method.material().expect("TODO");
+
+      // TODO: Get rid of clone by changing how `MethodId`s can be constructed.
+      let multikey = if let VerificationMaterial::PublicKeyMultibase(multibase_str) = material {
+        Multikey::from_multibase_string(multibase_str.as_str().to_owned())
+      } else {
+        todo!();
+      };
+
+      Ok(MethodId::new_from_multikey(
+        method.id().fragment().expect("TODO"),
+        &multikey,
+      ))
+    } else {
+      todo!("unsupported method type")
+    }
+  }
 }

@@ -3,19 +3,19 @@
 
 use std::borrow::Cow;
 
-use crate::KeyId;
+use crate::identifiers::KeyId;
 
-pub type StorageResult<T> = Result<T, StorageError>;
+pub type StorageResult<T> = Result<T, SimpleStorageError>;
 
 /// Errors that can occur during execution of a storage implementation.
 #[derive(Debug, thiserror::Error)]
 #[error("{kind}")]
-pub struct StorageError {
+pub struct SimpleStorageError {
   kind: StorageErrorKind,
   source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
 }
 
-impl StorageError {
+impl SimpleStorageError {
   /// TODO
   pub fn new(kind: StorageErrorKind) -> Self {
     Self { kind, source: None }
@@ -78,8 +78,8 @@ pub enum StorageErrorKind {
   Other(Cow<'static, str>),
 }
 
-impl From<StorageErrorKind> for StorageError {
+impl From<StorageErrorKind> for SimpleStorageError {
   fn from(kind: StorageErrorKind) -> Self {
-    StorageError::new(kind)
+    SimpleStorageError::new(kind)
   }
 }
