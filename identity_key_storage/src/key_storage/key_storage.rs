@@ -1,3 +1,6 @@
+// Copyright 2020-2023 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 pub use super::error::KeyStorageError;
 pub use super::error::KeyStorageErrorKind;
 
@@ -16,8 +19,8 @@ pub trait KeyStorage {
   /// Signing algorithms supported by the `KeyStorage`.
   /// This will typically be an enum of various cryptographic
   /// signature algorithms supported by the key storage.
-  type SigningAlgorithm: 'static;
-  // type SigningAlgorithm: std::fmt::Display + FromStr + TryFrom<String> + AsRef<str>;
+  type SigningAlgorithm: 'static + for<'r> TryFrom<&'r str>;
+  // type SigningAlgorithm: std::fmt::Display + FromStr + TryFrom<String> + AsRef<str>>;
 
   /// Generate and store a private, public key pair
   /// in compliance with the Multikey specification.

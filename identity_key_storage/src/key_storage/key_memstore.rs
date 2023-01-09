@@ -100,6 +100,17 @@ impl From<Ed25519SignatureAlgorithm> for MemStoreSigningAlgorithm {
   }
 }
 
+impl TryFrom<&str> for MemStoreSigningAlgorithm {
+  // TODO: Use a better type for the error.
+  type Error = ();
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    match value {
+      "Ed25519" => Ok(MemStoreSigningAlgorithm::Ed25519),
+      "ed25519" => Ok(MemStoreSigningAlgorithm::Ed25519),
+      _ => Err(()),
+    }
+  }
+}
 // Refer to the `Storage` interface docs for high-level documentation of the individual methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -119,7 +130,7 @@ impl KeyStorage for MemKeyStore {
     let keypair: KeyPair = KeyPair::new(key_type).expect("TODO");
 
     let random_string: String = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32);
-    let alias: KeyId = KeyId(random_string);
+    let alias: KeyId = KeyId::new(random_string);
 
     let public_key: &PublicKey = keypair.public();
     let multikey: Multikey = Multikey::new(schema.multicodec(), public_key.as_ref());

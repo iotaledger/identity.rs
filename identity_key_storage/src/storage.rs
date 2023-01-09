@@ -11,6 +11,7 @@ where
   K: KeyStorage,
   I: IdentityStorage,
 {
+  //TODO: Consider abstracting over the pointer type using GATs.
   key_storage: Arc<K>,
   identity_storage: Arc<I>,
 }
@@ -28,11 +29,11 @@ where
     }
   }
 
-  pub(crate) fn key_storage(&self) -> &K {
-    &self.key_storage
+  pub(crate) fn key_storage(&self) -> Arc<K> {
+    self.key_storage.clone()
   }
 
-  pub(crate) fn identity_storage(&self) -> &I {
-    &self.identity_storage
+  pub(crate) fn identity_storage(&self) -> Arc<I> {
+    self.identity_storage.clone()
   }
 }

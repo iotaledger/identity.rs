@@ -161,6 +161,9 @@ pub enum KeyStorageErrorKind {
   /// given signature algorithm.
   UnsupportedSigningKey,
 
+  /// Indicates an attempt to parse a signature algorithm that is not recognized by the [`KeyStorage`] implementation.
+  UnrecognizedSigningAlgorithm,
+
   /// Indicates that the [`KeyStorage`] implementation is not able to find the requested key.
   KeyNotFound,
 
@@ -195,6 +198,7 @@ impl KeyStorageErrorKind {
       Self::UnsupportedSigningKey => {
         "signing failed: the specified signing algorithm does not support the provided key type"
       }
+      Self::UnrecognizedSigningAlgorithm => "signing algorithm parsing failed",
       Self::KeyNotFound => "key not found",
       Self::UnavailableKeyStorage => "key storage unavailable",
       Self::CouldNotAuthenticate => "authentication with the key storage failed",

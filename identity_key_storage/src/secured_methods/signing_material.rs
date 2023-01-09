@@ -4,6 +4,8 @@
 use identity_data_integrity::proof::ProofPurpose;
 use identity_did::did::CoreDIDUrl;
 
+use crate::key_storage::KeyStorage;
+
 use super::RemoteKey;
 
 #[non_exhaustive]
@@ -12,8 +14,8 @@ use super::RemoteKey;
 ///
 /// This struct can be obtained by calling
 /// [`CoreDocumentExt::signing_material`](crate::CoreDocumentEx::signing_material()).
-pub struct SigningMaterial<F> {
-  pub remote_key: RemoteKey<F>,
+pub struct SigningMaterial<K: KeyStorage> {
+  pub remote_key: RemoteKey<K>,
   pub verification_method: CoreDIDUrl,
-  pub proof_purpose: Option<ProofPurpose>,
+  pub proof_purpose: ProofPurpose,
 }

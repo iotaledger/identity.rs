@@ -4,7 +4,7 @@
 use crate::identity_storage::IdentityStorageError;
 
 #[derive(Debug, thiserror::Error)]
-pub enum KeyLookupError {
+pub enum SigningMaterialConstructionError {
   /// Could not find a method in the document corresponding to the provided fragment.
   #[error("could not obtain remote key: method not found")]
   MethodNotFound,

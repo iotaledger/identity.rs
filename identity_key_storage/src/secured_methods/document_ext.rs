@@ -3,10 +3,14 @@
 
 use async_trait::async_trait;
 use identity_core::common::KeyComparable;
+use identity_data_integrity::proof::DataIntegrityProof;
+use identity_data_integrity::proof::ProofOptions;
 use identity_data_integrity::proof::ProofPurpose;
+
 use identity_data_integrity::verification_material::Multikey;
 use identity_data_integrity::verification_material::PublicKeyMultibase;
 use identity_data_integrity::verification_material::VerificationMaterial;
+use identity_did::did::CoreDID;
 use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
@@ -19,6 +23,7 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
+use crate::identifiers::KeyId;
 use crate::identifiers::MethodId;
 use crate::identity_storage::IdentityStorage;
 use crate::key_generation::MultikeyOutput;
@@ -26,12 +31,15 @@ use crate::key_generation::MultikeySchema;
 use crate::key_storage::KeyStorage;
 
 use crate::storage::Storage;
+use crate::storage_error::SimpleStorageError;
 
+use super::cryptosuite::CryptoSuite;
 use super::method_creation_error::MethodCreationError;
 use super::method_removal_error::MethodRemovalError;
 use super::signing_material::SigningMaterial;
-use super::KeyLookupError;
 use super::RemoteKey;
+use super::Signable;
+use super::SigningMaterialConstructionError;
 
 #[async_trait(?Send)]
 /// Extension trait enabling [`CoreDocument`] to utilize
@@ -82,15 +90,29 @@ pub trait CoreDocumentExt: private::Sealed {
   ///
   /// If the verification method is an embedded method restricted to a method relationship not matching the
   /// [`ProofPurpose`] an error will be thrown.
-  async fn signing_material<K, I, F>(
+  async fn signing_material<K, I>(
     &self,
     fragment: &str,
     purpose: ProofPurpose,
     storage: &Storage<K, I>,
-  ) -> Result<SigningMaterial<F>, KeyLookupError>
+  ) -> Result<SigningMaterial<K>, SigningMaterialConstructionError>
   where
     K: KeyStorage,
     I: IdentityStorage;
+
+  /// Signs the given data with a `DataIntegrityProof`.
+  async fn sign_data_integrity<K, I, C, 'signable>(
+    &self,
+    did_url: &DIDUrl<Self::D>,
+    data: Signable<'signable>,
+    proof_options: ProofOptions,
+    storage: &Storage<K, I>,
+    cryptosuite: &C,
+  ) -> Result<DataIntegrityProof, SimpleStorageError>
+  where
+    K: KeyStorage,
+    I: IdentityStorage,
+    C: CryptoSuite<K>;
 }
 
 mod private {
@@ -104,7 +126,7 @@ mod private {
 }
 
 #[async_trait(?Send)]
-impl<D: DID + KeyComparable, T, U, V> CoreDocumentExt for CoreDocument<D, T, U, V>
+impl<D: DID + KeyComparable + Into<CoreDID>, T, U, V> CoreDocumentExt for CoreDocument<D, T, U, V>
 where
   U: Default,
 {
@@ -222,33 +244,33 @@ where
     key_id_removal_result
   }
 
-  async fn signing_material<K, I, F>(
+  async fn signing_material<K, I>(
     &self,
     fragment: &str,
-    purpose: ProofPurpose,
+    proof_purpose: ProofPurpose,
     storage: &Storage<K, I>,
-  ) -> Result<SigningMaterial<F>, KeyLookupError>
+  ) -> Result<SigningMaterial<K>, SigningMaterialConstructionError>
   where
     K: KeyStorage,
     I: IdentityStorage,
   {
     // Extract the method. First try to find it under a scope corresponding to the proof purpose, if that fails we look
     // it up under the general purpose verification methods registered in the document.
-    let method = MethodRelationship::try_from(&purpose)
+    let method = MethodRelationship::try_from(&proof_purpose)
       .ok()
       .and_then(|relationship| relationship.extract_methods(&self).query(fragment))
       .and_then(|method_ref| match method_ref {
         MethodRef::Embed(method) => Some(method),
         MethodRef::Refer(did_url) => self.verification_method().iter().find(|method| method.id() == did_url),
       })
-      .ok_or(KeyLookupError::MethodNotFound)?;
+      .ok_or(SigningMaterialConstructionError::MethodNotFound)?;
 
     // TODO: This only works when type is Multikey, generalize this when we start supporting publicKeyJwk as well.
     // TODO: Introduce a function for extracting a MethodId from a verification method.
     let (Some(method_fragment), Some(public_key_multibase)) = (
       method.id().fragment(),
        method.material().and_then(|material| match material {VerificationMaterial::PublicKeyMultibase(ref key) => Some(key), _=> None})) else {
-      return Err(KeyLookupError::MethodNotFound); 
+      return Err(SigningMaterialConstructionError::MethodNotFound);
     };
     let method_id = MethodId::new_from_multikey(
       method_fragment,
@@ -259,9 +281,53 @@ where
       .identity_storage()
       .load_key_id(&method_id)
       .await
-      .map_err(|err| KeyLookupError::KeyIdRetrievalFailure(err))?;
+      .map_err(|err| SigningMaterialConstructionError::KeyIdRetrievalFailure(err))?;
 
-    todo!();
+    let verification_method = method.id().clone();
+    Ok(SigningMaterial {
+      remote_key: RemoteKey::new(storage.key_storage(), key_id),
+      verification_method: verification_method.map(Into::into),
+      proof_purpose,
+    })
+  }
+
+  async fn sign_data_integrity<K, I, C, 'signable>(
+    &self,
+    did_url: &DIDUrl<Self::D>,
+    data: Signable<'signable>,
+    proof_options: ProofOptions,
+    storage: &Storage<K, I>,
+    cryptosuite: &C,
+  ) -> Result<DataIntegrityProof, SimpleStorageError>
+  where
+    K: KeyStorage,
+    I: IdentityStorage,
+    C: CryptoSuite<K>,
+    'signable: 'async_trait,
+  {
+    let method = match self.resolve_method(did_url, None) {
+      Some(method) => method,
+      None => {
+        return Err(SimpleStorageError::new(
+          crate::storage_error::StorageErrorKind::NotSupported("()".into()),
+        ));
+      }
+    };
+
+    let method_id = MethodId::try_from(method).expect("TODO");
+    let key_id: KeyId = storage.identity_storage().load_key_id(&method_id).await.expect("TODO");
+
+    // TODO: The user passed the cryptosuite explicitly for use with the method resolved from `did_url`.
+    // However, we might still want to provide additional safety guards by calling into cryptosuite to check if
+    // the suite can sign with that method. Perhaps something like `cryptosuite.can_sign_with(method);`
+    // This allows the cryptosuite to reject incompatible MethodTypes or Multicodecs.
+
+    let _signature = cryptosuite
+      .sign_data_integrity(&key_id, data, proof_options, &storage.key_storage())
+      .await
+      .expect("TODO");
+
+    Ok(DataIntegrityProof::new())
   }
 }
 
