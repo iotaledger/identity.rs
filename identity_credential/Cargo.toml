@@ -22,10 +22,12 @@ serde_repr = { version = "0.1", default-features = false, optional = true }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
+reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json"], optional = true }
 
 [dev-dependencies]
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 serde_json = { version = "1.0", default-features = false }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -34,6 +36,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap", "validator"]
+default = ["revocation-bitmap", "validator", "domain-linkage-fetch"]
 revocation-bitmap = ["identity_did/revocation-bitmap"]
 validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr"]
+domain-linkage-fetch = ["dep:reqwest"]

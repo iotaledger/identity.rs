@@ -1,0 +1,27 @@
+{
+  "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+  "linked_dids": [
+    {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://identity.foundation/.well-known/did-configuration/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "DomainLinkageCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:iota:rms:0xe5d5a7c02874b0284ccc2f28bada68780cad26702e7e8186d521e9615a73bc45",
+        "origin": "https://example.com"
+      },
+      "issuer": "did:iota:rms:0xe5d5a7c02874b0284ccc2f28bada68780cad26702e7e8186d521e9615a73bc45",
+      "issuanceDate": "2020-12-04T20:08:28Z",
+      "expirationDate": "2025-12-04T20:08:28Z",
+      "proof": {
+        "type": "JcsEd25519Signature2020",
+        "verificationMethod": "did:iota:rms:0xe5d5a7c02874b0284ccc2f28bada68780cad26702e7e8186d521e9615a73bc45#key-1",
+        "signatureValue": "KmbBNRrawoMFQGS5pgVvarnwdNNVFBGuxFeas4h3xGU9LhoXdgrPTx6Nwyy551SEtbyi94UGovgM6J4AHLiYwMZ"
+      }
+    }
+  ]
+}

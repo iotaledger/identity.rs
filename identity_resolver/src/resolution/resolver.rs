@@ -7,9 +7,12 @@ use std::marker::PhantomData;
 
 use futures::TryFutureExt;
 use identity_credential::credential::Credential;
+use identity_credential::credential::DomainLinkageConfiguration;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::AbstractThreadSafeValidatorDocument;
+use identity_credential::validator::CredentialValidationOptions;
 use identity_credential::validator::CredentialValidator;
+use identity_credential::validator::DomainLinkageVerifier;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
@@ -17,6 +20,8 @@ use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 
+use identity_core::common::Object;
+use identity_core::common::Url;
 use serde::Serialize;
 
 use crate::Error;
@@ -278,6 +283,28 @@ where
       }
     }
     .map_err(Into::into)
+  }
+
+  /// Resolves the issuers of the [Domain Linkage Credentials](https://identity.foundation/.well-known/resources/did-configuration/#DomainLinkageCredential)
+  /// that are included in [DID Configuration Resource](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource)
+  /// and performs a [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+  ///
+  /// Note: If multiple Domain Linkage Credentials exist, all of them are verified.
+  pub async fn verify_domain_linkage_configuration(
+    &self,
+    configuration: &DomainLinkageConfiguration,
+    domain: Url,
+    validation_options: &CredentialValidationOptions,
+  ) -> Result<()> {
+    let mut issuers: Vec<DOC> = Vec::new();
+    for credential in configuration.linked_dids() {
+      let issuer: DOC = self.resolve_credential_issuer(credential).await?;
+      issuers.push(issuer);
+    }
+    DomainLinkageVerifier::verify_configuration::<Object, DOC>(&issuers, configuration, domain, validation_options)
+      .map_err(|error| ErrorCause::DomainLinkageVerificationError { source: error })
+      .map_err(Error::new)?;
+    Ok(())
   }
 }
 

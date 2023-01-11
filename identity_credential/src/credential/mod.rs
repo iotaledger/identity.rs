@@ -7,7 +7,9 @@
 
 mod builder;
 mod credential;
-mod did_configuration_resource;
+mod domain_linkage_configuration;
+mod domain_linkage_credential_builder;
+mod domain_linkage_utils;
 mod evidence;
 mod issuer;
 mod policy;
@@ -20,8 +22,9 @@ mod subject;
 
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
-pub use self::did_configuration_resource::DIDConfigurationResource;
-pub use self::did_configuration_resource::DomainLinkageCredentialBuilder;
+pub use self::domain_linkage_configuration::DomainLinkageConfiguration;
+pub use self::domain_linkage_credential_builder::DomainLinkageCredentialBuilder;
+pub use self::domain_linkage_utils::DomainLinkageUtils;
 pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;
 pub use self::policy::Policy;

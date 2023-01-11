@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeMap;
+use std::error::Error;
 use std::fmt::Display;
 
 use itertools;
@@ -139,4 +140,57 @@ impl Display for CompoundPresentationValidationError {
   }
 }
 
-impl std::error::Error for CompoundPresentationValidationError {}
+impl Error for CompoundPresentationValidationError {}
+
+#[derive(Debug, thiserror::Error)]
+pub struct DomainLinkageVerificationError {
+  pub(crate) cause: DomainLinkageVerificationErrorCause,
+  pub(crate) source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
+}
+impl DomainLinkageVerificationError {
+  pub fn get_cause(&self) -> &DomainLinkageVerificationErrorCause {
+    &self.cause
+  }
+}
+
+impl Display for DomainLinkageVerificationError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{:?}; ", self.cause)?;
+    match &self.source {
+      Some(err) => write!(f, "{}", err)?,
+      None => {}
+    }
+    Ok(())
+  }
+}
+
+#[non_exhaustive]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+pub enum DomainLinkageVerificationErrorCause {
+  #[error("invalid credential")]
+  CredentialValidationError,
+  #[error("the expiration date is missing")]
+  MissingExpirationDate,
+  #[error("id property is not allowed")]
+  ImpermissibleIdProperty,
+  #[error("issuer DID does not match the subject")]
+  IssuerSubjectMismatch,
+  #[error("subject id is invalid")]
+  InvalidSubjectId,
+  #[error("credential contains multiple subjects")]
+  MultipleCredentialSubjects,
+  #[error("invalid issuer DID")]
+  InvalidIssuer,
+  #[error("subject id property is missing")]
+  MissingSubjectId,
+  #[error("credential type is invalid")]
+  InvalidTypeProperty,
+  #[error("the issuer's id does not match the provided DID Document(s)")]
+  DocumentMismatch,
+  #[error("the subject's origin does not match the provided domain origin")]
+  OriginMismatch,
+  #[error("the subject's origin property is either invalid or missing")]
+  InvalidSubjectOrigin,
+  #[error("invalid semantic structure of the domain linkage configuration")]
+  InvalidStructure,
+}
