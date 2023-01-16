@@ -9,7 +9,7 @@ use identity_core::convert::FmtJson;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::verification::MethodRelationship;
+use crate::verification_method::MethodRelationship;
 
 /// Verification method group used to refine the scope of a method query.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

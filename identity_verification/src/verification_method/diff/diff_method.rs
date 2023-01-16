@@ -9,11 +9,11 @@ use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use crate::diff::DiffMethodData;
-use crate::verification::MethodBuilder;
-use crate::verification::MethodData;
-use crate::verification::MethodType;
-use crate::verification::VerificationMethod;
+use super::method_data::DiffMethodData;
+use crate::verification_method::MethodBuilder;
+use crate::verification_method::MethodData;
+use crate::verification_method::MethodType;
+use crate::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;

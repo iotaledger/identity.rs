@@ -8,8 +8,8 @@ use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::diff::DiffMethod;
-use crate::verification::MethodRef;
+use super::diff_method::DiffMethod;
+use crate::verification_method::MethodRef;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;

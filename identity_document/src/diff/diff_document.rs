@@ -17,8 +17,8 @@ use identity_core::diff::Result;
 use crate::document::CoreDocument;
 use crate::document::CoreDocumentData;
 use crate::service::Service;
-use crate::verification::MethodRef;
-use crate::verification::VerificationMethod;
+use identity_verification::verification_method::MethodRef;
+use identity_verification::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DID;
 
@@ -335,9 +335,9 @@ mod test {
 
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
-  use crate::verification::MethodBuilder;
-  use crate::verification::MethodData;
-  use crate::verification::MethodType;
+  use identity_verification::verification_method::MethodBuilder;
+  use identity_verification::verification_method::MethodData;
+  use identity_verification::verification_method::MethodType;
   use identity_did::CoreDIDUrl;
   use identity_did::DID;
 

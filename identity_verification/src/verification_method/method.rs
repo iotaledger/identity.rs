@@ -16,10 +16,10 @@ use identity_core::crypto::PublicKey;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::verification::MethodBuilder;
-use crate::verification::MethodData;
-use crate::verification::MethodRef;
-use crate::verification::MethodType;
+use crate::verification_method::MethodBuilder;
+use crate::verification_method::MethodData;
+use crate::verification_method::MethodRef;
+use crate::verification_method::MethodType;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;
@@ -201,7 +201,10 @@ where
     } else {
       fragment.to_owned()
     };
-    let id: DIDUrl<D> = did.to_url().join(method_fragment)?;
+    let id: DIDUrl<D> = did
+      .to_url()
+      .join(method_fragment)
+      .map_err(|err| Error::DIDUrlConstructionError(err))?;
 
     let mut builder: MethodBuilder<D, T> = MethodBuilder::default().id(id).controller(did);
     match key_type {

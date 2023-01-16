@@ -6,8 +6,8 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::verification::MethodScope;
-use crate::verification::MethodType;
+use identity_verification::verification_method::MethodScope;
+use identity_verification::verification_method::MethodType;
 
 /// Holds additional options for verifying a proof with
 /// [`CoreDocument::verify_data`](crate::document::CoreDocument::verify_data).

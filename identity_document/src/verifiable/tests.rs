@@ -12,13 +12,13 @@ use identity_core::crypto::SetSignature;
 
 use crate::document::CoreDocument;
 use crate::verifiable::VerifierOptions;
-use crate::verification::MethodData;
-use crate::verification::MethodRelationship;
-use crate::verification::MethodScope;
-use crate::verification::MethodType;
-use crate::verification::MethodUriType;
-use crate::verification::TryMethod;
-use crate::verification::VerificationMethod;
+use identity_verification::verification_method::MethodData;
+use identity_verification::verification_method::MethodRelationship;
+use identity_verification::verification_method::MethodScope;
+use identity_verification::verification_method::MethodType;
+use identity_verification::verification_method::MethodUriType;
+use identity_verification::verification_method::TryMethod;
+use identity_verification::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DID;
 

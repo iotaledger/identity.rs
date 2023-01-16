@@ -8,8 +8,8 @@ use identity_core::common::Url;
 use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;
-use crate::verification::MethodRef;
-use crate::verification::VerificationMethod;
+use identity_verification::verification_method::MethodRef;
+use identity_verification::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DID;
 
@@ -142,8 +142,8 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::verification::MethodData;
-  use crate::verification::MethodType;
+  use identity_verification::verification_method::MethodData;
+  use identity_verification::verification_method::MethodType;
   use crate::Error;
 
   #[test]

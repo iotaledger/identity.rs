@@ -51,12 +51,9 @@ pub enum Error {
   #[error("Unknown Method Type")]
   UnknownMethodType,
 
-  #[error("Invalid Key Data")]
-  InvalidKeyData,
-  #[error("Invalid Base58 Key Data")]
-  InvalidKeyDataBase58,
-  #[error("Invalid Multibase Key Data")]
-  InvalidKeyDataMultibase,
+  #[error("invalid key data")]
+  #[non_exhaustive]
+  InvalidKeyData(#[source] identity_verification::Error),
 
   #[error("signature verification failed: {0}")]
   InvalidSignature(&'static str),

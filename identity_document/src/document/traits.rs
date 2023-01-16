@@ -8,8 +8,8 @@ use identity_core::crypto::GetSignature;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::verifiable::VerifierOptions;
-use crate::verification::MethodScope;
-use crate::verification::VerificationMethod;
+use identity_verification::verification_method::MethodScope;
+use identity_verification::verification_method::VerificationMethod;
 use crate::Result;
 use identity_did::DID;
 

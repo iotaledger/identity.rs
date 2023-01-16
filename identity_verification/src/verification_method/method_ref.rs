@@ -7,7 +7,7 @@ use core::fmt::Formatter;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 
-use crate::verification::VerificationMethod;
+use crate::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;

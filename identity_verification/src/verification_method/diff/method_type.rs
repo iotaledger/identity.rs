@@ -4,7 +4,7 @@
 use identity_core::diff::Diff;
 use identity_core::diff::Result;
 
-use crate::verification::MethodType;
+use crate::verification_method::MethodType;
 
 impl Diff for MethodType {
   type Type = MethodType;

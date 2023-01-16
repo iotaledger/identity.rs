@@ -33,13 +33,13 @@ use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
 use crate::verifiable::DocumentSigner;
 use crate::verifiable::VerifierOptions;
-use crate::verification::MethodRef;
-use crate::verification::MethodRelationship;
-use crate::verification::MethodScope;
-use crate::verification::MethodType;
-use crate::verification::MethodUriType;
-use crate::verification::TryMethod;
-use crate::verification::VerificationMethod;
+use identity_verification::verification_method::MethodRef;
+use identity_verification::verification_method::MethodRelationship;
+use identity_verification::verification_method::MethodScope;
+use identity_verification::verification_method::MethodType;
+use identity_verification::verification_method::MethodUriType;
+use identity_verification::verification_method::TryMethod;
+use identity_verification::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;
@@ -896,7 +896,7 @@ where
 
     // Check method type.
     if let Some(ref method_types) = options.method_type {
-      if !method_types.is_empty() && !method_types.contains(&method.type_) {
+      if !method_types.is_empty() && !method_types.contains(&method.type_()) {
         return Err(Error::InvalidSignature("invalid method type"));
       }
     }
@@ -938,7 +938,7 @@ where
   where
     X: Serialize + GetSignature + ?Sized,
   {
-    let public_key: Vec<u8> = method.data().try_decode()?;
+    let public_key: Vec<u8> = method.data().try_decode().map_err(|error| Error::InvalidKeyData(error))?;
 
     match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
@@ -1113,8 +1113,8 @@ mod tests {
   use identity_core::convert::ToJson;
 
   use crate::service::ServiceBuilder;
-  use crate::verification::MethodBuilder;
-  use crate::verification::MethodData;
+  use identity_verification::verification_method::MethodBuilder;
+  use identity_verification::verification_method::MethodData;
 
   use super::*;
 

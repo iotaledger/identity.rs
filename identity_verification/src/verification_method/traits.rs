@@ -3,7 +3,7 @@
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::verification::VerificationMethod;
+use crate::verification_method::VerificationMethod;
 use identity_did::DID;
 
 /// Represents all possible verification method URI types
@@ -21,7 +21,7 @@ pub enum MethodUriType {
 ///
 /// [More Info](https://www.w3.org/TR/did-core/#relative-did-urls)
 pub trait TryMethod {
-  /// Flag that determines whether absolute or rleative URI
+  /// Flag that determines whether absolute or relative URI
   const TYPE: MethodUriType;
 
   /// Returns an absolute or relative method URI, if any, depending on the [`MethodUriType`].

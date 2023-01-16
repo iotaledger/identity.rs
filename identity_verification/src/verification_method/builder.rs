@@ -4,9 +4,9 @@
 use identity_core::common::Object;
 
 use crate::error::Result;
-use crate::verification::MethodData;
-use crate::verification::MethodType;
-use crate::verification::VerificationMethod;
+use crate::verification_method::MethodData;
+use crate::verification_method::MethodType;
+use crate::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;

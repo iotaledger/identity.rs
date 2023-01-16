@@ -20,16 +20,7 @@
 #[macro_use]
 extern crate serde;
 
-#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-pub mod diff;
-
-pub mod document;
-pub mod error;
-#[cfg(feature = "revocation-bitmap")]
-pub mod revocation;
-pub mod service;
-pub mod utils;
-pub mod verifiable;
-
-pub use self::error::Error;
-pub use self::error::Result;
+mod error;
+pub mod verification_method; 
+pub use error::Error;
+pub use error::Result;

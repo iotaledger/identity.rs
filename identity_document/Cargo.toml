@@ -14,6 +14,7 @@ description = "Agnostic implementation of the Decentralized Identifiers (DID) st
 serde.workspace = true
 thiserror.workspace = true
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did" }
+identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verification", default-features = false }
 dataurl = { version = "0.1.2", default-features = false, optional = true }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }

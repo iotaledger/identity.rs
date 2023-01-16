@@ -5,7 +5,7 @@ use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Result;
 
-use crate::verification::MethodData;
+use crate::verification_method::MethodData;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum DiffMethodData {
