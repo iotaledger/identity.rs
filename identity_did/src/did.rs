@@ -14,8 +14,8 @@ use identity_core::common::KeyComparable;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
-use crate::did::DIDError;
-use crate::did::DIDUrl;
+use crate::DIDUrl;
+use crate::Error;
 
 pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryFrom<BaseDIDUrl> + Into<String> {
   const SCHEME: &'static str = BaseDIDUrl::SCHEME;
@@ -60,7 +60,7 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
   /// fragment to this [`DID`].
   ///
   /// See [`DIDUrl::join`].
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
+  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, Error>
   where
     Self: Sized;
 
@@ -83,59 +83,59 @@ impl CoreDID {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`DID`].
-  pub fn parse(input: impl AsRef<str>) -> Result<Self, DIDError> {
-    let base_did_url: BaseDIDUrl = BaseDIDUrl::parse(input).map_err(DIDError::from)?;
+  pub fn parse(input: impl AsRef<str>) -> Result<Self, Error> {
+    let base_did_url: BaseDIDUrl = BaseDIDUrl::parse(input).map_err(Error::from)?;
     Self::try_from_base_did(base_did_url)
   }
 
   /// Try convert a [`BaseDIDUrl`] into a [`CoreDID`].
-  fn try_from_base_did(base_did_url: BaseDIDUrl) -> Result<Self, DIDError> {
+  fn try_from_base_did(base_did_url: BaseDIDUrl) -> Result<Self, Error> {
     Self::check_validity(&base_did_url)?;
     Ok(Self(base_did_url))
   }
 
   /// Set the method name of the [`DID`].
-  pub fn set_method_name(&mut self, value: impl AsRef<str>) -> Result<(), DIDError> {
+  pub fn set_method_name(&mut self, value: impl AsRef<str>) -> Result<(), Error> {
     Self::valid_method_name(value.as_ref())?;
     self.0.set_method(value);
     Ok(())
   }
 
   /// Validates whether a string is a valid [`DID`] method name.
-  pub fn valid_method_name(value: &str) -> Result<(), DIDError> {
+  pub fn valid_method_name(value: &str) -> Result<(), Error> {
     if !value.chars().all(is_char_method_name) {
-      return Err(DIDError::InvalidMethodName);
+      return Err(Error::InvalidMethodName);
     }
     Ok(())
   }
 
   /// Set the method-specific-id of the [`DID`].
-  pub fn set_method_id(&mut self, value: impl AsRef<str>) -> Result<(), DIDError> {
+  pub fn set_method_id(&mut self, value: impl AsRef<str>) -> Result<(), Error> {
     Self::valid_method_id(value.as_ref())?;
     self.0.set_method_id(value);
     Ok(())
   }
 
   /// Validates whether a string is a valid [`DID`] method-id.
-  pub fn valid_method_id(value: &str) -> Result<(), DIDError> {
+  pub fn valid_method_id(value: &str) -> Result<(), Error> {
     if !value.chars().all(is_char_method_id) {
-      return Err(DIDError::InvalidMethodId);
+      return Err(Error::InvalidMethodId);
     }
     Ok(())
   }
 
   /// Checks if the given `did` is valid according to the base [`DID`] specification.
-  pub fn check_validity(did: &BaseDIDUrl) -> Result<(), DIDError> {
+  pub fn check_validity(did: &BaseDIDUrl) -> Result<(), Error> {
     // Validate basic DID constraints.
     Self::valid_method_name(did.method())?;
     Self::valid_method_id(did.method_id())?;
     if did.scheme() != Self::SCHEME {
-      return Err(DIDError::InvalidScheme);
+      return Err(Error::InvalidScheme);
     }
 
     // Ensure no DID Url segments are present.
     if !did.path().is_empty() || did.fragment().is_some() || did.query().is_some() {
-      return Err(DIDError::InvalidMethodId);
+      return Err(Error::InvalidMethodId);
     }
 
     Ok(())
@@ -167,7 +167,7 @@ impl DID for CoreDID {
     <Self as Into<String>>::into(self)
   }
 
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError> {
+  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, Error> {
     self.into_url().join(value)
   }
 
@@ -187,7 +187,7 @@ impl From<CoreDID> for BaseDIDUrl {
 }
 
 impl TryFrom<BaseDIDUrl> for CoreDID {
-  type Error = DIDError;
+  type Error = Error;
 
   fn try_from(base_did_url: BaseDIDUrl) -> Result<Self, Self::Error> {
     Self::try_from_base_did(base_did_url)
@@ -213,7 +213,7 @@ impl AsRef<str> for CoreDID {
 }
 
 impl FromStr for CoreDID {
-  type Err = DIDError;
+  type Err = Error;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::parse(string)
@@ -221,7 +221,7 @@ impl FromStr for CoreDID {
 }
 
 impl TryFrom<&str> for CoreDID {
-  type Error = DIDError;
+  type Error = Error;
 
   fn try_from(other: &str) -> Result<Self, Self::Error> {
     Self::parse(other)
@@ -229,7 +229,7 @@ impl TryFrom<&str> for CoreDID {
 }
 
 impl TryFrom<String> for CoreDID {
-  type Error = DIDError;
+  type Error = Error;
 
   fn try_from(other: String) -> Result<Self, Self::Error> {
     Self::parse(other)
@@ -334,7 +334,7 @@ where
   fn to_url(&self) -> DIDUrl<Self> {
     DIDUrl::new(self.clone(), None)
   }
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
+  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, Error>
   where
     Self: Sized,
   {

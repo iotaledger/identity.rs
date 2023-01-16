@@ -15,6 +15,7 @@ description = "An implementation of the Verifiable Credentials standard."
 erased-serde = { version = "0.3.21", default-features = false, features = ["std"], optional = true }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
+identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
 itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
@@ -34,5 +35,5 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["revocation-bitmap", "validator"]
-revocation-bitmap = ["identity_did/revocation-bitmap"]
+revocation-bitmap = ["identity_document/revocation-bitmap"]
 validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr"]

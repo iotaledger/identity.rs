@@ -1,7 +1,7 @@
-IOTA Identity - DID
+IOTA Identity - Document
 === 
 
-Agnostic implementation of the Decentralized Identifiers (DID) standard from W3C.
+Agnostic implementation of DID Documents from the Decentralized Identifiers (DID) standard from W3C.
 
 ## Overview 
 Decentralized Identifiers (DID) is a proposed standard from the World Wide Web Consortium (W3C) to enable a
@@ -16,7 +16,6 @@ The [IOTA Identity Framework](https://wiki.iota.org/identity.rs/introduction) le
 ## Central functionality 
 When working with the IOTA Identity Framework one will frequently interact with functionality from this crate listed here. 
 
-- [`DID` trait](crate::did::DID)
 - [`DIDUrl`](crate::did::DIDUrl)
 - [`Service`](crate::service::Service)
 - [`VerificationMethod`](crate::verification::VerificationMethod)

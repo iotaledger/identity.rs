@@ -7,6 +7,7 @@ members = [
   "identity_credential",
   "identity_did",
   "identity_diff",
+  "identity_document", 
   "identity_iota",
   "identity_iota_core",
   "identity_resolver",
@@ -22,3 +23,7 @@ exclude = [
 
 [profile.dev]
 split-debuginfo = "unpacked"
+
+[workspace.dependencies]
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+thiserror = { version = "1.0", default-features = false }

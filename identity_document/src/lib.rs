@@ -17,18 +17,20 @@
   // clippy::missing_errors_doc
 )]
 
+#[macro_use]
+extern crate serde;
 
-#[allow(clippy::module_inception)]
-mod did;
-mod did_url;
-mod error;
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
+pub mod diff;
 
-pub use did::CoreDID;
-pub use did::DID;
-pub use crate::did_url::CoreDIDUrl;
-pub use crate::did_url::DIDUrl;
-pub use crate::did_url::RelativeDIDUrl;
-pub use error::Error;
-pub use ::did_url::DID as BaseDIDUrl;
+pub mod document;
+pub mod error;
+#[cfg(feature = "revocation-bitmap")]
+pub mod revocation;
+pub mod service;
+pub mod utils;
+pub mod verifiable;
+pub mod verification;
 
-
+pub use self::error::Error;
+pub use self::error::Result;
