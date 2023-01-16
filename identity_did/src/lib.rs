@@ -17,18 +17,15 @@
   // clippy::missing_errors_doc
 )]
 
-
 #[allow(clippy::module_inception)]
 mod did;
 mod did_url;
 mod error;
 
-pub use did::CoreDID;
-pub use did::DID;
 pub use crate::did_url::CoreDIDUrl;
 pub use crate::did_url::DIDUrl;
 pub use crate::did_url::RelativeDIDUrl;
-pub use error::Error;
 pub use ::did_url::DID as BaseDIDUrl;
-
-
+pub use did::CoreDID;
+pub use did::DID;
+pub use error::Error;

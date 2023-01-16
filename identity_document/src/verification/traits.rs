@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verification::VerificationMethod;
+use identity_did::DID;
 
 /// Represents all possible verification method URI types
 ///

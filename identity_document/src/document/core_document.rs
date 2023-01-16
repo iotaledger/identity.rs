@@ -24,9 +24,6 @@ use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Verifier;
 use serde::Serializer;
 
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 use crate::document::Document;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
@@ -43,6 +40,9 @@ use crate::verification::MethodType;
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
@@ -1012,13 +1012,13 @@ where
 mod core_document_revocation {
   use identity_core::common::KeyComparable;
 
-  use identity_did::DID;
   use crate::revocation::RevocationBitmap;
   use crate::service::Service;
   use crate::utils::DIDUrlQuery;
   use crate::utils::Queryable;
   use crate::Error;
   use crate::Result;
+  use identity_did::DID;
 
   use super::CoreDocument;
 

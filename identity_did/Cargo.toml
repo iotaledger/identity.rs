@@ -14,8 +14,8 @@ description = "Agnostic implementation of the Decentralized Identifiers (DID) st
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 form_urlencoded = { version = "1.0.1", default-features = false }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core" }
-serde.workspace = true 
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+serde.workspace = true
+strum.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]

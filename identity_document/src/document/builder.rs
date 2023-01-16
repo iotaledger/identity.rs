@@ -5,13 +5,13 @@ use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Url;
 
-use identity_did::CoreDID;
-use identity_did::DID;
 use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
+use identity_did::CoreDID;
+use identity_did::DID;
 
 /// A `DocumentBuilder` is used to generate a customized [`Document`](crate::document::CoreDocument).
 #[derive(Clone, Debug)]

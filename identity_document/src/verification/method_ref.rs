@@ -7,10 +7,10 @@ use core::fmt::Formatter;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 
+use crate::verification::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;
-use crate::verification::VerificationMethod;
 
 /// A reference to a verification method, either a `DID` or embedded `Method`.
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]

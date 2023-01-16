@@ -3,12 +3,12 @@
 
 use identity_core::common::Object;
 
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 use crate::error::Result;
 use crate::service::Service;
 use crate::service::ServiceEndpoint;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
 #[derive(Clone, Debug)]

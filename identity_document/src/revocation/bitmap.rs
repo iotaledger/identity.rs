@@ -12,11 +12,11 @@ use identity_core::utils::Base;
 use identity_core::utils::BaseEncoding;
 use roaring::RoaringBitmap;
 
-use identity_did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
 use crate::service::ServiceEndpoint;
+use identity_did::DID;
 
 const DATA_URL_MEDIA_TYPE: &str = "application/octet-stream";
 

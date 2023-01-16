@@ -10,8 +10,6 @@ use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
 
-use identity_did::CoreDID;
-use identity_did::DID;
 use crate::document::CoreDocument;
 use crate::verifiable::VerifierOptions;
 use crate::verification::MethodData;
@@ -21,6 +19,8 @@ use crate::verification::MethodType;
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
+use identity_did::CoreDID;
+use identity_did::DID;
 
 #[derive(Debug, Serialize)]
 struct MockObject {

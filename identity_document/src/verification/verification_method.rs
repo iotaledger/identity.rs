@@ -14,15 +14,15 @@ use identity_core::convert::FmtJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
 use crate::verification::MethodRef;
 use crate::verification::MethodType;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 /// A DID Document Verification Method.
 ///

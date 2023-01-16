@@ -3,8 +3,6 @@
 
 use serde::Serialize;
 
-use identity_did::CoreDID;
-use identity_did::DID;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
@@ -15,6 +13,8 @@ use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
+use identity_did::CoreDID;
+use identity_did::DID;
 
 use crate::document::CoreDocument;
 use crate::utils::DIDUrlQuery;

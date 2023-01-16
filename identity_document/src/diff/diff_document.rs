@@ -14,13 +14,13 @@ use identity_core::diff::DiffVec;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use identity_did::CoreDID;
-use identity_did::DID;
 use crate::document::CoreDocument;
 use crate::document::CoreDocumentData;
 use crate::service::Service;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
+use identity_did::CoreDID;
+use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
@@ -333,13 +333,13 @@ mod test {
   use identity_core::convert::ToJson;
   use identity_core::diff::DiffString;
 
-  use identity_did::CoreDIDUrl;
-  use identity_did::DID;
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
+  use identity_did::CoreDIDUrl;
+  use identity_did::DID;
 
   use super::*;
 

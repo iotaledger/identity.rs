@@ -10,12 +10,12 @@ use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 use crate::service::Service;
 use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffService<D = CoreDID, T = Object>
@@ -175,7 +175,6 @@ impl Diff for ServiceEndpoint {
 mod test {
   use indexmap::IndexMap;
 
-  use identity_did::CoreDIDUrl;
   use identity_core::common::Object;
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;
@@ -183,6 +182,7 @@ mod test {
   use identity_core::convert::ToJson;
   use identity_core::diff::DiffString;
   use identity_core::diff::DiffVec;
+  use identity_did::CoreDIDUrl;
 
   use super::*;
 

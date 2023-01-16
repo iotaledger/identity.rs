@@ -13,13 +13,13 @@ use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::convert::FmtJson;
 
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 /// A DID Document Service used to enable trusted interactions associated with a DID subject.
 ///
@@ -192,11 +192,11 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-  use identity_did::CoreDIDUrl;
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
+  use identity_did::CoreDIDUrl;
 
   #[test]
   fn test_service_types_serde() {

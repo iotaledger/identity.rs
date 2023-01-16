@@ -3,13 +3,13 @@
 
 use identity_core::common::Object;
 
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 use crate::error::Result;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::VerificationMethod;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
 #[derive(Clone, Debug)]

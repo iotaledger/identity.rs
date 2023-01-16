@@ -5,13 +5,13 @@ use serde::Serialize;
 
 use identity_core::crypto::GetSignature;
 
-use identity_did::DID;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::verifiable::VerifierOptions;
 use crate::verification::MethodScope;
 use crate::verification::VerificationMethod;
 use crate::Result;
+use identity_did::DID;
 
 // TODO: add sign_data, split sign/verify to separate trait as first step towards
 //       supporting custom signature schemes. Replace DocumentSigner with trait?

@@ -9,14 +9,14 @@ use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 use crate::diff::DiffMethodData;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::VerificationMethod;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffMethod<D = CoreDID, T = Object>

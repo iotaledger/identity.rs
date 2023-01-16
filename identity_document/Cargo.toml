@@ -21,7 +21,7 @@ form_urlencoded = { version = "1.0.1", default-features = false }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core" }
 indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 roaring = { version = "0.9.0", default-features = false, optional = true }
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+strum.workspace = true
 
 [dev-dependencies]
 serde_json = { version = "1.0", default-features = false }

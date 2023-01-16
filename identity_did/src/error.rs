@@ -3,7 +3,6 @@
 
 use core::fmt::Debug;
 
-
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 /// Error type caused by invalid DID handling.

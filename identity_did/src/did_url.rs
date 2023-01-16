@@ -20,8 +20,8 @@ use identity_core::diff::DiffString;
 
 use crate::did::is_char_method_id;
 use crate::did::CoreDID;
-use crate::Error;
 use crate::did::DID;
+use crate::Error;
 
 /// A method agnostic [`DID Url`](DIDUrl).
 pub type CoreDIDUrl = DIDUrl<CoreDID>;
