@@ -12,6 +12,12 @@ members = [
   "identity_iota_core",
   "identity_resolver",
   "identity_verification",
+  "identity_jose",
+  # TODO: Remove
+  # "identity_storage",
+  # TODO: Rename to `identity_storage`
+  "identity_key_storage",
+  "identity_data_integrity",
   "examples",
 ]
 

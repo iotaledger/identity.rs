@@ -1,0 +1,37 @@
+[package]
+name = "identity_jose"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jwm", "jws", "jwt"]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+description = "A library for JOSE (JSON Object Signing and Encryption)"
+
+[dependencies]
+# TODO: Bump base64 version.
+base64 = { version = "0.13.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+subtle = { version = "2.4.1", default-features = false }
+url = { version = "2.3.1", default-features = false, features = ["serde"] }
+zeroize = { version = "1.5.7", default-features = false, features = ["zeroize_derive"] }
+
+[dependencies.iota-crypto]
+version = "0.15.3"
+default-features = false
+features = [
+  "std",
+  "aes",
+  "aes-cbc",
+  "aes-kw",
+  "chacha",
+  "ed25519",
+  "hmac",
+  "pbkdf",
+  "random",
+  "sha",
+  "x25519",
+]
