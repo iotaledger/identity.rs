@@ -28,7 +28,7 @@ use identity_core::crypto::Signer;
 use identity_did::document::CoreDocument;
 use identity_did::document::Document;
 use identity_did::service::Service;
-use identity_did::utils::DIDUrlQuery;
+use identity_document::utils::DIDUrlQuery;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::VerifierOptions;
 use identity_did::verification::MethodRef;
@@ -658,7 +658,7 @@ impl Document for IotaDocument {
 
 #[cfg(feature = "revocation-bitmap")]
 mod iota_document_revocation {
-  use identity_did::utils::DIDUrlQuery;
+  use identity_document::utils::DIDUrlQuery;
 
   use crate::Error;
   use crate::Result;

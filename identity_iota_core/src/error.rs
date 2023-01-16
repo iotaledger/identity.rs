@@ -11,7 +11,7 @@ pub enum Error {
   #[error("invalid did")]
   DIDSyntaxError(#[source] identity_did::Error),
   #[error("invalid document")]
-  InvalidDoc(#[source] identity_did::error::Error),
+  InvalidDoc(#[source] identity_document::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID update: {0}")]
   DIDUpdateError(&'static str, #[source] Option<Box<iota_client::error::Error>>),
@@ -34,7 +34,7 @@ pub enum Error {
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
   #[error("credential revocation error")]
-  RevocationError(#[source] identity_did::Error),
+  RevocationError(#[source] identity_document::Error),
   #[cfg(feature = "client")]
   #[error("alias output build error")]
   AliasOutputBuildError(#[source] crate::block::Error),
