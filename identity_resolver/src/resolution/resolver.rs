@@ -8,6 +8,7 @@ use std::marker::PhantomData;
 use futures::TryFutureExt;
 use identity_credential::credential::Credential;
 use identity_credential::credential::DomainLinkageConfiguration;
+use identity_credential::credential::LinkedDomainService;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::AbstractThreadSafeValidatorDocument;
 use identity_credential::validator::CredentialValidationOptions;
@@ -293,18 +294,61 @@ where
   pub async fn verify_domain_linkage_configuration(
     &self,
     configuration: &DomainLinkageConfiguration,
-    domain: Url,
+    domain: &Url,
     validation_options: &CredentialValidationOptions,
-  ) -> Result<()> {
+  ) -> Result<Vec<DOC>> {
     let mut issuers: Vec<DOC> = Vec::new();
     for credential in configuration.linked_dids() {
       let issuer: DOC = self.resolve_credential_issuer(credential).await?;
       issuers.push(issuer);
     }
-    DomainLinkageVerifier::verify_configuration::<Object, DOC>(&issuers, configuration, domain, validation_options)
-      .map_err(|error| ErrorCause::DomainLinkageVerificationError { source: error })
-      .map_err(Error::new)?;
-    Ok(())
+    DomainLinkageVerifier::verify_configuration::<Object, DOC>(
+      &issuers,
+      configuration,
+      domain.clone(),
+      validation_options,
+    )
+    .map_err(|error| ErrorCause::DomainLinkageError {
+      source: Box::new(error),
+    })
+    .map_err(Error::new)?;
+    Ok(issuers)
+  }
+
+  /// Fetches the DID Configuration resources from all the domains contained in a Linked Domain Service
+  /// and verifies them.
+  ///
+  /// The verification step includes resolving the DID documents of the issuers and verifying the
+  /// Domain Linkage Credential.
+  ///
+  /// # Error
+  /// Errors fast if fetching or verifying any of the domains fails.
+  ///
+  /// # Return
+  /// DID Documents of the issuers of the Domain Linkage Credentials.
+  pub async fn fetch_and_verify_linked_domains<D, T>(
+    &self,
+    service: &LinkedDomainService<D, T>,
+    validation_options: &CredentialValidationOptions,
+  ) -> Result<Vec<DOC>>
+  where
+    D: DID,
+  {
+    let domains: Vec<Url> = service.domains();
+    let mut issuers: Vec<DOC> = Vec::new();
+    for domain in domains.clone().into_iter() {
+      let configuration: DomainLinkageConfiguration = DomainLinkageConfiguration::fetch_configuration(domain.clone())
+        .await
+        .map_err(|error| ErrorCause::DomainLinkageError {
+          source: Box::new(error),
+        })
+        .map_err(Error::new)?;
+      let mut domain_issuers: Vec<DOC> = self
+        .verify_domain_linkage_configuration(&configuration, &domain, validation_options)
+        .await?;
+      issuers.append(&mut domain_issuers);
+    }
+    Ok(issuers)
   }
 }
 

@@ -98,9 +98,9 @@ pub enum ErrorCause {
   #[error("did resolution failed: the DID method \"{method}\" is not supported by the resolver")]
   UnsupportedMethodError { method: String },
 
-  #[error("domain linkage configuration verification error")]
-  DomainLinkageVerificationError {
-    source: identity_credential::validator::DomainLinkageVerificationError,
+  #[error("domain linkage error")]
+  DomainLinkageError {
+    source: Box<dyn std::error::Error + Send + Sync + 'static>,
   },
 }
 

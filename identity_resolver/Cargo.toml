@@ -16,13 +16,11 @@ description = "DID Resolution utilities for the identity.rs library."
 async-trait = { version = "0.1", default-features = false }
 futures = { version = "0.3" }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.4", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_credential = { version = "=0.7.0-alpha.4", path = "../identity_credential", default-features = false, features = ["validator", "domain-linkage-fetch"] }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
-#reqwest = { version = "0.11", features = ["json"] }
-reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json"] }
 
 [dependencies.identity_iota_core]
 version = "=0.7.0-alpha.4"

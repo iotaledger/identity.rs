@@ -189,12 +189,14 @@ impl DomainLinkageVerifier {
             cause: DomainLinkageVerificationErrorCause::InvalidSubjectOrigin,
             source: None,
           })?;
-        let origin: Url = Url::parse(origin).map_err(|err| DomainLinkageVerificationError {
-          cause: DomainLinkageVerificationErrorCause::InvalidSubjectOrigin,
-          source: Some(Box::new(err)),
-        })?;
+        let origin_url = Url::parse(origin)
+          .map_err(|_err| Url::parse("https://".to_owned() + origin))
+          .map_err(|_err| DomainLinkageVerificationError {
+            cause: DomainLinkageVerificationErrorCause::InvalidSubjectOrigin,
+            source: None,
+          })?;
 
-        if origin.origin() != domain.origin() {
+        if origin_url.origin() != domain.origin() {
           return Err(DomainLinkageVerificationError {
             cause: DomainLinkageVerificationErrorCause::OriginMismatch,
             source: None,
@@ -231,7 +233,7 @@ mod tests {
 
     let configuration_string: &str = include_str!("../../tests/fixtures/did_configuration/issuer-did-document.json");
     let document: CoreDocument = CoreDocument::from_json(configuration_string).unwrap();
-    let domain = Url::parse("https://example.com").unwrap();
+    let domain: Url = Url::parse("https://example.com").unwrap();
     DomainLinkageVerifier::verify_credential(&[document], credential, domain, &CredentialValidationOptions::default())
       .unwrap();
   }
