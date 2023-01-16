@@ -9,7 +9,7 @@ use identity_iota::core::ToJson;
 use identity_iota::credential::AbstractThreadSafeValidatorDocument;
 use identity_iota::crypto::KeyPair as IotaKeyPair;
 use identity_iota::did::CoreDID;
-use identity_iota::did::CoreDocument;
+use identity_iota::document::CoreDocument;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;

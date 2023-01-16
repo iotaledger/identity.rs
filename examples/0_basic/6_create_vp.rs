@@ -33,8 +33,8 @@ use identity_iota::credential::Subject;
 use identity_iota::credential::SubjectHolderRelationship;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
-use identity_iota::did::verifiable::VerifierOptions;
 use identity_iota::did::DID;
+use identity_iota::document::verifiable::VerifierOptions;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
 

@@ -490,10 +490,10 @@ mod tests {
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
+  use identity_did::DID;
   use identity_document::verifiable::VerifiableProperties;
   use identity_verification::verification_method::MethodData;
   use identity_verification::verification_method::MethodType;
-  use identity_did::DID;
   use iota_types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;

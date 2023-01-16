@@ -12,12 +12,12 @@ use identity_credential::presentation::PresentationBuilder;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::ValidatorDocument;
-use identity_document::document::CoreDocument;
-use identity_document::document::DocumentBuilder;
 use identity_did::BaseDIDUrl;
 use identity_did::CoreDID;
 use identity_did::Error as DIDError;
 use identity_did::DID;
+use identity_document::document::CoreDocument;
+use identity_document::document::DocumentBuilder;
 
 use crate::Error as ResolverError;
 use crate::ErrorCause;

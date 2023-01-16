@@ -55,18 +55,21 @@ pub mod did {
   //! Decentralized Identifiers
   //!
   //! [Specification](https://www.w3.org/TR/did-core/)
-
-  pub use identity_did::document::*;
-  pub use identity_did::error::*;
-  #[cfg(feature = "revocation-bitmap")]
-  pub use identity_did::revocation::*;
-  pub use identity_did::service::*;
-  pub use identity_did::utils::*;
-  pub use identity_did::verification::*;
-
   pub use identity_did::*;
+}
+pub mod document {
+  //! DID Documents
+  //!
+  //! [Specification](https://www.w3.org/TR/did-core/)
 
-  pub use identity_did::verifiable;
+  pub use identity_document::document::*;
+  pub use identity_document::error::*;
+  #[cfg(feature = "revocation-bitmap")]
+  pub use identity_document::revocation::*;
+  pub use identity_document::service::*;
+  pub use identity_document::utils::*;
+
+  pub use identity_document::verifiable;
 }
 
 pub mod iota {
@@ -117,4 +120,9 @@ pub mod resolver {
   //! DID resolution utilities
 
   pub use identity_resolver::*;
+}
+
+pub mod verification {
+  //! Types for verifiable data
+  pub use identity_verification::verification_method::*;
 }

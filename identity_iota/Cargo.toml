@@ -15,8 +15,10 @@ description = "Framework for Self-Sovereign Identity with IOTA DID."
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.7.0-alpha.4", path = "../identity_credential", features = ["validator"], default-features = false }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
+identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=0.7.0-alpha.4", path = "../identity_iota_core", default-features = false }
 identity_resolver = { version = "=0.7.0-alpha.4", path = "../identity_resolver", default-features = false, optional = true }
+identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.64"
