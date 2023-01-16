@@ -287,8 +287,8 @@ mod tests {
   use identity_credential::credential::Subject;
   use identity_credential::validator::CredentialValidationOptions;
   use identity_credential::validator::SubjectHolderRelationship;
-  use identity_did::did::CoreDID;
-  use identity_did::did::DID;
+  use identity_did::CoreDID;
+  use identity_did::DID;
   use identity_did::document::CoreDocument;
   use identity_did::verifiable::VerifierOptions;
   use identity_did::verification::VerificationMethod;

@@ -8,11 +8,11 @@ use core::fmt::Formatter;
 use core::str::FromStr;
 
 use identity_core::common::KeyComparable;
-use identity_did::did::BaseDIDUrl;
-use identity_did::did::CoreDID;
-use identity_did::did::DIDError;
-use identity_did::did::DIDUrl;
-use identity_did::did::DID;
+use identity_did::BaseDIDUrl;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::Error as DIDError;
+use identity_did::DID;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -62,7 +62,7 @@ impl IotaDID {
   /// # Example
   ///
   /// ```
-  /// # use identity_did::did::DID;
+  /// # use identity_did::DID;
   /// # use identity_iota_core::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
@@ -87,7 +87,7 @@ impl IotaDID {
   /// # Example
   ///
   /// ```
-  /// # use identity_did::did::DID;
+  /// # use identity_did::DID;
   /// # use identity_iota_core::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #
@@ -103,7 +103,7 @@ impl IotaDID {
   /// # Example
   ///
   /// ```
-  /// # use identity_did::did::DID;
+  /// # use identity_did::DID;
   /// # use identity_iota_core::NetworkName;
   /// # use identity_iota_core::IotaDID;
   /// #

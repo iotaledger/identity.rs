@@ -14,8 +14,8 @@ use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
+use identity_did::CoreDID;
+use identity_did::DID;
 
 use serde::Serialize;
 
@@ -99,8 +99,8 @@ where
   /// ## Example
   /// ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::did::CoreDID;
-  /// # use identity_did::did::DID;
+  /// # use identity_did::CoreDID;
+  /// # use identity_did::DID;
   /// # use identity_did::document::CoreDocument;
   ///
   /// async fn resolve_and_cast(
@@ -297,7 +297,7 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   /// # Example
   /// ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::did::CoreDID;
+  /// # use identity_did::CoreDID;
   /// # use identity_did::document::CoreDocument;
   ///
   ///    // A client that can resolve DIDs of our invented "foo" method.
@@ -356,7 +356,7 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
   /// # Example
   /// ```
   /// # use identity_resolver::SingleThreadedResolver;
-  /// # use identity_did::did::CoreDID;
+  /// # use identity_did::CoreDID;
   /// # use identity_did::document::CoreDocument;
   ///
   ///    // A client that can resolve DIDs of our invented "foo" method.

@@ -8,11 +8,11 @@ use serde::Serialize;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
+use identity_did::CoreDID;
+use identity_did::DID;
 #[cfg(feature = "revocation-bitmap")]
-use identity_did::revocation::RevocationBitmap;
-use identity_did::verifiable::VerifierOptions;
+use identity_document::revocation::RevocationBitmap;
+use identity_document::verifiable::VerifierOptions;
 
 use crate::credential::Credential;
 #[cfg(feature = "revocation-bitmap")]
@@ -202,7 +202,7 @@ impl CredentialValidator {
     issuer: &DOC,
     status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: identity_did::did::CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+    let issuer_service_url: identity_did::CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
     let revocation_bitmap: RevocationBitmap = issuer
@@ -298,9 +298,9 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_did::did::DID;
-  use identity_did::document::CoreDocument;
-  use identity_did::service::Service;
+  use identity_did::DID;
+  use identity_document::document::CoreDocument;
+  use identity_document::service::Service;
 
   use crate::credential::Status;
   use crate::credential::Subject;
@@ -756,7 +756,7 @@ mod tests {
     }
 
     // Add a RevocationBitmap status to the credential.
-    let service_url: identity_did::did::CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
+    let service_url: identity_did::CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
     let index: u32 = 42;
     credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
 

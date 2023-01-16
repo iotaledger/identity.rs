@@ -18,11 +18,11 @@ use identity_did::DID;
 
 use crate::document::CoreDocument;
 use crate::utils::DIDUrlQuery;
+use crate::Error;
+use crate::Result;
 use identity_verification::verification_method::MethodType;
 use identity_verification::verification_method::TryMethod;
 use identity_verification::verification_method::VerificationMethod;
-use crate::Error;
-use crate::Result;
 
 // =============================================================================
 // Document Signer - Simplifying Digital Signature Creation Since 2021
@@ -125,7 +125,7 @@ where
   {
     let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
     let method: &VerificationMethod<D, U> = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
-    let method_uri: String = X::try_method(method).map_err(|_|Error::MissingIdFragment)?;
+    let method_uri: String = X::try_method(method).map_err(|_| Error::MissingIdFragment)?;
 
     match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {

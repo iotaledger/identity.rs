@@ -10,7 +10,7 @@ pub enum Error {
   #[error("{0}")]
   CredError(#[from] identity_credential::Error),
   #[error("{0}")]
-  InvalidDID(#[from] identity_did::did::DIDError),
+  InvalidDID(#[from] identity_did::Error),
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]

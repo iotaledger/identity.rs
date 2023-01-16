@@ -7,14 +7,14 @@
 //! `identity_iota_core_legacy` crate.
 
 mod builder;
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
+pub mod diff;
 mod material;
 mod method;
 mod method_ref;
 mod method_relationship;
 mod method_scope;
 mod method_type;
-#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-pub mod diff; 
 mod traits;
 
 pub use self::builder::MethodBuilder;

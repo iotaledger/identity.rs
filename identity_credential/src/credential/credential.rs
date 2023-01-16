@@ -16,8 +16,8 @@ use identity_core::crypto::GetSignature;
 use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_did::verification::MethodUriType;
-use identity_did::verification::TryMethod;
+use identity_verification::verification_method::MethodUriType;
+use identity_verification::verification_method::TryMethod;
 
 use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;

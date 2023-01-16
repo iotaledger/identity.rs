@@ -64,7 +64,7 @@ pub mod did {
   pub use identity_did::utils::*;
   pub use identity_did::verification::*;
 
-  pub use identity_did::did::*;
+  pub use identity_did::*;
 
   pub use identity_did::verifiable;
 }

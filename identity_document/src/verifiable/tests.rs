@@ -12,6 +12,8 @@ use identity_core::crypto::SetSignature;
 
 use crate::document::CoreDocument;
 use crate::verifiable::VerifierOptions;
+use identity_did::CoreDID;
+use identity_did::DID;
 use identity_verification::verification_method::MethodData;
 use identity_verification::verification_method::MethodRelationship;
 use identity_verification::verification_method::MethodScope;
@@ -19,8 +21,6 @@ use identity_verification::verification_method::MethodType;
 use identity_verification::verification_method::MethodUriType;
 use identity_verification::verification_method::TryMethod;
 use identity_verification::verification_method::VerificationMethod;
-use identity_did::CoreDID;
-use identity_did::DID;
 
 #[derive(Debug, Serialize)]
 struct MockObject {

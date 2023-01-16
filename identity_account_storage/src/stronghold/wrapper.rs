@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use identity_did::did::CoreDID;
+use identity_did::CoreDID;
 use iota_stronghold::Client;
 use iota_stronghold::ClientError;
 use iota_stronghold::KeyProvider;

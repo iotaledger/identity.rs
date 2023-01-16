@@ -17,10 +17,10 @@ use identity_core::diff::Result;
 use crate::document::CoreDocument;
 use crate::document::CoreDocumentData;
 use crate::service::Service;
-use identity_verification::verification_method::MethodRef;
-use identity_verification::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DID;
+use identity_verification::verification_method::MethodRef;
+use identity_verification::verification_method::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
@@ -335,11 +335,11 @@ mod test {
 
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
+  use identity_did::CoreDIDUrl;
+  use identity_did::DID;
   use identity_verification::verification_method::MethodBuilder;
   use identity_verification::verification_method::MethodData;
   use identity_verification::verification_method::MethodType;
-  use identity_did::CoreDIDUrl;
-  use identity_did::DID;
 
   use super::*;
 

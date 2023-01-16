@@ -4,8 +4,8 @@
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
-use identity_did::did::CoreDID;
 use identity_did::document::CoreDocument;
+use identity_did::CoreDID;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
@@ -200,8 +200,8 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::DID;
   use identity_did::verification::MethodScope;
+  use identity_did::DID;
 
   use crate::state_metadata::document::DID_MARKER;
   use crate::state_metadata::PLACEHOLDER_DID;

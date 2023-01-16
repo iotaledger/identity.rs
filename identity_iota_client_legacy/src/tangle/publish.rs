@@ -38,7 +38,7 @@ impl PublishType {
 mod test {
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::DID;
+  use identity_did::DID;
   use identity_did::verification::MethodScope;
   use identity_iota_core_legacy::did::IotaDIDUrl;
   use identity_iota_core_legacy::document::IotaVerificationMethod;

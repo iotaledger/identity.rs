@@ -9,10 +9,10 @@ use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::json;
 use identity_core::utils::BaseEncoding;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
-use identity_did::document::CoreDocument;
-use identity_did::verification::VerificationMethod;
+use identity_did::CoreDID;
+use identity_did::DID;
+use identity_document::document::CoreDocument;
+use identity_verification::verification_method::VerificationMethod;
 
 use crate::credential::Credential;
 use crate::credential::CredentialBuilder;

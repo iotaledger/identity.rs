@@ -170,7 +170,7 @@ mod test {
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::ProofOptions;
-  use identity_did::did::DID;
+  use identity_did::DID;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;

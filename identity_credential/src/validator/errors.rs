@@ -66,7 +66,7 @@ pub enum ValidationError {
   InvalidStatus(#[source] crate::Error),
   /// Indicates that the the credential's service is invalid.
   #[error("invalid service")]
-  InvalidService(#[source] identity_did::Error),
+  InvalidService(#[source] identity_document::Error),
   /// Indicates that the credential has been revoked.
   #[error("credential has been revoked")]
   Revoked,

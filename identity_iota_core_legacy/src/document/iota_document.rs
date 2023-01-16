@@ -757,7 +757,7 @@ mod tests {
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyType;
   use identity_core::utils::BaseEncoding;
-  use identity_did::did::DID;
+  use identity_did::DID;
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
 

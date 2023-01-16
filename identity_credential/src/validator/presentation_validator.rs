@@ -7,9 +7,9 @@ use std::str::FromStr;
 use serde::Serialize;
 
 use identity_core::common::Url;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
-use identity_did::verifiable::VerifierOptions;
+use identity_did::CoreDID;
+use identity_did::DID;
+use identity_document::verifiable::VerifierOptions;
 
 use crate::presentation::Presentation;
 
@@ -238,7 +238,7 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_did::document::CoreDocument;
+  use identity_document::document::CoreDocument;
 
   use crate::credential::Credential;
   use crate::presentation::PresentationBuilder;

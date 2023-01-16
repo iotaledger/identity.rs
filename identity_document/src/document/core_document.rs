@@ -33,6 +33,9 @@ use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
 use crate::verifiable::DocumentSigner;
 use crate::verifiable::VerifierOptions;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use identity_verification::verification_method::MethodRef;
 use identity_verification::verification_method::MethodRelationship;
 use identity_verification::verification_method::MethodScope;
@@ -40,9 +43,6 @@ use identity_verification::verification_method::MethodType;
 use identity_verification::verification_method::MethodUriType;
 use identity_verification::verification_method::TryMethod;
 use identity_verification::verification_method::VerificationMethod;
-use identity_did::CoreDID;
-use identity_did::DIDUrl;
-use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
@@ -938,7 +938,10 @@ where
   where
     X: Serialize + GetSignature + ?Sized,
   {
-    let public_key: Vec<u8> = method.data().try_decode().map_err(|error| Error::InvalidKeyData(error))?;
+    let public_key: Vec<u8> = method
+      .data()
+      .try_decode()
+      .map_err(|error| Error::InvalidKeyData(error))?;
 
     match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {

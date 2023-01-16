@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Timestamp;
-use identity_did::verifiable::VerifierOptions;
+use identity_document::verifiable::VerifierOptions;
 use serde::Deserialize;
 use serde::Serialize;
 

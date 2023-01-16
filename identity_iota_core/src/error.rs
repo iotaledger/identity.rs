@@ -9,7 +9,7 @@ pub enum Error {
   #[error("serialization error")]
   SerializationError(&'static str, #[source] Option<identity_core::Error>),
   #[error("invalid did")]
-  DIDSyntaxError(#[source] identity_did::did::DIDError),
+  DIDSyntaxError(#[source] identity_did::Error),
   #[error("invalid document")]
   InvalidDoc(#[source] identity_did::error::Error),
   #[cfg(feature = "iota-client")]

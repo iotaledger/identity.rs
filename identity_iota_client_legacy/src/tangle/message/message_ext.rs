@@ -3,7 +3,7 @@
 
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
-use identity_did::did::DID;
+use identity_did::DID;
 use identity_iota_core_legacy::did::IotaDID;
 use identity_iota_core_legacy::diff::DiffMessage;
 use identity_iota_core_legacy::tangle::Message;

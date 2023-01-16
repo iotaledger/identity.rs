@@ -10,7 +10,7 @@
 /// # Example
 ///
 /// ```
-/// # use identity_did::did::DID;
+/// # use identity_did::DID;
 /// # use identity_iota_core_legacy::try_construct_did;
 /// #
 /// let did = try_construct_did!(b"public-key")?;

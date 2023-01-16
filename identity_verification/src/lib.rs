@@ -21,6 +21,6 @@
 extern crate serde;
 
 mod error;
-pub mod verification_method; 
+pub mod verification_method;
 pub use error::Error;
 pub use error::Result;

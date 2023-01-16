@@ -8,8 +8,8 @@ use identity_credential::presentation::Presentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::did::CoreDID;
 use identity_did::document::CoreDocument;
+use identity_did::CoreDID;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 

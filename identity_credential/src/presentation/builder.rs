@@ -141,14 +141,14 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::CoreDID;
-  use identity_did::did::DID;
-  use identity_did::document::CoreDocument;
-  use identity_did::document::DocumentBuilder;
-  use identity_did::verification::MethodBuilder;
-  use identity_did::verification::MethodData;
-  use identity_did::verification::MethodType;
-  use identity_did::verification::VerificationMethod;
+  use identity_did::CoreDID;
+  use identity_did::DID;
+  use identity_document::document::CoreDocument;
+  use identity_document::document::DocumentBuilder;
+  use identity_verification::verification_method::MethodBuilder;
+  use identity_verification::verification_method::MethodData;
+  use identity_verification::verification_method::MethodType;
+  use identity_verification::verification_method::VerificationMethod;
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;

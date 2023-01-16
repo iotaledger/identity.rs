@@ -8,10 +8,10 @@ use identity_core::crypto::GetSignature;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::verifiable::VerifierOptions;
-use identity_verification::verification_method::MethodScope;
-use identity_verification::verification_method::VerificationMethod;
 use crate::Result;
 use identity_did::DID;
+use identity_verification::verification_method::MethodScope;
+use identity_verification::verification_method::VerificationMethod;
 
 // TODO: add sign_data, split sign/verify to separate trait as first step towards
 //       supporting custom signature schemes. Replace DocumentSigner with trait?
