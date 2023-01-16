@@ -24,9 +24,9 @@ use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Verifier;
 use serde::Serializer;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::document::Document;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
@@ -1012,7 +1012,7 @@ where
 mod core_document_revocation {
   use identity_core::common::KeyComparable;
 
-  use crate::did::DID;
+  use identity_did::DID;
   use crate::revocation::RevocationBitmap;
   use crate::service::Service;
   use crate::utils::DIDUrlQuery;

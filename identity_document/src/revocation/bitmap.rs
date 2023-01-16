@@ -12,7 +12,7 @@ use identity_core::utils::Base;
 use identity_core::utils::BaseEncoding;
 use roaring::RoaringBitmap;
 
-use crate::did::DID;
+use identity_did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;

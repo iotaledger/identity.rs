@@ -13,9 +13,9 @@ use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::convert::FmtJson;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
@@ -192,7 +192,7 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::did::CoreDIDUrl;
+  use identity_did::CoreDIDUrl;
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;

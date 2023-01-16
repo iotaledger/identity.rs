@@ -10,8 +10,8 @@ use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
 
-use crate::did::CoreDID;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DID;
 use crate::document::CoreDocument;
 use crate::verifiable::VerifierOptions;
 use crate::verification::MethodData;

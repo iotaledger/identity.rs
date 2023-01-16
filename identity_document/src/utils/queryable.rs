@@ -4,8 +4,8 @@
 use identity_core::common::KeyComparable;
 use identity_core::common::OrderedSet;
 
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::utils::DIDUrlQuery;
 
 /// Allows retrieving an entry from a collection using a custom query type.

@@ -9,9 +9,9 @@ use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::diff::DiffMethodData;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;

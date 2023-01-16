@@ -14,8 +14,8 @@ use identity_core::diff::DiffVec;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use crate::did::CoreDID;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DID;
 use crate::document::CoreDocument;
 use crate::document::CoreDocumentData;
 use crate::service::Service;
@@ -333,8 +333,8 @@ mod test {
   use identity_core::convert::ToJson;
   use identity_core::diff::DiffString;
 
-  use crate::did::CoreDIDUrl;
-  use crate::did::DID;
+  use identity_did::CoreDIDUrl;
+  use identity_did::DID;
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;

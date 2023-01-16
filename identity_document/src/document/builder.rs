@@ -5,8 +5,8 @@ use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Url;
 
-use crate::did::CoreDID;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DID;
 use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;

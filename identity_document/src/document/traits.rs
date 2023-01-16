@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use identity_core::crypto::GetSignature;
 
-use crate::did::DID;
+use identity_did::DID;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::verifiable::VerifierOptions;

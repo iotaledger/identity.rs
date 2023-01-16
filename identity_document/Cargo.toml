@@ -12,6 +12,7 @@ description = "Agnostic implementation of the Decentralized Identifiers (DID) st
 
 [dependencies]
 serde.workspace = true
+thiserror.workspace = true
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did" }
 dataurl = { version = "0.1.2", default-features = false, optional = true }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
@@ -22,6 +23,9 @@ indexmap = { version = "1.7", default-features = false, features = ["std", "serd
 roaring = { version = "0.9.0", default-features = false, optional = true }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 
+[dev-dependencies]
+serde_json = { version = "1.0", default-features = false }
+criterion = { version = "0.4.0", default-features = false, features = ["cargo_bench_support"] }
 [features]
 default = ["revocation-bitmap"]
 revocation-bitmap = ["dataurl", "flate2", "roaring"]

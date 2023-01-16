@@ -8,7 +8,7 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
-use identity_did::document::CoreDocument;
+use identity_document::document::CoreDocument;
 
 const JSON_DOC_SHORT: &str = r#"
     {

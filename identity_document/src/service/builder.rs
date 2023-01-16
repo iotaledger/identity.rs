@@ -3,9 +3,9 @@
 
 use identity_core::common::Object;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::error::Result;
 use crate::service::Service;
 use crate::service::ServiceEndpoint;

@@ -10,9 +10,9 @@ use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::service::Service;
 use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
@@ -175,7 +175,7 @@ impl Diff for ServiceEndpoint {
 mod test {
   use indexmap::IndexMap;
 
-  use crate::did::CoreDIDUrl;
+  use identity_did::CoreDIDUrl;
   use identity_core::common::Object;
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;

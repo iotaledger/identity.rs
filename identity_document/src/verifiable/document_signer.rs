@@ -3,8 +3,8 @@
 
 use serde::Serialize;
 
-use crate::did::CoreDID;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DID;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;

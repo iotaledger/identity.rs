@@ -7,9 +7,9 @@ use core::fmt::Formatter;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::verification::VerificationMethod;
 
 /// A reference to a verification method, either a `DID` or embedded `Method`.

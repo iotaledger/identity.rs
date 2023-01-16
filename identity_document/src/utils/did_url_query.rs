@@ -5,10 +5,10 @@ use std::borrow::Cow;
 
 use identity_core::crypto::Proof;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::RelativeDIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::RelativeDIDUrl;
+use identity_did::DID;
 
 /// Specifies a DIDUrl or fragment to query a service or method in a DID Document.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -113,7 +113,7 @@ impl<'query> From<&'query Proof> for DIDUrlQuery<'query> {
 
 #[cfg(test)]
 mod tests {
-  use crate::did::CoreDIDUrl;
+  use identity_did::CoreDIDUrl;
   use std::ops::Not;
 
   use super::*;

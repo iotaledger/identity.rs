@@ -14,9 +14,9 @@ use identity_core::convert::FmtJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 
-use crate::did::CoreDID;
-use crate::did::DIDUrl;
-use crate::did::DID;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verification::MethodBuilder;
