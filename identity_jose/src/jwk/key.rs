@@ -22,7 +22,7 @@ use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkParamsRsa;
 use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
-use crate::utils::encode_b64;
+use crate::jw_utils::encode_b64;
 // use crate::utils::random_bytes;
 // use crate::utils::Ed25519SecretKey;
 // use crate::utils::K256SecretKey;
