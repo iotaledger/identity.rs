@@ -38,6 +38,8 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap", "validator"]
+default = ["revocation-bitmap", "validator", "credential", "presentation"]
+credential = []
+presentation = ["credential"]
 revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
-validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr"]
+validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr", "credential", "presentation"]

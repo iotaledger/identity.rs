@@ -33,8 +33,9 @@ pub enum Error {
   ProtocolParametersError(#[source] iota_client::Error),
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
+  #[cfg(feature = "revocation-bitmap")]
   #[error("credential revocation error")]
-  RevocationError(#[source] identity_document::Error),
+  RevocationError(#[source] identity_credential::revocation::RevocationError),
   #[cfg(feature = "client")]
   #[error("alias output build error")]
   AliasOutputBuildError(#[source] crate::block::Error),

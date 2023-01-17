@@ -23,8 +23,10 @@ extern crate serde;
 pub use self::error::Error;
 pub use self::error::Result;
 
+#[cfg(feature = "credential")]
 pub mod credential;
 pub mod error;
+#[cfg(feature = "presentation")]
 pub mod presentation;
 #[cfg(feature = "revocation-bitmap")]
 pub mod revocation;

@@ -9,20 +9,20 @@ use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
 use identity_document::utils::Queryable;
 
-use super::Error;
-use super::Result;
+use super::RevocationError;
+use super::RevocationResult;
 /// Extension trait providing convenience methods to update a `RevocationBitmap2022` service
 /// in a [`CoreDocument`](::identity_document::document::CoreDocument).   
 pub trait RevocationDocumentExt: private::Sealed {
   /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
   /// revoke all specified `indices`.
-  fn revoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
+  fn revoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>;
 
   /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
   /// unrevoke all specified `indices`.
-  fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
+  fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>;
 }
@@ -40,7 +40,7 @@ impl<D, T, U, V> RevocationDocumentExt for CoreDocument<D, T, U, V>
 where
   D: DID + KeyComparable,
 {
-  fn revoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
+  fn revoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -51,7 +51,7 @@ where
     })
   }
 
-  fn unrevoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
+  fn unrevoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -67,7 +67,7 @@ fn update_revocation_bitmap<'query, 'me, F, Q, D, T, U, V>(
   document: &'me mut CoreDocument<D, T, U, V>,
   service_query: Q,
   f: F,
-) -> Result<()>
+) -> RevocationResult<()>
 where
   D: DID + KeyComparable,
   F: FnOnce(&mut RevocationBitmap),
@@ -76,7 +76,7 @@ where
   let service: &mut Service<D, V> = document
     .service_mut_unchecked()
     .query_mut(service_query)
-    .ok_or(Error::InvalidService("invalid id - service not found"))?;
+    .ok_or(RevocationError::InvalidService("invalid id - service not found"))?;
 
   let mut revocation_bitmap: RevocationBitmap = RevocationBitmap::try_from(&*service)?;
   f(&mut revocation_bitmap);

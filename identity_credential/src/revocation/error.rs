@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// A result type designed for `RevocationBitmap2022` handling.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type RevocationResult<T> = std::result::Result<T, RevocationError>;
 
 /// Errors occurring when creating or extracting a Service of type `RevocationBitmap2022`
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum RevocationError {
   #[error("revocation bitmap could not be deserialized or decompressed")]
   /// Indicates that the bitmap could not be reconstructed.
   BitmapDecodingError(#[source] std::io::Error),

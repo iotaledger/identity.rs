@@ -7,5 +7,5 @@ mod document_ext;
 mod error;
 pub use self::bitmap::RevocationBitmap;
 pub use self::document_ext::RevocationDocumentExt;
-pub use self::error::Error;
-pub use self::error::Result;
+pub use self::error::RevocationError;
+pub use self::error::RevocationResult;

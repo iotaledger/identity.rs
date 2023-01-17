@@ -1016,71 +1016,6 @@ where
   }
 }
 
-#[cfg(feature = "revocation-bitmap")]
-mod core_document_revocation {
-  use identity_core::common::KeyComparable;
-
-  use crate::revocation::RevocationBitmap;
-  use crate::service::Service;
-  use crate::utils::DIDUrlQuery;
-  use crate::utils::Queryable;
-  use crate::Error;
-  use crate::Result;
-  use identity_did::DID;
-
-  use super::CoreDocument;
-
-  impl<D, T, U, V> CoreDocument<D, T, U, V>
-  where
-    D: DID + KeyComparable,
-  {
-    /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
-    /// revoke all specified `indices`.
-    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
-    where
-      Q: Into<DIDUrlQuery<'query>>,
-    {
-      self.update_revocation_bitmap(service_query, |revocation_bitmap| {
-        for credential in indices {
-          revocation_bitmap.revoke(*credential);
-        }
-      })
-    }
-
-    /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
-    /// unrevoke all specified `indices`.
-    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
-    where
-      Q: Into<DIDUrlQuery<'query>>,
-    {
-      self.update_revocation_bitmap(service_query, |revocation_bitmap| {
-        for credential in indices {
-          revocation_bitmap.unrevoke(*credential);
-        }
-      })
-    }
-
-    fn update_revocation_bitmap<'query, 'me, F, Q>(&'me mut self, service_query: Q, f: F) -> Result<()>
-    where
-      F: FnOnce(&mut RevocationBitmap),
-      Q: Into<DIDUrlQuery<'query>>,
-    {
-      let service: &mut Service<D, V> = self
-        .data
-        .service
-        .query_mut(service_query)
-        .ok_or(Error::InvalidService("invalid id - service not found"))?;
-
-      let mut revocation_bitmap: RevocationBitmap = RevocationBitmap::try_from(&*service)?;
-      f(&mut revocation_bitmap);
-
-      std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
-
-      Ok(())
-    }
-  }
-}
-
 // =============================================================================
 // Signature Extensions
 // =============================================================================
@@ -1468,60 +1403,6 @@ mod tests {
     // Ensure *all* references were removed.
     assert!(document.capability_delegation().query(method3.id()).is_none());
     assert!(document.verification_method().query(method3.id()).is_none());
-  }
-
-  #[cfg(feature = "revocation-bitmap")]
-  #[test]
-  fn test_revocation() {
-    let mut document: CoreDocument = document();
-    let indices_1 = [3, 9, 254, 65536];
-    let indices_2 = [2, 15, 1337, 1000];
-
-    let service_id = document.id().to_url().join("#revocation-service").unwrap();
-
-    // The methods error if the service doesn't exist.
-    assert!(document.revoke_credentials(&service_id, &indices_2).is_err());
-    assert!(document.unrevoke_credentials(&service_id, &indices_2).is_err());
-
-    // Add service with indices_1 already revoked.
-    let mut bitmap: crate::revocation::RevocationBitmap = crate::revocation::RevocationBitmap::new();
-    for index in indices_1.iter() {
-      bitmap.revoke(*index);
-    }
-    assert!(document
-      .insert_service(
-        Service::builder(Object::new())
-          .id(service_id.clone())
-          .type_(crate::revocation::RevocationBitmap::TYPE)
-          .service_endpoint(bitmap.to_endpoint().unwrap())
-          .build()
-          .unwrap()
-      )
-      .is_ok());
-
-    // Revoke indices_2.
-    document.revoke_credentials(&service_id, &indices_2).unwrap();
-    let service: &Service = document.resolve_service(&service_id).unwrap();
-    let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();
-
-    // We expect all indices to be revoked now.
-    for index in indices_1.iter().chain(indices_2.iter()) {
-      assert!(decoded_bitmap.is_revoked(*index));
-    }
-
-    // Unrevoke indices_1.
-    document.unrevoke_credentials(&service_id, &indices_1).unwrap();
-
-    let service: &Service = document.resolve_service(&service_id).unwrap();
-    let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();
-
-    // Expect indices_2 to be revoked, but not indices_1.
-    for index in indices_2 {
-      assert!(decoded_bitmap.is_revoked(index));
-    }
-    for index in indices_1 {
-      assert!(!decoded_bitmap.is_revoked(index));
-    }
   }
 
   #[test]

@@ -48,6 +48,8 @@ pub mod credential {
   pub use identity_credential::credential::*;
   pub use identity_credential::error::*;
   pub use identity_credential::presentation::*;
+  #[cfg(feature = "revocation-bitmap")]
+  pub use identity_credential::revocation::*;
   pub use identity_credential::validator::*;
 }
 
@@ -64,8 +66,7 @@ pub mod document {
 
   pub use identity_document::document::*;
   pub use identity_document::error::*;
-  #[cfg(feature = "revocation-bitmap")]
-  pub use identity_document::revocation::*;
+
   pub use identity_document::service::*;
   pub use identity_document::utils::*;
 

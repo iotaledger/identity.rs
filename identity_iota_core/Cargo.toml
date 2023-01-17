@@ -48,6 +48,6 @@ client = ["dep:async-trait", "dep:iota-types"]
 # Enables the iota-client dependency, the client trait implementations for it, and the `IotaClientExt` trait.
 iota-client = ["dep:iota-client", "client"]
 # Enables revocation with `RevocationBitmap2022`.
-revocation-bitmap = ["identity_document/revocation-bitmap"]
+revocation-bitmap = ["identity_credential/revocation-bitmap"]
 # Adds Send bounds on the futures produces by the client extension traits.
 send-sync-client-ext = []

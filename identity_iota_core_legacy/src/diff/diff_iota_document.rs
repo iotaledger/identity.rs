@@ -8,7 +8,7 @@ use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 use identity_did::diff::DiffDocument;
-use identity_did::document::CoreDocument;
+use identity_document::document::CoreDocument;
 
 use crate::did::IotaDID;
 use crate::diff::DiffIotaDocumentMetadata;

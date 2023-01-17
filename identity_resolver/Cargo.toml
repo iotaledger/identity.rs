@@ -36,6 +36,6 @@ tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-th
 
 [features]
 default = ["revocation-bitmap", "iota"]
-revocation-bitmap = ["identity_document/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
+revocation-bitmap = ["identity_credential/revocation-bitmap", "identity_iota_core?/revocation-bitmap"]
 # Enables the IOTA integration for the resolver.
 iota = ["dep:identity_iota_core"]

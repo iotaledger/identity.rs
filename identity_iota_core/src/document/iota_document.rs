@@ -421,6 +421,7 @@ impl Document for IotaDocument {
 
 #[cfg(feature = "revocation-bitmap")]
 mod iota_document_revocation {
+  use identity_credential::revocation::RevocationDocumentExt;
   use identity_document::utils::DIDUrlQuery;
 
   use crate::Error;

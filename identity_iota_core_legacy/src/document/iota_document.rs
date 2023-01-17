@@ -25,7 +25,7 @@ use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
-use identity_did::document::CoreDocument;
+use identity_document::document::CoreDocument;
 use identity_did::document::Document;
 use identity_did::service::Service;
 use identity_document::utils::DIDUrlQuery;

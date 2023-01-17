@@ -12,7 +12,7 @@ use identity_core::utils::Base;
 use identity_core::utils::BaseEncoding;
 use roaring::RoaringBitmap;
 
-use super::error::Error;
+use super::error::RevocationError;
 use identity_did::DID;
 use identity_document::service::Service;
 use identity_document::service::ServiceEndpoint;
@@ -62,7 +62,7 @@ impl RevocationBitmap {
   }
 
   /// Return the bitmap as a data url embedded in a service endpoint.
-  pub fn to_endpoint(&self) -> Result<ServiceEndpoint, Error> {
+  pub fn to_endpoint(&self) -> Result<ServiceEndpoint, RevocationError> {
     let endpoint_data: String = self.serialize_compressed_base64()?;
 
     let mut data_url: DataUrl = DataUrl::new();
@@ -71,82 +71,93 @@ impl RevocationBitmap {
     data_url.set_data(endpoint_data.as_bytes());
     Url::parse(data_url.to_string())
       .map(ServiceEndpoint::One)
-      .map_err(|e| Error::UrlConstructionError(e.into()))
+      .map_err(|e| RevocationError::UrlConstructionError(e.into()))
   }
 
   /// Construct a `RevocationBitmap` from a data url embedded in `service_endpoint`.
-  pub fn from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, Error> {
+  pub fn from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
     if let ServiceEndpoint::One(url) = service_endpoint {
-      let data_url: DataUrl =
-        DataUrl::parse(url.as_str()).map_err(|_| Error::InvalidService("invalid url - expected a data url"))?;
+      let data_url: DataUrl = DataUrl::parse(url.as_str())
+        .map_err(|_| RevocationError::InvalidService("invalid url - expected a data url"))?;
 
       if !data_url.get_is_base64_encoded() || data_url.get_media_type() != DATA_URL_MEDIA_TYPE {
-        return Err(Error::InvalidService(
+        return Err(RevocationError::InvalidService(
           "invalid url - expected an `application/octet-stream;base64` data url",
         ));
       }
 
       RevocationBitmap::deserialize_compressed_base64(
         std::str::from_utf8(data_url.get_data())
-          .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
+          .map_err(|_| RevocationError::InvalidService("invalid data url - expected valid utf-8"))?,
       )
     } else {
-      Err(Error::InvalidService("invalid endpoint - expected a single data url"))
+      Err(RevocationError::InvalidService(
+        "invalid endpoint - expected a single data url",
+      ))
     }
   }
 
   /// Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
-  pub(crate) fn deserialize_compressed_base64<T>(data: &T) -> Result<Self, Error>
+  pub(crate) fn deserialize_compressed_base64<T>(data: &T) -> Result<Self, RevocationError>
   where
     T: AsRef<str> + ?Sized,
   {
     let decoded_data: Vec<u8> = BaseEncoding::decode(data, Base::Base64Url)
-      .map_err(|e| Error::Base64DecodingError(data.as_ref().to_owned(), e))?;
+      .map_err(|e| RevocationError::Base64DecodingError(data.as_ref().to_owned(), e))?;
     let decompressed_data: Vec<u8> = Self::decompress_zlib(decoded_data)?;
     Self::deserialize_slice(&decompressed_data)
   }
 
   /// Serializes and compressess [`RevocationBitmap`] as a base64-encoded `String`.
-  pub(crate) fn serialize_compressed_base64(&self) -> Result<String, Error> {
+  pub(crate) fn serialize_compressed_base64(&self) -> Result<String, RevocationError> {
     let serialized_data: Vec<u8> = self.serialize_vec()?;
     Self::compress_zlib(serialized_data).map(|data| BaseEncoding::encode(&data, Base::Base64Url))
   }
 
   /// Deserializes [`RevocationBitmap`] from a slice of bytes.
-  fn deserialize_slice(data: &[u8]) -> Result<Self, Error> {
+  fn deserialize_slice(data: &[u8]) -> Result<Self, RevocationError> {
     RoaringBitmap::deserialize_from(data)
-      .map_err(Error::BitmapDecodingError)
+      .map_err(RevocationError::BitmapDecodingError)
       .map(Self)
   }
 
   /// Serializes a [`RevocationBitmap`] as a vector of bytes.
-  fn serialize_vec(&self) -> Result<Vec<u8>, Error> {
+  fn serialize_vec(&self) -> Result<Vec<u8>, RevocationError> {
     let mut output: Vec<u8> = Vec::with_capacity(self.0.serialized_size());
-    self.0.serialize_into(&mut output).map_err(Error::BitmapEncodingError)?;
+    self
+      .0
+      .serialize_into(&mut output)
+      .map_err(RevocationError::BitmapEncodingError)?;
     Ok(output)
   }
 
-  fn compress_zlib<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, Error> {
+  fn compress_zlib<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, RevocationError> {
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-    encoder.write_all(input.as_ref()).map_err(Error::BitmapEncodingError)?;
-    encoder.finish().map_err(Error::BitmapEncodingError)
+    encoder
+      .write_all(input.as_ref())
+      .map_err(RevocationError::BitmapEncodingError)?;
+    encoder.finish().map_err(RevocationError::BitmapEncodingError)
   }
 
-  fn decompress_zlib<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, Error> {
+  fn decompress_zlib<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, RevocationError> {
     let mut writer = Vec::new();
     let mut decoder = ZlibDecoder::new(writer);
-    decoder.write_all(input.as_ref()).map_err(Error::BitmapDecodingError)?;
-    writer = decoder.finish().map_err(Error::BitmapDecodingError)?;
+    decoder
+      .write_all(input.as_ref())
+      .map_err(RevocationError::BitmapDecodingError)?;
+    writer = decoder.finish().map_err(RevocationError::BitmapDecodingError)?;
     Ok(writer)
   }
 }
 
 impl<D: DID + Sized, T> TryFrom<&Service<D, T>> for RevocationBitmap {
-  type Error = Error;
+  type Error = RevocationError;
 
-  fn try_from(service: &Service<D, T>) -> Result<Self, Error> {
+  fn try_from(service: &Service<D, T>) -> Result<Self, RevocationError> {
     if !service.type_().contains(Self::TYPE) {
-      return Err(Error::InvalidService("invalid type - expected `RevocationBitmap2022`"));
+      return Err(RevocationError::InvalidService(
+        "invalid type - expected `RevocationBitmap2022`",
+      ));
     }
 
     Self::from_endpoint(service.service_endpoint())

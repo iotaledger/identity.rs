@@ -62,7 +62,7 @@ pub trait ValidatorDocument: Sealed + core::fmt::Debug {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> crate::revocation::Result<RevocationBitmap>;
+  ) -> crate::revocation::RevocationResult<RevocationBitmap>;
 }
 
 mod private {
@@ -110,7 +110,7 @@ impl ValidatorDocument for &dyn ValidatorDocument {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> crate::revocation::Result<RevocationBitmap> {
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     (*self).resolve_revocation_bitmap(query)
   }
 }
@@ -138,10 +138,10 @@ where
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> crate::revocation::Result<RevocationBitmap> {
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     self
       .resolve_service(query)
-      .ok_or(crate::revocation::Error::InvalidService(
+      .ok_or(crate::revocation::RevocationError::InvalidService(
         "revocation bitmap service not found",
       ))
       .and_then(RevocationBitmap::try_from)
@@ -188,7 +188,7 @@ impl ValidatorDocument for AbstractValidatorDocument {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> crate::revocation::Result<RevocationBitmap> {
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     self.0.resolve_revocation_bitmap(query)
   }
 }
@@ -265,7 +265,7 @@ impl ValidatorDocument for AbstractThreadSafeValidatorDocument {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> crate::revocation::Result<RevocationBitmap> {
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     self.0.resolve_revocation_bitmap(query)
   }
 }
