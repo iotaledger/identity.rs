@@ -11,8 +11,8 @@ use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
 use identity_core::diff::Diff;
 
-use identity_verification::verification_method::MethodUriType;
-use identity_verification::verification_method::TryMethod;
+use identity_verification::MethodUriType;
+use identity_verification::TryMethod;
 
 /// A generic container for a [`digital signature`][Proof] and a set of properties.
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

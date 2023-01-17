@@ -203,7 +203,7 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_did::DID;
-  use identity_verification::verification_method::MethodScope;
+  use identity_verification::MethodScope;
 
   use crate::state_metadata::document::DID_MARKER;
   use crate::state_metadata::PLACEHOLDER_DID;

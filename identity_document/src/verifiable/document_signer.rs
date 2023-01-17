@@ -20,9 +20,9 @@ use crate::document::CoreDocument;
 use crate::utils::DIDUrlQuery;
 use crate::Error;
 use crate::Result;
-use identity_verification::verification_method::MethodType;
-use identity_verification::verification_method::TryMethod;
-use identity_verification::verification_method::VerificationMethod;
+use identity_verification::MethodType;
+use identity_verification::TryMethod;
+use identity_verification::VerificationMethod;
 
 // =============================================================================
 // Document Signer - Simplifying Digital Signature Creation Since 2021

@@ -23,11 +23,11 @@ use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
 use identity_document::verifiable::DocumentSigner;
 use identity_document::verifiable::VerifierOptions;
-use identity_verification::verification_method::MethodRelationship;
-use identity_verification::verification_method::MethodScope;
-use identity_verification::verification_method::MethodUriType;
-use identity_verification::verification_method::TryMethod;
-use identity_verification::verification_method::VerificationMethod;
+use identity_verification::MethodRelationship;
+use identity_verification::MethodScope;
+use identity_verification::MethodUriType;
+use identity_verification::TryMethod;
+use identity_verification::VerificationMethod;
 
 use crate::error::Result;
 use crate::Error;
@@ -492,8 +492,8 @@ mod tests {
   use identity_core::crypto::KeyType;
   use identity_did::DID;
   use identity_document::verifiable::VerifiableProperties;
-  use identity_verification::verification_method::MethodData;
-  use identity_verification::verification_method::MethodType;
+  use identity_verification::MethodData;
+  use identity_verification::MethodType;
   use iota_types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;

@@ -24,3 +24,4 @@ mod error;
 pub mod verification_method;
 pub use error::Error;
 pub use error::Result;
+pub use verification_method::*;

@@ -145,10 +145,10 @@ mod tests {
   use identity_did::DID;
   use identity_document::document::CoreDocument;
   use identity_document::document::DocumentBuilder;
-  use identity_verification::verification_method::MethodBuilder;
-  use identity_verification::verification_method::MethodData;
-  use identity_verification::verification_method::MethodType;
-  use identity_verification::verification_method::VerificationMethod;
+  use identity_verification::MethodBuilder;
+  use identity_verification::MethodData;
+  use identity_verification::MethodType;
+  use identity_verification::VerificationMethod;
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;

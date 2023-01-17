@@ -124,5 +124,5 @@ pub mod resolver {
 
 pub mod verification {
   //! Types for verifiable data
-  pub use identity_verification::verification_method::*;
+  pub use identity_verification::*;
 }

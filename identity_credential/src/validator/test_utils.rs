@@ -12,7 +12,7 @@ use identity_core::utils::BaseEncoding;
 use identity_did::CoreDID;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
-use identity_verification::verification_method::VerificationMethod;
+use identity_verification::VerificationMethod;
 
 use crate::credential::Credential;
 use crate::credential::CredentialBuilder;

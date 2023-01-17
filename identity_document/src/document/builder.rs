@@ -10,8 +10,8 @@ use crate::error::Result;
 use crate::service::Service;
 use identity_did::CoreDID;
 use identity_did::DID;
-use identity_verification::verification_method::MethodRef;
-use identity_verification::verification_method::VerificationMethod;
+use identity_verification::MethodRef;
+use identity_verification::VerificationMethod;
 
 /// A `DocumentBuilder` is used to generate a customized [`Document`](crate::document::CoreDocument).
 #[derive(Clone, Debug)]
@@ -143,8 +143,8 @@ where
 mod tests {
   use super::*;
   use crate::Error;
-  use identity_verification::verification_method::MethodData;
-  use identity_verification::verification_method::MethodType;
+  use identity_verification::MethodData;
+  use identity_verification::MethodType;
 
   #[test]
   fn test_missing_id() {

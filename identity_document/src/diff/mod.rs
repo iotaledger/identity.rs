@@ -3,9 +3,9 @@
 
 pub use self::diff_document::DiffDocument;
 pub use self::diff_service::DiffService;
-pub use identity_verification::verification_method::diff::DiffMethod;
-pub use identity_verification::verification_method::diff::DiffMethodData;
-pub use identity_verification::verification_method::diff::DiffMethodRef;
+pub use identity_verification::diff::DiffMethod;
+pub use identity_verification::diff::DiffMethodData;
+pub use identity_verification::diff::DiffMethodRef;
 
 mod diff_document;
 mod diff_service;

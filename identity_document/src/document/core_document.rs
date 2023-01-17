@@ -36,13 +36,13 @@ use crate::verifiable::VerifierOptions;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::DID;
-use identity_verification::verification_method::MethodRef;
-use identity_verification::verification_method::MethodRelationship;
-use identity_verification::verification_method::MethodScope;
-use identity_verification::verification_method::MethodType;
-use identity_verification::verification_method::MethodUriType;
-use identity_verification::verification_method::TryMethod;
-use identity_verification::verification_method::VerificationMethod;
+use identity_verification::MethodRef;
+use identity_verification::MethodRelationship;
+use identity_verification::MethodScope;
+use identity_verification::MethodType;
+use identity_verification::MethodUriType;
+use identity_verification::TryMethod;
+use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
@@ -1116,8 +1116,8 @@ mod tests {
   use identity_core::convert::ToJson;
 
   use crate::service::ServiceBuilder;
-  use identity_verification::verification_method::MethodBuilder;
-  use identity_verification::verification_method::MethodData;
+  use identity_verification::MethodBuilder;
+  use identity_verification::MethodData;
 
   use super::*;
 
