@@ -204,7 +204,7 @@ where
     let id: DIDUrl<D> = did
       .to_url()
       .join(method_fragment)
-      .map_err(|err| Error::DIDUrlConstructionError(err))?;
+      .map_err(Error::DIDUrlConstructionError)?;
 
     let mut builder: MethodBuilder<D, T> = MethodBuilder::default().id(id).controller(did);
     match key_type {

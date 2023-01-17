@@ -946,10 +946,7 @@ where
   where
     X: Serialize + GetSignature + ?Sized,
   {
-    let public_key: Vec<u8> = method
-      .data()
-      .try_decode()
-      .map_err(|error| Error::InvalidKeyData(error))?;
+    let public_key: Vec<u8> = method.data().try_decode().map_err(Error::InvalidKeyData)?;
 
     match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {

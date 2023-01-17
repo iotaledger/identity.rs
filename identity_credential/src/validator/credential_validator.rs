@@ -307,9 +307,6 @@ mod tests {
   use crate::validator::test_utils;
   use crate::validator::CredentialValidationOptions;
 
-  #[cfg(feature = "revocation-bitmap")]
-  use crate::revocation::RevocationDocumentExt;
-
   use super::*;
 
   const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
@@ -733,6 +730,7 @@ mod tests {
   #[cfg(feature = "revocation-bitmap")]
   #[test]
   fn test_check_status() {
+    use crate::revocation::RevocationDocumentExt;
     let Setup {
       mut issuer_doc,
       unsigned_credential: mut credential,
@@ -795,7 +793,7 @@ mod tests {
     }
 
     // 4: revoked index.
-    issuer_doc.revoke_credentials(&service_url, &[index]).unwrap();
+    <CoreDocument as RevocationDocumentExt>::revoke_credentials(&mut issuer_doc, &service_url, &[index]).unwrap();
     for (status_check, expected) in [
       (StatusCheck::Strict, false),
       (StatusCheck::SkipUnsupported, false),
