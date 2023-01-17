@@ -90,9 +90,11 @@ impl_wasm_error_from!(
   identity_iota::core::Error,
   identity_iota::credential::Error,
   identity_iota::did::Error,
-  identity_iota::did::DIDError,
+  identity_iota::document::Error,
   identity_iota::iota::Error,
-  identity_iota::credential::ValidationError
+  identity_iota::credential::ValidationError,
+  identity_iota::credential::RevocationError,
+  identity_iota::verification::Error
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str

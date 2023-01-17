@@ -11,8 +11,8 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::core::OneOrMany;
 use identity_iota::did::CoreDIDUrl;
-use identity_iota::did::Service;
-use identity_iota::did::ServiceEndpoint;
+use identity_iota::document::Service;
+use identity_iota::document::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 

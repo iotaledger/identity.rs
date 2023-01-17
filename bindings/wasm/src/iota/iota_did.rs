@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::did::DIDError;
+use identity_iota::did::Error as DIDError;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::NetworkName;

@@ -3,8 +3,8 @@
 
 use std::borrow::Cow;
 
-use identity_iota::did::RevocationBitmap;
-use identity_iota::did::ServiceEndpoint;
+use identity_iota::credential::RevocationBitmap;
+use identity_iota::document::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
 
 use crate::did::UServiceEndpoint;
