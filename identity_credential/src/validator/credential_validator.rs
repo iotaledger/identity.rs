@@ -207,7 +207,7 @@ impl CredentialValidator {
     // Check whether index is revoked.
     let revocation_bitmap: RevocationBitmap = issuer
       .resolve_revocation_bitmap(issuer_service_url.into())
-      .map_err(|_| ValidationError::InvalidService)?;
+      .map_err(|_| ValidationError::ServiceLookupError)?;
     let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
     if revocation_bitmap.is_revoked(index) {
       Err(ValidationError::Revoked)
