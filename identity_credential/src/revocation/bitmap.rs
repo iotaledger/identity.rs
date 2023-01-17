@@ -70,7 +70,7 @@ impl RevocationBitmap {
     data_url.set_is_base64_encoded(true);
     data_url.set_data(endpoint_data.as_bytes());
     Url::parse(data_url.to_string())
-      .map(|url| ServiceEndpoint::One(url))
+      .map(ServiceEndpoint::One)
       .map_err(|e| Error::UrlConstructionError(e.into()))
   }
 
