@@ -5,13 +5,13 @@ use std::str::FromStr;
 
 use serde::Serialize;
 
+#[cfg(feature = "revocation-bitmap")]
+use crate::revocation::RevocationBitmap;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_did::CoreDID;
 use identity_did::DID;
-#[cfg(feature = "revocation-bitmap")]
-use identity_document::revocation::RevocationBitmap;
 use identity_document::verifiable::VerifierOptions;
 
 use crate::credential::Credential;
@@ -207,7 +207,7 @@ impl CredentialValidator {
     // Check whether index is revoked.
     let revocation_bitmap: RevocationBitmap = issuer
       .resolve_revocation_bitmap(issuer_service_url.into())
-      .map_err(ValidationError::InvalidService)?;
+      .map_err(|_| ValidationError::InvalidService)?;
     let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
     if revocation_bitmap.is_revoked(index) {
       Err(ValidationError::Revoked)
@@ -306,6 +306,9 @@ mod tests {
   use crate::credential::Subject;
   use crate::validator::test_utils;
   use crate::validator::CredentialValidationOptions;
+
+  #[cfg(feature = "revocation-bitmap")]
+  use crate::revocation::RevocationDocumentExt;
 
   use super::*;
 
@@ -727,6 +730,7 @@ mod tests {
     .is_ok());
   }
 
+  #[cfg(feature = "revocation-bitmap")]
   #[test]
   fn test_check_status() {
     let Setup {

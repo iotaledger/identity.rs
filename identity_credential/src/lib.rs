@@ -26,6 +26,8 @@ pub use self::error::Result;
 pub mod credential;
 pub mod error;
 pub mod presentation;
+#[cfg(feature = "revocation-bitmap")]
+pub mod revocation;
 
 #[cfg(feature = "validator")]
 pub mod validator;

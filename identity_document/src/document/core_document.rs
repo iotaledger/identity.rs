@@ -316,6 +316,14 @@ where
     &self.data.service
   }
 
+  /// # Warning
+  ///
+  /// Changes a service's identifier can drastically alter the results of
+  /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
+  pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D, V>> {
+    &mut self.data.service
+  }
+
   /// Returns a reference to the custom `CoreDocument` properties.
   pub fn properties(&self) -> &T {
     &self.data.properties

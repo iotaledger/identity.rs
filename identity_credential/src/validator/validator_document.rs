@@ -3,11 +3,11 @@
 
 use std::any::Any;
 
+#[cfg(feature = "revocation-bitmap")]
+use crate::revocation::RevocationBitmap;
 use identity_core::crypto::GetSignature;
 use identity_did::DID;
 use identity_document::document::Document;
-#[cfg(feature = "revocation-bitmap")]
-use identity_document::revocation::RevocationBitmap;
 use identity_document::verifiable::VerifierOptions;
 
 use self::private::Sealed;
@@ -62,7 +62,7 @@ pub trait ValidatorDocument: Sealed + core::fmt::Debug {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> identity_document::Result<RevocationBitmap>;
+  ) -> crate::revocation::Result<RevocationBitmap>;
 }
 
 mod private {
@@ -110,7 +110,7 @@ impl ValidatorDocument for &dyn ValidatorDocument {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> identity_document::Result<RevocationBitmap> {
+  ) -> crate::revocation::Result<RevocationBitmap> {
     (*self).resolve_revocation_bitmap(query)
   }
 }
@@ -138,10 +138,10 @@ where
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> identity_document::Result<RevocationBitmap> {
+  ) -> crate::revocation::Result<RevocationBitmap> {
     self
       .resolve_service(query)
-      .ok_or(identity_document::Error::InvalidService(
+      .ok_or(crate::revocation::Error::InvalidService(
         "revocation bitmap service not found",
       ))
       .and_then(RevocationBitmap::try_from)
@@ -188,7 +188,7 @@ impl ValidatorDocument for AbstractValidatorDocument {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> identity_document::Result<RevocationBitmap> {
+  ) -> crate::revocation::Result<RevocationBitmap> {
     self.0.resolve_revocation_bitmap(query)
   }
 }
@@ -265,7 +265,7 @@ impl ValidatorDocument for AbstractThreadSafeValidatorDocument {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> identity_document::Result<RevocationBitmap> {
+  ) -> crate::revocation::Result<RevocationBitmap> {
     self.0.resolve_revocation_bitmap(query)
   }
 }

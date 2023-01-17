@@ -52,7 +52,6 @@ pub enum Error {
   UnknownMethodType,
 
   #[error("invalid key data")]
-  #[non_exhaustive]
   InvalidKeyData(#[source] identity_verification::Error),
 
   #[error("signature verification failed: {0}")]
