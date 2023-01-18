@@ -1,8 +1,8 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! This example shows how to revoke a verifiable credential.
-//! It demonstrates two methods for revocation. The first uses a revocation bitmap of type `RevocationBitmap2022`,
+//! It demonstrates two methods for revocation. The first uses a revocation bitmap of type `RevocationBitmap2023`,
 //! while the second method simply removes the verification method (public key) that signed the credential
 //! from the DID Document of the issuer.
 //!
