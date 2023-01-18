@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! JSON Web Utilities.
+
 mod base64;
 mod crypto;
 mod serde;

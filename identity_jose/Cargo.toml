@@ -24,14 +24,10 @@ version = "0.15.3"
 default-features = false
 features = [
   "std",
-  "aes",
-  "aes-cbc",
-  "aes-kw",
-  "chacha",
-  "ed25519",
-  "hmac",
-  "pbkdf",
-  "random",
   "sha",
-  "x25519",
 ]
+
+[dev-dependencies]
+anyhow = "1"
+iota-crypto = { version = "*", features = ["ed25519", "random"] }
+tokio = { version = "1.24.2", features = ["macros", "rt"] }

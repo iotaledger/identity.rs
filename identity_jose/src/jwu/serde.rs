@@ -8,7 +8,7 @@ use crate::error::Result;
 use crate::jose::JoseHeader;
 // use crate::jwe::JweHeader;
 use crate::jws::JwsHeader;
-use crate::jw_utils::decode_b64;
+use crate::jwu::decode_b64;
 
 // The default value of the "b64" header parameter
 const DEFAULT_B64: bool = true;

@@ -1,11 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// use crate::utils::RsaComputed;
 use crypto::hashes::sha::SHA256;
 use crypto::hashes::sha::SHA256_LEN;
-// use rand::rngs::OsRng;
-// use rsa::PublicKeyParts as _;
 use url::Url;
 use zeroize::Zeroize;
 
@@ -22,14 +19,7 @@ use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkParamsRsa;
 use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
-use crate::jw_utils::encode_b64;
-// use crate::utils::random_bytes;
-// use crate::utils::Ed25519SecretKey;
-// use crate::utils::K256SecretKey;
-// use crate::utils::P256SecretKey;
-// use crate::utils::RsaSecretKey;
-// use crate::utils::X25519SecretKey;
-// use crate::utils::X448SecretKey;
+use crate::jwu::encode_b64;
 
 /// A SHA256 JSON Web Key Thumbprint.
 pub type JwkThumbprint = [u8; SHA256_LEN];

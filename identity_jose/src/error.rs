@@ -25,11 +25,13 @@ pub enum Error {
   InvalidArray(&'static str),
   AlgError(&'static str),
   EncError(&'static str),
+  // TODO: Check if this is used?
   SigError(&'static str),
   KeyError(&'static str),
-  // CryptoError(crypto::Error),
+  SignatureError(Box<dyn std::error::Error + Send + Sync>), // CryptoError(crypto::Error),
 }
 
+// TODO: Use thiserror? Lowercase error message!
 impl Display for Error {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
@@ -48,12 +50,12 @@ impl Display for Error {
       Self::EncError(inner) => f.write_fmt(format_args!("Encryption Error: {}", inner)),
       Self::SigError(inner) => f.write_fmt(format_args!("Signature Error: {}", inner)),
       Self::KeyError(inner) => f.write_fmt(format_args!("Invalid Key Format: {}", inner)),
+      Self::SignatureError(inner) => f.write_fmt(format_args!("signature creation error: {}", inner)),
       // Self::CryptoError(inner) => f.write_fmt(format_args!("Crypto Error: {}", inner)),
     }
   }
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for Error {}
 
 // impl From<crypto::Error> for Error {
