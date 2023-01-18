@@ -430,7 +430,7 @@ mod iota_document_revocation {
   use super::IotaDocument;
 
   impl IotaDocument {
-    /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
+    /// If the document has a [`RevocationBitmap`](identity_credential::revocation::RevocationBitmap)
     /// service identified by `service_query`, revoke all specified `indices`.
     pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
@@ -442,7 +442,7 @@ mod iota_document_revocation {
         .map_err(Error::RevocationError)
     }
 
-    /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
+    /// If the document has a [`RevocationBitmap`](identity_credential::revocation::RevocationBitmap)
     /// service with an id by `service_query`, unrevoke all specified `indices`.
     pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
