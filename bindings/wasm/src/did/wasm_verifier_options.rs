@@ -24,6 +24,7 @@ impl WasmVerifierOptions {
   }
 
   /// Creates a new `VerifierOptions` with default options.
+  #[allow(clippy::should_implement_trait)]
   #[wasm_bindgen]
   pub fn default() -> WasmVerifierOptions {
     WasmVerifierOptions(VerifierOptions::default())

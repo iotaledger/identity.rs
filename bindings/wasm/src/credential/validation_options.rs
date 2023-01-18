@@ -29,6 +29,7 @@ impl WasmCredentialValidationOptions {
   }
 
   /// Creates a new `CredentialValidationOptions` with defaults.
+  #[allow(clippy::should_implement_trait)]
   #[wasm_bindgen]
   pub fn default() -> WasmCredentialValidationOptions {
     WasmCredentialValidationOptions::from(CredentialValidationOptions::default())
@@ -66,6 +67,7 @@ impl WasmPresentationValidationOptions {
   }
 
   /// Creates a new `PresentationValidationOptions` with defaults.
+  #[allow(clippy::should_implement_trait)]
   #[wasm_bindgen]
   pub fn default() -> WasmPresentationValidationOptions {
     WasmPresentationValidationOptions::from(PresentationValidationOptions::default())

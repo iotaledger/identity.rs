@@ -24,6 +24,7 @@ impl WasmProofOptions {
   }
 
   /// Creates a new `ProofOptions` with default options.
+  #[allow(clippy::should_implement_trait)]
   #[wasm_bindgen]
   pub fn default() -> WasmProofOptions {
     WasmProofOptions::from(ProofOptions::default())
