@@ -72,9 +72,9 @@ where
   /// ```
   /// 
   /// # Tradeoffs
-  /// The default type agnostic [`Resolver`] is more convenient when working with document types whose implementations of the [`Document`](::identity_did::document::Document)
+  /// The default type agnostic [`Resolver`] is more convenient when working with document types whose implementations of the [`Document`](::identity_document::document::Document)
   /// trait do not map well to a single representation (such as for instance [`CoreDocument`](::identity_document::document::CoreDocument)).
-  /// This is typically the case whenever custom cryptography is applied in implementations of the [`Document::verify_data`](::identity_did::document::Document::verify_data()) method.
+  /// This is typically the case whenever custom cryptography is applied in implementations of the [`Document::verify_data`](::identity_document::document::Document::verify_data()) method.
   /// The extra flexibility offered by the type agnostic resolver comes at the cost of less type information, hence specifying a concrete type in the constructor
   /// is recommended whenever a single representation is a good fit.  
   pub fn new() -> Self {
