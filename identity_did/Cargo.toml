@@ -3,11 +3,11 @@ name = "identity_did"
 version = "0.7.0-alpha.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
-homepage = "https://www.iota.org"
+homepage.workspace = true
 keywords = ["iota", "tangle", "identity", "did"]
-license = "Apache-2.0"
+license.workspace = true
 readme = "./README.md"
-repository = "https://github.com/iotaledger/identity.rs"
+repository.workspace = true
 description = "Agnostic implementation of the Decentralized Identifiers (DID) standard."
 
 [dependencies]

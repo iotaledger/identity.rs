@@ -29,3 +29,11 @@ split-debuginfo = "unpacked"
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+
+[workspace.package]
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+license = "Apache-2.0"
+repository = "https://github.com/iotaledger/identity.rs"
+rust-version = "1.65"

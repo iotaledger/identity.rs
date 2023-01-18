@@ -3,12 +3,12 @@ name = "identity_iota_core"
 version = "0.7.0-alpha.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
-homepage = "https://www.iota.org"
+homepage.workspace = true
 keywords = ["iota", "tangle", "utxo", "shimmer", "identity"]
-license = "Apache-2.0"
+license.workspace = true
 readme = "./README.md"
-repository = "https://github.com/iotaledger/identity.rs"
-rust-version = "1.62"
+repository.workspace = true
+rust-version.workspace = true
 description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
