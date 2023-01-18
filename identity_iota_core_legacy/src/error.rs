@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
@@ -11,7 +11,7 @@ pub enum Error {
   #[error("{0}")]
   InvalidDID(#[from] identity_did::Error),
   #[error("{0}")]
-  InvalidDoc(#[from] identity_did::Error),
+  InvalidDoc(#[from] identity_document::Error),
   #[error("Invalid Message: {0}")]
   InvalidMessage(#[from] bee_message::Error),
 
