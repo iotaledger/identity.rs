@@ -9,7 +9,7 @@ license.workspace = true
 readme = "./README.md"
 repository.workspace = true
 rust-version.workspace = true
-description = "Agnostic implementation of the Decentralized Identifiers (DID) standard."
+description = "Method-agnostic implementation of the Decentralized Identifiers (DID) standard."
 
 [dependencies]
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
