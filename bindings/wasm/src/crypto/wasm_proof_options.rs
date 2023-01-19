@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::crypto::ProofOptions;
@@ -24,6 +24,7 @@ impl WasmProofOptions {
   }
 
   /// Creates a new `ProofOptions` with default options.
+  #[allow(clippy::should_implement_trait)]
   #[wasm_bindgen]
   pub fn default() -> WasmProofOptions {
     WasmProofOptions::from(ProofOptions::default())

@@ -1,14 +1,14 @@
 [package]
 name = "identity_agent"
 version = "0.7.0-alpha.4"
-authors = ["IOTA Stiftung"]
-edition = "2021"
-homepage = "https://www.iota.org"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 keywords = ["iota", "tangle", "identity", "p2p", "agent"]
-license = "Apache-2.0"
+license.workspace = true
 publish = false
 readme = "./README.md"
-repository = "https://github.com/iotaledger/identity.rs"
+repository.workspace = true
 description = "A peer-to-peer communication framework for building SSI agents on IOTA Identity"
 
 [dependencies]

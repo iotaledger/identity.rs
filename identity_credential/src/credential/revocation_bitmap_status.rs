@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
@@ -6,8 +6,8 @@ use std::str::FromStr;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::common::Value;
-use identity_did::did::DIDUrl;
-use identity_did::did::DID;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 use crate::credential::Status;
 use crate::error::Error;
@@ -31,8 +31,8 @@ impl RevocationBitmapStatus {
   ///
   /// ```
   /// # use identity_credential::credential::RevocationBitmapStatus;
-  /// # use identity_did::did::DIDUrl;
-  /// # use identity_did::did::CoreDID;
+  /// # use identity_did::DIDUrl;
+  /// # use identity_did::CoreDID;
   /// let did_url: DIDUrl<CoreDID> = DIDUrl::parse("did:method:0xffff#revocation-1").unwrap();
   /// let status: RevocationBitmapStatus = RevocationBitmapStatus::new(did_url, 5);
   /// assert_eq!(
@@ -144,8 +144,8 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
-  use identity_did::did::CoreDID;
-  use identity_did::did::DIDUrl;
+  use identity_did::CoreDID;
+  use identity_did::DIDUrl;
 
   use crate::Error;
 

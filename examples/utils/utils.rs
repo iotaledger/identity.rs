@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::path::PathBuf;
@@ -7,12 +7,12 @@ use anyhow::Context;
 
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
-use identity_iota::did::MethodScope;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
+use identity_iota::verification::MethodScope;
 
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;

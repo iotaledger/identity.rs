@@ -7,7 +7,7 @@ use identity_account_storage::types::EncryptedData;
 use identity_account_storage::types::EncryptionAlgorithm;
 use identity_account_storage::types::KeyLocation;
 use identity_account_storage::types::Signature;
-use identity_did::did::CoreDID;
+use identity_did::CoreDID;
 use identity_iota_core_legacy::document::IotaDocument;
 use napi::Result;
 use napi_derive::napi;

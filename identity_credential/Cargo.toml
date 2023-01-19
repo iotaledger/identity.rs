@@ -3,24 +3,29 @@ name = "identity_credential"
 version = "0.7.0-alpha.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
-homepage = "https://www.iota.org"
+homepage.workspace = true
 keywords = ["iota", "tangle", "identity"]
-license = "Apache-2.0"
+license.workspace = true
 readme = "./README.md"
-repository = "https://github.com/iotaledger/identity.rs"
-rust-version = "1.62"
+repository.workspace = true
+rust-version.workspace = true
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
+dataurl = { version = "0.1.2", default-features = false, optional = true }
 erased-serde = { version = "0.3.21", default-features = false, features = ["std"], optional = true }
+flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
+identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
+identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verification", default-features = false }
 itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
 lazy_static = { version = "1.4", default-features = false }
-serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+roaring = { version = "0.9.0", default-features = false, optional = true }
+serde.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
-thiserror = { version = "1.0", default-features = false }
+strum.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
@@ -33,6 +38,8 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap", "validator"]
-revocation-bitmap = ["identity_did/revocation-bitmap"]
-validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr"]
+default = ["revocation-bitmap", "validator", "credential", "presentation"]
+credential = []
+presentation = ["credential"]
+revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
+validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr", "credential", "presentation"]

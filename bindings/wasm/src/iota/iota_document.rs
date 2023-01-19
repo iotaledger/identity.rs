@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::core::OneOrMany;
@@ -9,9 +9,8 @@ use identity_iota::credential::Credential;
 use identity_iota::credential::Presentation;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
-use identity_iota::did::verifiable::VerifiableProperties;
-use identity_iota::did::Document;
-use identity_iota::did::MethodScope;
+use identity_iota::document::verifiable::VerifiableProperties;
+use identity_iota::document::Document;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaDID;
@@ -19,6 +18,7 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
+use identity_iota::verification::MethodScope;
 use iota_types::block::protocol::dto::ProtocolParametersDto;
 use iota_types::block::protocol::ProtocolParameters;
 use wasm_bindgen::prelude::*;

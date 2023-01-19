@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Context;
@@ -141,14 +141,14 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::CoreDID;
-  use identity_did::did::DID;
-  use identity_did::document::CoreDocument;
-  use identity_did::document::DocumentBuilder;
-  use identity_did::verification::MethodBuilder;
-  use identity_did::verification::MethodData;
-  use identity_did::verification::MethodType;
-  use identity_did::verification::VerificationMethod;
+  use identity_did::CoreDID;
+  use identity_did::DID;
+  use identity_document::document::CoreDocument;
+  use identity_document::document::DocumentBuilder;
+  use identity_verification::MethodBuilder;
+  use identity_verification::MethodData;
+  use identity_verification::MethodType;
+  use identity_verification::VerificationMethod;
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;

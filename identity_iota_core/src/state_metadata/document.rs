@@ -1,11 +1,11 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
-use identity_did::did::CoreDID;
-use identity_did::document::CoreDocument;
+use identity_did::CoreDID;
+use identity_document::document::CoreDocument;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
@@ -84,7 +84,7 @@ impl StateMetadataDocument {
     // Check marker.
     let marker: &[u8] = data
       .get(0..=2)
-      .ok_or(identity_did::Error::InvalidDocument(
+      .ok_or(identity_document::Error::InvalidDocument(
         "state metadata decoding: expected DID marker at offset [0..=2]",
         None,
       ))
@@ -97,7 +97,7 @@ impl StateMetadataDocument {
     let version: StateMetadataVersion = StateMetadataVersion::try_from(
       *data
         .get(3)
-        .ok_or(identity_did::Error::InvalidDocument(
+        .ok_or(identity_document::Error::InvalidDocument(
           "state metadata decoding: expected version at offset 3",
           None,
         ))
@@ -111,7 +111,7 @@ impl StateMetadataDocument {
     let encoding: StateMetadataEncoding = StateMetadataEncoding::try_from(
       *data
         .get(4)
-        .ok_or(identity_did::Error::InvalidDocument(
+        .ok_or(identity_document::Error::InvalidDocument(
           "state metadata decoding: expected encoding at offset 4",
           None,
         ))
@@ -120,19 +120,21 @@ impl StateMetadataDocument {
 
     let data_len_packed: [u8; 2] = data
       .get(5..=6)
-      .ok_or(identity_did::Error::InvalidDocument(
+      .ok_or(identity_document::Error::InvalidDocument(
         "state metadata decoding: expected data length at offset [5..=6]",
         None,
       ))
       .map_err(Error::InvalidDoc)?
       .try_into()
-      .map_err(|_| identity_did::Error::InvalidDocument("state metadata decoding: data length conversion error", None))
+      .map_err(|_| {
+        identity_document::Error::InvalidDocument("state metadata decoding: data length conversion error", None)
+      })
       .map_err(Error::InvalidDoc)?;
     let data_len: u16 = u16::from_le_bytes(data_len_packed);
 
     let data: &[u8] = data
       .get(7..(7 + data_len as usize))
-      .ok_or(identity_did::Error::InvalidDocument(
+      .ok_or(identity_document::Error::InvalidDocument(
         "state metadata decoding: encoded document shorter than length prefix",
         None,
       ))
@@ -200,8 +202,8 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::DID;
-  use identity_did::verification::MethodScope;
+  use identity_did::DID;
+  use identity_verification::MethodScope;
 
   use crate::state_metadata::document::DID_MARKER;
   use crate::state_metadata::PLACEHOLDER_DID;

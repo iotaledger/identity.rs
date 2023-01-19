@@ -1,22 +1,24 @@
 [package]
 name = "identity_iota"
 version = "0.7.0-alpha.4"
-authors = ["IOTA Stiftung"]
-edition = "2021"
-homepage = "https://www.iota.org"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 keywords = ["iota", "tangle", "identity", "did", "ssi"]
-license = "Apache-2.0"
+license.workspace = true
 readme = "./README.md"
-repository = "https://github.com/iotaledger/identity.rs"
-rust-version = "1.62"
+repository.workspace = true
+rust-version.workspace = true
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.7.0-alpha.4", path = "../identity_credential", features = ["validator"], default-features = false }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
+identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=0.7.0-alpha.4", path = "../identity_iota_core", default-features = false }
 identity_resolver = { version = "=0.7.0-alpha.4", path = "../identity_resolver", default-features = false, optional = true }
+identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.64"

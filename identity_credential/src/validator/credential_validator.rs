@@ -1,18 +1,18 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
 
 use serde::Serialize;
 
+#[cfg(feature = "revocation-bitmap")]
+use crate::revocation::RevocationBitmap;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
-#[cfg(feature = "revocation-bitmap")]
-use identity_did::revocation::RevocationBitmap;
-use identity_did::verifiable::VerifierOptions;
+use identity_did::CoreDID;
+use identity_did::DID;
+use identity_document::verifiable::VerifierOptions;
 
 use crate::credential::Credential;
 #[cfg(feature = "revocation-bitmap")]
@@ -202,12 +202,12 @@ impl CredentialValidator {
     issuer: &DOC,
     status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: identity_did::did::CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+    let issuer_service_url: identity_did::CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
     let revocation_bitmap: RevocationBitmap = issuer
       .resolve_revocation_bitmap(issuer_service_url.into())
-      .map_err(ValidationError::InvalidService)?;
+      .map_err(|_| ValidationError::ServiceLookupError)?;
     let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
     if revocation_bitmap.is_revoked(index) {
       Err(ValidationError::Revoked)
@@ -298,9 +298,9 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_did::did::DID;
-  use identity_did::document::CoreDocument;
-  use identity_did::service::Service;
+  use identity_did::DID;
+  use identity_document::document::CoreDocument;
+  use identity_document::service::Service;
 
   use crate::credential::Status;
   use crate::credential::Subject;
@@ -727,8 +727,10 @@ mod tests {
     .is_ok());
   }
 
+  #[cfg(feature = "revocation-bitmap")]
   #[test]
   fn test_check_status() {
+    use crate::revocation::RevocationDocumentExt;
     let Setup {
       mut issuer_doc,
       unsigned_credential: mut credential,
@@ -756,7 +758,7 @@ mod tests {
     }
 
     // Add a RevocationBitmap status to the credential.
-    let service_url: identity_did::did::CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
+    let service_url: identity_did::CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
     let index: u32 = 42;
     credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
 
@@ -791,7 +793,7 @@ mod tests {
     }
 
     // 4: revoked index.
-    issuer_doc.revoke_credentials(&service_url, &[index]).unwrap();
+    <CoreDocument as RevocationDocumentExt>::revoke_credentials(&mut issuer_doc, &service_url, &[index]).unwrap();
     for (status_check, expected) in [
       (StatusCheck::Strict, false),
       (StatusCheck::SkipUnsupported, false),

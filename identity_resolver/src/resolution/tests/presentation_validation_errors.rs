@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::ErrorCause;
@@ -8,8 +8,8 @@ use identity_credential::presentation::Presentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::did::CoreDID;
-use identity_did::document::CoreDocument;
+use identity_did::CoreDID;
+use identity_document::document::CoreDocument;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 

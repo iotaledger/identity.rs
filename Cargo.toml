@@ -7,9 +7,11 @@ members = [
   "identity_credential",
   "identity_did",
   "identity_diff",
+  "identity_document",
   "identity_iota",
   "identity_iota_core",
   "identity_resolver",
+  "identity_verification",
   "examples",
 ]
 
@@ -22,3 +24,16 @@ exclude = [
 
 [profile.dev]
 split-debuginfo = "unpacked"
+
+[workspace.dependencies]
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+thiserror = { version = "1.0", default-features = false }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+
+[workspace.package]
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+license = "Apache-2.0"
+repository = "https://github.com/iotaledger/identity.rs"
+rust-version = "1.65"

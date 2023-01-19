@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
@@ -16,11 +16,11 @@ use serde::Serialize;
 
 use identity_core::common::KeyComparable;
 use identity_core::utils::BaseEncoding;
-use identity_did::did::BaseDIDUrl;
-use identity_did::did::CoreDID;
-use identity_did::did::DIDError;
-use identity_did::did::DIDUrl;
-use identity_did::did::DID;
+use identity_did::BaseDIDUrl;
+use identity_did::CoreDID;
+use identity_did::DIDError;
+use identity_did::DIDUrl;
+use identity_did::DID;
 
 use crate::did::Segments;
 use crate::error::Error;
@@ -293,8 +293,8 @@ impl KeyComparable for IotaDID {
 mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::CoreDID;
-  use identity_did::did::DID;
+  use identity_did::CoreDID;
+  use identity_did::DID;
 
   use crate::did::IotaDID;
   use crate::did::IotaDIDUrl;

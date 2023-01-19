@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt;
@@ -17,17 +17,17 @@ use identity_core::crypto::GetSignature;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
-use identity_did::document::CoreDocument;
-use identity_did::document::Document;
-use identity_did::service::Service;
-use identity_did::utils::DIDUrlQuery;
-use identity_did::verifiable::DocumentSigner;
-use identity_did::verifiable::VerifierOptions;
-use identity_did::verification::MethodRelationship;
-use identity_did::verification::MethodScope;
-use identity_did::verification::MethodUriType;
-use identity_did::verification::TryMethod;
-use identity_did::verification::VerificationMethod;
+use identity_document::document::CoreDocument;
+use identity_document::document::Document;
+use identity_document::service::Service;
+use identity_document::utils::DIDUrlQuery;
+use identity_document::verifiable::DocumentSigner;
+use identity_document::verifiable::VerifierOptions;
+use identity_verification::MethodRelationship;
+use identity_verification::MethodScope;
+use identity_verification::MethodUriType;
+use identity_verification::TryMethod;
+use identity_verification::VerificationMethod;
 
 use crate::error::Result;
 use crate::Error;
@@ -411,7 +411,7 @@ impl Document for IotaDocument {
     self.document.resolve_method(query, scope)
   }
 
-  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_did::Result<()>
+  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_document::Result<()>
   where
     X: Serialize + GetSignature + ?Sized,
   {
@@ -421,7 +421,8 @@ impl Document for IotaDocument {
 
 #[cfg(feature = "revocation-bitmap")]
 mod iota_document_revocation {
-  use identity_did::utils::DIDUrlQuery;
+  use identity_credential::revocation::RevocationDocumentExt;
+  use identity_document::utils::DIDUrlQuery;
 
   use crate::Error;
   use crate::Result;
@@ -429,7 +430,7 @@ mod iota_document_revocation {
   use super::IotaDocument;
 
   impl IotaDocument {
-    /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
+    /// If the document has a [`RevocationBitmap`](identity_credential::revocation::RevocationBitmap)
     /// service identified by `service_query`, revoke all specified `indices`.
     pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
@@ -441,7 +442,7 @@ mod iota_document_revocation {
         .map_err(Error::RevocationError)
     }
 
-    /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
+    /// If the document has a [`RevocationBitmap`](identity_credential::revocation::RevocationBitmap)
     /// service with an id by `service_query`, unrevoke all specified `indices`.
     pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
@@ -490,10 +491,10 @@ mod tests {
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::DID;
-  use identity_did::verifiable::VerifiableProperties;
-  use identity_did::verification::MethodData;
-  use identity_did::verification::MethodType;
+  use identity_did::DID;
+  use identity_document::verifiable::VerifiableProperties;
+  use identity_verification::MethodData;
+  use identity_verification::MethodType;
   use iota_types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;

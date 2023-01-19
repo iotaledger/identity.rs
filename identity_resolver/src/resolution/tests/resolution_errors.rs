@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::error::Error;
@@ -12,12 +12,12 @@ use identity_credential::presentation::PresentationBuilder;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::did::BaseDIDUrl;
-use identity_did::did::CoreDID;
-use identity_did::did::DIDError;
-use identity_did::did::DID;
-use identity_did::document::CoreDocument;
-use identity_did::document::DocumentBuilder;
+use identity_did::BaseDIDUrl;
+use identity_did::CoreDID;
+use identity_did::Error as DIDError;
+use identity_did::DID;
+use identity_document::document::CoreDocument;
+use identity_document::document::DocumentBuilder;
 
 use crate::Error as ResolverError;
 use crate::ErrorCause;

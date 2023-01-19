@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -15,8 +15,8 @@ use identity_core::crypto::GetSignature;
 use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_did::verification::MethodUriType;
-use identity_did::verification::TryMethod;
+use identity_verification::MethodUriType;
+use identity_verification::TryMethod;
 
 use crate::credential::Credential;
 use crate::credential::Policy;

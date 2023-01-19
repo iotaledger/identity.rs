@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -23,9 +23,13 @@ extern crate serde;
 pub use self::error::Error;
 pub use self::error::Result;
 
+#[cfg(feature = "credential")]
 pub mod credential;
 pub mod error;
+#[cfg(feature = "presentation")]
 pub mod presentation;
+#[cfg(feature = "revocation-bitmap")]
+pub mod revocation;
 
 #[cfg(feature = "validator")]
 pub mod validator;
