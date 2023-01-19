@@ -6,7 +6,7 @@ edition.workspace = true
 homepage.workspace = true
 license.workspace = true
 rust-version.workspace = true
-
+description = "Verification data types and functionality for identity.rs"
 
 [dependencies]
 identity_core = { version = "=0.7.0-alpha.4", path = "./../identity_core", default-features = false }
