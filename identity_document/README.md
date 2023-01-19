@@ -1,7 +1,7 @@
 IOTA Identity - Document
 === 
 
-Agnostic implementation of DID Documents from the Decentralized Identifiers (DID) standard from W3C.
+Method-agnostic implementation of DID Documents from the Decentralized Identifiers (DID) standard from W3C.
 
 ## Overview 
 Decentralized Identifiers (DID) is a proposed standard from the World Wide Web Consortium (W3C) to enable a
