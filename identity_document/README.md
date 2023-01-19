@@ -12,15 +12,3 @@ information about the identity. Often the DID Documents are stored on a Distribu
 Bitcoin, Ethereum and IOTA, but this is not a requirement.
 
 The [IOTA Identity Framework](https://wiki.iota.org/identity.rs/introduction) leverages this crate to build its own [DID method](https://www.w3.org/TR/2020/WD-did-core-20200731/#dfn-did-methods), but the types and traits here are defined according to the [DID specifications v1.0 Working Draft 20200731](https://www.w3.org/TR/2020/WD-did-core-20200731/) which is method agnostic. 
-
-## Central functionality 
-When working with the IOTA Identity Framework one will frequently interact with functionality from this crate listed here. 
-
-- [`DIDUrl`](crate::did::DIDUrl)
-- [`Service`](crate::service::Service)
-- [`VerificationMethod`](crate::verification::VerificationMethod)
-- [`MethodRelationship`](crate::verification::MethodRelationship)
-- [`MethodScope`](crate::verification::MethodScope)
-- [`MethodType`](crate::verification::MethodType)
-- [`VerifierOptions`](crate::verifiable::VerifierOptions)
-- [`RevocationBitmap`](crate::revocation::RevocationBitmap)

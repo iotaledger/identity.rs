@@ -25,7 +25,7 @@ pub enum Error {
   #[error("invalid service property: {0}")]
   InvalidService(&'static str),
   /// Caused by invalid or missing properties when constructing a
-  /// [`VerificationMethod`](crate::verification::VerificationMethod).
+  /// [`VerificationMethod`](::identity_verification::VerificationMethod).
   #[error("invalid verification method property: {0}")]
   InvalidMethod(&'static str),
 

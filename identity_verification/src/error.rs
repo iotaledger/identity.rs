@@ -10,7 +10,7 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   /// Caused by invalid or missing properties when constructing a
-  /// [`VerificationMethod`](crate::verification::VerificationMethod).
+  /// [`VerificationMethod`](crate::VerificationMethod).
   #[error("invalid verification method property: {0}")]
   InvalidMethod(&'static str),
 
