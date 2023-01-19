@@ -1,0 +1,1 @@
+Verification related data types used in `identity_iota`. 
