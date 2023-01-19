@@ -28,7 +28,8 @@ pub enum Error {
   // TODO: Check if this is used?
   SigError(&'static str),
   KeyError(&'static str),
-  SignatureError(Box<dyn std::error::Error + Send + Sync>), // CryptoError(crypto::Error),
+  SignatureCreationError(Box<dyn std::error::Error + Send + Sync>),
+  SignatureVerificationError(Box<dyn std::error::Error + Send + Sync>),
 }
 
 // TODO: Use thiserror? Lowercase error message!
@@ -50,7 +51,8 @@ impl Display for Error {
       Self::EncError(inner) => f.write_fmt(format_args!("Encryption Error: {}", inner)),
       Self::SigError(inner) => f.write_fmt(format_args!("Signature Error: {}", inner)),
       Self::KeyError(inner) => f.write_fmt(format_args!("Invalid Key Format: {}", inner)),
-      Self::SignatureError(inner) => f.write_fmt(format_args!("signature creation error: {}", inner)),
+      Self::SignatureCreationError(inner) => f.write_fmt(format_args!("signature creation error: {}", inner)),
+      Self::SignatureVerificationError(inner) => f.write_fmt(format_args!("signature verification error: {}", inner)),
       // Self::CryptoError(inner) => f.write_fmt(format_args!("Crypto Error: {}", inner)),
     }
   }

@@ -48,6 +48,7 @@ struct Flatten<'a, 'b> {
 // =============================================================================
 // =============================================================================
 
+// TODO: Use type alias for keyId instead of raw string.
 pub struct Encoder<'a, FUN, FUT, ERR>
 where
   FUN: Fn(JwsAlgorithm, String, Vec<u8>) -> FUT + 'static + Send + Sync,
@@ -232,7 +233,7 @@ where
     let message: Vec<u8> = jwu::create_message(header, payload);
     let signature: String = (self.sign)(algorithm, kid.to_owned(), message)
       .await
-      .map_err(|err| Error::SignatureError(err.into()))?;
+      .map_err(|err| Error::SignatureCreationError(err.into()))?;
 
     Ok(Signature {
       header: recipient.unprotected,

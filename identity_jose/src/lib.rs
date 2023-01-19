@@ -3,7 +3,7 @@ pub mod jose;
 pub mod jwk;
 pub mod jws;
 pub mod jwt;
-pub mod jwu;
+mod jwu;
 
 #[cfg(test)]
 mod tests {
@@ -12,6 +12,7 @@ mod tests {
 
   use crypto::signatures::ed25519::SecretKey;
 
+  use crate::jws::Decoder;
   use crate::jws::Encoder;
   use crate::jws::JwsAlgorithm;
   use crate::jws::JwsHeader;
@@ -20,8 +21,9 @@ mod tests {
   use crate::jwu::{self};
 
   #[tokio::test]
-  async fn test_encoder_api_jwt() -> anyhow::Result<()> {
+  async fn test_encoder_decoder_roundtrip() {
     let secret_key = Arc::new(SecretKey::generate().unwrap());
+    let public_key = secret_key.public_key();
 
     let sign_fn = move |alg, _key_id, msg: Vec<u8>| {
       let sk = secret_key.clone();
@@ -31,6 +33,23 @@ mod tests {
         }
         let sig: _ = sk.sign(msg.as_slice()).to_bytes();
         Ok(jwu::encode_b64(sig))
+      }
+    };
+
+    let verify_fn = |alg: JwsAlgorithm, _key_id: &str, msg: &[u8], sig: &[u8]| {
+      if alg != JwsAlgorithm::EdDSA {
+        return Err("incompatible `alg` parameter".to_owned());
+      }
+
+      let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(sig)
+        .map_err(|err| err.to_string())
+        .unwrap();
+
+      let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
+      if public_key.verify(&signature, msg) {
+        Ok(())
+      } else {
+        Err("invalid signature".to_owned())
       }
     };
 
@@ -47,14 +66,16 @@ mod tests {
     );
     claims.set_custom(serde_json::json!({"num": 42u64}));
 
-    let token = Encoder::new(sign_fn)
-      .format(crate::jws::JwsFormat::General)
-      .recipient(Recipient::new().protected(&header).unprotected(&header))
+    let token: String = Encoder::new(sign_fn)
+      .recipient(Recipient::new().protected(&header))
       .encode_serde(&claims)
-      .await?;
+      .await
+      .unwrap();
 
-    println!("{token}");
+    let token: _ = Decoder::new(verify_fn).decode(token.as_bytes()).unwrap();
 
-    Ok(())
+    let recovered_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(&token.claims).unwrap();
+
+    assert_eq!(claims, recovered_claims);
   }
 }
