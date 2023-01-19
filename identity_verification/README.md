@@ -1,1 +1,1 @@
-Verification related data types used in `identity_iota`. 
+Verification data types and functionality for use with `identity_document`.
