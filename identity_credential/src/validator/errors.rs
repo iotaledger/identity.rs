@@ -143,11 +143,15 @@ impl Display for CompoundPresentationValidationError {
 impl Error for CompoundPresentationValidationError {}
 
 #[derive(Debug, thiserror::Error)]
+/// An error caused by a failure to verify a Domain Linkage configuration or credential.
 pub struct DomainLinkageVerificationError {
-  pub(crate) cause: DomainLinkageVerificationErrorCause,
-  pub(crate) source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  /// Cause of the error.
+  pub cause: DomainLinkageVerificationErrorCause,
+  /// Source of the error.
+  pub source: Option<Box<dyn Error + Send + Sync + 'static>>,
 }
 impl DomainLinkageVerificationError {
+  /// Provides the cause of the error.
   pub fn get_cause(&self) -> &DomainLinkageVerificationErrorCause {
     &self.cause
   }
@@ -193,4 +197,8 @@ pub enum DomainLinkageVerificationErrorCause {
   InvalidSubjectOrigin,
   #[error("invalid semantic structure of the domain linkage configuration")]
   InvalidStructure,
+  #[error("multiple domain linkage credentials reference the same DID")]
+  AmbiguousCredential,
+  #[error("a domain linkage credential referencing the provided DID is not found")]
+  CredentialNotFound,
 }

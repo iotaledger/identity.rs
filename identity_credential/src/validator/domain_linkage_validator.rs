@@ -11,29 +11,38 @@ use crate::validator::CredentialValidator;
 use crate::validator::FailFast;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
-
 use identity_did::did::CoreDID;
-use identity_did::did::DID;
-use identity_did::document::Document;
 use serde::Serialize;
 use std::collections::HashSet;
 
 type DomainLinkageValidationResult = Result<(), DomainLinkageVerificationError>;
 
+/// A verifier for a Domain Linkage Configuration and Credentials.
 pub struct DomainLinkageVerifier {}
 
 impl DomainLinkageVerifier {
-  /// Verifies a [`DomainLinkageConfiguration`] according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+  /// Verifies the linkage between a domain and a DID.
+  /// [`DomainLinkageConfiguration`] is verified according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
   ///
+  /// * `issuer`: DID Document of the linked DID. Issuer of the Domain Linkage Credential included
+  /// in the Domain Linkage Configuration.
+  /// * `configuration`: Domain Linkage Configuration fetched from the domain at "/.well-known/did-configuration.json".
+  /// * `domain`: domain, from which the Domain Linkage Configuration has been fetched.
+  /// * `validation_options`: Further validation options to be applied on the Domain Linkage Credential.
   ///
-  /// Note:
+  /// # Note:
   /// - Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
   ///   is supported.
-  /// - If multiple Domain Linkage Credentials exist, all of them are verified.
-  pub fn verify_configuration<T: Serialize, DOC: ValidatorDocument>(
-    issuer: &[DOC],
+  /// - Only the Credential issued by `issuer` is verified.
+  ///
+  /// # Errors
+  ///  - Semantic structure of `configuration` is invalid.
+  ///  - `configuration` includes multiple credentials issued by `issuer`.
+  ///  - Verification of the matched Domain Linkage Credential fails.
+  pub fn verify_linkage<DOC: ValidatorDocument>(
+    issuer: &DOC,
     configuration: &DomainLinkageConfiguration,
-    domain: Url,
+    domain: &Url,
     validation_options: &CredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
     configuration
@@ -42,15 +51,39 @@ impl DomainLinkageVerifier {
         cause: DomainLinkageVerificationErrorCause::InvalidStructure,
         source: Some(Box::new(err)),
       })?;
-    for credential in configuration.linked_dids() {
-      Self::verify_credential(issuer, credential, domain.clone(), validation_options)?;
+
+    let mut matched_credentials: Vec<&Credential> = configuration
+      .linked_dids()
+      .iter()
+      .filter(|credential| credential.issuer.url().as_str() == issuer.did_str())
+      .collect();
+
+    if matched_credentials.is_empty() {
+      return Err(DomainLinkageVerificationError {
+        cause: DomainLinkageVerificationErrorCause::CredentialNotFound,
+        source: None,
+      });
     }
-    Ok(())
+
+    if matched_credentials.len() == 1 {
+      // Unwrap is fine since length is checked.
+      let credential = matched_credentials.pop().unwrap();
+      return Self::verify_credential(issuer, credential, domain.clone(), validation_options);
+    }
+
+    Err(DomainLinkageVerificationError {
+      cause: DomainLinkageVerificationErrorCause::InvalidStructure,
+      source: None,
+    })
   }
 
   /// Verifies a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+  ///
+  /// *`issuer`: issuer of the credential.
+  /// *`credential`: domain linkage Credential to be verified.
+  /// *`domain`: the domain hosting the credential.
   pub fn verify_credential<T: Serialize, DOC: ValidatorDocument>(
-    issuer: &[DOC],
+    issuer: &DOC,
     credential: &Credential<T>,
     domain: Url,
     validation_options: &CredentialValidationOptions,
@@ -72,14 +105,6 @@ impl DomainLinkageVerifier {
     let issuer_did: CoreDID =
       CoreDID::parse(credential.issuer.url().to_string()).map_err(|_err| DomainLinkageVerificationError {
         cause: DomainLinkageVerificationErrorCause::InvalidIssuer,
-        source: None,
-      })?;
-
-    let issuer: &DOC = issuer
-      .iter()
-      .find(|issuer| issuer.did_str() == issuer_did.as_str())
-      .ok_or(DomainLinkageVerificationError {
-        cause: DomainLinkageVerificationErrorCause::DocumentMismatch,
         source: None,
       })?;
 
@@ -234,7 +259,7 @@ mod tests {
     let configuration_string: &str = include_str!("../../tests/fixtures/did_configuration/issuer-did-document.json");
     let document: CoreDocument = CoreDocument::from_json(configuration_string).unwrap();
     let domain: Url = Url::parse("https://example.com").unwrap();
-    DomainLinkageVerifier::verify_credential(&[document], credential, domain, &CredentialValidationOptions::default())
+    DomainLinkageVerifier::verify_credential(&document, credential, domain, &CredentialValidationOptions::default())
       .unwrap();
   }
 }

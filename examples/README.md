@@ -30,6 +30,7 @@ The following basic CRUD (Create, Read, Update, Delete) examples are available:
 | [5_create_vc](./0_basic/5_create_vc.rs)           | Demonstrates how to create and verify verifiable credentials.                        |
 | [6_create_vp](./0_basic/6_create_vp.rs)           | Demonstrates how to create and verify verifiable presentations.                      |
 | [7_revoke_vc](./0_basic/7_revoke_vc.rs)           | Demonstrates how to revoke a verifiable credential.                                  |
+| [8_domain_linkage](./0_basic/8_domain_linkage.rs) | Demonstrates how to link a domain and a DID and verify the linkage.                  |
 
 ## Advanced Examples
 

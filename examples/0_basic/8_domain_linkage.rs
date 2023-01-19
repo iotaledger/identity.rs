@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did;
@@ -15,11 +15,11 @@ use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
+use identity_iota::credential::DomainLinkageVerifier;
 use identity_iota::credential::Issuer;
 use identity_iota::credential::LinkedDomainService;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
-use identity_iota::did::Document;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDID;
@@ -112,58 +112,77 @@ async fn main() -> anyhow::Result<()> {
   // through the DID Configuration resource. A bidirectional linkage is established.
 
   ////////////////////////////////////////////////////////////
-  // Resolve and verify the DID Configuration resource
+  // Verification
   ////////////////////////////////////////////////////////////
 
+  // Init a resolver for resolving DID Documents.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client.clone());
 
-  // Resolve the DID Document.
-  let resolved_did_document: IotaDocument = resolver.resolve(&did).await?;
+  /////////////////////////////////////////////////
+  // → Case 1: starting from domain.
+  ////////////////////////////////////////////////
+  let domain_foo: Url = domain_1.clone();
+
+  // Fetch the DID Configuration resource
+  // let configuration_resource: DomainLinkageConfiguration =
+  // DomainLinkageConfiguration::fetch_configuration(domain_foo).await.unwrap(); But since the DID Configuration
+  // resource isn't available online in this example, we will simply deserialize the JSON.
+  let configuration_resource: DomainLinkageConfiguration =
+    DomainLinkageConfiguration::from_json(&configuration_resource_json)?;
+
+  // Retrieve the issuers of the the Domain Linkage Credentials which correspond to the possibly linked DIDs.
+  let linked_dids: Vec<Url> = configuration_resource.issuers();
+  assert_eq!(linked_dids.len(), 1);
+
+  // Resolve the DID Document of the DID.
+  let did: IotaDID = IotaDID::parse(linked_dids.get(0).unwrap().as_str()).unwrap();
+  let issuer_did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
+
+  // Verify the linkage.
+  let verified = DomainLinkageVerifier::verify_linkage(
+    &issuer_did_document,
+    &configuration_resource,
+    &domain_foo,
+    &CredentialValidationOptions::default(),
+  );
+  assert!(verified.is_ok());
+
+  /////////////////////////////////////////////////
+  // → Case 2: starting from a DID.
+  ////////////////////////////////////////////////
+  let did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
   // Get the Linked Domain Services from the DID Document.
-  let mut linked_domain_services: Vec<LinkedDomainService<IotaDID, Object>> = resolved_did_document
+  let linked_domain_services: Vec<LinkedDomainService<IotaDID, Object>> = did_document
     .service()
     .iter()
     .cloned()
     .filter_map(|service| LinkedDomainService::try_from(service).ok())
     .collect();
-
-  // The document should have only one Linked Domain Service.
   assert_eq!(linked_domain_services.len(), 1);
-  let linked_domain_service: LinkedDomainService<IotaDID> = linked_domain_services.pop().unwrap();
 
-  // One step to fetch and verify all the DID Configuration resources of all domains in a Linked Domain Service.
-  // This will fail in this example because the DID Configuration resources are not available.
-  let verification_result = resolver
-    .fetch_and_verify_linked_domains(&linked_domain_service, &CredentialValidationOptions::default())
-    .await;
-  assert!(verification_result.is_err());
+  // Get the domains included in the Linked Domain Service.
+  let domains: Vec<Url> = linked_domain_services.get(0).unwrap().domains();
 
-  // Alternatively, DID Configuration resources can be fetched verified separately.
-  let domains: Vec<Url> = linked_domain_service.domains();
-  assert_eq!(domains, vec![domain_1.clone(), domain_2.clone()]);
+  let domain_foo: Url = domains.get(0).unwrap().clone();
+  assert_eq!(domain_foo, domain_1);
 
-  // Fetching the DID Configuration resource.
-  let configuration_resource = DomainLinkageConfiguration::fetch_configuration(domain_1.clone()).await;
-  assert!(configuration_resource.is_err());
-
-  // Since the DID Configuration resource isn't available online in this example,
-  // we will simply deserialize the JSON.
+  // Fetch the DID Configuration resource
+  // let configuration_resource: DomainLinkageConfiguration =
+  // DomainLinkageConfiguration::fetch_configuration(domain_foo).await.unwrap(); But since the DID Configuration
+  // resource isn't available online in this example, we will simply deserialize the JSON.
   let configuration_resource: DomainLinkageConfiguration =
     DomainLinkageConfiguration::from_json(&configuration_resource_json)?;
 
-  // Verify the DID Configuration resource.
-  let verification_result = resolver
-    .verify_domain_linkage_configuration(
-      &configuration_resource,
-      &domain_1,
-      &CredentialValidationOptions::default(),
-    )
-    .await;
-
-  // Verification succeeds.
-  assert!(verification_result.is_ok());
+  // Verify the linkage.
+  let verified = DomainLinkageVerifier::verify_linkage(
+    &did_document,
+    &configuration_resource,
+    &domain_foo,
+    &CredentialValidationOptions::default(),
+  );
+  assert!(verified.is_ok());
   Ok(())
 }
 

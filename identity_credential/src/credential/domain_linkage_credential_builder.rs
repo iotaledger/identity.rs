@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::credential::Credential;
@@ -7,14 +7,10 @@ use crate::credential::Issuer;
 use crate::credential::Subject;
 use crate::error::Result;
 use crate::Error;
-
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
-
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-
-use identity_did::did::DID;
 
 /// Convenient builder to create a spec compliant Linked Data Domain Linkage Credential.
 ///

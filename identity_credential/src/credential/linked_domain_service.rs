@@ -1,10 +1,9 @@
-use crate::error::Result;
+// Copyright 2020-2023 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
-
-use crate::Error;
 use identity_did::did::CoreDID;
 use identity_did::did::DIDUrl;
 use identity_did::did::DID;
@@ -12,8 +11,11 @@ use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
 use indexmap::map::IndexMap;
 
+use crate::Error;
 use crate::Error::DomainLinkageError;
+use crate::error::Result;
 
+/// A service wrapper for [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
 pub struct LinkedDomainService<D = CoreDID, T = Object>
 where
   D: DID,
@@ -80,6 +82,7 @@ where
     Ok(Self { service })
   }
 
+  /// Converts into a normal service that can be inserted into a DID Document.
   pub fn into_service(self) -> Service<D, T>
   where
     D: DID,
@@ -99,7 +102,7 @@ where
     let service_type = service
       .type_()
       .get(0)
-      .ok_or(DomainLinkageError("invalid service type".into()))?;
+      .ok_or_else(|| DomainLinkageError("invalid service type".into()))?;
 
     if !service_type.eq(Self::domain_linkage_service_type()) {
       return Err(DomainLinkageError("invalid service type".into()));
@@ -121,7 +124,7 @@ where
         }
         let origins: &OrderedSet<Url> = endpoint
           .get(&"origins".to_owned())
-          .ok_or(DomainLinkageError("invalid service endpoint object".into()))?;
+          .ok_or_else(|| DomainLinkageError("invalid service endpoint object".into()))?;
 
         for origin in origins.iter() {
           if origin.scheme() != "https" {

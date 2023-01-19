@@ -1,33 +1,24 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
 use std::collections::HashMap;
 use std::marker::PhantomData;
-
 use futures::TryFutureExt;
 use identity_credential::credential::Credential;
-use identity_credential::credential::DomainLinkageConfiguration;
-use identity_credential::credential::LinkedDomainService;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::AbstractThreadSafeValidatorDocument;
-use identity_credential::validator::CredentialValidationOptions;
 use identity_credential::validator::CredentialValidator;
-use identity_credential::validator::DomainLinkageVerifier;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
-
-use identity_core::common::Object;
-use identity_core::common::Url;
 use serde::Serialize;
 
 use crate::Error;
 use crate::ErrorCause;
-
 use crate::Result;
 
 use super::commands::Command;
@@ -284,71 +275,6 @@ where
       }
     }
     .map_err(Into::into)
-  }
-
-  /// Resolves the issuers of the [Domain Linkage Credentials](https://identity.foundation/.well-known/resources/did-configuration/#DomainLinkageCredential)
-  /// that are included in [DID Configuration Resource](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource)
-  /// and performs a [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
-  ///
-  /// Note: If multiple Domain Linkage Credentials exist, all of them are verified.
-  pub async fn verify_domain_linkage_configuration(
-    &self,
-    configuration: &DomainLinkageConfiguration,
-    domain: &Url,
-    validation_options: &CredentialValidationOptions,
-  ) -> Result<Vec<DOC>> {
-    let mut issuers: Vec<DOC> = Vec::new();
-    for credential in configuration.linked_dids() {
-      let issuer: DOC = self.resolve_credential_issuer(credential).await?;
-      issuers.push(issuer);
-    }
-    DomainLinkageVerifier::verify_configuration::<Object, DOC>(
-      &issuers,
-      configuration,
-      domain.clone(),
-      validation_options,
-    )
-    .map_err(|error| ErrorCause::DomainLinkageError {
-      source: Box::new(error),
-    })
-    .map_err(Error::new)?;
-    Ok(issuers)
-  }
-
-  /// Fetches the DID Configuration resources from all the domains contained in a Linked Domain Service
-  /// and verifies them.
-  ///
-  /// The verification step includes resolving the DID documents of the issuers and verifying the
-  /// Domain Linkage Credential.
-  ///
-  /// # Error
-  /// Errors fast if fetching or verifying any of the domains fails.
-  ///
-  /// # Return
-  /// DID Documents of the issuers of the Domain Linkage Credentials.
-  pub async fn fetch_and_verify_linked_domains<D, T>(
-    &self,
-    service: &LinkedDomainService<D, T>,
-    validation_options: &CredentialValidationOptions,
-  ) -> Result<Vec<DOC>>
-  where
-    D: DID,
-  {
-    let domains: Vec<Url> = service.domains();
-    let mut issuers: Vec<DOC> = Vec::new();
-    for domain in domains.clone().into_iter() {
-      let configuration: DomainLinkageConfiguration = DomainLinkageConfiguration::fetch_configuration(domain.clone())
-        .await
-        .map_err(|error| ErrorCause::DomainLinkageError {
-          source: Box::new(error),
-        })
-        .map_err(Error::new)?;
-      let mut domain_issuers: Vec<DOC> = self
-        .verify_domain_linkage_configuration(&configuration, &domain, validation_options)
-        .await?;
-      issuers.append(&mut domain_issuers);
-    }
-    Ok(issuers)
   }
 }
 

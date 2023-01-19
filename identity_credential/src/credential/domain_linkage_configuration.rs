@@ -1,17 +1,12 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::credential::Credential;
 use crate::error::Result;
-
 use identity_core::common::Context;
 use identity_core::common::Object;
-
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-
-use identity_did::did::DID;
-
 #[cfg(feature = "domain-linkage-fetch")]
 use reqwest::redirect::Policy;
 #[cfg(feature = "domain-linkage-fetch")]
@@ -90,13 +85,15 @@ impl DomainLinkageConfiguration {
   }
 
   /// Fetches the the DID Configuration resource via a GET request at the
-  /// well-known location: `origin`/.well-known/did-configuration.json.
+  /// well-known location: "`origin`/.well-known/did-configuration.json".
   #[cfg(feature = "domain-linkage-fetch")]
   pub async fn fetch_configuration(mut origin: Url) -> Result<DomainLinkageConfiguration> {
     if origin.scheme() != "https" {
       return Err(DomainLinkageError("origin` does not use `https` protocol".into()));
     }
+    // todo: set file size limit to 1MB.
     let client: Client = reqwest::ClientBuilder::new()
+      .https_only(true)
       .redirect(Policy::none())
       .build()
       .map_err(|err| DomainLinkageError(Box::new(err)))?;
@@ -110,12 +107,23 @@ impl DomainLinkageConfiguration {
       .json::<DomainLinkageConfiguration>()
       .await
       .map_err(|err| DomainLinkageError(Box::new(err)))?;
+
+    //todo: should structure be checked here? it will be inconsistent with `from_json(..)`.
     Ok(domain_linkage_configuration)
   }
 
-  /// List of domain Linkage Credentials.
+  /// List of Domain Linkage Credentials.
   pub fn linked_dids(&self) -> &Vec<Credential> {
     &self.linked_dids
+  }
+
+  /// List of the issuers of the Domain Linkage Credentials.
+  pub fn issuers(&self) -> Vec<Url> {
+    self
+      .linked_dids
+      .iter()
+      .map(|linked_did| linked_did.issuer.url().clone())
+      .collect()
   }
 
   /// List of domain Linkage Credentials.
