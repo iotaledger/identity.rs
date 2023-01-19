@@ -11,9 +11,9 @@ use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
 use indexmap::map::IndexMap;
 
+use crate::error::Result;
 use crate::Error;
 use crate::Error::DomainLinkageError;
-use crate::error::Result;
 
 /// A service wrapper for [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
 pub struct LinkedDomainService<D = CoreDID, T = Object>
@@ -190,88 +190,93 @@ mod tests {
     .unwrap();
     assert_eq!(service.into_service(), service_from_json);
   }
-  //
-  // #[test]
-  // fn create_service_single_origin() {
-  //   let mut domains = OrderedSet::new();
-  //   domains.append(Url::parse("https://foo.example-1.com").unwrap());
-  //
-  //   let service: Service<CoreDID, Object> =
-  //     LinkedDomainService::create_linked_domain_service(CoreDIDUrl::parse("did:example:123#foo").unwrap(), domains)
-  //       .unwrap();
-  //
-  //   // Add a new Service.
-  //   let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
-  //       "id":"did:example:123#foo",
-  //       "type": "LinkedDomains",
-  //       "serviceEndpoint": "https://foo.example-1.com"
-  //   }))
-  //     .unwrap();
-  //   assert_eq!(service, service_from_json);
-  // }
-  //
-  // #[test]
-  // fn extract_domains() {
-  //   let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
-  //       "id":"did:example:123#foo",
-  //       "type": "LinkedDomains",
-  //       "serviceEndpoint": "https://foo.example-1.com"
-  //   }))
-  //     .unwrap();
-  //   let domain: Vec<Url> = vec![Url::parse("https://foo.example-1.com").unwrap()];
-  //   assert_eq!(LinkedDomainService::domains(&service_1).unwrap(), domain);
-  //
-  //   let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
-  //       "id":"did:example:123#foo",
-  //       "type": "LinkedDomains",
-  //       "serviceEndpoint": { "origins" : ["https://foo.example-1.com", "https://foo.example-2.com"]}
-  //   }))
-  //     .unwrap();
-  //   let domains: Vec<Url> = vec![
-  //     Url::parse("https://foo.example-1.com").unwrap(),
-  //     Url::parse("https://foo.example-2.com").unwrap(),
-  //   ];
-  //   assert_eq!(LinkedDomainService::domains(&service_2).unwrap(), domains);
-  // }
-  //
-  // #[test]
-  // fn extract_domains_invalid_scheme() {
-  //   // http scheme instead of https.
-  //   let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
-  //       "id":"did:example:123#foo",
-  //       "type": "LinkedDomains",
-  //       "serviceEndpoint": "http://foo.example-1.com"
-  //   }))
-  //     .unwrap();
-  //   assert!(LinkedDomainService::domains(&service_1).is_err());
-  //
-  //   let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
-  //       "id":"did:example:123#foo",
-  //       "type": "LinkedDomains",
-  //       "serviceEndpoint": { "origins" : ["https://foo.example-1.com", "http://foo.example-2.com"]}
-  //   }))
-  //     .unwrap();
-  //   assert!(LinkedDomainService::domains(&service_2).is_err());
-  // }
-  //
-  // #[test]
-  // fn extract_domain_type_check() {
-  //   // Valid type.
-  //   let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
-  //       "id":"did:example:123#foo",
-  //       "type": "LinkedDomains",
-  //       "serviceEndpoint": "https://foo.example-1.com"
-  //   }))
-  //     .unwrap();
-  //   assert!(LinkedDomainService::domains(&service_1).is_ok());
-  //
-  //   // Invalid type.
-  //   let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
-  //       "id":"did:example:123#foo",
-  //       "type": "LinkedDomain",
-  //       "serviceEndpoint": "https://foo.example-1.com"
-  //   }))
-  //     .unwrap();
-  //   assert!(LinkedDomainService::domains(&service_2).is_err());
-  // }
+
+  #[test]
+  fn create_service_single_origin() {
+    let mut domains: OrderedSet<Url> = OrderedSet::new();
+    domains.append(Url::parse("https://foo.example-1.com").unwrap());
+
+    let service: LinkedDomainService<CoreDID, Object> = LinkedDomainService::new(
+      CoreDIDUrl::parse("did:example:123#foo").unwrap(),
+      domains,
+      Object::new(),
+    )
+    .unwrap();
+
+    // Add a new Service.
+    let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://foo.example-1.com"
+    }))
+    .unwrap();
+    assert_eq!(service.into_service(), service_from_json);
+  }
+
+  #[test]
+  fn domains() {
+    let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://foo.example-1.com"
+    }))
+    .unwrap();
+    let service_1: LinkedDomainService<CoreDID, Object> = LinkedDomainService::try_from(service_1).unwrap();
+    let domain: Vec<Url> = vec![Url::parse("https://foo.example-1.com").unwrap()];
+    assert_eq!(service_1.domains(), domain);
+
+    let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": { "origins" : ["https://foo.example-1.com", "https://foo.example-2.com"]}
+    }))
+    .unwrap();
+    let service_2: LinkedDomainService<CoreDID, Object> = LinkedDomainService::try_from(service_2).unwrap();
+    let domains: Vec<Url> = vec![
+      Url::parse("https://foo.example-1.com").unwrap(),
+      Url::parse("https://foo.example-2.com").unwrap(),
+    ];
+    assert_eq!(service_2.domains(), domains);
+  }
+
+  #[test]
+  fn extract_domains_invalid_scheme() {
+    // http scheme instead of https.
+    let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "http://foo.example-1.com"
+    }))
+    .unwrap();
+    assert!(LinkedDomainService::try_from(service_1).is_err());
+
+    let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": { "origins" : ["https://foo.example-1.com", "http://foo.example-2.com"]}
+    }))
+    .unwrap();
+    assert!(LinkedDomainService::try_from(service_2).is_err());
+  }
+
+  #[test]
+  fn extract_domain_type_check() {
+    // Valid type.
+    let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://foo.example-1.com"
+    }))
+    .unwrap();
+    assert!(LinkedDomainService::try_from(service_1).is_ok());
+
+    // Invalid type 'LinkedDomain` instead of `LinkedDomains`.
+    let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
+        "id":"did:example:123#foo",
+        "type": "LinkedDomain",
+        "serviceEndpoint": "https://foo.example-1.com"
+    }))
+    .unwrap();
+    assert!(LinkedDomainService::try_from(service_2).is_err());
+  }
 }

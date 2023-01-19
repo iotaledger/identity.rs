@@ -22,9 +22,7 @@ lazy_static! {
 }
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
-///
 /// It can be placed in an origin's `.well-known` directory to prove linkage between the origin and a DID.
-///
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 ///
 /// Note:

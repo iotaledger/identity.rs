@@ -120,7 +120,7 @@ async fn main() -> anyhow::Result<()> {
   resolver.attach_iota_handler(client.clone());
 
   /////////////////////////////////////////////////
-  // → Case 1: starting from domain.
+  // → Case 1: starting from domain
   ////////////////////////////////////////////////
   let domain_foo: Url = domain_1.clone();
 
@@ -149,7 +149,7 @@ async fn main() -> anyhow::Result<()> {
   assert!(verified.is_ok());
 
   /////////////////////////////////////////////////
-  // → Case 2: starting from a DID.
+  // → Case 2: starting from a DID
   ////////////////////////////////////////////////
   let did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
