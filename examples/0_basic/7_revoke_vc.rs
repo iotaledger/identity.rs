@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! This example shows how to revoke a verifiable credential.
-//! It demonstrates two methods for revocation. The first uses a revocation bitmap of type `RevocationBitmap2023`,
+//! It demonstrates two methods for revocation. The first uses a revocation bitmap of type `RevocationBitmap2022`,
 //! while the second method simply removes the verification method (public key) that signed the credential
 //! from the DID Document of the issuer.
 //!
