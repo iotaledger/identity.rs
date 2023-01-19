@@ -2,7 +2,7 @@
 name = "identity_document"
 version = "0.7.0-alpha.4"
 authors.workspace = true
-edition = "2021"
+edition.workspace = true
 homepage.workspace = true
 keywords = ["iota", "tangle", "identity", "did"]
 license.workspace = true
