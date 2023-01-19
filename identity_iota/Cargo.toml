@@ -1,8 +1,8 @@
 [package]
 name = "identity_iota"
 version = "0.7.0-alpha.4"
-authors = ["IOTA Stiftung"]
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
 homepage.workspace = true
 keywords = ["iota", "tangle", "identity", "did", "ssi"]
 license.workspace = true
