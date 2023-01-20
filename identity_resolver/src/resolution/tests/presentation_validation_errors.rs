@@ -34,7 +34,7 @@ async fn misconfigured_foo_resolver(_did: CoreDID) -> Result<CoreDocument, Dynam
 /// checks that `Resolver::verify_presentation` fails when the resolver is misconfigured.
 async fn check_verify_presentation<DOC>(mut resolver: Resolver<DOC>)
 where
-  DOC: ValidatorDocument + From<CoreDocument> + From<IotaDocument> + Send + Sync,
+  DOC: AsRef<CoreDocument> + From<CoreDocument> + From<IotaDocument> + Send + Sync,
 {
   let correct_iota_issuer: IotaDocument = IotaDocument::from_json(ISSUER_IOTA_DOC_JSON).unwrap();
   let correct_bar_issuer: CoreDocument = CoreDocument::from_json(ISSUER_BAR_DOC_JSON).unwrap();

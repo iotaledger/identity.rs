@@ -52,7 +52,7 @@ async fn resolve_bar(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
 
 async fn check_verify_presentation<DOC>(mut resolver: Resolver<DOC>)
 where
-  DOC: ValidatorDocument + From<CoreDocument> + From<IotaDocument> + Send + Sync,
+  DOC: AsRef<CoreDocument> + From<CoreDocument> + From<IotaDocument> + Send + Sync,
 {
   let presentation: Presentation = Presentation::from_json(PRESENTATION_JSON).unwrap();
 

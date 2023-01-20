@@ -19,9 +19,6 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 
 /// Demonstrates how to set up a resolver using custom handlers.
-///
-/// NOTE: Since both `IotaDocument` and `CoreDocument` implement `Into<CoreDocument>` we could have used
-/// Resolver<CoreDocument> in this example and just worked with `CoreDocument` representations throughout.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a method agnostic resolver and attach handlers for the "foo" and "iota" methods.
@@ -48,27 +45,17 @@ async fn main() -> anyhow::Result<()> {
   let (_, iota_document, _): (Address, IotaDocument, IotaKeyPair) = create_did(&client, &mut secret_manager).await?;
   let iota_did: IotaDID = iota_document.id().clone();
 
-  // Resolve did_foo to get an abstract document.
-  let did_foo_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&did_foo).await?;
+  // Resolve did_foo.
+  let did_foo_doc: CoreDocument = resolver.resolve(&did_foo).await?;
 
   // Resolve iota_did to get an abstract document.
-  let iota_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&iota_did).await?;
+  let iota_doc: CoreDocument = resolver.resolve(&iota_did).await?;
 
-  // These documents are mainly meant for validating credentials and presentations, but one can also attempt to cast
-  // them to concrete document types.
-
-  let did_foo_doc: CoreDocument = *did_foo_doc
-    .into_any()
-    .downcast::<CoreDocument>()
-    .expect("downcasting to the return type of the did:foo handler should be fine");
+  // These documents are mainly meant for validating credentials and presentations, as we only receive the
+  // `CoreDocument` representation when resolving an IOTA Document:
+  println!("Resolved IOTA DID document: {}", iota_doc.to_json_pretty()?);
 
   println!("Resolved DID foo document: {}", did_foo_doc.to_json_pretty()?);
-
-  let iota_doc: IotaDocument = *iota_doc
-    .into_any()
-    .downcast::<IotaDocument>()
-    .expect("downcasting to the return type of the iota handler should be fine");
-  println!("Resolved IOTA DID document: {}", iota_doc.to_json_pretty()?);
 
   Ok(())
 }

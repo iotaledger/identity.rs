@@ -60,7 +60,7 @@ async fn check_failure_for_all_methods<F, D, DOC>(resolver: Resolver<DOC>, bad_d
 where
   F: Fn(ErrorCause),
   D: DID,
-  DOC: ValidatorDocument + Send + Sync + 'static + From<CoreDocument>,
+  DOC: AsRef<CoreDocument> + Send + Sync + 'static + From<CoreDocument>,
 {
   // resolving bad_did fails
   let err: ResolverError = resolver.resolve(&bad_did).await.unwrap_err();

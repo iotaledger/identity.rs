@@ -28,6 +28,8 @@
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
+<dt><a href="#Foo">Foo</a></dt>
+<dd></dd>
 <dt><a href="#IotaDID">IotaDID</a></dt>
 <dd><p>A DID conforming to the IOTA DID method specification.</p>
 </dd>
@@ -1621,6 +1623,27 @@ to canonicalize JSON messages.
 | signature | <code>Uint8Array</code> | 
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="Foo"></a>
+
+## Foo
+**Kind**: global class  
+
+* [Foo](#Foo)
+    * _instance_
+        * [.hello()](#Foo+hello) ⇒ <code>number</code>
+    * _static_
+        * [.bar()](#Foo.bar) ⇒ <code>number</code>
+
+<a name="Foo+hello"></a>
+
+### foo.hello() ⇒ <code>number</code>
+**Kind**: instance method of [<code>Foo</code>](#Foo)  
+<a name="Foo.bar"></a>
+
+### Foo.bar() ⇒ <code>number</code>
+Not part of the interface
+
+**Kind**: static method of [<code>Foo</code>](#Foo)  
 <a name="IotaDID"></a>
 
 ## IotaDID

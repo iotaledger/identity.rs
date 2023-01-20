@@ -15,7 +15,7 @@ fn is_send<T: Send>(_t: T) {}
 fn is_send_sync<T: Send + Sync>(_t: T) {}
 
 #[allow(dead_code)]
-fn default_resolver_is_send_sync<DOC: ValidatorDocument + Send + Sync + 'static>() {
+fn default_resolver_is_send_sync<DOC: AsRef<CoreDocument> + Send + Sync + 'static>() {
   let resolver = Resolver::<DOC>::new();
   is_send_sync(resolver);
 }
@@ -26,7 +26,7 @@ fn resolver_methods_give_send_futures<DOC, D, T, U, V>(
   credential: Credential<T>,
   presentation: Presentation<U, V>,
 ) where
-  DOC: ValidatorDocument + Send + Sync + 'static,
+  DOC: AsRef<CoreDocument> + Send + Sync + 'static,
   D: DID + Send + Sync + 'static,
   T: Send + Sync + Serialize,
   U: Send + Sync + Serialize,

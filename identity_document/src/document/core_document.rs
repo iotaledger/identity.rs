@@ -1050,6 +1050,12 @@ where
   }
 }
 
+impl AsRef<CoreDocument> for CoreDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    self
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use identity_core::convert::FromJson;
