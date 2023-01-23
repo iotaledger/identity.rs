@@ -3,8 +3,6 @@
 
 pub use iota_document::IotaCoreDocument;
 pub use iota_document::IotaDocument;
-pub use iota_document::IotaService;
-pub use iota_document::IotaVerificationMethod;
 pub use iota_document_metadata::IotaDocumentMetadata;
 
 mod iota_document;

@@ -19,10 +19,9 @@ use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaService;
-use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::verification::MethodRelationship;
 use identity_iota::verification::MethodScope;
+use identity_iota::verification::VerificationMethod;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
 use iota_client::secret::stronghold::StrongholdSecretManager;
@@ -51,8 +50,8 @@ async fn main() -> anyhow::Result<()> {
 
   // Insert a new Ed25519 verification method in the DID document.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-2")?;
+  let method: VerificationMethod =
+    VerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-2")?;
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
   // Attach a new method relationship to the inserted method.
@@ -62,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
   )?;
 
   // Add a new Service.
-  let service: IotaService = Service::from_json_value(json!({
+  let service: Service = Service::from_json_value(json!({
     "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org/"
@@ -71,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
   document.metadata.updated = Some(Timestamp::now_utc());
 
   // Remove a verification method.
-  let original_method: DIDUrl<IotaDID> = document.resolve_method("key-1", None).unwrap().id().clone();
+  let original_method: DIDUrl = document.resolve_method("key-1", None).unwrap().id().clone();
   document.remove_method(&original_method).unwrap();
 
   // Resolve the latest output and update it with the given document.

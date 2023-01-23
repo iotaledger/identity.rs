@@ -13,7 +13,6 @@ use identity_core::utils::BaseEncoding;
 use roaring::RoaringBitmap;
 
 use super::error::RevocationError;
-use identity_did::DID;
 use identity_document::service::Service;
 use identity_document::service::ServiceEndpoint;
 
@@ -150,10 +149,10 @@ impl RevocationBitmap {
   }
 }
 
-impl<D: DID + Sized> TryFrom<&Service<D>> for RevocationBitmap {
+impl TryFrom<&Service> for RevocationBitmap {
   type Error = RevocationError;
 
-  fn try_from(service: &Service<D>) -> Result<Self, RevocationError> {
+  fn try_from(service: &Service) -> Result<Self, RevocationError> {
     if !service.type_().contains(Self::TYPE) {
       return Err(RevocationError::InvalidService(
         "invalid type - expected `RevocationBitmap2022`",

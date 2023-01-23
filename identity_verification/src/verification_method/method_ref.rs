@@ -9,25 +9,18 @@ use identity_core::common::KeyComparable;
 use crate::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 /// A reference to a verification method, either a `DID` or embedded `Method`.
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]
-pub enum MethodRef<D = CoreDID>
-where
-  D: DID,
-{
-  Embed(VerificationMethod<D>),
-  Refer(DIDUrl<D>),
+pub enum MethodRef {
+  Embed(VerificationMethod),
+  Refer(DIDUrl),
 }
 
-impl<D> MethodRef<D>
-where
-  D: DID,
-{
+impl MethodRef {
   /// Returns a reference to the `MethodRef` id.
-  pub fn id(&self) -> &DIDUrl<D> {
+  pub fn id(&self) -> &DIDUrl {
     match self {
       Self::Embed(inner) => inner.id(),
       Self::Refer(inner) => inner,
@@ -37,7 +30,7 @@ where
   /// Returns a reference to the [`MethodRef`] controller.
   ///
   /// Always `None` for [`MethodRef::Refer`].
-  pub fn controller(&self) -> Option<&D> {
+  pub fn controller(&self) -> Option<&CoreDID> {
     match self {
       Self::Embed(inner) => Some(inner.controller()),
       Self::Refer(_) => None,
@@ -56,12 +49,12 @@ where
     matches!(self, Self::Refer(_))
   }
 
-  /// Maps `MethodRef<D,T>` to `MethodRef<C,T>` by applying a function `f` to the inner
-  /// [`VerificationMethod`] or [`DIDUrl`].
-  pub fn map<C, F>(self, f: F) -> MethodRef<C>
+  /// Maps the [`MethodRef`] by applying a function `f` to the inner
+  /// [`VerificationMethod`] or [`DIDUrl`]. This can be useful for DID methods
+  /// where the DID is not known before the document has been published.
+  pub fn map<F>(self, f: F) -> MethodRef
   where
-    C: DID,
-    F: FnMut(D) -> C,
+    F: FnMut(CoreDID) -> CoreDID,
   {
     match self {
       MethodRef::Embed(method) => MethodRef::Embed(method.map(f)),
@@ -70,10 +63,9 @@ where
   }
 
   /// Fallible version of [`MethodRef::map`].
-  pub fn try_map<C, F, E>(self, f: F) -> Result<MethodRef<C>, E>
+  pub fn try_map<F, E>(self, f: F) -> Result<MethodRef, E>
   where
-    C: DID,
-    F: FnMut(D) -> Result<C, E>,
+    F: FnMut(CoreDID) -> Result<CoreDID, E>,
   {
     Ok(match self {
       MethodRef::Embed(method) => MethodRef::Embed(method.try_map(f)?),
@@ -88,7 +80,7 @@ where
   /// # Errors
   ///
   /// Fails if `MethodRef` is not an embedded method.
-  pub fn try_into_embedded(self) -> Result<VerificationMethod<D>, Self> {
+  pub fn try_into_embedded(self) -> Result<VerificationMethod, Self> {
     match self {
       Self::Embed(inner) => Ok(inner),
       Self::Refer(_) => Err(self),
@@ -102,7 +94,7 @@ where
   /// # Errors
   ///
   /// Fails if `MethodRef` is not an referenced method.
-  pub fn try_into_referenced(self) -> Result<DIDUrl<D>, Self> {
+  pub fn try_into_referenced(self) -> Result<DIDUrl, Self> {
     match self {
       Self::Embed(_) => Err(self),
       Self::Refer(inner) => Ok(inner),
@@ -110,10 +102,7 @@ where
   }
 }
 
-impl<D> Debug for MethodRef<D>
-where
-  D: DID + Debug,
-{
+impl Debug for MethodRef {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
       Self::Embed(inner) => Debug::fmt(inner, f),
@@ -122,41 +111,29 @@ where
   }
 }
 
-impl<D> From<VerificationMethod<D>> for MethodRef<D>
-where
-  D: DID,
-{
+impl From<VerificationMethod> for MethodRef {
   #[inline]
-  fn from(other: VerificationMethod<D>) -> Self {
+  fn from(other: VerificationMethod) -> Self {
     Self::Embed(other)
   }
 }
 
-impl<D> From<DIDUrl<D>> for MethodRef<D>
-where
-  D: DID,
-{
+impl From<DIDUrl> for MethodRef {
   #[inline]
-  fn from(other: DIDUrl<D>) -> Self {
+  fn from(other: DIDUrl) -> Self {
     Self::Refer(other)
   }
 }
 
-impl<D> AsRef<DIDUrl<D>> for MethodRef<D>
-where
-  D: DID,
-{
+impl AsRef<DIDUrl> for MethodRef {
   #[inline]
-  fn as_ref(&self) -> &DIDUrl<D> {
+  fn as_ref(&self) -> &DIDUrl {
     self.id()
   }
 }
 
-impl<D> KeyComparable for MethodRef<D>
-where
-  D: DID,
-{
-  type Key = DIDUrl<D>;
+impl KeyComparable for MethodRef {
+  type Key = DIDUrl;
 
   #[inline]
   fn key(&self) -> &Self::Key {

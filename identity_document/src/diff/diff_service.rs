@@ -13,31 +13,22 @@ use identity_core::diff::Result;
 use crate::service::Service;
 use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
-use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffService<D = CoreDID, T = Object>
-where
-  D: DID + Diff,
-  T: Diff,
-{
+pub struct DiffService {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<<DIDUrl<D> as Diff>::Type>,
+  id: Option<<DIDUrl as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   type_: Option<<OneOrSet<String> as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   service_endpoint: Option<<ServiceEndpoint as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  properties: Option<<T as Diff>::Type>,
+  properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D> Diff for Service<D>
-where
-  D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
-{
-  type Type = DiffService<D>;
+impl Diff for Service {
+  type Type = DiffService;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffService {
@@ -65,7 +56,7 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: DIDUrl<D> = diff
+    let id: DIDUrl = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
@@ -99,7 +90,7 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: DIDUrl<D> = diff
+    let id: DIDUrl = diff
       .id
       .map(Diff::from_diff)
       .transpose()?
@@ -181,11 +172,11 @@ mod test {
   use identity_core::convert::ToJson;
   use identity_core::diff::DiffString;
   use identity_core::diff::DiffVec;
-  use identity_did::CoreDIDUrl;
+  use identity_did::DIDUrl;
 
   use super::*;
 
-  fn controller() -> CoreDIDUrl {
+  fn controller() -> DIDUrl {
     "did:example:1234#service".parse().unwrap()
   }
 
@@ -386,7 +377,7 @@ mod test {
     // Updated fields.
     {
       let mut updated: Service = service.clone();
-      updated.id = CoreDIDUrl::parse("did:test:serde").unwrap();
+      updated.id = DIDUrl::parse("did:test:serde").unwrap();
       updated.type_ = OneOrSet::new_one("TestSerde".to_owned());
       updated.service_endpoint = ServiceEndpoint::One(Url::parse("https://test.serde/").unwrap());
       updated.properties.insert("a".into(), 42.into());

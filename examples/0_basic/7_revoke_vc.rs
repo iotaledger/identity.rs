@@ -33,10 +33,8 @@ use identity_iota::did::DID;
 use identity_iota::document::Document;
 use identity_iota::document::Service;
 use identity_iota::iota::IotaClientExt;
-use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaService;
 use identity_iota::resolver::Resolver;
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
@@ -76,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
   let revocation_bitmap: RevocationBitmap = RevocationBitmap::new();
 
   // Add the revocation bitmap to the DID document of the issuer as a service.
-  let service: IotaService = Service::from_json_value(json!({
+  let service: Service = Service::from_json_value(json!({
     "id": issuer_document.id().to_url().join("#my-revocation-service")?,
     "type": RevocationBitmap::TYPE,
     "serviceEndpoint": revocation_bitmap.to_endpoint()?
@@ -170,7 +168,7 @@ async fn main() -> anyhow::Result<()> {
 
   // By removing the verification method, that signed the credential, from the issuer's DID document,
   // we effectively revoke the credential, as it will no longer be possible to validate the signature.
-  let original_method: DIDUrl<IotaDID> = issuer_document.resolve_method("#key-1", None).unwrap().id().clone();
+  let original_method: DIDUrl = issuer_document.resolve_method("#key-1", None).unwrap().id().clone();
   issuer_document.remove_method(&original_method).unwrap();
 
   // Publish the changes.

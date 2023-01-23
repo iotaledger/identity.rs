@@ -10,9 +10,9 @@ use identity_iota::crypto::KeyType;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
+use identity_iota::verification::VerificationMethod;
 
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
@@ -58,8 +58,8 @@ pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<(IotaDo
 
   let key_pair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(document.id().clone(), key_pair.type_(), key_pair.public(), "#key-1")?;
+  let method: VerificationMethod =
+    VerificationMethod::new(document.id().clone(), key_pair.type_(), key_pair.public(), "#key-1")?;
 
   document.insert_method(method, MethodScope::VerificationMethod)?;
 

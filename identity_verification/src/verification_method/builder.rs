@@ -9,25 +9,18 @@ use crate::verification_method::MethodType;
 use crate::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
 #[derive(Clone, Debug)]
-pub struct MethodBuilder<D = CoreDID>
-where
-  D: DID,
-{
-  pub(crate) id: Option<DIDUrl<D>>,
-  pub(crate) controller: Option<D>,
+pub struct MethodBuilder {
+  pub(crate) id: Option<DIDUrl>,
+  pub(crate) controller: Option<CoreDID>,
   pub(crate) type_: Option<MethodType>,
   pub(crate) data: Option<MethodData>,
   pub(crate) properties: Object,
 }
 
-impl<D> MethodBuilder<D>
-where
-  D: DID,
-{
+impl MethodBuilder {
   /// Creates a new `MethodBuilder`.
   pub fn new(properties: Object) -> Self {
     Self {
@@ -41,14 +34,14 @@ where
 
   /// Sets the `id` value of the generated `VerificationMethod`.
   #[must_use]
-  pub fn id(mut self, value: DIDUrl<D>) -> Self {
+  pub fn id(mut self, value: DIDUrl) -> Self {
     self.id = Some(value);
     self
   }
 
   /// Sets the `controller` value of the generated `VerificationMethod`.
   #[must_use]
-  pub fn controller(mut self, value: D) -> Self {
+  pub fn controller(mut self, value: CoreDID) -> Self {
     self.controller = Some(value);
     self
   }
@@ -68,15 +61,12 @@ where
   }
 
   /// Returns a new `VerificationMethod` based on the `MethodBuilder` configuration.
-  pub fn build(self) -> Result<VerificationMethod<D>> {
+  pub fn build(self) -> Result<VerificationMethod> {
     VerificationMethod::from_builder(self)
   }
 }
 
-impl<D> Default for MethodBuilder<D>
-where
-  D: DID,
-{
+impl Default for MethodBuilder {
   fn default() -> Self {
     Self {
       id: None,

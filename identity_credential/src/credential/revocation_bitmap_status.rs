@@ -7,7 +7,6 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::common::Value;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 use crate::credential::Status;
 use crate::error::Error;
@@ -41,7 +40,7 @@ impl RevocationBitmapStatus {
   /// );
   /// assert_eq!(status.index().unwrap(), 5);
   /// ```
-  pub fn new<D: DID>(mut id: DIDUrl<D>, index: u32) -> Self {
+  pub fn new(mut id: DIDUrl, index: u32) -> Self {
     id.set_query(Some(&format!("index={index}")))
       .expect("the string should be non-empty and a valid URL query");
 
@@ -56,7 +55,7 @@ impl RevocationBitmapStatus {
 
   /// Returns the [`DIDUrl`] of the `RevocationBitmapStatus`, which should resolve
   /// to a `RevocationBitmap2022` service in a DID Document.
-  pub fn id<D: DID>(&self) -> Result<DIDUrl<D>> {
+  pub fn id(&self) -> Result<DIDUrl> {
     DIDUrl::parse(self.0.id.as_str())
       .map_err(|err| Error::InvalidStatus(format!("invalid DID Url '{}': {:?}", self.0.id, err)))
   }
@@ -144,7 +143,6 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
-  use identity_did::CoreDID;
   use identity_did::DIDUrl;
 
   use crate::Error;
@@ -155,7 +153,7 @@ mod tests {
   #[test]
   fn test_embedded_status_invariants() {
     let url: Url = Url::parse("did:method:0xabcd?index=0#revocation").unwrap();
-    let did_url: DIDUrl<CoreDID> = DIDUrl::parse(url.clone().into_string()).unwrap();
+    let did_url: DIDUrl = DIDUrl::parse(url.clone().into_string()).unwrap();
     let revocation_list_index: u32 = 0;
     let embedded_revocation_status: RevocationBitmapStatus =
       RevocationBitmapStatus::new(did_url, revocation_list_index);
@@ -179,14 +177,14 @@ mod tests {
   #[test]
   fn test_revocation_bitmap_status_index_query() {
     // index is set.
-    let did_url: DIDUrl<CoreDID> = DIDUrl::parse("did:method:0xffff#rev-0").unwrap();
+    let did_url: DIDUrl = DIDUrl::parse("did:method:0xffff#rev-0").unwrap();
     let revocation_status: RevocationBitmapStatus = RevocationBitmapStatus::new(did_url, 250);
-    assert_eq!(revocation_status.id::<CoreDID>().unwrap().query().unwrap(), "index=250");
+    assert_eq!(revocation_status.id().unwrap().query().unwrap(), "index=250");
 
     // index is overwritten.
-    let did_url: DIDUrl<CoreDID> = DIDUrl::parse("did:method:0xffff?index=300#rev-0").unwrap();
+    let did_url: DIDUrl = DIDUrl::parse("did:method:0xffff?index=300#rev-0").unwrap();
     let revocation_status: RevocationBitmapStatus = RevocationBitmapStatus::new(did_url, 250);
-    assert_eq!(revocation_status.id::<CoreDID>().unwrap().query().unwrap(), "index=250");
+    assert_eq!(revocation_status.id().unwrap().query().unwrap(), "index=250");
   }
 
   #[test]

@@ -251,7 +251,7 @@ mod tests {
   fn build_presentation(holder: &CoreDocument, credentials: Vec<Credential>) -> Presentation {
     let mut builder = PresentationBuilder::default()
       .id(Url::parse("https://example.org/credentials/3732").unwrap())
-      .holder(Url::parse(holder.id().as_ref()).unwrap());
+      .holder(Url::parse(holder.id()).unwrap());
     for credential in credentials {
       builder = builder.credential(credential);
     }

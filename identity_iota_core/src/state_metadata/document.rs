@@ -50,6 +50,13 @@ impl StateMetadataDocument {
           IotaDID::try_from_core(did).map_err(crate::error::Error::DIDSyntaxError)
         }
       },
+      |did| {
+        if did == PLACEHOLDER_DID.as_ref() {
+          Ok(CoreDID::from(original_did.clone()))
+        } else {
+          Ok(did)
+        }
+      },
       crate::error::Error::InvalidDoc,
     )?;
 
@@ -182,6 +189,13 @@ impl From<IotaDocument> for StateMetadataDocument {
           CoreDID::from(did)
         }
       },
+      |did| {
+        if &did == id.as_ref() {
+          PLACEHOLDER_DID.clone()
+        } else {
+          did
+        }
+      },
     );
     StateMetadataDocument {
       document: core_document,
@@ -197,6 +211,7 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
+  use identity_did::CoreDID;
   use identity_did::DID;
   use identity_verification::MethodScope;
 
@@ -204,11 +219,11 @@ mod tests {
   use crate::state_metadata::PLACEHOLDER_DID;
   use crate::IotaDID;
   use crate::IotaDocument;
-  use crate::IotaService;
-  use crate::IotaVerificationMethod;
   use crate::StateMetadataDocument;
   use crate::StateMetadataEncoding;
   use crate::StateMetadataVersion;
+  use identity_document::service::Service;
+  use identity_verification::VerificationMethod;
 
   struct TestSetup {
     document: IotaDocument,
@@ -226,7 +241,7 @@ mod tests {
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .insert_method(
-        IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
+        VerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
         MethodScope::VerificationMethod,
       )
       .unwrap();
@@ -234,7 +249,7 @@ mod tests {
     let keypair_foreign: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .insert_method(
-        IotaVerificationMethod::new(
+        VerificationMethod::new(
           did_foreign.clone(),
           keypair_foreign.type_(),
           keypair_foreign.public(),
@@ -247,7 +262,7 @@ mod tests {
 
     assert!(document
       .insert_service(
-        IotaService::builder(Object::new())
+        Service::builder(Object::new())
           .id(document.id().to_url().join("#my-service").unwrap())
           .type_("RevocationList2022")
           .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
@@ -258,7 +273,7 @@ mod tests {
 
     assert!(document
       .insert_service(
-        IotaService::builder(Object::new())
+        Service::builder(Object::new())
           .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
           .type_("RevocationList2022")
           .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
@@ -301,7 +316,7 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      PLACEHOLDER_DID.as_ref()
+      <CoreDID as AsRef<CoreDID>>::as_ref(&PLACEHOLDER_DID.as_ref())
     );
 
     assert_eq!(
@@ -335,12 +350,15 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      PLACEHOLDER_DID.as_ref()
+      <CoreDID as AsRef<CoreDID>>::as_ref(&PLACEHOLDER_DID.as_ref())
     );
 
     let controllers = state_metadata_doc.document.controller().unwrap();
     assert_eq!(controllers.get(0).unwrap(), did_foreign.as_ref());
-    assert_eq!(controllers.get(1).unwrap(), PLACEHOLDER_DID.as_ref());
+    assert_eq!(
+      controllers.get(1).unwrap(),
+      <CoreDID as AsRef<CoreDID>>::as_ref(&PLACEHOLDER_DID.as_ref())
+    );
 
     let iota_document = state_metadata_doc.into_iota_document(&did_self).unwrap();
     assert_eq!(iota_document, document);

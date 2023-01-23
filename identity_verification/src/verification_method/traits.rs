@@ -4,7 +4,6 @@
 use crate::error::Error;
 use crate::error::Result;
 use crate::verification_method::VerificationMethod;
-use identity_did::DID;
 
 /// Represents all possible verification method URI types
 ///
@@ -28,10 +27,7 @@ pub trait TryMethod {
   ///
   /// - [`MethodUriType::Absolute`] => "did:example:1234#method"
   /// - [`MethodUriType::Relative`] => "#method"
-  fn method<D>(method: &VerificationMethod<D>) -> Option<String>
-  where
-    D: DID,
-  {
+  fn method(method: &VerificationMethod) -> Option<String> {
     // Return None if there is no fragment on the method, even in the absolute case.
     let fragment: &str = method.id().fragment()?;
 
@@ -46,10 +42,7 @@ pub trait TryMethod {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used.
-  fn try_method<D>(method: &VerificationMethod<D>) -> Result<String>
-  where
-    D: DID,
-  {
+  fn try_method(method: &VerificationMethod) -> Result<String> {
     Self::method(method).ok_or(Error::MissingIdFragment)
   }
 }

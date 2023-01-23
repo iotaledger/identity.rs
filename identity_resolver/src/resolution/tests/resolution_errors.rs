@@ -198,6 +198,18 @@ impl From<FooDID> for String {
     String::from(did.0)
   }
 }
+impl From<FooDID> for CoreDID {
+  fn from(value: FooDID) -> Self {
+    value.0
+  }
+}
+
+impl TryFrom<CoreDID> for FooDID {
+  type Error = DIDError;
+  fn try_from(value: CoreDID) -> Result<Self, Self::Error> {
+    Self::try_from_core(value)
+  }
+}
 
 impl FromStr for FooDID {
   type Err = DIDError;

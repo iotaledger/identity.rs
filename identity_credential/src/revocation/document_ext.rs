@@ -73,7 +73,7 @@ where
   F: FnOnce(&mut RevocationBitmap),
   Q: Into<DIDUrlQuery<'query>>,
 {
-  let service: &mut Service<D> = document
+  let service: &mut Service = document
     .service_mut_unchecked()
     .query_mut(service_query)
     .ok_or(RevocationError::InvalidService("invalid id - service not found"))?;

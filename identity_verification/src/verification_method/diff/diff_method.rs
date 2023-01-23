@@ -16,31 +16,23 @@ use crate::verification_method::MethodType;
 use crate::verification_method::VerificationMethod;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffMethod<D = CoreDID, T = Object>
-where
-  D: Diff + DID,
-  T: Diff,
-{
+pub struct DiffMethod {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<<DIDUrl<D> as Diff>::Type>,
+  id: Option<<DIDUrl as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<<D as Diff>::Type>,
+  controller: Option<<CoreDID as Diff>::Type>,
   #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
   type_: Option<MethodType>,
   #[serde(skip_serializing_if = "Option::is_none")]
   data: Option<DiffMethodData>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  properties: Option<<T as Diff>::Type>,
+  properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D> Diff for VerificationMethod<D>
-where
-  D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
-{
-  type Type = DiffMethod<D>;
+impl Diff for VerificationMethod {
+  type Type = DiffMethod;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffMethod {
@@ -73,13 +65,13 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: DIDUrl<D> = diff
+    let id: DIDUrl = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: D = diff
+    let controller: CoreDID = diff
       .controller
       .map(|value| self.controller().merge(value))
       .transpose()?
@@ -114,13 +106,13 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: DIDUrl<D> = diff
+    let id: DIDUrl = diff
       .id
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.id`"))?;
 
-    let controller: D = diff
+    let controller: CoreDID = diff
       .controller
       .map(Diff::from_diff)
       .transpose()?

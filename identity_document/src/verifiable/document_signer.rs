@@ -123,7 +123,7 @@ where
     X: Serialize + SetSignature + TryMethod,
   {
     let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
-    let method: &VerificationMethod<D> = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
+    let method: &VerificationMethod = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
     let method_uri: String = X::try_method(method).map_err(|_| Error::MissingIdFragment)?;
 
     match method.type_() {

@@ -28,38 +28,31 @@ use identity_did::DID;
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct VerificationMethod<D = CoreDID, T = Object>
-where
-  D: DID,
-{
+pub struct VerificationMethod {
   #[serde(deserialize_with = "deserialize_id_with_fragment")]
-  pub(crate) id: DIDUrl<D>,
-  pub(crate) controller: D,
+  pub(crate) id: DIDUrl,
+  pub(crate) controller: CoreDID,
   #[serde(rename = "type")]
   pub(crate) type_: MethodType,
   #[serde(flatten)]
   pub(crate) data: MethodData,
   #[serde(flatten)]
-  pub(crate) properties: T,
+  pub(crate) properties: Object,
 }
 
 /// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
-fn deserialize_id_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
+fn deserialize_id_with_fragment<'de, D>(deserializer: D) -> Result<DIDUrl, D::Error>
 where
   D: de::Deserializer<'de>,
-  T: DID + serde::Deserialize<'de>,
 {
-  let did_url: DIDUrl<T> = DIDUrl::deserialize(deserializer)?;
+  let did_url: DIDUrl = DIDUrl::deserialize(deserializer)?;
   if did_url.fragment().unwrap_or_default().is_empty() {
     return Err(de::Error::custom("method id missing fragment"));
   }
   Ok(did_url)
 }
 
-impl<D> VerificationMethod<D>
-where
-  D: DID,
-{
+impl VerificationMethod {
   // ===========================================================================
   // Builder
   // ===========================================================================
@@ -67,13 +60,13 @@ where
   /// Creates a `MethodBuilder` to configure a new `Method`.
   ///
   /// This is the same as `MethodBuilder::new()`.
-  pub fn builder(properties: Object) -> MethodBuilder<D> {
+  pub fn builder(properties: Object) -> MethodBuilder {
     MethodBuilder::new(properties)
   }
 
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
-  pub fn from_builder(builder: MethodBuilder<D>) -> Result<Self> {
-    let id: DIDUrl<D> = builder.id.ok_or(Error::InvalidMethod("missing id"))?;
+  pub fn from_builder(builder: MethodBuilder) -> Result<Self> {
+    let id: DIDUrl = builder.id.ok_or(Error::InvalidMethod("missing id"))?;
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidMethod("empty id fragment"));
     }
@@ -92,7 +85,7 @@ where
   // ===========================================================================
 
   /// Returns a reference to the `VerificationMethod` id.
-  pub fn id(&self) -> &DIDUrl<D> {
+  pub fn id(&self) -> &DIDUrl {
     &self.id
   }
 
@@ -100,7 +93,7 @@ where
   ///
   /// # Errors
   /// [`Error::MissingIdFragment`] if there is no fragment on the [`DIDUrl`].
-  pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
+  pub fn set_id(&mut self, id: DIDUrl) -> Result<()> {
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::MissingIdFragment);
     }
@@ -109,12 +102,12 @@ where
   }
 
   /// Returns a reference to the `VerificationMethod` controller.
-  pub fn controller(&self) -> &D {
+  pub fn controller(&self) -> &CoreDID {
     &self.controller
   }
 
   /// Returns a mutable reference to the `VerificationMethod` controller.
-  pub fn controller_mut(&mut self) -> &mut D {
+  pub fn controller_mut(&mut self) -> &mut CoreDID {
     &mut self.controller
   }
 
@@ -149,16 +142,16 @@ where
   }
 
   /// Creates a new [`MethodRef`] from `self`.
-  pub fn into_method_ref(self) -> MethodRef<D> {
+  pub fn into_method_ref(self) -> MethodRef {
     MethodRef::Embed(self)
   }
 
-  /// Maps `VerificationMethod<D,T>` to `VerificationMethod<C,T>` by applying a function `f` to
-  /// the id and controller.
-  pub fn map<C, F>(self, mut f: F) -> VerificationMethod<C>
+  /// Maps the [`VerificationMethod`] by applying a function `f` to
+  /// the [`CoreDID`] components of id and controller. Useful when working with DID methods where the identifier
+  /// is not known before publishing.
+  pub fn map<F>(self, mut f: F) -> VerificationMethod
   where
-    C: DID,
-    F: FnMut(D) -> C,
+    F: FnMut(CoreDID) -> CoreDID,
   {
     VerificationMethod {
       id: self.id.map(&mut f),
@@ -170,10 +163,9 @@ where
   }
 
   /// Fallible version of [`VerificationMethod::map`].
-  pub fn try_map<C, F, E>(self, mut f: F) -> Result<VerificationMethod<C>, E>
+  pub fn try_map<F, E>(self, mut f: F) -> Result<VerificationMethod, E>
   where
-    C: DID,
-    F: FnMut(D) -> Result<C, E>,
+    F: FnMut(CoreDID) -> Result<CoreDID, E>,
   {
     Ok(VerificationMethod {
       id: self.id.try_map(&mut f)?,
@@ -185,27 +177,24 @@ where
   }
 }
 
-impl<D> VerificationMethod<D>
-where
-  D: DID,
-{
+impl VerificationMethod {
   // ===========================================================================
   // Constructors
   // ===========================================================================
 
   /// Creates a new [`VerificationMethod`] from the given `did` and public key.
-  pub fn new(did: D, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
+  pub fn new<D: DID>(did: D, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
     let method_fragment: String = if !fragment.starts_with('#') {
       format!("#{}", fragment)
     } else {
       fragment.to_owned()
     };
-    let id: DIDUrl<D> = did
+    let id: DIDUrl = did
       .to_url()
       .join(method_fragment)
       .map_err(Error::DIDUrlConstructionError)?;
 
-    let mut builder: MethodBuilder<D> = MethodBuilder::default().id(id).controller(did);
+    let mut builder: MethodBuilder = MethodBuilder::default().id(id).controller(did.into());
     match key_type {
       KeyType::Ed25519 => {
         builder = builder.type_(MethodType::Ed25519VerificationKey2018);
@@ -220,29 +209,20 @@ where
   }
 }
 
-impl<D> Display for VerificationMethod<D>
-where
-  D: DID + Serialize,
-{
+impl Display for VerificationMethod {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }
 
-impl<D> AsRef<DIDUrl<D>> for VerificationMethod<D>
-where
-  D: DID,
-{
-  fn as_ref(&self) -> &DIDUrl<D> {
+impl AsRef<DIDUrl> for VerificationMethod {
+  fn as_ref(&self) -> &DIDUrl {
     self.id()
   }
 }
 
-impl<D> KeyComparable for VerificationMethod<D>
-where
-  D: DID,
-{
-  type Key = DIDUrl<D>;
+impl KeyComparable for VerificationMethod {
+  type Key = DIDUrl;
 
   #[inline]
   fn key(&self) -> &Self::Key {

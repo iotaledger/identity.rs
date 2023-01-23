@@ -6,6 +6,7 @@ use core::fmt::Debug;
 use core::fmt::Display;
 
 use identity_did::CoreDID;
+use identity_did::DIDUrl;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -33,17 +34,10 @@ use identity_verification::VerificationMethod;
 use crate::error::Result;
 use crate::Error;
 use crate::IotaDID;
-use crate::IotaDIDUrl;
 use crate::IotaDocumentMetadata;
 use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
-
-/// A [`VerificationMethod`] adhering to the IOTA DID method specification.
-pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
-
-/// A [`Service`] adhering to the IOTA DID method specification.
-pub type IotaService = Service<IotaDID>;
 
 /// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
 pub type IotaCoreDocument = CoreDocument<IotaDID>;
@@ -143,27 +137,27 @@ impl IotaDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all [`IotaService`]s in the document.
-  pub fn service(&self) -> &OrderedSet<IotaService> {
+  /// Return a set of all [`Service`]s in the document.
+  pub fn service(&self) -> &OrderedSet<Service> {
     self.document.service()
   }
 
-  /// Add a new [`IotaService`] to the document.
+  /// Add a new [`Service`] to the document.
   ///
   /// # Errors
   /// An error is returned if there already exists a service or (verification) method with
   /// the same identifier in the document.  
-  pub fn insert_service(&mut self, service: IotaService) -> Result<()> {
+  pub fn insert_service(&mut self, service: Service) -> Result<()> {
     self
       .core_document_mut()
       .insert_service(service)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Remove and return the [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
+  /// Remove and return the [`Service`] identified by the given [`DIDUrl`] from the document.
   ///
   /// `None` is returned if the service does not exist in the document.
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Option<IotaService> {
+  pub fn remove_service(&mut self, did_url: &DIDUrl) -> Option<Service> {
     self.core_document_mut().remove_service(did_url)
   }
 
@@ -174,28 +168,28 @@ impl IotaDocument {
   /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
   ///
   /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
-  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&IotaVerificationMethod> {
+  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod> {
     self.document.methods(scope)
   }
 
-  /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
+  /// Adds a new [`VerificationMethod`] to the document in the given [`MethodScope`].
   ///
   /// # Errors
   ///
   /// Returns an error if a method with the same fragment already exists.
-  pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
+  pub fn insert_method(&mut self, method: VerificationMethod, scope: MethodScope) -> Result<()> {
     self
       .core_document_mut()
       .insert_method(method, scope)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Removes all references to the specified [`IotaVerificationMethod`].
+  /// Removes all references to the specified [`VerificationMethod`].
   ///
   /// # Errors
   ///
   /// Returns an error if the method does not exist.
-  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Option<IotaVerificationMethod> {
+  pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
     self.core_document_mut().remove_method(did_url)
   }
 
@@ -203,7 +197,7 @@ impl IotaDocument {
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
-  pub fn attach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  pub fn attach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
     self
       .core_document_mut()
       .attach_method_relationship(did_url, relationship)
@@ -211,14 +205,14 @@ impl IotaDocument {
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  pub fn detach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
     self
       .core_document_mut()
       .detach_method_relationship(did_url, relationship)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
   ///
   /// # Warning
@@ -228,7 +222,7 @@ impl IotaDocument {
     &mut self,
     query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&mut IotaVerificationMethod>
+  ) -> Option<&mut VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -392,18 +386,14 @@ impl Document for IotaDocument {
     IotaDocument::id(self)
   }
 
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D>>
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
     self.document.resolve_service(query)
   }
 
-  fn resolve_method<'query, 'me, Q>(
-    &'me self,
-    query: Q,
-    scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod<Self::D>>
+  fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -463,7 +453,7 @@ impl From<IotaDocument> for IotaCoreDocument {
 
 impl From<IotaDocument> for CoreDocument {
   fn from(document: IotaDocument) -> Self {
-    document.document.map_unchecked(CoreDID::from)
+    document.document.map_unchecked(CoreDID::from, CoreDID::from)
   }
 }
 
@@ -513,10 +503,10 @@ mod tests {
       .unwrap()
   }
 
-  fn generate_method(controller: &IotaDID, fragment: &str) -> IotaVerificationMethod {
+  fn generate_method(controller: &IotaDID, fragment: &str) -> VerificationMethod {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
-      .controller(controller.clone())
+      .controller(controller.clone().into())
       .type_(MethodType::Ed25519VerificationKey2018)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
@@ -566,7 +556,7 @@ mod tests {
   fn test_methods() {
     let controller: IotaDID = valid_did();
     let document: IotaDocument = generate_document(&controller);
-    let expected: Vec<IotaVerificationMethod> = vec![
+    let expected: Vec<VerificationMethod> = vec![
       generate_method(&controller, "#key-1"),
       generate_method(&controller, "#key-2"),
       generate_method(&controller, "#key-3"),
@@ -608,7 +598,7 @@ mod tests {
       // Add a new method.
       let key_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
-      let method_new: IotaVerificationMethod = IotaVerificationMethod::new(
+      let method_new: VerificationMethod = VerificationMethod::new(
         document.id().clone(),
         key_new.type_(),
         key_new.public(),
@@ -654,8 +644,8 @@ mod tests {
   fn test_services() {
     // VALID: add one service.
     let mut document: IotaDocument = IotaDocument::new_with_id(valid_did());
-    let url1: IotaDIDUrl = document.id().to_url().join("#linked-domain").unwrap();
-    let service1: IotaService = Service::from_json(&format!(
+    let url1: DIDUrl = document.id().to_url().join("#linked-domain").unwrap();
+    let service1: Service = Service::from_json(&format!(
       r#"{{
       "id":"{}",
       "type": "LinkedDomains",
@@ -673,8 +663,8 @@ mod tests {
     assert_eq!(document.resolve_service("#other"), None);
 
     // VALID: add two services.
-    let url2: IotaDIDUrl = document.id().to_url().join("#revocation").unwrap();
-    let service2: IotaService = Service::from_json(&format!(
+    let url2: DIDUrl = document.id().to_url().join("#revocation").unwrap();
+    let service2: Service = Service::from_json(&format!(
       r#"{{
       "id":"{}",
       "type": "RevocationBitmap2022",
@@ -692,7 +682,7 @@ mod tests {
     assert_eq!(document.resolve_service("#other"), None);
 
     // INVALID: insert service with duplicate fragment fails.
-    let duplicate: IotaService = Service::from_json(&format!(
+    let duplicate: Service = Service::from_json(&format!(
       r#"{{
       "id":"{}",
       "type": "DuplicateService",
@@ -703,14 +693,14 @@ mod tests {
     .unwrap();
     assert!(document.insert_service(duplicate.clone()).is_err());
     assert_eq!(2, document.service().len());
-    let resolved: &IotaService = document.resolve_service(&url1).unwrap();
+    let resolved: &Service = document.resolve_service(&url1).unwrap();
     assert_eq!(resolved, &service1);
     assert_ne!(resolved, &duplicate);
 
     // VALID: remove services.
     assert_eq!(service1, document.remove_service(&url1).unwrap());
     assert_eq!(1, document.service().len());
-    let last_service: &IotaService = document.resolve_service(&url2).unwrap();
+    let last_service: &Service = document.resolve_service(&url2).unwrap();
     assert_eq!(last_service, &service2);
 
     assert_eq!(service2, document.remove_service(&url2).unwrap());
@@ -721,7 +711,7 @@ mod tests {
   fn test_document_equality() {
     let mut original_doc: IotaDocument = IotaDocument::new_with_id(valid_did());
     let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method1: IotaVerificationMethod = IotaVerificationMethod::new(
+    let method1: VerificationMethod = VerificationMethod::new(
       original_doc.id().to_owned(),
       keypair1.type_(),
       keypair1.public(),
@@ -735,8 +725,8 @@ mod tests {
     // Update the key material of the existing verification method #test-0.
     let mut doc1 = original_doc.clone();
     let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method2: IotaVerificationMethod =
-      IotaVerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
+    let method2: VerificationMethod =
+      VerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
     doc1
       .remove_method(&doc1.id().to_url().join("#test-0").unwrap())
@@ -751,8 +741,8 @@ mod tests {
 
     let mut doc2 = doc1.clone();
     let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method3: IotaVerificationMethod =
-      IotaVerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
+    let method3: VerificationMethod =
+      VerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 
     let insertion_result = doc2.insert_method(method3, MethodScope::capability_invocation());
 

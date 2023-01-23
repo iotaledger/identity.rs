@@ -25,17 +25,13 @@ pub trait Document {
   fn id(&self) -> &Self::D;
 
   /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D>>
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
   where
     Q: Into<DIDUrlQuery<'query>>;
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope`, if present.
-  fn resolve_method<'query, 'me, Q>(
-    &'me self,
-    query: Q,
-    scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod<Self::D>>
+  fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>;
 
@@ -57,18 +53,14 @@ impl<DOC: Document> Document for &DOC {
     DOC::id(self)
   }
 
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D>>
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
     DOC::resolve_service(self, query)
   }
 
-  fn resolve_method<'query, 'me, Q>(
-    &'me self,
-    query: Q,
-    scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod<Self::D>>
+  fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {

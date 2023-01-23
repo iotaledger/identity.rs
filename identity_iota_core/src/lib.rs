@@ -13,7 +13,6 @@ pub use iota_types::block;
 #[cfg(feature = "client")]
 pub use client::*;
 pub use did::IotaDID;
-pub use did::IotaDIDUrl;
 pub use document::*;
 pub use network::NetworkName;
 pub use state_metadata::*;
