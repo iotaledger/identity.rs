@@ -9,7 +9,6 @@ use crate::jwk::EcCurve;
 use crate::jwk::EcxCurve;
 use crate::jwk::EdCurve;
 use crate::jwk::JwkType;
-// use crate::lib::*;
 
 /// Algorithm-specific parameters for JSON Web Keys.
 ///

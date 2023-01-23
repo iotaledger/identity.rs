@@ -6,9 +6,7 @@ use core::str;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jose::JoseHeader;
-// use crate::jwe::JweHeader;
 use crate::jws::JwsHeader;
-use crate::jwu::decode_b64;
 
 // The default value of the "b64" header parameter
 const DEFAULT_B64: bool = true;
@@ -40,36 +38,6 @@ where
   U: AsRef<[u8]> + ?Sized,
 {
   value.into().map(AsRef::as_ref).filter(|value| !value.is_empty())
-}
-
-pub fn create_aad<T, U>(header: Option<&T>, data: Option<&U>) -> Vec<u8>
-where
-  T: AsRef<[u8]> + ?Sized,
-  U: AsRef<[u8]> + ?Sized,
-{
-  let header: &[u8] = header.map(AsRef::as_ref).unwrap_or_default();
-  let data: &[u8] = data.map(AsRef::as_ref).unwrap_or_default();
-
-  if data.is_empty() {
-    header.to_vec()
-  } else {
-    create_message(header, data)
-  }
-}
-
-pub fn parse_cek(cek: Option<&str>) -> Result<Vec<u8>> {
-  cek.ok_or(Error::EncError("CEK (missing)")).and_then(decode_b64)
-}
-
-pub fn create_pbes2_salt(algorithm: &str, p2s: &[u8]) -> Vec<u8> {
-  let capacity: usize = algorithm.len() + 1 + p2s.len();
-  let mut salt: Vec<u8> = Vec::with_capacity(capacity);
-
-  // The salt value used is (UTF8(Alg) || 0x00 || Salt Input)
-  salt.extend_from_slice(algorithm.as_bytes());
-  salt.push(0x0);
-  salt.extend_from_slice(p2s);
-  salt
 }
 
 pub fn create_message(header: &[u8], claims: &[u8]) -> Vec<u8> {
