@@ -73,8 +73,6 @@ where
   algs: Option<Vec<JwsAlgorithm>>,
   /// A list of permitted extension parameters.
   crits: Option<Vec<String>>,
-  /// The expected key id of the decoded token.
-  key_id: Option<String>,
   /// The detached payload, if using detached content
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
@@ -92,7 +90,6 @@ where
       verify,
       algs: None,
       crits: None,
-      key_id: None,
       payload: None,
     }
   }
@@ -109,11 +106,6 @@ where
 
   pub fn critical(mut self, value: impl Into<String>) -> Self {
     self.crits.get_or_insert_with(Vec::new).push(value.into());
-    self
-  }
-
-  pub fn key_id(mut self, value: impl Into<String>) -> Self {
-    self.key_id = Some(value.into());
     self
   }
 
@@ -148,10 +140,9 @@ where
     let merged: HeaderSet<'_> = HeaderSet::new()
       .protected(protected.as_ref())
       .unprotected(signature.header.as_ref());
+    let alg: JwsAlgorithm = merged.try_alg()?;
 
-    self.check_alg(merged.try_alg()?)?;
-    // TODO: Do we need this check? Check RFC.
-    // self.check_kid(merged.kid())?;
+    self.check_alg(alg)?;
 
     {
       let protected: &[u8] = signature.protected.map(str::as_bytes).unwrap_or_default();
@@ -159,7 +150,7 @@ where
       let signature: Vec<u8> = decode_b64(signature.signature)?;
 
       (self.verify)(
-        merged.try_alg()?,
+        alg,
         merged.try_kid()?.as_ref(),
         message.as_slice(),
         signature.as_slice(),
@@ -221,13 +212,5 @@ where
 
   fn check_alg(&self, value: JwsAlgorithm) -> Result<()> {
     check_slice_param("alg", self.algs.as_deref(), &value)
-  }
-
-  fn check_kid(&self, value: Option<&str>) -> Result<()> {
-    if self.key_id.as_deref() == value {
-      Ok(())
-    } else {
-      Err(Error::InvalidParam("kid"))
-    }
   }
 }

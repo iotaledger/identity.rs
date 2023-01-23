@@ -7,4 +7,4 @@ mod base64;
 mod serde;
 
 pub use self::base64::*;
-pub use self::serde::*;
+pub(crate) use self::serde::*;
