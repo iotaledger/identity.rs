@@ -29,15 +29,15 @@ impl CharSet {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7797#section-5.2)
   pub fn validate(&self, data: &[u8]) -> Result<()> {
-    let payload: &str = from_utf8(data).map_err(|_| Error::InvalidContent("UTF-8"))?;
+    let payload: &str = from_utf8(data).map_err(|_| Error::InvalidContent("invalid UTF-8"))?;
 
     if payload.contains('.') {
-      return Err(Error::InvalidContent("Invalid Character: `.`"));
+      return Err(Error::InvalidContent("invalid character `.`"));
     }
 
     if !self.__validate(payload) {
       // TODO: Improve this error
-      return Err(Error::InvalidContent("Invalid Character(s)"));
+      return Err(Error::InvalidContent("invalid character(s)"));
     }
 
     Ok(())

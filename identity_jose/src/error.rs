@@ -3,65 +3,32 @@
 
 //! Errors that may occur in the library.
 
-use core::fmt::Display;
-use core::fmt::Formatter;
-
 /// Alias for a `Result` with the error type [Error].
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// All possible errors that can occur in the library.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-  InvalidRsaPrime,
-  InvalidJson(serde_json::Error),
-  InvalidBase64(base64::DecodeError),
-  InvalidUtf8(core::str::Utf8Error),
+  #[error("invalid json")]
+  InvalidJson(#[source] serde_json::Error),
+  #[error("invalid base64")]
+  InvalidBase64(#[source] base64::DecodeError),
+  #[error("invalid utf-8")]
+  InvalidUtf8(#[source] core::str::Utf8Error),
+  #[error("invalid claim `{0}`")]
   InvalidClaim(&'static str),
+  #[error("missing claim `{0}`")]
   MissingClaim(&'static str),
+  #[error("invalid param: {0}")]
   InvalidParam(&'static str),
+  #[error("missing param `{0}`")]
   MissingParam(&'static str),
+  #[error("{0}")]
   InvalidContent(&'static str),
-  InvalidArray(&'static str),
-  AlgError(&'static str),
-  EncError(&'static str),
+  #[error("invalid key format `{0}`")]
   KeyError(&'static str),
-  SignatureCreationError(Box<dyn std::error::Error + Send + Sync>),
-  SignatureVerificationError(Box<dyn std::error::Error + Send + Sync>),
-}
-
-// TODO: Use thiserror? Lowercase error message!
-impl Display for Error {
-  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-    match self {
-      Self::InvalidRsaPrime => f.write_str("Invalid Rsa Prime Value"),
-      Self::InvalidJson(inner) => f.write_fmt(format_args!("Invalid JSON: {}", inner)),
-      Self::InvalidBase64(inner) => f.write_fmt(format_args!("Invalid Base64: {}", inner)),
-      Self::InvalidUtf8(inner) => f.write_fmt(format_args!("Invalid Utf-8: {:?}", inner)),
-      Self::InvalidClaim(inner) => f.write_fmt(format_args!("Invalid Claim: {}", inner)),
-      Self::MissingClaim(inner) => f.write_fmt(format_args!("Missing Claim: {}", inner)),
-      Self::InvalidParam(inner) => f.write_fmt(format_args!("Invalid Param: {}", inner)),
-      Self::MissingParam(inner) => f.write_fmt(format_args!("Missing Param: {}", inner)),
-      Self::InvalidContent(inner) => f.write_fmt(format_args!("Invalid Content: {}", inner)),
-      Self::InvalidArray(inner) => f.write_fmt(format_args!("Invalid Array: {}", inner)),
-      Self::AlgError(inner) => f.write_fmt(format_args!("Unsupported Algorithm: {}", inner)),
-      Self::EncError(inner) => f.write_fmt(format_args!("Encryption Error: {}", inner)),
-      Self::KeyError(inner) => f.write_fmt(format_args!("Invalid Key Format: {}", inner)),
-      Self::SignatureCreationError(inner) => f.write_fmt(format_args!("signature creation error: {}", inner)),
-      Self::SignatureVerificationError(inner) => f.write_fmt(format_args!("signature verification error: {}", inner)),
-    }
-  }
-}
-
-impl std::error::Error for Error {}
-
-impl From<serde_json::Error> for Error {
-  fn from(other: serde_json::Error) -> Self {
-    Self::InvalidJson(other)
-  }
-}
-
-impl From<base64::DecodeError> for Error {
-  fn from(other: base64::DecodeError) -> Self {
-    Self::InvalidBase64(other)
-  }
+  #[error("signature creation error")]
+  SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),
+  #[error("signature verification error")]
+  SignatureVerificationError(#[source] Box<dyn std::error::Error + Send + Sync>),
 }

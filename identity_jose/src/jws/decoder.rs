@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str;
-use serde_json::from_slice;
 use std::borrow::Cow;
 
 use crate::error::Error;
@@ -128,7 +127,7 @@ where
         }
       }
 
-      Err(Error::InvalidContent("Recipient (not found)"))
+      Err(Error::InvalidContent("recipient not found"))
     })
   }
 
@@ -177,7 +176,7 @@ where
         let split: Vec<&[u8]> = data.split(|byte| *byte == b'.').collect();
 
         if split.len() != COMPACT_SEGMENTS {
-          return Err(Error::InvalidContent("Segments (count)"));
+          return Err(Error::InvalidContent("invalid segments count"));
         }
 
         let signature: JwsSignature<'_> = JwsSignature {
@@ -189,12 +188,12 @@ where
         format(self.expand_payload(Some(split[1]))?, vec![signature])
       }
       JwsFormat::General => {
-        let data: General<'_> = from_slice(data)?;
+        let data: General<'_> = serde_json::from_slice(data).map_err(|err| Error::InvalidJson(err))?;
 
         format(self.expand_payload(data.payload)?, data.signatures)
       }
       JwsFormat::Flatten => {
-        let data: Flatten<'_> = from_slice(data)?;
+        let data: Flatten<'_> = serde_json::from_slice(data).map_err(|err| Error::InvalidJson(err))?;
 
         format(self.expand_payload(data.payload)?, vec![data.signature])
       }
@@ -205,8 +204,8 @@ where
     match (self.payload, filter_non_empty_bytes(payload)) {
       (Some(payload), None) => Ok(payload),
       (None, Some(payload)) => Ok(payload),
-      (Some(_), Some(_)) => Err(Error::InvalidContent("Payload (multiple)")),
-      (None, None) => Err(Error::InvalidContent("Payload (missing)")),
+      (Some(_), Some(_)) => Err(Error::InvalidContent("multiple payloads")),
+      (None, None) => Err(Error::InvalidContent("missing payload")),
     }
   }
 

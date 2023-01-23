@@ -102,14 +102,14 @@ where
 {
   // The "crit" parameter MUST be integrity protected
   if unprotected.map(|header| header.has_claim("crit")).unwrap_or_default() {
-    return Err(Error::InvalidParam("crit (unprotected)"));
+    return Err(Error::InvalidParam("unprotected crit"));
   }
 
   let values: Option<&[String]> = protected.and_then(|header| header.common().crit());
 
   // The "crit" parameter MUST NOT be an empty list
   if values.map(|values| values.is_empty()).unwrap_or_default() {
-    return Err(Error::InvalidParam("crit (empty)"));
+    return Err(Error::InvalidParam("empty crit"));
   }
 
   let permitted: &[String] = permitted.unwrap_or_default();
@@ -119,12 +119,12 @@ where
     // The "crit" parameter MUST NOT contain any header parameters defined by
     // the JOSE JWS/JWA specifications.
     if PREDEFINED.contains(&&**value) {
-      return Err(Error::InvalidParam("crit (pre-defined)"));
+      return Err(Error::InvalidParam("crit contains pre-defined parameters"));
     }
 
     // The "crit" parameter MUST be understood by the application.
     if !permitted.contains(value) {
-      return Err(Error::InvalidParam("crit (unpermitted)"));
+      return Err(Error::InvalidParam("unpermitted crit"));
     }
 
     let exists: bool = protected
@@ -143,7 +143,7 @@ where
 pub fn validate_b64(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
   // The "b64" parameter MUST be integrity protected
   if unprotected.and_then(JwsHeader::b64).is_some() {
-    return Err(Error::InvalidParam("b64 (unprotected)"));
+    return Err(Error::InvalidParam("unprotected `b64` parameter"));
   }
 
   let b64: Option<bool> = protected.and_then(|header| header.b64());
@@ -152,7 +152,9 @@ pub fn validate_b64(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeade
   // The "b64" parameter MUST be included in the "crit" parameter values
   match (b64, crit) {
     (Some(_), Some(values)) if values.iter().any(|value| value == "b64") => Ok(()),
-    (Some(_), None) => Err(Error::InvalidParam("b64 (non-critical)")),
+    (Some(_), None) => Err(Error::InvalidParam(
+      "`b64` param must be included in the crit parameter values",
+    )),
     _ => Ok(()),
   }
 }
