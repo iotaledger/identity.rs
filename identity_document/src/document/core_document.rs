@@ -46,7 +46,7 @@ use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub(crate) struct CoreDocumentData<D = CoreDID, V = Object>
+pub(crate) struct CoreDocumentData<D = CoreDID>
   where
     D: DID + KeyComparable
 {
@@ -68,12 +68,12 @@ pub(crate) struct CoreDocumentData<D = CoreDID, V = Object>
   #[serde(default = "Default::default", rename = "capabilityInvocation", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) capability_invocation: OrderedSet<MethodRef<D>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) service: OrderedSet<Service<D, V>>,
+  pub(crate) service: OrderedSet<Service<D>>,
   #[serde(flatten)]
   pub(crate) properties: Object,
 }
 
-impl<D: DID + KeyComparable, V> CoreDocumentData<D, V> {
+impl<D: DID + KeyComparable> CoreDocumentData<D> {
   /// Checks the following:
   /// - There are no scoped method references to an embedded method in the document
   /// - The ids of verification methods (scoped/embedded or general purpose) and services are unique across the
@@ -155,19 +155,18 @@ impl<D: DID + KeyComparable, V> CoreDocumentData<D, V> {
 /// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[rustfmt::skip]
-#[serde(try_from = "CoreDocumentData<D, V>")]
-pub struct CoreDocument<D = CoreDID, V = Object>
+#[serde(try_from = "CoreDocumentData<D>")]
+pub struct CoreDocument<D = CoreDID>
   where
     D: DID + KeyComparable
 {
-  pub(crate) data: CoreDocumentData<D,V>, 
+  pub(crate) data: CoreDocumentData<D>, 
 }
 
 //Forward serialization to inner
-impl<D, V> Serialize for CoreDocument<D, V>
+impl<D> Serialize for CoreDocument<D>
 where
   D: DID + KeyComparable + Serialize,
-  V: Serialize,
 {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -187,19 +186,19 @@ macro_rules! method_ref_mut_helper {
   };
 }
 
-impl<D, V> CoreDocument<D, V>
+impl<D> CoreDocument<D>
 where
   D: DID + KeyComparable,
 {
   /// Creates a [`DocumentBuilder`] to configure a new `CoreDocument`.
   ///
   /// This is the same as [`DocumentBuilder::new`].
-  pub fn builder(properties: Object) -> DocumentBuilder<D, V> {
+  pub fn builder(properties: Object) -> DocumentBuilder<D> {
     DocumentBuilder::new(properties)
   }
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
-  pub fn from_builder(builder: DocumentBuilder<D, V>) -> Result<Self> {
+  pub fn from_builder(builder: DocumentBuilder<D>) -> Result<Self> {
     Self::try_from(CoreDocumentData {
       id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
       controller: Some(builder.controller)
@@ -310,7 +309,7 @@ where
   }
 
   /// Returns a reference to the `CoreDocument` service set.
-  pub fn service(&self) -> &OrderedSet<Service<D, V>> {
+  pub fn service(&self) -> &OrderedSet<Service<D>> {
     &self.data.service
   }
 
@@ -318,7 +317,7 @@ where
   ///
   /// Changing a service's identifier can drastically alter the results of
   /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
-  pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D, V>> {
+  pub fn service_mut_unchecked(&mut self) -> &mut OrderedSet<Service<D>> {
     &mut self.data.service
   }
 
@@ -344,13 +343,13 @@ where
   ///
   /// Can lead to broken invariants if used incorrectly. See [`Self::try_map`](CoreDocument::try_map()) for a fallible
   /// version with additional built-in checks.
-  pub fn map_unchecked<C, F>(self, mut f: F) -> CoreDocument<C, V>
+  pub fn map_unchecked<C, F>(self, mut f: F) -> CoreDocument<C>
   where
     C: DID + KeyComparable,
     F: FnMut(D) -> C,
   {
     let current_inner = self.data;
-    CoreDocument::<C, V> {
+    CoreDocument::<C> {
       data: CoreDocumentData {
         id: f(current_inner.id),
         controller: current_inner
@@ -406,7 +405,7 @@ where
   /// identifiers. In the case of the latter the provided function `h` will be called to construct a compatible error.
   /// Note that custom properties are still not checked (see the documentation for
   /// [`Self::properties_mut_unchecked`](CoreDocument::properties_mut_unchecked())).
-  pub fn try_map<C, F, E, H>(self, mut f: F, h: H) -> std::result::Result<CoreDocument<C, V>, E>
+  pub fn try_map<C, F, E, H>(self, mut f: F, h: H) -> std::result::Result<CoreDocument<C>, E>
   where
     C: DID + KeyComparable,
     F: FnMut(D) -> Result<C, E>,
@@ -414,7 +413,7 @@ where
     E: std::error::Error,
   {
     let current_inner = self.data;
-    let helper = || -> Result<CoreDocumentData<C, V>, E> {
+    let helper = || -> Result<CoreDocumentData<C>, E> {
       Ok(CoreDocumentData {
         id: f(current_inner.id)?,
         controller: current_inner
@@ -530,7 +529,7 @@ where
   /// # Errors
   ///
   /// Returns an error if there already exists a service or verification method with the same identifier.
-  pub fn insert_service(&mut self, service: Service<D, V>) -> Result<()> {
+  pub fn insert_service(&mut self, service: Service<D>) -> Result<()> {
     let service_id = service.id();
     let id_exists = self
       .verification_relationships()
@@ -544,7 +543,7 @@ where
   }
 
   /// Removes and returns a [`Service`] from the document if it exists.
-  pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Option<Service<D, V>> {
+  pub fn remove_service(&mut self, id: &DIDUrl<D>) -> Option<Service<D>> {
     self.data.service.remove(id)
   }
   /// Attaches the relationship to the method resolved by `method_query`.
@@ -862,7 +861,7 @@ where
   }
 }
 
-impl<D, V> CoreDocument<D, V>
+impl<D> CoreDocument<D>
 where
   D: DID + KeyComparable,
 {
@@ -956,12 +955,11 @@ where
   }
 }
 
-impl<D, V> Document for CoreDocument<D, V>
+impl<D> Document for CoreDocument<D>
 where
   D: DID + KeyComparable,
 {
   type D = D;
-  type V = V;
 
   fn id(&self) -> &Self::D {
     CoreDocument::id(self)
@@ -969,7 +967,7 @@ where
 
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
   // services whose ids are of the form <did different from this document's>#<fragment>.
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D>>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -997,12 +995,12 @@ where
   }
 }
 
-impl<D, V> TryFrom<CoreDocumentData<D, V>> for CoreDocument<D, V>
+impl<D> TryFrom<CoreDocumentData<D>> for CoreDocument<D>
 where
   D: DID + KeyComparable,
 {
   type Error = crate::error::Error;
-  fn try_from(value: CoreDocumentData<D, V>) -> Result<Self, Self::Error> {
+  fn try_from(value: CoreDocumentData<D>) -> Result<Self, Self::Error> {
     match value.check_id_constraints() {
       Ok(_) => Ok(Self { data: value }),
       Err(err) => Err(err),
@@ -1014,28 +1012,27 @@ where
 // Signature Extensions
 // =============================================================================
 
-impl<D, V> CoreDocument<D, V>
+impl<D> CoreDocument<D>
 where
   D: DID + KeyComparable,
 {
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, D, V> {
+  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, D> {
     DocumentSigner::new(self, private)
   }
 }
 
-impl<D, V> TryMethod for CoreDocument<D, V>
+impl<D> TryMethod for CoreDocument<D>
 where
   D: DID + KeyComparable,
 {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
-impl<D, V> Display for CoreDocument<D, V>
+impl<D> Display for CoreDocument<D>
 where
   D: DID + KeyComparable + Serialize,
-  V: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)

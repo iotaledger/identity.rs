@@ -15,7 +15,7 @@ use identity_verification::VerificationMethod;
 
 /// A `DocumentBuilder` is used to generate a customized [`Document`](crate::document::CoreDocument).
 #[derive(Clone, Debug)]
-pub struct DocumentBuilder<D = CoreDID, V = Object>
+pub struct DocumentBuilder<D = CoreDID>
 where
   D: DID + KeyComparable,
 {
@@ -28,11 +28,11 @@ where
   pub(crate) key_agreement: Vec<MethodRef<D>>,
   pub(crate) capability_delegation: Vec<MethodRef<D>>,
   pub(crate) capability_invocation: Vec<MethodRef<D>>,
-  pub(crate) service: Vec<Service<D, V>>,
+  pub(crate) service: Vec<Service<D>>,
   pub(crate) properties: Object,
 }
 
-impl<D, V> DocumentBuilder<D, V>
+impl<D> DocumentBuilder<D>
 where
   D: DID + KeyComparable,
 {
@@ -118,18 +118,18 @@ where
 
   /// Adds a value to the `service` set.
   #[must_use]
-  pub fn service(mut self, value: Service<D, V>) -> Self {
+  pub fn service(mut self, value: Service<D>) -> Self {
     self.service.push(value);
     self
   }
 
   /// Returns a new `Document` based on the `DocumentBuilder` configuration.
-  pub fn build(self) -> Result<CoreDocument<D, V>> {
+  pub fn build(self) -> Result<CoreDocument<D>> {
     CoreDocument::from_builder(self)
   }
 }
 
-impl<D, V> Default for DocumentBuilder<D, V>
+impl<D> Default for DocumentBuilder<D>
 where
   D: DID + KeyComparable,
 {

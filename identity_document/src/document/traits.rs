@@ -20,13 +20,12 @@ use identity_verification::VerificationMethod;
 /// Common operations for DID Documents.
 pub trait Document {
   type D: DID;
-  type V;
 
   /// Returns a reference to the `Document` id.
   fn id(&self) -> &Self::D;
 
   /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D>>
   where
     Q: Into<DIDUrlQuery<'query>>;
 
@@ -53,13 +52,12 @@ pub trait Document {
 
 impl<DOC: Document> Document for &DOC {
   type D = DOC::D;
-  type V = DOC::V;
 
   fn id(&self) -> &Self::D {
     DOC::id(self)
   }
 
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D>>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {

@@ -33,12 +33,11 @@ where
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<D, T> Diff for Service<D, T>
+impl<D> Diff for Service<D>
 where
   D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
-  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffService<D, T>;
+  type Type = DiffService<D>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffService {
@@ -84,7 +83,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.service_endpoint().clone());
 
-    let properties: T = diff
+    let properties: Object = diff
       .properties
       .map(|value| self.properties().merge(value))
       .transpose()?
@@ -118,7 +117,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `service.service_endpoint`"))?;
 
-    let properties: T = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
+    let properties: Object = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
 
     // Use builder to enforce invariants.
     ServiceBuilder::new(properties)
@@ -134,7 +133,7 @@ where
       id: Some(self.id.into_diff()?),
       type_: Some(self.type_.into_diff()?),
       service_endpoint: Some(self.service_endpoint.into_diff()?),
-      properties: if self.properties != T::default() {
+      properties: if self.properties != Object::default() {
         Some(self.properties.into_diff()?)
       } else {
         None

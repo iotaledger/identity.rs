@@ -25,8 +25,8 @@ use identity_did::DID;
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#services)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(bound(deserialize = "D: DID + Deserialize<'de>, T: serde::Deserialize<'de>"))]
-pub struct Service<D = CoreDID, T = Object>
+#[serde(bound(deserialize = "D: DID + Deserialize<'de>"))]
+pub struct Service<D = CoreDID>
 where
   D: DID,
 {
@@ -37,7 +37,7 @@ where
   #[serde(rename = "serviceEndpoint")]
   pub(crate) service_endpoint: ServiceEndpoint,
   #[serde(flatten)]
-  pub(crate) properties: T,
+  pub(crate) properties: Object,
 }
 
 /// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
@@ -53,19 +53,19 @@ where
   Ok(did_url)
 }
 
-impl<D, T> Service<D, T>
+impl<D> Service<D>
 where
   D: DID,
 {
   /// Creates a `ServiceBuilder` to configure a new `Service`.
   ///
   /// This is the same as `ServiceBuilder::new()`.
-  pub fn builder(properties: T) -> ServiceBuilder<D, T> {
+  pub fn builder(properties: Object) -> ServiceBuilder<D> {
     ServiceBuilder::new(properties)
   }
 
   /// Returns a new `Service` based on the `ServiceBuilder` configuration.
-  pub fn from_builder(builder: ServiceBuilder<D, T>) -> Result<Self> {
+  pub fn from_builder(builder: ServiceBuilder<D>) -> Result<Self> {
     let id: DIDUrl<D> = builder.id.ok_or(Error::InvalidService("missing id"))?;
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidService("empty id fragment"));
@@ -119,18 +119,18 @@ where
   }
 
   /// Returns a reference to the custom `Service` properties.
-  pub fn properties(&self) -> &T {
+  pub fn properties(&self) -> &Object {
     &self.properties
   }
 
   /// Returns a mutable reference to the custom `Service` properties.
-  pub fn properties_mut(&mut self) -> &mut T {
+  pub fn properties_mut(&mut self) -> &mut Object {
     &mut self.properties
   }
 
   /// Maps `Service<D,T>` to `Service<C,T>` by applying a function `f` to
   /// the id.
-  pub fn map<C, F>(self, f: F) -> Service<C, T>
+  pub fn map<C, F>(self, f: F) -> Service<C>
   where
     C: DID,
     F: FnMut(D) -> C,
@@ -144,7 +144,7 @@ where
   }
 
   /// Fallible version of [`Service::map`].
-  pub fn try_map<C, F, E>(self, f: F) -> Result<Service<C, T>, E>
+  pub fn try_map<C, F, E>(self, f: F) -> Result<Service<C>, E>
   where
     C: DID,
     F: FnMut(D) -> Result<C, E>,
@@ -158,7 +158,7 @@ where
   }
 }
 
-impl<D, T> AsRef<DIDUrl<D>> for Service<D, T>
+impl<D> AsRef<DIDUrl<D>> for Service<D>
 where
   D: DID,
 {
@@ -167,17 +167,16 @@ where
   }
 }
 
-impl<D, T> Display for Service<D, T>
+impl<D> Display for Service<D>
 where
   D: DID + Serialize,
-  T: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }
 
-impl<D, T> KeyComparable for Service<D, T>
+impl<D> KeyComparable for Service<D>
 where
   D: DID,
 {

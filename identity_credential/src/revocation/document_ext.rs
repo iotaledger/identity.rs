@@ -33,10 +33,10 @@ mod private {
   use super::DID;
 
   pub trait Sealed {}
-  impl<D: DID + KeyComparable, V> Sealed for CoreDocument<D, V> {}
+  impl<D: DID + KeyComparable> Sealed for CoreDocument<D> {}
 }
 
-impl<D, V> RevocationDocumentExt for CoreDocument<D, V>
+impl<D> RevocationDocumentExt for CoreDocument<D>
 where
   D: DID + KeyComparable,
 {
@@ -63,8 +63,8 @@ where
   }
 }
 
-fn update_revocation_bitmap<'query, 'me, F, Q, D, V>(
-  document: &'me mut CoreDocument<D, V>,
+fn update_revocation_bitmap<'query, 'me, F, Q, D>(
+  document: &'me mut CoreDocument<D>,
   service_query: Q,
   f: F,
 ) -> RevocationResult<()>
@@ -73,7 +73,7 @@ where
   F: FnOnce(&mut RevocationBitmap),
   Q: Into<DIDUrlQuery<'query>>,
 {
-  let service: &mut Service<D, V> = document
+  let service: &mut Service<D> = document
     .service_mut_unchecked()
     .query_mut(service_query)
     .ok_or(RevocationError::InvalidService("invalid id - service not found"))?;

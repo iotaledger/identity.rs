@@ -500,25 +500,25 @@ struct ICoreDocumentHelper {
   alsoKnownAs: Option<OrderedSet<Url>>,
 
   #[typescript(type = "(CoreVerificationMethod | IotaVerificationMethod)[]")]
-  verificationMethod: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  verificationMethod: Option<OrderedSet<VerificationMethod<CoreDID>>>,
 
   #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  authentication: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  authentication: Option<OrderedSet<VerificationMethod<CoreDID>>>,
 
   #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  assertionMethod: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  assertionMethod: Option<OrderedSet<VerificationMethod<CoreDID>>>,
 
   #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  keyAgreement: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  keyAgreement: Option<OrderedSet<VerificationMethod<CoreDID>>>,
 
   #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  capabilityDelegation: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  capabilityDelegation: Option<OrderedSet<VerificationMethod<CoreDID>>>,
 
   #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  capabilityInvocation: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  capabilityInvocation: Option<OrderedSet<VerificationMethod<CoreDID>>>,
 
   #[typescript(type = "(CoreService | IotaService)[]")]
-  service: Option<OrderedSet<Service<CoreDID, Object>>>,
+  service: Option<OrderedSet<Service<CoreDID>>>,
 
   #[serde(flatten)]
   #[typescript(optional = false, name = "[properties: string]", type = "unknown")]

@@ -4,7 +4,6 @@
 use serde::Serialize;
 
 use identity_core::common::KeyComparable;
-use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
@@ -28,21 +27,21 @@ use identity_verification::VerificationMethod;
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, D = CoreDID, V = Object>
+pub struct DocumentSigner<'base, 'query, D = CoreDID>
 where
   D: DID + KeyComparable,
 {
-  document: &'base CoreDocument<D, V>,
+  document: &'base CoreDocument<D>,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
   options: ProofOptions,
 }
 
-impl<'base, D, V> DocumentSigner<'base, '_, D, V>
+impl<'base, D> DocumentSigner<'base, '_, D>
 where
   D: DID + KeyComparable,
 {
-  pub fn new(document: &'base CoreDocument<D, V>, private: &'base PrivateKey) -> Self {
+  pub fn new(document: &'base CoreDocument<D>, private: &'base PrivateKey) -> Self {
     Self {
       document,
       private,
@@ -95,7 +94,7 @@ where
   }
 }
 
-impl<'base, 'query, D, V> DocumentSigner<'base, 'query, D, V>
+impl<'base, 'query, D> DocumentSigner<'base, 'query, D>
 where
   D: DID + KeyComparable,
 {
@@ -109,7 +108,7 @@ where
   }
 }
 
-impl<D, V> DocumentSigner<'_, '_, D, V>
+impl<D> DocumentSigner<'_, '_, D>
 where
   D: DID + KeyComparable,
 {

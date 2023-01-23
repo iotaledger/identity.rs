@@ -24,10 +24,9 @@ use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<D = CoreDID, V = Object>
+pub struct DiffDocument<D = CoreDID>
 where
   D: Diff + DID + KeyComparable + Serialize + for<'__de> Deserialize<'__de>,
-  V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<<D as Diff>::Type>,
@@ -48,17 +47,16 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   capability_invocation: Option<DiffVec<MethodRef<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  service: Option<DiffVec<Service<D, V>>>,
+  service: Option<DiffVec<Service<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D, V> Diff for CoreDocument<D, V>
+impl<D> Diff for CoreDocument<D>
 where
   D: DID + KeyComparable + Diff + Serialize + for<'de> Deserialize<'de>,
-  V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffDocument<D, V>;
+  type Type = DiffDocument<D>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffDocument {
@@ -185,7 +183,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.capability_invocation().clone());
 
-    let service: OrderedSet<Service<D, V>> = diff
+    let service: OrderedSet<Service<D>> = diff
       .service
       .map(|value| self.service().merge(value))
       .transpose()?
@@ -272,7 +270,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_invocation`"))?;
 
-    let service: OrderedSet<Service<D, V>> = diff
+    let service: OrderedSet<Service<D>> = diff
       .service
       .map(Diff::from_diff)
       .transpose()?

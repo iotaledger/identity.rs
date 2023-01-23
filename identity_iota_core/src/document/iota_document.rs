@@ -43,7 +43,7 @@ use crate::StateMetadataEncoding;
 pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
 
 /// A [`Service`] adhering to the IOTA DID method specification.
-pub type IotaService = Service<IotaDID, Object>;
+pub type IotaService = Service<IotaDID>;
 
 /// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
 pub type IotaCoreDocument = CoreDocument<IotaDID>;
@@ -387,13 +387,12 @@ mod client_document {
 
 impl Document for IotaDocument {
   type D = IotaDID;
-  type V = Object;
 
   fn id(&self) -> &Self::D {
     IotaDocument::id(self)
   }
 
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D>>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
