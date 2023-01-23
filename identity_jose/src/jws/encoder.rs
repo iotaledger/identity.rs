@@ -114,7 +114,7 @@ where
 
   pub async fn encode(&self, claims: &[u8]) -> Result<String> {
     if self.recipients.is_empty() {
-      return Err(Error::SigError("Missing Recipients"));
+      return Err(Error::SignatureCreationError("Missing Recipients".into()));
     }
 
     self.validate()?;
@@ -186,8 +186,8 @@ where
         None,
         recipient.protected.and_then(|header| header.crit()),
       ),
-      (JwsFormat::Compact, _) => Err(Error::SigError(
-        "JWS Compact Serialization doesn't support multiple recipients or unprotected headers",
+      (JwsFormat::Compact, _) => Err(Error::SignatureCreationError(
+        "JWS Compact Serialization doesn't support multiple recipients or unprotected headers".into(),
       )),
       (JwsFormat::General, recipients) => {
         let mut __b64: bool = false;
@@ -215,8 +215,8 @@ where
         recipient.unprotected,
         recipient.protected.and_then(|header| header.crit()),
       ),
-      (JwsFormat::Flatten, _) => Err(Error::SigError(
-        "JWS Flattened Serialization doesn't support multiple recipients",
+      (JwsFormat::Flatten, _) => Err(Error::SignatureCreationError(
+        "JWS Flattened Serialization doesn't support multiple recipients".into(),
       )),
     }
   }

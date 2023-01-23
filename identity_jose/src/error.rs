@@ -15,7 +15,6 @@ pub enum Error {
   InvalidRsaPrime,
   InvalidJson(serde_json::Error),
   InvalidBase64(base64::DecodeError),
-  // InvalidDecompression(miniz_oxide::inflate::TINFLStatus),
   InvalidUtf8(core::str::Utf8Error),
   InvalidClaim(&'static str),
   MissingClaim(&'static str),
@@ -25,8 +24,6 @@ pub enum Error {
   InvalidArray(&'static str),
   AlgError(&'static str),
   EncError(&'static str),
-  // TODO: Check if this is used?
-  SigError(&'static str),
   KeyError(&'static str),
   SignatureCreationError(Box<dyn std::error::Error + Send + Sync>),
   SignatureVerificationError(Box<dyn std::error::Error + Send + Sync>),
@@ -39,7 +36,6 @@ impl Display for Error {
       Self::InvalidRsaPrime => f.write_str("Invalid Rsa Prime Value"),
       Self::InvalidJson(inner) => f.write_fmt(format_args!("Invalid JSON: {}", inner)),
       Self::InvalidBase64(inner) => f.write_fmt(format_args!("Invalid Base64: {}", inner)),
-      // Self::InvalidDecompression(inner) => f.write_fmt(format_args!("Invalid Decompression: {:?}", inner)),
       Self::InvalidUtf8(inner) => f.write_fmt(format_args!("Invalid Utf-8: {:?}", inner)),
       Self::InvalidClaim(inner) => f.write_fmt(format_args!("Invalid Claim: {}", inner)),
       Self::MissingClaim(inner) => f.write_fmt(format_args!("Missing Claim: {}", inner)),
@@ -49,22 +45,14 @@ impl Display for Error {
       Self::InvalidArray(inner) => f.write_fmt(format_args!("Invalid Array: {}", inner)),
       Self::AlgError(inner) => f.write_fmt(format_args!("Unsupported Algorithm: {}", inner)),
       Self::EncError(inner) => f.write_fmt(format_args!("Encryption Error: {}", inner)),
-      Self::SigError(inner) => f.write_fmt(format_args!("Signature Error: {}", inner)),
       Self::KeyError(inner) => f.write_fmt(format_args!("Invalid Key Format: {}", inner)),
       Self::SignatureCreationError(inner) => f.write_fmt(format_args!("signature creation error: {}", inner)),
       Self::SignatureVerificationError(inner) => f.write_fmt(format_args!("signature verification error: {}", inner)),
-      // Self::CryptoError(inner) => f.write_fmt(format_args!("Crypto Error: {}", inner)),
     }
   }
 }
 
 impl std::error::Error for Error {}
-
-// impl From<crypto::Error> for Error {
-//   fn from(other: crypto::Error) -> Self {
-//     Self::CryptoError(other)
-//   }
-// }
 
 impl From<serde_json::Error> for Error {
   fn from(other: serde_json::Error) -> Self {
@@ -77,16 +65,3 @@ impl From<base64::DecodeError> for Error {
     Self::InvalidBase64(other)
   }
 }
-
-// impl From<miniz_oxide::inflate::TINFLStatus> for Error {
-//   fn from(other: miniz_oxide::inflate::TINFLStatus) -> Self {
-//     Self::InvalidDecompression(other)
-//   }
-// }
-
-// impl From<::rsa::errors::Error> for Error {
-//   fn from(_: ::rsa::errors::Error) -> Self {
-//     // TODO: Return better errors
-//     Self::CryptoError(crypto::Error::CipherError { alg: "Rsa" })
-//   }
-// }
