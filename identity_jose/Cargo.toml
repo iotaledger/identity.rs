@@ -11,8 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "A library for JOSE (JSON Object Signing and Encryption)"
 
 [dependencies]
-# TODO: Bump base64 version.
-base64 = { version = "0.13.0", default-features = false, features = ["std"] }
+base64 = { version = "0.21.0", default-features = false, features = ["std"] }
 iota-crypto = { version = "0.15.3", default-features = false, features = ["std", "sha"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["std"] }

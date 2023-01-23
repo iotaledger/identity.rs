@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use base64::engine::general_purpose;
+use base64::Engine;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -9,12 +11,14 @@ use crate::error::Result;
 
 /// Encode the given slice in url-safe base64.
 pub fn encode_b64(data: impl AsRef<[u8]>) -> String {
-  base64::encode_config(data.as_ref(), base64::URL_SAFE_NO_PAD)
+  general_purpose::URL_SAFE_NO_PAD.encode(data)
 }
 
 /// Decode the given url-safe base64-encoded slice into its raw bytes.
 pub fn decode_b64(data: impl AsRef<[u8]>) -> Result<Vec<u8>> {
-  base64::decode_config(data.as_ref(), base64::URL_SAFE_NO_PAD).map_err(|err| Error::InvalidBase64(err))
+  general_purpose::URL_SAFE_NO_PAD
+    .decode(data)
+    .map_err(|err| Error::InvalidBase64(err))
 }
 
 /// Serialize the given data into JSON and encode the result in url-safe base64.
