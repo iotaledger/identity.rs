@@ -56,7 +56,7 @@ where
   Ok(did_url)
 }
 
-impl<D, T> VerificationMethod<D, T>
+impl<D> VerificationMethod<D>
 where
   D: DID,
 {
@@ -67,12 +67,12 @@ where
   /// Creates a `MethodBuilder` to configure a new `Method`.
   ///
   /// This is the same as `MethodBuilder::new()`.
-  pub fn builder(properties: T) -> MethodBuilder<D, T> {
+  pub fn builder(properties: Object) -> MethodBuilder<D> {
     MethodBuilder::new(properties)
   }
 
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
-  pub fn from_builder(builder: MethodBuilder<D, T>) -> Result<Self> {
+  pub fn from_builder(builder: MethodBuilder<D>) -> Result<Self> {
     let id: DIDUrl<D> = builder.id.ok_or(Error::InvalidMethod("missing id"))?;
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidMethod("empty id fragment"));
@@ -139,23 +139,23 @@ where
   }
 
   /// Returns a reference to the custom `VerificationMethod` properties.
-  pub fn properties(&self) -> &T {
+  pub fn properties(&self) -> &Object {
     &self.properties
   }
 
   /// Returns a mutable reference to the custom `VerificationMethod` properties.
-  pub fn properties_mut(&mut self) -> &mut T {
+  pub fn properties_mut(&mut self) -> &mut Object {
     &mut self.properties
   }
 
   /// Creates a new [`MethodRef`] from `self`.
-  pub fn into_method_ref(self) -> MethodRef<D, T> {
+  pub fn into_method_ref(self) -> MethodRef<D> {
     MethodRef::Embed(self)
   }
 
   /// Maps `VerificationMethod<D,T>` to `VerificationMethod<C,T>` by applying a function `f` to
   /// the id and controller.
-  pub fn map<C, F>(self, mut f: F) -> VerificationMethod<C, T>
+  pub fn map<C, F>(self, mut f: F) -> VerificationMethod<C>
   where
     C: DID,
     F: FnMut(D) -> C,
@@ -170,7 +170,7 @@ where
   }
 
   /// Fallible version of [`VerificationMethod::map`].
-  pub fn try_map<C, F, E>(self, mut f: F) -> Result<VerificationMethod<C, T>, E>
+  pub fn try_map<C, F, E>(self, mut f: F) -> Result<VerificationMethod<C>, E>
   where
     C: DID,
     F: FnMut(D) -> Result<C, E>,
@@ -185,10 +185,9 @@ where
   }
 }
 
-impl<D, T> VerificationMethod<D, T>
+impl<D> VerificationMethod<D>
 where
   D: DID,
-  T: Default,
 {
   // ===========================================================================
   // Constructors
@@ -206,7 +205,7 @@ where
       .join(method_fragment)
       .map_err(Error::DIDUrlConstructionError)?;
 
-    let mut builder: MethodBuilder<D, T> = MethodBuilder::default().id(id).controller(did);
+    let mut builder: MethodBuilder<D> = MethodBuilder::default().id(id).controller(did);
     match key_type {
       KeyType::Ed25519 => {
         builder = builder.type_(MethodType::Ed25519VerificationKey2018);
@@ -221,17 +220,16 @@ where
   }
 }
 
-impl<D, T> Display for VerificationMethod<D, T>
+impl<D> Display for VerificationMethod<D>
 where
   D: DID + Serialize,
-  T: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }
 
-impl<D, T> AsRef<DIDUrl<D>> for VerificationMethod<D, T>
+impl<D> AsRef<DIDUrl<D>> for VerificationMethod<D>
 where
   D: DID,
 {
@@ -240,7 +238,7 @@ where
   }
 }
 
-impl<D, T> KeyComparable for VerificationMethod<D, T>
+impl<D> KeyComparable for VerificationMethod<D>
 where
   D: DID,
 {

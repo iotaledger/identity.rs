@@ -15,24 +15,24 @@ use identity_verification::VerificationMethod;
 
 /// A `DocumentBuilder` is used to generate a customized [`Document`](crate::document::CoreDocument).
 #[derive(Clone, Debug)]
-pub struct DocumentBuilder<D = CoreDID, U = Object, V = Object>
+pub struct DocumentBuilder<D = CoreDID, V = Object>
 where
   D: DID + KeyComparable,
 {
   pub(crate) id: Option<D>,
   pub(crate) controller: Vec<D>,
   pub(crate) also_known_as: Vec<Url>,
-  pub(crate) verification_method: Vec<VerificationMethod<D, U>>,
-  pub(crate) authentication: Vec<MethodRef<D, U>>,
-  pub(crate) assertion_method: Vec<MethodRef<D, U>>,
-  pub(crate) key_agreement: Vec<MethodRef<D, U>>,
-  pub(crate) capability_delegation: Vec<MethodRef<D, U>>,
-  pub(crate) capability_invocation: Vec<MethodRef<D, U>>,
+  pub(crate) verification_method: Vec<VerificationMethod<D>>,
+  pub(crate) authentication: Vec<MethodRef<D>>,
+  pub(crate) assertion_method: Vec<MethodRef<D>>,
+  pub(crate) key_agreement: Vec<MethodRef<D>>,
+  pub(crate) capability_delegation: Vec<MethodRef<D>>,
+  pub(crate) capability_invocation: Vec<MethodRef<D>>,
   pub(crate) service: Vec<Service<D, V>>,
   pub(crate) properties: Object,
 }
 
-impl<D, U, V> DocumentBuilder<D, U, V>
+impl<D, V> DocumentBuilder<D, V>
 where
   D: DID + KeyComparable,
 {
@@ -76,42 +76,42 @@ where
 
   /// Adds a value to the `verificationMethod` set.
   #[must_use]
-  pub fn verification_method(mut self, value: VerificationMethod<D, U>) -> Self {
+  pub fn verification_method(mut self, value: VerificationMethod<D>) -> Self {
     self.verification_method.push(value);
     self
   }
 
   /// Adds a value to the `authentication` set.
   #[must_use]
-  pub fn authentication(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
+  pub fn authentication(mut self, value: impl Into<MethodRef<D>>) -> Self {
     self.authentication.push(value.into());
     self
   }
 
   /// Adds a value to the `assertionMethod` set.
   #[must_use]
-  pub fn assertion_method(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
+  pub fn assertion_method(mut self, value: impl Into<MethodRef<D>>) -> Self {
     self.assertion_method.push(value.into());
     self
   }
 
   /// Adds a value to the `keyAgreement` set.
   #[must_use]
-  pub fn key_agreement(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
+  pub fn key_agreement(mut self, value: impl Into<MethodRef<D>>) -> Self {
     self.key_agreement.push(value.into());
     self
   }
 
   /// Adds a value to the `capabilityDelegation` set.
   #[must_use]
-  pub fn capability_delegation(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
+  pub fn capability_delegation(mut self, value: impl Into<MethodRef<D>>) -> Self {
     self.capability_delegation.push(value.into());
     self
   }
 
   /// Adds a value to the `capabilityInvocation` set.
   #[must_use]
-  pub fn capability_invocation(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
+  pub fn capability_invocation(mut self, value: impl Into<MethodRef<D>>) -> Self {
     self.capability_invocation.push(value.into());
     self
   }
@@ -124,12 +124,12 @@ where
   }
 
   /// Returns a new `Document` based on the `DocumentBuilder` configuration.
-  pub fn build(self) -> Result<CoreDocument<D, U, V>> {
+  pub fn build(self) -> Result<CoreDocument<D, V>> {
     CoreDocument::from_builder(self)
   }
 }
 
-impl<D, U, V> Default for DocumentBuilder<D, U, V>
+impl<D, V> Default for DocumentBuilder<D, V>
 where
   D: DID + KeyComparable,
 {

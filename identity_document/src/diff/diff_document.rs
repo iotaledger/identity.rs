@@ -24,10 +24,9 @@ use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<D = CoreDID, U = Object, V = Object>
+pub struct DiffDocument<D = CoreDID, V = Object>
 where
   D: Diff + DID + KeyComparable + Serialize + for<'__de> Deserialize<'__de>,
-  U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
   V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -37,30 +36,29 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  verification_method: Option<DiffVec<VerificationMethod<D, U>>>,
+  verification_method: Option<DiffVec<VerificationMethod<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  authentication: Option<DiffVec<MethodRef<D, U>>>,
+  authentication: Option<DiffVec<MethodRef<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  assertion_method: Option<DiffVec<MethodRef<D, U>>>,
+  assertion_method: Option<DiffVec<MethodRef<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  key_agreement: Option<DiffVec<MethodRef<D, U>>>,
+  key_agreement: Option<DiffVec<MethodRef<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_delegation: Option<DiffVec<MethodRef<D, U>>>,
+  capability_delegation: Option<DiffVec<MethodRef<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_invocation: Option<DiffVec<MethodRef<D, U>>>,
+  capability_invocation: Option<DiffVec<MethodRef<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   service: Option<DiffVec<Service<D, V>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D, U, V> Diff for CoreDocument<D, U, V>
+impl<D, V> Diff for CoreDocument<D, V>
 where
   D: DID + KeyComparable + Diff + Serialize + for<'de> Deserialize<'de>,
-  U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffDocument<D, U, V>;
+  type Type = DiffDocument<D, V>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffDocument {
@@ -151,37 +149,37 @@ where
       .transpose()?
       .unwrap_or_else(|| self.also_known_as().clone());
 
-    let verification_method: OrderedSet<VerificationMethod<D, U>> = diff
+    let verification_method: OrderedSet<VerificationMethod<D>> = diff
       .verification_method
       .map(|value| self.verification_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.verification_method().clone());
 
-    let authentication: OrderedSet<MethodRef<D, U>> = diff
+    let authentication: OrderedSet<MethodRef<D>> = diff
       .authentication
       .map(|value| self.authentication().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.authentication().clone());
 
-    let assertion_method: OrderedSet<MethodRef<D, U>> = diff
+    let assertion_method: OrderedSet<MethodRef<D>> = diff
       .assertion_method
       .map(|value| self.assertion_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.assertion_method().clone());
 
-    let key_agreement: OrderedSet<MethodRef<D, U>> = diff
+    let key_agreement: OrderedSet<MethodRef<D>> = diff
       .key_agreement
       .map(|value| self.key_agreement().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.key_agreement().clone());
 
-    let capability_delegation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_delegation: OrderedSet<MethodRef<D>> = diff
       .capability_delegation
       .map(|value| self.capability_delegation().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.capability_delegation().clone());
 
-    let capability_invocation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_invocation: OrderedSet<MethodRef<D>> = diff
       .capability_invocation
       .map(|value| self.capability_invocation().merge(value))
       .transpose()?
@@ -238,37 +236,37 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.also_known_as`"))?;
 
-    let verification_method: OrderedSet<VerificationMethod<D, U>> = diff
+    let verification_method: OrderedSet<VerificationMethod<D>> = diff
       .verification_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.verification_method`"))?;
 
-    let authentication: OrderedSet<MethodRef<D, U>> = diff
+    let authentication: OrderedSet<MethodRef<D>> = diff
       .authentication
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.authentication`"))?;
 
-    let assertion_method: OrderedSet<MethodRef<D, U>> = diff
+    let assertion_method: OrderedSet<MethodRef<D>> = diff
       .assertion_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.assertion_method`"))?;
 
-    let key_agreement: OrderedSet<MethodRef<D, U>> = diff
+    let key_agreement: OrderedSet<MethodRef<D>> = diff
       .key_agreement
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.key_agreement`"))?;
 
-    let capability_delegation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_delegation: OrderedSet<MethodRef<D>> = diff
       .capability_delegation
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_delegation`"))?;
 
-    let capability_invocation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_invocation: OrderedSet<MethodRef<D>> = diff
       .capability_invocation
       .map(Diff::from_diff)
       .transpose()?

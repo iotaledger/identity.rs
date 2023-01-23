@@ -28,21 +28,21 @@ use identity_verification::VerificationMethod;
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, D = CoreDID, U = Object, V = Object>
+pub struct DocumentSigner<'base, 'query, D = CoreDID, V = Object>
 where
   D: DID + KeyComparable,
 {
-  document: &'base CoreDocument<D, U, V>,
+  document: &'base CoreDocument<D, V>,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
   options: ProofOptions,
 }
 
-impl<'base, D, U, V> DocumentSigner<'base, '_, D, U, V>
+impl<'base, D, V> DocumentSigner<'base, '_, D, V>
 where
   D: DID + KeyComparable,
 {
-  pub fn new(document: &'base CoreDocument<D, U, V>, private: &'base PrivateKey) -> Self {
+  pub fn new(document: &'base CoreDocument<D, V>, private: &'base PrivateKey) -> Self {
     Self {
       document,
       private,
@@ -95,7 +95,7 @@ where
   }
 }
 
-impl<'base, 'query, D, U, V> DocumentSigner<'base, 'query, D, U, V>
+impl<'base, 'query, D, V> DocumentSigner<'base, 'query, D, V>
 where
   D: DID + KeyComparable,
 {
@@ -109,7 +109,7 @@ where
   }
 }
 
-impl<D, U, V> DocumentSigner<'_, '_, D, U, V>
+impl<D, V> DocumentSigner<'_, '_, D, V>
 where
   D: DID + KeyComparable,
 {
@@ -124,7 +124,7 @@ where
     X: Serialize + SetSignature + TryMethod,
   {
     let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
-    let method: &VerificationMethod<D, U> = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
+    let method: &VerificationMethod<D> = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
     let method_uri: String = X::try_method(method).map_err(|_| Error::MissingIdFragment)?;
 
     match method.type_() {

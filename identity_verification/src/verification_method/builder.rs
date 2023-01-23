@@ -13,7 +13,7 @@ use identity_did::DID;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
 #[derive(Clone, Debug)]
-pub struct MethodBuilder<D = CoreDID, T = Object>
+pub struct MethodBuilder<D = CoreDID>
 where
   D: DID,
 {
@@ -21,15 +21,15 @@ where
   pub(crate) controller: Option<D>,
   pub(crate) type_: Option<MethodType>,
   pub(crate) data: Option<MethodData>,
-  pub(crate) properties: T,
+  pub(crate) properties: Object,
 }
 
-impl<D, T> MethodBuilder<D, T>
+impl<D> MethodBuilder<D>
 where
   D: DID,
 {
   /// Creates a new `MethodBuilder`.
-  pub fn new(properties: T) -> Self {
+  pub fn new(properties: Object) -> Self {
     Self {
       id: None,
       controller: None,
@@ -68,15 +68,14 @@ where
   }
 
   /// Returns a new `VerificationMethod` based on the `MethodBuilder` configuration.
-  pub fn build(self) -> Result<VerificationMethod<D, T>> {
+  pub fn build(self) -> Result<VerificationMethod<D>> {
     VerificationMethod::from_builder(self)
   }
 }
 
-impl<D, T> Default for MethodBuilder<D, T>
+impl<D> Default for MethodBuilder<D>
 where
   D: DID,
-  T: Default,
 {
   fn default() -> Self {
     Self {

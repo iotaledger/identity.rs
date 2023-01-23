@@ -5,7 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use identity_core::common::KeyComparable;
-use identity_core::common::Object;
 
 use crate::verification_method::VerificationMethod;
 use identity_did::CoreDID;
@@ -15,15 +14,15 @@ use identity_did::DID;
 /// A reference to a verification method, either a `DID` or embedded `Method`.
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]
-pub enum MethodRef<D = CoreDID, T = Object>
+pub enum MethodRef<D = CoreDID>
 where
   D: DID,
 {
-  Embed(VerificationMethod<D, T>),
+  Embed(VerificationMethod<D>),
   Refer(DIDUrl<D>),
 }
 
-impl<D, T> MethodRef<D, T>
+impl<D> MethodRef<D>
 where
   D: DID,
 {
@@ -59,7 +58,7 @@ where
 
   /// Maps `MethodRef<D,T>` to `MethodRef<C,T>` by applying a function `f` to the inner
   /// [`VerificationMethod`] or [`DIDUrl`].
-  pub fn map<C, F>(self, f: F) -> MethodRef<C, T>
+  pub fn map<C, F>(self, f: F) -> MethodRef<C>
   where
     C: DID,
     F: FnMut(D) -> C,
@@ -71,7 +70,7 @@ where
   }
 
   /// Fallible version of [`MethodRef::map`].
-  pub fn try_map<C, F, E>(self, f: F) -> Result<MethodRef<C, T>, E>
+  pub fn try_map<C, F, E>(self, f: F) -> Result<MethodRef<C>, E>
   where
     C: DID,
     F: FnMut(D) -> Result<C, E>,
@@ -89,7 +88,7 @@ where
   /// # Errors
   ///
   /// Fails if `MethodRef` is not an embedded method.
-  pub fn try_into_embedded(self) -> Result<VerificationMethod<D, T>, Self> {
+  pub fn try_into_embedded(self) -> Result<VerificationMethod<D>, Self> {
     match self {
       Self::Embed(inner) => Ok(inner),
       Self::Refer(_) => Err(self),
@@ -111,10 +110,9 @@ where
   }
 }
 
-impl<D, T> Debug for MethodRef<D, T>
+impl<D> Debug for MethodRef<D>
 where
   D: DID + Debug,
-  T: Debug,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
@@ -124,17 +122,17 @@ where
   }
 }
 
-impl<D, T> From<VerificationMethod<D, T>> for MethodRef<D, T>
+impl<D> From<VerificationMethod<D>> for MethodRef<D>
 where
   D: DID,
 {
   #[inline]
-  fn from(other: VerificationMethod<D, T>) -> Self {
+  fn from(other: VerificationMethod<D>) -> Self {
     Self::Embed(other)
   }
 }
 
-impl<D, T> From<DIDUrl<D>> for MethodRef<D, T>
+impl<D> From<DIDUrl<D>> for MethodRef<D>
 where
   D: DID,
 {
@@ -144,7 +142,7 @@ where
   }
 }
 
-impl<D, T> AsRef<DIDUrl<D>> for MethodRef<D, T>
+impl<D> AsRef<DIDUrl<D>> for MethodRef<D>
 where
   D: DID,
 {
@@ -154,7 +152,7 @@ where
   }
 }
 
-impl<D, T> KeyComparable for MethodRef<D, T>
+impl<D> KeyComparable for MethodRef<D>
 where
   D: DID,
 {

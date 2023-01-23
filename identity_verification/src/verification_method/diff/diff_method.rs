@@ -36,12 +36,11 @@ where
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<D, T> Diff for VerificationMethod<D, T>
+impl<D> Diff for VerificationMethod<D>
 where
   D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
-  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffMethod<D, T>;
+  type Type = DiffMethod<D>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffMethod {
@@ -98,7 +97,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.type_());
 
-    let properties: T = diff
+    let properties: Object = diff
       .properties
       .map(|value| self.properties().merge(value))
       .transpose()?
@@ -139,7 +138,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.data`"))?;
 
-    let properties: T = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
+    let properties: Object = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
 
     // Use builder to enforce invariants.
     MethodBuilder::new(properties)

@@ -20,7 +20,6 @@ use identity_verification::VerificationMethod;
 /// Common operations for DID Documents.
 pub trait Document {
   type D: DID;
-  type U;
   type V;
 
   /// Returns a reference to the `Document` id.
@@ -37,7 +36,7 @@ pub trait Document {
     &'me self,
     query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  ) -> Option<&VerificationMethod<Self::D>>
   where
     Q: Into<DIDUrlQuery<'query>>;
 
@@ -54,7 +53,6 @@ pub trait Document {
 
 impl<DOC: Document> Document for &DOC {
   type D = DOC::D;
-  type U = DOC::U;
   type V = DOC::V;
 
   fn id(&self) -> &Self::D {
@@ -72,7 +70,7 @@ impl<DOC: Document> Document for &DOC {
     &'me self,
     query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  ) -> Option<&VerificationMethod<Self::D>>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {

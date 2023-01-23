@@ -33,10 +33,10 @@ mod private {
   use super::DID;
 
   pub trait Sealed {}
-  impl<D: DID + KeyComparable, U, V> Sealed for CoreDocument<D, U, V> {}
+  impl<D: DID + KeyComparable, V> Sealed for CoreDocument<D, V> {}
 }
 
-impl<D, U, V> RevocationDocumentExt for CoreDocument<D, U, V>
+impl<D, V> RevocationDocumentExt for CoreDocument<D, V>
 where
   D: DID + KeyComparable,
 {
@@ -63,8 +63,8 @@ where
   }
 }
 
-fn update_revocation_bitmap<'query, 'me, F, Q, D, U, V>(
-  document: &'me mut CoreDocument<D, U, V>,
+fn update_revocation_bitmap<'query, 'me, F, Q, D, V>(
+  document: &'me mut CoreDocument<D, V>,
   service_query: Q,
   f: F,
 ) -> RevocationResult<()>

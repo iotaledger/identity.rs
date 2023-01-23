@@ -25,12 +25,11 @@ where
   Refer(#[serde(skip_serializing_if = "Option::is_none")] Option<<DIDUrl<D> as Diff>::Type>),
 }
 
-impl<D, T> Diff for MethodRef<D, T>
+impl<D> Diff for MethodRef<D>
 where
   D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
-  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffMethodRef<D, T>;
+  type Type = DiffMethodRef<D>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     match (self, other) {

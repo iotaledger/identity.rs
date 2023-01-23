@@ -28,7 +28,7 @@ pub trait TryMethod {
   ///
   /// - [`MethodUriType::Absolute`] => "did:example:1234#method"
   /// - [`MethodUriType::Relative`] => "#method"
-  fn method<D, U>(method: &VerificationMethod<D, U>) -> Option<String>
+  fn method<D>(method: &VerificationMethod<D>) -> Option<String>
   where
     D: DID,
   {
@@ -46,7 +46,7 @@ pub trait TryMethod {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used.
-  fn try_method<D, U>(method: &VerificationMethod<D, U>) -> Result<String>
+  fn try_method<D>(method: &VerificationMethod<D>) -> Result<String>
   where
     D: DID,
   {

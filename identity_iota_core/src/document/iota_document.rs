@@ -387,7 +387,6 @@ mod client_document {
 
 impl Document for IotaDocument {
   type D = IotaDID;
-  type U = Object;
   type V = Object;
 
   fn id(&self) -> &Self::D {
@@ -405,7 +404,7 @@ impl Document for IotaDocument {
     &'me self,
     query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  ) -> Option<&VerificationMethod<Self::D>>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
