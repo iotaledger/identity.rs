@@ -28,21 +28,21 @@ use identity_verification::VerificationMethod;
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, D = CoreDID, T = Object, U = Object, V = Object>
+pub struct DocumentSigner<'base, 'query, D = CoreDID, U = Object, V = Object>
 where
   D: DID + KeyComparable,
 {
-  document: &'base CoreDocument<D, T, U, V>,
+  document: &'base CoreDocument<D, U, V>,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
   options: ProofOptions,
 }
 
-impl<'base, D, T, U, V> DocumentSigner<'base, '_, D, T, U, V>
+impl<'base, D, U, V> DocumentSigner<'base, '_, D, U, V>
 where
   D: DID + KeyComparable,
 {
-  pub fn new(document: &'base CoreDocument<D, T, U, V>, private: &'base PrivateKey) -> Self {
+  pub fn new(document: &'base CoreDocument<D, U, V>, private: &'base PrivateKey) -> Self {
     Self {
       document,
       private,
@@ -95,7 +95,7 @@ where
   }
 }
 
-impl<'base, 'query, D, T, U, V> DocumentSigner<'base, 'query, D, T, U, V>
+impl<'base, 'query, D, U, V> DocumentSigner<'base, 'query, D, U, V>
 where
   D: DID + KeyComparable,
 {
@@ -109,7 +109,7 @@ where
   }
 }
 
-impl<D, T, U, V> DocumentSigner<'_, '_, D, T, U, V>
+impl<D, U, V> DocumentSigner<'_, '_, D, U, V>
 where
   D: DID + KeyComparable,
 {

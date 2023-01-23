@@ -5,6 +5,7 @@ use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
 
+use identity_did::CoreDID;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -464,7 +465,7 @@ impl From<IotaDocument> for IotaCoreDocument {
 
 impl From<IotaDocument> for CoreDocument {
   fn from(document: IotaDocument) -> Self {
-    document.document.map_unchecked(Into::into, |id| id)
+    document.document.map_unchecked(CoreDID::from)
   }
 }
 

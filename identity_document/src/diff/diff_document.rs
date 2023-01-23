@@ -24,10 +24,9 @@ use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<D = CoreDID, T = Object, U = Object, V = Object>
+pub struct DiffDocument<D = CoreDID, U = Object, V = Object>
 where
   D: Diff + DID + KeyComparable + Serialize + for<'__de> Deserialize<'__de>,
-  T: Diff + Serialize + for<'__de> Deserialize<'__de>,
   U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
   V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
@@ -52,17 +51,16 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   service: Option<DiffVec<Service<D, V>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  properties: Option<<T as Diff>::Type>,
+  properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D, T, U, V> Diff for CoreDocument<D, T, U, V>
+impl<D, U, V> Diff for CoreDocument<D, U, V>
 where
   D: DID + KeyComparable + Diff + Serialize + for<'de> Deserialize<'de>,
-  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffDocument<D, T, U, V>;
+  type Type = DiffDocument<D, U, V>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffDocument {
@@ -195,7 +193,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.service().clone());
 
-    let properties: T = diff
+    let properties: Object = diff
       .properties
       .map(|value| self.properties().merge(value))
       .transpose()?
@@ -282,7 +280,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.service`"))?;
 
-    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
+    let properties: Object = diff.properties.map(Object::from_diff).transpose()?.unwrap_or_default();
 
     Ok(CoreDocument {
       data: CoreDocumentData {

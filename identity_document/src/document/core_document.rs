@@ -46,7 +46,7 @@ use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub(crate) struct CoreDocumentData<D = CoreDID, T = Object, U = Object, V = Object>
+pub(crate) struct CoreDocumentData<D = CoreDID, U = Object, V = Object>
   where
     D: DID + KeyComparable
 {
@@ -70,10 +70,10 @@ pub(crate) struct CoreDocumentData<D = CoreDID, T = Object, U = Object, V = Obje
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) service: OrderedSet<Service<D, V>>,
   #[serde(flatten)]
-  pub(crate) properties: T,
+  pub(crate) properties: Object,
 }
 
-impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
+impl<D: DID + KeyComparable, U, V> CoreDocumentData<D, U, V> {
   /// Checks the following:
   /// - There are no scoped method references to an embedded method in the document
   /// - The ids of verification methods (scoped/embedded or general purpose) and services are unique across the
@@ -155,19 +155,18 @@ impl<D: DID + KeyComparable, T, U, V> CoreDocumentData<D, T, U, V> {
 /// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[rustfmt::skip]
-#[serde(try_from = "CoreDocumentData<D,T,U,V>")]
-pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
+#[serde(try_from = "CoreDocumentData<D, U, V>")]
+pub struct CoreDocument<D = CoreDID, U = Object, V = Object>
   where
     D: DID + KeyComparable
 {
-  pub(crate) data: CoreDocumentData<D,T,U,V>, 
+  pub(crate) data: CoreDocumentData<D,U,V>, 
 }
 
 //Forward serialization to inner
-impl<D, T, U, V> Serialize for CoreDocument<D, T, U, V>
+impl<D, U, V> Serialize for CoreDocument<D, U, V>
 where
   D: DID + KeyComparable + Serialize,
-  T: Serialize,
   U: Serialize,
   V: Serialize,
 {
@@ -189,19 +188,19 @@ macro_rules! method_ref_mut_helper {
   };
 }
 
-impl<D, T, U, V> CoreDocument<D, T, U, V>
+impl<D, U, V> CoreDocument<D, U, V>
 where
   D: DID + KeyComparable,
 {
   /// Creates a [`DocumentBuilder`] to configure a new `CoreDocument`.
   ///
   /// This is the same as [`DocumentBuilder::new`].
-  pub fn builder(properties: T) -> DocumentBuilder<D, T, U, V> {
+  pub fn builder(properties: Object) -> DocumentBuilder<D, U, V> {
     DocumentBuilder::new(properties)
   }
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
-  pub fn from_builder(builder: DocumentBuilder<D, T, U, V>) -> Result<Self> {
+  pub fn from_builder(builder: DocumentBuilder<D, U, V>) -> Result<Self> {
     Self::try_from(CoreDocumentData {
       id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
       controller: Some(builder.controller)
@@ -325,7 +324,7 @@ where
   }
 
   /// Returns a reference to the custom `CoreDocument` properties.
-  pub fn properties(&self) -> &T {
+  pub fn properties(&self) -> &Object {
     &self.data.properties
   }
 
@@ -336,25 +335,23 @@ where
   /// The properties returned are not checked against the standard fields in a [`CoreDocument`]. Incautious use can have
   /// undesired consequences such as key collision when attempting to serialize the document or distinct resources (such
   /// as services and methods) being identified by the same DID URL.  
-  pub fn properties_mut_unchecked(&mut self) -> &mut T {
+  pub fn properties_mut_unchecked(&mut self) -> &mut Object {
     &mut self.data.properties
   }
 
-  /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields
-  /// and another function `g` to the custom properties.
+  /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields.
   ///
   /// # Warning
   ///
   /// Can lead to broken invariants if used incorrectly. See [`Self::try_map`](CoreDocument::try_map()) for a fallible
   /// version with additional built-in checks.
-  pub fn map_unchecked<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
+  pub fn map_unchecked<C, F>(self, mut f: F) -> CoreDocument<C, U, V>
   where
     C: DID + KeyComparable,
     F: FnMut(D) -> C,
-    G: FnOnce(T) -> S,
   {
     let current_inner = self.data;
-    CoreDocument::<C, S, U, V> {
+    CoreDocument::<C, U, V> {
       data: CoreDocumentData {
         id: f(current_inner.id),
         controller: current_inner
@@ -396,7 +393,7 @@ where
           .into_iter()
           .map(|service| service.map(&mut f))
           .collect(),
-        properties: g(current_inner.properties),
+        properties: current_inner.properties,
       },
     }
   }
@@ -410,16 +407,15 @@ where
   /// identifiers. In the case of the latter the provided function `h` will be called to construct a compatible error.
   /// Note that custom properties are still not checked (see the documentation for
   /// [`Self::properties_mut_unchecked`](CoreDocument::properties_mut_unchecked())).
-  pub fn try_map<S, C, F, G, E, H>(self, mut f: F, g: G, h: H) -> std::result::Result<CoreDocument<C, S, U, V>, E>
+  pub fn try_map<C, F, E, H>(self, mut f: F, h: H) -> std::result::Result<CoreDocument<C, U, V>, E>
   where
     C: DID + KeyComparable,
     F: FnMut(D) -> Result<C, E>,
-    G: FnOnce(T) -> Result<S, E>,
     H: FnOnce(crate::error::Error) -> E,
     E: std::error::Error,
   {
     let current_inner = self.data;
-    let helper = || -> Result<CoreDocumentData<C, S, U, V>, E> {
+    let helper = || -> Result<CoreDocumentData<C, U, V>, E> {
       Ok(CoreDocumentData {
         id: f(current_inner.id)?,
         controller: current_inner
@@ -462,7 +458,7 @@ where
           .into_iter()
           .map(|service| service.try_map(&mut f))
           .collect::<Result<_, E>>()?,
-        properties: g(current_inner.properties)?,
+        properties: current_inner.properties,
       })
     };
     helper().and_then(|data| CoreDocument::try_from(data).map_err(h))
@@ -867,7 +863,7 @@ where
   }
 }
 
-impl<D, T, U, V> CoreDocument<D, T, U, V>
+impl<D, U, V> CoreDocument<D, U, V>
 where
   D: DID + KeyComparable,
 {
@@ -961,7 +957,7 @@ where
   }
 }
 
-impl<D, T, U, V> Document for CoreDocument<D, T, U, V>
+impl<D, U, V> Document for CoreDocument<D, U, V>
 where
   D: DID + KeyComparable,
 {
@@ -1003,12 +999,12 @@ where
   }
 }
 
-impl<D, T, U, V> TryFrom<CoreDocumentData<D, T, U, V>> for CoreDocument<D, T, U, V>
+impl<D, U, V> TryFrom<CoreDocumentData<D, U, V>> for CoreDocument<D, U, V>
 where
   D: DID + KeyComparable,
 {
   type Error = crate::error::Error;
-  fn try_from(value: CoreDocumentData<D, T, U, V>) -> Result<Self, Self::Error> {
+  fn try_from(value: CoreDocumentData<D, U, V>) -> Result<Self, Self::Error> {
     match value.check_id_constraints() {
       Ok(_) => Ok(Self { data: value }),
       Err(err) => Err(err),
@@ -1020,28 +1016,27 @@ where
 // Signature Extensions
 // =============================================================================
 
-impl<D, T, U, V> CoreDocument<D, T, U, V>
+impl<D, U, V> CoreDocument<D, U, V>
 where
   D: DID + KeyComparable,
 {
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, D, T, U, V> {
+  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, D, U, V> {
     DocumentSigner::new(self, private)
   }
 }
 
-impl<D, T, U, V> TryMethod for CoreDocument<D, T, U, V>
+impl<D, U, V> TryMethod for CoreDocument<D, U, V>
 where
   D: DID + KeyComparable,
 {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
-impl<D, T, U, V> Display for CoreDocument<D, T, U, V>
+impl<D, U, V> Display for CoreDocument<D, U, V>
 where
   D: DID + KeyComparable + Serialize,
-  T: Serialize,
   U: Serialize,
   V: Serialize,
 {

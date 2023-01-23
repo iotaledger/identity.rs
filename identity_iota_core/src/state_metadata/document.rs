@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::CoreDID;
@@ -51,8 +50,6 @@ impl StateMetadataDocument {
           IotaDID::try_from_core(did).map_err(crate::error::Error::DIDSyntaxError)
         }
       },
-      // Do not modify properties.
-      Result::<Object, crate::error::Error>::Ok,
       crate::error::Error::InvalidDoc,
     )?;
 
@@ -185,8 +182,6 @@ impl From<IotaDocument> for StateMetadataDocument {
           CoreDID::from(did)
         }
       },
-      // Do not modify properties.
-      |o| o,
     );
     StateMetadataDocument {
       document: core_document,
