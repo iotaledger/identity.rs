@@ -948,21 +948,21 @@ where
 
 impl CoreDocument {
   /// Update the DID components of the document's `id`, controllers, methods and services by applying the provided
-  /// fallible maps respectively.
+  /// fallible maps.
   ///
-  /// This is an advanced function that can be useful for DID methods that do not know the document's identifier prior
-  /// to publishing.
+  /// This is an advanced method that can be useful for DID methods that do not know the document's identifier prior
+  /// to publishing, but should preferably be avoided otherwise.
   ///
   /// # Errors
   /// Any error is returned if any of the functions fail or the updates cause scoped method references to embedded
-  /// methods, or methods and services with identical identifiers in the document. In this case the supplied
-  /// `error_cast` function is called in order to convert [`Error`] to `E`.
+  /// methods, or methods and services with identical identifiers in the document. In the case where illegal identifiers
+  /// are detected the supplied the `error_cast` function gets called in order to convert [`Error`] to `E`.
   pub fn try_update_identifiers<F, G, H, L, M, E>(
     self,
-    id_map: F,
-    controller_map: G,
-    method_map: H,
-    services_map: L,
+    id_update: F,
+    controller_update: G,
+    methods_update: H,
+    service_update: L,
     error_cast: M,
   ) -> Result<Self, E>
   where
@@ -974,7 +974,7 @@ impl CoreDocument {
   {
     let data = self
       .data
-      .try_update_identifiers(id_map, controller_map, method_map, services_map)?;
+      .try_update_identifiers(id_update, controller_update, methods_update, service_update)?;
     data.check_id_constraints().map_err(error_cast)?;
     Ok(CoreDocument { data })
   }
@@ -982,10 +982,10 @@ impl CoreDocument {
   /// Unchecked version of [Self::try_update_identifiers](Self::try_update_identifiers()).
   pub fn update_identifiers_unchecked<F, G, H, L, E>(
     self,
-    id_map: F,
-    mut controller_map: G,
-    mut method_map: H,
-    mut services_map: L,
+    id_update: F,
+    mut controller_update: G,
+    mut methods_update: H,
+    mut service_update: L,
   ) -> Self
   where
     F: FnOnce(CoreDID) -> CoreDID,
@@ -995,10 +995,10 @@ impl CoreDocument {
   {
     type InfallibleCoreDIDResult = std::result::Result<CoreDID, Infallible>;
 
-    let id_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(id_map(did)) };
-    let controller_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(controller_map(did)) };
-    let method_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(method_map(did)) };
-    let services_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(services_map(did)) };
+    let id_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(id_update(did)) };
+    let controller_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(controller_update(did)) };
+    let method_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(methods_update(did)) };
+    let services_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(service_update(did)) };
     let data = self
       .data
       .try_update_identifiers(id_map, controller_map, method_map, services_map)
