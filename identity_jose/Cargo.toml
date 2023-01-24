@@ -22,5 +22,5 @@ zeroize = { version = "1.5.7", default-features = false, features = ["std", "zer
 
 [dev-dependencies]
 anyhow = "1"
-iota-crypto = { version = "0.15.3", features = ["ed25519", "random"] }
+iota-crypto = { version = "0.15.3", features = ["ed25519", "random", "hmac"] }
 tokio = { version = "1.24.2", features = ["macros", "rt"] }

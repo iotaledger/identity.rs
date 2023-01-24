@@ -121,6 +121,7 @@ where
         }
       }
 
+      // TODO: Improve error by somehow including the error returned by decode_one if it exists.
       Err(Error::InvalidContent("recipient not found"))
     })
   }
