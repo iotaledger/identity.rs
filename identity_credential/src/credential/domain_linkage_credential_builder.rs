@@ -15,6 +15,9 @@ use identity_core::common::Url;
 /// Convenient builder to create a spec compliant Linked Data Domain Linkage Credential.
 ///
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format>
+///
+/// The builder expects `issuer`, `expirationDate` and `origin` to be set.
+/// Setting `issuanceDate` is optional. If unset the current time will be used.
 #[derive(Debug, Default)]
 pub struct DomainLinkageCredentialBuilder {
   pub(crate) issuer: Option<Url>,
@@ -30,6 +33,8 @@ impl DomainLinkageCredentialBuilder {
   }
 
   /// Sets the value of the `issuer`, only the URL is used, other properties are ignored.
+  ///
+  /// The issuer will also be set as the `credentialSubject`.
   #[must_use]
   pub fn issuer(mut self, value: Issuer) -> Self {
     let issuer: Url = match value {
@@ -105,7 +110,7 @@ mod tests {
   use identity_core::common::Url;
 
   #[test]
-  fn builder() {
+  fn test_builder_with_all_fields_set_succeeds() {
     let issuer = Issuer::Url(Url::parse("did:example:issuer").unwrap());
     let _credential: Credential = DomainLinkageCredentialBuilder::new()
       .issuance_date(Timestamp::now_utc())
@@ -117,7 +122,7 @@ mod tests {
   }
 
   #[test]
-  fn builder_no_issuer() {
+  fn test_builder_no_issuer() {
     let credential: Result<Credential> = DomainLinkageCredentialBuilder::new()
       .issuance_date(Timestamp::now_utc())
       .expiration_date(Timestamp::now_utc())
@@ -128,7 +133,7 @@ mod tests {
   }
 
   #[test]
-  fn builder_no_origin() {
+  fn test_builder_no_origin() {
     let issuer = Issuer::Url(Url::parse("did:example:issuer").unwrap());
     let credential: Result<Credential> = DomainLinkageCredentialBuilder::new()
       .issuance_date(Timestamp::now_utc())
@@ -140,7 +145,7 @@ mod tests {
   }
 
   #[test]
-  fn builder_no_expiration_date() {
+  fn test_builder_no_expiration_date() {
     let issuer = Issuer::Url(Url::parse("did:example:issuer").unwrap());
     let credential: Result<Credential> = DomainLinkageCredentialBuilder::new()
       .issuance_date(Timestamp::now_utc())

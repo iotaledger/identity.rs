@@ -4,13 +4,14 @@
 use crate::credential::Credential;
 use crate::error::Result;
 use identity_core::common::Context;
-use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 #[cfg(feature = "domain-linkage-fetch")]
 use reqwest::redirect::Policy;
 #[cfg(feature = "domain-linkage-fetch")]
 use reqwest::Client;
+use serde::Deserialize;
+
 use std::fmt::Display;
 use std::fmt::Formatter;
 
@@ -29,15 +30,39 @@ lazy_static! {
 /// - Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
 ///   is supported.
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct DomainLinkageConfiguration {
+#[serde(try_from = "__DomainLinkageConfiguration")]
+pub struct DomainLinkageConfiguration(__DomainLinkageConfiguration);
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct __DomainLinkageConfiguration {
   /// Fixed context.
   #[serde(rename = "@context")]
   context: Context,
   /// Linked credentials.
   linked_dids: Vec<Credential>,
-  /// Further properties, must be empty.
-  #[serde(flatten)]
-  pub properties: Object,
+}
+
+impl __DomainLinkageConfiguration {
+  /// Validates the semantic structure.
+  fn check_structure(&self) -> Result<()> {
+    if &self.context != DomainLinkageConfiguration::well_known_context() {
+      return Err(DomainLinkageError("invalid context".into()));
+    }
+    if self.linked_dids.is_empty() {
+      return Err(DomainLinkageError("empty linked_dids list".into()));
+    }
+    Ok(())
+  }
+}
+
+impl TryFrom<__DomainLinkageConfiguration> for DomainLinkageConfiguration {
+  type Error = &'static str;
+
+  fn try_from(config: __DomainLinkageConfiguration) -> Result<Self, Self::Error> {
+    config.check_structure()?;
+    Ok(Self(config))
+  }
 }
 
 impl Display for DomainLinkageConfiguration {
@@ -49,11 +74,10 @@ impl Display for DomainLinkageConfiguration {
 impl DomainLinkageConfiguration {
   /// Creates a new DID Configuration Resource.
   pub fn new(linked_dids: Vec<Credential>) -> Self {
-    Self {
+    Self(__DomainLinkageConfiguration {
       context: Self::well_known_context().clone(),
       linked_dids,
-      properties: Object::new(),
-    }
+    })
   }
 
   pub(crate) fn well_known_context() -> &'static Context {
@@ -62,24 +86,6 @@ impl DomainLinkageConfiguration {
 
   pub(crate) const fn domain_linkage_type() -> &'static str {
     "DomainLinkageCredential"
-  }
-
-  /// Validates the semantic structure.
-  pub fn check_structure(&self) -> Result<()> {
-    if &self.context != Self::well_known_context() {
-      return Err(DomainLinkageError("invalid context".into()));
-    }
-
-    if !self.properties.is_empty() {
-      return Err(DomainLinkageError(
-        "domain linkage configuration contains invalid properties".into(),
-      ));
-    }
-
-    if self.linked_dids.is_empty() {
-      return Err(DomainLinkageError("property `linked_dids` is invalid".into()));
-    }
-    Ok(())
   }
 
   /// Fetches the the DID Configuration resource via a GET request at the
@@ -106,37 +112,22 @@ impl DomainLinkageConfiguration {
       .await
       .map_err(|err| DomainLinkageError(Box::new(err)))?;
 
-    //todo: should structure be checked here? it will be inconsistent with `from_json(..)`.
     Ok(domain_linkage_configuration)
   }
 
   /// List of Domain Linkage Credentials.
   pub fn linked_dids(&self) -> &Vec<Credential> {
-    &self.linked_dids
+    &self.0.linked_dids
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
-  pub fn issuers(&self) -> Vec<Url> {
-    self
-      .linked_dids
-      .iter()
-      .map(|linked_did| linked_did.issuer.url().clone())
-      .collect()
+  pub fn issuers(&self) -> impl Iterator<Item = &Url> {
+    self.0.linked_dids.iter().map(|linked_did| linked_did.issuer.url())
   }
 
   /// List of domain Linkage Credentials.
   pub fn linked_dids_mut(&mut self) -> &mut Vec<Credential> {
-    &mut self.linked_dids
-  }
-
-  /// List of extra properties (should be empty to be spec compliant).
-  pub fn properties(&self) -> &Object {
-    &self.properties
-  }
-
-  /// List of extra properties (should be empty to be spec compliant).
-  pub fn properties_mut(&mut self) -> &mut Object {
-    &mut self.properties
+    &mut self.0.linked_dids
   }
 }
 
@@ -144,17 +135,38 @@ impl DomainLinkageConfiguration {
 mod tests {
   use crate::credential::domain_linkage_configuration::DomainLinkageConfiguration;
   use identity_core::convert::FromJson;
+  use identity_core::error::Result;
+  use serde_json::json;
+  use serde_json::Value;
 
   #[test]
-  fn from_json() {
-    const JSON1: &str = include_str!("../../tests/fixtures/dn-config.json");
+  fn test_from_json_valid() {
+    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-valid.json");
     DomainLinkageConfiguration::from_json(JSON1).unwrap();
   }
 
   #[test]
-  fn from_json_invalid_context() {
+  fn test_from_json_invalid_context() {
     const JSON1: &str = include_str!("../../tests/fixtures/dn-config-invalid-context.json");
-    let config = DomainLinkageConfiguration::from_json(JSON1).unwrap();
-    assert!(config.check_structure().is_err());
+    let deserialization_result: Result<DomainLinkageConfiguration> = DomainLinkageConfiguration::from_json(JSON1);
+    assert!(deserialization_result.is_err());
+  }
+
+  #[test]
+  fn test_from_json_extra_property() {
+    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-extra-property.json");
+    let deserialization_result: Result<DomainLinkageConfiguration> = DomainLinkageConfiguration::from_json(JSON1);
+    assert!(deserialization_result.is_err());
+  }
+
+  #[test]
+  fn test_from_json_empty_linked_did() {
+    let json_value: Value = json!({
+      "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+      "linked_dids": []
+    });
+    let deserialization_result: Result<DomainLinkageConfiguration> =
+      DomainLinkageConfiguration::from_json_value(json_value);
+    assert!(deserialization_result.is_err());
   }
 }

@@ -144,33 +144,22 @@ impl Error for CompoundPresentationValidationError {}
 
 #[derive(Debug, thiserror::Error)]
 /// An error caused by a failure to verify a Domain Linkage configuration or credential.
-pub struct DomainLinkageVerificationError {
+pub struct DomainLinkageValidationError {
   /// Cause of the error.
-  pub cause: DomainLinkageVerificationErrorCause,
+  pub cause: DomainLinkageValidationErrorCause,
   /// Source of the error.
   pub source: Option<Box<dyn Error + Send + Sync + 'static>>,
 }
-impl DomainLinkageVerificationError {
-  /// Provides the cause of the error.
-  pub fn get_cause(&self) -> &DomainLinkageVerificationErrorCause {
-    &self.cause
-  }
-}
 
-impl Display for DomainLinkageVerificationError {
+impl Display for DomainLinkageValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{:?}; ", self.cause)?;
-    match &self.source {
-      Some(err) => write!(f, "{}", err)?,
-      None => {}
-    }
-    Ok(())
+    write!(f, "{}", self.cause)
   }
 }
 
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
-pub enum DomainLinkageVerificationErrorCause {
+pub enum DomainLinkageValidationErrorCause {
   #[error("invalid credential")]
   CredentialValidationError,
   #[error("the expiration date is missing")]

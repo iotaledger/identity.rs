@@ -8,6 +8,7 @@ use identity_did::did::CoreDID;
 use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 use identity_did::service::Service;
+use identity_did::service::ServiceBuilder;
 use identity_did::service::ServiceEndpoint;
 use indexmap::map::IndexMap;
 
@@ -15,7 +16,8 @@ use crate::error::Result;
 use crate::Error;
 use crate::Error::DomainLinkageError;
 
-/// A service wrapper for [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
+/// A service wrapper for a [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
+#[derive(Debug, Clone)]
 pub struct LinkedDomainService<D = CoreDID, T = Object>
 where
   D: DID,
@@ -61,40 +63,34 @@ where
         return Err(DomainLinkageError("domain does not include `https` scheme".into()));
       }
     }
+    let builder: ServiceBuilder<_, _> = Service::builder(properties)
+      .id(did_url)
+      .type_(Self::domain_linkage_service_type());
     if domains.len() == 1 {
-      return Ok(Self {
-        service: Service::builder(properties)
-          .id(did_url)
-          .type_(Self::domain_linkage_service_type())
-          .service_endpoint(ServiceEndpoint::One(domains.head().unwrap().clone()))
+      Ok(Self {
+        service: builder
+          .service_endpoint(ServiceEndpoint::One(
+            domains.head().expect("the len should be 1").clone(),
+          ))
           .build()
           .map_err(|err| DomainLinkageError(Box::new(err)))?,
-      });
+      })
+    } else {
+      let mut map: IndexMap<String, OrderedSet<Url>> = IndexMap::new();
+      map.insert("origins".to_owned(), domains);
+      let service = builder
+        .service_endpoint(ServiceEndpoint::Map(map))
+        .build()
+        .map_err(|err| DomainLinkageError(Box::new(err)))?;
+      Ok(Self { service })
     }
-    let mut map: IndexMap<String, OrderedSet<Url>> = IndexMap::new();
-    map.insert("origins".to_owned(), domains);
-    let service = Service::builder(properties)
-      .id(did_url)
-      .type_(Self::domain_linkage_service_type())
-      .service_endpoint(ServiceEndpoint::Map(map))
-      .build()
-      .map_err(|err| DomainLinkageError(Box::new(err)))?;
-    Ok(Self { service })
-  }
-
-  /// Converts into a normal service that can be inserted into a DID Document.
-  pub fn into_service(self) -> Service<D, T>
-  where
-    D: DID,
-  {
-    self.service
   }
 
   /// Checks the semantic structure of a Linked Domain Service.
   ///
   /// Note: `{"type": ["LinkedDomains"]}` might be serialized the same way as  `{"type": "LinkedDomains"}`
   /// which passes the semantic check.
-  pub fn check_structure(service: &Service<D, T>) -> Result<()> {
+  fn check_structure(service: &Service<D, T>) -> Result<()> {
     if service.type_().len() != 1 {
       return Err(DomainLinkageError("invalid service type".into()));
     }
@@ -102,10 +98,12 @@ where
     let service_type = service
       .type_()
       .get(0)
-      .ok_or_else(|| DomainLinkageError("invalid service type".into()))?;
+      .ok_or_else(|| DomainLinkageError("missing service type".into()))?;
 
-    if !service_type.eq(Self::domain_linkage_service_type()) {
-      return Err(DomainLinkageError("invalid service type".into()));
+    if service_type != Self::domain_linkage_service_type() {
+      return Err(DomainLinkageError(
+        format!("expected `{}` service type", Self::domain_linkage_service_type()).into(),
+      ));
     }
 
     match service.service_endpoint() {
@@ -120,11 +118,11 @@ where
       )),
       ServiceEndpoint::Map(endpoint) => {
         if endpoint.is_empty() {
-          return Err(DomainLinkageError("invalid service endpoint object".into()));
+          return Err(DomainLinkageError("empty service endpoint map".into()));
         }
         let origins: &OrderedSet<Url> = endpoint
-          .get(&"origins".to_owned())
-          .ok_or_else(|| DomainLinkageError("invalid service endpoint object".into()))?;
+          .get("origins")
+          .ok_or_else(|| DomainLinkageError("missing `origins` property in service endpoint".into()))?;
 
         for origin in origins.iter() {
           if origin.scheme() != "https" {
@@ -137,18 +135,16 @@ where
   }
 
   /// Returns the domains contained in the Linked Domain Service.
-  pub fn domains(&self) -> Vec<Url> {
+  pub fn domains(&self) -> &[Url] {
     match self.service.service_endpoint() {
-      ServiceEndpoint::One(endpoint) => {
-        vec![endpoint.clone()]
+      ServiceEndpoint::One(endpoint) => std::slice::from_ref(endpoint),
+      ServiceEndpoint::Set(_) => {
+        unreachable!("the service endpoint is never a set per the `LinkedDomainService` type invariant")
       }
-      ServiceEndpoint::Set(_) => Vec::new(),
-      ServiceEndpoint::Map(endpoint) => {
-        if let Some(origins) = endpoint.get(&"origins".to_owned()) {
-          return origins.clone().to_vec();
-        }
-        Vec::new()
-      }
+      ServiceEndpoint::Map(endpoint) => endpoint
+        .get("origins")
+        .expect("the `origins` property exists per the `LinkedDomainService` type invariant")
+        .as_slice(),
     }
   }
 }
@@ -166,7 +162,7 @@ mod tests {
   use serde_json::json;
 
   #[test]
-  fn create_service_multiple_origins() {
+  fn test_create_service_multiple_origins() {
     let domain_1 = "https://foo.example-1.com";
     let domain_2 = "https://bar.example-2.com";
     let mut domains = OrderedSet::new();
@@ -188,11 +184,11 @@ mod tests {
         }
     }))
     .unwrap();
-    assert_eq!(service.into_service(), service_from_json);
+    assert_eq!(<Service<_, _>>::from(service), service_from_json);
   }
 
   #[test]
-  fn create_service_single_origin() {
+  fn test_create_service_single_origin() {
     let mut domains: OrderedSet<Url> = OrderedSet::new();
     domains.append(Url::parse("https://foo.example-1.com").unwrap());
 
@@ -203,18 +199,17 @@ mod tests {
     )
     .unwrap();
 
-    // Add a new Service.
     let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": "https://foo.example-1.com"
     }))
     .unwrap();
-    assert_eq!(service.into_service(), service_from_json);
+    assert_eq!(<Service<_, _>>::from(service), service_from_json);
   }
 
   #[test]
-  fn domains() {
+  fn test_valid_domains() {
     let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
@@ -240,7 +235,7 @@ mod tests {
   }
 
   #[test]
-  fn extract_domains_invalid_scheme() {
+  fn test_extract_domains_invalid_scheme() {
     // http scheme instead of https.
     let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
         "id":"did:example:123#foo",
@@ -260,7 +255,7 @@ mod tests {
   }
 
   #[test]
-  fn extract_domain_type_check() {
+  fn test_extract_domain_type_check() {
     // Valid type.
     let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
         "id":"did:example:123#foo",
