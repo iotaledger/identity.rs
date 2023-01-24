@@ -5,6 +5,7 @@ use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use std::collections::HashMap;
+use std::convert::Infallible;
 
 use serde::Serialize;
 
@@ -147,6 +148,93 @@ impl<D: DID + KeyComparable> CoreDocumentData<D> {
     }
 
     Ok(())
+  }
+}
+
+impl CoreDocumentData {
+  // Apply the provided fallible functions to the DID components of `id`, `controller`, methods and services
+  // respectively.
+  fn try_update_identifiers<F, G, H, L, E>(
+    self,
+    id_map: F,
+    mut controller_map: G,
+    mut method_map: H,
+    mut services_map: L,
+  ) -> Result<Self, E>
+  where
+    F: FnOnce(CoreDID) -> std::result::Result<CoreDID, E>,
+    G: FnMut(CoreDID) -> std::result::Result<CoreDID, E>,
+    H: FnMut(CoreDID) -> std::result::Result<CoreDID, E>,
+    L: FnMut(CoreDID) -> std::result::Result<CoreDID, E>,
+  {
+    let current_data = self;
+    // Update `id`
+    let id = id_map(current_data.id)?;
+    // Update controllers
+    let controller = if let Some(controllers) = current_data.controller {
+      Some(controllers.try_map(&mut controller_map)?)
+    } else {
+      None
+    };
+
+    // Update methods
+
+    let verification_method = current_data
+      .verification_method
+      .into_iter()
+      .map(|method| method.try_map(&mut method_map))
+      .collect::<Result<_, E>>()?;
+
+    let authentication = current_data
+      .authentication
+      .into_iter()
+      .map(|method_ref| method_ref.try_map(&mut method_map))
+      .collect::<Result<_, E>>()?;
+
+    let assertion_method = current_data
+      .assertion_method
+      .into_iter()
+      .map(|method_ref| method_ref.try_map(&mut method_map))
+      .collect::<Result<_, E>>()?;
+
+    let key_agreement = current_data
+      .key_agreement
+      .into_iter()
+      .map(|method_ref| method_ref.try_map(&mut method_map))
+      .collect::<Result<_, E>>()?;
+
+    let capability_delegation = current_data
+      .capability_delegation
+      .into_iter()
+      .map(|method_ref| method_ref.try_map(&mut method_map))
+      .collect::<Result<_, E>>()?;
+
+    let capability_invocation = current_data
+      .capability_invocation
+      .into_iter()
+      .map(|method_ref| method_ref.try_map(&mut method_map))
+      .collect::<Result<_, E>>()?;
+
+    // Update services
+    let service = current_data
+      .service
+      .into_iter()
+      .map(|service| service.try_map(&mut services_map))
+      .collect::<Result<_, E>>()?;
+
+    Ok(CoreDocumentData {
+      id,
+      controller,
+      also_known_as: current_data.also_known_as,
+      verification_method,
+      authentication,
+      assertion_method,
+      key_agreement,
+      capability_delegation,
+      capability_invocation,
+      service,
+      properties: current_data.properties,
+    })
   }
 }
 
@@ -855,6 +943,67 @@ where
       Some(MethodRef::Refer(did)) => self.data.verification_method.query_mut(&did.to_string()),
       None => self.data.verification_method.query_mut(query),
     }
+  }
+}
+
+impl CoreDocument {
+  /// Update the DID components of the document's `id`, controllers, methods and services by applying the provided
+  /// fallible maps respectively.
+  ///
+  /// This is an advanced function that can be useful for DID methods that do not know the document's identifier prior
+  /// to publishing.
+  ///
+  /// # Errors
+  /// Any error is returned if any of the functions fail or the updates cause scoped method references to embedded
+  /// methods, or methods and services with identical identifiers in the document. In this case the supplied
+  /// `error_cast` function is called in order to convert [`Error`] to `E`.
+  pub fn try_update_identifiers<F, G, H, L, M, E>(
+    self,
+    id_map: F,
+    controller_map: G,
+    method_map: H,
+    services_map: L,
+    error_cast: M,
+  ) -> Result<Self, E>
+  where
+    F: FnOnce(CoreDID) -> std::result::Result<CoreDID, E>,
+    G: FnMut(CoreDID) -> std::result::Result<CoreDID, E>,
+    H: FnMut(CoreDID) -> std::result::Result<CoreDID, E>,
+    L: FnMut(CoreDID) -> std::result::Result<CoreDID, E>,
+    M: FnOnce(crate::Error) -> E,
+  {
+    let data = self
+      .data
+      .try_update_identifiers(id_map, controller_map, method_map, services_map)?;
+    data.check_id_constraints().map_err(error_cast)?;
+    Ok(CoreDocument { data })
+  }
+
+  /// Unchecked version of [Self::try_update_identifiers](Self::try_update_identifiers()).
+  pub fn update_identifiers_unchecked<F, G, H, L, E>(
+    self,
+    id_map: F,
+    mut controller_map: G,
+    mut method_map: H,
+    mut services_map: L,
+  ) -> Self
+  where
+    F: FnOnce(CoreDID) -> CoreDID,
+    G: FnMut(CoreDID) -> CoreDID,
+    H: FnMut(CoreDID) -> CoreDID,
+    L: FnMut(CoreDID) -> CoreDID,
+  {
+    type InfallibleCoreDIDResult = std::result::Result<CoreDID, Infallible>;
+
+    let id_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(id_map(did)) };
+    let controller_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(controller_map(did)) };
+    let method_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(method_map(did)) };
+    let services_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(services_map(did)) };
+    let data = self
+      .data
+      .try_update_identifiers(id_map, controller_map, method_map, services_map)
+      .expect("unwrapping infallible should be fine");
+    CoreDocument { data }
   }
 }
 

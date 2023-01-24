@@ -459,7 +459,8 @@ impl From<IotaDocument> for IotaCoreDocument {
 
 impl From<IotaDocument> for CoreDocument {
   fn from(document: IotaDocument) -> Self {
-    document.document.map_unchecked(CoreDID::from, CoreDID::from)
+    //document.document.map_unchecked(CoreDID::from, CoreDID::from)
+    todo!()
   }
 }
 
