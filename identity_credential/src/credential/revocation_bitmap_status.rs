@@ -32,10 +32,10 @@ impl RevocationBitmapStatus {
   /// # use identity_credential::credential::RevocationBitmapStatus;
   /// # use identity_did::DIDUrl;
   /// # use identity_did::CoreDID;
-  /// let did_url: DIDUrl<CoreDID> = DIDUrl::parse("did:method:0xffff#revocation-1").unwrap();
+  /// let did_url: DIDUrl = DIDUrl::parse("did:method:0xffff#revocation-1").unwrap();
   /// let status: RevocationBitmapStatus = RevocationBitmapStatus::new(did_url, 5);
   /// assert_eq!(
-  ///   status.id::<CoreDID>().unwrap().to_string(),
+  ///   status.id().unwrap().to_string(),
   ///   "did:method:0xffff?index=5#revocation-1"
   /// );
   /// assert_eq!(status.index().unwrap(), 5);

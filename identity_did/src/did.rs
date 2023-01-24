@@ -65,14 +65,14 @@ pub trait DID:
   /// - `"did:example:12345678" -> "12345678"`
   /// - `"did:iota:main:12345678" -> "main:12345678"`
   fn method_id(&self) -> &str {
-    self.as_ref().0.method()
+    self.as_ref().0.method_id()
   }
 
   /// Returns the serialized [`DID`].
   ///
   /// This is fast since the serialized value is stored in the [`DID`].
   fn as_str(&self) -> &str {
-    self.as_ref().as_str()
+    self.as_ref().0.as_str()
   }
 
   /// Consumes the [`DID`] and returns its serialization.
@@ -84,10 +84,7 @@ pub trait DID:
   /// fragment to this [`DID`].
   ///
   /// See [`DIDUrl::join`].
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl, Error>
-  where
-    Self: Sized,
-  {
+  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl, Error> {
     let url = DIDUrl::from(self);
     url.join(value)
   }
