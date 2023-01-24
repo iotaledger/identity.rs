@@ -11,7 +11,7 @@ use crate::validator::CredentialValidator;
 use crate::validator::FailFast;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
-use identity_did::did::CoreDID;
+use identity_did::CoreDID;
 use serde::Serialize;
 use std::collections::HashSet;
 
@@ -242,8 +242,8 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_did::did::DID;
-  use identity_did::document::CoreDocument;
+  use identity_did::DID;
+  use identity_document::document::CoreDocument;
 
   #[test]
   pub(crate) fn test_valid_credential() {

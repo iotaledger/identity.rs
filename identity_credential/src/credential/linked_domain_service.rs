@@ -4,12 +4,12 @@
 use identity_core::common::Object;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
-use identity_did::did::CoreDID;
-use identity_did::did::DIDUrl;
-use identity_did::did::DID;
-use identity_did::service::Service;
-use identity_did::service::ServiceBuilder;
-use identity_did::service::ServiceEndpoint;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
+use identity_did::DID;
+use identity_document::service::Service;
+use identity_document::service::ServiceBuilder;
+use identity_document::service::ServiceEndpoint;
 use indexmap::map::IndexMap;
 
 use crate::error::Result;
@@ -156,9 +156,9 @@ mod tests {
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
-  use identity_did::did::CoreDID;
-  use identity_did::did::CoreDIDUrl;
-  use identity_did::service::Service;
+  use identity_did::CoreDID;
+  use identity_did::CoreDIDUrl;
+  use identity_document::service::Service;
   use serde_json::json;
 
   #[test]
