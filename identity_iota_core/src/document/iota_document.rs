@@ -83,15 +83,21 @@ impl IotaDocument {
 
   /// Returns the DID document identifier.
   pub fn id(&self) -> &IotaDID {
-    self.document.id()
+    //self.document.id()
+    todo!()
   }
 
-  /// Returns a reference to the DID controllers.
+  /// Returns an iterator yielding the DID controllers.
   ///
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
-  pub fn controller(&self) -> Option<&OneOrSet<IotaDID>> {
-    self.document.controller()
+  pub fn controller(&self) -> impl Iterator<Item = &IotaDID> + '_ {
+    self
+      .document
+      .controller()
+      .map(|controllers| controllers.iter())
+      .into_iter()
+      .flatten()
   }
 
   /// Returns a reference to the `alsoKnownAs` set.
