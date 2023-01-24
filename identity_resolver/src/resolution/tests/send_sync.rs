@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
@@ -8,7 +8,7 @@ use identity_credential::presentation::Presentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::did::DID;
+use identity_did::DID;
 use serde::Serialize;
 
 fn is_send<T: Send>(_t: T) {}

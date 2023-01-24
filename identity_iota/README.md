@@ -92,7 +92,7 @@ _main._<span></span>_rs_
 use identity_iota::core::ToJson;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
-use identity_iota::did::MethodScope;
+use identity_iota::verification::MethodScope;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;

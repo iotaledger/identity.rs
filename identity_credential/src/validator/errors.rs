@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeMap;
@@ -66,8 +66,9 @@ pub enum ValidationError {
   #[error("invalid credential status")]
   InvalidStatus(#[source] crate::Error),
   /// Indicates that the the credential's service is invalid.
-  #[error("invalid service")]
-  InvalidService(#[source] identity_did::Error),
+  #[error("service lookup error")]
+  #[non_exhaustive]
+  ServiceLookupError,
   /// Indicates that the credential has been revoked.
   #[error("credential has been revoked")]
   Revoked,

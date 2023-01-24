@@ -1,7 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::did::verifiable::VerifierOptions;
+use identity_iota::document::verifiable::VerifierOptions;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
@@ -24,6 +24,7 @@ impl WasmVerifierOptions {
   }
 
   /// Creates a new `VerifierOptions` with default options.
+  #[allow(clippy::should_implement_trait)]
   #[wasm_bindgen]
   pub fn default() -> WasmVerifierOptions {
     WasmVerifierOptions(VerifierOptions::default())

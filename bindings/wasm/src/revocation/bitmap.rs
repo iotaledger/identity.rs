@@ -1,10 +1,10 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
 
-use identity_iota::did::RevocationBitmap;
-use identity_iota::did::ServiceEndpoint;
+use identity_iota::credential::RevocationBitmap;
+use identity_iota::document::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
 
 use crate::did::UServiceEndpoint;

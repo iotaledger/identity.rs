@@ -11,8 +11,8 @@ use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
+use identity_did::CoreDID;
+use identity_did::DID;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -51,10 +51,10 @@ where
   ///
   /// # Example
   /// Construct a `Resolver` that resolves DID documents of type
-  /// [`CoreDocument`](::identity_did::document::CoreDocument).
+  /// [`CoreDocument`](::identity_document::document::CoreDocument).
   ///  ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_document::document::CoreDocument;
   ///
   /// let mut resolver = Resolver::<CoreDocument>::new();
   /// // Now attach some handlers whose output can be converted to a `CoreDocument`.
@@ -69,9 +69,9 @@ where
   /// ```
   /// 
   /// # Tradeoffs
-  /// The default type agnostic [`Resolver`] is more convenient when working with document types whose implementations of the [`Document`](::identity_did::document::Document)
-  /// trait do not map well to a single representation (such as for instance [`CoreDocument`](::identity_did::document::CoreDocument)).
-  /// This is typically the case whenever custom cryptography is applied in implementations of the [`Document::verify_data`](::identity_did::document::Document::verify_data()) method.
+  /// The default type agnostic [`Resolver`] is more convenient when working with document types whose implementations of the [`Document`](::identity_document::document::Document)
+  /// trait do not map well to a single representation (such as for instance [`CoreDocument`](::identity_document::document::CoreDocument)).
+  /// This is typically the case whenever custom cryptography is applied in implementations of the [`Document::verify_data`](::identity_document::document::Document::verify_data()) method.
   /// The extra flexibility offered by the type agnostic resolver comes at the cost of less type information, hence specifying a concrete type in the constructor
   /// is recommended whenever a single representation is a good fit.  
   pub fn new() -> Self {
@@ -96,9 +96,9 @@ where
   /// ## Example
   /// ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::did::CoreDID;
-  /// # use identity_did::did::DID;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_did::CoreDID;
+  /// # use identity_did::DID;
+  /// # use identity_document::document::CoreDocument;
   ///
   /// async fn resolve_and_cast(
   ///   did: CoreDID,
@@ -294,8 +294,8 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   /// # Example
   /// ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::did::CoreDID;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_did::CoreDID;
+  /// # use identity_document::document::CoreDocument;
   ///
   ///    // A client that can resolve DIDs of our invented "foo" method.
   ///    struct Client;
@@ -353,8 +353,8 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
   /// # Example
   /// ```
   /// # use identity_resolver::SingleThreadedResolver;
-  /// # use identity_did::did::CoreDID;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_did::CoreDID;
+  /// # use identity_document::document::CoreDocument;
   ///
   ///    // A client that can resolve DIDs of our invented "foo" method.
   ///    struct Client;

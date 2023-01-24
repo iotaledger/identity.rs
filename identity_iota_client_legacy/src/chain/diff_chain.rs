@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -274,7 +274,7 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_core::json;
-  use identity_did::did::DID;
+  use identity_did::DID;
   use identity_did::service::Service;
   use identity_iota_core_legacy::diff::DiffMessage;
   use identity_iota_core_legacy::document::IotaDocument;

@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::did::WasmCoreDID;
@@ -9,8 +9,8 @@ use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::did::CoreDID;
-use identity_iota::did::CoreDocument;
 use identity_iota::did::DID;
+use identity_iota::document::CoreDocument;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use serde::Deserialize;

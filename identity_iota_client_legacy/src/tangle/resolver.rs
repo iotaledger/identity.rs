@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashMap;
@@ -287,9 +287,9 @@ mod tests {
   use identity_credential::credential::Subject;
   use identity_credential::validator::CredentialValidationOptions;
   use identity_credential::validator::SubjectHolderRelationship;
-  use identity_did::did::CoreDID;
-  use identity_did::did::DID;
-  use identity_did::document::CoreDocument;
+  use identity_did::CoreDID;
+  use identity_did::DID;
+  use identity_document::document::CoreDocument;
   use identity_did::verifiable::VerifierOptions;
   use identity_did::verification::VerificationMethod;
   use identity_iota_core_legacy::document::IotaDocument;

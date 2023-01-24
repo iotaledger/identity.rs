@@ -1,29 +1,24 @@
 [package]
 name = "identity_did"
 version = "0.7.0-alpha.4"
-authors = ["IOTA Stiftung"]
+authors.workspace = true
 edition = "2021"
-homepage = "https://www.iota.org"
+homepage.workspace = true
 keywords = ["iota", "tangle", "identity", "did"]
-license = "Apache-2.0"
+license.workspace = true
 readme = "./README.md"
-repository = "https://github.com/iotaledger/identity.rs"
+repository.workspace = true
 description = "Agnostic implementation of the Decentralized Identifiers (DID) standard."
 
 [dependencies]
-dataurl = { version = "0.1.2", default-features = false, optional = true }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
 form_urlencoded = { version = "1.0.1", default-features = false }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core" }
-indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
-roaring = { version = "0.9.0", default-features = false, optional = true }
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
-thiserror = { version = "1.0", default-features = false }
+serde.workspace = true
+strum.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
-criterion = { version = "0.4.0", default-features = false, features = ["cargo_bench_support"] }
 proptest = { version = "1.0" }
 serde_json = { version = "1.0", default-features = false }
 
@@ -32,11 +27,3 @@ serde_json = { version = "1.0", default-features = false }
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-[features]
-default = ["revocation-bitmap"]
-revocation-bitmap = ["dataurl", "flate2", "roaring"]
-
-[[bench]]
-name = "deserialize_document"
-harness = false

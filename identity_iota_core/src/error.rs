@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
@@ -9,9 +9,9 @@ pub enum Error {
   #[error("serialization error")]
   SerializationError(&'static str, #[source] Option<identity_core::Error>),
   #[error("invalid did")]
-  DIDSyntaxError(#[source] identity_did::did::DIDError),
+  DIDSyntaxError(#[source] identity_did::Error),
   #[error("invalid document")]
-  InvalidDoc(#[source] identity_did::error::Error),
+  InvalidDoc(#[source] identity_document::Error),
   #[cfg(feature = "iota-client")]
   #[error("DID update: {0}")]
   DIDUpdateError(&'static str, #[source] Option<Box<iota_client::error::Error>>),
@@ -33,8 +33,9 @@ pub enum Error {
   ProtocolParametersError(#[source] iota_client::Error),
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
+  #[cfg(feature = "revocation-bitmap")]
   #[error("credential revocation error")]
-  RevocationError(#[source] identity_did::Error),
+  RevocationError(#[source] identity_credential::revocation::RevocationError),
   #[cfg(feature = "client")]
   #[error("alias output build error")]
   AliasOutputBuildError(#[source] crate::block::Error),

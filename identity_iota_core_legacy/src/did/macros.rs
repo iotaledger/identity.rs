@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 /// Creates a new IOTA DID from a `public` key and optional `network`.
@@ -10,7 +10,7 @@
 /// # Example
 ///
 /// ```
-/// # use identity_did::did::DID;
+/// # use identity_did::DID;
 /// # use identity_iota_core_legacy::try_construct_did;
 /// #
 /// let did = try_construct_did!(b"public-key")?;

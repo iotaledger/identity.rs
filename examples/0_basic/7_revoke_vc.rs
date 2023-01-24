@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! This example shows how to revoke a verifiable credential.
@@ -21,6 +21,7 @@ use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::FailFast;
+use identity_iota::credential::RevocationBitmap;
 use identity_iota::credential::RevocationBitmapStatus;
 use identity_iota::credential::Status;
 use identity_iota::credential::Subject;
@@ -28,10 +29,9 @@ use identity_iota::credential::ValidationError;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DIDUrl;
-use identity_iota::did::Document;
-use identity_iota::did::RevocationBitmap;
-use identity_iota::did::Service;
 use identity_iota::did::DID;
+use identity_iota::document::Document;
+use identity_iota::document::Service;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;

@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -48,6 +48,8 @@ pub mod credential {
   pub use identity_credential::credential::*;
   pub use identity_credential::error::*;
   pub use identity_credential::presentation::*;
+  #[cfg(feature = "revocation-bitmap")]
+  pub use identity_credential::revocation::*;
   pub use identity_credential::validator::*;
 }
 
@@ -55,18 +57,20 @@ pub mod did {
   //! Decentralized Identifiers
   //!
   //! [Specification](https://www.w3.org/TR/did-core/)
+  pub use identity_did::*;
+}
+pub mod document {
+  //! DID Documents
+  //!
+  //! [Specification](https://www.w3.org/TR/did-core/)
 
-  pub use identity_did::document::*;
-  pub use identity_did::error::*;
-  #[cfg(feature = "revocation-bitmap")]
-  pub use identity_did::revocation::*;
-  pub use identity_did::service::*;
-  pub use identity_did::utils::*;
-  pub use identity_did::verification::*;
+  pub use identity_document::document::*;
+  pub use identity_document::error::*;
 
-  pub use identity_did::did::*;
+  pub use identity_document::service::*;
+  pub use identity_document::utils::*;
 
-  pub use identity_did::verifiable;
+  pub use identity_document::verifiable;
 }
 
 pub mod iota {
@@ -117,4 +121,9 @@ pub mod resolver {
   //! DID resolution utilities
 
   pub use identity_resolver::*;
+}
+
+pub mod verification {
+  //! Types for verifiable data
+  pub use identity_verification::*;
 }

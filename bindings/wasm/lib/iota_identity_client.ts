@@ -14,7 +14,7 @@ import {
     TransactionHelper,
 } from "@iota/iota.js";
 import type { INodeInfoProtocol } from "@iota/types";
-import type { Client, INodeInfoWrapper, SecretManager } from "~iota-client-wasm";
+import type { Client, INodeInfoWrapper, SecretManager } from "~client-wasm";
 
 /** Provides operations for IOTA DID Documents with Alias Outputs. */
 export class IotaIdentityClient implements IIotaIdentityClient {

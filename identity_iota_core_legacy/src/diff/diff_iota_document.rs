@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Deserialize;
@@ -8,7 +8,7 @@ use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 use identity_did::diff::DiffDocument;
-use identity_did::document::CoreDocument;
+use identity_document::document::CoreDocument;
 
 use crate::did::IotaDID;
 use crate::diff::DiffIotaDocumentMetadata;

@@ -1,14 +1,14 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
 
-use identity_core::crypto::GetSignature;
-use identity_did::did::DID;
-use identity_did::document::Document;
 #[cfg(feature = "revocation-bitmap")]
-use identity_did::revocation::RevocationBitmap;
-use identity_did::verifiable::VerifierOptions;
+use crate::revocation::RevocationBitmap;
+use identity_core::crypto::GetSignature;
+use identity_did::DID;
+use identity_document::document::Document;
+use identity_document::verifiable::VerifierOptions;
 
 use self::private::Sealed;
 use self::private::Verifiable;
@@ -49,7 +49,7 @@ pub trait ValidatorDocument: Sealed + core::fmt::Debug {
   ///
   /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the verification operation fails.
-  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()>;
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_document::Result<()>;
 
   #[doc(hidden)]
   /// Extracts the `RevocationBitmap` from the referenced service in the DID Document.
@@ -61,8 +61,8 @@ pub trait ValidatorDocument: Sealed + core::fmt::Debug {
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(
     &self,
-    query: identity_did::utils::DIDUrlQuery<'_>,
-  ) -> identity_did::Result<RevocationBitmap>;
+    query: identity_document::utils::DIDUrlQuery<'_>,
+  ) -> crate::revocation::RevocationResult<RevocationBitmap>;
 }
 
 mod private {
@@ -96,7 +96,7 @@ impl ValidatorDocument for &dyn ValidatorDocument {
     (*self).did_str()
   }
 
-  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_document::Result<()> {
     (*self).verify_data(data, options)
   }
   fn upcast(self: Box<Self>) -> Box<dyn Any>
@@ -109,8 +109,8 @@ impl ValidatorDocument for &dyn ValidatorDocument {
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(
     &self,
-    query: identity_did::utils::DIDUrlQuery<'_>,
-  ) -> identity_did::Result<RevocationBitmap> {
+    query: identity_document::utils::DIDUrlQuery<'_>,
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     (*self).resolve_revocation_bitmap(query)
   }
 }
@@ -123,7 +123,7 @@ where
     self.id().as_str()
   }
 
-  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_document::Result<()> {
     self.verify_data(data, options).map_err(Into::into)
   }
 
@@ -137,11 +137,11 @@ where
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(
     &self,
-    query: identity_did::utils::DIDUrlQuery<'_>,
-  ) -> identity_did::Result<RevocationBitmap> {
+    query: identity_document::utils::DIDUrlQuery<'_>,
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     self
       .resolve_service(query)
-      .ok_or(identity_did::Error::InvalidService(
+      .ok_or(crate::revocation::RevocationError::InvalidService(
         "revocation bitmap service not found",
       ))
       .and_then(RevocationBitmap::try_from)
@@ -173,7 +173,7 @@ impl ValidatorDocument for AbstractValidatorDocument {
     self.0.did_str()
   }
 
-  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_document::Result<()> {
     self.0.verify_data(data, options)
   }
 
@@ -187,8 +187,8 @@ impl ValidatorDocument for AbstractValidatorDocument {
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(
     &self,
-    query: identity_did::utils::DIDUrlQuery<'_>,
-  ) -> identity_did::Result<RevocationBitmap> {
+    query: identity_document::utils::DIDUrlQuery<'_>,
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     self.0.resolve_revocation_bitmap(query)
   }
 }
@@ -232,7 +232,7 @@ impl AbstractThreadSafeValidatorDocument {
   ///
   /// # Example
   /// ```
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_document::document::CoreDocument;
   /// # use identity_credential::validator::AbstractValidatorDocument;
   ///
   /// fn round_trip(doc: CoreDocument) -> CoreDocument {
@@ -246,7 +246,7 @@ impl AbstractThreadSafeValidatorDocument {
 }
 
 impl ValidatorDocument for AbstractThreadSafeValidatorDocument {
-  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_document::Result<()> {
     self.0.verify_data(data, options)
   }
 
@@ -264,8 +264,8 @@ impl ValidatorDocument for AbstractThreadSafeValidatorDocument {
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(
     &self,
-    query: identity_did::utils::DIDUrlQuery<'_>,
-  ) -> identity_did::Result<RevocationBitmap> {
+    query: identity_document::utils::DIDUrlQuery<'_>,
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
     self.0.resolve_revocation_bitmap(query)
   }
 }

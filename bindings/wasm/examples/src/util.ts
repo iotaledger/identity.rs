@@ -1,4 +1,4 @@
-import type { Client, SecretManager } from "@iota/iota-client-wasm/node";
+import type { Client, SecretManager } from "@iota/client-wasm/node";
 import { AddressTypes, Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import {
     IotaDID,

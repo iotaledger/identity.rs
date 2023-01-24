@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
@@ -7,7 +7,7 @@ use core::fmt::Formatter;
 use std::str::FromStr;
 
 use identity_core::common::Url;
-use identity_did::did::DID;
+use identity_did::DID;
 use identity_iota_core_legacy::tangle::MessageId;
 use serde;
 use serde::Deserialize;

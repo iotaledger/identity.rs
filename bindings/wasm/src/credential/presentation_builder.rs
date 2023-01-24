@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::core::Context;
@@ -37,7 +37,7 @@ impl TryFrom<IPresentation> for PresentationBuilder {
       }
     }
     if let Some(id) = id {
-      builder = builder.id(Url::parse(&id).wasm_result()?);
+      builder = builder.id(Url::parse(id).wasm_result()?);
     }
     if let Some(types) = r#type {
       for value in types.iter() {

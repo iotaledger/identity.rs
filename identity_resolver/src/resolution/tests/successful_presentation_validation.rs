@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::convert::FromJson;
@@ -7,11 +7,11 @@ use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::SubjectHolderRelationship;
 use identity_credential::validator::ValidatorDocument;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
-use identity_did::document::CoreDocument;
-use identity_did::document::Document;
-use identity_did::verifiable::VerifierOptions;
+use identity_did::CoreDID;
+use identity_did::DID;
+use identity_document::document::CoreDocument;
+use identity_document::document::Document;
+use identity_document::verifiable::VerifierOptions;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use serde::de::DeserializeOwned;

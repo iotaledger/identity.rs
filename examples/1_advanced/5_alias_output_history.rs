@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
@@ -11,9 +11,8 @@ use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
 use identity_iota::crypto::KeyPair;
-use identity_iota::did::MethodRelationship;
-use identity_iota::did::Service;
 use identity_iota::did::DID;
+use identity_iota::document::Service;
 use identity_iota::iota::block::address::Address;
 use identity_iota::iota::block::output::RentStructure;
 use identity_iota::iota::IotaClientExt;
@@ -22,6 +21,7 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClient;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaService;
+use identity_iota::verification::MethodRelationship;
 use iota_client::api_types::response::OutputMetadataResponse;
 use iota_client::block::input::Input;
 use iota_client::block::output::AliasId;
