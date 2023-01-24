@@ -8,11 +8,9 @@ use std::future::Future;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jws::CharSet;
-use crate::jws::JwsAlgorithm;
 use crate::jws::JwsFormat;
 use crate::jws::JwsHeader;
 use crate::jws::Recipient;
-use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 
 macro_rules! to_json {
@@ -51,7 +49,7 @@ struct Flatten<'a, 'b> {
 // TODO: Use type alias for keyId instead of raw string.
 pub struct Encoder<'a, FUN, FUT, ERR>
 where
-  FUN: Fn(JwsAlgorithm, String, Vec<u8>) -> FUT + 'static + Send + Sync,
+  FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
   FUT: Future<Output = std::result::Result<String, ERR>> + Send,
   ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
 {
@@ -71,7 +69,7 @@ where
 
 impl<'a, FUN, FUT, ERR> Encoder<'a, FUN, FUT, ERR>
 where
-  FUN: Fn(JwsAlgorithm, String, Vec<u8>) -> FUT + 'static + Send + Sync,
+  FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
   FUT: Future<Output = std::result::Result<String, ERR>> + Send,
   ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
 {
@@ -224,16 +222,10 @@ where
   }
 
   async fn encode_recipient<'b>(&self, payload: &[u8], recipient: Recipient<'b>) -> Result<Signature<'b>> {
-    let header_set: JwtHeaderSet<_> = JwtHeaderSet::new()
-      .protected(recipient.protected)
-      .unprotected(recipient.unprotected);
-    let algorithm: JwsAlgorithm = header_set.try_alg()?;
-    let kid: &str = header_set.try_kid()?;
-
     let protected: Option<String> = recipient.protected.map(jwu::encode_b64_json).transpose()?;
     let header: &[u8] = protected.as_deref().map(str::as_bytes).unwrap_or_default();
     let message: Vec<u8> = jwu::create_message(header, payload);
-    let signature: String = (self.sign)(algorithm, kid.to_owned(), message)
+    let signature: String = (self.sign)(recipient.protected.cloned(), recipient.unprotected.cloned(), message)
       .await
       .map_err(|err| Error::SignatureCreationError(err.into()))?;
 

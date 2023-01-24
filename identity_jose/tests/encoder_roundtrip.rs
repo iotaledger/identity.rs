@@ -14,6 +14,7 @@ mod tests {
   use identity_jose::jws::JwsHeader;
   use identity_jose::jws::Recipient;
   use identity_jose::jwt::JwtClaims;
+  use identity_jose::jwt::JwtHeaderSet;
   use identity_jose::jwu;
 
   #[tokio::test]
@@ -21,10 +22,11 @@ mod tests {
     let secret_key = Arc::new(SecretKey::generate().unwrap());
     let public_key = secret_key.public_key();
 
-    let sign_fn = move |alg, _key_id, msg: Vec<u8>| {
+    let sign_fn = move |protected, unprotected, msg: Vec<u8>| {
       let sk = secret_key.clone();
       async move {
-        if alg != JwsAlgorithm::EdDSA {
+        let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(&protected).unprotected(&unprotected);
+        if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
           return Err("incompatible `alg` parameter");
         }
         let sig: _ = sk.sign(msg.as_slice()).to_bytes();
@@ -32,9 +34,10 @@ mod tests {
       }
     };
 
-    let verify_fn = |alg: JwsAlgorithm, _key_id: &str, msg: &[u8], sig: &[u8]| {
-      if alg != JwsAlgorithm::EdDSA {
-        return Err("incompatible `alg` parameter".to_owned());
+    let verify_fn = |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
+      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(protected).unprotected(unprotected);
+      if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
+        return Err("incompatible `alg` parameter");
       }
 
       let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(sig)
@@ -45,7 +48,7 @@ mod tests {
       if public_key.verify(&signature, msg) {
         Ok(())
       } else {
-        Err("invalid signature".to_owned())
+        Err("invalid signature")
       }
     };
 

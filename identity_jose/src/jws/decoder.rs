@@ -61,7 +61,7 @@ struct Flatten<'a> {
 
 pub struct Decoder<'b, FUN, ERR>
 where
-  FUN: Fn(JwsAlgorithm, KeyId<'_>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
+  FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
   ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
 {
   /// The expected format of the encoded token.
@@ -80,7 +80,7 @@ where
 
 impl<'a, 'b, FUN, ERR> Decoder<'b, FUN, ERR>
 where
-  FUN: Fn(JwsAlgorithm, KeyId<'_>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
+  FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
   ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
 {
   pub fn new(verify: FUN) -> Self {
@@ -116,14 +116,8 @@ where
   pub fn decode(&self, data: &'b [u8]) -> Result<Token<'b>> {
     self.expand(data, |payload, signatures| {
       for signature in signatures {
-        // if let Ok(token) = self.decode_one(payload, signature) {
-        //   return Ok(token);
-        // }
-        match self.decode_one(payload, signature) {
-          Ok(token) => return Ok(token),
-          Err(err) => {
-            println!("{err}");
-          }
+        if let Ok(token) = self.decode_one(payload, signature) {
+          return Ok(token);
         }
       }
 
@@ -131,25 +125,30 @@ where
     })
   }
 
-  fn decode_one(&self, payload: &'b [u8], signature: JwsSignature<'a>) -> Result<Token<'b>> {
-    let protected: Option<JwsHeader> = signature.protected.map(decode_b64_json).transpose()?;
+  fn decode_one(&self, payload: &'b [u8], jws_signature: JwsSignature<'a>) -> Result<Token<'b>> {
+    let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
 
-    validate_jws_headers(protected.as_ref(), signature.header.as_ref(), self.crits.as_deref())?;
+    validate_jws_headers(protected.as_ref(), jws_signature.header.as_ref(), self.crits.as_deref())?;
 
     let merged: HeaderSet<'_> = HeaderSet::new()
       .protected(protected.as_ref())
-      .unprotected(signature.header.as_ref());
+      .unprotected(jws_signature.header.as_ref());
     let alg: JwsAlgorithm = merged.try_alg()?;
 
     self.check_alg(alg)?;
 
     {
-      let protected: &[u8] = signature.protected.map(str::as_bytes).unwrap_or_default();
-      let message: Vec<u8> = create_message(protected, payload);
-      let signature: Vec<u8> = decode_b64(signature.signature)?;
+      let protected_bytes: &[u8] = jws_signature.protected.map(str::as_bytes).unwrap_or_default();
+      let message: Vec<u8> = create_message(protected_bytes, payload);
+      let signature: Vec<u8> = decode_b64(jws_signature.signature)?;
 
-      (self.verify)(alg, merged.try_kid()?, message.as_slice(), signature.as_slice())
-        .map_err(|err| Error::SignatureVerificationError(err.into()))?;
+      (self.verify)(
+        protected.as_ref(),
+        jws_signature.header.as_ref(),
+        message.as_slice(),
+        signature.as_slice(),
+      )
+      .map_err(|err| Error::SignatureVerificationError(err.into()))?;
     }
 
     let claims: Cow<'b, [u8]> = if merged.b64().unwrap_or(true) {
@@ -160,7 +159,7 @@ where
 
     Ok(Token {
       protected,
-      unprotected: signature.header,
+      unprotected: jws_signature.header,
       claims,
     })
   }
