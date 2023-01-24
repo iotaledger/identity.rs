@@ -9,7 +9,6 @@ use std::convert::Infallible;
 
 use serde::Serialize;
 
-use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -36,7 +35,6 @@ use crate::verifiable::DocumentSigner;
 use crate::verifiable::VerifierOptions;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 use identity_verification::MethodRef;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
@@ -47,13 +45,11 @@ use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub(crate) struct CoreDocumentData<D = CoreDID>
-  where
-    D: DID + KeyComparable
+pub(crate) struct CoreDocumentData
 {
-  pub(crate) id: D,
+  pub(crate) id: CoreDID,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) controller: Option<OneOrSet<D>>,
+  pub(crate) controller: Option<OneOrSet<CoreDID>>,
   #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) also_known_as: OrderedSet<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
@@ -74,7 +70,7 @@ pub(crate) struct CoreDocumentData<D = CoreDID>
   pub(crate) properties: Object,
 }
 
-impl<D: DID + KeyComparable> CoreDocumentData<D> {
+impl CoreDocumentData {
   /// Checks the following:
   /// - There are no scoped method references to an embedded method in the document
   /// - The ids of verification methods (scoped/embedded or general purpose) and services are unique across the
@@ -149,9 +145,7 @@ impl<D: DID + KeyComparable> CoreDocumentData<D> {
 
     Ok(())
   }
-}
 
-impl CoreDocumentData {
   // Apply the provided fallible functions to the DID components of `id`, `controller`, methods and services
   // respectively.
   fn try_update_identifiers<F, G, H, L, E>(
@@ -804,9 +798,7 @@ impl CoreDocument {
       None => self.data.verification_method.query_mut(query),
     }
   }
-}
 
-impl CoreDocument {
   /// Update the DID components of the document's `id`, controllers, methods and services by applying the provided
   /// fallible maps.
   ///
@@ -1026,6 +1018,7 @@ impl Display for CoreDocument {
 mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
+  use identity_did::DID;
 
   use crate::service::ServiceBuilder;
   use identity_verification::MethodBuilder;
