@@ -17,7 +17,7 @@ use crate::jwu;
 
 macro_rules! to_json {
   ($data:expr) => {{
-    ::serde_json::to_string(&$data).map_err(|err| Error::InvalidJson(err))
+    ::serde_json::to_string(&$data).map_err(Error::InvalidJson)
   }};
 }
 
@@ -110,7 +110,7 @@ where
     T: Serialize,
   {
     self
-      .encode(&serde_json::to_vec(claims).map_err(|err| Error::InvalidJson(err))?)
+      .encode(&serde_json::to_vec(claims).map_err(Error::InvalidJson)?)
       .await
   }
 

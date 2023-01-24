@@ -148,13 +148,8 @@ where
       let message: Vec<u8> = create_message(protected, payload);
       let signature: Vec<u8> = decode_b64(signature.signature)?;
 
-      (self.verify)(
-        alg,
-        merged.try_kid()?.as_ref(),
-        message.as_slice(),
-        signature.as_slice(),
-      )
-      .map_err(|err| Error::SignatureVerificationError(err.into()))?;
+      (self.verify)(alg, merged.try_kid()?, message.as_slice(), signature.as_slice())
+        .map_err(|err| Error::SignatureVerificationError(err.into()))?;
     }
 
     let claims: Cow<'b, [u8]> = if merged.b64().unwrap_or(true) {
@@ -188,12 +183,12 @@ where
         format(self.expand_payload(Some(split[1]))?, vec![signature])
       }
       JwsFormat::General => {
-        let data: General<'_> = serde_json::from_slice(data).map_err(|err| Error::InvalidJson(err))?;
+        let data: General<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
 
         format(self.expand_payload(data.payload)?, data.signatures)
       }
       JwsFormat::Flatten => {
-        let data: Flatten<'_> = serde_json::from_slice(data).map_err(|err| Error::InvalidJson(err))?;
+        let data: Flatten<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
 
         format(self.expand_payload(data.payload)?, vec![data.signature])
       }

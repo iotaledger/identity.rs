@@ -18,7 +18,7 @@ pub fn encode_b64(data: impl AsRef<[u8]>) -> String {
 pub fn decode_b64(data: impl AsRef<[u8]>) -> Result<Vec<u8>> {
   general_purpose::URL_SAFE_NO_PAD
     .decode(data)
-    .map_err(|err| Error::InvalidBase64(err))
+    .map_err(Error::InvalidBase64)
 }
 
 /// Serialize the given data into JSON and encode the result in url-safe base64.
@@ -26,9 +26,7 @@ pub fn encode_b64_json<T>(data: &T) -> Result<String>
 where
   T: Serialize,
 {
-  serde_json::to_vec(data)
-    .map(encode_b64)
-    .map_err(|err| Error::InvalidJson(err))
+  serde_json::to_vec(data).map(encode_b64).map_err(Error::InvalidJson)
 }
 
 /// Decode the given url-safe base64-encoded slice into its raw bytes and try to deserialize it into `T`.
@@ -36,7 +34,7 @@ pub fn decode_b64_json<T>(data: impl AsRef<[u8]>) -> Result<T>
 where
   T: DeserializeOwned,
 {
-  decode_b64(data).and_then(|data| serde_json::from_slice(&data).map_err(|err| Error::InvalidJson(err)))
+  decode_b64(data).and_then(|data| serde_json::from_slice(&data).map_err(Error::InvalidJson))
 }
 
 #[cfg(test)]
