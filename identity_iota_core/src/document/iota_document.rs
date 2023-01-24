@@ -39,9 +39,6 @@ use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
-/// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
-pub type IotaCoreDocument = CoreDocument<IotaDID>;
-
 /// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This extends [`CoreDocument`].
