@@ -32,10 +32,11 @@ async fn resolve<D, DOC>(did: D, json: &str) -> Result<DOC, ResolutionError>
 where
   D: DID + Send + Sync + 'static + Eq,
   DOC: Document + Send + Sync + 'static + DeserializeOwned,
-  <DOC as Document>::D: PartialEq<D>,
 {
   let doc: DOC = DOC::from_json(json).unwrap();
-  (doc.id() == &did).then_some(doc).ok_or(ResolutionError)
+  (doc.id().as_str() == did.as_str())
+    .then_some(doc)
+    .ok_or(ResolutionError)
 }
 
 async fn resolve_foo(did: CoreDID) -> Result<CoreDocument, ResolutionError> {

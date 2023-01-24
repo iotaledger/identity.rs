@@ -113,7 +113,7 @@ impl IotaDocument {
   ///
   /// WARNING: mutating the inner document directly bypasses restrictions and
   /// may have undesired consequences.
-  pub fn core_document_mut(&mut self) -> &mut IotaCoreDocument {
+  pub(crate) fn core_document_mut(&mut self) -> &mut IotaCoreDocument {
     &mut self.document
   }
 
@@ -380,10 +380,10 @@ mod client_document {
 }
 
 impl Document for IotaDocument {
-  type D = IotaDID;
+  type D = CoreDID;
 
   fn id(&self) -> &Self::D {
-    IotaDocument::id(self)
+    IotaDocument::id(self).as_ref()
   }
 
   fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
