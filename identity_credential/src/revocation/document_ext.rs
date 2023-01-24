@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::RevocationBitmap;
-use identity_core::common::KeyComparable;
-use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
@@ -29,17 +27,12 @@ pub trait RevocationDocumentExt: private::Sealed {
 
 mod private {
   use super::CoreDocument;
-  use super::KeyComparable;
-  use super::DID;
 
   pub trait Sealed {}
-  impl<D: DID + KeyComparable> Sealed for CoreDocument<D> {}
+  impl Sealed for CoreDocument {}
 }
 
-impl<D> RevocationDocumentExt for CoreDocument<D>
-where
-  D: DID + KeyComparable,
-{
+impl RevocationDocumentExt for CoreDocument {
   fn revoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>,
@@ -63,13 +56,12 @@ where
   }
 }
 
-fn update_revocation_bitmap<'query, 'me, F, Q, D>(
-  document: &'me mut CoreDocument<D>,
+fn update_revocation_bitmap<'query, 'me, F, Q>(
+  document: &'me mut CoreDocument,
   service_query: Q,
   f: F,
 ) -> RevocationResult<()>
 where
-  D: DID + KeyComparable,
   F: FnOnce(&mut RevocationBitmap),
   Q: Into<DIDUrlQuery<'query>>,
 {
@@ -91,6 +83,7 @@ mod tests {
   use super::*;
   use identity_core::common::Object;
   use identity_core::convert::FromJson;
+  use identity_did::DID;
   use identity_document::document::Document;
 
   const START_DOCUMENT_JSON: &str = r#"{

@@ -4,7 +4,6 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -18,20 +17,16 @@ use crate::document::CoreDocument;
 use crate::document::CoreDocumentData;
 use crate::service::Service;
 use identity_did::CoreDID;
-use identity_did::DID;
 use identity_verification::MethodRef;
 use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<D = CoreDID>
-where
-  D: Diff + DID + KeyComparable + Serialize + for<'__de> Deserialize<'__de>,
-{
+pub struct DiffDocument {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<<D as Diff>::Type>,
+  id: Option<<CoreDID as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<Option<DiffVec<D>>>,
+  controller: Option<Option<DiffVec<CoreDID>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -52,11 +47,8 @@ where
   properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D> Diff for CoreDocument<D>
-where
-  D: DID + KeyComparable + Diff + Serialize + for<'de> Deserialize<'de>,
-{
-  type Type = DiffDocument<D>;
+impl Diff for CoreDocument {
+  type Type = DiffDocument;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffDocument {
@@ -123,13 +115,13 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: D = diff
+    let id: CoreDID = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: Option<OneOrSet<D>> = diff
+    let controller: Option<OneOrSet<CoreDID>> = diff
       .controller
       .map(|value| match value {
         Some(diff_value) => self
@@ -213,13 +205,13 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: D = diff
+    let id: CoreDID = diff
       .id
-      .map(D::from_diff)
+      .map(CoreDID::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
 
-    let controller: Option<OneOrSet<D>> = diff
+    let controller: Option<OneOrSet<CoreDID>> = diff
       .controller
       .map(|diff| match diff {
         Some(diff) => Some(OneOrSet::from_diff(diff)).transpose(),

@@ -243,19 +243,14 @@ impl CoreDocumentData {
 /// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[rustfmt::skip]
-#[serde(try_from = "CoreDocumentData<D>")]
-pub struct CoreDocument<D = CoreDID>
-  where
-    D: DID + KeyComparable
+#[serde(try_from = "CoreDocumentData")]
+pub struct CoreDocument
 {
-  pub(crate) data: CoreDocumentData<D>, 
+  pub(crate) data: CoreDocumentData, 
 }
 
 //Forward serialization to inner
-impl<D> Serialize for CoreDocument<D>
-where
-  D: DID + KeyComparable + Serialize,
-{
+impl Serialize for CoreDocument {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
@@ -274,19 +269,16 @@ macro_rules! method_ref_mut_helper {
   };
 }
 
-impl<D> CoreDocument<D>
-where
-  D: DID + KeyComparable,
-{
+impl CoreDocument {
   /// Creates a [`DocumentBuilder`] to configure a new `CoreDocument`.
   ///
   /// This is the same as [`DocumentBuilder::new`].
-  pub fn builder(properties: Object) -> DocumentBuilder<D> {
+  pub fn builder(properties: Object) -> DocumentBuilder {
     DocumentBuilder::new(properties)
   }
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
-  pub fn from_builder(builder: DocumentBuilder<D>) -> Result<Self> {
+  pub fn from_builder(builder: DocumentBuilder) -> Result<Self> {
     Self::try_from(CoreDocumentData {
       id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
       controller: Some(builder.controller)
@@ -331,7 +323,7 @@ where
   }
 
   /// Returns a reference to the `CoreDocument` id.
-  pub fn id(&self) -> &D {
+  pub fn id(&self) -> &CoreDID {
     &self.data.id
   }
 
@@ -342,17 +334,17 @@ where
   /// Changes to the identifier can drastically alter the results of
   /// [`Self::resolve_method`](CoreDocument::resolve_method()),
   /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
-  pub fn id_mut_unchecked(&mut self) -> &mut D {
+  pub fn id_mut_unchecked(&mut self) -> &mut CoreDID {
     &mut self.data.id
   }
 
   /// Returns a reference to the `CoreDocument` controller.
-  pub fn controller(&self) -> Option<&OneOrSet<D>> {
+  pub fn controller(&self) -> Option<&OneOrSet<CoreDID>> {
     self.data.controller.as_ref()
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<D>> {
+  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<CoreDID>> {
     &mut self.data.controller
   }
 
@@ -423,135 +415,6 @@ where
   /// as services and methods) being identified by the same DID URL.  
   pub fn properties_mut_unchecked(&mut self) -> &mut Object {
     &mut self.data.properties
-  }
-
-  /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields.
-  ///
-  /// # Warning
-  ///
-  /// Can lead to broken invariants if used incorrectly. See [`Self::try_map`](CoreDocument::try_map()) for a fallible
-  /// version with additional built-in checks.
-  // TODO: Remove `f` when `id` gets refactored to use `CoreDID`.
-  pub fn map_unchecked<C, F, G>(self, mut f: F, mut g: G) -> CoreDocument<C>
-  where
-    C: DID + KeyComparable,
-    F: FnMut(D) -> C,
-    G: FnMut(CoreDID) -> CoreDID,
-  {
-    let current_inner = self.data;
-    CoreDocument::<C> {
-      data: CoreDocumentData {
-        id: f(current_inner.id),
-        controller: current_inner
-          .controller
-          .map(|controller_set| controller_set.map(&mut f)),
-        also_known_as: current_inner.also_known_as,
-        verification_method: current_inner
-          .verification_method
-          .into_iter()
-          .map(|method| method.map(&mut g))
-          .collect(),
-        authentication: current_inner
-          .authentication
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut g))
-          .collect(),
-        assertion_method: current_inner
-          .assertion_method
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut g))
-          .collect(),
-        key_agreement: current_inner
-          .key_agreement
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut g))
-          .collect(),
-        capability_delegation: current_inner
-          .capability_delegation
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut g))
-          .collect(),
-        capability_invocation: current_inner
-          .capability_invocation
-          .into_iter()
-          .map(|method_ref| method_ref.map(&mut g))
-          .collect(),
-        service: current_inner
-          .service
-          .into_iter()
-          .map(|service| service.map(&mut g))
-          .collect(),
-        properties: current_inner.properties,
-      },
-    }
-  }
-
-  /// Fallible version of [`CoreDocument::map_unchecked`] with additional identifier uniqueness checks.
-  ///
-  /// # Errors
-  ///
-  /// `try_map` can fail if either of the provided functions fail or if the mapping `f`
-  /// introduces methods referencing embedded method identifiers, or services with identifiers matching method
-  /// identifiers. In the case of the latter the provided function `h` will be called to construct a compatible error.
-  /// Note that custom properties are still not checked (see the documentation for
-  /// [`Self::properties_mut_unchecked`](CoreDocument::properties_mut_unchecked())).
-  // TODO: Remove `f` when `id` gets refactored to use `CoreDID`.
-  pub fn try_map<C, F, G, E, H>(self, mut f: F, mut g: G, h: H) -> std::result::Result<CoreDocument<C>, E>
-  where
-    C: DID + KeyComparable,
-    F: FnMut(D) -> Result<C, E>,
-    G: FnMut(CoreDID) -> Result<CoreDID, E>,
-    H: FnOnce(crate::error::Error) -> E,
-    E: std::error::Error,
-  {
-    let current_inner = self.data;
-    let helper = || -> Result<CoreDocumentData<C>, E> {
-      Ok(CoreDocumentData {
-        id: f(current_inner.id)?,
-        controller: current_inner
-          .controller
-          .map(|controller_set| controller_set.try_map(&mut f))
-          .transpose()?,
-        also_known_as: current_inner.also_known_as,
-        verification_method: current_inner
-          .verification_method
-          .into_iter()
-          .map(|method| method.try_map(&mut g))
-          .collect::<Result<_, E>>()?,
-        authentication: current_inner
-          .authentication
-          .into_iter()
-          .map(|method_ref| method_ref.try_map(&mut g))
-          .collect::<Result<_, E>>()?,
-        assertion_method: current_inner
-          .assertion_method
-          .into_iter()
-          .map(|method_ref| method_ref.try_map(&mut g))
-          .collect::<Result<_, E>>()?,
-        key_agreement: current_inner
-          .key_agreement
-          .into_iter()
-          .map(|method_ref| method_ref.try_map(&mut g))
-          .collect::<Result<_, E>>()?,
-        capability_delegation: current_inner
-          .capability_delegation
-          .into_iter()
-          .map(|method_ref| method_ref.try_map(&mut g))
-          .collect::<Result<_, E>>()?,
-        capability_invocation: current_inner
-          .capability_invocation
-          .into_iter()
-          .map(|method_ref| method_ref.try_map(&mut g))
-          .collect::<Result<_, E>>()?,
-        service: current_inner
-          .service
-          .into_iter()
-          .map(|service| service.try_map(&mut g))
-          .collect::<Result<_, E>>()?,
-        properties: current_inner.properties,
-      })
-    };
-    helper().and_then(|data| CoreDocument::try_from(data).map_err(h))
   }
 
   /// Adds a new [`VerificationMethod`] to the document in the given [`MethodScope`].
@@ -721,10 +584,7 @@ where
   /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
   ///
   /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
-  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod>
-  where
-    D: DID,
-  {
+  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod> {
     if let Some(scope) = scope {
       match scope {
         MethodScope::VerificationMethod => self.verification_method().iter().collect(),
@@ -975,8 +835,7 @@ impl CoreDocument {
     let data = self
       .data
       .try_update_identifiers(id_update, controller_update, methods_update, service_update)?;
-    data.check_id_constraints().map_err(error_cast)?;
-    Ok(CoreDocument { data })
+    CoreDocument::try_from(data).map_err(error_cast)
   }
 
   /// Unchecked version of [Self::try_update_identifiers](Self::try_update_identifiers()).
@@ -1007,10 +866,7 @@ impl CoreDocument {
   }
 }
 
-impl<D> CoreDocument<D>
-where
-  D: DID + KeyComparable,
-{
+impl CoreDocument {
   /// Verifies the signature of the provided `data` was created using a verification method
   /// in this DID Document.
   ///
@@ -1101,11 +957,8 @@ where
   }
 }
 
-impl<D> Document for CoreDocument<D>
-where
-  D: DID + KeyComparable,
-{
-  type D = D;
+impl Document for CoreDocument {
+  type D = CoreDID;
 
   fn id(&self) -> &Self::D {
     CoreDocument::id(self)
@@ -1137,12 +990,9 @@ where
   }
 }
 
-impl<D> TryFrom<CoreDocumentData<D>> for CoreDocument<D>
-where
-  D: DID + KeyComparable,
-{
+impl TryFrom<CoreDocumentData> for CoreDocument {
   type Error = crate::error::Error;
-  fn try_from(value: CoreDocumentData<D>) -> Result<Self, Self::Error> {
+  fn try_from(value: CoreDocumentData) -> Result<Self, Self::Error> {
     match value.check_id_constraints() {
       Ok(_) => Ok(Self { data: value }),
       Err(err) => Err(err),
@@ -1154,28 +1004,19 @@ where
 // Signature Extensions
 // =============================================================================
 
-impl<D> CoreDocument<D>
-where
-  D: DID + KeyComparable,
-{
+impl CoreDocument {
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, D> {
+  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_> {
     DocumentSigner::new(self, private)
   }
 }
 
-impl<D> TryMethod for CoreDocument<D>
-where
-  D: DID + KeyComparable,
-{
+impl TryMethod for CoreDocument {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
-impl<D> Display for CoreDocument<D>
-where
-  D: DID + KeyComparable + Serialize,
-{
+impl Display for CoreDocument {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }

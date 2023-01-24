@@ -3,7 +3,6 @@
 
 use serde::Serialize;
 
-use identity_core::common::KeyComparable;
 use identity_core::common::Timestamp;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
@@ -12,8 +11,6 @@ use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
-use identity_did::CoreDID;
-use identity_did::DID;
 
 use crate::document::CoreDocument;
 use crate::utils::DIDUrlQuery;
@@ -27,21 +24,15 @@ use identity_verification::VerificationMethod;
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, D = CoreDID>
-where
-  D: DID + KeyComparable,
-{
-  document: &'base CoreDocument<D>,
+pub struct DocumentSigner<'base, 'query> {
+  document: &'base CoreDocument,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
   options: ProofOptions,
 }
 
-impl<'base, D> DocumentSigner<'base, '_, D>
-where
-  D: DID + KeyComparable,
-{
-  pub fn new(document: &'base CoreDocument<D>, private: &'base PrivateKey) -> Self {
+impl<'base> DocumentSigner<'base, '_> {
+  pub fn new(document: &'base CoreDocument, private: &'base PrivateKey) -> Self {
     Self {
       document,
       private,
@@ -94,10 +85,7 @@ where
   }
 }
 
-impl<'base, 'query, D> DocumentSigner<'base, 'query, D>
-where
-  D: DID + KeyComparable,
-{
+impl<'base, 'query> DocumentSigner<'base, 'query> {
   #[must_use]
   pub fn method<Q>(mut self, value: Q) -> Self
   where
@@ -108,10 +96,7 @@ where
   }
 }
 
-impl<D> DocumentSigner<'_, '_, D>
-where
-  D: DID + KeyComparable,
-{
+impl DocumentSigner<'_, '_> {
   /// Signs the provided data with the configured verification method.
   ///
   /// # Errors

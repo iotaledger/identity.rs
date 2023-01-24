@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Url;
 
@@ -9,18 +8,14 @@ use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;
 use identity_did::CoreDID;
-use identity_did::DID;
 use identity_verification::MethodRef;
 use identity_verification::VerificationMethod;
 
 /// A `DocumentBuilder` is used to generate a customized [`Document`](crate::document::CoreDocument).
 #[derive(Clone, Debug)]
-pub struct DocumentBuilder<D = CoreDID>
-where
-  D: DID + KeyComparable,
-{
-  pub(crate) id: Option<D>,
-  pub(crate) controller: Vec<D>,
+pub struct DocumentBuilder {
+  pub(crate) id: Option<CoreDID>,
+  pub(crate) controller: Vec<CoreDID>,
   pub(crate) also_known_as: Vec<Url>,
   pub(crate) verification_method: Vec<VerificationMethod>,
   pub(crate) authentication: Vec<MethodRef>,
@@ -32,10 +27,7 @@ where
   pub(crate) properties: Object,
 }
 
-impl<D> DocumentBuilder<D>
-where
-  D: DID + KeyComparable,
-{
+impl DocumentBuilder {
   /// Creates a new `DocumentBuilder`.
   pub fn new(properties: Object) -> Self {
     Self {
@@ -55,14 +47,14 @@ where
 
   /// Sets the `id` value.
   #[must_use]
-  pub fn id(mut self, value: D) -> Self {
+  pub fn id(mut self, value: CoreDID) -> Self {
     self.id = Some(value);
     self
   }
 
   /// Adds a value to the `controller` set.
   #[must_use]
-  pub fn controller(mut self, value: D) -> Self {
+  pub fn controller(mut self, value: CoreDID) -> Self {
     self.controller.push(value);
     self
   }
@@ -124,15 +116,12 @@ where
   }
 
   /// Returns a new `Document` based on the `DocumentBuilder` configuration.
-  pub fn build(self) -> Result<CoreDocument<D>> {
+  pub fn build(self) -> Result<CoreDocument> {
     CoreDocument::from_builder(self)
   }
 }
 
-impl<D> Default for DocumentBuilder<D>
-where
-  D: DID + KeyComparable,
-{
+impl Default for DocumentBuilder {
   fn default() -> Self {
     Self::new(Object::default())
   }
@@ -142,6 +131,7 @@ where
 mod tests {
   use super::*;
   use crate::Error;
+  use identity_did::DID;
   use identity_verification::MethodData;
   use identity_verification::MethodType;
 
