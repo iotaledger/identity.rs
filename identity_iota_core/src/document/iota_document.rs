@@ -48,7 +48,7 @@ pub type IotaCoreDocument = CoreDocument<IotaDID>;
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct IotaDocument {
   #[serde(rename = "doc")]
-  pub(crate) document: IotaCoreDocument,
+  pub(crate) document: CoreDocument,
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
 }
@@ -69,8 +69,8 @@ impl IotaDocument {
   /// Constructs an empty DID Document with the given identifier.
   pub fn new_with_id(id: IotaDID) -> Self {
     // PANIC: constructing an empty DID Document is infallible, caught by tests otherwise.
-    let document: IotaCoreDocument = CoreDocument::builder(Object::default())
-      .id(id)
+    let document: CoreDocument = CoreDocument::builder(Object::default())
+      .id(id.into())
       .build()
       .expect("empty IotaDocument constructor failed");
     let metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
@@ -82,22 +82,25 @@ impl IotaDocument {
   // ===========================================================================
 
   /// Returns the DID document identifier.
-  pub fn id(&self) -> &IotaDID {
-    //self.document.id()
-    todo!()
+  // TODO: Make this efficient by changing the definition of `IotaDID`.
+  pub fn id(&self) -> IotaDID {
+    //TODO: Make efficient by changing the definition of `IotaDID`.
+    IotaDID::try_from_core(self.document.id().clone()).expect("should be OK to convert CoreDID")
   }
 
   /// Returns an iterator yielding the DID controllers.
   ///
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
-  pub fn controller(&self) -> impl Iterator<Item = &IotaDID> + '_ {
+  pub fn controller(&self) -> impl Iterator<Item = IotaDID> + '_ {
+    // TODO: Make this efficient by changing the definition of `IotaDID`.
     self
       .document
       .controller()
       .map(|controllers| controllers.iter())
       .into_iter()
       .flatten()
+      .map(|did| IotaDID::try_from_core(did.clone()).expect("controllers in an IotaDocument should be Iota DIDs"))
   }
 
   /// Returns a reference to the `alsoKnownAs` set.
@@ -111,7 +114,7 @@ impl IotaDocument {
   }
 
   /// Returns a reference to the underlying [`IotaCoreDocument`].
-  pub fn core_document(&self) -> &IotaCoreDocument {
+  pub fn core_document(&self) -> &CoreDocument {
     &self.document
   }
 
@@ -119,7 +122,7 @@ impl IotaDocument {
   ///
   /// WARNING: mutating the inner document directly bypasses restrictions and
   /// may have undesired consequences.
-  pub(crate) fn core_document_mut(&mut self) -> &mut IotaCoreDocument {
+  pub(crate) fn core_document_mut(&mut self) -> &mut CoreDocument {
     &mut self.document
   }
 
@@ -241,7 +244,7 @@ impl IotaDocument {
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
   /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, IotaDID> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, CoreDID> {
     self.document.signer(private_key)
   }
 
@@ -345,7 +348,7 @@ mod client_document {
         Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
         _ => None,
       };
-      *self.core_document_mut().controller_mut() = controller_did.map(OneOrSet::new_one);
+      *self.core_document_mut().controller_mut() = controller_did.map(CoreDID::from).map(OneOrSet::new_one);
     }
 
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
@@ -389,7 +392,7 @@ impl Document for IotaDocument {
   type D = CoreDID;
 
   fn id(&self) -> &Self::D {
-    IotaDocument::id(self).as_ref()
+    self.document.id()
   }
 
   fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
@@ -451,24 +454,19 @@ mod iota_document_revocation {
   }
 }
 
-impl From<IotaDocument> for IotaCoreDocument {
+impl From<IotaDocument> for CoreDocument {
   fn from(document: IotaDocument) -> Self {
     document.document
   }
 }
 
-impl From<IotaDocument> for CoreDocument {
-  fn from(document: IotaDocument) -> Self {
-    //document.document.map_unchecked(CoreDID::from, CoreDID::from)
-    todo!()
-  }
-}
-
+/*
 impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
   fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
     Self { document, metadata }
   }
 }
+*/
 
 impl Display for IotaDocument {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -525,9 +523,9 @@ mod tests {
     metadata.created = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
     metadata.updated = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
 
-    let document: IotaCoreDocument = IotaCoreDocument::builder(Object::default())
-      .id(id.clone())
-      .controller(id.clone())
+    let document: CoreDocument = CoreDocument::builder(Object::default())
+      .id(id.clone().into())
+      .controller(id.clone().into())
       .verification_method(generate_method(id, "#key-1"))
       .verification_method(generate_method(id, "#key-2"))
       .verification_method(generate_method(id, "#key-3"))
@@ -536,7 +534,7 @@ mod tests {
       .build()
       .unwrap();
 
-    IotaDocument::from((document, metadata))
+    IotaDocument { document, metadata }
   }
 
   #[test]
@@ -547,14 +545,14 @@ mod tests {
     let doc1: IotaDocument = IotaDocument::new(&network);
     assert_eq!(doc1.id().network_str(), network.as_ref());
     assert_eq!(doc1.id().tag(), placeholder.tag());
-    assert_eq!(doc1.id(), &placeholder);
+    assert_eq!(&doc1.id(), &placeholder);
     assert_eq!(doc1.methods(None).len(), 0);
     assert!(doc1.service().is_empty());
 
     // VALID new_with_id().
     let did: IotaDID = valid_did();
     let doc2: IotaDocument = IotaDocument::new_with_id(did.clone());
-    assert_eq!(doc2.id(), &did);
+    assert_eq!(&doc2.id(), &did);
     assert_eq!(doc2.methods(None).len(), 0);
     assert!(doc2.service().is_empty());
   }
@@ -778,7 +776,7 @@ mod tests {
       .finish(mock_token_supply)
       .unwrap();
     let document: IotaDocument = IotaDocument::unpack_from_output(&did, &alias_output, true).unwrap();
-    assert_eq!(document.id(), &did);
+    assert_eq!(&document.id(), &did);
     assert_eq!(document.metadata.deactivated, Some(true));
 
     // Ensure no other fields are injected.

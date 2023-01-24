@@ -980,7 +980,7 @@ impl CoreDocument {
   }
 
   /// Unchecked version of [Self::try_update_identifiers](Self::try_update_identifiers()).
-  pub fn update_identifiers_unchecked<F, G, H, L, E>(
+  pub fn update_identifiers_unchecked<F, G, H, L>(
     self,
     id_update: F,
     mut controller_update: G,

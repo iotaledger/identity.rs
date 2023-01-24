@@ -11,7 +11,6 @@ use serde::Serialize;
 
 use crate::error::Result;
 use crate::Error;
-use crate::IotaCoreDocument;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::IotaDocumentMetadata;
@@ -40,27 +39,37 @@ impl StateMetadataDocument {
   /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
   pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
-    let core_document: IotaCoreDocument = document.try_map(
-      // Replace placeholder identifiers.
-      |did| {
-        if did == PLACEHOLDER_DID.as_ref() {
-          Ok(original_did.clone())
-        } else {
-          // TODO: wrap error?
-          IotaDID::try_from_core(did).map_err(crate::error::Error::DIDSyntaxError)
-        }
-      },
-      |did| {
-        if did == PLACEHOLDER_DID.as_ref() {
-          Ok(CoreDID::from(original_did.clone()))
-        } else {
-          Ok(did)
-        }
-      },
+    // Transform identifiers: Replace placeholder identifiers, and ensure that `id` and `controller` adhere to the
+    // specification.
+    let replace_placeholder_with_method_check = |did: CoreDID| -> Result<CoreDID> {
+      if did == PLACEHOLDER_DID.as_ref() {
+        Ok(CoreDID::from(original_did.clone()))
+      } else {
+        // TODO: Consider introducing better error variant
+        IotaDID::check_validity(&did).map_err(|err| Error::DIDSyntaxError(err))?;
+        Ok(did)
+      }
+    };
+    let [id_update, controller_update] = [replace_placeholder_with_method_check; 2];
+    // Methods and services are not required to be IOTA UTXO DIDs, but we still want to replace placeholders
+    let replace_placeholder = |did: CoreDID| -> Result<CoreDID> {
+      if did == PLACEHOLDER_DID.as_ref() {
+        Ok(CoreDID::from(original_did.clone()))
+      } else {
+        Ok(did)
+      }
+    };
+    let [methods_update, service_update] = [replace_placeholder; 2];
+
+    let document = document.try_update_identifiers(
+      id_update,
+      controller_update,
+      methods_update,
+      service_update,
       crate::error::Error::InvalidDoc,
     )?;
 
-    Ok(IotaDocument::from((core_document, metadata)))
+    Ok(IotaDocument { document, metadata })
   }
 
   /// Pack a [`StateMetadataDocument`] into bytes, suitable for inclusion in
@@ -178,27 +187,22 @@ impl From<IotaDocument> for StateMetadataDocument {
   /// Transforms a [`IotaDocument`] into its state metadata representation by replacing all
   /// occurrences of its did with a placeholder.
   fn from(document: IotaDocument) -> Self {
-    let IotaDocument { document, metadata } = document;
     let id: IotaDID = document.id().clone();
-    let core_document: CoreDocument = document.map_unchecked(
-      // Replace self-referential identifiers with a placeholder, but not others.
-      |did| {
-        if did == id {
-          PLACEHOLDER_DID.clone()
-        } else {
-          CoreDID::from(did)
-        }
-      },
-      |did| {
-        if &did == id.as_ref() {
-          PLACEHOLDER_DID.clone()
-        } else {
-          did
-        }
-      },
-    );
+    let IotaDocument { document, metadata } = document;
+
+    // Replace self-referential identifiers with a placeholder, but not others.
+    let replace_id_with_placeholder = |did: CoreDID| -> CoreDID {
+      if &did == id.as_ref() {
+        PLACEHOLDER_DID.clone()
+      } else {
+        did
+      }
+    };
+
+    let [id_update, controller_update, methods_update, service_update] = [replace_id_with_placeholder; 4];
+
     StateMetadataDocument {
-      document: core_document,
+      document: document.update_identifiers_unchecked(id_update, controller_update, methods_update, service_update),
       metadata,
     }
   }
@@ -289,7 +293,7 @@ mod tests {
       .also_known_as_mut()
       .append(Url::parse("did:example:xyz").unwrap());
 
-    let controllers = OneOrSet::try_from(vec![did_foreign.clone(), did_self.clone()]).unwrap();
+    let controllers = OneOrSet::try_from(vec![did_foreign.clone().into(), did_self.clone().into()]).unwrap();
     *document.core_document_mut().controller_mut() = Some(controllers);
 
     TestSetup {

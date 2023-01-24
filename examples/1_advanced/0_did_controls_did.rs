@@ -113,7 +113,7 @@ async fn main() -> anyhow::Result<()> {
   // ===================================================================
 
   // Resolve the subsidiary's Alias Output.
-  let subsidiary_output: AliasOutput = client.resolve_did_output(subsidiary_document.id()).await?;
+  let subsidiary_output: AliasOutput = client.resolve_did_output(&subsidiary_document.id()).await?;
 
   // Extract the company's Alias Id from the state controller unlock condition.
   //

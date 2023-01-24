@@ -90,7 +90,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   ///
   /// Returns `Err` when failing to resolve the DID contained in `document`.
   async fn update_did_output(&self, document: IotaDocument) -> Result<AliasOutput> {
-    let id: AliasId = AliasId::from(document.id());
+    let id: AliasId = AliasId::from(&document.id());
     let (_, alias_output) = self.get_alias_output(id).await?;
 
     let mut alias_output_builder: AliasOutputBuilder = AliasOutputBuilder::from(&alias_output)
