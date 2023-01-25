@@ -79,10 +79,6 @@ impl IotaDID {
   pub fn new(bytes: &[u8; 32], network_name: &NetworkName) -> Self {
     let tag = prefix_hex::encode(bytes);
     let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, tag);
-    dbg!(&did);
-    dbg!(&tag);
-    println!("DID length: {}", did.len());
-    println!("tag length: {}", tag.len());
 
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }

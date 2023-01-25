@@ -39,10 +39,47 @@ use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
+#[derive(Debug, Deserialize)]
+/// Struct used internally when deserializing [`IotaDocument`].
+struct ProvisionalIotaDocument {
+  #[serde(rename = "doc")]
+  document: CoreDocument,
+  #[serde(rename = "meta")]
+  metadata: IotaDocumentMetadata,
+}
+
+impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
+  type Error = crate::Error;
+  fn try_from(provisional: ProvisionalIotaDocument) -> std::result::Result<Self, Self::Error> {
+    let ProvisionalIotaDocument { document, metadata } = provisional;
+    // TODO: Improve error?
+    IotaDID::check_validity(document.id()).map_err(|_| {
+      Error::SerializationError(
+        "deserializing iota document failed: id not conforming to the iota method specification detected",
+        None,
+      )
+    })?;
+    for controller_id in document
+      .controller()
+      .map(|controller_set| controller_set.iter())
+      .into_iter()
+      .flatten()
+    {
+      IotaDID::check_validity(controller_id).map_err(|_| {
+        Error::SerializationError(
+          "deserializing iota document failed: controller not conforming to the iota method specification detected",
+          None,
+        )
+      })?;
+    }
+    Ok(IotaDocument { document, metadata })
+  }
+}
 /// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(try_from = "ProvisionalIotaDocument")]
 pub struct IotaDocument {
   #[serde(rename = "doc")]
   pub(crate) document: CoreDocument,
@@ -816,5 +853,109 @@ mod tests {
       serialization,
       format!("{{\"doc\":{},\"meta\":{}}}", document.document, document.metadata)
     );
+  }
+
+  #[test]
+  fn deserializing_id_from_other_method_fails() {
+    const JSON_DOC_INVALID_ID: &str = r#"
+    {
+      "doc": {
+        "id": "did:foo:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "verificationMethod": [
+          {
+            "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+            "controller": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "type": "Ed25519VerificationKey2018",
+            "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+          }
+        ]
+      },
+      "meta": {
+        "created": "2022-08-31T09:33:31Z",
+        "updated": "2022-08-31T09:33:31Z"
+      }
+    }"#;
+
+    let deserialization_result = IotaDocument::from_json(&JSON_DOC_INVALID_ID);
+
+    assert!(deserialization_result.is_err());
+
+    // Check that deserialization works after correcting the json document to have a valid IOTA DID as its identifier.
+    const JSON_DOC_CORRECT_ID: &str = r#"
+    {
+      "doc": {
+        "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "verificationMethod": [
+          {
+            "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+            "controller": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "type": "Ed25519VerificationKey2018",
+            "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+          }
+        ]
+      },
+      "meta": {
+        "created": "2022-08-31T09:33:31Z",
+        "updated": "2022-08-31T09:33:31Z"
+      }
+    }"#;
+
+    let corrected_deserialization_result = IotaDocument::from_json(&JSON_DOC_CORRECT_ID);
+    assert!(corrected_deserialization_result.is_ok());
+  }
+
+  #[test]
+  fn deserializing_controller_from_other_method_fails() {
+    const JSON_DOC_INVALID_CONTROLLER_ID: &str = r#"
+    {
+    "doc": {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:example:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "verificationMethod": [
+        {
+          "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+          "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
+        }
+      ]
+    },
+    "meta": {
+      "created": "2023-01-25T15:48:09Z",
+      "updated": "2023-01-25T15:48:09Z",
+      "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
+      "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+    }
+  }
+  "#;
+
+    let deserialization_result = IotaDocument::from_json(&JSON_DOC_INVALID_CONTROLLER_ID);
+    assert!(deserialization_result.is_err());
+
+    // Check that deserialization works after correcting the json document to have a valid IOTA DID as the controller.
+    const JSON_DOC_CORRECT_CONTROLLER_ID: &str = r#"
+  {
+  "doc": {
+    "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+    "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+    "verificationMethod": [
+      {
+        "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+        "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
+      }
+    ]
+  },
+  "meta": {
+    "created": "2023-01-25T15:48:09Z",
+    "updated": "2023-01-25T15:48:09Z",
+    "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
+    "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+  }
+}
+"#;
+    let corrected_deserialization_result = IotaDocument::from_json(JSON_DOC_CORRECT_CONTROLLER_ID);
+    assert!(corrected_deserialization_result.is_ok());
   }
 }
