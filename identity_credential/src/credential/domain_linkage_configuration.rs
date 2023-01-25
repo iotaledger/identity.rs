@@ -5,15 +5,15 @@ use crate::credential::Credential;
 use crate::error::Result;
 use identity_core::common::Context;
 use identity_core::common::Url;
-use identity_core::convert::FmtJson;
+use identity_core::convert::{FmtJson, FromJson};
 #[cfg(feature = "domain-linkage-fetch")]
 use reqwest::redirect::Policy;
 #[cfg(feature = "domain-linkage-fetch")]
 use reqwest::Client;
 use serde::Deserialize;
-
 use std::fmt::Display;
 use std::fmt::Formatter;
+use futures::StreamExt;
 
 use crate::Error::DomainLinkageError;
 
@@ -35,7 +35,7 @@ pub struct DomainLinkageConfiguration(__DomainLinkageConfiguration);
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct __DomainLinkageConfiguration {
+struct __DomainLinkageConfiguration {
   /// Fixed context.
   #[serde(rename = "@context")]
   context: Context,
@@ -89,29 +89,42 @@ impl DomainLinkageConfiguration {
   }
 
   /// Fetches the the DID Configuration resource via a GET request at the
-  /// well-known location: "`origin`/.well-known/did-configuration.json".
+  /// well-known location: "`domain`/.well-known/did-configuration.json".
   #[cfg(feature = "domain-linkage-fetch")]
-  pub async fn fetch_configuration(mut origin: Url) -> Result<DomainLinkageConfiguration> {
-    if origin.scheme() != "https" {
-      return Err(DomainLinkageError("origin` does not use `https` protocol".into()));
+  pub async fn fetch_configuration(mut domain: Url) -> Result<DomainLinkageConfiguration> {
+    if domain.scheme() != "https" {
+      return Err(DomainLinkageError("domain` does not use `https` protocol".into()));
     }
-    // todo: set file size limit to 1MB.
+    domain.set_path(".well-known/did-configuration.json");
+
     let client: Client = reqwest::ClientBuilder::new()
       .https_only(true)
       .redirect(Policy::none())
       .build()
       .map_err(|err| DomainLinkageError(Box::new(err)))?;
 
-    origin.set_path(".well-known/did-configuration.json");
-    let domain_linkage_configuration: DomainLinkageConfiguration = client
-      .get(origin.to_string())
+    // We use a stream so we can limit the size of the response to 1 MiB.
+    let mut stream: _ = client
+      .get(domain.to_string())
       .send()
       .await
       .map_err(|err| DomainLinkageError(Box::new(err)))?
-      .json::<DomainLinkageConfiguration>()
-      .await
-      .map_err(|err| DomainLinkageError(Box::new(err)))?;
+      .bytes_stream();
 
+    let mut json: Vec<u8> = Vec::new();
+    while let Some(item) = stream.next().await {
+      match item {
+        Ok(bytes) => {
+          json.extend(bytes);
+          if json.len() > 1_048_576 {
+            return Err(DomainLinkageError("domain linkage configuration can not exceed 1 MiB".into()));
+          }
+        }
+        Err(err) => return Err(DomainLinkageError(Box::new(err))),
+      }
+    }
+    let domain_linkage_configuration: DomainLinkageConfiguration =
+      DomainLinkageConfiguration::from_json_slice(&json).map_err(|err| DomainLinkageError(Box::new(err)))?;
     Ok(domain_linkage_configuration)
   }
 
@@ -121,7 +134,7 @@ impl DomainLinkageConfiguration {
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
-  pub fn issuers(&self) -> impl Iterator<Item = &Url> {
+  pub fn issuers(&self) -> impl Iterator<Item=&Url> {
     self.0.linked_dids.iter().map(|linked_did| linked_did.issuer.url())
   }
 

@@ -15,6 +15,7 @@ description = "An implementation of the Verifiable Credentials standard."
 dataurl = { version = "0.1.2", default-features = false, optional = true }
 erased-serde = { version = "0.3.21", default-features = false, features = ["std"], optional = true }
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
+futures = { version = "0.3" }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
 identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
@@ -22,7 +23,7 @@ identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verifi
 indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
 lazy_static = { version = "1.4", default-features = false }
-reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json"], optional = true }
+reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
 roaring = { version = "0.9.0", default-features = false, optional = true }
 serde.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
