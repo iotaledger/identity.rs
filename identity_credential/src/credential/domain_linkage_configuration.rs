@@ -3,9 +3,11 @@
 
 use crate::credential::Credential;
 use crate::error::Result;
+use futures::StreamExt;
 use identity_core::common::Context;
 use identity_core::common::Url;
-use identity_core::convert::{FmtJson, FromJson};
+use identity_core::convert::FmtJson;
+use identity_core::convert::FromJson;
 #[cfg(feature = "domain-linkage-fetch")]
 use reqwest::redirect::Policy;
 #[cfg(feature = "domain-linkage-fetch")]
@@ -13,7 +15,6 @@ use reqwest::Client;
 use serde::Deserialize;
 use std::fmt::Display;
 use std::fmt::Formatter;
-use futures::StreamExt;
 
 use crate::Error::DomainLinkageError;
 
@@ -117,7 +118,9 @@ impl DomainLinkageConfiguration {
         Ok(bytes) => {
           json.extend(bytes);
           if json.len() > 1_048_576 {
-            return Err(DomainLinkageError("domain linkage configuration can not exceed 1 MiB".into()));
+            return Err(DomainLinkageError(
+              "domain linkage configuration can not exceed 1 MiB".into(),
+            ));
           }
         }
         Err(err) => return Err(DomainLinkageError(Box::new(err))),
@@ -134,7 +137,7 @@ impl DomainLinkageConfiguration {
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
-  pub fn issuers(&self) -> impl Iterator<Item=&Url> {
+  pub fn issuers(&self) -> impl Iterator<Item = &Url> {
     self.0.linked_dids.iter().map(|linked_did| linked_did.issuer.url())
   }
 
