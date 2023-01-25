@@ -12,6 +12,8 @@ use identity_did::BaseDIDUrl;
 use identity_did::CoreDID;
 use identity_did::Error as DIDError;
 use identity_did::DID;
+use ref_cast::ref_cast_custom;
+use ref_cast::RefCastCustom;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -23,7 +25,7 @@ pub type Result<T> = std::result::Result<T, DIDError>;
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
 /// [`identity_did`][`identity_did`] crate.
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, RefCastCustom)]
 #[repr(transparent)]
 #[serde(into = "CoreDID", try_from = "CoreDID")]
 pub struct IotaDID(CoreDID);
@@ -43,6 +45,18 @@ impl IotaDID {
 
   /// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
+
+  #[ref_cast_custom]
+  /// Convert a `CoreDID` reference to an `IotaDID` reference without checking the referenced value.
+  ///  
+  /// # Warning
+  /// This method should only be called on [`CoreDIDs`](CoreDID) that
+  /// are known to satisfy the requirements of the IOTA UTXO specification.  
+  ///
+  /// # Memory safety
+  ///
+  /// The `ref-cast` crate ensures a memory safe implementation.  
+  pub(crate) const fn from_inner_ref_unchecked(did: &CoreDID) -> &Self;
 
   // ===========================================================================
   // Constructors

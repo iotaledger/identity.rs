@@ -87,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
   let mut alias_history: Vec<AliasOutput> = Vec::new();
 
   // Step 0 - Get the latest Alias Output
-  let alias_id: AliasId = AliasId::from(&client.resolve_did(&did).await?.id());
+  let alias_id: AliasId = AliasId::from(client.resolve_did(&did).await?.id());
   let (mut output_id, mut alias_output): (OutputId, AliasOutput) = client.get_alias_output(alias_id).await?;
 
   while alias_output.state_index() != 0 {

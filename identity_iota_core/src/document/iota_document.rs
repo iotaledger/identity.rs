@@ -80,24 +80,28 @@ impl IotaDocument {
 
   /// Returns the DID document identifier.
   // TODO: Make this efficient by changing the definition of `IotaDID`.
-  pub fn id(&self) -> IotaDID {
-    //TODO: Make efficient by changing the definition of `IotaDID`.
-    IotaDID::try_from_core(self.document.id().clone()).expect("should be OK to convert CoreDID")
+  pub fn id(&self) -> &IotaDID {
+    // CORRECTNESS: This cast is OK because the public API does not expose methods
+    // enabling unchecked mutation of the `id` field.
+    IotaDID::from_inner_ref_unchecked(self.document.id())
   }
 
   /// Returns an iterator yielding the DID controllers.
   ///
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
-  pub fn controller(&self) -> impl Iterator<Item = IotaDID> + '_ {
+  pub fn controller(&self) -> impl Iterator<Item = &IotaDID> + '_ {
     // TODO: Make this efficient by changing the definition of `IotaDID`.
-    self
+    let core_did_controller_iter = self
       .document
       .controller()
       .map(|controllers| controllers.iter())
       .into_iter()
-      .flatten()
-      .map(|did| IotaDID::try_from_core(did.clone()).expect("controllers in an IotaDocument should be Iota DIDs"))
+      .flatten();
+
+    // CORRECTNESS: These casts are OK because the public API does not expose methods
+    // enabling unchecked mutation fo the controllers.
+    core_did_controller_iter.map(|did| IotaDID::from_inner_ref_unchecked(did))
   }
 
   /// Returns a reference to the `alsoKnownAs` set.
@@ -542,14 +546,14 @@ mod tests {
     let doc1: IotaDocument = IotaDocument::new(&network);
     assert_eq!(doc1.id().network_str(), network.as_ref());
     assert_eq!(doc1.id().tag(), placeholder.tag());
-    assert_eq!(&doc1.id(), &placeholder);
+    assert_eq!(doc1.id(), &placeholder);
     assert_eq!(doc1.methods(None).len(), 0);
     assert!(doc1.service().is_empty());
 
     // VALID new_with_id().
     let did: IotaDID = valid_did();
     let doc2: IotaDocument = IotaDocument::new_with_id(did.clone());
-    assert_eq!(&doc2.id(), &did);
+    assert_eq!(doc2.id(), &did);
     assert_eq!(doc2.methods(None).len(), 0);
     assert!(doc2.service().is_empty());
   }
@@ -773,7 +777,7 @@ mod tests {
       .finish(mock_token_supply)
       .unwrap();
     let document: IotaDocument = IotaDocument::unpack_from_output(&did, &alias_output, true).unwrap();
-    assert_eq!(&document.id(), &did);
+    assert_eq!(document.id(), &did);
     assert_eq!(document.metadata.deactivated, Some(true));
 
     // Ensure no other fields are injected.
