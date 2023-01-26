@@ -12,6 +12,7 @@ use identity_did::DIDUrl;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
 #[derive(Clone, Debug)]
+#[derive(Default)]
 pub struct MethodBuilder {
   pub(crate) id: Option<DIDUrl>,
   pub(crate) controller: Option<CoreDID>,
@@ -66,17 +67,7 @@ impl MethodBuilder {
   }
 }
 
-impl Default for MethodBuilder {
-  fn default() -> Self {
-    Self {
-      id: None,
-      controller: None,
-      type_: None,
-      data: None,
-      properties: Default::default(),
-    }
-  }
-}
+
 
 #[cfg(test)]
 mod tests {

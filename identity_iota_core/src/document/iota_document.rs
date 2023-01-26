@@ -137,7 +137,7 @@ impl IotaDocument {
 
     // CORRECTNESS: These casts are OK because the public API does not expose methods
     // enabling unchecked mutation fo the controllers.
-    core_did_controller_iter.map(|did| IotaDID::from_inner_ref_unchecked(did))
+    core_did_controller_iter.map(IotaDID::from_inner_ref_unchecked)
   }
 
   /// Returns a reference to the `alsoKnownAs` set.

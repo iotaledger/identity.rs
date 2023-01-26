@@ -39,7 +39,7 @@ impl AsRef<CoreDocument> for DocumentTypes {
   fn as_ref(&self) -> &CoreDocument {
     match self {
       Self::Iota(doc) => doc.as_ref(),
-      Self::CoreDocument(doc) => doc.as_ref(),
+      Self::CoreDocument(doc) => doc,
     }
   }
 }

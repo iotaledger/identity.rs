@@ -94,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
   // ============================================
 
   // Resolve the Alias Output of the DID.
-  let output: AliasOutput = client.resolve_did_output(&car_document.id()).await?;
+  let output: AliasOutput = client.resolve_did_output(car_document.id()).await?;
 
   // Extract the NFT address from the state controller unlock condition.
   let unlock_condition: &UnlockCondition = output

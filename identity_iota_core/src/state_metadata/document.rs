@@ -46,7 +46,7 @@ impl StateMetadataDocument {
         Ok(CoreDID::from(original_did.clone()))
       } else {
         // TODO: Consider introducing better error variant
-        IotaDID::check_validity(&did).map_err(|err| Error::DIDSyntaxError(err))?;
+        IotaDID::check_validity(&did).map_err(Error::DIDSyntaxError)?;
         Ok(did)
       }
     };
@@ -320,7 +320,7 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      <CoreDID as AsRef<CoreDID>>::as_ref(&PLACEHOLDER_DID.as_ref())
+      <CoreDID as AsRef<CoreDID>>::as_ref(PLACEHOLDER_DID.as_ref())
     );
 
     assert_eq!(
@@ -354,14 +354,14 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      <CoreDID as AsRef<CoreDID>>::as_ref(&PLACEHOLDER_DID.as_ref())
+      <CoreDID as AsRef<CoreDID>>::as_ref(PLACEHOLDER_DID.as_ref())
     );
 
     let controllers = state_metadata_doc.document.controller().unwrap();
     assert_eq!(controllers.get(0).unwrap(), did_foreign.as_ref());
     assert_eq!(
       controllers.get(1).unwrap(),
-      <CoreDID as AsRef<CoreDID>>::as_ref(&PLACEHOLDER_DID.as_ref())
+      <CoreDID as AsRef<CoreDID>>::as_ref(PLACEHOLDER_DID.as_ref())
     );
 
     let iota_document = state_metadata_doc.into_iota_document(&did_self).unwrap();

@@ -10,6 +10,7 @@ use identity_did::DIDUrl;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
 #[derive(Clone, Debug)]
+#[derive(Default)]
 pub struct ServiceBuilder {
   pub(crate) id: Option<DIDUrl>,
   pub(crate) type_: Vec<String>,
@@ -64,16 +65,7 @@ impl ServiceBuilder {
   }
 }
 
-impl Default for ServiceBuilder {
-  fn default() -> Self {
-    Self {
-      id: None,
-      type_: Vec::default(),
-      service_endpoint: None,
-      properties: Object::default(),
-    }
-  }
-}
+
 
 #[cfg(test)]
 mod tests {
