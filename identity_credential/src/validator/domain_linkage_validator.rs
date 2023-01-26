@@ -103,7 +103,7 @@ impl DomainLinkageValidator {
       OneOrMany::Many(types) => {
         if !types
           .iter()
-          .any(|type_| type_ == &DomainLinkageConfiguration::domain_linkage_type())
+          .any(|type_| type_ == DomainLinkageConfiguration::domain_linkage_type())
         {
           return Err(DomainLinkageValidationError {
             cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
