@@ -7,3 +7,6 @@ pub mod jwk;
 pub mod jws;
 pub mod jwt;
 pub mod jwu;
+
+#[cfg(test)]
+mod tests;
