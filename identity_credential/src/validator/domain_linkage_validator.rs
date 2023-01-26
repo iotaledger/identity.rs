@@ -79,7 +79,7 @@ impl DomainLinkageValidator {
     validation_options: &CredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
     let issuer_did: CoreDID =
-      CoreDID::parse(credential.issuer.url().to_string()).map_err(|err| DomainLinkageValidationError {
+      CoreDID::parse(credential.issuer.url().as_str()).map_err(|err| DomainLinkageValidationError {
         cause: DomainLinkageValidationErrorCause::InvalidIssuer,
         source: Some(Box::new(err)),
       })?;
@@ -99,25 +99,16 @@ impl DomainLinkageValidator {
     }
 
     // Validate type.
-    match &credential.types {
-      OneOrMany::Many(types) => {
-        if !types
-          .iter()
-          .any(|type_| type_ == DomainLinkageConfiguration::domain_linkage_type())
-        {
-          return Err(DomainLinkageValidationError {
-            cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
-            source: None,
-          });
-        }
-      }
-      OneOrMany::One(_) => {
-        Err(DomainLinkageValidationError {
-          cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
-          source: None,
-        })?;
-      }
-    };
+    if !credential
+      .types
+      .iter()
+      .any(|type_| type_ == DomainLinkageConfiguration::domain_linkage_type())
+    {
+      return Err(DomainLinkageValidationError {
+        cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
+        source: None,
+      });
+    }
 
     // Extract credential subject.
     let OneOrMany::One(ref credential_subject) = credential.credential_subject else {
