@@ -33,7 +33,7 @@ pub enum Error {
   /// Caused when trying to construct an invalid status.
   #[error("invalid credential status: {0}")]
   InvalidStatus(String),
-  /// Caused when trying to fetch and construct Domain Linkage Configuration.
-  #[error("Domain Linkage Error: {0}")]
+  /// Caused when constructing an invalid `LinkedDomainService` or `DomainLinkageConfiguration`.
+  #[error("domain linkage error: {0}")]
   DomainLinkageError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
