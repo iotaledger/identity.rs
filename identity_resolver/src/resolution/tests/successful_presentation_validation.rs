@@ -6,15 +6,14 @@ use identity_credential::presentation::Presentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::SubjectHolderRelationship;
-use identity_credential::validator::ValidatorDocument;
 use identity_did::CoreDID;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
-use identity_document::document::Document;
 use identity_document::verifiable::VerifierOptions;
 use identity_iota_core::IotaDID;
 use identity_iota_core::IotaDocument;
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 
 use crate::Resolver;
 
@@ -31,15 +30,76 @@ struct ResolutionError;
 async fn resolve<D, DOC>(did: D, json: &str) -> Result<DOC, ResolutionError>
 where
   D: DID + Send + Sync + 'static + Eq,
-  DOC: Document + Send + Sync + 'static + DeserializeOwned,
+  DOC: AsRef<CoreDocument> + Send + Sync + 'static + DeserializeOwned,
 {
   let doc: DOC = DOC::from_json(json).unwrap();
-  (doc.id().as_str() == did.as_str())
+  (doc.as_ref().id().as_str() == did.as_str())
     .then_some(doc)
     .ok_or(ResolutionError)
 }
 
-async fn resolve_foo(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
+#[derive(Deserialize)]
+#[serde(transparent)]
+pub(super) struct FooDocument(CoreDocument);
+#[derive(Deserialize)]
+#[serde(transparent)]
+pub(super) struct BarDocument(CoreDocument);
+
+impl AsRef<CoreDocument> for FooDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    &self.0
+  }
+}
+
+impl AsRef<CoreDocument> for BarDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    &self.0
+  }
+}
+
+impl From<FooDocument> for CoreDocument {
+  fn from(value: FooDocument) -> Self {
+    value.0
+  }
+}
+
+impl From<BarDocument> for CoreDocument {
+  fn from(value: BarDocument) -> Self {
+    value.0
+  }
+}
+
+enum DocumentTypes {
+  Foo(FooDocument),
+  Bar(BarDocument),
+  Iota(IotaDocument),
+}
+impl AsRef<CoreDocument> for DocumentTypes {
+  fn as_ref(&self) -> &CoreDocument {
+    match self {
+      Self::Foo(doc) => doc.as_ref(),
+      Self::Bar(doc) => doc.as_ref(),
+      Self::Iota(doc) => doc.as_ref(),
+    }
+  }
+}
+impl From<FooDocument> for DocumentTypes {
+  fn from(value: FooDocument) -> Self {
+    Self::Foo(value)
+  }
+}
+impl From<BarDocument> for DocumentTypes {
+  fn from(value: BarDocument) -> Self {
+    Self::Bar(value)
+  }
+}
+impl From<IotaDocument> for DocumentTypes {
+  fn from(value: IotaDocument) -> Self {
+    Self::Iota(value)
+  }
+}
+
+async fn resolve_foo(did: CoreDID) -> Result<FooDocument, ResolutionError> {
   resolve(did, HOLDER_FOO_DOC_JSON).await
 }
 
@@ -47,13 +107,13 @@ async fn resolve_iota(did: IotaDID) -> Result<IotaDocument, ResolutionError> {
   resolve(did, ISSUER_IOTA_DOC_JSON).await
 }
 
-async fn resolve_bar(did: CoreDID) -> Result<CoreDocument, ResolutionError> {
+async fn resolve_bar(did: CoreDID) -> Result<BarDocument, ResolutionError> {
   resolve(did, ISSUER_BAR_DOC_JSON).await
 }
 
 async fn check_verify_presentation<DOC>(mut resolver: Resolver<DOC>)
 where
-  DOC: ValidatorDocument + From<CoreDocument> + From<IotaDocument> + Send + Sync,
+  DOC: AsRef<CoreDocument> + From<FooDocument> + From<BarDocument> + From<IotaDocument> + Send + Sync,
 {
   let presentation: Presentation = Presentation::from_json(PRESENTATION_JSON).unwrap();
 
@@ -92,7 +152,7 @@ where
 #[tokio::test]
 async fn correct_presentation_validation() {
   let core_resolver: Resolver<CoreDocument> = Resolver::new();
-  let dynamic_resolver: Resolver = Resolver::new();
+  let custom_resolver: Resolver<DocumentTypes> = Resolver::new();
   check_verify_presentation(core_resolver).await;
-  check_verify_presentation(dynamic_resolver).await;
+  check_verify_presentation(custom_resolver).await;
 }

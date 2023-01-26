@@ -426,6 +426,11 @@ mod client_document {
   }
 }
 
+impl AsRef<CoreDocument> for IotaDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    &self.document
+  }
+}
 impl Document for IotaDocument {
   type D = CoreDID;
 

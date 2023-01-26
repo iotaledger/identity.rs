@@ -949,6 +949,11 @@ impl CoreDocument {
   }
 }
 
+impl AsRef<CoreDocument> for CoreDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    self
+  }
+}
 impl Document for CoreDocument {
   type D = CoreDID;
 
