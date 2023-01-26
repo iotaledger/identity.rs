@@ -211,3 +211,9 @@ impl<'a, 'b> Decoder<'b> {
     check_slice_param("alg", self.algs.as_deref(), &value)
   }
 }
+
+impl<'a> Default for Decoder<'a> {
+  fn default() -> Self {
+    Self::new()
+  }
+}

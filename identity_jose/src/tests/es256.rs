@@ -78,7 +78,7 @@ pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) ->
 
     match signature::Verifier::verify(&verifying_key, msg, &signature) {
       Ok(()) => Ok(()),
-      Err(err) => Err(err.to_string().to_owned()),
+      Err(err) => Err(err.to_string()),
     }
   };
 
