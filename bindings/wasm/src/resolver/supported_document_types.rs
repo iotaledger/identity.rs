@@ -27,7 +27,7 @@ impl AsRef<CoreDocument> for RustSupportedDocument {
   fn as_ref(&self) -> &CoreDocument {
     match self {
       Self::Iota(doc) => doc.as_ref(),
-      Self::Core(doc) => doc.as_ref(),
+      Self::Core(doc) => doc,
     }
   }
 }

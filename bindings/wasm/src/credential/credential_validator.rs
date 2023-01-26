@@ -59,7 +59,7 @@ impl WasmCredentialValidator {
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let issuer: RustSupportedDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?.into();
+    let issuer: RustSupportedDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?;
     CredentialValidator::validate(&credential.0, &issuer, &options.0, fail_fast.into()).wasm_result()
   }
 

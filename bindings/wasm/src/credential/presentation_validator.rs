@@ -55,7 +55,7 @@ impl WasmPresentationValidator {
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?.into();
+    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?;
     let issuers: Vec<RustSupportedDocument> = issuers
       .into_serde::<Vec<RustSupportedDocument>>()
       .wasm_result()?
@@ -79,7 +79,7 @@ impl WasmPresentationValidator {
     holder: &SupportedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?.into();
+    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?;
     PresentationValidator::verify_presentation_signature(&presentation.0, &holder, &options.0).wasm_result()
   }
 
