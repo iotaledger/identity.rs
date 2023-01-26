@@ -5,7 +5,7 @@ use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use wasm_bindgen::prelude::*;
 
-use crate::did::wasm_core_url::WasmCoreDIDUrl;
+use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -93,22 +93,22 @@ impl WasmCoreDID {
     self.0.method_id().to_owned()
   }
 
-  /// Construct a new `CoreDIDUrl` by joining with a relative DID Url string.
+  /// Construct a new `DIDUrl` by joining with a relative DID Url string.
   #[wasm_bindgen]
-  pub fn join(&self, segment: &str) -> Result<WasmCoreDIDUrl> {
-    self.0.clone().join(segment).wasm_result().map(WasmCoreDIDUrl)
+  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
+    self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
-  /// Clones the `CoreDID` into a `CoreDIDUrl`.
+  /// Clones the `CoreDID` into a `DIDUrl`.
   #[wasm_bindgen(js_name = toUrl)]
-  pub fn to_url(&self) -> WasmCoreDIDUrl {
-    WasmCoreDIDUrl::from(self.0.to_url())
+  pub fn to_url(&self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.to_url())
   }
 
-  /// Converts the `CoreDID` into a `CoreDIDUrl`, consuming it.
+  /// Converts the `CoreDID` into a `DIDUrl`, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
-  pub fn into_url(self) -> WasmCoreDIDUrl {
-    WasmCoreDIDUrl::from(self.0.into_url())
+  pub fn into_url(self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.into_url())
   }
 
   /// Returns the `CoreDID` as a string.

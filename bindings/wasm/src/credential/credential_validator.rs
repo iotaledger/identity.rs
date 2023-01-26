@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::core::Url;
-use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::StatusCheck;
 use identity_iota::credential::ValidationError;
@@ -60,7 +59,7 @@ impl WasmCredentialValidator {
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let issuer: AbstractValidatorDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?.into();
+    let issuer: RustSupportedDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?.into();
     CredentialValidator::validate(&credential.0, &issuer, &options.0, fail_fast.into()).wasm_result()
   }
 
@@ -104,7 +103,7 @@ impl WasmCredentialValidator {
     trustedIssuers: &ArraySupportedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let trusted_issuers: Vec<AbstractValidatorDocument> = trustedIssuers
+    let trusted_issuers: Vec<RustSupportedDocument> = trustedIssuers
       .into_serde::<Vec<RustSupportedDocument>>()
       .wasm_result()?
       .into_iter()
@@ -135,7 +134,7 @@ impl WasmCredentialValidator {
     trustedIssuers: &ArraySupportedDocument,
     statusCheck: WasmStatusCheck,
   ) -> Result<()> {
-    let trusted_issuers: Vec<AbstractValidatorDocument> = trustedIssuers
+    let trusted_issuers: Vec<RustSupportedDocument> = trustedIssuers
       .into_serde::<Vec<RustSupportedDocument>>()
       .wasm_result()?
       .into_iter()

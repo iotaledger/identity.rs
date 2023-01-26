@@ -1,9 +1,84 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::core::OneOrMany;
+use identity_iota::did::DIDUrl;
+use identity_iota::document::Service;
 use identity_iota::document::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+
+use crate::common::deserialize_map_or_any;
+use crate::common::ArrayString;
+use crate::common::MapStringAny;
+use crate::did::WasmDIDUrl;
+use crate::error::Result;
+use crate::error::WasmResult;
+
+/// A DID Document Service used to enable trusted interactions associated with a DID subject.
+#[wasm_bindgen(js_name = Service, inspectable)]
+pub struct WasmService(pub(crate) Service);
+
+#[wasm_bindgen(js_class = Service)]
+impl WasmService {
+  #[wasm_bindgen(constructor)]
+  pub fn new(service: IService) -> Result<WasmService> {
+    let id: DIDUrl = service.id().into_serde().wasm_result()?;
+
+    let base_service: &IService = service.as_ref();
+    let types: OneOrMany<String> = service.type_().into_serde().wasm_result()?;
+    let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&base_service.service_endpoint())?;
+    let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&base_service.properties())?;
+
+    Service::builder(properties.unwrap_or_default())
+      .id(id)
+      .types(types)
+      .service_endpoint(service_endpoint)
+      .build()
+      .map(WasmService)
+      .wasm_result()
+  }
+
+  /// Returns a copy of the `Service` id.
+  #[wasm_bindgen]
+  pub fn id(&self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.id().clone())
+  }
+
+  /// Returns a copy of the `Service` type.
+  #[wasm_bindgen(js_name = type)]
+  pub fn type_(&self) -> ArrayString {
+    self
+      .0
+      .type_()
+      .iter()
+      .cloned()
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
+  }
+
+  /// Returns a copy of the `Service` endpoint.
+  #[wasm_bindgen(js_name = serviceEndpoint)]
+  pub fn service_endpoint(&self) -> UServiceEndpoint {
+    UServiceEndpoint::from(self.0.service_endpoint())
+  }
+
+  /// Returns a copy of the custom properties on the `Service`.
+  #[wasm_bindgen]
+  pub fn properties(&self) -> Result<MapStringAny> {
+    MapStringAny::try_from(self.0.properties())
+  }
+}
+
+impl_wasm_json!(WasmService, Service);
+impl_wasm_clone!(WasmService, Service);
+
+impl From<Service> for WasmService {
+  fn from(service: Service) -> Self {
+    Self(service)
+  }
+}
 
 impl From<ServiceEndpoint> for UServiceEndpoint {
   fn from(endpoint: ServiceEndpoint) -> Self {
@@ -51,6 +126,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IService")]
   pub type IService;
 
+  #[wasm_bindgen(method, getter)]
+  pub fn id(this: &IService) -> JsValue;
+
   #[wasm_bindgen(method, getter, js_name = type)]
   pub fn type_(this: &IService) -> JsValue;
 
@@ -67,6 +145,13 @@ const I_SERVICE: &'static str = r#"
  * Base `Service` properties.
  */
 interface IService {
+  /**
+   * Identifier of the service.
+   *
+   * Must be a valid DIDUrl with a fragment.
+   */
+    readonly id: DIDUrl | string;
+
     /**
      * Type of service.
      *

@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 // TODO: remove allow after https://github.com/iotaledger/identity.rs/issues/1011 is fixed.
@@ -18,12 +18,12 @@ use wasm_bindgen_test::*;
 use identity_wasm::common::WasmTimestamp;
 use identity_wasm::crypto::WasmKeyPair;
 use identity_wasm::crypto::WasmKeyType;
+use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmMethodScope;
+use identity_wasm::did::WasmVerificationMethod;
 use identity_wasm::error::WasmError;
 use identity_wasm::iota::WasmIotaDID;
-use identity_wasm::iota::WasmIotaDIDUrl;
 use identity_wasm::iota::WasmIotaDocument;
-use identity_wasm::iota::WasmIotaVerificationMethod;
 
 /// Generate a random byte array of the length of an Alias Id.
 fn random_alias_id() -> [u8; 32] {
@@ -97,8 +97,8 @@ fn test_did_url() {
 
   assert_eq!(did.to_string(), did_url.to_string());
 
-  let parsed_from_did = WasmIotaDIDUrl::parse(&did.to_string()).unwrap();
-  let parsed_from_did_url = WasmIotaDIDUrl::parse(&did_url.to_string()).unwrap();
+  let parsed_from_did = WasmDIDUrl::parse(&did.to_string()).unwrap();
+  let parsed_from_did_url = WasmDIDUrl::parse(&did_url.to_string()).unwrap();
 
   assert_eq!(did_url.to_string(), parsed_from_did.to_string());
   assert_eq!(did_url.to_string(), parsed_from_did_url.to_string());
@@ -133,8 +133,8 @@ fn test_document_sign() {
   // Sign with DIDUrl method query.
   {
     let mut document: WasmIotaDocument = WasmIotaDocument::new(WasmIotaDID::static_default_network()).unwrap();
-    let method = WasmIotaVerificationMethod::new(
-      &document.id(),
+    let method = WasmVerificationMethod::new(
+      &document.id().to_core_did(),
       WasmKeyType::Ed25519,
       keypair.public(),
       "#sign-0".to_owned(),
@@ -185,8 +185,8 @@ fn test_document_resolve_method() {
   let mut document: WasmIotaDocument = WasmIotaDocument::new(WasmIotaDID::static_default_network()).unwrap();
 
   let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let method: WasmIotaVerificationMethod = WasmIotaVerificationMethod::new(
-    &document.id(),
+  let method: WasmVerificationMethod = WasmVerificationMethod::new(
+    &document.id().to_core_did(),
     WasmKeyType::Ed25519,
     keypair.public(),
     "new-key".to_owned(),

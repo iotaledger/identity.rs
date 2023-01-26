@@ -10,15 +10,14 @@ use identity_iota::credential::Presentation;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::document::verifiable::VerifiableProperties;
-use identity_iota::document::Document;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
 use identity_iota::verification::MethodScope;
+use identity_iota::verification::VerificationMethod;
 use iota_types::block::protocol::dto::ProtocolParametersDto;
 use iota_types::block::protocol::ProtocolParameters;
 use wasm_bindgen::prelude::*;
@@ -34,17 +33,17 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::RefMethodScope;
+use crate::did::WasmDIDUrl;
 use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
+use crate::did::WasmService;
+use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::iota::identity_client_ext::IAliasOutput;
 use crate::iota::WasmIotaDID;
-use crate::iota::WasmIotaDIDUrl;
 use crate::iota::WasmIotaDocumentMetadata;
-use crate::iota::WasmIotaService;
-use crate::iota::WasmIotaVerificationMethod;
 use crate::iota::WasmStateMetadataEncoding;
 
 // =============================================================================
@@ -90,16 +89,14 @@ impl WasmIotaDocument {
   /// during resolution and are omitted when publishing.
   #[wasm_bindgen]
   pub fn controller(&self) -> ArrayIotaDID {
-    match self.0.controller() {
-      Some(controllers) => controllers
-        .iter()
-        .cloned()
-        .map(WasmIotaDID::from)
-        .map(JsValue::from)
-        .collect::<js_sys::Array>()
-        .unchecked_into::<ArrayIotaDID>(),
-      None => js_sys::Array::new().unchecked_into::<ArrayIotaDID>(),
-    }
+    self
+      .0
+      .controller()
+      .cloned()
+      .map(WasmIotaDID::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayIotaDID>()
   }
 
   /// Returns a copy of the document's `alsoKnownAs` set.
@@ -159,81 +156,77 @@ impl WasmIotaDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all {@link IotaService} in the document.
+  /// Return a set of all {@link Service} in the document.
   #[wasm_bindgen]
-  pub fn service(&self) -> ArrayIotaService {
+  pub fn service(&self) -> ArrayService {
     self
       .0
       .service()
       .iter()
       .cloned()
-      .map(WasmIotaService)
+      .map(WasmService)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayIotaService>()
+      .unchecked_into::<ArrayService>()
   }
 
-  /// Add a new {@link IotaService} to the document.
+  /// Add a new {@link Service} to the document.
   ///
   /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmIotaService) -> Result<()> {
+  pub fn insert_service(&mut self, service: &WasmService) -> Result<()> {
     self.0.insert_service(service.0.clone()).wasm_result()
   }
 
-  /// Remove a {@link IotaService} identified by the given {@link IotaDIDUrl} from the document.
+  /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaService> {
+  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Option<WasmService> {
     self.0.remove_service(&did.0).map(Into::into)
   }
 
-  /// Returns the first {@link IotaService} with an `id` property matching the provided `query`,
+  /// Returns the first {@link Service} with an `id` property matching the provided `query`,
   /// if present.
   #[wasm_bindgen(js_name = resolveService)]
-  pub fn resolve_service(&self, query: &UIotaDIDUrlQuery) -> Option<WasmIotaService> {
+  pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
     let service_query: String = query.into_serde().ok()?;
-    self
-      .0
-      .resolve_service(&service_query)
-      .cloned()
-      .map(WasmIotaService::from)
+    self.0.resolve_service(&service_query).cloned().map(WasmService::from)
   }
 
   // ===========================================================================
   // Verification Methods
   // ===========================================================================
 
-  /// Returns a list of all {@link IotaVerificationMethod} in the DID Document,
+  /// Returns a list of all {@link VerificationMethod} in the DID Document,
   /// whose verification relationship matches `scope`.
   ///
   /// If `scope` is not set, a list over the **embedded** methods is returned.
   #[wasm_bindgen]
-  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayIotaVerificationMethods> {
+  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayVerificationMethods> {
     let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
     let methods = self
       .0
       .methods(scope)
       .into_iter()
       .cloned()
-      .map(WasmIotaVerificationMethod::from)
+      .map(WasmVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayIotaVerificationMethods>();
+      .unchecked_into::<ArrayVerificationMethods>();
     Ok(methods)
   }
 
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmIotaVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
     self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
     Ok(())
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaVerificationMethod> {
+  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Option<WasmVerificationMethod> {
     self.0.remove_method(&did.0).map(Into::into)
   }
 
@@ -243,14 +236,14 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = resolveMethod)]
   pub fn resolve_method(
     &self,
-    query: &UIotaDIDUrlQuery,
+    query: &UDIDUrlQuery,
     scope: Option<RefMethodScope>,
-  ) -> Result<Option<WasmIotaVerificationMethod>> {
+  ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let method: Option<&IotaVerificationMethod> = self.0.resolve_method(&method_query, method_scope);
-    Ok(method.cloned().map(WasmIotaVerificationMethod))
+    let method: Option<&VerificationMethod> = self.0.resolve_method(&method_query, method_scope);
+    Ok(method.cloned().map(WasmVerificationMethod))
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -261,7 +254,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = attachMethodRelationship)]
   pub fn attach_method_relationship(
     &mut self,
-    didUrl: &WasmIotaDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
@@ -275,7 +268,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
     &mut self,
-    didUrl: &WasmIotaDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
@@ -296,7 +289,7 @@ impl WasmIotaDocument {
     &self,
     credential: &WasmCredential,
     privateKey: Vec<u8>,
-    methodQuery: &UIotaDIDUrlQuery,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmCredential> {
     let mut data: Credential = credential.0.clone();
@@ -319,7 +312,7 @@ impl WasmIotaDocument {
     &self,
     presentation: &WasmPresentation,
     privateKey: Vec<u8>,
-    methodQuery: &UIotaDIDUrlQuery,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmPresentation> {
     let mut data: Presentation = presentation.0.clone();
@@ -344,7 +337,7 @@ impl WasmIotaDocument {
     &self,
     data: &JsValue,
     privateKey: Vec<u8>,
-    methodQuery: &UIotaDIDUrlQuery,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
@@ -557,7 +550,7 @@ impl WasmIotaDocument {
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, serviceQuery: &UIotaDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
@@ -568,7 +561,7 @@ impl WasmIotaDocument {
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(&mut self, serviceQuery: &UIotaDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn unrevoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
@@ -593,8 +586,8 @@ impl From<WasmIotaDocument> for IotaDocument {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IotaDIDUrl | string")]
-  pub type UIotaDIDUrlQuery;
+  #[wasm_bindgen(typescript_type = "DIDUrl | string")]
+  pub type UDIDUrlQuery;
 
   #[wasm_bindgen(typescript_type = "IotaDID[]")]
   pub type ArrayIotaDID;
@@ -602,11 +595,11 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IotaDocument[]")]
   pub type ArrayIotaDocument;
 
-  #[wasm_bindgen(typescript_type = "IotaService[]")]
-  pub type ArrayIotaService;
+  #[wasm_bindgen(typescript_type = "Service[]")]
+  pub type ArrayService;
 
-  #[wasm_bindgen(typescript_type = "IotaVerificationMethod[]")]
-  pub type ArrayIotaVerificationMethods;
+  #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
+  pub type ArrayVerificationMethods;
 
   // External interface from `@iota/types`, must be deserialized via BlockDto.
   #[wasm_bindgen(typescript_type = "IBlock")]

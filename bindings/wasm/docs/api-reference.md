@@ -4,17 +4,8 @@
 <dt><a href="#CoreDID">CoreDID</a></dt>
 <dd><p>A method-agnostic Decentralized Identifier (DID).</p>
 </dd>
-<dt><a href="#CoreDIDUrl">CoreDIDUrl</a></dt>
-<dd><p>A method agnostic DID Url.</p>
-</dd>
 <dt><a href="#CoreDocument">CoreDocument</a></dt>
 <dd><p>A method-agnostic DID Document.</p>
-</dd>
-<dt><a href="#CoreService">CoreService</a></dt>
-<dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
-</dd>
-<dt><a href="#CoreVerificationMethod">CoreVerificationMethod</a></dt>
-<dd><p>A DID Document Verification Method.</p>
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
@@ -23,6 +14,9 @@
 </dd>
 <dt><a href="#CredentialValidator">CredentialValidator</a></dt>
 <dd></dd>
+<dt><a href="#DIDUrl">DIDUrl</a></dt>
+<dd><p>A method agnostic DID Url.</p>
+</dd>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
@@ -30,9 +24,6 @@
 <dd></dd>
 <dt><a href="#IotaDID">IotaDID</a></dt>
 <dd><p>A DID conforming to the IOTA DID method specification.</p>
-</dd>
-<dt><a href="#IotaDIDUrl">IotaDIDUrl</a></dt>
-<dd><p>A DID URL conforming to the IOTA DID method specification.</p>
 </dd>
 <dt><a href="#IotaDocument">IotaDocument</a></dt>
 <dd></dd>
@@ -43,11 +34,6 @@
 <dd><p>An extension interface that provides helper functions for publication
 and resolution of DID documents in Alias Outputs.</p>
 </dd>
-<dt><a href="#IotaService">IotaService</a></dt>
-<dd><p>A <code>Service</code> adhering to the IOTA DID method specification.</p>
-</dd>
-<dt><a href="#IotaVerificationMethod">IotaVerificationMethod</a></dt>
-<dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
@@ -88,8 +74,14 @@ verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
 <dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
 <dd><p>A compressed bitmap for managing credential revocation.</p>
 </dd>
+<dt><a href="#Service">Service</a></dt>
+<dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
+</dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
+<dt><a href="#VerificationMethod">VerificationMethod</a></dt>
+<dd><p>A DID Document Verification Method.</p>
+</dd>
 <dt><a href="#VerifierOptions">VerifierOptions</a></dt>
 <dd><p>Holds additional proof verification options.
 See <code>IVerifierOptions</code>.</p>
@@ -102,6 +94,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
@@ -148,8 +142,6 @@ This variant is the default used if no other variant is specified when construct
 </dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -175,9 +167,9 @@ A method-agnostic Decentralized Identifier (DID).
         * [.authority()](#CoreDID+authority) ⇒ <code>string</code>
         * [.method()](#CoreDID+method) ⇒ <code>string</code>
         * [.methodId()](#CoreDID+methodId) ⇒ <code>string</code>
-        * [.join(segment)](#CoreDID+join) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-        * [.toUrl()](#CoreDID+toUrl) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-        * [.intoUrl()](#CoreDID+intoUrl) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
+        * [.join(segment)](#CoreDID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.toUrl()](#CoreDID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.intoUrl()](#CoreDID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#CoreDID+toString) ⇒ <code>string</code>
         * [.toJSON()](#CoreDID+toJSON) ⇒ <code>any</code>
         * [.clone()](#CoreDID+clone) ⇒ [<code>CoreDID</code>](#CoreDID)
@@ -251,8 +243,8 @@ E.g.
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+join"></a>
 
-### coreDID.join(segment) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Construct a new `CoreDIDUrl` by joining with a relative DID Url string.
+### coreDID.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 
@@ -262,14 +254,14 @@ Construct a new `CoreDIDUrl` by joining with a relative DID Url string.
 
 <a name="CoreDID+toUrl"></a>
 
-### coreDID.toUrl() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Clones the `CoreDID` into a `CoreDIDUrl`.
+### coreDID.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Clones the `CoreDID` into a `DIDUrl`.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+intoUrl"></a>
 
-### coreDID.intoUrl() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Converts the `CoreDID` into a `CoreDIDUrl`, consuming it.
+### coreDID.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Converts the `CoreDID` into a `DIDUrl`, consuming it.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+toString"></a>
@@ -338,153 +330,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="CoreDIDUrl"></a>
-
-## CoreDIDUrl
-A method agnostic DID Url.
-
-**Kind**: global class  
-
-* [CoreDIDUrl](#CoreDIDUrl)
-    * _instance_
-        * [.did()](#CoreDIDUrl+did) ⇒ [<code>CoreDID</code>](#CoreDID)
-        * [.urlStr()](#CoreDIDUrl+urlStr) ⇒ <code>string</code>
-        * [.fragment()](#CoreDIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setFragment(value)](#CoreDIDUrl+setFragment)
-        * [.path()](#CoreDIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setPath(value)](#CoreDIDUrl+setPath)
-        * [.query()](#CoreDIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setQuery(value)](#CoreDIDUrl+setQuery)
-        * [.join(segment)](#CoreDIDUrl+join) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-        * [.toString()](#CoreDIDUrl+toString) ⇒ <code>string</code>
-        * [.toJSON()](#CoreDIDUrl+toJSON) ⇒ <code>any</code>
-        * [.clone()](#CoreDIDUrl+clone) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-    * _static_
-        * [.parse(input)](#CoreDIDUrl.parse) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-        * [.fromJSON(json)](#CoreDIDUrl.fromJSON) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-
-<a name="CoreDIDUrl+did"></a>
-
-### coreDIDUrl.did() ⇒ [<code>CoreDID</code>](#CoreDID)
-Return a copy of the `CoreDID` section of the `CoreDIDUrl`.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl+urlStr"></a>
-
-### coreDIDUrl.urlStr() ⇒ <code>string</code>
-Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl+fragment"></a>
-
-### coreDIDUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `CoreDIDUrl` method fragment, if any. Excludes the leading '#'.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl+setFragment"></a>
-
-### coreDIDUrl.setFragment(value)
-Sets the `fragment` component of the `CoreDIDUrl`.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="CoreDIDUrl+path"></a>
-
-### coreDIDUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `CoreDIDUrl` path.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl+setPath"></a>
-
-### coreDIDUrl.setPath(value)
-Sets the `path` component of the `CoreDIDUrl`.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="CoreDIDUrl+query"></a>
-
-### coreDIDUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `CoreDIDUrl` method query, if any. Excludes the leading '?'.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl+setQuery"></a>
-
-### coreDIDUrl.setQuery(value)
-Sets the `query` component of the `CoreDIDUrl`.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="CoreDIDUrl+join"></a>
-
-### coreDIDUrl.join(segment) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Append a string representing a path, query, and/or fragment, returning a new `CoreDIDUrl`.
-
-Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
-segment and any following segments in order of path, query, then fragment.
-
-I.e.
-- joining a path will clear the query and fragment.
-- joining a query will clear the fragment.
-- joining a fragment will only overwrite the fragment.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| segment | <code>string</code> | 
-
-<a name="CoreDIDUrl+toString"></a>
-
-### coreDIDUrl.toString() ⇒ <code>string</code>
-Returns the `CoreDIDUrl` as a string.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl+toJSON"></a>
-
-### coreDIDUrl.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl+clone"></a>
-
-### coreDIDUrl.clone() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Deep clones the object.
-
-**Kind**: instance method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-<a name="CoreDIDUrl.parse"></a>
-
-### CoreDIDUrl.parse(input) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Parses a `CoreDIDUrl` from the input string.
-
-**Kind**: static method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="CoreDIDUrl.fromJSON"></a>
-
-### CoreDIDUrl.fromJSON(json) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>CoreDIDUrl</code>](#CoreDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="CoreDocument"></a>
 
 ## CoreDocument
@@ -501,23 +346,23 @@ A method-agnostic DID Document.
         * [.setController(controllers)](#CoreDocument+setController)
         * [.alsoKnownAs()](#CoreDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setAlsoKnownAs(urls)](#CoreDocument+setAlsoKnownAs)
-        * [.verificatonMethod()](#CoreDocument+verificatonMethod) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
-        * [.authentication()](#CoreDocument+authentication) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
-        * [.assertionMethod()](#CoreDocument+assertionMethod) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
-        * [.keyAgreement()](#CoreDocument+keyAgreement) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
-        * [.capabilityDelegation()](#CoreDocument+capabilityDelegation) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
-        * [.capabilityInvocation()](#CoreDocument+capabilityInvocation) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.verificatonMethod()](#CoreDocument+verificatonMethod) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+        * [.authentication()](#CoreDocument+authentication) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
+        * [.assertionMethod()](#CoreDocument+assertionMethod) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
+        * [.keyAgreement()](#CoreDocument+keyAgreement) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
+        * [.capabilityDelegation()](#CoreDocument+capabilityDelegation) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
+        * [.capabilityInvocation()](#CoreDocument+capabilityInvocation) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.properties()](#CoreDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.setPropertyUnchecked(key, value)](#CoreDocument+setPropertyUnchecked)
-        * [.service()](#CoreDocument+service) ⇒ [<code>Array.&lt;CoreService&gt;</code>](#CoreService)
+        * [.service()](#CoreDocument+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#CoreDocument+insertService)
-        * [.removeService(didUrl)](#CoreDocument+removeService) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
-        * [.resolveService(query)](#CoreDocument+resolveService) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
-        * [.methods(scope)](#CoreDocument+methods) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
-        * [.verificationRelationships()](#CoreDocument+verificationRelationships) ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+        * [.removeService(didUrl)](#CoreDocument+removeService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+        * [.resolveService(query)](#CoreDocument+resolveService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+        * [.methods(scope)](#CoreDocument+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+        * [.verificationRelationships()](#CoreDocument+verificationRelationships) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.insertMethod(method, scope)](#CoreDocument+insertMethod)
-        * [.removeMethod(did)](#CoreDocument+removeMethod) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
-        * [.resolveMethod(query, scope)](#CoreDocument+resolveMethod) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
+        * [.removeMethod(did)](#CoreDocument+removeMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
+        * [.resolveMethod(query, scope)](#CoreDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
@@ -601,37 +446,37 @@ Sets the `alsoKnownAs` property in the DID document.
 
 <a name="CoreDocument+verificatonMethod"></a>
 
-### coreDocument.verificatonMethod() ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
+### coreDocument.verificatonMethod() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
 Returns a copy of the document's `verificationMethod` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+authentication"></a>
 
-### coreDocument.authentication() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+### coreDocument.authentication() ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
 Returns a copy of the document's `authentication` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+assertionMethod"></a>
 
-### coreDocument.assertionMethod() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+### coreDocument.assertionMethod() ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
 Returns a copy of the document's `assertionMethod` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+keyAgreement"></a>
 
-### coreDocument.keyAgreement() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+### coreDocument.keyAgreement() ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
 Returns a copy of the document's `keyAgreement` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+capabilityDelegation"></a>
 
-### coreDocument.capabilityDelegation() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+### coreDocument.capabilityDelegation() ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
 Returns a copy of the document's `capabilityDelegation` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+capabilityInvocation"></a>
 
-### coreDocument.capabilityInvocation() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+### coreDocument.capabilityInvocation() ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
 Returns a copy of the document's `capabilityInvocation` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -660,14 +505,14 @@ This method can overwrite existing properties like `id` and result in an invalid
 
 <a name="CoreDocument+service"></a>
 
-### coreDocument.service() ⇒ [<code>Array.&lt;CoreService&gt;</code>](#CoreService)
-Returns a set of all [CoreService](#CoreService) in the document.
+### coreDocument.service() ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
+Returns a set of all [Service](#Service) in the document.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+insertService"></a>
 
 ### coreDocument.insertService(service)
-Add a new [CoreService](#CoreService) to the document.
+Add a new [Service](#Service) to the document.
 
 Errors if there already exists a service or verification method with the same id.
 
@@ -675,12 +520,12 @@ Errors if there already exists a service or verification method with the same id
 
 | Param | Type |
 | --- | --- |
-| service | [<code>CoreService</code>](#CoreService) | 
+| service | [<code>Service</code>](#Service) | 
 
 <a name="CoreDocument+removeService"></a>
 
-### coreDocument.removeService(didUrl) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
-Remoce a [CoreService](#CoreService) identified by the given [CoreDIDUrl](#CoreDIDUrl) from the document.
+### coreDocument.removeService(didUrl) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+Remoce a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 Returns `true` if the service was removed.
 
@@ -688,24 +533,24 @@ Returns `true` if the service was removed.
 
 | Param | Type |
 | --- | --- |
-| didUrl | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
+| didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 
 <a name="CoreDocument+resolveService"></a>
 
-### coreDocument.resolveService(query) ⇒ [<code>CoreService</code>](#CoreService) \| <code>undefined</code>
-Returns the first [CoreService](#CoreService) with an `id` property matching the provided `query`,
+### coreDocument.resolveService(query) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+Returns the first [Service](#Service) with an `id` property matching the provided `query`,
 if present.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| query | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="CoreDocument+methods"></a>
 
-### coreDocument.methods(scope) ⇒ [<code>Array.&lt;CoreVerificationMethod&gt;</code>](#CoreVerificationMethod)
-Returns a list of all [CoreVerificationMethod](#CoreVerificationMethod) in the DID Document,
+### coreDocument.methods(scope) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Document,
 whose verification relationship matches `scope`.
 
 If `scope` is not set, a list over the **embedded** methods is returned.
@@ -718,7 +563,7 @@ If `scope` is not set, a list over the **embedded** methods is returned.
 
 <a name="CoreDocument+verificationRelationships"></a>
 
-### coreDocument.verificationRelationships() ⇒ <code>Array.&lt;(CoreDIDUrl\|CoreVerificationMethod)&gt;</code>
+### coreDocument.verificationRelationships() ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
 Returns an array of all verification relationships.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -731,23 +576,23 @@ Adds a new `method` to the document in the given `scope`.
 
 | Param | Type |
 | --- | --- |
-| method | [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) | 
+| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
 | scope | [<code>MethodScope</code>](#MethodScope) | 
 
 <a name="CoreDocument+removeMethod"></a>
 
-### coreDocument.removeMethod(did) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
+### coreDocument.removeMethod(did) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
 Removes all references to the specified Verification Method.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
+| did | [<code>DIDUrl</code>](#DIDUrl) | 
 
 <a name="CoreDocument+resolveMethod"></a>
 
-### coreDocument.resolveMethod(query, scope) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod) \| <code>undefined</code>
+### coreDocument.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
 Returns a copy of the first verification method with an `id` property
 matching the provided `query` and the verification relationship
 specified by `scope`, if present.
@@ -756,7 +601,7 @@ specified by `scope`, if present.
 
 | Param | Type |
 | --- | --- |
-| query | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
 <a name="CoreDocument+attachMethodRelationship"></a>
@@ -771,7 +616,7 @@ so it cannot be an embedded one.
 
 | Param | Type |
 | --- | --- |
-| didUrl | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
+| didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="CoreDocument+detachMethodRelationship"></a>
@@ -783,7 +628,7 @@ Detaches the given relationship from the given method, if the method exists.
 
 | Param | Type |
 | --- | --- |
-| didUrl | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
+| didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="CoreDocument+verifyData"></a>
@@ -808,7 +653,7 @@ revoke all specified `indices`.
 
 | Param | Type |
 | --- | --- |
-| serviceQuery | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="CoreDocument+unrevokeCredentials"></a>
@@ -821,7 +666,7 @@ unrevoke all specified `indices`.
 
 | Param | Type |
 | --- | --- |
-| serviceQuery | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="CoreDocument+signData"></a>
@@ -838,7 +683,7 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 | --- | --- |
 | data | <code>any</code> | 
 | privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>CoreDIDUrl</code>](#CoreDIDUrl) \| <code>string</code> | 
+| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="CoreDocument+toJSON"></a>
@@ -859,232 +704,6 @@ Deep clones the object.
 Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>CoreDocument</code>](#CoreDocument)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="CoreService"></a>
-
-## CoreService
-A DID Document Service used to enable trusted interactions associated with a DID subject.
-
-**Kind**: global class  
-
-* [CoreService](#CoreService)
-    * [new CoreService(service)](#new_CoreService_new)
-    * _instance_
-        * [.id()](#CoreService+id) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-        * [.type()](#CoreService+type) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.serviceEndpoint()](#CoreService+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-        * [.properties()](#CoreService+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.toJSON()](#CoreService+toJSON) ⇒ <code>any</code>
-        * [.clone()](#CoreService+clone) ⇒ [<code>CoreService</code>](#CoreService)
-    * _static_
-        * [.fromJSON(json)](#CoreService.fromJSON) ⇒ [<code>CoreService</code>](#CoreService)
-
-<a name="new_CoreService_new"></a>
-
-### new CoreService(service)
-
-| Param | Type |
-| --- | --- |
-| service | <code>ICoreService</code> | 
-
-<a name="CoreService+id"></a>
-
-### coreService.id() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Returns a copy of the `CoreService` id.
-
-**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
-<a name="CoreService+type"></a>
-
-### coreService.type() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a copy of the `CoreService` type.
-
-**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
-<a name="CoreService+serviceEndpoint"></a>
-
-### coreService.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-Returns a copy of the `CoreService` endpoint.
-
-**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
-<a name="CoreService+properties"></a>
-
-### coreService.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the custom properties on the `CoreService`.
-
-**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
-<a name="CoreService+toJSON"></a>
-
-### coreService.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
-<a name="CoreService+clone"></a>
-
-### coreService.clone() ⇒ [<code>CoreService</code>](#CoreService)
-Deep clones the object.
-
-**Kind**: instance method of [<code>CoreService</code>](#CoreService)  
-<a name="CoreService.fromJSON"></a>
-
-### CoreService.fromJSON(json) ⇒ [<code>CoreService</code>](#CoreService)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>CoreService</code>](#CoreService)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="CoreVerificationMethod"></a>
-
-## CoreVerificationMethod
-A DID Document Verification Method.
-
-**Kind**: global class  
-
-* [CoreVerificationMethod](#CoreVerificationMethod)
-    * [new CoreVerificationMethod(did, keyType, publicKey, fragment)](#new_CoreVerificationMethod_new)
-    * _instance_
-        * [.id()](#CoreVerificationMethod+id) ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-        * [.setId(id)](#CoreVerificationMethod+setId)
-        * [.controller()](#CoreVerificationMethod+controller) ⇒ [<code>CoreDID</code>](#CoreDID)
-        * [.setController(did)](#CoreVerificationMethod+setController)
-        * [.type()](#CoreVerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.setType(type_)](#CoreVerificationMethod+setType)
-        * [.data()](#CoreVerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
-        * [.setData(data)](#CoreVerificationMethod+setData)
-        * [.properties()](#CoreVerificationMethod+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.setPropertyUnchecked(key, value)](#CoreVerificationMethod+setPropertyUnchecked)
-        * [.toJSON()](#CoreVerificationMethod+toJSON) ⇒ <code>any</code>
-        * [.clone()](#CoreVerificationMethod+clone) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
-    * _static_
-        * [.fromJSON(json)](#CoreVerificationMethod.fromJSON) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
-
-<a name="new_CoreVerificationMethod_new"></a>
-
-### new CoreVerificationMethod(did, keyType, publicKey, fragment)
-Creates a new `CoreVerificationMethod` from the given `did` and public key.
-
-
-| Param | Type |
-| --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) | 
-| keyType | <code>number</code> | 
-| publicKey | <code>Uint8Array</code> | 
-| fragment | <code>string</code> | 
-
-<a name="CoreVerificationMethod+id"></a>
-
-### coreVerificationMethod.id() ⇒ [<code>CoreDIDUrl</code>](#CoreDIDUrl)
-Returns a copy of the `CoreDIDUrl` of the `CoreVerificationMethod`'s `id`.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-<a name="CoreVerificationMethod+setId"></a>
-
-### coreVerificationMethod.setId(id)
-Sets the id of the `CoreVerificationMethod`.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| id | [<code>CoreDIDUrl</code>](#CoreDIDUrl) | 
-
-<a name="CoreVerificationMethod+controller"></a>
-
-### coreVerificationMethod.controller() ⇒ [<code>CoreDID</code>](#CoreDID)
-Returns a copy of the `controller` `DID` of the `CoreVerificationMethod`.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-<a name="CoreVerificationMethod+setController"></a>
-
-### coreVerificationMethod.setController(did)
-Sets the `controller` `DID` of the `CoreVerificationMethod` object.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) | 
-
-<a name="CoreVerificationMethod+type"></a>
-
-### coreVerificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
-Returns a copy of the `CoreVerificationMethod` type.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-<a name="CoreVerificationMethod+setType"></a>
-
-### coreVerificationMethod.setType(type_)
-Sets the `CoreVerificationMethod` type.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| type_ | [<code>MethodType</code>](#MethodType) | 
-
-<a name="CoreVerificationMethod+data"></a>
-
-### coreVerificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
-Returns a copy of the `CoreVerificationMethod` public key data.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-<a name="CoreVerificationMethod+setData"></a>
-
-### coreVerificationMethod.setData(data)
-Sets `CoreVerificationMethod` public key data.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| data | [<code>MethodData</code>](#MethodData) | 
-
-<a name="CoreVerificationMethod+properties"></a>
-
-### coreVerificationMethod.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Get custom properties of the Verification Method.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-<a name="CoreVerificationMethod+setPropertyUnchecked"></a>
-
-### coreVerificationMethod.setPropertyUnchecked(key, value)
-Adds a custom property to the Verification Method.
-If the value is set to `null`, the custom property will be removed.
-
-### WARNING
-This method can overwrite existing properties like `id` and result
-in an invalid Verification Method.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| key | <code>string</code> | 
-| value | <code>any</code> | 
-
-<a name="CoreVerificationMethod+toJSON"></a>
-
-### coreVerificationMethod.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-<a name="CoreVerificationMethod+clone"></a>
-
-### coreVerificationMethod.clone() ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
-Deep clones the object.
-
-**Kind**: instance method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
-<a name="CoreVerificationMethod.fromJSON"></a>
-
-### CoreVerificationMethod.fromJSON(json) ⇒ [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>CoreVerificationMethod</code>](#CoreVerificationMethod)  
 
 | Param | Type |
 | --- | --- |
@@ -1467,6 +1086,153 @@ Fails if the issuer field is not a valid DID.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 
+<a name="DIDUrl"></a>
+
+## DIDUrl
+A method agnostic DID Url.
+
+**Kind**: global class  
+
+* [DIDUrl](#DIDUrl)
+    * _instance_
+        * [.did()](#DIDUrl+did) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.urlStr()](#DIDUrl+urlStr) ⇒ <code>string</code>
+        * [.fragment()](#DIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setFragment(value)](#DIDUrl+setFragment)
+        * [.path()](#DIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setPath(value)](#DIDUrl+setPath)
+        * [.query()](#DIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setQuery(value)](#DIDUrl+setQuery)
+        * [.join(segment)](#DIDUrl+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.toString()](#DIDUrl+toString) ⇒ <code>string</code>
+        * [.toJSON()](#DIDUrl+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DIDUrl+clone) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+    * _static_
+        * [.parse(input)](#DIDUrl.parse) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.fromJSON(json)](#DIDUrl.fromJSON) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+
+<a name="DIDUrl+did"></a>
+
+### didUrl.did() ⇒ [<code>CoreDID</code>](#CoreDID)
+Return a copy of the `CoreDID` section of the `DIDUrl`.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+urlStr"></a>
+
+### didUrl.urlStr() ⇒ <code>string</code>
+Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+fragment"></a>
+
+### didUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `DIDUrl` method fragment, if any. Excludes the leading '#'.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+setFragment"></a>
+
+### didUrl.setFragment(value)
+Sets the `fragment` component of the `DIDUrl`.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="DIDUrl+path"></a>
+
+### didUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `DIDUrl` path.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+setPath"></a>
+
+### didUrl.setPath(value)
+Sets the `path` component of the `DIDUrl`.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="DIDUrl+query"></a>
+
+### didUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the `DIDUrl` method query, if any. Excludes the leading '?'.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+setQuery"></a>
+
+### didUrl.setQuery(value)
+Sets the `query` component of the `DIDUrl`.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="DIDUrl+join"></a>
+
+### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
+
+Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
+segment and any following segments in order of path, query, then fragment.
+
+I.e.
+- joining a path will clear the query and fragment.
+- joining a query will clear the fragment.
+- joining a fragment will only overwrite the fragment.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="DIDUrl+toString"></a>
+
+### didUrl.toString() ⇒ <code>string</code>
+Returns the `DIDUrl` as a string.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+toJSON"></a>
+
+### didUrl.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+clone"></a>
+
+### didUrl.clone() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl.parse"></a>
+
+### DIDUrl.parse(input) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Parses a `DIDUrl` from the input string.
+
+**Kind**: static method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="DIDUrl.fromJSON"></a>
+
+### DIDUrl.fromJSON(json) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Duration"></a>
 
 ## Duration
@@ -1633,14 +1399,15 @@ A DID conforming to the IOTA DID method specification.
     * _instance_
         * [.networkStr()](#IotaDID+networkStr) ⇒ <code>string</code>
         * [.tag()](#IotaDID+tag) ⇒ <code>string</code>
+        * [.toCoreDid()](#IotaDID+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.scheme()](#IotaDID+scheme) ⇒ <code>string</code>
         * [.authority()](#IotaDID+authority) ⇒ <code>string</code>
         * [.method()](#IotaDID+method) ⇒ <code>string</code>
         * [.methodId()](#IotaDID+methodId) ⇒ <code>string</code>
-        * [.join(segment)](#IotaDID+join) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-        * [.toUrl()](#IotaDID+toUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.join(segment)](#IotaDID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.toUrl()](#IotaDID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toAliasId()](#IotaDID+toAliasId) ⇒ <code>string</code>
-        * [.intoUrl()](#IotaDID+intoUrl) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+        * [.intoUrl()](#IotaDID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#IotaDID+toString) ⇒ <code>string</code>
         * [.toJSON()](#IotaDID+toJSON) ⇒ <code>any</code>
         * [.clone()](#IotaDID+clone) ⇒ [<code>IotaDID</code>](#IotaDID)
@@ -1676,6 +1443,12 @@ Returns the Tangle network name of the `IotaDID`.
 
 ### did.tag() ⇒ <code>string</code>
 Returns a copy of the unique tag of the `IotaDID`.
+
+**Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
+<a name="IotaDID+toCoreDid"></a>
+
+### did.toCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
+Returns the DID represented as a `CoreDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+scheme"></a>
@@ -1720,7 +1493,7 @@ E.g.
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+join"></a>
 
-### did.join(segment) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
 Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -1731,7 +1504,7 @@ Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 <a name="IotaDID+toUrl"></a>
 
-### did.toUrl() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+### did.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
 Clones the `DID` into a `DIDUrl`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -1743,7 +1516,7 @@ Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+intoUrl"></a>
 
-### did.intoUrl() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
+### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
 Converts the `DID` into a `DIDUrl`, consuming it.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -1825,153 +1598,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="IotaDIDUrl"></a>
-
-## IotaDIDUrl
-A DID URL conforming to the IOTA DID method specification.
-
-**Kind**: global class  
-
-* [IotaDIDUrl](#IotaDIDUrl)
-    * _instance_
-        * [.did()](#IotaDIDUrl+did) ⇒ [<code>IotaDID</code>](#IotaDID)
-        * [.urlStr()](#IotaDIDUrl+urlStr) ⇒ <code>string</code>
-        * [.fragment()](#IotaDIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setFragment(value)](#IotaDIDUrl+setFragment)
-        * [.path()](#IotaDIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setPath(value)](#IotaDIDUrl+setPath)
-        * [.query()](#IotaDIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setQuery(value)](#IotaDIDUrl+setQuery)
-        * [.join(segment)](#IotaDIDUrl+join) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-        * [.toString()](#IotaDIDUrl+toString) ⇒ <code>string</code>
-        * [.toJSON()](#IotaDIDUrl+toJSON) ⇒ <code>any</code>
-        * [.clone()](#IotaDIDUrl+clone) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-    * _static_
-        * [.parse(input)](#IotaDIDUrl.parse) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-        * [.fromJSON(json)](#IotaDIDUrl.fromJSON) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-
-<a name="IotaDIDUrl+did"></a>
-
-### iotaDIDUrl.did() ⇒ [<code>IotaDID</code>](#IotaDID)
-Return a copy of the `IotaDID` section of the `IotaDIDUrl`.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl+urlStr"></a>
-
-### iotaDIDUrl.urlStr() ⇒ <code>string</code>
-Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl+fragment"></a>
-
-### iotaDIDUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `IotaDIDUrl` method fragment, if any. Excludes the leading '#'.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl+setFragment"></a>
-
-### iotaDIDUrl.setFragment(value)
-Sets the `fragment` component of the `IotaDIDUrl`.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="IotaDIDUrl+path"></a>
-
-### iotaDIDUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `IotaDIDUrl` path.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl+setPath"></a>
-
-### iotaDIDUrl.setPath(value)
-Sets the `path` component of the `IotaDIDUrl`.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="IotaDIDUrl+query"></a>
-
-### iotaDIDUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the `IotaDIDUrl` method query, if any. Excludes the leading '?'.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl+setQuery"></a>
-
-### iotaDIDUrl.setQuery(value)
-Sets the `query` component of the `IotaDIDUrl`.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
-
-<a name="IotaDIDUrl+join"></a>
-
-### iotaDIDUrl.join(segment) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-Append a string representing a path, query, and/or fragment, returning a new `IotaDIDUrl`.
-
-Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
-segment and any following segments in order of path, query, then fragment.
-
-I.e.
-- joining a path will clear the query and fragment.
-- joining a query will clear the fragment.
-- joining a fragment will only overwrite the fragment.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| segment | <code>string</code> | 
-
-<a name="IotaDIDUrl+toString"></a>
-
-### iotaDIDUrl.toString() ⇒ <code>string</code>
-Returns the `IotaDIDUrl` as a string.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl+toJSON"></a>
-
-### iotaDIDUrl.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl+clone"></a>
-
-### iotaDIDUrl.clone() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-Deep clones the object.
-
-**Kind**: instance method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-<a name="IotaDIDUrl.parse"></a>
-
-### IotaDIDUrl.parse(input) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-Parses a `IotaDIDUrl` from the input string.
-
-**Kind**: static method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="IotaDIDUrl.fromJSON"></a>
-
-### IotaDIDUrl.fromJSON(json) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>IotaDIDUrl</code>](#IotaDIDUrl)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="IotaDocument"></a>
 
 ## IotaDocument
@@ -1986,14 +1612,14 @@ Deserializes an instance from a JSON object.
         * [.setAlsoKnownAs(urls)](#IotaDocument+setAlsoKnownAs)
         * [.properties()](#IotaDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.setPropertyUnchecked(key, value)](#IotaDocument+setPropertyUnchecked)
-        * [.service()](#IotaDocument+service) ⇒ [<code>Array.&lt;IotaService&gt;</code>](#IotaService)
+        * [.service()](#IotaDocument+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#IotaDocument+insertService)
-        * [.removeService(did)](#IotaDocument+removeService) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
-        * [.resolveService(query)](#IotaDocument+resolveService) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
-        * [.methods(scope)](#IotaDocument+methods) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
+        * [.removeService(did)](#IotaDocument+removeService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+        * [.resolveService(query)](#IotaDocument+resolveService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+        * [.methods(scope)](#IotaDocument+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#IotaDocument+insertMethod)
-        * [.removeMethod(did)](#IotaDocument+removeMethod) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
-        * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
+        * [.removeMethod(did)](#IotaDocument+removeMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
+        * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signCredential(credential, privateKey, methodQuery, options)](#IotaDocument+signCredential) ⇒ [<code>Credential</code>](#Credential)
@@ -2090,14 +1716,14 @@ This method can overwrite existing properties like `id` and result in an invalid
 
 <a name="IotaDocument+service"></a>
 
-### iotaDocument.service() ⇒ [<code>Array.&lt;IotaService&gt;</code>](#IotaService)
-Return a set of all [IotaService](#IotaService) in the document.
+### iotaDocument.service() ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
+Return a set of all [Service](#Service) in the document.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+insertService"></a>
 
 ### iotaDocument.insertService(service)
-Add a new [IotaService](#IotaService) to the document.
+Add a new [Service](#Service) to the document.
 
 Returns `true` if the service was added.
 
@@ -2105,12 +1731,12 @@ Returns `true` if the service was added.
 
 | Param | Type |
 | --- | --- |
-| service | [<code>IotaService</code>](#IotaService) | 
+| service | [<code>Service</code>](#Service) | 
 
 <a name="IotaDocument+removeService"></a>
 
-### iotaDocument.removeService(did) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
-Remove a [IotaService](#IotaService) identified by the given [IotaDIDUrl](#IotaDIDUrl) from the document.
+### iotaDocument.removeService(did) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 Returns `true` if a service was removed.
 
@@ -2118,24 +1744,24 @@ Returns `true` if a service was removed.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+| did | [<code>DIDUrl</code>](#DIDUrl) | 
 
 <a name="IotaDocument+resolveService"></a>
 
-### iotaDocument.resolveService(query) ⇒ [<code>IotaService</code>](#IotaService) \| <code>undefined</code>
-Returns the first [IotaService](#IotaService) with an `id` property matching the provided `query`,
+### iotaDocument.resolveService(query) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+Returns the first [Service](#Service) with an `id` property matching the provided `query`,
 if present.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
 | Param | Type |
 | --- | --- |
-| query | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="IotaDocument+methods"></a>
 
-### iotaDocument.methods(scope) ⇒ [<code>Array.&lt;IotaVerificationMethod&gt;</code>](#IotaVerificationMethod)
-Returns a list of all [IotaVerificationMethod](#IotaVerificationMethod) in the DID Document,
+### iotaDocument.methods(scope) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Document,
 whose verification relationship matches `scope`.
 
 If `scope` is not set, a list over the **embedded** methods is returned.
@@ -2155,23 +1781,23 @@ Adds a new `method` to the document in the given `scope`.
 
 | Param | Type |
 | --- | --- |
-| method | [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) | 
+| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
 | scope | [<code>MethodScope</code>](#MethodScope) | 
 
 <a name="IotaDocument+removeMethod"></a>
 
-### iotaDocument.removeMethod(did) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
+### iotaDocument.removeMethod(did) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
 Removes all references to the specified Verification Method.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+| did | [<code>DIDUrl</code>](#DIDUrl) | 
 
 <a name="IotaDocument+resolveMethod"></a>
 
-### iotaDocument.resolveMethod(query, scope) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod) \| <code>undefined</code>
+### iotaDocument.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
 Returns a copy of the first verification method with an `id` property
 matching the provided `query` and the verification relationship
 specified by `scope`, if present.
@@ -2180,7 +1806,7 @@ specified by `scope`, if present.
 
 | Param | Type |
 | --- | --- |
-| query | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
 <a name="IotaDocument+attachMethodRelationship"></a>
@@ -2195,7 +1821,7 @@ so it cannot be an embedded one.
 
 | Param | Type |
 | --- | --- |
-| didUrl | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+| didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="IotaDocument+detachMethodRelationship"></a>
@@ -2207,7 +1833,7 @@ Detaches the given relationship from the given method, if the method exists.
 
 | Param | Type |
 | --- | --- |
-| didUrl | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
+| didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
 <a name="IotaDocument+signCredential"></a>
@@ -2222,7 +1848,7 @@ Verification Method.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 | privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="IotaDocument+signPresentation"></a>
@@ -2237,7 +1863,7 @@ Verification Method.
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="IotaDocument+signData"></a>
@@ -2254,7 +1880,7 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 | --- | --- |
 | data | <code>any</code> | 
 | privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="IotaDocument+verifyData"></a>
@@ -2382,7 +2008,7 @@ revoke all specified `indices`.
 
 | Param | Type |
 | --- | --- |
-| serviceQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="IotaDocument+unrevokeCredentials"></a>
@@ -2395,7 +2021,7 @@ unrevoke all specified `indices`.
 
 | Param | Type |
 | --- | --- |
-| serviceQuery | [<code>IotaDIDUrl</code>](#IotaDIDUrl) \| <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="IotaDocument+toJSON"></a>
@@ -2647,230 +2273,6 @@ Fetches the `IAliasOutput` associated with the given DID.
 | --- | --- |
 | client | <code>IIotaIdentityClient</code> | 
 | did | [<code>IotaDID</code>](#IotaDID) | 
-
-<a name="IotaService"></a>
-
-## IotaService
-A `Service` adhering to the IOTA DID method specification.
-
-**Kind**: global class  
-
-* [IotaService](#IotaService)
-    * [new IotaService(service)](#new_IotaService_new)
-    * _instance_
-        * [.id()](#IotaService+id) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-        * [.type()](#IotaService+type) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.serviceEndpoint()](#IotaService+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-        * [.properties()](#IotaService+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.toJSON()](#IotaService+toJSON) ⇒ <code>any</code>
-        * [.clone()](#IotaService+clone) ⇒ [<code>IotaService</code>](#IotaService)
-    * _static_
-        * [.fromJSON(json)](#IotaService.fromJSON) ⇒ [<code>IotaService</code>](#IotaService)
-
-<a name="new_IotaService_new"></a>
-
-### new IotaService(service)
-
-| Param | Type |
-| --- | --- |
-| service | <code>IIotaService</code> | 
-
-<a name="IotaService+id"></a>
-
-### iotaService.id() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-Returns a copy of the `Service` id.
-
-**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
-<a name="IotaService+type"></a>
-
-### iotaService.type() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a copy of the `Service` type.
-
-**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
-<a name="IotaService+serviceEndpoint"></a>
-
-### iotaService.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-Returns a copy of the `Service` endpoint.
-
-**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
-<a name="IotaService+properties"></a>
-
-### iotaService.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the custom properties on the `Service`.
-
-**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
-<a name="IotaService+toJSON"></a>
-
-### iotaService.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
-<a name="IotaService+clone"></a>
-
-### iotaService.clone() ⇒ [<code>IotaService</code>](#IotaService)
-Deep clones the object.
-
-**Kind**: instance method of [<code>IotaService</code>](#IotaService)  
-<a name="IotaService.fromJSON"></a>
-
-### IotaService.fromJSON(json) ⇒ [<code>IotaService</code>](#IotaService)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>IotaService</code>](#IotaService)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="IotaVerificationMethod"></a>
-
-## IotaVerificationMethod
-**Kind**: global class  
-
-* [IotaVerificationMethod](#IotaVerificationMethod)
-    * [new IotaVerificationMethod(did, keyType, publicKey, fragment)](#new_IotaVerificationMethod_new)
-    * _instance_
-        * [.id()](#IotaVerificationMethod+id) ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-        * [.setId(id)](#IotaVerificationMethod+setId)
-        * [.controller()](#IotaVerificationMethod+controller) ⇒ [<code>IotaDID</code>](#IotaDID)
-        * [.setController(did)](#IotaVerificationMethod+setController)
-        * [.setType(type_)](#IotaVerificationMethod+setType)
-        * [.type()](#IotaVerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.data()](#IotaVerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
-        * [.setData(data)](#IotaVerificationMethod+setData)
-        * [.properties()](#IotaVerificationMethod+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.setPropertyUnchecked(key, value)](#IotaVerificationMethod+setPropertyUnchecked)
-        * [.toJSON()](#IotaVerificationMethod+toJSON) ⇒ <code>any</code>
-        * [.clone()](#IotaVerificationMethod+clone) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
-    * _static_
-        * [.fromJSON(json)](#IotaVerificationMethod.fromJSON) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
-
-<a name="new_IotaVerificationMethod_new"></a>
-
-### new IotaVerificationMethod(did, keyType, publicKey, fragment)
-Creates a new `IotaVerificationMethod` from the given `did` and public key.
-
-
-| Param | Type |
-| --- | --- |
-| did | [<code>IotaDID</code>](#IotaDID) | 
-| keyType | <code>number</code> | 
-| publicKey | <code>Uint8Array</code> | 
-| fragment | <code>string</code> | 
-
-<a name="IotaVerificationMethod+id"></a>
-
-### iotaVerificationMethod.id() ⇒ [<code>IotaDIDUrl</code>](#IotaDIDUrl)
-Returns a reference to the `IotaVerificationMethod` id.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-<a name="IotaVerificationMethod+setId"></a>
-
-### iotaVerificationMethod.setId(id)
-Sets the id of the `IotaVerificationMethod`.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| id | [<code>IotaDIDUrl</code>](#IotaDIDUrl) | 
-
-<a name="IotaVerificationMethod+controller"></a>
-
-### iotaVerificationMethod.controller() ⇒ [<code>IotaDID</code>](#IotaDID)
-Returns a copy of the `controller` `DID` of the `IotaVerificationMethod`.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-<a name="IotaVerificationMethod+setController"></a>
-
-### iotaVerificationMethod.setController(did)
-Sets the `controller` `DID` of the `IotaVerificationMethod`.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>IotaDID</code>](#IotaDID) | 
-
-<a name="IotaVerificationMethod+setType"></a>
-
-### iotaVerificationMethod.setType(type_)
-Sets the `IotaVerificationMethod` type.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| type_ | [<code>MethodType</code>](#MethodType) | 
-
-<a name="IotaVerificationMethod+type"></a>
-
-### iotaVerificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
-Returns a copy of the `IotaVerificationMethod` type.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-<a name="IotaVerificationMethod+data"></a>
-
-### iotaVerificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
-Returns a copy of the `IotaVerificationMethod` public key data.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-<a name="IotaVerificationMethod+setData"></a>
-
-### iotaVerificationMethod.setData(data)
-Sets `IotaVerificationMethod` public key data.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| data | [<code>MethodData</code>](#MethodData) | 
-
-<a name="IotaVerificationMethod+properties"></a>
-
-### iotaVerificationMethod.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Get custom properties of the Verification Method.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-<a name="IotaVerificationMethod+setPropertyUnchecked"></a>
-
-### iotaVerificationMethod.setPropertyUnchecked(key, value)
-Adds a custom property to the Verification Method.
-If the value is set to `null`, the custom property will be removed.
-
-### WARNING
-This method can overwrite existing properties like `id` and result
-in an invalid Verification Method.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| key | <code>string</code> | 
-| value | <code>any</code> | 
-
-<a name="IotaVerificationMethod+toJSON"></a>
-
-### iotaVerificationMethod.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-<a name="IotaVerificationMethod+clone"></a>
-
-### iotaVerificationMethod.clone() ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
-Deep clones the object.
-
-**Kind**: instance method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-<a name="IotaVerificationMethod.fromJSON"></a>
-
-### IotaVerificationMethod.fromJSON(json) ⇒ [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>IotaVerificationMethod</code>](#IotaVerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
 
 <a name="KeyPair"></a>
 
@@ -3858,6 +3260,80 @@ Construct a `RevocationBitmap` from a data `url`.
 | --- | --- |
 | endpoint | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code> | 
 
+<a name="Service"></a>
+
+## Service
+A DID Document Service used to enable trusted interactions associated with a DID subject.
+
+**Kind**: global class  
+
+* [Service](#Service)
+    * [new Service(service)](#new_Service_new)
+    * _instance_
+        * [.id()](#Service+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.type()](#Service+type) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.serviceEndpoint()](#Service+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+        * [.properties()](#Service+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Service+clone) ⇒ [<code>Service</code>](#Service)
+    * _static_
+        * [.fromJSON(json)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
+
+<a name="new_Service_new"></a>
+
+### new Service(service)
+
+| Param | Type |
+| --- | --- |
+| service | <code>IService</code> | 
+
+<a name="Service+id"></a>
+
+### service.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Returns a copy of the `Service` id.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+type"></a>
+
+### service.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the `Service` type.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+serviceEndpoint"></a>
+
+### service.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Returns a copy of the `Service` endpoint.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+properties"></a>
+
+### service.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom properties on the `Service`.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+toJSON"></a>
+
+### service.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+clone"></a>
+
+### service.clone() ⇒ [<code>Service</code>](#Service)
+Deep clones the object.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service.fromJSON"></a>
+
+### Service.fromJSON(json) ⇒ [<code>Service</code>](#Service)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>Service</code>](#Service)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -3935,6 +3411,158 @@ Creates a new `Timestamp` with the current date and time.
 Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="VerificationMethod"></a>
+
+## VerificationMethod
+A DID Document Verification Method.
+
+**Kind**: global class  
+
+* [VerificationMethod](#VerificationMethod)
+    * [new VerificationMethod(did, keyType, publicKey, fragment)](#new_VerificationMethod_new)
+    * _instance_
+        * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.setId(id)](#VerificationMethod+setId)
+        * [.controller()](#VerificationMethod+controller) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.setController(did)](#VerificationMethod+setController)
+        * [.type()](#VerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.setType(type_)](#VerificationMethod+setType)
+        * [.data()](#VerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.setData(data)](#VerificationMethod+setData)
+        * [.properties()](#VerificationMethod+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#VerificationMethod+setPropertyUnchecked)
+        * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
+        * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+    * _static_
+        * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+
+<a name="new_VerificationMethod_new"></a>
+
+### new VerificationMethod(did, keyType, publicKey, fragment)
+Creates a new `VerificationMethod` from the given `did` and public key.
+
+
+| Param | Type |
+| --- | --- |
+| did | [<code>CoreDID</code>](#CoreDID) | 
+| keyType | <code>number</code> | 
+| publicKey | <code>Uint8Array</code> | 
+| fragment | <code>string</code> | 
+
+<a name="VerificationMethod+id"></a>
+
+### verificationMethod.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Returns a copy of the `DIDUrl` of the `VerificationMethod`'s `id`.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+setId"></a>
+
+### verificationMethod.setId(id)
+Sets the id of the `VerificationMethod`.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+
+<a name="VerificationMethod+controller"></a>
+
+### verificationMethod.controller() ⇒ [<code>CoreDID</code>](#CoreDID)
+Returns a copy of the `controller` `DID` of the `VerificationMethod`.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+setController"></a>
+
+### verificationMethod.setController(did)
+Sets the `controller` `DID` of the `VerificationMethod` object.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>CoreDID</code>](#CoreDID) | 
+
+<a name="VerificationMethod+type"></a>
+
+### verificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
+Returns a copy of the `VerificationMethod` type.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+setType"></a>
+
+### verificationMethod.setType(type_)
+Sets the `VerificationMethod` type.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| type_ | [<code>MethodType</code>](#MethodType) | 
+
+<a name="VerificationMethod+data"></a>
+
+### verificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
+Returns a copy of the `VerificationMethod` public key data.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+setData"></a>
+
+### verificationMethod.setData(data)
+Sets `VerificationMethod` public key data.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| data | [<code>MethodData</code>](#MethodData) | 
+
+<a name="VerificationMethod+properties"></a>
+
+### verificationMethod.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Get custom properties of the Verification Method.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+setPropertyUnchecked"></a>
+
+### verificationMethod.setPropertyUnchecked(key, value)
+Adds a custom property to the Verification Method.
+If the value is set to `null`, the custom property will be removed.
+
+### WARNING
+This method can overwrite existing properties like `id` and result
+in an invalid Verification Method.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="VerificationMethod+toJSON"></a>
+
+### verificationMethod.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+clone"></a>
+
+### verificationMethod.clone() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Deep clones the object.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod.fromJSON"></a>
+
+### VerificationMethod.fromJSON(json) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
 | Param | Type |
 | --- | --- |
@@ -4063,6 +3691,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
@@ -4148,10 +3780,6 @@ Return after the first error occurs.
 <a name="KeyType"></a>
 
 ## KeyType
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 
