@@ -509,6 +509,7 @@ impl From<IotaDocument> for CoreDocument {
   }
 }
 
+// TODO: Do we still want something like the commented From implementation below?
 /*
 impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
   fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
@@ -968,5 +969,46 @@ mod tests {
 "#;
     let corrected_deserialization_result = IotaDocument::from_json(JSON_DOC_CORRECT_CONTROLLER_ID);
     assert!(corrected_deserialization_result.is_ok());
+  }
+
+  #[test]
+  fn controller_iterator_without_controller() {
+    const DOC_JSON: &str = r#"
+    {
+      "doc": {
+        "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "meta": {
+        "created": "2022-08-31T09:33:31Z",
+        "updated": "2022-08-31T09:33:31Z"
+      }
+    }
+    "#;
+
+    let doc = IotaDocument::from_json(DOC_JSON).unwrap();
+    assert!(doc.controller().next().is_none());
+  }
+
+  #[test]
+  fn controller_iterator_with_controller() {
+    const DOC_JSON: &str = r#"
+  {
+    "doc": {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343"
+    },
+    "meta": {
+      "created": "2023-01-25T15:48:09Z",
+      "updated": "2023-01-25T15:48:09Z",
+      "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
+      "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+    }
+  }
+  "#;
+    let doc = IotaDocument::from_json(DOC_JSON).unwrap();
+    let expected_controller =
+      IotaDID::parse("did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343").unwrap();
+    let controllers: Vec<&IotaDID> = doc.controller().collect();
+    assert_eq!(&controllers, &[&expected_controller]);
   }
 }
