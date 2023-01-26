@@ -27,7 +27,6 @@ use super::validation_options::StatusCheck;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
-use super::ValidatorDocument;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -210,6 +209,8 @@ impl CredentialValidator {
     issuer: &DOC,
     status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
+    use crate::revocation::RevocationDocumentExt;
+
     let issuer_service_url: identity_did::DIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.

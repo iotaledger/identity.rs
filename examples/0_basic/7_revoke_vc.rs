@@ -30,7 +30,6 @@ use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
-use identity_iota::document::Document;
 use identity_iota::document::Service;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;

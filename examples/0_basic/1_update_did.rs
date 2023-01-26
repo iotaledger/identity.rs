@@ -11,7 +11,6 @@ use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
-use identity_iota::document::Document;
 use identity_iota::document::Service;
 use identity_iota::iota::block::address::Address;
 use identity_iota::iota::block::output::RentStructure;

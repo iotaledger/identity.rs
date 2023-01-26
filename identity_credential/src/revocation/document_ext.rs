@@ -23,6 +23,20 @@ pub trait RevocationDocumentExt: private::Sealed {
   fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>;
+
+  // TODO: Should we just make this visible?
+  #[doc(hidden)]
+  /// Extracts the `RevocationBitmap` from the referenced service in the DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the referenced service is not found, or is not a
+  /// valid `RevocationBitmap2022` service.
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_document::utils::DIDUrlQuery<'_>,
+  ) -> crate::revocation::RevocationResult<RevocationBitmap>;
 }
 
 mod private {
@@ -54,6 +68,18 @@ impl RevocationDocumentExt for CoreDocument {
       }
     })
   }
+
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_document::utils::DIDUrlQuery<'_>,
+  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
+    self
+      .resolve_service(query)
+      .ok_or(crate::revocation::RevocationError::InvalidService(
+        "revocation bitmap service not found",
+      ))
+      .and_then(RevocationBitmap::try_from)
+  }
 }
 
 fn update_revocation_bitmap<'query, 'me, F, Q>(
@@ -84,7 +110,6 @@ mod tests {
   use identity_core::common::Object;
   use identity_core::convert::FromJson;
   use identity_did::DID;
-  use identity_document::document::Document;
 
   const START_DOCUMENT_JSON: &str = r#"{
         "id": "did:example:1234",

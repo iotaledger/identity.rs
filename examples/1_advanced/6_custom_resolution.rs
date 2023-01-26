@@ -6,9 +6,9 @@ use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
 use identity_iota::core::FromJson;
 use identity_iota::core::ToJson;
-use identity_iota::credential::AbstractThreadSafeValidatorDocument;
 use identity_iota::crypto::KeyPair as IotaKeyPair;
 use identity_iota::did::CoreDID;
+use identity_iota::did::DID;
 use identity_iota::document::CoreDocument;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
@@ -20,12 +20,13 @@ use iota_client::Client;
 
 /// Demonstrates how to set up a resolver using custom handlers.
 ///
-/// NOTE: Since both `IotaDocument` and `CoreDocument` implement `Into<CoreDocument>` we could have used
+/// NOTE: Since both `IotaDocument` and `FooDocument` implement `Into<CoreDocument>` we could have used
 /// Resolver<CoreDocument> in this example and just worked with `CoreDocument` representations throughout.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // Create a method agnostic resolver and attach handlers for the "foo" and "iota" methods.
-  let mut resolver: Resolver = Resolver::new();
+  // Create a resolver returning an enum of the documents we are interested in and attach handlers for the "foo" and
+  // "iota" methods.
+  let mut resolver: Resolver<Document> = Resolver::new();
 
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
@@ -49,35 +50,82 @@ async fn main() -> anyhow::Result<()> {
   let iota_did: IotaDID = iota_document.id().clone();
 
   // Resolve did_foo to get an abstract document.
-  let did_foo_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&did_foo).await?;
+  let did_foo_doc: Document = resolver.resolve(&did_foo).await?;
 
   // Resolve iota_did to get an abstract document.
-  let iota_doc: AbstractThreadSafeValidatorDocument = resolver.resolve(&iota_did).await?;
+  let iota_doc: Document = resolver.resolve(&iota_did).await?;
 
-  // These documents are mainly meant for validating credentials and presentations, but one can also attempt to cast
-  // them to concrete document types.
+  // The Resolver is mainly meant for validating presentations, but here we will just
+  // check that the resolved documents match our expectations.
 
-  let did_foo_doc: CoreDocument = *did_foo_doc
-    .into_any()
-    .downcast::<CoreDocument>()
-    .expect("downcasting to the return type of the did:foo handler should be fine");
+  let Document::Foo(did_foo_document) = did_foo_doc else {
+    anyhow::bail!("expected a foo DID document when resolving a foo DID");
+  };
 
-  println!("Resolved DID foo document: {}", did_foo_doc.to_json_pretty()?);
+  println!(
+    "Resolved DID foo document: {}",
+    did_foo_document.as_ref().to_json_pretty()?
+  );
 
-  let iota_doc: IotaDocument = *iota_doc
-    .into_any()
-    .downcast::<IotaDocument>()
-    .expect("downcasting to the return type of the iota handler should be fine");
-  println!("Resolved IOTA DID document: {}", iota_doc.to_json_pretty()?);
+  let Document::Iota(iota_document) = iota_doc else {
+    anyhow::bail!("expected an IOTA DID document when resolving an IOTA DID")
+  };
+
+  println!("Resolved IOTA DID document: {}", iota_document.to_json_pretty()?);
 
   Ok(())
 }
 
-/// Resolve a did:foo to a DID document.
-async fn resolve_did_foo(did: CoreDID) -> anyhow::Result<CoreDocument> {
-  Ok(
-    CoreDocument::from_json(&format!(
-      r#"{{
+// Type safe representation of the imaginary of a document adhering to the imaginary "foo" method.
+struct FooDocument(CoreDocument);
+impl FooDocument {
+  fn new(document: CoreDocument) -> anyhow::Result<Self> {
+    if document.id().method() == "foo" {
+      Ok(Self(document))
+    } else {
+      anyhow::bail!("cannot construct foo document: incorrect method")
+    }
+  }
+}
+impl AsRef<CoreDocument> for FooDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    &self.0
+  }
+}
+impl From<FooDocument> for CoreDocument {
+  fn from(value: FooDocument) -> Self {
+    value.0
+  }
+}
+// Enum of the document types we want to handle.
+enum Document {
+  Foo(FooDocument),
+  Iota(IotaDocument),
+}
+impl From<FooDocument> for Document {
+  fn from(value: FooDocument) -> Self {
+    Self::Foo(value)
+  }
+}
+impl From<IotaDocument> for Document {
+  fn from(value: IotaDocument) -> Self {
+    Self::Iota(value)
+  }
+}
+
+impl AsRef<CoreDocument> for Document {
+  fn as_ref(&self) -> &CoreDocument {
+    match self {
+      Self::Foo(doc) => doc.as_ref(),
+      Self::Iota(doc) => doc.as_ref(),
+    }
+  }
+}
+
+/// Resolve a did to a DID document if the did method is "foo".
+async fn resolve_did_foo(did: CoreDID) -> anyhow::Result<FooDocument> {
+  let doc = CoreDocument::from_json(&format!(
+    r#"{{
       "id": "{did}",
       "verificationMethod": [
         {{
@@ -88,7 +136,7 @@ async fn resolve_did_foo(did: CoreDID) -> anyhow::Result<CoreDocument> {
         }}
       ]
       }}"#,
-    ))
-    .unwrap(),
-  )
+  ))
+  .unwrap();
+  FooDocument::new(doc)
 }

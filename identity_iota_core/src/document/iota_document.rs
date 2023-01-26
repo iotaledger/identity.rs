@@ -20,7 +20,6 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
 use identity_document::document::CoreDocument;
-use identity_document::document::Document;
 use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
 use identity_document::verifiable::DocumentSigner;
@@ -276,6 +275,27 @@ impl IotaDocument {
     self.document.resolve_method_mut(query, scope)
   }
 
+  /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
+  // services whose ids are of the form <did different from this document's>#<fragment>.
+  pub fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.document.resolve_service(query)
+  }
+
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the
+  /// provided `query` and the verification relationship specified by `scope` if present.
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
+  // whose ids are of the form <did different from this document's>#<fragment>.
+  pub fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.document.resolve_method(query, scope)
+  }
+
   // ===========================================================================
   // Signatures
   // ===========================================================================
@@ -313,6 +333,20 @@ impl IotaDocument {
       .options(options)
       .sign(data)
       .map_err(|err| Error::SigningError(err.into()))
+  }
+
+  /// Verifies the signature of the provided `data` was created using a verification method
+  /// in this DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, data
+  /// serialization fails, or the verification operation fails.
+  pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_document::Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    self.document.verify_data(data, options)
   }
 
   // ===========================================================================
@@ -429,34 +463,6 @@ mod client_document {
 impl AsRef<CoreDocument> for IotaDocument {
   fn as_ref(&self) -> &CoreDocument {
     &self.document
-  }
-}
-impl Document for IotaDocument {
-  type D = CoreDID;
-
-  fn id(&self) -> &Self::D {
-    self.document.id()
-  }
-
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.document.resolve_service(query)
-  }
-
-  fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.document.resolve_method(query, scope)
-  }
-
-  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_document::Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    self.document.verify_data(data, options)
   }
 }
 

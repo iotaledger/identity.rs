@@ -24,7 +24,6 @@ use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Verifier;
 use serde::Serializer;
 
-use crate::document::Document;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
@@ -731,6 +730,16 @@ impl CoreDocument {
     }
   }
 
+  /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
+  // services whose ids are of the form <did different from this document's>#<fragment>.
+  pub fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.service().query(query.into())
+  }
+
   #[doc(hidden)]
   pub fn resolve_method_ref<'a>(&'a self, method_ref: &'a MethodRef) -> Option<&'a VerificationMethod> {
     match method_ref {
@@ -952,38 +961,6 @@ impl CoreDocument {
 impl AsRef<CoreDocument> for CoreDocument {
   fn as_ref(&self) -> &CoreDocument {
     self
-  }
-}
-impl Document for CoreDocument {
-  type D = CoreDID;
-
-  fn id(&self) -> &Self::D {
-    CoreDocument::id(self)
-  }
-
-  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
-  // services whose ids are of the form <did different from this document's>#<fragment>.
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.service().query(query.into())
-  }
-
-  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
-  // methods whose ids are of the form <did different from this document's>#<fragment>.
-  fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    CoreDocument::resolve_method(self, query, scope)
-  }
-
-  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    CoreDocument::verify_data(self, data, options)
   }
 }
 
