@@ -95,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
   // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
   let _credential_json: String = credential.to_json()?;
 
-  println!("Credential JSON > {:#}", credential);
+  println!("Credential JSON > {credential:#}");
 
   Ok(())
 }

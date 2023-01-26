@@ -273,8 +273,7 @@ async fn handler_not_found(handler: &mut DidCommAgent, request: InboundRequest) 
             // The assumption is that DID authentication is done before this point, so this is not
             // considered an information leak, e.g. to enumerate thread ids.
             Err(RemoteSendError::UnexpectedRequest(format!(
-              "thread id `{}` not found",
-              thread_id
+              "thread id `{thread_id}` not found"
             )))
           }
         }

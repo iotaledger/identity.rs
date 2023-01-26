@@ -86,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the updated Alias Output.
   let updated: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
-  println!("Updated DID document: {:#}", updated);
+  println!("Updated DID document: {updated:#}");
 
   Ok(())
 }
