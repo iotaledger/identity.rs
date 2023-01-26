@@ -13,7 +13,6 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_did::CoreDID;
 use serde::Serialize;
-use std::collections::HashSet;
 
 type DomainLinkageValidationResult = Result<(), DomainLinkageValidationError>;
 
@@ -79,13 +78,6 @@ impl DomainLinkageValidator {
     domain: Url,
     validation_options: &CredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
-    credential
-      .check_structure()
-      .map_err(|err| DomainLinkageValidationError {
-        cause: DomainLinkageValidationErrorCause::CredentialValidationError,
-        source: Some(Box::new(err)),
-      })?;
-
     let issuer_did: CoreDID =
       CoreDID::parse(credential.issuer.url().to_string()).map_err(|err| DomainLinkageValidationError {
         cause: DomainLinkageValidationErrorCause::InvalidIssuer,
@@ -106,32 +98,17 @@ impl DomainLinkageValidator {
       });
     }
 
+    // Validate type.
     match &credential.types {
       OneOrMany::Many(types) => {
-        if types.len() != 2 {
-          Err(DomainLinkageValidationError {
+        if !types
+          .iter()
+          .any(|type_| type_ == &DomainLinkageConfiguration::domain_linkage_type())
+        {
+          return Err(DomainLinkageValidationError {
             cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
             source: None,
-          })?;
-        }
-        let type_1 = types.get(0).ok_or(DomainLinkageValidationError {
-          cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
-          source: None,
-        })?;
-        let type_2: &String = types.get(1).ok_or(DomainLinkageValidationError {
-          cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
-          source: None,
-        })?;
-        let expected_types: HashSet<&str> = HashSet::from([
-          Credential::<T>::base_type(),
-          DomainLinkageConfiguration::domain_linkage_type(),
-        ]);
-        let types: HashSet<&str> = HashSet::from([type_1.as_str(), type_2.as_str()]);
-        if !types.eq(&expected_types) {
-          Err(DomainLinkageValidationError {
-            cause: DomainLinkageValidationErrorCause::InvalidTypeProperty,
-            source: None,
-          })?;
+          });
         }
       }
       OneOrMany::One(_) => {
@@ -142,77 +119,58 @@ impl DomainLinkageValidator {
       }
     };
 
-    match &credential.credential_subject {
-      OneOrMany::One(credential_subject) => {
-        match &credential_subject.id {
-          None => {
-            return Err(DomainLinkageValidationError {
-              cause: DomainLinkageValidationErrorCause::MissingSubjectId,
-              source: None,
-            });
-          }
-          Some(id) => match CoreDID::parse(id.to_string()) {
-            Ok(subject_did) => {
-              if issuer_did != subject_did {
-                return Err(DomainLinkageValidationError {
-                  cause: DomainLinkageValidationErrorCause::IssuerSubjectMismatch,
-                  source: None,
-                });
-              }
-            }
-            Err(_) => {
-              return Err(DomainLinkageValidationError {
-                cause: DomainLinkageValidationErrorCause::InvalidSubjectId,
-                source: None,
-              });
-            }
-          },
-        }
+    // Extract credential subject.
+    let OneOrMany::One(ref credential_subject) = credential.credential_subject else {
+      return Err(DomainLinkageValidationError {
+        cause: DomainLinkageValidationErrorCause::MultipleCredentialSubjects,
+        source: None,
+      });
+    };
 
-        let origin: &str = credential_subject
-          .properties
-          .get("origin")
-          .ok_or(DomainLinkageValidationError {
-            cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
-            source: None,
-          })?
-          .as_str()
-          .ok_or(DomainLinkageValidationError {
-            cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
-            source: None,
-          })?;
-
-        let origin_url: Url = match Url::parse(origin) {
-          Ok(url) => url,
-          Err(identity_core::Error::InvalidUrl(url::ParseError::RelativeUrlWithoutBase)) => {
-            match Url::parse("https://".to_owned() + origin) {
-              Ok(url) => url,
-              Err(err) => {
-                return Err(DomainLinkageValidationError {
-                  cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
-                  source: Some(Box::new(err)),
-                });
-              }
-            }
-          }
-          Err(err) => {
-            return Err(DomainLinkageValidationError {
-              cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
-              source: Some(Box::new(err)),
-            });
-          }
-        };
-
-        if origin_url.origin() != domain.origin() {
-          return Err(DomainLinkageValidationError {
-            cause: DomainLinkageValidationErrorCause::OriginMismatch,
-            source: None,
-          });
-        }
-      }
-      OneOrMany::Many(_) => {
+    // Validate credential subject.
+    {
+      let subject_id = credential_subject.id.as_deref().ok_or(DomainLinkageValidationError {
+        cause: DomainLinkageValidationErrorCause::MissingSubjectId,
+        source: None,
+      })?;
+      let subject_did = CoreDID::parse(subject_id.as_str()).map_err(|_| DomainLinkageValidationError {
+        cause: DomainLinkageValidationErrorCause::InvalidSubjectId,
+        source: None,
+      })?;
+      if issuer_did != subject_did {
         return Err(DomainLinkageValidationError {
-          cause: DomainLinkageValidationErrorCause::MultipleCredentialSubjects,
+          cause: DomainLinkageValidationErrorCause::IssuerSubjectMismatch,
+          source: None,
+        });
+      }
+    }
+
+    // Extract and validate origin.
+    {
+      let origin: &str = credential_subject
+        .properties
+        .get("origin")
+        .and_then(|value| value.as_str())
+        .ok_or(DomainLinkageValidationError {
+          cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
+          source: None,
+        })?;
+      let origin_url: Url = match Url::parse(origin) {
+        Ok(url) => Ok(url),
+        Err(identity_core::Error::InvalidUrl(url::ParseError::RelativeUrlWithoutBase)) => {
+          Url::parse("https://".to_owned() + origin).map_err(|err| DomainLinkageValidationError {
+            cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
+            source: Some(Box::new(err)),
+          })
+        }
+        Err(other_error) => Err(DomainLinkageValidationError {
+          cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
+          source: Some(Box::new(other_error)),
+        }),
+      }?;
+      if origin_url.origin() != domain.origin() {
+        return Err(DomainLinkageValidationError {
+          cause: DomainLinkageValidationErrorCause::OriginMismatch,
           source: None,
         });
       }
@@ -324,10 +282,7 @@ mod tests {
       url_foo(),
       &CredentialValidationOptions::default(),
     );
-    assert!(matches!(
-      validation_result.unwrap_err().cause,
-      DomainLinkageValidationErrorCause::InvalidTypeProperty
-    ));
+    assert!(validation_result.is_ok());
   }
 
   #[test]

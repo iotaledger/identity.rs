@@ -3,15 +3,9 @@
 
 use crate::credential::Credential;
 use crate::error::Result;
-use futures::StreamExt;
 use identity_core::common::Context;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::convert::FromJson;
-#[cfg(feature = "domain-linkage-fetch")]
-use reqwest::redirect::Policy;
-#[cfg(feature = "domain-linkage-fetch")]
-use reqwest::Client;
 use serde::Deserialize;
 use std::fmt::Display;
 use std::fmt::Formatter;
@@ -48,7 +42,7 @@ impl __DomainLinkageConfiguration {
   /// Validates the semantic structure.
   fn check_structure(&self) -> Result<()> {
     if &self.context != DomainLinkageConfiguration::well_known_context() {
-      return Err(DomainLinkageError("invalid context".into()));
+      return Err(DomainLinkageError("invalid JSON-LD context".into()));
     }
     if self.linked_dids.is_empty() {
       return Err(DomainLinkageError("empty linked_dids list".into()));
@@ -89,48 +83,6 @@ impl DomainLinkageConfiguration {
     "DomainLinkageCredential"
   }
 
-  /// Fetches the the DID Configuration resource via a GET request at the
-  /// well-known location: "`domain`/.well-known/did-configuration.json".
-  #[cfg(feature = "domain-linkage-fetch")]
-  pub async fn fetch_configuration(mut domain: Url) -> Result<DomainLinkageConfiguration> {
-    if domain.scheme() != "https" {
-      return Err(DomainLinkageError("domain` does not use `https` protocol".into()));
-    }
-    domain.set_path(".well-known/did-configuration.json");
-
-    let client: Client = reqwest::ClientBuilder::new()
-      .https_only(true)
-      .redirect(Policy::none())
-      .build()
-      .map_err(|err| DomainLinkageError(Box::new(err)))?;
-
-    // We use a stream so we can limit the size of the response to 1 MiB.
-    let mut stream: _ = client
-      .get(domain.to_string())
-      .send()
-      .await
-      .map_err(|err| DomainLinkageError(Box::new(err)))?
-      .bytes_stream();
-
-    let mut json: Vec<u8> = Vec::new();
-    while let Some(item) = stream.next().await {
-      match item {
-        Ok(bytes) => {
-          json.extend(bytes);
-          if json.len() > 1_048_576 {
-            return Err(DomainLinkageError(
-              "domain linkage configuration can not exceed 1 MiB".into(),
-            ));
-          }
-        }
-        Err(err) => return Err(DomainLinkageError(Box::new(err))),
-      }
-    }
-    let domain_linkage_configuration: DomainLinkageConfiguration =
-      DomainLinkageConfiguration::from_json_slice(&json).map_err(|err| DomainLinkageError(Box::new(err)))?;
-    Ok(domain_linkage_configuration)
-  }
-
   /// List of Domain Linkage Credentials.
   pub fn linked_dids(&self) -> &Vec<Credential> {
     &self.0.linked_dids
@@ -144,6 +96,64 @@ impl DomainLinkageConfiguration {
   /// List of domain Linkage Credentials.
   pub fn linked_dids_mut(&mut self) -> &mut Vec<Credential> {
     &mut self.0.linked_dids
+  }
+}
+
+#[cfg(feature = "domain-linkage-fetch")]
+mod __fetch_configuration {
+  use crate::credential::DomainLinkageConfiguration;
+  use crate::error::Result;
+  use crate::Error::DomainLinkageError;
+  use futures::StreamExt;
+  use identity_core::common::Url;
+  use identity_core::convert::FromJson;
+  use reqwest::redirect::Policy;
+  use reqwest::Client;
+
+  impl DomainLinkageConfiguration {
+    /// Fetches the the DID Configuration resource via a GET request at the
+    /// well-known location: "`domain`/.well-known/did-configuration.json".
+    ///
+    /// The maximum size of the domain linkage configuration that can be retrieved with this method is 1 MiB.
+    /// To download larger ones, use your own HTTP client.
+    pub async fn fetch_configuration(mut domain: Url) -> Result<DomainLinkageConfiguration> {
+      if domain.scheme() != "https" {
+        return Err(DomainLinkageError("domain` does not use `https` protocol".into()));
+      }
+      domain.set_path(".well-known/did-configuration.json");
+
+      let client: Client = reqwest::ClientBuilder::new()
+        .https_only(true)
+        .redirect(Policy::none())
+        .build()
+        .map_err(|err| DomainLinkageError(Box::new(err)))?;
+
+      // We use a stream so we can limit the size of the response to 1 MiB.
+      let mut stream: _ = client
+        .get(domain.to_string())
+        .send()
+        .await
+        .map_err(|err| DomainLinkageError(Box::new(err)))?
+        .bytes_stream();
+
+      let mut json: Vec<u8> = Vec::new();
+      while let Some(item) = stream.next().await {
+        match item {
+          Ok(bytes) => {
+            json.extend(bytes);
+            if json.len() > 1_048_576 {
+              return Err(DomainLinkageError(
+                "domain linkage configuration can not exceed 1 MiB".into(),
+              ));
+            }
+          }
+          Err(err) => return Err(DomainLinkageError(Box::new(err))),
+        }
+      }
+      let domain_linkage_configuration: DomainLinkageConfiguration =
+        DomainLinkageConfiguration::from_json_slice(&json).map_err(|err| DomainLinkageError(Box::new(err)))?;
+      Ok(domain_linkage_configuration)
+    }
   }
 }
 

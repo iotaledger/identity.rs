@@ -70,7 +70,7 @@ where
       Ok(Self {
         service: builder
           .service_endpoint(ServiceEndpoint::One(
-            domains.head().expect("the len should be 1").clone(),
+            domains.into_iter().next().expect("the len should be 1"),
           ))
           .build()
           .map_err(|err| DomainLinkageError(Box::new(err)))?,
