@@ -6,13 +6,13 @@ import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDocument,
     IotaIdentityClient,
-    IotaService,
-    IotaVerificationMethod,
     KeyPair,
     KeyType,
     MethodRelationship,
     MethodScope,
+    Service,
     Timestamp,
+    VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
 import { API_ENDPOINT, createDid } from "../util";
@@ -40,14 +40,14 @@ export async function updateIdentity() {
 
     // Insert a new Ed25519 verification method in the DID document.
     let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new IotaVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-2");
+    let method = new VerificationMethod(document.id().toCoreDid(), keypair.type(), keypair.public(), "#key-2");
     document.insertMethod(method, MethodScope.VerificationMethod());
 
     // Attach a new method relationship to the inserted method.
     document.attachMethodRelationship(did.join("#key-2"), MethodRelationship.Authentication);
 
     // Add a new Service.
-    const service: IotaService = new IotaService({
+    const service: Service = new Service({
         id: did.join("#linked-domain"),
         type: "LinkedDomains",
         serviceEndpoint: "https://iota.org/",
@@ -56,7 +56,7 @@ export async function updateIdentity() {
     document.setMetadataUpdated(Timestamp.nowUTC());
 
     // Remove a verification method.
-    let originalMethod = document.resolveMethod("key-1") as IotaVerificationMethod;
+    let originalMethod = document.resolveMethod("key-1") as VerificationMethod;
     document.removeMethod(originalMethod?.id());
 
     // Resolve the latest output and update it with the given document.

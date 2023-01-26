@@ -7,10 +7,10 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    IotaVerificationMethod,
     KeyPair,
     KeyType,
     MethodScope,
+    VerificationMethod,
 } from "@iota/identity-wasm/node";
 import {
     AddressTypes,
@@ -100,8 +100,8 @@ export async function didControlsDid() {
     // Add a verification method to the subsidiary.
     // This only serves as an example for updating the subsidiary DID.
     const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-    const method: IotaVerificationMethod = new IotaVerificationMethod(
-        subsidiaryDocument.id(),
+    const method: VerificationMethod = new VerificationMethod(
+        subsidiaryDocument.id().toCoreDid(),
         KeyType.Ed25519,
         keyPair.public(),
         "#key-2",

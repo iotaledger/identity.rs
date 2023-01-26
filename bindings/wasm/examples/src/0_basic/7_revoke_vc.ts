@@ -10,11 +10,11 @@ import {
     FailFast,
     IotaDocument,
     IotaIdentityClient,
-    IotaService,
-    IotaVerificationMethod,
     ProofOptions,
     Resolver,
     RevocationBitmap,
+    Service,
+    VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
 import { API_ENDPOINT, createDid } from "../util";
@@ -53,7 +53,7 @@ export async function revokeVC() {
     const revocationBitmap = new RevocationBitmap();
 
     // Add the revocation bitmap to the DID Document of the issuer as a service.
-    const service: IotaService = new IotaService({
+    const service: Service = new Service({
         id: issuerDocument.id().join("#my-revocation-service"),
         type: RevocationBitmap.type(),
         serviceEndpoint: revocationBitmap.toEndpoint(),
@@ -130,7 +130,7 @@ export async function revokeVC() {
 
     // By removing the verification method, that signed the credential, from the issuer's DID document,
     // we effectively revoke the credential, as it will no longer be possible to validate the signature.
-    let originalMethod = issuerDocument.resolveMethod("#key-1") as IotaVerificationMethod;
+    let originalMethod = issuerDocument.resolveMethod("#key-1") as VerificationMethod;
     await issuerDocument.removeMethod(originalMethod.id());
 
     // Publish the changes.
