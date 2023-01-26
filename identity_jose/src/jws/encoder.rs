@@ -47,12 +47,7 @@ struct Flatten<'a, 'b> {
 // =============================================================================
 
 // TODO: Use type alias for keyId instead of raw string.
-pub struct Encoder<'a, FUN, FUT, ERR>
-where
-  FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
-  FUT: Future<Output = std::result::Result<String, ERR>> + Send,
-  ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
-{
+pub struct Encoder<'a> {
   /// The output format of the encoded token.
   format: JwsFormat,
   /// Content validation rules for unencoded content using the compact format.
@@ -63,23 +58,15 @@ where
   detached: bool,
   /// Per-recipient configuration.
   recipients: Vec<Recipient<'a>>,
-  /// The function to sign with. Returns the signature as a base64-encoded string.
-  sign: FUN,
 }
 
-impl<'a, FUN, FUT, ERR> Encoder<'a, FUN, FUT, ERR>
-where
-  FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
-  FUT: Future<Output = std::result::Result<String, ERR>> + Send,
-  ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
-{
-  pub fn new(sign: FUN) -> Self {
+impl<'a> Encoder<'a> {
+  pub fn new() -> Self {
     Self {
       format: JwsFormat::Compact,
       charset: CharSet::Default,
       detached: false,
       recipients: Vec::new(),
-      sign,
     }
   }
 
@@ -103,16 +90,24 @@ where
     self
   }
 
-  pub async fn encode_serde<T>(&self, claims: &T) -> Result<String>
+  pub async fn encode_serde<T, FUN, FUT, ERR>(&self, sign_fn: &FUN, claims: &T) -> Result<String>
   where
     T: Serialize,
+    FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
+    FUT: Future<Output = std::result::Result<String, ERR>> + Send,
+    ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     self
-      .encode(&serde_json::to_vec(claims).map_err(Error::InvalidJson)?)
+      .encode(sign_fn, &serde_json::to_vec(claims).map_err(Error::InvalidJson)?)
       .await
   }
 
-  pub async fn encode(&self, claims: &[u8]) -> Result<String> {
+  pub async fn encode<FUN, FUT, ERR>(&self, sign_fn: &FUN, claims: &[u8]) -> Result<String>
+  where
+    FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
+    FUT: Future<Output = std::result::Result<String, ERR>> + Send,
+    ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  {
     if self.recipients.is_empty() {
       return Err(Error::SignatureCreationError("Missing Recipients".into()));
     }
@@ -137,7 +132,7 @@ where
 
     let mut encoded: Vec<Signature<'a>> = Vec::with_capacity(self.recipients.len());
     for recipient in self.recipients.iter().copied() {
-      encoded.push(self.encode_recipient(payload, recipient).await?);
+      encoded.push(self.encode_recipient(sign_fn, payload, recipient).await?);
     }
     debug_assert_eq!(encoded.len(), self.recipients.len());
 
@@ -221,11 +216,21 @@ where
     }
   }
 
-  async fn encode_recipient<'b>(&self, payload: &[u8], recipient: Recipient<'b>) -> Result<Signature<'b>> {
+  async fn encode_recipient<'b, FUN, FUT, ERR>(
+    &self,
+    sign_fn: &FUN,
+    payload: &[u8],
+    recipient: Recipient<'b>,
+  ) -> Result<Signature<'b>>
+  where
+    FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
+    FUT: Future<Output = std::result::Result<String, ERR>> + Send,
+    ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  {
     let protected: Option<String> = recipient.protected.map(jwu::encode_b64_json).transpose()?;
     let header: &[u8] = protected.as_deref().map(str::as_bytes).unwrap_or_default();
     let message: Vec<u8> = jwu::create_message(header, payload);
-    let signature: String = (self.sign)(recipient.protected.cloned(), recipient.unprotected.cloned(), message)
+    let signature: String = (sign_fn)(recipient.protected.cloned(), recipient.unprotected.cloned(), message)
       .await
       .map_err(|err| Error::SignatureCreationError(err.into()))?;
 

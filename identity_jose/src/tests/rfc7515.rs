@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::jwk::Jwk;
+use crate::jws;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
+use crate::jws::Recipient;
 use crate::tests::es256;
 use crate::tests::hs256;
 
@@ -24,18 +26,21 @@ async fn test_rfc7515() {
     let jwk: Jwk = serde_json::from_str(tv.private_key).unwrap();
 
     if tv.deterministic {
+      let encoder: jws::Encoder = jws::Encoder::new().recipient(Recipient::new().protected(&header));
+
       let encoded: String = match header.alg() {
-        JwsAlgorithm::HS256 => hs256::encode(tv.claims, &header, &jwk).await,
-        JwsAlgorithm::ES256 => es256::encode(tv.claims, &header, &jwk).await,
+        JwsAlgorithm::HS256 => hs256::encode(&encoder, tv.claims, &jwk).await,
+        JwsAlgorithm::ES256 => es256::encode(&encoder, tv.claims, &jwk).await,
         other => unimplemented!("{other}"),
       };
 
       assert_eq!(encoded.as_bytes(), tv.encoded);
     }
 
+    let decoder: jws::Decoder = jws::Decoder::new();
     let decoded: _ = match header.alg() {
-      JwsAlgorithm::HS256 => hs256::decode(tv.encoded, &jwk),
-      JwsAlgorithm::ES256 => es256::decode(tv.encoded, &jwk),
+      JwsAlgorithm::HS256 => hs256::decode(&decoder, tv.encoded, &jwk),
+      JwsAlgorithm::ES256 => es256::decode(&decoder, tv.encoded, &jwk),
       other => unimplemented!("{other}"),
     };
 

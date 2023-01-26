@@ -1,15 +1,15 @@
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOct;
-use crate::jws;
+use crate::jws::Decoder;
+use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::Recipient;
 use crate::jws::Token;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 use crypto::hashes::sha::SHA256_LEN;
 
-pub fn expand_hmac_jwk(jwk: &Jwk, key_len: usize) -> Vec<u8> {
+pub(crate) fn expand_hmac_jwk(jwk: &Jwk, key_len: usize) -> Vec<u8> {
   let params: &JwkParamsOct = jwk.try_oct_params().unwrap();
   let k: Vec<u8> = jwu::decode_b64(&params.k).unwrap();
 
@@ -20,7 +20,7 @@ pub fn expand_hmac_jwk(jwk: &Jwk, key_len: usize) -> Vec<u8> {
   }
 }
 
-pub async fn encode(claims: &[u8], header: &JwsHeader, jwk: &Jwk) -> String {
+pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> String {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
   let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
@@ -36,14 +36,10 @@ pub async fn encode(claims: &[u8], header: &JwsHeader, jwk: &Jwk) -> String {
     }
   };
 
-  jws::Encoder::new(sign_fn)
-    .recipient(Recipient::new().protected(header))
-    .encode(claims)
-    .await
-    .unwrap()
+  encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub fn decode<'a>(encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
+pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
   let verify_fn = move |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
@@ -63,5 +59,5 @@ pub fn decode<'a>(encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
     }
   };
 
-  jws::Decoder::new(verify_fn).decode(encoded).unwrap()
+  decoder.decode(&verify_fn, encoded).unwrap()
 }

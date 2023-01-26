@@ -59,15 +59,9 @@ struct Flatten<'a> {
 // =============================================================================
 // =============================================================================
 
-pub struct Decoder<'b, FUN, ERR>
-where
-  FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
-  ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
-{
+pub struct Decoder<'b> {
   /// The expected format of the encoded token.
   format: JwsFormat,
-  /// The function used for signature verification.
-  verify: FUN,
   /// A list of permitted signature algorithms.
   algs: Option<Vec<JwsAlgorithm>>,
   /// A list of permitted extension parameters.
@@ -78,15 +72,11 @@ where
   payload: Option<&'b [u8]>,
 }
 
-impl<'a, 'b, FUN, ERR> Decoder<'b, FUN, ERR>
-where
-  FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
-  ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
-{
-  pub fn new(verify: FUN) -> Self {
+impl<'a, 'b> Decoder<'b> {
+  pub fn new() -> Self {
     Self {
       format: JwsFormat::Compact,
-      verify,
+
       algs: None,
       crits: None,
       payload: None,
@@ -113,10 +103,14 @@ where
     self
   }
 
-  pub fn decode(&self, data: &'b [u8]) -> Result<Token<'b>> {
+  pub fn decode<FUN, ERR>(&self, verify_fn: &FUN, data: &'b [u8]) -> Result<Token<'b>>
+  where
+    FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
+    ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  {
     self.expand(data, |payload, signatures| {
       for signature in signatures {
-        if let Ok(token) = self.decode_one(payload, signature) {
+        if let Ok(token) = self.decode_one(verify_fn, payload, signature) {
           return Ok(token);
         }
       }
@@ -126,7 +120,16 @@ where
     })
   }
 
-  fn decode_one(&self, payload: &'b [u8], jws_signature: JwsSignature<'a>) -> Result<Token<'b>> {
+  fn decode_one<FUN, ERR>(
+    &self,
+    verify_fn: &FUN,
+    payload: &'b [u8],
+    jws_signature: JwsSignature<'a>,
+  ) -> Result<Token<'b>>
+  where
+    FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
+    ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
 
     validate_jws_headers(protected.as_ref(), jws_signature.header.as_ref(), self.crits.as_deref())?;
@@ -143,7 +146,7 @@ where
       let message: Vec<u8> = create_message(protected_bytes, payload);
       let signature: Vec<u8> = decode_b64(jws_signature.signature)?;
 
-      (self.verify)(
+      verify_fn(
         protected.as_ref(),
         jws_signature.header.as_ref(),
         message.as_slice(),

@@ -1,10 +1,10 @@
 use crate::jwk::EcCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsEc;
-use crate::jws;
+use crate::jws::Decoder;
+use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::Recipient;
 use crate::jws::Token;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
@@ -38,7 +38,7 @@ pub(crate) fn expand_p256_jwk(jwk: &Jwk) -> (SecretKey, PublicKey) {
   (sk, pk)
 }
 
-pub(crate) async fn encode(claims: &[u8], header: &JwsHeader, jwk: &Jwk) -> String {
+pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> String {
   let (secret_key, _) = expand_p256_jwk(jwk);
 
   let signing_key = SigningKey::from(secret_key);
@@ -56,14 +56,10 @@ pub(crate) async fn encode(claims: &[u8], header: &JwsHeader, jwk: &Jwk) -> Stri
     }
   };
 
-  jws::Encoder::new(sign_fn)
-    .recipient(Recipient::new().protected(header))
-    .encode(claims)
-    .await
-    .unwrap()
+  encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
+pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
   let (_, public_key) = expand_p256_jwk(jwk);
 
   let verifying_key = VerifyingKey::from(public_key);
@@ -83,5 +79,5 @@ pub(crate) fn decode<'a>(encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
     }
   };
 
-  jws::Decoder::new(verify_fn).decode(encoded).unwrap()
+  decoder.decode(&verify_fn, encoded).unwrap()
 }
