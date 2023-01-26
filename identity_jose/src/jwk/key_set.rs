@@ -9,7 +9,6 @@ use core::slice::SliceIndex;
 use zeroize::Zeroize;
 
 use crate::jwk::Jwk;
-// use crate::lib::*;
 
 /// JSON Web Key Set.
 ///

@@ -6,10 +6,6 @@ use url::Url;
 
 use crate::error::Error;
 use crate::error::Result;
-// use crate::jwe::JweAlgorithm;
-// use crate::jwe::JweCompression;
-// use crate::jwe::JweEncryption;
-// use crate::jwe::JweHeader;
 use crate::jwk::Jwk;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
