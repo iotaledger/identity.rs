@@ -23,7 +23,7 @@ use iota_client::secret::SecretManager;
 use iota_client::Client;
 use rand::distributions::DistString;
 
-pub static API_ENDPOINT: &str = "http://localhost:14265";
+pub static API_ENDPOINT: &str = "https://api.testnet.shimmer.network/";
 pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
 
 /// Creates a DID Document and publishes it in a new Alias Output.

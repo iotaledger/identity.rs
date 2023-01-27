@@ -21,6 +21,10 @@ path = "0_basic/0_create_did.rs"
 name = "0_create_did"
 
 [[example]]
+path = "0_basic/delegated_funding.rs"
+name = "delegated_funding"
+
+[[example]]
 path = "0_basic/1_update_did.rs"
 name = "1_update_did"
 
