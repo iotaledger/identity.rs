@@ -223,7 +223,7 @@ impl DidCommAgent {
 
   #[inline(always)]
   pub(crate) fn handle_async_request(mut self, request: InboundRequest) {
-    let _ = tokio::spawn(async move {
+    tokio::spawn(async move {
       match self.state.handlers.get(&request.endpoint) {
         Some(handler) => {
           let handler: &dyn AbstractDidCommHandler = handler.as_ref();

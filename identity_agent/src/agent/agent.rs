@@ -174,7 +174,7 @@ impl Agent {
     if request.request_mode == RequestMode::Synchronous {
       self.handle_sync_request(request)
     } else {
-      let _ = tokio::spawn(async move {
+      tokio::spawn(async move {
         if let Err(error) = send_response(
           self.commander_mut(),
           Result::<(), RemoteSendError>::Err(RemoteSendError::UnexpectedRequest(
@@ -196,7 +196,7 @@ impl Agent {
 
   #[inline(always)]
   pub(crate) fn handle_sync_request(mut self, request: InboundRequest) {
-    let _ = tokio::spawn(async move {
+    tokio::spawn(async move {
       match self.state.handlers.get(&request.endpoint) {
         Some(handler) => {
           let context: RequestContext<Vec<u8>> =
