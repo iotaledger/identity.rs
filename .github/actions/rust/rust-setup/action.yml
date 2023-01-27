@@ -4,10 +4,9 @@ inputs:
   target:
     description: 'Additionally install specified target for this toolchain, ex. x86_64-apple-darwin'
     required: false
-  profile:
-    description: 'Execute rustup set profile {value} before installing the toolchain, ex. minimal'
+  components:
+    description: 'Comma-separated string of additional components to install e.g. `clippy`, `rustfmt`'
     required: false
-    default: 'minimal'
   os:
     description: 'OS of the runner, used for cache key construction.'
     required: true
@@ -44,12 +43,10 @@ runs:
       run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Install stable toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@ce8f65846d7180d2ce63b1e74483d981800b9e22
       with:
         toolchain: stable
-        override: true
-        profile: ${{ inputs.profile }}
-        target: ${{ inputs.target }}
+        targets: ${{ inputs.target }}
 
     - name: Cache cargo
       uses: actions/cache@v2.1.7
@@ -72,6 +69,8 @@ runs:
     # Allows dependencies updated on crates.io between runs to trigger storing an updated cache,
     # which hashing Cargo.toml files alone does not.
     - name: Cargo update
+      run: cargo update 
+
       uses: actions-rs/cargo@v1
       with:
         command: update
