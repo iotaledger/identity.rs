@@ -70,10 +70,8 @@ runs:
     # which hashing Cargo.toml files alone does not.
     - name: Cargo update
       run: cargo update 
-
-      uses: actions-rs/cargo@v1
-      with:
-        command: update
+      if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
+      shell: sh
 
     - name: Cache build target
       uses: actions/cache@v2.1.7
