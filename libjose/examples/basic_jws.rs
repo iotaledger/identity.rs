@@ -23,5 +23,5 @@ fn main() {
     .encode_serde(&claims)
     .unwrap();
 
-  println!("Token: {}", token);
+  println!("Token: {token}");
 }

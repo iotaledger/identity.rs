@@ -223,7 +223,7 @@ impl DidCommAgent {
 
   #[inline(always)]
   pub(crate) fn handle_async_request(mut self, request: InboundRequest) {
-    let _ = tokio::spawn(async move {
+    tokio::spawn(async move {
       match self.state.handlers.get(&request.endpoint) {
         Some(handler) => {
           let handler: &dyn AbstractDidCommHandler = handler.as_ref();
@@ -273,8 +273,7 @@ async fn handler_not_found(handler: &mut DidCommAgent, request: InboundRequest) 
             // The assumption is that DID authentication is done before this point, so this is not
             // considered an information leak, e.g. to enumerate thread ids.
             Err(RemoteSendError::UnexpectedRequest(format!(
-              "thread id `{}` not found",
-              thread_id
+              "thread id `{thread_id}` not found"
             )))
           }
         }

@@ -175,7 +175,7 @@ impl<T> FromIterator<T> for OneOrMany<T> {
       }
       this
     } else {
-      iter.into_iter().collect::<Vec<T>>().into()
+      iter.collect::<Vec<T>>().into()
     }
   }
 }

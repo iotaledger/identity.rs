@@ -124,7 +124,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Sign the Credential with the issuer's verification method.
   issuer_document.sign_data(&mut credential, key_pair.private(), "#key-1", ProofOptions::default())?;
-  println!("Credential JSON > {:#}", credential);
+  println!("Credential JSON > {credential:#}");
 
   // Validate the credential's signature using the issuer's DID Document.
   CredentialValidator::validate(
@@ -190,7 +190,7 @@ async fn main() -> anyhow::Result<()> {
     FailFast::FirstError,
   );
 
-  println!("VC validation result: {:?}", validation_result);
+  println!("VC validation result: {validation_result:?}");
   assert!(validation_result.is_err());
 
   println!("Credential successfully revoked!");

@@ -153,12 +153,9 @@ impl WasmResolver {
         let awaited_output: JsValue =
           JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
 
-        let supported_document: RustSupportedDocument = awaited_output.into_serde().map_err(|error| {
-          format!(
-            "unable to convert the resolved document into a supported DID document: {}",
-            error
-          )
-        })?;
+        let supported_document: RustSupportedDocument = awaited_output
+          .into_serde()
+          .map_err(|error| format!("unable to convert the resolved document into a supported DID document: {error}"))?;
         std::result::Result::<_, String>::Ok(AbstractValidatorDocument::from(supported_document))
       }
     };

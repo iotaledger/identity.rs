@@ -413,7 +413,7 @@ impl WasmIotaDocument {
     let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
     let alias_output: AliasOutput = AliasOutput::try_from_dto(&alias_dto, tokenSupply)
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
       })
       .wasm_result()?;
     IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
@@ -438,23 +438,21 @@ impl WasmIotaDocument {
     let block_dto: iota_types::block::BlockDto = block
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
+        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {err}"))
       })
       .wasm_result()?;
 
     let protocol_parameters_dto: ProtocolParametersDto = protocol_parameters
       .into_serde()
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {}", err)))
+      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {err}")))
       .wasm_result()?;
 
     let protocol_parameters: ProtocolParameters = ProtocolParameters::try_from(protocol_parameters_dto)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {}", err)))
+      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {err}")))
       .wasm_result()?;
 
     let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
-      .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
-      })
+      .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
       .wasm_result()?;
 
     Ok(

@@ -51,8 +51,8 @@ impl MethodData {
 impl Debug for MethodData {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
-      Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({})", inner)),
-      Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({})", inner)),
+      Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({inner})")),
+      Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({inner})")),
     }
   }
 }

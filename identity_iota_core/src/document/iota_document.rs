@@ -658,11 +658,10 @@ mod tests {
     let url1: IotaDIDUrl = document.id().to_url().join("#linked-domain").unwrap();
     let service1: IotaService = Service::from_json(&format!(
       r#"{{
-      "id":"{}",
+      "id":"{url1}",
       "type": "LinkedDomains",
       "serviceEndpoint": "https://bar.example.com"
-    }}"#,
-      url1
+    }}"#
     ))
     .unwrap();
     assert!(document.insert_service(service1.clone()).is_ok());
@@ -677,11 +676,10 @@ mod tests {
     let url2: IotaDIDUrl = document.id().to_url().join("#revocation").unwrap();
     let service2: IotaService = Service::from_json(&format!(
       r#"{{
-      "id":"{}",
+      "id":"{url2}",
       "type": "RevocationBitmap2022",
       "serviceEndpoint": "data:,blah"
-    }}"#,
-      url2
+    }}"#
     ))
     .unwrap();
     assert!(document.insert_service(service2.clone()).is_ok());
@@ -695,11 +693,10 @@ mod tests {
     // INVALID: insert service with duplicate fragment fails.
     let duplicate: IotaService = Service::from_json(&format!(
       r#"{{
-      "id":"{}",
+      "id":"{url1}",
       "type": "DuplicateService",
       "serviceEndpoint": "data:,duplicate"
-    }}"#,
-      url1
+    }}"#
     ))
     .unwrap();
     assert!(document.insert_service(duplicate.clone()).is_err());
