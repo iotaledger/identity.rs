@@ -1,6 +1,6 @@
 [package]
 name = "identity_jose"
-version = "0.1.0"
+version = "0.7.0-alpha.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"

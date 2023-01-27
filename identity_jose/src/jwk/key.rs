@@ -142,6 +142,8 @@ impl Jwk {
   }
 
   /// Sets a value for the key type parameter (kty).
+  ///
+  /// Removes any previously set `params`.
   pub fn set_kty(&mut self, value: impl Into<JwkType>) {
     self.kty = value.into();
     self.params = JwkParams::new(self.kty);
@@ -241,8 +243,12 @@ impl Jwk {
   }
 
   /// Sets the value of the custom JWK properties.
-  pub fn set_params(&mut self, value: impl Into<JwkParams>) {
-    match (self.kty, value.into()) {
+  ///
+  /// The passed `params` must be appropriate for the key type (`kty`), an error is returned otherwise.
+  ///
+  /// If you want to set `params` unchecked, use [`set_params_unchecked`](Self::set_params_unchecked).
+  pub fn set_params(&mut self, params: impl Into<JwkParams>) -> Result<()> {
+    match (self.kty, params.into()) {
       (JwkType::Ec, value @ JwkParams::Ec(_)) => {
         self.set_params_unchecked(value);
       }
@@ -256,12 +262,15 @@ impl Jwk {
         self.set_params_unchecked(value);
       }
       (_, _) => {
-        // TODO: Return an error
+        return Err(Error::InvalidParam("`params` type does not match `kty`"));
       }
     }
+    Ok(())
   }
 
-  /// Sets the value of the custom JWK properties. Does not assert valid params.
+  /// Sets the value of the custom JWK properties.
+  ///
+  /// Does not check whether the passed params are appropriate for the set key type (`kty`).
   pub fn set_params_unchecked(&mut self, value: impl Into<JwkParams>) {
     self.params = value.into();
   }

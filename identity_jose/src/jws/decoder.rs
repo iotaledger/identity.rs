@@ -20,9 +20,14 @@ use crate::jwu::validate_jws_headers;
 
 type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
 
-pub type KeyId<'a> = &'a str;
-pub type Message<'a> = &'a [u8];
-pub type Signature<'a> = &'a [u8];
+/// The protected JWS header.
+pub type DecoderProtectedHeader<'a> = &'a JwsHeader;
+/// The unprotected JWS header.
+pub type DecoderUnprotectedHeader<'a> = &'a JwsHeader;
+/// The message to sign as a slice.
+pub type DecoderMessage<'a> = &'a [u8];
+/// The signature as a slice.
+pub type DecoderSignature<'a> = &'a [u8];
 
 const COMPACT_SEGMENTS: usize = 3;
 
@@ -105,7 +110,12 @@ impl<'a, 'b> Decoder<'b> {
 
   pub fn decode<FUN, ERR>(&self, verify_fn: &FUN, data: &'b [u8]) -> Result<Token<'b>>
   where
-    FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
+    FUN: Fn(
+      Option<DecoderProtectedHeader<'_>>,
+      Option<DecoderUnprotectedHeader<'_>>,
+      DecoderMessage<'_>,
+      DecoderSignature<'_>,
+    ) -> std::result::Result<(), ERR>,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     self.expand(data, |payload, signatures| {
@@ -127,7 +137,12 @@ impl<'a, 'b> Decoder<'b> {
     jws_signature: JwsSignature<'a>,
   ) -> Result<Token<'b>>
   where
-    FUN: Fn(Option<&JwsHeader>, Option<&JwsHeader>, Message<'_>, Signature<'_>) -> std::result::Result<(), ERR>,
+    FUN: Fn(
+      Option<DecoderProtectedHeader<'_>>,
+      Option<DecoderUnprotectedHeader<'_>>,
+      DecoderMessage<'_>,
+      DecoderSignature<'_>,
+    ) -> std::result::Result<(), ERR>,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;

@@ -25,7 +25,7 @@ pub enum Error {
   MissingParam(&'static str),
   #[error("{0}")]
   InvalidContent(&'static str),
-  #[error("invalid key format `{0}`")]
+  #[error("invalid key format for type `{0}`")]
   KeyError(&'static str),
   #[error("signature creation error")]
   SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),

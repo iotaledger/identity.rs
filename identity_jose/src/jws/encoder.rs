@@ -13,6 +13,15 @@ use crate::jws::JwsHeader;
 use crate::jws::Recipient;
 use crate::jwu;
 
+/// The protected JWS header.
+pub type EncoderProtectedHeader = JwsHeader;
+/// The unprotected JWS header.
+pub type EncoderUnprotectedHeader = JwsHeader;
+/// The message to sign as a byte vector.
+pub type EncoderMessage = Vec<u8>;
+/// The base64url-encoded signature.
+pub type EncoderSignature = String;
+
 macro_rules! to_json {
   ($data:expr) => {{
     ::serde_json::to_string(&$data).map_err(Error::InvalidJson)
@@ -20,7 +29,7 @@ macro_rules! to_json {
 }
 
 #[derive(Serialize)]
-struct Signature<'a> {
+struct JwsSignature<'a> {
   #[serde(skip_serializing_if = "Option::is_none")]
   header: Option<&'a JwsHeader>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -32,7 +41,7 @@ struct Signature<'a> {
 struct General<'a> {
   #[serde(skip_serializing_if = "Option::is_none")]
   payload: Option<&'a str>,
-  signatures: Vec<Signature<'a>>,
+  signatures: Vec<JwsSignature<'a>>,
 }
 
 #[derive(Serialize)]
@@ -40,13 +49,12 @@ struct Flatten<'a, 'b> {
   #[serde(skip_serializing_if = "Option::is_none")]
   payload: Option<&'a str>,
   #[serde(flatten)]
-  signature: &'b Signature<'a>,
+  signature: &'b JwsSignature<'a>,
 }
 
 // =============================================================================
 // =============================================================================
 
-// TODO: Use type alias for keyId instead of raw string.
 pub struct Encoder<'a> {
   /// The output format of the encoded token.
   format: JwsFormat,
@@ -93,8 +101,11 @@ impl<'a> Encoder<'a> {
   pub async fn encode_serde<T, FUN, FUT, ERR>(&self, sign_fn: &FUN, claims: &T) -> Result<String>
   where
     T: Serialize,
-    FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
-    FUT: Future<Output = std::result::Result<String, ERR>> + Send,
+    FUN: Fn(Option<EncoderProtectedHeader>, Option<EncoderUnprotectedHeader>, EncoderMessage) -> FUT
+      + 'static
+      + Send
+      + Sync,
+    FUT: Future<Output = std::result::Result<EncoderSignature, ERR>> + Send,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     self
@@ -104,8 +115,11 @@ impl<'a> Encoder<'a> {
 
   pub async fn encode<FUN, FUT, ERR>(&self, sign_fn: &FUN, claims: &[u8]) -> Result<String>
   where
-    FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
-    FUT: Future<Output = std::result::Result<String, ERR>> + Send,
+    FUN: Fn(Option<EncoderProtectedHeader>, Option<EncoderUnprotectedHeader>, EncoderMessage) -> FUT
+      + 'static
+      + Send
+      + Sync,
+    FUT: Future<Output = std::result::Result<EncoderSignature, ERR>> + Send,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     if self.recipients.is_empty() {
@@ -130,7 +144,7 @@ impl<'a> Encoder<'a> {
       claims
     };
 
-    let mut encoded: Vec<Signature<'a>> = Vec::with_capacity(self.recipients.len());
+    let mut encoded: Vec<JwsSignature<'a>> = Vec::with_capacity(self.recipients.len());
     for recipient in self.recipients.iter().copied() {
       encoded.push(self.encode_recipient(sign_fn, payload, recipient).await?);
     }
@@ -221,10 +235,13 @@ impl<'a> Encoder<'a> {
     sign_fn: &FUN,
     payload: &[u8],
     recipient: Recipient<'b>,
-  ) -> Result<Signature<'b>>
+  ) -> Result<JwsSignature<'b>>
   where
-    FUN: Fn(Option<JwsHeader>, Option<JwsHeader>, Vec<u8>) -> FUT + 'static + Send + Sync,
-    FUT: Future<Output = std::result::Result<String, ERR>> + Send,
+    FUN: Fn(Option<EncoderProtectedHeader>, Option<EncoderUnprotectedHeader>, EncoderMessage) -> FUT
+      + 'static
+      + Send
+      + Sync,
+    FUT: Future<Output = std::result::Result<EncoderSignature, ERR>> + Send,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let protected: Option<String> = recipient.protected.map(jwu::encode_b64_json).transpose()?;
@@ -234,7 +251,7 @@ impl<'a> Encoder<'a> {
       .await
       .map_err(|err| Error::SignatureCreationError(err.into()))?;
 
-    Ok(Signature {
+    Ok(JwsSignature {
       header: recipient.unprotected,
       protected,
       signature,
