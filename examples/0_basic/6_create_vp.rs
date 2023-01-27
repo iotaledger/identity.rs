@@ -95,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
     "#key-1",
     ProofOptions::default(),
   )?;
-  println!("Credential JSON > {:#}", credential);
+  println!("Credential JSON > {credential:#}");
 
   // Before sending this credential to the holder the issuer wants to validate that some properties
   // of the credential satisfy their expectations.

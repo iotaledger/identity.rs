@@ -40,7 +40,7 @@ pub fn should_ignore(field: &Field) -> bool {
       Some(TokenTree::Group(gr)) if gr.delimiter() == PARENS => gr
         .stream()
         .into_iter()
-        .map(|tt| format!("{}", tt))
+        .map(|tt| format!("{tt}"))
         .any(|x| x == "should_ignore"),
       _ => false,
     };

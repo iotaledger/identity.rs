@@ -20,20 +20,20 @@ impl Error {
   where
     T: Display,
   {
-    Self::DiffError(format!("{}", message))
+    Self::DiffError(format!("{message}"))
   }
 
   pub fn merge<T>(message: T) -> Self
   where
     T: Display,
   {
-    Self::MergeError(format!("{}", message))
+    Self::MergeError(format!("{message}"))
   }
 
   pub fn convert<T>(message: T) -> Self
   where
     T: Display,
   {
-    Self::ConversionError(format!("{}", message))
+    Self::ConversionError(format!("{message}"))
   }
 }

@@ -357,16 +357,16 @@ impl Jwk {
 
     let json: String = match self.params() {
       JwkParams::Ec(JwkParamsEc { crv, x, y, .. }) => {
-        format!(r#"{{"crv":"{}","kty":"{}","x":"{}","y":"{}"}}"#, crv, kty, x, y)
+        format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}","y":"{y}"}}"#)
       }
       JwkParams::Rsa(JwkParamsRsa { e, n, .. }) => {
-        format!(r#"{{"e":"{}","kty":"{}","n":"{}"}}"#, e, kty, n)
+        format!(r#"{{"e":"{e}","kty":"{kty}","n":"{n}"}}"#)
       }
       JwkParams::Oct(JwkParamsOct { k }) => {
-        format!(r#"{{"k":"{}","kty":"{}"}}"#, k, kty)
+        format!(r#"{{"k":"{k}","kty":"{kty}"}}"#)
       }
       JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
-        format!(r#"{{"crv":"{}","kty":"{}","x":"{}"}}"#, crv, kty, x)
+        format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}"}}"#)
       }
     };
 

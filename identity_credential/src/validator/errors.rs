@@ -89,7 +89,7 @@ impl Display for SignerContext {
       Self::Issuer => "issuer",
       Self::Holder => "holder",
     };
-    write!(f, "{}", context)
+    write!(f, "{context}")
   }
 }
 
@@ -108,7 +108,7 @@ impl Display for CompoundCredentialValidationError {
       "; ".to_string(),
     )
     .collect();
-    write!(f, "[{}]", detailed_information)
+    write!(f, "[{detailed_information}]")
   }
 }
 
@@ -136,7 +136,7 @@ impl Display for CompoundPresentationValidationError {
       .map(|error| error.to_string())
       .chain(self.credential_errors.iter().map(credential_error_formatter));
     let detailed_information: String = itertools::intersperse(error_string_iter, "; ".to_string()).collect();
-    write!(f, "[{}]", detailed_information)
+    write!(f, "[{detailed_information}]")
   }
 }
 

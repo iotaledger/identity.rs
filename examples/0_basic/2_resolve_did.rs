@@ -35,7 +35,7 @@ async fn main() -> anyhow::Result<()> {
   // We can resolve a `IotaDID` with the client itself.
   // Resolve the associated Alias Output and extract the DID document from it.
   let client_document: IotaDocument = client.resolve_did(&did).await?;
-  println!("Client resolved DID Document: {:#}", client_document);
+  println!("Client resolved DID Document: {client_document:#}");
 
   // We can also create a `Resolver` that has additional convenience methods,
   // for example to resolve presentation issuers or to verify presentations.
