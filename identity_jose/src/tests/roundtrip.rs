@@ -18,7 +18,8 @@ async fn test_encoder_decoder_roundtrip() {
   let secret_key = SecretKey::generate().unwrap();
   let public_key = secret_key.public_key();
 
-  let mut header: JwsHeader = JwsHeader::new(JwsAlgorithm::EdDSA);
+  let mut header: JwsHeader = JwsHeader::new();
+  header.set_alg(JwsAlgorithm::EdDSA);
   header.set_kid("did:iota:0x123#signing-key");
 
   let mut claims: JwtClaims<serde_json::Value> = JwtClaims::new();

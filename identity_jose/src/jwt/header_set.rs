@@ -112,7 +112,7 @@ where
 
 #[rustfmt::skip]
 impl<'a> JwtHeaderSet<'a, JwsHeader> {
-  impl_accessors!(@unwrapped, alg, try_alg, JwsAlgorithm);
+  impl_accessors!(@protected, alg, try_alg, JwsAlgorithm);
   impl_accessors!(@protected, b64, try_b64, bool);
   impl_accessors!(@protected, ppt, try_ppt, &str);
 }

@@ -28,7 +28,7 @@ async fn test_rfc7515() {
     if tv.deterministic {
       let encoder: jws::Encoder = jws::Encoder::new().recipient(Recipient::new().protected(&header));
 
-      let encoded: String = match header.alg() {
+      let encoded: String = match header.alg().unwrap() {
         JwsAlgorithm::HS256 => hs256::encode(&encoder, tv.claims, &jwk).await,
         JwsAlgorithm::ES256 => es256::encode(&encoder, tv.claims, &jwk).await,
         other => unimplemented!("{other}"),
@@ -38,7 +38,7 @@ async fn test_rfc7515() {
     }
 
     let decoder: jws::Decoder = jws::Decoder::new();
-    let decoded: _ = match header.alg() {
+    let decoded: _ = match header.alg().unwrap() {
       JwsAlgorithm::HS256 => hs256::decode(&decoder, tv.encoded, &jwk),
       JwsAlgorithm::ES256 => es256::decode(&decoder, tv.encoded, &jwk),
       other => unimplemented!("{other}"),

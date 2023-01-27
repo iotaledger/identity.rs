@@ -21,7 +21,8 @@ pub struct JwsHeader {
   /// Identifies the cryptographic algorithm used to secure the JWS.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.1)
-  alg: JwsAlgorithm,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  alg: Option<JwsAlgorithm>,
   /// Base64url-Encode Payload.
   ///
   /// Determines whether the payload is represented in the JWS and the JWS
@@ -52,24 +53,24 @@ pub struct JwsHeader {
 }
 
 impl JwsHeader {
-  /// Create a new `JwsHeader` with the given `alg` claim.
-  pub const fn new(alg: JwsAlgorithm) -> Self {
+  /// Create a new empty `JwsHeader`.
+  pub const fn new() -> Self {
     Self {
       common: JwtHeader::new(),
-      alg,
+      alg: None,
       b64: None,
       ppt: None,
     }
   }
 
   /// Returns the value for the algorithm claim (alg).
-  pub fn alg(&self) -> JwsAlgorithm {
-    self.alg
+  pub fn alg(&self) -> Option<JwsAlgorithm> {
+    self.alg.as_ref().copied()
   }
 
   /// Sets a value for the algorithm claim (alg).
   pub fn set_alg(&mut self, value: impl Into<JwsAlgorithm>) {
-    self.alg = value.into();
+    self.alg = Some(value.into());
   }
 
   /// Returns the value of the base64url-encode payload claim (b64).
@@ -97,7 +98,7 @@ impl JwsHeader {
 
   pub fn has(&self, claim: &str) -> bool {
     match claim {
-      "alg" => true, // we always have an algorithm
+      "alg" => self.alg().is_some(),
       "b64" => self.b64().is_some(),
       "ppt" => self.ppt().is_some(),
       _ => self.common.has(claim),
@@ -126,5 +127,11 @@ impl JoseHeader for JwsHeader {
 
   fn has_claim(&self, claim: &str) -> bool {
     self.has(claim)
+  }
+}
+
+impl Default for JwsHeader {
+  fn default() -> Self {
+    Self::new()
   }
 }
