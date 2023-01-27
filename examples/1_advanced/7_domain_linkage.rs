@@ -74,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
   did_document.insert_service(linked_domain_service.into())?;
   let updated_did_document: IotaDocument = publish_document(client.clone(), secret_manager, did_document).await?;
 
-  println!("DID document with linked domain service: {:#}", updated_did_document);
+  println!("DID document with linked domain service: {updated_did_document:#}");
 
   // =====================================================
   // Create DID Configuration resource
@@ -105,7 +105,7 @@ async fn main() -> anyhow::Result<()> {
   // Create the DID Configuration Resource which wraps the Domain Linkage credential.
   let configuration_resource: DomainLinkageConfiguration =
     DomainLinkageConfiguration::new(vec![domain_linkage_credential]);
-  println!("Configuration Resource >>: {:#}", configuration_resource);
+  println!("Configuration Resource >>: {configuration_resource:#}");
 
   // The DID Configuration resource can be made available on `https://foo.example.com/.well-known/did-configuration.json`.
   let configuration_resource_json: String = configuration_resource.to_json()?;
