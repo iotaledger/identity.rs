@@ -37,7 +37,6 @@ impl Issuer {
     }
   }
 }
-
 impl<T> From<T> for Issuer
 where
   T: Into<Url>,

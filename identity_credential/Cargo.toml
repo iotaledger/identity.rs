@@ -15,21 +15,26 @@ description = "An implementation of the Verifiable Credentials standard."
 dataurl = { version = "0.1.2", default-features = false, optional = true }
 erased-serde = { version = "0.3.21", default-features = false, features = ["std"], optional = true }
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
+futures = { version = "0.3", default-features = false, optional = true }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
 identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
 identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verification", default-features = false }
+indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
 lazy_static = { version = "1.4", default-features = false }
+reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
 roaring = { version = "0.9.0", default-features = false, optional = true }
 serde.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
 strum.workspace = true
 thiserror.workspace = true
+url = { version = "2.2", default-features = false }
 
 [dev-dependencies]
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 serde_json = { version = "1.0", default-features = false }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -38,8 +43,9 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap", "validator", "credential", "presentation"]
+default = ["revocation-bitmap", "validator", "credential", "presentation", "domain-linkage-fetch"]
 credential = []
 presentation = ["credential"]
 revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
 validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr", "credential", "presentation"]
+domain-linkage-fetch = ["dep:reqwest", "dep:futures"]
