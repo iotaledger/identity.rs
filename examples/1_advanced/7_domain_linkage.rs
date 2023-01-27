@@ -21,10 +21,10 @@ use identity_iota::credential::Issuer;
 use identity_iota::credential::LinkedDomainService;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
+use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDID;
-use identity_iota::iota::IotaDIDUrl;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::resolver::Resolver;
@@ -67,9 +67,9 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a Linked Domain Service to enable the discovery of the linked domains through the DID Document.
   // This is optional.
-  let service_url: IotaDIDUrl = did.clone().join("#domain-linkage")?;
+  let service_url: DIDUrl = did.clone().join("#domain-linkage")?;
   // let domain_linkage_service: IotaService = LinkedDomainService::new(service_url, domains)?;
-  let linked_domain_service: LinkedDomainService<IotaDID> =
+  let linked_domain_service: LinkedDomainService =
     LinkedDomainService::new(service_url, domains, Object::new()).unwrap();
   did_document.insert_service(linked_domain_service.into())?;
   let updated_did_document: IotaDocument = publish_document(client.clone(), secret_manager, did_document).await?;
@@ -162,7 +162,7 @@ async fn main() -> anyhow::Result<()> {
   let did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
   // Get the Linked Domain Services from the DID Document.
-  let linked_domain_services: Vec<LinkedDomainService<IotaDID, Object>> = did_document
+  let linked_domain_services: Vec<LinkedDomainService> = did_document
     .service()
     .iter()
     .cloned()
