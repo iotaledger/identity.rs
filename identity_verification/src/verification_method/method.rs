@@ -185,7 +185,7 @@ impl VerificationMethod {
   /// Creates a new [`VerificationMethod`] from the given `did` and public key.
   pub fn new<D: DID>(did: D, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
     let method_fragment: String = if !fragment.starts_with('#') {
-      format!("#{}", fragment)
+      format!("#{fragment}")
     } else {
       fragment.to_owned()
     };

@@ -67,7 +67,7 @@ where
 impl<T: Diff> std::fmt::Debug for DiffOption<T> {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match &self {
-      Self::Some(d) => write!(f, "DiffOption::Some({:#?})", d),
+      Self::Some(d) => write!(f, "DiffOption::Some({d:#?})"),
       Self::None => write!(f, "DiffOption::None"),
     }
   }

@@ -1,6 +1,6 @@
 {
   "name": "@iota/identity-wasm",
-  "version": "0.7.0-alpha.4",
+  "version": "0.7.0-alpha.5",
   "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
   "repository": {
     "type": "git",
@@ -80,7 +80,7 @@
   },
   "peerDependencies": {
     "@iota/client-wasm": "^1.0.0-alpha.1",
-    "@iota/iota.js": "^1.9.0-stardust.25"
+    "@iota/iota.js": "^2.0.0-rc.2"
   },
   "engines": {
     "node": ">=16"

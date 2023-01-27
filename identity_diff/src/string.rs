@@ -56,7 +56,7 @@ impl Diff for String {
 impl Debug for DiffString {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match &self.0 {
-      Some(val) => write!(f, "DiffString({:#?})", val),
+      Some(val) => write!(f, "DiffString({val:#?})"),
       None => write!(f, "DiffString None"),
     }
   }

@@ -4,8 +4,10 @@
 //! Verifiable Credential and Presentation validators.
 
 pub use self::credential_validator::CredentialValidator;
+pub use self::domain_linkage_validator::DomainLinkageValidator;
 pub use self::errors::CompoundCredentialValidationError;
 pub use self::errors::CompoundPresentationValidationError;
+pub use self::errors::DomainLinkageValidationError;
 pub use self::errors::SignerContext;
 pub use self::errors::ValidationError;
 pub use self::presentation_validator::PresentationValidator;
@@ -16,6 +18,7 @@ pub use self::validation_options::StatusCheck;
 pub use self::validation_options::SubjectHolderRelationship;
 
 mod credential_validator;
+mod domain_linkage_validator;
 mod errors;
 mod presentation_validator;
 #[cfg(test)]

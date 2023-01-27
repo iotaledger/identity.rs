@@ -149,7 +149,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
       for field in fields.iter() {
         let (fname, ftype) = (field.name(), field.typ());
 
-        let str_name = format!("{}", fname);
+        let str_name = format!("{fname}");
 
         mac.extend(if field.should_ignore() {
           quote! {

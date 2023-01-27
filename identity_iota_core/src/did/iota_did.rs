@@ -421,19 +421,15 @@ mod tests {
   fn valid_check_network() {
     let assert_check_network = |input: &str| {
       let did_core: CoreDID =
-        CoreDID::parse(input).unwrap_or_else(|_| panic!("expected {} to parse to a valid CoreDID", input));
+        CoreDID::parse(input).unwrap_or_else(|_| panic!("expected {input} to parse to a valid CoreDID"));
       assert!(
         IotaDID::check_network(&did_core).is_ok(),
-        "test: valid_check_network failed with input {}",
-        input,
+        "test: valid_check_network failed with input {input}",
       );
     };
 
     for network_name in VALID_NETWORK_NAMES {
-      let did_string = format!(
-        "did:method:{}:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-        network_name
-      );
+      let did_string = format!("did:method:{network_name}:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK");
       assert_check_network(&did_string);
     }
 
@@ -455,10 +451,7 @@ mod tests {
       "Main", "fOo", "deV", "féta", "", "  ", "foo ", " foo", "1234567", "foobar0",
     ];
     for network_name in INVALID_NETWORK_NAMES {
-      let did_string: String = format!(
-        "did:method:{}:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-        network_name
-      );
+      let did_string: String = format!("did:method:{network_name}:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK");
       let did_core: CoreDID = {
         match CoreDID::parse(did_string) {
           Ok(did_core) => did_core,
@@ -481,15 +474,14 @@ mod tests {
       let did_core: CoreDID = CoreDID::parse(input).unwrap();
       assert!(
         IotaDID::check_tag(&did_core).is_ok(),
-        "test: valid_check_method_id failed on input {}",
-        input
+        "test: valid_check_method_id failed on input {input}"
       );
     }
 
     // Should also work for DID's of the form: did:<method_name>:<valid_iota_network (or
     // nothing/normalized)>:<alias_id>
-    let did_other_string: String = format!("did:method:{}", VALID_ALIAS_ID_STR);
-    let did_other_with_network: String = format!("did:method:test:{}", VALID_ALIAS_ID_STR);
+    let did_other_string: String = format!("did:method:{VALID_ALIAS_ID_STR}");
+    let did_other_with_network: String = format!("did:method:test:{VALID_ALIAS_ID_STR}");
     let did_other_core: CoreDID = CoreDID::parse(did_other_string).unwrap();
     let did_other_with_network_core: CoreDID = CoreDID::parse(did_other_with_network).unwrap();
 
@@ -501,7 +493,7 @@ mod tests {
   fn invalid_check_tag() {
     let invalid_method_id_strings = [
       // Too many segments
-      format!("did:method:main:test:{}", VALID_ALIAS_ID_STR),
+      format!("did:method:main:test:{VALID_ALIAS_ID_STR}"),
       // Tag is not prefixed
       format!("did:method:{}", &VALID_ALIAS_ID_STR.strip_prefix("0x").unwrap()),
       // Tag is too long
@@ -580,7 +572,7 @@ mod tests {
       ));
 
       assert!(matches!(
-        IotaDID::parse(format!("did:key:{}", valid_alias_id)),
+        IotaDID::parse(format!("did:key:{valid_alias_id}")),
         Err(DIDError::InvalidMethodName)
       ));
 

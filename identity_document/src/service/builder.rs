@@ -9,8 +9,7 @@ use crate::service::ServiceEndpoint;
 use identity_did::DIDUrl;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
-#[derive(Clone, Debug)]
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct ServiceBuilder {
   pub(crate) id: Option<DIDUrl>,
   pub(crate) type_: Vec<String>,
@@ -64,8 +63,6 @@ impl ServiceBuilder {
     Service::from_builder(self)
   }
 }
-
-
 
 #[cfg(test)]
 mod tests {

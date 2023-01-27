@@ -11,8 +11,7 @@ use identity_did::CoreDID;
 use identity_did::DIDUrl;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
-#[derive(Clone, Debug)]
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct MethodBuilder {
   pub(crate) id: Option<DIDUrl>,
   pub(crate) controller: Option<CoreDID>,
@@ -66,8 +65,6 @@ impl MethodBuilder {
     VerificationMethod::from_builder(self)
   }
 }
-
-
 
 #[cfg(test)]
 mod tests {

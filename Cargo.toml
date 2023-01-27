@@ -22,9 +22,6 @@ exclude = [
   "libjose",
 ]
 
-[profile.dev]
-split-debuginfo = "unpacked"
-
 [workspace.dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }

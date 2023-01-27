@@ -227,7 +227,7 @@ fn deserialize_json_document(c: &mut Criterion) {
       |b, json| {
         b.iter(|| {
           let doc: Result<CoreDocument, _> = CoreDocument::from_json(json);
-          assert!(doc.is_ok(), "bench {name} failed: {:#?}", doc);
+          assert!(doc.is_ok(), "bench {name} failed: {doc:#?}");
         })
       },
     );
