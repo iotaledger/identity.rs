@@ -54,22 +54,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let token_supply = plugin.client.get_token_supply().await.unwrap();
 
+  // Create an alias funded by the plugin and controlled by the controller for demonstration purposes,
+  // so we can model the "update alias output in delegated funding" scenario.
   let (output_id, alias_output) = create_alias(&plugin.client, &plugin.secret_manager, controller.address.clone())
     .await
     .unwrap();
 
-  // Modify output locally.
-  let (input, output) = controller_prepare_update(output_id.clone(), alias_output, token_supply)
+  // Modify output locally. This is where we would update the contained DID document.
+  let (alias_input, alias_output) = controller
+    .update_alias(output_id.clone(), alias_output, token_supply)
     .await
     .unwrap();
 
   // Send input to plugin.
-  let prepared_tx = plugin.plugin_prepare_tx(input, output).await.unwrap();
+  // Construct the TX from the alias output and a suitable Basic Output that funds the Alias' storage deposit.
+  let prepared_tx = plugin.prepare_tx(alias_input, alias_output).await.unwrap();
 
   // Skipped: Controller verifies the included output is correct.
 
   // Sign input locally and produce an Unlock.
-  let controller_unlock = controller.controller_sign_tx(&output_id, &prepared_tx).await.unwrap();
+  let controller_unlock = controller.sign_tx(&output_id, &prepared_tx).await.unwrap();
 
   // Send Unlock to plugin.
   let signed_tx = plugin
@@ -81,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let output_id = plugin.publish(signed_tx).await.unwrap();
 
   let alias_id = AliasId::from(&output_id);
-  println!("published alias with id\n{alias_id}");
+  println!("Published alias with id\n{alias_id}");
 
   Ok(())
 }
@@ -165,26 +169,8 @@ async fn create_alias(
   Ok((output_id, alias_output))
 }
 
-async fn controller_prepare_update(
-  output_id: OutputId,
-  alias_output: AliasOutput,
-  token_supply: u64,
-) -> Result<(UtxoInput, AliasOutput), Box<dyn std::error::Error>> {
-  // This is the input we want to consume.
-  let input = UtxoInput::from(output_id);
-  // These are the modification we want to make to the existing alias output.
-  let output: AliasOutput = AliasOutputBuilder::from(&alias_output)
-    .with_alias_id(AliasId::from(&output_id))
-    .with_state_index(alias_output.state_index() + 1)
-    .with_state_metadata(vec![5, 6, 7, 8])
-    .finish(token_supply)
-    .unwrap();
-
-  Ok((input, output))
-}
-
 impl Plugin {
-  async fn plugin_prepare_tx(
+  async fn prepare_tx(
     &self,
     alias_input: UtxoInput,
     alias_output: AliasOutput,
@@ -237,12 +223,15 @@ impl Plugin {
   ) -> Result<SignedTransactionData, Box<dyn std::error::Error>> {
     let essence_hash = prepared_tx.essence.hash();
 
-    // TODO: Determine where the alias input is and place the unlock at the same index.
-    let mut unlocks = vec![controller_unlock];
+    let mut unlocks = Vec::with_capacity(prepared_tx.inputs_data.len());
 
     // We sign everything except the alias output of the controller which is the last output.
     for input in prepared_tx.inputs_data.iter() {
-      if input.output_id() != alias_output_id {
+      if input.output_id() == alias_output_id {
+        // We don't sign the alias input ourselves but use the received unlock from the controller instead.
+        unlocks.push(controller_unlock.clone());
+      } else {
+        // Otherwise we sign ourselves.
         unlocks.push(
           self
             .secret_manager
@@ -300,7 +289,7 @@ impl Plugin {
 }
 
 impl Controller {
-  async fn controller_sign_tx(
+  async fn sign_tx(
     &self,
     output_id: &OutputId,
     prepared_transaction_data: &PreparedTransactionData,
@@ -320,6 +309,25 @@ impl Controller {
       .signature_unlock(input_signing_data, &essence_hash, &prepared_transaction_data.remainder)
       .await
       .map_err(Into::into);
+  }
+
+  async fn update_alias(
+    &self,
+    output_id: OutputId,
+    alias_output: AliasOutput,
+    token_supply: u64,
+  ) -> Result<(UtxoInput, AliasOutput), Box<dyn std::error::Error>> {
+    // This is the input we want to consume.
+    let input = UtxoInput::from(output_id);
+    // These are the modification we want to make to the existing alias output.
+    let output: AliasOutput = AliasOutputBuilder::from(&alias_output)
+      .with_alias_id(AliasId::from(&output_id))
+      .with_state_index(alias_output.state_index() + 1)
+      .with_state_metadata(vec![5, 6, 7, 8])
+      .finish(token_supply)
+      .unwrap();
+
+    Ok((input, output))
   }
 }
 
