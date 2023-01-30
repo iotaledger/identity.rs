@@ -10,7 +10,7 @@ const {
     IotaDID,
     IotaDocument,
     IotaService,
-    IotaVerificationMethod,
+    VerificationMethod,
     Timestamp,
 } = require("../node");
 
@@ -76,7 +76,7 @@ describe("IotaDocument", function() {
             const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
             const scope = MethodScope.AssertionMethod();
-            const method = new IotaVerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = new VerificationMethod(doc.id().toCoreDid(), KeyType.Ed25519, aliasIdBytes, fragment);
 
             // Add.
             doc.insertMethod(method, scope);
@@ -104,7 +104,7 @@ describe("IotaDocument", function() {
         it("should work", async () => {
             const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
-            const method = new IotaVerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = new VerificationMethod(doc.id().toCoreDid(), KeyType.Ed25519, aliasIdBytes, fragment);
             doc.insertMethod(method, MethodScope.VerificationMethod());
             assert.deepStrictEqual(
                 doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
