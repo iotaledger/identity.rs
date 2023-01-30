@@ -150,12 +150,12 @@ impl IotaDocument {
     self.document.also_known_as_mut()
   }
 
-  /// Returns a reference to the underlying [`IotaCoreDocument`].
+  /// Returns a reference to the underlying [`CoreDocument`].
   pub fn core_document(&self) -> &CoreDocument {
     &self.document
   }
 
-  /// Returns a mutable reference to the underlying [`IotaCoreDocument`].
+  /// Returns a mutable reference to the underlying [`CoreDocument`].
   ///
   /// WARNING: mutating the inner document directly bypasses restrictions and
   /// may have undesired consequences.
