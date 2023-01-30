@@ -12,7 +12,7 @@ const {
     ProofOptions,
     RevocationBitmap,
     IotaDocument,
-    IotaService,
+    Service,
     VerificationMethod,
     StatusCheck,
     SubjectHolderRelationship,
@@ -176,7 +176,7 @@ describe("CredentialValidator, PresentationValidator", function() {
             // Add RevocationBitmap service.
             const revocationBitmap = new RevocationBitmap();
             issuerDoc.insertService(
-                new IotaService({
+                new Service({
                     id: issuerDoc.id().join("#my-revocation-service"),
                     type: RevocationBitmap.type(),
                     serviceEndpoint: revocationBitmap.toEndpoint(),

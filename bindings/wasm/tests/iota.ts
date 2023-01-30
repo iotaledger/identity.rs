@@ -9,7 +9,7 @@ const {
     MethodRelationship,
     IotaDID,
     IotaDocument,
-    IotaService,
+    Service,
     VerificationMethod,
     Timestamp,
 } = require("../node");
@@ -142,7 +142,7 @@ describe("IotaDocument", function() {
 
             // Add.
             const fragment1 = "new-service-1";
-            const service = new IotaService({
+            const service = new Service({
                 id: doc.id().toUrl().join("#" + fragment1),
                 type: ["LinkedDomains", "ExampleType"],
                 serviceEndpoint: ["https://example.com/", "https://iota.org/"],
