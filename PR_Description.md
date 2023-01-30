@@ -18,7 +18,7 @@ The third approach which is what this PR does is to just remove the generics fro
 ## What about the non-DID specific parameters in VerificationMethod, Service, etc. 
 In practice we have so far found that they are either not used, or a (JSON) `Object` representation is enough. If we should later become aware of (or get requests for supporting) use-cases requiring the ability to inject more specific types into these structures, we can consider re-adding those (non-DID specific) parameters in an almost non-breaking manner (in the case when the same parameters can be used across different document types only though). 
 
-Also note that the generic parameter `T` in the current `CoreDocument<D,T,U,V>` can be avoided by instead introducing a wrapper 
+Also note that the generic parameter `T` in the `properties` field in the current `CoreDocument<D,T,U,V>` can be avoided by instead introducing a wrapper 
 ```
 #[Derive(Serialize, Deserialize)]
 struct MyDocument {
