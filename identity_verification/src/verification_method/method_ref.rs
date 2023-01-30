@@ -80,10 +80,10 @@ impl MethodRef {
   /// # Errors
   ///
   /// Fails if `MethodRef` is not an embedded method.
-  pub fn try_into_embedded(self) -> Result<VerificationMethod, Self> {
+  pub fn try_into_embedded(self) -> Result<VerificationMethod, Box<Self>> {
     match self {
       Self::Embed(inner) => Ok(inner),
-      Self::Refer(_) => Err(self),
+      Self::Refer(_) => Err(self.into()),
     }
   }
 
@@ -94,9 +94,9 @@ impl MethodRef {
   /// # Errors
   ///
   /// Fails if `MethodRef` is not an referenced method.
-  pub fn try_into_referenced(self) -> Result<DIDUrl, Self> {
+  pub fn try_into_referenced(self) -> Result<DIDUrl, Box<Self>> {
     match self {
-      Self::Embed(_) => Err(self),
+      Self::Embed(_) => Err(self.into()),
       Self::Refer(inner) => Ok(inner),
     }
   }
