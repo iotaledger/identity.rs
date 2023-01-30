@@ -121,7 +121,7 @@ where
             map.insert(key, <V>::from_diff(value)?);
           }
           _ => {
-            panic!("Unable to create Diff at index: {:?}", idx);
+            panic!("Unable to create Diff at index: {idx:?}");
           }
         }
       }

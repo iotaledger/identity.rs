@@ -151,7 +151,7 @@ impl RelativeDIDUrl {
         if s.is_empty() || !s.chars().all(is_char_query) {
           return Err(Error::InvalidQuery);
         }
-        Ok(format!("?{}", s))
+        Ok(format!("?{s}"))
       })
       .transpose()?;
     Ok(())
@@ -201,7 +201,7 @@ impl RelativeDIDUrl {
         if s.is_empty() || !s.chars().all(is_char_fragment) {
           return Err(Error::InvalidFragment);
         }
-        Ok(format!("#{}", s))
+        Ok(format!("#{s}"))
       })
       .transpose()?;
     Ok(())
@@ -221,7 +221,7 @@ impl Display for RelativeDIDUrl {
 
 impl Debug for RelativeDIDUrl {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-    f.write_fmt(format_args!("{}", self))
+    f.write_fmt(format_args!("{self}"))
   }
 }
 
@@ -569,7 +569,7 @@ where
   D: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-    f.write_fmt(format_args!("{}", self))
+    f.write_fmt(format_args!("{self}"))
   }
 }
 

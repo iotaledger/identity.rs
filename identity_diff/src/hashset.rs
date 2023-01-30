@@ -178,10 +178,10 @@ mod tests {
 
     let json = serde_json::to_string(&diff).unwrap();
 
-    println!("{}", json);
+    println!("{json}");
 
     let diff: DiffHashSet<String> = serde_json::from_str(&json).unwrap();
 
-    println!("{:?}", diff);
+    println!("{diff:?}");
   }
 }

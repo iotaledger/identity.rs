@@ -51,17 +51,14 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       .ok_or_else(|| identity_iota::iota::Error::JsError("get_alias_output expected a tuple of size 2".to_owned()))?
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize OutputId: {}", err))
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize OutputId: {err}"))
       })?;
     let alias_dto: AliasOutputDto = iter
       .next()
       .ok_or_else(|| identity_iota::iota::Error::JsError("get_alias_output expected a tuple of size 2".to_owned()))?
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!(
-          "get_alias_output failed to deserialize AliasOutputDto: {}",
-          err
-        ))
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize AliasOutputDto: {err}"))
       })?;
 
     let alias_output = AliasOutput::try_from_dto(
@@ -69,7 +66,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
       <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
     )
     .map_err(|err| {
-      identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+      identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
     })?;
     Ok((output_id, alias_output))
   }
@@ -80,10 +77,10 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| {
       parameters
         .into_serde()
-        .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {}", err)))
+        .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {err}")))
     })?;
     ProtocolParameters::try_from(protocol_parameters)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {}", err)))
+      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {err}")))
   }
 }
 

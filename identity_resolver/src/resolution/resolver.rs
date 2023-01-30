@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
-use std::collections::HashMap;
-use std::marker::PhantomData;
-
 use futures::TryFutureExt;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
@@ -16,12 +13,12 @@ use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
 use identity_did::CoreDID;
 use identity_did::DID;
-
 use serde::Serialize;
+use std::collections::HashMap;
+use std::marker::PhantomData;
 
 use crate::Error;
 use crate::ErrorCause;
-
 use crate::Result;
 
 use super::commands::Command;

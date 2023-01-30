@@ -101,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
     alias_history.push(alias_output.clone());
   }
 
-  println!("Alias History: {:?}", alias_history);
+  println!("Alias History: {alias_history:?}");
 
   Ok(())
 }

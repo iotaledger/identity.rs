@@ -19,12 +19,21 @@ pub enum Error {
   #[error("missing credential issuer")]
   MissingIssuer,
   /// Caused when constructing a credential without a subject.
-  #[error("missing Credential subject")]
+  #[error("missing credential subject")]
   MissingSubject,
+  /// Caused when constructing a Domain Linkage credential without an expiration date.
+  #[error("missing expiration date")]
+  MissingExpirationDate,
+  /// Caused when constructing a Domain Linkage credential without an origin.
+  #[error("missing origin")]
+  MissingOrigin,
   /// Caused when constructing a credential with a malformed subject.
   #[error("invalid credential subject")]
   InvalidSubject,
   /// Caused when trying to construct an invalid status.
   #[error("invalid credential status: {0}")]
   InvalidStatus(String),
+  /// Caused when constructing an invalid `LinkedDomainService` or `DomainLinkageConfiguration`.
+  #[error("domain linkage error: {0}")]
+  DomainLinkageError(Box<dyn std::error::Error + Send + Sync + 'static>),
 }

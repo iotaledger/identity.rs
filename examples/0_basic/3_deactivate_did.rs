@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
   // Resolving a deactivated DID returns an empty DID document
   // with its `deactivated` metadata field set to `true`.
   let deactivated: IotaDocument = client.resolve_did(&did).await?;
-  println!("Deactivated DID document: {:#}", deactivated);
+  println!("Deactivated DID document: {deactivated:#}");
   assert_eq!(deactivated.metadata.deactivated, Some(true));
 
   // Re-activate the DID by publishing a valid DID document.

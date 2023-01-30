@@ -304,7 +304,7 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
           .map(|f| {
             let (fname, ftyp) = (f.name(), f.typ());
 
-            let str_name = format!("{}", fname);
+            let str_name = format!("{fname}");
 
             if f.should_ignore() {
               quote! {

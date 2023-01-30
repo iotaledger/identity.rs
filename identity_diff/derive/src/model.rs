@@ -149,7 +149,7 @@ impl InputModel {
   /// get struct variant.
   pub fn s_variant(&self) -> &SVariant {
     match self {
-      Self::Enum(InputEnum { name, .. }) => panic!("{} isn't a struct", name),
+      Self::Enum(InputEnum { name, .. }) => panic!("{name} isn't a struct"),
       Self::Struct(InputStruct { variant, .. }) => variant,
     }
   }
@@ -158,7 +158,7 @@ impl InputModel {
   pub fn e_variants(&self) -> &Vec<EVariant> {
     match self {
       Self::Enum(InputEnum { variants, .. }) => variants,
-      Self::Struct(InputStruct { name, .. }) => panic!("{} isn't an Enum", name),
+      Self::Struct(InputStruct { name, .. }) => panic!("{name} isn't an Enum"),
     }
   }
 
@@ -197,7 +197,7 @@ impl InputModel {
   /// get the fields for the Enum or Struct.
   pub fn fields(&self) -> &Vec<DataFields> {
     match self {
-      Self::Enum(InputEnum { name, .. }) => panic!("{} isn't a Struct", name),
+      Self::Enum(InputEnum { name, .. }) => panic!("{name} isn't a Struct"),
       Self::Struct(InputStruct { fields, .. }) => fields,
     }
   }

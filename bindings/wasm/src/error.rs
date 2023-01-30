@@ -124,10 +124,10 @@ macro_rules! impl_wasm_error_from_with_struct_name {
 
 // the following function is inspired by https://www.lpalmieri.com/posts/error-handling-rust/#error-source
 fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-  write!(f, "{}. ", e)?;
+  write!(f, "{e}. ")?;
   let mut current = e.source();
   while let Some(cause) = current {
-    write!(f, "Caused by: {}. ", cause)?;
+    write!(f, "Caused by: {cause}. ")?;
     current = cause.source();
   }
   Ok(())

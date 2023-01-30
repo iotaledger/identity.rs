@@ -117,13 +117,12 @@ impl std::fmt::Display for ResolutionAction {
       ResolutionAction::PresentationHolderResolution => {
         "attempt to resolve the presentation holder's DID failed".into()
       }
-      ResolutionAction::PresentationIssuersResolution(idx) => format!(
-        "attempt to resolve the credential issuer's DID of credential no. {} in the presentation failed",
-        idx
-      )
-      .into(),
+      ResolutionAction::PresentationIssuersResolution(idx) => {
+        format!("attempt to resolve the credential issuer's DID of credential no. {idx} in the presentation failed")
+          .into()
+      }
     };
 
-    write!(f, "{}", message)
+    write!(f, "{message}")
   }
 }

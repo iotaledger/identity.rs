@@ -18,7 +18,7 @@ fn main() {
   let secret: Jwk = Jwk::random(header.alg()).unwrap();
 
   println!("Header: {}", serde_json::to_string_pretty(&header).unwrap());
-  println!("Claims: {:?}", claims);
+  println!("Claims: {claims:?}");
   println!("Secret: {}", serde_json::to_string_pretty(&secret).unwrap());
 
   let token: String = Encoder::new()
@@ -26,12 +26,12 @@ fn main() {
     .encode(claims.as_bytes())
     .unwrap();
 
-  println!("Token: {}", token);
+  println!("Token: {token}");
 
   let decoded: Token<'_> = Decoder::new(&secret).decode(token.as_bytes()).unwrap();
   let decoded: &str = str::from_utf8(&decoded.claims).unwrap();
 
-  println!("Decoded: {:?}", decoded);
+  println!("Decoded: {decoded:?}");
 
   assert_eq!(claims, decoded);
 }
