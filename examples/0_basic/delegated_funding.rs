@@ -10,6 +10,7 @@ use iota_client::block::output::unlock_condition::StateControllerAddressUnlockCo
 use iota_client::block::output::AliasId;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
+use iota_client::block::output::BasicOutputBuilder;
 use iota_client::block::output::OutputId;
 use iota_client::block::output::UnlockCondition;
 use iota_client::block::payload::Payload;
@@ -68,13 +69,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Skipped: Controller verifies the included output is correct.
 
   // Sign input locally and produce an Unlock.
-  let controller_unlock = controller.controller_sign_tx(&prepared_tx).await.unwrap();
+  let controller_unlock = controller.controller_sign_tx(&output_id, &prepared_tx).await.unwrap();
 
   // Send Unlock to plugin.
-  let signed_tx = plugin.plugin_finish_tx(controller_unlock, prepared_tx).await.unwrap();
+  let signed_tx = plugin
+    .sign_tx(&output_id, controller_unlock, prepared_tx)
+    .await
+    .unwrap();
 
   // Plugin publishes.
-  plugin.plugin_publish(signed_tx).await.unwrap();
+  let output_id = plugin.publish(signed_tx).await.unwrap();
 
   let alias_id = AliasId::from(&output_id);
   println!("published alias with id\n{alias_id}");
@@ -156,7 +160,7 @@ async fn create_alias(
 
   let _ = client.retry_until_included(&block.id(), None, None).await.unwrap();
 
-  let output_id = utils::unpack_output_id_from_block(&block).unwrap();
+  let output_id = utils::unpack_alias_output_id_from_block(&block).unwrap();
 
   Ok((output_id, alias_output))
 }
@@ -170,6 +174,8 @@ async fn controller_prepare_update(
   let input = UtxoInput::from(output_id);
   // These are the modification we want to make to the existing alias output.
   let output: AliasOutput = AliasOutputBuilder::from(&alias_output)
+    .with_alias_id(AliasId::from(&output_id))
+    .with_state_index(alias_output.state_index() + 1)
     .with_state_metadata(vec![5, 6, 7, 8])
     .finish(token_supply)
     .unwrap();
@@ -183,59 +189,69 @@ impl Plugin {
     alias_input: UtxoInput,
     alias_output: AliasOutput,
   ) -> Result<PreparedTransactionData, Box<dyn std::error::Error>> {
+    let token_supply = self.client.get_token_supply().await.unwrap();
+
     // Calculate the storage deposit for the alias output.
     let rent_structure = self.client.get_rent_structure().await.unwrap();
     let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
       .with_minimum_storage_deposit(rent_structure)
-      .finish(self.client.get_token_supply().await.unwrap())
+      .finish(token_supply)
       .unwrap();
 
-    // Find one or more inputs to fund the alias output.
+    // Find an input to fund the alias output.
     let network_hrp = self.client.network_name().await.unwrap();
-    let addresses = vec![self.address.to_bech32(network_hrp.as_ref())];
-    let mut inputs = self.client.find_inputs(addresses, alias_output.amount()).await.unwrap();
+    let address = self.address.to_bech32(network_hrp.as_ref());
+    let (basic_input, amount) = utils::find_funding_output(&self.client, address, alias_output.amount()).await;
 
-    // Include the alias_input in the inputs for the TX.
-    inputs.push(alias_input);
+    // Build the Basic Output that the remaining funds will be put into explicitly,
+    // so that the plugin retains control over them.
+    // Without this, the automatic input selection transferred the funds to the controller.
+    let remainder_output = BasicOutputBuilder::new_with_amount(amount)
+      .unwrap()
+      .add_unlock_condition(UnlockCondition::Address(self.address.into()))
+      .finish(token_supply)
+      .unwrap();
 
     // Prepare the transaction.
-    let mut transaction_builder = self.client.block();
-    for input in inputs {
-      transaction_builder = transaction_builder.with_input(input).unwrap();
-    }
-
-    let prepared_transaction = transaction_builder
-      .with_outputs(vec![alias_output.into()])
+    let transaction_builder = self
+      .client
+      .block()
+      .with_input(alias_input)
       .unwrap()
-      .prepare_transaction()
-      .await
+      .with_input(basic_input)
+      .unwrap()
+      .with_outputs(vec![alias_output.into(), remainder_output.into()])
       .unwrap();
+
+    let prepared_transaction = transaction_builder.prepare_transaction().await.unwrap();
 
     Ok(prepared_transaction)
   }
 
-  async fn plugin_finish_tx(
+  /// Signs all inputs in the given transaction except for the alias input that was signed by the controller.
+  async fn sign_tx(
     &self,
+    alias_output_id: &OutputId,
     controller_unlock: Unlock,
     prepared_tx: PreparedTransactionData,
   ) -> Result<SignedTransactionData, Box<dyn std::error::Error>> {
     let essence_hash = prepared_tx.essence.hash();
 
-    let mut unlocks = vec![];
+    // TODO: Determine where the alias input is and place the unlock at the same index.
+    let mut unlocks = vec![controller_unlock];
 
     // We sign everything except the alias output of the controller which is the last output.
-    for input in prepared_tx.inputs_data.iter().take(prepared_tx.inputs_data.len() - 1) {
-      unlocks.push(
-        self
-          .secret_manager
-          .signature_unlock(input, &essence_hash, &prepared_tx.remainder)
-          .await
-          .unwrap(),
-      );
+    for input in prepared_tx.inputs_data.iter() {
+      if input.output_id() != alias_output_id {
+        unlocks.push(
+          self
+            .secret_manager
+            .signature_unlock(input, &essence_hash, &prepared_tx.remainder)
+            .await
+            .unwrap(),
+        );
+      }
     }
-
-    // Append the unlock of the alias output that we received from the controller.
-    unlocks.push(controller_unlock);
 
     let unlocks: Unlocks = Unlocks::new(unlocks).unwrap();
 
@@ -249,10 +265,11 @@ impl Plugin {
     Ok(signed_transaction_data)
   }
 
-  async fn plugin_publish(
+  /// Publishes and returns the output id of the published alias output.
+  async fn publish(
     &self,
     signed_transaction_payload: SignedTransactionData,
-  ) -> Result<(), Box<dyn std::error::Error>> {
+  ) -> Result<OutputId, Box<dyn std::error::Error>> {
     let client = &self.client;
     let current_time = client.get_time_checked().await.unwrap();
 
@@ -278,42 +295,49 @@ impl Plugin {
 
     let _ = client.retry_until_included(&block.id(), None, None).await.unwrap();
 
-    Ok(())
+    utils::unpack_alias_output_id_from_block(&block)
   }
 }
 
 impl Controller {
   async fn controller_sign_tx(
     &self,
+    output_id: &OutputId,
     prepared_transaction_data: &PreparedTransactionData,
   ) -> Result<Unlock, Box<dyn std::error::Error>> {
     let essence_hash = prepared_transaction_data.essence.hash();
 
-    // We define the last input to be the alias output.
-    // Can be changed, we just need to somehow agree on it.
-    let last_input_idx = prepared_transaction_data.inputs_data.len() - 1;
-    let input = prepared_transaction_data
+    // Find the alias input that we need to sign.
+    let input_signing_data = prepared_transaction_data
       .inputs_data
-      .get(last_input_idx)
-      .expect("handle error");
+      .iter()
+      .find(|input| input.output_id() == output_id)
+      .expect("should be present");
 
     // Sign the alias input and return the `Unlock`.
     return self
       .secret_manager
-      .signature_unlock(input, &essence_hash, &prepared_transaction_data.remainder)
+      .signature_unlock(input_signing_data, &essence_hash, &prepared_transaction_data.remainder)
       .await
       .map_err(Into::into);
   }
 }
 
 mod utils {
+  use std::str::FromStr;
+
+  use iota_client::api::ClientBlockBuilder;
+  use iota_client::block::input::UtxoInput;
   use iota_client::block::output::Output;
   use iota_client::block::output::OutputId;
   use iota_client::block::payload::transaction::TransactionEssence;
+  use iota_client::block::payload::transaction::TransactionId;
   use iota_client::block::payload::Payload;
   use iota_client::block::Block;
+  use iota_client::node_api::indexer::query_parameters::QueryParameter;
+  use iota_client::Client;
 
-  pub fn unpack_output_id_from_block(block: &Block) -> Result<OutputId, Box<dyn std::error::Error>> {
+  pub fn unpack_alias_output_id_from_block(block: &Block) -> Result<OutputId, Box<dyn std::error::Error>> {
     if let Some(Payload::Transaction(tx_payload)) = block.payload() {
       let TransactionEssence::Regular(regular) = tx_payload.essence();
 
@@ -325,5 +349,48 @@ mod utils {
     }
 
     Err("did not find alias id".into())
+  }
+
+  // Adapted from Client::find_inputs.
+  pub async fn find_funding_output(client: &Client, address: String, amount: u64) -> (UtxoInput, u64) {
+    let basic_output_ids = client
+      .basic_output_ids(vec![
+        QueryParameter::Address(address),
+        QueryParameter::HasExpiration(false),
+        QueryParameter::HasTimelock(false),
+        QueryParameter::HasStorageDepositReturn(false),
+      ])
+      .await
+      .unwrap();
+
+    let outputs = client.get_outputs(basic_output_ids).await.unwrap();
+
+    let current_time = client.get_time_checked().await.unwrap();
+    let token_supply = client.get_token_supply().await.unwrap();
+    let mut basic_outputs = Vec::new();
+
+    for output_resp in outputs {
+      let (amount, _) = ClientBlockBuilder::get_output_amount_and_address(
+        &Output::try_from_dto(&output_resp.output, token_supply).unwrap(),
+        None,
+        current_time,
+      )
+      .unwrap();
+      basic_outputs.push((
+        UtxoInput::new(
+          TransactionId::from_str(&output_resp.metadata.transaction_id).unwrap(),
+          output_resp.metadata.output_index,
+        )
+        .unwrap(),
+        amount,
+      ));
+    }
+    basic_outputs.sort_by(|l, r| r.1.cmp(&l.1));
+
+    if amount <= basic_outputs[0].1 {
+      return basic_outputs.into_iter().next().unwrap();
+    } else {
+      unimplemented!("we assume there exists one output with enough funds for now")
+    }
   }
 }
