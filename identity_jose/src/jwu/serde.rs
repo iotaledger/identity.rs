@@ -66,35 +66,6 @@ pub fn validate_jws_headers(
   Ok(())
 }
 
-// pub fn validate_jwe_headers<'a>(
-//   protected: Option<&JweHeader>,
-//   unprotected: Option<&JweHeader>,
-//   recipients: impl Iterator<Item = Option<&'a JweHeader>>,
-//   permitted: Option<&[String]>,
-// ) -> Result<()> {
-//   // TODO: Validate Disjoint
-
-//   for recipient in recipients {
-//     // TODO: Validate Disjoint
-
-//     let unprotected: Option<Cow<'_, JweHeader>> = match (unprotected, recipient) {
-//       (Some(header), None) => Some(Cow::Borrowed(header)),
-//       (None, Some(header)) => Some(Cow::Borrowed(header)),
-//       (Some(_lhs), Some(_rhs)) => todo!("Merge Headers"),
-//       (None, None) => None,
-//     };
-
-//     validate_crit(protected, unprotected.as_deref(), permitted)?;
-
-//     // The "zip" parameter MUST be integrity protected
-//     if unprotected.map(|header| header.has("zip")).unwrap_or_default() {
-//       return Err(Error::InvalidParam("zip (unprotected)"));
-//     }
-//   }
-
-//   Ok(())
-// }
-
 pub fn validate_crit<T>(protected: Option<&T>, unprotected: Option<&T>, permitted: Option<&[String]>) -> Result<()>
 where
   T: JoseHeader,
