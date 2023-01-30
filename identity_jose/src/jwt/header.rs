@@ -266,6 +266,24 @@ impl JwtHeader {
       _ => false,
     }
   }
+
+  /// Returns `true` if none of the fields are set in both `self` and `other`.
+  pub fn is_disjoint(&self, other: &JwtHeader) -> bool {
+    let has_duplicate: bool = self.jku.is_some() && other.jku.is_some()
+      || self.jwk.is_some() && other.jwk.is_some()
+      || self.kid.is_some() && other.kid.is_some()
+      || self.x5u.is_some() && other.x5u.is_some()
+      || self.x5c.is_some() && other.x5c.is_some()
+      || self.x5t.is_some() && other.x5t.is_some()
+      || self.x5t_s256.is_some() && other.x5t_s256.is_some()
+      || self.typ.is_some() && other.typ.is_some()
+      || self.cty.is_some() && other.cty.is_some()
+      || self.crit.is_some() && other.crit.is_some()
+      || self.url.is_some() && other.url.is_some()
+      || self.nonce.is_some() && other.nonce.is_some();
+
+    !has_duplicate
+  }
 }
 
 impl JoseHeader for JwtHeader {

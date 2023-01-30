@@ -104,6 +104,15 @@ impl JwsHeader {
       _ => self.common.has(claim),
     }
   }
+
+  /// Returns `true` if none of the fields are set in both `self` and `other`.
+  pub fn is_disjoint(&self, other: &JwsHeader) -> bool {
+    let has_duplicate: bool = self.alg().is_some() && other.alg.is_some()
+      || self.b64.is_some() && other.b64.is_some()
+      || self.ppt.is_some() && other.ppt.is_some();
+
+    !has_duplicate && self.common.is_disjoint(other.common())
+  }
 }
 
 impl Deref for JwsHeader {
@@ -133,5 +142,34 @@ impl JoseHeader for JwsHeader {
 impl Default for JwsHeader {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_header_disjoint() {
+    let header1: JwsHeader = serde_json::from_value(serde_json::json!({
+      "alg": "ES256",
+      "b64": false,
+    }))
+    .unwrap();
+    let header2: JwsHeader = serde_json::from_value(serde_json::json!({
+      "alg": "ES256",
+      "crit": ["b64"],
+    }))
+    .unwrap();
+    let header3: JwsHeader = serde_json::from_value(serde_json::json!({
+      "ppt": "pptx",
+      "cty": "mediatype"
+    }))
+    .unwrap();
+
+    assert!(!header1.is_disjoint(&header2));
+    assert!(header1.is_disjoint(&header3));
+    assert!(header2.is_disjoint(&header3));
+    assert!(header1.is_disjoint(&JwsHeader::new()));
   }
 }
