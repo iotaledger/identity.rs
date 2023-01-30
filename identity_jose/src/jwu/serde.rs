@@ -59,8 +59,7 @@ pub fn validate_jws_headers(
   unprotected: Option<&JwsHeader>,
   permitted: Option<&[String]>,
 ) -> Result<()> {
-  // TODO: Validate Disjoint
-
+  validate_disjoint(protected, unprotected)?;
   validate_crit(protected, unprotected, permitted)?;
   validate_b64(protected, unprotected)?;
 
@@ -156,5 +155,20 @@ pub fn validate_b64(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeade
       "`b64` param must be included in the crit parameter values",
     )),
     _ => Ok(()),
+  }
+}
+
+pub fn validate_disjoint(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
+  let is_disjoint: bool = match (protected, unprotected) {
+    (Some(protected), Some(unprotected)) => protected.is_disjoint(unprotected),
+    _ => true,
+  };
+
+  if is_disjoint {
+    Ok(())
+  } else {
+    Err(Error::InvalidContent(
+      "protected and unprotected headers are not disjoint",
+    ))
   }
 }
