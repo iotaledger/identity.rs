@@ -46,7 +46,6 @@ impl IotaDID {
   /// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
 
-  #[ref_cast_custom]
   /// Convert a `CoreDID` reference to an `IotaDID` reference without checking the referenced value.
   ///  
   /// # Warning
@@ -56,6 +55,7 @@ impl IotaDID {
   /// # Memory safety
   ///
   /// The `ref-cast` crate ensures a memory safe implementation.  
+  #[ref_cast_custom]
   pub(crate) const fn from_inner_ref_unchecked(did: &CoreDID) -> &Self;
 
   // ===========================================================================
