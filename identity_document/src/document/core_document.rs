@@ -147,7 +147,7 @@ impl CoreDocumentData {
 
   // Apply the provided fallible functions to the DID components of `id`, `controller`, methods and services
   // respectively.
-  fn try_update_identifiers<F, G, H, L, E>(
+  fn try_map<F, G, H, L, E>(
     self,
     id_map: F,
     mut controller_map: G,
