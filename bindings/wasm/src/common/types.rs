@@ -26,6 +26,19 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "string | string[] | null")]
   pub type OptionOneOrManyString;
+
+  #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
+  pub type ArrayVerificationMethod;
+
+  #[wasm_bindgen(typescript_type = "Array<DIDUrl | VerificationMethod>")]
+  pub type ArrayCoreMethodRef;
+
+  #[wasm_bindgen(typescript_type = "DIDUrl | string")]
+  pub type UDIDUrlQuery;
+
+  #[wasm_bindgen(typescript_type = "Service[]")]
+  pub type ArrayService;
+
 }
 
 impl TryFrom<Object> for MapStringAny {

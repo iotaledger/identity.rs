@@ -23,10 +23,13 @@ use iota_types::block::protocol::ProtocolParameters;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use crate::common::ArrayService;
 use crate::common::ArrayString;
+use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
+use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
@@ -203,7 +206,7 @@ impl WasmIotaDocument {
   ///
   /// If `scope` is not set, a list over the **embedded** methods is returned.
   #[wasm_bindgen]
-  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayVerificationMethods> {
+  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayVerificationMethod> {
     let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
     let methods = self
       .0
@@ -213,7 +216,7 @@ impl WasmIotaDocument {
       .map(WasmVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayVerificationMethods>();
+      .unchecked_into::<ArrayVerificationMethod>();
     Ok(methods)
   }
 
@@ -584,20 +587,11 @@ impl From<WasmIotaDocument> for IotaDocument {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "DIDUrl | string")]
-  pub type UDIDUrlQuery;
-
   #[wasm_bindgen(typescript_type = "IotaDID[]")]
   pub type ArrayIotaDID;
 
   #[wasm_bindgen(typescript_type = "IotaDocument[]")]
   pub type ArrayIotaDocument;
-
-  #[wasm_bindgen(typescript_type = "Service[]")]
-  pub type ArrayService;
-
-  #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
-  pub type ArrayVerificationMethods;
 
   // External interface from `@iota/types`, must be deserialized via BlockDto.
   #[wasm_bindgen(typescript_type = "IBlock")]

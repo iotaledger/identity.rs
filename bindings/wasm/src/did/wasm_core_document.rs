@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::WasmCoreDID;
+use crate::common::ArrayCoreMethodRef;
+use crate::common::ArrayService;
 use crate::common::ArrayString;
+use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
+use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::crypto::WasmProofOptions;
 use crate::did::service::WasmService;
@@ -464,20 +468,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "CoreDID[]")]
   pub type ArrayCoreDID;
 
-  #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
-  pub type ArrayVerificationMethod;
-
-  #[wasm_bindgen(typescript_type = "Array<DIDUrl | VerificationMethod>")]
-  pub type ArrayCoreMethodRef;
-
-  #[wasm_bindgen(typescript_type = "DIDUrl | string")]
-  pub type UDIDUrlQuery;
-
   #[wasm_bindgen(typescript_type = "CoreDID | CoreDID[] | null")]
   pub type OptionOneOrManyCoreDID;
 
-  #[wasm_bindgen(typescript_type = "Service[]")]
-  pub type ArrayService;
 }
 
 #[derive(Deserialize)]
