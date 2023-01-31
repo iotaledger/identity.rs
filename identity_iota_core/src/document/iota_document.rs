@@ -51,7 +51,7 @@ impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
   type Error = crate::Error;
   fn try_from(provisional: ProvisionalIotaDocument) -> std::result::Result<Self, Self::Error> {
     let ProvisionalIotaDocument { document, metadata } = provisional;
-    // TODO: Improve error?
+
     IotaDID::check_validity(document.id()).map_err(|_| {
       Error::SerializationError(
         "deserializing iota document failed: id does not conform to the IOTA method specification",
