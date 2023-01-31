@@ -54,7 +54,7 @@ impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
     // TODO: Improve error?
     IotaDID::check_validity(document.id()).map_err(|_| {
       Error::SerializationError(
-        "deserializing iota document failed: id not conforming to the iota method specification detected",
+        "deserializing iota document failed: id does not conform to the IOTA method specification",
         None,
       )
     })?;
