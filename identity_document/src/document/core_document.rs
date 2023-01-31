@@ -818,7 +818,7 @@ impl CoreDocument {
   /// Any error is returned if any of the functions fail or the updates cause scoped method references to embedded
   /// methods, or methods and services with identical identifiers in the document. In the case where illegal identifiers
   /// are detected the supplied the `error_cast` function gets called in order to convert [`Error`] to `E`.
-  pub fn try_update_identifiers<F, G, H, L, M, E>(
+  pub fn try_map<F, G, H, L, M, E>(
     self,
     id_update: F,
     controller_update: G,
@@ -835,12 +835,12 @@ impl CoreDocument {
   {
     let data = self
       .data
-      .try_update_identifiers(id_update, controller_update, methods_update, service_update)?;
+      .try_map(id_update, controller_update, methods_update, service_update)?;
     CoreDocument::try_from(data).map_err(error_cast)
   }
 
-  /// Unchecked version of [Self::try_update_identifiers](Self::try_update_identifiers()).
-  pub fn update_identifiers_unchecked<F, G, H, L>(
+  /// Unchecked version of [Self::try_map](Self::try_map()).
+  pub fn map_unchecked<F, G, H, L>(
     self,
     id_update: F,
     mut controller_update: G,
@@ -861,7 +861,7 @@ impl CoreDocument {
     let services_map = |did: CoreDID| -> InfallibleCoreDIDResult { Ok(service_update(did)) };
     let data = self
       .data
-      .try_update_identifiers(id_map, controller_map, method_map, services_map)
+      .try_map(id_map, controller_map, method_map, services_map)
       .expect("unwrapping infallible should be fine");
     CoreDocument { data }
   }

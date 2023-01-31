@@ -61,7 +61,7 @@ impl StateMetadataDocument {
     };
     let [methods_update, service_update] = [replace_placeholder; 2];
 
-    let document = document.try_update_identifiers(
+    let document = document.try_map(
       id_update,
       controller_update,
       methods_update,
@@ -202,7 +202,7 @@ impl From<IotaDocument> for StateMetadataDocument {
     let [id_update, controller_update, methods_update, service_update] = [replace_id_with_placeholder; 4];
 
     StateMetadataDocument {
-      document: document.update_identifiers_unchecked(id_update, controller_update, methods_update, service_update),
+      document: document.map_unchecked(id_update, controller_update, methods_update, service_update),
       metadata,
     }
   }

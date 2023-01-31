@@ -24,8 +24,6 @@ pub trait RevocationDocumentExt: private::Sealed {
   where
     Q: Into<DIDUrlQuery<'query>>;
 
-  // TODO: Should we just make this visible?
-  #[doc(hidden)]
   /// Extracts the `RevocationBitmap` from the referenced service in the DID Document.
   ///
   /// # Errors
@@ -36,7 +34,7 @@ pub trait RevocationDocumentExt: private::Sealed {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> crate::revocation::RevocationResult<RevocationBitmap>;
+  ) -> RevocationResult<RevocationBitmap>;
 }
 
 mod private {
@@ -72,7 +70,7 @@ impl RevocationDocumentExt for CoreDocument {
   fn resolve_revocation_bitmap(
     &self,
     query: identity_document::utils::DIDUrlQuery<'_>,
-  ) -> crate::revocation::RevocationResult<RevocationBitmap> {
+  ) -> RevocationResult<RevocationBitmap> {
     self
       .resolve_service(query)
       .ok_or(crate::revocation::RevocationError::InvalidService(
