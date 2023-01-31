@@ -136,7 +136,7 @@ impl IotaDocument {
       .flatten();
 
     // CORRECTNESS: These casts are OK because the public API does not expose methods
-    // enabling unchecked mutation fo the controllers.
+    // enabling unchecked mutation of the controllers.
     core_did_controller_iter.map(IotaDID::from_inner_ref_unchecked)
   }
 
