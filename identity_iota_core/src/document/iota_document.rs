@@ -115,7 +115,6 @@ impl IotaDocument {
   // ===========================================================================
 
   /// Returns the DID document identifier.
-  // TODO: Make this efficient by changing the definition of `IotaDID`.
   pub fn id(&self) -> &IotaDID {
     // CORRECTNESS: This cast is OK because the public API does not expose methods
     // enabling unchecked mutation of the `id` field.
@@ -127,7 +126,6 @@ impl IotaDocument {
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
   pub fn controller(&self) -> impl Iterator<Item = &IotaDID> + '_ {
-    // TODO: Make this efficient by changing the definition of `IotaDID`.
     let core_did_controller_iter = self
       .document
       .controller()
