@@ -507,15 +507,6 @@ impl From<IotaDocument> for CoreDocument {
   }
 }
 
-// TODO: Do we still want something like the commented From implementation below?
-/*
-impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
-  fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
-    Self { document, metadata }
-  }
-}
-*/
-
 impl TryFrom<(CoreDocument, IotaDocumentMetadata)> for IotaDocument {
   type Error = crate::Error;
   /// Converts the tuple into an [`IotaDocument`] if the given [`CoreDocument`] has an identifier satisfying the
