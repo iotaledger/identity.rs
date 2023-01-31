@@ -157,7 +157,7 @@ impl IotaDocument {
 
   /// Returns a mutable reference to the underlying [`CoreDocument`].
   ///
-  /// WARNING: mutating the inner document directly bypasses restrictions and
+  /// WARNING: Mutating the inner document directly bypasses checks and
   /// may have undesired consequences.
   pub(crate) fn core_document_mut(&mut self) -> &mut CoreDocument {
     &mut self.document
