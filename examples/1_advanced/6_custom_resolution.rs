@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
   Ok(())
 }
 
-// Type safe representation of the imaginary of a document adhering to the imaginary "foo" method.
+// Type safe representation of a document adhering to the imaginary "foo" method.
 struct FooDocument(CoreDocument);
 impl FooDocument {
   fn new(document: CoreDocument) -> anyhow::Result<Self> {
