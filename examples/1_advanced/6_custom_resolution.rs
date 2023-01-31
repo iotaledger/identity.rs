@@ -87,26 +87,31 @@ impl FooDocument {
     }
   }
 }
+
 impl AsRef<CoreDocument> for FooDocument {
   fn as_ref(&self) -> &CoreDocument {
     &self.0
   }
 }
+
 impl From<FooDocument> for CoreDocument {
   fn from(value: FooDocument) -> Self {
     value.0
   }
 }
+
 // Enum of the document types we want to handle.
 enum Document {
   Foo(FooDocument),
   Iota(IotaDocument),
 }
+
 impl From<FooDocument> for Document {
   fn from(value: FooDocument) -> Self {
     Self::Foo(value)
   }
 }
+
 impl From<IotaDocument> for Document {
   fn from(value: IotaDocument) -> Self {
     Self::Iota(value)
