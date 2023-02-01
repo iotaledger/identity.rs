@@ -1015,4 +1015,72 @@ mod tests {
     let controllers: Vec<&IotaDID> = doc.controller().collect();
     assert_eq!(&controllers, &[&expected_controller]);
   }
+
+  #[test]
+  fn try_from_doc_metadata() {
+    const DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_ID: &str = r#"
+    {
+      "id": "did:foo:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "verificationMethod": [
+        {
+          "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+          "controller": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+        }
+      ]
+    }
+    "#;
+
+    const DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_CONTROLLER: &str = r#"
+    {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:example:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "verificationMethod": [
+        {
+          "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+          "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
+        }
+      ]
+    }
+    "#;
+
+    const METADATA_JSON: &str = r#"
+    {
+      "created": "2022-08-31T09:33:31Z",
+      "updated": "2022-08-31T09:33:31Z"
+    }
+    "#;
+
+    const DOCUMENT_WITH_IOTA_ID_AND_CONTROLLER_JSON: &str = r#"
+    {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "verificationMethod": [
+        {
+          "id": "did:foo:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+          "controller": "did:bar:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+        }
+      ]
+    }
+    "#;
+
+    let doc_not_iota_because_of_id: CoreDocument =
+      CoreDocument::from_json(DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_ID).unwrap();
+    let doc_not_iota_because_of_controller: CoreDocument =
+      CoreDocument::from_json(DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_CONTROLLER).unwrap();
+    let doc_with_iota_id_and_controller: CoreDocument =
+      CoreDocument::from_json(DOCUMENT_WITH_IOTA_ID_AND_CONTROLLER_JSON).unwrap();
+    let metadata: IotaDocumentMetadata = IotaDocumentMetadata::from_json(METADATA_JSON).unwrap();
+
+    assert!(IotaDocument::try_from((doc_not_iota_because_of_id, metadata.clone())).is_ok());
+
+    assert!(IotaDocument::try_from((doc_not_iota_because_of_controller, metadata.clone())).is_err());
+
+    assert!(IotaDocument::try_from((doc_with_iota_id_and_controller, metadata)).is_ok());
+  }
 }
