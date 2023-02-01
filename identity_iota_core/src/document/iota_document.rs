@@ -1077,7 +1077,7 @@ mod tests {
       CoreDocument::from_json(DOCUMENT_WITH_IOTA_ID_AND_CONTROLLER_JSON).unwrap();
     let metadata: IotaDocumentMetadata = IotaDocumentMetadata::from_json(METADATA_JSON).unwrap();
 
-    assert!(IotaDocument::try_from((doc_not_iota_because_of_id, metadata.clone())).is_ok());
+    assert!(IotaDocument::try_from((doc_not_iota_because_of_id, metadata.clone())).is_err());
 
     assert!(IotaDocument::try_from((doc_not_iota_because_of_controller, metadata.clone())).is_err());
 
