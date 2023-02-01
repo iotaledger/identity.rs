@@ -4,13 +4,14 @@
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
-
+#[cfg(feature = "client")]
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+#[cfg(feature = "client")]
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
