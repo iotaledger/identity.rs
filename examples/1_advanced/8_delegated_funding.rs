@@ -68,9 +68,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // Send input to plugin.
   // Construct the TX from the alias output and a suitable Basic Output that funds the Alias' storage deposit.
+  // TODO: Plugin could verify that the alias_input is valid and the latest state.
   let prepared_tx = plugin.prepare_tx(alias_input, alias_output).await.unwrap();
 
-  // Skipped: Controller verifies the included output is correct.
+  // TODO: Controller verifies the output in the TX is the one they sent over,
+  // except for the amount field (storage depost).
+  // To do that, we have to receive all outputs from the TX so we can reconstruct the TX on controller side.
 
   // Sign input locally and produce an Unlock.
   let controller_unlock = controller.sign_tx(&output_id, &prepared_tx).await.unwrap();
@@ -84,8 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Plugin publishes.
   let output_id = plugin.publish(signed_tx).await.unwrap();
 
-  let alias_id = AliasId::from(&output_id);
-  println!("Published alias with id\n{alias_id}");
+  println!("Published alias with id {}", AliasId::from(&output_id));
 
   Ok(())
 }
