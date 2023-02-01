@@ -14,6 +14,7 @@ pub use self::validation_options::WasmCredentialValidationOptions;
 pub use self::validation_options::WasmFailFast;
 pub use self::validation_options::WasmPresentationValidationOptions;
 pub use self::validation_options::WasmSubjectHolderRelationship;
+pub use self::domain_linkage_configuration::WasmDomainLinkageConfiguration;
 
 mod credential;
 mod credential_builder;
@@ -23,3 +24,5 @@ mod presentation_builder;
 mod presentation_validator;
 mod types;
 mod validation_options;
+mod domain_linkage_configuration;
+mod domain_linkage_credential_builder;

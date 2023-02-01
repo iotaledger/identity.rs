@@ -11,6 +11,7 @@ use wasm_bindgen::JsCast;
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::credential::ArrayContext;
+use crate::credential::ArrayCredential;
 use crate::credential::ArrayPolicy;
 use crate::credential::ArrayRefreshService;
 use crate::credential::IPresentation;
@@ -21,13 +22,6 @@ use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Presentation, inspectable)]
 pub struct WasmPresentation(pub(crate) Presentation);
-
-// Workaround for Typescript type annotations for returned arrays.
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "Array<Credential>")]
-  pub type ArrayCredential;
-}
 
 #[wasm_bindgen(js_class = Presentation)]
 impl WasmPresentation {

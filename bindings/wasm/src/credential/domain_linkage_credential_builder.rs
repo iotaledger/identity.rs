@@ -1,0 +1,63 @@
+// Copyright 2020-2023 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::DomainLinkageCredentialBuilder;
+use identity_iota::credential::Issuer;
+use wasm_bindgen::prelude::*;
+use proc_typescript::typescript;
+use crate::error::WasmResult;
+
+impl TryFrom<IDomainLinkageCredential> for DomainLinkageCredentialBuilder {
+  type Error = JsValue;
+
+  fn try_from(values: IDomainLinkageCredential) -> std::result::Result<Self, Self::Error> {
+    let IDomainLinkageCredentialHelper {
+      issuer,
+      issuance_date,
+      expiration_date,
+      origin,
+    } = values.into_serde::<IDomainLinkageCredentialHelper>().wasm_result()?;
+
+    let mut builder: DomainLinkageCredentialBuilder = DomainLinkageCredentialBuilder::new();
+    if let Some(issuer) = issuer {
+      builder = builder.issuer(issuer);
+    }
+    if let Some(issuance_date) = issuance_date {
+      builder = builder.issuance_date(issuance_date);
+    }
+    if let Some(expiration_date) = expiration_date {
+      builder = builder.expiration_date(expiration_date);
+    }
+    if let Some(origin) = origin {
+        builder = builder.origin(origin);
+    }
+    Ok(builder)
+  }
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "IDomainLinkageCredential")]
+  pub type IDomainLinkageCredential;
+}
+
+/// Fields to create a new Domain Linkage {@link Credential}.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[typescript(name = "IDomainLinkageCredential", readonly, optional)]
+struct IDomainLinkageCredentialHelper {
+  /// A reference to the issuer of the `Credential`.
+  #[typescript(optional = false, type = "string | CoreDID | IotaDID | Issuer")]
+  issuer: Option<Issuer>,
+  /// A timestamp of when the `Credential` becomes valid. Defaults to the current datetime.
+  #[typescript(name = "issuanceDate", type = "Timestamp")]
+  issuance_date: Option<Timestamp>,
+  /// A timestamp of when the `Credential` should no longer be considered valid.
+  #[typescript(optional = false, name = "expirationDate", type = "Timestamp")]
+  expiration_date: Option<Timestamp>,
+  /// The origin, on which the `Credential` is issued.
+  #[typescript(optional = false, name = "origin", type = "string")]
+  origin: Option<Url>,
+}
