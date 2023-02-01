@@ -511,7 +511,11 @@ impl From<IotaDocument> for CoreDocument {
 impl TryFrom<(CoreDocument, IotaDocumentMetadata)> for IotaDocument {
   type Error = crate::Error;
   /// Converts the tuple into an [`IotaDocument`] if the given [`CoreDocument`] has an identifier satisfying the
-  /// requirements of the IOTA UTXO method and the same holds for all its controllers.
+  /// requirements of the IOTA UTXO method and the same holds for all of the [`CoreDocument's`](CoreDocument)
+  /// controllers.
+  ///
+  /// # Important
+  /// This does not check the relationship between the [`CoreDocument`] and the [`IotaDocumentMetadata`].
   fn try_from(value: (CoreDocument, IotaDocumentMetadata)) -> std::result::Result<Self, Self::Error> {
     ProvisionalIotaDocument {
       document: value.0,
