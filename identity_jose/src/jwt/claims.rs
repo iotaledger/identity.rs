@@ -48,11 +48,6 @@ pub struct JwtClaims<T = ()> {
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.1.7)
   #[serde(skip_serializing_if = "Option::is_none")]
   jti: Option<String>, // JWT ID
-  /// Identifies a decentralized digital identity.
-  ///
-  /// [More Info](https://www.w3.org/TR/did-core/)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  did: Option<String>, // Decentralized Identifier
   /// Contains the properties of a Verifiable Credential
   ///
   /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
@@ -81,7 +76,6 @@ impl<T> JwtClaims<T> {
       nbf: None,
       iat: None,
       jti: None,
-      did: None,
       vc: None,
       vp: None,
       custom: None,
@@ -156,16 +150,6 @@ impl<T> JwtClaims<T> {
   /// Sets a value for the JWT ID claim (jti).
   pub fn set_jti(&mut self, value: impl Into<String>) {
     self.jti = Some(value.into());
-  }
-
-  /// Returns the value for the JWT DID claim (did).
-  pub fn did(&self) -> Option<&str> {
-    self.did.as_deref()
-  }
-
-  /// Sets a value for the JWT DID claim (did).
-  pub fn set_did(&mut self, value: impl Into<String>) {
-    self.did = Some(value.into());
   }
 
   /// Returns the value for the JWT verifiable credential claim (vc).
