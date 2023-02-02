@@ -69,11 +69,11 @@ impl RevocationDocumentExt for CoreDocument {
 
   fn resolve_revocation_bitmap(
     &self,
-    query: identity_document::utils::DIDUrlQuery<'_>,
+    query: DIDUrlQuery<'_>,
   ) -> RevocationResult<RevocationBitmap> {
     self
       .resolve_service(query)
-      .ok_or(crate::revocation::RevocationError::InvalidService(
+      .ok_or(RevocationError::InvalidService(
         "revocation bitmap service not found",
       ))
       .and_then(RevocationBitmap::try_from)
