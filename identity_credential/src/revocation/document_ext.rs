@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::RevocationBitmap;
-use identity_core::common::KeyComparable;
-use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
@@ -25,21 +23,25 @@ pub trait RevocationDocumentExt: private::Sealed {
   fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>;
+
+  /// Extracts the `RevocationBitmap` from the referenced service in the DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the referenced service is not found, or is not a
+  /// valid `RevocationBitmap2022` service.
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> RevocationResult<RevocationBitmap>;
 }
 
 mod private {
   use super::CoreDocument;
-  use super::KeyComparable;
-  use super::DID;
 
   pub trait Sealed {}
-  impl<D: DID + KeyComparable, T, U, V> Sealed for CoreDocument<D, T, U, V> {}
+  impl Sealed for CoreDocument {}
 }
 
-impl<D, T, U, V> RevocationDocumentExt for CoreDocument<D, T, U, V>
-where
-  D: DID + KeyComparable,
-{
+impl RevocationDocumentExt for CoreDocument {
   fn revoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> RevocationResult<()>
   where
     Q: Into<DIDUrlQuery<'query>>,
@@ -61,19 +63,25 @@ where
       }
     })
   }
+
+  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> RevocationResult<RevocationBitmap> {
+    self
+      .resolve_service(query)
+      .ok_or(RevocationError::InvalidService("revocation bitmap service not found"))
+      .and_then(RevocationBitmap::try_from)
+  }
 }
 
-fn update_revocation_bitmap<'query, 'me, F, Q, D, T, U, V>(
-  document: &'me mut CoreDocument<D, T, U, V>,
+fn update_revocation_bitmap<'query, 'me, F, Q>(
+  document: &'me mut CoreDocument,
   service_query: Q,
   f: F,
 ) -> RevocationResult<()>
 where
-  D: DID + KeyComparable,
   F: FnOnce(&mut RevocationBitmap),
   Q: Into<DIDUrlQuery<'query>>,
 {
-  let service: &mut Service<D, V> = document
+  let service: &mut Service = document
     .service_mut_unchecked()
     .query_mut(service_query)
     .ok_or(RevocationError::InvalidService("invalid id - service not found"))?;
@@ -91,7 +99,7 @@ mod tests {
   use super::*;
   use identity_core::common::Object;
   use identity_core::convert::FromJson;
-  use identity_document::document::Document;
+  use identity_did::DID;
 
   const START_DOCUMENT_JSON: &str = r#"{
         "id": "did:example:1234",

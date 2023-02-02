@@ -4,8 +4,8 @@ const assert = require("assert");
 const {
     CoreDID,
     CoreDocument,
-    CoreService,
-    CoreVerificationMethod,
+    Service,
+    VerificationMethod,
     KeyType,
     MethodRelationship,
     MethodScope,
@@ -117,15 +117,15 @@ describe("CoreDocument", function() {
         });
         it("full should work", () => {
             const did = CoreDID.parse(VALID_DID_EXAMPLE);
-            const method0 = new CoreVerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-0");
-            const method1 = new CoreVerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-1");
-            const method2 = new CoreVerificationMethod(
+            const method0 = new VerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-0");
+            const method1 = new VerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-1");
+            const method2 = new VerificationMethod(
                 CoreDID.parse(VALID_DID_EXAMPLE),
                 KeyType.Ed25519,
                 KEY_BYTES,
                 "key-2",
             );
-            const service = new CoreService({
+            const service = new Service({
                 id: did.join("#service-1"),
                 type: "LinkedDomains",
                 serviceEndpoint: "https://example.com/",
@@ -186,7 +186,10 @@ describe("CoreDocument", function() {
             });
             const fragment = "new-method-1";
             const scope = MethodScope.AssertionMethod();
-            const method = new CoreVerificationMethod(doc.id(), KeyType.Ed25519, KEY_BYTES, fragment);
+            const method = new VerificationMethod(doc.id(), KeyType.Ed25519, KEY_BYTES, fragment);
+
+            // `id` should remain valid after passing it to the constructor of VerificationMethod
+            assert.deepStrictEqual(doc.id().toString(), VALID_DID_EXAMPLE);
 
             // Add.
             doc.insertMethod(method, scope);
@@ -216,7 +219,7 @@ describe("CoreDocument", function() {
                 id: VALID_DID_EXAMPLE,
             });
             const fragment = "new-method-1";
-            const method = new CoreVerificationMethod(doc.id(), KeyType.Ed25519, KEY_BYTES, fragment);
+            const method = new VerificationMethod(doc.id(), KeyType.Ed25519, KEY_BYTES, fragment);
             doc.insertMethod(method, MethodScope.VerificationMethod());
             assert.deepStrictEqual(
                 doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
@@ -256,7 +259,7 @@ describe("CoreDocument", function() {
 
             // Add.
             const fragment1 = "new-service-1";
-            const service = new CoreService({
+            const service = new Service({
                 id: doc.id().toUrl().join("#" + fragment1),
                 type: ["LinkedDomains", "ExampleType"],
                 serviceEndpoint: ["https://example.com/", "https://iota.org/"],

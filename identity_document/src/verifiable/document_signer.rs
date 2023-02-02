@@ -3,8 +3,6 @@
 
 use serde::Serialize;
 
-use identity_core::common::KeyComparable;
-use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
@@ -13,8 +11,6 @@ use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
-use identity_did::CoreDID;
-use identity_did::DID;
 
 use crate::document::CoreDocument;
 use crate::utils::DIDUrlQuery;
@@ -28,21 +24,15 @@ use identity_verification::VerificationMethod;
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, D = CoreDID, T = Object, U = Object, V = Object>
-where
-  D: DID + KeyComparable,
-{
-  document: &'base CoreDocument<D, T, U, V>,
+pub struct DocumentSigner<'base, 'query> {
+  document: &'base CoreDocument,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
   options: ProofOptions,
 }
 
-impl<'base, D, T, U, V> DocumentSigner<'base, '_, D, T, U, V>
-where
-  D: DID + KeyComparable,
-{
-  pub fn new(document: &'base CoreDocument<D, T, U, V>, private: &'base PrivateKey) -> Self {
+impl<'base> DocumentSigner<'base, '_> {
+  pub fn new(document: &'base CoreDocument, private: &'base PrivateKey) -> Self {
     Self {
       document,
       private,
@@ -95,10 +85,7 @@ where
   }
 }
 
-impl<'base, 'query, D, T, U, V> DocumentSigner<'base, 'query, D, T, U, V>
-where
-  D: DID + KeyComparable,
-{
+impl<'base, 'query> DocumentSigner<'base, 'query> {
   #[must_use]
   pub fn method<Q>(mut self, value: Q) -> Self
   where
@@ -109,10 +96,7 @@ where
   }
 }
 
-impl<D, T, U, V> DocumentSigner<'_, '_, D, T, U, V>
-where
-  D: DID + KeyComparable,
-{
+impl DocumentSigner<'_, '_> {
   /// Signs the provided data with the configured verification method.
   ///
   /// # Errors
@@ -124,7 +108,7 @@ where
     X: Serialize + SetSignature + TryMethod,
   {
     let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
-    let method: &VerificationMethod<D, U> = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
+    let method: &VerificationMethod = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
     let method_uri: String = X::try_method(method).map_err(|_| Error::MissingIdFragment)?;
 
     match method.type_() {

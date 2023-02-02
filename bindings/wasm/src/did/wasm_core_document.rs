@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::WasmCoreDID;
+use crate::common::ArrayCoreMethodRef;
+use crate::common::ArrayService;
 use crate::common::ArrayString;
+use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
+use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::crypto::WasmProofOptions;
-use crate::did::wasm_core_service::WasmCoreService;
-use crate::did::wasm_core_url::WasmCoreDIDUrl;
-use crate::did::wasm_core_verification_method::WasmCoreVerificationMethod;
+use crate::did::service::WasmService;
+use crate::did::wasm_did_url::WasmDIDUrl;
+use crate::did::wasm_verification_method::WasmVerificationMethod;
 use crate::did::RefMethodScope;
 use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
@@ -27,7 +31,6 @@ use identity_iota::crypto::ProofOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
-use identity_iota::document::Document;
 use identity_iota::document::Service;
 use identity_iota::verification::MethodRef;
 use identity_iota::verification::MethodScope;
@@ -132,16 +135,16 @@ impl WasmCoreDocument {
 
   /// Returns a copy of the document's `verificationMethod` set.
   #[wasm_bindgen(js_name = verificatonMethod)]
-  pub fn verification_method(&self) -> ArrayCoreVerificationMethod {
+  pub fn verification_method(&self) -> ArrayVerificationMethod {
     self
       .0
       .verification_method()
       .iter()
       .cloned()
-      .map(WasmCoreVerificationMethod::from)
+      .map(WasmVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreVerificationMethod>()
+      .unchecked_into::<ArrayVerificationMethod>()
   }
 
   /// Returns a copy of the document's `authentication` set.
@@ -153,8 +156,8 @@ impl WasmCoreDocument {
       .iter()
       .cloned()
       .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmCoreVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmCoreDIDUrl(did_url)),
+        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
       })
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayCoreMethodRef>()
@@ -169,8 +172,8 @@ impl WasmCoreDocument {
       .iter()
       .cloned()
       .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmCoreVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmCoreDIDUrl(did_url)),
+        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
       })
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayCoreMethodRef>()
@@ -185,8 +188,8 @@ impl WasmCoreDocument {
       .iter()
       .cloned()
       .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmCoreVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmCoreDIDUrl(did_url)),
+        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
       })
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayCoreMethodRef>()
@@ -201,8 +204,8 @@ impl WasmCoreDocument {
       .iter()
       .cloned()
       .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmCoreVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmCoreDIDUrl(did_url)),
+        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
       })
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayCoreMethodRef>()
@@ -217,8 +220,8 @@ impl WasmCoreDocument {
       .iter()
       .cloned()
       .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmCoreVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmCoreDIDUrl(did_url)),
+        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
       })
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayCoreMethodRef>()
@@ -254,69 +257,65 @@ impl WasmCoreDocument {
   // Services
   // ===========================================================sdfs================
 
-  /// Returns a set of all {@link CoreService} in the document.
+  /// Returns a set of all {@link Service} in the document.
   #[wasm_bindgen]
-  pub fn service(&self) -> ArrayCoreService {
+  pub fn service(&self) -> ArrayService {
     self
       .0
       .service()
       .iter()
       .cloned()
-      .map(WasmCoreService)
+      .map(WasmService)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreService>()
+      .unchecked_into::<ArrayService>()
   }
 
-  /// Add a new {@link CoreService} to the document.
+  /// Add a new {@link Service} to the document.
   ///
   /// Errors if there already exists a service or verification method with the same id.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmCoreService) -> Result<()> {
+  pub fn insert_service(&mut self, service: &WasmService) -> Result<()> {
     self.0.insert_service(service.0.clone()).wasm_result()
   }
 
-  /// Remoce a {@link CoreService} identified by the given {@link CoreDIDUrl} from the document.
+  /// Remoce a {@link Service} identified by the given {@link DIDUrl} from the document.
   ///
   /// Returns `true` if the service was removed.
   #[wasm_bindgen(js_name = removeService)]
   #[allow(non_snake_case)]
-  pub fn remove_service(&mut self, didUrl: &WasmCoreDIDUrl) -> Option<WasmCoreService> {
+  pub fn remove_service(&mut self, didUrl: &WasmDIDUrl) -> Option<WasmService> {
     self.0.remove_service(&didUrl.0.clone()).map(Into::into)
   }
 
-  /// Returns the first {@link CoreService} with an `id` property matching the provided `query`,
+  /// Returns the first {@link Service} with an `id` property matching the provided `query`,
   /// if present.
   #[wasm_bindgen(js_name = resolveService)]
-  pub fn resolve_service(&self, query: &UCoreDIDUrlQuery) -> Option<WasmCoreService> {
+  pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
     let service_query: String = query.into_serde().ok()?;
-    self
-      .0
-      .resolve_service(&service_query)
-      .cloned()
-      .map(WasmCoreService::from)
+    self.0.resolve_service(&service_query).cloned().map(WasmService::from)
   }
 
   // ===========================================================================
   // Verification Methods
   // ===========================================================================
 
-  /// Returns a list of all {@link CoreVerificationMethod} in the DID Document,
+  /// Returns a list of all {@link VerificationMethod} in the DID Document,
   /// whose verification relationship matches `scope`.
   ///
   /// If `scope` is not set, a list over the **embedded** methods is returned.
   #[wasm_bindgen]
-  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayCoreVerificationMethod> {
+  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayVerificationMethod> {
     let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
     let methods = self
       .0
       .methods(scope)
       .into_iter()
       .cloned()
-      .map(WasmCoreVerificationMethod::from)
+      .map(WasmVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreVerificationMethod>();
+      .unchecked_into::<ArrayVerificationMethod>();
     Ok(methods)
   }
 
@@ -328,8 +327,8 @@ impl WasmCoreDocument {
       .verification_relationships()
       .cloned()
       .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmCoreVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmCoreDIDUrl(did_url)),
+        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
       })
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayCoreMethodRef>()
@@ -337,13 +336,13 @@ impl WasmCoreDocument {
 
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmCoreVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
     self.0.insert_method(method.0.clone(), scope.0).wasm_result()
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmCoreDIDUrl) -> Option<WasmCoreVerificationMethod> {
+  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Option<WasmVerificationMethod> {
     self.0.remove_method(&did.0).map(Into::into)
   }
 
@@ -353,14 +352,14 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = resolveMethod)]
   pub fn resolve_method(
     &self,
-    query: &UCoreDIDUrlQuery,
+    query: &UDIDUrlQuery,
     scope: Option<RefMethodScope>,
-  ) -> Result<Option<WasmCoreVerificationMethod>> {
+  ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
     let method: Option<&VerificationMethod> = self.0.resolve_method(&method_query, method_scope);
-    Ok(method.cloned().map(WasmCoreVerificationMethod))
+    Ok(method.cloned().map(WasmVerificationMethod))
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -371,7 +370,7 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = attachMethodRelationship)]
   pub fn attach_method_relationship(
     &mut self,
-    didUrl: &WasmCoreDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
@@ -385,7 +384,7 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
     &mut self,
-    didUrl: &WasmCoreDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
@@ -413,7 +412,7 @@ impl WasmCoreDocument {
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, serviceQuery: &UCoreDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
@@ -424,7 +423,7 @@ impl WasmCoreDocument {
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(&mut self, serviceQuery: &UCoreDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn unrevoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
@@ -445,7 +444,7 @@ impl WasmCoreDocument {
     &self,
     data: &JsValue,
     privateKey: Vec<u8>,
-    methodQuery: &UCoreDIDUrlQuery,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
@@ -469,20 +468,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "CoreDID[]")]
   pub type ArrayCoreDID;
 
-  #[wasm_bindgen(typescript_type = "CoreVerificationMethod[]")]
-  pub type ArrayCoreVerificationMethod;
-
-  #[wasm_bindgen(typescript_type = "Array<CoreDIDUrl | CoreVerificationMethod>")]
-  pub type ArrayCoreMethodRef;
-
-  #[wasm_bindgen(typescript_type = "CoreDIDUrl | string")]
-  pub type UCoreDIDUrlQuery;
-
   #[wasm_bindgen(typescript_type = "CoreDID | CoreDID[] | null")]
   pub type OptionOneOrManyCoreDID;
 
-  #[wasm_bindgen(typescript_type = "CoreService[]")]
-  pub type ArrayCoreService;
 }
 
 #[derive(Deserialize)]
@@ -499,26 +487,26 @@ struct ICoreDocumentHelper {
   #[typescript(type = "string[]")]
   alsoKnownAs: Option<OrderedSet<Url>>,
 
-  #[typescript(type = "(CoreVerificationMethod | IotaVerificationMethod)[]")]
-  verificationMethod: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  #[typescript(type = "(VerificationMethod)[]")]
+  verificationMethod: Option<OrderedSet<VerificationMethod>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  authentication: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  #[typescript(type = "(VerificationMethod | DIDUrl)[]")]
+  authentication: Option<OrderedSet<VerificationMethod>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  assertionMethod: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  #[typescript(type = "(VerificationMethod | DIDUrl)[]")]
+  assertionMethod: Option<OrderedSet<VerificationMethod>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  keyAgreement: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  #[typescript(type = "(VerificationMethod | DIDUrl)[]")]
+  keyAgreement: Option<OrderedSet<VerificationMethod>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  capabilityDelegation: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  #[typescript(type = "(VerificationMethod | DIDUrl)[]")]
+  capabilityDelegation: Option<OrderedSet<VerificationMethod>>,
 
-  #[typescript(type = "(CoreVerificationMethod | CoreDIDUrl | IotaVerificationMethod | IotaDIDUrl)[]")]
-  capabilityInvocation: Option<OrderedSet<VerificationMethod<CoreDID, Object>>>,
+  #[typescript(type = "(VerificationMethod | DIDUrl)[]")]
+  capabilityInvocation: Option<OrderedSet<VerificationMethod>>,
 
-  #[typescript(type = "(CoreService | IotaService)[]")]
-  service: Option<OrderedSet<Service<CoreDID, Object>>>,
+  #[typescript(type = "(Service)[]")]
+  service: Option<OrderedSet<Service>>,
 
   #[serde(flatten)]
   #[typescript(optional = false, name = "[properties: string]", type = "unknown")]

@@ -1,7 +1,6 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
@@ -56,8 +55,8 @@ impl WasmPresentationValidator {
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let holder: AbstractValidatorDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?.into();
-    let issuers: Vec<AbstractValidatorDocument> = issuers
+    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?;
+    let issuers: Vec<RustSupportedDocument> = issuers
       .into_serde::<Vec<RustSupportedDocument>>()
       .wasm_result()?
       .into_iter()
@@ -80,7 +79,7 @@ impl WasmPresentationValidator {
     holder: &SupportedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let holder: AbstractValidatorDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?.into();
+    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?;
     PresentationValidator::verify_presentation_signature(&presentation.0, &holder, &options.0).wasm_result()
   }
 

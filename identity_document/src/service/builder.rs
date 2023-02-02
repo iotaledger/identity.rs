@@ -6,28 +6,20 @@ use identity_core::common::Object;
 use crate::error::Result;
 use crate::service::Service;
 use crate::service::ServiceEndpoint;
-use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
-#[derive(Clone, Debug)]
-pub struct ServiceBuilder<D = CoreDID, T = Object>
-where
-  D: DID,
-{
-  pub(crate) id: Option<DIDUrl<D>>,
+#[derive(Clone, Debug, Default)]
+pub struct ServiceBuilder {
+  pub(crate) id: Option<DIDUrl>,
   pub(crate) type_: Vec<String>,
   pub(crate) service_endpoint: Option<ServiceEndpoint>,
-  pub(crate) properties: T,
+  pub(crate) properties: Object,
 }
 
-impl<D, T> ServiceBuilder<D, T>
-where
-  D: DID,
-{
+impl ServiceBuilder {
   /// Creates a new `ServiceBuilder`.
-  pub fn new(properties: T) -> Self {
+  pub fn new(properties: Object) -> Self {
     Self {
       id: None,
       type_: Vec::new(),
@@ -38,7 +30,7 @@ where
 
   /// Sets the `id` value of the generated `Service`.
   #[must_use]
-  pub fn id(mut self, value: DIDUrl<D>) -> Self {
+  pub fn id(mut self, value: DIDUrl) -> Self {
     self.id = Some(value);
     self
   }
@@ -67,23 +59,8 @@ where
   }
 
   /// Returns a new `Service` based on the `ServiceBuilder` configuration.
-  pub fn build(self) -> Result<Service<D, T>> {
+  pub fn build(self) -> Result<Service> {
     Service::from_builder(self)
-  }
-}
-
-impl<D, T> Default for ServiceBuilder<D, T>
-where
-  D: DID,
-  T: Default,
-{
-  fn default() -> Self {
-    Self {
-      id: None,
-      type_: Vec::default(),
-      service_endpoint: None,
-      properties: T::default(),
-    }
   }
 }
 

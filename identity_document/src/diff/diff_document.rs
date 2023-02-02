@@ -4,7 +4,6 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -18,51 +17,38 @@ use crate::document::CoreDocument;
 use crate::document::CoreDocumentData;
 use crate::service::Service;
 use identity_did::CoreDID;
-use identity_did::DID;
 use identity_verification::MethodRef;
 use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<D = CoreDID, T = Object, U = Object, V = Object>
-where
-  D: Diff + DID + KeyComparable + Serialize + for<'__de> Deserialize<'__de>,
-  T: Diff + Serialize + for<'__de> Deserialize<'__de>,
-  U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
-  V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
-{
+pub struct DiffDocument {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<<D as Diff>::Type>,
+  id: Option<<CoreDID as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<Option<DiffVec<D>>>,
+  controller: Option<Option<DiffVec<CoreDID>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  verification_method: Option<DiffVec<VerificationMethod<D, U>>>,
+  verification_method: Option<DiffVec<VerificationMethod>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  authentication: Option<DiffVec<MethodRef<D, U>>>,
+  authentication: Option<DiffVec<MethodRef>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  assertion_method: Option<DiffVec<MethodRef<D, U>>>,
+  assertion_method: Option<DiffVec<MethodRef>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  key_agreement: Option<DiffVec<MethodRef<D, U>>>,
+  key_agreement: Option<DiffVec<MethodRef>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_delegation: Option<DiffVec<MethodRef<D, U>>>,
+  capability_delegation: Option<DiffVec<MethodRef>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_invocation: Option<DiffVec<MethodRef<D, U>>>,
+  capability_invocation: Option<DiffVec<MethodRef>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  service: Option<DiffVec<Service<D, V>>>,
+  service: Option<DiffVec<Service>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  properties: Option<<T as Diff>::Type>,
+  properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D, T, U, V> Diff for CoreDocument<D, T, U, V>
-where
-  D: DID + KeyComparable + Diff + Serialize + for<'de> Deserialize<'de>,
-  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-  U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-  V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-{
-  type Type = DiffDocument<D, T, U, V>;
+impl Diff for CoreDocument {
+  type Type = DiffDocument;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffDocument {
@@ -129,13 +115,13 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: D = diff
+    let id: CoreDID = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: Option<OneOrSet<D>> = diff
+    let controller: Option<OneOrSet<CoreDID>> = diff
       .controller
       .map(|value| match value {
         Some(diff_value) => self
@@ -153,49 +139,49 @@ where
       .transpose()?
       .unwrap_or_else(|| self.also_known_as().clone());
 
-    let verification_method: OrderedSet<VerificationMethod<D, U>> = diff
+    let verification_method: OrderedSet<VerificationMethod> = diff
       .verification_method
       .map(|value| self.verification_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.verification_method().clone());
 
-    let authentication: OrderedSet<MethodRef<D, U>> = diff
+    let authentication: OrderedSet<MethodRef> = diff
       .authentication
       .map(|value| self.authentication().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.authentication().clone());
 
-    let assertion_method: OrderedSet<MethodRef<D, U>> = diff
+    let assertion_method: OrderedSet<MethodRef> = diff
       .assertion_method
       .map(|value| self.assertion_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.assertion_method().clone());
 
-    let key_agreement: OrderedSet<MethodRef<D, U>> = diff
+    let key_agreement: OrderedSet<MethodRef> = diff
       .key_agreement
       .map(|value| self.key_agreement().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.key_agreement().clone());
 
-    let capability_delegation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_delegation: OrderedSet<MethodRef> = diff
       .capability_delegation
       .map(|value| self.capability_delegation().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.capability_delegation().clone());
 
-    let capability_invocation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_invocation: OrderedSet<MethodRef> = diff
       .capability_invocation
       .map(|value| self.capability_invocation().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.capability_invocation().clone());
 
-    let service: OrderedSet<Service<D, V>> = diff
+    let service: OrderedSet<Service> = diff
       .service
       .map(|value| self.service().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.service().clone());
 
-    let properties: T = diff
+    let properties: Object = diff
       .properties
       .map(|value| self.properties().merge(value))
       .transpose()?
@@ -219,13 +205,13 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: D = diff
+    let id: CoreDID = diff
       .id
-      .map(D::from_diff)
+      .map(CoreDID::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
 
-    let controller: Option<OneOrSet<D>> = diff
+    let controller: Option<OneOrSet<CoreDID>> = diff
       .controller
       .map(|diff| match diff {
         Some(diff) => Some(OneOrSet::from_diff(diff)).transpose(),
@@ -240,49 +226,49 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.also_known_as`"))?;
 
-    let verification_method: OrderedSet<VerificationMethod<D, U>> = diff
+    let verification_method: OrderedSet<VerificationMethod> = diff
       .verification_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.verification_method`"))?;
 
-    let authentication: OrderedSet<MethodRef<D, U>> = diff
+    let authentication: OrderedSet<MethodRef> = diff
       .authentication
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.authentication`"))?;
 
-    let assertion_method: OrderedSet<MethodRef<D, U>> = diff
+    let assertion_method: OrderedSet<MethodRef> = diff
       .assertion_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.assertion_method`"))?;
 
-    let key_agreement: OrderedSet<MethodRef<D, U>> = diff
+    let key_agreement: OrderedSet<MethodRef> = diff
       .key_agreement
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.key_agreement`"))?;
 
-    let capability_delegation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_delegation: OrderedSet<MethodRef> = diff
       .capability_delegation
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_delegation`"))?;
 
-    let capability_invocation: OrderedSet<MethodRef<D, U>> = diff
+    let capability_invocation: OrderedSet<MethodRef> = diff
       .capability_invocation
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_invocation`"))?;
 
-    let service: OrderedSet<Service<D, V>> = diff
+    let service: OrderedSet<Service> = diff
       .service
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.service`"))?;
 
-    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
+    let properties: Object = diff.properties.map(Object::from_diff).transpose()?.unwrap_or_default();
 
     Ok(CoreDocument {
       data: CoreDocumentData {
@@ -335,7 +321,7 @@ mod test {
 
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
-  use identity_did::CoreDIDUrl;
+  use identity_did::DIDUrl;
   use identity_did::DID;
   use identity_verification::MethodBuilder;
   use identity_verification::MethodData;
@@ -357,7 +343,7 @@ mod test {
       .unwrap()
   }
 
-  fn service(did_url: CoreDIDUrl) -> Service {
+  fn service(did_url: DIDUrl) -> Service {
     ServiceBuilder::default()
       .id(did_url)
       .service_endpoint(ServiceEndpoint::One(Url::parse("did:service:1234").unwrap()))
@@ -810,7 +796,7 @@ mod test {
     let doc = document();
     let mut new = doc.clone();
 
-    let first: CoreDIDUrl = new.capability_invocation().first().unwrap().as_ref().clone();
+    let first: DIDUrl = new.capability_invocation().first().unwrap().as_ref().clone();
     new.data.capability_invocation.remove(&first);
 
     let method_ref: MethodRef = MethodBuilder::default()

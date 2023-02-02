@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
@@ -6,10 +6,10 @@ import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDocument,
     IotaIdentityClient,
-    IotaVerificationMethod,
     KeyPair,
     KeyType,
     MethodScope,
+    VerificationMethod,
     X25519,
 } from "@iota/identity-wasm/node";
 import { AddressTypes, Bech32Helper, IRent, OutputTypes } from "@iota/iota.js";
@@ -63,8 +63,8 @@ export async function keyExchange() {
 
         // Insert a new X25519 KeyAgreement verification method.
         const x25519: KeyPair = new KeyPair(KeyType.X25519);
-        const method: IotaVerificationMethod = new IotaVerificationMethod(
-            aliceDocument.id(),
+        const method: VerificationMethod = new VerificationMethod(
+            aliceDocument.id().toCoreDid(),
             KeyType.X25519,
             x25519.public(),
             "kex-0",
@@ -88,8 +88,8 @@ export async function keyExchange() {
 
         // Insert a new X25519 KeyAgreement verification method.
         const x25519: KeyPair = new KeyPair(KeyType.X25519);
-        const method: IotaVerificationMethod = new IotaVerificationMethod(
-            bobDocument.id(),
+        const method: VerificationMethod = new VerificationMethod(
+            bobDocument.id().toCoreDid(),
             KeyType.X25519,
             x25519.public(),
             "kex-0",
@@ -114,7 +114,7 @@ export async function keyExchange() {
     {
         // Alice: resolves Bob's DID Document and extracts their public key.
         const bobDocument: IotaDocument = await didClient.resolveDid(bobDid);
-        const bobMethod: IotaVerificationMethod = bobDocument.resolveMethod("kex-0", MethodScope.KeyAgreement())!;
+        const bobMethod: VerificationMethod = bobDocument.resolveMethod("kex-0", MethodScope.KeyAgreement())!;
         const bobPublicKey: Uint8Array = bobMethod.data().tryDecode();
         // Compute the shared secret.
         aliceSharedSecretKey = X25519.keyExchange(aliceX25519.private(), bobPublicKey);
@@ -124,7 +124,7 @@ export async function keyExchange() {
     {
         // Bob: resolves Alice's DID Document and extracts their public key.
         const aliceDocument: IotaDocument = await didClient.resolveDid(aliceDid);
-        const aliceMethod: IotaVerificationMethod = aliceDocument.resolveMethod("kex-0", MethodScope.KeyAgreement())!;
+        const aliceMethod: VerificationMethod = aliceDocument.resolveMethod("kex-0", MethodScope.KeyAgreement())!;
         const alicePublicKey: Uint8Array = aliceMethod.data().tryDecode();
         // Compute the shared secret.
         bobSharedSecretKey = X25519.keyExchange(bobX25519.private(), alicePublicKey);

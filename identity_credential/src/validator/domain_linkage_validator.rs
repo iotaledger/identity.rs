@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ValidatorDocument;
 use crate::credential::Credential;
 use crate::credential::DomainLinkageConfiguration;
 use crate::validator::errors::DomainLinkageValidationError;
@@ -12,6 +11,8 @@ use crate::validator::FailFast;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_did::CoreDID;
+use identity_did::DID;
+use identity_document::document::CoreDocument;
 use serde::Serialize;
 
 type DomainLinkageValidationResult = Result<(), DomainLinkageValidationError>;
@@ -38,7 +39,7 @@ impl DomainLinkageValidator {
   ///  - Semantic structure of `configuration` is invalid.
   ///  - `configuration` includes multiple credentials issued by `issuer`.
   ///  - Validation of the matched Domain Linkage Credential fails.
-  pub fn validate_linkage<DOC: ValidatorDocument>(
+  pub fn validate_linkage<DOC: AsRef<CoreDocument>>(
     issuer: &DOC,
     configuration: &DomainLinkageConfiguration,
     domain: &Url,
@@ -47,7 +48,7 @@ impl DomainLinkageValidator {
     let mut matched_credentials = configuration
       .linked_dids()
       .iter()
-      .filter(|credential| credential.issuer.url().as_str() == issuer.did_str());
+      .filter(|credential| credential.issuer.url().as_str() == CoreDocument::id(issuer.as_ref()).as_str());
 
     match matched_credentials.next() {
       None => Err(DomainLinkageValidationError {
@@ -72,7 +73,7 @@ impl DomainLinkageValidator {
   /// *`issuer`: issuer of the credential.
   /// *`credential`: domain linkage Credential to be verified.
   /// *`domain`: the domain hosting the credential.
-  pub fn validate_credential<T: Serialize, DOC: ValidatorDocument>(
+  pub fn validate_credential<T: Serialize, DOC: AsRef<CoreDocument>>(
     issuer: &DOC,
     credential: &Credential<T>,
     domain: Url,

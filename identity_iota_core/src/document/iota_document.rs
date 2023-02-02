@@ -4,11 +4,14 @@
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
-
+#[cfg(feature = "client")]
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
 use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+#[cfg(feature = "client")]
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
@@ -18,7 +21,6 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
 use identity_document::document::CoreDocument;
-use identity_document::document::Document;
 use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
 use identity_document::verifiable::DocumentSigner;
@@ -32,28 +34,55 @@ use identity_verification::VerificationMethod;
 use crate::error::Result;
 use crate::Error;
 use crate::IotaDID;
-use crate::IotaDIDUrl;
 use crate::IotaDocumentMetadata;
 use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
-/// A [`VerificationMethod`] adhering to the IOTA DID method specification.
-pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
+#[derive(Debug, Deserialize)]
+/// Struct used internally when deserializing [`IotaDocument`].
+struct ProvisionalIotaDocument {
+  #[serde(rename = "doc")]
+  document: CoreDocument,
+  #[serde(rename = "meta")]
+  metadata: IotaDocumentMetadata,
+}
 
-/// A [`Service`] adhering to the IOTA DID method specification.
-pub type IotaService = Service<IotaDID, Object>;
+impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
+  type Error = Error;
+  fn try_from(provisional: ProvisionalIotaDocument) -> std::result::Result<Self, Self::Error> {
+    let ProvisionalIotaDocument { document, metadata } = provisional;
 
-/// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
-pub type IotaCoreDocument = CoreDocument<IotaDID>;
-
+    IotaDID::check_validity(document.id()).map_err(|_| {
+      Error::SerializationError(
+        "deserializing iota document failed: id does not conform to the IOTA method specification",
+        None,
+      )
+    })?;
+    for controller_id in document
+      .controller()
+      .map(|controller_set| controller_set.iter())
+      .into_iter()
+      .flatten()
+    {
+      IotaDID::check_validity(controller_id).map_err(|_| {
+        Error::SerializationError(
+          "deserializing iota document failed: controller not conforming to the iota method specification detected",
+          None,
+        )
+      })?;
+    }
+    Ok(IotaDocument { document, metadata })
+  }
+}
 /// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(try_from = "ProvisionalIotaDocument")]
 pub struct IotaDocument {
   #[serde(rename = "doc")]
-  pub(crate) document: IotaCoreDocument,
+  pub(crate) document: CoreDocument,
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
 }
@@ -74,8 +103,8 @@ impl IotaDocument {
   /// Constructs an empty DID Document with the given identifier.
   pub fn new_with_id(id: IotaDID) -> Self {
     // PANIC: constructing an empty DID Document is infallible, caught by tests otherwise.
-    let document: IotaCoreDocument = CoreDocument::builder(Object::default())
-      .id(id)
+    let document: CoreDocument = CoreDocument::builder(Object::default())
+      .id(id.into())
       .build()
       .expect("empty IotaDocument constructor failed");
     let metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
@@ -88,15 +117,26 @@ impl IotaDocument {
 
   /// Returns the DID document identifier.
   pub fn id(&self) -> &IotaDID {
-    self.document.id()
+    // CORRECTNESS: This cast is OK because the public API does not expose methods
+    // enabling unchecked mutation of the `id` field.
+    IotaDID::from_inner_ref_unchecked(self.document.id())
   }
 
-  /// Returns a reference to the DID controllers.
+  /// Returns an iterator yielding the DID controllers.
   ///
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
-  pub fn controller(&self) -> Option<&OneOrSet<IotaDID>> {
-    self.document.controller()
+  pub fn controller(&self) -> impl Iterator<Item = &IotaDID> + '_ {
+    let core_did_controller_iter = self
+      .document
+      .controller()
+      .map(|controllers| controllers.iter())
+      .into_iter()
+      .flatten();
+
+    // CORRECTNESS: These casts are OK because the public API does not expose methods
+    // enabling unchecked mutation of the controllers.
+    core_did_controller_iter.map(IotaDID::from_inner_ref_unchecked)
   }
 
   /// Returns a reference to the `alsoKnownAs` set.
@@ -109,16 +149,16 @@ impl IotaDocument {
     self.document.also_known_as_mut()
   }
 
-  /// Returns a reference to the underlying [`IotaCoreDocument`].
-  pub fn core_document(&self) -> &IotaCoreDocument {
+  /// Returns a reference to the underlying [`CoreDocument`].
+  pub fn core_document(&self) -> &CoreDocument {
     &self.document
   }
 
-  /// Returns a mutable reference to the underlying [`IotaCoreDocument`].
+  /// Returns a mutable reference to the underlying [`CoreDocument`].
   ///
-  /// WARNING: mutating the inner document directly bypasses restrictions and
+  /// WARNING: Mutating the inner document directly bypasses checks and
   /// may have undesired consequences.
-  pub fn core_document_mut(&mut self) -> &mut IotaCoreDocument {
+  pub(crate) fn core_document_mut(&mut self) -> &mut CoreDocument {
     &mut self.document
   }
 
@@ -142,27 +182,27 @@ impl IotaDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all [`IotaService`]s in the document.
-  pub fn service(&self) -> &OrderedSet<IotaService> {
+  /// Return a set of all [`Service`]s in the document.
+  pub fn service(&self) -> &OrderedSet<Service> {
     self.document.service()
   }
 
-  /// Add a new [`IotaService`] to the document.
+  /// Add a new [`Service`] to the document.
   ///
   /// # Errors
   /// An error is returned if there already exists a service or (verification) method with
   /// the same identifier in the document.  
-  pub fn insert_service(&mut self, service: IotaService) -> Result<()> {
+  pub fn insert_service(&mut self, service: Service) -> Result<()> {
     self
       .core_document_mut()
       .insert_service(service)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Remove and return the [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
+  /// Remove and return the [`Service`] identified by the given [`DIDUrl`] from the document.
   ///
   /// `None` is returned if the service does not exist in the document.
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Option<IotaService> {
+  pub fn remove_service(&mut self, did_url: &DIDUrl) -> Option<Service> {
     self.core_document_mut().remove_service(did_url)
   }
 
@@ -173,28 +213,28 @@ impl IotaDocument {
   /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
   ///
   /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
-  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&IotaVerificationMethod> {
+  pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod> {
     self.document.methods(scope)
   }
 
-  /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
+  /// Adds a new [`VerificationMethod`] to the document in the given [`MethodScope`].
   ///
   /// # Errors
   ///
   /// Returns an error if a method with the same fragment already exists.
-  pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
+  pub fn insert_method(&mut self, method: VerificationMethod, scope: MethodScope) -> Result<()> {
     self
       .core_document_mut()
       .insert_method(method, scope)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Removes all references to the specified [`IotaVerificationMethod`].
+  /// Removes all references to the specified [`VerificationMethod`].
   ///
   /// # Errors
   ///
   /// Returns an error if the method does not exist.
-  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Option<IotaVerificationMethod> {
+  pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
     self.core_document_mut().remove_method(did_url)
   }
 
@@ -202,7 +242,7 @@ impl IotaDocument {
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
-  pub fn attach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  pub fn attach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
     self
       .core_document_mut()
       .attach_method_relationship(did_url, relationship)
@@ -210,14 +250,14 @@ impl IotaDocument {
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: &IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  pub fn detach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
     self
       .core_document_mut()
       .detach_method_relationship(did_url, relationship)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
   ///
   /// # Warning
@@ -227,11 +267,32 @@ impl IotaDocument {
     &mut self,
     query: Q,
     scope: Option<MethodScope>,
-  ) -> Option<&mut IotaVerificationMethod>
+  ) -> Option<&mut VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
     self.document.resolve_method_mut(query, scope)
+  }
+
+  /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
+  // services whose ids are of the form <did different from this document's>#<fragment>.
+  pub fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.document.resolve_service(query)
+  }
+
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the
+  /// provided `query` and the verification relationship specified by `scope` if present.
+  // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
+  // whose ids are of the form <did different from this document's>#<fragment>.
+  pub fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.document.resolve_method(query, scope)
   }
 
   // ===========================================================================
@@ -240,7 +301,7 @@ impl IotaDocument {
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
   /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, IotaDID> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_> {
     self.document.signer(private_key)
   }
 
@@ -271,6 +332,20 @@ impl IotaDocument {
       .options(options)
       .sign(data)
       .map_err(|err| Error::SigningError(err.into()))
+  }
+
+  /// Verifies the signature of the provided `data` was created using a verification method
+  /// in this DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, data
+  /// serialization fails, or the verification operation fails.
+  pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_document::Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    self.document.verify_data(data, options)
   }
 
   // ===========================================================================
@@ -344,7 +419,7 @@ mod client_document {
         Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
         _ => None,
       };
-      *self.core_document_mut().controller_mut() = controller_did.map(OneOrSet::new_one);
+      *self.core_document_mut().controller_mut() = controller_did.map(CoreDID::from).map(OneOrSet::new_one);
     }
 
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
@@ -384,38 +459,9 @@ mod client_document {
   }
 }
 
-impl Document for IotaDocument {
-  type D = IotaDID;
-  type U = Object;
-  type V = Object;
-
-  fn id(&self) -> &Self::D {
-    IotaDocument::id(self)
-  }
-
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.document.resolve_service(query)
-  }
-
-  fn resolve_method<'query, 'me, Q>(
-    &'me self,
-    query: Q,
-    scope: Option<MethodScope>,
-  ) -> Option<&VerificationMethod<Self::D, Self::U>>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.document.resolve_method(query, scope)
-  }
-
-  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_document::Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    self.document.verify_data(data, options)
+impl AsRef<CoreDocument> for IotaDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    &self.document
   }
 }
 
@@ -456,21 +502,26 @@ mod iota_document_revocation {
   }
 }
 
-impl From<IotaDocument> for IotaCoreDocument {
+impl From<IotaDocument> for CoreDocument {
   fn from(document: IotaDocument) -> Self {
     document.document
   }
 }
 
-impl From<IotaDocument> for CoreDocument {
-  fn from(document: IotaDocument) -> Self {
-    document.document.map_unchecked(Into::into, |id| id)
-  }
-}
-
-impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
-  fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
-    Self { document, metadata }
+impl TryFrom<(CoreDocument, IotaDocumentMetadata)> for IotaDocument {
+  type Error = Error;
+  /// Converts the tuple into an [`IotaDocument`] if the given [`CoreDocument`] has an identifier satisfying the
+  /// requirements of the IOTA UTXO method and the same holds for all of the [`CoreDocument's`](CoreDocument)
+  /// controllers.
+  ///
+  /// # Important
+  /// This does not check the relationship between the [`CoreDocument`] and the [`IotaDocumentMetadata`].
+  fn try_from(value: (CoreDocument, IotaDocumentMetadata)) -> std::result::Result<Self, Self::Error> {
+    ProvisionalIotaDocument {
+      document: value.0,
+      metadata: value.1,
+    }
+    .try_into()
   }
 }
 
@@ -514,10 +565,10 @@ mod tests {
       .unwrap()
   }
 
-  fn generate_method(controller: &IotaDID, fragment: &str) -> IotaVerificationMethod {
+  fn generate_method(controller: &IotaDID, fragment: &str) -> VerificationMethod {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
-      .controller(controller.clone())
+      .controller(controller.clone().into())
       .type_(MethodType::Ed25519VerificationKey2018)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
@@ -529,9 +580,9 @@ mod tests {
     metadata.created = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
     metadata.updated = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
 
-    let document: IotaCoreDocument = IotaCoreDocument::builder(Object::default())
-      .id(id.clone())
-      .controller(id.clone())
+    let document: CoreDocument = CoreDocument::builder(Object::default())
+      .id(id.clone().into())
+      .controller(id.clone().into())
       .verification_method(generate_method(id, "#key-1"))
       .verification_method(generate_method(id, "#key-2"))
       .verification_method(generate_method(id, "#key-3"))
@@ -540,7 +591,7 @@ mod tests {
       .build()
       .unwrap();
 
-    IotaDocument::from((document, metadata))
+    IotaDocument { document, metadata }
   }
 
   #[test]
@@ -567,7 +618,7 @@ mod tests {
   fn test_methods() {
     let controller: IotaDID = valid_did();
     let document: IotaDocument = generate_document(&controller);
-    let expected: Vec<IotaVerificationMethod> = vec![
+    let expected: Vec<VerificationMethod> = vec![
       generate_method(&controller, "#key-1"),
       generate_method(&controller, "#key-2"),
       generate_method(&controller, "#key-3"),
@@ -609,7 +660,7 @@ mod tests {
       // Add a new method.
       let key_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
-      let method_new: IotaVerificationMethod = IotaVerificationMethod::new(
+      let method_new: VerificationMethod = VerificationMethod::new(
         document.id().clone(),
         key_new.type_(),
         key_new.public(),
@@ -655,8 +706,8 @@ mod tests {
   fn test_services() {
     // VALID: add one service.
     let mut document: IotaDocument = IotaDocument::new_with_id(valid_did());
-    let url1: IotaDIDUrl = document.id().to_url().join("#linked-domain").unwrap();
-    let service1: IotaService = Service::from_json(&format!(
+    let url1: DIDUrl = document.id().to_url().join("#linked-domain").unwrap();
+    let service1: Service = Service::from_json(&format!(
       r#"{{
       "id":"{url1}",
       "type": "LinkedDomains",
@@ -673,8 +724,8 @@ mod tests {
     assert_eq!(document.resolve_service("#other"), None);
 
     // VALID: add two services.
-    let url2: IotaDIDUrl = document.id().to_url().join("#revocation").unwrap();
-    let service2: IotaService = Service::from_json(&format!(
+    let url2: DIDUrl = document.id().to_url().join("#revocation").unwrap();
+    let service2: Service = Service::from_json(&format!(
       r#"{{
       "id":"{url2}",
       "type": "RevocationBitmap2022",
@@ -691,7 +742,7 @@ mod tests {
     assert_eq!(document.resolve_service("#other"), None);
 
     // INVALID: insert service with duplicate fragment fails.
-    let duplicate: IotaService = Service::from_json(&format!(
+    let duplicate: Service = Service::from_json(&format!(
       r#"{{
       "id":"{url1}",
       "type": "DuplicateService",
@@ -701,14 +752,14 @@ mod tests {
     .unwrap();
     assert!(document.insert_service(duplicate.clone()).is_err());
     assert_eq!(2, document.service().len());
-    let resolved: &IotaService = document.resolve_service(&url1).unwrap();
+    let resolved: &Service = document.resolve_service(&url1).unwrap();
     assert_eq!(resolved, &service1);
     assert_ne!(resolved, &duplicate);
 
     // VALID: remove services.
     assert_eq!(service1, document.remove_service(&url1).unwrap());
     assert_eq!(1, document.service().len());
-    let last_service: &IotaService = document.resolve_service(&url2).unwrap();
+    let last_service: &Service = document.resolve_service(&url2).unwrap();
     assert_eq!(last_service, &service2);
 
     assert_eq!(service2, document.remove_service(&url2).unwrap());
@@ -719,7 +770,7 @@ mod tests {
   fn test_document_equality() {
     let mut original_doc: IotaDocument = IotaDocument::new_with_id(valid_did());
     let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method1: IotaVerificationMethod = IotaVerificationMethod::new(
+    let method1: VerificationMethod = VerificationMethod::new(
       original_doc.id().to_owned(),
       keypair1.type_(),
       keypair1.public(),
@@ -733,8 +784,8 @@ mod tests {
     // Update the key material of the existing verification method #test-0.
     let mut doc1 = original_doc.clone();
     let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method2: IotaVerificationMethod =
-      IotaVerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
+    let method2: VerificationMethod =
+      VerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
     doc1
       .remove_method(&doc1.id().to_url().join("#test-0").unwrap())
@@ -749,8 +800,8 @@ mod tests {
 
     let mut doc2 = doc1.clone();
     let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method3: IotaVerificationMethod =
-      IotaVerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
+    let method3: VerificationMethod =
+      VerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 
     let insertion_result = doc2.insert_method(method3, MethodScope::capability_invocation());
 
@@ -818,5 +869,218 @@ mod tests {
       serialization,
       format!("{{\"doc\":{},\"meta\":{}}}", document.document, document.metadata)
     );
+  }
+
+  #[test]
+  fn deserializing_id_from_other_method_fails() {
+    const JSON_DOC_INVALID_ID: &str = r#"
+    {
+      "doc": {
+        "id": "did:foo:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "verificationMethod": [
+          {
+            "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+            "controller": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "type": "Ed25519VerificationKey2018",
+            "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+          }
+        ]
+      },
+      "meta": {
+        "created": "2022-08-31T09:33:31Z",
+        "updated": "2022-08-31T09:33:31Z"
+      }
+    }"#;
+
+    let deserialization_result = IotaDocument::from_json(&JSON_DOC_INVALID_ID);
+
+    assert!(deserialization_result.is_err());
+
+    // Check that deserialization works after correcting the json document to have a valid IOTA DID as its identifier.
+    const JSON_DOC_CORRECT_ID: &str = r#"
+    {
+      "doc": {
+        "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "verificationMethod": [
+          {
+            "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+            "controller": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "type": "Ed25519VerificationKey2018",
+            "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+          }
+        ]
+      },
+      "meta": {
+        "created": "2022-08-31T09:33:31Z",
+        "updated": "2022-08-31T09:33:31Z"
+      }
+    }"#;
+
+    let corrected_deserialization_result = IotaDocument::from_json(&JSON_DOC_CORRECT_ID);
+    assert!(corrected_deserialization_result.is_ok());
+  }
+
+  #[test]
+  fn deserializing_controller_from_other_method_fails() {
+    const JSON_DOC_INVALID_CONTROLLER_ID: &str = r#"
+    {
+    "doc": {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:example:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "verificationMethod": [
+        {
+          "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+          "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
+        }
+      ]
+    },
+    "meta": {
+      "created": "2023-01-25T15:48:09Z",
+      "updated": "2023-01-25T15:48:09Z",
+      "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
+      "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+    }
+  }
+  "#;
+
+    let deserialization_result = IotaDocument::from_json(&JSON_DOC_INVALID_CONTROLLER_ID);
+    assert!(deserialization_result.is_err());
+
+    // Check that deserialization works after correcting the json document to have a valid IOTA DID as the controller.
+    const JSON_DOC_CORRECT_CONTROLLER_ID: &str = r#"
+  {
+  "doc": {
+    "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+    "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+    "verificationMethod": [
+      {
+        "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+        "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
+      }
+    ]
+  },
+  "meta": {
+    "created": "2023-01-25T15:48:09Z",
+    "updated": "2023-01-25T15:48:09Z",
+    "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
+    "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+  }
+}
+"#;
+    let corrected_deserialization_result = IotaDocument::from_json(JSON_DOC_CORRECT_CONTROLLER_ID);
+    assert!(corrected_deserialization_result.is_ok());
+  }
+
+  #[test]
+  fn controller_iterator_without_controller() {
+    const DOC_JSON: &str = r#"
+    {
+      "doc": {
+        "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "meta": {
+        "created": "2022-08-31T09:33:31Z",
+        "updated": "2022-08-31T09:33:31Z"
+      }
+    }
+    "#;
+
+    let doc = IotaDocument::from_json(DOC_JSON).unwrap();
+    assert!(doc.controller().next().is_none());
+  }
+
+  #[test]
+  fn controller_iterator_with_controller() {
+    const DOC_JSON: &str = r#"
+  {
+    "doc": {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343"
+    },
+    "meta": {
+      "created": "2023-01-25T15:48:09Z",
+      "updated": "2023-01-25T15:48:09Z",
+      "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
+      "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+    }
+  }
+  "#;
+    let doc = IotaDocument::from_json(DOC_JSON).unwrap();
+    let expected_controller =
+      IotaDID::parse("did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343").unwrap();
+    let controllers: Vec<&IotaDID> = doc.controller().collect();
+    assert_eq!(&controllers, &[&expected_controller]);
+  }
+
+  #[test]
+  fn try_from_doc_metadata() {
+    const DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_ID: &str = r#"
+    {
+      "id": "did:foo:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "verificationMethod": [
+        {
+          "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+          "controller": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+        }
+      ]
+    }
+    "#;
+
+    const DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_CONTROLLER: &str = r#"
+    {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:example:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "verificationMethod": [
+        {
+          "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38#key-2",
+          "controller": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "z7eTUXFdLCFg1LFVFhG8qUAM2aSjfTuPLB2x9XGXgQh6G"
+        }
+      ]
+    }
+    "#;
+
+    const METADATA_JSON: &str = r#"
+    {
+      "created": "2022-08-31T09:33:31Z",
+      "updated": "2022-08-31T09:33:31Z"
+    }
+    "#;
+
+    const DOCUMENT_WITH_IOTA_ID_AND_CONTROLLER_JSON: &str = r#"
+    {
+      "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+      "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343",
+      "verificationMethod": [
+        {
+          "id": "did:foo:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+          "controller": "did:bar:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "type": "Ed25519VerificationKey2018",
+          "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
+        }
+      ]
+    }
+    "#;
+
+    let doc_not_iota_because_of_id: CoreDocument =
+      CoreDocument::from_json(DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_ID).unwrap();
+    let doc_not_iota_because_of_controller: CoreDocument =
+      CoreDocument::from_json(DOC_JSON_NOT_IOTA_DOCUMENT_BECAUSE_OF_CONTROLLER).unwrap();
+    let doc_with_iota_id_and_controller: CoreDocument =
+      CoreDocument::from_json(DOCUMENT_WITH_IOTA_ID_AND_CONTROLLER_JSON).unwrap();
+    let metadata: IotaDocumentMetadata = IotaDocumentMetadata::from_json(METADATA_JSON).unwrap();
+
+    assert!(IotaDocument::try_from((doc_not_iota_because_of_id, metadata.clone())).is_err());
+
+    assert!(IotaDocument::try_from((doc_not_iota_because_of_controller, metadata.clone())).is_err());
+
+    assert!(IotaDocument::try_from((doc_with_iota_id_and_controller, metadata)).is_ok());
   }
 }

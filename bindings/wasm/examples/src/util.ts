@@ -4,10 +4,10 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    IotaVerificationMethod,
     KeyPair,
     KeyType,
     MethodScope,
+    VerificationMethod,
 } from "../../node";
 
 export const API_ENDPOINT = "http://localhost:14265";
@@ -44,7 +44,7 @@ export async function createDid(client: Client, secretManager: SecretManager): P
 
     // Insert a new Ed25519 verification method in the DID document.
     let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new IotaVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
+    let method = new VerificationMethod(document.id().toCoreDid(), keypair.type(), keypair.public(), "#key-1");
     document.insertMethod(method, MethodScope.VerificationMethod());
 
     // Construct an Alias Output containing the DID document, with the wallet address

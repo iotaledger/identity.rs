@@ -13,7 +13,6 @@ description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
 dataurl = { version = "0.1.2", default-features = false, optional = true }
-erased-serde = { version = "0.3.21", default-features = false, features = ["std"], optional = true }
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
 identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
@@ -47,5 +46,5 @@ default = ["revocation-bitmap", "validator", "credential", "presentation", "doma
 credential = []
 presentation = ["credential"]
 revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
-validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr", "credential", "presentation"]
+validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage-fetch = ["dep:reqwest", "dep:futures"]

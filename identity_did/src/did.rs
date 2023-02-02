@@ -17,7 +17,19 @@ use identity_core::diff::DiffString;
 use crate::DIDUrl;
 use crate::Error;
 
-pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryFrom<BaseDIDUrl> + Into<String> {
+pub trait DID:
+  Clone
+  + PartialEq
+  + Eq
+  + PartialOrd
+  + Ord
+  + Hash
+  + FromStr
+  + TryFrom<CoreDID>
+  + Into<String>
+  + Into<CoreDID>
+  + AsRef<CoreDID>
+{
   const SCHEME: &'static str = BaseDIDUrl::SCHEME;
 
   /// Returns the [`DID`] scheme. See [`DID::SCHEME`].
@@ -25,50 +37,67 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
   /// E.g.
   /// - `"did:example:12345678" -> "did"`
   /// - `"did:iota:main:12345678" -> "did"`
-  fn scheme(&self) -> &'static str;
+  fn scheme(&self) -> &'static str {
+    self.as_ref().0.scheme()
+  }
 
   /// Returns the [`DID`] authority: the method name and method-id.
   ///
   /// E.g.
   /// - `"did:example:12345678" -> "example:12345678"`
   /// - `"did:iota:main:12345678" -> "iota:main:12345678"`
-  fn authority(&self) -> &str;
+  fn authority(&self) -> &str {
+    self.as_ref().0.authority()
+  }
 
   /// Returns the [`DID`] method name.
   ///
   /// E.g.
   /// - `"did:example:12345678" -> "example"`
   /// - `"did:iota:main:12345678" -> "iota"`
-  fn method(&self) -> &str;
+  fn method(&self) -> &str {
+    self.as_ref().0.method()
+  }
 
   /// Returns the [`DID`] method-specific ID.
   ///
   /// E.g.
   /// - `"did:example:12345678" -> "12345678"`
   /// - `"did:iota:main:12345678" -> "main:12345678"`
-  fn method_id(&self) -> &str;
+  fn method_id(&self) -> &str {
+    self.as_ref().0.method_id()
+  }
 
   /// Returns the serialized [`DID`].
   ///
   /// This is fast since the serialized value is stored in the [`DID`].
-  fn as_str(&self) -> &str;
+  fn as_str(&self) -> &str {
+    self.as_ref().0.as_str()
+  }
 
   /// Consumes the [`DID`] and returns its serialization.
-  fn into_string(self) -> String;
+  fn into_string(self) -> String {
+    self.into()
+  }
 
   /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
   /// fragment to this [`DID`].
   ///
   /// See [`DIDUrl::join`].
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, Error>
-  where
-    Self: Sized;
+  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl, Error> {
+    let url = DIDUrl::from(self);
+    url.join(value)
+  }
 
   /// Clones the [`DID`] into a [`DIDUrl`] of the same method.
-  fn to_url(&self) -> DIDUrl<Self>;
+  fn to_url(&self) -> DIDUrl {
+    DIDUrl::new(self.clone().into(), None)
+  }
 
   /// Converts the [`DID`] into a [`DIDUrl`] of the same method.
-  fn into_url(self) -> DIDUrl<Self>;
+  fn into_url(self) -> DIDUrl {
+    DIDUrl::from(self)
+  }
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize, serde::Serialize)]
@@ -142,41 +171,9 @@ impl CoreDID {
   }
 }
 
-impl DID for CoreDID {
-  fn scheme(&self) -> &'static str {
-    self.0.scheme()
-  }
-
-  fn authority(&self) -> &str {
-    self.0.authority()
-  }
-
-  fn method(&self) -> &str {
-    self.0.method()
-  }
-
-  fn method_id(&self) -> &str {
-    self.0.method_id()
-  }
-
-  fn as_str(&self) -> &str {
-    self.0.as_str()
-  }
-
-  fn into_string(self) -> String {
-    <Self as Into<String>>::into(self)
-  }
-
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, Error> {
-    self.into_url().join(value)
-  }
-
-  fn to_url(&self) -> DIDUrl<Self> {
-    DIDUrl::new(self.clone(), None)
-  }
-
-  fn into_url(self) -> DIDUrl<Self> {
-    DIDUrl::new(self, None)
+impl AsRef<CoreDID> for CoreDID {
+  fn as_ref(&self) -> &CoreDID {
+    self
   }
 }
 
@@ -300,46 +297,19 @@ pub(crate) const fn is_char_method_id(ch: char) -> bool {
   matches!(ch, '0'..='9' | 'a'..='z' | 'A'..='Z' | '.' | '-' | '_' | ':')
 }
 
-impl<D> DID for D
-where
-  D: AsRef<CoreDID> + Into<String> + FromStr + Hash + Ord + Eq + PartialEq + Clone + TryFrom<BaseDIDUrl>,
+impl<D> DID for D where
+  D: Clone
+    + PartialEq
+    + Eq
+    + PartialOrd
+    + Ord
+    + Hash
+    + FromStr
+    + TryFrom<CoreDID>
+    + Into<String>
+    + Into<CoreDID>
+    + AsRef<CoreDID>
 {
-  fn as_str(&self) -> &str {
-    self.as_ref().as_str()
-  }
-
-  fn authority(&self) -> &str {
-    self.as_ref().authority()
-  }
-
-  fn into_string(self) -> String {
-    <Self as Into<String>>::into(self)
-  }
-
-  fn into_url(self) -> DIDUrl<Self> {
-    DIDUrl::new(self, None)
-  }
-
-  fn method(&self) -> &str {
-    self.as_ref().method()
-  }
-
-  fn method_id(&self) -> &str {
-    self.as_ref().method_id()
-  }
-  fn scheme(&self) -> &'static str {
-    self.as_ref().scheme()
-  }
-
-  fn to_url(&self) -> DIDUrl<Self> {
-    DIDUrl::new(self.clone(), None)
-  }
-  fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, Error>
-  where
-    Self: Sized,
-  {
-    self.into_url().join(value)
-  }
 }
 
 #[cfg(test)]

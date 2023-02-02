@@ -14,9 +14,9 @@ use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
+use identity_iota::verification::VerificationMethod;
 use iota_client::block::address::Address;
 use iota_client::block::address::AliasAddress;
 use iota_client::block::output::feature::IssuerFeature;
@@ -87,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
   // Add a verification method to the subsidiary.
   // This only serves as an example for updating the subsidiary DID.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: IotaVerificationMethod = IotaVerificationMethod::new(
+  let method: VerificationMethod = VerificationMethod::new(
     subsidiary_document.id().clone(),
     keypair.type_(),
     keypair.public(),

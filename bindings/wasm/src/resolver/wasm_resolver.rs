@@ -1,10 +1,9 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
 use std::rc::Rc;
 
-use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::did::CoreDID;
@@ -40,6 +39,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
+type RustSupportedDocumentResolver = SingleThreadedResolver<RustSupportedDocument>;
 /// Convenience type for resolving DID documents from different DID methods.   
 ///  
 /// Also provides methods for resolving DID Documents associated with
@@ -48,7 +48,7 @@ use wasm_bindgen_futures::future_to_promise;
 /// # Configuration
 /// The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
 #[wasm_bindgen(js_name = Resolver)]
-pub struct WasmResolver(Rc<SingleThreadedResolver>);
+pub struct WasmResolver(Rc<RustSupportedDocumentResolver>);
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
@@ -59,7 +59,7 @@ impl WasmResolver {
   /// will throw an error because the handler for the "iota" method then becomes ambiguous.
   #[wasm_bindgen(constructor)]
   pub fn new(config: ResolverConfig) -> Result<WasmResolver> {
-    let mut resolver: SingleThreadedResolver = SingleThreadedResolver::new();
+    let mut resolver: RustSupportedDocumentResolver = SingleThreadedResolver::new();
 
     let mut attached_iota_method = false;
     let resolution_handlers: Option<MapResolutionHandler> = config.handlers();
@@ -110,7 +110,11 @@ impl WasmResolver {
   }
 
   /// attempts to extract (method, handler) pairs from the entries of a map and attaches them to the resolver.
-  fn attach_handlers(resolver: &mut SingleThreadedResolver, map: &Map, attached_iota_method: &mut bool) -> Result<()> {
+  fn attach_handlers(
+    resolver: &mut RustSupportedDocumentResolver,
+    map: &Map,
+    attached_iota_method: &mut bool,
+  ) -> Result<()> {
     for key in map.keys() {
       if let Ok(js_method) = key {
         let js_handler: JsValue = map.get(&js_method);
@@ -143,7 +147,7 @@ impl WasmResolver {
   }
 
   /// Converts a JS handler to a Rust closure and attaches it to the given `resolver`.
-  fn attach_handler(resolver: &mut SingleThreadedResolver, method: String, handler: Function) {
+  fn attach_handler(resolver: &mut RustSupportedDocumentResolver, method: String, handler: Function) {
     let fun = move |input: CoreDID| {
       let fun_clone: Function = handler.clone();
       async move {
@@ -156,7 +160,7 @@ impl WasmResolver {
         let supported_document: RustSupportedDocument = awaited_output
           .into_serde()
           .map_err(|error| format!("unable to convert the resolved document into a supported DID document: {error}"))?;
-        std::result::Result::<_, String>::Ok(AbstractValidatorDocument::from(supported_document))
+        std::result::Result::<_, String>::Ok(supported_document)
       }
     };
 
@@ -171,21 +175,14 @@ impl WasmResolver {
   /// resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
   pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
-    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
     let promise: Promise = future_to_promise(async move {
       let supported_documents: Vec<RustSupportedDocument> = resolver
         .resolve_presentation_issuers(&presentation)
         .await
-        .wasm_result()
-        .and_then(|abstractly_resolved| {
-          abstractly_resolved
-            .into_iter()
-            .map(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
-            .collect::<Result<_>>()
-        })?;
-
+        .wasm_result()?;
       Ok(
         supported_documents
           .into_iter()
@@ -194,6 +191,7 @@ impl WasmResolver {
           .into(),
       )
     });
+
     Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
   }
 
@@ -204,7 +202,7 @@ impl WasmResolver {
   /// DID resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationHolder)]
   pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseSupportedDocument> {
-    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
     let promise: Promise = future_to_promise(async move {
@@ -212,7 +210,6 @@ impl WasmResolver {
         .resolve_presentation_holder(&presentation)
         .await
         .wasm_result()
-        .and_then(|abstract_doc| RustSupportedDocument::try_from(abstract_doc).map_err(JsValue::from))
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into::<PromiseSupportedDocument>())
@@ -243,16 +240,13 @@ impl WasmResolver {
     holder: &OptionSupportedDocument,
     issuers: &OptionArraySupportedDocument,
   ) -> Result<PromiseVoid> {
-    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
     let options: PresentationValidationOptions = options.0.clone();
 
     let holder: Option<RustSupportedDocument> = holder.into_serde().wasm_result()?;
-    let holder: Option<AbstractValidatorDocument> = holder.map(From::from);
+    let holder: Option<RustSupportedDocument> = holder.map(From::from);
     let issuers: Option<Vec<RustSupportedDocument>> = issuers.into_serde().wasm_result()?;
-    let issuers: Option<Vec<AbstractValidatorDocument>> =
-      issuers.map(|vector| vector.into_iter().map(AbstractValidatorDocument::from).collect());
-
     let promise: Promise = future_to_promise(async move {
       resolver
         .verify_presentation(
@@ -278,7 +272,7 @@ impl WasmResolver {
   /// corresponding to the given DID or the resolution process itself fails.
   #[wasm_bindgen]
   pub fn resolve(&self, did: &str) -> Result<PromiseSupportedDocument> {
-    let resolver: Rc<SingleThreadedResolver> = self.0.clone();
+    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
     let did: CoreDID = CoreDID::parse(did).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
@@ -286,7 +280,6 @@ impl WasmResolver {
         .resolve(&did)
         .await
         .map_err(WasmError::from)
-        .and_then(RustSupportedDocument::try_from)
         .map_err(JsValue::from)
         .map(JsValue::from)
     });

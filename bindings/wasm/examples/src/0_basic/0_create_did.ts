@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, MnemonicSecretManager, SecretManager } from "@iota/client-wasm/node";
@@ -7,10 +7,10 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    IotaVerificationMethod,
     KeyPair,
     KeyType,
     MethodScope,
+    VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
@@ -53,7 +53,7 @@ export async function createIdentity(): Promise<{
 
     // Insert a new Ed25519 verification method in the DID document.
     let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new IotaVerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
+    let method = new VerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
     document.insertMethod(method, MethodScope.VerificationMethod());
 
     // Construct an Alias Output containing the DID document, with the wallet address

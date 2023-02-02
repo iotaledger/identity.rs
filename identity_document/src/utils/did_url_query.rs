@@ -17,10 +17,7 @@ pub struct DIDUrlQuery<'query>(Cow<'query, str>);
 
 impl<'query> DIDUrlQuery<'query> {
   /// Returns whether this query matches the given DIDUrl.
-  pub(crate) fn matches<D>(&self, did_url: &DIDUrl<D>) -> bool
-  where
-    D: DID,
-  {
+  pub(crate) fn matches(&self, did_url: &DIDUrl) -> bool {
     // Ensure the DID matches if included in the query.
     if let Some(did_str) = self.did_str() {
       if did_str != did_url.did().as_str() {
@@ -80,20 +77,14 @@ impl<'query> From<&'query String> for DIDUrlQuery<'query> {
   }
 }
 
-impl<'query, T> From<&'query DIDUrl<T>> for DIDUrlQuery<'query>
-where
-  T: DID,
-{
-  fn from(other: &'query DIDUrl<T>) -> Self {
+impl<'query> From<&'query DIDUrl> for DIDUrlQuery<'query> {
+  fn from(other: &'query DIDUrl) -> Self {
     Self(Cow::Owned(other.to_string()))
   }
 }
 
-impl<'query, T> From<DIDUrl<T>> for DIDUrlQuery<'query>
-where
-  T: DID,
-{
-  fn from(other: DIDUrl<T>) -> Self {
+impl<'query> From<DIDUrl> for DIDUrlQuery<'query> {
+  fn from(other: DIDUrl) -> Self {
     Self(Cow::Owned(other.to_string()))
   }
 }
@@ -113,7 +104,7 @@ impl<'query> From<&'query Proof> for DIDUrlQuery<'query> {
 
 #[cfg(test)]
 mod tests {
-  use identity_did::CoreDIDUrl;
+  use identity_did::DIDUrl;
   use std::ops::Not;
 
   use super::*;
@@ -179,13 +170,13 @@ mod tests {
 
   #[test]
   fn test_matches() {
-    let did_base: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example").unwrap();
-    let did_path: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example/path").unwrap();
-    let did_query: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example?query").unwrap();
-    let did_fragment: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example#fragment").unwrap();
-    let did_different_fragment: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example#differentfragment").unwrap();
-    let did_url: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example/path?query#fragment").unwrap();
-    let did_url_complex: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example/path?query&relativeRef=/#fragment").unwrap();
+    let did_base: DIDUrl = DIDUrl::parse("did:iota:example").unwrap();
+    let did_path: DIDUrl = DIDUrl::parse("did:iota:example/path").unwrap();
+    let did_query: DIDUrl = DIDUrl::parse("did:iota:example?query").unwrap();
+    let did_fragment: DIDUrl = DIDUrl::parse("did:iota:example#fragment").unwrap();
+    let did_different_fragment: DIDUrl = DIDUrl::parse("did:iota:example#differentfragment").unwrap();
+    let did_url: DIDUrl = DIDUrl::parse("did:iota:example/path?query#fragment").unwrap();
+    let did_url_complex: DIDUrl = DIDUrl::parse("did:iota:example/path?query&relativeRef=/#fragment").unwrap();
 
     // INVALID: empty query should not match anything.
     {

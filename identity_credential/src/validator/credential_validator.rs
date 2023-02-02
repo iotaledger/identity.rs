@@ -3,6 +3,7 @@
 
 use std::str::FromStr;
 
+use identity_document::document::CoreDocument;
 use serde::Serialize;
 
 #[cfg(feature = "revocation-bitmap")]
@@ -26,7 +27,6 @@ use super::validation_options::StatusCheck;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
-use super::ValidatorDocument;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -60,13 +60,19 @@ impl CredentialValidator {
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  pub fn validate<T: Serialize, DOC: ValidatorDocument>(
+  pub fn validate<T: Serialize, DOC: AsRef<CoreDocument>>(
     credential: &Credential<T>,
     issuer: &DOC,
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
   ) -> CredentialValidationResult {
-    Self::validate_extended(credential, std::slice::from_ref(issuer), options, None, fail_fast)
+    Self::validate_extended(
+      credential,
+      std::slice::from_ref(issuer.as_ref()),
+      options,
+      None,
+      fail_fast,
+    )
   }
 
   /// Validates the semantic structure of the [`Credential`].
@@ -103,7 +109,7 @@ impl CredentialValidator {
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-  pub fn verify_signature<DOC: ValidatorDocument, T: Serialize>(
+  pub fn verify_signature<DOC: AsRef<CoreDocument>, T: Serialize>(
     credential: &Credential<T>,
     trusted_issuers: &[DOC],
     options: &VerifierOptions,
@@ -111,7 +117,8 @@ impl CredentialValidator {
     let issuer_did: CoreDID = Self::extract_issuer(credential)?;
     trusted_issuers
       .iter()
-      .find(|issuer_doc| issuer_doc.did_str() == issuer_did.as_str())
+      .map(AsRef::as_ref)
+      .find(|issuer_doc| <CoreDocument>::id(issuer_doc) == &issuer_did)
       .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
       .and_then(|issuer| {
         issuer
@@ -159,7 +166,7 @@ impl CredentialValidator {
   ///
   /// Only supports `BitmapRevocation2022`.
   #[cfg(feature = "revocation-bitmap")]
-  pub fn check_status<DOC: ValidatorDocument, T>(
+  pub fn check_status<DOC: AsRef<CoreDocument>, T>(
     credential: &Credential<T>,
     trusted_issuers: &[DOC],
     status_check: StatusCheck,
@@ -188,7 +195,7 @@ impl CredentialValidator {
         let issuer_did: CoreDID = Self::extract_issuer(credential)?;
         trusted_issuers
           .iter()
-          .find(|issuer| issuer.did_str() == issuer_did.as_str())
+          .find(|issuer| <CoreDocument>::id(issuer.as_ref()) == &issuer_did)
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
           .and_then(|issuer| CredentialValidator::check_revocation_bitmap_status(issuer, status))
       }
@@ -198,14 +205,17 @@ impl CredentialValidator {
   /// Check the given `status` against the matching [`RevocationBitmap`] service in the
   /// issuer's DID Document.
   #[cfg(feature = "revocation-bitmap")]
-  fn check_revocation_bitmap_status<DOC: ValidatorDocument + ?Sized>(
+  fn check_revocation_bitmap_status<DOC: AsRef<CoreDocument> + ?Sized>(
     issuer: &DOC,
     status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: identity_did::CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+    use crate::revocation::RevocationDocumentExt;
+
+    let issuer_service_url: identity_did::DIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
     let revocation_bitmap: RevocationBitmap = issuer
+      .as_ref()
       .resolve_revocation_bitmap(issuer_service_url.into())
       .map_err(|_| ValidationError::ServiceLookupError)?;
     let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
@@ -219,7 +229,7 @@ impl CredentialValidator {
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<DOC: ValidatorDocument, T: Serialize>(
+  pub(crate) fn validate_extended<DOC: AsRef<CoreDocument>, T: Serialize>(
     credential: &Credential<T>,
     issuers: &[DOC],
     options: &CredentialValidationOptions,
@@ -758,7 +768,7 @@ mod tests {
     }
 
     // Add a RevocationBitmap status to the credential.
-    let service_url: identity_did::CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
+    let service_url: identity_did::DIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
     let index: u32 = 42;
     credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
 

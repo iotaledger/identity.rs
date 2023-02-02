@@ -65,8 +65,8 @@ const {
   KeyType,
   MethodScope,
   IotaDocument,
-  IotaVerificationMethod,
-  IotaService,
+  VerificationMethod,
+  Service,
   MethodRelationship,
   IotaIdentityClient,
 } = require('@iota/identity-wasm/node');
@@ -94,8 +94,8 @@ async function main() {
 
   // Insert a new Ed25519 verification method in the DID document.
   let keypair = new KeyPair(KeyType.Ed25519);
-  let method = new IotaVerificationMethod(
-    document.id(),
+  let method = new VerificationMethod(
+    document.id().toCoreDid(),
     keypair.type(),
     keypair.public(),
     "#key-1"
@@ -109,7 +109,7 @@ async function main() {
   );
 
   // Add a new Service.
-  const service = new IotaService({
+  const service = new Service({
     id: document.id().join("#linked-domain"),
     type: "LinkedDomains",
     serviceEndpoint: "https://iota.org/",
@@ -259,7 +259,7 @@ async function createDocument() {
   );
 
   // Add a new Service.
-  const service = new identity.IotaService({
+  const service = new identity.Service({
     id: document.id().join("#linked-domain"),
     type: "LinkedDomains",
     serviceEndpoint: "https://iota.org/",
