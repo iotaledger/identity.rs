@@ -101,7 +101,7 @@ export async function didControlsDid() {
     // This only serves as an example for updating the subsidiary DID.
     const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
     const method: VerificationMethod = new VerificationMethod(
-        subsidiaryDocument.id().toCoreDid(),
+        subsidiaryDocument.id(),
         KeyType.Ed25519,
         keyPair.public(),
         "#key-2",

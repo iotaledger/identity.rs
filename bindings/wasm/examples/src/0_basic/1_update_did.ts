@@ -40,7 +40,7 @@ export async function updateIdentity() {
 
     // Insert a new Ed25519 verification method in the DID document.
     let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new VerificationMethod(document.id().toCoreDid(), keypair.type(), keypair.public(), "#key-2");
+    let method = new VerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-2");
     document.insertMethod(method, MethodScope.VerificationMethod());
 
     // Attach a new method relationship to the inserted method.
