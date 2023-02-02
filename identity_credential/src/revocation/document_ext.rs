@@ -33,7 +33,7 @@ pub trait RevocationDocumentExt: private::Sealed {
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(
     &self,
-    query: identity_document::utils::DIDUrlQuery<'_>,
+    query: DIDUrlQuery<'_>,
   ) -> RevocationResult<RevocationBitmap>;
 }
 
