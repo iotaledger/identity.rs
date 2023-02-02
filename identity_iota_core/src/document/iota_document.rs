@@ -49,7 +49,7 @@ struct ProvisionalIotaDocument {
 }
 
 impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
-  type Error = crate::Error;
+  type Error = Error;
   fn try_from(provisional: ProvisionalIotaDocument) -> std::result::Result<Self, Self::Error> {
     let ProvisionalIotaDocument { document, metadata } = provisional;
 
