@@ -171,6 +171,7 @@ A method-agnostic Decentralized Identifier (DID).
         * [.toUrl()](#CoreDID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.intoUrl()](#CoreDID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#CoreDID+toString) ⇒ <code>string</code>
+        * [.toCoreDid()](#CoreDID+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.toJSON()](#CoreDID+toJSON) ⇒ <code>any</code>
         * [.clone()](#CoreDID+clone) ⇒ [<code>CoreDID</code>](#CoreDID)
     * _static_
@@ -269,6 +270,10 @@ Converts the `CoreDID` into a `DIDUrl`, consuming it.
 ### coreDID.toString() ⇒ <code>string</code>
 Returns the `CoreDID` as a string.
 
+**Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
+<a name="CoreDID+toCoreDid"></a>
+
+### coreDID.toCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+toJSON"></a>
 
@@ -3449,7 +3454,7 @@ Creates a new `VerificationMethod` from the given `did` and public key.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>ICoreDID</code> | 
 | keyType | <code>number</code> | 
 | publicKey | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 

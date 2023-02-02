@@ -188,6 +188,9 @@ describe("CoreDocument", function() {
             const scope = MethodScope.AssertionMethod();
             const method = new VerificationMethod(doc.id(), KeyType.Ed25519, KEY_BYTES, fragment);
 
+            // `id` should remain valid after passing it to the constructor of VerificationMethod
+            assert.deepStrictEqual(doc.id().toString(), VALID_DID_EXAMPLE);
+
             // Add.
             doc.insertMethod(method, scope);
             // Resolve.

@@ -70,13 +70,23 @@ describe("IotaDocument", function() {
             const doc = IotaDocument.newWithId(did);
             assert.deepStrictEqual(doc.id().toString(), did.toString());
         });
+        it("toCoreDid should work", () => {
+            const did = new IotaDID(aliasIdBytes, networkName);
+            const coreDid = did.toCoreDid();
+            assert.deepStrictEqual(did.toString(), coreDid.toString());
+            assert.deepStrictEqual(
+                coreDid.toString(),
+                "did" + ":" + IotaDID.METHOD + ":" + networkName + ":" + did.tag(),
+            );
+        });
     });
+
     describe("#insert/resolve/removeMethod", function() {
         it("should work", async () => {
             const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
             const scope = MethodScope.AssertionMethod();
-            const method = new VerificationMethod(doc.id().toCoreDid(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = new VerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
 
             // Add.
             doc.insertMethod(method, scope);
@@ -104,7 +114,7 @@ describe("IotaDocument", function() {
         it("should work", async () => {
             const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
-            const method = new VerificationMethod(doc.id().toCoreDid(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = new VerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
             doc.insertMethod(method, MethodScope.VerificationMethod());
             assert.deepStrictEqual(
                 doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),

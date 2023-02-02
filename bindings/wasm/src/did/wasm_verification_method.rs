@@ -13,6 +13,8 @@ use identity_iota::crypto::PublicKey;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
 
+use super::wasm_core_did::ICoreDID;
+
 /// A DID Document Verification Method.
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
 pub struct WasmVerificationMethod(pub(crate) VerificationMethod);
@@ -23,13 +25,13 @@ impl WasmVerificationMethod {
   #[allow(non_snake_case)]
   #[wasm_bindgen(constructor)]
   pub fn new(
-    did: &WasmCoreDID,
+    did: &ICoreDID,
     keyType: WasmKeyType,
     publicKey: Vec<u8>,
     fragment: String,
   ) -> Result<WasmVerificationMethod> {
     let public_key: PublicKey = PublicKey::from(publicKey);
-    VerificationMethod::new(did.0.clone(), keyType.into(), &public_key, &fragment)
+    VerificationMethod::new(did.to_core_did().0, keyType.into(), &public_key, &fragment)
       .map(Self)
       .wasm_result()
   }
