@@ -362,6 +362,7 @@ impl Jwk {
       JwkParams::Oct(JwkParamsOct { k }) => {
         format!(r#"{{"k":"{k}","kty":"{kty}"}}"#)
       }
+      // Implementation according to https://www.rfc-editor.org/rfc/rfc8037#section-2.
       JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
         format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}"}}"#)
       }
