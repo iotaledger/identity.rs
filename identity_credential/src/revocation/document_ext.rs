@@ -31,10 +31,7 @@ pub trait RevocationDocumentExt: private::Sealed {
   /// Fails if the referenced service is not found, or is not a
   /// valid `RevocationBitmap2022` service.
   #[cfg(feature = "revocation-bitmap")]
-  fn resolve_revocation_bitmap(
-    &self,
-    query: DIDUrlQuery<'_>,
-  ) -> RevocationResult<RevocationBitmap>;
+  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> RevocationResult<RevocationBitmap>;
 }
 
 mod private {
@@ -67,15 +64,10 @@ impl RevocationDocumentExt for CoreDocument {
     })
   }
 
-  fn resolve_revocation_bitmap(
-    &self,
-    query: DIDUrlQuery<'_>,
-  ) -> RevocationResult<RevocationBitmap> {
+  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> RevocationResult<RevocationBitmap> {
     self
       .resolve_service(query)
-      .ok_or(RevocationError::InvalidService(
-        "revocation bitmap service not found",
-      ))
+      .ok_or(RevocationError::InvalidService("revocation bitmap service not found"))
       .and_then(RevocationBitmap::try_from)
   }
 }
