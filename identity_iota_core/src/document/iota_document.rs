@@ -509,7 +509,7 @@ impl From<IotaDocument> for CoreDocument {
 }
 
 impl TryFrom<(CoreDocument, IotaDocumentMetadata)> for IotaDocument {
-  type Error = crate::Error;
+  type Error = Error;
   /// Converts the tuple into an [`IotaDocument`] if the given [`CoreDocument`] has an identifier satisfying the
   /// requirements of the IOTA UTXO method and the same holds for all of the [`CoreDocument's`](CoreDocument)
   /// controllers.
