@@ -150,7 +150,7 @@ mod tests {
     let method1: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(id.clone())
       .controller(did.clone())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyBase58(
         "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
       ))
@@ -160,7 +160,7 @@ mod tests {
     let method2: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(id)
       .controller(did.clone())
-      .type_(MethodType::X25519KeyAgreementKey2019)
+      .type_(MethodType::X25519_KEY_AGREEMENT_KEY_2019)
       .data(MethodData::PublicKeyBase58(
         "FbQWLPRhTH95MCkQUeFYdiSoQt8zMwetqfWoxqPgaq7x".into(),
       ))

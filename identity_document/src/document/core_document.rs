@@ -901,7 +901,7 @@ impl CoreDocument {
 
     // Check method type.
     if let Some(ref method_types) = options.method_type {
-      if !method_types.is_empty() && !method_types.contains(&method.type_()) {
+      if !method_types.is_empty() && !method_types.contains(method.type_()) {
         return Err(Error::InvalidSignature("invalid method type"));
       }
     }
@@ -945,16 +945,12 @@ impl CoreDocument {
   {
     let public_key: Vec<u8> = method.data().try_decode().map_err(Error::InvalidKeyData)?;
 
-    match method.type_() {
-      MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
-      }
-      MethodType::X25519KeyAgreementKey2019 => {
-        return Err(Error::InvalidMethodType);
-      }
+    if method.type_() == &MethodType::ED25519_VERIFICATION_KEY_2018 {
+      JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
+      Ok(())
+    } else {
+      Err(Error::InvalidMethodType)
     }
-
-    Ok(())
   }
 }
 
@@ -1016,7 +1012,7 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
@@ -1378,7 +1374,7 @@ mod tests {
 
     // inserting a method with the same identifier as an existing service should fail
     let method: VerificationMethod = MethodBuilder::default()
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyBase58(
         "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
       ))
