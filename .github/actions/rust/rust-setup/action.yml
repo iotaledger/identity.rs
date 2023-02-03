@@ -49,6 +49,7 @@ runs:
       with:
         toolchain: ${{ inputs.toolchain }}
         targets: ${{ inputs.target }}
+        components: ${{ inputs.components }}
 
     - name: Cache cargo
       uses: actions/cache@v2.1.7
