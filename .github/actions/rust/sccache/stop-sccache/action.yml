@@ -9,13 +9,6 @@ runs:
   steps:
   
     - name: Stop sccache
-      if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
-      shell: sh
-      run: |
-        sccache --stop-server || true
-
-    - name: Stop sccache
-      if: inputs.os == 'windows-latest'
-      shell: 'pwsh'
+      shell: bash
       run: |
         sccache --stop-server || true

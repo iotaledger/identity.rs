@@ -117,22 +117,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: cargo clean
 
+        # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
       - name: Build all features
-        uses: actions-rs/cargo@v1
-        with:
-          # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-          command: build
-          args: --workspace --tests --examples --all-features --release
+        run: cargo build --workspace --tests --examples --all-features --release
 
       - name: Start private tangle
         if: matrix.os == 'ubuntu-latest'
         uses: './.github/actions/private-tangle/setup'
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace --all-features --release
+        run: cargo test --workspace --all-features --release
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -175,16 +169,10 @@ jobs:
           override: true
 
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --manifest-path ./libjose/Cargo.toml --release
+        run: cargo build --manifest-path ./libjose/Cargo.toml --release
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path ./libjose/Cargo.toml --release
+        run: cargo test --manifest-path ./libjose/Cargo.toml --release
 
   build-wasm:
     needs: check-for-run-condition

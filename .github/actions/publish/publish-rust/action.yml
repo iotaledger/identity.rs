@@ -21,13 +21,11 @@ runs:
         override: true
 
     - name: Install cargo-release
-      uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: --version ^0.21 cargo-release
+      shell: bash
+      run: cargo install --version ^0.21 cargo-release
 
     - name: Publish library to crates.io
-      shell: sh
+      shell: bash
       run: |
         echo "dry-run: '${{ inputs.dry-run }}'"
         echo "version: '${{ inputs.version }}'"

@@ -34,10 +34,7 @@ jobs:
           override: true
 
       - name: Test Rust Documentation
-        uses: actions-rs/cargo@v1
         env:
           RUSTDOCFLAGS: "-D warnings --cfg docsrs"
-        with:
-          command: doc
-          toolchain: nightly
-          args: --all-features --no-deps --workspace
+          RUSTUP_TOOLCHAIN: "nightly"
+        run: cargo doc --all-features --no-deps --workspace

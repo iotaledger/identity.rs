@@ -20,16 +20,12 @@ runs:
         override: true
 
     - name: Install cargo-workspaces
-      uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: --version ^0.2 cargo-workspaces
+      shell: bash
+      run: cargo install --version ^0.2 cargo-workspaces
 
     - name: Install cargo-edit # to use cargo add and set-version
-      uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
+      shell: bash
+      run: cargo install -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
 
     - name: Bump Rust crate versions
       shell: bash
