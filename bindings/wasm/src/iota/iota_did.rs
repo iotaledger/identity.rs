@@ -8,9 +8,10 @@ use identity_iota::iota::NetworkName;
 use iota_types::block::output::AliasId;
 use wasm_bindgen::prelude::*;
 
+use crate::did::WasmCoreDID;
+use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::iota::WasmIotaDIDUrl;
 
 /// A DID conforming to the IOTA DID method specification.
 ///
@@ -90,6 +91,12 @@ impl WasmIotaDID {
     self.0.tag().to_owned()
   }
 
+  #[wasm_bindgen(js_name = toCoreDid)]
+  /// Returns the DID represented as a `CoreDID`.
+  pub fn to_core_did(&self) -> WasmCoreDID {
+    WasmCoreDID(self.0.as_ref().clone())
+  }
+
   // ===========================================================================
   // DID trait
   // ===========================================================================
@@ -136,14 +143,14 @@ impl WasmIotaDID {
 
   /// Construct a new `DIDUrl` by joining with a relative DID Url string.
   #[wasm_bindgen]
-  pub fn join(&self, segment: &str) -> Result<WasmIotaDIDUrl> {
-    self.0.clone().join(segment).wasm_result().map(WasmIotaDIDUrl)
+  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
+    self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
   /// Clones the `DID` into a `DIDUrl`.
   #[wasm_bindgen(js_name = toUrl)]
-  pub fn to_url(&self) -> WasmIotaDIDUrl {
-    WasmIotaDIDUrl::from(self.0.to_url())
+  pub fn to_url(&self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.to_url())
   }
 
   /// Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
@@ -154,8 +161,8 @@ impl WasmIotaDID {
 
   /// Converts the `DID` into a `DIDUrl`, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
-  pub fn into_url(self) -> WasmIotaDIDUrl {
-    WasmIotaDIDUrl::from(self.0.into_url())
+  pub fn into_url(self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.into_url())
   }
 
   /// Returns the `DID` as a string.

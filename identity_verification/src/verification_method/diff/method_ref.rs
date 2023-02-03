@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Object;
 use identity_core::diff::Diff;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
@@ -10,27 +9,18 @@ use serde::Serialize;
 
 use super::diff_method::DiffMethod;
 use crate::verification_method::MethodRef;
-use identity_did::CoreDID;
+
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
-pub enum DiffMethodRef<D = CoreDID, T = Object>
-where
-  D: Diff + DID,
-  T: Diff,
-{
-  Embed(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffMethod<D, T>>),
-  Refer(#[serde(skip_serializing_if = "Option::is_none")] Option<<DIDUrl<D> as Diff>::Type>),
+pub enum DiffMethodRef {
+  Embed(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffMethod>),
+  Refer(#[serde(skip_serializing_if = "Option::is_none")] Option<<DIDUrl as Diff>::Type>),
 }
 
-impl<D, T> Diff for MethodRef<D, T>
-where
-  D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
-  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-{
-  type Type = DiffMethodRef<D, T>;
+impl Diff for MethodRef {
+  type Type = DiffMethodRef;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     match (self, other) {

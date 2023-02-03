@@ -6,7 +6,7 @@ mod resolver;
 mod tests;
 
 use self::commands::SingleThreadedCommand;
-use identity_credential::validator::AbstractValidatorDocument;
+use identity_document::document::CoreDocument;
 pub use resolver::Resolver;
 /// Alias for a [`Resolver`] that is not [`Send`] + [`Sync`].
-pub type SingleThreadedResolver<DOC = AbstractValidatorDocument> = Resolver<DOC, SingleThreadedCommand<DOC>>;
+pub type SingleThreadedResolver<DOC = CoreDocument> = Resolver<DOC, SingleThreadedCommand<DOC>>;

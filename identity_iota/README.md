@@ -96,7 +96,7 @@ use identity_iota::verification::MethodScope;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaVerificationMethod;
+use identity_iota::verification::VerificationMethod;
 use identity_iota::iota::NetworkName;
 use iota_client::block::address::Address;
 use iota_client::block::output::AliasOutput;
@@ -145,8 +145,8 @@ async fn main() -> anyhow::Result<()> {
 
   // Insert a new Ed25519 verification method in the DID document.
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
+  let method: VerificationMethod =
+    VerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
   document.insert_method(method, MethodScope::VerificationMethod)?;
 
   // Construct an Alias Output containing the DID document, with the wallet address

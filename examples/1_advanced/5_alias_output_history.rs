@@ -20,7 +20,6 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClient;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaService;
 use identity_iota::verification::MethodRelationship;
 use iota_client::api_types::response::OutputMetadataResponse;
 use iota_client::block::input::Input;
@@ -69,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     json!({"id": document.id().to_url().join("#my-service-0")?, "type": "MyService", "serviceEndpoint": "https://iota.org/"}),
   ];
   for service in services {
-    let service: IotaService = Service::from_json_value(service)?;
+    let service: Service = Service::from_json_value(service)?;
     assert!(document.insert_service(service).is_ok());
     document.metadata.updated = Some(Timestamp::now_utc());
 

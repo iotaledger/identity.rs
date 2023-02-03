@@ -10,9 +10,10 @@ use core::str::FromStr;
 use identity_core::common::KeyComparable;
 use identity_did::BaseDIDUrl;
 use identity_did::CoreDID;
-use identity_did::DIDUrl;
 use identity_did::Error as DIDError;
 use identity_did::DID;
+use ref_cast::ref_cast_custom;
+use ref_cast::RefCastCustom;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -20,16 +21,11 @@ use crate::NetworkName;
 
 pub type Result<T> = std::result::Result<T, DIDError>;
 
-/// A DID URL conforming to the IOTA DID method specification.
-///
-/// See [`DIDUrl`].
-pub type IotaDIDUrl = DIDUrl<IotaDID>;
-
 /// A DID conforming to the IOTA DID method specification.
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
 /// [`identity_did`][`identity_did`] crate.
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, RefCastCustom)]
 #[repr(transparent)]
 #[serde(into = "CoreDID", try_from = "CoreDID")]
 pub struct IotaDID(CoreDID);
@@ -49,6 +45,18 @@ impl IotaDID {
 
   /// The length of an Alias ID, which is a BLAKE2b-256 hash (32-bytes).
   pub(crate) const TAG_BYTES_LEN: usize = 32;
+
+  /// Convert a `CoreDID` reference to an `IotaDID` reference without checking the referenced value.
+  ///  
+  /// # Warning
+  /// This method should only be called on [`CoreDIDs`](CoreDID) that
+  /// are known to satisfy the requirements of the IOTA UTXO specification.  
+  ///
+  /// # Memory safety
+  ///
+  /// The `ref-cast` crate ensures a memory safe implementation.  
+  #[ref_cast_custom]
+  pub(crate) const fn from_inner_ref_unchecked(did: &CoreDID) -> &Self;
 
   // ===========================================================================
   // Constructors
@@ -333,6 +341,7 @@ mod __iota_did_client {
 
 #[cfg(test)]
 mod tests {
+  use identity_did::DIDUrl;
   use once_cell::sync::Lazy;
   use proptest::strategy::Strategy;
   use proptest::*;
@@ -780,60 +789,60 @@ mod tests {
   #[test]
   fn test_parse_did_url_valid() {
     let execute_assertions = |valid_alias_id: &str| {
-      assert!(IotaDIDUrl::parse(format!("did:{}:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!("did:{}:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!("did:{}:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!(
         "did:{}:{}?somequery=somevalue",
         IotaDID::METHOD,
         valid_alias_id
       ))
       .is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!(
         "did:{}:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
         valid_alias_id
       ))
       .is_ok());
 
-      assert!(IotaDIDUrl::parse(format!("did:{}:main:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!("did:{}:main:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!("did:{}:main:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:main:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!(
         "did:{}:main:{}?somequery=somevalue",
         IotaDID::METHOD,
         valid_alias_id
       ))
       .is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!(
         "did:{}:main:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
         valid_alias_id
       ))
       .is_ok());
 
-      assert!(IotaDIDUrl::parse(format!("did:{}:dev:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!("did:{}:dev:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!("did:{}:dev:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:dev:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!(
         "did:{}:dev:{}?somequery=somevalue",
         IotaDID::METHOD,
         valid_alias_id
       ))
       .is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!(
         "did:{}:dev:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
         valid_alias_id
       ))
       .is_ok());
 
-      assert!(IotaDIDUrl::parse(format!("did:{}:custom:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!("did:{}:custom:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!("did:{}:custom:{}", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!("did:{}:custom:{}#fragment", IotaDID::METHOD, valid_alias_id)).is_ok());
+      assert!(DIDUrl::parse(format!(
         "did:{}:custom:{}?somequery=somevalue",
         IotaDID::METHOD,
         valid_alias_id
       ))
       .is_ok());
-      assert!(IotaDIDUrl::parse(format!(
+      assert!(DIDUrl::parse(format!(
         "did:{}:custom:{}?somequery=somevalue#fragment",
         IotaDID::METHOD,
         valid_alias_id
@@ -847,7 +856,7 @@ mod tests {
   #[test]
   fn valid_url_setters() {
     let execute_assertions = |valid_alias_id: &str| {
-      let mut did_url: IotaDIDUrl = IotaDID::parse(format!("did:{}:{}", IotaDID::METHOD, valid_alias_id))
+      let mut did_url: DIDUrl = IotaDID::parse(format!("did:{}:{}", IotaDID::METHOD, valid_alias_id))
         .unwrap()
         .into_url();
 

@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! Verifiable Credential and Presentation validators.
@@ -16,9 +16,6 @@ pub use self::validation_options::FailFast;
 pub use self::validation_options::PresentationValidationOptions;
 pub use self::validation_options::StatusCheck;
 pub use self::validation_options::SubjectHolderRelationship;
-pub use self::validator_document::AbstractThreadSafeValidatorDocument;
-pub use self::validator_document::AbstractValidatorDocument;
-pub use self::validator_document::ValidatorDocument;
 
 mod credential_validator;
 mod domain_linkage_validator;
@@ -27,4 +24,3 @@ mod presentation_validator;
 #[cfg(test)]
 mod test_utils;
 mod validation_options;
-mod validator_document;

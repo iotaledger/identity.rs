@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::CoreDID;
@@ -12,7 +11,6 @@ use serde::Serialize;
 
 use crate::error::Result;
 use crate::Error;
-use crate::IotaCoreDocument;
 use crate::IotaDID;
 use crate::IotaDocument;
 use crate::IotaDocumentMetadata;
@@ -41,22 +39,37 @@ impl StateMetadataDocument {
   /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
   pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
-    let core_document: IotaCoreDocument = document.try_map(
-      // Replace placeholder identifiers.
-      |did| {
-        if did == PLACEHOLDER_DID.as_ref() {
-          Ok(original_did.clone())
-        } else {
-          // TODO: wrap error?
-          IotaDID::try_from_core(did).map_err(crate::error::Error::DIDSyntaxError)
-        }
-      },
-      // Do not modify properties.
-      Result::<Object, crate::error::Error>::Ok,
+    // Transform identifiers: Replace placeholder identifiers, and ensure that `id` and `controller` adhere to the
+    // specification.
+    let replace_placeholder_with_method_check = |did: CoreDID| -> Result<CoreDID> {
+      if did == PLACEHOLDER_DID.as_ref() {
+        Ok(CoreDID::from(original_did.clone()))
+      } else {
+        // TODO: Consider introducing better error variant
+        IotaDID::check_validity(&did).map_err(Error::DIDSyntaxError)?;
+        Ok(did)
+      }
+    };
+    let [id_update, controller_update] = [replace_placeholder_with_method_check; 2];
+    // Methods and services are not required to be IOTA UTXO DIDs, but we still want to replace placeholders
+    let replace_placeholder = |did: CoreDID| -> Result<CoreDID> {
+      if did == PLACEHOLDER_DID.as_ref() {
+        Ok(CoreDID::from(original_did.clone()))
+      } else {
+        Ok(did)
+      }
+    };
+    let [methods_update, service_update] = [replace_placeholder; 2];
+
+    let document = document.try_map(
+      id_update,
+      controller_update,
+      methods_update,
+      service_update,
       crate::error::Error::InvalidDoc,
     )?;
 
-    Ok(IotaDocument::from((core_document, metadata)))
+    Ok(IotaDocument { document, metadata })
   }
 
   /// Pack a [`StateMetadataDocument`] into bytes, suitable for inclusion in
@@ -174,22 +187,22 @@ impl From<IotaDocument> for StateMetadataDocument {
   /// Transforms a [`IotaDocument`] into its state metadata representation by replacing all
   /// occurrences of its did with a placeholder.
   fn from(document: IotaDocument) -> Self {
-    let IotaDocument { document, metadata } = document;
     let id: IotaDID = document.id().clone();
-    let core_document: CoreDocument = document.map_unchecked(
-      // Replace self-referential identifiers with a placeholder, but not others.
-      |did| {
-        if did == id {
-          PLACEHOLDER_DID.clone()
-        } else {
-          CoreDID::from(did)
-        }
-      },
-      // Do not modify properties.
-      |o| o,
-    );
+    let IotaDocument { document, metadata } = document;
+
+    // Replace self-referential identifiers with a placeholder, but not others.
+    let replace_id_with_placeholder = |did: CoreDID| -> CoreDID {
+      if &did == id.as_ref() {
+        PLACEHOLDER_DID.clone()
+      } else {
+        did
+      }
+    };
+
+    let [id_update, controller_update, methods_update, service_update] = [replace_id_with_placeholder; 4];
+
     StateMetadataDocument {
-      document: core_document,
+      document: document.map_unchecked(id_update, controller_update, methods_update, service_update),
       metadata,
     }
   }
@@ -202,6 +215,7 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
+  use identity_did::CoreDID;
   use identity_did::DID;
   use identity_verification::MethodScope;
 
@@ -209,11 +223,11 @@ mod tests {
   use crate::state_metadata::PLACEHOLDER_DID;
   use crate::IotaDID;
   use crate::IotaDocument;
-  use crate::IotaService;
-  use crate::IotaVerificationMethod;
   use crate::StateMetadataDocument;
   use crate::StateMetadataEncoding;
   use crate::StateMetadataVersion;
+  use identity_document::service::Service;
+  use identity_verification::VerificationMethod;
 
   struct TestSetup {
     document: IotaDocument,
@@ -231,7 +245,7 @@ mod tests {
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .insert_method(
-        IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
+        VerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
         MethodScope::VerificationMethod,
       )
       .unwrap();
@@ -239,7 +253,7 @@ mod tests {
     let keypair_foreign: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .insert_method(
-        IotaVerificationMethod::new(
+        VerificationMethod::new(
           did_foreign.clone(),
           keypair_foreign.type_(),
           keypair_foreign.public(),
@@ -252,7 +266,7 @@ mod tests {
 
     assert!(document
       .insert_service(
-        IotaService::builder(Object::new())
+        Service::builder(Object::new())
           .id(document.id().to_url().join("#my-service").unwrap())
           .type_("RevocationList2022")
           .service_endpoint(Url::parse("https://example.com/xyzabc").unwrap())
@@ -263,7 +277,7 @@ mod tests {
 
     assert!(document
       .insert_service(
-        IotaService::builder(Object::new())
+        Service::builder(Object::new())
           .id(did_foreign.to_url().join("#my-foreign-service").unwrap())
           .type_("RevocationList2022")
           .service_endpoint(Url::parse("https://example.com/0xf4c42e9da").unwrap())
@@ -279,7 +293,7 @@ mod tests {
       .also_known_as_mut()
       .append(Url::parse("did:example:xyz").unwrap());
 
-    let controllers = OneOrSet::try_from(vec![did_foreign.clone(), did_self.clone()]).unwrap();
+    let controllers = OneOrSet::try_from(vec![did_foreign.clone().into(), did_self.clone().into()]).unwrap();
     *document.core_document_mut().controller_mut() = Some(controllers);
 
     TestSetup {
@@ -306,7 +320,7 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      PLACEHOLDER_DID.as_ref()
+      <CoreDID as AsRef<CoreDID>>::as_ref(PLACEHOLDER_DID.as_ref())
     );
 
     assert_eq!(
@@ -340,12 +354,15 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      PLACEHOLDER_DID.as_ref()
+      <CoreDID as AsRef<CoreDID>>::as_ref(PLACEHOLDER_DID.as_ref())
     );
 
     let controllers = state_metadata_doc.document.controller().unwrap();
     assert_eq!(controllers.get(0).unwrap(), did_foreign.as_ref());
-    assert_eq!(controllers.get(1).unwrap(), PLACEHOLDER_DID.as_ref());
+    assert_eq!(
+      controllers.get(1).unwrap(),
+      <CoreDID as AsRef<CoreDID>>::as_ref(PLACEHOLDER_DID.as_ref())
+    );
 
     let iota_document = state_metadata_doc.into_iota_document(&did_self).unwrap();
     assert_eq!(iota_document, document);

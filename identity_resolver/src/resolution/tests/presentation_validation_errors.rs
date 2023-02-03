@@ -7,7 +7,6 @@ use identity_core::convert::FromJson;
 use identity_credential::presentation::Presentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
-use identity_credential::validator::ValidatorDocument;
 use identity_did::CoreDID;
 use identity_document::document::CoreDocument;
 use identity_iota_core::IotaDID;
@@ -31,10 +30,34 @@ async fn misconfigured_foo_resolver(_did: CoreDID) -> Result<CoreDocument, Dynam
   Ok(CoreDocument::from_json(ISSUER_BAR_DOC_JSON).unwrap())
 }
 
+enum DocumentTypes {
+  Iota(IotaDocument),
+  CoreDocument(CoreDocument),
+}
+
+impl AsRef<CoreDocument> for DocumentTypes {
+  fn as_ref(&self) -> &CoreDocument {
+    match self {
+      Self::Iota(doc) => doc.as_ref(),
+      Self::CoreDocument(doc) => doc,
+    }
+  }
+}
+impl From<IotaDocument> for DocumentTypes {
+  fn from(value: IotaDocument) -> Self {
+    Self::Iota(value)
+  }
+}
+impl From<CoreDocument> for DocumentTypes {
+  fn from(value: CoreDocument) -> Self {
+    Self::CoreDocument(value)
+  }
+}
+
 /// checks that `Resolver::verify_presentation` fails when the resolver is misconfigured.
 async fn check_verify_presentation<DOC>(mut resolver: Resolver<DOC>)
 where
-  DOC: ValidatorDocument + From<CoreDocument> + From<IotaDocument> + Send + Sync,
+  DOC: AsRef<CoreDocument> + From<CoreDocument> + From<IotaDocument> + Send + Sync,
 {
   let correct_iota_issuer: IotaDocument = IotaDocument::from_json(ISSUER_IOTA_DOC_JSON).unwrap();
   let correct_bar_issuer: CoreDocument = CoreDocument::from_json(ISSUER_BAR_DOC_JSON).unwrap();
@@ -116,7 +139,7 @@ where
 #[tokio::test]
 async fn misconfigured_resolvers_verify_incorrectly() {
   let resolver_core: Resolver<CoreDocument> = Resolver::new();
-  let resolver: Resolver = Resolver::new();
+  let resolver: Resolver<DocumentTypes> = Resolver::new();
   check_verify_presentation(resolver_core).await;
   check_verify_presentation(resolver).await;
 }

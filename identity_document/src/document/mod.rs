@@ -7,9 +7,7 @@
 
 pub use self::builder::DocumentBuilder;
 pub use self::core_document::CoreDocument;
-pub use self::traits::Document;
 
 pub(crate) use core_document::CoreDocumentData;
 mod builder;
 mod core_document;
-mod traits;

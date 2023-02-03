@@ -3,7 +3,7 @@
 
 use crate::common::MapStringAny;
 use crate::crypto::WasmKeyType;
-use crate::did::wasm_core_url::WasmCoreDIDUrl;
+use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmCoreDID;
 use crate::did::WasmMethodData;
 use crate::did::WasmMethodType;
@@ -13,71 +13,73 @@ use identity_iota::crypto::PublicKey;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
 
-/// A DID Document Verification Method.
-#[wasm_bindgen(js_name = CoreVerificationMethod, inspectable)]
-pub struct WasmCoreVerificationMethod(pub(crate) VerificationMethod);
+use super::wasm_core_did::ICoreDID;
 
-#[wasm_bindgen(js_class = CoreVerificationMethod)]
-impl WasmCoreVerificationMethod {
-  /// Creates a new `CoreVerificationMethod` from the given `did` and public key.
+/// A DID Document Verification Method.
+#[wasm_bindgen(js_name = VerificationMethod, inspectable)]
+pub struct WasmVerificationMethod(pub(crate) VerificationMethod);
+
+#[wasm_bindgen(js_class = VerificationMethod)]
+impl WasmVerificationMethod {
+  /// Creates a new `VerificationMethod` from the given `did` and public key.
   #[allow(non_snake_case)]
   #[wasm_bindgen(constructor)]
   pub fn new(
-    did: &WasmCoreDID,
+    did: &ICoreDID,
     keyType: WasmKeyType,
     publicKey: Vec<u8>,
     fragment: String,
-  ) -> Result<WasmCoreVerificationMethod> {
+  ) -> Result<WasmVerificationMethod> {
     let public_key: PublicKey = PublicKey::from(publicKey);
-    VerificationMethod::new(did.0.clone(), keyType.into(), &public_key, &fragment)
+    VerificationMethod::new(did.to_core_did().0, keyType.into(), &public_key, &fragment)
       .map(Self)
       .wasm_result()
   }
 
-  /// Returns a copy of the `CoreDIDUrl` of the `CoreVerificationMethod`'s `id`.
+  /// Returns a copy of the `DIDUrl` of the `VerificationMethod`'s `id`.
   #[wasm_bindgen]
-  pub fn id(&self) -> WasmCoreDIDUrl {
-    WasmCoreDIDUrl::from(self.0.id().clone())
+  pub fn id(&self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.id().clone())
   }
 
-  /// Sets the id of the `CoreVerificationMethod`.
+  /// Sets the id of the `VerificationMethod`.
   #[wasm_bindgen(js_name = setId)]
-  pub fn set_id(&mut self, id: &WasmCoreDIDUrl) -> Result<()> {
+  pub fn set_id(&mut self, id: &WasmDIDUrl) -> Result<()> {
     self.0.set_id(id.0.clone()).wasm_result()?;
     Ok(())
   }
 
-  /// Returns a copy of the `controller` `DID` of the `CoreVerificationMethod`.
+  /// Returns a copy of the `controller` `DID` of the `VerificationMethod`.
   #[wasm_bindgen]
   pub fn controller(&self) -> WasmCoreDID {
     WasmCoreDID::from(self.0.controller().clone())
   }
 
-  /// Sets the `controller` `DID` of the `CoreVerificationMethod` object.
+  /// Sets the `controller` `DID` of the `VerificationMethod` object.
   #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, did: &WasmCoreDID) {
     *self.0.controller_mut() = did.0.clone();
   }
 
-  /// Returns a copy of the `CoreVerificationMethod` type.
+  /// Returns a copy of the `VerificationMethod` type.
   #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> WasmMethodType {
     WasmMethodType::from(self.0.type_())
   }
 
-  /// Sets the `CoreVerificationMethod` type.
+  /// Sets the `VerificationMethod` type.
   #[wasm_bindgen(js_name = setType)]
   pub fn set_type(&mut self, type_: &WasmMethodType) {
     *self.0.type_mut() = type_.0;
   }
 
-  /// Returns a copy of the `CoreVerificationMethod` public key data.
+  /// Returns a copy of the `VerificationMethod` public key data.
   #[wasm_bindgen]
   pub fn data(&self) -> WasmMethodData {
     WasmMethodData::from(self.0.data().clone())
   }
 
-  /// Sets `CoreVerificationMethod` public key data.
+  /// Sets `VerificationMethod` public key data.
   #[wasm_bindgen(js_name = setData)]
   pub fn set_data(&mut self, data: &WasmMethodData) {
     *self.0.data_mut() = data.0.clone();
@@ -110,10 +112,10 @@ impl WasmCoreVerificationMethod {
   }
 }
 
-impl_wasm_json!(WasmCoreVerificationMethod, CoreVerificationMethod);
-impl_wasm_clone!(WasmCoreVerificationMethod, CoreVerificationMethod);
+impl_wasm_json!(WasmVerificationMethod, VerificationMethod);
+impl_wasm_clone!(WasmVerificationMethod, VerificationMethod);
 
-impl From<VerificationMethod> for WasmCoreVerificationMethod {
+impl From<VerificationMethod> for WasmVerificationMethod {
   fn from(method: VerificationMethod) -> Self {
     Self(method)
   }

@@ -19,54 +19,45 @@ use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 /// A DID Document Service used to enable trusted interactions associated with a DID subject.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#services)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(bound(deserialize = "D: DID + Deserialize<'de>, T: serde::Deserialize<'de>"))]
-pub struct Service<D = CoreDID, T = Object>
-where
-  D: DID,
-{
+pub struct Service {
   #[serde(deserialize_with = "deserialize_id_with_fragment")]
-  pub(crate) id: DIDUrl<D>,
+  pub(crate) id: DIDUrl,
   #[serde(rename = "type")]
   pub(crate) type_: OneOrSet<String>,
   #[serde(rename = "serviceEndpoint")]
   pub(crate) service_endpoint: ServiceEndpoint,
   #[serde(flatten)]
-  pub(crate) properties: T,
+  pub(crate) properties: Object,
 }
 
 /// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
-fn deserialize_id_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
+fn deserialize_id_with_fragment<'de, D>(deserializer: D) -> Result<DIDUrl, D::Error>
 where
   D: de::Deserializer<'de>,
-  T: DID + serde::Deserialize<'de>,
 {
-  let did_url: DIDUrl<T> = DIDUrl::deserialize(deserializer)?;
+  let did_url: DIDUrl = DIDUrl::deserialize(deserializer)?;
   if did_url.fragment().unwrap_or_default().is_empty() {
     return Err(de::Error::custom(Error::InvalidService("empty id fragment")));
   }
   Ok(did_url)
 }
 
-impl<D, T> Service<D, T>
-where
-  D: DID,
-{
+impl Service {
   /// Creates a `ServiceBuilder` to configure a new `Service`.
   ///
   /// This is the same as `ServiceBuilder::new()`.
-  pub fn builder(properties: T) -> ServiceBuilder<D, T> {
+  pub fn builder(properties: Object) -> ServiceBuilder {
     ServiceBuilder::new(properties)
   }
 
   /// Returns a new `Service` based on the `ServiceBuilder` configuration.
-  pub fn from_builder(builder: ServiceBuilder<D, T>) -> Result<Self> {
-    let id: DIDUrl<D> = builder.id.ok_or(Error::InvalidService("missing id"))?;
+  pub fn from_builder(builder: ServiceBuilder) -> Result<Self> {
+    let id: DIDUrl = builder.id.ok_or(Error::InvalidService("missing id"))?;
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidService("empty id fragment"));
     }
@@ -82,7 +73,7 @@ where
   }
 
   /// Returns a reference to the `Service` id.
-  pub fn id(&self) -> &DIDUrl<D> {
+  pub fn id(&self) -> &DIDUrl {
     &self.id
   }
 
@@ -90,7 +81,7 @@ where
   ///
   /// # Errors
   /// [`Error::MissingIdFragment`] if there is no fragment on the [`DIDUrl`].
-  pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
+  pub fn set_id(&mut self, id: DIDUrl) -> Result<()> {
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::MissingIdFragment);
     }
@@ -119,21 +110,21 @@ where
   }
 
   /// Returns a reference to the custom `Service` properties.
-  pub fn properties(&self) -> &T {
+  pub fn properties(&self) -> &Object {
     &self.properties
   }
 
   /// Returns a mutable reference to the custom `Service` properties.
-  pub fn properties_mut(&mut self) -> &mut T {
+  pub fn properties_mut(&mut self) -> &mut Object {
     &mut self.properties
   }
 
-  /// Maps `Service<D,T>` to `Service<C,T>` by applying a function `f` to
-  /// the id.
-  pub fn map<C, F>(self, f: F) -> Service<C, T>
+  /// Maps `Service` by applying a function `f` to
+  /// the id. This is useful when working with DID methods
+  /// where the DID is not known prior to publishing.  
+  pub fn map<F>(self, f: F) -> Service
   where
-    C: DID,
-    F: FnMut(D) -> C,
+    F: FnMut(CoreDID) -> CoreDID,
   {
     Service {
       id: self.id.map(f),
@@ -144,10 +135,9 @@ where
   }
 
   /// Fallible version of [`Service::map`].
-  pub fn try_map<C, F, E>(self, f: F) -> Result<Service<C, T>, E>
+  pub fn try_map<F, E>(self, f: F) -> Result<Service, E>
   where
-    C: DID,
-    F: FnMut(D) -> Result<C, E>,
+    F: FnMut(CoreDID) -> Result<CoreDID, E>,
   {
     Ok(Service {
       id: self.id.try_map(f)?,
@@ -158,30 +148,20 @@ where
   }
 }
 
-impl<D, T> AsRef<DIDUrl<D>> for Service<D, T>
-where
-  D: DID,
-{
-  fn as_ref(&self) -> &DIDUrl<D> {
+impl AsRef<DIDUrl> for Service {
+  fn as_ref(&self) -> &DIDUrl {
     self.id()
   }
 }
 
-impl<D, T> Display for Service<D, T>
-where
-  D: DID + Serialize,
-  T: Serialize,
-{
+impl Display for Service {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }
 
-impl<D, T> KeyComparable for Service<D, T>
-where
-  D: DID,
-{
-  type Key = DIDUrl<D>;
+impl KeyComparable for Service {
+  type Key = DIDUrl;
 
   #[inline]
   fn key(&self) -> &Self::Key {
@@ -196,13 +176,12 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
-  use identity_did::CoreDIDUrl;
 
   #[test]
   fn test_service_types_serde() {
     // Single type.
     let service1: Service = Service::builder(Object::new())
-      .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
+      .id(DIDUrl::parse("did:example:123#service").unwrap())
       .type_("LinkedDomains")
       .service_endpoint(Url::parse("https://iota.org/").unwrap())
       .build()
@@ -218,7 +197,7 @@ mod tests {
 
     // Set of types.
     let service2: Service = Service::builder(Object::new())
-      .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
+      .id(DIDUrl::parse("did:example:123#service").unwrap())
       .types(["LinkedDomains".to_owned(), "OtherService2022".to_owned()])
       .service_endpoint(Url::parse("https://iota.org/").unwrap())
       .build()
@@ -242,7 +221,7 @@ mod tests {
     // Single endpoint.
     {
       let service: Service = Service::builder(Object::new())
-        .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
+        .id(DIDUrl::parse("did:example:123#service").unwrap())
         .type_("LinkedDomains")
         .service_endpoint(Url::parse("https://iota.org/").unwrap())
         .build()
@@ -263,7 +242,7 @@ mod tests {
         .unwrap(),
       );
       let service: Service = Service::builder(Object::new())
-        .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
+        .id(DIDUrl::parse("did:example:123#service").unwrap())
         .type_("LinkedDomains")
         .service_endpoint(endpoint)
         .build()

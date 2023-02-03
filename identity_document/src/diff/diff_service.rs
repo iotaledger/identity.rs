@@ -13,32 +13,22 @@ use identity_core::diff::Result;
 use crate::service::Service;
 use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
-use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffService<D = CoreDID, T = Object>
-where
-  D: DID + Diff,
-  T: Diff,
-{
+pub struct DiffService {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<<DIDUrl<D> as Diff>::Type>,
+  id: Option<<DIDUrl as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   type_: Option<<OneOrSet<String> as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   service_endpoint: Option<<ServiceEndpoint as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  properties: Option<<T as Diff>::Type>,
+  properties: Option<<Object as Diff>::Type>,
 }
 
-impl<D, T> Diff for Service<D, T>
-where
-  D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
-  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-{
-  type Type = DiffService<D, T>;
+impl Diff for Service {
+  type Type = DiffService;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffService {
@@ -66,7 +56,7 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: DIDUrl<D> = diff
+    let id: DIDUrl = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
@@ -84,7 +74,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.service_endpoint().clone());
 
-    let properties: T = diff
+    let properties: Object = diff
       .properties
       .map(|value| self.properties().merge(value))
       .transpose()?
@@ -100,7 +90,7 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: DIDUrl<D> = diff
+    let id: DIDUrl = diff
       .id
       .map(Diff::from_diff)
       .transpose()?
@@ -118,7 +108,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `service.service_endpoint`"))?;
 
-    let properties: T = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
+    let properties: Object = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
 
     // Use builder to enforce invariants.
     ServiceBuilder::new(properties)
@@ -134,7 +124,7 @@ where
       id: Some(self.id.into_diff()?),
       type_: Some(self.type_.into_diff()?),
       service_endpoint: Some(self.service_endpoint.into_diff()?),
-      properties: if self.properties != T::default() {
+      properties: if self.properties != Object::default() {
         Some(self.properties.into_diff()?)
       } else {
         None
@@ -182,11 +172,11 @@ mod test {
   use identity_core::convert::ToJson;
   use identity_core::diff::DiffString;
   use identity_core::diff::DiffVec;
-  use identity_did::CoreDIDUrl;
+  use identity_did::DIDUrl;
 
   use super::*;
 
-  fn controller() -> CoreDIDUrl {
+  fn controller() -> DIDUrl {
     "did:example:1234#service".parse().unwrap()
   }
 
@@ -387,7 +377,7 @@ mod test {
     // Updated fields.
     {
       let mut updated: Service = service.clone();
-      updated.id = CoreDIDUrl::parse("did:test:serde").unwrap();
+      updated.id = DIDUrl::parse("did:test:serde").unwrap();
       updated.type_ = OneOrSet::new_one("TestSerde".to_owned());
       updated.service_endpoint = ServiceEndpoint::One(Url::parse("https://test.serde/").unwrap());
       updated.properties.insert("a".into(), 42.into());

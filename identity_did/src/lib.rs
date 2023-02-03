@@ -22,7 +22,6 @@ mod did;
 mod did_url;
 mod error;
 
-pub use crate::did_url::CoreDIDUrl;
 pub use crate::did_url::DIDUrl;
 pub use crate::did_url::RelativeDIDUrl;
 pub use ::did_url::DID as BaseDIDUrl;

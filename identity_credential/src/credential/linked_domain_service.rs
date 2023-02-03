@@ -4,9 +4,7 @@
 use identity_core::common::Object;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
-use identity_did::CoreDID;
 use identity_did::DIDUrl;
-use identity_did::DID;
 use identity_document::service::Service;
 use identity_document::service::ServiceBuilder;
 use identity_document::service::ServiceEndpoint;
@@ -18,52 +16,40 @@ use crate::Error::DomainLinkageError;
 
 /// A service wrapper for a [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
 #[derive(Debug, Clone)]
-pub struct LinkedDomainService<D = CoreDID, T = Object>
-where
-  D: DID,
-{
-  service: Service<D, T>,
+pub struct LinkedDomainService {
+  service: Service,
 }
 
-impl<D, T> TryFrom<Service<D, T>> for LinkedDomainService<D, T>
-where
-  D: DID,
-{
+impl TryFrom<Service> for LinkedDomainService {
   type Error = Error;
 
-  fn try_from(service: Service<D, T>) -> std::result::Result<Self, Self::Error> {
+  fn try_from(service: Service) -> std::result::Result<Self, Self::Error> {
     LinkedDomainService::check_structure(&service)?;
     Ok(LinkedDomainService { service })
   }
 }
 
-impl<D, T> From<LinkedDomainService<D, T>> for Service<D, T>
-where
-  D: DID,
-{
-  fn from(service: LinkedDomainService<D, T>) -> Self {
+impl From<LinkedDomainService> for Service {
+  fn from(service: LinkedDomainService) -> Self {
     service.service
   }
 }
 
-impl<D, T> LinkedDomainService<D, T>
-where
-  D: DID,
-{
+impl LinkedDomainService {
   pub(crate) fn domain_linkage_service_type() -> &'static str {
     "LinkedDomains"
   }
 
   /// Convenient function to create a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
   /// Domain URLs must include the `https` scheme in order to pass the domain linkage validation.
-  pub fn new(did_url: DIDUrl<D>, domains: impl Into<OrderedSet<Url>>, properties: T) -> Result<Self> {
+  pub fn new(did_url: DIDUrl, domains: impl Into<OrderedSet<Url>>, properties: Object) -> Result<Self> {
     let domains: OrderedSet<Url> = domains.into();
     for domain in domains.iter() {
       if domain.scheme() != "https" {
         return Err(DomainLinkageError("domain does not include `https` scheme".into()));
       }
     }
-    let builder: ServiceBuilder<_, _> = Service::builder(properties)
+    let builder: ServiceBuilder = Service::builder(properties)
       .id(did_url)
       .type_(Self::domain_linkage_service_type());
     if domains.len() == 1 {
@@ -90,7 +76,7 @@ where
   ///
   /// Note: `{"type": ["LinkedDomains"]}` might be serialized the same way as  `{"type": "LinkedDomains"}`
   /// which passes the semantic check.
-  fn check_structure(service: &Service<D, T>) -> Result<()> {
+  fn check_structure(service: &Service) -> Result<()> {
     if service.type_().len() != 1 {
       return Err(DomainLinkageError("invalid service type".into()));
     }
@@ -156,8 +142,7 @@ mod tests {
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
-  use identity_did::CoreDID;
-  use identity_did::CoreDIDUrl;
+  use identity_did::DIDUrl;
   use identity_document::service::Service;
   use serde_json::json;
 
@@ -169,14 +154,10 @@ mod tests {
     domains.append(Url::parse(domain_1).unwrap());
     domains.append(Url::parse(domain_2).unwrap());
 
-    let service: LinkedDomainService = LinkedDomainService::new(
-      CoreDIDUrl::parse("did:example:123#foo").unwrap(),
-      domains,
-      Object::new(),
-    )
-    .unwrap();
+    let service: LinkedDomainService =
+      LinkedDomainService::new(DIDUrl::parse("did:example:123#foo").unwrap(), domains, Object::new()).unwrap();
 
-    let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_from_json: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": {
@@ -184,7 +165,7 @@ mod tests {
         }
     }))
     .unwrap();
-    assert_eq!(<Service<_, _>>::from(service), service_from_json);
+    assert_eq!(Service::from(service), service_from_json);
   }
 
   #[test]
@@ -192,41 +173,37 @@ mod tests {
     let mut domains: OrderedSet<Url> = OrderedSet::new();
     domains.append(Url::parse("https://foo.example-1.com").unwrap());
 
-    let service: LinkedDomainService<CoreDID, Object> = LinkedDomainService::new(
-      CoreDIDUrl::parse("did:example:123#foo").unwrap(),
-      domains,
-      Object::new(),
-    )
-    .unwrap();
+    let service: LinkedDomainService =
+      LinkedDomainService::new(DIDUrl::parse("did:example:123#foo").unwrap(), domains, Object::new()).unwrap();
 
-    let service_from_json: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_from_json: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": "https://foo.example-1.com"
     }))
     .unwrap();
-    assert_eq!(<Service<_, _>>::from(service), service_from_json);
+    assert_eq!(Service::from(service), service_from_json);
   }
 
   #[test]
   fn test_valid_domains() {
-    let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_1: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": "https://foo.example-1.com"
     }))
     .unwrap();
-    let service_1: LinkedDomainService<CoreDID, Object> = LinkedDomainService::try_from(service_1).unwrap();
+    let service_1: LinkedDomainService = LinkedDomainService::try_from(service_1).unwrap();
     let domain: Vec<Url> = vec![Url::parse("https://foo.example-1.com").unwrap()];
     assert_eq!(service_1.domains(), domain);
 
-    let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_2: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": { "origins" : ["https://foo.example-1.com", "https://foo.example-2.com"]}
     }))
     .unwrap();
-    let service_2: LinkedDomainService<CoreDID, Object> = LinkedDomainService::try_from(service_2).unwrap();
+    let service_2: LinkedDomainService = LinkedDomainService::try_from(service_2).unwrap();
     let domains: Vec<Url> = vec![
       Url::parse("https://foo.example-1.com").unwrap(),
       Url::parse("https://foo.example-2.com").unwrap(),
@@ -237,7 +214,7 @@ mod tests {
   #[test]
   fn test_extract_domains_invalid_scheme() {
     // http scheme instead of https.
-    let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_1: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": "http://foo.example-1.com"
@@ -245,7 +222,7 @@ mod tests {
     .unwrap();
     assert!(LinkedDomainService::try_from(service_1).is_err());
 
-    let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_2: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": { "origins" : ["https://foo.example-1.com", "http://foo.example-2.com"]}
@@ -257,7 +234,7 @@ mod tests {
   #[test]
   fn test_extract_domain_type_check() {
     // Valid type.
-    let service_1: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_1: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomains",
         "serviceEndpoint": "https://foo.example-1.com"
@@ -266,7 +243,7 @@ mod tests {
     assert!(LinkedDomainService::try_from(service_1).is_ok());
 
     // Invalid type 'LinkedDomain` instead of `LinkedDomains`.
-    let service_2: Service<CoreDID, Object> = Service::from_json_value(json!({
+    let service_2: Service = Service::from_json_value(json!({
         "id":"did:example:123#foo",
         "type": "LinkedDomain",
         "serviceEndpoint": "https://foo.example-1.com"

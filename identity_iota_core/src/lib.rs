@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![forbid(unsafe_code)]
 #![allow(clippy::upper_case_acronyms)]
 
 #[cfg(feature = "iota-client")]
@@ -13,7 +12,6 @@ pub use iota_types::block;
 #[cfg(feature = "client")]
 pub use client::*;
 pub use did::IotaDID;
-pub use did::IotaDIDUrl;
 pub use document::*;
 pub use network::NetworkName;
 pub use state_metadata::*;

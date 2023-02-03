@@ -5,14 +5,14 @@ use core::future::Future;
 use futures::TryFutureExt;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
-use identity_credential::validator::AbstractThreadSafeValidatorDocument;
 use identity_credential::validator::CredentialValidator;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
-use identity_credential::validator::ValidatorDocument;
 use identity_did::CoreDID;
 use identity_did::DID;
+
+use identity_document::document::CoreDocument;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -33,10 +33,10 @@ use super::commands::SingleThreadedCommand;
 /// # Configuration
 /// The resolver will only be able to resolve DID documents for methods it has been configured for. This is done by
 /// attaching method specific handlers with [`Self::attach_handler`](Self::attach_handler()).
-pub struct Resolver<DOC = AbstractThreadSafeValidatorDocument, CMD = SendSyncCommand<DOC>>
+pub struct Resolver<DOC = CoreDocument, CMD = SendSyncCommand<DOC>>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
+  DOC: AsRef<CoreDocument>,
 {
   command_map: HashMap<String, CMD>,
   _required: PhantomData<DOC>,
@@ -45,7 +45,7 @@ where
 impl<M, DOC> Resolver<DOC, M>
 where
   M: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
+  DOC: AsRef<CoreDocument>,
 {
   /// Constructs a new [`Resolver`].
   ///
@@ -59,21 +59,6 @@ where
   /// let mut resolver = Resolver::<CoreDocument>::new();
   /// // Now attach some handlers whose output can be converted to a `CoreDocument`.
   /// ```
-  /// 
-  /// # Example
-  /// Construct a `Resolver` that is agnostic about DID Document types.
-  /// ```
-  /// # use identity_resolver::Resolver;
-  /// let mut resolver: Resolver = Resolver::new();
-  /// // Now attach some handlers whose output type implements the `Document` trait.
-  /// ```
-  /// 
-  /// # Tradeoffs
-  /// The default type agnostic [`Resolver`] is more convenient when working with document types whose implementations of the [`Document`](::identity_document::document::Document)
-  /// trait do not map well to a single representation (such as for instance [`CoreDocument`](::identity_document::document::CoreDocument)).
-  /// This is typically the case whenever custom cryptography is applied in implementations of the [`Document::verify_data`](::identity_document::document::Document::verify_data()) method.
-  /// The extra flexibility offered by the type agnostic resolver comes at the cost of less type information, hence specifying a concrete type in the constructor
-  /// is recommended whenever a single representation is a good fit.  
   pub fn new() -> Self {
     Self {
       command_map: HashMap::new(),
@@ -87,33 +72,18 @@ where
   /// Errors if the resolver has not been configured to handle the method corresponding to the given DID or the
   /// resolution process itself fails.
   ///
-  /// # When the return type is abstract
-  /// If the resolver has been constructed without specifying the return type (in [`Self::new`](Self::new()))
-  /// one can call [`into_any`](AbstractThreadSafeValidatorDocument::into_any()) on the resolved output to obtain a
-  /// [`Box<dyn Any>`] which one may then attempt to downcast to a concrete type. The downcast will succeed if the
-  /// specified type matches the return type of the attached handler responsible for resolving the given DID.
-  ///
   /// ## Example
   /// ```
   /// # use identity_resolver::Resolver;
   /// # use identity_did::CoreDID;
-  /// # use identity_did::DID;
   /// # use identity_document::document::CoreDocument;
   ///
-  /// async fn resolve_and_cast(
+  /// async fn configure_and_resolve(
   ///   did: CoreDID,
-  /// ) -> std::result::Result<Option<CoreDocument>, Box<dyn std::error::Error>> {
+  /// ) -> std::result::Result<CoreDocument, Box<dyn std::error::Error>> {
   ///   let resolver: Resolver = configure_resolver(Resolver::new());
-  ///   let abstract_doc = resolver.resolve(&did).await?;
-  ///   let document: Option<CoreDocument> = abstract_doc
-  ///     .into_any()
-  ///     .downcast::<CoreDocument>()
-  ///     .ok()
-  ///     .map(|boxed| *boxed);
-  ///   if did.method() == "foo" {
-  ///     assert!(document.is_some());
-  ///   }
-  ///   return Ok(document);
+  ///   let resolved_doc: CoreDocument = resolver.resolve(&did).await?;
+  ///   Ok(resolved_doc)
   /// }
   ///
   /// fn configure_resolver(mut resolver: Resolver) -> Resolver {
@@ -278,7 +248,7 @@ where
   }
 }
 
-impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
+impl<DOC: AsRef<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -338,7 +308,7 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   }
 }
 
-impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+impl<DOC: AsRef<CoreDocument> + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -400,7 +370,7 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
 #[cfg(feature = "iota")]
 mod iota_handler {
   use super::Resolver;
-  use identity_credential::validator::ValidatorDocument;
+  use identity_document::document::CoreDocument;
   use identity_iota_core::IotaClientExt;
   use identity_iota_core::IotaDID;
   use identity_iota_core::IotaDocument;
@@ -409,7 +379,7 @@ mod iota_handler {
 
   impl<DOC> Resolver<DOC>
   where
-    DOC: From<IotaDocument> + ValidatorDocument + 'static,
+    DOC: From<IotaDocument> + AsRef<CoreDocument> + 'static,
   {
     /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs.
     ///
@@ -433,7 +403,7 @@ mod iota_handler {
 impl<CMD, DOC> Default for Resolver<DOC, CMD>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
+  DOC: AsRef<CoreDocument>,
 {
   fn default() -> Self {
     Self::new()
@@ -443,7 +413,7 @@ where
 impl<CMD, DOC> std::fmt::Debug for Resolver<DOC, CMD>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
+  DOC: AsRef<CoreDocument>,
 {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("Resolver")

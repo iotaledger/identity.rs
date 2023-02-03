@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use criterion::criterion_group;
@@ -37,11 +37,8 @@ async fn setup() -> (Agent, AgentId, Agent) {
 fn fake_document() -> IotaDocument {
   let rand_bytes: [u8; 32] = rand::random();
   let network_name = NetworkName::try_from("iota").unwrap();
-  let mut did = IotaDID::new(&rand_bytes, &network_name);
-  let mut doc = IotaDocument::new(&network_name);
-  // Let's act as if this was a published IotaDocument for testing purposes.
-  std::mem::swap(doc.core_document_mut().id_mut_unchecked(), &mut did);
-  doc
+  let did = IotaDID::new(&rand_bytes, &network_name);
+  IotaDocument::new_with_id(did)
 }
 
 fn bench_remote_account(c: &mut Criterion) {

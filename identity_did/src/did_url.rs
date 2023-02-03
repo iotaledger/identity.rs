@@ -7,7 +7,6 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
 use std::cmp::Ordering;
-use std::convert::TryInto;
 use std::hash::Hash;
 use std::hash::Hasher;
 
@@ -23,22 +22,15 @@ use crate::did::CoreDID;
 use crate::did::DID;
 use crate::Error;
 
-/// A method agnostic [`DID Url`](DIDUrl).
-pub type CoreDIDUrl = DIDUrl<CoreDID>;
-
-/// A [DID Url]: a [DID] with [RelativeDIDUrl] components.
+/// A [DID Url]: a [CoreDID] with [RelativeDIDUrl] components.
 ///
 /// E.g. "did:iota:H3C2AVvLMv6gmMNam3uVAjZar3cJCwDwnZn6z3wXmqPV/path?query1=a&query2=b#fragment"
 ///
 /// [DID Url]: https://www.w3.org/TR/did-core/#did-url-syntax
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 #[serde(into = "String", try_from = "String")]
-pub struct DIDUrl<D>
-where
-  Self: Sized,
-  D: DID + Sized,
-{
-  did: D,
+pub struct DIDUrl {
+  did: CoreDID,
   url: RelativeDIDUrl,
 }
 
@@ -282,12 +274,9 @@ impl Hash for RelativeDIDUrl {
   }
 }
 
-impl<D> DIDUrl<D>
-where
-  D: DID + Sized,
-{
+impl DIDUrl {
   /// Construct a new [`DIDUrl`] with optional [`RelativeDIDUrl`].
-  pub fn new(did: D, url: Option<RelativeDIDUrl>) -> Self {
+  pub fn new(did: CoreDID, url: Option<RelativeDIDUrl>) -> Self {
     Self {
       did,
       url: url.unwrap_or_default(),
@@ -311,19 +300,19 @@ where
     };
 
     // Extract base DID
-    let did: D = {
+    let did: CoreDID = {
       let mut base_did: BaseDIDUrl = did_url;
       base_did.set_path("");
       base_did.set_query(None);
       base_did.set_fragment(None);
-      D::try_from(base_did).map_err(|_| Error::Other("invalid DID"))?
+      CoreDID::try_from(base_did).map_err(|_| Error::Other("invalid DID"))?
     };
 
     Ok(Self { did, url })
   }
 
-  /// Returns the [`did`][DID].
-  pub fn did(&self) -> &D {
+  /// Returns the [`did`][CoreDID].
+  pub fn did(&self) -> &CoreDID {
     &self.did
   }
 
@@ -408,31 +397,11 @@ where
     Self::from_base_did_url(base_did_url)
   }
 
-  /// Construct a `DIDUrl<D>` from a `DIDUrl<U>` of a different DID method.
-  ///
-  /// Workaround for lack of specialisation preventing a generic `From` implementation.
-  pub fn from<U>(other: DIDUrl<U>) -> Self
+  /// Maps a [`DIDUrl`] by applying a function to the [`CoreDID`] part of the [`DIDUrl`], the [`RelativeDIDUrl`]
+  /// components are left untouched.
+  pub fn map<F>(self, f: F) -> DIDUrl
   where
-    U: DID + Into<D>,
-  {
-    let did: D = other.did.into();
-    Self { did, url: other.url }
-  }
-
-  /// Fallible version of [`DIDUrl::from`].
-  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, <U as TryInto<D>>::Error>
-  where
-    U: DID + TryInto<D>,
-  {
-    let did: D = other.did.try_into()?;
-    Ok(Self { did, url: other.url })
-  }
-
-  /// Maps `DIDUrl<D>` to `DIDUrl<U>` by applying a function to its [`DID`].
-  pub fn map<U, F>(self, f: F) -> DIDUrl<U>
-  where
-    F: FnOnce(D) -> U,
-    U: DID,
+    F: FnOnce(CoreDID) -> CoreDID,
   {
     DIDUrl {
       did: f(self.did),
@@ -441,10 +410,9 @@ where
   }
 
   /// Fallible version of [`DIDUrl::map`].
-  pub fn try_map<U, F, E>(self, f: F) -> Result<DIDUrl<U>, E>
+  pub fn try_map<F, E>(self, f: F) -> Result<DIDUrl, E>
   where
-    F: FnOnce(D) -> Result<U, E>,
-    U: DID,
+    F: FnOnce(CoreDID) -> Result<CoreDID, E>,
   {
     Ok(DIDUrl {
       did: f(self.did)?,
@@ -453,19 +421,16 @@ where
   }
 }
 
-impl<D> From<D> for DIDUrl<D>
+impl<D> From<D> for DIDUrl
 where
-  D: DID,
+  D: Into<CoreDID>,
 {
   fn from(did: D) -> Self {
-    Self::new(did, None)
+    Self::new(did.into(), None)
   }
 }
 
-impl<D> FromStr for DIDUrl<D>
-where
-  D: DID,
-{
+impl FromStr for DIDUrl {
   type Err = Error;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -473,10 +438,7 @@ where
   }
 }
 
-impl<D> TryFrom<String> for DIDUrl<D>
-where
-  D: DID,
-{
+impl TryFrom<String> for DIDUrl {
   type Error = Error;
 
   fn try_from(other: String) -> Result<Self, Self::Error> {
@@ -484,54 +446,39 @@ where
   }
 }
 
-impl<D> From<DIDUrl<D>> for String
-where
-  D: DID,
-{
-  fn from(did_url: DIDUrl<D>) -> Self {
+impl From<DIDUrl> for String {
+  fn from(did_url: DIDUrl) -> Self {
     did_url.to_string()
   }
 }
 
-impl<D> From<DIDUrl<D>> for Url
-where
-  D: DID,
-{
-  fn from(did_url: DIDUrl<D>) -> Self {
+impl From<DIDUrl> for Url {
+  fn from(did_url: DIDUrl) -> Self {
     Url::parse(did_url.to_string()).expect("a DIDUrl should be a valid Url")
   }
 }
 
-impl<D> AsRef<D> for DIDUrl<D>
-where
-  D: DID,
-{
-  fn as_ref(&self) -> &D {
+impl AsRef<CoreDID> for DIDUrl {
+  fn as_ref(&self) -> &CoreDID {
     &self.did
   }
 }
 
-impl<D: DID> AsRef<DIDUrl<D>> for DIDUrl<D> {
-  fn as_ref(&self) -> &DIDUrl<D> {
+impl AsRef<DIDUrl> for DIDUrl {
+  fn as_ref(&self) -> &DIDUrl {
     self
   }
 }
 
-impl<D> PartialEq for DIDUrl<D>
-where
-  D: DID,
-{
+impl PartialEq for DIDUrl {
   fn eq(&self, other: &Self) -> bool {
     self.did().eq(other.did()) && self.url() == other.url()
   }
 }
 
-impl<D> Eq for DIDUrl<D> where D: DID {}
+impl Eq for DIDUrl {}
 
-impl<D> PartialOrd for DIDUrl<D>
-where
-  D: DID,
-{
+impl PartialOrd for DIDUrl {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
     match self.did().partial_cmp(other.did()) {
@@ -542,10 +489,7 @@ where
   }
 }
 
-impl<D> Ord for DIDUrl<D>
-where
-  D: DID,
-{
+impl Ord for DIDUrl {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
     match self.did().cmp(other.did()) {
@@ -555,37 +499,25 @@ where
   }
 }
 
-impl<D> Hash for DIDUrl<D>
-where
-  D: DID,
-{
+impl Hash for DIDUrl {
   fn hash<H: Hasher>(&self, state: &mut H) {
     self.to_string().hash(state)
   }
 }
 
-impl<D> Debug for DIDUrl<D>
-where
-  D: DID,
-{
+impl Debug for DIDUrl {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{self}"))
   }
 }
 
-impl<D> Display for DIDUrl<D>
-where
-  D: DID,
-{
+impl Display for DIDUrl {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url))
   }
 }
 
-impl<D> Diff for DIDUrl<D>
-where
-  D: DID,
-{
+impl Diff for DIDUrl {
   type Type = DiffString;
 
   fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
@@ -608,10 +540,7 @@ where
   }
 }
 
-impl<D> KeyComparable for DIDUrl<D>
-where
-  D: DID,
-{
+impl KeyComparable for DIDUrl {
   type Key = Self;
 
   fn key(&self) -> &Self::Key {
@@ -646,22 +575,22 @@ mod tests {
   #[rustfmt::skip]
   #[test]
   fn test_did_url_parse_valid() {
-    let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
+    let did_url = DIDUrl::parse("did:example:1234567890").unwrap();
     assert_eq!(did_url.to_string(), "did:example:1234567890");
     assert!(did_url.url().is_empty());
     assert!(did_url.path().is_none());
     assert!(did_url.query().is_none());
     assert!(did_url.fragment().is_none());
 
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890/path").unwrap().to_string(), "did:example:1234567890/path");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890?query").unwrap().to_string(), "did:example:1234567890?query");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
+    assert_eq!(DIDUrl::parse("did:example:1234567890/path").unwrap().to_string(), "did:example:1234567890/path");
+    assert_eq!(DIDUrl::parse("did:example:1234567890?query").unwrap().to_string(), "did:example:1234567890?query");
+    assert_eq!(DIDUrl::parse("did:example:1234567890#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
 
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
+    assert_eq!(DIDUrl::parse("did:example:1234567890/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
+    assert_eq!(DIDUrl::parse("did:example:1234567890/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
+    assert_eq!(DIDUrl::parse("did:example:1234567890?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
 
-    let did_url = CoreDIDUrl::parse("did:example:1234567890/path?query#fragment").unwrap();
+    let did_url = DIDUrl::parse("did:example:1234567890/path?query#fragment").unwrap();
     assert!(!did_url.url().is_empty());
     assert_eq!(did_url.to_string(), "did:example:1234567890/path?query#fragment");
     assert_eq!(did_url.path().unwrap(), "/path");
@@ -672,7 +601,7 @@ mod tests {
   #[rustfmt::skip]
   #[test]
   fn test_join_valid() {
-    let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
+    let did_url = DIDUrl::parse("did:example:1234567890").unwrap();
     assert_eq!(did_url.join("/path").unwrap().to_string(), "did:example:1234567890/path");
     assert_eq!(did_url.join("?query").unwrap().to_string(), "did:example:1234567890?query");
     assert_eq!(did_url.join("#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
@@ -690,11 +619,11 @@ mod tests {
 
   #[test]
   fn test_did_url_invalid() {
-    assert!(CoreDIDUrl::parse("did:example:1234567890/invalid{path}").is_err());
-    assert!(CoreDIDUrl::parse("did:example:1234567890?invalid{query}").is_err());
-    assert!(CoreDIDUrl::parse("did:example:1234567890#invalid{fragment}").is_err());
+    assert!(DIDUrl::parse("did:example:1234567890/invalid{path}").is_err());
+    assert!(DIDUrl::parse("did:example:1234567890?invalid{query}").is_err());
+    assert!(DIDUrl::parse("did:example:1234567890#invalid{fragment}").is_err());
 
-    let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
+    let did_url = DIDUrl::parse("did:example:1234567890").unwrap();
     assert!(did_url.join("noleadingdelimiter").is_err());
     assert!(did_url.join("/invalid{path}").is_err());
     assert!(did_url.join("?invalid{query}").is_err());
@@ -703,25 +632,25 @@ mod tests {
 
   #[test]
   fn test_did_url_basic_comparisons() {
-    let did_url1 = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-    let did_url1_copy = CoreDIDUrl::parse("did:example:1234567890").unwrap();
+    let did_url1 = DIDUrl::parse("did:example:1234567890").unwrap();
+    let did_url1_copy = DIDUrl::parse("did:example:1234567890").unwrap();
     assert_eq!(did_url1, did_url1_copy);
 
-    let did_url2 = CoreDIDUrl::parse("did:example:0987654321").unwrap();
+    let did_url2 = DIDUrl::parse("did:example:0987654321").unwrap();
     assert_ne!(did_url1, did_url2);
     assert!(did_url1 > did_url2);
 
-    let did_url3 = CoreDIDUrl::parse("did:fxample:1234567890").unwrap();
+    let did_url3 = DIDUrl::parse("did:fxample:1234567890").unwrap();
     assert_ne!(did_url1, did_url3);
     assert!(did_url1 < did_url3);
 
-    let did_url4 = CoreDIDUrl::parse("did:example:1234567890/path").unwrap();
+    let did_url4 = DIDUrl::parse("did:example:1234567890/path").unwrap();
     assert_ne!(did_url1, did_url4);
     assert_ne!(did_url1.url(), did_url4.url());
     assert_eq!(did_url1.did(), did_url4.did());
     assert!(did_url1 < did_url4);
 
-    let did_url5 = CoreDIDUrl::parse("did:example:1234567890/zero").unwrap();
+    let did_url5 = DIDUrl::parse("did:example:1234567890/zero").unwrap();
     assert_ne!(did_url4, did_url5);
     assert_ne!(did_url4.url(), did_url5.url());
     assert_eq!(did_url4.did(), did_url5.did());
@@ -870,7 +799,7 @@ mod tests {
   proptest::proptest! {
     #[test]
     fn test_fuzz_join_no_panic(s in "\\PC*") {
-      let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
+      let did_url = DIDUrl::parse("did:example:1234567890").unwrap();
       let _ = did_url.join(s);
     }
 

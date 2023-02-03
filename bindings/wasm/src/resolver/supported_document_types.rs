@@ -3,11 +3,9 @@
 
 use crate::did::WasmCoreDID;
 use crate::did::WasmCoreDocument;
-use crate::error::WasmError;
 use crate::error::WasmResult;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
-use identity_iota::credential::AbstractValidatorDocument;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::document::CoreDocument;
@@ -19,11 +17,31 @@ use wasm_bindgen::JsCast;
 
 #[derive(Deserialize)]
 #[serde(untagged)]
-/// Temporary type used to convert to and from Box<dyn ValidatorDocument> until
-/// we port the Document trait to these bindings.
+/// Temporary type used for the resolver.
 pub enum RustSupportedDocument {
   Iota(IotaDocument),
   Core(CoreDocument),
+}
+
+impl AsRef<CoreDocument> for RustSupportedDocument {
+  fn as_ref(&self) -> &CoreDocument {
+    match self {
+      Self::Iota(doc) => doc.as_ref(),
+      Self::Core(doc) => doc,
+    }
+  }
+}
+
+impl From<IotaDocument> for RustSupportedDocument {
+  fn from(value: IotaDocument) -> Self {
+    Self::Iota(value)
+  }
+}
+
+impl From<CoreDocument> for RustSupportedDocument {
+  fn from(value: CoreDocument) -> Self {
+    Self::Core(value)
+  }
 }
 
 impl From<RustSupportedDocument> for JsValue {
@@ -32,36 +50,6 @@ impl From<RustSupportedDocument> for JsValue {
       RustSupportedDocument::Core(doc) => JsValue::from(WasmCoreDocument::from(doc)),
       RustSupportedDocument::Iota(doc) => JsValue::from(WasmIotaDocument(doc)),
     }
-  }
-}
-
-impl From<RustSupportedDocument> for AbstractValidatorDocument {
-  fn from(document: RustSupportedDocument) -> Self {
-    match document {
-      RustSupportedDocument::Core(core_doc) => AbstractValidatorDocument::from(core_doc),
-      RustSupportedDocument::Iota(iota_doc) => AbstractValidatorDocument::from(iota_doc),
-    }
-  }
-}
-
-impl TryFrom<AbstractValidatorDocument> for RustSupportedDocument {
-  type Error = WasmError<'static>;
-  fn try_from(value: AbstractValidatorDocument) -> std::result::Result<Self, Self::Error> {
-    let upcast = value.into_any();
-    let supported_document = match upcast.downcast::<CoreDocument>() {
-      Ok(doc) => RustSupportedDocument::Core(*doc),
-      Err(retry) => {
-        if let Ok(doc) = retry.downcast::<IotaDocument>() {
-          RustSupportedDocument::Iota(*doc)
-        } else {
-          Err(WasmError::new(
-            "CastingError".into(),
-            "Failed to cast the resolved did output to the required document type".into(),
-          ))?
-        }
-      }
-    };
-    Ok(supported_document)
   }
 }
 
