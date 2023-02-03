@@ -21,15 +21,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install clippy with stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          override: true
-          components: clippy
 
+      - name: Setup Rust
+        uses: './.github/actions/rust/rust-setup'
+        with:
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
+          target: wasm32-unknown-unknown
+          components: clippy
+          
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
         uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9

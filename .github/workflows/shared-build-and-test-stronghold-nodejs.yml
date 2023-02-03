@@ -108,6 +108,7 @@ jobs:
             os: ${{ matrix.settings.host }}
             job: ${{ github.job }}
             target: ${{ matrix.settings.target }}
+            cargo-cache-enabled: true
 
         - name: Setup
           if: ${{ matrix.settings.setup }}

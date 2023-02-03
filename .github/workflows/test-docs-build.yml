@@ -27,12 +27,13 @@ jobs:
           yarn build
 
       # docs.rs also uses nightly so it makes sense to mirror that
-      - name: Install Rust nightly toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: './.github/actions/rust/rust-setup'
         with:
           toolchain: nightly
-          override: true
-
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
+      
       - name: Test Rust Documentation
         env:
           RUSTDOCFLAGS: "-D warnings --cfg docsrs"

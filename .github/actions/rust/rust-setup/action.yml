@@ -4,6 +4,10 @@ inputs:
   target:
     description: 'Additionally install specified target for this toolchain, ex. x86_64-apple-darwin'
     required: false
+  toolchain:
+    description: 'Toolchain to install. Default: stable.'
+    required: false
+    default: stable
   components:
     description: 'Comma-separated string of additional components to install e.g. `clippy`, `rustfmt`'
     required: false
@@ -13,6 +17,10 @@ inputs:
   job:
     description: 'Name of the job, used for cache key construction.'
     required: true
+  cargo-cache-enabled:
+    description: 'Cache cargo folder. Default: false.'
+    required: false
+    default: ''
   target-cache-enabled:
     description: 'Cache build artifacts from the target path. Default: false.'
     required: false
@@ -39,11 +47,12 @@ runs:
     - name: Install stable toolchain
       uses: dtolnay/rust-toolchain@ce8f65846d7180d2ce63b1e74483d981800b9e22
       with:
-        toolchain: stable
+        toolchain: ${{ inputs.toolchain }}
         targets: ${{ inputs.target }}
 
     - name: Cache cargo
       uses: actions/cache@v2.1.7
+      if: inputs.cargo-cache-enabled == 'true'
       with:
         # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
         path: |

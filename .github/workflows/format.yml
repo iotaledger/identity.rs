@@ -23,12 +23,12 @@ jobs:
       - uses: actions/checkout@v3
 
       # we use nightly to get access to advanced format capabilities
-      - name: Install rustfmt with nightly toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: './.github/actions/rust/rust-setup'
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
           components: rustfmt
 
       - name: Install cargo-license-template

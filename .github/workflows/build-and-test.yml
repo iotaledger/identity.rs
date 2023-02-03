@@ -86,6 +86,7 @@ jobs:
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
+          cargo-cache-enabled: true
           target-cache-enabled: true
           sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
@@ -161,12 +162,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: './.github/actions/rust/rust-setup'
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
 
       - name: Build
         run: cargo build --manifest-path ./libjose/Cargo.toml --release

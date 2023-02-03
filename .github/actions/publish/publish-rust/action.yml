@@ -13,12 +13,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Rust stable toolchain
-      uses: actions-rs/toolchain@v1
+    - name: Setup Rust
+      uses: './.github/actions/rust/rust-setup'
       with:
-        toolchain: stable
-        profile: minimal
-        override: true
+        os: ${{ runner.os }}
+        job: ${{ github.job }}
 
     - name: Install cargo-release
       shell: bash
