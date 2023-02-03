@@ -8,15 +8,18 @@
 //! In this example we encode and decode a JWS using the Ed25519 signature scheme.
 //!
 //! ```rust
+//! # use std::sync::Arc;
 //! # use std::time::SystemTime;
+//! # use crypto::signatures::ed25519;
 //! # use crypto::signatures::ed25519::SecretKey;
-//! # use crate::jws::Decoder;
-//! # use crate::jws::Encoder;
-//! # use crate::jws::JwsAlgorithm;
-//! # use crate::jws::JwsHeader;
-//! # use crate::jws::Recipient;
-//! # use crate::jwt::JwtClaims;
-//! # use crate::tests::ed25519;
+//! # use identity_jose::jws::Decoder;
+//! # use identity_jose::jws::Encoder;
+//! # use identity_jose::jws::JwsAlgorithm;
+//! # use identity_jose::jws::JwsHeader;
+//! # use identity_jose::jws::Recipient;
+//! # use identity_jose::jwt::JwtClaims;
+//! # use identity_jose::jwt::JwtHeaderSet;
+//! # use identity_jose::jwu;
 //! # async fn _jws_example() -> Result<(), Box<dyn std::error::Error>> {
 //! // =============================
 //! // Generate an Ed25519 key pair
