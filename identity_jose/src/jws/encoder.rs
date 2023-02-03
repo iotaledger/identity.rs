@@ -55,6 +55,18 @@ struct Flatten<'a, 'b> {
 // =============================================================================
 // =============================================================================
 
+/// The [`Encoder`] allows encoding an arbitrary set of claims into a JWS.
+///
+/// When encoding, the format, charset and recipients of the resulting JWS
+/// can be set in builder-style.
+///
+/// This API does not have any cryptography built-in. Rather, signatures are created
+/// through a closure that is passed to the [`encode`](Encoder::encode) method so that users can implement
+/// the signature algorithm of their choice.
+///
+/// To use a particular key for a recipient, it is recommended to set the `kid` parameter
+/// in their header. Based on that, the closure can then choose the appropriate key for
+/// the recipient.
 pub struct Encoder<'a> {
   /// The output format of the encoded token.
   format: JwsFormat,
@@ -113,6 +125,12 @@ impl<'a> Encoder<'a> {
       .await
   }
 
+  /// Encode the given `claims` into a JWS.
+  ///
+  /// The `sign_fn` closure is called to create a signature for every recipient.
+  /// Their protected and unprotected headers are passed in which can be merged with
+  /// [`JwtHeaderSet`](crate::jwt::JwtHeaderSet). The header parameters of particular interest are `alg` and `kid`.
+  /// The closure also takes the bytes to be signed and is expected to return the signature as bytes.
   pub async fn encode<FUN, FUT, ERR>(&self, sign_fn: &FUN, claims: &[u8]) -> Result<String>
   where
     FUN: Fn(Option<EncoderProtectedHeader>, Option<EncoderUnprotectedHeader>, EncoderMessage) -> FUT

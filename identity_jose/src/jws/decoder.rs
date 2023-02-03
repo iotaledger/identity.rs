@@ -31,6 +31,9 @@ pub type DecoderSignature<'a> = &'a [u8];
 
 const COMPACT_SEGMENTS: usize = 3;
 
+/// A partially decoded token from a JWS.
+///
+/// Contains the decoded headers and the raw claims.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token<'a> {
   pub protected: Option<JwsHeader>,
@@ -64,6 +67,15 @@ struct Flatten<'a> {
 // =============================================================================
 // =============================================================================
 
+/// The [`Decoder`] allows decoding a raw JWS into a [`Token`], verifying
+/// the structure of the JWS and its signature.
+///
+/// When attempting to decode a raw JWS, the decoder will check for the expected format, algorithms
+/// and crits which can be set via their respective setters.
+///
+/// This API does not have any cryptography built-in. Rather, signatures are verified
+/// through a closure that is passed to the [`decode`](Decoder::decode) method, so that users can implement
+/// verification for their particular algorithm.
 pub struct Decoder<'b> {
   /// The expected format of the encoded token.
   format: JwsFormat,
@@ -108,6 +120,11 @@ impl<'a, 'b> Decoder<'b> {
     self
   }
 
+  /// Decode the given `data` which is a base64url-encoded JWS.
+  ///
+  /// The `verify_fn` closure must be provided to verify signatures on the JWS.
+  /// Only one signature must match in order for the JWS to be considered valid,
+  /// hence `verify_fn` can error on signatures it cannot verify.
   pub fn decode<FUN, ERR>(&self, verify_fn: &FUN, data: &'b [u8]) -> Result<Token<'b>>
   where
     FUN: Fn(

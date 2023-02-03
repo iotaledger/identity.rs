@@ -3,6 +3,10 @@
 
 use crate::jws::JwsHeader;
 
+/// The recipient of a JWS.
+///
+/// The contained headers determine the specifics of the signature for that recipient,
+/// such as what algorithm (`alg`) or key (`kid`) will be or was used to create the signature.
 #[derive(Clone, Copy)]
 pub struct Recipient<'a> {
   /// The integrity-protected JOSE header.
