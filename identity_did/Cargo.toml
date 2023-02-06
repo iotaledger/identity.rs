@@ -20,7 +20,7 @@ thiserror.workspace = true
 
 [dev-dependencies]
 proptest = { version = "1.0" }
-serde_json = { version = "1.0", default-features = false }
+serde_json.workspace = true
 
 [package.metadata.docs.rs]
 # To build locally:

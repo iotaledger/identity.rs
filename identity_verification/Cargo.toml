@@ -16,4 +16,4 @@ strum.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
-serde_json = { version = "1.0", default-features = false }
+serde_json.workspace = true

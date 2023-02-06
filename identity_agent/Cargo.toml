@@ -19,7 +19,7 @@ identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default
 libp2p = { version = "0.45", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-serde_json = { version = "1.0", default-features = false }
+serde_json.workspace = true
 thiserror = { version = "1.0", default-features = false }
 tokio = { version = "1.21", default-features = false, features = ["rt", "time"] }
 uuid = { version = "0.8", default-features = false, features = ["v4", "serde"] }

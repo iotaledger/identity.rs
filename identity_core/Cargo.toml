@@ -16,7 +16,7 @@ identity-diff = { version = "=0.7.0-alpha.4", path = "../identity_diff", default
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_jcs = { version = "0.1", default-features = false }
-serde_json = { version = "1.0", default-features = false, features = ["std"] }
+serde_json = { workspace = true, features = ["std"] }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 time = { version = "0.3.5", default-features = false, features = ["std", "serde", "parsing", "formatting"] }
