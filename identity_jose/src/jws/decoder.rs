@@ -123,8 +123,10 @@ impl<'a, 'b> Decoder<'b> {
   /// Decode the given `data` which is a base64url-encoded JWS.
   ///
   /// The `verify_fn` closure must be provided to verify signatures on the JWS.
-  /// Only one signature must match in order for the JWS to be considered valid,
-  /// hence `verify_fn` can error on signatures it cannot verify.
+  /// Only one signature on a JWS is required to be verified successfully by `verify_fn`
+  /// in order for the entire JWS to be considered valid, hence `verify_fn` can error
+  /// on signatures it cannot verify. `verify_fn` must return an error if signature verification
+  /// fails or if the `alg` parameter in the header describes a cryptographic algorithm that it cannot handle.
   pub fn decode<FUN, ERR>(&self, verify_fn: &FUN, data: &'b [u8]) -> Result<Token<'b>>
   where
     FUN: Fn(
