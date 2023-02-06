@@ -13,7 +13,7 @@ description = "A library for JOSE (JSON Object Signing and Encryption)"
 [dependencies]
 base64 = { version = "0.21.0", default-features = false, features = ["std"] }
 iota-crypto = { version = "0.15.3", default-features = false, features = ["std", "sha"] }
-serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+serde.workspace = true
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 subtle = { version = "2.4.1", default-features = false }
 thiserror.workspace = true
