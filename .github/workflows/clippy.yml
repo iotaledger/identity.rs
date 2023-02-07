@@ -33,7 +33,9 @@ jobs:
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
         uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9
-
+      - name: Direct clippy (test)
+        shell: bash
+        run: cargo clippy --all-targets --all-features -- -D warnings 
       - name: core clippy check
         uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
         with:
