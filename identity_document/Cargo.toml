@@ -25,7 +25,12 @@ thiserror.workspace = true
 [dev-dependencies]
 criterion = { version = "0.4.0", default-features = false, features = ["cargo_bench_support"] }
 serde_json = { version = "1.0", default-features = false }
+tokio = { version = "1.25", default-features = false, features = ["sync"]}
 
 [[bench]]
 name = "deserialize_document"
+harness = false
+
+[[bench]]
+name = "service_insert"
 harness = false
