@@ -3,6 +3,7 @@
 
 use core::fmt::Debug;
 use std::collections::HashMap;
+use std::fmt::Display;
 
 use async_trait::async_trait;
 use crypto::signatures::ed25519::SecretKey;
@@ -96,29 +97,34 @@ impl KeyStorage for MemKeyStore {
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-    match MemStoreSigningAlgorithm::try_from(&algorithm)? {
-      MemStoreSigningAlgorithm::Ed25519 => (),
-    }
+    let signature: Vec<u8> = match MemStoreSigningAlgorithm::try_from(&algorithm)? {
+      sig_alg @ MemStoreSigningAlgorithm::Ed25519 => {
+        jwk
+          .check_alg(JwsAlgorithm::EdDSA.name())
+          .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm).with_source(err))?;
 
-    jwk
-      .check_alg(JwsAlgorithm::EdDSA.name())
-      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSigningAlgorithm).with_source(err))?;
+        let okp_params = jwk.try_okp_params().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedSigningKey)
+            .with_custom_message(format!(
+              "expected a Jwk with Okp params in order to sign with {sig_alg}"
+            ))
+            .with_source(err)
+        })?;
+        if okp_params.crv != EdCurve::Ed25519.name() {
+          return Err(
+            KeyStorageError::new(KeyStorageErrorKind::UnsupportedSigningKey).with_custom_message(format!(
+              "expected Jwk with Okp {} crv in order to sign with {sig_alg}",
+              EdCurve::Ed25519
+            )),
+          );
+        }
 
-    let okp_params = jwk.try_okp_params().map_err(|err| {
-      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message("expected Okp params")
-        .with_source(err)
-    })?;
-    if okp_params.crv != EdCurve::Ed25519.name() {
-      return Err(
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("expected Jwk with Okp {} crv", EdCurve::Ed25519)),
-      );
-    }
+        let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
+        secret_key.sign(&data).to_bytes().to_vec()
+      }
+    };
 
-    let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
-
-    Ok(secret_key.sign(&data).to_bytes().to_vec())
+    Ok(signature)
   }
 
   async fn public_jwk(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
@@ -210,6 +216,14 @@ pub enum MemStoreSigningAlgorithm {
   Ed25519,
 }
 
+impl Display for MemStoreSigningAlgorithm {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      MemStoreSigningAlgorithm::Ed25519 => f.write_str("Ed25519"),
+    }
+  }
+}
+
 impl TryFrom<&SignatureAlgorithm> for MemStoreSigningAlgorithm {
   type Error = KeyStorageError;
 
@@ -217,7 +231,7 @@ impl TryFrom<&SignatureAlgorithm> for MemStoreSigningAlgorithm {
     match value.as_str() {
       ED25519_SIGNING_ALG_STR => Ok(MemStoreSigningAlgorithm::Ed25519),
       other => Err(
-        KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::UnsupportedSigningAlgorithm)
+        KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
           .with_custom_message(format!("`{other}` not supported")),
       ),
     }
@@ -320,6 +334,8 @@ mod tests {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::Signature;
   use crypto::signatures::ed25519::{self};
+  use identity_jose::jwk::EcCurve;
+  use identity_jose::jwk::JwkParamsEc;
   use identity_jose::jwk::JwkParamsOkp;
   use identity_jose::jwu;
 
@@ -358,6 +374,32 @@ mod tests {
     // INVALID: Inserting a Jwk with all private key components unset should fail.
     let err = store.insert_jwk(jwk.to_public()).await.unwrap_err();
     assert!(matches!(err.kind(), KeyStorageErrorKind::Unspecified))
+  }
+
+  #[tokio::test]
+  async fn exists() {
+    let store: MemKeyStore = MemKeyStore::new();
+    assert!(!store.exists(&KeyId::new("non-existent-id")).await.unwrap());
+  }
+
+  #[tokio::test]
+  async fn incompatible_signing_key() {
+    let store: MemKeyStore = MemKeyStore::new();
+
+    let mut ec_params = JwkParamsEc::new();
+    ec_params.crv = EcCurve::P256.name().to_owned();
+    ec_params.x = "".to_owned();
+    ec_params.y = "".to_owned();
+    ec_params.d = Some("".to_owned());
+    let jwk_ec = Jwk::from_params(ec_params);
+
+    let key_id = store.insert_jwk(jwk_ec).await.unwrap();
+
+    let err: _ = store
+      .sign(&key_id, ED25519_SIGNING_ALG, b"test".to_vec())
+      .await
+      .unwrap_err();
+    assert!(matches!(err.kind(), KeyStorageErrorKind::UnsupportedSigningKey));
   }
 
   pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {

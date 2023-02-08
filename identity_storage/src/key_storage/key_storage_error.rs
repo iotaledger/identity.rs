@@ -164,7 +164,7 @@ pub enum KeyStorageErrorKind {
   UnsupportedSigningKey,
 
   /// Indicates an attempt to parse a signature algorithm that is not recognized by the [`KeyStorage`] implementation.
-  UnsupportedSigningAlgorithm,
+  UnsupportedSignatureAlgorithm,
 
   /// Indicates that the [`KeyStorage`] implementation is not able to find the requested key.
   KeyNotFound,
@@ -173,10 +173,10 @@ pub enum KeyStorageErrorKind {
   ///
   /// Occurrences of this variant should hopefully be rare, but could occur if hardware fails, or a hosted key store
   /// goes offline.
-  UnavailableKeyStorage,
+  Unavailable,
 
-  /// Indicates that an attempt was made to authenticate with the key storage, but this operation did not succeed.
-  CouldNotAuthenticate,
+  /// Indicates that an attempt was made to authenticate with the key storage, but the operation did not succeed.
+  Unauthenticated,
 
   /// Indicates an unsuccessful I/O operation that may be retried, such as a temporary connection failure or timeouts.
   ///
@@ -200,10 +200,10 @@ impl KeyStorageErrorKind {
       Self::UnsupportedSigningKey => {
         "signing failed: the specified signing algorithm does not support the provided key type"
       }
-      Self::UnsupportedSigningAlgorithm => "signing algorithm parsing failed",
+      Self::UnsupportedSignatureAlgorithm => "signing algorithm parsing failed",
       Self::KeyNotFound => "key not found",
-      Self::UnavailableKeyStorage => "key storage unavailable",
-      Self::CouldNotAuthenticate => "authentication with the key storage failed",
+      Self::Unavailable => "key storage unavailable",
+      Self::Unauthenticated => "authentication with the key storage failed",
       Self::Unspecified => "key storage operation failed",
       Self::RetryableIOFailure => "key storage was unsuccessful because of an I/O failure",
     }
