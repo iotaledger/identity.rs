@@ -456,6 +456,26 @@ impl Jwk {
     }
   }
 
+  /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
+  pub fn is_public(&self) -> bool {
+    match self.params() {
+      JwkParams::Ec(params) => params.is_public(),
+      JwkParams::Rsa(params) => params.is_public(),
+      JwkParams::Oct(_) => true,
+      JwkParams::Okp(params) => params.is_public(),
+    }
+  }
+
+  /// Returns `true` if _all_ private key components of the key are set, `false` otherwise.
+  pub fn is_private(&self) -> bool {
+    match self.params() {
+      JwkParams::Ec(params) => params.is_private(),
+      JwkParams::Rsa(params) => params.is_private(),
+      JwkParams::Oct(_) => true,
+      JwkParams::Okp(params) => params.is_private(),
+    }
+  }
+
   pub fn to_public(&self) -> Jwk {
     let mut public: Jwk = Jwk::from_params(self.params().to_public());
 
