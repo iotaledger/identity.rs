@@ -54,7 +54,7 @@ runs:
 
     - name: Override toolchain
       shell: bash
-      run: rustup override set ${{steps.toolchain.outputs.name}}
+      run: rustup override set ${{ steps.toolchain.outputs.name }}
 
     - name: Cache cargo
       uses: actions/cache@v2.1.7
