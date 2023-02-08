@@ -104,7 +104,8 @@ export async function domainLinkage() {
     // =====================================================
 
     // Fetch the DID Configuration resource (For example using the Fetch API).
-    // Note that redirection must be disabled when fetching.
+    // Note that according to the specs, the DID Configuration resource must exist
+    // at the origin's root, Well-Known Resource directory.
     const _configurationUrl = `${domainFoo}/.well-known/did-configuration.json")`;
 
     // But since the DID Configuration
@@ -140,7 +141,8 @@ export async function domainLinkage() {
     let domains: string[] = linkedDomainServices[0].domains();
 
     // Fetch the DID Configuration resource (For example using the Fetch API).
-    // Note that redirection must be disabled when fetching.
+    // Note that according to the specs, the DID Configuration resource must exist
+    // at the origin's root, Well-Known Resource directory.
     const __configurationUrl = `${domains[0]}/.well-known/did-configuration.json")`;
 
     // But since the DID Configuration
@@ -148,7 +150,7 @@ export async function domainLinkage() {
     fetchedConfigurationResource = DomainLinkageConfiguration.fromJSON(configurationResource);
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
-    // Validation is succeeds when no error is thrown.
+    // Validation succeeds when no error is thrown.
     DomainLinkageValidator.validateLinkage({
         domain: domains[0],
         configuration: fetchedConfigurationResource,
