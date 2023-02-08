@@ -78,7 +78,12 @@ fn bench_insert(c: &mut Criterion) {
 
     group.bench_with_input(format!("{id} with arc tokio RwLock"), &document, |b, doc| {
       b.iter_batched(
-        || (service(), ArcLockDocument(Arc::new(tokio::sync::RwLock::new(doc.clone())))),
+        || {
+          (
+            service(),
+            ArcLockDocument(Arc::new(tokio::sync::RwLock::new(doc.clone()))),
+          )
+        },
         |(service, lock_doc)| {
           lock_doc.0.blocking_write().insert_service(service).unwrap();
         },
