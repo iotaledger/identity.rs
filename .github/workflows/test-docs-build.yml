@@ -37,5 +37,4 @@ jobs:
       - name: Test Rust Documentation
         env:
           RUSTDOCFLAGS: "-D warnings --cfg docsrs"
-          RUSTUP_TOOLCHAIN: "nightly"
-        run: cargo doc --all-features --no-deps --workspace
+        run: cargo +nightly doc --all-features --no-deps --workspace

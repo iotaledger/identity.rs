@@ -39,17 +39,17 @@ jobs:
         #run: cargo install dprint # installing from source is slow, ~5 minutes
 
       - name: core fmt check
-        run: cargo fmt --all -- --check
+        run: cargo +nightly fmt --all -- --check
 
       - name: wasm fmt check
-        run: cargo fmt --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
+        run: cargo +nightly fmt --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
 
       # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
       # - name: stronghold-nodejs fmt check
       #   run: cargo fmt --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all -- --check
 
       - name: libjose fmt check
-        run: cargo fmt --manifest-path ./libjose/Cargo.toml --all -- --check
+        run: cargo +nightly fmt --manifest-path ./libjose/Cargo.toml --all -- --check
 
       # Use `dprint` to check Cargo.toml formatting.
       # To fix, run `dprint fmt` locally.
@@ -58,4 +58,4 @@ jobs:
           dprint check
 
       - name: cargo-license-template check
-        run: cargo license-template --template .license_template --ignore .license_template_ignore --verbose
+        run: cargo +nightly license-template --template .license_template --ignore .license_template_ignore --verbose
