@@ -1,13 +1,13 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::error::WasmResult;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
 use identity_iota::credential::Issuer;
-use wasm_bindgen::prelude::*;
 use proc_typescript::typescript;
-use crate::error::WasmResult;
+use wasm_bindgen::prelude::*;
 
 impl TryFrom<IDomainLinkageCredential> for DomainLinkageCredentialBuilder {
   type Error = JsValue;
@@ -31,7 +31,7 @@ impl TryFrom<IDomainLinkageCredential> for DomainLinkageCredentialBuilder {
       builder = builder.expiration_date(expiration_date);
     }
     if let Some(origin) = origin {
-        builder = builder.origin(origin);
+      builder = builder.origin(origin);
     }
     Ok(builder)
   }

@@ -12,6 +12,7 @@ use wasm_bindgen::JsCast;
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
+use crate::credential::domain_linkage_credential_builder::IDomainLinkageCredential;
 use crate::credential::ArrayContext;
 use crate::credential::ArrayEvidence;
 use crate::credential::ArrayPolicy;
@@ -21,7 +22,6 @@ use crate::credential::ArrayStatus;
 use crate::credential::ArraySubject;
 use crate::credential::ICredential;
 use crate::credential::UrlOrIssuer;
-use crate::credential::domain_linkage_credential_builder::IDomainLinkageCredential;
 use crate::crypto::WasmProof;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -52,8 +52,8 @@ impl WasmCredential {
     let builder: CredentialBuilder = CredentialBuilder::try_from(values)?;
     builder.build().map(Self).wasm_result()
   }
-  
-  #[wasm_bindgen(js_name = "CreateDomainLinkageCredential")]
+
+  #[wasm_bindgen(js_name = "createDomainLinkageCredential")]
   pub fn create_domain_linkage_credential(values: IDomainLinkageCredential) -> Result<WasmCredential> {
     let builder: DomainLinkageCredentialBuilder = DomainLinkageCredentialBuilder::try_from(values)?;
     builder.build().map(Self).wasm_result()

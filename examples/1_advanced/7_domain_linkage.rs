@@ -110,7 +110,7 @@ async fn main() -> anyhow::Result<()> {
   // The DID Configuration resource can be made available on `https://foo.example.com/.well-known/did-configuration.json`.
   let configuration_resource_json: String = configuration_resource.to_json()?;
 
-  // Now the DID Document links to the Domains through the service, and first domain links to the DID
+  // Now the DID Document links to the Domains through the service, and the Foo domain links to the DID
   // through the DID Configuration resource. A bidirectional linkage is established.
   // Note however that bidirectionality is not a hard requirement. It is valid to have a Domain Linkage
   // credential point to a DID, without the DID having a service that points back.
@@ -144,7 +144,6 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(linked_dids.len(), 1);
 
   // Resolve the DID Document of the DID that issued the credential.
-  let did: IotaDID = IotaDID::parse(linked_dids.get(0).unwrap().as_str()).unwrap();
   let issuer_did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.

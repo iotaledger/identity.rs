@@ -28,7 +28,7 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<Subject>")]
   pub type ArraySubject;
-  
+
   #[wasm_bindgen(typescript_type = "Array<Credential>")]
   pub type ArrayCredential;
 }

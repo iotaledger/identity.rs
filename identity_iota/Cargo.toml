@@ -44,6 +44,9 @@ revocation-bitmap = [
 # Enables support for the `Resolver`.
 resolver = ["dep:identity_resolver"]
 
+# Enables fetching domain linkage configuration files.
+domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open

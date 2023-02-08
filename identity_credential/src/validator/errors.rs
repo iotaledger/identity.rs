@@ -158,6 +158,12 @@ impl Display for DomainLinkageValidationError {
   }
 }
 
+impl From<DomainLinkageValidationError> for &str {
+  fn from(value: DomainLinkageValidationError) -> Self {
+    value.cause.into()
+  }
+}
+
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum DomainLinkageValidationErrorCause {
