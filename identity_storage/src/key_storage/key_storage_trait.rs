@@ -14,8 +14,21 @@ use super::key_gen::JwkGenOutput;
 
 pub type KeyStorageResult<T> = Result<T, KeyStorageError>;
 
-#[async_trait(?Send)]
-pub trait KeyStorage {
+#[cfg(not(feature = "send-sync-storage"))]
+mod storage_sub_trait {
+  pub trait StorageSendSyncMaybe {}
+  impl<S: super::KeyStorage> StorageSendSyncMaybe for S {}
+}
+
+#[cfg(feature = "send-sync-storage")]
+mod storage_sub_trait {
+  pub trait StorageSendSyncMaybe: Send + Sync {}
+  impl<S: Send + Sync + super::KeyStorage> StorageSendSyncMaybe for S {}
+}
+
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Generate a new key represented as a JSON Web Key.
   ///
   /// It's recommend that the implementer exposes constants for the supported [`KeyType`].
