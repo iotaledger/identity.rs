@@ -2,7 +2,9 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::Criterion;
 use identity_core::convert::FromJson;
+use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_credential::validator::CredentialValidator;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::SubjectHolderRelationship;
@@ -16,9 +18,8 @@ use tokio::sync::RwLock;
 
 use identity_document::document::CoreDocument;
 
-// Emulates validate_presentation in the Wasm bindings with enum CoreDocumentView {Core(Arc<RwLock<CoreDocument>>),
-// Iota(Arc<RwLock<IotaDocument>>)}
-fn validate_presentation_lock_document(
+// Emulates validate_presentation in the Wasm bindings using ICoreDocumentView backed by locks from tokio.
+fn validate_presentation_document_view_with_tokio_lock(
   presentation: &Presentation,
   holder: &dyn Fn() -> LockDocumentTypes,
   issuers: Box<dyn Iterator<Item = Box<dyn Fn() -> LockDocumentTypes>>>,
@@ -49,9 +50,8 @@ fn validate_presentation_lock_document(
   .map_err(Into::into)
 }
 
-// Emulates validate_presentation in the Wasm bindings with enum CoreDocumentView {Core(Rc<RefCell<CoreDocument>>),
-// Iota(Rc<RefCell<IotaDocument>>)}
-fn validate_presentation_refcelll_document(
+// Emulates validate_presentation in the Wasm bindings using ICoreDocumentView backed by refcell.
+fn validate_presentation_document_view_refcell(
   presentation: &Presentation,
   holder: &dyn Fn() -> RefCellDocumentTypes,
   issuers: Box<dyn Iterator<Item = Box<dyn Fn() -> RefCellDocumentTypes>>>,
@@ -86,9 +86,8 @@ fn validate_presentation_refcelll_document(
   .map_err(Into::into)
 }
 
-// Emulates validate_presentation in the Wasm bindings without any CoreDocumentView Interface by directly cloning the
-// documents instead.
-fn validate_presentation_clone_documents(
+// Emulates validate_presentation in the Wasm bindings with ICoreDocument.
+fn validate_presentation_core_document_interface(
   presentation: &Presentation,
   holder: &dyn Fn() -> CoreDocument,
   issuers: Box<dyn Iterator<Item = Box<dyn Fn() -> CoreDocument>>>,
@@ -115,11 +114,27 @@ fn validate_presentation_clone_documents(
   .map_err(Into::into)
 }
 
+// Emulates ICoreDocumentView
 #[derive(Clone)]
 enum LockDocumentTypes {
   Core(Arc<RwLock<CoreDocument>>),
   // Emulate some other type since we can't import IotaDocument here
   Iota(Arc<RwLock<(CoreDocument, usize)>>),
+}
+
+// Emulates ICoreDocument
+enum RcLockDocumentTypes {
+  Core(Rc<RwLock<CoreDocument>>),
+  Iota(Rc<RwLock<(CoreDocument, usize)>>),
+}
+
+impl RcLockDocumentTypes {
+  fn to_core_document(&self) -> CoreDocument {
+    match self {
+      Self::Core(doc) => doc.blocking_read().to_owned(),
+      Self::Iota(doc) => doc.blocking_read().to_owned().0,
+    }
+  }
 }
 
 enum ReadLockedDocumentTypes {
@@ -396,7 +411,8 @@ fn issuer_iota_doc() -> (CoreDocument, usize) {
   (CoreDocument::from_json(json).unwrap(), 42)
 }
 
-fn bench_insert(c: &mut Criterion) {
+// Emulates validate presentation benchmarks in the Wasm bindings with different choices of interfaces.
+fn bench_validate_presentation_bindings(c: &mut Criterion) {
   let mut group = c.benchmark_group("presentation validation bindings emulation");
   let holder_doc = holder_foo_doc();
   let issuer_bar_doc = issuer_bar_doc();
@@ -438,12 +454,12 @@ fn bench_insert(c: &mut Criterion) {
   group.bench_function("validate_presentation_cloning", |b| {
     b.iter_batched(
       || {
-        let holder = holder_doc.clone();
-        let issuer_bar_doc = issuer_bar_doc.clone();
-        let issuer_iota_doc = issuer_iota_doc();
-        let holder_fn = Box::new(move || holder.clone()) as Box<dyn Fn() -> CoreDocument>;
-        let issuer_bar_fn = Box::new(move || issuer_bar_doc.clone()) as Box<dyn Fn() -> CoreDocument>;
-        let issuer_iota_fn = Box::new(move || issuer_iota_doc.0.clone()) as Box<dyn Fn() -> CoreDocument>;
+        let holder = RcLockDocumentTypes::Core(Rc::new(RwLock::new(holder_doc.clone())));
+        let issuer_bar_doc = RcLockDocumentTypes::Core(Rc::new(RwLock::new(issuer_bar_doc.clone())));
+        let issuer_iota_doc = RcLockDocumentTypes::Iota(Rc::new(RwLock::new(issuer_iota_doc())));
+        let holder_fn = Box::new(move || holder.to_core_document()) as Box<dyn Fn() -> CoreDocument>;
+        let issuer_bar_fn = Box::new(move || issuer_bar_doc.to_core_document()) as Box<dyn Fn() -> CoreDocument>;
+        let issuer_iota_fn = Box::new(move || issuer_iota_doc.to_core_document()) as Box<dyn Fn() -> CoreDocument>;
         let issuers = [issuer_bar_fn, issuer_iota_fn];
         (
           presentation.clone(),
@@ -452,13 +468,13 @@ fn bench_insert(c: &mut Criterion) {
         )
       },
       |(presentation, holder, issuers)| {
-        assert!(validate_presentation_clone_documents(&presentation, &holder, issuers).is_ok());
+        assert!(validate_presentation_core_document_interface(&presentation, &holder, issuers).is_ok());
       },
       criterion::BatchSize::SmallInput,
     );
   });
 
-  group.bench_function("validate_presentation_rwlock", |b| {
+  group.bench_function("validate_presentation_rwlock_arc", |b| {
     b.iter_batched(
       || {
         let holder = LockDocumentTypes::Core(Arc::new(RwLock::new(holder_doc.clone())));
@@ -475,7 +491,7 @@ fn bench_insert(c: &mut Criterion) {
         )
       },
       |(presentation, holder, issuers)| {
-        assert!(validate_presentation_lock_document(&presentation, &holder, issuers).is_ok());
+        assert!(validate_presentation_document_view_with_tokio_lock(&presentation, &holder, issuers).is_ok());
       },
       criterion::BatchSize::SmallInput,
     );
@@ -498,7 +514,7 @@ fn bench_insert(c: &mut Criterion) {
         )
       },
       |(presentation, holder, issuers)| {
-        assert!(validate_presentation_refcelll_document(&presentation, &holder, issuers).is_ok());
+        assert!(validate_presentation_document_view_refcell(&presentation, &holder, issuers).is_ok());
       },
       criterion::BatchSize::SmallInput,
     );
@@ -507,5 +523,80 @@ fn bench_insert(c: &mut Criterion) {
   group.finish();
 }
 
-criterion_group!(benches, bench_insert);
+fn bench_i_core_document_call_large_document(c: &mut Criterion) {
+  c.bench_function("ICoreDocument Call large document", |b| {
+    b.iter_batched(
+      || {
+        let large_documet = RcLockDocumentTypes::Core(Rc::new(RwLock::new(holder_foo_doc())));
+        return Box::new(move || large_documet.to_core_document()) as Box<dyn Fn() -> CoreDocument>;
+      },
+      |fn_ptr| {
+        let _ = fn_ptr();
+      },
+      criterion::BatchSize::SmallInput,
+    );
+  });
+}
+
+// TODO: Merge this with the previous function to a single function using c.group + bench_with_input.
+fn bench_i_core_document_call_small_document(c: &mut Criterion) {
+  c.bench_function("ICoreDocument Call small document", |b| {
+    b.iter_batched(
+      || {
+        let documet = RcLockDocumentTypes::Iota(Rc::new(RwLock::new(issuer_iota_doc())));
+        return Box::new(move || documet.to_core_document()) as Box<dyn Fn() -> CoreDocument>;
+      },
+      |fn_ptr| {
+        let _ = fn_ptr();
+      },
+      criterion::BatchSize::SmallInput,
+    );
+  });
+}
+
+fn bench_verify_credential_signature(c: &mut Criterion) {
+  c.bench_function("verify credential signature", |b| {
+    b.iter_batched(|| 
+      {
+        let credential_json = r#"
+        {
+          "@context": "https://www.w3.org/2018/credentials/v1",
+          "id": "https://example.edu/credentials/3732",
+          "type": [
+            "VerifiableCredential",
+            "UniversityDegreeCredential"
+          ],
+          "credentialSubject": {
+            "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+            "GPA": "4.0",
+            "degree": {
+              "name": "Bachelor of Science and Arts",
+              "type": "BachelorDegree"
+            },
+            "name": "Alice"
+          },
+          "issuer": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "issuanceDate": "2022-08-31T08:35:44Z",
+          "expirationDate": "2050-09-01T08:35:44Z",
+          "proof": {
+            "type": "JcsEd25519Signature2020",
+            "verificationMethod": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+            "signatureValue": "2xoRHPUWRVavrBsymJCKhTUe9iYX8iEEZtPhaMjmFvVmjaybVUYXHJagw9kCFmDoPgeyvZjRVQatp2VYs1b8f2Ug"
+          }
+      }"#;
+      let credential: Credential = Credential::from_json(credential_json).unwrap(); 
+      (credential, issuer_iota_doc().0) 
+      }, |(credential, issuer_doc)| {
+        assert!(CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer_doc), &VerifierOptions::default()).is_ok());
+      }, criterion::BatchSize::SmallInput );
+  });
+}
+
+criterion_group!(
+  benches,
+  bench_validate_presentation_bindings,
+  bench_i_core_document_call_large_document,
+  bench_i_core_document_call_small_document,
+  bench_verify_credential_signature
+);
 criterion_main!(benches);
