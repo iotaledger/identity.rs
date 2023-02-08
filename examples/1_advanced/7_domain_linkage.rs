@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
   domains.append(domain_2.clone());
 
   // Create a Linked Domain Service to enable the discovery of the linked domains through the DID Document.
-  // This is optional.
+  // This is optional since it is not a hard requirement by the specs.
   let service_url: DIDUrl = did.clone().join("#domain-linkage")?;
   // let domain_linkage_service: IotaService = LinkedDomainService::new(service_url, domains)?;
   let linked_domain_service: LinkedDomainService =

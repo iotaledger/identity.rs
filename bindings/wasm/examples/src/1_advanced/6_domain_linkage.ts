@@ -47,7 +47,7 @@ export async function domainLinkage() {
     let domainBar = "https://bar.example.com";
 
     // Create a Linked Domain Service to enable the discovery of the linked domains through the DID Document.
-    // This is optional
+    // This is optional since it is not a hard requirement by the specs.
     let serviceUrl: DIDUrl = did.clone().join("#domain_linkage");
     let linkedDomainService: LinkedDomainService = new LinkedDomainService({
         id: serviceUrl,
