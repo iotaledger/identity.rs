@@ -119,7 +119,7 @@ jobs:
         run: cargo clean
 
         # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-      - name: Build all features
+      - name: Build with all features
         run: cargo build --workspace --tests --examples --all-features --release
 
       - name: Start private tangle
