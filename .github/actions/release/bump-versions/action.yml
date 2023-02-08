@@ -24,7 +24,7 @@ runs:
 
     - name: Install cargo-edit # to use cargo add and set-version
       shell: bash
-      run: cargo install -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
+      run: cargo install -f --no-default-features --features "set-version" --version ^0.8 cargo-edit
 
     - name: Bump Rust crate versions
       shell: bash
