@@ -21,6 +21,11 @@ pub trait KeyStorage {
   /// It's recommend that the implementer exposes constants for the supported [`KeyType`].
   async fn generate_jwk(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput>;
 
+  /// Insert an existing JSON Web Key into the storage.
+  ///
+  /// All private key components of the `jwk` must be set.
+  async fn insert_jwk(&self, jwk: Jwk) -> KeyStorageResult<KeyId>;
+
   /// Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
   ///
   /// It's recommend that the implementer exposes constants for the supported [`SignatureAlgorithm`].

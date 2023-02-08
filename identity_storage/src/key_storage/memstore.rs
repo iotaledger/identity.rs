@@ -8,14 +8,13 @@ use async_trait::async_trait;
 use crypto::signatures::ed25519::SecretKey;
 use identity_jose::jwk::EdCurve;
 use identity_jose::jwk::Jwk;
+use identity_jose::jwk::JwkType;
 use identity_jose::jws::JwsAlgorithm;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
-use self::key_type::MemStoreStorageKeyType;
-use self::signing_algorithm::MemStoreSigningAlgorithm;
 use super::key_gen::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
@@ -61,8 +60,7 @@ impl KeyStorage for MemKeyStore {
       }
     };
 
-    let random_string: String = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32);
-    let kid: KeyId = KeyId::new(random_string);
+    let kid: KeyId = random_key_id();
 
     let jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
     let public_jwk: Jwk = jwk.to_public();
@@ -70,6 +68,25 @@ impl KeyStorage for MemKeyStore {
     store.insert(kid.clone(), jwk);
 
     Ok(JwkGenOutput::new(kid, public_jwk))
+  }
+
+  async fn insert_jwk(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
+    let _ = MemStoreStorageKeyType::try_from(&jwk)?;
+
+    if !jwk.is_private() {
+      return Err(
+        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("expected a Jwk with all private key components set"),
+      );
+    }
+
+    let key_id: KeyId = random_key_id();
+
+    let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
+
+    jwk_store.insert(key_id.clone(), jwk);
+
+    Ok(key_id)
   }
 
   async fn sign(&self, key_id: &KeyId, algorithm: SignatureAlgorithm, data: Vec<u8>) -> KeyStorageResult<Vec<u8>> {
@@ -99,7 +116,7 @@ impl KeyStorage for MemKeyStore {
       );
     }
 
-    let secret_key: _ = ed25519::expand_secret_jwk(&jwk)?;
+    let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
 
     Ok(secret_key.sign(&data).to_bytes().to_vec())
   }
@@ -186,52 +203,72 @@ pub(crate) mod ed25519 {
   }
 }
 
-pub mod signing_algorithm {
-  use crate::key_storage::KeyStorageError;
-  use crate::key_storage::SignatureAlgorithm;
+const ED25519_SIGNING_ALG_STR: &str = "Ed25519";
+pub const ED25519_SIGNING_ALG: SignatureAlgorithm = SignatureAlgorithm::from_static_str(ED25519_SIGNING_ALG_STR);
 
-  const ED25519_SIGNING_ALG_STR: &str = "Ed25519";
-  pub const ED25519_SIGNING_ALG: SignatureAlgorithm = SignatureAlgorithm::from_static_str(ED25519_SIGNING_ALG_STR);
+pub enum MemStoreSigningAlgorithm {
+  Ed25519,
+}
 
-  pub enum MemStoreSigningAlgorithm {
-    Ed25519,
-  }
+impl TryFrom<&SignatureAlgorithm> for MemStoreSigningAlgorithm {
+  type Error = KeyStorageError;
 
-  impl TryFrom<&SignatureAlgorithm> for MemStoreSigningAlgorithm {
-    type Error = KeyStorageError;
-
-    fn try_from(value: &SignatureAlgorithm) -> Result<Self, Self::Error> {
-      match value.as_str() {
-        ED25519_SIGNING_ALG_STR => Ok(MemStoreSigningAlgorithm::Ed25519),
-        other => Err(
-          KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::UnsupportedSigningAlgorithm)
-            .with_custom_message(format!("`{other}` not supported")),
-        ),
-      }
+  fn try_from(value: &SignatureAlgorithm) -> Result<Self, Self::Error> {
+    match value.as_str() {
+      ED25519_SIGNING_ALG_STR => Ok(MemStoreSigningAlgorithm::Ed25519),
+      other => Err(
+        KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::UnsupportedSigningAlgorithm)
+          .with_custom_message(format!("`{other}` not supported")),
+      ),
     }
   }
 }
 
-pub mod key_type {
-  use crate::key_storage::KeyStorageError;
-  use crate::key_storage::KeyStorageErrorKind;
-  use crate::key_storage::KeyType;
+const ED25519_KEY_TYPE_STR: &str = "Ed25519";
+pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_STR);
 
-  const ED25519_KEY_TYPE_STR: &str = "Ed25519";
-  pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_STR);
+pub enum MemStoreStorageKeyType {
+  Ed25519,
+}
 
-  pub enum MemStoreStorageKeyType {
-    Ed25519,
+impl TryFrom<&KeyType> for MemStoreStorageKeyType {
+  type Error = KeyStorageError;
+
+  fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
+    match value.as_str() {
+      ED25519_KEY_TYPE_STR => Ok(MemStoreStorageKeyType::Ed25519),
+      _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
+    }
   }
+}
 
-  impl TryFrom<&KeyType> for MemStoreStorageKeyType {
-    type Error = KeyStorageError;
+impl TryFrom<&Jwk> for MemStoreStorageKeyType {
+  type Error = KeyStorageError;
 
-    fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
-      match value.as_str() {
-        ED25519_KEY_TYPE_STR => Ok(MemStoreStorageKeyType::Ed25519),
-        _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
+  fn try_from(jwk: &Jwk) -> Result<Self, Self::Error> {
+    match jwk.kty() {
+      JwkType::Okp => {
+        let okp_params = jwk.try_okp_params().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("expected Okp parameters for a JWK with `kty` Okp")
+            .with_source(err)
+        })?;
+        match okp_params.try_ed_curve().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("only Ed curves are supported for signing")
+            .with_source(err)
+        })? {
+          EdCurve::Ed25519 => Ok(MemStoreStorageKeyType::Ed25519),
+          curve => Err(
+            KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+              .with_custom_message(format!("{curve} not supported")),
+          ),
+        }
       }
+      other => Err(
+        KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+          .with_custom_message(format!("Jwk `kty` {other} not supported")),
+      ),
     }
   }
 }
@@ -240,6 +277,11 @@ impl Default for MemKeyStore {
   fn default() -> Self {
     Self::new()
   }
+}
+
+/// Generate a random alphanumeric string of len 32.
+fn random_key_id() -> KeyId {
+  KeyId::new(rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32))
 }
 
 pub(crate) mod shared {
@@ -284,24 +326,38 @@ mod tests {
   use super::*;
 
   #[tokio::test]
-  async fn generate_sign() {
-    let test_msg = b"test";
-    let store = MemKeyStore::new();
+  async fn generate_and_sign() {
+    let test_msg: &[u8] = b"test";
+    let store: MemKeyStore = MemKeyStore::new();
 
-    let JwkGenOutput { key_id, jwk } = store.generate_jwk(key_type::ED25519_KEY_TYPE).await.unwrap();
+    let JwkGenOutput { key_id, jwk } = store.generate_jwk(ED25519_KEY_TYPE).await.unwrap();
 
     let signature = store
-      .sign(&key_id, signing_algorithm::ED25519_SIGNING_ALG, test_msg.to_vec())
+      .sign(&key_id, ED25519_SIGNING_ALG, test_msg.to_vec())
       .await
       .unwrap();
 
-    let pubkey = expand_public_jwk(&jwk);
+    let public_key: PublicKey = expand_public_jwk(&jwk);
+    let signature: Signature = Signature::from_bytes(signature.try_into().unwrap());
 
-    let signature = Signature::from_bytes(signature.try_into().unwrap());
-
-    assert!(pubkey.verify(&signature, test_msg));
+    assert!(public_key.verify(&signature, test_msg));
     assert!(store.exists(&key_id).await.unwrap());
     assert!(store.delete(&key_id).await.unwrap());
+  }
+
+  #[tokio::test]
+  async fn insert() {
+    let store: MemKeyStore = MemKeyStore::new();
+
+    let (private_key, public_key) = generate_ed25519();
+    let jwk: Jwk = crate::key_storage::ed25519::encode_jwk(&private_key, &public_key);
+
+    // VALID: Inserting a Jwk with all private key components set should succeed.
+    store.insert_jwk(jwk.clone()).await.unwrap();
+
+    // INVALID: Inserting a Jwk with all private key components unset should fail.
+    let err = store.insert_jwk(jwk.to_public()).await.unwrap_err();
+    assert!(matches!(err.kind(), KeyStorageErrorKind::Unspecified))
   }
 
   pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {
@@ -314,5 +370,11 @@ mod tests {
     let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
 
     PublicKey::try_from(pk).unwrap()
+  }
+
+  fn generate_ed25519() -> (SecretKey, PublicKey) {
+    let private_key = SecretKey::generate().unwrap();
+    let public_key = private_key.public_key();
+    (private_key, public_key)
   }
 }
