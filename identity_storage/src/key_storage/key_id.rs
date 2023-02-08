@@ -9,20 +9,12 @@
 pub struct KeyId(String);
 
 impl KeyId {
-  pub fn new(alias: impl Into<String>) -> Self {
-    Self(alias.into())
+  pub fn new(id: impl Into<String>) -> Self {
+    Self(id.into())
   }
 
   pub fn as_str(&self) -> &str {
     &self.0
-  }
-}
-
-impl TryFrom<Vec<u8>> for KeyId {
-  type Error = ();
-
-  fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
-    Ok(KeyId(String::from_utf8(bytes).expect("TODO")))
   }
 }
 

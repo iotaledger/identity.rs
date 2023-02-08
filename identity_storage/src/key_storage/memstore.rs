@@ -14,8 +14,8 @@ use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
-use self::signing_algorithm::MemStoreSigningAlgorithm;
 use self::key_type::MemStoreStorageKeyType;
+use self::signing_algorithm::MemStoreSigningAlgorithm;
 use super::key_gen::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
@@ -50,12 +50,12 @@ impl KeyStorage for MemKeyStore {
   async fn generate_jwk(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput> {
     let mut store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
 
-    let key_type: MemStoreStorageKeyType = MemStoreStorageKeyType::try_from(&key_type)
-      .map_err(|_err: ()| KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType))?;
+    let key_type: MemStoreStorageKeyType = MemStoreStorageKeyType::try_from(&key_type)?;
 
     let (private_key, public_key) = match key_type {
       MemStoreStorageKeyType::Ed25519 => {
-        let private_key = SecretKey::generate().expect("TODO");
+        let private_key = SecretKey::generate()
+          .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?;
         let public_key = private_key.public_key();
         (private_key, public_key)
       }
@@ -112,23 +112,32 @@ impl KeyStorage for MemKeyStore {
     Ok(jwk.to_public())
   }
 
-  async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
-    let mut store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
+  async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
+    let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
 
-    store.remove(key_id);
+    let key: Option<Jwk> = jwk_store.remove(key_id);
 
-    Ok(())
+    Ok(key.is_some())
+  }
+
+  async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
+    let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
+    Ok(jwk_store.contains_key(key_id))
   }
 }
 
 pub(crate) mod ed25519 {
-  use crypto::signatures::ed25519::{self, PublicKey, SecretKey};
-  use identity_jose::{
-    jwk::{EdCurve, Jwk, JwkParamsOkp},
-    jwu,
-  };
+  use crypto::signatures::ed25519::PublicKey;
+  use crypto::signatures::ed25519::SecretKey;
+  use crypto::signatures::ed25519::{self};
+  use identity_jose::jwk::EdCurve;
+  use identity_jose::jwk::Jwk;
+  use identity_jose::jwk::JwkParamsOkp;
+  use identity_jose::jwu;
 
-  use crate::key_storage::{KeyStorageError, KeyStorageErrorKind, KeyStorageResult};
+  use crate::key_storage::KeyStorageError;
+  use crate::key_storage::KeyStorageErrorKind;
+  use crate::key_storage::KeyStorageResult;
 
   pub(crate) fn expand_secret_jwk(jwk: &Jwk) -> KeyStorageResult<SecretKey> {
     let params: &JwkParamsOkp = jwk.try_okp_params().unwrap();
@@ -178,7 +187,8 @@ pub(crate) mod ed25519 {
 }
 
 pub mod signing_algorithm {
-  use crate::key_storage::{KeyStorageError, SignatureAlgorithm};
+  use crate::key_storage::KeyStorageError;
+  use crate::key_storage::SignatureAlgorithm;
 
   const ED25519_SIGNING_ALG_STR: &str = "Ed25519";
   pub const ED25519_SIGNING_ALG: SignatureAlgorithm = SignatureAlgorithm::from_static_str(ED25519_SIGNING_ALG_STR);
@@ -203,6 +213,8 @@ pub mod signing_algorithm {
 }
 
 pub mod key_type {
+  use crate::key_storage::KeyStorageError;
+  use crate::key_storage::KeyStorageErrorKind;
   use crate::key_storage::KeyType;
 
   const ED25519_KEY_TYPE_STR: &str = "Ed25519";
@@ -213,44 +225,15 @@ pub mod key_type {
   }
 
   impl TryFrom<&KeyType> for MemStoreStorageKeyType {
-    // TODO: Use a better type for the error.
-    type Error = ();
+    type Error = KeyStorageError;
 
     fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
       match value.as_str() {
         ED25519_KEY_TYPE_STR => Ok(MemStoreStorageKeyType::Ed25519),
-        _ => Err(()),
+        _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
       }
     }
   }
-
-  // impl TryFrom<&Jwk> for MemStoreStorageKeyType {
-  //   // TODO: Use a better type for the error.
-  //   type Error = KeyStorageError;
-
-  //   fn try_from(jwk: &Jwk) -> Result<Self, Self::Error> {
-  //     match jwk.kty() {
-  //       JwkType::Ec => todo!(),
-  //       JwkType::Rsa => todo!(),
-  //       JwkType::Oct => todo!(),
-  //       JwkType::Okp => {
-  //         let okp_params = jwk
-  //           .try_okp_params()
-  //           .expect("unlikely, but return error anyway because set_params_unchecked exists");
-  //         match okp_params
-  //           .try_ed_curve()
-  //           .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType).with_source(err))?
-  //         {
-  //           EdCurve::Ed25519 => Ok(MemStoreStorageKeyType::Ed25519),
-  //           curve => Err(
-  //             KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
-  //               .with_custom_message(format!("{curve} not supported")),
-  //           ),
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
 }
 
 impl Default for MemKeyStore {
@@ -292,8 +275,11 @@ pub(crate) mod shared {
 
 #[cfg(test)]
 mod tests {
-  use crypto::signatures::ed25519::{self, PublicKey, Signature};
-  use identity_jose::{jwk::JwkParamsOkp, jwu};
+  use crypto::signatures::ed25519::PublicKey;
+  use crypto::signatures::ed25519::Signature;
+  use crypto::signatures::ed25519::{self};
+  use identity_jose::jwk::JwkParamsOkp;
+  use identity_jose::jwu;
 
   use super::*;
 
@@ -314,6 +300,8 @@ mod tests {
     let signature = Signature::from_bytes(signature.try_into().unwrap());
 
     assert!(pubkey.verify(&signature, test_msg));
+    assert!(store.exists(&key_id).await.unwrap());
+    assert!(store.delete(&key_id).await.unwrap());
   }
 
   pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {

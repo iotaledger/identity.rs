@@ -178,7 +178,7 @@ pub enum KeyStorageErrorKind {
   /// Indicates that an attempt was made to authenticate with the key storage, but this operation did not succeed.
   CouldNotAuthenticate,
 
-  /// Indicates an unsuccessful I/O operation that may be retried, such as temporary connection failure or timeouts.
+  /// Indicates an unsuccessful I/O operation that may be retried, such as a temporary connection failure or timeouts.
   ///
   /// Returning this error signals to the caller that the operation may be retried with a chance of success.
   /// It is at the caller's discretion whether to retry or not, and how often.

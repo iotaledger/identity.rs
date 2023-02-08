@@ -8,7 +8,6 @@ use std::borrow::Cow;
 /// This type essentially a wrapper around a string and is used to communicate between
 /// users and `KeyStorage` implementers. `KeyStorage` implementers can define constants
 /// that represent the algorithms they support.
-///
 // # Example: TODO
 // ```
 // /// The Ed25519 Signing Algorithm.
