@@ -5,16 +5,17 @@ use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
 
+use crate::credential::ImportedDocumentLock;
+use crate::credential::ImportedDocumentReadGuard;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
+use crate::did::IAsCoreDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::resolver::ArrayIAsCoreDocument;
-use crate::resolver::RustSupportedDocument;
 use crate::resolver::SupportedDID;
-use crate::resolver::SupportedDocument;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
 pub struct WasmPresentationValidator;
@@ -50,18 +51,17 @@ impl WasmPresentationValidator {
   #[wasm_bindgen]
   pub fn validate(
     presentation: &WasmPresentation,
-    holder: &SupportedDocument,
+    holder: &IAsCoreDocument,
     issuers: &ArrayIAsCoreDocument,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?;
-    let issuers: Vec<RustSupportedDocument> = issuers
-      .into_serde::<Vec<RustSupportedDocument>>()
-      .wasm_result()?
-      .into_iter()
-      .map(Into::into)
-      .collect();
+    let holder_lock = ImportedDocumentLock::from(holder);
+    let holder = holder_lock.blocking_read();
+
+    let issuer_locks: Vec<ImportedDocumentLock> = issuers.into();
+    let issuers: Vec<ImportedDocumentReadGuard<'_>> =
+      issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     PresentationValidator::validate(&presentation.0, &holder, &issuers, &options.0, fail_fast.into()).wasm_result()
   }
 
@@ -76,10 +76,11 @@ impl WasmPresentationValidator {
   #[wasm_bindgen(js_name = verifyPresentationSignature)]
   pub fn verify_presentation_signature(
     presentation: &WasmPresentation,
-    holder: &SupportedDocument,
+    holder: &IAsCoreDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let holder: RustSupportedDocument = holder.into_serde::<RustSupportedDocument>().wasm_result()?;
+    let holder_lock = ImportedDocumentLock::from(holder);
+    let holder = holder_lock.blocking_read();
     PresentationValidator::verify_presentation_signature(&presentation.0, &holder, &options.0).wasm_result()
   }
 
