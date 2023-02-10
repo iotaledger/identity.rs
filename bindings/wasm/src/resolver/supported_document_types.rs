@@ -48,7 +48,7 @@ impl From<RustSupportedDocument> for JsValue {
   fn from(document: RustSupportedDocument) -> Self {
     match document {
       RustSupportedDocument::Core(doc) => JsValue::from(WasmCoreDocument::from(doc)),
-      RustSupportedDocument::Iota(doc) => JsValue::from(WasmIotaDocument(doc)),
+      RustSupportedDocument::Iota(doc) => JsValue::from(WasmIotaDocument::from(doc)),
     }
   }
 }
