@@ -13,11 +13,11 @@ use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
 use crate::credential::ImportedDocumentLock;
 use crate::credential::ImportedDocumentReadGuard;
+use crate::did::ArrayIAsCoreDocument;
 use crate::did::IAsCoreDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::resolver::ArrayIAsCoreDocument;
 use crate::resolver::SupportedDID;
 
 use super::WasmCredential;

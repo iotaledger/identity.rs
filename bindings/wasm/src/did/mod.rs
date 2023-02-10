@@ -7,6 +7,7 @@ pub use self::service::WasmService;
 pub use self::wasm_core_did::IAsCoreDID;
 pub use self::wasm_core_did::WasmCoreDID;
 pub(crate) use self::wasm_core_document::getCoreDocument;
+pub use self::wasm_core_document::ArrayIAsCoreDocument;
 pub(crate) use self::wasm_core_document::CoreDocumentLock;
 pub use self::wasm_core_document::IAsCoreDocument;
 pub use self::wasm_core_document::WasmCoreDocument;

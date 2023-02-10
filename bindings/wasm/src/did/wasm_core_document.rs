@@ -596,6 +596,9 @@ extern "C" {
 
   #[wasm_bindgen(js_name = getCoreDocument)]
   pub fn getCoreDocument(input: &JsValue) -> WasmCoreDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<CoreDocument | IAsCoreDocument>")]
+  pub type ArrayIAsCoreDocument;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

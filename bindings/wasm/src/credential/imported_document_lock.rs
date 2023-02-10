@@ -9,10 +9,10 @@ use js_sys::Array;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 
+use crate::did::ArrayIAsCoreDocument;
 use crate::did::CoreDocumentLock;
 use crate::did::IAsCoreDocument;
 use crate::iota::IotaDocumentLock;
-use crate::resolver::ArrayIAsCoreDocument;
 
 /// A shallow copy of a document imported from JS.
 pub(crate) enum ImportedDocumentLock {

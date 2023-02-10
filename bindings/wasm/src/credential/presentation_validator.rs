@@ -10,11 +10,11 @@ use crate::credential::ImportedDocumentReadGuard;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
+use crate::did::ArrayIAsCoreDocument;
 use crate::did::IAsCoreDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::resolver::ArrayIAsCoreDocument;
 use crate::resolver::SupportedDID;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
