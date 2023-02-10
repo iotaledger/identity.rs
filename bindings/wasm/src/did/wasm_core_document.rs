@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::rc::Rc;
+
 use super::WasmCoreDID;
 use crate::common::ArrayCoreMethodRef;
 use crate::common::ArrayService;
@@ -40,9 +42,11 @@ use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+type CoreDocumentLock = tokio::sync::RwLock<CoreDocument>;
+
 /// A method-agnostic DID Document.
 #[wasm_bindgen(js_name = CoreDocument, inspectable)]
-pub struct WasmCoreDocument(pub(crate) CoreDocument);
+pub struct WasmCoreDocument(pub(crate) Rc<CoreDocumentLock>);
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
@@ -50,13 +54,13 @@ impl WasmCoreDocument {
   #[wasm_bindgen(constructor)]
   pub fn new(values: ICoreDocument) -> Result<WasmCoreDocument> {
     let core_doc: CoreDocument = values.into_serde().wasm_result()?;
-    Ok(WasmCoreDocument(core_doc))
+    Ok(WasmCoreDocument(Rc::new(CoreDocumentLock::new(core_doc))))
   }
 
   /// Returns a copy of the DID Document `id`.
   #[wasm_bindgen]
   pub fn id(&self) -> WasmCoreDID {
-    WasmCoreDID::from(self.0.id().clone())
+    WasmCoreDID::from(self.0.blocking_read().id().clone())
   }
 
   /// Sets the DID of the document.
@@ -68,13 +72,13 @@ impl WasmCoreDocument {
   /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmCoreDID) {
-    *self.0.id_mut_unchecked() = id.0.clone();
+    *self.0.blocking_write().id_mut_unchecked() = id.0.clone();
   }
 
   /// Returns a copy of the document controllers.
   #[wasm_bindgen]
   pub fn controller(&self) -> ArrayCoreDID {
-    match self.0.controller() {
+    match self.0.blocking_read().controller() {
       Some(controllers) => controllers
         .iter()
         .cloned()
@@ -102,7 +106,7 @@ impl WasmCoreDocument {
     } else {
       None
     };
-    *self.0.controller_mut() = controller_set;
+    *self.0.blocking_write().controller_mut() = controller_set;
     Ok(())
   }
 
@@ -111,6 +115,7 @@ impl WasmCoreDocument {
   pub fn also_known_as(&self) -> ArrayString {
     self
       .0
+      .blocking_read()
       .also_known_as()
       .iter()
       .map(|url| url.to_string())
@@ -129,7 +134,7 @@ impl WasmCoreDocument {
         urls_set.append(Url::parse(url).wasm_result()?);
       }
     }
-    *self.0.also_known_as_mut() = urls_set;
+    *self.0.blocking_write().also_known_as_mut() = urls_set;
     Ok(())
   }
 
@@ -138,6 +143,7 @@ impl WasmCoreDocument {
   pub fn verification_method(&self) -> ArrayVerificationMethod {
     self
       .0
+      .blocking_read()
       .verification_method()
       .iter()
       .cloned()
@@ -152,6 +158,7 @@ impl WasmCoreDocument {
   pub fn authentication(&self) -> ArrayCoreMethodRef {
     self
       .0
+      .blocking_read()
       .authentication()
       .iter()
       .cloned()
@@ -168,6 +175,7 @@ impl WasmCoreDocument {
   pub fn assertion_method(&self) -> ArrayCoreMethodRef {
     self
       .0
+      .blocking_read()
       .assertion_method()
       .iter()
       .cloned()
@@ -184,6 +192,7 @@ impl WasmCoreDocument {
   pub fn key_agreement(&self) -> ArrayCoreMethodRef {
     self
       .0
+      .blocking_read()
       .key_agreement()
       .iter()
       .cloned()
@@ -200,6 +209,7 @@ impl WasmCoreDocument {
   pub fn capability_delegation(&self) -> ArrayCoreMethodRef {
     self
       .0
+      .blocking_read()
       .capability_delegation()
       .iter()
       .cloned()
@@ -216,6 +226,7 @@ impl WasmCoreDocument {
   pub fn capability_invocation(&self) -> ArrayCoreMethodRef {
     self
       .0
+      .blocking_read()
       .capability_invocation()
       .iter()
       .cloned()
@@ -230,7 +241,7 @@ impl WasmCoreDocument {
   /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    MapStringAny::try_from(self.0.properties())
+    MapStringAny::try_from(self.0.blocking_read().properties())
   }
 
   /// Sets a custom property in the DID Document.
@@ -244,10 +255,10 @@ impl WasmCoreDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut_unchecked().insert(key, value);
+        self.0.blocking_write().properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.properties_mut_unchecked().remove(&key);
+        self.0.blocking_write().properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -262,6 +273,7 @@ impl WasmCoreDocument {
   pub fn service(&self) -> ArrayService {
     self
       .0
+      .blocking_read()
       .service()
       .iter()
       .cloned()
@@ -276,7 +288,7 @@ impl WasmCoreDocument {
   /// Errors if there already exists a service or verification method with the same id.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &WasmService) -> Result<()> {
-    self.0.insert_service(service.0.clone()).wasm_result()
+    self.0.blocking_write().insert_service(service.0.clone()).wasm_result()
   }
 
   /// Remoce a {@link Service} identified by the given {@link DIDUrl} from the document.
@@ -285,7 +297,11 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = removeService)]
   #[allow(non_snake_case)]
   pub fn remove_service(&mut self, didUrl: &WasmDIDUrl) -> Option<WasmService> {
-    self.0.remove_service(&didUrl.0.clone()).map(Into::into)
+    self
+      .0
+      .blocking_write()
+      .remove_service(&didUrl.0.clone())
+      .map(Into::into)
   }
 
   /// Returns the first {@link Service} with an `id` property matching the provided `query`,
@@ -293,7 +309,12 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = resolveService)]
   pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
     let service_query: String = query.into_serde().ok()?;
-    self.0.resolve_service(&service_query).cloned().map(WasmService::from)
+    self
+      .0
+      .blocking_read()
+      .resolve_service(&service_query)
+      .cloned()
+      .map(WasmService::from)
   }
 
   // ===========================================================================
@@ -309,6 +330,7 @@ impl WasmCoreDocument {
     let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
     let methods = self
       .0
+      .blocking_read()
       .methods(scope)
       .into_iter()
       .cloned()
@@ -324,6 +346,7 @@ impl WasmCoreDocument {
   pub fn verification_relationships(&self) -> ArrayCoreMethodRef {
     self
       .0
+      .blocking_read()
       .verification_relationships()
       .cloned()
       .map(|method_ref| match method_ref {
@@ -337,13 +360,17 @@ impl WasmCoreDocument {
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-    self.0.insert_method(method.0.clone(), scope.0).wasm_result()
+    self
+      .0
+      .blocking_write()
+      .insert_method(method.0.clone(), scope.0)
+      .wasm_result()
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
   pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Option<WasmVerificationMethod> {
-    self.0.remove_method(&did.0).map(Into::into)
+    self.0.blocking_write().remove_method(&did.0).map(Into::into)
   }
 
   /// Returns a copy of the first verification method with an `id` property
@@ -358,7 +385,8 @@ impl WasmCoreDocument {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let method: Option<&VerificationMethod> = self.0.resolve_method(&method_query, method_scope);
+    let guard = self.0.blocking_read();
+    let method: Option<&VerificationMethod> = guard.resolve_method(&method_query, method_scope);
     Ok(method.cloned().map(WasmVerificationMethod))
   }
 
@@ -375,6 +403,7 @@ impl WasmCoreDocument {
   ) -> Result<bool> {
     self
       .0
+      .blocking_write()
       .attach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
@@ -389,6 +418,7 @@ impl WasmCoreDocument {
   ) -> Result<bool> {
     self
       .0
+      .blocking_write()
       .detach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
@@ -401,7 +431,7 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = verifyData)]
   pub fn verify_data(&self, data: &JsValue, options: &WasmVerifierOptions) -> Result<bool> {
     let data: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.0.verify_data(&data, &options.0).is_ok())
+    Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
   }
 
   // ===========================================================================
@@ -416,7 +446,11 @@ impl WasmCoreDocument {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.revoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .blocking_write()
+      .revoke_credentials(&query, indices.as_slice())
+      .wasm_result()
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
@@ -427,7 +461,11 @@ impl WasmCoreDocument {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.unrevoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .blocking_write()
+      .unrevoke_credentials(&query, indices.as_slice())
+      .wasm_result()
   }
 
   // ===========================================================================
@@ -452,11 +490,23 @@ impl WasmCoreDocument {
     let method_query: String = methodQuery.into_serde().wasm_result()?;
     let options: ProofOptions = options.0.clone();
 
-    let signer = self.0.signer(&private_key);
+    let guard = self.0.blocking_read();
+    let signer = guard.signer(&private_key);
     let signer = signer.options(options);
     let signer = signer.method(&method_query);
     signer.sign(&mut data).wasm_result()?;
     JsValue::from_serde(&data).wasm_result()
+  }
+
+  #[wasm_bindgen(js_name = clone)]
+  /// Deep clones the `CoreDocument`.
+  pub fn deep_clone(&self) -> WasmCoreDocument {
+    WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
+  }
+
+  #[wasm_bindgen(js_name = shallowClone, skip_typescript)]
+  pub fn shallow_clone(&self) -> WasmCoreDocument {
+    WasmCoreDocument(self.0.clone())
   }
 }
 
@@ -513,11 +563,28 @@ struct ICoreDocumentHelper {
   properties: Object,
 }
 
-impl_wasm_json!(WasmCoreDocument, CoreDocument);
-impl_wasm_clone!(WasmCoreDocument, CoreDocument);
+#[wasm_bindgen(js_class = CoreDocument)]
+impl WasmCoreDocument {
+  /// Serializes this to a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> crate::error::Result<JsValue> {
+    use crate::error::WasmResult;
+    JsValue::from_serde(&self.0.blocking_read().as_ref()).wasm_result()
+  }
+
+  /// Deserializes an instance from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> crate::error::Result<WasmCoreDocument> {
+    use crate::error::WasmResult;
+    json
+      .into_serde()
+      .map(|value| Self(Rc::new(CoreDocumentLock::new(value))))
+      .wasm_result()
+  }
+}
 
 impl From<CoreDocument> for WasmCoreDocument {
   fn from(doc: CoreDocument) -> Self {
-    Self(doc)
+    Self(Rc::new(CoreDocumentLock::new(doc)))
   }
 }
