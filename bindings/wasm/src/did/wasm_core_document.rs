@@ -588,3 +588,17 @@ impl From<CoreDocument> for WasmCoreDocument {
     Self(Rc::new(CoreDocumentLock::new(doc)))
   }
 }
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "CoreDocument | IAsCoreDocument")]
+  pub type IAsCoreDocument;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+pub const TS_AS_REF_CORE_Document: &'static str = r#"
+interface IAsCoreDocument {
+
+  /** Returns a `CoreDocument` representation of this Document. */
+  asCoreDocument(): CoreDocument;
+}"#;
