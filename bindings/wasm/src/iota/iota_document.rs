@@ -39,8 +39,8 @@ use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
 use crate::did::RefMethodScope;
-use crate::did::WasmDIDUrl;
 use crate::did::WasmCoreDocument;
+use crate::did::WasmDIDUrl;
 use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
 use crate::did::WasmService;
@@ -53,7 +53,7 @@ use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
 
-type IotaDocumentLock = tokio::sync::RwLock<IotaDocument>; 
+pub(crate) type IotaDocumentLock = tokio::sync::RwLock<IotaDocument>;
 // =============================================================================
 // =============================================================================
 
@@ -202,7 +202,12 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = resolveService)]
   pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
     let service_query: String = query.into_serde().ok()?;
-    self.0.blocking_read().resolve_service(&service_query).cloned().map(WasmService::from)
+    self
+      .0
+      .blocking_read()
+      .resolve_service(&service_query)
+      .cloned()
+      .map(WasmService::from)
   }
 
   // ===========================================================================
@@ -232,7 +237,11 @@ impl WasmIotaDocument {
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-    self.0.blocking_write().insert_method(method.0.clone(), scope.0).wasm_result()?;
+    self
+      .0
+      .blocking_write()
+      .insert_method(method.0.clone(), scope.0)
+      .wasm_result()?;
     Ok(())
   }
 
@@ -571,7 +580,11 @@ impl WasmIotaDocument {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.blocking_write().revoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .blocking_write()
+      .revoke_credentials(&query, indices.as_slice())
+      .wasm_result()
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
@@ -582,7 +595,11 @@ impl WasmIotaDocument {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.blocking_write().unrevoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .blocking_write()
+      .unrevoke_credentials(&query, indices.as_slice())
+      .wasm_result()
   }
 
   // ===========================================================================
@@ -590,7 +607,7 @@ impl WasmIotaDocument {
   // ===========================================================================
 
   #[wasm_bindgen(js_name = clone)]
-  /// Returns a deep clone of the `IotaDocument`. 
+  /// Returns a deep clone of the `IotaDocument`.
   pub fn deep_clone(&self) -> WasmIotaDocument {
     WasmIotaDocument(Rc::new(IotaDocumentLock::new(self.0.blocking_read().clone())))
   }
@@ -603,7 +620,7 @@ impl WasmIotaDocument {
   // ===========================================================================
   // Serialization
   // ===========================================================================
-    
+
   /// Serializes this to a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> crate::error::Result<JsValue> {
@@ -624,13 +641,14 @@ impl WasmIotaDocument {
   // ===========================================================================
   // "AsRef<CoreDocument>"
   // ===========================================================================
-  /// Transforms the `IotaDocument` to its `CoreDocument` representation. 
+  /// Transforms the `IotaDocument` to its `CoreDocument` representation.
   #[wasm_bindgen(js_name = asCoreDocument)]
   pub fn as_core_document(&self) -> WasmCoreDocument {
-    WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().core_document().clone())))
+    WasmCoreDocument(Rc::new(CoreDocumentLock::new(
+      self.0.blocking_read().core_document().clone(),
+    )))
   }
 }
-
 
 impl From<IotaDocument> for WasmIotaDocument {
   fn from(document: IotaDocument) -> Self {
@@ -661,6 +679,11 @@ extern "C" {
   // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
   #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
   pub type INodeInfoProtocol;
+
+  // Used in combination with `IAsCoreDocument` as a way to avoid deep cloning when one wants to extract a
+  // `&CoreDocument` from a potential `WasmIotaDocument`.
+  #[wasm_bindgen(js_name = maybeGetIotaDocument)]
+  pub fn maybe_get_iota_document(input: &JsValue) -> Option<WasmIotaDocument>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

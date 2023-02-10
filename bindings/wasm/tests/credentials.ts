@@ -169,7 +169,7 @@ describe("CredentialValidator, PresentationValidator", function() {
             const issuerDoc = new IotaDocument("iota");
             const issuerKeys = new KeyPair(KeyType.Ed25519);
             issuerDoc.insertMethod(
-                new VerificationMethod(issuerDoc.id().toCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
+                new VerificationMethod(issuerDoc.id().asCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
                 MethodScope.VerificationMethod(),
             );
 
@@ -186,7 +186,7 @@ describe("CredentialValidator, PresentationValidator", function() {
             const subjectDoc = new IotaDocument("iota");
             const subjectKeys = new KeyPair(KeyType.Ed25519);
             subjectDoc.insertMethod(
-                new VerificationMethod(subjectDoc.id().toCoreDid(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"),
+                new VerificationMethod(subjectDoc.id().asCoreDid(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"),
                 MethodScope.VerificationMethod(),
             );
 

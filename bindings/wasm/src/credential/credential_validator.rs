@@ -11,13 +11,14 @@ use wasm_bindgen::prelude::*;
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
+use crate::credential::ImportedDocumentLock;
+use crate::did::IAsCoreDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::resolver::ArraySupportedDocument;
 use crate::resolver::RustSupportedDocument;
 use crate::resolver::SupportedDID;
-use crate::resolver::SupportedDocument;
 
 use super::WasmCredential;
 use super::WasmCredentialValidationOptions;
@@ -55,12 +56,14 @@ impl WasmCredentialValidator {
   #[wasm_bindgen]
   pub fn validate(
     credential: &WasmCredential,
-    issuer: &SupportedDocument,
+    issuer: &IAsCoreDocument,
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let issuer: RustSupportedDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?;
-    CredentialValidator::validate(&credential.0, &issuer, &options.0, fail_fast.into()).wasm_result()
+    let issuer_lock = ImportedDocumentLock::from(issuer);
+    let issuer_guard = issuer_lock.blocking_read();
+    //let issuer: RustSupportedDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?;
+    CredentialValidator::validate(&credential.0, &issuer_guard, &options.0, fail_fast.into()).wasm_result()
   }
 
   /// Validates the semantic structure of the `Credential`.

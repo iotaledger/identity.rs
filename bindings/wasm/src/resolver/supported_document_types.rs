@@ -70,24 +70,25 @@ impl TryFrom<CoreDID> for SupportedDID {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<Array<IotaDocument | CoreDocument>>")]
+  #[wasm_bindgen(typescript_type = "Promise<Array<CoreDocument | IAsCoreDocument>>")]
   pub type PromiseArraySupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "Promise<IotaDocument | CoreDocument>")]
+  #[wasm_bindgen(typescript_type = "Promise<CoreDocument | IAsCoreDocument>")]
   pub type PromiseSupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "IotaDocument | CoreDocument")]
+  #[wasm_bindgen(typescript_type = "CoreDocument | IAsCoreDocument")]
   pub type SupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "IotaDocument | CoreDocument | undefined")]
+  #[wasm_bindgen(typescript_type = "CoreDocument | IAsCoreDocument | undefined")]
   pub type OptionSupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "Array<IotaDocument | CoreDocument>")]
+  #[wasm_bindgen(typescript_type = "Array<CoreDocument | IAsCoreDocument>")]
   pub type ArraySupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "Array<IotaDocument | CoreDocument> | undefined")]
+  #[wasm_bindgen(typescript_type = "Array<CoreDocument | IAsCoreDocument> | undefined")]
   pub type OptionArraySupportedDocument;
 
-  #[wasm_bindgen(typescript_type = "CoreDID | IotaDID")]
+  //TODO: Remove this and use IAsCoreDID instead.
+  #[wasm_bindgen(typescript_type = "CoreDID | IAsCoreDID")]
   pub type SupportedDID;
 }
