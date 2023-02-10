@@ -42,7 +42,7 @@ use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-type CoreDocumentLock = tokio::sync::RwLock<CoreDocument>;
+pub(crate) type CoreDocumentLock = tokio::sync::RwLock<CoreDocument>;
 
 /// A method-agnostic DID Document.
 #[wasm_bindgen(js_name = CoreDocument, inspectable)]

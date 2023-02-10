@@ -37,8 +37,10 @@ use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
+use crate::did::CoreDocumentLock;
 use crate::did::RefMethodScope;
 use crate::did::WasmDIDUrl;
+use crate::did::WasmCoreDocument;
 use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
 use crate::did::WasmService;
@@ -583,6 +585,10 @@ impl WasmIotaDocument {
     self.0.blocking_write().unrevoke_credentials(&query, indices.as_slice()).wasm_result()
   }
 
+  // ===========================================================================
+  // Cloning
+  // ===========================================================================
+
   #[wasm_bindgen(js_name = clone)]
   /// Returns a deep clone of the `IotaDocument`. 
   pub fn deep_clone(&self) -> WasmIotaDocument {
@@ -593,10 +599,11 @@ impl WasmIotaDocument {
   pub fn shallow_clone(&self) -> WasmIotaDocument {
     WasmIotaDocument(self.0.clone())
   }
-}
 
-#[wasm_bindgen(js_class = IotaDocument)]
-impl WasmIotaDocument {
+  // ===========================================================================
+  // Serialization
+  // ===========================================================================
+    
   /// Serializes this to a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> crate::error::Result<JsValue> {
@@ -612,6 +619,15 @@ impl WasmIotaDocument {
       .into_serde()
       .map(|value| Self(Rc::new(IotaDocumentLock::new(value))))
       .wasm_result()
+  }
+
+  // ===========================================================================
+  // "AsRef<CoreDocument>"
+  // ===========================================================================
+  /// Transforms the `IotaDocument` to its `CoreDocument` representation. 
+  #[wasm_bindgen(js_name = asCoreDocument)]
+  pub fn as_core_document(&self) -> WasmCoreDocument {
+    WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().core_document().clone())))
   }
 }
 

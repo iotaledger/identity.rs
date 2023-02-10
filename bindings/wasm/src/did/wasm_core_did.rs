@@ -136,11 +136,11 @@ impl From<CoreDID> for WasmCoreDID {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "CoreDID | ICoreDID")]
-  pub type ICoreDID;
+  #[wasm_bindgen(typescript_type = "CoreDID | IAsCoreDID")]
+  pub type IAsCoreDID;
 
   #[wasm_bindgen(method, js_name= asCoreDid)]
-  pub fn to_core_did(this: &ICoreDID) -> WasmCoreDID;
+  pub fn to_core_did(this: &IAsCoreDID) -> WasmCoreDID;
 
 }
 
