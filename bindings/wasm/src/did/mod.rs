@@ -16,6 +16,7 @@ pub use self::wasm_method_scope::WasmMethodScope;
 pub use self::wasm_method_type::WasmMethodType;
 pub use self::wasm_verification_method::WasmVerificationMethod;
 pub use self::wasm_verifier_options::WasmVerifierOptions;
+pub(crate) use self::wasm_core_did::callToCoreDidThenClone;
 
 mod service;
 mod wasm_core_did;

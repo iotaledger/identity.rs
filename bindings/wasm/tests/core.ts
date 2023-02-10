@@ -17,6 +17,22 @@ const VALID_DID_EXAMPLE = "did:example:123";
 const KEY_BYTES = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
     25, 26, 27, 28, 29, 30, 31, 32]);
 
+class MyDID {
+    inner: CoreDID;
+
+    constructor(inner: CoreDID) {
+        this.inner = inner;
+    }
+
+    toCoreDid() {
+        return this.inner;
+    }
+
+    toString() {
+        return this.inner.toString();
+    }
+}    
+
 describe("CoreDID", function() {
     describe("#parse", function() {
         it("iota", () => {
@@ -125,6 +141,11 @@ describe("CoreDocument", function() {
                 KEY_BYTES,
                 "key-2",
             );
+
+            let myDid = new MyDID(did);
+            const method3 = new VerificationMethod(myDid, KeyType.Ed25519, KEY_BYTES, "key-3");
+            assert.deepStrictEqual(method3.id().did().toString(), VALID_DID_EXAMPLE as string);
+            assert.deepStrictEqual(myDid.toString(), VALID_DID_EXAMPLE as string);  
             const service = new Service({
                 id: did.join("#service-1"),
                 type: "LinkedDomains",

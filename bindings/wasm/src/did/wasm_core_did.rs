@@ -141,7 +141,11 @@ extern "C" {
 
   #[wasm_bindgen(method, js_name= toCoreDid)]
   pub fn to_core_did(this: &ICoreDID) -> WasmCoreDID;
+}
 
+#[wasm_bindgen] 
+extern "C" {
+  pub fn callToCoreDidThenClone(arg: &ICoreDID) -> WasmCoreDID;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

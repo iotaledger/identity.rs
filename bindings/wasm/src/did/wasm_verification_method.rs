@@ -3,6 +3,7 @@
 
 use crate::common::MapStringAny;
 use crate::crypto::WasmKeyType;
+use crate::did::callToCoreDidThenClone;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmCoreDID;
 use crate::did::WasmMethodData;
@@ -31,7 +32,7 @@ impl WasmVerificationMethod {
     fragment: String,
   ) -> Result<WasmVerificationMethod> {
     let public_key: PublicKey = PublicKey::from(publicKey);
-    VerificationMethod::new(did.to_core_did().0, keyType.into(), &public_key, &fragment)
+    VerificationMethod::new(callToCoreDidThenClone(did.as_ref()).0, keyType.into(), &public_key, &fragment)
       .map(Self)
       .wasm_result()
   }
