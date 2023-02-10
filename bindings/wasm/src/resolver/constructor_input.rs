@@ -25,7 +25,7 @@ extern "C" {
 // definitions (which would be accepted by JSDocs).
 #[wasm_bindgen(typescript_custom_section)]
 const HANDLERS: &'static str =
-  "export type ResolutionHandlers = Map<string, (did: string) => Promise<IotaDocument | CoreDocument>>;";
+  "export type ResolutionHandlers = Map<string, (did: string) => Promise<CoreDocument | IAsCoreDocument>>;";
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_RESOLVER_CONFIG: &'static str = r#"
@@ -46,6 +46,6 @@ export type ResolverConfig = {
      * 
      * Note that if a `client` is given the key "iota" may NOT be present in this map. 
      */
-    handlers?: Map<string, (did: string) => Promise<IotaDocument | CoreDocument>>
+    handlers?: Map<string, (did: string) => Promise<CoreDocument | IAsCoreDocument>>
 };
 "#;

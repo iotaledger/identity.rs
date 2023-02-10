@@ -5,10 +5,14 @@ use std::rc::Rc;
 
 use identity_iota::document::CoreDocument;
 use identity_iota::prelude::IotaDocument;
+use js_sys::Array;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::JsValue;
 
 use crate::did::CoreDocumentLock;
 use crate::did::IAsCoreDocument;
 use crate::iota::IotaDocumentLock;
+use crate::resolver::ArrayIAsCoreDocument;
 
 /// A shallow copy of a document imported from JS.
 pub(crate) enum ImportedDocumentLock {
@@ -24,17 +28,34 @@ impl ImportedDocumentLock {
       Self::Core(lock) => ImportedDocumentReadGuard::Core(lock.blocking_read()),
     }
   }
+
+  /// Only call this method from higher level methods which cast from a more type checked value to `&JsValue`.
+  fn from_js_value_unchecked(value: &JsValue) -> Self {
+    // Use specially crafted functions that 1) Provide strongly typed values without expensive cloning and 2) use our
+    // custom JS shims to make sure that pointers are not nulled after passing them to Rust.
+    if let Some(doc) = crate::iota::maybe_get_iota_document(value) {
+      Self::Iota(doc.0)
+    } else {
+      Self::Core(crate::did::getCoreDocument(value).0)
+    }
+  }
 }
 
 impl From<&IAsCoreDocument> for ImportedDocumentLock {
   fn from(value: &IAsCoreDocument) -> Self {
-    // Use specially crafted functions that 1) Provide strongly typed values without expensive cloning and 2) use our
-    // custom JS shims to make sure that pointers are not nulled after passing them to Rust.
-    if let Some(doc) = crate::iota::maybe_get_iota_document(value.as_ref()) {
-      Self::Iota(doc.0)
-    } else {
-      Self::Core(crate::did::getCoreDocument(value.as_ref()).0)
-    }
+    Self::from_js_value_unchecked(value.as_ref())
+  }
+}
+
+impl From<&ArrayIAsCoreDocument> for Vec<ImportedDocumentLock> {
+  fn from(value: &ArrayIAsCoreDocument) -> Self {
+    let value_array = value
+      .dyn_ref::<Array>()
+      .expect("the provided argument should be of type `Array`");
+    value_array
+      .iter()
+      .map(|value| ImportedDocumentLock::from_js_value_unchecked(&value))
+      .collect()
   }
 }
 

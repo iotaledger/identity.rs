@@ -83,7 +83,7 @@ extern "C" {
   pub type OptionSupportedDocument;
 
   #[wasm_bindgen(typescript_type = "Array<CoreDocument | IAsCoreDocument>")]
-  pub type ArraySupportedDocument;
+  pub type ArrayIAsCoreDocument;
 
   #[wasm_bindgen(typescript_type = "Array<CoreDocument | IAsCoreDocument> | undefined")]
   pub type OptionArraySupportedDocument;

@@ -12,12 +12,12 @@ use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
 use crate::credential::ImportedDocumentLock;
+use crate::credential::ImportedDocumentReadGuard;
 use crate::did::IAsCoreDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::resolver::ArraySupportedDocument;
-use crate::resolver::RustSupportedDocument;
+use crate::resolver::ArrayIAsCoreDocument;
 use crate::resolver::SupportedDID;
 
 use super::WasmCredential;
@@ -103,15 +103,12 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn verify_signature(
     credential: &WasmCredential,
-    trustedIssuers: &ArraySupportedDocument,
+    trustedIssuers: &ArrayIAsCoreDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let trusted_issuers: Vec<RustSupportedDocument> = trustedIssuers
-      .into_serde::<Vec<RustSupportedDocument>>()
-      .wasm_result()?
-      .into_iter()
-      .map(Into::into)
-      .collect();
+    let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
+    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
+      issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     CredentialValidator::verify_signature(&credential.0, &trusted_issuers, &options.0).wasm_result()
   }
 
@@ -134,15 +131,12 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn check_status(
     credential: &WasmCredential,
-    trustedIssuers: &ArraySupportedDocument,
+    trustedIssuers: &ArrayIAsCoreDocument,
     statusCheck: WasmStatusCheck,
   ) -> Result<()> {
-    let trusted_issuers: Vec<RustSupportedDocument> = trustedIssuers
-      .into_serde::<Vec<RustSupportedDocument>>()
-      .wasm_result()?
-      .into_iter()
-      .map(Into::into)
-      .collect();
+    let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
+    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
+      issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     let status_check: StatusCheck = StatusCheck::from(statusCheck);
     CredentialValidator::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
   }

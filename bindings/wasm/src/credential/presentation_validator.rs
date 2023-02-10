@@ -11,7 +11,7 @@ use crate::credential::WasmPresentationValidationOptions;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::resolver::ArraySupportedDocument;
+use crate::resolver::ArrayIAsCoreDocument;
 use crate::resolver::RustSupportedDocument;
 use crate::resolver::SupportedDID;
 use crate::resolver::SupportedDocument;
@@ -51,7 +51,7 @@ impl WasmPresentationValidator {
   pub fn validate(
     presentation: &WasmPresentation,
     holder: &SupportedDocument,
-    issuers: &ArraySupportedDocument,
+    issuers: &ArrayIAsCoreDocument,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
