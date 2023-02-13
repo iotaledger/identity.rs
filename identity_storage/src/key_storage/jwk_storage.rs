@@ -17,27 +17,27 @@ pub type KeyStorageResult<T> = Result<T, KeyStorageError>;
 #[cfg(not(feature = "send-sync-storage"))]
 mod storage_sub_trait {
   pub trait StorageSendSyncMaybe {}
-  impl<S: super::KeyStorage> StorageSendSyncMaybe for S {}
+  impl<S: super::JwkStorage> StorageSendSyncMaybe for S {}
 }
 
 #[cfg(feature = "send-sync-storage")]
 mod storage_sub_trait {
   pub trait StorageSendSyncMaybe: Send + Sync {}
-  impl<S: Send + Sync + super::KeyStorage> StorageSendSyncMaybe for S {}
+  impl<S: Send + Sync + super::JwkStorage> StorageSendSyncMaybe for S {}
 }
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
+pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Generate a new key represented as a JSON Web Key.
   ///
   /// It's recommend that the implementer exposes constants for the supported [`KeyType`].
-  async fn generate_jwk(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput>;
+  async fn generate(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput>;
 
   /// Insert an existing JSON Web Key into the storage.
   ///
   /// All private key components of the `jwk` must be set.
-  async fn insert_jwk(&self, jwk: Jwk) -> KeyStorageResult<KeyId>;
+  async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId>;
 
   /// Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
   ///
@@ -45,7 +45,7 @@ pub trait KeyStorage: storage_sub_trait::StorageSendSyncMaybe {
   async fn sign(&self, key_id: &KeyId, algorithm: SignatureAlgorithm, data: Vec<u8>) -> KeyStorageResult<Vec<u8>>;
 
   /// Returns the public key identified by `key_id` as a JSON Web Key.
-  async fn public_jwk(&self, key_id: &KeyId) -> KeyStorageResult<Jwk>;
+  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk>;
 
   /// Deletes the key identified by `key_id`.
   ///

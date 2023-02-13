@@ -23,7 +23,7 @@ use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
 use super::SignatureAlgorithm;
-use crate::key_storage::KeyStorage;
+use crate::key_storage::JwkStorage;
 
 /// The map from key ids to JWKs.
 type JwkKeyStore = HashMap<KeyId, Jwk>;
@@ -46,8 +46,8 @@ impl MemKeyStore {
 // Refer to the `Storage` interface docs for high-level documentation of the individual methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl KeyStorage for MemKeyStore {
-  async fn generate_jwk(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput> {
+impl JwkStorage for MemKeyStore {
+  async fn generate(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput> {
     let key_type: MemStoreStorageKeyType = MemStoreStorageKeyType::try_from(&key_type)?;
 
     let (private_key, public_key) = match key_type {
@@ -70,7 +70,7 @@ impl KeyStorage for MemKeyStore {
     Ok(JwkGenOutput::new(kid, public_jwk))
   }
 
-  async fn insert_jwk(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
+  async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
     let _ = MemStoreStorageKeyType::try_from(&jwk)?;
 
     if !jwk.is_private() {
@@ -126,7 +126,7 @@ impl KeyStorage for MemKeyStore {
     Ok(signature)
   }
 
-  async fn public_jwk(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
+  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
     let jwk: &Jwk = jwk_store
       .get(key_id)
@@ -345,7 +345,7 @@ mod tests {
     let test_msg: &[u8] = b"test";
     let store: MemKeyStore = MemKeyStore::new();
 
-    let JwkGenOutput { key_id, jwk } = store.generate_jwk(ED25519_KEY_TYPE).await.unwrap();
+    let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE).await.unwrap();
 
     let signature = store
       .sign(&key_id, ED25519_SIGNING_ALG, test_msg.to_vec())
@@ -368,10 +368,10 @@ mod tests {
     let jwk: Jwk = crate::key_storage::ed25519::encode_jwk(&private_key, &public_key);
 
     // VALID: Inserting a Jwk with all private key components set should succeed.
-    store.insert_jwk(jwk.clone()).await.unwrap();
+    store.insert(jwk.clone()).await.unwrap();
 
     // INVALID: Inserting a Jwk with all private key components unset should fail.
-    let err = store.insert_jwk(jwk.to_public()).await.unwrap_err();
+    let err = store.insert(jwk.to_public()).await.unwrap_err();
     assert!(matches!(err.kind(), KeyStorageErrorKind::Unspecified))
   }
 
@@ -392,7 +392,7 @@ mod tests {
     ec_params.d = Some("".to_owned());
     let jwk_ec = Jwk::from_params(ec_params);
 
-    let key_id = store.insert_jwk(jwk_ec).await.unwrap();
+    let key_id = store.insert(jwk_ec).await.unwrap();
 
     let err: _ = store
       .sign(&key_id, ED25519_SIGNING_ALG, b"test".to_vec())
