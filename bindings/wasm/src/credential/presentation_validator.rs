@@ -5,8 +5,8 @@ use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
 
-use crate::credential::ImportedDocumentLock;
-use crate::credential::ImportedDocumentReadGuard;
+use crate::common::ImportedDocumentLock;
+use crate::common::ImportedDocumentReadGuard;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;

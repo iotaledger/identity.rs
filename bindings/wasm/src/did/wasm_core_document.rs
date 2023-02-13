@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::rc::Rc;
 
 use super::WasmCoreDID;
@@ -8,6 +10,7 @@ use crate::common::ArrayCoreMethodRef;
 use crate::common::ArrayService;
 use crate::common::ArrayString;
 use crate::common::ArrayVerificationMethod;
+use crate::common::ImportedDocumentReadGuard;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::UDIDUrlQuery;
@@ -42,7 +45,22 @@ use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-pub(crate) type CoreDocumentLock = tokio::sync::RwLock<CoreDocument>;
+pub(crate) struct CoreDocumentLock(tokio::sync::RwLock<CoreDocument>);
+impl CoreDocumentLock {
+  pub(crate) fn new(input: CoreDocument) -> Self {
+    Self(tokio::sync::RwLock::new(input))
+  }
+
+  pub(crate) fn blocking_read(&self) -> impl Deref<Target = CoreDocument> + '_  + Into<ImportedDocumentReadGuard<'_>>{
+    self.0.blocking_read()
+  }
+
+  pub(crate) fn blocking_write(&self) -> impl DerefMut<Target = CoreDocument> + '_ {
+    self.0.blocking_write()
+  }
+
+  // Implement async read & write when needed. 
+}
 
 /// A method-agnostic DID Document.
 #[wasm_bindgen(js_name = CoreDocument, inspectable)]

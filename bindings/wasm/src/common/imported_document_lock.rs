@@ -24,8 +24,8 @@ impl ImportedDocumentLock {
   /// Obtain a read guard which implements `AsRef<CoreDocument>`.
   pub(crate) fn blocking_read(&self) -> ImportedDocumentReadGuard<'_> {
     match self {
-      Self::Iota(lock) => ImportedDocumentReadGuard::Iota(lock.blocking_read()),
-      Self::Core(lock) => ImportedDocumentReadGuard::Core(lock.blocking_read()),
+      Self::Iota(lock) => lock.blocking_read().into(),
+      Self::Core(lock) => lock.blocking_read().into(),
     }
   }
 
@@ -70,5 +70,17 @@ impl<'a> AsRef<CoreDocument> for ImportedDocumentReadGuard<'a> {
       Self::Core(doc) => doc.as_ref(),
       Self::Iota(doc) => doc.as_ref(),
     }
+  }
+}
+
+impl<'a> From<tokio::sync::RwLockReadGuard<'a, CoreDocument>> for ImportedDocumentReadGuard<'a> {
+  fn from(value: tokio::sync::RwLockReadGuard<'a, CoreDocument>) -> Self {
+      Self::Core(value)
+  }
+}
+
+impl<'a> From<tokio::sync::RwLockReadGuard<'a, IotaDocument>> for ImportedDocumentReadGuard<'a> {
+  fn from(value: tokio::sync::RwLockReadGuard<'a, IotaDocument>) -> Self {
+      Self::Iota(value)
   }
 }

@@ -6,8 +6,6 @@
 pub use self::credential::WasmCredential;
 pub use self::credential_builder::*;
 pub use self::credential_validator::WasmCredentialValidator;
-pub(crate) use self::imported_document_lock::ImportedDocumentLock;
-pub(crate) use self::imported_document_lock::ImportedDocumentReadGuard;
 pub use self::presentation::WasmPresentation;
 pub use self::presentation_builder::*;
 pub use self::presentation_validator::WasmPresentationValidator;
@@ -19,7 +17,6 @@ pub use self::validation_options::WasmSubjectHolderRelationship;
 mod credential;
 mod credential_builder;
 mod credential_validator;
-mod imported_document_lock;
 mod presentation;
 mod presentation_builder;
 mod presentation_validator;
