@@ -184,6 +184,9 @@ pub enum KeyStorageErrorKind {
   /// It is at the caller's discretion whether to retry or not, and how often.
   RetryableIOFailure,
 
+  /// Indicates a failure to serialize or deserialize.
+  SerializationError,
+
   /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
   ///
   /// When using this variant one may want to attach additional context to the corresponding [`KeyStorageError`]. See
@@ -204,6 +207,7 @@ impl KeyStorageErrorKind {
       Self::Unauthenticated => "authentication with the key storage failed",
       Self::Unspecified => "key storage operation failed",
       Self::RetryableIOFailure => "key storage was unsuccessful because of an I/O failure",
+      Self::SerializationError => "(de)serialization error",
     }
   }
 }

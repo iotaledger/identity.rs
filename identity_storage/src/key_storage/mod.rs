@@ -10,6 +10,7 @@ mod key_type;
 mod memstore;
 
 pub use jwk_storage::*;
+pub use key_gen::*;
 pub use key_id::*;
 pub use key_storage_error::*;
 pub use key_type::*;

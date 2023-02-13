@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::resolver;
+use identity_iota::storage::key_storage::KeyStorageError;
+use identity_iota::storage::key_storage::KeyStorageErrorKind;
+use identity_iota::storage::key_storage::KeyStorageResult;
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::result::Result as StdResult;
@@ -209,11 +212,12 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
-  // TODO: Remove or reuse depending on what we do with the account.
-  /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
-  // pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
-  //   self.stringify_error().map_err(AccountStorageError::JsError)
-  // }
+  /// Consumes the struct and returns a Result<_, KeyStorageError>, leaving an `Ok` value untouched.
+  pub fn to_key_storage_error(self) -> KeyStorageResult<JsValue> {
+    self
+      .stringify_error()
+      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))
+  }
 
   // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
   pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
@@ -241,8 +245,7 @@ impl From<Result<JsValue>> for JsValueResult {
   }
 }
 
-// TODO: Remove or reuse depending on what we do with the account..
-// impl From<JsValueResult> for AccountStorageResult<()> {
+// impl From<JsValueResult> for KeyStorageResult<()> {
 //   fn from(result: JsValueResult) -> Self {
 //     result.to_account_error().and_then(|js_value| {
 //       js_value

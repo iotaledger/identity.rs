@@ -34,6 +34,12 @@ path = "../../identity_iota"
 default-features = false
 features = ["client", "revocation-bitmap", "resolver"]
 
+[dependencies.identity_jose]
+version = "0.7.0-alpha.4"
+path = "../../identity_jose"
+default-features = false
+features = []
+
 [dev-dependencies]
 rand = "0.8.5"
 wasm-bindgen-test = { version = "0.3" }

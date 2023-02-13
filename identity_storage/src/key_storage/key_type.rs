@@ -32,6 +32,12 @@ impl From<&'static str> for KeyType {
   }
 }
 
+impl From<KeyType> for String {
+  fn from(value: KeyType) -> Self {
+    value.0.into()
+  }
+}
+
 impl std::fmt::Display for KeyType {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str(&self.0)

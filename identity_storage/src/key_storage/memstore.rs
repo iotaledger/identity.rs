@@ -163,12 +163,13 @@ impl JwkStorage for MemKeyStore {
     Ok(jwk.to_public())
   }
 
-  async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
+  async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
     let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
 
-    let key: Option<Jwk> = jwk_store.remove(key_id);
-
-    Ok(key.is_some())
+    jwk_store
+      .remove(key_id)
+      .map(|_| ())
+      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))
   }
 
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
@@ -382,7 +383,7 @@ mod tests {
 
     assert!(public_key.verify(&signature, test_msg));
     assert!(store.exists(&key_id).await.unwrap());
-    assert!(store.delete(&key_id).await.unwrap());
+    store.delete(&key_id).await.unwrap();
   }
 
   #[tokio::test]

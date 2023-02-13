@@ -49,13 +49,10 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
 
   /// Deletes the key identified by `key_id`.
   ///
-  /// This operation is idempotent: it does not fail if the key does not exist.
-  /// Storages should return `true` if the key existed and was deleted, and `false` otherwise.
-  ///
   /// # Warning
   ///
   /// This operation cannot be undone. The keys are purged permanently.
-  async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<bool>;
+  async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()>;
 
   /// Returns `true` if the key with the given `key_id` exists in storage, `false` otherwise.
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool>;
