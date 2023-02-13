@@ -1,10 +1,10 @@
 import {CoreDocument, IotaDocument, IAsCoreDocument} from "~identity_wasm" ; 
-//type GetCoreDocument = (arg: IAsCoreDocument) => CoreDocument;
-//type MaybeGetIotaDocument = (arg: IAsCoreDocument) => IotaDocument | void; 
+type GetCoreDocument = (arg: IAsCoreDocument) => CoreDocument;
+type MaybeGetIotaDocument = (arg: IAsCoreDocument) => IotaDocument | void; 
 
 declare global {
-    function getCoreDocument(arg: IAsCoreDocument): CoreDocument;
-    function maybeGetIotaDocument(arg: IAsCoreDocument): (IotaDocument | void); 
+    var getCoreDocument: GetCoreDocument;
+    var maybeGetIotaDocument: MaybeGetIotaDocument; 
 }
 function getCoreDocument(arg: IAsCoreDocument): CoreDocument {
     if (arg instanceof CoreDocument) {
