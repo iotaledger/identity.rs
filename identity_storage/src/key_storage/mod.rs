@@ -8,7 +8,6 @@ mod key_storage_error;
 mod key_type;
 #[cfg(feature = "memstore")]
 mod memstore;
-mod signature_algorithm;
 
 pub use jwk_storage::*;
 pub use key_id::*;
@@ -16,4 +15,3 @@ pub use key_storage_error::*;
 pub use key_type::*;
 #[cfg(feature = "memstore")]
 pub use memstore::*;
-pub use signature_algorithm::*;

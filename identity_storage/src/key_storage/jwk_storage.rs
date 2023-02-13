@@ -3,12 +3,12 @@
 
 pub use crate::key_storage::KeyStorageError;
 pub use crate::key_storage::KeyStorageErrorKind;
-use crate::key_storage::SignatureAlgorithm;
 
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyType;
 use async_trait::async_trait;
 use identity_jose::jwk::Jwk;
+use identity_jose::jws::JwsAlgorithm;
 
 use super::key_gen::JwkGenOutput;
 
@@ -32,7 +32,7 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Generate a new key represented as a JSON Web Key.
   ///
   /// It's recommend that the implementer exposes constants for the supported [`KeyType`].
-  async fn generate(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput>;
+  async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
   /// Insert an existing JSON Web Key into the storage.
   ///
@@ -42,7 +42,7 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
   ///
   /// It's recommend that the implementer exposes constants for the supported [`SignatureAlgorithm`].
-  async fn sign(&self, key_id: &KeyId, algorithm: SignatureAlgorithm, data: Vec<u8>) -> KeyStorageResult<Vec<u8>>;
+  async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>>;
 
   /// Returns the public key identified by `key_id` as a JSON Web Key.
   async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk>;

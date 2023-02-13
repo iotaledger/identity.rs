@@ -159,9 +159,9 @@ pub enum KeyStorageErrorKind {
   /// does not support.
   UnsupportedKeyType,
 
-  /// Indicates an attempt to sign with a key type that the [`KeyStorage`] implementation deems incompatible with the
-  /// given signature algorithm.
-  UnsupportedSigningKey,
+  /// Indicates an attempt to generate or insert a key with a key type that the [`KeyStorage`] implementation
+  /// deems incompatible with the given signature algorithm.
+  KeyAlgorithmMismatch,
 
   /// Indicates an attempt to parse a signature algorithm that is not recognized by the [`KeyStorage`] implementation.
   UnsupportedSignatureAlgorithm,
@@ -197,9 +197,7 @@ impl KeyStorageErrorKind {
   const fn as_str(&self) -> &str {
     match self {
       Self::UnsupportedKeyType => "key generation failed: the provided multikey schema is not supported",
-      Self::UnsupportedSigningKey => {
-        "signing failed: the specified signing algorithm does not support the provided key type"
-      }
+      Self::KeyAlgorithmMismatch => "the key type cannot be used with the algorithm",
       Self::UnsupportedSignatureAlgorithm => "signing algorithm parsing failed",
       Self::KeyNotFound => "key not found",
       Self::Unavailable => "key storage unavailable",
