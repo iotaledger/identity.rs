@@ -65,10 +65,10 @@ impl WasmDomainLinkageValidator {
 
     match issuer {
       RustSupportedDocument::Core(doc) => {
-        DomainLinkageValidator::validate_credential(&doc, &credential, domain, &validation_options).wasm_result()?;
+        DomainLinkageValidator::validate_credential(&doc, &credential, &domain, &validation_options).wasm_result()?;
       }
       RustSupportedDocument::Iota(doc) => {
-        DomainLinkageValidator::validate_credential(&doc, &credential, domain, &validation_options).wasm_result()?;
+        DomainLinkageValidator::validate_credential(&doc, &credential, &domain, &validation_options).wasm_result()?;
       }
     }
     Ok(())
@@ -81,7 +81,7 @@ extern "C" {
   pub type IValidateLinkage;
 }
 
-/// Fields for constructing a new {@link LinkedDomainService}.
+/// Fields for validating a domain linkage.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[typescript(name = "IValidateLinkage", readonly, optional)]
@@ -107,7 +107,7 @@ extern "C" {
   pub type IValidateCredential;
 }
 
-/// Fields for constructing a new {@link LinkedDomainService}.
+/// Fields for validating a Domain Linkage Credential.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[typescript(name = "IValidateCredential", readonly, optional)]

@@ -47,7 +47,7 @@ export async function domainLinkage() {
     let domainBar = "https://bar.example.com";
 
     // Create a Linked Domain Service to enable the discovery of the linked domains through the DID Document.
-    // This is optional since it is not a hard requirement by the specs.
+    // This is optional since it is not a hard requirement by the spec.
     let serviceUrl: DIDUrl = did.clone().join("#domain_linkage");
     let linkedDomainService: LinkedDomainService = new LinkedDomainService({
         id: serviceUrl,
@@ -105,7 +105,7 @@ export async function domainLinkage() {
 
     // Fetch the DID Configuration resource (For example using the Fetch API).
     // Note that according to the specs, the DID Configuration resource must exist
-    // at the origin's root, Well-Known Resource directory.
+    // at the origin's root, well-known Resource directory.
     const _configurationUrl = `${domainFoo}/.well-known/did-configuration.json")`;
 
     // But since the DID Configuration
@@ -113,11 +113,12 @@ export async function domainLinkage() {
     let fetchedConfigurationResource = DomainLinkageConfiguration.fromJSON(configurationResource);
 
     // Retrieve the issuers of the Domain Linkage Credentials which correspond to the possibly linked DIDs.
+    // Note that in this example only the first entry in the credential is validated.
     let issuers: Array<string> = fetchedConfigurationResource.issuers();
     const issuerDocument: IotaDocument = await didClient.resolveDid(IotaDID.parse(issuers[0]));
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
-    // Validation is succeeds when no error is thrown.
+    // Validation succeeds when no error is thrown.
     DomainLinkageValidator.validateLinkage({
         domain: domainFoo,
         configuration: fetchedConfigurationResource,
@@ -138,6 +139,7 @@ export async function domainLinkage() {
         .map(service => LinkedDomainService.fromService(service));
 
     // Get the domains included in the Linked Domain Service.
+    // Note that in this example only the first entry in the service is validated.
     let domains: string[] = linkedDomainServices[0].domains();
 
     // Fetch the DID Configuration resource (For example using the Fetch API).

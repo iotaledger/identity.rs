@@ -76,7 +76,7 @@ impl LinkedDomainService {
   ///
   /// Note: `{"type": ["LinkedDomains"]}` might be serialized the same way as  `{"type": "LinkedDomains"}`
   /// which passes the semantic check.
-  fn check_structure(service: &Service) -> Result<()> {
+  pub fn check_structure(service: &Service) -> Result<()> {
     if service.type_().len() != 1 {
       return Err(DomainLinkageError("invalid service type".into()));
     }

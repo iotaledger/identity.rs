@@ -65,7 +65,7 @@ impl WasmLinkedDomainService {
   /// Returns `true` if a @link{Service} is a valid Linked Domain Service.
   #[wasm_bindgen(js_name = isValid)]
   pub fn is_valid(service: &WasmService) -> bool {
-    LinkedDomainService::try_from(service.0.clone()).is_ok()
+    LinkedDomainService::check_structure(&service.0).is_ok()
   }
 }
 
