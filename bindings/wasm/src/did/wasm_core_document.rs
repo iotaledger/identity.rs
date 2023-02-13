@@ -503,8 +503,10 @@ impl WasmCoreDocument {
   pub fn deep_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
   }
-
-  #[wasm_bindgen(js_name = shallowClone, skip_typescript)]
+ 
+  /// ### Warning 
+  /// This is for internal use only do not call this method. 
+  #[wasm_bindgen(js_name = _shallowCloneInternal)]
   pub fn shallow_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(self.0.clone())
   }
