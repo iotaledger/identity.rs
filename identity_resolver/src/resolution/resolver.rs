@@ -36,7 +36,6 @@ use super::commands::SingleThreadedCommand;
 pub struct Resolver<DOC = CoreDocument, CMD = SendSyncCommand<DOC>>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: AsRef<CoreDocument>,
 {
   command_map: HashMap<String, CMD>,
   _required: PhantomData<DOC>,
@@ -45,7 +44,6 @@ where
 impl<M, DOC> Resolver<DOC, M>
 where
   M: for<'r> Command<'r, Result<DOC>>,
-  DOC: AsRef<CoreDocument>,
 {
   /// Constructs a new [`Resolver`].
   ///
@@ -213,6 +211,7 @@ where
   where
     U: Serialize,
     V: Serialize,
+    DOC: AsRef<CoreDocument>,
   {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
@@ -248,7 +247,7 @@ where
   }
 }
 
-impl<DOC: AsRef<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
+impl<DOC: 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -308,7 +307,7 @@ impl<DOC: AsRef<CoreDocument> + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   }
 }
 
-impl<DOC: AsRef<CoreDocument> + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+impl<DOC: 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document

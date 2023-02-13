@@ -8,11 +8,11 @@ use identity_iota::credential::ValidationError;
 use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
 
+use crate::common::ImportedDocumentLock;
+use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
-use crate::common::ImportedDocumentLock;
-use crate::common::ImportedDocumentReadGuard;
 use crate::did::ArrayIAsCoreDocument;
 use crate::did::IAsCoreDocument;
 use crate::did::WasmVerifierOptions;

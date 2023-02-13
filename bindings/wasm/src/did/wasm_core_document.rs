@@ -51,7 +51,7 @@ impl CoreDocumentLock {
     Self(tokio::sync::RwLock::new(input))
   }
 
-  pub(crate) fn blocking_read(&self) -> impl Deref<Target = CoreDocument> + '_  + Into<ImportedDocumentReadGuard<'_>>{
+  pub(crate) fn blocking_read(&self) -> impl Deref<Target = CoreDocument> + '_ + Into<ImportedDocumentReadGuard<'_>> {
     self.0.blocking_read()
   }
 
@@ -59,7 +59,7 @@ impl CoreDocumentLock {
     self.0.blocking_write()
   }
 
-  // Implement async read & write when needed. 
+  // Implement async read & write when needed.
 }
 
 /// A method-agnostic DID Document.
@@ -521,9 +521,9 @@ impl WasmCoreDocument {
   pub fn deep_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
   }
- 
-  /// ### Warning 
-  /// This is for internal use only do not call this method. 
+
+  /// ### Warning
+  /// This is for internal use only do not call this method.
   #[wasm_bindgen(js_name = _shallowCloneInternal)]
   pub fn shallow_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(self.0.clone())

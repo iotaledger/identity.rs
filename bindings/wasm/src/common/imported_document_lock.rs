@@ -75,12 +75,12 @@ impl<'a> AsRef<CoreDocument> for ImportedDocumentReadGuard<'a> {
 
 impl<'a> From<tokio::sync::RwLockReadGuard<'a, CoreDocument>> for ImportedDocumentReadGuard<'a> {
   fn from(value: tokio::sync::RwLockReadGuard<'a, CoreDocument>) -> Self {
-      Self::Core(value)
+    Self::Core(value)
   }
 }
 
 impl<'a> From<tokio::sync::RwLockReadGuard<'a, IotaDocument>> for ImportedDocumentReadGuard<'a> {
   fn from(value: tokio::sync::RwLockReadGuard<'a, IotaDocument>) -> Self {
-      Self::Iota(value)
+    Self::Iota(value)
   }
 }

@@ -71,7 +71,7 @@ impl IotaDocumentLock {
     self.0.blocking_write()
   }
 
-  // Add async methods when they become necessary. 
+  // Add async methods when they become necessary.
 }
 // =============================================================================
 // =============================================================================
@@ -631,8 +631,8 @@ impl WasmIotaDocument {
     WasmIotaDocument(Rc::new(IotaDocumentLock::new(self.0.blocking_read().clone())))
   }
 
-  /// ### Warning 
-  /// This is for internal use only do not call this method. 
+  /// ### Warning
+  /// This is for internal use only do not call this method.
   #[wasm_bindgen(js_name = _shallowCloneInternal)]
   pub fn shallow_clone(&self) -> WasmIotaDocument {
     WasmIotaDocument(self.0.clone())

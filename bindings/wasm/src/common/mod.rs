@@ -8,7 +8,7 @@ pub(crate) use utils::*;
 pub(crate) use self::imported_document_lock::ImportedDocumentLock;
 pub(crate) use self::imported_document_lock::ImportedDocumentReadGuard;
 
+mod imported_document_lock;
 mod timestamp;
 mod types;
 mod utils;
-mod imported_document_lock;
