@@ -10,14 +10,14 @@ runs:
 
     - name: Install sccache (macos-latest)
       if: inputs.os == 'macos-latest'
-      shell: sh
+      shell: bash
       run: |
         brew update --preinstall
         brew install sccache
 
     - name: Install sccache (ubuntu-latest)
       if: inputs.os == 'ubuntu-latest'
-      shell: sh
+      shell: bash
       run: |
         SCCACHE_DOWNLOAD_LINK=https://github.com/mozilla/sccache/releases/download
         SCCACHE_VERSION=v0.2.15
@@ -40,15 +40,7 @@ runs:
         choco install sccache
 
     - name: Start sccache
-      if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
-      shell: sh
-      run: |
-        sccache --start-server
-        sccache -s
-
-    - name: Start sccache
-      if: inputs.os == 'windows-latest'
-      shell: 'pwsh'
+      shell: bash
       run: |
         sccache --start-server
         sccache -s

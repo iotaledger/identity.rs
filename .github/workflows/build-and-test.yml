@@ -41,7 +41,7 @@ jobs:
     outputs:
       core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Run change detection
@@ -57,7 +57,7 @@ jobs:
              CORE_MODIFIED=false
           fi
           echo CORE_MODIFIED=$CORE_MODIFIED
-          echo "::set-output name=core-modified::$CORE_MODIFIED"
+          echo "{core-modified}={$CORE_MODIFIED}" >> $GITHUB_OUTPUT
 
   build-and-test:
     runs-on: ${{ matrix.os }}
@@ -79,13 +79,14 @@ jobs:
       RUSTC_WRAPPER: sccache
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Rust and cache
         uses: './.github/actions/rust/rust-setup'
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
+          cargo-cache-enabled: true
           target-cache-enabled: true
           sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
@@ -117,22 +118,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: cargo clean
 
-      - name: Build all features
-        uses: actions-rs/cargo@v1
-        with:
-          # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-          command: build
-          args: --workspace --tests --examples --all-features --release
+        # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
+      - name: Build with all features
+        run: cargo build --workspace --tests --examples --all-features --release
 
       - name: Start private tangle
         if: matrix.os == 'ubuntu-latest'
         uses: './.github/actions/private-tangle/setup'
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace --all-features --release
+        run: cargo test --workspace --all-features --release
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -165,26 +160,19 @@ jobs:
           - os: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: './.github/actions/rust/rust-setup'
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
 
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --manifest-path ./libjose/Cargo.toml --release
+        run: cargo build --manifest-path ./libjose/Cargo.toml --release
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path ./libjose/Cargo.toml --release
+        run: cargo test --manifest-path ./libjose/Cargo.toml --release
 
   build-wasm:
     needs: check-for-run-condition
@@ -206,7 +194,7 @@ jobs:
           - os: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
