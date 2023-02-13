@@ -18,8 +18,8 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 Allows presentation of one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model) that are issued to a [holder](#roles) and are uniquely presented to a third-party [verifier](#roles) through [verifiable presentations](https://www.w3.org/TR/vc-data-model/#presentations).
 
 ### Relationships
-- [Issuance](./issuance): a presentation may be used to provide extra information from the [holder](#roles) during a credential issuance.
-- [Authentication](./authentication): a presentation may be used after authentication to prove the authenticated DID is bound to a physical identity.
+- [Issuance](./issuance.md): a presentation may be used to provide extra information from the [holder](#roles) during a credential issuance.
+- [Authentication](./authentication.md): a presentation may be used after authentication to prove the authenticated DID is bound to a physical identity.
 
 ### Example Use-Cases
 
@@ -49,7 +49,7 @@ Allows presentation of one or more [verifiable credentials](https://www.w3.org/T
 - Type: `iota/presentation/0.1/presentation-offer`
 - Role: [holder](#roles)
 
-Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. [`CredentialInfo`](../resources/credential-info) is used to indicate which kinds of credentials the [holder](#roles) wants to present.
+Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. [`CredentialInfo`](../resources/credential-info.md) is used to indicate which kinds of credentials the [holder](#roles) wants to present.
 
 #### Structure
 ```json
@@ -61,7 +61,7 @@ Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `offers` | Array of one or more [`CredentialInfo`](../resources/credential-info), each specifying a single credential possessed by the holder.[^1] | ✔ |
+| `offers` | Array of one or more [`CredentialInfo`](../resources/credential-info.md), each specifying a single credential possessed by the holder.[^1] | ✔ |
 | `requireSignature` | Request that the [verifier](#roles) use a [signed DIDComm message][SDM] for non-repudiation of the [`presentation-request`](#presentation-request). The [holder](#roles) SHOULD issue a `problem-report` if the [verifier](#roles) does not sign the message when this is `true`. Default: `false`. | ✖ | 
 
 [^1] With [CredentialType2021], the `type` MAY be under-specified to preserve privacy but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
@@ -102,7 +102,7 @@ Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#
 - Type: `iota/presentation/0.1/presentation-request`
 - Role: [verifier](#roles)
 
-Sent by the [verifier](#roles) to request one or more verifiable credentials from a [holder](#roles). [`CredentialInfo`](../resources/credential-info) indicates which kinds of credentials the [verifier](#roles) wants presented by the [holder](#roles).
+Sent by the [verifier](#roles) to request one or more verifiable credentials from a [holder](#roles). [`CredentialInfo`](../resources/credential-info.md) indicates which kinds of credentials the [verifier](#roles) wants presented by the [holder](#roles).
 
 [Verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message][SDM]. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signed requests.
 
@@ -120,7 +120,7 @@ Sent by the [verifier](#roles) to request one or more verifiable credentials fro
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `requests` | Array of one or more requests, each specifying a single credential possessed by the holder. | ✔ |
-| `credentialInfo` | A [`CredentialInfo`](../resources/credential-info), specifying a credential requested by the verifier.[^1] | ✔ |
+| `credentialInfo` | A [`CredentialInfo`](../resources/credential-info.md), specifying a credential requested by the verifier.[^1] | ✔ |
 | `optional` | Whether this credential is required (`false`) or optional (`true`) to present by the holder. A holder SHOULD send a problem report if unable to satisfy a non-optional credential request. Default: `false`. | ✖ |
 | [`challenge`](https://w3c-ccg.github.io/ld-proofs/#dfn-challenge) | A random string unique per [`presentation-request`](#presentation-request) by a verifier to help mitigate replay attacks. | ✔ |
 
@@ -311,7 +311,7 @@ If the [presentation-result](#presentation-result) contains `disputes` or a prob
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.md).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
