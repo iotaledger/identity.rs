@@ -19,7 +19,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 ### Relationships
 
-- [Issuance](./issuance): an [issuer](./issuance#roles) may take on the role of [trusted-party](#roles) to request a different [issuer](#roles) to sign a new credential.
+- [Issuance](./issuance.md): an [issuer](./issuance.md#roles) may take on the role of [trusted-party](#roles) to request a different [issuer](#roles) to sign a new credential.
 
 ### Example Use-Cases
 
@@ -37,7 +37,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 <div style={{textAlign: 'center'}}>
 
-<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+<sub>For guidance on diagrams see the <a href="../overview.md#diagrams">corresponding section in the overview</a>.</sub>
 
 </div>
 
@@ -51,7 +51,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 Request by a [trusted-party](#roles) for an [issuer](#roles) to sign a credential.
 
-To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender authenticated encryption][SAE] established in a preceding [authentication](./authentication) protocol. For non-repudiation or auditing, the [issuer](#role) MAY enforce that the [signing-request](#signing-request) be a [signed DIDComm message][SDM].
+To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender authenticated encryption][SAE] established in a preceding [authentication](./authentication.md) protocol. For non-repudiation or auditing, the [issuer](#role) MAY enforce that the [signing-request](#signing-request) be a [signed DIDComm message][SDM].
 
 #### Structure
 ```json
@@ -174,7 +174,7 @@ Acknowledgement by the [trusted-party](#roles) that the credential was received 
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.md).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
@@ -183,7 +183,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 ## Unresolved Questions
 
-- Using a signed DIDComm message for auditing requires retaining the entire message including the credential itself. While this may be desired or required for some purposes, it could complicate or violate GDPR laws. Should an explicit signature of the credential hash be used instead, similar to the [issuance](./issuance) protocol?
+- Using a signed DIDComm message for auditing requires retaining the entire message including the credential itself. While this may be desired or required for some purposes, it could complicate or violate GDPR laws. Should an explicit signature of the credential hash be used instead, similar to the [issuance](./issuance.md) protocol?
 
 ## Considerations
 

@@ -18,7 +18,7 @@ This protocol allows two parties to mutually authenticate by disclosing and veri
 
 ### Relationships
 
-- [Connection](./connection): it is RECOMMENDED to establish [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) on [connection](./connection) to prevent revealing the DID of either party to eavesdroppers.
+- [Connection](./connection.md): it is RECOMMENDED to establish [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) on [connection](./connection.md) to prevent revealing the DID of either party to eavesdroppers.
 
 ### Example Use-Cases
 - A connected sensor wants to make sure only valid well-known parties connect to it, before allowing access.
@@ -35,7 +35,7 @@ This protocol allows two parties to mutually authenticate by disclosing and veri
 
 <div style={{textAlign: 'center'}}>
 
-<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+<sub>For guidance on diagrams see the <a href="../overview.md#diagrams">corresponding section in the overview</a>.</sub>
 
 </div>
 
@@ -176,8 +176,8 @@ This section is non-normative.
   - requesting a verifiable presentation of credentials issued by a trusted third party, such as a government,
   - using the [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/) or embedding the DID in a DNS record to tie an identity to a website or domain,
   - using an allowlist of trusted DIDs,
-  - exchanging DIDs out-of-band in a secure manner (note that some [connection](./connection) invitations could be altered by malicious parties depending on the medium).
-- **Authorisation**: the permissions and capabilities of either party may still need to be established after [authentication](#authentication), either by [verifiable presentation](./presentation) as mentioned above or other methods such as JWT tokens
+  - exchanging DIDs out-of-band in a secure manner (note that some [connection](./connection.md) invitations could be altered by malicious parties depending on the medium).
+- **Authorisation**: the permissions and capabilities of either party may still need to be established after [authentication](#authentication), either by [verifiable presentation](./presentation.md) as mentioned above or other methods such as JWT tokens
 - **Privacy**: the [responder](#roles) may be subject to probing whereby their DID may be revealed even with the use of [sender authenticated encryption][SAE], as the `skid` message header is linked to their DID. This is possible if the [responder](#roles) chooses to accept the [authentication-request](#authentication-request) of an unknown [requester](#roles), or the [requester](#roles) successfully replays an [authentication-request](#authentication-request) from a DID the [requester](#roles) trusts.
 
 ## Unresolved Questions

@@ -111,7 +111,7 @@ multiple networks as long as they have distinct valid names (max six characters)
 Note that in the context of an identity managed by an `Account` the DID document can also be resolved by simply calling the `resolve` method on the `Account` directly. 
 
 ## Resolution in the context of Verifiable Presentations 
-As explained in [Verifiable Presentations](./../verifiable_credentials/verifiable_presentations) one resolves the DID Documents of the credential issuers and presentation holder 
+As explained in [Verifiable Presentations](./../verifiable_credentials/verifiable_presentations.mdx) one resolves the DID Documents of the credential issuers and presentation holder 
 during verification of a verifiable presentation. Resolving the necessary DID Documents is done automatically when verifying presentations via the `Resolver`, but there are certain 
 advanced use cases where more control is desired. To accommodate for such situations the `Resolver` also comes equipped with additional stand alone methods that enable:
 - resolving a presentation holder's DID Document
