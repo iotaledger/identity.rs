@@ -127,3 +127,8 @@ pub mod verification {
   //! Types for verifiable data
   pub use identity_verification::*;
 }
+
+pub mod storage {
+  //! Storage traits.
+  pub use identity_storage::*;
+}
