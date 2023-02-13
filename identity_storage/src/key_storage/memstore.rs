@@ -48,8 +48,6 @@ impl MemKeyStore {
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl KeyStorage for MemKeyStore {
   async fn generate_jwk(&self, key_type: KeyType) -> KeyStorageResult<JwkGenOutput> {
-    let mut store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
-
     let key_type: MemStoreStorageKeyType = MemStoreStorageKeyType::try_from(&key_type)?;
 
     let (private_key, public_key) = match key_type {
@@ -66,7 +64,8 @@ impl KeyStorage for MemKeyStore {
     let jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
     let public_jwk: Jwk = jwk.to_public();
 
-    store.insert(kid.clone(), jwk);
+    let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
+    jwk_store.insert(kid.clone(), jwk);
 
     Ok(JwkGenOutput::new(kid, public_jwk))
   }
