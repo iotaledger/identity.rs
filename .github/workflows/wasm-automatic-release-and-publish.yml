@@ -36,7 +36,7 @@ jobs:
     needs: [call-create-release-workflow, build-wasm]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Release to npm
         uses: './.github/actions/publish/publish-wasm'
         with:
@@ -61,7 +61,7 @@ jobs:
   #   needs: [call-create-release-workflow, build-stronghold-nodejs]
   #   steps:
   #     - name: Checkout
-  #       uses: actions/checkout@v2
+  #       uses: actions/checkout@v3
   #     - name: Release to npm
   #       uses: './.github/actions/publish/publish-stronghold-nodejs'
   #       with:

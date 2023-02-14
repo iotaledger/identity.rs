@@ -21,8 +21,8 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClient;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::verification::MethodRelationship;
-use iota_client::api_types::response::OutputMetadataResponse;
 use iota_client::block::input::Input;
+use iota_client::block::output::dto::OutputMetadataDto;
 use iota_client::block::output::AliasId;
 use iota_client::block::output::AliasOutput;
 use iota_client::block::output::AliasOutputBuilder;
@@ -106,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn current_block(client: &Client, output_id: &OutputId) -> anyhow::Result<Block> {
-  let output_metadata: OutputMetadataResponse = client.get_output_metadata(output_id).await?;
+  let output_metadata: OutputMetadataDto = client.get_output_metadata(output_id).await?;
   let block_id: BlockId = BlockId::from_str(&output_metadata.block_id)?;
   let block: Block = client.get_block(&block_id).await?;
   Ok(block)

@@ -20,45 +20,37 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Install clippy with stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          override: true
-          components: clippy
+      - uses: actions/checkout@v3
 
+      - name: Setup Rust
+        uses: './.github/actions/rust/rust-setup'
+        with:
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
+          target: wasm32-unknown-unknown
+          components: clippy
+  
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
         uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9
 
       - name: core clippy check
-        uses: actions-rs/clippy-check@v1
+        uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-targets --all-features -- -D warnings
-          name: core
 
       - name: Wasm clippy check
-        uses: actions-rs/clippy-check@v1
+        uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           args: --manifest-path ./bindings/wasm/Cargo.toml --target wasm32-unknown-unknown --all-targets --all-features -- -D warnings
-          name: wasm
 
       # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
       # - name: stronghold-nodejs clippy check
-      #   uses: actions-rs/clippy-check@v1
-      #   with:
-      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #   uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
+      #   with:    
       #     args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all-targets --all-features -- -D warnings
-      #     name: stronghold-nodejs
 
       - name: libjose clippy check
-        uses: actions-rs/clippy-check@v1
+        uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           args: --manifest-path ./libjose/Cargo.toml --all-targets --all-features -- -D warnings
-          name: libjose
