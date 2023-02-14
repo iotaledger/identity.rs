@@ -1,4 +1,4 @@
-import type { ICoreDocument } from "../node";
+import type { CoreDocument, ICoreDocument, IotaDocument } from "../node";
 
 export {};
 
@@ -41,6 +41,34 @@ class MockInheritedCoreDocument extends CoreDocument {
     }
 }
 
+class MockIAsCoreDocument {
+    inner: CoreDocument;
+    asCoreDocumentCalled: boolean;
+
+    constructor(inner: CoreDocument) {
+        this.inner = inner;
+        this.asCoreDocumentCalled = false; 
+    }
+
+    asCoreDocument(): CoreDocument {
+        this.asCoreDocumentCalled = true;
+        return this.inner;
+    }
+}
+
+class MockInheritedIotaDocument extends IotaDocument {
+    asCoreDocumentCalled: boolean; 
+
+    constructor(network: string) {
+        super(network);
+        this.asCoreDocumentCalled = false;
+    }
+
+    asCoreDocument(): CoreDocument {
+        this.asCoreDocumentCalled = true; 
+        return super.asCoreDocument();
+    }
+}
 const credentialFields = {
     context: "https://www.w3.org/2018/credentials/examples/v1",
     id: "https://example.edu/credentials/3732",
@@ -259,6 +287,19 @@ describe("CredentialValidator, PresentationValidator", function() {
                 )
             );
 
+            assert.doesNotThrow(() =>
+                CredentialValidator.validate(
+                    signedCredential,
+                    issuerDoc,
+                    CredentialValidationOptions.default(),
+                    FailFast.FirstError,
+                )
+            );
+            assert.deepStrictEqual(
+                CredentialValidator.extractIssuer(signedCredential).toString(),
+                issuerDID.toString(),
+            );
+
             // Characterisation test: Check that asCoreDocument does not get called 
             // when passing an extension of `CoreDocument`. 
             let mockInheritedDocument = new MockInheritedCoreDocument({
@@ -279,17 +320,45 @@ describe("CredentialValidator, PresentationValidator", function() {
                 false
             );
 
+            // Characterisation test: Check that asCoreDocument DOES get called 
+            // when passing a mere implementer of IAsCoreDocument (without inheriting from CoreDocument) 
+            // to CredentialValidator.verifySignature. 
+            let mockIAsCoreDocument = new MockIAsCoreDocument(issuerDoc.asCoreDocument());
             assert.doesNotThrow(() =>
-                CredentialValidator.validate(
-                    signedCredential,
-                    issuerDoc,
-                    CredentialValidationOptions.default(),
-                    FailFast.FirstError,
+            CredentialValidator.verifySignature(
+                signedCredential,
+                [mockIAsCoreDocument, subjectDoc],
+                VerifierOptions.default()
                 )
             );
+
             assert.deepStrictEqual(
-                CredentialValidator.extractIssuer(signedCredential).toString(),
-                issuerDID.toString(),
+                mockIAsCoreDocument.asCoreDocumentCalled, 
+                true
+            );
+
+            // Characterisation test: Check that asCoreDocument does not get called 
+            // when passing `IotaDocument` (we use inheritance as a way of mocking a normal IotaDocument). 
+            let mockIotaDoc = new MockInheritedIotaDocument("iota");
+            // Make sure that DIDs are the same. 
+            assert.deepStrictEqual(issuerDoc.id().toString(), mockIotaDoc.id().toString());
+            // Insert the same verificationMethod used by `issuerDoc` to sign the credential. 
+            mockIotaDoc.insertMethod(
+                new VerificationMethod(issuerDoc.id().asCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
+                MethodScope.VerificationMethod(),
+            );
+
+            assert.doesNotThrow(() =>
+            CredentialValidator.verifySignature(
+                signedCredential,
+                [mockIotaDoc, subjectDoc],
+                VerifierOptions.default()
+                )
+            );
+            
+            assert.deepStrictEqual(
+                mockIotaDoc.asCoreDocumentCalled,
+                false
             );
 
             // Construct a presentation.
