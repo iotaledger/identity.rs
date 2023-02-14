@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_client::api::input_selection::Burn;
 use iota_client::block::output::dto::OutputDto;
 use iota_client::block::protocol::ProtocolParameters;
 use iota_client::secret::SecretManager;
@@ -95,7 +96,7 @@ impl IotaClientExt for Client {
       .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block input", Some(Box::new(err))))?
       .with_outputs(vec![basic_output])
       .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block output", Some(Box::new(err))))?
-      .with_burning_allowed(true)
+      .with_burn(Burn::new().add_alias(alias_id))
       .finish()
       .await
       .map_err(|err| Error::DIDUpdateError("delete_did_output: publish failed", Some(Box::new(err))))?;
