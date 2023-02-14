@@ -6,15 +6,19 @@ use std::rc::Rc;
 use identity_iota::document::CoreDocument;
 use identity_iota::prelude::IotaDocument;
 use js_sys::Array;
-use wasm_bindgen::JsCast;
-use wasm_bindgen::JsValue;
 
 use crate::did::ArrayIAsCoreDocument;
 use crate::did::CoreDocumentLock;
 use crate::did::IAsCoreDocument;
+use crate::did::WasmCoreDocument;
 use crate::iota::IotaDocumentLock;
+use crate::iota::WasmIotaDocument;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 /// A shallow copy of a document imported from JS.
+/// Instances of this type are expected to be short lived (for the duration of a function call)
+/// in order to avoid unintentional memory leaks.
 pub(crate) enum ImportedDocumentLock {
   Core(Rc<CoreDocumentLock>),
   Iota(Rc<IotaDocumentLock>),
@@ -29,14 +33,11 @@ impl ImportedDocumentLock {
     }
   }
 
-  /// Only call this method from higher level methods which cast from a more type checked value to `&JsValue`.
   fn from_js_value_unchecked(value: &JsValue) -> Self {
-    // Use specially crafted functions that 1) Provide strongly typed values without expensive cloning and 2) use our
-    // custom JS shims to make sure that pointers are not nulled after passing them to Rust.
-    if let Some(doc) = crate::iota::maybe_get_iota_document(value) {
+    if let Some(doc) = maybe_get_iota_document(value) {
       Self::Iota(doc.0)
     } else {
-      Self::Core(crate::did::getCoreDocument(value).0)
+      Self::Core(getCoreDocument(value).0)
     }
   }
 }
@@ -83,4 +84,17 @@ impl<'a> From<tokio::sync::RwLockReadGuard<'a, IotaDocument>> for ImportedDocume
   fn from(value: tokio::sync::RwLockReadGuard<'a, IotaDocument>) -> Self {
     Self::Iota(value)
   }
+}
+
+// Specially crafted functions that 1) Provide strongly typed values without expensive cloning and 2) use our
+// custom JS shims to make sure that pointers are not nulled after passing them to Rust.
+#[wasm_bindgen]
+extern "C" {
+  /// Called internally by `ImportedDocumentLock`, if used elsewhere panics or memory leaks may occur.  
+  #[wasm_bindgen(js_name = _getCoreDocumentInternal)]
+  pub fn getCoreDocument(input: &JsValue) -> WasmCoreDocument;
+
+  /// Called internally by `ImportedDocumentLock`, if used elsewhere panics or memory leaks may occur.
+  #[wasm_bindgen(js_name = _maybeGetIotaDocumentInternal)]
+  pub fn maybe_get_iota_document(input: &JsValue) -> Option<WasmIotaDocument>;
 }

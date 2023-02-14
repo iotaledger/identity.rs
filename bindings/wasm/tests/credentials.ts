@@ -1,3 +1,5 @@
+import type { ICoreDocument } from "../node";
+
 export {};
 
 const assert = require("assert");
@@ -21,7 +23,23 @@ const {
     VerifierOptions,
     PresentationValidator,
     PresentationValidationOptions,
+    CoreDocument,
+    ICoreDocument,
 } = require("../node");
+
+class MockInheritedCoreDocument extends CoreDocument {
+    asCoreDocumentCalled: boolean;
+
+    constructor(values: ICoreDocument) {
+        super(values);
+        this.asCoreDocumentCalled = false; 
+    }
+
+    asCoreDocument(): CoreDocument {
+        this.asCoreDocumentCalled = true; 
+        return super.asCoreDocument();
+    }
+}
 
 const credentialFields = {
     context: "https://www.w3.org/2018/credentials/examples/v1",
@@ -240,6 +258,27 @@ describe("CredentialValidator, PresentationValidator", function() {
                     VerifierOptions.default(),
                 )
             );
+
+            // Characterisation test: Check that asCoreDocument does not get called 
+            // when passing an extension of `CoreDocument`. 
+            let mockInheritedDocument = new MockInheritedCoreDocument({
+                id: issuerDoc.id(),
+                verificationMethod: issuerDoc.methods(MethodScope.VerificationMethod()),
+            });
+
+            assert.doesNotThrow(() =>
+            CredentialValidator.verifySignature(
+                signedCredential,
+                [mockInheritedDocument, subjectDoc],
+                VerifierOptions.default()
+                )
+            );
+
+            assert.deepStrictEqual(
+                mockInheritedDocument.asCoreDocumentCalled, 
+                false
+            );
+
             assert.doesNotThrow(() =>
                 CredentialValidator.validate(
                     signedCredential,

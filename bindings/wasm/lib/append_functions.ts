@@ -3,10 +3,10 @@ type GetCoreDocument = (arg: IAsCoreDocument) => CoreDocument;
 type MaybeGetIotaDocument = (arg: IAsCoreDocument) => IotaDocument | void; 
 
 declare global {
-    var getCoreDocument: GetCoreDocument;
-    var maybeGetIotaDocument: MaybeGetIotaDocument; 
+    var _getCoreDocumentInternal: GetCoreDocument;
+    var _maybeGetIotaDocumentInternal: MaybeGetIotaDocument; 
 }
-function getCoreDocument(arg: IAsCoreDocument): CoreDocument {
+function _getCoreDocumentInternal(arg: IAsCoreDocument): CoreDocument {
     if (arg instanceof CoreDocument) {
          
         return arg._shallowCloneInternal();
@@ -16,7 +16,7 @@ function getCoreDocument(arg: IAsCoreDocument): CoreDocument {
     }
 }
 
-function maybeGetIotaDocument(arg: IAsCoreDocument) : IotaDocument | void {
+function _maybeGetIotaDocumentInternal(arg: IAsCoreDocument) : IotaDocument | void {
     if (arg instanceof IotaDocument) {
         
         return arg._shallowCloneInternal()
@@ -25,6 +25,6 @@ function maybeGetIotaDocument(arg: IAsCoreDocument) : IotaDocument | void {
     }
 }
 
-globalThis.getCoreDocument = getCoreDocument;
+globalThis._getCoreDocumentInternal = _getCoreDocumentInternal;
 
-globalThis.maybeGetIotaDocument = maybeGetIotaDocument; 
+globalThis._maybeGetIotaDocumentInternal = _maybeGetIotaDocumentInternal; 

@@ -677,14 +677,6 @@ impl From<IotaDocument> for WasmIotaDocument {
   }
 }
 
-/*
-impl From<WasmIotaDocument> for IotaDocument {
-  fn from(wasm_document: WasmIotaDocument) -> Self {
-    wasm_document.0
-  }
-}
- */
-
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "IotaDID[]")]
@@ -700,11 +692,6 @@ extern "C" {
   // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
   #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
   pub type INodeInfoProtocol;
-
-  // Used in combination with `IAsCoreDocument` as a way to avoid deep cloning when one wants to extract a
-  // `&CoreDocument` from a potential `WasmIotaDocument`.
-  #[wasm_bindgen(js_name = maybeGetIotaDocument)]
-  pub fn maybe_get_iota_document(input: &JsValue) -> Option<WasmIotaDocument>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
