@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::core::Object;
 use identity_iota::core::Url;
 use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::StatusCheck;
@@ -15,10 +16,10 @@ use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
 use crate::did::ArrayIAsCoreDocument;
 use crate::did::IAsCoreDocument;
+use crate::did::WasmCoreDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::resolver::SupportedDID;
 
 use super::WasmCredential;
 use super::WasmCredentialValidationOptions;
@@ -147,8 +148,9 @@ impl WasmCredentialValidator {
   ///
   /// Fails if the issuer field is not a valid DID.
   #[wasm_bindgen(js_name = extractIssuer)]
-  pub fn extract_issuer(credential: &WasmCredential) -> Result<SupportedDID> {
-    let did: CoreDID = CredentialValidator::extract_issuer(&credential.0).wasm_result()?;
-    SupportedDID::try_from(did)
+  pub fn extract_issuer(credential: &WasmCredential) -> Result<WasmCoreDID> {
+    CredentialValidator::extract_issuer::<CoreDID, Object>(&credential.0)
+      .map(WasmCoreDID::from)
+      .wasm_result()
   }
 }

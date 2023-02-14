@@ -13,6 +13,7 @@ use crate::did::IAsCoreDocument;
 use crate::did::WasmCoreDocument;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDocument;
+
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -33,7 +34,7 @@ impl ImportedDocumentLock {
     }
   }
 
-  fn from_js_value_unchecked(value: &JsValue) -> Self {
+  pub(crate) fn from_js_value_unchecked(value: &JsValue) -> Self {
     if let Some(doc) = maybe_get_iota_document(value) {
       Self::Iota(doc.0)
     } else {

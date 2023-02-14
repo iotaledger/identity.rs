@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod constructor_input;
-mod supported_document_types;
+mod specialized_ts_type_definitions;
 mod wasm_resolver;
 
-pub use supported_document_types::*;
+pub use specialized_ts_type_definitions::*;

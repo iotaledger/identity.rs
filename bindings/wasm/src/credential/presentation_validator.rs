@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::core::Object;
 use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
@@ -12,10 +13,10 @@ use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
 use crate::did::ArrayIAsCoreDocument;
 use crate::did::IAsCoreDocument;
+use crate::did::WasmCoreDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::resolver::SupportedDID;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
 pub struct WasmPresentationValidator;
@@ -96,8 +97,9 @@ impl WasmPresentationValidator {
   ///
   /// Fails if the holder field is missing or not a valid DID.
   #[wasm_bindgen(js_name = extractHolder)]
-  pub fn extract_holder(presentation: &WasmPresentation) -> Result<SupportedDID> {
-    let did: CoreDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
-    SupportedDID::try_from(did)
+  pub fn extract_holder(presentation: &WasmPresentation) -> Result<WasmCoreDID> {
+    PresentationValidator::extract_holder::<CoreDID, Object, Object>(&presentation.0)
+      .map(WasmCoreDID::from)
+      .wasm_result()
   }
 }

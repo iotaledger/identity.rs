@@ -6,10 +6,10 @@ use std::rc::Rc;
 
 use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationValidationOptions;
+use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDID;
-use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::resolver::SingleThreadedResolver;
 use js_sys::Function;
@@ -17,29 +17,33 @@ use js_sys::Map;
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
+use crate::common::ImportedDocumentLock;
+use crate::common::ImportedDocumentReadGuard;
 use crate::common::PromiseVoid;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
+use crate::did::ArrayIAsCoreDocument;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
+use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
+use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
 use crate::resolver::constructor_input::MapResolutionHandler;
 use crate::resolver::constructor_input::ResolverConfig;
-use crate::resolver::supported_document_types::OptionArraySupportedDocument;
-use crate::resolver::supported_document_types::OptionSupportedDocument;
-use crate::resolver::supported_document_types::RustSupportedDocument;
+use crate::resolver::specialized_ts_type_definitions::OptionArrayIAsCoreDocument;
+use crate::resolver::specialized_ts_type_definitions::OptionIAsCoreDocument;
 
-use super::supported_document_types::PromiseArraySupportedDocument;
-use super::supported_document_types::PromiseSupportedDocument;
+use super::specialized_ts_type_definitions::PromiseArrayIAsCoreDocument;
+use super::specialized_ts_type_definitions::PromiseIAsCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-type RustSupportedDocumentResolver = SingleThreadedResolver<RustSupportedDocument>;
+type JsDocumentResolver = SingleThreadedResolver<JsValue>;
 /// Convenience type for resolving DID documents from different DID methods.   
 ///  
 /// Also provides methods for resolving DID Documents associated with
@@ -48,7 +52,7 @@ type RustSupportedDocumentResolver = SingleThreadedResolver<RustSupportedDocumen
 /// # Configuration
 /// The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
 #[wasm_bindgen(js_name = Resolver)]
-pub struct WasmResolver(Rc<RustSupportedDocumentResolver>);
+pub struct WasmResolver(Rc<JsDocumentResolver>);
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
@@ -59,7 +63,7 @@ impl WasmResolver {
   /// will throw an error because the handler for the "iota" method then becomes ambiguous.
   #[wasm_bindgen(constructor)]
   pub fn new(config: ResolverConfig) -> Result<WasmResolver> {
-    let mut resolver: RustSupportedDocumentResolver = SingleThreadedResolver::new();
+    let mut resolver: JsDocumentResolver = SingleThreadedResolver::new();
 
     let mut attached_iota_method = false;
     let resolution_handlers: Option<MapResolutionHandler> = config.handlers();
@@ -105,16 +109,14 @@ impl WasmResolver {
   pub(crate) async fn client_as_handler(
     client: &WasmIotaIdentityClient,
     did: WasmIotaDID,
-  ) -> std::result::Result<IotaDocument, identity_iota::iota::Error> {
-    client.resolve_did(&did.0).await
+  ) -> std::result::Result<WasmIotaDocument, identity_iota::iota::Error> {
+    Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(
+      client.resolve_did(&did.0).await?,
+    ))))
   }
 
   /// attempts to extract (method, handler) pairs from the entries of a map and attaches them to the resolver.
-  fn attach_handlers(
-    resolver: &mut RustSupportedDocumentResolver,
-    map: &Map,
-    attached_iota_method: &mut bool,
-  ) -> Result<()> {
+  fn attach_handlers(resolver: &mut JsDocumentResolver, map: &Map, attached_iota_method: &mut bool) -> Result<()> {
     for key in map.keys() {
       if let Ok(js_method) = key {
         let js_handler: JsValue = map.get(&js_method);
@@ -147,7 +149,7 @@ impl WasmResolver {
   }
 
   /// Converts a JS handler to a Rust closure and attaches it to the given `resolver`.
-  fn attach_handler(resolver: &mut RustSupportedDocumentResolver, method: String, handler: Function) {
+  fn attach_handler(resolver: &mut JsDocumentResolver, method: String, handler: Function) {
     let fun = move |input: CoreDID| {
       let fun_clone: Function = handler.clone();
       async move {
@@ -157,10 +159,7 @@ impl WasmResolver {
         let awaited_output: JsValue =
           JsValueResult::from(JsFuture::from(closure_output_promise).await).stringify_error()?;
 
-        let supported_document: RustSupportedDocument = awaited_output
-          .into_serde()
-          .map_err(|error| format!("unable to convert the resolved document into a supported DID document: {error}"))?;
-        std::result::Result::<_, String>::Ok(supported_document)
+        std::result::Result::<_, String>::Ok(awaited_output)
       }
     };
 
@@ -174,25 +173,19 @@ impl WasmResolver {
   /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
   /// resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
-  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArraySupportedDocument> {
-    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
+  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArrayIAsCoreDocument> {
+    let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
     let promise: Promise = future_to_promise(async move {
-      let supported_documents: Vec<RustSupportedDocument> = resolver
+      let issuer_documents: Vec<JsValue> = resolver
         .resolve_presentation_issuers(&presentation)
         .await
         .wasm_result()?;
-      Ok(
-        supported_documents
-          .into_iter()
-          .map(JsValue::from)
-          .collect::<js_sys::Array>()
-          .into(),
-      )
+      Ok(issuer_documents.into_iter().collect::<js_sys::Array>().into())
     });
 
-    Ok(promise.unchecked_into::<PromiseArraySupportedDocument>())
+    Ok(promise.unchecked_into::<PromiseArrayIAsCoreDocument>())
   }
 
   /// Fetches the DID Document of the holder of a `Presentation`.
@@ -201,8 +194,8 @@ impl WasmResolver {
   /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
   /// DID resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationHolder)]
-  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseSupportedDocument> {
-    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
+  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseIAsCoreDocument> {
+    let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
     let promise: Promise = future_to_promise(async move {
@@ -212,7 +205,7 @@ impl WasmResolver {
         .wasm_result()
         .map(JsValue::from)
     });
-    Ok(promise.unchecked_into::<PromiseSupportedDocument>())
+    Ok(promise.unchecked_into::<PromiseIAsCoreDocument>())
   }
 
   /// Verifies a `Presentation`.
@@ -237,26 +230,53 @@ impl WasmResolver {
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
-    holder: &OptionSupportedDocument,
-    issuers: &OptionArraySupportedDocument,
+    holder: &OptionIAsCoreDocument,
+    issuers: &OptionArrayIAsCoreDocument,
   ) -> Result<PromiseVoid> {
-    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
+    let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
     let options: PresentationValidationOptions = options.0.clone();
 
-    let holder: Option<RustSupportedDocument> = holder.into_serde().wasm_result()?;
-    let holder: Option<RustSupportedDocument> = holder.map(From::from);
-    let issuers: Option<Vec<RustSupportedDocument>> = issuers.into_serde().wasm_result()?;
+    let holder_clone: JsValue = JsValue::from(holder);
+    let issuers_clone: JsValue = JsValue::from(issuers);
+
     let promise: Promise = future_to_promise(async move {
-      resolver
-        .verify_presentation(
-          &presentation,
-          &options,
-          fail_fast.into(),
-          holder.as_ref(),
-          issuers.as_deref(),
-        )
-        .await
+      let holder_handler = || async {
+        if holder_clone.is_null() || holder_clone.is_undefined() {
+          resolver
+            .resolve_presentation_holder(&presentation)
+            .await
+            .map(|value| ImportedDocumentLock::from_js_value_unchecked(&value))
+        } else {
+          Ok(ImportedDocumentLock::from_js_value_unchecked(&holder_clone))
+        }
+      };
+
+      let issuers_handler = || async {
+        if issuers_clone.is_null() || issuers_clone.is_undefined() {
+          resolver.resolve_presentation_issuers(&presentation).await.map(|value| {
+            value
+              .into_iter()
+              .map(|entry| ImportedDocumentLock::from_js_value_unchecked(&entry))
+              .collect::<Vec<ImportedDocumentLock>>()
+          })
+        } else {
+          Ok(Vec::<ImportedDocumentLock>::from(
+            issuers_clone.unchecked_ref::<ArrayIAsCoreDocument>(),
+          ))
+        }
+      };
+
+      let (holder_result, issuers_result) = futures::join!(holder_handler(), issuers_handler());
+
+      let holder = holder_result.wasm_result()?;
+      let issuers = issuers_result.wasm_result()?;
+
+      let holder_guard = holder.blocking_read();
+      let issuers_guard: Vec<ImportedDocumentReadGuard<'_>> =
+        issuers.iter().map(ImportedDocumentLock::blocking_read).collect();
+
+      PresentationValidator::validate(&presentation, &holder_guard, &issuers_guard, &options, fail_fast.into())
         .wasm_result()
         .map(|_| JsValue::UNDEFINED)
     });
@@ -271,8 +291,8 @@ impl WasmResolver {
   /// Errors if the resolver has not been configured to handle the method
   /// corresponding to the given DID or the resolution process itself fails.
   #[wasm_bindgen]
-  pub fn resolve(&self, did: &str) -> Result<PromiseSupportedDocument> {
-    let resolver: Rc<RustSupportedDocumentResolver> = self.0.clone();
+  pub fn resolve(&self, did: &str) -> Result<PromiseIAsCoreDocument> {
+    let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let did: CoreDID = CoreDID::parse(did).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
@@ -284,6 +304,6 @@ impl WasmResolver {
         .map(JsValue::from)
     });
 
-    Ok(promise.unchecked_into::<PromiseSupportedDocument>())
+    Ok(promise.unchecked_into::<PromiseIAsCoreDocument>())
   }
 }

@@ -27,6 +27,9 @@ const {
     ICoreDocument,
 } = require("../node");
 
+// Mocks for characterisation tests ensuring that asCoreDocument() 
+// only gets called when a document cannot be cast to either IotaDocument 
+// or CoreDocument. 
 class MockInheritedCoreDocument extends CoreDocument {
     asCoreDocumentCalled: boolean;
 
