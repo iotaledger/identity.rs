@@ -23,3 +23,9 @@ impl std::fmt::Display for KeyId {
     f.write_str(&self.0)
   }
 }
+
+impl From<KeyId> for String {
+  fn from(value: KeyId) -> Self {
+    value.0
+  }
+}

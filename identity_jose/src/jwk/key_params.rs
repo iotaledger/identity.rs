@@ -256,6 +256,7 @@ impl JwkParamsRsa {
       && self.dp.is_none()
       && self.dq.is_none()
       && self.qi.is_none()
+      // TODO: `oth` consists of multiple fields; check individually?
       && self.oth.is_none()
   }
 
