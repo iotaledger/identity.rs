@@ -97,7 +97,7 @@ impl_wasm_error_from!(
   identity_iota::iota::Error,
   identity_iota::credential::ValidationError,
   identity_iota::credential::RevocationError,
-  identity_iota::verification::Error
+  identity_iota::verification::Error // identity_jose::error::Error
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -198,16 +198,6 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   }
 }
 
-// TODO: Remove or reuse depending on what we do with the account.
-// impl From<UpdateError> for WasmError<'_> {
-//   fn from(error: UpdateError) -> Self {
-//     Self {
-//       name: Cow::Borrowed("Update::Error"),
-//       message: Cow::Owned(error.to_string()),
-//     }
-//   }
-// }
-
 /// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
@@ -245,23 +235,13 @@ impl From<Result<JsValue>> for JsValueResult {
   }
 }
 
-// impl From<JsValueResult> for KeyStorageResult<()> {
-//   fn from(result: JsValueResult) -> Self {
-//     result.to_account_error().and_then(|js_value| {
-//       js_value
-//         .into_serde()
-//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-//     })
-//   }
-// }
-
 // TODO: Remove or reuse depending on what we do with the account..
-// impl From<JsValueResult> for AccountStorageResult<bool> {
-//   fn from(result: JsValueResult) -> Self {
-//     result.to_account_error().and_then(|js_value| {
-//       js_value
-//         .into_serde()
-//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-//     })
-//   }
-// }
+impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyStorageResult<T> {
+  fn from(result: JsValueResult) -> Self {
+    result.to_key_storage_error().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::SerializationError).with_source(e))
+    })
+  }
+}

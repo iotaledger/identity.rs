@@ -1,3 +1,7 @@
+use crate::common::PromiseBool;
+use crate::common::PromiseString;
+use crate::common::PromiseUint8Array;
+use crate::common::PromiseVoid;
 use crate::error::JsValueResult;
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
@@ -8,7 +12,9 @@ use identity_iota::storage::key_storage::KeyStorageResult;
 use identity_iota::storage::key_storage::KeyType;
 use identity_jose::jwk::Jwk;
 use identity_jose::jws::JwsAlgorithm;
+use js_sys::Array;
 use js_sys::Promise;
+use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
@@ -18,22 +24,8 @@ use super::WasmJwk;
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<JwkGenOutput>")]
   pub type PromiseJwkGenOutput;
-  #[wasm_bindgen(typescript_type = "Promise<string>")]
-  pub type PromiseKeyId;
-  // #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined>")]
-  // pub type PromiseOptionChainState;
-  // #[wasm_bindgen(typescript_type = "Promise<Document | undefined>")]
-  // pub type PromiseOptionDocument;
-  // #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
-  // pub type PromiseKeyLocation;
-  // #[wasm_bindgen(typescript_type = "Promise<Array<DID>>")]
-  // pub type PromiseArrayDID;
-  // #[wasm_bindgen(typescript_type = "Promise<[DID, KeyLocation]>")]
-  // pub type PromiseDIDKeyLocation;
-  // #[wasm_bindgen(typescript_type = "Promise<EncryptedData>")]
-  // pub type PromiseEncryptedData;
-  // #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
-  // pub type PromiseData;
+  #[wasm_bindgen(typescript_type = "Promise<Jwk>")]
+  pub type PromiseJwk;
 }
 
 #[wasm_bindgen]
@@ -45,7 +37,19 @@ extern "C" {
   pub fn generate(this: &WasmJwkStorage, key_type: String, algorithm: String) -> PromiseJwkGenOutput;
 
   #[wasm_bindgen(method)]
-  pub fn insert(this: &WasmJwkStorage, jwk: WasmJwk) -> PromiseKeyId;
+  pub fn insert(this: &WasmJwkStorage, jwk: WasmJwk) -> PromiseString;
+
+  #[wasm_bindgen(method)]
+  pub fn sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>) -> PromiseUint8Array;
+
+  #[wasm_bindgen(method)]
+  pub fn public(this: &WasmJwkStorage, key_id: String) -> PromiseJwk;
+
+  #[wasm_bindgen(method)]
+  pub fn delete(this: &WasmJwkStorage, key_id: String) -> PromiseVoid;
+
+  #[wasm_bindgen(method)]
+  pub fn exists(this: &WasmJwkStorage, key_id: String) -> PromiseBool;
 }
 
 #[async_trait::async_trait(?Send)]
@@ -53,35 +57,57 @@ impl JwkStorage for WasmJwkStorage {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let promise: Promise = Promise::resolve(&WasmJwkStorage::generate(&self, key_type.into(), alg.name().to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-
-    result
-      .to_key_storage_error()?
-      .into_serde()
-      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::SerializationError).with_source(err))
+    result.into()
   }
 
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::insert(&self, WasmJwk::new(jwk)));
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::insert(&self, WasmJwk::from(jwk)));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.to_key_storage_error()?;
-    js_value
-      .into_serde()
-      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::SerializationError).with_source(err))
+    result.into()
   }
 
   async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>> {
-    todo!()
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(&self, key_id.clone().into(), data));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    result.to_key_storage_error().map(uint8array_to_bytes)?
   }
 
   async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
-    todo!()
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::public(&self, key_id.clone().into()));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    result.into()
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
-    todo!()
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::delete(&self, key_id.clone().into()));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    result.into()
   }
 
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
-    todo!()
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::exists(&self, key_id.clone().into()));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    result.into()
   }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const JWK_STORAGE: &'static str = r#"
+interface JwkStorage {
+  generate: (keyType: string, algorithm: JwsAlgorithm) => Promise<JwkGenOutput>;
+  sign: (keyId: string, data: Uint8Array) => Promise<Uint8Array>;
+}
+"#;
+
+fn uint8array_to_bytes(value: JsValue) -> KeyStorageResult<Vec<u8>> {
+  if !JsCast::is_instance_of::<Uint8Array>(&value) {
+    return Err(
+      KeyStorageError::new(KeyStorageErrorKind::SerializationError)
+        .with_custom_message("expected Uint8Array".to_owned()),
+    );
+  }
+  let array_js_value = JsValue::from(Array::from(&value));
+  array_js_value
+    .into_serde()
+    .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::SerializationError).with_custom_message(e.to_string()))
 }
