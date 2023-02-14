@@ -25,10 +25,10 @@ proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
+# Want to use the nice API of tokio::sync::RwLock for now even though we can't use threads.
+tokio = { version = "1.25", default-features = false, features = ["sync"] }
 wasm-bindgen = { version = "0.2.84", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
-# Want to use the nice API of tokio::sync::RwLock for now even though we can't use threads. 
-tokio = { version = "1.25", default-features = false, features = ["sync"]}
 
 [dependencies.identity_iota]
 version = "0.7.0-alpha.4"
