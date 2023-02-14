@@ -20,7 +20,7 @@ identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-f
 identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verification", default-features = false }
 iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls"], optional = true }
-iota-types = { version = "1.0.0-rc.3", default-features = false, features = ["block", "std"], optional = true }
+iota-types = { version = "1.0.0-rc.6", default-features = false, features = ["block", "std"], optional = true }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
