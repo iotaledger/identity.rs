@@ -3,7 +3,6 @@
 
 use core::future::Future;
 use identity_did::DID;
-use identity_document::document::CoreDocument;
 
 use crate::Error;
 use crate::ErrorCause;
@@ -22,7 +21,6 @@ pub trait Command<'a, T>: std::fmt::Debug + private::Sealed {
 mod private {
   use super::SendSyncCommand;
   use super::SingleThreadedCommand;
-  use identity_document::document::CoreDocument;
   pub trait Sealed {}
   impl<DOC: 'static> Sealed for SendSyncCommand<DOC> {}
   impl<DOC: 'static> Sealed for SingleThreadedCommand<DOC> {}
