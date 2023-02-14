@@ -10,4 +10,4 @@ keywords:
 In this section you will find end-to-end examples using the library to achieve common use-cases.
 
 List of tutorials:
-- [validate_university_degree](./validate_university_degree): Use the Wasm bindings to digitally prove the existence and validity of a degree.
+- [validate_university_degree](./validate_university_degree.md): Use the Wasm bindings to digitally prove the existence and validity of a degree.

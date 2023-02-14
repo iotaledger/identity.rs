@@ -16,8 +16,8 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 ## Overview
 Allows to request revocation of an issued [verifiable credential](https://www.w3.org/TR/vc-data-model/), either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to the issuer, in which case they take on the role of trusted-party in their request.
 ### Relationships
-- [revocation-options](./revocation-options): this may be preceded by the the [revocation-options](./revocation-options) protocol for the [trusted-party](#roles) to discover the available [`RevocationInfo` types](#RevocationInfo).
-- [presentation](./presentation): this may include a [presentation](./presentation) by the [revoker](#roles) to request additional information, such as the entire credential being revoked or authorization information.
+- [revocation-options](./revocation-options.md): this may be preceded by the the [revocation-options](./revocation-options.md) protocol for the [trusted-party](#roles) to discover the available [`RevocationInfo` types](#RevocationInfo).
+- [presentation](./presentation.md): this may include a [presentation](./presentation.md) by the [revoker](#roles) to request additional information, such as the entire credential being revoked or authorization information.
 
 ### Example Use-Cases
 - A member of an organisation asks the organisation to revoke their membership.
@@ -57,7 +57,7 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 | :--- | :--- | :--- |
 | [`revocationInfo`](#RevocationInfo) | Contains information sufficient to specify which credential should be revoked. See [`revocationInfo`](#RevocationInfo).[^1] | ✔ |
 
-[^1] If an unsupported `revocationInfo` type is received, the [revoker](#roles) MUST issue a problem-report. The specific problem-report descriptor is `invalid-revocation-type` but if privacy is a concern, a [revoker](#roles) may send a more generic descriptor such as `reject-request` to avoid disclosing its capabilities more than the [revocation-options](./revocation-options#Considerations) protocol would reveal.
+[^1] If an unsupported `revocationInfo` type is received, the [revoker](#roles) MUST issue a problem-report. The specific problem-report descriptor is `invalid-revocation-type` but if privacy is a concern, a [revoker](#roles) may send a more generic descriptor such as `reject-request` to avoid disclosing its capabilities more than the [revocation-options](./revocation-options.md#Considerations) protocol would reveal.
 
 #### Examples
 
@@ -245,7 +245,7 @@ Request the revocation of a verifiable credential by sending its corresponding [
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.md).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |

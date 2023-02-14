@@ -15,7 +15,7 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 
 ## Introduction
 
-The IOTA DIDComm Specification standardizes how Self-Sovereign Identities (SSIs) can interact with each other and exchange information. Any applications that implement this standard will naturally be interoperable with each other. This reduces fragmentation in the ecosystem and therefore it is highly recommended to use this for any application built on top of the IOTA Identity framework. The specification defines several [protocols](#protocols), that can be used for common interactions like [issuing](./protocols/issuance) and [presenting](./protocols/presentation) verifiable credentials as well as supporting functions, such as [connection](./protocols/connection) establishment and [authentication](./protocols/authentication.md). Cross-cutting concerns like [error handling](./resources/problem-reports.md) and [credential negotiation](./resources/credential-info.md) are discussed in the [resources](#resources) section.
+The IOTA DIDComm Specification standardizes how Self-Sovereign Identities (SSIs) can interact with each other and exchange information. Any applications that implement this standard will naturally be interoperable with each other. This reduces fragmentation in the ecosystem and therefore it is highly recommended to use this for any application built on top of the IOTA Identity framework. The specification defines several [protocols](#protocols), that can be used for common interactions like [issuing](./protocols/issuance.md) and [presenting](./protocols/presentation.md) verifiable credentials as well as supporting functions, such as [connection](./protocols/connection.md) establishment and [authentication](./protocols/authentication.md). Cross-cutting concerns like [error handling](./resources/problem-reports.md) and [credential negotiation](./resources/credential-info.md) are discussed in the [resources](#resources) section.
 
 The IOTA DIDComm Specification builds on the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) developed by the [Decentralized Identity Foundation (DIF)](https://identity.foundation/) and utilises [external protocols](#external-protocols) from the messaging specification for well-established interactions like feature discovery.
 
@@ -46,7 +46,7 @@ The specification defines several [DIDComm protocols](https://identity.foundatio
 | [Issuance](./protocols/issuance.md) | 0.1 | Allows the exchange of a verifiable credential between an issuer and a holder. | 
 | [Signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. |
 | [Revocation](./protocols/revocation.md) | 0.1 | Allows to request revocation of an issued credential, either by the holder or a trusted-party. |
-| [Revocation Options](./protocols/revocation-options.md) | 0.1 | Allows discovery of available [`RevocationInfo`](./protocols/revocation#RevocationInfo) types for use with the [revocation](./protocols/revocation) protocol. |
+| [Revocation Options](./protocols/revocation-options.md) | 0.1 | Allows discovery of available [`RevocationInfo`](./protocols/revocation.md#RevocationInfo) types for use with the [revocation](./protocols/revocation.md) protocol. |
 | [Post](./protocols/post.md) | 0.1 | Allows the sending of a single message with arbitrary data. |
 | [Termination](./protocols/termination.md) | 0.1 | Indicates the graceful termination of a connection. |
 
@@ -74,7 +74,7 @@ The diagrams in this specification follow the [BPMN 2.0](https://www.omg.org/spe
 
 ## Changelog
 
-See [CHANGELOG](./CHANGELOG).
+See [CHANGELOG](./CHANGELOG.md).
 
 ## Future Work
 
