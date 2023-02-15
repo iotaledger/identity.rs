@@ -33,7 +33,7 @@ impl ImportedDocumentLock {
       Self::Core(lock) => lock.blocking_read().into(),
     }
   }
-
+  /// Must only be called on values implementing `IAsCoreDocument`.
   pub(crate) fn from_js_value_unchecked(value: &JsValue) -> Self {
     if let Some(doc) = maybe_get_iota_document(value) {
       Self::Iota(doc.0)
