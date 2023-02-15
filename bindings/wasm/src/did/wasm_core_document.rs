@@ -517,6 +517,10 @@ impl WasmCoreDocument {
     JsValue::from_serde(&data).wasm_result()
   }
 
+  // ===========================================================================
+  // Cloning
+  // ===========================================================================
+
   /// Deep clones the `CoreDocument`.
   #[wasm_bindgen(js_name = clone)]
   pub fn deep_clone(&self) -> WasmCoreDocument {
@@ -528,6 +532,25 @@ impl WasmCoreDocument {
   #[wasm_bindgen(js_name = _shallowCloneInternal)]
   pub fn shallow_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(self.0.clone())
+  }
+
+  // ===========================================================================
+  // Serialization
+  // ===========================================================================
+
+  /// Serializes this to a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0.blocking_read().as_ref()).wasm_result()
+  }
+
+  /// Deserializes an instance from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmCoreDocument> {
+    json
+      .into_serde()
+      .map(|value| Self(Rc::new(CoreDocumentLock::new(value))))
+      .wasm_result()
   }
 }
 
@@ -582,26 +605,6 @@ struct ICoreDocumentHelper {
   #[serde(flatten)]
   #[typescript(optional = false, name = "[properties: string]", type = "unknown")]
   properties: Object,
-}
-
-#[wasm_bindgen(js_class = CoreDocument)]
-impl WasmCoreDocument {
-  /// Serializes this to a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> crate::error::Result<JsValue> {
-    use crate::error::WasmResult;
-    JsValue::from_serde(&self.0.blocking_read().as_ref()).wasm_result()
-  }
-
-  /// Deserializes an instance from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> crate::error::Result<WasmCoreDocument> {
-    use crate::error::WasmResult;
-    json
-      .into_serde()
-      .map(|value| Self(Rc::new(CoreDocumentLock::new(value))))
-      .wasm_result()
-  }
 }
 
 impl From<CoreDocument> for WasmCoreDocument {

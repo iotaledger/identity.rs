@@ -644,15 +644,13 @@ impl WasmIotaDocument {
 
   /// Serializes this to a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> crate::error::Result<JsValue> {
-    use crate::error::WasmResult;
+  pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0.blocking_read().as_ref()).wasm_result()
   }
 
   /// Deserializes an instance from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> crate::error::Result<WasmIotaDocument> {
-    use crate::error::WasmResult;
+  pub fn from_json(json: &JsValue) -> Result<WasmIotaDocument> {
     json
       .into_serde()
       .map(|value| Self(Rc::new(IotaDocumentLock::new(value))))
