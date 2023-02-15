@@ -309,7 +309,7 @@ impl WasmCoreDocument {
     self.0.blocking_write().insert_service(service.0.clone()).wasm_result()
   }
 
-  /// Remoce a {@link Service} identified by the given {@link DIDUrl} from the document.
+  /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
   ///
   /// Returns `true` if the service was removed.
   #[wasm_bindgen(js_name = removeService)]
