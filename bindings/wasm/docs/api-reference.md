@@ -94,11 +94,7 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -142,6 +138,10 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -375,7 +375,7 @@ A method-agnostic DID Document.
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
-        * [.shallowClone()](#CoreDocument+shallowClone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -698,9 +698,12 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 Deep clones the `CoreDocument`.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
-<a name="CoreDocument+shallowClone"></a>
+<a name="CoreDocument+_shallowCloneInternal"></a>
 
-### coreDocument.shallowClone() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+### coreDocument.\_shallowCloneInternal() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+### Warning
+This is for internal use only do not call this method.
+
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+toJSON"></a>
 
@@ -955,7 +958,7 @@ Deserializes an instance from a JSON object.
     * [.verifySignature(credential, trustedIssuers, options)](#CredentialValidator.verifySignature)
     * [.checkSubjectHolderRelationship(credential, holder, relationship)](#CredentialValidator.checkSubjectHolderRelationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
-    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID) \| <code>IAsCoreDID</code>
+    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1083,7 +1086,7 @@ Only supports `BitmapRevocation2022`.
 
 <a name="CredentialValidator.extractIssuer"></a>
 
-### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID) \| <code>IAsCoreDID</code>
+### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
 Utility for extracting the issuer field of a `Credential` as a DID.
 
 ### Errors
@@ -1651,7 +1654,7 @@ Deserializes an instance from a JSON object.
         * [.revokeCredentials(serviceQuery, indices)](#IotaDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#IotaDocument+unrevokeCredentials)
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-        * [.shallowClone()](#IotaDocument+shallowClone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [._shallowCloneInternal()](#IotaDocument+_shallowCloneInternal) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.asCoreDocument()](#IotaDocument+asCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
     * _static_
@@ -2042,9 +2045,12 @@ unrevoke all specified `indices`.
 Returns a deep clone of the `IotaDocument`.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-<a name="IotaDocument+shallowClone"></a>
+<a name="IotaDocument+_shallowCloneInternal"></a>
 
-### iotaDocument.shallowClone() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+### iotaDocument.\_shallowCloneInternal() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+### Warning
+This is for internal use only do not call this method.
+
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+toJSON"></a>
 
@@ -2785,7 +2791,7 @@ Deserializes an instance from a JSON object.
     * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
-    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID) \| <code>IAsCoreDID</code>
+    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -2860,7 +2866,7 @@ Validates the semantic structure of the `Presentation`.
 
 <a name="PresentationValidator.extractHolder"></a>
 
-### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID) \| <code>IAsCoreDID</code>
+### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
 Utility for extracting the holder field of a `Presentation` as a DID.
 
 ### Errors
@@ -3713,17 +3719,9 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -3802,6 +3800,14 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 

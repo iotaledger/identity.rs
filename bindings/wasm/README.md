@@ -95,7 +95,7 @@ async function main() {
   // Insert a new Ed25519 verification method in the DID document.
   let keypair = new KeyPair(KeyType.Ed25519);
   let method = new VerificationMethod(
-    document.id().toCoreDid(),
+    document.id(),
     keypair.type(),
     keypair.public(),
     "#key-1"
