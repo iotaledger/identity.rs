@@ -517,8 +517,8 @@ impl WasmCoreDocument {
     JsValue::from_serde(&data).wasm_result()
   }
 
-  #[wasm_bindgen(js_name = clone)]
   /// Deep clones the `CoreDocument`.
+  #[wasm_bindgen(js_name = clone)]
   pub fn deep_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
   }
