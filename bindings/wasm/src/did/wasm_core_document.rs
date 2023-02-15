@@ -524,7 +524,7 @@ impl WasmCoreDocument {
   }
 
   /// ### Warning
-  /// This is for internal use only do not call this method.
+  /// This is for internal use only. Do not rely on or call this method.
   #[wasm_bindgen(js_name = _shallowCloneInternal)]
   pub fn shallow_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(self.0.clone())
