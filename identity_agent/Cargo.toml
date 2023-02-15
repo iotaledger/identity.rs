@@ -15,7 +15,7 @@ description = "A peer-to-peer communication framework for building SSI agents on
 async-trait = { version = "0.1", default-features = false }
 dashmap = { version = "5.3", default-features = false }
 futures = { version = "0.3", default-features = false }
-identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
+identity_core = { version = "=0.7.0-alpha.5", path = "../identity_core", default-features = false }
 libp2p = { version = "0.45", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
