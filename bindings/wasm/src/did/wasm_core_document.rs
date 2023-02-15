@@ -46,6 +46,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 pub(crate) struct CoreDocumentLock(tokio::sync::RwLock<CoreDocument>);
+
 impl CoreDocumentLock {
   pub(crate) fn new(input: CoreDocument) -> Self {
     Self(tokio::sync::RwLock::new(input))
