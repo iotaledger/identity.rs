@@ -351,7 +351,7 @@ A method-agnostic DID Document.
         * [.setController(controllers)](#CoreDocument+setController)
         * [.alsoKnownAs()](#CoreDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setAlsoKnownAs(urls)](#CoreDocument+setAlsoKnownAs)
-        * [.verificatonMethod()](#CoreDocument+verificatonMethod) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+        * [.verificationMethod()](#CoreDocument+verificationMethod) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.authentication()](#CoreDocument+authentication) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.assertionMethod()](#CoreDocument+assertionMethod) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.keyAgreement()](#CoreDocument+keyAgreement) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
@@ -450,9 +450,9 @@ Sets the `alsoKnownAs` property in the DID document.
 | --- | --- |
 | urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
 
-<a name="CoreDocument+verificatonMethod"></a>
+<a name="CoreDocument+verificationMethod"></a>
 
-### coreDocument.verificatonMethod() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+### coreDocument.verificationMethod() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
 Returns a copy of the document's `verificationMethod` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -531,7 +531,7 @@ Errors if there already exists a service or verification method with the same id
 <a name="CoreDocument+removeService"></a>
 
 ### coreDocument.removeService(didUrl) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
-Remoce a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 Returns `true` if the service was removed.
 
@@ -702,7 +702,7 @@ Deep clones the `CoreDocument`.
 
 ### coreDocument.\_shallowCloneInternal() ⇒ [<code>CoreDocument</code>](#CoreDocument)
 ### Warning
-This is for internal use only do not call this method.
+This is for internal use only. Do not rely on or call this method.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+toJSON"></a>
@@ -2049,7 +2049,7 @@ Returns a deep clone of the `IotaDocument`.
 
 ### iotaDocument.\_shallowCloneInternal() ⇒ [<code>IotaDocument</code>](#IotaDocument)
 ### Warning
-This is for internal use only do not call this method.
+This is for internal use only. Do not rely on or call this method.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+toJSON"></a>

@@ -158,7 +158,7 @@ impl WasmCoreDocument {
   }
 
   /// Returns a copy of the document's `verificationMethod` set.
-  #[wasm_bindgen(js_name = verificatonMethod)]
+  #[wasm_bindgen(js_name = verificationMethod)]
   pub fn verification_method(&self) -> ArrayVerificationMethod {
     self
       .0

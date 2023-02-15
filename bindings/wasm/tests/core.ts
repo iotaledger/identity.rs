@@ -105,7 +105,7 @@ describe("CoreDocument", function() {
             assert.deepStrictEqual(doc.id().toString(), VALID_DID_EXAMPLE);
             assert.deepStrictEqual(doc.controller(), []);
             assert.deepStrictEqual(doc.alsoKnownAs(), []);
-            assert.deepStrictEqual(doc.verificatonMethod(), []);
+            assert.deepStrictEqual(doc.verificationMethod(), []);
             assert.deepStrictEqual(doc.assertionMethod(), []);
             assert.deepStrictEqual(doc.authentication(), []);
             assert.deepStrictEqual(doc.capabilityDelegation(), []);
@@ -151,9 +151,9 @@ describe("CoreDocument", function() {
                 VALID_DID_EXAMPLE,
             ]);
             assert.deepStrictEqual(doc.alsoKnownAs(), [VALID_DID_KEY]);
-            assert.deepStrictEqual(doc.verificatonMethod().length, 2);
-            assert.deepStrictEqual(doc.verificatonMethod()[0].toJSON(), method0.toJSON());
-            assert.deepStrictEqual(doc.verificatonMethod()[1].toJSON(), method1.toJSON());
+            assert.deepStrictEqual(doc.verificationMethod().length, 2);
+            assert.deepStrictEqual(doc.verificationMethod()[0].toJSON(), method0.toJSON());
+            assert.deepStrictEqual(doc.verificationMethod()[1].toJSON(), method1.toJSON());
             assert.deepStrictEqual(doc.assertionMethod().length, 1);
             assert.deepStrictEqual(doc.assertionMethod()[0].toString(), method0.id().toString());
             assert.deepStrictEqual(doc.authentication().length, 2);

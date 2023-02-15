@@ -32,11 +32,11 @@ use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
 use crate::resolver::constructor_input::MapResolutionHandler;
 use crate::resolver::constructor_input::ResolverConfig;
-use crate::resolver::specialized_ts_type_definitions::OptionArrayIAsCoreDocument;
-use crate::resolver::specialized_ts_type_definitions::OptionIAsCoreDocument;
+use crate::resolver::type_definitions::OptionArrayIAsCoreDocument;
+use crate::resolver::type_definitions::OptionIAsCoreDocument;
 
-use super::specialized_ts_type_definitions::PromiseArrayIAsCoreDocument;
-use super::specialized_ts_type_definitions::PromiseIAsCoreDocument;
+use super::type_definitions::PromiseArrayIAsCoreDocument;
+use super::type_definitions::PromiseIAsCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::prelude::*;
