@@ -19,7 +19,7 @@ crate-type = ["cdylib", "rlib"]
 async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
-iota-types = { version = "1.0.0-rc.3", default-features = false, features = ["block", "api", "dto", "std"] }
+iota-types = { version = "1.0.0-rc.6", default-features = false, features = ["block", "api", "dto", "std"] }
 js-sys = { version = "0.3.61" }
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
@@ -31,7 +31,7 @@ wasm-bindgen = { version = "0.2.84", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity_iota]
-version = "0.7.0-alpha.4"
+version = "0.7.0-alpha.5"
 path = "../../identity_iota"
 default-features = false
 features = ["client", "revocation-bitmap", "resolver"]
