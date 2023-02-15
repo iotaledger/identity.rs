@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-use std::ops::DerefMut;
 use std::rc::Rc;
 
 use identity_iota::core::OneOrMany;
@@ -30,7 +28,6 @@ use wasm_bindgen::JsCast;
 use crate::common::ArrayService;
 use crate::common::ArrayString;
 use crate::common::ArrayVerificationMethod;
-use crate::common::ImportedDocumentReadGuard;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
@@ -63,15 +60,17 @@ impl IotaDocumentLock {
     Self(tokio::sync::RwLock::new(value))
   }
 
-  pub(crate) fn blocking_read(&self) -> impl Deref<Target = IotaDocument> + '_ + Into<ImportedDocumentReadGuard<'_>> {
+  pub(crate) fn blocking_read(&self) -> tokio::sync::RwLockReadGuard<'_, IotaDocument> {
     self.0.blocking_read()
   }
 
-  pub(crate) fn blocking_write(&self) -> impl DerefMut<Target = IotaDocument> + '_ {
+  pub(crate) fn blocking_write(&self) -> tokio::sync::RwLockWriteGuard<'_, IotaDocument> {
     self.0.blocking_write()
   }
 
-  // Add async methods when they become necessary.
+  pub(crate) async fn read(&self) -> tokio::sync::RwLockReadGuard<'_, IotaDocument> {
+    self.0.read().await
+  }
 }
 // =============================================================================
 // =============================================================================

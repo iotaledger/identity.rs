@@ -29,8 +29,11 @@ impl ImportedDocumentLock {
   /// Obtain a read guard which implements `AsRef<CoreDocument>`.
   pub(crate) fn blocking_read(&self) -> ImportedDocumentReadGuard<'_> {
     match self {
-      Self::Iota(lock) => lock.blocking_read().into(),
-      Self::Core(lock) => lock.blocking_read().into(),
+      Self::Iota(lock) => ImportedDocumentReadGuard(tokio::sync::RwLockReadGuard::map(
+        lock.blocking_read(),
+        IotaDocument::core_document,
+      )),
+      Self::Core(lock) => ImportedDocumentReadGuard(lock.blocking_read()),
     }
   }
   /// Must only be called on values implementing `IAsCoreDocument`.
@@ -39,6 +42,16 @@ impl ImportedDocumentLock {
       Self::Iota(doc.0)
     } else {
       Self::Core(getCoreDocument(value).0)
+    }
+  }
+
+  pub(crate) async fn read(&self) -> ImportedDocumentReadGuard<'_> {
+    match self {
+      Self::Iota(lock) => ImportedDocumentReadGuard(tokio::sync::RwLockReadGuard::map(
+        lock.read().await,
+        IotaDocument::core_document,
+      )),
+      Self::Core(loc) => ImportedDocumentReadGuard(loc.read().await),
     }
   }
 }
@@ -61,29 +74,11 @@ impl From<&ArrayIAsCoreDocument> for Vec<ImportedDocumentLock> {
   }
 }
 
-pub(crate) enum ImportedDocumentReadGuard<'a> {
-  Core(tokio::sync::RwLockReadGuard<'a, CoreDocument>),
-  Iota(tokio::sync::RwLockReadGuard<'a, IotaDocument>),
-}
+pub(crate) struct ImportedDocumentReadGuard<'a>(tokio::sync::RwLockReadGuard<'a, CoreDocument>);
 
 impl<'a> AsRef<CoreDocument> for ImportedDocumentReadGuard<'a> {
   fn as_ref(&self) -> &CoreDocument {
-    match self {
-      Self::Core(doc) => doc.as_ref(),
-      Self::Iota(doc) => doc.as_ref(),
-    }
-  }
-}
-
-impl<'a> From<tokio::sync::RwLockReadGuard<'a, CoreDocument>> for ImportedDocumentReadGuard<'a> {
-  fn from(value: tokio::sync::RwLockReadGuard<'a, CoreDocument>) -> Self {
-    Self::Core(value)
-  }
-}
-
-impl<'a> From<tokio::sync::RwLockReadGuard<'a, IotaDocument>> for ImportedDocumentReadGuard<'a> {
-  fn from(value: tokio::sync::RwLockReadGuard<'a, IotaDocument>) -> Self {
-    Self::Iota(value)
+    self.0.as_ref()
   }
 }
 

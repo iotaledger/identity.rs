@@ -39,6 +39,8 @@ use super::type_definitions::PromiseArrayIAsCoreDocument;
 use super::type_definitions::PromiseIAsCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
+use futures::stream::StreamExt;
+use futures::stream::{self};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
@@ -272,9 +274,11 @@ impl WasmResolver {
       let holder = holder_result.wasm_result()?;
       let issuers = issuers_result.wasm_result()?;
 
-      let holder_guard = holder.blocking_read();
-      let issuers_guard: Vec<ImportedDocumentReadGuard<'_>> =
-        issuers.iter().map(ImportedDocumentLock::blocking_read).collect();
+      let holder_guard = holder.read().await;
+      let issuers_guard: Vec<ImportedDocumentReadGuard<'_>> = stream::iter(issuers.iter())
+        .then(ImportedDocumentLock::read)
+        .collect()
+        .await;
 
       PresentationValidator::validate(&presentation, &holder_guard, &issuers_guard, &options, fail_fast.into())
         .wasm_result()
