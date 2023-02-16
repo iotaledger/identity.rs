@@ -118,7 +118,7 @@ impl WasmCoreDID {
     self.0.to_string()
   }
 
-  #[wasm_bindgen(js_name = asCoreDid, skip_typescript)]
+  #[wasm_bindgen(js_name = toCoreDid, skip_typescript)]
   // Only intended to be called internally.
   pub fn to_core_did(&self) -> WasmCoreDID {
     WasmCoreDID(self.0.clone())
@@ -136,18 +136,18 @@ impl From<CoreDID> for WasmCoreDID {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "CoreDID | IAsCoreDID")]
-  pub type IAsCoreDID;
+  #[wasm_bindgen(typescript_type = "CoreDID | IToCoreDID")]
+  pub type IToCoreDID;
 
-  #[wasm_bindgen(method, js_name= asCoreDid)]
-  pub fn to_core_did(this: &IAsCoreDID) -> WasmCoreDID;
+  #[wasm_bindgen(method, js_name= toCoreDid)]
+  pub fn to_core_did(this: &IToCoreDID) -> WasmCoreDID;
 
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 pub const TS_AS_REF_CORE_DID: &'static str = r#"
-interface IAsCoreDID {
+interface IToCoreDID {
 
   /** Returns a `CoreDID` representation of this DID. */
-  asCoreDid(): CoreDID;
+  toCoreDid(): CoreDID;
 }"#;

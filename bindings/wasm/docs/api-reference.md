@@ -171,7 +171,7 @@ A method-agnostic Decentralized Identifier (DID).
         * [.toUrl()](#CoreDID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.intoUrl()](#CoreDID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#CoreDID+toString) ⇒ <code>string</code>
-        * [.asCoreDid()](#CoreDID+asCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.toCoreDid()](#CoreDID+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.toJSON()](#CoreDID+toJSON) ⇒ <code>any</code>
         * [.clone()](#CoreDID+clone) ⇒ [<code>CoreDID</code>](#CoreDID)
     * _static_
@@ -271,9 +271,9 @@ Converts the `CoreDID` into a `DIDUrl`, consuming it.
 Returns the `CoreDID` as a string.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
-<a name="CoreDID+asCoreDid"></a>
+<a name="CoreDID+toCoreDid"></a>
 
-### coreDID.asCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
+### coreDID.toCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+toJSON"></a>
 
@@ -993,7 +993,7 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IAsCoreDocument</code> | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -1052,7 +1052,7 @@ to verify the credential's signature will be made and an error is returned upon 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code> | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="CredentialValidator.checkSubjectHolderRelationship"></a>
@@ -1081,7 +1081,7 @@ Only supports `BitmapRevocation2022`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code> | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | statusCheck | <code>number</code> | 
 
 <a name="CredentialValidator.extractIssuer"></a>
@@ -1412,7 +1412,7 @@ A DID conforming to the IOTA DID method specification.
     * _instance_
         * [.networkStr()](#IotaDID+networkStr) ⇒ <code>string</code>
         * [.tag()](#IotaDID+tag) ⇒ <code>string</code>
-        * [.asCoreDid()](#IotaDID+asCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.toCoreDid()](#IotaDID+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.scheme()](#IotaDID+scheme) ⇒ <code>string</code>
         * [.authority()](#IotaDID+authority) ⇒ <code>string</code>
         * [.method()](#IotaDID+method) ⇒ <code>string</code>
@@ -1458,9 +1458,9 @@ Returns the Tangle network name of the `IotaDID`.
 Returns a copy of the unique tag of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
-<a name="IotaDID+asCoreDid"></a>
+<a name="IotaDID+toCoreDid"></a>
 
-### did.asCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
+### did.toCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
 Returns the DID represented as a `CoreDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -1656,7 +1656,7 @@ Deserializes an instance from a JSON object.
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [._shallowCloneInternal()](#IotaDocument+_shallowCloneInternal) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
-        * [.asCoreDocument()](#IotaDocument+asCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2058,9 +2058,9 @@ This is for internal use only. Do not rely on or call this method.
 Serializes this to a JSON object.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-<a name="IotaDocument+asCoreDocument"></a>
+<a name="IotaDocument+toCoreDocument"></a>
 
-### iotaDocument.asCoreDocument() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+### iotaDocument.toCoreDocument() ⇒ [<code>CoreDocument</code>](#CoreDocument)
 Transforms the `IotaDocument` to its `CoreDocument` representation.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
@@ -2828,8 +2828,8 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IAsCoreDocument</code> | 
-| issuers | <code>Array.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code> | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -2850,7 +2850,7 @@ Fails if signature verification against the holder document fails.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IAsCoreDocument</code> | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="PresentationValidator.checkStructure"></a>
@@ -3102,10 +3102,10 @@ The resolver will only be able to resolve DID documents for methods it has been 
 
 * [Resolver](#Resolver)
     * [new Resolver(config)](#new_Resolver_new)
-    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IAsCoreDocument)&gt;&gt;</code>
-    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code>
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
     * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code>
+    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -3123,7 +3123,7 @@ will throw an error because the handler for the "iota" method then becomes ambig
 
 <a name="Resolver+resolvePresentationIssuers"></a>
 
-### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IAsCoreDocument)&gt;&gt;</code>
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
 Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
@@ -3139,7 +3139,7 @@ resolution fails.
 
 <a name="Resolver+resolvePresentationHolder"></a>
 
-### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code>
+### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 Fetches the DID Document of the holder of a `Presentation`.
 
 # Errors
@@ -3179,12 +3179,12 @@ according to the `fail_fast` parameter.
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IAsCoreDocument</code> \| <code>undefined</code> | 
-| issuers | <code>Array.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code> \| <code>undefined</code> | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="Resolver+resolve"></a>
 
-### resolver.resolve(did) ⇒ <code>Promise.&lt;(CoreDocument\|IAsCoreDocument)&gt;</code>
+### resolver.resolve(did) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 Fetches the DID Document of the given DID.
 
 ### Errors
@@ -3477,7 +3477,7 @@ Creates a new `VerificationMethod` from the given `did` and public key.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) \| <code>IAsCoreDID</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
 | keyType | <code>number</code> | 
 | publicKey | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 

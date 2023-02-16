@@ -27,49 +27,49 @@ const {
     ICoreDocument,
 } = require("../node");
 
-// Mocks for characterisation tests ensuring that asCoreDocument()
+// Mocks for characterisation tests ensuring that toCoreDocument()
 // only gets called when a document cannot be cast to either IotaDocument
 // or CoreDocument.
 class MockInheritedCoreDocument extends CoreDocument {
-    asCoreDocumentCalled: boolean;
+    toCoreDocumentCalled: boolean;
 
     constructor(values: ICoreDocument) {
         super(values);
-        this.asCoreDocumentCalled = false;
+        this.toCoreDocumentCalled = false;
     }
 
-    asCoreDocument(): CoreDocument {
-        this.asCoreDocumentCalled = true;
-        return super.asCoreDocument();
+    toCoreDocument(): CoreDocument {
+        this.toCoreDocumentCalled = true;
+        return super.toCoreDocument();
     }
 }
 
-class MockIAsCoreDocument {
+class MockIToCoreDocument {
     inner: CoreDocument;
-    asCoreDocumentCalled: boolean;
+    toCoreDocumentCalled: boolean;
 
     constructor(inner: CoreDocument) {
         this.inner = inner;
-        this.asCoreDocumentCalled = false;
+        this.toCoreDocumentCalled = false;
     }
 
-    asCoreDocument(): CoreDocument {
-        this.asCoreDocumentCalled = true;
+    toCoreDocument(): CoreDocument {
+        this.toCoreDocumentCalled = true;
         return this.inner;
     }
 }
 
 class MockInheritedIotaDocument extends IotaDocument {
-    asCoreDocumentCalled: boolean;
+    toCoreDocumentCalled: boolean;
 
     constructor(network: string) {
         super(network);
-        this.asCoreDocumentCalled = false;
+        this.toCoreDocumentCalled = false;
     }
 
-    asCoreDocument(): CoreDocument {
-        this.asCoreDocumentCalled = true;
-        return super.asCoreDocument();
+    toCoreDocument(): CoreDocument {
+        this.toCoreDocumentCalled = true;
+        return super.toCoreDocument();
     }
 }
 const credentialFields = {
@@ -235,7 +235,7 @@ describe("CredentialValidator, PresentationValidator", function() {
             const subjectDoc = new IotaDocument("iota");
             const subjectKeys = new KeyPair(KeyType.Ed25519);
             subjectDoc.insertMethod(
-                new VerificationMethod(subjectDoc.id().asCoreDid(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"),
+                new VerificationMethod(subjectDoc.id().toCoreDid(), KeyType.Ed25519, subjectKeys.public(), "#sub-0"),
                 MethodScope.VerificationMethod(),
             );
 
@@ -303,7 +303,7 @@ describe("CredentialValidator, PresentationValidator", function() {
                 issuerDID.toString(),
             );
 
-            // Characterisation test: Check that asCoreDocument does not get called
+            // Characterisation test: Check that toCoreDocument does not get called
             // when passing an extension of `CoreDocument`.
             let mockInheritedDocument = new MockInheritedCoreDocument({
                 id: issuerDoc.id(),
@@ -319,35 +319,35 @@ describe("CredentialValidator, PresentationValidator", function() {
             );
 
             assert.deepStrictEqual(
-                mockInheritedDocument.asCoreDocumentCalled,
+                mockInheritedDocument.toCoreDocumentCalled,
                 false,
             );
 
-            // Characterisation test: Check that asCoreDocument DOES get called
-            // when passing a mere implementer of IAsCoreDocument (without inheriting from CoreDocument)
+            // Characterisation test: Check that toCoreDocument DOES get called
+            // when passing a mere implementer of IToCoreDocument (without inheriting from CoreDocument)
             // to CredentialValidator.verifySignature.
-            let mockIAsCoreDocument = new MockIAsCoreDocument(issuerDoc.asCoreDocument());
+            let mockIToCoreDocument = new MockIToCoreDocument(issuerDoc.toCoreDocument());
             assert.doesNotThrow(() =>
                 CredentialValidator.verifySignature(
                     signedCredential,
-                    [mockIAsCoreDocument, subjectDoc],
+                    [mockIToCoreDocument, subjectDoc],
                     VerifierOptions.default(),
                 )
             );
 
             assert.deepStrictEqual(
-                mockIAsCoreDocument.asCoreDocumentCalled,
+                mockIToCoreDocument.toCoreDocumentCalled,
                 true,
             );
 
-            // Characterisation test: Check that asCoreDocument does not get called
+            // Characterisation test: Check that toCoreDocument does not get called
             // when passing `IotaDocument` (we use inheritance as a way of mocking a normal IotaDocument).
             let mockIotaDoc = new MockInheritedIotaDocument("iota");
             // Make sure that DIDs are the same.
             assert.deepStrictEqual(issuerDoc.id().toString(), mockIotaDoc.id().toString());
             // Insert the same verificationMethod used by `issuerDoc` to sign the credential.
             mockIotaDoc.insertMethod(
-                new VerificationMethod(issuerDoc.id().asCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
+                new VerificationMethod(issuerDoc.id().toCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
                 MethodScope.VerificationMethod(),
             );
 
@@ -360,7 +360,7 @@ describe("CredentialValidator, PresentationValidator", function() {
             );
 
             assert.deepStrictEqual(
-                mockIotaDoc.asCoreDocumentCalled,
+                mockIotaDoc.toCoreDocumentCalled,
                 false,
             );
 

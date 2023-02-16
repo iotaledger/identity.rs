@@ -23,7 +23,7 @@ use crate::common::PromiseVoid;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayIAsCoreDocument;
+use crate::did::ArrayIToCoreDocument;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::iota::IotaDocumentLock;
@@ -32,11 +32,11 @@ use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
 use crate::resolver::constructor_input::MapResolutionHandler;
 use crate::resolver::constructor_input::ResolverConfig;
-use crate::resolver::type_definitions::OptionArrayIAsCoreDocument;
-use crate::resolver::type_definitions::OptionIAsCoreDocument;
+use crate::resolver::type_definitions::OptionArrayIToCoreDocument;
+use crate::resolver::type_definitions::OptionIToCoreDocument;
 
-use super::type_definitions::PromiseArrayIAsCoreDocument;
-use super::type_definitions::PromiseIAsCoreDocument;
+use super::type_definitions::PromiseArrayIToCoreDocument;
+use super::type_definitions::PromiseIToCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use futures::stream::StreamExt;
@@ -175,7 +175,7 @@ impl WasmResolver {
   /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
   /// resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
-  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArrayIAsCoreDocument> {
+  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArrayIToCoreDocument> {
     let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
@@ -187,7 +187,7 @@ impl WasmResolver {
       Ok(issuer_documents.into_iter().collect::<js_sys::Array>().into())
     });
 
-    Ok(promise.unchecked_into::<PromiseArrayIAsCoreDocument>())
+    Ok(promise.unchecked_into::<PromiseArrayIToCoreDocument>())
   }
 
   /// Fetches the DID Document of the holder of a `Presentation`.
@@ -196,7 +196,7 @@ impl WasmResolver {
   /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
   /// DID resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationHolder)]
-  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseIAsCoreDocument> {
+  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseIToCoreDocument> {
     let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
 
@@ -207,7 +207,7 @@ impl WasmResolver {
         .wasm_result()
         .map(JsValue::from)
     });
-    Ok(promise.unchecked_into::<PromiseIAsCoreDocument>())
+    Ok(promise.unchecked_into::<PromiseIToCoreDocument>())
   }
 
   /// Verifies a `Presentation`.
@@ -232,8 +232,8 @@ impl WasmResolver {
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
-    holder: &OptionIAsCoreDocument,
-    issuers: &OptionArrayIAsCoreDocument,
+    holder: &OptionIToCoreDocument,
+    issuers: &OptionArrayIToCoreDocument,
   ) -> Result<PromiseVoid> {
     let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let presentation: Presentation = presentation.0.clone();
@@ -264,7 +264,7 @@ impl WasmResolver {
           })
         } else {
           Ok(Vec::<ImportedDocumentLock>::from(
-            issuers_clone.unchecked_ref::<ArrayIAsCoreDocument>(),
+            issuers_clone.unchecked_ref::<ArrayIToCoreDocument>(),
           ))
         }
       };
@@ -295,7 +295,7 @@ impl WasmResolver {
   /// Errors if the resolver has not been configured to handle the method
   /// corresponding to the given DID or the resolution process itself fails.
   #[wasm_bindgen]
-  pub fn resolve(&self, did: &str) -> Result<PromiseIAsCoreDocument> {
+  pub fn resolve(&self, did: &str) -> Result<PromiseIToCoreDocument> {
     let resolver: Rc<JsDocumentResolver> = self.0.clone();
     let did: CoreDID = CoreDID::parse(did).wasm_result()?;
 
@@ -308,6 +308,6 @@ impl WasmResolver {
         .map(JsValue::from)
     });
 
-    Ok(promise.unchecked_into::<PromiseIAsCoreDocument>())
+    Ok(promise.unchecked_into::<PromiseIToCoreDocument>())
   }
 }

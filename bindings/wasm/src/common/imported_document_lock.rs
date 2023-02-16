@@ -7,9 +7,9 @@ use identity_iota::document::CoreDocument;
 use identity_iota::prelude::IotaDocument;
 use js_sys::Array;
 
-use crate::did::ArrayIAsCoreDocument;
+use crate::did::ArrayIToCoreDocument;
 use crate::did::CoreDocumentLock;
-use crate::did::IAsCoreDocument;
+use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDocument;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDocument;
@@ -36,7 +36,7 @@ impl ImportedDocumentLock {
       Self::Core(lock) => ImportedDocumentReadGuard(lock.blocking_read()),
     }
   }
-  /// Must only be called on values implementing `IAsCoreDocument`.
+  /// Must only be called on values implementing `IToCoreDocument`.
   pub(crate) fn from_js_value_unchecked(value: &JsValue) -> Self {
     if let Some(doc) = maybe_get_iota_document(value) {
       Self::Iota(doc.0)
@@ -56,14 +56,14 @@ impl ImportedDocumentLock {
   }
 }
 
-impl From<&IAsCoreDocument> for ImportedDocumentLock {
-  fn from(value: &IAsCoreDocument) -> Self {
+impl From<&IToCoreDocument> for ImportedDocumentLock {
+  fn from(value: &IToCoreDocument) -> Self {
     Self::from_js_value_unchecked(value.as_ref())
   }
 }
 
-impl From<&ArrayIAsCoreDocument> for Vec<ImportedDocumentLock> {
-  fn from(value: &ArrayIAsCoreDocument) -> Self {
+impl From<&ArrayIToCoreDocument> for Vec<ImportedDocumentLock> {
+  fn from(value: &ArrayIToCoreDocument) -> Self {
     let value_array = value
       .dyn_ref::<Array>()
       .expect("the provided argument should be of type `Array`");

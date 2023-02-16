@@ -9,7 +9,7 @@ use std::borrow::Cow;
 use identity_iota::core::Timestamp;
 use identity_iota::iota::IotaDID;
 use identity_wasm::crypto::WasmProofOptions;
-use identity_wasm::did::IAsCoreDID;
+use identity_wasm::did::IToCoreDID;
 use identity_wasm::did::WasmVerifierOptions;
 use serde_json::json;
 use wasm_bindgen::prelude::*;
@@ -134,7 +134,7 @@ fn test_document_sign() {
   // Sign with DIDUrl method query.
   {
     let mut document: WasmIotaDocument = WasmIotaDocument::new(WasmIotaDID::static_default_network()).unwrap();
-    let id: IAsCoreDID = JsValue::from(document.id()).unchecked_into();
+    let id: IToCoreDID = JsValue::from(document.id()).unchecked_into();
     let method =
       WasmVerificationMethod::new(&id, WasmKeyType::Ed25519, keypair.public(), "#sign-0".to_owned()).unwrap();
     document

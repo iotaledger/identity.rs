@@ -14,8 +14,8 @@ use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
-use crate::did::ArrayIAsCoreDocument;
-use crate::did::IAsCoreDocument;
+use crate::did::ArrayIToCoreDocument;
+use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
@@ -57,7 +57,7 @@ impl WasmCredentialValidator {
   #[wasm_bindgen]
   pub fn validate(
     credential: &WasmCredential,
-    issuer: &IAsCoreDocument,
+    issuer: &IToCoreDocument,
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
@@ -104,7 +104,7 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn verify_signature(
     credential: &WasmCredential,
-    trustedIssuers: &ArrayIAsCoreDocument,
+    trustedIssuers: &ArrayIToCoreDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
     let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
@@ -132,7 +132,7 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn check_status(
     credential: &WasmCredential,
-    trustedIssuers: &ArrayIAsCoreDocument,
+    trustedIssuers: &ArrayIToCoreDocument,
     statusCheck: WasmStatusCheck,
   ) -> Result<()> {
     let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();

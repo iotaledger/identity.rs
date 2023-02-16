@@ -11,8 +11,8 @@ use crate::common::ImportedDocumentReadGuard;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayIAsCoreDocument;
-use crate::did::IAsCoreDocument;
+use crate::did::ArrayIToCoreDocument;
+use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
@@ -52,8 +52,8 @@ impl WasmPresentationValidator {
   #[wasm_bindgen]
   pub fn validate(
     presentation: &WasmPresentation,
-    holder: &IAsCoreDocument,
-    issuers: &ArrayIAsCoreDocument,
+    holder: &IToCoreDocument,
+    issuers: &ArrayIToCoreDocument,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
@@ -77,7 +77,7 @@ impl WasmPresentationValidator {
   #[wasm_bindgen(js_name = verifyPresentationSignature)]
   pub fn verify_presentation_signature(
     presentation: &WasmPresentation,
-    holder: &IAsCoreDocument,
+    holder: &IToCoreDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
     let holder_lock = ImportedDocumentLock::from(holder);

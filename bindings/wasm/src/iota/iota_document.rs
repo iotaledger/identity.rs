@@ -660,7 +660,7 @@ impl WasmIotaDocument {
   // "AsRef<CoreDocument>"
   // ===========================================================================
   /// Transforms the `IotaDocument` to its `CoreDocument` representation.
-  #[wasm_bindgen(js_name = asCoreDocument)]
+  #[wasm_bindgen(js_name = toCoreDocument)]
   pub fn as_core_document(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(
       self.0.blocking_read().core_document().clone(),

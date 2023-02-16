@@ -32,9 +32,9 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.scheme(), "did");
         });
 
-        it("asCoreDid should work", () => {
+        it("toCoreDid should work", () => {
             const did = new IotaDID(aliasIdBytes, networkName);
-            const coreDid = did.asCoreDid();
+            const coreDid = did.toCoreDid();
             assert.deepStrictEqual(did.toString(), coreDid.toString());
             assert.deepStrictEqual(
                 coreDid.toString(),

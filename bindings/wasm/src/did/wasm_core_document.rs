@@ -614,17 +614,17 @@ impl From<CoreDocument> for WasmCoreDocument {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "CoreDocument | IAsCoreDocument")]
-  pub type IAsCoreDocument;
+  #[wasm_bindgen(typescript_type = "CoreDocument | IToCoreDocument")]
+  pub type IToCoreDocument;
 
-  #[wasm_bindgen(typescript_type = "Array<CoreDocument | IAsCoreDocument>")]
-  pub type ArrayIAsCoreDocument;
+  #[wasm_bindgen(typescript_type = "Array<CoreDocument | IToCoreDocument>")]
+  pub type ArrayIToCoreDocument;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 pub const TS_AS_REF_CORE_Document: &'static str = r#"
-interface IAsCoreDocument {
+interface IToCoreDocument {
 
   /** Returns a `CoreDocument` representation of this Document. */
-  asCoreDocument(): CoreDocument;
+  toCoreDocument(): CoreDocument;
 }"#;

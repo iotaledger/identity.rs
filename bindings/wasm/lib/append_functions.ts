@@ -1,20 +1,20 @@
-import { CoreDocument, IAsCoreDocument, IotaDocument } from "~identity_wasm";
-type GetCoreDocument = (arg: IAsCoreDocument) => CoreDocument;
-type MaybeGetIotaDocument = (arg: IAsCoreDocument) => IotaDocument | void;
+import { CoreDocument, IotaDocument, IToCoreDocument } from "~identity_wasm";
+type GetCoreDocument = (arg: IToCoreDocument) => CoreDocument;
+type MaybeGetIotaDocument = (arg: IToCoreDocument) => IotaDocument | void;
 
 declare global {
     var _getCoreDocumentInternal: GetCoreDocument;
     var _maybeGetIotaDocumentInternal: MaybeGetIotaDocument;
 }
-function _getCoreDocumentInternal(arg: IAsCoreDocument): CoreDocument {
+function _getCoreDocumentInternal(arg: IToCoreDocument): CoreDocument {
     if (arg instanceof CoreDocument) {
         return arg._shallowCloneInternal();
     } else {
-        return arg.asCoreDocument()._shallowCloneInternal();
+        return arg.toCoreDocument()._shallowCloneInternal();
     }
 }
 
-function _maybeGetIotaDocumentInternal(arg: IAsCoreDocument): IotaDocument | void {
+function _maybeGetIotaDocumentInternal(arg: IToCoreDocument): IotaDocument | void {
     if (arg instanceof IotaDocument) {
         return arg._shallowCloneInternal();
     } else {
