@@ -641,13 +641,13 @@ impl WasmIotaDocument {
   // Serialization
   // ===========================================================================
 
-  /// Serializes this to a JSON object.
+  /// Serializes to a plain JS representation.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0.blocking_read().as_ref()).wasm_result()
   }
 
-  /// Deserializes an instance from a JSON object.
+  /// Deserializes an instance from a plain JS representation.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmIotaDocument> {
     json

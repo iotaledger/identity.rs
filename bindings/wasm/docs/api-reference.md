@@ -708,13 +708,13 @@ This is for internal use only. Do not rely on or call this method.
 <a name="CoreDocument+toJSON"></a>
 
 ### coreDocument.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
+Serializes to a plain JS representation.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument.fromJSON"></a>
 
 ### CoreDocument.fromJSON(json) ⇒ [<code>CoreDocument</code>](#CoreDocument)
-Deserializes an instance from a JSON object.
+Deserializes an instance from a plain JS representation.
 
 **Kind**: static method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -2055,7 +2055,7 @@ This is for internal use only. Do not rely on or call this method.
 <a name="IotaDocument+toJSON"></a>
 
 ### iotaDocument.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
+Serializes to a plain JS representation.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+toCoreDocument"></a>
@@ -2119,7 +2119,7 @@ Errors if any Alias Output does not contain a valid or empty DID Document.
 <a name="IotaDocument.fromJSON"></a>
 
 ### IotaDocument.fromJSON(json) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Deserializes an instance from a JSON object.
+Deserializes an instance from a plain JS representation.
 
 **Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
 
