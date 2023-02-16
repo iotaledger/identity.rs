@@ -64,7 +64,7 @@ export async function keyExchange() {
         // Insert a new X25519 KeyAgreement verification method.
         const x25519: KeyPair = new KeyPair(KeyType.X25519);
         const method: VerificationMethod = new VerificationMethod(
-            aliceDocument.id().toCoreDid(),
+            aliceDocument.id(),
             KeyType.X25519,
             x25519.public(),
             "kex-0",
@@ -89,7 +89,7 @@ export async function keyExchange() {
         // Insert a new X25519 KeyAgreement verification method.
         const x25519: KeyPair = new KeyPair(KeyType.X25519);
         const method: VerificationMethod = new VerificationMethod(
-            bobDocument.id().toCoreDid(),
+            bobDocument.id(),
             KeyType.X25519,
             x25519.public(),
             "kex-0",

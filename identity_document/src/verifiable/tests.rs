@@ -70,7 +70,7 @@ fn test_sign_verify_data_ed25519() {
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(method_data_base(public_key))
       .build()
       .unwrap();
@@ -103,7 +103,7 @@ fn setup() -> (KeyPair, CoreDocument) {
   let method: VerificationMethod = VerificationMethod::builder(Default::default())
     .id(controller.to_url().join("#key-1").unwrap())
     .controller(controller.clone())
-    .type_(MethodType::Ed25519VerificationKey2018)
+    .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
     .data(MethodData::new_multibase(public_key))
     .build()
     .unwrap();
@@ -135,15 +135,15 @@ fn test_sign_verify_method_type() {
   document
     .verify_data(
       &data,
-      &VerifierOptions::default().method_type(vec![MethodType::Ed25519VerificationKey2018]),
+      &VerifierOptions::default().method_type(vec![MethodType::ED25519_VERIFICATION_KEY_2018]),
     )
     .unwrap();
   document
     .verify_data(
       &data,
       &VerifierOptions::default().method_type(vec![
-        MethodType::Ed25519VerificationKey2018,
-        MethodType::X25519KeyAgreementKey2019,
+        MethodType::ED25519_VERIFICATION_KEY_2018,
+        MethodType::X25519_KEY_AGREEMENT_KEY_2019,
       ]),
     )
     .unwrap();
@@ -151,8 +151,8 @@ fn test_sign_verify_method_type() {
     .verify_data(
       &data,
       &VerifierOptions::default().method_type(vec![
-        MethodType::X25519KeyAgreementKey2019,
-        MethodType::Ed25519VerificationKey2018,
+        MethodType::X25519_KEY_AGREEMENT_KEY_2019,
+        MethodType::ED25519_VERIFICATION_KEY_2018,
       ]),
     )
     .unwrap();
@@ -161,7 +161,7 @@ fn test_sign_verify_method_type() {
   assert!(document
     .verify_data(
       &data,
-      &VerifierOptions::default().method_type(vec![MethodType::X25519KeyAgreementKey2019]),
+      &VerifierOptions::default().method_type(vec![MethodType::X25519_KEY_AGREEMENT_KEY_2019]),
     )
     .is_err());
 }

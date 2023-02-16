@@ -1,3 +1,5 @@
+import type { CoreDocument, ICoreDocument, IotaDocument } from "../node";
+
 export {};
 
 const assert = require("assert");
@@ -21,8 +23,55 @@ const {
     VerifierOptions,
     PresentationValidator,
     PresentationValidationOptions,
+    CoreDocument,
+    ICoreDocument,
 } = require("../node");
 
+// Mocks for characterisation tests ensuring that toCoreDocument()
+// only gets called when a document cannot be cast to either IotaDocument
+// or CoreDocument.
+class MockInheritedCoreDocument extends CoreDocument {
+    toCoreDocumentCalled: boolean;
+
+    constructor(values: ICoreDocument) {
+        super(values);
+        this.toCoreDocumentCalled = false;
+    }
+
+    toCoreDocument(): CoreDocument {
+        this.toCoreDocumentCalled = true;
+        return super.toCoreDocument();
+    }
+}
+
+class MockIToCoreDocument {
+    inner: CoreDocument;
+    toCoreDocumentCalled: boolean;
+
+    constructor(inner: CoreDocument) {
+        this.inner = inner;
+        this.toCoreDocumentCalled = false;
+    }
+
+    toCoreDocument(): CoreDocument {
+        this.toCoreDocumentCalled = true;
+        return this.inner;
+    }
+}
+
+class MockInheritedIotaDocument extends IotaDocument {
+    toCoreDocumentCalled: boolean;
+
+    constructor(network: string) {
+        super(network);
+        this.toCoreDocumentCalled = false;
+    }
+
+    toCoreDocument(): CoreDocument {
+        this.toCoreDocumentCalled = true;
+        return super.toCoreDocument();
+    }
+}
 const credentialFields = {
     context: "https://www.w3.org/2018/credentials/examples/v1",
     id: "https://example.edu/credentials/3732",
@@ -169,7 +218,7 @@ describe("CredentialValidator, PresentationValidator", function() {
             const issuerDoc = new IotaDocument("iota");
             const issuerKeys = new KeyPair(KeyType.Ed25519);
             issuerDoc.insertMethod(
-                new VerificationMethod(issuerDoc.id().toCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
+                new VerificationMethod(issuerDoc.id(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
                 MethodScope.VerificationMethod(),
             );
 
@@ -240,6 +289,7 @@ describe("CredentialValidator, PresentationValidator", function() {
                     VerifierOptions.default(),
                 )
             );
+
             assert.doesNotThrow(() =>
                 CredentialValidator.validate(
                     signedCredential,
@@ -251,6 +301,67 @@ describe("CredentialValidator, PresentationValidator", function() {
             assert.deepStrictEqual(
                 CredentialValidator.extractIssuer(signedCredential).toString(),
                 issuerDID.toString(),
+            );
+
+            // Characterisation test: Check that toCoreDocument does not get called
+            // when passing an extension of `CoreDocument`.
+            let mockInheritedDocument = new MockInheritedCoreDocument({
+                id: issuerDoc.id(),
+                verificationMethod: issuerDoc.methods(MethodScope.VerificationMethod()),
+            });
+
+            assert.doesNotThrow(() =>
+                CredentialValidator.verifySignature(
+                    signedCredential,
+                    [mockInheritedDocument, subjectDoc],
+                    VerifierOptions.default(),
+                )
+            );
+
+            assert.deepStrictEqual(
+                mockInheritedDocument.toCoreDocumentCalled,
+                false,
+            );
+
+            // Characterisation test: Check that toCoreDocument DOES get called
+            // when passing a mere implementer of IToCoreDocument (without inheriting from CoreDocument)
+            // to CredentialValidator.verifySignature.
+            let mockIToCoreDocument = new MockIToCoreDocument(issuerDoc.toCoreDocument());
+            assert.doesNotThrow(() =>
+                CredentialValidator.verifySignature(
+                    signedCredential,
+                    [mockIToCoreDocument, subjectDoc],
+                    VerifierOptions.default(),
+                )
+            );
+
+            assert.deepStrictEqual(
+                mockIToCoreDocument.toCoreDocumentCalled,
+                true,
+            );
+
+            // Characterisation test: Check that toCoreDocument does not get called
+            // when passing `IotaDocument` (we use inheritance as a way of mocking a normal IotaDocument).
+            let mockIotaDoc = new MockInheritedIotaDocument("iota");
+            // Make sure that DIDs are the same.
+            assert.deepStrictEqual(issuerDoc.id().toString(), mockIotaDoc.id().toString());
+            // Insert the same verificationMethod used by `issuerDoc` to sign the credential.
+            mockIotaDoc.insertMethod(
+                new VerificationMethod(issuerDoc.id().toCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
+                MethodScope.VerificationMethod(),
+            );
+
+            assert.doesNotThrow(() =>
+                CredentialValidator.verifySignature(
+                    signedCredential,
+                    [mockIotaDoc, subjectDoc],
+                    VerifierOptions.default(),
+                )
+            );
+
+            assert.deepStrictEqual(
+                mockIotaDoc.toCoreDocumentCalled,
+                false,
             );
 
             // Construct a presentation.

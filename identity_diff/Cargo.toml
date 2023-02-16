@@ -1,6 +1,6 @@
 [package]
 name = "identity-diff"
-version = "0.7.0-alpha.4"
+version = "0.7.0-alpha.5"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -11,14 +11,11 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "`Diff` trait to compute and merge data structure differences."
 
 [dependencies]
-identity-diff-derive = { version = "=0.7.0-alpha.4", path = "derive", optional = true }
+identity-diff-derive = { version = "=0.7.0-alpha.5", path = "derive", optional = true }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0" }
+serde_json = { workspace = true, features = ["std"] }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
-
-[dev-dependencies]
-serde_json = "1.0"
 
 [features]
 default = ["derive"]

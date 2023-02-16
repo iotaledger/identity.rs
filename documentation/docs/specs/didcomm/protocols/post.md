@@ -19,7 +19,7 @@ Allows the sending of a single message with arbitrary data. Multiple [post](#pos
 
 ### Relationships
 
-- [Authentication](./authentication): can be used to authenticate both parties and establish [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
+- [Authentication](./authentication.md): can be used to authenticate both parties and establish [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
 
 ### Example Use-Cases
 - Instant messaging between two parties, where the text payload is displayed in a chat.

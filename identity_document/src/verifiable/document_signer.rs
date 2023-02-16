@@ -111,14 +111,11 @@ impl DocumentSigner<'_, '_> {
     let method: &VerificationMethod = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
     let method_uri: String = X::try_method(method).map_err(|_| Error::MissingIdFragment)?;
 
-    match method.type_() {
-      MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref(), self.options.clone())?;
-      }
-      MethodType::X25519KeyAgreementKey2019 => {
-        return Err(Error::InvalidMethodType);
-      }
+    if method.type_() == &MethodType::ED25519_VERIFICATION_KEY_2018 {
+      JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref(), self.options.clone())?;
+      Ok(())
+    } else {
+      Err(Error::InvalidMethodType)
     }
-    Ok(())
   }
 }

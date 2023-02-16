@@ -78,7 +78,7 @@ mod tests {
       let result: Result<VerificationMethod> = MethodBuilder::default()
         .id("did:example:123#key".parse().unwrap())
         .controller("did:example:123".parse().unwrap())
-        .type_(MethodType::Ed25519VerificationKey2018)
+        .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
         .data(method_data_fn(""))
         .build();
       assert!(result.is_ok());
@@ -90,7 +90,7 @@ mod tests {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
@@ -100,7 +100,7 @@ mod tests {
   fn test_missing_id() {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .controller("did:example:123".parse().unwrap())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
@@ -121,7 +121,7 @@ mod tests {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
@@ -130,7 +130,7 @@ mod tests {
   fn test_missing_controller() {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
-      .type_(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));

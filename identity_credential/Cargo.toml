@@ -1,6 +1,6 @@
 [package]
 name = "identity_credential"
-version = "0.7.0-alpha.4"
+version = "0.7.0-alpha.5"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage.workspace = true
@@ -15,10 +15,10 @@ description = "An implementation of the Verifiable Credentials standard."
 dataurl = { version = "0.1.2", default-features = false, optional = true }
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
-identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
-identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
-identity_document = { version = "=0.7.0-alpha.4", path = "../identity_document", default-features = false }
-identity_verification = { version = "=0.7.0-alpha.4", path = "../identity_verification", default-features = false }
+identity_core = { version = "=0.7.0-alpha.5", path = "../identity_core", default-features = false }
+identity_did = { version = "=0.7.0-alpha.5", path = "../identity_did", default-features = false }
+identity_document = { version = "=0.7.0-alpha.5", path = "../identity_document", default-features = false }
+identity_verification = { version = "=0.7.0-alpha.5", path = "../identity_verification", default-features = false }
 indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
 lazy_static = { version = "1.4", default-features = false }
@@ -32,7 +32,7 @@ url = { version = "2.2", default-features = false }
 
 [dev-dependencies]
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-serde_json = { version = "1.0", default-features = false }
+serde_json.workspace = true
 tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
