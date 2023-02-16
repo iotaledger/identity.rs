@@ -27,6 +27,7 @@ pub mod did;
 pub mod error;
 pub mod iota;
 pub mod revocation;
+pub mod ts_test;
 
 pub mod resolver;
 
