@@ -4,6 +4,7 @@
 pub(crate) use identity_client::WasmIotaIdentityClient;
 pub use identity_client_ext::PromiseIotaDocument;
 pub use iota_did::WasmIotaDID;
+pub(crate) use iota_document::IotaDocumentLock;
 pub use iota_document::WasmIotaDocument;
 pub use iota_document_metadata::WasmIotaDocumentMetadata;
 pub use iota_metadata_encoding::WasmStateMetadataEncoding;

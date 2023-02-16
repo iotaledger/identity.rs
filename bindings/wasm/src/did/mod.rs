@@ -4,8 +4,11 @@
 pub use self::service::IService;
 pub use self::service::UServiceEndpoint;
 pub use self::service::WasmService;
-pub use self::wasm_core_did::ICoreDID;
+pub use self::wasm_core_did::IToCoreDID;
 pub use self::wasm_core_did::WasmCoreDID;
+pub use self::wasm_core_document::ArrayIToCoreDocument;
+pub(crate) use self::wasm_core_document::CoreDocumentLock;
+pub use self::wasm_core_document::IToCoreDocument;
 pub use self::wasm_core_document::WasmCoreDocument;
 pub use self::wasm_did_url::WasmDIDUrl;
 pub use self::wasm_method_data::WasmMethodData;
