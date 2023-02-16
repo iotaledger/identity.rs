@@ -1,6 +1,6 @@
 [package]
 name = "identity_storage"
-version = "0.7.0-alpha.4"
+version = "0.7.0-alpha.5"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -13,8 +13,8 @@ description = "Abstractions over storage for cryptographic keys used in DID Docu
 
 [dependencies]
 async-trait = { version = "0.1.64", default-features = false }
-identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
-identity_jose = { version = "=0.7.0-alpha.4", path = "../identity_jose", default-features = false }
+identity_core = { version = "=0.7.0-alpha.5", path = "../identity_core", default-features = false }
+identity_jose = { version = "=0.7.0-alpha.5", path = "../identity_jose", default-features = false }
 iota-crypto = { version = "0.15", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }
 rand = { version = "0.8.5", default-features = false, features = ["std"], optional = true }
 serde.workspace = true

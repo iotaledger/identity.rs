@@ -19,7 +19,7 @@ identity_document = { version = "=0.7.0-alpha.5", path = "../identity_document",
 identity_iota_core = { version = "=0.7.0-alpha.5", path = "../identity_iota_core", default-features = false }
 identity_resolver = { version = "=0.7.0-alpha.5", path = "../identity_resolver", default-features = false, optional = true }
 # TODO: Decide whether this should be completely behind a feature flag.
-identity_storage = { version = "=0.7.0-alpha.4", path = "../identity_storage", default-features = false }
+identity_storage = { version = "=0.7.0-alpha.5", path = "../identity_storage", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.5", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
