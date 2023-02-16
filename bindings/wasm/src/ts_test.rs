@@ -15,8 +15,10 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
+
+import { JwsAlgorithm } from '../lib/enums';
+
 export interface IJwk {
-  // This type is defined in index.ts.
   alg?: JwsAlgorithm
 }
 "#;
