@@ -218,7 +218,7 @@ describe("CredentialValidator, PresentationValidator", function() {
             const issuerDoc = new IotaDocument("iota");
             const issuerKeys = new KeyPair(KeyType.Ed25519);
             issuerDoc.insertMethod(
-                new VerificationMethod(issuerDoc.id().asCoreDid(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
+                new VerificationMethod(issuerDoc.id(), KeyType.Ed25519, issuerKeys.public(), "#iss-0"),
                 MethodScope.VerificationMethod(),
             );
 
