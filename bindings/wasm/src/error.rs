@@ -171,15 +171,6 @@ impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   }
 }
 
-impl From<iota_types::api::error::Error> for WasmError<'_> {
-  fn from(error: iota_types::api::error::Error) -> Self {
-    Self {
-      name: Cow::Borrowed("iota_types::api::Error"),
-      message: Cow::Owned(error.to_string()),
-    }
-  }
-}
-
 impl From<identity_iota::credential::CompoundCredentialValidationError> for WasmError<'_> {
   fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {

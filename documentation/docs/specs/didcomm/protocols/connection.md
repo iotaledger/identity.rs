@@ -18,8 +18,8 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 Allows establishment of a [DIDComm connection](https://identity.foundation/didcomm-messaging/spec/#connections) between two parties. The connection may be established by an explicit invitation delivered [out-of-band][OUT_OF_BAND]&mdash;such as a QR code, URL, or email&mdash;or by following an implicit invitation in the form of a [service endpoint][DIDCOMM_SERVICE_ENDPOINT] attached to a public DID document.
 
 ### Relationships
-- [Termination](./termination): the DIDComm connection may be gracefully concluded using the [termination protocol](./termination).
-- [Authentication](./authentication): the authentication protocol can be used to authenticate parties participating in the established [connection](./connection).
+- [Termination](./termination.md): the DIDComm connection may be gracefully concluded using the [termination protocol](./termination.md).
+- [Authentication](./authentication.md): the authentication protocol can be used to authenticate parties participating in the established [connection](./connection.md).
 - [Feature Discovery](https://github.com/decentralized-identity/didcomm-messaging/blob/ef997c9d3cd1cd24eb182ffa2930a095d3b856a9/docs/spec-files/feature_discovery.md): feature discovery can be used to learn about the capabilities of the other party after connection.
 
 ### Example Use-Cases
@@ -219,7 +219,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Authentication**: implementors SHOULD NOT use any information transmitted in the connection protocol for direct authentication or proof of identity. See the [authentication](./authentication) protocol.
+- **Authentication**: implementors SHOULD NOT use any information transmitted in the connection protocol for direct authentication or proof of identity. See the [authentication](./authentication.md) protocol.
 
 ## Unresolved Questions
 

@@ -1,12 +1,12 @@
 [package]
 name = "identity_jose"
-version = "0.7.0-alpha.4"
+version = "0.7.0-alpha.5"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
-keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jwm", "jws", "jwt"]
+keywords = ["iota", "identity", "jose", "jwk", "jws"]
 license.workspace = true
-readme = "README.md"
+readme = "./README.md"
 repository.workspace = true
 rust-version.workspace = true
 description = "A library for JOSE (JSON Object Signing and Encryption)"

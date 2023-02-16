@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.7.0-alpha.5](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.5) (2023-02-15)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.4...v0.7.0-alpha.5)
+
+### Added
+- Add Support for Domain Linkage in Rust [#1094](https://github.com/iotaledger/identity.rs/pull/1094)
+- Add JSON Object Signing capabilities [#1105](https://github.com/iotaledger/identity.rs/pull/1105)
+
+### Changed 
+- `CoreDocument` & `Service` and `VerificationMethod` are now in the `document` and `verification` modules respectively [#1104](https://github.com/iotaledger/identity.rs/pull/1104)
+-  Remove generics in CoreDocument, VerificationMethod, Service, DIDUrl and LinkedDomainService [#1110](https://github.com/iotaledger/identity.rs/pull/1110)
+- Updated `iota-types` dependency to `1.0.0-rc.6` [#1121](https://github.com/iotaledger/identity.rs/pull/1121)
+- Refactor `MethodType` to make it extensible [#1112](https://github.com/iotaledger/identity.rs/pull/1112)
+
 ## [v0.7.0-alpha.4](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.4) (2022-11-24)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.3...v0.7.0-alpha.4)

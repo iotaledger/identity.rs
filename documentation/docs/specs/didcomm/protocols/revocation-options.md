@@ -14,11 +14,11 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 - Last Updated: 2021-10-29
 
 ## Overview
-Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) types for use with the [revocation](./revocation) protocol.
+Allows discovery of available [`RevocationInfo`](./revocation.md#RevocationInfo) types for use with the [revocation](./revocation.md) protocol.
 
 ### Relationships
 
-- [revocation](./revocation): this protocol is used to discover the `revocationInfoType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation#revocation-request).
+- [revocation](./revocation.md): this protocol is used to discover the `revocationInfoType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation.md#revocation-request).
 
 ### Roles
 - Trusted-Party: requests supported methods of revocation.
@@ -41,7 +41,7 @@ Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) ty
 - Type: `iota/revocation-options/0.1/revocation-options-request`
 - Role: [trusted-party](#roles)
 
-Empty message requesting all available [`RevocationInfo`](./revocation#RevocationInfo) types.
+Empty message requesting all available [`RevocationInfo`](./revocation.md#RevocationInfo) types.
 
 #### Structure
 ```json
@@ -53,7 +53,7 @@ Empty message requesting all available [`RevocationInfo`](./revocation#Revocatio
 - Type: `iota/revocation-options/0.1/revocation-options`
 - Role: [revoker](#roles)
 
-Response including all available [RevocationInfo](./revocation#RevocationInfo) types supported by the [revoker](#roles).
+Response including all available [RevocationInfo](./revocation.md#RevocationInfo) types supported by the [revoker](#roles).
 
 #### Structure
 ```json
@@ -64,13 +64,13 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `revocationInfoTypes` | List of supported [RevocationInfo](./revocation#RevocationInfo) types.[^1] | ✔ |
+| `revocationInfoTypes` | List of supported [RevocationInfo](./revocation.md#RevocationInfo) types.[^1] | ✔ |
 
 [^1] The actual list of supported types may be vague or exact depending on how much the [revoker](#roles) trusts the requester. The supported types may also differ per requester.
 
 #### Examples
 
-1. Response including multiple [RevocationInfo](./revocation#RevocationInfo) types:
+1. Response including multiple [RevocationInfo](./revocation.md#RevocationInfo) types:
 
 ```json
 {
@@ -78,7 +78,7 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 }
 ```
 
-2. Response including a single [RevocationInfo](./revocation#RevocationInfo) type:
+2. Response including a single [RevocationInfo](./revocation.md#RevocationInfo) type:
 
 ```json
 {
@@ -100,7 +100,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Privacy**: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a party partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation) or return a subset/superset of its actual supported options.
+- **Privacy**: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a party partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation.md) or return a subset/superset of its actual supported options.
 
 ## Unresolved Questions
 
