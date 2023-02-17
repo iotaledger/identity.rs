@@ -49,18 +49,21 @@ runs:
       run: |
         rustup self update
         
-        if [[ ${{ inputs.target }} != '' ]]; then
-          rustup target add ${{ inputs.target }}
+        TARGET=${{ inputs.target }}
+        if [[ $TARGET != '' ]]; then
+          rustup target add $TARGET
         fi
 
         rustup update
         
-        if [[ ${{ inputs.toolchain }} != 'stable' ]]; then
-           rustup toolchain install ${{ inputs.toolchain }}
+        TOOLCHAIN=${{ inputs.toolchain }}
+        if [[ $TOOLCHAIN != 'stable' ]]; then
+           rustup toolchain install $TOOLCHAIN
         fi
 
-        if [[ ${{ inputs.components }} != '' ]]; then
-          for i in ${${{ inputs.components }}//,/ }
+        COMPONENTS=${{ inputs.components }}
+        if [[ $COMPONENTS != '' ]]; then
+          for i in ${$COMPONENTS//,/ }
           do
               rustup component add $i
           done
