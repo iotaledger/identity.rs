@@ -17,6 +17,19 @@
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
+<dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
+<dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
+It can be placed in an origin&#39;s <code>.well-known</code> directory to prove linkage between the origin and a DID.
+See: <a href="https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource">https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource</a></p>
+<p>Note:</p>
+<ul>
+<li>Only <a href="https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format">Linked Data Proof Format</a>
+is supported.</li>
+</ul>
+</dd>
+<dt><a href="#DomainLinkageValidator">DomainLinkageValidator</a></dt>
+<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
+</dd>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
@@ -35,6 +48,8 @@
 and resolution of DID documents in Alias Outputs.</p>
 </dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
+<dd></dd>
+<dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
 <dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
 <dd><p>Supported verification method data formats.</p>
@@ -94,6 +109,10 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
@@ -138,10 +157,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -750,6 +765,7 @@ Deserializes an instance from a plain JS representation.
     * _static_
         * [.BaseContext()](#Credential.BaseContext) ⇒ <code>string</code>
         * [.BaseType()](#Credential.BaseType) ⇒ <code>string</code>
+        * [.createDomainLinkageCredential(values)](#Credential.createDomainLinkageCredential) ⇒ [<code>Credential</code>](#Credential)
         * [.fromJSON(json)](#Credential.fromJSON) ⇒ [<code>Credential</code>](#Credential)
 
 <a name="new_Credential_new"></a>
@@ -877,6 +893,15 @@ Returns the base JSON-LD context.
 Returns the base type.
 
 **Kind**: static method of [<code>Credential</code>](#Credential)  
+<a name="Credential.createDomainLinkageCredential"></a>
+
+### Credential.createDomainLinkageCredential(values) ⇒ [<code>Credential</code>](#Credential)
+**Kind**: static method of [<code>Credential</code>](#Credential)  
+
+| Param | Type |
+| --- | --- |
+| values | <code>IDomainLinkageCredential</code> | 
+
 <a name="Credential.fromJSON"></a>
 
 ### Credential.fromJSON(json) ⇒ [<code>Credential</code>](#Credential)
@@ -1245,6 +1270,127 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="DomainLinkageConfiguration"></a>
+
+## DomainLinkageConfiguration
+DID Configuration Resource which contains Domain Linkage Credentials.
+It can be placed in an origin's `.well-known` directory to prove linkage between the origin and a DID.
+See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
+
+Note:
+- Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
+  is supported.
+
+**Kind**: global class  
+
+* [DomainLinkageConfiguration](#DomainLinkageConfiguration)
+    * [new DomainLinkageConfiguration(linked_dids)](#new_DomainLinkageConfiguration_new)
+    * _instance_
+        * [.linkedDids()](#DomainLinkageConfiguration+linkedDids) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+        * [.issuers()](#DomainLinkageConfiguration+issuers) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.toJSON()](#DomainLinkageConfiguration+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DomainLinkageConfiguration+clone) ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+    * _static_
+        * [.fromJSON(json)](#DomainLinkageConfiguration.fromJSON) ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+
+<a name="new_DomainLinkageConfiguration_new"></a>
+
+### new DomainLinkageConfiguration(linked_dids)
+Constructs a new `DomainLinkageConfiguration`.
+
+
+| Param | Type |
+| --- | --- |
+| linked_dids | [<code>Array.&lt;Credential&gt;</code>](#Credential) | 
+
+<a name="DomainLinkageConfiguration+linkedDids"></a>
+
+### domainLinkageConfiguration.linkedDids() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+List of the Domain Linkage Credentials.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration+issuers"></a>
+
+### domainLinkageConfiguration.issuers() ⇒ <code>Array.&lt;string&gt;</code>
+List of the issuers of the Domain Linkage Credentials.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration+toJSON"></a>
+
+### domainLinkageConfiguration.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration+clone"></a>
+
+### domainLinkageConfiguration.clone() ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration.fromJSON"></a>
+
+### DomainLinkageConfiguration.fromJSON(json) ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="DomainLinkageValidator"></a>
+
+## DomainLinkageValidator
+A validator for a Domain Linkage Configuration and Credentials.
+
+**Kind**: global class  
+
+* [DomainLinkageValidator](#DomainLinkageValidator)
+    * [.validateLinkage(issuer, configuration, domain, options)](#DomainLinkageValidator.validateLinkage)
+    * [.validateCredential(issuer, credential, domain, options)](#DomainLinkageValidator.validateCredential)
+
+<a name="DomainLinkageValidator.validateLinkage"></a>
+
+### DomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
+Validates the linkage between a domain and a DID.
+[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+
+Linkage is valid if no error is thrown.
+
+# Note:
+- Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
+  is supported.
+- Only the Credential issued by `issuer` is verified.
+
+# Errors
+ - Semantic structure of `configuration` is invalid.
+ - `configuration` includes multiple credentials issued by `issuer`.
+ - Validation of the matched Domain Linkage Credential fails.
+
+**Kind**: static method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
+| domain | <code>string</code> | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
+
+<a name="DomainLinkageValidator.validateCredential"></a>
+
+### DomainLinkageValidator.validateCredential(issuer, credential, domain, options)
+Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+Error will be thrown in case the validation fails.
+
+**Kind**: static method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| credential | [<code>Credential</code>](#Credential) | 
+| domain | <code>string</code> | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 
 <a name="Duration"></a>
 
@@ -2399,6 +2545,74 @@ Deserializes a `KeyPair` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="LinkedDomainService"></a>
+
+## LinkedDomainService
+**Kind**: global class  
+
+* [LinkedDomainService](#LinkedDomainService)
+    * [new LinkedDomainService(options)](#new_LinkedDomainService_new)
+    * _instance_
+        * [.domains()](#LinkedDomainService+domains) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.toService()](#LinkedDomainService+toService) ⇒ [<code>Service</code>](#Service)
+        * [.clone()](#LinkedDomainService+clone) ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+    * _static_
+        * [.fromService(service)](#LinkedDomainService.fromService) ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+        * [.isValid(service)](#LinkedDomainService.isValid) ⇒ <code>boolean</code>
+
+<a name="new_LinkedDomainService_new"></a>
+
+### new LinkedDomainService(options)
+Constructs a new `LinkedDomainService` that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
+Domain URLs must include the `https` scheme in order to pass the domain linkage validation.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>ILinkedDomainService</code> | 
+
+<a name="LinkedDomainService+domains"></a>
+
+### linkedDomainService.domains() ⇒ <code>Array.&lt;string&gt;</code>
+Returns the domains contained in the Linked Domain Service.
+
+**Kind**: instance method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+<a name="LinkedDomainService+toService"></a>
+
+### linkedDomainService.toService() ⇒ [<code>Service</code>](#Service)
+Returns the inner service which can be added to a DID Document.
+
+**Kind**: instance method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+<a name="LinkedDomainService+clone"></a>
+
+### linkedDomainService.clone() ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+Deep clones the object.
+
+**Kind**: instance method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+<a name="LinkedDomainService.fromService"></a>
+
+### LinkedDomainService.fromService(service) ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+Creates a new @link{LinkedDomainService} from a @link{Service}.
+# Error
+Errors if `service` is not a valid Linked Domain Service.
+
+**Kind**: static method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>Service</code>](#Service) | 
+
+<a name="LinkedDomainService.isValid"></a>
+
+### LinkedDomainService.isValid(service) ⇒ <code>boolean</code>
+Returns `true` if a @link{Service} is a valid Linked Domain Service.
+
+**Kind**: static method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>Service</code>](#Service) | 
 
 <a name="MethodData"></a>
 
@@ -3719,6 +3933,14 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -3800,14 +4022,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 

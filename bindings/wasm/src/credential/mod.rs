@@ -6,6 +6,7 @@
 pub use self::credential::WasmCredential;
 pub use self::credential_builder::*;
 pub use self::credential_validator::WasmCredentialValidator;
+pub use self::domain_linkage_configuration::WasmDomainLinkageConfiguration;
 pub use self::presentation::WasmPresentation;
 pub use self::presentation_builder::*;
 pub use self::presentation_validator::WasmPresentationValidator;
@@ -17,6 +18,10 @@ pub use self::validation_options::WasmSubjectHolderRelationship;
 mod credential;
 mod credential_builder;
 mod credential_validator;
+mod domain_linkage_configuration;
+mod domain_linkage_credential_builder;
+mod domain_linkage_validator;
+mod linked_domain_service;
 mod presentation;
 mod presentation_builder;
 mod presentation_validator;
