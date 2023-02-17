@@ -37,3 +37,8 @@ pub fn start() -> Result<(), JsValue> {
   console_error_panic_hook::set_once();
   Ok(())
 }
+
+#[wasm_bindgen(typescript_custom_section)]
+const CUSTOM_IMPORTS: &'static str = r#"
+import { JwsAlgorithm } from '../lib/enums';
+"#;
