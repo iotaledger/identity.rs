@@ -1,7 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-  "identity_agent",
+  # Temporarily excluded for the 0.7.0-alpha.5 release.
+  # "identity_agent",
   # "identity_comm",
   "identity_core",
   "identity_credential",
@@ -12,6 +13,7 @@ members = [
   "identity_iota_core",
   "identity_resolver",
   "identity_verification",
+  "identity_jose",
   "examples",
 ]
 
@@ -26,6 +28,7 @@ exclude = [
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1.0", default-features = false }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]

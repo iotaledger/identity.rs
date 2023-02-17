@@ -18,8 +18,8 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 Allows presentation of one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model) that are issued to a [holder](#roles) and are uniquely presented to a third-party [verifier](#roles) through [verifiable presentations](https://www.w3.org/TR/vc-data-model/#presentations).
 
 ### Relationships
-- [Issuance](./issuance): a presentation may be used to provide extra information from the [holder](#roles) during a credential issuance.
-- [Authentication](./authentication): a presentation may be used after authentication to prove the authenticated DID is bound to a physical identity.
+- [Issuance](./issuance.md): a presentation may be used to provide extra information from the [holder](#roles) during a credential issuance.
+- [Authentication](./authentication.md): a presentation may be used after authentication to prove the authenticated DID is bound to a physical identity.
 
 ### Example Use-Cases
 

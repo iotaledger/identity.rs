@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::rc::Rc;
+
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
@@ -35,7 +37,9 @@ use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
+use crate::did::CoreDocumentLock;
 use crate::did::RefMethodScope;
+use crate::did::WasmCoreDocument;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmMethodRelationship;
 use crate::did::WasmMethodScope;
@@ -49,11 +53,30 @@ use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
 
+pub(crate) struct IotaDocumentLock(tokio::sync::RwLock<IotaDocument>);
+
+impl IotaDocumentLock {
+  pub(crate) fn new(value: IotaDocument) -> Self {
+    Self(tokio::sync::RwLock::new(value))
+  }
+
+  pub(crate) fn blocking_read(&self) -> tokio::sync::RwLockReadGuard<'_, IotaDocument> {
+    self.0.blocking_read()
+  }
+
+  pub(crate) fn blocking_write(&self) -> tokio::sync::RwLockWriteGuard<'_, IotaDocument> {
+    self.0.blocking_write()
+  }
+
+  pub(crate) async fn read(&self) -> tokio::sync::RwLockReadGuard<'_, IotaDocument> {
+    self.0.read().await
+  }
+}
 // =============================================================================
 // =============================================================================
 
 #[wasm_bindgen(js_name = IotaDocument, inspectable)]
-pub struct WasmIotaDocument(pub(crate) IotaDocument);
+pub struct WasmIotaDocument(pub(crate) Rc<IotaDocumentLock>);
 
 #[wasm_bindgen(js_class = IotaDocument)]
 impl WasmIotaDocument {
@@ -83,7 +106,7 @@ impl WasmIotaDocument {
   /// Returns a copy of the DID Document `id`.
   #[wasm_bindgen]
   pub fn id(&self) -> WasmIotaDID {
-    WasmIotaDID::from(self.0.id().clone())
+    WasmIotaDID::from(self.0.blocking_read().id().clone())
   }
 
   /// Returns a copy of the list of document controllers.
@@ -94,6 +117,7 @@ impl WasmIotaDocument {
   pub fn controller(&self) -> ArrayIotaDID {
     self
       .0
+      .blocking_read()
       .controller()
       .cloned()
       .map(WasmIotaDID::from)
@@ -107,6 +131,7 @@ impl WasmIotaDocument {
   pub fn also_known_as(&self) -> ArrayString {
     self
       .0
+      .blocking_read()
       .also_known_as()
       .iter()
       .map(|url| url.to_string())
@@ -125,14 +150,14 @@ impl WasmIotaDocument {
         urls_set.append(Url::parse(url).wasm_result()?);
       }
     }
-    *self.0.also_known_as_mut() = urls_set;
+    *self.0.blocking_write().also_known_as_mut() = urls_set;
     Ok(())
   }
 
   /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    MapStringAny::try_from(self.0.properties())
+    MapStringAny::try_from(self.0.blocking_read().properties())
   }
 
   /// Sets a custom property in the DID Document.
@@ -146,10 +171,10 @@ impl WasmIotaDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut_unchecked().insert(key, value);
+        self.0.blocking_write().properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.properties_mut_unchecked().remove(&key);
+        self.0.blocking_write().properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -164,6 +189,7 @@ impl WasmIotaDocument {
   pub fn service(&self) -> ArrayService {
     self
       .0
+      .blocking_read()
       .service()
       .iter()
       .cloned()
@@ -178,7 +204,7 @@ impl WasmIotaDocument {
   /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &WasmService) -> Result<()> {
-    self.0.insert_service(service.0.clone()).wasm_result()
+    self.0.blocking_write().insert_service(service.0.clone()).wasm_result()
   }
 
   /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
@@ -186,7 +212,7 @@ impl WasmIotaDocument {
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
   pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Option<WasmService> {
-    self.0.remove_service(&did.0).map(Into::into)
+    self.0.blocking_write().remove_service(&did.0).map(Into::into)
   }
 
   /// Returns the first {@link Service} with an `id` property matching the provided `query`,
@@ -194,7 +220,12 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = resolveService)]
   pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
     let service_query: String = query.into_serde().ok()?;
-    self.0.resolve_service(&service_query).cloned().map(WasmService::from)
+    self
+      .0
+      .blocking_read()
+      .resolve_service(&service_query)
+      .cloned()
+      .map(WasmService::from)
   }
 
   // ===========================================================================
@@ -210,6 +241,7 @@ impl WasmIotaDocument {
     let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
     let methods = self
       .0
+      .blocking_read()
       .methods(scope)
       .into_iter()
       .cloned()
@@ -223,14 +255,18 @@ impl WasmIotaDocument {
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
+    self
+      .0
+      .blocking_write()
+      .insert_method(method.0.clone(), scope.0)
+      .wasm_result()?;
     Ok(())
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
   pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Option<WasmVerificationMethod> {
-    self.0.remove_method(&did.0).map(Into::into)
+    self.0.blocking_write().remove_method(&did.0).map(Into::into)
   }
 
   /// Returns a copy of the first verification method with an `id` property
@@ -245,7 +281,8 @@ impl WasmIotaDocument {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let method: Option<&VerificationMethod> = self.0.resolve_method(&method_query, method_scope);
+    let guard = self.0.blocking_read();
+    let method: Option<&VerificationMethod> = guard.resolve_method(&method_query, method_scope);
     Ok(method.cloned().map(WasmVerificationMethod))
   }
 
@@ -262,6 +299,7 @@ impl WasmIotaDocument {
   ) -> Result<bool> {
     self
       .0
+      .blocking_write()
       .attach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
@@ -276,6 +314,7 @@ impl WasmIotaDocument {
   ) -> Result<bool> {
     self
       .0
+      .blocking_write()
       .detach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
@@ -302,6 +341,7 @@ impl WasmIotaDocument {
 
     self
       .0
+      .blocking_read()
       .sign_data(&mut data, &private_key, &method_query, options)
       .wasm_result()?;
     Ok(WasmCredential::from(data))
@@ -325,6 +365,7 @@ impl WasmIotaDocument {
 
     self
       .0
+      .blocking_read()
       .sign_data(&mut data, &private_key, &method_query, options)
       .wasm_result()?;
     Ok(WasmPresentation::from(data))
@@ -350,6 +391,7 @@ impl WasmIotaDocument {
 
     self
       .0
+      .blocking_read()
       .sign_data(&mut data, &private_key, &method_query, options)
       .wasm_result()?;
 
@@ -364,7 +406,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = verifyData)]
   pub fn verify_data(&self, data: &JsValue, options: &WasmVerifierOptions) -> Result<bool> {
     let data: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.0.verify_data(&data, &options.0).is_ok())
+    Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
   }
 
   // ===========================================================================
@@ -375,7 +417,7 @@ impl WasmIotaDocument {
   /// with the default {@link StateMetadataEncoding}.
   #[wasm_bindgen]
   pub fn pack(&self) -> Result<Vec<u8>> {
-    self.0.clone().pack().wasm_result()
+    self.0.blocking_read().clone().pack().wasm_result()
   }
 
   /// Serializes the document for inclusion in an Alias Output's state metadata.
@@ -383,6 +425,7 @@ impl WasmIotaDocument {
   pub fn pack_with_encoding(&self, encoding: WasmStateMetadataEncoding) -> Result<Vec<u8>> {
     self
       .0
+      .blocking_read()
       .clone()
       .pack_with_encoding(StateMetadataEncoding::from(encoding))
       .wasm_result()
@@ -413,7 +456,7 @@ impl WasmIotaDocument {
       })
       .wasm_result()?;
     IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
-      .map(WasmIotaDocument)
+      .map(WasmIotaDocument::from)
       .wasm_result()
   }
 
@@ -472,59 +515,59 @@ impl WasmIotaDocument {
   /// `metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
   #[wasm_bindgen]
   pub fn metadata(&self) -> WasmIotaDocumentMetadata {
-    WasmIotaDocumentMetadata::from(self.0.metadata.clone())
+    WasmIotaDocumentMetadata::from(self.0.blocking_read().metadata.clone())
   }
 
   /// Returns a copy of the timestamp of when the DID document was created.
   #[wasm_bindgen(js_name = metadataCreated)]
   pub fn metadata_created(&self) -> Option<WasmTimestamp> {
-    self.0.metadata.created.map(WasmTimestamp::from)
+    self.0.blocking_read().metadata.created.map(WasmTimestamp::from)
   }
 
   /// Sets the timestamp of when the DID document was created.
   #[wasm_bindgen(js_name = setMetadataCreated)]
   pub fn set_metadata_created(&mut self, timestamp: OptionTimestamp) -> Result<()> {
     let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
-    self.0.metadata.created = timestamp;
+    self.0.blocking_write().metadata.created = timestamp;
     Ok(())
   }
 
   /// Returns a copy of the timestamp of the last DID document update.
   #[wasm_bindgen(js_name = metadataUpdated)]
   pub fn metadata_updated(&self) -> Option<WasmTimestamp> {
-    self.0.metadata.updated.map(WasmTimestamp::from)
+    self.0.blocking_read().metadata.updated.map(WasmTimestamp::from)
   }
 
   /// Sets the timestamp of the last DID document update.
   #[wasm_bindgen(js_name = setMetadataUpdated)]
   pub fn set_metadata_updated(&mut self, timestamp: OptionTimestamp) -> Result<()> {
     let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
-    self.0.metadata.updated = timestamp;
+    self.0.blocking_write().metadata.updated = timestamp;
     Ok(())
   }
 
   /// Returns a copy of the deactivated status of the DID document.
   #[wasm_bindgen(js_name = metadataDeactivated)]
   pub fn metadata_deactivated(&self) -> Option<bool> {
-    self.0.metadata.deactivated
+    self.0.blocking_read().metadata.deactivated
   }
 
   /// Sets the deactivated status of the DID document.
   #[wasm_bindgen(js_name = setMetadataDeactivated)]
   pub fn set_metadata_deactivated(&mut self, deactivated: Option<bool>) {
-    self.0.metadata.deactivated = deactivated;
+    self.0.blocking_write().metadata.deactivated = deactivated;
   }
 
   /// Returns a copy of the Bech32-encoded state controller address, if present.
   #[wasm_bindgen(js_name = metadataStateControllerAddress)]
   pub fn metadata_state_controller_address(&self) -> Option<String> {
-    self.0.metadata.state_controller_address.clone()
+    self.0.blocking_read().metadata.state_controller_address.clone()
   }
 
   /// Returns a copy of the Bech32-encoded governor address, if present.
   #[wasm_bindgen(js_name = metadataGovernorAddress)]
   pub fn metadata_governor_address(&self) -> Option<String> {
-    self.0.metadata.governor_address.clone()
+    self.0.blocking_read().metadata.governor_address.clone()
   }
 
   /// Sets a custom property in the document metadata.
@@ -534,10 +577,10 @@ impl WasmIotaDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.metadata.properties.insert(key, value);
+        self.0.blocking_write().metadata.properties.insert(key, value);
       }
       None => {
-        self.0.metadata.properties.remove(&key);
+        self.0.blocking_write().metadata.properties.remove(&key);
       }
     }
     Ok(())
@@ -555,7 +598,11 @@ impl WasmIotaDocument {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.revoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .blocking_write()
+      .revoke_credentials(&query, indices.as_slice())
+      .wasm_result()
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
@@ -566,22 +613,64 @@ impl WasmIotaDocument {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.unrevoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .blocking_write()
+      .unrevoke_credentials(&query, indices.as_slice())
+      .wasm_result()
+  }
+
+  // ===========================================================================
+  // Cloning
+  // ===========================================================================
+
+  #[wasm_bindgen(js_name = clone)]
+  /// Returns a deep clone of the `IotaDocument`.
+  pub fn deep_clone(&self) -> WasmIotaDocument {
+    WasmIotaDocument(Rc::new(IotaDocumentLock::new(self.0.blocking_read().clone())))
+  }
+
+  /// ### Warning
+  /// This is for internal use only. Do not rely on or call this method.
+  #[wasm_bindgen(js_name = _shallowCloneInternal)]
+  pub fn shallow_clone(&self) -> WasmIotaDocument {
+    WasmIotaDocument(self.0.clone())
+  }
+
+  // ===========================================================================
+  // Serialization
+  // ===========================================================================
+
+  /// Serializes to a plain JS representation.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0.blocking_read().as_ref()).wasm_result()
+  }
+
+  /// Deserializes an instance from a plain JS representation.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmIotaDocument> {
+    json
+      .into_serde()
+      .map(|value| Self(Rc::new(IotaDocumentLock::new(value))))
+      .wasm_result()
+  }
+
+  // ===========================================================================
+  // "AsRef<CoreDocument>"
+  // ===========================================================================
+  /// Transforms the `IotaDocument` to its `CoreDocument` representation.
+  #[wasm_bindgen(js_name = toCoreDocument)]
+  pub fn as_core_document(&self) -> WasmCoreDocument {
+    WasmCoreDocument(Rc::new(CoreDocumentLock::new(
+      self.0.blocking_read().core_document().clone(),
+    )))
   }
 }
-
-impl_wasm_json!(WasmIotaDocument, IotaDocument);
-impl_wasm_clone!(WasmIotaDocument, IotaDocument);
 
 impl From<IotaDocument> for WasmIotaDocument {
   fn from(document: IotaDocument) -> Self {
-    Self(document)
-  }
-}
-
-impl From<WasmIotaDocument> for IotaDocument {
-  fn from(wasm_document: WasmIotaDocument) -> Self {
-    wasm_document.0
+    Self(Rc::new(IotaDocumentLock::new(document)))
   }
 }
 

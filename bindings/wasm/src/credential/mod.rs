@@ -15,7 +15,6 @@ pub use self::validation_options::WasmCredentialValidationOptions;
 pub use self::validation_options::WasmFailFast;
 pub use self::validation_options::WasmPresentationValidationOptions;
 pub use self::validation_options::WasmSubjectHolderRelationship;
-
 mod credential;
 mod credential_builder;
 mod credential_validator;

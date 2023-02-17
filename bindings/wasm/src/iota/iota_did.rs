@@ -93,7 +93,7 @@ impl WasmIotaDID {
 
   #[wasm_bindgen(js_name = toCoreDid)]
   /// Returns the DID represented as a `CoreDID`.
-  pub fn to_core_did(&self) -> WasmCoreDID {
+  pub fn as_core_did(&self) -> WasmCoreDID {
     WasmCoreDID(self.0.as_ref().clone())
   }
 

@@ -19,7 +19,7 @@ Indicates the graceful termination of a connection. It is expected that no recon
 
 ### Relationships
 
-- [Connection](./connection): this protocol terminates a communication initiated by the [connection protocol](./connection).
+- [Connection](./connection.md): this protocol terminates a communication initiated by the [connection protocol](./connection.md).
 
 ### Example Use-Cases
 

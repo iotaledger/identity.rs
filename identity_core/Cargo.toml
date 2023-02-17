@@ -1,6 +1,6 @@
 [package]
 name = "identity_core"
-version = "0.7.0-alpha.4"
+version = "0.7.0-alpha.5"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,11 +12,11 @@ rust-version.workspace = true
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
-identity-diff = { version = "=0.7.0-alpha.4", path = "../identity_diff", default-features = false }
+identity-diff = { version = "=0.7.0-alpha.5", path = "../identity_diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_jcs = { version = "0.1", default-features = false }
-serde_json = { version = "1.0", default-features = false, features = ["std"] }
+serde_json = { workspace = true, features = ["std"] }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 time = { version = "0.3.5", default-features = false, features = ["std", "serde", "parsing", "formatting"] }

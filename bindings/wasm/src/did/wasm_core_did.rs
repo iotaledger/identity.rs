@@ -136,17 +136,17 @@ impl From<CoreDID> for WasmCoreDID {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "CoreDID | ICoreDID")]
-  pub type ICoreDID;
+  #[wasm_bindgen(typescript_type = "CoreDID | IToCoreDID")]
+  pub type IToCoreDID;
 
   #[wasm_bindgen(method, js_name= toCoreDid)]
-  pub fn to_core_did(this: &ICoreDID) -> WasmCoreDID;
+  pub fn to_core_did(this: &IToCoreDID) -> WasmCoreDID;
 
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_RESOLVER_CONFIG: &'static str = r#"
-interface ICoreDID {
+pub const TS_AS_REF_CORE_DID: &'static str = r#"
+interface IToCoreDID {
 
   /** Returns a `CoreDID` representation of this DID. */
   toCoreDid(): CoreDID;

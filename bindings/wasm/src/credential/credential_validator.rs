@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::core::Object;
 use identity_iota::core::Url;
 use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::StatusCheck;
@@ -8,16 +9,17 @@ use identity_iota::credential::ValidationError;
 use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
 
+use crate::common::ImportedDocumentLock;
+use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
+use crate::did::ArrayIToCoreDocument;
+use crate::did::IToCoreDocument;
+use crate::did::WasmCoreDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::resolver::ArraySupportedDocument;
-use crate::resolver::RustSupportedDocument;
-use crate::resolver::SupportedDID;
-use crate::resolver::SupportedDocument;
 
 use super::WasmCredential;
 use super::WasmCredentialValidationOptions;
@@ -55,12 +57,14 @@ impl WasmCredentialValidator {
   #[wasm_bindgen]
   pub fn validate(
     credential: &WasmCredential,
-    issuer: &SupportedDocument,
+    issuer: &IToCoreDocument,
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let issuer: RustSupportedDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?;
-    CredentialValidator::validate(&credential.0, &issuer, &options.0, fail_fast.into()).wasm_result()
+    let issuer_lock = ImportedDocumentLock::from(issuer);
+    let issuer_guard = issuer_lock.blocking_read();
+    //let issuer: RustSupportedDocument = issuer.into_serde::<RustSupportedDocument>().wasm_result()?;
+    CredentialValidator::validate(&credential.0, &issuer_guard, &options.0, fail_fast.into()).wasm_result()
   }
 
   /// Validates the semantic structure of the `Credential`.
@@ -100,15 +104,12 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn verify_signature(
     credential: &WasmCredential,
-    trustedIssuers: &ArraySupportedDocument,
+    trustedIssuers: &ArrayIToCoreDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let trusted_issuers: Vec<RustSupportedDocument> = trustedIssuers
-      .into_serde::<Vec<RustSupportedDocument>>()
-      .wasm_result()?
-      .into_iter()
-      .map(Into::into)
-      .collect();
+    let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
+    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
+      issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     CredentialValidator::verify_signature(&credential.0, &trusted_issuers, &options.0).wasm_result()
   }
 
@@ -131,15 +132,12 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn check_status(
     credential: &WasmCredential,
-    trustedIssuers: &ArraySupportedDocument,
+    trustedIssuers: &ArrayIToCoreDocument,
     statusCheck: WasmStatusCheck,
   ) -> Result<()> {
-    let trusted_issuers: Vec<RustSupportedDocument> = trustedIssuers
-      .into_serde::<Vec<RustSupportedDocument>>()
-      .wasm_result()?
-      .into_iter()
-      .map(Into::into)
-      .collect();
+    let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
+    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
+      issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     let status_check: StatusCheck = StatusCheck::from(statusCheck);
     CredentialValidator::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
   }
@@ -150,8 +148,9 @@ impl WasmCredentialValidator {
   ///
   /// Fails if the issuer field is not a valid DID.
   #[wasm_bindgen(js_name = extractIssuer)]
-  pub fn extract_issuer(credential: &WasmCredential) -> Result<SupportedDID> {
-    let did: CoreDID = CredentialValidator::extract_issuer(&credential.0).wasm_result()?;
-    SupportedDID::try_from(did)
+  pub fn extract_issuer(credential: &WasmCredential) -> Result<WasmCoreDID> {
+    CredentialValidator::extract_issuer::<CoreDID, Object>(&credential.0)
+      .map(WasmCoreDID::from)
+      .wasm_result()
   }
 }

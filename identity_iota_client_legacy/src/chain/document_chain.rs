@@ -170,13 +170,13 @@ mod test {
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::ProofOptions;
-  use identity_did::DID;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
   use identity_did::verification::MethodRelationship;
   use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
+  use identity_did::DID;
   use identity_iota_core_legacy::did::IotaDIDUrl;
   use identity_iota_core_legacy::document::IotaDocument;
   use identity_iota_core_legacy::document::IotaVerificationMethod;
@@ -229,7 +229,7 @@ mod test {
       let signing_method: MethodRef<IotaDID> = MethodBuilder::default()
         .id(chain.id().to_url().join("#key-2").unwrap())
         .controller(chain.id().clone())
-        .type_(MethodType::Ed25519VerificationKey2018)
+        .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
         .data(MethodData::new_multibase(keypair.public()))
         .build()
         .map(Into::into)

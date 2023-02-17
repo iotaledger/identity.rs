@@ -113,8 +113,6 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -157,6 +155,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -366,7 +366,7 @@ A method-agnostic DID Document.
         * [.setController(controllers)](#CoreDocument+setController)
         * [.alsoKnownAs()](#CoreDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setAlsoKnownAs(urls)](#CoreDocument+setAlsoKnownAs)
-        * [.verificatonMethod()](#CoreDocument+verificatonMethod) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+        * [.verificationMethod()](#CoreDocument+verificationMethod) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.authentication()](#CoreDocument+authentication) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.assertionMethod()](#CoreDocument+assertionMethod) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.keyAgreement()](#CoreDocument+keyAgreement) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
@@ -389,8 +389,9 @@ A method-agnostic DID Document.
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
-        * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -464,9 +465,9 @@ Sets the `alsoKnownAs` property in the DID document.
 | --- | --- |
 | urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
 
-<a name="CoreDocument+verificatonMethod"></a>
+<a name="CoreDocument+verificationMethod"></a>
 
-### coreDocument.verificatonMethod() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+### coreDocument.verificationMethod() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
 Returns a copy of the document's `verificationMethod` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -545,7 +546,7 @@ Errors if there already exists a service or verification method with the same id
 <a name="CoreDocument+removeService"></a>
 
 ### coreDocument.removeService(didUrl) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
-Remoce a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 Returns `true` if the service was removed.
 
@@ -706,22 +707,29 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
-<a name="CoreDocument+toJSON"></a>
-
-### coreDocument.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+clone"></a>
 
 ### coreDocument.clone() ⇒ [<code>CoreDocument</code>](#CoreDocument)
-Deep clones the object.
+Deep clones the `CoreDocument`.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+_shallowCloneInternal"></a>
+
+### coreDocument.\_shallowCloneInternal() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+toJSON"></a>
+
+### coreDocument.toJSON() ⇒ <code>any</code>
+Serializes to a plain JS representation.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument.fromJSON"></a>
 
 ### CoreDocument.fromJSON(json) ⇒ [<code>CoreDocument</code>](#CoreDocument)
-Deserializes an instance from a JSON object.
+Deserializes an instance from a plain JS representation.
 
 **Kind**: static method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -975,7 +983,7 @@ Deserializes an instance from a JSON object.
     * [.verifySignature(credential, trustedIssuers, options)](#CredentialValidator.verifySignature)
     * [.checkSubjectHolderRelationship(credential, holder, relationship)](#CredentialValidator.checkSubjectHolderRelationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
-    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1010,7 +1018,7 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -1069,7 +1077,7 @@ to verify the credential's signature will be made and an error is returned upon 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="CredentialValidator.checkSubjectHolderRelationship"></a>
@@ -1098,12 +1106,12 @@ Only supports `BitmapRevocation2022`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | statusCheck | <code>number</code> | 
 
 <a name="CredentialValidator.extractIssuer"></a>
 
-### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
 Utility for extracting the issuer field of a `Credential` as a DID.
 
 ### Errors
@@ -1785,8 +1793,10 @@ Deserializes an instance from a JSON object.
         * [.setMetadataPropertyUnchecked(key, value)](#IotaDocument+setMetadataPropertyUnchecked)
         * [.revokeCredentials(serviceQuery, indices)](#IotaDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#IotaDocument+unrevokeCredentials)
-        * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [._shallowCloneInternal()](#IotaDocument+_shallowCloneInternal) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
+        * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2169,16 +2179,29 @@ unrevoke all specified `indices`.
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
-<a name="IotaDocument+toJSON"></a>
-
-### iotaDocument.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+clone"></a>
 
 ### iotaDocument.clone() ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Deep clones the object.
+Returns a deep clone of the `IotaDocument`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+_shallowCloneInternal"></a>
+
+### iotaDocument.\_shallowCloneInternal() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+toJSON"></a>
+
+### iotaDocument.toJSON() ⇒ <code>any</code>
+Serializes to a plain JS representation.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+toCoreDocument"></a>
+
+### iotaDocument.toCoreDocument() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+Transforms the `IotaDocument` to its `CoreDocument` representation.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument.newWithId"></a>
@@ -2236,7 +2259,7 @@ Errors if any Alias Output does not contain a valid or empty DID Document.
 <a name="IotaDocument.fromJSON"></a>
 
 ### IotaDocument.fromJSON(json) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Deserializes an instance from a JSON object.
+Deserializes an instance from a plain JS representation.
 
 **Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
 
@@ -2976,7 +2999,7 @@ Deserializes an instance from a JSON object.
     * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
-    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -3013,8 +3036,8 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
-| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -3035,7 +3058,7 @@ Fails if signature verification against the holder document fails.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="PresentationValidator.checkStructure"></a>
@@ -3051,7 +3074,7 @@ Validates the semantic structure of the `Presentation`.
 
 <a name="PresentationValidator.extractHolder"></a>
 
-### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
 Utility for extracting the holder field of a `Presentation` as a DID.
 
 ### Errors
@@ -3287,10 +3310,10 @@ The resolver will only be able to resolve DID documents for methods it has been 
 
 * [Resolver](#Resolver)
     * [new Resolver(config)](#new_Resolver_new)
-    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
-    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
     * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -3308,7 +3331,7 @@ will throw an error because the handler for the "iota" method then becomes ambig
 
 <a name="Resolver+resolvePresentationIssuers"></a>
 
-### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
 Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
@@ -3324,7 +3347,7 @@ resolution fails.
 
 <a name="Resolver+resolvePresentationHolder"></a>
 
-### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 Fetches the DID Document of the holder of a `Presentation`.
 
 # Errors
@@ -3364,12 +3387,12 @@ according to the `fail_fast` parameter.
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
-| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) \| <code>undefined</code> | 
-| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> \| <code>undefined</code> | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="Resolver+resolve"></a>
 
-### resolver.resolve(did) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+### resolver.resolve(did) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 Fetches the DID Document of the given DID.
 
 ### Errors
@@ -3662,7 +3685,7 @@ Creates a new `VerificationMethod` from the given `did` and public key.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) \| <code>ICoreDID</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
 | keyType | <code>number</code> | 
 | publicKey | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 
@@ -3912,10 +3935,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## MethodRelationship
 **Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -3993,6 +4012,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
