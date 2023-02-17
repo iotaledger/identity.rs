@@ -289,6 +289,9 @@ describe("CredentialValidator, PresentationValidator", function() {
                     VerifierOptions.default(),
                 )
             );
+            // Check that we are not leaking memory in Rust. 
+            assert.deepStrictEqual(issuerDoc._strongCountInternal() as number, 1);
+            assert.deepStrictEqual(subjectDoc._strongCountInternal() as number, 1);
 
             assert.doesNotThrow(() =>
                 CredentialValidator.validate(
@@ -322,6 +325,8 @@ describe("CredentialValidator, PresentationValidator", function() {
                 mockInheritedDocument.toCoreDocumentCalled,
                 false,
             );
+            // Also check that we don't leak memory. 
+            assert.deepStrictEqual(mockInheritedDocument._strongCountInternal() as number, 1);
 
             // Characterisation test: Check that toCoreDocument DOES get called
             // when passing a mere implementer of IToCoreDocument (without inheriting from CoreDocument)
@@ -339,6 +344,9 @@ describe("CredentialValidator, PresentationValidator", function() {
                 mockIToCoreDocument.toCoreDocumentCalled,
                 true,
             );
+
+            // Also check that we don't leak memory.     
+            assert.deepStrictEqual(mockIToCoreDocument.inner._strongCountInternal() as number, 1);
 
             // Characterisation test: Check that toCoreDocument does not get called
             // when passing `IotaDocument` (we use inheritance as a way of mocking a normal IotaDocument).
@@ -386,6 +394,9 @@ describe("CredentialValidator, PresentationValidator", function() {
                     VerifierOptions.default(),
                 )
             );
+            // Check that we don't leak memory. 
+            assert.deepStrictEqual(subjectDoc._strongCountInternal() as number, 1);
+
             assert.doesNotThrow(() =>
                 PresentationValidator.validate(
                     signedPresentation,
@@ -395,6 +406,10 @@ describe("CredentialValidator, PresentationValidator", function() {
                     FailFast.FirstError,
                 )
             );
+            // Check that we don't leak memory. 
+            assert.deepStrictEqual(subjectDoc._strongCountInternal() as number, 1);
+            assert.deepStrictEqual(issuerDoc._strongCountInternal() as number, 1);
+
             assert.deepStrictEqual(
                 PresentationValidator.extractHolder(signedPresentation).toString(),
                 subjectDID.toString(),
