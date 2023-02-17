@@ -71,18 +71,6 @@ runs:
         
         rustup show
 
-    # - name: Install stable toolchain
-    #   uses: dtolnay/rust-toolchain@9cd00a88a73addc8617065438eff914dd08d0955
-    #   id: toolchain
-    #   with:
-    #     toolchain: ${{ inputs.toolchain }}
-    #     targets: ${{ inputs.target }}
-    #     components: ${{ inputs.components }}
-
-    # - name: Override toolchain
-    #   shell: bash
-    #   run: rustup override set ${{ steps.toolchain.outputs.name }}
-
     - name: Cache cargo
       uses: actions/cache@v2.1.7
       if: inputs.cargo-cache-enabled == 'true'
