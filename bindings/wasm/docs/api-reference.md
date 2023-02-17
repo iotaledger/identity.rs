@@ -109,8 +109,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
@@ -156,6 +154,8 @@ This variant is the default used if no other variant is specified when construct
 <dd><p>Return after the first error occurs.</p>
 </dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -1347,12 +1347,12 @@ A validator for a Domain Linkage Configuration and Credentials.
 **Kind**: global class  
 
 * [DomainLinkageValidator](#DomainLinkageValidator)
-    * [.validateLinkage(options)](#DomainLinkageValidator.validateLinkage)
-    * [.validateCredential(options)](#DomainLinkageValidator.validateCredential)
+    * [.validateLinkage(issuer, configuration, domain, options)](#DomainLinkageValidator.validateLinkage)
+    * [.validateCredential(issuer, credential, domain, options)](#DomainLinkageValidator.validateCredential)
 
 <a name="DomainLinkageValidator.validateLinkage"></a>
 
-### DomainLinkageValidator.validateLinkage(options)
+### DomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
 Validates the linkage between a domain and a DID.
 [`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
 
@@ -1372,11 +1372,14 @@ Linkage is valid if no error is thrown.
 
 | Param | Type |
 | --- | --- |
-| options | <code>IValidateLinkage</code> | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
+| domain | <code>string</code> | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 
 <a name="DomainLinkageValidator.validateCredential"></a>
 
-### DomainLinkageValidator.validateCredential(options)
+### DomainLinkageValidator.validateCredential(issuer, credential, domain, options)
 Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
 Error will be thrown in case the validation fails.
 
@@ -1384,7 +1387,10 @@ Error will be thrown in case the validation fails.
 
 | Param | Type |
 | --- | --- |
-| options | <code>IValidateCredential</code> | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| credential | [<code>Credential</code>](#Credential) | 
+| domain | <code>string</code> | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 
 <a name="Duration"></a>
 
@@ -3927,10 +3933,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -4016,6 +4018,10 @@ Return after the first error occurs.
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 
