@@ -5,7 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
 
-/// Supported types for the JSON Web Key `typ` property.
+/// Supported types for the JSON Web Key `kty` property.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-key-types)
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
@@ -25,7 +25,7 @@ pub enum JwkType {
 }
 
 impl JwkType {
-  /// Returns the JWK "typ" as a `str` slice.
+  /// Returns the JWK "kty" as a `str` slice.
   pub const fn name(self) -> &'static str {
     match self {
       Self::Ec => "EC",
