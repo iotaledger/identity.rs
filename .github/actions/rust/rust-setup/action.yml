@@ -48,7 +48,24 @@ runs:
       shell: bash
       run: |
         rustup self update
+        
+        if [[ ${{ inputs.target }} != '' ]]; then
+          rustup target add ${{ inputs.target }}
+        fi
+
         rustup update
+        
+        if [[ ${{ inputs.toolchain }} != 'stable' ]]; then
+           rustup toolchain install ${{ inputs.toolchain }}
+        fi
+
+        if [[ ${{ inputs.components }} != '' ]]; then
+          for i in ${${{ inputs.components }}//,/ }
+          do
+              rustup component add $i
+          done
+        fi
+        
         rustup show
 
     # - name: Install stable toolchain
