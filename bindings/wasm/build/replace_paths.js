@@ -26,7 +26,7 @@ async function replace(tsconfig, dist) {
         let fileData = await fs.readFile(path.join(__dirname, `../${dist}/${file}`), "utf8");
         for (let key of keys) {
             let value = a[key][1] ?? a[key][0];
-            fileData = fileData.replace(key, value);
+            fileData = fileData.replaceAll(key, value);
         }
         await fs.writeFile(path.join(__dirname, `../${dist}/${file}`), fileData, "utf8");
     }
