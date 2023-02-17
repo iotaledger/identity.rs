@@ -2,7 +2,7 @@ use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::KeyId;
 use wasm_bindgen::prelude::*;
 
-use super::WasmJwk;
+use crate::jose::WasmJwk;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen(js_name = JwkGenOutput, inspectable)]

@@ -3,6 +3,7 @@ use crate::common::PromiseString;
 use crate::common::PromiseUint8Array;
 use crate::common::PromiseVoid;
 use crate::error::JsValueResult;
+use crate::jose::WasmJwk;
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
 use identity_iota::storage::key_storage::KeyId;
@@ -17,8 +18,6 @@ use js_sys::Promise;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-
-use super::WasmJwk;
 
 #[wasm_bindgen]
 extern "C" {
@@ -55,37 +54,37 @@ extern "C" {
 #[async_trait::async_trait(?Send)]
 impl JwkStorage for WasmJwkStorage {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::generate(&self, key_type.into(), alg.name().to_owned()));
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::generate(self, key_type.into(), alg.name().to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::insert(&self, WasmJwk::from(jwk)));
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::insert(self, WasmJwk::from(jwk)));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(&self, key_id.clone().into(), data));
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(self, key_id.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.to_key_storage_error().map(uint8array_to_bytes)?
   }
 
   async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::public(&self, key_id.clone().into()));
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::public(self, key_id.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::delete(&self, key_id.clone().into()));
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::delete(self, key_id.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::exists(&self, key_id.clone().into()));
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::exists(self, key_id.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }

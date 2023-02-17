@@ -26,10 +26,10 @@ pub mod crypto;
 pub mod did;
 pub mod error;
 pub mod iota;
+pub mod jose;
 pub mod resolver;
 pub mod revocation;
 pub mod storage;
-pub mod jose;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
@@ -42,5 +42,8 @@ pub fn start() -> Result<(), JsValue> {
 // It appears the import path must be relative to `src`.
 #[wasm_bindgen(typescript_custom_section)]
 const CUSTOM_IMPORTS: &'static str = r#"
-import { JwsAlgorithm } from '../lib/enums';
+import { JwsAlgorithm } from '../lib/jose/jws_algorithm';
+import { JwkOperation } from '../lib/jose/jwk_operation';
+import { JwkUse } from '../lib/jose/jwk_use';
+import { JwkType } from '../lib/jose/jwk_type';
 "#;

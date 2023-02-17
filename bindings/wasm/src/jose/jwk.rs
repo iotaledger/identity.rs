@@ -1,4 +1,7 @@
-use identity_jose::jwk::{Jwk, JwkOperation, JwkParamsEc, JwkUse};
+use identity_jose::jwk::Jwk;
+use identity_jose::jwk::JwkOperation;
+use identity_jose::jwk::JwkParamsEc;
+use identity_jose::jwk::JwkUse;
 use wasm_bindgen::prelude::*;
 
 use crate::common::ArrayString;
@@ -16,17 +19,25 @@ impl WasmJwk {
   }
 
   #[wasm_bindgen]
-  pub fn kty(&self) -> String {
-    self.0.kty().name().to_owned()
+  pub fn kty(&self) -> WasmJwkType {
+    // WARNING: this does not validate the return type. Check carefully.
+    JsValue::from(self.0.kty().name().to_owned()).unchecked_into()
   }
 
   #[wasm_bindgen(js_name = use)]
-  pub fn use_(&self) -> Option<String> {
-    self.0.use_().as_ref().map(JwkUse::name).map(ToOwned::to_owned)
+  pub fn use_(&self) -> Option<WasmJwkUse> {
+    self
+      .0
+      .use_()
+      .as_ref()
+      .map(JwkUse::name)
+      .map(JsValue::from)
+      // WARNING: this does not validate the return type. Check carefully.
+      .map(JsValue::unchecked_into)
   }
 
   #[wasm_bindgen(js_name = keyOps)]
-  pub fn key_ops(&self) -> ArrayString {
+  pub fn key_ops(&self) -> ArrayJwkOperation {
     self
       .0
       .key_ops()
@@ -35,12 +46,18 @@ impl WasmJwk {
       .map(JwkOperation::name)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayString>()
+      // WARNING: this does not validate the return type. Check carefully.
+      .unchecked_into::<ArrayJwkOperation>()
   }
 
   #[wasm_bindgen]
-  pub fn alg(&self) -> Option<String> {
-    self.0.alg().map(ToOwned::to_owned)
+  pub fn alg(&self) -> Option<WasmJwsAlgorithm> {
+    self
+      .0
+      .alg()
+      .map(JsValue::from)
+      // WARNING: this does not validate the return type. Check carefully.
+      .map(JsValue::unchecked_into)
   }
 
   #[wasm_bindgen]
@@ -107,63 +124,15 @@ pub struct WasmJwkParamsEc(JwkParamsEc);
 extern "C" {
   #[wasm_bindgen(typescript_type = "IJwk")]
   pub type IJwk;
+  #[wasm_bindgen(typescript_type = "JwsAlgorithm")]
+  pub type WasmJwsAlgorithm;
+  #[wasm_bindgen(typescript_type = "JwkUse")]
+  pub type WasmJwkUse;
+  #[wasm_bindgen(typescript_type = "JwkType")]
+  pub type WasmJwkType;
+  #[wasm_bindgen(typescript_type = "Array<JwkOperation>")]
+  pub type ArrayJwkOperation;
 }
-
-// #[derive(Deserialize)]
-// #[serde(rename_all = "camelCase")]
-// #[typescript(name = "IJwk", readonly, optional)]
-// #[allow(non_snake_case, dead_code)]
-// struct IJwkHelper {
-//   #[typescript(type = "string")]
-//   kty: Option<JwkType>,
-
-//   #[typescript(type = "string")]
-//   r#use: Option<String>,
-
-//   #[typescript(type = "string[]")]
-//   key_ops: Vec<String>,
-
-//   #[typescript(type = "string")]
-//   alg: Option<String>,
-
-//   #[typescript(type = "string")]
-//   kid: Option<String>,
-
-//   #[typescript(type = "string")]
-//   x5u: Option<String>,
-//   #[typescript(type = "string[]")]
-//   x5c: Vec<String>,
-//   #[typescript(type = "string")]
-//   x5t: Option<String>,
-//   #[typescript(type = "string")]
-//   x5t_S256: Option<String>,
-//   #[typescript(type = "string")]
-//   crv: Option<String>,
-//   #[typescript(type = "string")]
-//   d: Option<String>,
-//   #[typescript(type = "string")]
-//   dp: Option<String>,
-//   #[typescript(type = "string")]
-//   dq: Option<String>,
-//   #[typescript(type = "string")]
-//   e: Option<String>,
-//   #[typescript(type = "string")]
-//   k: Option<String>,
-//   #[typescript(type = "string")]
-//   n: Option<String>,
-//   #[typescript(type = "Array<{d?:string,r?:string,t?:string}>")]
-//   oth: Option<Vec<JwkParamsRsaPrime>>,
-//   #[typescript(type = "string")]
-//   p: Option<String>,
-//   #[typescript(type = "string")]
-//   q: Option<String>,
-//   #[typescript(type = "string")]
-//   qi: Option<String>,
-//   #[typescript(type = "string")]
-//   x: Option<String>,
-//   #[typescript(type = "string")]
-//   y: Option<String>,
-// }
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
@@ -174,19 +143,19 @@ export interface IJwk {
   Identifies the cryptographic algorithm family used with the key.
   
   [More Info](https://tools.ietf.org/html/rfc7517#section-4.1) */
-  kty: string
+  kty: JwkType
   /** Public Key Use.
   
   Identifies the intended use of the public key.
   
   [More Info](https://tools.ietf.org/html/rfc7517#section-4.2) */
-  use?: string
+  use?: JwkUse
   /** Key Operations.
  
   Identifies the operation(s) for which the key is intended to be used.
  
   [More Info](https://tools.ietf.org/html/rfc7517#section-4.3) */
-  key_ops?: string[]
+  key_ops?: JwkOperation[]
   /** Algorithm.
  
   Identifies the algorithm intended for use with the key.
