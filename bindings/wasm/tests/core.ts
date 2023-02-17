@@ -27,7 +27,6 @@ class MockDID {
     }
 }
 
-
 describe("CoreDID", function() {
     describe("#parse", function() {
         it("iota", () => {
@@ -105,14 +104,17 @@ describe("CoreDID", function() {
             assert.deepStrictEqual(CoreDID.validMethodId("method[brackets]"), false);
         });
     });
-    describe("#callingToCoreDid from Rust does not null out wrapped values", function() {
+    describe("#callingToCoreDid from Rust does not null out DIDs", function() {
         it("should work", () => {
             let didStr = "did:example:network:123";
             let did = CoreDID.parse(didStr);
             let mockDid = new MockDID(did);
             const method = new VerificationMethod(mockDid, KeyType.Ed25519, KEY_BYTES, "key-0");
-            // Check that the VerificationMethod constructor does not null out mockDid.inner. 
+            // Check that the VerificationMethod constructor does not null out mockDid.inner.
             assert.deepStrictEqual(mockDid.inner.toString() as string, didStr as string);
+            // Also check for `CoreDID`
+            let method1 = new VerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-1");
+            assert.deepStrictEqual(did.toString() as string, didStr as string);
         });
     });
 });
