@@ -25,6 +25,17 @@ const holderFooDoc = CoreDocument.fromJSON(holderFooDocJSON);
 const issuerIotaDoc: IotaDocument = IotaDocument.fromJSON(issuerIotaDocJSON);
 const issuerBarDoc: CoreDocument = CoreDocument.fromJSON(issuerBarDocJSON);
 
+class MockFooDocument {
+    inner: CoreDocument;
+    constructor(inner: CoreDocument) {
+        this.inner = inner;
+    }
+
+    toCoreDocument() : CoreDocument {
+        return this.inner;
+    }
+}
+
 describe("Resolver", function() {
     describe("#verifyPresentation", function() {
         it("should accept a correct presentation when configured correctly", async () => {
@@ -67,6 +78,9 @@ describe("Resolver", function() {
 
             const resolvedHolderDoc = await resolver.resolvePresentationHolder(presentation);
             assert(resolvedHolderDoc instanceof CoreDocument);
+
+            // Check that we are not leaking memory. 
+            assert.deepStrictEqual((resolvedHolderDoc as CoreDocument)._strongCountInternal() as number, 1);
 
             const resolvedIssuerDocuments = await resolver.resolvePresentationIssuers(presentation);
 
