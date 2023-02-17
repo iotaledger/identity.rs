@@ -20,7 +20,7 @@ use wasm_bindgen::JsCast;
 /// - Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
 ///   is supported.
 #[wasm_bindgen(js_name = DomainLinkageConfiguration, inspectable)]
-pub struct WasmDomainLinkageConfiguration(DomainLinkageConfiguration);
+pub struct WasmDomainLinkageConfiguration(pub(crate) DomainLinkageConfiguration);
 
 #[wasm_bindgen(js_class = DomainLinkageConfiguration)]
 impl WasmDomainLinkageConfiguration {

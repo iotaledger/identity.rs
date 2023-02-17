@@ -119,12 +119,12 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    DomainLinkageValidator.validateLinkage({
-        domain: domainFoo,
-        configuration: fetchedConfigurationResource,
-        issuer: issuerDocument,
-        validationOptions: CredentialValidationOptions.default(),
-    });
+    DomainLinkageValidator.validateLinkage(
+        issuerDocument,
+        fetchedConfigurationResource,
+        domainFoo,
+        CredentialValidationOptions.default(),
+    );
 
     // =====================================================
     // → Case 2: starting from a DID
@@ -153,12 +153,12 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    DomainLinkageValidator.validateLinkage({
-        domain: domains[0],
-        configuration: fetchedConfigurationResource,
-        issuer: didDocument,
-        validationOptions: CredentialValidationOptions.default(),
-    });
+    DomainLinkageValidator.validateLinkage(
+        didDocument,
+        fetchedConfigurationResource,
+        domains[0],
+        CredentialValidationOptions.default(),
+    );
 }
 
 async function publishDocument(
