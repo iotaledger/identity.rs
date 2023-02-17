@@ -65,7 +65,7 @@ runs:
         if [[ $COMPONENTS != '' ]]; then
           for i in ${COMPONENTS//,/ }
           do
-              rustup component add $i
+            rustup component add $i $(if [ $TOOLCHAIN != '' ]; then echo --toolchain $TOOLCHAIN; fi)
           done
         fi
         
