@@ -174,7 +174,7 @@ export interface IJwk {
   Identifies the cryptographic algorithm family used with the key.
   
   [More Info](https://tools.ietf.org/html/rfc7517#section-4.1) */
-  kty?: string
+  kty: string
   /** Public Key Use.
   
   Identifies the intended use of the public key.

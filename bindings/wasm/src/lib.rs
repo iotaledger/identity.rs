@@ -29,6 +29,7 @@ pub mod iota;
 pub mod resolver;
 pub mod revocation;
 pub mod storage;
+pub mod jose;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
@@ -36,3 +37,10 @@ pub fn start() -> Result<(), JsValue> {
   console_error_panic_hook::set_once();
   Ok(())
 }
+
+// This section should be used as the central place for imports from `./lib`.
+// It appears the import path must be relative to `src`.
+#[wasm_bindgen(typescript_custom_section)]
+const CUSTOM_IMPORTS: &'static str = r#"
+import { JwsAlgorithm } from '../lib/enums';
+"#;
