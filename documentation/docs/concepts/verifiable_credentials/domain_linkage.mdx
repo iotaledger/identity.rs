@@ -1,0 +1,141 @@
+---
+title: Domain Linkage 
+sidebar_label: Domain Linkage 
+description: Explain how to link a domain and a DID 
+image: /img/Identity_icon.png
+keywords:
+- well-known
+- domain linkage
+- DID Configuration Resource
+- Domain Linkage Credential
+---
+
+import domain_linkage_ts from '!!raw-loader!../../../../bindings/wasm/examples/src/1_advanced/6_domain_linkage.ts'
+import domain_linkage_rs from  '!!raw-loader!../../../../examples/1_advanced/7_domain_linkage.rs';
+import CodeSnippet from '../../../src/components/CodeSnippetComponent'
+
+# Domain Linkage Verification.
+
+## Overview
+
+Domain Linkage can provide proof for a connection between a DID and a domain being controlled by the same entity. This linkage can transfer trust from a domain to a DID and vice verca. For instance, if an entity trusts a domain, it can also trust the linked DID and all documents signed by verification methods included in the DID Document. A use case coud be a verifier that trusts `www.example.com` and receives a Verifiable Presentation issued by `did:foo:abc`. By `did:foo:abc` being linked to `www.example.com`, the verifier can trust that the Verifiable Presentation is issued by the same entity controlling `www.example.com`.
+The DIF has approved [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/) a draft to standardize this connection by introducing the [DID Configuration Resource](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource) and the [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
+
+![Identity getting started](/img/domain-linkage-diagram.png)
+
+### DID Configuration Resource
+
+Suppose that a DID `did:foo:example` with the following DID Document only containing a `verificationMethod` `key-1`
+```json
+{
+    "id": "did:foo:abc",
+    "verificationMethod": [
+      {
+        "id": "did:foo:abc#key-1",
+        "controller": "did:foo:abc",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "zDShpHKXkcHKHcF8CnGAA1UqyyuEPRNz1XFEuggbWJQSq"
+      }
+    ]
+  },
+```
+
+and the domain `https://www.example.com` represents the same entity and need be linked to increase trust in the DID.
+
+To establish this linkage, A [DID Configuration Resource](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource) must be created and made available on the [DID Configuration URL](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-uri). In this case it's `https://example.com/.well-known/did-configuration.json`.
+
+
+The [DID Configuration Resource](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource) is a JSON-LD object containing verifiable credentials called `Domain Linkage Credentials`. Each credential represents a linkage to a single DID.
+
+:::note
+Note that one `DID Configuration Resource` can include multiple `Domain Linkage Credentials` effectivaly linking the same domain to multiple DIDs.
+:::
+
+
+In this example, the domain `https://www.example.com` needs to be linked to the DID `did:foo:abc`. This means that the `DID Configuration Resource` will have one `Domain Linkage Credential`. This credential must have the following properties:
+
+ - Its `type` includes `DomainLinkageCredential`. 
+ - It includes the DID Configuration context.
+ - The `credentialSubject` must be the DID `did:foo:abc` and references the domain `https://www.example.com`.
+ - The issuer is the DID itself `did:foo:abc`.
+ - It is signed by a key material included in the DID Document, in this case `did:foo:abc#key-1`.
+
+```json
+
+  "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+  "linked_dids": [
+    {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://identity.foundation/.well-known/did-configuration/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "DomainLinkageCredential"
+      ],
+      "credentialSubject": {
+        "id": "did:foo:abc",
+        "origin": "https://www.example.com/"
+      },
+      "issuer": "did:foo:abc",
+      "issuanceDate": "2023-02-09T22:14:15Z",
+      "expirationDate": "2024-02-09T22:14:15Z",
+      "proof": {
+        "type": "JcsEd25519Signature2020",
+        "verificationMethod": "did:foo:abc#key-1",
+        "signatureValue": "4SvYqo3YoArfW7r7qKfN7RUJdZnBteb166KE4UkX8MNdbp5UW6YbykneAzvjyRmf5EVQ9bnP9cS5sbEPUn2uaAcB"
+      }
+    }
+  ]
+}
+
+```
+
+Now this `DID Configuration Resource` must be made available on `https://example.com/.well-known/did-configuration.json` which establishes the  linkage.  
+
+### Linked Domain Service Endpoint
+By having a domain, one can discover what DIDs are linked to it by fetching the `DID Configuration Resource` and investigating the `Domain Linkage Credentials`. To enable discovery from the other direction, when having a DID and wanting to discover which domains are linked to it, a [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint) can be added to the DID Document. The DID Document from this example will be as follows to enable discovery to `https://www.example.com`: 
+
+```json
+{
+    "id": "did:foo:abc",
+    "verificationMethod": [
+      {
+        "id": "did:foo:abc#key-1",
+        "controller": "did:foo:abc",
+        "type": "Ed25519VerificationKey2018",
+        "publicKeyMultibase": "zDShpHKXkcHKHcF8CnGAA1UqyyuEPRNz1XFEuggbWJQSq"
+      }
+    ],
+        "service": [
+      {
+        "id": "did:foo:abc#domain-linkage",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://www.example.com/"
+      }
+    ]
+  }
+```
+
+:::note
+Note that a DID Document can have multiple `Linked Domain Services` and each service can link multiple domains.
+:::
+
+### Verifying DID and Domain Linkage
+
+As mentioned above, the discovery of the Domain Linkage can happen from either direction. But verifying the linkage involves only verifying the DID Configuration Resource in both cases. 
+
+1. Fetch `DID Configuration Resource` from `https://www.example.com/.well-known/did-configuration.json`.
+2. Resolve the DID Document of `did:foo:abc`.
+3. Verify the `DID Configuration Resource` and its `Domain Linkage Credential` that references `did:foo:abc`.
+
+Read more about [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+
+### Example
+
+<CodeSnippet
+    nodeContent={domain_linkage_ts}
+    rustContent={domain_linkage_rs}
+    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/src/1_advanced/6_domain_linkage.ts"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/main/examples/1_advanced/7_domain_linkage.rs"
+/>

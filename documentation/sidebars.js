@@ -55,6 +55,7 @@ module.exports = {
                   'concepts/verifiable_credentials/create',
                   'concepts/verifiable_credentials/revocation',
                   'concepts/verifiable_credentials/verifiable_presentations',
+                  'concepts/verifiable_credentials/domain_linkage'
               ]
             },
           ],
