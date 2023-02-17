@@ -63,7 +63,7 @@ runs:
 
         COMPONENTS=${{ inputs.components }}
         if [[ $COMPONENTS != '' ]]; then
-          for i in ${$COMPONENTS//,/ }
+          for i in ${COMPONENTS//,/ }
           do
               rustup component add $i
           done
