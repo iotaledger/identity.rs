@@ -1,10 +1,11 @@
 use identity_jose::jwk::Jwk;
 use identity_jose::jwk::JwkOperation;
-use identity_jose::jwk::JwkParamsEc;
+use identity_jose::jwk::JwkParams;
 use identity_jose::jwk::JwkUse;
 use wasm_bindgen::prelude::*;
 
 use crate::common::ArrayString;
+use crate::error::WasmResult;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen(js_name = Jwk, inspectable)]
@@ -13,7 +14,7 @@ pub struct WasmJwk(pub(crate) Jwk);
 #[wasm_bindgen(js_class = Jwk)]
 impl WasmJwk {
   #[wasm_bindgen(constructor)]
-  pub fn new(jwk: IJwk) -> Self {
+  pub fn new(jwk: IJwkWithParams) -> Self {
     let jwk: Jwk = jwk.into_serde().unwrap();
     Self(jwk)
   }
@@ -92,14 +93,63 @@ impl WasmJwk {
     self.0.x5t_s256().map(AsRef::<str>::as_ref).map(ToOwned::to_owned)
   }
 
-  // #[wasm_bindgen(js_name = paramsEc)]
-  // pub fn params_ec(&self) -> Option<String> {
-  //   if let JwkParams::Ec(params_ec) = self.0.params() {
-  //     Some("".to_owned())
-  //   } else {
-  //     None
-  //   }
-  // }
+  #[wasm_bindgen(js_name = paramsEc)]
+  pub fn params_ec(&self) -> crate::error::Result<Option<WasmJwkParamsEc>> {
+    if let JwkParams::Ec(params_ec) = self.0.params() {
+      // WARNING: this does not validate the return type. Check carefully.
+      Ok(Some(JsValue::from_serde(params_ec).wasm_result()?.unchecked_into()))
+    } else {
+      Ok(None)
+    }
+  }
+
+  #[wasm_bindgen(js_name = paramsOkp)]
+  pub fn params_okp(&self) -> crate::error::Result<Option<WasmJwkParamsOkp>> {
+    if let JwkParams::Okp(params_okp) = self.0.params() {
+      // WARNING: this does not validate the return type. Check carefully.
+      Ok(Some(JsValue::from_serde(params_okp).wasm_result()?.unchecked_into()))
+    } else {
+      Ok(None)
+    }
+  }
+
+  #[wasm_bindgen(js_name = paramsOct)]
+  pub fn params_oct(&self) -> crate::error::Result<Option<WasmJwkParamsOct>> {
+    if let JwkParams::Oct(params_oct) = self.0.params() {
+      // WARNING: this does not validate the return type. Check carefully.
+      Ok(Some(JsValue::from_serde(params_oct).wasm_result()?.unchecked_into()))
+    } else {
+      Ok(None)
+    }
+  }
+
+  #[wasm_bindgen(js_name = paramsRsa)]
+  pub fn params_rsa(&self) -> crate::error::Result<Option<WasmJwkParamsRsa>> {
+    if let JwkParams::Rsa(params_rsa) = self.0.params() {
+      // WARNING: this does not validate the return type. Check carefully.
+      Ok(Some(JsValue::from_serde(params_rsa).wasm_result()?.unchecked_into()))
+    } else {
+      Ok(None)
+    }
+  }
+
+  /// Returns a clone of the Jwk with _all_ private key components unset.
+  #[wasm_bindgen(js_name = toPublic)]
+  pub fn to_public(&self) -> WasmJwk {
+    WasmJwk(self.0.to_public())
+  }
+
+  /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
+  #[wasm_bindgen(js_name = isPublic)]
+  pub fn is_public(&self) -> bool {
+    self.0.is_public()
+  }
+
+  /// Returns `true` if _all_ private key components of the key are set, `false` otherwise.
+  #[wasm_bindgen(js_name = isPrivate)]
+  pub fn is_private(&self) -> bool {
+    self.0.is_private()
+  }
 }
 
 impl From<WasmJwk> for Jwk {
@@ -118,12 +168,9 @@ impl_wasm_json!(WasmJwk, Jwk);
 impl_wasm_clone!(WasmJwk, Jwk);
 
 #[wasm_bindgen]
-pub struct WasmJwkParamsEc(JwkParamsEc);
-
-#[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IJwk")]
-  pub type IJwk;
+  #[wasm_bindgen(typescript_type = "IJwkEc | IJwkRsa | IJwkOkp | IJwkOct")]
+  pub type IJwkWithParams;
   #[wasm_bindgen(typescript_type = "JwsAlgorithm")]
   pub type WasmJwsAlgorithm;
   #[wasm_bindgen(typescript_type = "JwkUse")]
@@ -132,7 +179,27 @@ extern "C" {
   pub type WasmJwkType;
   #[wasm_bindgen(typescript_type = "Array<JwkOperation>")]
   pub type ArrayJwkOperation;
+  #[wasm_bindgen(typescript_type = "JwkParamsEc")]
+  pub type WasmJwkParamsEc;
+  #[wasm_bindgen(typescript_type = "JwkParamsOkp")]
+  pub type WasmJwkParamsOkp;
+  #[wasm_bindgen(typescript_type = "JwkParamsRsa")]
+  pub type WasmJwkParamsRsa;
+  #[wasm_bindgen(typescript_type = "JwkParamsOct")]
+  pub type WasmJwkParamsOct;
 }
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_JWK: &'static str = r#"
+/** A JSON Web Key with EC params. */
+export interface IJwkEc extends IJwk, JwkParamsEc {}
+/** A JSON Web Key with RSA params. */
+export interface IJwkRsa extends IJwk, JwkParamsRsa {}
+/** A JSON Web Key with OKP params. */
+export interface IJwkOkp extends IJwk, JwkParamsOkp {}
+/** A JSON Web Key with OCT params. */
+export interface IJwkOct extends IJwk, JwkParamsOct {}
+"#;
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
@@ -195,22 +262,123 @@ export interface IJwk {
  
   [More Info](https://tools.ietf.org/html/rfc7517#section-4.9) */
   'x5t#S256'?: string
-  crv?: string
-  d?: string
-  dp?: string
-  dq?: string
-  e?: string
-  k?: string
-  n?: string
-  oth?: Array<{
-    d?: string
-    r?: string
-    t?: string
-  }>
-  p?: string
-  q?: string
-  qi?: string
-  x?: string
-  y?: string
 }
 "#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const IJWK_PARAMS_EC: &str = r#"
+/** Parameters for Elliptic Curve Keys.
+ * 
+ * [More Info](https://tools.ietf.org/html/rfc7518#section-6.2) */
+interface JwkParamsEc {
+  /** Identifies the cryptographic curve used with the key.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.2.1.1) */
+  crv: string
+  /** The `x` coordinate for the Elliptic Curve point as a base64url-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.2.1.2) */
+  x: string
+  /** The `y` coordinate for the Elliptic Curve point as a base64url-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.2.1.3) */
+  y: string
+  /** The Elliptic Curve private key as a base64url-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.2.2.1) */
+  d?: string
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const IJWK_PARAMS_OKP: &str = r#"
+/** Parameters for Octet Key Pairs.
+ * 
+ * [More Info](https://tools.ietf.org/html/rfc8037#section-2) */
+interface JwkParamsOkp {
+  /** The subtype of the key pair.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc8037#section-2) */
+  crv: string
+  /** The public key as a base64url-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc8037#section-2) */
+  x: string
+  /** The private key as a base64url-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc8037#section-2) */
+  d?: string
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const IJWK_PARAMS_RSA: &str = r#"
+/** Parameters for RSA Keys.
+ * 
+ * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3) */
+interface JwkParamsRsa {
+  /** The modulus value for the RSA public key as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.1.1) */
+  n: string,
+  /** The exponent value for the RSA public key as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.1.2) */
+  e: string,
+  /** The private exponent value for the RSA private key as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.1) */
+  d?: string,
+  /** The first prime factor as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.2) */
+  p?: string,
+  /** The second prime factor as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.3) */
+  q?: string,
+  /** The Chinese Remainder Theorem (CRT) exponent of the first factor as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.4)  */
+  dp?: string,
+  /** The CRT exponent of the second factor as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.5) */
+  dq?: string,
+  /** The CRT coefficient of the second factor as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.6) */
+  qi?: string,
+  /** An array of information about any third and subsequent primes, should they exist.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.7) */
+  oth?: JwkParamsRsaPrime[],
+}
+
+/** Parameters for RSA Primes
+ * 
+ * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.7) */
+interface JwkParamsRsaPrime {
+  /** The value of a subsequent prime factor as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.7.1)  */
+  r: string,
+  /** The CRT exponent of the corresponding prime factor as a base64urlUInt-encoded value. 
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.7.2) */
+  d: string,
+  /** The CRT coefficient of the corresponding prime factor as a base64urlUInt-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.7.3) */
+  t: string,
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const IJWK_PARAMS_OKP: &str = r#"
+/** Parameters for Symmetric Keys.
+ * 
+ * [More Info](https://tools.ietf.org/html/rfc7518#section-6.4) */
+interface JwkParamsOct {
+  /** The symmetric key as a base64url-encoded value.
+   * 
+   * [More Info](https://tools.ietf.org/html/rfc7518#section-6.4.1) */
+  k: string
+}"#;

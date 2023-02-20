@@ -476,6 +476,7 @@ impl Jwk {
     }
   }
 
+  /// Returns a clone of the Jwk with _all_ private key components unset.
   pub fn to_public(&self) -> Jwk {
     let mut public: Jwk = Jwk::from_params(self.params().to_public());
 
