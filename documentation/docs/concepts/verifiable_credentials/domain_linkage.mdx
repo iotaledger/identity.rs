@@ -94,7 +94,7 @@ In this example, the domain `https://www.example.com` needs to be linked to the 
 Now this `DID Configuration Resource` must be made available on `https://example.com/.well-known/did-configuration.json` which establishes the  linkage.  
 
 ### Linked Domain Service Endpoint
-By having a domain, one can discover what DIDs are linked to it by fetching the `DID Configuration Resource` and investigating the `Domain Linkage Credentials`. To enable discovery from the other direction, when having a DID and wanting to discover which domains are linked to it, a [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint) can be added to the DID Document. The DID Document from this example will be as follows to enable discovery to `https://www.example.com`: 
+By having a domain, one can discover what DIDs are linked to it by fetching the `DID Configuration Resource` and investigating the `Domain Linkage Credentials`. To enable discovery from the other direction, when having a DID and wanting to discover which domains are linked to it, a [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint) can be added to the DID Document. The DID Document from this example will be extended as follows to enable discovery of `https://www.example.com`: 
 
 ```json
 {
@@ -118,18 +118,18 @@ By having a domain, one can discover what DIDs are linked to it by fetching the 
 ```
 
 :::note
-Note that a DID Document can have multiple `Linked Domain Services` and each service can link multiple domains.
+Note that a DID Document can have multiple `Linked Domain Services` and each service can link to multiple domains.
 :::
 
 ### Verifying DID and Domain Linkage
 
-As mentioned above, the discovery of the Domain Linkage can happen from either direction. But verifying the linkage involves only verifying the DID Configuration Resource in both cases. 
+As mentioned above, the discovery of the Domain Linkage can happen from either direction. But verifying the linkage in both cases involves only verifying the DID Configuration Resource. The process is as follows:
 
 1. Fetch `DID Configuration Resource` from `https://www.example.com/.well-known/did-configuration.json`.
 2. Resolve the DID Document of `did:foo:abc`.
 3. Verify the `DID Configuration Resource` and its `Domain Linkage Credential` that references `did:foo:abc`.
 
-Read more about [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+Here you can learn more about  [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
 
 ### Example
 
