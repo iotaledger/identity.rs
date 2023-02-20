@@ -1,11 +1,11 @@
 export {};
 const assert = require("assert");
-import { EdCurve, Jwk, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
+import { EdCurve, IJwkParams, Jwk, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
 
 describe("Jwk", function() {
     describe("#constructor and getters", function() {
         it("should work", () => {
-            const iJwk = {
+            const iJwk: IJwkParams = {
                 kty: JwkType.Okp,
                 use: JwkUse.Signature,
                 alg: JwsAlgorithm.EdDSA,

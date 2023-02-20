@@ -92,11 +92,31 @@ impl JwkStorage for WasmJwkStorage {
 
 #[wasm_bindgen(typescript_custom_section)]
 const JWK_STORAGE: &'static str = r#"
+/** Secure storage for cryptographic keys represented as JWKs. */
 interface JwkStorage {
+  /** Generate a new key represented as a JSON Web Key.
+   * 
+   * It's recommend that the implementer exposes constants for the supported [`KeyType`]. */
   generate: (keyType: string, algorithm: JwsAlgorithm) => Promise<JwkGenOutput>;
+  /** Insert an existing JSON Web Key into the storage.
+   * 
+   * All private key components of the `jwk` must be set. */
+  insert: (jwk: Jwk) => Promise<string>;
+  /** Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
+   * 
+   * It's recommend that the implementer exposes constants for the supported [`SignatureAlgorithm`]. */
   sign: (keyId: string, data: Uint8Array) => Promise<Uint8Array>;
-}
-"#;
+  /** Returns the public key identified by `key_id` as a JSON Web Key. */
+  public: (keyId: string) => Promise<Jwk>;
+  /** Deletes the key identified by `key_id`.
+   * 
+   * # Warning
+   * 
+   * This operation cannot be undone. The keys are purged permanently. */
+  delete: (keyId: string) => Promise<void>;
+  /** Returns `true` if the key with the given `key_id` exists in storage, `false` otherwise. */
+  exists: (keyId: string) => Promise<boolean>;
+}"#;
 
 fn uint8array_to_bytes(value: JsValue) -> KeyStorageResult<Vec<u8>> {
   if !JsCast::is_instance_of::<Uint8Array>(&value) {

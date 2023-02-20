@@ -14,7 +14,7 @@ pub struct WasmJwk(pub(crate) Jwk);
 #[wasm_bindgen(js_class = Jwk)]
 impl WasmJwk {
   #[wasm_bindgen(constructor)]
-  pub fn new(jwk: IJwkWithParams) -> Self {
+  pub fn new(jwk: IJwkParams) -> Self {
     let jwk: Jwk = jwk.into_serde().unwrap();
     Self(jwk)
   }
@@ -169,8 +169,8 @@ impl_wasm_clone!(WasmJwk, Jwk);
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IJwkEc | IJwkRsa | IJwkOkp | IJwkOct")]
-  pub type IJwkWithParams;
+  #[wasm_bindgen(typescript_type = "IJwkParams")]
+  pub type IJwkParams;
   #[wasm_bindgen(typescript_type = "JwsAlgorithm")]
   pub type WasmJwsAlgorithm;
   #[wasm_bindgen(typescript_type = "JwkUse")]
@@ -191,14 +191,23 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
+type IJwkParams = IJwkEc | IJwkRsa | IJwkOkp | IJwkOct
 /** A JSON Web Key with EC params. */
-export interface IJwkEc extends IJwk, JwkParamsEc {}
+export interface IJwkEc extends IJwk, JwkParamsEc {
+  kty: JwkType.Ec
+}
 /** A JSON Web Key with RSA params. */
-export interface IJwkRsa extends IJwk, JwkParamsRsa {}
+export interface IJwkRsa extends IJwk, JwkParamsRsa {
+  kty: JwkType.Rsa
+}
 /** A JSON Web Key with OKP params. */
-export interface IJwkOkp extends IJwk, JwkParamsOkp {}
+export interface IJwkOkp extends IJwk, JwkParamsOkp {
+  kty: JwkType.Okp
+}
 /** A JSON Web Key with OCT params. */
-export interface IJwkOct extends IJwk, JwkParamsOct {}
+export interface IJwkOct extends IJwk, JwkParamsOct {
+  kty: JwkType.Oct
+}
 "#;
 
 #[wasm_bindgen(typescript_custom_section)]
