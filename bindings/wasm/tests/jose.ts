@@ -1,6 +1,6 @@
 export {};
 const assert = require("assert");
-import { Jwk, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
+import { EdCurve, Jwk, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
 
 describe("Jwk", function() {
     describe("#constructor and getters", function() {
@@ -10,7 +10,7 @@ describe("Jwk", function() {
                 use: JwkUse.Signature,
                 alg: JwsAlgorithm.EdDSA,
                 key_ops: [JwkOperation.Sign, JwkOperation.Verify],
-                crv: "Ed25519",
+                crv: EdCurve.Ed25519,
                 d: "nWGxne_9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A",
                 x: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
             };
