@@ -1,6 +1,6 @@
 ---
 title: Domain Linkage 
-sidebar_label: Domain Linkage 
+sidebar_label: Create and Verify 
 description: Explain how to link a domain and a DID 
 image: /img/Identity_icon.png
 keywords:
@@ -19,7 +19,7 @@ import CodeSnippet from '../../../src/components/CodeSnippetComponent'
 ## Overview
 
 Domain Linkage can provide proof for a connection between a DID and a domain being controlled by the same entity. This linkage can transfer trust from a domain to a DID and vice verca. For instance, if an entity trusts a domain, it can also trust the linked DID and all documents signed by verification methods included in the DID Document. A use case coud be a verifier that trusts `www.example.com` and receives a Verifiable Presentation issued by `did:foo:abc`. By `did:foo:abc` being linked to `www.example.com`, the verifier can trust that the Verifiable Presentation is issued by the same entity controlling `www.example.com`.
-The DIF has approved [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/) a draft to standardize this connection by introducing the [DID Configuration Resource](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource) and the [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
+The DIF has approved a [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/) draft to standardize this connection by introducing the [DID Configuration Resource](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource) and the [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
 
 ![Identity getting started](/img/domain-linkage-diagram.png)
 
@@ -61,7 +61,7 @@ In this example, the domain `https://www.example.com` needs to be linked to the 
  - It is signed by a key material included in the DID Document, in this case `did:foo:abc#key-1`.
 
 ```json
-
+{
   "@context": "https://identity.foundation/.well-known/did-configuration/v1",
   "linked_dids": [
     {
@@ -107,7 +107,7 @@ By having a domain, one can discover what DIDs are linked to it by fetching the 
         "publicKeyMultibase": "zDShpHKXkcHKHcF8CnGAA1UqyyuEPRNz1XFEuggbWJQSq"
       }
     ],
-        "service": [
+    "service": [
       {
         "id": "did:foo:abc#domain-linkage",
         "type": "LinkedDomains",
