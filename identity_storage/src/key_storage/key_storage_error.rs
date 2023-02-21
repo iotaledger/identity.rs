@@ -5,11 +5,9 @@ use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::Display;
 
-// use crate::error_utils::AsDynError;
-
-/// The error type for KeyStorage operations.
+/// The error type for key storage operations.
 ///
-/// Instances always carry a corresponding [`StorageErrorKind`] and may be extended with custom error messages and
+/// Instances always carry a corresponding [`KeyStorageErrorKind`] and may be extended with custom error messages and
 /// source.
 #[derive(Debug)]
 pub struct KeyStorageError {
@@ -151,22 +149,22 @@ impl KeyStorageError {
   }
 }
 
-/// The cause of the failed [`KeyStorage`] operation.
+/// The cause of the failed key storage operation.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub enum KeyStorageErrorKind {
-  /// Indicates that a user tried to generate a key which the [`KeyStorage`] implementation
+  /// Indicates that a user tried to generate a key which the key storage implementation
   /// does not support.
   UnsupportedKeyType,
 
-  /// Indicates an attempt to generate or insert a key with a key type that the [`KeyStorage`] implementation
+  /// Indicates an attempt to generate or insert a key with a key type that the key storage implementation
   /// deems incompatible with the given signature algorithm.
   KeyAlgorithmMismatch,
 
-  /// Indicates an attempt to parse a signature algorithm that is not recognized by the [`KeyStorage`] implementation.
+  /// Indicates an attempt to parse a signature algorithm that is not recognized by the key storage implementation.
   UnsupportedSignatureAlgorithm,
 
-  /// Indicates that the [`KeyStorage`] implementation is not able to find the requested key.
+  /// Indicates that the key storage implementation is not able to find the requested key.
   KeyNotFound,
 
   /// Indicates that the storage is unavailable for an unpredictable amount of time.

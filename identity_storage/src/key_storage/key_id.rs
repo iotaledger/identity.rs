@@ -1,9 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-/// An identifier for a private key stored in a [`KeyStorage`](crate::key_storage::KeyStorage).
+/// An identifier for a private key stored in a key storage.
 ///
-/// This type is returned by a [`KeyStorage`](crate::key_storage::KeyStorage) implementation when
+/// This type is returned by a key storage implementation when
 /// generating cryptographic key pairs and later used as a parameter when signing data.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct KeyId(String);

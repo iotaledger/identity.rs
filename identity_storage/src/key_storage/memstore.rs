@@ -28,7 +28,7 @@ use crate::key_storage::JwkStorage;
 /// The map from key ids to JWKs.
 type JwkKeyStore = HashMap<KeyId, Jwk>;
 
-/// An insecure, in-memory [`Storage`] implementation that serves as an example and is used in tests.
+/// An insecure, in-memory [`JwkStorage`] implementation that serves as an example and is used in tests.
 #[derive(Debug)]
 pub struct MemKeyStore {
   jwk_store: Shared<JwkKeyStore>,
