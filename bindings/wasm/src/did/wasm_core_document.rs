@@ -3,8 +3,6 @@
 
 use std::rc::Rc;
 
-use std::rc::Rc;
-
 use super::WasmCoreDID;
 use crate::common::ArrayCoreMethodRef;
 use crate::common::ArrayService;

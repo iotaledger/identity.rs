@@ -144,8 +144,6 @@ impl From<&IToCoreDID> for CoreDID {
 extern "C" {
   #[wasm_bindgen(typescript_type = "CoreDID | IToCoreDID")]
   pub type IToCoreDID;
-  #[wasm_bindgen(typescript_type = "CoreDID | IToCoreDID")]
-  pub type IToCoreDID;
 
   // Specially crafted JS function called internally that ensures
   // Custom DID implementations built on `CoreDID` don't get nulled

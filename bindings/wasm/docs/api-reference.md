@@ -109,10 +109,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
@@ -395,6 +391,7 @@ A method-agnostic DID Document.
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [._strongCountInternal()](#CoreDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -720,6 +717,13 @@ Deep clones the `CoreDocument`.
 <a name="CoreDocument+_shallowCloneInternal"></a>
 
 ### coreDocument.\_shallowCloneInternal() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+_strongCountInternal"></a>
+
+### coreDocument.\_strongCountInternal() ⇒ <code>number</code>
 ### Warning
 This is for internal use only. Do not rely on or call this method.
 
@@ -1805,6 +1809,7 @@ Deserializes an instance from a JSON object.
         * [.unrevokeCredentials(serviceQuery, indices)](#IotaDocument+unrevokeCredentials)
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [._shallowCloneInternal()](#IotaDocument+_shallowCloneInternal) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [._strongCountInternal()](#IotaDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
     * _static_
@@ -2198,6 +2203,13 @@ Returns a deep clone of the `IotaDocument`.
 <a name="IotaDocument+_shallowCloneInternal"></a>
 
 ### iotaDocument.\_shallowCloneInternal() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+_strongCountInternal"></a>
+
+### iotaDocument.\_strongCountInternal() ⇒ <code>number</code>
 ### Warning
 This is for internal use only. Do not rely on or call this method.
 
@@ -3937,14 +3949,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
