@@ -19,12 +19,14 @@ impl WasmJwk {
     Self(jwk)
   }
 
+  /// Returns the value for the key type parameter (kty).
   #[wasm_bindgen]
   pub fn kty(&self) -> WasmJwkType {
     // WARNING: this does not validate the return type. Check carefully.
     JsValue::from(self.0.kty().name().to_owned()).unchecked_into()
   }
 
+  /// Returns the value for the use property (use).
   #[wasm_bindgen(js_name = use)]
   pub fn use_(&self) -> Option<WasmJwkUse> {
     self
@@ -37,6 +39,7 @@ impl WasmJwk {
       .map(JsValue::unchecked_into)
   }
 
+  // Returns the value for the key operations parameter (key_ops).
   #[wasm_bindgen(js_name = keyOps)]
   pub fn key_ops(&self) -> ArrayJwkOperation {
     self
@@ -51,6 +54,7 @@ impl WasmJwk {
       .unchecked_into::<ArrayJwkOperation>()
   }
 
+  /// Returns the value for the algorithm property (alg).
   #[wasm_bindgen]
   pub fn alg(&self) -> Option<WasmJwsAlgorithm> {
     self
@@ -61,16 +65,19 @@ impl WasmJwk {
       .map(JsValue::unchecked_into)
   }
 
+  /// Returns the value of the key ID property (kid).
   #[wasm_bindgen]
   pub fn kid(&self) -> Option<String> {
     self.0.kid().map(ToOwned::to_owned)
   }
 
+  /// Returns the value of the X.509 URL property (x5u).
   #[wasm_bindgen]
   pub fn x5u(&self) -> Option<String> {
     self.0.x5u().map(AsRef::<str>::as_ref).map(ToOwned::to_owned)
   }
 
+  /// Returns the value of the X.509 certificate chain property (x5c).
   #[wasm_bindgen]
   pub fn x5c(&self) -> ArrayString {
     self
@@ -83,16 +90,19 @@ impl WasmJwk {
       .unchecked_into::<ArrayString>()
   }
 
+  /// Returns the value of the X.509 certificate SHA-1 thumbprint property (x5t).
   #[wasm_bindgen]
   pub fn x5t(&self) -> Option<String> {
     self.0.x5t().map(AsRef::<str>::as_ref).map(ToOwned::to_owned)
   }
 
+  /// Returns the value of the X.509 certificate SHA-256 thumbprint property (x5t#S256).
   #[wasm_bindgen]
   pub fn x5t256(&self) -> Option<String> {
     self.0.x5t_s256().map(AsRef::<str>::as_ref).map(ToOwned::to_owned)
   }
 
+  /// If this JWK is of kty EC, returns those parameters.
   #[wasm_bindgen(js_name = paramsEc)]
   pub fn params_ec(&self) -> crate::error::Result<Option<WasmJwkParamsEc>> {
     if let JwkParams::Ec(params_ec) = self.0.params() {
@@ -103,6 +113,7 @@ impl WasmJwk {
     }
   }
 
+  /// If this JWK is of kty OKP, returns those parameters.
   #[wasm_bindgen(js_name = paramsOkp)]
   pub fn params_okp(&self) -> crate::error::Result<Option<WasmJwkParamsOkp>> {
     if let JwkParams::Okp(params_okp) = self.0.params() {
@@ -113,6 +124,7 @@ impl WasmJwk {
     }
   }
 
+  /// If this JWK is of kty OCT, returns those parameters.
   #[wasm_bindgen(js_name = paramsOct)]
   pub fn params_oct(&self) -> crate::error::Result<Option<WasmJwkParamsOct>> {
     if let JwkParams::Oct(params_oct) = self.0.params() {
@@ -123,6 +135,7 @@ impl WasmJwk {
     }
   }
 
+  /// If this JWK is of kty RSA, returns those parameters.
   #[wasm_bindgen(js_name = paramsRsa)]
   pub fn params_rsa(&self) -> crate::error::Result<Option<WasmJwkParamsRsa>> {
     if let JwkParams::Rsa(params_rsa) = self.0.params() {
