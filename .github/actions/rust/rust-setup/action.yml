@@ -44,17 +44,32 @@ runs:
       shell: bash
       run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
-    - name: Install stable toolchain
-      uses: dtolnay/rust-toolchain@9cd00a88a73addc8617065438eff914dd08d0955
-      id: toolchain
-      with:
-        toolchain: ${{ inputs.toolchain }}
-        targets: ${{ inputs.target }}
-        components: ${{ inputs.components }}
-
-    - name: Override toolchain
+    - name: Setup rust toolchain
       shell: bash
-      run: rustup override set ${{ steps.toolchain.outputs.name }}
+      run: |
+        rustup self update
+        
+        TARGET=${{ inputs.target }}
+        if [[ $TARGET != '' ]]; then
+          rustup target add $TARGET
+        fi
+
+        rustup update
+        
+        TOOLCHAIN=${{ inputs.toolchain }}
+        if [[ $TOOLCHAIN != 'stable' ]]; then
+           rustup toolchain install $TOOLCHAIN
+        fi
+
+        COMPONENTS=${{ inputs.components }}
+        if [[ $COMPONENTS != '' ]]; then
+          for i in ${COMPONENTS//,/ }
+          do
+            rustup component add $i $(if [ $TOOLCHAIN != '' ]; then echo --toolchain $TOOLCHAIN; fi)
+          done
+        fi
+        
+        rustup show
 
     - name: Cache cargo
       uses: actions/cache@v2.1.7
