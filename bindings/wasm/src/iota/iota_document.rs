@@ -3,7 +3,6 @@
 
 use std::rc::Rc;
 
-
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;

@@ -32,7 +32,7 @@ class MockFooDocument {
         this.inner = inner;
     }
 
-    toCoreDocument() : CoreDocument {
+    toCoreDocument(): CoreDocument {
         return this.inner;
     }
 }
@@ -81,21 +81,20 @@ describe("Resolver", function() {
             const resolvedHolderDoc = await resolver.resolvePresentationHolder(presentation);
             assert(resolvedHolderDoc instanceof MockFooDocument);
             assert(!(resolvedHolderDoc instanceof CoreDocument));
-            // Check that we are not leaking memory. 
+            // Check that we are not leaking memory.
             assert.deepStrictEqual(resolvedHolderDoc.inner._strongCountInternal() as number, 1);
 
-            // Also check with Promise.any and Promise.all 
+            // Also check with Promise.any and Promise.all
             let promise0 = resolver.resolvePresentationHolder(presentation);
             let promise1 = resolver.resolvePresentationHolder(presentation);
-            let holderDocFromPromiseAny = await Promise.any([promise0, promise1]); 
+            let holderDocFromPromiseAny = await Promise.any([promise0, promise1]);
             assert.deepStrictEqual(holderDocFromPromiseAny.inner._strongCountInternal() as number, 1);
 
             let promise2 = resolver.resolvePresentationHolder(presentation);
             let promise3 = resolver.resolvePresentationHolder(presentation);
             let [out2, out3] = await Promise.all([promise2, promise3]);
             assert.deepStrictEqual(out2.inner._strongCountInternal() as number, 1);
-            assert.deepStrictEqual(out3.inner._strongCountInternal() as number, 1); 
-
+            assert.deepStrictEqual(out3.inner._strongCountInternal() as number, 1);
 
             const resolvedIssuerDocuments = await resolver.resolvePresentationIssuers(presentation);
 
@@ -122,16 +121,16 @@ describe("Resolver", function() {
                 resolvedIssuerDocuments,
             );
 
-            // Check that we are not leaking memory when calling verifyPresentation. 
+            // Check that we are not leaking memory when calling verifyPresentation.
             assert.deepStrictEqual(
-                resolvedHolderDoc.inner._strongCountInternal() as number, 
-                1
+                resolvedHolderDoc.inner._strongCountInternal() as number,
+                1,
             );
 
             for (let doc of resolvedIssuerDocuments) {
                 assert.deepStrictEqual(
-                    doc._strongCountInternal() as number, 
-                    1
+                    doc._strongCountInternal() as number,
+                    1,
                 );
             }
 

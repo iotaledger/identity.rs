@@ -291,7 +291,7 @@ describe("CredentialValidator, PresentationValidator", function() {
                     VerifierOptions.default(),
                 )
             );
-            // Check that we are not leaking memory in Rust. 
+            // Check that we are not leaking memory in Rust.
             assert.deepStrictEqual(issuerDoc._strongCountInternal() as number, 1);
             assert.deepStrictEqual(subjectDoc._strongCountInternal() as number, 1);
 
@@ -327,7 +327,7 @@ describe("CredentialValidator, PresentationValidator", function() {
                 mockInheritedDocument.toCoreDocumentCalled,
                 false,
             );
-            // Also check that we don't leak memory. 
+            // Also check that we don't leak memory.
             assert.deepStrictEqual(mockInheritedDocument._strongCountInternal() as number, 1);
 
             // Characterisation test: Check that toCoreDocument DOES get called
@@ -347,7 +347,7 @@ describe("CredentialValidator, PresentationValidator", function() {
                 true,
             );
 
-            // Also check that we don't leak memory.     
+            // Also check that we don't leak memory.
             assert.deepStrictEqual(mockIToCoreDocument.inner._strongCountInternal() as number, 1);
 
             // Characterisation test: Check that toCoreDocument does not get called
@@ -396,7 +396,7 @@ describe("CredentialValidator, PresentationValidator", function() {
                     VerifierOptions.default(),
                 )
             );
-            // Check that we don't leak memory. 
+            // Check that we don't leak memory.
             assert.deepStrictEqual(subjectDoc._strongCountInternal() as number, 1);
 
             assert.doesNotThrow(() =>
@@ -408,7 +408,7 @@ describe("CredentialValidator, PresentationValidator", function() {
                     FailFast.FirstError,
                 )
             );
-            // Check that we don't leak memory. 
+            // Check that we don't leak memory.
             assert.deepStrictEqual(subjectDoc._strongCountInternal() as number, 1);
             assert.deepStrictEqual(issuerDoc._strongCountInternal() as number, 1);
 
