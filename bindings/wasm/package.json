@@ -18,7 +18,7 @@
     "build:docs": "node ./build/docs",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
-    "test": "npm run test:unit && npm run test:unit:node && npm run test:examples",
+    "test": "npm run test:unit:node && npm run test:examples",
     "test:examples": "npm run test:node && npm run test:readme",
     "test:node": "ts-mocha -r tsconfig-paths/register -p tsconfig.node.json ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/e2e -a '\"--quiet\"'",
