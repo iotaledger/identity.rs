@@ -533,6 +533,13 @@ impl WasmCoreDocument {
     WasmCoreDocument(self.0.clone())
   }
 
+  /// ### Warning
+  /// This is for internal use only. Do not rely on or call this method.
+  #[wasm_bindgen(js_name = _strongCountInternal)]
+  pub fn strong_count(&self) -> usize {
+    Rc::strong_count(&self.0)
+  }
+
   // ===========================================================================
   // Serialization
   // ===========================================================================

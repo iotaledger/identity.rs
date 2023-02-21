@@ -134,13 +134,23 @@ impl From<CoreDID> for WasmCoreDID {
   }
 }
 
+impl From<&IToCoreDID> for CoreDID {
+  fn from(value: &IToCoreDID) -> Self {
+    get_core_did_clone(value).0
+  }
+}
+
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "CoreDID | IToCoreDID")]
   pub type IToCoreDID;
 
-  #[wasm_bindgen(method, js_name= toCoreDid)]
-  pub fn to_core_did(this: &IToCoreDID) -> WasmCoreDID;
+  // Specially crafted JS function called internally that ensures
+  // Custom DID implementations built on `CoreDID` don't get nulled
+  // out by Rust. Also avoids double clones when passing an instance of `CoreDID`
+  // or `IotaDID`.
+  #[wasm_bindgen(js_name = _getCoreDidCloneInternal, skip_typescript)]
+  pub fn get_core_did_clone(input: &IToCoreDID) -> WasmCoreDID;
 
 }
 

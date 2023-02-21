@@ -98,8 +98,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
@@ -146,6 +144,10 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -380,6 +382,9 @@ A method-agnostic DID Document.
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
+        * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [._strongCountInternal()](#CoreDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
     * _static_
@@ -697,6 +702,26 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
+<a name="CoreDocument+clone"></a>
+
+### coreDocument.clone() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+Deep clones the `CoreDocument`.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+_shallowCloneInternal"></a>
+
+### coreDocument.\_shallowCloneInternal() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+_strongCountInternal"></a>
+
+### coreDocument.\_strongCountInternal() ⇒ <code>number</code>
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+toJSON"></a>
 
 ### coreDocument.toJSON() ⇒ <code>any</code>
@@ -1651,6 +1676,9 @@ Deserializes an instance from a JSON object.
         * [.setMetadataPropertyUnchecked(key, value)](#IotaDocument+setMetadataPropertyUnchecked)
         * [.revokeCredentials(serviceQuery, indices)](#IotaDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#IotaDocument+unrevokeCredentials)
+        * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [._shallowCloneInternal()](#IotaDocument+_shallowCloneInternal) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [._strongCountInternal()](#IotaDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
     * _static_
@@ -2035,6 +2063,26 @@ unrevoke all specified `indices`.
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
+<a name="IotaDocument+clone"></a>
+
+### iotaDocument.clone() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+Returns a deep clone of the `IotaDocument`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+_shallowCloneInternal"></a>
+
+### iotaDocument.\_shallowCloneInternal() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+_strongCountInternal"></a>
+
+### iotaDocument.\_strongCountInternal() ⇒ <code>number</code>
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+toJSON"></a>
 
 ### iotaDocument.toJSON() ⇒ <code>any</code>
@@ -3891,10 +3939,13 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<<<<<<< HEAD
 <a name="KeyType"></a>
 
 ## KeyType
 **Kind**: global variable  
+=======
+>>>>>>> origin/main
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -3980,6 +4031,14 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 

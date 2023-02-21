@@ -17,6 +17,16 @@ const VALID_DID_EXAMPLE = "did:example:123";
 const KEY_BYTES = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
     25, 26, 27, 28, 29, 30, 31, 32]);
 
+class MockDID {
+    inner: CoreDID;
+    constructor(inner: CoreDID) {
+        this.inner = inner;
+    }
+    toCoreDid(): CoreDID {
+        return this.inner;
+    }
+}
+
 describe("CoreDID", function() {
     describe("#parse", function() {
         it("iota", () => {
@@ -92,6 +102,19 @@ describe("CoreDID", function() {
             // Invalid
             assert.deepStrictEqual(CoreDID.validMethodId(" "), false);
             assert.deepStrictEqual(CoreDID.validMethodId("method[brackets]"), false);
+        });
+    });
+    describe("#callingToCoreDid from Rust does not null out DIDs", function() {
+        it("should work", () => {
+            let didStr = "did:example:network:123";
+            let did = CoreDID.parse(didStr);
+            let mockDid = new MockDID(did);
+            const method = new VerificationMethod(mockDid, KeyType.Ed25519, KEY_BYTES, "key-0");
+            // Check that the VerificationMethod constructor does not null out mockDid.inner.
+            assert.deepStrictEqual(mockDid.inner.toString() as string, didStr as string);
+            // Also check for `CoreDID`
+            let method1 = new VerificationMethod(did, KeyType.Ed25519, KEY_BYTES, "key-1");
+            assert.deepStrictEqual(did.toString() as string, didStr as string);
         });
     });
 });
