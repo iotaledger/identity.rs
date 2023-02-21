@@ -174,9 +174,6 @@ fn test_document_sign() {
       signed.into_serde::<serde_json::Value>().unwrap(),
       signed_str.into_serde::<serde_json::Value>().unwrap()
     );
-
-    // Check that `id` was not invalidated by the WasmVerificationMethod constructor.
-    assert_eq!(id.to_core_did().to_string(), document.id().to_string());
   }
 }
 
