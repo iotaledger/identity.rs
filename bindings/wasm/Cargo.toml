@@ -38,14 +38,10 @@ features = ["client", "revocation-bitmap", "resolver"]
 
 [dev-dependencies]
 rand = "0.8.5"
-wasm-bindgen-test = { version = "0.3" }
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
 instant = { version = "0.1", default-features = false, features = ["wasm-bindgen"] }
-
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = true
 
 [profile.release]
 opt-level = 's'
