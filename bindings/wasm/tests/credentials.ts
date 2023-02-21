@@ -1,7 +1,5 @@
 import type { CoreDocument, ICoreDocument, IotaDocument } from "../node";
 
-import type { CoreDocument, ICoreDocument, IotaDocument } from "../node";
-
 export {};
 
 const assert = require("assert");
