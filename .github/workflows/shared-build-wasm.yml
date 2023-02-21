@@ -67,10 +67,6 @@ jobs:
       - name: Build WASM bindings
         run: npm run build
 
-      - name: Run unit tests
-        if: ${{ inputs.run-unit-tests }}
-        run: npm run test:unit
-
       - name: Run Node unit tests
         if: ${{ inputs.run-unit-tests }}
         run: npm run test:unit:node
