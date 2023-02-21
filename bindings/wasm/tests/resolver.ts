@@ -158,7 +158,7 @@ describe("Resolver", function() {
                 );
             } catch (e) {
                 if (e instanceof Error) {
-                    assert.equal("ResolverError::PresentationValidationError", e.name);
+                    assert.equal("CompoundPresentationValidationError", e.name);
                     return;
                 }
             }

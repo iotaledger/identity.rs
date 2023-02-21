@@ -17,6 +17,19 @@
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
+<dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
+<dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
+It can be placed in an origin&#39;s <code>.well-known</code> directory to prove linkage between the origin and a DID.
+See: <a href="https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource">https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource</a></p>
+<p>Note:</p>
+<ul>
+<li>Only <a href="https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format">Linked Data Proof Format</a>
+is supported.</li>
+</ul>
+</dd>
+<dt><a href="#DomainLinkageValidator">DomainLinkageValidator</a></dt>
+<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
+</dd>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
@@ -35,6 +48,8 @@
 and resolution of DID documents in Alias Outputs.</p>
 </dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
+<dd></dd>
+<dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
 <dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
 <dd><p>Supported verification method data formats.</p>
@@ -94,11 +109,11 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -351,7 +366,7 @@ A method-agnostic DID Document.
         * [.setController(controllers)](#CoreDocument+setController)
         * [.alsoKnownAs()](#CoreDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setAlsoKnownAs(urls)](#CoreDocument+setAlsoKnownAs)
-        * [.verificatonMethod()](#CoreDocument+verificatonMethod) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+        * [.verificationMethod()](#CoreDocument+verificationMethod) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.authentication()](#CoreDocument+authentication) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.assertionMethod()](#CoreDocument+assertionMethod) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.keyAgreement()](#CoreDocument+keyAgreement) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
@@ -374,8 +389,9 @@ A method-agnostic DID Document.
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
-        * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -449,9 +465,9 @@ Sets the `alsoKnownAs` property in the DID document.
 | --- | --- |
 | urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
 
-<a name="CoreDocument+verificatonMethod"></a>
+<a name="CoreDocument+verificationMethod"></a>
 
-### coreDocument.verificatonMethod() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+### coreDocument.verificationMethod() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
 Returns a copy of the document's `verificationMethod` set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -530,7 +546,7 @@ Errors if there already exists a service or verification method with the same id
 <a name="CoreDocument+removeService"></a>
 
 ### coreDocument.removeService(didUrl) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
-Remoce a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 Returns `true` if the service was removed.
 
@@ -691,22 +707,29 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
-<a name="CoreDocument+toJSON"></a>
-
-### coreDocument.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+clone"></a>
 
 ### coreDocument.clone() ⇒ [<code>CoreDocument</code>](#CoreDocument)
-Deep clones the object.
+Deep clones the `CoreDocument`.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+_shallowCloneInternal"></a>
+
+### coreDocument.\_shallowCloneInternal() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+toJSON"></a>
+
+### coreDocument.toJSON() ⇒ <code>any</code>
+Serializes to a plain JS representation.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument.fromJSON"></a>
 
 ### CoreDocument.fromJSON(json) ⇒ [<code>CoreDocument</code>](#CoreDocument)
-Deserializes an instance from a JSON object.
+Deserializes an instance from a plain JS representation.
 
 **Kind**: static method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -742,6 +765,7 @@ Deserializes an instance from a JSON object.
     * _static_
         * [.BaseContext()](#Credential.BaseContext) ⇒ <code>string</code>
         * [.BaseType()](#Credential.BaseType) ⇒ <code>string</code>
+        * [.createDomainLinkageCredential(values)](#Credential.createDomainLinkageCredential) ⇒ [<code>Credential</code>](#Credential)
         * [.fromJSON(json)](#Credential.fromJSON) ⇒ [<code>Credential</code>](#Credential)
 
 <a name="new_Credential_new"></a>
@@ -869,6 +893,15 @@ Returns the base JSON-LD context.
 Returns the base type.
 
 **Kind**: static method of [<code>Credential</code>](#Credential)  
+<a name="Credential.createDomainLinkageCredential"></a>
+
+### Credential.createDomainLinkageCredential(values) ⇒ [<code>Credential</code>](#Credential)
+**Kind**: static method of [<code>Credential</code>](#Credential)  
+
+| Param | Type |
+| --- | --- |
+| values | <code>IDomainLinkageCredential</code> | 
+
 <a name="Credential.fromJSON"></a>
 
 ### Credential.fromJSON(json) ⇒ [<code>Credential</code>](#Credential)
@@ -950,7 +983,7 @@ Deserializes an instance from a JSON object.
     * [.verifySignature(credential, trustedIssuers, options)](#CredentialValidator.verifySignature)
     * [.checkSubjectHolderRelationship(credential, holder, relationship)](#CredentialValidator.checkSubjectHolderRelationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
-    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -985,7 +1018,7 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -1044,7 +1077,7 @@ to verify the credential's signature will be made and an error is returned upon 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="CredentialValidator.checkSubjectHolderRelationship"></a>
@@ -1073,12 +1106,12 @@ Only supports `BitmapRevocation2022`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | statusCheck | <code>number</code> | 
 
 <a name="CredentialValidator.extractIssuer"></a>
 
-### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
 Utility for extracting the issuer field of a `Credential` as a DID.
 
 ### Errors
@@ -1237,6 +1270,127 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="DomainLinkageConfiguration"></a>
+
+## DomainLinkageConfiguration
+DID Configuration Resource which contains Domain Linkage Credentials.
+It can be placed in an origin's `.well-known` directory to prove linkage between the origin and a DID.
+See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
+
+Note:
+- Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
+  is supported.
+
+**Kind**: global class  
+
+* [DomainLinkageConfiguration](#DomainLinkageConfiguration)
+    * [new DomainLinkageConfiguration(linked_dids)](#new_DomainLinkageConfiguration_new)
+    * _instance_
+        * [.linkedDids()](#DomainLinkageConfiguration+linkedDids) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+        * [.issuers()](#DomainLinkageConfiguration+issuers) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.toJSON()](#DomainLinkageConfiguration+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DomainLinkageConfiguration+clone) ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+    * _static_
+        * [.fromJSON(json)](#DomainLinkageConfiguration.fromJSON) ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+
+<a name="new_DomainLinkageConfiguration_new"></a>
+
+### new DomainLinkageConfiguration(linked_dids)
+Constructs a new `DomainLinkageConfiguration`.
+
+
+| Param | Type |
+| --- | --- |
+| linked_dids | [<code>Array.&lt;Credential&gt;</code>](#Credential) | 
+
+<a name="DomainLinkageConfiguration+linkedDids"></a>
+
+### domainLinkageConfiguration.linkedDids() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+List of the Domain Linkage Credentials.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration+issuers"></a>
+
+### domainLinkageConfiguration.issuers() ⇒ <code>Array.&lt;string&gt;</code>
+List of the issuers of the Domain Linkage Credentials.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration+toJSON"></a>
+
+### domainLinkageConfiguration.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration+clone"></a>
+
+### domainLinkageConfiguration.clone() ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+<a name="DomainLinkageConfiguration.fromJSON"></a>
+
+### DomainLinkageConfiguration.fromJSON(json) ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="DomainLinkageValidator"></a>
+
+## DomainLinkageValidator
+A validator for a Domain Linkage Configuration and Credentials.
+
+**Kind**: global class  
+
+* [DomainLinkageValidator](#DomainLinkageValidator)
+    * [.validateLinkage(issuer, configuration, domain, options)](#DomainLinkageValidator.validateLinkage)
+    * [.validateCredential(issuer, credential, domain, options)](#DomainLinkageValidator.validateCredential)
+
+<a name="DomainLinkageValidator.validateLinkage"></a>
+
+### DomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
+Validates the linkage between a domain and a DID.
+[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+
+Linkage is valid if no error is thrown.
+
+# Note:
+- Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
+  is supported.
+- Only the Credential issued by `issuer` is verified.
+
+# Errors
+ - Semantic structure of `configuration` is invalid.
+ - `configuration` includes multiple credentials issued by `issuer`.
+ - Validation of the matched Domain Linkage Credential fails.
+
+**Kind**: static method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
+| domain | <code>string</code> | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
+
+<a name="DomainLinkageValidator.validateCredential"></a>
+
+### DomainLinkageValidator.validateCredential(issuer, credential, domain, options)
+Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+Error will be thrown in case the validation fails.
+
+**Kind**: static method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| credential | [<code>Credential</code>](#Credential) | 
+| domain | <code>string</code> | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 
 <a name="Duration"></a>
 
@@ -1645,8 +1799,10 @@ Deserializes an instance from a JSON object.
         * [.setMetadataPropertyUnchecked(key, value)](#IotaDocument+setMetadataPropertyUnchecked)
         * [.revokeCredentials(serviceQuery, indices)](#IotaDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#IotaDocument+unrevokeCredentials)
-        * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.clone()](#IotaDocument+clone) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [._shallowCloneInternal()](#IotaDocument+_shallowCloneInternal) ⇒ [<code>IotaDocument</code>](#IotaDocument)
+        * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
+        * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2029,16 +2185,29 @@ unrevoke all specified `indices`.
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
-<a name="IotaDocument+toJSON"></a>
-
-### iotaDocument.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+clone"></a>
 
 ### iotaDocument.clone() ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Deep clones the object.
+Returns a deep clone of the `IotaDocument`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+_shallowCloneInternal"></a>
+
+### iotaDocument.\_shallowCloneInternal() ⇒ [<code>IotaDocument</code>](#IotaDocument)
+### Warning
+This is for internal use only. Do not rely on or call this method.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+toJSON"></a>
+
+### iotaDocument.toJSON() ⇒ <code>any</code>
+Serializes to a plain JS representation.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+toCoreDocument"></a>
+
+### iotaDocument.toCoreDocument() ⇒ [<code>CoreDocument</code>](#CoreDocument)
+Transforms the `IotaDocument` to its `CoreDocument` representation.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument.newWithId"></a>
@@ -2096,7 +2265,7 @@ Errors if any Alias Output does not contain a valid or empty DID Document.
 <a name="IotaDocument.fromJSON"></a>
 
 ### IotaDocument.fromJSON(json) ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Deserializes an instance from a JSON object.
+Deserializes an instance from a plain JS representation.
 
 **Kind**: static method of [<code>IotaDocument</code>](#IotaDocument)  
 
@@ -2376,6 +2545,74 @@ Deserializes a `KeyPair` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="LinkedDomainService"></a>
+
+## LinkedDomainService
+**Kind**: global class  
+
+* [LinkedDomainService](#LinkedDomainService)
+    * [new LinkedDomainService(options)](#new_LinkedDomainService_new)
+    * _instance_
+        * [.domains()](#LinkedDomainService+domains) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.toService()](#LinkedDomainService+toService) ⇒ [<code>Service</code>](#Service)
+        * [.clone()](#LinkedDomainService+clone) ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+    * _static_
+        * [.fromService(service)](#LinkedDomainService.fromService) ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+        * [.isValid(service)](#LinkedDomainService.isValid) ⇒ <code>boolean</code>
+
+<a name="new_LinkedDomainService_new"></a>
+
+### new LinkedDomainService(options)
+Constructs a new `LinkedDomainService` that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
+Domain URLs must include the `https` scheme in order to pass the domain linkage validation.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>ILinkedDomainService</code> | 
+
+<a name="LinkedDomainService+domains"></a>
+
+### linkedDomainService.domains() ⇒ <code>Array.&lt;string&gt;</code>
+Returns the domains contained in the Linked Domain Service.
+
+**Kind**: instance method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+<a name="LinkedDomainService+toService"></a>
+
+### linkedDomainService.toService() ⇒ [<code>Service</code>](#Service)
+Returns the inner service which can be added to a DID Document.
+
+**Kind**: instance method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+<a name="LinkedDomainService+clone"></a>
+
+### linkedDomainService.clone() ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+Deep clones the object.
+
+**Kind**: instance method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+<a name="LinkedDomainService.fromService"></a>
+
+### LinkedDomainService.fromService(service) ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
+Creates a new @link{LinkedDomainService} from a @link{Service}.
+# Error
+Errors if `service` is not a valid Linked Domain Service.
+
+**Kind**: static method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>Service</code>](#Service) | 
+
+<a name="LinkedDomainService.isValid"></a>
+
+### LinkedDomainService.isValid(service) ⇒ <code>boolean</code>
+Returns `true` if a @link{Service} is a valid Linked Domain Service.
+
+**Kind**: static method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>Service</code>](#Service) | 
 
 <a name="MethodData"></a>
 
@@ -2768,7 +3005,7 @@ Deserializes an instance from a JSON object.
     * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
-    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -2805,8 +3042,8 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
-| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -2827,7 +3064,7 @@ Fails if signature verification against the holder document fails.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="PresentationValidator.checkStructure"></a>
@@ -2843,7 +3080,7 @@ Validates the semantic structure of the `Presentation`.
 
 <a name="PresentationValidator.extractHolder"></a>
 
-### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID) \| [<code>IotaDID</code>](#IotaDID)
+### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
 Utility for extracting the holder field of a `Presentation` as a DID.
 
 ### Errors
@@ -3079,10 +3316,10 @@ The resolver will only be able to resolve DID documents for methods it has been 
 
 * [Resolver](#Resolver)
     * [new Resolver(config)](#new_Resolver_new)
-    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
-    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
     * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+    * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -3100,7 +3337,7 @@ will throw an error because the handler for the "iota" method then becomes ambig
 
 <a name="Resolver+resolvePresentationIssuers"></a>
 
-### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(IotaDocument\|CoreDocument)&gt;&gt;</code>
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
 Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
@@ -3116,7 +3353,7 @@ resolution fails.
 
 <a name="Resolver+resolvePresentationHolder"></a>
 
-### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 Fetches the DID Document of the holder of a `Presentation`.
 
 # Errors
@@ -3156,12 +3393,12 @@ according to the `fail_fast` parameter.
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
-| holder | [<code>IotaDocument</code>](#IotaDocument) \| [<code>CoreDocument</code>](#CoreDocument) \| <code>undefined</code> | 
-| issuers | <code>Array.&lt;(IotaDocument\|CoreDocument)&gt;</code> \| <code>undefined</code> | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="Resolver+resolve"></a>
 
-### resolver.resolve(did) ⇒ <code>Promise.&lt;(IotaDocument\|CoreDocument)&gt;</code>
+### resolver.resolve(did) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 Fetches the DID Document of the given DID.
 
 ### Errors
@@ -3454,7 +3691,7 @@ Creates a new `VerificationMethod` from the given `did` and public key.
 
 | Param | Type |
 | --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) \| <code>ICoreDID</code> | 
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
 | keyType | <code>number</code> | 
 | publicKey | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 
@@ -3696,6 +3933,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
@@ -3703,10 +3944,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 

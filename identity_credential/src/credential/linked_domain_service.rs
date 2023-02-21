@@ -40,7 +40,7 @@ impl LinkedDomainService {
     "LinkedDomains"
   }
 
-  /// Convenient function to create a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
+  /// Constructs a new `LinkedDomainService` that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
   /// Domain URLs must include the `https` scheme in order to pass the domain linkage validation.
   pub fn new(did_url: DIDUrl, domains: impl Into<OrderedSet<Url>>, properties: Object) -> Result<Self> {
     let domains: OrderedSet<Url> = domains.into();
@@ -76,7 +76,7 @@ impl LinkedDomainService {
   ///
   /// Note: `{"type": ["LinkedDomains"]}` might be serialized the same way as  `{"type": "LinkedDomains"}`
   /// which passes the semantic check.
-  fn check_structure(service: &Service) -> Result<()> {
+  pub fn check_structure(service: &Service) -> Result<()> {
     if service.type_().len() != 1 {
       return Err(DomainLinkageError("invalid service type".into()));
     }

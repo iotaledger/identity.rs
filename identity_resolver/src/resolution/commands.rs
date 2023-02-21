@@ -3,7 +3,6 @@
 
 use core::future::Future;
 use identity_did::DID;
-use identity_document::document::CoreDocument;
 
 use crate::Error;
 use crate::ErrorCause;
@@ -22,19 +21,18 @@ pub trait Command<'a, T>: std::fmt::Debug + private::Sealed {
 mod private {
   use super::SendSyncCommand;
   use super::SingleThreadedCommand;
-  use identity_document::document::CoreDocument;
   pub trait Sealed {}
-  impl<DOC: AsRef<CoreDocument> + 'static> Sealed for SendSyncCommand<DOC> {}
-  impl<DOC: AsRef<CoreDocument> + 'static> Sealed for SingleThreadedCommand<DOC> {}
+  impl<DOC: 'static> Sealed for SendSyncCommand<DOC> {}
+  impl<DOC: 'static> Sealed for SingleThreadedCommand<DOC> {}
 }
 
-impl<DOC: AsRef<CoreDocument> + 'static> std::fmt::Debug for SendSyncCommand<DOC> {
+impl<DOC: 'static> std::fmt::Debug for SendSyncCommand<DOC> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("<resolution_handler>")
   }
 }
 
-impl<DOC: AsRef<CoreDocument> + 'static> std::fmt::Debug for SingleThreadedCommand<DOC> {
+impl<DOC: 'static> std::fmt::Debug for SingleThreadedCommand<DOC> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("<resolution_handler>")
   }
@@ -45,18 +43,18 @@ type SendSyncCallback<DOC> =
   Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send>> + Send + Sync>;
 
 /// Wrapper around a thread safe callback.
-pub struct SendSyncCommand<DOC: AsRef<CoreDocument> + 'static> {
+pub struct SendSyncCommand<DOC: 'static> {
   fun: SendSyncCallback<DOC>,
 }
 
-impl<'a, DOC: AsRef<CoreDocument> + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
+impl<'a, DOC: 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
 }
 
-impl<DOC: AsRef<CoreDocument> + 'static> SendSyncCommand<DOC> {
+impl<DOC: 'static> SendSyncCommand<DOC> {
   /// Converts a handler represented as a closure to a command.
   ///
   /// This is achieved by first producing a callback represented as a dynamic asynchronous function pointer
@@ -102,14 +100,14 @@ pub(super) type SingleThreadedCallback<DOC> =
 pub struct SingleThreadedCommand<DOC> {
   fun: SingleThreadedCallback<DOC>,
 }
-impl<'a, DOC: AsRef<CoreDocument> + 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
+impl<'a, DOC: 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
 }
 
-impl<DOC: AsRef<CoreDocument> + 'static> SingleThreadedCommand<DOC> {
+impl<DOC: 'static> SingleThreadedCommand<DOC> {
   /// Equivalent to [`SendSyncCommand::new`](SendSyncCommand::new()), but with less `Send` + `Sync` bounds.
   pub(super) fn new<D, F, Fut, DOCUMENT, E, DIDERR>(handler: F) -> Self
   where

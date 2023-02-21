@@ -31,6 +31,16 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.methodId(), networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.scheme(), "did");
         });
+
+        it("toCoreDid should work", () => {
+            const did = new IotaDID(aliasIdBytes, networkName);
+            const coreDid = did.toCoreDid();
+            assert.deepStrictEqual(did.toString(), coreDid.toString());
+            assert.deepStrictEqual(
+                coreDid.toString(),
+                "did" + ":" + IotaDID.METHOD + ":" + networkName + ":" + did.tag(),
+            );
+        });
     });
     describe("#from_alias_id", function() {
         it("should work", () => {
@@ -69,15 +79,6 @@ describe("IotaDocument", function() {
             const did = new IotaDID(aliasIdBytes, networkName);
             const doc = IotaDocument.newWithId(did);
             assert.deepStrictEqual(doc.id().toString(), did.toString());
-        });
-        it("toCoreDid should work", () => {
-            const did = new IotaDID(aliasIdBytes, networkName);
-            const coreDid = did.toCoreDid();
-            assert.deepStrictEqual(did.toString(), coreDid.toString());
-            assert.deepStrictEqual(
-                coreDid.toString(),
-                "did" + ":" + IotaDID.METHOD + ":" + networkName + ":" + did.tag(),
-            );
         });
     });
 

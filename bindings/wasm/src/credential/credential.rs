@@ -5,12 +5,14 @@ use identity_iota::core::Context;
 use identity_iota::core::Object;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::DomainLinkageCredentialBuilder;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
+use crate::credential::domain_linkage_credential_builder::IDomainLinkageCredential;
 use crate::credential::ArrayContext;
 use crate::credential::ArrayEvidence;
 use crate::credential::ArrayPolicy;
@@ -48,6 +50,12 @@ impl WasmCredential {
   #[wasm_bindgen(constructor)]
   pub fn new(values: ICredential) -> Result<WasmCredential> {
     let builder: CredentialBuilder = CredentialBuilder::try_from(values)?;
+    builder.build().map(Self).wasm_result()
+  }
+
+  #[wasm_bindgen(js_name = "createDomainLinkageCredential")]
+  pub fn create_domain_linkage_credential(values: IDomainLinkageCredential) -> Result<WasmCredential> {
+    let builder: DomainLinkageCredentialBuilder = DomainLinkageCredentialBuilder::try_from(values)?;
     builder.build().map(Self).wasm_result()
   }
 

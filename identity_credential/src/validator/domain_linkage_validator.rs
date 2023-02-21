@@ -62,7 +62,7 @@ impl DomainLinkageValidator {
             source: None,
           })
         } else {
-          Self::validate_credential(issuer, credential, domain.clone(), validation_options)
+          Self::validate_credential(issuer, credential, domain, validation_options)
         }
       }
     }
@@ -76,7 +76,7 @@ impl DomainLinkageValidator {
   pub fn validate_credential<T: Serialize, DOC: AsRef<CoreDocument>>(
     issuer: &DOC,
     credential: &Credential<T>,
-    domain: Url,
+    domain: &Url,
     validation_options: &CredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
     let issuer_did: CoreDID =
@@ -202,7 +202,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(validation_result.is_ok());
@@ -216,7 +216,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -233,7 +233,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -250,7 +250,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -271,7 +271,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(validation_result.is_ok());
@@ -289,7 +289,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -309,7 +309,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -330,7 +330,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(validation_result.is_ok());
@@ -347,7 +347,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -366,7 +366,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -385,7 +385,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
@@ -404,7 +404,7 @@ mod tests {
     let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
       &document,
       &credential,
-      url_foo(),
+      &url_foo(),
       &CredentialValidationOptions::default(),
     );
     assert!(matches!(
