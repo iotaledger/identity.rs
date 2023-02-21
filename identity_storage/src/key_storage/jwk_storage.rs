@@ -26,6 +26,7 @@ mod storage_sub_trait {
   impl<S: Send + Sync + super::JwkStorage> StorageSendSyncMaybe for S {}
 }
 
+/// Secure storage for cryptographic keys represented as JWKs.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {

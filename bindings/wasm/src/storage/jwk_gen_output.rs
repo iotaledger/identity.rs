@@ -11,11 +11,23 @@ pub struct WasmJwkGenOutput(pub(crate) JwkGenOutput);
 #[wasm_bindgen(js_class = JwkGenOutput)]
 impl WasmJwkGenOutput {
   #[wasm_bindgen(constructor)]
-  pub fn new(key_id: String, jwk: WasmJwk) -> Self {
+  pub fn new(key_id: String, jwk: &WasmJwk) -> Self {
     Self(JwkGenOutput {
       key_id: KeyId::new(key_id),
-      jwk: jwk.into(),
+      jwk: jwk.clone().into(),
     })
+  }
+
+  /// Returns the generated public JWK.
+  #[wasm_bindgen]
+  pub fn jwk(&self) -> WasmJwk {
+    WasmJwk(self.0.jwk.clone())
+  }
+
+  /// Returns the key id of the generated jwk.
+  #[wasm_bindgen(js_name = keyId)]
+  pub fn key_id(&self) -> String {
+    self.0.key_id.clone().into()
   }
 }
 
