@@ -66,9 +66,8 @@ async fn main() -> anyhow::Result<()> {
   domains.append(domain_2.clone());
 
   // Create a Linked Domain Service to enable the discovery of the linked domains through the DID Document.
-  // This is optional.
+  // This is optional since it is not a hard requirement by the specs.
   let service_url: DIDUrl = did.clone().join("#domain-linkage")?;
-  // let domain_linkage_service: IotaService = LinkedDomainService::new(service_url, domains)?;
   let linked_domain_service: LinkedDomainService =
     LinkedDomainService::new(service_url, domains, Object::new()).unwrap();
   did_document.insert_service(linked_domain_service.into())?;
@@ -110,7 +109,7 @@ async fn main() -> anyhow::Result<()> {
   // The DID Configuration resource can be made available on `https://foo.example.com/.well-known/did-configuration.json`.
   let configuration_resource_json: String = configuration_resource.to_json()?;
 
-  // Now the DID Document links to the Domains through the service, and first domain links to the DID
+  // Now the DID Document links to the Domains through the service, and the Foo domain links to the DID
   // through the DID Configuration resource. A bidirectional linkage is established.
   // Note however that bidirectionality is not a hard requirement. It is valid to have a Domain Linkage
   // credential point to a DID, without the DID having a service that points back.
@@ -144,7 +143,6 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(linked_dids.len(), 1);
 
   // Resolve the DID Document of the DID that issued the credential.
-  let did: IotaDID = IotaDID::parse(linked_dids.get(0).unwrap().as_str()).unwrap();
   let issuer_did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
