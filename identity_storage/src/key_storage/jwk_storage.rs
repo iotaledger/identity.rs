@@ -41,8 +41,6 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId>;
 
   /// Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
-  ///
-  /// It's recommend that the implementer exposes constants for the supported [`SignatureAlgorithm`].
   async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>>;
 
   /// Returns the public key identified by `key_id` as a JSON Web Key.

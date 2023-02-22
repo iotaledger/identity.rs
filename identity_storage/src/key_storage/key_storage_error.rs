@@ -188,7 +188,7 @@ pub enum KeyStorageErrorKind {
   /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
   ///
   /// When using this variant one may want to attach additional context to the corresponding [`KeyStorageError`]. See
-  /// [`KeyStorageError::with_message`](KeyStorageError::with_message()) and
+  /// [`KeyStorageError::with_custom_message`](KeyStorageError::with_custom_message()) and
   /// [`KeyStorageError::with_source`](KeyStorageError::with_source()).
   Unspecified,
 }

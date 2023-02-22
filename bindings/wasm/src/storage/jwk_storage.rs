@@ -99,25 +99,23 @@ const JWK_STORAGE: &'static str = r#"
 interface JwkStorage {
   /** Generate a new key represented as a JSON Web Key.
    * 
-   * It's recommend that the implementer exposes constants for the supported [`KeyType`]. */
+   * It's recommend that the implementer exposes constants for the supported key type string. */
   generate: (keyType: string, algorithm: JwsAlgorithm) => Promise<JwkGenOutput>;
   /** Insert an existing JSON Web Key into the storage.
    * 
    * All private key components of the `jwk` must be set. */
   insert: (jwk: Jwk) => Promise<string>;
-  /** Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
-   * 
-   * It's recommend that the implementer exposes constants for the supported [`SignatureAlgorithm`]. */
+  /** Sign the provided `data` using the private key identified by `keyId` with the specified `algorithm`. */
   sign: (keyId: string, data: Uint8Array) => Promise<Uint8Array>;
-  /** Returns the public key identified by `key_id` as a JSON Web Key. */
+  /** Returns the public key identified by `keyId` as a JSON Web Key. */
   public: (keyId: string) => Promise<Jwk>;
-  /** Deletes the key identified by `key_id`.
+  /** Deletes the key identified by `keyId`.
    * 
    * # Warning
    * 
    * This operation cannot be undone. The keys are purged permanently. */
   delete: (keyId: string) => Promise<void>;
-  /** Returns `true` if the key with the given `key_id` exists in storage, `false` otherwise. */
+  /** Returns `true` if the key with the given `keyId` exists in storage, `false` otherwise. */
   exists: (keyId: string) => Promise<boolean>;
 }"#;
 
