@@ -8,7 +8,7 @@ import {
     KeyType,
     MethodScope,
     VerificationMethod,
-} from "../../node";
+} from "@iota/identity-wasm/node";
 
 export const API_ENDPOINT = "http://localhost:14265";
 export const FAUCET_ENDPOINT = "http://localhost:8091/api/enqueue";
