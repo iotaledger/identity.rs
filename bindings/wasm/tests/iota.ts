@@ -88,7 +88,6 @@ describe("IotaDocument", function() {
             const fragment = "new-method-1";
             const scope = MethodScope.AssertionMethod();
             const method = new VerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
-
             // Add.
             doc.insertMethod(method, scope);
             // Resolve.
@@ -225,6 +224,13 @@ describe("IotaDocument", function() {
             doc.setPropertyUnchecked("custom1", "asdf");
             doc.setPropertyUnchecked("custom2", 1234);
             assert.deepStrictEqual(doc.properties(), properties);
+        });
+    });
+    describe("#callingToCoreDid from Rust does not null out IotaDID", function() {
+        it("should work", () => {
+            const did = new IotaDID(aliasIdBytes, networkName);
+            const method = new VerificationMethod(did, KeyType.Ed25519, aliasIdBytes, "key-0");
+            assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
         });
     });
 });

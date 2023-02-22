@@ -10,6 +10,7 @@ use crate::did::WasmMethodType;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::crypto::PublicKey;
+use identity_iota::did::CoreDID;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
 
@@ -31,7 +32,7 @@ impl WasmVerificationMethod {
     fragment: String,
   ) -> Result<WasmVerificationMethod> {
     let public_key: PublicKey = PublicKey::from(publicKey);
-    VerificationMethod::new(did.to_core_did().0, keyType.into(), &public_key, &fragment)
+    VerificationMethod::new(CoreDID::from(did), keyType.into(), &public_key, &fragment)
       .map(Self)
       .wasm_result()
   }
