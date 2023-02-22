@@ -28,14 +28,14 @@ use crate::key_storage::JwkStorage;
 /// The map from key ids to JWKs.
 type JwkKeyStore = HashMap<KeyId, Jwk>;
 
-/// An insecure, in-memory [`JwkStorage`] implementation that serves as an example and is used in tests.
+/// An insecure, in-memory [`JwkStorage`] implementation that serves as an example and may be used in tests.
 #[derive(Debug)]
-pub struct MemKeyStore {
+pub struct JwkMemStore {
   jwk_store: Shared<JwkKeyStore>,
 }
 
-impl MemKeyStore {
-  /// Creates a new, empty `MemStore` instance.
+impl JwkMemStore {
+  /// Creates a new, empty `JwkMemStore` instance.
   pub fn new() -> Self {
     Self {
       jwk_store: Shared::new(HashMap::new()),
@@ -43,10 +43,10 @@ impl MemKeyStore {
   }
 }
 
-// Refer to the `Storage` interface docs for high-level documentation of the individual methods.
+// Refer to the `JwkStorage` interface docs for high-level documentation of the individual methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl JwkStorage for MemKeyStore {
+impl JwkStorage for JwkMemStore {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let key_type: MemStoreKeyType = MemStoreKeyType::try_from(&key_type)?;
 
@@ -302,7 +302,7 @@ impl TryFrom<&Jwk> for MemStoreKeyType {
   }
 }
 
-impl Default for MemKeyStore {
+impl Default for JwkMemStore {
   fn default() -> Self {
     Self::new()
   }
@@ -372,7 +372,7 @@ mod tests {
   #[tokio::test]
   async fn generate_and_sign() {
     let test_msg: &[u8] = b"test";
-    let store: MemKeyStore = MemKeyStore::new();
+    let store: JwkMemStore = JwkMemStore::new();
 
     let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE, JwsAlgorithm::EdDSA).await.unwrap();
 
@@ -388,7 +388,7 @@ mod tests {
 
   #[tokio::test]
   async fn insert() {
-    let store: MemKeyStore = MemKeyStore::new();
+    let store: JwkMemStore = JwkMemStore::new();
 
     let (private_key, public_key) = generate_ed25519();
     let mut jwk: Jwk = crate::key_storage::ed25519::encode_jwk(&private_key, &public_key);
@@ -408,13 +408,13 @@ mod tests {
 
   #[tokio::test]
   async fn exists() {
-    let store: MemKeyStore = MemKeyStore::new();
+    let store: JwkMemStore = JwkMemStore::new();
     assert!(!store.exists(&KeyId::new("non-existent-id")).await.unwrap());
   }
 
   #[tokio::test]
   async fn incompatible_key_type() {
-    let store: MemKeyStore = MemKeyStore::new();
+    let store: JwkMemStore = JwkMemStore::new();
 
     let mut ec_params = JwkParamsEc::new();
     ec_params.crv = EcCurve::P256.name().to_owned();
@@ -429,7 +429,7 @@ mod tests {
 
   #[tokio::test]
   async fn incompatible_key_alg() {
-    let store: MemKeyStore = MemKeyStore::new();
+    let store: JwkMemStore = JwkMemStore::new();
 
     let (private_key, public_key) = generate_ed25519();
     let mut jwk: Jwk = crate::key_storage::ed25519::encode_jwk(&private_key, &public_key);

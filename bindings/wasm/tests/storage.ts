@@ -118,6 +118,10 @@ export class MemStore implements JwkStorage {
             throw new Error("expected a JWK with all private key components set");
         }
 
+        if (!jwk.alg()) {
+            throw new Error("expected a Jwk with an `alg` parameter");
+        }
+
         this._keys.set(keyId, jwk);
 
         return keyId;
@@ -144,7 +148,6 @@ export class MemStore implements JwkStorage {
 
 // Encodes a Ed25519 keypair into a Jwk.
 function encodeJwk(keyPair: KeyPair, alg: JwsAlgorithm): Jwk {
-    // TODO: Is this url-safe?
     let x = Base64.encode(keyPair.public());
     let d = Base64.encode(keyPair.private());
 

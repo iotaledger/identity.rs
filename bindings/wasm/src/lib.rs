@@ -38,7 +38,8 @@ pub fn start() -> Result<(), JsValue> {
   Ok(())
 }
 
-// This section should be used as the central place for imports from `./lib`.
+// This section should be used as the central place for imports from `./lib`
+// used by TS definitions written on the Rust side.
 // It appears the import path must be relative to `src`.
 #[wasm_bindgen(typescript_custom_section)]
 const CUSTOM_IMPORTS: &'static str = r#"

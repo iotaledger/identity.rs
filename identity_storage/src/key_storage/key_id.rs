@@ -9,10 +9,12 @@
 pub struct KeyId(String);
 
 impl KeyId {
+  /// Creates a new key identifier from a string.
   pub fn new(id: impl Into<String>) -> Self {
     Self(id.into())
   }
 
+  /// Returns string representation of the key id.
   pub fn as_str(&self) -> &str {
     &self.0
   }
