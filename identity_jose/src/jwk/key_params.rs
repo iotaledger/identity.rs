@@ -60,6 +60,7 @@ impl JwkParams {
 /// Parameters for Elliptic Curve Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.2)
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize, Zeroize)]
 #[zeroize(drop)]
 pub struct JwkParamsEc {
@@ -131,6 +132,7 @@ impl From<JwkParamsEc> for JwkParams {
 /// Parameters for RSA Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.3)
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize, Zeroize)]
 #[zeroize(drop)]
 pub struct JwkParamsRsa {
@@ -186,6 +188,7 @@ pub struct JwkParamsRsa {
 /// Parameters for RSA Primes
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.7)
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize, Zeroize)]
 #[zeroize(drop)]
 pub struct JwkParamsRsaPrime {
@@ -252,6 +255,7 @@ impl From<JwkParamsRsa> for JwkParams {
 /// Parameters for Symmetric Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.4)
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize, Zeroize)]
 #[zeroize(drop)]
 pub struct JwkParamsOct {
@@ -288,6 +292,7 @@ impl From<JwkParamsOct> for JwkParams {
 /// Parameters for Octet Key Pairs.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc8037#section-2)
+#[typeshare::typeshare]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize, Zeroize)]
 #[zeroize(drop)]
 pub struct JwkParamsOkp {

@@ -8,6 +8,7 @@ use core::fmt::Result;
 /// Supported algorithms for the JSON Web Key `key_ops` property.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-key-operations)
+#[typeshare::typeshare]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum JwkOperation {

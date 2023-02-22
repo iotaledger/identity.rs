@@ -8,6 +8,7 @@ use core::fmt::Result;
 /// Supported algorithms for the JSON Web Signatures `alg` claim.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms)
+#[typeshare::typeshare]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
 #[allow(non_camel_case_types)]
 pub enum JwsAlgorithm {

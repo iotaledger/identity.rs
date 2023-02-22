@@ -8,6 +8,7 @@ use core::fmt::Result;
 /// Supported Elliptic Curves.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-key-elliptic-curve)
+#[typeshare::typeshare]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EdCurve {
   /// Ed25519 signature algorithm key pairs.

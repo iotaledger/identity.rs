@@ -8,6 +8,7 @@ use core::fmt::Result;
 /// Supported algorithms for the JSON Web Key `use` property.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-key-use)
+#[typeshare::typeshare]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
 pub enum JwkUse {
   /// Digital Signature or MAC.

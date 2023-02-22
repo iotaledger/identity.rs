@@ -8,6 +8,7 @@ use core::fmt::Result;
 /// Supported types for the JSON Web Key `typ` property.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-key-types)
+#[typeshare::typeshare]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, serde::Serialize)]
 pub enum JwkType {
   /// Elliptic Curve.

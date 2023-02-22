@@ -27,6 +27,7 @@ pub type JwkThumbprint = [u8; SHA256_LEN];
 /// JSON Web Key.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7517#section-4)
+#[typeshare::typeshare]
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct Jwk {
   /// Key Type.
