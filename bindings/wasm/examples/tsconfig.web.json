@@ -1,11 +1,9 @@
 {
   "compilerOptions": {
-    "allowJs": false,
     "target": "ES6",
     "outDir": "./dist/web",
     "baseUrl": "./",
     "lib": ["ES6", "dom"],
-    "types": ["cypress", "node"],
     "esModuleInterop": true,
     "moduleResolution": "node",
     "paths": {
