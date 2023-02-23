@@ -2,11 +2,14 @@ const fs = require("fs");
 const path = require("path");
 
 /**
- * Replaces aliases defined in `tsconfig.json` files with their corresponding paths.
+ * Replaces aliases defined in the `tsconfig.json` `paths` configuration in `js` and `ts` files.
  * If more than one path is defined. The second path is used. Otherwise the first path.
+ * @param {string} tsconfig - Path to tsconfig that should be processed
+ * @param {string} dist - Folder of files that should be processed
+ * @param {'resolve'=} mode - In "resolve" mode relative paths will be replaced paths relative to the processed file. Note: `basePath` in the tsconfig will not be considered.
  */
 
-async function replace(tsconfig, dist, mode) {
+function replace(tsconfig, dist, mode) {
     // Read tsconfig file.
     const tsconfigPath = path.join(__dirname, '..', tsconfig);
     console.log(`\n using ${tsconfigPath}`);
@@ -26,14 +29,15 @@ async function replace(tsconfig, dist, mode) {
         let fileData = fs.readFileSync(file, "utf8");
         for (let key of keys) {
             let value = a[key][1] ?? a[key][0];
-            console.log(`\t replacement value: ${value}`);
+            
             const absoluteIncludePath = path.resolve(path.dirname(tsconfigPath), value);
-            if(mode == "resolve" && fs.existsSync(absoluteIncludePath)) {
+            if (mode == "resolve" && fs.existsSync(absoluteIncludePath)) {
                 const absoluteFilePath = path.resolve(path.dirname(file));
-                console.log(`\t\t resolving ${absoluteFilePath} to ${absoluteIncludePath}`);
+                console.log(`\t calculating path from ${absoluteFilePath} to ${absoluteIncludePath}`);
                 value = path.relative(absoluteFilePath, absoluteIncludePath);
-                console.log(`\t\t resolved relative replacement value: ${value}`);
             }
+
+            console.log(`\t replace ${key} with ${value}`);
             fileData = fileData.replace(key, value);
         }
         fs.writeFileSync(file, fileData, "utf8");
@@ -42,15 +46,8 @@ async function replace(tsconfig, dist, mode) {
 
 const readdirSync = (p, a = []) => {
     if (fs.statSync(p).isDirectory())
-      fs.readdirSync(p).map(f => readdirSync(a[a.push(path.join(p, f)) - 1], a))
+    fs.readdirSync(p).map(f => readdirSync(a[a.push(path.join(p, f)) - 1], a))
     return a
-  }
-  
-(async () => {
-    try {
-        await replace(process.argv[2], process.argv[3], process.argv[4]);
-    } catch (e) {
-        console.log(e);
-        return e;
-    }
-})();
+}
+
+replace(process.argv[2], process.argv[3], process.argv[4]);
