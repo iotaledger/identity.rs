@@ -169,8 +169,8 @@ impl<'a, 'b> Decoder<'b> {
     validate_jws_headers(protected.as_ref(), jws_signature.header.as_ref(), self.crits.as_deref())?;
 
     let merged: HeaderSet<'_> = HeaderSet::new()
-      .protected(protected.as_ref())
-      .unprotected(jws_signature.header.as_ref());
+      .with_protected(protected.as_ref())
+      .with_unprotected(jws_signature.header.as_ref());
     let alg: JwsAlgorithm = merged.try_alg()?;
 
     self.check_alg(alg)?;

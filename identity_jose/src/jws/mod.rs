@@ -101,6 +101,7 @@ mod decoder;
 mod encoder;
 mod format;
 mod header;
+mod jws_verifier;
 mod recipient;
 
 pub use self::algorithm::*;

@@ -55,7 +55,9 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
   let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
     let sk = sk.clone();
     async move {
-      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(&protected).unprotected(&unprotected);
+      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
+        .with_protected(&protected)
+        .with_unprotected(&unprotected);
       if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
         return Err("incompatible `alg` parameter");
       }
@@ -69,7 +71,9 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
 
 pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], public_key: PublicKey) -> Token<'a> {
   let verify_fn = |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
-    let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(protected).unprotected(unprotected);
+    let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
+      .with_protected(protected)
+      .with_unprotected(unprotected);
     if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
       return Err("incompatible `alg` parameter");
     }

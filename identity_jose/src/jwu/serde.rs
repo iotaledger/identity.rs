@@ -66,6 +66,15 @@ pub fn validate_jws_headers(
   Ok(())
 }
 
+/// Validates that the "crit" parameter satisfies the following requirements:
+/// 1. It is integrity protected.
+/// 2. It is not encoded as an empty list.
+/// 3. It does not contain any header parameters defined by the
+///  JOSE JWS/JWA specifications.
+/// 4. It's values are contained in the given `permitted` array.
+/// 5. All values in "crit" are present in at least one of the `protected` or `unprotected` headers.
+///
+/// See <https://www.rfc-editor.org/rfc/rfc7515#section-4.1.11>
 pub fn validate_crit<T>(protected: Option<&T>, unprotected: Option<&T>, permitted: Option<&[String]>) -> Result<()>
 where
   T: JoseHeader,
@@ -110,6 +119,7 @@ where
   Ok(())
 }
 
+/// Checks that the provided headers satisfy the requirements of <https://www.rfc-editor.org/rfc/rfc7797#section-3>.
 pub fn validate_b64(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
   // The "b64" parameter MUST be integrity protected
   if unprotected.and_then(JwsHeader::b64).is_some() {
