@@ -34,7 +34,8 @@ function replace(tsconfig, dist, mode) {
             if (mode == "resolve" && fs.existsSync(absoluteIncludePath)) {
                 const absoluteFilePath = path.resolve(path.dirname(file));
                 console.log(`\t calculating path from ${absoluteFilePath} to ${absoluteIncludePath}`);
-                value = path.relative(absoluteFilePath, absoluteIncludePath);
+                // replace `\` with `/` to convert windows paths to node compatible imports
+                value = path.relative(absoluteFilePath, absoluteIncludePath).replace(/\\/g, '/');
             }
 
             console.log(`\t replace ${key} with ${value}`);
