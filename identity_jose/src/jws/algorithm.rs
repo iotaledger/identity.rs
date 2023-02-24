@@ -4,6 +4,9 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
+use std::str::FromStr;
+
+use crate::error::Error;
 
 /// Supported algorithms for the JSON Web Signatures `alg` claim.
 ///
@@ -81,6 +84,31 @@ impl JwsAlgorithm {
       Self::ES256K => "ES256K",
       Self::NONE => "none",
       Self::EdDSA => "EdDSA",
+    }
+  }
+}
+
+impl FromStr for JwsAlgorithm {
+  type Err = crate::error::Error;
+
+  fn from_str(string: &str) -> std::result::Result<Self, Self::Err> {
+    match string {
+      "HS256" => Ok(Self::HS256),
+      "HS384" => Ok(Self::HS384),
+      "HS512" => Ok(Self::HS512),
+      "RS256" => Ok(Self::RS256),
+      "RS384" => Ok(Self::RS384),
+      "RS512" => Ok(Self::RS512),
+      "PS256" => Ok(Self::PS256),
+      "PS384" => Ok(Self::PS384),
+      "PS512" => Ok(Self::PS512),
+      "ES256" => Ok(Self::ES256),
+      "ES384" => Ok(Self::ES384),
+      "ES512" => Ok(Self::ES512),
+      "ES256K" => Ok(Self::ES256K),
+      "none" => Ok(Self::NONE),
+      "EdDSA" => Ok(Self::EdDSA),
+      _ => Err(Error::UnsupportedAlgorithm),
     }
   }
 }

@@ -107,6 +107,16 @@ impl JwkParamsEc {
     }
   }
 
+  /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
+  pub fn is_public(&self) -> bool {
+    self.d.is_none()
+  }
+
+  /// Returns `true` if _all_ private key components of the key are set, `false` otherwise.
+  pub fn is_private(&self) -> bool {
+    self.d.is_some()
+  }
+
   pub fn try_ec_curve(&self) -> Result<EcCurve> {
     match &*self.crv {
       "P-256" => Ok(EcCurve::P256),
@@ -237,6 +247,29 @@ impl JwkParamsRsa {
       oth: None,
     }
   }
+
+  /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
+  pub fn is_public(&self) -> bool {
+    self.d.is_none()
+      && self.p.is_none()
+      && self.q.is_none()
+      && self.dp.is_none()
+      && self.dq.is_none()
+      && self.qi.is_none()
+      // TODO: `oth` consists of multiple fields; check individually?
+      && self.oth.is_none()
+  }
+
+  /// Returns `true` if _all_ private key components of the key are set, `false` otherwise.
+  pub fn is_private(&self) -> bool {
+    self.d.is_some()
+      && self.p.is_some()
+      && self.q.is_some()
+      && self.dp.is_some()
+      && self.dq.is_some()
+      && self.qi.is_some()
+      && self.oth.is_some()
+  }
 }
 
 impl From<JwkParamsRsa> for JwkParams {
@@ -325,6 +358,16 @@ impl JwkParamsOkp {
       x: self.x.clone(),
       d: None,
     }
+  }
+
+  /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
+  pub fn is_public(&self) -> bool {
+    self.d.is_none()
+  }
+
+  /// Returns `true` if _all_ private key components of the key are set, `false` otherwise.
+  pub fn is_private(&self) -> bool {
+    self.d.is_some()
   }
 
   pub fn try_ed_curve(&self) -> Result<EdCurve> {

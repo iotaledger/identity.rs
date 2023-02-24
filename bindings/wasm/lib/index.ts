@@ -3,5 +3,6 @@
 
 import "./append_functions";
 export * from "./iota_identity_client";
+export * from "./jose/index";
 
 export * from "~identity_wasm";
