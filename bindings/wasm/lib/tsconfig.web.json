@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "~identity_wasm": ["../web/identity_wasm"],
+      "~identity_wasm": ["../web/identity_wasm", "./identity_wasm.js"],
       "~client-wasm": ["../node_modules/@iota/client-wasm/web", "@iota/client-wasm/web"],
       "../lib": ["."]
     },
