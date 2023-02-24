@@ -11,9 +11,8 @@
   ],
   "excludes": [
     "documentation",
-    "bindings/wasm/cypress/**/*.{js,ts}",
     "**/{node_modules,target}",
-    "bindings/wasm/{cypress,node,web}/**/*.{js,ts}",
+    "bindings/wasm/{node,web}/**/*.{js,ts}",
     "bindings/stronghold-nodejs/{napi-dist,dist}/**/*.{js,ts}"
   ],
   "plugins": [
