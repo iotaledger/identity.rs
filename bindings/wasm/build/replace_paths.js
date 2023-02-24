@@ -11,9 +11,9 @@ const path = require("path");
 
 function replace(tsconfig, dist, mode) {
     // Read tsconfig file.
-    const tsconfigPath = path.join(__dirname, '..', tsconfig);
+    const tsconfigPath = path.join(__dirname, "..", tsconfig);
     console.log(`\n using ${tsconfigPath}`);
-    let data = JSON.parse(fs.readFileSync(path.join(__dirname, '..', tsconfig), "utf8"));
+    let data = JSON.parse(fs.readFileSync(path.join(__dirname, "..", tsconfig), "utf8"));
     let a = data.compilerOptions.paths;
     let keys = Object.keys(a);
 
@@ -29,13 +29,13 @@ function replace(tsconfig, dist, mode) {
         let fileData = fs.readFileSync(file, "utf8");
         for (let key of keys) {
             let value = a[key][1] ?? a[key][0];
-            
+
             const absoluteIncludePath = path.resolve(path.dirname(tsconfigPath), value);
             if (mode == "resolve" && fs.existsSync(absoluteIncludePath)) {
                 const absoluteFilePath = path.resolve(path.dirname(file));
                 console.log(`\t calculating path from ${absoluteFilePath} to ${absoluteIncludePath}`);
                 // replace `\` with `/` to convert windows paths to node compatible imports
-                value = path.relative(absoluteFilePath, absoluteIncludePath).replace(/\\/g, '/');
+                value = path.relative(absoluteFilePath, absoluteIncludePath).replace(/\\/g, "/");
             }
 
             console.log(`\t replace ${key} with ${value}`);
@@ -46,9 +46,10 @@ function replace(tsconfig, dist, mode) {
 }
 
 const readdirSync = (p, a = []) => {
-    if (fs.statSync(p).isDirectory())
-    fs.readdirSync(p).map(f => readdirSync(a[a.push(path.join(p, f)) - 1], a))
-    return a
-}
+    if (fs.statSync(p).isDirectory()) {
+        fs.readdirSync(p).map(f => readdirSync(a[a.push(path.join(p, f)) - 1], a));
+    }
+    return a;
+};
 
 replace(process.argv[2], process.argv[3], process.argv[4]);
