@@ -26,9 +26,10 @@ pub mod crypto;
 pub mod did;
 pub mod error;
 pub mod iota;
-pub mod revocation;
-
+pub mod jose;
 pub mod resolver;
+pub mod revocation;
+pub mod storage;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
@@ -36,3 +37,11 @@ pub fn start() -> Result<(), JsValue> {
   console_error_panic_hook::set_once();
   Ok(())
 }
+
+// This section should be used as the central place for imports from `./lib`
+// used by TS definitions written on the Rust side.
+// It appears the import path must be relative to `src`.
+#[wasm_bindgen(typescript_custom_section)]
+const CUSTOM_IMPORTS: &'static str = r#"
+import { JwsAlgorithm, JwkOperation, JwkUse, JwkType } from '../lib/jose/index';
+"#;

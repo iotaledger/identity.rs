@@ -38,7 +38,7 @@ function replace(tsconfig, dist, mode) {
             }
 
             console.log(`\t replace ${key} with ${value}`);
-            fileData = fileData.replace(key, value);
+            fileData = fileData.replaceAll(key, value);
         }
         fs.writeFileSync(file, fileData, "utf8");
     }

@@ -47,6 +47,11 @@ is supported.</li>
 <dd><p>An extension interface that provides helper functions for publication
 and resolution of DID documents in Alias Outputs.</p>
 </dd>
+<dt><a href="#Jwk">Jwk</a></dt>
+<dd></dd>
+<dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
+<dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
+</dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
@@ -109,8 +114,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -156,6 +159,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -2464,6 +2469,221 @@ Fetches the `IAliasOutput` associated with the given DID.
 | client | <code>IIotaIdentityClient</code> | 
 | did | [<code>IotaDID</code>](#IotaDID) | 
 
+<a name="Jwk"></a>
+
+## Jwk
+**Kind**: global class  
+
+* [Jwk](#Jwk)
+    * [new Jwk(jwk)](#new_Jwk_new)
+    * _instance_
+        * [.kty()](#Jwk+kty) ⇒ <code>JwkType</code>
+        * [.use()](#Jwk+use) ⇒ <code>JwkUse</code> \| <code>undefined</code>
+        * [.keyOps()](#Jwk+keyOps) ⇒ <code>Array.&lt;JwkOperation&gt;</code>
+        * [.alg()](#Jwk+alg) ⇒ <code>JwsAlgorithm</code> \| <code>undefined</code>
+        * [.kid()](#Jwk+kid) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.x5u()](#Jwk+x5u) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.x5c()](#Jwk+x5c) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.x5t()](#Jwk+x5t) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.x5t256()](#Jwk+x5t256) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.paramsEc()](#Jwk+paramsEc) ⇒ <code>JwkParamsEc</code> \| <code>undefined</code>
+        * [.paramsOkp()](#Jwk+paramsOkp) ⇒ <code>JwkParamsOkp</code> \| <code>undefined</code>
+        * [.paramsOct()](#Jwk+paramsOct) ⇒ <code>JwkParamsOct</code> \| <code>undefined</code>
+        * [.paramsRsa()](#Jwk+paramsRsa) ⇒ <code>JwkParamsRsa</code> \| <code>undefined</code>
+        * [.toPublic()](#Jwk+toPublic) ⇒ [<code>Jwk</code>](#Jwk)
+        * [.isPublic()](#Jwk+isPublic) ⇒ <code>boolean</code>
+        * [.isPrivate()](#Jwk+isPrivate) ⇒ <code>boolean</code>
+        * [.toJSON()](#Jwk+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Jwk+clone) ⇒ [<code>Jwk</code>](#Jwk)
+    * _static_
+        * [.fromJSON(json)](#Jwk.fromJSON) ⇒ [<code>Jwk</code>](#Jwk)
+
+<a name="new_Jwk_new"></a>
+
+### new Jwk(jwk)
+
+| Param | Type |
+| --- | --- |
+| jwk | <code>IJwkParams</code> | 
+
+<a name="Jwk+kty"></a>
+
+### jwk.kty() ⇒ <code>JwkType</code>
+Returns the value for the key type parameter (kty).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+use"></a>
+
+### jwk.use() ⇒ <code>JwkUse</code> \| <code>undefined</code>
+Returns the value for the use property (use).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+keyOps"></a>
+
+### jwk.keyOps() ⇒ <code>Array.&lt;JwkOperation&gt;</code>
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+alg"></a>
+
+### jwk.alg() ⇒ <code>JwsAlgorithm</code> \| <code>undefined</code>
+Returns the value for the algorithm property (alg).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+kid"></a>
+
+### jwk.kid() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the key ID property (kid).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+x5u"></a>
+
+### jwk.x5u() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the X.509 URL property (x5u).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+x5c"></a>
+
+### jwk.x5c() ⇒ <code>Array.&lt;string&gt;</code>
+Returns the value of the X.509 certificate chain property (x5c).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+x5t"></a>
+
+### jwk.x5t() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the X.509 certificate SHA-1 thumbprint property (x5t).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+x5t256"></a>
+
+### jwk.x5t256() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the X.509 certificate SHA-256 thumbprint property (x5t#S256).
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+paramsEc"></a>
+
+### jwk.paramsEc() ⇒ <code>JwkParamsEc</code> \| <code>undefined</code>
+If this JWK is of kty EC, returns those parameters.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+paramsOkp"></a>
+
+### jwk.paramsOkp() ⇒ <code>JwkParamsOkp</code> \| <code>undefined</code>
+If this JWK is of kty OKP, returns those parameters.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+paramsOct"></a>
+
+### jwk.paramsOct() ⇒ <code>JwkParamsOct</code> \| <code>undefined</code>
+If this JWK is of kty OCT, returns those parameters.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+paramsRsa"></a>
+
+### jwk.paramsRsa() ⇒ <code>JwkParamsRsa</code> \| <code>undefined</code>
+If this JWK is of kty RSA, returns those parameters.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+toPublic"></a>
+
+### jwk.toPublic() ⇒ [<code>Jwk</code>](#Jwk)
+Returns a clone of the Jwk with _all_ private key components unset.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+isPublic"></a>
+
+### jwk.isPublic() ⇒ <code>boolean</code>
+Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+isPrivate"></a>
+
+### jwk.isPrivate() ⇒ <code>boolean</code>
+Returns `true` if _all_ private key components of the key are set, `false` otherwise.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+toJSON"></a>
+
+### jwk.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk+clone"></a>
+
+### jwk.clone() ⇒ [<code>Jwk</code>](#Jwk)
+Deep clones the object.
+
+**Kind**: instance method of [<code>Jwk</code>](#Jwk)  
+<a name="Jwk.fromJSON"></a>
+
+### Jwk.fromJSON(json) ⇒ [<code>Jwk</code>](#Jwk)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>Jwk</code>](#Jwk)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwkGenOutput"></a>
+
+## JwkGenOutput
+The result of a key generation in `JwkStorage`.
+
+**Kind**: global class  
+
+* [JwkGenOutput](#JwkGenOutput)
+    * [new JwkGenOutput(key_id, jwk)](#new_JwkGenOutput_new)
+    * _instance_
+        * [.jwk()](#JwkGenOutput+jwk) ⇒ [<code>Jwk</code>](#Jwk)
+        * [.keyId()](#JwkGenOutput+keyId) ⇒ <code>string</code>
+        * [.toJSON()](#JwkGenOutput+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwkGenOutput+clone) ⇒ [<code>JwkGenOutput</code>](#JwkGenOutput)
+    * _static_
+        * [.fromJSON(json)](#JwkGenOutput.fromJSON) ⇒ [<code>JwkGenOutput</code>](#JwkGenOutput)
+
+<a name="new_JwkGenOutput_new"></a>
+
+### new JwkGenOutput(key_id, jwk)
+
+| Param | Type |
+| --- | --- |
+| key_id | <code>string</code> | 
+| jwk | [<code>Jwk</code>](#Jwk) | 
+
+<a name="JwkGenOutput+jwk"></a>
+
+### jwkGenOutput.jwk() ⇒ [<code>Jwk</code>](#Jwk)
+Returns the generated public JWK.
+
+**Kind**: instance method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
+<a name="JwkGenOutput+keyId"></a>
+
+### jwkGenOutput.keyId() ⇒ <code>string</code>
+Returns the key id of the generated jwk.
+
+**Kind**: instance method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
+<a name="JwkGenOutput+toJSON"></a>
+
+### jwkGenOutput.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
+<a name="JwkGenOutput+clone"></a>
+
+### jwkGenOutput.clone() ⇒ [<code>JwkGenOutput</code>](#JwkGenOutput)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
+<a name="JwkGenOutput.fromJSON"></a>
+
+### JwkGenOutput.fromJSON(json) ⇒ [<code>JwkGenOutput</code>](#JwkGenOutput)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="KeyPair"></a>
 
 ## KeyPair
@@ -3949,10 +4169,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4038,6 +4254,10 @@ Return after the first error occurs.
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

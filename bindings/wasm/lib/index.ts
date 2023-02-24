@@ -3,5 +3,6 @@
 
 import "./append_functions.js";
 export * from "./iota_identity_client.js";
+export * from "./jose";
 
 export * from "~identity_wasm";
