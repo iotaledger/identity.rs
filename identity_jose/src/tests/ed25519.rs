@@ -15,6 +15,7 @@ use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::Token;
+use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 
@@ -70,20 +71,22 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
 }
 
 pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], public_key: PublicKey) -> Token<'a> {
-  let verify_fn = |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
-    let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
-      .with_protected(protected)
-      .with_unprotected(unprotected);
-    if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
+  let verify_fn = |verification_input: &VerificationInput| {
+    if verification_input
+      .jose_header()
+      .try_alg()
+      .map_err(|_| "missing `alg` parameter")?
+      != JwsAlgorithm::EdDSA
+    {
       return Err("incompatible `alg` parameter");
     }
 
-    let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(sig)
+    let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
       .map_err(|err| err.to_string())
       .unwrap();
 
     let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
-    if public_key.verify(&signature, msg) {
+    if public_key.verify(&signature, verification_input.signing_input()) {
       Ok(())
     } else {
       Err("invalid signature")

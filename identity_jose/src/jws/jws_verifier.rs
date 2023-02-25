@@ -16,7 +16,7 @@ pub type JwsUnprotectedHeader<'a> = &'a JwsHeader;
 pub type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
 
 pub type JWSVerificationAlgFnPtr =
-  fn(&Jwk, DecodedVerificationParameters<'_>) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+  fn(&Jwk, VerificationInput<'_>) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 
 pub struct JWSValidationConfig {
   /// A list of permitted extension parameters.
@@ -43,26 +43,29 @@ pub struct JWSVerifier {
   config: JWSValidationConfig,
 }
 
-pub struct DecodedCompactSerialization<'a> {
-  protected: JwsHeader,
-  payload: Cow<'a, [u8]>,
-  signature: Box<[u8]>,
-}
-
-impl<'a, 'b> From<&'b DecodedCompactSerialization<'a>> for DecodedVerificationParameters<'b> {
-  fn from(value: &'b DecodedCompactSerialization<'a>) -> Self {
-    DecodedVerificationParameters::<'b> {
-      jose_header: HeaderSet::new().with_protected(Some(&value.protected)),
-      message: &value.payload,
-      signature: &value.signature,
-    }
-  }
-}
-
-pub struct DecodedVerificationParameters<'a> {
+/// Input intended for an `alg` specific
+/// JWS verifier.
+pub struct VerificationInput<'a> {
   jose_header: HeaderSet<'a>,
-  message: &'a [u8],
+  signing_input: Box<[u8]>,
   signature: &'a [u8],
+}
+
+impl<'a> VerificationInput<'a> {
+  /// Decoded JOSE header.
+  pub fn jose_header(&self) -> &HeaderSet<'a> {
+    &self.jose_header
+  }
+
+  /// Signing input.
+  pub fn signing_input(&self) -> &[u8] {
+    self.signing_input.as_ref()
+  }
+
+  /// Decoded signature.
+  pub fn signature(&self) -> &'a [u8] {
+    self.signature
+  }
 }
 
 impl JWSVerifier {
@@ -78,27 +81,14 @@ impl JWSVerifier {
     Ok(())
   }
 
-  // TODO: Better error.
-  pub fn extract_compact(data: &[u8]) -> Result<DecodedCompactSerialization<'static>, String> {
-    todo!()
-  }
-
-  // TODO: Better error.
-  pub fn extract_compact_detached_payload<'a>(
-    data: &[u8],
-    payload: &'a [u8],
-  ) -> Result<DecodedCompactSerialization<'a>, String> {
-    todo!()
-  }
-
   pub fn validate_with<F, E>(
-    decoded_parameters: DecodedVerificationParameters,
+    decoded_parameters: VerificationInput,
     public_key: Option<&Jwk>,
     verification_algorithm_handler: F,
     config: &JWSValidationConfig,
   ) -> Result<(), crate::error::Error>
   where
-    F: FnOnce(&DecodedVerificationParameters, &Jwk) -> Result<(), E>,
+    F: FnOnce(&VerificationInput, &Jwk) -> Result<(), E>,
     E: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     // Validate the header(s).

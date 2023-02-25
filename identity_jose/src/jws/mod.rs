@@ -13,6 +13,7 @@
 //! # use crypto::signatures::ed25519;
 //! # use crypto::signatures::ed25519::SecretKey;
 //! # use identity_jose::jws::Decoder;
+//! # use identity_jose::jws::VerificationInput;
 //! # use identity_jose::jws::Encoder;
 //! # use identity_jose::jws::JwsAlgorithm;
 //! # use identity_jose::jws::JwsHeader;
@@ -55,7 +56,7 @@
 //! let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
 //!   let sk: Arc<SecretKey> = secret_key.clone();
 //!   async move {
-//!     let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(&protected).unprotected(&unprotected);
+//!     let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().with_protected(&protected).with_unprotected(&unprotected);
 //!     if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
 //!       return Err("incompatible `alg` parameter");
 //!     }
@@ -69,16 +70,15 @@
 //! // Decode the claims
 //! // ==================
 //! let decoder: Decoder = Decoder::new();
-//! let verify_fn = |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
-//!   let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(protected).unprotected(unprotected);
-//!   if header_set.try_alg().map_err(|_| "missing `alg` parameter".to_owned())? != JwsAlgorithm::EdDSA {
+//! let verify_fn = |verification_input: &VerificationInput| {
+//!   if verification_input.jose_header().try_alg().map_err(|_| "missing `alg` parameter".to_owned())? != JwsAlgorithm::EdDSA {
 //!     return Err("incompatible `alg` parameter".to_owned());
 //!   }
-//!   let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(sig)
+//!   let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
 //!     .map_err(|err| err.to_string())
 //!     ?;
 //!   let signature = ed25519::Signature::from_bytes(signature_arr);
-//!   if public_key.verify(&signature, msg) {
+//!   if public_key.verify(&signature, verification_input.signing_input()) {
 //!     Ok(())
 //!   } else {
 //!     Err("invalid signature".to_owned())

@@ -9,6 +9,7 @@ use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::Token;
+use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 use p256::ecdsa::Signature;
@@ -69,18 +70,18 @@ pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) ->
 
   let verifying_key = VerifyingKey::from(public_key);
 
-  let verify_fn = move |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
-    let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
-      .with_protected(protected)
-      .with_unprotected(unprotected);
-    let alg: JwsAlgorithm = header_set.try_alg().map_err(|_| "missing `alg` parameter".to_owned())?;
+  let verify_fn = move |verification_input: &VerificationInput| {
+    let alg: JwsAlgorithm = verification_input
+      .jose_header()
+      .try_alg()
+      .map_err(|_| "missing `alg` parameter".to_owned())?;
     if alg != JwsAlgorithm::ES256 {
       return Err("incompatible `alg` parameter".to_owned());
     }
 
-    let signature = Signature::try_from(sig).unwrap();
+    let signature = Signature::try_from(verification_input.signature()).unwrap();
 
-    match signature::Verifier::verify(&verifying_key, msg, &signature) {
+    match signature::Verifier::verify(&verifying_key, verification_input.signing_input(), &signature) {
       Ok(()) => Ok(()),
       Err(err) => Err(err.to_string()),
     }

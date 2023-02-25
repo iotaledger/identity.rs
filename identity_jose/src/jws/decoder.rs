@@ -49,6 +49,28 @@ struct JwsSignature<'a> {
   signature: &'a str,
 }
 
+/// Input intended for an `alg` specific
+/// JWS verifier.
+pub struct VerificationInput<'a> {
+  jose_header: HeaderSet<'a>,
+  signing_input: Vec<u8>,
+  signature: &'a [u8],
+}
+
+impl<'a> VerificationInput<'a> {
+  pub fn jose_header(&self) -> &HeaderSet<'a> {
+    &self.jose_header
+  }
+
+  pub fn signing_input(&self) -> &[u8] {
+    self.signing_input.as_ref()
+  }
+
+  pub fn signature(&self) -> &'a [u8] {
+    self.signature
+  }
+}
+
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct General<'a> {
@@ -129,12 +151,7 @@ impl<'a, 'b> Decoder<'b> {
   /// fails or if the `alg` parameter in the header describes a cryptographic algorithm that it cannot handle.
   pub fn decode<FUN, ERR>(&self, verify_fn: &FUN, data: &'b [u8]) -> Result<Token<'b>>
   where
-    FUN: Fn(
-      Option<DecoderProtectedHeader<'_>>,
-      Option<DecoderUnprotectedHeader<'_>>,
-      DecoderMessage<'_>,
-      DecoderSignature<'_>,
-    ) -> std::result::Result<(), ERR>,
+    FUN: Fn(&VerificationInput<'_>) -> std::result::Result<(), ERR>,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     self.expand(data, |payload, signatures| {
@@ -156,12 +173,7 @@ impl<'a, 'b> Decoder<'b> {
     jws_signature: JwsSignature<'a>,
   ) -> Result<Token<'b>>
   where
-    FUN: Fn(
-      Option<DecoderProtectedHeader<'_>>,
-      Option<DecoderUnprotectedHeader<'_>>,
-      DecoderMessage<'_>,
-      DecoderSignature<'_>,
-    ) -> std::result::Result<(), ERR>,
+    FUN: Fn(&VerificationInput<'_>) -> std::result::Result<(), ERR>,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
@@ -174,22 +186,23 @@ impl<'a, 'b> Decoder<'b> {
     let alg: JwsAlgorithm = merged.try_alg()?;
 
     self.check_alg(alg)?;
+    let payload_is_b64_encoded = merged.b64().unwrap_or(true);
 
+    // Verify the signature
     {
       let protected_bytes: &[u8] = jws_signature.protected.map(str::as_bytes).unwrap_or_default();
       let message: Vec<u8> = create_message(protected_bytes, payload);
       let signature: Vec<u8> = decode_b64(jws_signature.signature)?;
+      let verification_input = VerificationInput {
+        jose_header: merged,
+        signing_input: message,
+        signature: &signature,
+      };
 
-      verify_fn(
-        protected.as_ref(),
-        jws_signature.header.as_ref(),
-        message.as_slice(),
-        signature.as_slice(),
-      )
-      .map_err(|err| Error::SignatureVerificationError(err.into()))?;
+      verify_fn(&verification_input).map_err(|err| Error::SignatureVerificationError(err.into()))?;
     }
 
-    let claims: Cow<'b, [u8]> = if merged.b64().unwrap_or(true) {
+    let claims: Cow<'b, [u8]> = if payload_is_b64_encoded {
       Cow::Owned(decode_b64(payload)?)
     } else {
       Cow::Borrowed(payload)

@@ -8,6 +8,7 @@ use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::Token;
+use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 use crypto::hashes::sha::SHA256_LEN;
@@ -47,19 +48,19 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
 pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
-  let verify_fn = move |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
-    let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
-      .with_protected(protected)
-      .with_unprotected(unprotected);
-    let alg: JwsAlgorithm = header_set.try_alg().map_err(|_| "missing `alg` parameter")?;
+  let verify_fn = move |verification_input: &VerificationInput| {
+    let alg: JwsAlgorithm = verification_input
+      .jose_header()
+      .try_alg()
+      .map_err(|_| "missing `alg` parameter")?;
     if alg != JwsAlgorithm::HS256 {
       return Err("incompatible `alg` parameter");
     }
 
     let mut mac: [u8; SHA256_LEN] = Default::default();
-    crypto::macs::hmac::HMAC_SHA256(msg, &shared_secret, &mut mac);
+    crypto::macs::hmac::HMAC_SHA256(verification_input.signing_input(), &shared_secret, &mut mac);
 
-    if sig == mac {
+    if verification_input.signature() == mac {
       Ok(())
     } else {
       Err("invalid signature")
