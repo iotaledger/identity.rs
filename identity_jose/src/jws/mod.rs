@@ -84,7 +84,7 @@
 //!     Err("invalid signature".to_owned())
 //!   }
 //! };
-//! let token: _ = decoder.decode(&verify_fn, token.as_bytes())?;
+//! let token: _ = decoder.decode_with(&verify_fn, token.as_bytes(), None)?;
 //!
 //! // ==================================
 //! // Assert the claims are as expected

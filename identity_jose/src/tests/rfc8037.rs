@@ -42,7 +42,7 @@ async fn test_rfc8037_ed25519() {
     assert_eq!(encoded, tv.encoded);
 
     let decoder: Decoder = Decoder::new();
-    let decoded: jws::Token = ed25519::decode(&decoder, encoded.as_bytes(), public_key);
+    let decoded: jws::Token = ed25519::decode(&decoder, encoded.as_bytes(), None, public_key);
 
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.payload.as_bytes());

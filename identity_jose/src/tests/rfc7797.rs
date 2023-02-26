@@ -24,12 +24,9 @@ fn test_rfc7797() {
 
     let mut decoder = jws::Decoder::new();
 
-    if tv.detach {
-      decoder = decoder.payload(tv.payload);
-    }
     let decoder = decoder.critical("b64");
 
-    let decoded: _ = hs256::decode(&decoder, tv.encoded, &jwk);
+    let decoded: _ = hs256::decode(&decoder, tv.encoded, tv.detach.then_some(tv.payload), &jwk);
 
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.payload);

@@ -70,7 +70,12 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], public_key: PublicKey) -> Token<'a> {
+pub(crate) fn decode<'a>(
+  decoder: &Decoder,
+  encoded: &'a [u8],
+  detached_payload: Option<&'a [u8]>,
+  public_key: PublicKey,
+) -> Token<'a> {
   let verify_fn = |verification_input: &VerificationInput| {
     if verification_input
       .jose_header()
@@ -93,5 +98,5 @@ pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], public_key: P
     }
   };
 
-  decoder.decode(&verify_fn, encoded).unwrap()
+  decoder.decode_with(&verify_fn, encoded, detached_payload).unwrap()
 }

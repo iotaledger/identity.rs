@@ -98,27 +98,22 @@ struct Flatten<'a> {
 /// This API does not have any cryptography built-in. Rather, signatures are verified
 /// through a closure that is passed to the [`decode`](Decoder::decode) method, so that users can implement
 /// verification for their particular algorithm.
-pub struct Decoder<'b> {
+pub struct Decoder {
   /// The expected format of the encoded token.
   format: JwsFormat,
   /// A list of permitted signature algorithms.
   algs: Option<Vec<JwsAlgorithm>>,
   /// A list of permitted extension parameters.
   crits: Option<Vec<String>>,
-  /// The detached payload, if using detached content
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
-  payload: Option<&'b [u8]>,
 }
 
-impl<'a, 'b> Decoder<'b> {
+impl<'a, 'b> Decoder {
   pub fn new() -> Self {
     Self {
       format: JwsFormat::Compact,
 
       algs: None,
       crits: None,
-      payload: None,
     }
   }
 
@@ -137,11 +132,6 @@ impl<'a, 'b> Decoder<'b> {
     self
   }
 
-  pub fn payload(mut self, value: &'b [u8]) -> Self {
-    self.payload = Some(value);
-    self
-  }
-
   /// Decode the given `data` which is a base64url-encoded JWS.
   ///
   /// The `verify_fn` closure must be provided to verify signatures on the JWS.
@@ -149,12 +139,20 @@ impl<'a, 'b> Decoder<'b> {
   /// in order for the entire JWS to be considered valid, hence `verify_fn` can error
   /// on signatures it cannot verify. `verify_fn` must return an error if signature verification
   /// fails or if the `alg` parameter in the header describes a cryptographic algorithm that it cannot handle.
-  pub fn decode<FUN, ERR>(&self, verify_fn: &FUN, data: &'b [u8]) -> Result<Token<'b>>
+  ///
+  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
+  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
+  pub fn decode_with<FUN, ERR>(
+    &self,
+    verify_fn: &FUN,
+    data: &'b [u8],
+    detached_payload: Option<&'b [u8]>,
+  ) -> Result<Token<'b>>
   where
     FUN: Fn(&VerificationInput<'_>) -> std::result::Result<(), ERR>,
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
-    self.expand(data, |payload, signatures| {
+    self.expand(data, detached_payload, |payload, signatures| {
       for signature in signatures {
         if let Ok(token) = self.decode_one(verify_fn, payload, signature) {
           return Ok(token);
@@ -215,7 +213,12 @@ impl<'a, 'b> Decoder<'b> {
     })
   }
 
-  fn expand<T>(&self, data: &'b [u8], format: impl Fn(&'b [u8], Vec<JwsSignature<'_>>) -> Result<T>) -> Result<T> {
+  fn expand<T>(
+    &self,
+    data: &'b [u8],
+    detached_payload: Option<&'b [u8]>,
+    format: impl Fn(&'b [u8], Vec<JwsSignature<'_>>) -> Result<T>,
+  ) -> Result<T> {
     match self.format {
       JwsFormat::Compact => {
         let split: Vec<&[u8]> = data.split(|byte| *byte == b'.').collect();
@@ -230,23 +233,29 @@ impl<'a, 'b> Decoder<'b> {
           signature: parse_utf8(split[2])?,
         };
 
-        format(self.expand_payload(Some(split[1]))?, vec![signature])
+        format(Self::expand_payload(detached_payload, Some(split[1]))?, vec![signature])
       }
       JwsFormat::General => {
         let data: General<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
 
-        format(self.expand_payload(data.payload)?, data.signatures)
+        format(Self::expand_payload(detached_payload, data.payload)?, data.signatures)
       }
       JwsFormat::Flatten => {
         let data: Flatten<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
 
-        format(self.expand_payload(data.payload)?, vec![data.signature])
+        format(
+          Self::expand_payload(detached_payload, data.payload)?,
+          vec![data.signature],
+        )
       }
     }
   }
 
-  fn expand_payload(&self, payload: Option<&'b (impl AsRef<[u8]> + ?Sized)>) -> Result<&'b [u8]> {
-    match (self.payload, filter_non_empty_bytes(payload)) {
+  fn expand_payload(
+    detached_payload: Option<&'b [u8]>,
+    parsed_payload: Option<&'b (impl AsRef<[u8]> + ?Sized)>,
+  ) -> Result<&'b [u8]> {
+    match (detached_payload, filter_non_empty_bytes(parsed_payload)) {
       (Some(payload), None) => Ok(payload),
       (None, Some(payload)) => Ok(payload),
       (Some(_), Some(_)) => Err(Error::InvalidContent("multiple payloads")),
@@ -259,7 +268,7 @@ impl<'a, 'b> Decoder<'b> {
   }
 }
 
-impl<'a> Default for Decoder<'a> {
+impl<'a> Default for Decoder {
   fn default() -> Self {
     Self::new()
   }

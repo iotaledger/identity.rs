@@ -39,8 +39,8 @@ async fn test_rfc7515() {
 
     let decoder: jws::Decoder = jws::Decoder::new();
     let decoded: _ = match header.alg().unwrap() {
-      JwsAlgorithm::HS256 => hs256::decode(&decoder, tv.encoded, &jwk),
-      JwsAlgorithm::ES256 => es256::decode(&decoder, tv.encoded, &jwk),
+      JwsAlgorithm::HS256 => hs256::decode(&decoder, tv.encoded, None, &jwk),
+      JwsAlgorithm::ES256 => es256::decode(&decoder, tv.encoded, None, &jwk),
       other => unimplemented!("{other}"),
     };
 

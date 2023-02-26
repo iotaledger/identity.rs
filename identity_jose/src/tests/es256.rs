@@ -65,7 +65,12 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
+pub(crate) fn decode<'a>(
+  decoder: &Decoder,
+  encoded: &'a [u8],
+  detached_payload: Option<&'a [u8]>,
+  jwk: &Jwk,
+) -> Token<'a> {
   let (_, public_key) = expand_p256_jwk(jwk);
 
   let verifying_key = VerifyingKey::from(public_key);
@@ -87,5 +92,5 @@ pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) ->
     }
   };
 
-  decoder.decode(&verify_fn, encoded).unwrap()
+  decoder.decode_with(&verify_fn, encoded, detached_payload).unwrap()
 }

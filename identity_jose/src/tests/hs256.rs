@@ -45,7 +45,12 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
+pub(crate) fn decode<'a>(
+  decoder: &Decoder,
+  encoded: &'a [u8],
+  detached_payload: Option<&'a [u8]>,
+  jwk: &Jwk,
+) -> Token<'a> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
   let verify_fn = move |verification_input: &VerificationInput| {
@@ -67,5 +72,5 @@ pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) ->
     }
   };
 
-  decoder.decode(&verify_fn, encoded).unwrap()
+  decoder.decode_with(&verify_fn, encoded, detached_payload).unwrap()
 }

@@ -38,7 +38,7 @@ async fn test_encoder_decoder_roundtrip() {
   let token: String = ed25519::encode(&encoder, &claims_bytes, secret_key).await;
 
   let decoder: Decoder = Decoder::new();
-  let token: _ = ed25519::decode(&decoder, token.as_bytes(), public_key);
+  let token: _ = ed25519::decode(&decoder, token.as_bytes(), None, public_key);
 
   let recovered_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(&token.claims).unwrap();
 
