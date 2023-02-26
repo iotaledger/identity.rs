@@ -13,6 +13,7 @@
 //! # use crypto::signatures::ed25519;
 //! # use crypto::signatures::ed25519::SecretKey;
 //! # use identity_jose::jws::Decoder;
+//! # use identity_jose::jws::JWSValidationConfig;
 //! # use identity_jose::jws::VerificationInput;
 //! # use identity_jose::jws::Encoder;
 //! # use identity_jose::jws::JwsAlgorithm;
@@ -84,7 +85,8 @@
 //!     Err("invalid signature".to_owned())
 //!   }
 //! };
-//! let token: _ = decoder.decode_with(&verify_fn, token.as_bytes(), None)?;
+//! let jws_validation_config: JWSValidationConfig = JWSValidationConfig::default();
+//! let token: _ = decoder.decode_with(&jws_validation_config, &verify_fn, token.as_bytes(), None)?;
 //!
 //! // ==================================
 //! // Assert the claims are as expected

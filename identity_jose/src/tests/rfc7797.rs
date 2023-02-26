@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::jwk::Jwk;
+use crate::jws::JWSValidationConfig;
 use crate::jws::JwsHeader;
 use crate::jws::{self};
 use crate::tests::hs256;
@@ -22,11 +23,15 @@ fn test_rfc7797() {
     let header: JwsHeader = serde_json::from_slice(tv.header).unwrap();
     let jwk: Jwk = serde_json::from_str(tv.public_key).unwrap();
 
-    let mut decoder = jws::Decoder::new();
+    let decoder = jws::Decoder::new();
 
-    let decoder = decoder.critical("b64");
-
-    let decoded: _ = hs256::decode(&decoder, tv.encoded, tv.detach.then_some(tv.payload), &jwk);
+    let decoded: _ = hs256::decode(
+      &JWSValidationConfig::default().critical("b64"),
+      &decoder,
+      tv.encoded,
+      tv.detach.then_some(tv.payload),
+      &jwk,
+    );
 
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.payload);

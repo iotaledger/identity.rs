@@ -3,6 +3,7 @@
 
 use crate::jwk::Jwk;
 use crate::jws;
+use crate::jws::JWSValidationConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::Recipient;
@@ -39,8 +40,8 @@ async fn test_rfc7515() {
 
     let decoder: jws::Decoder = jws::Decoder::new();
     let decoded: _ = match header.alg().unwrap() {
-      JwsAlgorithm::HS256 => hs256::decode(&decoder, tv.encoded, None, &jwk),
-      JwsAlgorithm::ES256 => es256::decode(&decoder, tv.encoded, None, &jwk),
+      JwsAlgorithm::HS256 => hs256::decode(&JWSValidationConfig::default(), &decoder, tv.encoded, None, &jwk),
+      JwsAlgorithm::ES256 => es256::decode(&JWSValidationConfig::default(), &decoder, tv.encoded, None, &jwk),
       other => unimplemented!("{other}"),
     };
 

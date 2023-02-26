@@ -6,6 +6,7 @@ use crate::jwk::Jwk;
 use crate::jwk::JwkParamsEc;
 use crate::jws::Decoder;
 use crate::jws::Encoder;
+use crate::jws::JWSValidationConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::Token;
@@ -66,6 +67,7 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
 }
 
 pub(crate) fn decode<'a>(
+  config: &JWSValidationConfig,
   decoder: &Decoder,
   encoded: &'a [u8],
   detached_payload: Option<&'a [u8]>,
@@ -92,5 +94,7 @@ pub(crate) fn decode<'a>(
     }
   };
 
-  decoder.decode_with(&verify_fn, encoded, detached_payload).unwrap()
+  decoder
+    .decode_with(config, &verify_fn, encoded, detached_payload)
+    .unwrap()
 }

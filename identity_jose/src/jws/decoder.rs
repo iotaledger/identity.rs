@@ -20,15 +20,6 @@ use crate::jwu::validate_jws_headers;
 
 type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
 
-/// The protected JWS header.
-pub type DecoderProtectedHeader<'a> = &'a JwsHeader;
-/// The unprotected JWS header.
-pub type DecoderUnprotectedHeader<'a> = &'a JwsHeader;
-/// The message to sign as a slice.
-pub type DecoderMessage<'a> = &'a [u8];
-/// The signature as a slice.
-pub type DecoderSignature<'a> = &'a [u8];
-
 const COMPACT_SEGMENTS: usize = 3;
 
 /// A partially decoded token from a JWS.
@@ -71,6 +62,58 @@ impl<'a> VerificationInput<'a> {
   }
 }
 
+#[derive(Clone, Debug)]
+pub struct JWSValidationConfig {
+  crits: Option<Vec<String>>,
+
+  jwk_must_have_alg: bool,
+
+  strict_signature_verification: bool,
+
+  format: JwsFormat,
+}
+
+impl Default for JWSValidationConfig {
+  fn default() -> Self {
+    Self {
+      crits: None,
+      jwk_must_have_alg: true,
+      strict_signature_verification: true,
+      format: JwsFormat::Compact,
+    }
+  }
+}
+
+impl JWSValidationConfig {
+  /// Append values to the list of permitted extension parameters.
+  pub fn critical(mut self, value: impl Into<String>) -> Self {
+    self.crits.get_or_insert_with(Vec::new).push(value.into());
+    self
+  }
+
+  /// Defines whether a given [`Jwk`](crate::jwk::Jwk) used to verify a JWS,
+  /// must have an `alg` parameter corresponding to the one extracted from the JWS header.
+  /// This value is `true` by default.  
+  pub fn jwk_must_have_alg(mut self, value: bool) -> Self {
+    self.jwk_must_have_alg = value;
+    self
+  }
+
+  /// When verifying a JWS encoded with the general JWS JSON serialization
+  /// this value decides whether all signatures must be verified (the default behavior),
+  /// otherwise only one signature needs to be verified in order for the entire JWS to be accepted.
+  pub fn strict_signature_verification(mut self, value: bool) -> Self {
+    self.strict_signature_verification = value;
+    self
+  }
+
+  /// Specify the serialization format the `Decoder` accepts. The default is [`JwsFormat::Compact`].
+  pub fn serialization_format(mut self, value: JwsFormat) -> Self {
+    self.format = value;
+    self
+  }
+}
+
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct General<'a> {
@@ -103,8 +146,6 @@ pub struct Decoder {
   format: JwsFormat,
   /// A list of permitted signature algorithms.
   algs: Option<Vec<JwsAlgorithm>>,
-  /// A list of permitted extension parameters.
-  crits: Option<Vec<String>>,
 }
 
 impl<'a, 'b> Decoder {
@@ -113,7 +154,6 @@ impl<'a, 'b> Decoder {
       format: JwsFormat::Compact,
 
       algs: None,
-      crits: None,
     }
   }
 
@@ -124,11 +164,6 @@ impl<'a, 'b> Decoder {
 
   pub fn algorithm(mut self, value: JwsAlgorithm) -> Self {
     self.algs.get_or_insert_with(Vec::new).push(value);
-    self
-  }
-
-  pub fn critical(mut self, value: impl Into<String>) -> Self {
-    self.crits.get_or_insert_with(Vec::new).push(value.into());
     self
   }
 
@@ -144,6 +179,7 @@ impl<'a, 'b> Decoder {
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_with<FUN, ERR>(
     &self,
+    config: &JWSValidationConfig,
     verify_fn: &FUN,
     data: &'b [u8],
     detached_payload: Option<&'b [u8]>,
@@ -153,19 +189,28 @@ impl<'a, 'b> Decoder {
     ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     self.expand(data, detached_payload, |payload, signatures| {
+      let mut result: Result<Token> = Err(Error::InvalidContent("recipient not found"));
+
       for signature in signatures {
-        if let Ok(token) = self.decode_one(verify_fn, payload, signature) {
-          return Ok(token);
+        result = self.decode_one(config, verify_fn, payload, signature);
+        if result.is_err() && config.strict_signature_verification {
+          // With strict signature verification all validations must be successful
+          // hence we return on the first error discovered.
+          return result;
+        }
+        if result.is_ok() && !config.strict_signature_verification {
+          // If signature verification is not strict only one verification must succeed
+          // hence we return on the first one.
+          return result;
         }
       }
-
-      // TODO: Improve error by somehow including the error returned by decode_one if it exists.
-      Err(Error::InvalidContent("recipient not found"))
+      result
     })
   }
 
   fn decode_one<FUN, ERR>(
     &self,
+    config: &JWSValidationConfig,
     verify_fn: &FUN,
     payload: &'b [u8],
     jws_signature: JwsSignature<'a>,
@@ -176,7 +221,11 @@ impl<'a, 'b> Decoder {
   {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
 
-    validate_jws_headers(protected.as_ref(), jws_signature.header.as_ref(), self.crits.as_deref())?;
+    validate_jws_headers(
+      protected.as_ref(),
+      jws_signature.header.as_ref(),
+      config.crits.as_deref(),
+    )?;
 
     let merged: HeaderSet<'_> = HeaderSet::new()
       .with_protected(protected.as_ref())
@@ -255,6 +304,7 @@ impl<'a, 'b> Decoder {
     detached_payload: Option<&'b [u8]>,
     parsed_payload: Option<&'b (impl AsRef<[u8]> + ?Sized)>,
   ) -> Result<&'b [u8]> {
+    //TODO: Do we allow an empty detached payload? (The previous stateful version did).
     match (detached_payload, filter_non_empty_bytes(parsed_payload)) {
       (Some(payload), None) => Ok(payload),
       (None, Some(payload)) => Ok(payload),
