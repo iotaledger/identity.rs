@@ -112,4 +112,5 @@ pub use self::decoder::*;
 pub use self::encoder::*;
 pub use self::format::*;
 pub use self::header::*;
+pub use self::jws_verifier::*;
 pub use self::recipient::*;
