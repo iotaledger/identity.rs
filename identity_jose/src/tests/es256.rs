@@ -66,35 +66,17 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(
-  config: &JWSValidationConfig,
-  decoder: &Decoder,
-  encoded: &'a [u8],
-  detached_payload: Option<&'a [u8]>,
+pub(crate) fn verify(
+  verification_input: &VerificationInput<'_>, 
   jwk: &Jwk,
-) -> Token<'a> {
+) -> Result<(), JwsVerifierError> {
   let (_, public_key) = expand_p256_jwk(jwk);
-
   let verifying_key = VerifyingKey::from(public_key);
 
-  let verify_fn = move |verification_input: &VerificationInput| {
-    let alg: JwsAlgorithm = verification_input
-      .jose_header()
-      .try_alg()
-      .map_err(|_| "missing `alg` parameter".to_owned())?;
-    if alg != JwsAlgorithm::ES256 {
-      return Err("incompatible `alg` parameter".to_owned());
-    }
+  let signature = Signature::try_from(verification_input.signature()).unwrap();
 
-    let signature = Signature::try_from(verification_input.signature()).unwrap();
-
-    match signature::Verifier::verify(&verifying_key, verification_input.signing_input(), &signature) {
-      Ok(()) => Ok(()),
-      Err(err) => Err(err.to_string()),
-    }
-  };
-
-  decoder
-    .decode_with(config, &verify_fn, encoded, detached_payload)
-    .unwrap()
+  match signature::Verifier::verify(&verifying_key, verification_input.signing_input(), &signature) {
+    Ok(()) => Ok(()),
+    Err(err) => Err(JwsVerifierError::new(JwsVerifierErrorKind::InvalidSignature).with_source(err)),
+  }
 }

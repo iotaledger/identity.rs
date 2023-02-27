@@ -71,35 +71,21 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(
-  decoder: &Decoder,
-  encoded: &'a [u8],
-  detached_payload: Option<&'a [u8]>,
-  public_key: PublicKey,
-) -> Token<'a> {
-  let verify_fn = |verification_input: &VerificationInput| {
-    if verification_input
-      .jose_header()
-      .try_alg()
-      .map_err(|_| "missing `alg` parameter")?
-      != JwsAlgorithm::EdDSA
-    {
-      return Err("incompatible `alg` parameter");
-    }
+pub(crate) fn verify(
+  verification_input: &VerificationInput, 
+  public_key: &Jwk, 
+) -> Result<(),JwsVerifierError> 
+{
+    let public_key = expand_public_jwk(jwk); 
 
     let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
-      .map_err(|err| err.to_string())
-      .unwrap();
+    .map_err(|err| err.to_string())
+    .unwrap();
 
     let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
     if public_key.verify(&signature, verification_input.signing_input()) {
       Ok(())
     } else {
-      Err("invalid signature")
+      Err(JwsVerifierErrorKind::InvalidSignature.into())
     }
-  };
-
-  decoder
-    .decode_with(&JWSValidationConfig::default(), &verify_fn, encoded, detached_payload)
-    .unwrap()
 }

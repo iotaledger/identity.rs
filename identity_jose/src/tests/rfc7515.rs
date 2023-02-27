@@ -38,12 +38,18 @@ async fn test_rfc7515() {
       assert_eq!(encoded.as_bytes(), tv.encoded);
     }
 
-    let decoder: jws::Decoder = jws::Decoder::new();
-    let decoded: _ = match header.alg().unwrap() {
-      JwsAlgorithm::HS256 => hs256::decode(&JWSValidationConfig::default(), &decoder, tv.encoded, None, &jwk),
-      JwsAlgorithm::ES256 => es256::decode(&JWSValidationConfig::default(), &decoder, tv.encoded, None, &jwk),
-      other => unimplemented!("{other}"),
-    };
+    let jws_signature_verifier = JwsSignatureVerifierFn::from(
+      |input: &VerificationInput<'_>, key: &Jwk| -> Result<(),JwsVerifierError> {
+        match key.alg().unwrap() {
+          JwsAlgorithm::HS256 => hs256::verify(input, key), 
+          JwsAlgorithm::ES256 => es256::verify(input, key), 
+          other => unimplemented!("{other}")
+        }
+      }
+    ); 
+
+    let mut decoder = jws::Decoder::new(jws_signature_verifier);
+    let decoded = decoder.decode(tv.encoded, &jwk).unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.claims);

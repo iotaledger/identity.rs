@@ -189,8 +189,7 @@ impl DefaultJwsSignatureVerifier {
       crypto::signatures::ed25519::PublicKey::try_from(pk).map_err(|_| JwsVerifierErrorKind::KeyDecodingFailure)?;
 
     let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.signature())
-      .map_err(|err| err.to_string())
-      .unwrap();
+      .map_err(|_| JwsVerifierErrorKind::InvalidSignature)?;
 
     let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
 

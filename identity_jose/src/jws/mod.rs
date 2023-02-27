@@ -70,23 +70,34 @@
 //! // ==================
 //! // Decode the claims
 //! // ==================
-//! let decoder: Decoder = Decoder::new();
-//! let verify_fn = |verification_input: &VerificationInput| {
-//!   if verification_input.jose_header().try_alg().map_err(|_| "missing `alg` parameter".to_owned())? != JwsAlgorithm::EdDSA {
-//!     return Err("incompatible `alg` parameter".to_owned());
+//!
+//! // Set up a verifier that verifies JWS signatures secured with the Ed25519 algorithm
+//! let verify_fn = JwsSignatureVerifierFn::from(|verification_input: &VerificationInput , jwk: &Jwk| -> Result<(), JwsVerifierError> {
+//!   if verification_input.jose_header().alg().filter(|value| value == JwsAlgorithm::EdDSA).is_none() {
+//!     return Err(JwsVerifierErrorKind::InvalidAlg.into());
 //!   }
+//!
+//!    let params: &JwkParamsOkp = jwk.try_okp_params().map_err(|_| JwsVerifierErrorKind::UnsupportedKeyType)?;
+//!
+//!  if params.try_ed_curve().unwrap() != EdCurve::Ed25519 {
+//!     return Err(JwsVerifierErrorKind::UnsupportedKeyParams);
+//!  }
+//!
+//!  let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
+//!
+//!   PublicKey::try_from(pk).unwrap()  
 //!   let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
-//!     .map_err(|err| err.to_string())
+//!     .map_err(|err| JwsVerifierErrorKind::InvalidSignature)
 //!     ?;
 //!   let signature = ed25519::Signature::from_bytes(signature_arr);
 //!   if public_key.verify(&signature, verification_input.signing_input()) {
 //!     Ok(())
 //!   } else {
-//!     Err("invalid signature".to_owned())
+//!     Err(JwsVerifierErrorKind::InvalidSignature.into())
 //!   }
-//! };
-//! let jws_validation_config: JWSValidationConfig = JWSValidationConfig::default();
-//! let token: _ = decoder.decode_with(&jws_validation_config, &verify_fn, token.as_bytes(), None)?;
+//! });
+//! let decoder = Decoder::new(verify_fn);
+//! let token = decoder.decode(token.as_bytes(), None)?;
 //!
 //! // ==================================
 //! // Assert the claims are as expected

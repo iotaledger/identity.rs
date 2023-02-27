@@ -46,35 +46,18 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(
-  config: &JWSValidationConfig,
-  decoder: &Decoder,
-  encoded: &'a [u8],
-  detached_payload: Option<&'a [u8]>,
+pub(crate) fn verify(
+  verification_input: &VerificationInput<'_>, 
   jwk: &Jwk,
-) -> Token<'a> {
+) -> Result<(), JwsVerifierError> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
-  let verify_fn = move |verification_input: &VerificationInput| {
-    let alg: JwsAlgorithm = verification_input
-      .jose_header()
-      .try_alg()
-      .map_err(|_| "missing `alg` parameter")?;
-    if alg != JwsAlgorithm::HS256 {
-      return Err("incompatible `alg` parameter");
-    }
+  let mut mac: [u8; SHA256_LEN] = Default::default();
+  crypto::macs::hmac::HMAC_SHA256(verification_input.signing_input(), &shared_secret, &mut mac);
 
-    let mut mac: [u8; SHA256_LEN] = Default::default();
-    crypto::macs::hmac::HMAC_SHA256(verification_input.signing_input(), &shared_secret, &mut mac);
-
-    if verification_input.signature() == mac {
-      Ok(())
-    } else {
-      Err("invalid signature")
-    }
-  };
-
-  decoder
-    .decode_with(config, &verify_fn, encoded, detached_payload)
-    .unwrap()
+  if verification_input.signature() == mac {
+    Ok(())
+  } else {
+    Err(JwsVerifierErrorKind::InvalidSignature.into())
+  }
 }

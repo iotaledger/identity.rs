@@ -156,14 +156,15 @@ where
 
   /// Decode the given `data` which is a base64url-encoded JWS.
   ///
-  /// The `jwk_provider` is a closure taking the `kid` extracted from a JWS header and returning the corresponding JWK
-  /// if possible.
+  /// The `jwk_provider` is a closure taking the `kid` extracted from a JWS header and returning the corresponding
+  /// [`Jwk`] if possible. In the cases where a `kid` is not present in the JWS header the `jwk_provider` may return
+  /// `None`, or some "default" JWK in the scenario where that is reasonable.  
   ///
   /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode<F>(&self, data: &'b [u8], jwk_provider: &F, detached_payload: Option<&'b [u8]>) -> Result<Token<'b>>
   where
-    F: Fn(&str) -> Option<&Jwk>,
+    F: Fn(Option<&str>) -> Option<&Jwk>,
   {
     self.expand(data, detached_payload, |payload, signatures| {
       let mut result: Result<Token> = Err(Error::InvalidContent("recipient not found"));
@@ -187,7 +188,7 @@ where
 
   fn decode_one<F>(&self, jwk_provider: F, payload: &'b [u8], jws_signature: JwsSignature<'a>) -> Result<Token<'b>>
   where
-    F: Fn(&str) -> Option<&Jwk>,
+    F: Fn(Option<&str>) -> Option<&Jwk>,
   {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
 
@@ -204,13 +205,9 @@ where
 
     let payload_is_b64_encoded = merged.b64().unwrap_or(true);
 
-    let kid = merged.kid();
-
     // Obtain a JWK before proceeding.
 
-    // TODO: Better error.
-    let key: &Jwk = kid
-      .and_then(jwk_provider)
+    let key: &Jwk = jwk_provider(merged.kid())
       .or_else(|| {
         if self.config.fallback_to_jwk_header {
           merged.jwk()
@@ -218,20 +215,16 @@ where
           None
         }
       })
-      .ok_or_else(|| crate::error::Error::SignatureVerificationError("could not obtain public key".into()))?;
+      .ok_or_else(|| crate::error::Error::MissingJwk)?;
 
     // Validate the header's alg against the requirements of the JWK.
     {
       if let Some(key_alg) = key.alg() {
         if alg.name() != key_alg {
-          return Err(crate::error::Error::SignatureVerificationError(
-            "algorithm mismatch between jwk and jws header".into(),
-          ));
+          return Err(crate::error::Error::AlgorithmMismatch);
         }
       } else if self.config.jwk_must_have_alg {
-        return Err(crate::error::Error::SignatureVerificationError(
-          "the jwk is missing the alg parameter required by the given config".into(),
-        ));
+        return Err(crate::error::Error::JwkWithoutAlg);
       }
     }
 
@@ -249,7 +242,7 @@ where
       self
         .verifier
         .verify(&verification_input, &key)
-        .map_err(|err| Error::SignatureVerificationError(err.into()))?;
+        .map_err(Error::SignatureVerificationError)?;
     }
 
     let claims: Cow<'b, [u8]> = if payload_is_b64_encoded {
