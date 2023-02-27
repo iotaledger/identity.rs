@@ -18,10 +18,8 @@ use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 
-use self::default_verification::DefaultJwsVerifier;
-
+use super::DefaultJwsSignatureVerifier;
 use super::JwsSignatureVerifier;
-use super::JwsVerifierError;
 use super::VerificationInput;
 
 type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
@@ -129,7 +127,7 @@ struct Flatten<'a> {
 
 /// The [`Decoder`] allows decoding a raw JWS into a [`Token`], verifying
 /// the structure of the JWS and its signature.
-pub struct Decoder<T = DefaultJwsVerifier>
+pub struct Decoder<T = DefaultJwsSignatureVerifier>
 where
   T: JwsSignatureVerifier,
 {
@@ -319,84 +317,12 @@ where
   }
 }
 
-pub mod default_verification {
-  use super::*;
-
-  #[non_exhaustive]
-  pub struct DefaultJwsVerifier;
-
-  impl JwsSignatureVerifier for DefaultJwsVerifier {
-    #[cfg(feature = "default-jws-signature-verifier")]
-    fn verify(&self, input: &VerificationInput<'_>, public_key: &Jwk) -> std::result::Result<(), JwsVerifierError> {
-      let alg = input.jose_header().alg().ok_or(JwsVerifierError::UnsupportedAlg)?;
-      match alg {
-        // EdDSA is the only supported algorithm for now, we can consider supporting more by default in the future.
-        JwsAlgorithm::EdDSA => DefaultJwsVerifier::verify_eddsa_jws_prechecked_alg(input, public_key),
-        _ => Err(JwsVerifierError::UnsupportedAlg),
-      }
-    }
-
-    #[cfg(not(feature = "default-jws-signature-verifier"))]
-    fn verify(&self, input: &VerificationInput<'_>, public_key: &Jwk) -> std::result::Result<(), JwsVerifierError> {
-      panic!("it should not be possible to construct DefaultJwsVerifier without the 'default-jws-signature-verifier' feature. We encourage you to report this bug at: https://github.com/iotaledger/identity.rs/issues");
-    }
-  }
-
-  #[cfg(feature = "default-jws-signature-verifier")]
-  mod default_impls {
-    use crate::jwk::EdCurve;
-    use crate::jwk::JwkParamsOkp;
-
-    use super::*;
-
-    impl DefaultJwsVerifier {
-      /// Verify a JWS signature secured with the EdDsa algorithm.
-      /// Only [`EdCurve::Ed25519`] is supported for now.  
-      pub fn verify_eddsa_jws_prechecked_alg(
-        input: &VerificationInput<'_>,
-        public_key: &Jwk,
-      ) -> Result<(), JwsVerifierError> {
-        // Obtain an Ed25519 public key
-        let params: &JwkParamsOkp = public_key
-          .try_okp_params()
-          .map_err(|_| JwsVerifierError::UnsupportedKeyType)?;
-
-        if params
-          .try_ed_curve()
-          .ok()
-          .filter(|curve_param| *curve_param == EdCurve::Ed25519)
-          .is_none()
-        {
-          return Err(JwsVerifierError::UnsupportedKeyParams);
-        }
-
-        let pk: [u8; crypto::signatures::ed25519::PUBLIC_KEY_LENGTH] = crate::jwu::decode_b64(params.x.as_str())
-          .map_err(|_| JwsVerifierError::Unspecified("could not extract Ed25519 public key".into()))
-          .and_then(|value| TryInto::try_into(value).map_err(|_| JwsVerifierError::UnsupportedKeyParams))?;
-
-        let public_key_ed25519 =
-          crypto::signatures::ed25519::PublicKey::try_from(pk).map_err(|_| JwsVerifierError::UnsupportedKeyParams)?;
-
-        let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.signature())
-          .map_err(|err| err.to_string())
-          .unwrap();
-
-        let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
-
-        if crypto::signatures::ed25519::PublicKey::verify(&public_key_ed25519, &signature, input.signing_input()) {
-          Ok(())
-        } else {
-          Err(JwsVerifierError::SignatureVerificationError(
-            "could not verify Ed25519 signature".into(),
-          ))
-        }
-      }
-    }
-
-    impl Default for Decoder {
-      fn default() -> Self {
-        Decoder::new(DefaultJwsVerifier)
-      }
-    }
+#[cfg(any(feature = "default-jws-signature-verifier", doc))]
+impl Default for Decoder {
+  /// Default constructor for the [`Decoder`] capable of decoding
+  /// a JWS secured with an algorithm the [`DefaultJwsSignatureVerifier`] can handle.
+  /// This constructor is only available when the `default-jws-signature-verifier` is enabled.
+  fn default() -> Self {
+    Decoder::new(DefaultJwsSignatureVerifier::default())
   }
 }
