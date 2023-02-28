@@ -21,17 +21,6 @@ pub fn parse_utf8(slice: &(impl AsRef<[u8]> + ?Sized)) -> Result<&str> {
   str::from_utf8(slice.as_ref()).map_err(Error::InvalidUtf8)
 }
 
-pub fn check_slice_param<T>(name: &'static str, slice: Option<&[T]>, value: &T) -> Result<()>
-where
-  T: PartialEq,
-{
-  if slice.map(|slice| slice.contains(value)).unwrap_or(true) {
-    Ok(())
-  } else {
-    Err(Error::InvalidParam(name))
-  }
-}
-
 pub fn filter_non_empty_bytes<'a, T, U: 'a>(value: T) -> Option<&'a [u8]>
 where
   T: Into<Option<&'a U>>,
