@@ -7,8 +7,8 @@ use crate::jwk::JwkParamsEc;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::JwsVerifierError;
-use crate::jws::JwsVerifierErrorKind;
+use crate::jws::SignatureVerificationError;
+use crate::jws::SignatureVerificationErrorKind;
 use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
@@ -65,7 +65,7 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> Result<(), JwsVerifierError> {
+pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let (_, public_key) = expand_p256_jwk(jwk);
   let verifying_key = VerifyingKey::from(public_key);
 
@@ -73,6 +73,6 @@ pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> R
 
   match signature::Verifier::verify(&verifying_key, verification_input.signing_input(), &signature) {
     Ok(()) => Ok(()),
-    Err(err) => Err(JwsVerifierError::new(JwsVerifierErrorKind::InvalidSignature).with_source(err)),
+    Err(err) => Err(SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)),
   }
 }

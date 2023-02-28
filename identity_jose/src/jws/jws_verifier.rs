@@ -40,15 +40,15 @@ impl<'a> VerificationInput<'a> {
 /// Error type for a failed jws signature verification. See [`JwsSignatureVerifier`].
 #[derive(Debug, thiserror::Error)]
 #[error("jws signature verification failed: {kind}")]
-pub struct JwsVerifierError {
-  kind: JwsVerifierErrorKind,
+pub struct SignatureVerificationError {
+  kind: SignatureVerificationErrorKind,
   #[source]
   source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
 }
 
-impl JwsVerifierError {
+impl SignatureVerificationError {
   /// Constructs a new [`JwsVerifierError`].
-  pub fn new(cause: JwsVerifierErrorKind) -> Self {
+  pub fn new(cause: SignatureVerificationErrorKind) -> Self {
     Self {
       kind: cause,
       source: None,
@@ -56,7 +56,7 @@ impl JwsVerifierError {
   }
 
   /// Returns the cause of the [`JwsVerifierError`].
-  pub fn kind(&self) -> &JwsVerifierErrorKind {
+  pub fn kind(&self) -> &SignatureVerificationErrorKind {
     &self.kind
   }
   /// Updates the `source` of the [`JwsVerifierError`].
@@ -70,8 +70,8 @@ impl JwsVerifierError {
   }
 }
 
-impl From<JwsVerifierErrorKind> for JwsVerifierError {
-  fn from(value: JwsVerifierErrorKind) -> Self {
+impl From<SignatureVerificationErrorKind> for SignatureVerificationError {
+  fn from(value: SignatureVerificationErrorKind) -> Self {
     Self::new(value)
   }
 }
@@ -79,7 +79,7 @@ impl From<JwsVerifierErrorKind> for JwsVerifierError {
 /// The cause of a failed jws signature verification.
 #[derive(Debug)]
 #[non_exhaustive]
-pub enum JwsVerifierErrorKind {
+pub enum SignatureVerificationErrorKind {
   /// Indicates that the [`JwsSignatureVerifier`] implementation is not compatible with the `alg` extracted from the
   /// JOSE header.
   UnsupportedAlg,
@@ -99,7 +99,7 @@ pub enum JwsVerifierErrorKind {
   Unspecified,
 }
 
-impl JwsVerifierErrorKind {
+impl SignatureVerificationErrorKind {
   const fn as_str(&self) -> &str {
     match self {
       Self::UnsupportedAlg => "unsupported alg",
@@ -112,13 +112,13 @@ impl JwsVerifierErrorKind {
   }
 }
 
-impl Display for JwsVerifierErrorKind {
+impl Display for SignatureVerificationErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}", self.as_str())
   }
 }
 
-/// Trait for verifying a JWS signature with a given public key represented as a `JWK`.
+/// Trait for verifying a JWS signature with a given public key represented as a [`Jwk`].
 ///
 /// When the `default-jws-signature-verifier` feature is enabled one can construct a default implementor
 /// provided by the IOTA Identity library. See
@@ -127,7 +127,7 @@ impl Display for JwsVerifierErrorKind {
 /// For custom implementations the most ergonomic option is in many cases converting a suitable closure to a
 /// [`JwsSignatureVerifierFn`] using the [`From`] trait.
 pub trait JwsSignatureVerifier {
-  fn verify<'a>(&self, input: &VerificationInput<'a>, public_key: &Jwk) -> Result<(), JwsVerifierError>;
+  fn verify<'a>(&self, input: &VerificationInput<'a>, public_key: &Jwk) -> Result<(), SignatureVerificationError>;
 }
 
 /// Simple wrapper around a closure capable of verifying a JWS signature. This wrapper implements
@@ -138,7 +138,7 @@ pub trait JwsSignatureVerifier {
 pub struct JwsSignatureVerifierFn<F>(F);
 impl<F> From<F> for JwsSignatureVerifierFn<F>
 where
-  for<'a> F: Fn(&VerificationInput<'a>, &Jwk) -> Result<(), JwsVerifierError>,
+  for<'a> F: Fn(&VerificationInput<'a>, &Jwk) -> Result<(), SignatureVerificationError>,
 {
   fn from(value: F) -> Self {
     Self(value)
@@ -147,9 +147,9 @@ where
 
 impl<F> JwsSignatureVerifier for JwsSignatureVerifierFn<F>
 where
-  for<'a> F: Fn(&VerificationInput<'a>, &Jwk) -> Result<(), JwsVerifierError>,
+  for<'a> F: Fn(&VerificationInput<'a>, &Jwk) -> Result<(), SignatureVerificationError>,
 {
-  fn verify<'a>(&self, input: &VerificationInput<'a>, public_key: &Jwk) -> Result<(), JwsVerifierError> {
+  fn verify<'a>(&self, input: &VerificationInput<'a>, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
     self.0(input, public_key)
   }
 }
@@ -169,11 +169,11 @@ impl DefaultJwsSignatureVerifier {
   pub fn verify_eddsa_jws_prechecked_alg(
     input: &VerificationInput<'_>,
     public_key: &Jwk,
-  ) -> Result<(), JwsVerifierError> {
+  ) -> Result<(), SignatureVerificationError> {
     // Obtain an Ed25519 public key
     let params: &JwkParamsOkp = public_key
       .try_okp_params()
-      .map_err(|_| JwsVerifierErrorKind::UnsupportedKeyType)?;
+      .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
 
     if params
       .try_ed_curve()
@@ -181,25 +181,25 @@ impl DefaultJwsSignatureVerifier {
       .filter(|curve_param| *curve_param == EdCurve::Ed25519)
       .is_none()
     {
-      return Err(JwsVerifierErrorKind::UnsupportedKeyParams.into());
+      return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
     }
 
     let pk: [u8; crypto::signatures::ed25519::PUBLIC_KEY_LENGTH] = crate::jwu::decode_b64(params.x.as_str())
-      .map_err(|_| JwsVerifierErrorKind::KeyDecodingFailure)
-      .and_then(|value| TryInto::try_into(value).map_err(|_| JwsVerifierErrorKind::KeyDecodingFailure))?;
+      .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)
+      .and_then(|value| TryInto::try_into(value).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure))?;
 
-    let public_key_ed25519 =
-      crypto::signatures::ed25519::PublicKey::try_from(pk).map_err(|_| JwsVerifierErrorKind::KeyDecodingFailure)?;
+    let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk)
+      .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
 
     let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.signature())
-      .map_err(|_| JwsVerifierErrorKind::InvalidSignature)?;
+      .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
 
     let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
 
     if crypto::signatures::ed25519::PublicKey::verify(&public_key_ed25519, &signature, input.signing_input()) {
       Ok(())
     } else {
-      Err(JwsVerifierErrorKind::InvalidSignature.into())
+      Err(SignatureVerificationErrorKind::InvalidSignature.into())
     }
   }
 }
@@ -217,12 +217,19 @@ impl JwsSignatureVerifier for DefaultJwsSignatureVerifier {
   /// Default implementer of [`JwsSignatureVerifier`]. For now `DefaultJwsVerifier::verify` can only handle the `alg =
   /// EdDSA` with `crv = Ed25519`, but the implementation may support more algorithms in the future.
   #[cfg(feature = "default-jws-signature-verifier")]
-  fn verify(&self, input: &VerificationInput<'_>, public_key: &Jwk) -> std::result::Result<(), JwsVerifierError> {
-    let alg = input.jose_header().alg().ok_or(JwsVerifierErrorKind::UnsupportedAlg)?;
+  fn verify(
+    &self,
+    input: &VerificationInput<'_>,
+    public_key: &Jwk,
+  ) -> std::result::Result<(), SignatureVerificationError> {
+    let alg = input
+      .jose_header()
+      .alg()
+      .ok_or(SignatureVerificationErrorKind::UnsupportedAlg)?;
     match alg {
       // EdDSA is the only supported algorithm for now, we can consider supporting more by default in the future.
       JwsAlgorithm::EdDSA => DefaultJwsSignatureVerifier::verify_eddsa_jws_prechecked_alg(input, public_key),
-      _ => Err(JwsVerifierErrorKind::UnsupportedAlg.into()),
+      _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
     }
   }
 
@@ -230,7 +237,11 @@ impl JwsSignatureVerifier for DefaultJwsSignatureVerifier {
   // the `default-jws-signature-verifier` feature. It is still necessary to implement this method in order to satisfy
   // the trait bounds on the default parameter for the `Decoder`.
   #[cfg(not(feature = "default-jws-signature-verifier"))]
-  fn verify(&self, input: &VerificationInput<'_>, public_key: &Jwk) -> std::result::Result<(), JwsVerifierError> {
+  fn verify(
+    &self,
+    input: &VerificationInput<'_>,
+    public_key: &Jwk,
+  ) -> std::result::Result<(), SignatureVerificationError> {
     panic!("it should not be possible to construct a DefaultJwsVerifier without the 'default-jws-signature-verifier' feature. We encourage you to report this bug at: https://github.com/iotaledger/identity.rs/issues");
   }
 }

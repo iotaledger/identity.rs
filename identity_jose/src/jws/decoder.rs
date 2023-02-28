@@ -331,11 +331,11 @@ mod tests {
       key
         .alg()
         .filter(|alg| *alg == "RS256")
-        .ok_or(crate::jws::JwsVerifierErrorKind::UnsupportedAlg)?;
+        .ok_or(crate::jws::SignatureVerificationErrorKind::UnsupportedAlg)?;
       if input.signature().len() > 42 {
         Ok(())
       } else {
-        Err(crate::jws::JwsVerifierErrorKind::InvalidSignature.into())
+        Err(crate::jws::SignatureVerificationErrorKind::InvalidSignature.into())
       }
     });
 

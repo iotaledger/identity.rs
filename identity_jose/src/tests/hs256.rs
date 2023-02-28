@@ -6,8 +6,8 @@ use crate::jwk::JwkParamsOct;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::JwsVerifierError;
-use crate::jws::JwsVerifierErrorKind;
+use crate::jws::SignatureVerificationError;
+use crate::jws::SignatureVerificationErrorKind;
 use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
@@ -45,7 +45,7 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> Result<(), JwsVerifierError> {
+pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
   let mut mac: [u8; SHA256_LEN] = Default::default();
@@ -54,6 +54,6 @@ pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> R
   if verification_input.signature() == mac {
     Ok(())
   } else {
-    Err(JwsVerifierErrorKind::InvalidSignature.into())
+    Err(SignatureVerificationErrorKind::InvalidSignature.into())
   }
 }

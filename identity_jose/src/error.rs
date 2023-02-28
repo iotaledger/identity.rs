@@ -36,5 +36,5 @@ pub enum Error {
   #[error("signature creation error")]
   SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),
   #[error("signature verification error")]
-  SignatureVerificationError(#[source] crate::jws::JwsVerifierError),
+  SignatureVerificationError(#[source] crate::jws::SignatureVerificationError),
 }

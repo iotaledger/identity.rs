@@ -11,9 +11,9 @@ use identity_jose::jws::Encoder;
 use identity_jose::jws::JwsAlgorithm;
 use identity_jose::jws::JwsHeader;
 use identity_jose::jws::JwsSignatureVerifierFn;
-use identity_jose::jws::JwsVerifierError;
-use identity_jose::jws::JwsVerifierErrorKind;
 use identity_jose::jws::Recipient;
+use identity_jose::jws::SignatureVerificationError;
+use identity_jose::jws::SignatureVerificationErrorKind;
 use identity_jose::jws::VerificationInput;
 use identity_jose::jwt::JwtClaims;
 use identity_jose::jwt::JwtHeaderSet;
@@ -86,34 +86,36 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
 
   // Set up a verifier that verifies JWS signatures secured with the Ed25519 algorithm
   let verify_fn = JwsSignatureVerifierFn::from(
-    |verification_input: &VerificationInput, jwk: &Jwk| -> Result<(), JwsVerifierError> {
+    |verification_input: &VerificationInput, jwk: &Jwk| -> Result<(), SignatureVerificationError> {
       if verification_input
         .jose_header()
         .alg()
         .filter(|value| *value == JwsAlgorithm::EdDSA)
         .is_none()
       {
-        return Err(JwsVerifierErrorKind::UnsupportedAlg.into());
+        return Err(SignatureVerificationErrorKind::UnsupportedAlg.into());
       }
 
       let params: &JwkParamsOkp = jwk
         .try_okp_params()
-        .map_err(|_| JwsVerifierErrorKind::UnsupportedKeyType)?;
+        .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
 
       if params.try_ed_curve().unwrap() != EdCurve::Ed25519 {
-        return Err(JwsVerifierErrorKind::UnsupportedKeyParams.into());
+        return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
       }
 
       let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
 
-      let public_key = PublicKey::try_from(pk).map_err(|_| JwsVerifierErrorKind::KeyDecodingFailure)?;
-      let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
-        .map_err(|err| JwsVerifierError::new(JwsVerifierErrorKind::InvalidSignature).with_source(err))?;
+      let public_key = PublicKey::try_from(pk).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
+      let signature_arr =
+        <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature()).map_err(|err| {
+          SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)
+        })?;
       let signature = ed25519::Signature::from_bytes(signature_arr);
       if public_key.verify(&signature, verification_input.signing_input()) {
         Ok(())
       } else {
-        Err(JwsVerifierErrorKind::InvalidSignature.into())
+        Err(SignatureVerificationErrorKind::InvalidSignature.into())
       }
     },
   );
