@@ -105,6 +105,12 @@ impl JWSValidationConfig {
     self.fallback_to_jwk_header = value;
     self
   }
+
+  /// Specify which jws serialization format the [`Decoder`] should accept.
+  pub fn format(mut self, value: JwsFormat) -> Self {
+    self.format = value;
+    self
+  }
 }
 
 #[derive(serde::Deserialize)]
@@ -149,11 +155,11 @@ where
     }
   }
 
-  pub fn format(mut self, value: JwsFormat) -> Self {
-    self.format = value;
+  /// Set the [`JWSValidationConfig`] for the decoder.
+  pub fn config(mut self, configuration: JWSValidationConfig) -> Self {
+    self.config = configuration;
     self
   }
-
   /// Decode the given `data` which is a base64url-encoded JWS.
   ///
   /// The `jwk_provider` is a closure taking the `kid` extracted from a JWS header and returning the corresponding
@@ -162,15 +168,15 @@ where
   ///
   /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
-  pub fn decode<F>(&self, data: &'b [u8], jwk_provider: &F, detached_payload: Option<&'b [u8]>) -> Result<Token<'b>>
+  pub fn decode<'c, 'd, F>(&self, data: &'b [u8], jwk_provider: F, detached_payload: Option<&'b [u8]>) -> Result<Token<'b>>
   where
-    F: Fn(Option<&str>) -> Option<&Jwk>,
+    F: Fn(Option<&'c str>) -> Option<&'d Jwk>,
   {
     self.expand(data, detached_payload, |payload, signatures| {
       let mut result: Result<Token> = Err(Error::InvalidContent("recipient not found"));
 
       for signature in signatures {
-        result = self.decode_one(jwk_provider, payload, signature);
+        result = self.decode_one(&jwk_provider, payload, signature);
         if result.is_err() && self.config.strict_signature_verification {
           // With strict signature verification all validations must be successful
           // hence we return on the first error discovered.
@@ -186,9 +192,9 @@ where
     })
   }
 
-  fn decode_one<F>(&self, jwk_provider: F, payload: &'b [u8], jws_signature: JwsSignature<'a>) -> Result<Token<'b>>
+  fn decode_one<'c, 'd, F>(&self, jwk_provider: &F, payload: &'b [u8], jws_signature: JwsSignature<'a>) -> Result<Token<'b>>
   where
-    F: Fn(Option<&str>) -> Option<&Jwk>,
+    F: Fn(Option<&'a str>) -> Option<&'d Jwk>,
   {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
 
@@ -198,10 +204,9 @@ where
       self.config.crits.as_deref(),
     )?;
 
-    let merged: HeaderSet<'_> = HeaderSet::new()
+    let merged = HeaderSet::new()
       .with_protected(protected.as_ref())
       .with_unprotected(jws_signature.header.as_ref());
-    let alg: JwsAlgorithm = merged.try_alg()?;
 
     let payload_is_b64_encoded = merged.b64().unwrap_or(true);
 
@@ -215,9 +220,10 @@ where
           None
         }
       })
-      .ok_or_else(|| crate::error::Error::MissingJwk)?;
+      .ok_or_else(|| crate::error::Error::JwkNotProvided)?;
 
     // Validate the header's alg against the requirements of the JWK.
+    let alg: JwsAlgorithm = merged.try_alg()?;
     {
       if let Some(key_alg) = key.alg() {
         if alg.name() != key_alg {
@@ -317,5 +323,131 @@ impl Default for Decoder {
   /// This constructor is only available when the `default-jws-signature-verifier` is enabled.
   fn default() -> Self {
     Decoder::new(DefaultJwsSignatureVerifier::default())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+
+  use std::sync::Arc;
+ use std::time::SystemTime;
+  use crypto::signatures::ed25519;
+  use crypto::signatures::ed25519::SecretKey;
+ use crypto::signatures::ed25519::PublicKey;
+  use crate::jwk::Jwk;
+  use crate::jwk::JwkParamsOkp;
+ use crate::jwk::EdCurve;
+ use crate::jwk::JwkType;
+ use crate::jws::Decoder;
+ use crate::jws::VerificationInput;
+  use crate::jws::Encoder;
+  use crate::jws::JwsAlgorithm;
+  use crate::jws::JwsHeader;
+ use crate::jws::Recipient;
+  use crate::jws::JwsVerifierError;
+  use crate::jws::JwsVerifierErrorKind;
+  use crate::jws::JwsSignatureVerifierFn;
+  use crate::jwt::JwtClaims;
+  use crate::jwt::JwtHeaderSet;
+ use crate::jwu;
+
+ async fn _jws_example() -> Result<(), Box<dyn std::error::Error>> {
+ // =============================
+ // Generate an Ed25519 key pair
+ // =============================
+ let secret_key = SecretKey::generate()?;
+ let public_key = secret_key.public_key();
+
+ // ====================================
+ // Create the header for the recipient
+ // ====================================
+ let mut header: JwsHeader = JwsHeader::new();
+ header.set_alg(JwsAlgorithm::EdDSA);
+ let kid = "did:iota:0x123#signing-key";
+ header.set_kid(kid);
+
+ // ==================================
+ // Create the claims we want to sign
+ // ==================================
+ let mut claims: JwtClaims<serde_json::Value> = JwtClaims::new();
+ claims.set_iss("issuer");
+ claims.set_iat(
+   SystemTime::now()
+     .duration_since(SystemTime::UNIX_EPOCH)?
+     .as_secs() as i64,
+ );
+ claims.set_custom(serde_json::json!({"num": 42u64}));
+
+ // ==================
+ // Encode the claims
+ // ==================
+ let encoder: Encoder = Encoder::new().recipient(Recipient::new().protected(&header));
+ let claims_bytes: Vec<u8> = serde_json::to_vec(&claims)?;
+ let secret_key: Arc<SecretKey> = Arc::new(secret_key);
+ let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
+   let sk: Arc<SecretKey> = secret_key.clone();
+   async move {
+     let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().with_protected(&protected).with_unprotected(&unprotected);
+     if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
+       return Err("incompatible `alg` parameter");
+     }
+     let sig: [u8; ed25519::SIGNATURE_LENGTH] = sk.sign(msg.as_slice()).to_bytes();
+     Ok(jwu::encode_b64(sig))
+   }
+ };
+ let token: String = encoder.encode(&sign_fn, &claims_bytes).await?;
+
+ // ============
+ // Create Public key for verification
+ // =============
+ let mut public_key_jwk = Jwk::new(JwkType::Okp);
+  public_key_jwk.set_kid(kid);
+  public_key_jwk.set_params(JwkParamsOkp {
+    crv: "Ed25519".into(),
+    x: crate::jwu::encode_b64(public_key.as_slice()),
+    d: None,
+  }).unwrap();
+
+
+ // ==================
+ // Decode the claims
+ // ==================
+
+ // Set up a verifier that verifies JWS signatures secured with the Ed25519 algorithm
+ let verify_fn = JwsSignatureVerifierFn::from(|verification_input: &VerificationInput , jwk: &Jwk| -> Result<(), JwsVerifierError> {
+   if verification_input.jose_header().alg().filter(|value| *value == JwsAlgorithm::EdDSA).is_none() {
+     return Err(JwsVerifierErrorKind::UnsupportedAlg.into());
+   }
+
+    let params: &JwkParamsOkp = jwk.try_okp_params().map_err(|_| JwsVerifierErrorKind::UnsupportedKeyType)?;
+
+  if params.try_ed_curve().unwrap() != EdCurve::Ed25519 {
+     return Err(JwsVerifierErrorKind::UnsupportedKeyParams.into());
+  }
+
+  let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
+
+   let public_key = PublicKey::try_from(pk).map_err(|_| JwsVerifierErrorKind::KeyDecodingFailure)?;
+   let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
+     .map_err(|err| JwsVerifierErrorKind::InvalidSignature)
+     ?;
+   let signature = ed25519::Signature::from_bytes(signature_arr);
+   if public_key.verify(&signature, verification_input.signing_input()) {
+     Ok(())
+   } else {
+     Err(JwsVerifierErrorKind::InvalidSignature.into())
+   }
+ });
+ let decoder = Decoder::new(verify_fn);
+ // We don't use a detached payload.  
+ let detached_payload = None;
+ let token = decoder.decode(token.as_bytes(),move |_|Some(&public_key_jwk), detached_payload)?;
+
+ // ==================================
+ // Assert the claims are as expected
+ // ==================================
+ let recovered_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(&token.claims)?;
+ assert_eq!(claims, recovered_claims);
+  Ok(())
   }
 }

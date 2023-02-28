@@ -27,8 +27,8 @@ pub enum Error {
   InvalidContent(&'static str),
   #[error("invalid key format for type `{0}`")]
   KeyError(&'static str),
-  #[error("missing jwk")]
-  MissingJwk,
+  #[error("failed to obtain a Jwk: Jwk was not provided or extracted otherwise")]
+  JwkNotProvided,
   #[error("mismatch between header and jwk alg values")]
   AlgorithmMismatch,
   #[error("could not extract alg from a jwk required to have this field")]

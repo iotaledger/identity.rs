@@ -11,16 +11,19 @@ use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::Recipient;
 use crate::jwt::JwtClaims;
+use crate::jwk::{Jwk, JwkType};
 use crate::tests::ed25519;
 
 #[tokio::test]
 async fn test_encoder_decoder_roundtrip() {
   let secret_key = SecretKey::generate().unwrap();
   let public_key = secret_key.public_key();
+  
 
   let mut header: JwsHeader = JwsHeader::new();
   header.set_alg(JwsAlgorithm::EdDSA);
-  header.set_kid("did:iota:0x123#signing-key");
+  let kid = "did:iota:0x123#signing-key";
+  header.set_kid(kid);
 
   let mut claims: JwtClaims<serde_json::Value> = JwtClaims::new();
   claims.set_iss("issuer");
@@ -37,8 +40,24 @@ async fn test_encoder_decoder_roundtrip() {
 
   let token: String = ed25519::encode(&encoder, &claims_bytes, secret_key).await;
 
-  let decoder: Decoder = Decoder::new();
-  let token: _ = ed25519::decode(&decoder, token.as_bytes(), None, public_key);
+  let verifier = JwsSignatureVerifierFn::from(
+    |input, key| {
+      if input.alg().filter(|value| value == JwsAlgorithm::EdDSA).is_none() {
+        panic!("invalid algorithm");
+      }
+      ed25519::verify(input, key)
+    }
+  ); 
+  let decoder: Decoder = Decoder::new(verifier);
+  let mut public_key_jwk = Jwk::new(JwkType::Okp);
+  public_key_jwk.set_kid(kid);
+  public_key_jwk.set_params(JwkParamsOkp {
+    crv: "Ed25519".into(), 
+    x: crate::jwu::encode_b64(public_key.as_slice()),
+    d: None
+  }).unwrap();
+
+  let token = decoder.verify(token.as_bytes(), |kid| kid.filter(|kid| kid == public_key_jwk.kid().unwrap()).map(|_|&public_key_jwk) , None);
 
   let recovered_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(&token.claims).unwrap();
 

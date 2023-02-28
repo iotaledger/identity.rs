@@ -23,15 +23,19 @@ fn test_rfc7797() {
     let header: JwsHeader = serde_json::from_slice(tv.header).unwrap();
     let jwk: Jwk = serde_json::from_str(tv.public_key).unwrap();
 
-    let decoder = jws::Decoder::new();
+    let verifier = JwsSignatureVerifierFn::from(|input, key| {
+      if input.alg().filter(|value| value == JwsAlgorithm::HS256).is_none() {
+        panic!("unsupported algorithm"); 
+      }
+      hs256::verify(input, key)
+    });
+    let decoder = Decoder::new(verifier).config(JWSValidationConfig::default().critical("b64"));  
 
-    let decoded: _ = hs256::decode(
-      &JWSValidationConfig::default().critical("b64"),
-      &decoder,
+    let decoded = decoder.decode(
       tv.encoded,
+      || Some(&jwk), 
       tv.detach.then_some(tv.payload),
-      &jwk,
-    );
+    ).unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.payload);

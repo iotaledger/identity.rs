@@ -42,8 +42,24 @@ async fn test_rfc8037_ed25519() {
     assert_eq!(encoded, tv.encoded);
 
     let decoder: Decoder = Decoder::new();
-    let decoded: jws::Token = ed25519::decode(&decoder, encoded.as_bytes(), None, public_key);
 
+    let jws_verifier = JwsSignatureVerifierFn::from(
+      |input, key| {
+        if input.alg().filter(|value| value == JwsAlgorithm::EdDSA).is_none() {
+          panic!("invalid algorithm");
+        }
+        ed25519::verify(input, key)
+      }
+    ); 
+    let decoder = Decoder::new(jws_verifier); 
+    let decoded = decoder.decode(encoded.as_bytes(), |_| Some(&public), None).unwrap();
+
+    #[cfg(feature = "default-jws-signature-verifier")]
+    {
+      let decoder = Decoder::default(); 
+      let decoded_with_default = decoder.decode(encoded.as_bytes(), |_| Some(&public), None).unwrap();
+      assert_eq!(decoded, decoded_with_default); 
+    }
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.payload.as_bytes());
   }

@@ -39,8 +39,8 @@ async fn test_rfc7515() {
     }
 
     let jws_signature_verifier = JwsSignatureVerifierFn::from(
-      |input: &VerificationInput<'_>, key: &Jwk| -> Result<(),JwsVerifierError> {
-        match key.alg().unwrap() {
+      |input, key| {
+        match input.alg().unwrap() {
           JwsAlgorithm::HS256 => hs256::verify(input, key), 
           JwsAlgorithm::ES256 => es256::verify(input, key), 
           other => unimplemented!("{other}")
@@ -49,7 +49,7 @@ async fn test_rfc7515() {
     ); 
 
     let mut decoder = jws::Decoder::new(jws_signature_verifier);
-    let decoded = decoder.decode(tv.encoded, &jwk).unwrap();
+    let decoded = decoder.decode(tv.encoded, |_| Some(&jwk), None).unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.claims);
