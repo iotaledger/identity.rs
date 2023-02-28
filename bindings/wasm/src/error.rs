@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::resolver;
+use identity_iota::storage::key_storage::KeyStorageError;
+use identity_iota::storage::key_storage::KeyStorageErrorKind;
+use identity_iota::storage::key_storage::KeyStorageResult;
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::result::Result as StdResult;
@@ -187,25 +190,16 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   }
 }
 
-// TODO: Remove or reuse depending on what we do with the account.
-// impl From<UpdateError> for WasmError<'_> {
-//   fn from(error: UpdateError) -> Self {
-//     Self {
-//       name: Cow::Borrowed("Update::Error"),
-//       message: Cow::Owned(error.to_string()),
-//     }
-//   }
-// }
-
 /// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
-  // TODO: Remove or reuse depending on what we do with the account.
-  /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
-  // pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
-  //   self.stringify_error().map_err(AccountStorageError::JsError)
-  // }
+  /// Consumes the struct and returns a Result<_, KeyStorageError>, leaving an `Ok` value untouched.
+  pub fn to_key_storage_error(self) -> KeyStorageResult<JsValue> {
+    self
+      .stringify_error()
+      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))
+  }
 
   // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
   pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
@@ -234,23 +228,12 @@ impl From<Result<JsValue>> for JsValueResult {
 }
 
 // TODO: Remove or reuse depending on what we do with the account..
-// impl From<JsValueResult> for AccountStorageResult<()> {
-//   fn from(result: JsValueResult) -> Self {
-//     result.to_account_error().and_then(|js_value| {
-//       js_value
-//         .into_serde()
-//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-//     })
-//   }
-// }
-
-// TODO: Remove or reuse depending on what we do with the account..
-// impl From<JsValueResult> for AccountStorageResult<bool> {
-//   fn from(result: JsValueResult) -> Self {
-//     result.to_account_error().and_then(|js_value| {
-//       js_value
-//         .into_serde()
-//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-//     })
-//   }
-// }
+impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyStorageResult<T> {
+  fn from(result: JsValueResult) -> Self {
+    result.to_key_storage_error().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::SerializationError).with_source(e))
+    })
+  }
+}

@@ -33,8 +33,10 @@ pub enum Error {
   AlgorithmMismatch,
   #[error("could not extract alg from a jwk required to have this field")]
   JwkWithoutAlg,
+  #[error("unsupported jws algorithm")]
+  UnsupportedAlgorithm,
   #[error("signature creation error")]
   SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),
   #[error("signature verification error")]
-  SignatureVerificationError(#[source] crate::jws::SignatureVerificationError),
+  SignatureVerificationError(#[source] crate::jws::SignatureVerificationError)
 }

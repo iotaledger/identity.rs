@@ -1,5 +1,4 @@
 import type { Client, SecretManager } from "@iota/client-wasm/node";
-import { AddressTypes, Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import {
     IotaDID,
     IotaDocument,
@@ -8,7 +7,8 @@ import {
     KeyType,
     MethodScope,
     VerificationMethod,
-} from "../../node";
+} from "@iota/identity-wasm/node";
+import { AddressTypes, Bech32Helper, IAliasOutput } from "@iota/iota.js";
 
 export const API_ENDPOINT = "http://localhost:14265";
 export const FAUCET_ENDPOINT = "http://localhost:8091/api/enqueue";

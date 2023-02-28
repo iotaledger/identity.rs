@@ -1,0 +1,33 @@
+[package]
+name = "identity_storage"
+version = "0.7.0-alpha.5"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords = ["iota", "storage", "identity", "kms", "stronghold"]
+license.workspace = true
+readme = "./README.md"
+repository.workspace = true
+rust-version.workspace = true
+description = "Abstractions over storage for cryptographic keys used in DID Documents"
+
+[dependencies]
+async-trait = { version = "0.1.64", default-features = false }
+identity_core = { version = "=0.7.0-alpha.5", path = "../identity_core", default-features = false }
+identity_jose = { version = "=0.7.0-alpha.5", path = "../identity_jose", default-features = false }
+iota-crypto = { version = "0.15", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }
+rand = { version = "0.8.5", default-features = false, features = ["std"], optional = true }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync"], optional = true }
+
+[dev-dependencies]
+rand = { version = "0.8.5" }
+tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync", "rt"] }
+
+[features]
+# Exposes in-memory implementations of the storage traits intended exclusively for testing.
+memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
+# Enables `Send` + `Sync` bounds for the storage traits.
+send-sync-storage = []

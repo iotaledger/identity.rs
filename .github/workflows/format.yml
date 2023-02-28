@@ -12,6 +12,9 @@ on:
       - '.github/workflows/format.yml'
       - '**.rs'
       - '**.toml'
+      - '**.ts'
+      - '**.js'
+      - '**.json'
 
 jobs:
   format:
