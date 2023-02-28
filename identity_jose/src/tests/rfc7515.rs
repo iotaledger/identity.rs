@@ -3,8 +3,8 @@
 
 use crate::jwk::Jwk;
 use crate::jws;
-use crate::jws::JwsDecoderConfig;
 use crate::jws::JwsAlgorithm;
+use crate::jws::JwsDecoderConfig;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSignatureVerifierFn;
 use crate::jws::Recipient;

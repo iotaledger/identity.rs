@@ -19,6 +19,7 @@ use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 
 use super::DefaultJwsSignatureVerifier;
+use super::JwsDecoderConfig;
 use super::JwsSignatureVerifier;
 use super::VerificationInput;
 
@@ -36,81 +37,15 @@ pub struct Token<'a> {
   pub claims: Cow<'a, [u8]>,
 }
 
+// =============================================================================================
+// Format dependent: Deserializable helper structs used by the decoder
+// =============================================================================================
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct JwsSignature<'a> {
   header: Option<JwsHeader>,
   protected: Option<&'a str>,
   signature: &'a str,
-}
-
-#[derive(Clone, Debug)]
-/// Configuration defining the behaviour of a [`Decoder`].
-pub struct JwsDecoderConfig {
-  crits: Option<Vec<String>>,
-
-  jwk_must_have_alg: bool,
-
-  strict_signature_verification: bool,
-
-  format: JwsFormat,
-
-  fallback_to_jwk_header: bool,
-}
-
-impl Default for JwsDecoderConfig {
-  fn default() -> Self {
-    Self {
-      crits: None,
-      jwk_must_have_alg: true,
-      strict_signature_verification: true,
-      format: JwsFormat::Compact,
-      fallback_to_jwk_header: false,
-    }
-  }
-}
-
-impl JwsDecoderConfig {
-  /// Append values to the list of permitted extension parameters.
-  pub fn critical(mut self, value: impl Into<String>) -> Self {
-    self.crits.get_or_insert_with(Vec::new).push(value.into());
-    self
-  }
-
-  /// Defines whether a given [`Jwk`](crate::jwk::Jwk) used to verify a JWS,
-  /// must have an `alg` parameter corresponding to the one extracted from the JWS header.
-  /// This value is `true` by default.  
-  pub fn jwk_must_have_alg(mut self, value: bool) -> Self {
-    self.jwk_must_have_alg = value;
-    self
-  }
-
-  /// When verifying a JWS encoded with the general JWS JSON serialization
-  /// this value decides whether all signatures must be verified (the default behavior),
-  /// otherwise only one signature needs to be verified in order for the entire JWS to be accepted.
-  pub fn strict_signature_verification(mut self, value: bool) -> Self {
-    self.strict_signature_verification = value;
-    self
-  }
-
-  /// Specify the serialization format the `Decoder` accepts. The default is [`JwsFormat::Compact`].
-  pub fn serialization_format(mut self, value: JwsFormat) -> Self {
-    self.format = value;
-    self
-  }
-
-  /// Specify whether to attempt to extract a public key from the JOSE header if the
-  /// `jwk` provider fails to provide one.
-  pub fn fallback_to_jwk_header(mut self, value: bool) -> Self {
-    self.fallback_to_jwk_header = value;
-    self
-  }
-
-  /// Specify which jws serialization format the [`Decoder`] should accept.
-  pub fn format(mut self, value: JwsFormat) -> Self {
-    self.format = value;
-    self
-  }
 }
 
 #[derive(serde::Deserialize)]
@@ -129,6 +64,7 @@ struct Flatten<'a> {
 }
 
 // =============================================================================
+// Decoder
 // =============================================================================
 
 /// The [`Decoder`] allows decoding a raw JWS into a [`Token`], verifying
@@ -145,6 +81,7 @@ impl<T> Decoder<T>
 where
   T: JwsSignatureVerifier,
 {
+  /// Constructs a new [`Decoder`] with the specified `verifier` for signature verification.
   pub fn new(verifier: T) -> Self {
     Self {
       config: JwsDecoderConfig::default(),
@@ -152,11 +89,17 @@ where
     }
   }
 
+  /// Returns the [`JwsDecoderConfig`] used by this [`Decoder`].
+  pub fn config(&self) -> &JwsDecoderConfig {
+    &self.config
+  }
+
   /// Set the [`JWSValidationConfig`] for the decoder.
   pub fn with_config(mut self, configuration: JwsDecoderConfig) -> Self {
     self.config = configuration;
     self
   }
+
   /// Decode the given `data` which is a base64url-encoded JWS.
   ///
   /// The `jwk_provider` is a closure taking the `kid` extracted from a JWS header and returning the corresponding
