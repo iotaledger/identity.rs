@@ -6,6 +6,7 @@ use identity_jose::jwk::Jwk;
 use identity_jose::jwk::JwkParamsOkp;
 use identity_jose::jwk::JwkType;
 use identity_jose::jws::Decoder;
+use identity_jose::jws::DecoderConfig;
 use identity_jose::jws::Encoder;
 use identity_jose::jws::JwsAlgorithm;
 use identity_jose::jws::JwsHeader;
@@ -118,8 +119,14 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
   );
   let decoder = Decoder::new(verify_fn);
   // We don't use a detached payload.
-  let detached_payload = None;
-  let token = decoder.decode(token.as_bytes(), |_| Some(&public_key_jwk), detached_payload)?;
+  let detached_payload: Option<&[u8]> = None;
+  let decoding_config: DecoderConfig = Default::default();
+  let token = decoder.decode(
+    token.as_bytes(),
+    |_| Some(&public_key_jwk),
+    detached_payload,
+    &decoding_config,
+  )?;
 
   // ==================================
   // Assert the claims are as expected

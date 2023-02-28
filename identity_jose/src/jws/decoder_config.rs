@@ -4,8 +4,8 @@
 use super::JwsFormat;
 
 #[derive(Clone, Debug)]
-/// Configuration defining the behaviour of a [`Decoder`].
-pub struct JwsDecoderConfig {
+/// Configuration parameters used in [`Decoder::decode`](crate::jws::Decoder::decode()).
+pub struct DecoderConfig {
   pub(super) crits: Option<Vec<String>>,
 
   pub(super) jwk_must_have_alg: bool,
@@ -17,7 +17,7 @@ pub struct JwsDecoderConfig {
   pub(super) fallback_to_jwk_header: bool,
 }
 
-impl Default for JwsDecoderConfig {
+impl Default for DecoderConfig {
   fn default() -> Self {
     Self {
       crits: None,
@@ -29,7 +29,7 @@ impl Default for JwsDecoderConfig {
   }
 }
 
-impl JwsDecoderConfig {
+impl DecoderConfig {
   /// Append values to the list of permitted extension parameters.
   pub fn critical(mut self, value: impl Into<String>) -> Self {
     self.crits.get_or_insert_with(Vec::new).push(value.into());

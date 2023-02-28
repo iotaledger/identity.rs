@@ -3,8 +3,8 @@
 
 use crate::jwk::Jwk;
 use crate::jws::Decoder;
+use crate::jws::DecoderConfig;
 use crate::jws::JwsAlgorithm;
-use crate::jws::JwsDecoderConfig;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSignatureVerifierFn;
 use crate::jws::VerificationInput;
@@ -37,11 +37,15 @@ fn test_rfc7797() {
       }
       hs256::verify(input, key)
     });
-    let decoder =
-      Decoder::new(verifier).with_config(JwsDecoderConfig::default().critical("b64").jwk_must_have_alg(false));
+    let decoder = Decoder::new(verifier);
 
     let decoded = decoder
-      .decode(tv.encoded, |_| Some(&jwk), tv.detach.then_some(tv.payload))
+      .decode(
+        tv.encoded,
+        |_| Some(&jwk),
+        tv.detach.then_some(tv.payload),
+        &DecoderConfig::default().critical("b64").jwk_must_have_alg(false),
+      )
       .unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);
