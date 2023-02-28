@@ -9,7 +9,7 @@ use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkType;
 use crate::jws::Decoder;
-use crate::jws::DecoderConfig;
+use crate::jws::DecodingConfig;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
@@ -75,7 +75,7 @@ async fn test_encoder_decoder_roundtrip() {
           .map(|_| &public_key_jwk)
       },
       None,
-      &DecoderConfig::default().jwk_must_have_alg(false),
+      &DecodingConfig::default().jwk_must_have_alg(false),
     )
     .unwrap();
 

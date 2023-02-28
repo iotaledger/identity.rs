@@ -5,7 +5,7 @@ use super::JwsFormat;
 
 #[derive(Clone, Debug)]
 /// Configuration parameters used in [`Decoder::decode`](crate::jws::Decoder::decode()).
-pub struct DecoderConfig {
+pub struct DecodingConfig {
   pub(super) crits: Option<Vec<String>>,
 
   pub(super) jwk_must_have_alg: bool,
@@ -17,7 +17,7 @@ pub struct DecoderConfig {
   pub(super) fallback_to_jwk_header: bool,
 }
 
-impl Default for DecoderConfig {
+impl Default for DecodingConfig {
   fn default() -> Self {
     Self {
       crits: None,
@@ -29,7 +29,7 @@ impl Default for DecoderConfig {
   }
 }
 
-impl DecoderConfig {
+impl DecodingConfig {
   /// Append values to the list of permitted extension parameters.
   pub fn critical(mut self, value: impl Into<String>) -> Self {
     self.crits.get_or_insert_with(Vec::new).push(value.into());
@@ -52,7 +52,8 @@ impl DecoderConfig {
     self
   }
 
-  /// Specify the serialization format the `Decoder` accepts. The default is [`JwsFormat::Compact`].
+  /// Specify the serialization format the [`Decoder`](crate::jws::Decoder) accepts. The default is
+  /// [`JwsFormat::Compact`].
   pub fn serialization_format(mut self, value: JwsFormat) -> Self {
     self.format = value;
     self
@@ -65,7 +66,7 @@ impl DecoderConfig {
     self
   }
 
-  /// Specify which jws serialization format the [`Decoder`] should accept.
+  /// Specify which jws serialization format the [`Decoder`](crate::jws::Decoder) should accept.
   pub fn format(mut self, value: JwsFormat) -> Self {
     self.format = value;
     self

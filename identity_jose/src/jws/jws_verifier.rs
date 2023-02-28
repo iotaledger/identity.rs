@@ -47,7 +47,7 @@ pub struct SignatureVerificationError {
 }
 
 impl SignatureVerificationError {
-  /// Constructs a new [`JwsVerifierError`].
+  /// Constructs a new [`SignatureVerificationError`].
   pub fn new(cause: SignatureVerificationErrorKind) -> Self {
     Self {
       kind: cause,
@@ -55,11 +55,11 @@ impl SignatureVerificationError {
     }
   }
 
-  /// Returns the cause of the [`JwsVerifierError`].
+  /// Returns the cause of the [`SignatureVerificationError`].
   pub fn kind(&self) -> &SignatureVerificationErrorKind {
     &self.kind
   }
-  /// Updates the `source` of the [`JwsVerifierError`].
+  /// Updates the `source` of the [`SignatureVerificationError`].
   pub fn with_source(self, source: impl Into<Box<dyn std::error::Error + Send + Sync + 'static>>) -> Self {
     self._with_source(source.into())
   }
@@ -122,7 +122,7 @@ impl Display for SignatureVerificationErrorKind {
 ///
 /// When the `default-jws-signature-verifier` feature is enabled one can construct a default implementor
 /// provided by the IOTA Identity library. See
-/// [`DefaultJwsSignatureVerifier::verify`](DefaultSignatureVerifier::verify()).
+/// [`DefaultJwsSignatureVerifier::verify`](DefaultJwsSignatureVerifier::verify()).
 ///
 /// For custom implementations the most ergonomic option is in many cases converting a suitable closure to a
 /// [`JwsSignatureVerifierFn`] using the [`From`] trait.
@@ -206,8 +206,8 @@ impl DefaultJwsSignatureVerifier {
 
 #[cfg(any(feature = "default-jws-signature-verifier", doc))]
 impl Default for DefaultJwsSignatureVerifier {
-  /// Constructs a [`DefaultJwsVerifier`]. This is the only way to obtain a `DefaultJwsVerifier` and is only available
-  /// when the `default-jws-signature-verifier` feature is set.
+  /// Constructs a [`DefaultJwsSignatureVerifier`]. This is the only way to obtain a `DefaultJwsVerifier` and is only
+  /// available when the `default-jws-signature-verifier` feature is set.
   fn default() -> Self {
     Self { _internal: () }
   }

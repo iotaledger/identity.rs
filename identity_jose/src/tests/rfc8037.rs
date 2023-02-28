@@ -5,7 +5,7 @@ use crypto::signatures::ed25519::SecretKey;
 
 use crate::jwk::Jwk;
 use crate::jws::Decoder;
-use crate::jws::DecoderConfig;
+use crate::jws::DecodingConfig;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
@@ -59,7 +59,7 @@ async fn test_rfc8037_ed25519() {
         encoded.as_bytes(),
         |_| Some(&public),
         None,
-        &DecoderConfig::default().jwk_must_have_alg(false),
+        &DecodingConfig::default().jwk_must_have_alg(false),
       )
       .unwrap();
 
@@ -71,7 +71,7 @@ async fn test_rfc8037_ed25519() {
           encoded.as_bytes(),
           |_| Some(&public),
           None,
-          &DecoderConfig::default().jwk_must_have_alg(false),
+          &DecodingConfig::default().jwk_must_have_alg(false),
         )
         .unwrap();
       assert_eq!(decoded, decoded_with_default);

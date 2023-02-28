@@ -18,7 +18,7 @@ use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 
-use super::DecoderConfig;
+use super::DecodingConfig;
 use super::DefaultJwsSignatureVerifier;
 use super::JwsSignatureVerifier;
 use super::VerificationInput;
@@ -114,13 +114,13 @@ where
   ///
   /// ## Additional configuration
   /// Some aspects of the behaviour of this method is decided by the `decoding_config` parameter. See the available
-  /// methods on [`DecoderConfig`] for information on what is possible to configure.
+  /// methods on [`DecodingConfig`] for information on what is possible to configure.
   pub fn decode<'b, 'c, F>(
     &self,
     data: &'b [u8],
     jwk_provider: F,
     detached_payload: Option<&'b [u8]>,
-    decoding_config: &DecoderConfig,
+    decoding_config: &DecodingConfig,
   ) -> Result<Token<'b>>
   where
     F: 'c,
@@ -179,7 +179,7 @@ where
 
   fn decode_one<'a, 'b, 'c, F>(
     &self,
-    decoding_config: &DecoderConfig,
+    decoding_config: &DecodingConfig,
     jwk_provider: &F,
     payload: &'b [u8],
     jws_signature: JwsSignature<'a>,

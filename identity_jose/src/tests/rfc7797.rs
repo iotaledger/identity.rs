@@ -3,7 +3,7 @@
 
 use crate::jwk::Jwk;
 use crate::jws::Decoder;
-use crate::jws::DecoderConfig;
+use crate::jws::DecodingConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSignatureVerifierFn;
@@ -44,7 +44,7 @@ fn test_rfc7797() {
         tv.encoded,
         |_| Some(&jwk),
         tv.detach.then_some(tv.payload),
-        &DecoderConfig::default().critical("b64").jwk_must_have_alg(false),
+        &DecodingConfig::default().critical("b64").jwk_must_have_alg(false),
       )
       .unwrap();
 
