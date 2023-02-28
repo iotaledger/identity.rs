@@ -104,13 +104,6 @@ impl Decoder {
     self
   }
 
-  /// Specify the serialization format the [`Decoder`](crate::jws::Decoder) accepts. The default is
-  /// [`JwsFormat::Compact`].
-  pub fn serialization_format(mut self, value: JwsFormat) -> Self {
-    self.config.format = value;
-    self
-  }
-
   /// Specify whether to attempt to extract a public key from the JOSE header if the
   /// `jwk` provider fails to provide one.
   pub fn fallback_to_jwk_header(mut self, value: bool) -> Self {
@@ -118,7 +111,8 @@ impl Decoder {
     self
   }
 
-  /// Specify which jws serialization format the [`Decoder`](crate::jws::Decoder) should accept.
+  /// Specify the serialization format the [`Decoder`](crate::jws::Decoder) accepts. The default is
+  /// [`JwsFormat::Compact`].
   pub fn format(mut self, value: JwsFormat) -> Self {
     self.config.format = value;
     self
