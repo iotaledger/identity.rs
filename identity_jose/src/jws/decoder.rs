@@ -151,7 +151,7 @@ impl Decoder {
   ///
   ///  If the [`Jwk`] cannot be obtained from the `jwk_provider` an error is immediately returned unless the
   /// [`Decoder`] has been configured to fall back to extracting the `Jwk` from the JOSE header (see
-  /// [`DecodingConfig::fallback_to_jwk_header`](DecodingConfig::fallback_to_jwk_header()). The fallback option is off
+  /// [`Decoder::fallback_to_jwk_header`](Decoder::fallback_to_jwk_header()). The fallback option is off
   /// by default.
   ///
   /// ### Working with detached payloads
