@@ -72,8 +72,8 @@ impl Stronghold {
 
     Ok(Self {
       stronghold,
-      snapshot_path,
       key_provider,
+      snapshot_path,
       index_lock: RwLock::new(()),
       dropsave: dropsave.unwrap_or(true),
     })
@@ -91,12 +91,16 @@ impl Stronghold {
 
   /// Load the client identified by the given `client_path` or create it, if it doesn't exist.
   pub(crate) fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
-    match self.stronghold.load_client(client_path.as_ref()) {
+    match self.stronghold.get_client(client_path.as_ref()) {
       Ok(client) => Ok(client),
-      Err(ClientError::ClientDataNotPresent) => self
-        .stronghold
-        .create_client(client_path.as_ref())
-        .map_err(|err| StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
+      Err(ClientError::ClientDataNotPresent) => match self.stronghold.load_client(client_path.as_ref()) {
+        Ok(client) => Ok(client),
+        Err(ClientError::ClientDataNotPresent) => self
+          .stronghold
+          .create_client(client_path.as_ref())
+          .map_err(|err| StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
+        Err(err) => Err(StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
+      },
       Err(err) => Err(StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
     }
   }
@@ -137,7 +141,7 @@ impl Stronghold {
 
     self
       .stronghold
-      .commit(&self.snapshot_path, &self.key_provider)
+      .commit_with_keyprovider(&self.snapshot_path, &self.key_provider)
       .map_err(|err| StrongholdError::Snapshot(SnapshotOperation::Write, self.snapshot_path.clone(), err))
   }
 }
