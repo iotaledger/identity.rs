@@ -433,110 +433,55 @@ mod tests {
   use std::sync::Arc;
   use std::time::SystemTime;
 
-  async fn _jws_example() -> Result<(), Box<dyn std::error::Error>> {
-    // =============================
-    // Generate an Ed25519 key pair
-    // =============================
-    let secret_key = SecretKey::generate()?;
-    let public_key = secret_key.public_key();
+  struct MockIssuer {
+    id: String,
+    keys: Vec<Jwk>,
+  }
 
-    // ====================================
-    // Create the header for the recipient
-    // ====================================
-    let mut header: JwsHeader = JwsHeader::new();
-    header.set_alg(JwsAlgorithm::EdDSA);
-    let kid = "did:iota:0x123#signing-key";
-    header.set_kid(kid);
+  // This is a very unrealistic test that is mainly designed to check that the `Decoder::decode` API will be callable
+  // from the (JWS)-based PresentationValidator. Tests more relevant for the features of this crate can be found in
+  // src/tests.
+  #[test]
+  fn compiles_with_advanced_jwk_provider() {
+    let issuer_did: &str = "did:example:abfe13f712120431c276e12ecab";
+    let kid: String = format!("{}#keys-1", issuer_did);
+    let alg: String = JwsAlgorithm::RS256.to_string();
+    let jws: &str = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRpZDpleGFtcGxlOmFiZmUxM2Y3MTIxMjA0MzFjMjc2ZTEyZWNhYiNrZXlzLTEifQ.eyJzdWIiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEiLCJqdGkiOiJodHRwOi8vZXhhbXBsZS5lZHUvY3JlZGVudGlhbHMvMzczMiIsImlzcyI6ImRpZDpleGFtcGxlOmFiZmUxM2Y3MTIxMjA0MzFjMjc2ZTEyZWNhYiIsIm5iZiI6MTU0MTQ5MzcyNCwiZXhwIjoxNTczMDI5NzIzLCJub25jZSI6IjY2MCE2MzQ1RlNlciIsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vdzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL2V4YW1wbGUuY29tL2V4YW1wbGVzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJkZWdyZWUiOnsidHlwZSI6IkJhY2hlbG9yRGVncmVlIiwibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgaW4gTWVjaGFuaWNhbCBFbmdpbmVlcmluZyJ9fX19.kaeFJM08sN7MthR-SWU-E8qbFoyZu2b_h1VllkEgNkLAGT9KpQbaeMUEti7QesFW_Cvwh5VErK62jneaW-uzZS6GPW3HVk8O3uRxWD3qCJx0l5uWZeHpRBX6yMcr2XGKWyFn0OBjoiGHQ78mHU8tNEWDqbrIhCoGQKj87OETvlfUDIkNi4_pRfLrJGh5HBrh6JuA-8uM2_clWC2RELsT52sPnqvMjm7UeYZgQEyaQJL6c41BUwHaCGWjUDCDZNWOd5M04s_Pi4Rqo97-2nbQRh_fuQk7aHKxb-UItQ8Mnk_hUFWEicwtuCfDFqwkZyW_r9dOBwz7-cOheuyP6OiLvw";
 
-    // ==================================
-    // Create the claims we want to sign
-    // ==================================
-    let mut claims: JwtClaims<serde_json::Value> = JwtClaims::new();
-    claims.set_iss("issuer");
-    claims.set_iat(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?.as_secs() as i64);
-    claims.set_custom(serde_json::json!({"num": 42u64}));
+    let mut jwk: Jwk = Jwk::new(JwkType::Rsa);
+    jwk.set_alg(alg);
 
-    // ==================
-    // Encode the claims
-    // ==================
-    let encoder: Encoder = Encoder::new().recipient(Recipient::new().protected(&header));
-    let claims_bytes: Vec<u8> = serde_json::to_vec(&claims)?;
-    let secret_key: Arc<SecretKey> = Arc::new(secret_key);
-    let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
-      let sk: Arc<SecretKey> = secret_key.clone();
-      async move {
-        let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
-          .with_protected(&protected)
-          .with_unprotected(&unprotected);
-        if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
-          return Err("incompatible `alg` parameter");
-        }
-        let sig: [u8; ed25519::SIGNATURE_LENGTH] = sk.sign(msg.as_slice()).to_bytes();
-        Ok(jwu::encode_b64(sig))
-      }
+    jwk.set_kid(kid);
+
+    let issuer: MockIssuer = MockIssuer {
+      id: issuer_did.into(),
+      keys: vec![jwk],
     };
-    let token: String = encoder.encode(&sign_fn, &claims_bytes).await?;
 
-    // ============
-    // Create Public key for verification
-    // =============
-    let mut public_key_jwk = Jwk::new(JwkType::Okp);
-    public_key_jwk.set_kid(kid);
-    public_key_jwk
-      .set_params(JwkParamsOkp {
-        crv: "Ed25519".into(),
-        x: crate::jwu::encode_b64(public_key.as_slice()),
-        d: None,
-      })
-      .unwrap();
+    let foo_issuer: MockIssuer = MockIssuer {
+      id: "foo".into(),
+      keys: Vec::new(),
+    };
+    let bar_issuer: MockIssuer = MockIssuer {
+      id: "bar".into(),
+      keys: vec![Jwk::new(JwkType::Ec)],
+    };
 
-    // ==================
-    // Decode the claims
-    // ==================
+    let issuers: Vec<MockIssuer> = vec![bar_issuer, foo_issuer, issuer];
+    let issuers_slice: &[MockIssuer] = issuers.as_slice();
 
-    // Set up a verifier that verifies JWS signatures secured with the Ed25519 algorithm
-    let verify_fn = JwsSignatureVerifierFn::from(
-      |verification_input: &VerificationInput, jwk: &Jwk| -> Result<(), JwsVerifierError> {
-        if verification_input
-          .jose_header()
-          .alg()
-          .filter(|value| *value == JwsAlgorithm::EdDSA)
-          .is_none()
-        {
-          return Err(JwsVerifierErrorKind::UnsupportedAlg.into());
-        }
+    let mock_verifier = JwsSignatureVerifierFn::from(|_input: &VerificationInput, _key: &Jwk| Ok(()));
 
-        let params: &JwkParamsOkp = jwk
-          .try_okp_params()
-          .map_err(|_| JwsVerifierErrorKind::UnsupportedKeyType)?;
+    let decoder = Decoder::new(mock_verifier);
 
-        if params.try_ed_curve().unwrap() != EdCurve::Ed25519 {
-          return Err(JwsVerifierErrorKind::UnsupportedKeyParams.into());
-        }
-
-        let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
-
-        let public_key = PublicKey::try_from(pk).map_err(|_| JwsVerifierErrorKind::KeyDecodingFailure)?;
-        let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
-          .map_err(|err| JwsVerifierError::new(JwsVerifierErrorKind::InvalidSignature).with_source(err))?;
-        let signature = ed25519::Signature::from_bytes(signature_arr);
-        if public_key.verify(&signature, verification_input.signing_input()) {
-          Ok(())
-        } else {
-          Err(JwsVerifierErrorKind::InvalidSignature.into())
-        }
-      },
-    );
-    let decoder = Decoder::new(verify_fn);
-    // We don't use a detached payload.
-    let detached_payload = None;
-    let token = decoder.decode(token.as_bytes(), |_| Some(&public_key_jwk), detached_payload)?;
-
-    // ==================================
-    // Assert the claims are as expected
-    // ==================================
-    let recovered_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(&token.claims)?;
-    assert_eq!(claims, recovered_claims);
-    Ok(())
+    let jwk_provider = |kid: Option<&str>| -> Option<&Jwk> {
+      let kid: &str = kid?;
+      let did = &kid[..kid.rfind("#").unwrap()];
+      issuers_slice
+        .iter()
+        .find(|entry| entry.id.as_str() == did)
+        .and_then(|entry| entry.keys.iter().find(|key| key.kid() == Some(kid)))
+    };
+    assert!(decoder.decode(&jws.as_bytes(), jwk_provider, None).is_ok());
   }
 }

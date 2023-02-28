@@ -132,10 +132,13 @@ pub trait JwsSignatureVerifier {
 
 /// Simple wrapper around a closure capable of verifying a JWS signature. This wrapper implements
 /// [`JwsSignatureVerifier`].
-pub struct JwsSignatureVerifierFn<F: Fn(&VerificationInput<'_>, &Jwk) -> Result<(), JwsVerifierError>>(F);
+///
+/// Note: One can convert a closure to this wrapper using the [`From`]. Currently the closure's input arguments must
+/// be explicitly typed otherwise a compiler error occurs.  
+pub struct JwsSignatureVerifierFn<F>(F);
 impl<F> From<F> for JwsSignatureVerifierFn<F>
 where
-  F: Fn(&VerificationInput<'_>, &Jwk) -> Result<(), JwsVerifierError>,
+  for<'a> F: Fn(&VerificationInput<'a>, &Jwk) -> Result<(), JwsVerifierError>,
 {
   fn from(value: F) -> Self {
     Self(value)
@@ -144,9 +147,9 @@ where
 
 impl<F> JwsSignatureVerifier for JwsSignatureVerifierFn<F>
 where
-  F: Fn(&VerificationInput<'_>, &Jwk) -> Result<(), JwsVerifierError>,
+  for<'a> F: Fn(&VerificationInput<'a>, &Jwk) -> Result<(), JwsVerifierError>,
 {
-  fn verify(&self, input: &VerificationInput<'_>, public_key: &Jwk) -> Result<(), JwsVerifierError> {
+  fn verify<'a>(&self, input: &VerificationInput<'a>, public_key: &Jwk) -> Result<(), JwsVerifierError> {
     self.0(input, public_key)
   }
 }
