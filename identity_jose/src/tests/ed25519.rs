@@ -10,12 +10,11 @@ use crypto::signatures::ed25519::{self};
 use crate::jwk::EdCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOkp;
-use crate::jws::Decoder;
 use crate::jws::Encoder;
-use crate::jws::JWSValidationConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::Token;
+use crate::jws::JwsVerifierError;
+use crate::jws::JwsVerifierErrorKind;
 use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
@@ -71,21 +70,17 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(
-  verification_input: &VerificationInput, 
-  public_key: &Jwk, 
-) -> Result<(),JwsVerifierError> 
-{
-    let public_key = expand_public_jwk(jwk); 
+pub(crate) fn verify(verification_input: &VerificationInput, jwk: &Jwk) -> Result<(), JwsVerifierError> {
+  let public_key = expand_public_jwk(jwk);
 
-    let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
+  let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
     .map_err(|err| err.to_string())
     .unwrap();
 
-    let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
-    if public_key.verify(&signature, verification_input.signing_input()) {
-      Ok(())
-    } else {
-      Err(JwsVerifierErrorKind::InvalidSignature.into())
-    }
+  let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
+  if public_key.verify(&signature, verification_input.signing_input()) {
+    Ok(())
+  } else {
+    Err(JwsVerifierErrorKind::InvalidSignature.into())
+  }
 }

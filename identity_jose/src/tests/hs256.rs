@@ -3,12 +3,11 @@
 
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOct;
-use crate::jws::Decoder;
 use crate::jws::Encoder;
-use crate::jws::JWSValidationConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::Token;
+use crate::jws::JwsVerifierError;
+use crate::jws::JwsVerifierErrorKind;
 use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
@@ -46,10 +45,7 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(
-  verification_input: &VerificationInput<'_>, 
-  jwk: &Jwk,
-) -> Result<(), JwsVerifierError> {
+pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> Result<(), JwsVerifierError> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
   let mut mac: [u8; SHA256_LEN] = Default::default();

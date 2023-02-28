@@ -212,71 +212,6 @@ where
 
     for jws_signature in signatures {
       result = self.decode_one(&jwk_provider, payload, jws_signature);
-      /*
-        result =  {
-        let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
-
-        validate_jws_headers(
-          protected.as_ref(),
-          jws_signature.header.as_ref(),
-          self.config.crits.as_deref(),
-        )?;
-
-        let merged = HeaderSet::new()
-          .with_protected(protected.as_ref())
-          .with_unprotected(jws_signature.header.as_ref());
-
-        let payload_is_b64_encoded = merged.b64().unwrap_or(true);
-
-        // Obtain a JWK before proceeding.
-
-        let kid = merged.kid();
-        let key: &Jwk = jwk_provider(kid)
-          .ok_or_else(|| crate::error::Error::JwkNotProvided)?;
-
-        // Validate the header's alg against the requirements of the JWK.
-        let alg: JwsAlgorithm = merged.try_alg()?;
-        {
-          if let Some(key_alg) = key.alg() {
-            if alg.name() != key_alg {
-              return Err(crate::error::Error::AlgorithmMismatch);
-            }
-          } else if self.config.jwk_must_have_alg {
-            return Err(crate::error::Error::JwkWithoutAlg);
-          }
-        }
-
-        // Verify the signature
-        {
-          let protected_bytes: &[u8] = jws_signature.protected.map(str::as_bytes).unwrap_or_default();
-          let message: Vec<u8> = create_message(protected_bytes, payload);
-          let signature: Vec<u8> = decode_b64(jws_signature.signature)?;
-          let verification_input = VerificationInput {
-            jose_header: &merged,
-            signing_input: message,
-            signature: &signature,
-          };
-
-          self
-            .verifier
-            .verify(&verification_input, &key)
-            .map_err(Error::SignatureVerificationError)?;
-          drop(key);
-        }
-
-        let claims: Cow<'b, [u8]> = if payload_is_b64_encoded {
-          Cow::Owned(decode_b64(payload)?)
-        } else {
-          Cow::Borrowed(payload)
-        };
-
-        Ok(Token {
-          protected,
-          unprotected: jws_signature.header,
-          claims,
-        })
-      };
-      */
       if result.is_err() && self.config.strict_signature_verification {
         // With strict signature verification all validations must be successful
         // hence we return on the first error discovered.
@@ -289,27 +224,6 @@ where
       }
     }
     result
-
-    /*
-    self.expand(data, detached_payload, |payload, signatures| {
-      let mut result: Result<Token> = Err(Error::InvalidContent("recipient not found"));
-
-      for signature in signatures {
-        result = self.decode_one(&jwk_provider, payload, signature);
-        if result.is_err() && self.config.strict_signature_verification {
-          // With strict signature verification all validations must be successful
-          // hence we return on the first error discovered.
-          return result;
-        }
-        if result.is_ok() && !self.config.strict_signature_verification {
-          // If signature verification is not strict only one verification must succeed
-          // hence we return on the first one.
-          return result;
-        }
-      }
-      result
-    })
-    */
   }
 
   fn decode_one<'a, 'b, 'c, F>(
@@ -410,28 +324,12 @@ impl Default for Decoder {
 
 #[cfg(test)]
 mod tests {
-
-  use crate::jwk::EdCurve;
   use crate::jwk::Jwk;
-  use crate::jwk::JwkParamsOkp;
   use crate::jwk::JwkType;
   use crate::jws::Decoder;
-  use crate::jws::Encoder;
   use crate::jws::JwsAlgorithm;
-  use crate::jws::JwsHeader;
   use crate::jws::JwsSignatureVerifierFn;
-  use crate::jws::JwsVerifierError;
-  use crate::jws::JwsVerifierErrorKind;
-  use crate::jws::Recipient;
   use crate::jws::VerificationInput;
-  use crate::jwt::JwtClaims;
-  use crate::jwt::JwtHeaderSet;
-  use crate::jwu;
-  use crypto::signatures::ed25519;
-  use crypto::signatures::ed25519::PublicKey;
-  use crypto::signatures::ed25519::SecretKey;
-  use std::sync::Arc;
-  use std::time::SystemTime;
 
   struct MockIssuer {
     id: String,
@@ -470,7 +368,17 @@ mod tests {
     let issuers: Vec<MockIssuer> = vec![bar_issuer, foo_issuer, issuer];
     let issuers_slice: &[MockIssuer] = issuers.as_slice();
 
-    let mock_verifier = JwsSignatureVerifierFn::from(|_input: &VerificationInput, _key: &Jwk| Ok(()));
+    let mock_verifier = JwsSignatureVerifierFn::from(|input: &VerificationInput, key: &Jwk| {
+      key
+        .alg()
+        .filter(|alg| *alg == "RS256")
+        .ok_or(crate::jws::JwsVerifierErrorKind::UnsupportedAlg)?;
+      if input.signature().len() > 42 {
+        Ok(())
+      } else {
+        Err(crate::jws::JwsVerifierErrorKind::InvalidSignature.into())
+      }
+    });
 
     let decoder = Decoder::new(mock_verifier);
 

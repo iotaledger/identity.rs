@@ -4,12 +4,11 @@
 use crate::jwk::EcCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsEc;
-use crate::jws::Decoder;
 use crate::jws::Encoder;
-use crate::jws::JWSValidationConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::Token;
+use crate::jws::JwsVerifierError;
+use crate::jws::JwsVerifierErrorKind;
 use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
@@ -66,10 +65,7 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(
-  verification_input: &VerificationInput<'_>, 
-  jwk: &Jwk,
-) -> Result<(), JwsVerifierError> {
+pub(crate) fn verify(verification_input: &VerificationInput<'_>, jwk: &Jwk) -> Result<(), JwsVerifierError> {
   let (_, public_key) = expand_p256_jwk(jwk);
   let verifying_key = VerifyingKey::from(public_key);
 
