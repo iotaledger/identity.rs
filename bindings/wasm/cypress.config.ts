@@ -6,9 +6,9 @@ export default defineConfig({
     requestTimeout: 10000,
     defaultCommandTimeout: 60000,
     retries: {
-        runMode: 3
+        runMode: 3,
     },
     e2e: {
         supportFile: false,
-    }
+    },
 });
