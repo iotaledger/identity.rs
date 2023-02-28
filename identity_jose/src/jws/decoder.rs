@@ -239,7 +239,7 @@ where
 
       self
         .verifier
-        .verify(&verification_input, &key)
+        .verify(&verification_input, key)
         .map_err(Error::SignatureVerificationError)?;
       drop(key);
     }
@@ -343,14 +343,14 @@ mod tests {
 
     let jwk_provider = |kid: Option<&str>| -> Option<&Jwk> {
       let kid: &str = kid?;
-      let did = &kid[..kid.rfind("#").unwrap()];
+      let did = &kid[..kid.rfind('#').unwrap()];
       issuers_slice
         .iter()
         .find(|entry| entry.id.as_str() == did)
         .and_then(|entry| entry.keys.iter().find(|key| key.kid() == Some(kid)))
     };
     assert!(decoder
-      .decode(&jws.as_bytes(), jwk_provider, None, &Default::default())
+      .decode(jws.as_bytes(), jwk_provider, None, &Default::default())
       .is_ok());
   }
 }

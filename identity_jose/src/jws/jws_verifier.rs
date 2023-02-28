@@ -23,7 +23,7 @@ pub struct VerificationInput<'a> {
 impl<'a> VerificationInput<'a> {
   /// The JOSE header.
   pub fn jose_header(&self) -> &HeaderSet<'a> {
-    &self.jose_header
+    self.jose_header
   }
 
   /// The signing input.
