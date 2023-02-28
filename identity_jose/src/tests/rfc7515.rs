@@ -3,7 +3,7 @@
 
 use crate::jwk::Jwk;
 use crate::jws;
-use crate::jws::JWSValidationConfig;
+use crate::jws::JwsDecoderConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSignatureVerifierFn;
@@ -50,7 +50,7 @@ async fn test_rfc7515() {
       );
 
     let decoder =
-      jws::Decoder::new(jws_signature_verifier).config(JWSValidationConfig::default().jwk_must_have_alg(false));
+      jws::Decoder::new(jws_signature_verifier).config(JwsDecoderConfig::default().jwk_must_have_alg(false));
     let decoded = decoder.decode(tv.encoded, |_| Some(&jwk), None).unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);

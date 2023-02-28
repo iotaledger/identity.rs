@@ -46,7 +46,7 @@ struct JwsSignature<'a> {
 
 #[derive(Clone, Debug)]
 /// Configuration defining the behaviour of a [`Decoder`].
-pub struct JWSValidationConfig {
+pub struct JwsDecoderConfig {
   crits: Option<Vec<String>>,
 
   jwk_must_have_alg: bool,
@@ -58,7 +58,7 @@ pub struct JWSValidationConfig {
   fallback_to_jwk_header: bool,
 }
 
-impl Default for JWSValidationConfig {
+impl Default for JwsDecoderConfig {
   fn default() -> Self {
     Self {
       crits: None,
@@ -70,7 +70,7 @@ impl Default for JWSValidationConfig {
   }
 }
 
-impl JWSValidationConfig {
+impl JwsDecoderConfig {
   /// Append values to the list of permitted extension parameters.
   pub fn critical(mut self, value: impl Into<String>) -> Self {
     self.crits.get_or_insert_with(Vec::new).push(value.into());
@@ -137,7 +137,7 @@ pub struct Decoder<T = DefaultJwsSignatureVerifier>
 where
   T: JwsSignatureVerifier,
 {
-  config: JWSValidationConfig,
+  config: JwsDecoderConfig,
   verifier: T,
 }
 
@@ -147,13 +147,13 @@ where
 {
   pub fn new(verifier: T) -> Self {
     Self {
-      config: JWSValidationConfig::default(),
+      config: JwsDecoderConfig::default(),
       verifier,
     }
   }
 
   /// Set the [`JWSValidationConfig`] for the decoder.
-  pub fn config(mut self, configuration: JWSValidationConfig) -> Self {
+  pub fn config(mut self, configuration: JwsDecoderConfig) -> Self {
     self.config = configuration;
     self
   }

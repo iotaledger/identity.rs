@@ -10,7 +10,7 @@ use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkType;
 use crate::jws::Decoder;
 use crate::jws::Encoder;
-use crate::jws::JWSValidationConfig;
+use crate::jws::JwsDecoderConfig;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSignatureVerifierFn;
@@ -55,7 +55,7 @@ async fn test_encoder_decoder_roundtrip() {
     }
     ed25519::verify(input, key)
   });
-  let decoder = Decoder::new(verifier).config(JWSValidationConfig::default().jwk_must_have_alg(false));
+  let decoder = Decoder::new(verifier).config(JwsDecoderConfig::default().jwk_must_have_alg(false));
   let mut public_key_jwk = Jwk::new(JwkType::Okp);
   public_key_jwk.set_kid(kid);
   public_key_jwk
