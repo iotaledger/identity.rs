@@ -127,7 +127,7 @@ impl Display for JwsVerifierErrorKind {
 /// For custom implementations the most ergonomic option is in many cases converting a suitable closure to a
 /// [`JwsSignatureVerifierFn`] using the [`From`] trait.
 pub trait JwsSignatureVerifier {
-  fn verify(&self, input: &VerificationInput<'_>, public_key: &Jwk) -> Result<(), JwsVerifierError>;
+  fn verify<'a>(&self, input: &VerificationInput<'a>, public_key: &Jwk) -> Result<(), JwsVerifierError>;
 }
 
 /// Simple wrapper around a closure capable of verifying a JWS signature. This wrapper implements
