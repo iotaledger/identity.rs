@@ -137,8 +137,6 @@ pub struct Decoder<T = DefaultJwsSignatureVerifier>
 where
   T: JwsSignatureVerifier,
 {
-  /// The expected format of the encoded token.
-  format: JwsFormat,
   config: JWSValidationConfig,
   verifier: T,
 }
@@ -149,7 +147,6 @@ where
 {
   pub fn new(verifier: T) -> Self {
     Self {
-      format: JwsFormat::Compact,
       config: JWSValidationConfig::default(),
       verifier,
     }
@@ -180,7 +177,7 @@ where
   {
     // TODO: Only Vec in the general case, consider using OneOrMany or Either to remove the allocation for the other two
     // cases.
-    let (payload, signatures): (&[u8], Vec<JwsSignature>) = match self.format {
+    let (payload, signatures): (&[u8], Vec<JwsSignature>) = match self.config.format {
       JwsFormat::Compact => {
         let split: Vec<&[u8]> = data.split(|byte| *byte == b'.').collect();
 
