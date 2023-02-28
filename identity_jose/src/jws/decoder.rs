@@ -19,6 +19,7 @@ use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 
 use super::decoder_config::DecodingConfig;
+#[cfg(feature = "default-jws-signature-verifier")]
 use super::DefaultJwsSignatureVerifier;
 use super::JwsSignatureVerifier;
 use super::VerificationInput;

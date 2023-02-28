@@ -7,8 +7,11 @@ use crate::jwk::Jwk;
 use crate::jwt::JwtHeaderSet;
 
 use super::JwsHeader;
+#[cfg(feature = "eddsa")]
 use crate::jwk::EdCurve;
+#[cfg(feature = "eddsa")]
 use crate::jwk::JwkParamsOkp;
+#[cfg(feature = "default-jws-signature-verifier")]
 use crate::jws::JwsAlgorithm;
 
 pub type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
@@ -239,8 +242,8 @@ impl JwsSignatureVerifier for DefaultJwsSignatureVerifier {
   #[cfg(not(feature = "default-jws-signature-verifier"))]
   fn verify(
     &self,
-    input: &VerificationInput<'_>,
-    public_key: &Jwk,
+    _input: &VerificationInput<'_>,
+    _public_key: &Jwk,
   ) -> std::result::Result<(), SignatureVerificationError> {
     panic!("it should not be possible to construct a DefaultJwsVerifier without the 'default-jws-signature-verifier' feature. We encourage you to report this bug at: https://github.com/iotaledger/identity.rs/issues");
   }
