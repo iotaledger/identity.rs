@@ -237,8 +237,9 @@ impl JwsSignatureVerifier for DefaultJwsSignatureVerifier {
   }
 
   // This method can never be called because it is impossible to construct the `DefaultJwsVerifier` without enabling
-  // the `default-jws-signature-verifier` feature. It is still necessary to implement this method in order to satisfy
-  // the trait bounds on the default parameter for the `Decoder`.
+  // the `default-jws-signature-verifier` feature. It is still implemented in case we need to parameterize a struct with
+  // DefaultJwsSignatureVerifier as a default also in the case where the `default-jws-signature-verifier` feature is
+  // disabled.
   #[cfg(not(feature = "default-jws-signature-verifier"))]
   fn verify(
     &self,
