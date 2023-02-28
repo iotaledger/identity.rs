@@ -19,7 +19,6 @@ mod recipient;
 pub use self::algorithm::*;
 pub use self::charset::*;
 pub use self::decoder::*;
-pub use self::decoder_config::*;
 pub use self::encoder::*;
 pub use self::format::*;
 pub use self::header::*;

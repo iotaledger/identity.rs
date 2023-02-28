@@ -18,7 +18,7 @@ use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 
-use super::DecodingConfig;
+use super::decoder_config::DecodingConfig;
 use super::DefaultJwsSignatureVerifier;
 use super::JwsSignatureVerifier;
 use super::VerificationInput;
@@ -69,34 +69,86 @@ struct Flatten<'a> {
 
 /// The [`Decoder`] allows decoding a raw JWS into a [`Token`], verifying
 /// the structure of the JWS and its signature.
-///
-/// # JWS signature verification
-/// The signature algorithms a [`Decoder`] can handle depends on the [`JwsSignatureVerifier`] the
-/// decoder is initialized with. One can pass in any implementation in the [`Decoder::new`](Decoder::new()) constructor.
-///
-/// # Default constructor
-/// When the `default-jws-signature-verifier` feature is enabled one can construct the default [`Decoder`] with the
-/// [`Default`] trait. In this case the [`DefaultJwsSignatureVerifier`] will be used for signature verification during
-/// decoding.
-pub struct Decoder<T = DefaultJwsSignatureVerifier>
-where
-  T: JwsSignatureVerifier,
-{
-  verifier: T,
+#[derive(Default)]
+pub struct Decoder {
+  config: DecodingConfig,
 }
 
-impl<T> Decoder<T>
-where
-  T: JwsSignatureVerifier,
-{
-  /// Constructs a new [`Decoder`] with the specified `verifier` for signature verification.
-  pub fn new(verifier: T) -> Self {
-    Self { verifier }
+impl Decoder {
+  /// Constructs a new [`Decoder`].
+  pub fn new() -> Self {
+    Self {
+      config: DecodingConfig::default(),
+    }
+  }
+
+  /// Append values to the list of permitted extension parameters.
+  pub fn critical(mut self, value: impl Into<String>) -> Self {
+    self.config.crits.get_or_insert_with(Vec::new).push(value.into());
+    self
+  }
+
+  /// Defines whether a given [`Jwk`](crate::jwk::Jwk) used to verify a JWS,
+  /// must have an `alg` parameter corresponding to the one extracted from the JWS header.
+  /// This value is `true` by default.  
+  pub fn jwk_must_have_alg(mut self, value: bool) -> Self {
+    self.config.jwk_must_have_alg = value;
+    self
+  }
+
+  /// When verifying a JWS encoded with the general JWS JSON serialization
+  /// this value decides whether all signatures must be verified (the default behavior),
+  /// otherwise only one signature needs to be verified in order for the entire JWS to be accepted.
+  pub fn strict_signature_verification(mut self, value: bool) -> Self {
+    self.config.strict_signature_verification = value;
+    self
+  }
+
+  /// Specify the serialization format the [`Decoder`](crate::jws::Decoder) accepts. The default is
+  /// [`JwsFormat::Compact`].
+  pub fn serialization_format(mut self, value: JwsFormat) -> Self {
+    self.config.format = value;
+    self
+  }
+
+  /// Specify whether to attempt to extract a public key from the JOSE header if the
+  /// `jwk` provider fails to provide one.
+  pub fn fallback_to_jwk_header(mut self, value: bool) -> Self {
+    self.config.fallback_to_jwk_header = value;
+    self
+  }
+
+  /// Specify which jws serialization format the [`Decoder`](crate::jws::Decoder) should accept.
+  pub fn format(mut self, value: JwsFormat) -> Self {
+    self.config.format = value;
+    self
+  }
+
+  /// Convenience method equivalent to [`Self::decode(data, &DefaultJwsSignatureVerifier::default(),<other
+  /// parameters>)](Self::decode()). This method is only available when the `default-jws-signature-verifier` feature
+  /// is enabled.
+  #[cfg(any(feature = "default-jws-signature-verifier", doc))]
+  pub fn decode_default<'b, 'c, F>(
+    &self,
+    data: &'b [u8],
+    jwk_provider: F,
+    detached_payload: Option<&'b [u8]>,
+  ) -> Result<Token<'b>>
+  where
+    F: 'c,
+    F: Fn(Option<&str>) -> Option<&'c Jwk>,
+  {
+    self.decode(
+      data,
+      &DefaultJwsSignatureVerifier::default(),
+      jwk_provider,
+      detached_payload,
+    )
   }
 
   /// Decode the given `data` which is a base64url-encoded JWS.
   ///
-  /// The decoder will verify the JWS signature(s) using the [`JwsSignatureVerifier`] it was initialized with.
+  /// The decoder will verify the JWS signature(s) using the provided [`JwsSignatureVerifier`].
   ///
   /// ### Jwk extraction
   /// The `jwk_provider` argument is a closure taking the `kid` extracted from a JWS header and returning the
@@ -104,31 +156,28 @@ where
   /// `jwk_provider` may return `None`, or some "default" JWK in the scenario where that is reasonable.
   ///
   ///  If the [`Jwk`] cannot be obtained from the `jwk_provider` an error is immediately returned unless the
-  /// `decoding_config` has been configured to fall back to extracting the `Jwk` from the JOSE header (see
+  /// [`Decoder`] has been configured to fall back to extracting the `Jwk` from the JOSE header (see
   /// [`DecodingConfig::fallback_to_jwk_header`](DecodingConfig::fallback_to_jwk_header()). The fallback option is off
   /// by default.
   ///
   /// ### Working with detached payloads
   /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
-  ///
-  /// ## Additional configuration
-  /// Some aspects of the behaviour of this method is decided by the `decoding_config` parameter. See the available
-  /// methods on [`DecodingConfig`] for information on what is possible to configure.
-  pub fn decode<'b, 'c, F>(
+  pub fn decode<'b, 'c, T, F>(
     &self,
     data: &'b [u8],
+    verifier: &T,
     jwk_provider: F,
     detached_payload: Option<&'b [u8]>,
-    decoding_config: &DecodingConfig,
   ) -> Result<Token<'b>>
   where
     F: 'c,
     F: Fn(Option<&str>) -> Option<&'c Jwk>,
+    T: JwsSignatureVerifier,
   {
     // TODO: Only Vec in the general case, consider using OneOrMany or Either to remove the allocation for the other two
     // cases.
-    let (payload, signatures): (&[u8], Vec<JwsSignature>) = match decoding_config.format {
+    let (payload, signatures): (&[u8], Vec<JwsSignature>) = match self.config.format {
       JwsFormat::Compact => {
         let split: Vec<&[u8]> = data.split(|byte| *byte == b'.').collect();
 
@@ -162,13 +211,13 @@ where
     let mut result: Result<Token> = Err(Error::InvalidContent("recipient not found"));
 
     for jws_signature in signatures {
-      result = self.decode_one(decoding_config, &jwk_provider, payload, jws_signature);
-      if result.is_err() && decoding_config.strict_signature_verification {
+      result = self.decode_one(verifier, &jwk_provider, payload, jws_signature);
+      if result.is_err() && self.config.strict_signature_verification {
         // With strict signature verification all validations must be successful
         // hence we return on the first error discovered.
         return result;
       }
-      if result.is_ok() && !decoding_config.strict_signature_verification {
+      if result.is_ok() && !self.config.strict_signature_verification {
         // If signature verification is not strict only one verification must succeed
         // hence we return on the first one.
         return result;
@@ -177,9 +226,9 @@ where
     result
   }
 
-  fn decode_one<'a, 'b, 'c, F>(
+  fn decode_one<'a, 'b, 'c, T, F>(
     &self,
-    decoding_config: &DecodingConfig,
+    verifier: &T,
     jwk_provider: &F,
     payload: &'b [u8],
     jws_signature: JwsSignature<'a>,
@@ -187,13 +236,14 @@ where
   where
     F: 'c,
     F: Fn(Option<&str>) -> Option<&'c Jwk>,
+    T: JwsSignatureVerifier,
   {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
 
     validate_jws_headers(
       protected.as_ref(),
       jws_signature.header.as_ref(),
-      decoding_config.crits.as_deref(),
+      self.config.crits.as_deref(),
     )?;
 
     let merged = HeaderSet::new()
@@ -206,7 +256,7 @@ where
     let kid = merged.kid();
     let key: &Jwk = jwk_provider(kid)
       .or_else(|| {
-        if decoding_config.fallback_to_jwk_header {
+        if self.config.fallback_to_jwk_header {
           merged.jwk()
         } else {
           None
@@ -221,7 +271,7 @@ where
         if alg.name() != key_alg {
           return Err(crate::error::Error::AlgorithmMismatch);
         }
-      } else if decoding_config.jwk_must_have_alg {
+      } else if self.config.jwk_must_have_alg {
         return Err(crate::error::Error::JwkWithoutAlg);
       }
     }
@@ -237,8 +287,7 @@ where
         signature: &signature,
       };
 
-      self
-        .verifier
+      verifier
         .verify(&verification_input, key)
         .map_err(Error::SignatureVerificationError)?;
     }
@@ -267,16 +316,6 @@ where
       (Some(_), Some(_)) => Err(Error::InvalidContent("multiple payloads")),
       (None, None) => Err(Error::InvalidContent("missing payload")),
     }
-  }
-}
-
-#[cfg(any(feature = "default-jws-signature-verifier", doc))]
-impl Default for Decoder {
-  /// Default constructor for the [`Decoder`] capable of decoding
-  /// a JWS secured with an algorithm the [`DefaultJwsSignatureVerifier`] can handle.
-  /// This constructor is only available when the `default-jws-signature-verifier` is enabled.
-  fn default() -> Self {
-    Decoder::new(DefaultJwsSignatureVerifier::default())
   }
 }
 
@@ -338,7 +377,7 @@ mod tests {
       }
     });
 
-    let decoder = Decoder::new(mock_verifier);
+    let decoder = Decoder::new();
 
     let jwk_provider = |kid: Option<&str>| -> Option<&Jwk> {
       let kid: &str = kid?;
@@ -349,7 +388,7 @@ mod tests {
         .and_then(|entry| entry.keys.iter().find(|key| key.kid() == Some(kid)))
     };
     assert!(decoder
-      .decode(jws.as_bytes(), jwk_provider, None, &Default::default())
+      .decode(jws.as_bytes(), &mock_verifier, jwk_provider, None)
       .is_ok());
   }
 }

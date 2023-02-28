@@ -5,7 +5,6 @@ use crypto::signatures::ed25519::SecretKey;
 
 use crate::jwk::Jwk;
 use crate::jws::Decoder;
-use crate::jws::DecodingConfig;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
@@ -53,26 +52,16 @@ async fn test_rfc8037_ed25519() {
       }
       ed25519::verify(input, key)
     });
-    let decoder = Decoder::new(jws_verifier);
+    let decoder = Decoder::new().jwk_must_have_alg(false);
     let decoded = decoder
-      .decode(
-        encoded.as_bytes(),
-        |_| Some(&public),
-        None,
-        &DecodingConfig::default().jwk_must_have_alg(false),
-      )
+      .decode(encoded.as_bytes(), &jws_verifier, |_| Some(&public), None)
       .unwrap();
 
     #[cfg(feature = "default-jws-signature-verifier")]
     {
-      let decoder = Decoder::default();
+      let decoder = Decoder::default().jwk_must_have_alg(false);
       let decoded_with_default = decoder
-        .decode(
-          encoded.as_bytes(),
-          |_| Some(&public),
-          None,
-          &DecodingConfig::default().jwk_must_have_alg(false),
-        )
+        .decode_default(encoded.as_bytes(), |_| Some(&public), None)
         .unwrap();
       assert_eq!(decoded, decoded_with_default);
     }

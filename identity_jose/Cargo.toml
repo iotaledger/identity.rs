@@ -36,5 +36,4 @@ tokio = { version = "1.24.2", features = ["macros", "rt"] }
 
 [[example]]
 name = "jws_encoding_decoding"
-publish = false
 test = true

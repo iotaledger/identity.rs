@@ -9,7 +9,6 @@ use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkType;
 use crate::jws::Decoder;
-use crate::jws::DecodingConfig;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
@@ -55,7 +54,7 @@ async fn test_encoder_decoder_roundtrip() {
     }
     ed25519::verify(input, key)
   });
-  let decoder = Decoder::new(verifier);
+  let decoder = Decoder::new().jwk_must_have_alg(false);
   let mut public_key_jwk = Jwk::new(JwkType::Okp);
   public_key_jwk.set_kid(kid);
   public_key_jwk
@@ -69,13 +68,13 @@ async fn test_encoder_decoder_roundtrip() {
   let token = decoder
     .decode(
       token.as_bytes(),
+      &verifier,
       |kid| {
         kid
           .filter(|kid| kid == &public_key_jwk.kid().unwrap())
           .map(|_| &public_key_jwk)
       },
       None,
-      &DecodingConfig::default().jwk_must_have_alg(false),
     )
     .unwrap();
 
