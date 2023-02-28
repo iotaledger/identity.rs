@@ -38,7 +38,7 @@ pub struct Token<'a> {
 }
 
 // =============================================================================================
-// Format dependent: Deserializable helper structs used by the decoder
+// Format dependent deserializable helper structs used by the decoder
 // =============================================================================================
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
