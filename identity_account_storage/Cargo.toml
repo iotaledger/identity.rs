@@ -29,7 +29,7 @@ serde = { version = "1.0", default-features = false, features = ["alloc", "deriv
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
 tokio = { version = "1.17.0", default-features = false, features = ["sync", "fs"], optional = true }
-zeroize = { version = "1.4" }
+zeroize = { version = "1.5.7" }
 
 [dev-dependencies]
 rusty-fork = { version = "0.3" }
