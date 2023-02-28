@@ -241,7 +241,6 @@ where
         .verifier
         .verify(&verification_input, key)
         .map_err(Error::SignatureVerificationError)?;
-      drop(key);
     }
 
     let claims: Cow<'b, [u8]> = if payload_is_b64_encoded {
