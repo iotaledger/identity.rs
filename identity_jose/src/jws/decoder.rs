@@ -153,7 +153,7 @@ where
   }
 
   /// Set the [`JWSValidationConfig`] for the decoder.
-  pub fn config(mut self, configuration: JwsDecoderConfig) -> Self {
+  pub fn with_config(mut self, configuration: JwsDecoderConfig) -> Self {
     self.config = configuration;
     self
   }

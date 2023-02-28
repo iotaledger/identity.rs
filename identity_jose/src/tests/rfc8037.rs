@@ -53,12 +53,12 @@ async fn test_rfc8037_ed25519() {
       }
       ed25519::verify(input, key)
     });
-    let decoder = Decoder::new(jws_verifier).config(JwsDecoderConfig::default().jwk_must_have_alg(false));
+    let decoder = Decoder::new(jws_verifier).with_config(JwsDecoderConfig::default().jwk_must_have_alg(false));
     let decoded = decoder.decode(encoded.as_bytes(), |_| Some(&public), None).unwrap();
 
     #[cfg(feature = "default-jws-signature-verifier")]
     {
-      let decoder = Decoder::default().config(JwsDecoderConfig::default().jwk_must_have_alg(false));
+      let decoder = Decoder::default().with_config(JwsDecoderConfig::default().jwk_must_have_alg(false));
       let decoded_with_default = decoder.decode(encoded.as_bytes(), |_| Some(&public), None).unwrap();
       assert_eq!(decoded, decoded_with_default);
     }

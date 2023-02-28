@@ -50,7 +50,7 @@ async fn test_rfc7515() {
       );
 
     let decoder =
-      jws::Decoder::new(jws_signature_verifier).config(JwsDecoderConfig::default().jwk_must_have_alg(false));
+      jws::Decoder::new(jws_signature_verifier).with_config(JwsDecoderConfig::default().jwk_must_have_alg(false));
     let decoded = decoder.decode(tv.encoded, |_| Some(&jwk), None).unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);

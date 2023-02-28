@@ -38,7 +38,7 @@ fn test_rfc7797() {
       hs256::verify(input, key)
     });
     let decoder =
-      Decoder::new(verifier).config(JwsDecoderConfig::default().critical("b64").jwk_must_have_alg(false));
+      Decoder::new(verifier).with_config(JwsDecoderConfig::default().critical("b64").jwk_must_have_alg(false));
 
     let decoded = decoder
       .decode(tv.encoded, |_| Some(&jwk), tv.detach.then_some(tv.payload))
