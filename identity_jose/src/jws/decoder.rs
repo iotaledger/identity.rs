@@ -120,7 +120,7 @@ impl Decoder {
   }
 
   /// Convenience method equivalent to [`Self::decode(data, &DefaultJwsSignatureVerifier::default(),<other
-  /// parameters>)](Self::decode()). This method is only available when the `default-jws-signature-verifier` feature
+  /// parameters>)`](Self::decode()). This method is only available when the `default-jws-signature-verifier` feature
   /// is enabled.
   #[cfg(any(feature = "default-jws-signature-verifier", doc))]
   pub fn decode_default<'b, 'c, F>(
