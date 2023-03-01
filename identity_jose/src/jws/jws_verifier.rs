@@ -14,18 +14,18 @@ use crate::jwk::JwkParamsOkp;
 #[cfg(feature = "default-jws-signature-verifier")]
 use crate::jws::JwsAlgorithm;
 
-pub type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
+pub type JwsHeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
 
 /// Verification data for a [`JwsSignatureVerifier`].
 pub struct VerificationInput<'a> {
-  pub(super) jose_header: &'a HeaderSet<'a>,
+  pub(super) jose_header: &'a JwsHeaderSet<'a>,
   pub(super) signing_input: Vec<u8>,
   pub(super) signature: &'a [u8],
 }
 
 impl<'a> VerificationInput<'a> {
   /// The JOSE header.
-  pub fn jose_header(&self) -> &HeaderSet<'a> {
+  pub fn jose_header(&self) -> &JwsHeaderSet<'a> {
     self.jose_header
   }
 

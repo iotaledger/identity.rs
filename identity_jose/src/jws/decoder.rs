@@ -10,7 +10,7 @@ use crate::jwk::Jwk;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsFormat;
 use crate::jws::JwsHeader;
-use crate::jwt::JwtHeaderSet;
+use crate::jws::JwsHeaderSet;
 use crate::jwu::create_message;
 use crate::jwu::decode_b64;
 use crate::jwu::decode_b64_json;
@@ -23,8 +23,6 @@ use super::decoder_config::DecodingConfig;
 use super::DefaultJwsSignatureVerifier;
 use super::JwsSignatureVerifier;
 use super::VerificationInput;
-
-type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
 
 const COMPACT_SEGMENTS: usize = 3;
 
@@ -131,7 +129,7 @@ impl Decoder {
   ) -> Result<Token<'b>>
   where
     F: 'c,
-    F: Fn(Option<&str>) -> Option<&'c Jwk>,
+    F: Fn(&JwsHeaderSet<'c>) -> Option<&'c Jwk>,
   {
     self.decode(
       data,
@@ -146,9 +144,9 @@ impl Decoder {
   /// The decoder will verify the JWS signature(s) using the provided [`JwsSignatureVerifier`].
   ///
   /// ### Jwk extraction
-  /// The `jwk_provider` argument is a closure taking the `kid` extracted from a JWS header and returning the
-  /// corresponding [`Jwk`] if possible. In the cases where a `kid` is not present in the JWS header the
-  /// `jwk_provider` may return `None`, or some "default" JWK in the scenario where that is reasonable.
+  /// The `jwk_provider` argument is a closure taking a parsed JOSE header and returning a suitable [`Jwk`] if possible.
+  /// The returned [`Jwk`] could be a [`Jwk`] with a `kid` matching the one found in the header, or it could be
+  /// extracted from the header, or some implicit default in the cases where that is reasonable.
   ///
   ///  If the [`Jwk`] cannot be obtained from the `jwk_provider` an error is immediately returned unless the
   /// [`Decoder`] has been configured to fall back to extracting the `Jwk` from the JOSE header (see
@@ -167,7 +165,7 @@ impl Decoder {
   ) -> Result<Token<'b>>
   where
     F: 'c,
-    F: Fn(Option<&str>) -> Option<&'c Jwk>,
+    F: Fn(&JwsHeaderSet<'c>) -> Option<&'c Jwk>,
     T: JwsSignatureVerifier,
   {
     // TODO: Only Vec in the general case, consider using OneOrMany or Either to remove the allocation for the other two
@@ -230,7 +228,7 @@ impl Decoder {
   ) -> Result<Token<'b>>
   where
     F: 'c,
-    F: Fn(Option<&str>) -> Option<&'c Jwk>,
+    F: Fn(&JwsHeaderSet<'c>) -> Option<&'c Jwk>,
     T: JwsSignatureVerifier,
   {
     let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
@@ -241,23 +239,15 @@ impl Decoder {
       self.config.crits.as_deref(),
     )?;
 
-    let merged = HeaderSet::new()
+    let merged = JwsHeaderSet::new()
       .with_protected(protected.as_ref())
       .with_unprotected(jws_signature.header.as_ref());
 
     let payload_is_b64_encoded = merged.b64().unwrap_or(true);
 
     // Obtain a JWK before proceeding.
-    let kid = merged.kid();
-    let key: &Jwk = jwk_provider(kid)
-      .or_else(|| {
-        if self.config.fallback_to_jwk_header {
-          merged.jwk()
-        } else {
-          None
-        }
-      })
-      .ok_or_else(|| crate::error::Error::JwkNotProvided)?;
+    //let kid = merged.kid();
+    let key: &Jwk = jwk_provider(&merged).ok_or_else(|| crate::error::Error::JwkNotProvided)?;
 
     // Validate the header's alg against the requirements of the JWK.
     let alg: JwsAlgorithm = merged.try_alg()?;
@@ -320,6 +310,7 @@ mod tests {
   use crate::jwk::JwkType;
   use crate::jws::Decoder;
   use crate::jws::JwsAlgorithm;
+  use crate::jws::JwsHeaderSet;
   use crate::jws::JwsSignatureVerifierFn;
   use crate::jws::VerificationInput;
 
@@ -374,8 +365,11 @@ mod tests {
 
     let decoder = Decoder::new();
 
-    let jwk_provider = |kid: Option<&str>| -> Option<&Jwk> {
-      let kid: &str = kid?;
+    let jwk_provider = |header: &JwsHeaderSet| -> Option<&Jwk> {
+      if let Some(jwk) = header.jwk() {
+        return Some(jwk);
+      }
+      let kid = header.kid()?;
       let did = &kid[..kid.rfind('#').unwrap()];
       issuers_slice
         .iter()
