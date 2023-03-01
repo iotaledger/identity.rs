@@ -11,6 +11,7 @@ use identity_jose::jws::Decoder;
 use identity_jose::jws::Encoder;
 use identity_jose::jws::JwsAlgorithm;
 use identity_jose::jws::JwsHeader;
+use identity_jose::jws::JwsHeaderSet;
 use identity_jose::jws::JwsSignatureVerifierFn;
 use identity_jose::jws::Recipient;
 use identity_jose::jws::SignatureVerificationError;
@@ -120,15 +121,17 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
       }
     },
   );
+
+  // Set up a Jwk provider. In this case we provide the public key jwk representation we know corresponds to the signing
+  // key.
+  let jwk_provider = |_header: &JwsHeaderSet, _fallback_to_jwk_in_header: &mut bool| {
+    return Some(&public_key_jwk);
+  };
+
   let decoder = Decoder::new();
   // We don't use a detached payload.
   let detached_payload: Option<&[u8]> = None;
-  let token = decoder.decode(
-    token.as_bytes(),
-    &verify_fn,
-    |_| Some(&public_key_jwk),
-    detached_payload,
-  )?;
+  let token = decoder.decode(token.as_bytes(), &verify_fn, jwk_provider, detached_payload)?;
 
   // ==================================
   // Assert the claims are as expected

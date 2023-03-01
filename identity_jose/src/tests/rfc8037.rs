@@ -54,14 +54,14 @@ async fn test_rfc8037_ed25519() {
     });
     let decoder = Decoder::new().jwk_must_have_alg(false);
     let decoded = decoder
-      .decode(encoded.as_bytes(), &jws_verifier, |_| Some(&public), None)
+      .decode(encoded.as_bytes(), &jws_verifier, |_, _| Some(&public), None)
       .unwrap();
 
     #[cfg(feature = "default-jws-signature-verifier")]
     {
       let decoder = Decoder::default().jwk_must_have_alg(false);
       let decoded_with_default = decoder
-        .decode_default(encoded.as_bytes(), |_| Some(&public), None)
+        .decode_default(encoded.as_bytes(), |_, _| Some(&public), None)
         .unwrap();
       assert_eq!(decoded, decoded_with_default);
     }

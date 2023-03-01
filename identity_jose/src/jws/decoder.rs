@@ -103,13 +103,6 @@ impl Decoder {
     self
   }
 
-  /// Specify whether to attempt to extract a public key from the JOSE header if the
-  /// `jwk` provider fails to provide one.
-  pub fn fallback_to_jwk_header(mut self, value: bool) -> Self {
-    self.config.fallback_to_jwk_header = value;
-    self
-  }
-
   /// Specify the serialization format the [`Decoder`](crate::jws::Decoder) accepts. The default is
   /// [`JwsFormat::Compact`].
   pub fn format(mut self, value: JwsFormat) -> Self {
@@ -129,7 +122,7 @@ impl Decoder {
   ) -> Result<Token<'b>>
   where
     F: 'c,
-    F: Fn(&JwsHeaderSet<'c>) -> Option<&'c Jwk>,
+    F: Fn(&JwsHeaderSet<'_>, &mut bool) -> Option<&'c Jwk>,
   {
     self.decode(
       data,
@@ -144,14 +137,9 @@ impl Decoder {
   /// The decoder will verify the JWS signature(s) using the provided [`JwsSignatureVerifier`].
   ///
   /// ### Jwk extraction
-  /// The `jwk_provider` argument is a closure taking a parsed JOSE header and returning a suitable [`Jwk`] if possible.
-  /// The returned [`Jwk`] could be a [`Jwk`] with a `kid` matching the one found in the header, or it could be
-  /// extracted from the header, or some implicit default in the cases where that is reasonable.
-  ///
-  ///  If the [`Jwk`] cannot be obtained from the `jwk_provider` an error is immediately returned unless the
-  /// [`Decoder`] has been configured to fall back to extracting the `Jwk` from the JOSE header (see
-  /// [`Decoder::fallback_to_jwk_header`](Decoder::fallback_to_jwk_header()). The fallback option is off
-  /// by default.
+  /// The `jwk_provider` argument is a closure responsible for providing a suitable [`Jwk`] or dictating that it should
+  /// be extracted from the header (by setting the provided `bool` to `true`). A suitable [`Jwk`] could be one matching
+  /// the header's `kid`, or some default JWK whenever that is reasonable.
   ///
   /// ### Working with detached payloads
   /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
@@ -165,7 +153,7 @@ impl Decoder {
   ) -> Result<Token<'b>>
   where
     F: 'c,
-    F: Fn(&JwsHeaderSet<'c>) -> Option<&'c Jwk>,
+    F: Fn(&JwsHeaderSet<'_>, &mut bool) -> Option<&'c Jwk>,
     T: JwsSignatureVerifier,
   {
     // TODO: Only Vec in the general case, consider using OneOrMany or Either to remove the allocation for the other two
@@ -228,26 +216,35 @@ impl Decoder {
   ) -> Result<Token<'b>>
   where
     F: 'c,
-    F: Fn(&JwsHeaderSet<'c>) -> Option<&'c Jwk>,
+    F: Fn(&JwsHeaderSet<'_>, &mut bool) -> Option<&'c Jwk>,
     T: JwsSignatureVerifier,
   {
-    let protected: Option<JwsHeader> = jws_signature.protected.map(decode_b64_json).transpose()?;
+    let JwsSignature {
+      header: unprotected_header,
+      protected,
+      signature,
+    } = jws_signature;
 
+    let protected_header: Option<JwsHeader> = protected.map(decode_b64_json).transpose()?;
     validate_jws_headers(
-      protected.as_ref(),
-      jws_signature.header.as_ref(),
+      protected_header.as_ref(),
+      unprotected_header.as_ref(),
       self.config.crits.as_deref(),
     )?;
 
     let merged = JwsHeaderSet::new()
-      .with_protected(protected.as_ref())
-      .with_unprotected(jws_signature.header.as_ref());
+      .with_protected(protected_header.as_ref())
+      .with_unprotected(unprotected_header.as_ref());
 
     let payload_is_b64_encoded = merged.b64().unwrap_or(true);
 
     // Obtain a JWK before proceeding.
     //let kid = merged.kid();
-    let key: &Jwk = jwk_provider(&merged).ok_or_else(|| crate::error::Error::JwkNotProvided)?;
+    let mut fallback_to_header = false;
+    let provided_key: Option<&Jwk> = jwk_provider(&merged, &mut fallback_to_header);
+    let key = provided_key
+      .or_else(|| if fallback_to_header { merged.jwk() } else { None })
+      .ok_or(Error::JwkNotProvided)?;
 
     // Validate the header's alg against the requirements of the JWK.
     let alg: JwsAlgorithm = merged.try_alg()?;
@@ -263,9 +260,9 @@ impl Decoder {
 
     // Verify the signature
     {
-      let protected_bytes: &[u8] = jws_signature.protected.map(str::as_bytes).unwrap_or_default();
+      let protected_bytes: &[u8] = protected.map(str::as_bytes).unwrap_or_default();
       let message: Vec<u8> = create_message(protected_bytes, payload);
-      let signature: Vec<u8> = decode_b64(jws_signature.signature)?;
+      let signature: Vec<u8> = decode_b64(signature)?;
       let verification_input = VerificationInput {
         jose_header: &merged,
         signing_input: message,
@@ -275,6 +272,7 @@ impl Decoder {
       verifier
         .verify(&verification_input, key)
         .map_err(Error::SignatureVerificationError)?;
+      drop(merged);
     }
 
     let claims: Cow<'b, [u8]> = if payload_is_b64_encoded {
@@ -284,8 +282,8 @@ impl Decoder {
     };
 
     Ok(Token {
-      protected,
-      unprotected: jws_signature.header,
+      protected: protected_header,
+      unprotected: unprotected_header,
       claims,
     })
   }
@@ -332,7 +330,7 @@ mod tests {
     let mut jwk: Jwk = Jwk::new(JwkType::Rsa);
     jwk.set_alg(alg);
 
-    jwk.set_kid(kid);
+    jwk.set_kid(kid.clone());
 
     let issuer: MockIssuer = MockIssuer {
       id: issuer_did.into(),
@@ -365,17 +363,20 @@ mod tests {
 
     let decoder = Decoder::new();
 
-    let jwk_provider = |header: &JwsHeaderSet| -> Option<&Jwk> {
-      if let Some(jwk) = header.jwk() {
-        return Some(jwk);
-      }
+    let jwk_provider = |header: &JwsHeaderSet, fallback_to_header_jwk: &mut bool| -> Option<&Jwk> {
       let kid = header.kid()?;
+      if header.jwk().filter(|jwk| jwk.kid() == Some(kid)).is_some() {
+        *fallback_to_header_jwk = true;
+        return None;
+      }
+
       let did = &kid[..kid.rfind('#').unwrap()];
       issuers_slice
         .iter()
         .find(|entry| entry.id.as_str() == did)
         .and_then(|entry| entry.keys.iter().find(|key| key.kid() == Some(kid)))
     };
+
     assert!(decoder
       .decode(jws.as_bytes(), &mock_verifier, jwk_provider, None)
       .is_ok());

@@ -13,8 +13,6 @@ pub(super) struct DecodingConfig {
   pub(super) strict_signature_verification: bool,
 
   pub(super) format: JwsFormat,
-
-  pub(super) fallback_to_jwk_header: bool,
 }
 
 impl Default for DecodingConfig {
@@ -24,7 +22,6 @@ impl Default for DecodingConfig {
       jwk_must_have_alg: true,
       strict_signature_verification: true,
       format: JwsFormat::Compact,
-      fallback_to_jwk_header: false,
     }
   }
 }

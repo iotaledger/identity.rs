@@ -39,7 +39,12 @@ fn test_rfc7797() {
     let decoder = Decoder::new().critical("b64").jwk_must_have_alg(false);
 
     let decoded = decoder
-      .decode(tv.encoded, &verifier, |_| Some(&jwk), tv.detach.then_some(tv.payload))
+      .decode(
+        tv.encoded,
+        &verifier,
+        |_, _| Some(&jwk),
+        tv.detach.then_some(tv.payload),
+      )
       .unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);

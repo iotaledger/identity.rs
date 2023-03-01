@@ -69,8 +69,9 @@ async fn test_encoder_decoder_roundtrip() {
     .decode(
       token.as_bytes(),
       &verifier,
-      |kid| {
-        kid
+      |header, _| {
+        header
+          .kid()
           .filter(|kid| kid == &public_key_jwk.kid().unwrap())
           .map(|_| &public_key_jwk)
       },
