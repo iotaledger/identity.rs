@@ -1,17 +1,21 @@
-use std::hash::Hasher;
+// Copyright 2020-2023 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
+use std::hash::Hasher;
 use identity_verification::VerificationMethod;
 use seahash::SeaHasher;
 
-// Copyright 2020-2023 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
+/// Unique description through hashing of key materials in `VerificationMethod`s.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct MethodDigest {
+  /// Version of hashing.
   pub version: u8,
+  /// Hash value.
   pub value: u64,
 }
 
 impl MethodDigest {
+  /// Creates a new [`MethodDigest`].
   pub fn new(verification_method: &VerificationMethod) -> identity_verification::Result<Self> {
     let mut hasher: SeaHasher = SeaHasher::new();
     let fragment = verification_method
