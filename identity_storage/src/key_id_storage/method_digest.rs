@@ -1,9 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::hash::Hasher;
 use identity_verification::VerificationMethod;
 use seahash::SeaHasher;
+use std::hash::Hasher;
 
 /// Unique description through hashing of key materials in `VerificationMethod`s.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
