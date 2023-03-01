@@ -25,4 +25,6 @@ pub enum Error {
   InvalidKeyDataBase58,
   #[error("Invalid Multibase Key Data")]
   InvalidKeyDataMultibase,
+  #[error("can only decode multibase verification material, but received publicKeyJwk")]
+  InvalidDecodingRequest, 
 }
