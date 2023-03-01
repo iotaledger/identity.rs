@@ -36,8 +36,8 @@ pub enum KeyIdStorageErrorKind {
   /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
   ///
   /// When using this variant one may want to attach additional context to the corresponding [`StorageError`]. See
-  /// [`KeyStorageError::with_custom_message`](KeyStorageError::with_custom_message()) and
-  /// [`KeyStorageError::with_source`](KeyStorageError::with_source()).
+  /// [`KeyStorageError::with_custom_message`](KeyIdStorageError::with_custom_message()) and
+  /// [`KeyStorageError::with_source`](KeyIdStorageError::with_source()).
   Unspecified,
 }
 

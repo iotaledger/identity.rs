@@ -21,7 +21,7 @@ pub trait KeyIdStorage {
   /// Obtain the [`KeyId`] associated with the given [`MethodDigest`].
   async fn get_key_id(&self, key: &MethodDigest) -> KeyIdStorageResult<KeyId>;
 
-  /// Delete the [`KeyId`] associated with the given [`MethodDigest`] from the [`IdentityStorage`].
+  /// Delete the [`KeyId`] associated with the given [`MethodDigest`] from the [`KeyIdStorage`].
   /// If `key` is not found in storage, an Error must be returned.
   async fn delete_key_id(&self, key: &MethodDigest) -> KeyIdStorageResult<()>;
 }
