@@ -15,16 +15,19 @@ description = "Abstractions over storage for cryptographic keys used in DID Docu
 async-trait = { version = "0.1.64", default-features = false }
 identity_core = { version = "=0.7.0-alpha.5", path = "../identity_core", default-features = false }
 identity_jose = { version = "=0.7.0-alpha.5", path = "../identity_jose", default-features = false }
+identity_verification = {version = "=0.7.0-alpha.5", path = "../identity_verification", default_features = false }
 iota-crypto = { version = "0.15", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }
 rand = { version = "0.8.5", default-features = false, features = ["std"], optional = true }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync"], optional = true }
+seahash = { version = "4.1.0", default_features = false }
 
 [dev-dependencies]
 rand = { version = "0.8.5" }
 tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync", "rt"] }
+identity_did = {  version = "=0.7.0-alpha.5", path = "../identity_did", default-features = false }
 
 [features]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
