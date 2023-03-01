@@ -329,7 +329,7 @@ mod tests {
     let mut jwk: Jwk = Jwk::new(JwkType::Rsa);
     jwk.set_alg(alg);
 
-    jwk.set_kid(kid.clone());
+    jwk.set_kid(kid);
 
     let issuer: MockIssuer = MockIssuer {
       id: issuer_did.into(),
