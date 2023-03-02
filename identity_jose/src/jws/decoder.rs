@@ -52,11 +52,27 @@ impl DecodedHeaders {
       (None, None) => Err(Error::MissingHeader),
     }
   }
+
+  fn protected_header(&self) -> Option<&JwsHeader> {
+    match self {
+      DecodedHeaders::Protected(ref header) => Some(header),
+      DecodedHeaders::Both { ref protected, .. } => Some(protected),
+      DecodedHeaders::Unprotected(_) => None,
+    }
+  }
+
+  fn unprotected_header(&self) -> Option<&JwsHeader> {
+    match self {
+      DecodedHeaders::Unprotected(ref header) => Some(header),
+      DecodedHeaders::Both { ref unprotected, .. } => Some(unprotected.as_ref()),
+      DecodedHeaders::Protected(_) => None,
+    }
+  }
 }
 
 /// A partially decoded JWS containing claims, and the decoded verification data
 /// for one of its signatures (headers, signing input and signature). This data
-/// can be cryptographically verified using a [`JwsSignatureVerifier`].
+/// can be cryptographically verified using a [`JwsSignatureVerifier`]. See [`Self::verify`](Self::verify).
 pub struct JwsValidationItem<'a> {
   headers: DecodedHeaders,
   signing_input: Box<[u8]>,
@@ -66,20 +82,12 @@ pub struct JwsValidationItem<'a> {
 impl<'a> JwsValidationItem<'a> {
   /// Returns the decoded protected header if it exists.
   pub fn protected_header(&self) -> Option<&JwsHeader> {
-    match self.headers {
-      DecodedHeaders::Protected(ref header) => Some(header),
-      DecodedHeaders::Both { ref protected, .. } => Some(protected),
-      DecodedHeaders::Unprotected(_) => None,
-    }
+    self.headers.protected_header()
   }
 
   /// Returns the decoded unproteced header if it exists.
   pub fn unprotected_header(&self) -> Option<&JwsHeader> {
-    match self.headers {
-      DecodedHeaders::Unprotected(ref header) => Some(header),
-      DecodedHeaders::Both { ref unprotected, .. } => Some(unprotected),
-      DecodedHeaders::Protected(_) => None,
-    }
+    self.headers.unprotected_header()
   }
 
   /// The algorithm parsed from the protected header if it exists.
@@ -105,7 +113,13 @@ impl<'a> JwsValidationItem<'a> {
     &self.decoded_signature
   }
 
-  /// TODO: Document this
+  /// Constructs [`VerificationInput`] from this data and passes it to the given `verifier` along with the
+  /// provided `public_key`.
+  ///
+  /// # Errors
+  /// Apart from the fallible call to [`JwsSignatureVerifier::verify`] this method can also error if there is no
+  /// `alg` present in the protected header (in which case the verifier cannot be called) or if the given `public_key`
+  /// has a different value present in its `alg` field.
   pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<Token<'a>>
   where
     T: JwsSignatureVerifier,
@@ -178,7 +192,7 @@ struct Flatten<'a> {
 // Decoder
 // =============================================================================
 
-/// The [`Decoder`] is responsible for decoding a JWS into a [`JwsValidationItem`].
+/// The [`Decoder`] is responsible for decoding a JWS into one or more [`JwsValidationItems`](JwsValidationItem).
 #[derive(Default, Debug, Clone)]
 pub struct Decoder {
   crits: Option<Vec<String>>,
