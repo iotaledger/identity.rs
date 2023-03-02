@@ -39,4 +39,6 @@ pub enum Error {
   SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),
   #[error("signature verification error")]
   SignatureVerificationError(#[source] crate::jws::SignatureVerificationError),
+  #[error("missing header")]
+  MissingHeader,
 }

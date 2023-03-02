@@ -4,6 +4,8 @@
 use core::str;
 use std::borrow::Cow;
 
+use serde::__private::de;
+
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::Jwk;
@@ -22,6 +24,7 @@ use super::decoder_config::DecodingConfig;
 #[cfg(feature = "default-jws-signature-verifier")]
 use super::DefaultJwsSignatureVerifier;
 use super::JwsSignatureVerifier;
+use super::SignatureVerificationError;
 use super::VerificationInput;
 
 const COMPACT_SEGMENTS: usize = 3;
@@ -34,6 +37,81 @@ pub struct Token<'a> {
   pub protected: Option<JwsHeader>,
   pub unprotected: Option<JwsHeader>,
   pub claims: Cow<'a, [u8]>,
+}
+
+// Todo: Consider boxing as this enum is very large
+enum DecodedHeaders {
+  Protected(JwsHeader),
+  Unprotected(JwsHeader),
+  Both {
+    protected: JwsHeader,
+    unprotected: JwsHeader,
+  },
+}
+
+impl DecodedHeaders {
+  fn new(protected: Option<JwsHeader>, unprotected: Option<JwsHeader>) -> Result<Self> {
+    match (protected, unprotected) {
+      (Some(protected), Some(unprotected)) => Ok(Self::Both { protected, unprotected }),
+      (Some(protected), None) => Ok(Self::Protected(protected)),
+      (None, Some(unprotected)) => Ok(Self::Unprotected(unprotected)),
+      (None, None) => Err(Error::MissingHeader),
+    }
+  }
+}
+
+pub struct DecodedItem<'a> {
+  headers: DecodedHeaders,
+  signing_input: Box<[u8]>,
+  decoded_signature: Box<[u8]>,
+  claims: Cow<'a, [u8]>,
+}
+impl<'a> DecodedItem<'a> {
+  /// Returns the decoded protected header if it exists.
+  pub fn protected_header(&self) -> Option<&JwsHeader> {
+    match self.headers {
+      DecodedHeaders::Protected(ref header) => Some(header),
+      DecodedHeaders::Both { ref protected, .. } => Some(protected),
+      DecodedHeaders::Unprotected(_) => None,
+    }
+  }
+
+  /// Returns the decoded unproteced header if it exists.
+  pub fn unprotected_header(&self) -> Option<&JwsHeader> {
+    match self.headers {
+      DecodedHeaders::Unprotected(ref header) => Some(header),
+      DecodedHeaders::Both { ref unprotected, .. } => Some(unprotected),
+      DecodedHeaders::Protected(_) => None,
+    }
+  }
+
+  /// The algorithm parsed from the protected header if it exists.
+  pub fn alg(&self) -> Option<JwsAlgorithm> {
+    self.protected_header().and_then(|protected| protected.alg())
+  }
+
+  /// Returns the JWS claims.
+  pub fn claims(&self) -> &[u8] {
+    &self.claims
+  }
+
+  /// Returns the signing input .
+  ///
+  /// See [RFC 7515: section 5.2 part 8.](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) and
+  /// [RFC 7797 section 3](https://www.rfc-editor.org/rfc/rfc7797#section-3).
+  pub fn signing_input(&self) -> &[u8] {
+    &self.signing_input
+  }
+
+  /// Returns the decoded JWS signature.
+  pub fn decoded_signature(&self) -> &[u8] {
+    &self.decoded_signature
+  }
+
+  /// TODO: Document this
+  pub fn verify<T>(self, verifier: &T) -> Result<Token<'a>> {
+    todo!()
+  }
 }
 
 // =============================================================================================
@@ -73,6 +151,20 @@ pub struct Decoder {
   config: DecodingConfig,
 }
 
+pub struct DecodedSignaturesIter<'decoder, 'payload, 'signatures> 
+{
+  decoder: &'decoder Decoder, 
+  signatures: std::vec::IntoIter<JwsSignature<'signatures>>, 
+  payload: &'payload [u8]
+}
+impl<'decoder, 'payload, 'signatures> Iterator for DecodedSignaturesIter<'decoder, 'payload, 'signatures> 
+{
+  type Item = Result<DecodedItem<'payload>>; 
+
+  fn next(&mut self) -> Option<Self::Item> {
+      self.signatures.next().map(|signature| self.decoder.decode_signature(self.payload, signature))
+  }
+}
 impl Decoder {
   /// Constructs a new [`Decoder`].
   pub fn new() -> Self {
@@ -130,6 +222,95 @@ impl Decoder {
       jwk_provider,
       detached_payload,
     )
+  }
+
+  pub fn decode_compact_serialization<'b>(
+    &self,
+    data: &'b [u8],
+    detached_payload: Option<&'b [u8]>,
+  ) -> Result<DecodedItem<'b>> {
+
+    let mut segments = data.split(|byte| *byte == b'.');
+
+    let (Some(protected), Some(payload), Some(signature), None) = (
+      segments.next(),
+      segments.next(),
+      segments.next(),
+      segments.next()
+    ) else {
+      return Err(Error::InvalidContent("invalid segments count"));
+    }; 
+
+
+    let signature: JwsSignature<'_> = JwsSignature {
+      header: None,
+      protected: Some(parse_utf8(protected)?),
+      signature: parse_utf8(signature)?,
+    };
+
+    let payload = Self::expand_payload(detached_payload, Some(payload))?;
+
+    self.decode_signature(payload, signature)
+  }
+
+  pub fn decode_flattened_serialization<'b>(
+    &self, 
+    data: &'b [u8], 
+    detached_payload: Option<&'b [u8]>
+  ) -> Result<DecodedItem<'b>> {
+      let data: Flatten<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
+      let payload = Self::expand_payload(detached_payload, data.payload)?; 
+      let signature = data.signature; 
+      self.decode_signature(payload, signature)
+  }
+
+  pub fn decode_general_serialization<'decoder, 'data>(
+    &'decoder self, 
+    data: &'data [u8],
+    detached_payload: Option<&'data [u8]>
+  ) -> Result<DecodedSignaturesIter<'decoder, 'data, 'data>> {
+    let data: General<'data> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
+
+    let payload = Self::expand_payload(detached_payload, data.payload)?; 
+    let signatures = data.signatures; 
+
+    Ok(DecodedSignaturesIter{
+      decoder: &self, 
+      payload,
+      signatures: signatures.into_iter()
+    })
+  }
+
+  fn decode_signature<'a, 'b>(&self, payload: &'b [u8], jws_signature: JwsSignature<'a>) -> Result<DecodedItem<'b>> {
+    let JwsSignature {
+      header: unprotected_header,
+      protected,
+      signature,
+    } = jws_signature;
+
+    let protected_header: Option<JwsHeader> = protected.map(decode_b64_json).transpose()?;
+    validate_jws_headers(
+      protected_header.as_ref(),
+      unprotected_header.as_ref(),
+      self.config.crits.as_deref(),
+    )?;
+
+    let protected_bytes: &[u8] = protected.map(str::as_bytes).unwrap_or_default();
+    let signing_input: Box<[u8]> = create_message(protected_bytes, payload).into();
+    let decoded_signature: Box<[u8]> = decode_b64(signature)?.into();
+
+    let claims: Cow<'b, [u8]> = if protected_header.as_ref().and_then(|value| value.b64()).unwrap_or(true) {
+      Cow::Owned(decode_b64(payload)?)
+    } else {
+      Cow::Borrowed(payload)
+    };
+
+    Ok(DecodedItem {
+      headers: DecodedHeaders::new(protected_header, unprotected_header)?,
+      signing_input,
+      decoded_signature,
+      claims,
+    })
   }
 
   /// Decode the given `data` which is a base64url-encoded JWS.
@@ -303,81 +484,43 @@ impl Decoder {
 
 #[cfg(test)]
 mod tests {
-  use crate::jwk::Jwk;
-  use crate::jwk::JwkType;
-  use crate::jws::Decoder;
-  use crate::jws::JwsAlgorithm;
-  use crate::jws::JwsHeaderSet;
-  use crate::jws::JwsSignatureVerifierFn;
-  use crate::jws::VerificationInput;
+  use crate::jwt::JwtClaims;
 
-  struct MockIssuer {
-    id: String,
-    keys: Vec<Jwk>,
-  }
+use super::*;
 
-  // This is a very unrealistic test that is mainly designed to check that the `Decoder::decode` API will be callable
-  // from the (JWS)-based PresentationValidator. Tests more relevant for the features of this crate can be found in
-  // src/tests.
   #[test]
-  fn compiles_with_advanced_jwk_provider() {
-    let issuer_did: &str = "did:example:abfe13f712120431c276e12ecab";
-    let kid: String = format!("{}#keys-1", issuer_did);
-    let alg: String = JwsAlgorithm::RS256.to_string();
-    let jws: &str = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRpZDpleGFtcGxlOmFiZmUxM2Y3MTIxMjA0MzFjMjc2ZTEyZWNhYiNrZXlzLTEifQ.eyJzdWIiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEiLCJqdGkiOiJodHRwOi8vZXhhbXBsZS5lZHUvY3JlZGVudGlhbHMvMzczMiIsImlzcyI6ImRpZDpleGFtcGxlOmFiZmUxM2Y3MTIxMjA0MzFjMjc2ZTEyZWNhYiIsIm5iZiI6MTU0MTQ5MzcyNCwiZXhwIjoxNTczMDI5NzIzLCJub25jZSI6IjY2MCE2MzQ1RlNlciIsInZjIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vdzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL2V4YW1wbGUuY29tL2V4YW1wbGVzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJkZWdyZWUiOnsidHlwZSI6IkJhY2hlbG9yRGVncmVlIiwibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgaW4gTWVjaGFuaWNhbCBFbmdpbmVlcmluZyJ9fX19.kaeFJM08sN7MthR-SWU-E8qbFoyZu2b_h1VllkEgNkLAGT9KpQbaeMUEti7QesFW_Cvwh5VErK62jneaW-uzZS6GPW3HVk8O3uRxWD3qCJx0l5uWZeHpRBX6yMcr2XGKWyFn0OBjoiGHQ78mHU8tNEWDqbrIhCoGQKj87OETvlfUDIkNi4_pRfLrJGh5HBrh6JuA-8uM2_clWC2RELsT52sPnqvMjm7UeYZgQEyaQJL6c41BUwHaCGWjUDCDZNWOd5M04s_Pi4Rqo97-2nbQRh_fuQk7aHKxb-UItQ8Mnk_hUFWEicwtuCfDFqwkZyW_r9dOBwz7-cOheuyP6OiLvw";
-
-    let mut jwk: Jwk = Jwk::new(JwkType::Rsa);
-    jwk.set_alg(alg);
-
-    jwk.set_kid(kid);
-
-    let issuer: MockIssuer = MockIssuer {
-      id: issuer_did.into(),
-      keys: vec![jwk],
-    };
-
-    let foo_issuer: MockIssuer = MockIssuer {
-      id: "foo".into(),
-      keys: Vec::new(),
-    };
-    let bar_issuer: MockIssuer = MockIssuer {
-      id: "bar".into(),
-      keys: vec![Jwk::new(JwkType::Ec)],
-    };
-
-    let issuers: Vec<MockIssuer> = vec![bar_issuer, foo_issuer, issuer];
-    let issuers_slice: &[MockIssuer] = issuers.as_slice();
-
-    let mock_verifier = JwsSignatureVerifierFn::from(|input: &VerificationInput, key: &Jwk| {
-      key
-        .alg()
-        .filter(|alg| *alg == "RS256")
-        .ok_or(crate::jws::SignatureVerificationErrorKind::UnsupportedAlg)?;
-      if input.signature().len() > 42 {
-        Ok(())
-      } else {
-        Err(crate::jws::SignatureVerificationErrorKind::InvalidSignature.into())
-      }
-    });
+  fn rfc7515_appendix_a_6() {
+    let general_jws_json_serialized: &str = r#"
+    {
+      "payload":
+       "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ",
+      "signatures":[
+       {"protected":"eyJhbGciOiJSUzI1NiJ9",
+        "header": {"kid":"2010-12-29"},
+        "signature": "cC4hiUPoj9Eetdgtv3hF80EGrhuB__dzERat0XF9g2VtQgr9PJbu3XOiZj5RZmh7AAuHIm4Bh-0Qc_lF5YKt_O8W2Fp5jujGbds9uJdbF9CUAr7t1dnZcAcQjbKBYNX4BAynRFdiuB--f_nZLgrnbyTyWzO75vRK5h6xBArLIARNPvkSjtQBMHlb1L07Qe7K0GarZRmB_eSN9383LcOLn6_dO--xi12jzDwusC-eOkHWEsqtFZESc6BfI7noOPqvhJ1phCnvWh6IeYI2w9QOYEUipUTI8np6LbgGY9Fs98rqVt5AXLIhWkWywlVmtVrBp0igcN_IoypGlUPQGe77Rw"
+        },
+       {"protected":"eyJhbGciOiJFUzI1NiJ9",
+        "header": {"kid":"e9bc097a-ce51-4036-9562-d2ade882db0d"},
+        "signature":"DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
+      }]
+    }"#; 
+    let claims_str : &str = r#"
+    {
+      "iss":"joe",
+    "exp":1300819380,
+    "http://example.com/is_root":true
+    }
+    "#; 
+    let claims: JwtClaims::<serde_json::Value> = serde_json::from_str(claims_str).unwrap(); 
 
     let decoder = Decoder::new();
 
-    let jwk_provider = |header: &JwsHeaderSet, fallback_to_header_jwk: &mut bool| -> Option<&Jwk> {
-      let kid = header.kid()?;
-      if header.jwk().filter(|jwk| jwk.kid() == Some(kid)).is_some() {
-        *fallback_to_header_jwk = true;
-        return None;
-      }
+    let mut signature_iter = decoder.decode_general_serialization(&general_jws_json_serialized.as_bytes(), None).unwrap().filter_map(|decoded| decoded.ok());
+    let first_signature_decoding = signature_iter.next().unwrap(); 
+    assert_eq!(first_signature_decoding.alg().unwrap(), JwsAlgorithm::RS256); 
+    assert_eq!(first_signature_decoding.unprotected_header().and_then(|value|value.kid()).unwrap(),"2010-12-29"); 
+    let decoded_claims: JwtClaims::<serde_json::Value> = serde_json::from_slice(first_signature_decoding.claims()).unwrap();
+    assert_eq!(claims, decoded_claims);
 
-      let did = &kid[..kid.rfind('#').unwrap()];
-      issuers_slice
-        .iter()
-        .find(|entry| entry.id.as_str() == did)
-        .and_then(|entry| entry.keys.iter().find(|key| key.kid() == Some(kid)))
-    };
-
-    assert!(decoder
-      .decode(jws.as_bytes(), &mock_verifier, jwk_provider, None)
-      .is_ok());
   }
 }
