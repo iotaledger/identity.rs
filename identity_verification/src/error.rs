@@ -25,6 +25,8 @@ pub enum Error {
   InvalidKeyDataBase58,
   #[error("Invalid Multibase Key Data")]
   InvalidKeyDataMultibase,
-  #[error("can only decode multibase verification material, but received publicKeyJwk")]
-  InvalidDecodingRequest, 
+  #[error("the method data could not be transformed to the desired type")]
+  InvalidMethodDataTransformation(&'static str),
+  #[error("invalid verification material: private key material exposed")]
+  PrivateKeyMaterialExposed,
 }

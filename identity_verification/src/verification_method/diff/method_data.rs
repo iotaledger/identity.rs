@@ -55,6 +55,8 @@ impl Diff for MethodData {
 
   fn into_diff(self) -> Result<Self::Type> {
     match self {
+      // TODO: Provide an implementation for PublicKeyJwk
+      Self::PublicKeyJwk(_) => unimplemented!("Diff has not been implemented for publicKeyJwk yet"),
       Self::PublicKeyMultibase(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyMultibase),
       Self::PublicKeyBase58(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyBase58),
     }
