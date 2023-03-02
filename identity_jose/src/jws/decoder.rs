@@ -29,7 +29,7 @@ use super::VerificationInput;
 
 const COMPACT_SEGMENTS: usize = 3;
 
-/// A partially decoded token from a JWS.
+/// A cryptographically verified decoded token from a JWS.
 ///
 /// Contains the decoded headers and the raw claims.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -37,6 +37,7 @@ pub struct Token<'a> {
   pub protected: Option<JwsHeader>,
   pub unprotected: Option<JwsHeader>,
   pub claims: Cow<'a, [u8]>,
+  _private: (),
 }
 
 // Todo: Consider boxing as this enum is very large
@@ -60,13 +61,16 @@ impl DecodedHeaders {
   }
 }
 
-pub struct DecodedItem<'a> {
+/// A partially decoded JWS containing claims, and the decoded verification data
+/// for one of its signatures (headers, signing input and signature). This data
+/// can be cryptographically verified using a [`JwsSignatureVerifier`].
+pub struct JwsValidationItem<'a> {
   headers: DecodedHeaders,
   signing_input: Box<[u8]>,
   decoded_signature: Box<[u8]>,
   claims: Cow<'a, [u8]>,
 }
-impl<'a> DecodedItem<'a> {
+impl<'a> JwsValidationItem<'a> {
   /// Returns the decoded protected header if it exists.
   pub fn protected_header(&self) -> Option<&JwsHeader> {
     match self.headers {
@@ -144,25 +148,25 @@ struct Flatten<'a> {
 // Decoder
 // =============================================================================
 
-/// The [`Decoder`] allows decoding a raw JWS into a [`Token`], verifying
-/// the structure of the JWS and its signature.
+/// The [`Decoder`] is responsible for decoding a JWS into a [`JwsValidationItem`].
 #[derive(Default)]
 pub struct Decoder {
   config: DecodingConfig,
 }
 
-pub struct DecodedSignaturesIter<'decoder, 'payload, 'signatures> 
-{
-  decoder: &'decoder Decoder, 
-  signatures: std::vec::IntoIter<JwsSignature<'signatures>>, 
-  payload: &'payload [u8]
+pub struct DecodedSignaturesIter<'decoder, 'payload, 'signatures> {
+  decoder: &'decoder Decoder,
+  signatures: std::vec::IntoIter<JwsSignature<'signatures>>,
+  payload: &'payload [u8],
 }
-impl<'decoder, 'payload, 'signatures> Iterator for DecodedSignaturesIter<'decoder, 'payload, 'signatures> 
-{
-  type Item = Result<DecodedItem<'payload>>; 
+impl<'decoder, 'payload, 'signatures> Iterator for DecodedSignaturesIter<'decoder, 'payload, 'signatures> {
+  type Item = Result<JwsValidationItem<'payload>>;
 
   fn next(&mut self) -> Option<Self::Item> {
-      self.signatures.next().map(|signature| self.decoder.decode_signature(self.payload, signature))
+    self
+      .signatures
+      .next()
+      .map(|signature| self.decoder.decode_signature(self.payload, signature))
   }
 }
 impl Decoder {
@@ -208,7 +212,7 @@ impl Decoder {
   #[cfg(any(feature = "default-jws-signature-verifier", doc))]
   pub fn decode_default<'b, 'c, F>(
     &self,
-    data: &'b [u8],
+    jws_bytes: &'b [u8],
     jwk_provider: F,
     detached_payload: Option<&'b [u8]>,
   ) -> Result<Token<'b>>
@@ -217,20 +221,25 @@ impl Decoder {
     F: Fn(&JwsHeaderSet<'_>, &mut bool) -> Option<&'c Jwk>,
   {
     self.decode(
-      data,
+      jws_bytes,
       &DefaultJwsSignatureVerifier::default(),
       jwk_provider,
       detached_payload,
     )
   }
 
+  /// Decode a JWS encoded with the [JWS compact serialization](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
+  ///
+  ///
+  /// ### Working with detached payloads
+  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
+  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_compact_serialization<'b>(
     &self,
-    data: &'b [u8],
+    jws_bytes: &'b [u8],
     detached_payload: Option<&'b [u8]>,
-  ) -> Result<DecodedItem<'b>> {
-
-    let mut segments = data.split(|byte| *byte == b'.');
+  ) -> Result<JwsValidationItem<'b>> {
+    let mut segments = jws_bytes.split(|byte| *byte == b'.');
 
     let (Some(protected), Some(payload), Some(signature), None) = (
       segments.next(),
@@ -239,8 +248,7 @@ impl Decoder {
       segments.next()
     ) else {
       return Err(Error::InvalidContent("invalid segments count"));
-    }; 
-
+    };
 
     let signature: JwsSignature<'_> = JwsSignature {
       header: None,
@@ -253,35 +261,51 @@ impl Decoder {
     self.decode_signature(payload, signature)
   }
 
+  /// Decode a JWS encoded with the [flattened JWS JSON serialization](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.2)
+  ///
+  ///
+  /// ### Working with detached payloads
+  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
+  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_flattened_serialization<'b>(
-    &self, 
-    data: &'b [u8], 
-    detached_payload: Option<&'b [u8]>
-  ) -> Result<DecodedItem<'b>> {
-      let data: Flatten<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
-      let payload = Self::expand_payload(detached_payload, data.payload)?; 
-      let signature = data.signature; 
-      self.decode_signature(payload, signature)
+    &self,
+    jws_bytes: &'b [u8],
+    detached_payload: Option<&'b [u8]>,
+  ) -> Result<JwsValidationItem<'b>> {
+    let data: Flatten<'_> = serde_json::from_slice(jws_bytes).map_err(Error::InvalidJson)?;
+    let payload = Self::expand_payload(detached_payload, data.payload)?;
+    let signature = data.signature;
+    self.decode_signature(payload, signature)
   }
 
+  /// Decode a JWS encoded with the [general JWS JSON serialization](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.1)
+  ///
+  ///  
+  /// ### Working with detached payloads
+  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
+  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_general_serialization<'decoder, 'data>(
-    &'decoder self, 
-    data: &'data [u8],
-    detached_payload: Option<&'data [u8]>
+    &'decoder self,
+    jws_bytes: &'data [u8],
+    detached_payload: Option<&'data [u8]>,
   ) -> Result<DecodedSignaturesIter<'decoder, 'data, 'data>> {
-    let data: General<'data> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
+    let data: General<'data> = serde_json::from_slice(jws_bytes).map_err(Error::InvalidJson)?;
 
-    let payload = Self::expand_payload(detached_payload, data.payload)?; 
-    let signatures = data.signatures; 
+    let payload = Self::expand_payload(detached_payload, data.payload)?;
+    let signatures = data.signatures;
 
-    Ok(DecodedSignaturesIter{
-      decoder: &self, 
+    Ok(DecodedSignaturesIter {
+      decoder: &self,
       payload,
-      signatures: signatures.into_iter()
+      signatures: signatures.into_iter(),
     })
   }
 
-  fn decode_signature<'a, 'b>(&self, payload: &'b [u8], jws_signature: JwsSignature<'a>) -> Result<DecodedItem<'b>> {
+  fn decode_signature<'a, 'b>(
+    &self,
+    payload: &'b [u8],
+    jws_signature: JwsSignature<'a>,
+  ) -> Result<JwsValidationItem<'b>> {
     let JwsSignature {
       header: unprotected_header,
       protected,
@@ -305,7 +329,7 @@ impl Decoder {
       Cow::Borrowed(payload)
     };
 
-    Ok(DecodedItem {
+    Ok(JwsValidationItem {
       headers: DecodedHeaders::new(protected_header, unprotected_header)?,
       signing_input,
       decoded_signature,
@@ -321,10 +345,7 @@ impl Decoder {
   /// The `jwk_provider` argument is a closure responsible for providing a suitable [`Jwk`] or dictating that it should
   /// be extracted from the header (by setting the provided `bool` to `true`). A suitable [`Jwk`] could be one matching
   /// the header's `kid`, or some default JWK whenever that is reasonable.
-  ///
-  /// ### Working with detached payloads
-  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
-  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
+
   pub fn decode<'b, 'c, T, F>(
     &self,
     data: &'b [u8],
@@ -465,6 +486,7 @@ impl Decoder {
       protected: protected_header,
       unprotected: unprotected_header,
       claims,
+      _private: (),
     })
   }
 
@@ -486,8 +508,24 @@ impl Decoder {
 mod tests {
   use crate::jwt::JwtClaims;
 
-use super::*;
+  use super::*;
 
+  const RFC_7515_APPENDIX_EXAMPLE_CLAIMS: &str = r#"
+  {
+    "iss":"joe",
+  "exp":1300819380,
+  "http://example.com/is_root":true
+  }
+  "#;
+
+  const SIGNING_INPUT_ES256_RFC_7515_APPENDIX_EXAMPLE: &[u8] = &[
+    101, 121, 74, 104, 98, 71, 99, 105, 79, 105, 74, 70, 85, 122, 73, 49, 78, 105, 74, 57, 46, 101, 121, 74, 112, 99,
+    51, 77, 105, 79, 105, 74, 113, 98, 50, 85, 105, 76, 65, 48, 75, 73, 67, 74, 108, 101, 72, 65, 105, 79, 106, 69,
+    122, 77, 68, 65, 52, 77, 84, 107, 122, 79, 68, 65, 115, 68, 81, 111, 103, 73, 109, 104, 48, 100, 72, 65, 54, 76,
+    121, 57, 108, 101, 71, 70, 116, 99, 71, 120, 108, 76, 109, 78, 118, 98, 83, 57, 112, 99, 49, 57, 121, 98, 50, 57,
+    48, 73, 106, 112, 48, 99, 110, 86, 108, 102, 81,
+  ];
+  // Test https://www.rfc-editor.org/rfc/rfc7515#appendix-A.6
   #[test]
   fn rfc7515_appendix_a_6() {
     let general_jws_json_serialized: &str = r#"
@@ -503,24 +541,72 @@ use super::*;
         "header": {"kid":"e9bc097a-ce51-4036-9562-d2ade882db0d"},
         "signature":"DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
       }]
-    }"#; 
-    let claims_str : &str = r#"
-    {
-      "iss":"joe",
-    "exp":1300819380,
-    "http://example.com/is_root":true
-    }
-    "#; 
-    let claims: JwtClaims::<serde_json::Value> = serde_json::from_str(claims_str).unwrap(); 
+    }"#;
+
+    let claims: JwtClaims<serde_json::Value> = serde_json::from_str(RFC_7515_APPENDIX_EXAMPLE_CLAIMS).unwrap();
 
     let decoder = Decoder::new();
 
-    let mut signature_iter = decoder.decode_general_serialization(&general_jws_json_serialized.as_bytes(), None).unwrap().filter_map(|decoded| decoded.ok());
-    let first_signature_decoding = signature_iter.next().unwrap(); 
-    assert_eq!(first_signature_decoding.alg().unwrap(), JwsAlgorithm::RS256); 
-    assert_eq!(first_signature_decoding.unprotected_header().and_then(|value|value.kid()).unwrap(),"2010-12-29"); 
-    let decoded_claims: JwtClaims::<serde_json::Value> = serde_json::from_slice(first_signature_decoding.claims()).unwrap();
+    let mut signature_iter = decoder
+      .decode_general_serialization(&general_jws_json_serialized.as_bytes(), None)
+      .unwrap()
+      .filter_map(|decoded| decoded.ok());
+    // Check assertions for the first signature:
+    let first_signature_decoding = signature_iter.next().unwrap();
+    assert_eq!(first_signature_decoding.alg().unwrap(), JwsAlgorithm::RS256);
+    assert_eq!(
+      first_signature_decoding
+        .unprotected_header()
+        .and_then(|value| value.kid())
+        .unwrap(),
+      "2010-12-29"
+    );
+    let decoded_claims: JwtClaims<serde_json::Value> =
+      serde_json::from_slice(first_signature_decoding.claims()).unwrap();
     assert_eq!(claims, decoded_claims);
 
+    // Check assertions for the second signature:
+    let second_signature_decoding = signature_iter.next().unwrap();
+    assert_eq!(second_signature_decoding.alg().unwrap(), JwsAlgorithm::ES256);
+    assert_eq!(
+      second_signature_decoding
+        .unprotected_header()
+        .and_then(|value| value.kid())
+        .unwrap(),
+      "e9bc097a-ce51-4036-9562-d2ade882db0d"
+    );
+    let decoded_claims: JwtClaims<serde_json::Value> =
+      serde_json::from_slice(second_signature_decoding.claims()).unwrap();
+    assert_eq!(decoded_claims, claims);
+    assert_eq!(
+      SIGNING_INPUT_ES256_RFC_7515_APPENDIX_EXAMPLE,
+      second_signature_decoding.signing_input()
+    );
+  }
+
+  // Test https://www.rfc-editor.org/rfc/rfc7515#appendix-A.7
+  #[test]
+  fn rfc7515_appendix_a_7() {
+    let flattened_jws_json_serialized: &str = r#"
+    {
+      "payload": "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ",
+      "protected":"eyJhbGciOiJFUzI1NiJ9",
+      "header": {"kid":"e9bc097a-ce51-4036-9562-d2ade882db0d"},
+      "signature": "DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
+     }
+    "#;
+    let claims: JwtClaims<serde_json::Value> = serde_json::from_str(RFC_7515_APPENDIX_EXAMPLE_CLAIMS).unwrap();
+    let decoder = Decoder::new();
+    let decoded = decoder
+      .decode_flattened_serialization(flattened_jws_json_serialized.as_bytes(), None)
+      .unwrap();
+    assert_eq!(decoded.alg().unwrap(), JwsAlgorithm::ES256);
+    assert_eq!(
+      decoded.unprotected_header().and_then(|value| value.kid()).unwrap(),
+      "e9bc097a-ce51-4036-9562-d2ade882db0d"
+    );
+    assert_eq!(decoded.signing_input(), SIGNING_INPUT_ES256_RFC_7515_APPENDIX_EXAMPLE);
+    let decoded_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(decoded.claims()).unwrap();
+    assert_eq!(decoded_claims, claims);
   }
 }
