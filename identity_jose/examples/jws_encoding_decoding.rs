@@ -11,7 +11,6 @@ use identity_jose::jws::Decoder;
 use identity_jose::jws::Encoder;
 use identity_jose::jws::JwsAlgorithm;
 use identity_jose::jws::JwsHeader;
-use identity_jose::jws::JwsHeaderSet;
 use identity_jose::jws::JwsSignatureVerifierFn;
 use identity_jose::jws::Recipient;
 use identity_jose::jws::SignatureVerificationError;
@@ -88,13 +87,8 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
 
   // Set up a verifier that verifies JWS signatures secured with the Ed25519 algorithm
   let verify_fn = JwsSignatureVerifierFn::from(
-    |verification_input: &VerificationInput, jwk: &Jwk| -> Result<(), SignatureVerificationError> {
-      if verification_input
-        .jose_header()
-        .alg()
-        .filter(|value| *value == JwsAlgorithm::EdDSA)
-        .is_none()
-      {
+    |verification_input: VerificationInput, jwk: &Jwk| -> Result<(), SignatureVerificationError> {
+      if verification_input.alg != JwsAlgorithm::EdDSA {
         return Err(SignatureVerificationErrorKind::UnsupportedAlg.into());
       }
 
@@ -110,11 +104,11 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
 
       let public_key = PublicKey::try_from(pk).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
       let signature_arr =
-        <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature()).map_err(|err| {
+        <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature).map_err(|err| {
           SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)
         })?;
       let signature = ed25519::Signature::from_bytes(signature_arr);
-      if public_key.verify(&signature, verification_input.signing_input()) {
+      if public_key.verify(&signature, verification_input.signing_input) {
         Ok(())
       } else {
         Err(SignatureVerificationErrorKind::InvalidSignature.into())
@@ -122,16 +116,14 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
     },
   );
 
-  // Set up a Jwk provider. In this case we provide the public key jwk representation we know corresponds to the signing
-  // key.
-  let jwk_provider = |_header: &JwsHeaderSet, _fallback_to_jwk_in_header: &mut bool| {
-    return Some(&public_key_jwk);
-  };
-
   let decoder = Decoder::new();
   // We don't use a detached payload.
   let detached_payload: Option<&[u8]> = None;
-  let token = decoder.decode(token.as_bytes(), &verify_fn, jwk_provider, detached_payload)?;
+
+  // Decode the encoded token and verify the result to get a cryptographically verified `Token`.
+  let token = decoder
+    .decode_compact_serialization(token.as_bytes(), detached_payload)
+    .and_then(|decoded| decoded.verify(&verify_fn, &public_key_jwk))?;
 
   // ==================================
   // Assert the claims are as expected

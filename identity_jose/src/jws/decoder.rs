@@ -4,15 +4,11 @@
 use core::str;
 use std::borrow::Cow;
 
-use serde::__private::de;
-
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::Jwk;
 use crate::jws::JwsAlgorithm;
-use crate::jws::JwsFormat;
 use crate::jws::JwsHeader;
-use crate::jws::JwsHeaderSet;
 use crate::jwu::create_message;
 use crate::jwu::decode_b64;
 use crate::jwu::decode_b64_json;
@@ -20,40 +16,37 @@ use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 
-use super::decoder_config::DecodingConfig;
-#[cfg(feature = "default-jws-signature-verifier")]
-use super::DefaultJwsSignatureVerifier;
 use super::JwsSignatureVerifier;
-use super::SignatureVerificationError;
 use super::VerificationInput;
-
-const COMPACT_SEGMENTS: usize = 3;
 
 /// A cryptographically verified decoded token from a JWS.
 ///
 /// Contains the decoded headers and the raw claims.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token<'a> {
-  pub protected: Option<JwsHeader>,
-  pub unprotected: Option<JwsHeader>,
+  pub protected: JwsHeader,
+  pub unprotected: Option<Box<JwsHeader>>,
   pub claims: Cow<'a, [u8]>,
   _private: (),
 }
 
-// Todo: Consider boxing as this enum is very large
 enum DecodedHeaders {
   Protected(JwsHeader),
   Unprotected(JwsHeader),
   Both {
     protected: JwsHeader,
-    unprotected: JwsHeader,
+    // Use box to reduce size
+    unprotected: Box<JwsHeader>,
   },
 }
 
 impl DecodedHeaders {
   fn new(protected: Option<JwsHeader>, unprotected: Option<JwsHeader>) -> Result<Self> {
     match (protected, unprotected) {
-      (Some(protected), Some(unprotected)) => Ok(Self::Both { protected, unprotected }),
+      (Some(protected), Some(unprotected)) => Ok(Self::Both {
+        protected,
+        unprotected: Box::new(unprotected),
+      }),
       (Some(protected), None) => Ok(Self::Protected(protected)),
       (None, Some(unprotected)) => Ok(Self::Unprotected(unprotected)),
       (None, None) => Err(Error::MissingHeader),
@@ -113,8 +106,45 @@ impl<'a> JwsValidationItem<'a> {
   }
 
   /// TODO: Document this
-  pub fn verify<T>(self, verifier: &T) -> Result<Token<'a>> {
-    todo!()
+  pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<Token<'a>>
+  where
+    T: JwsSignatureVerifier,
+  {
+    // Extract and validate alg from the protected header. Note this also implies existence of a decoded protected
+    // header.
+    let alg = self.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
+    public_key.check_alg(alg.name())?;
+    // Construct verification input
+    let input: VerificationInput = {
+      let signing_input = self.signing_input();
+      let decoded_signature = self.decoded_signature();
+      VerificationInput {
+        alg,
+        signing_input,
+        decoded_signature,
+      }
+    };
+    // Call verifier
+    verifier
+      .verify(input, public_key)
+      .map_err(Error::SignatureVerificationError)?;
+
+    // Construct token
+    let token: Token = {
+      let JwsValidationItem { headers, claims, .. } = self;
+      let (protected, unprotected): (JwsHeader, Option<Box<JwsHeader>>) = match headers {
+        DecodedHeaders::Protected(protected) => (protected, None),
+        DecodedHeaders::Both { protected, unprotected } => (protected, Some(unprotected)),
+        DecodedHeaders::Unprotected(_) => unreachable!("already checked the existence of protected header"),
+      };
+      Token {
+        protected,
+        unprotected,
+        claims,
+        _private: (),
+      }
+    };
+    Ok(token)
   }
 }
 
@@ -149,90 +179,28 @@ struct Flatten<'a> {
 // =============================================================================
 
 /// The [`Decoder`] is responsible for decoding a JWS into a [`JwsValidationItem`].
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Decoder {
-  config: DecodingConfig,
+  crits: Option<Vec<String>>,
 }
 
-pub struct DecodedSignaturesIter<'decoder, 'payload, 'signatures> {
-  decoder: &'decoder Decoder,
-  signatures: std::vec::IntoIter<JwsSignature<'signatures>>,
-  payload: &'payload [u8],
-}
-impl<'decoder, 'payload, 'signatures> Iterator for DecodedSignaturesIter<'decoder, 'payload, 'signatures> {
-  type Item = Result<JwsValidationItem<'payload>>;
-
-  fn next(&mut self) -> Option<Self::Item> {
-    self
-      .signatures
-      .next()
-      .map(|signature| self.decoder.decode_signature(self.payload, signature))
-  }
-}
 impl Decoder {
   /// Constructs a new [`Decoder`].
   pub fn new() -> Self {
-    Self {
-      config: DecodingConfig::default(),
-    }
+    Self::default()
   }
 
   /// Append values to the list of permitted extension parameters.
   pub fn critical(mut self, value: impl Into<String>) -> Self {
-    self.config.crits.get_or_insert_with(Vec::new).push(value.into());
+    self.crits.get_or_insert_with(Vec::new).push(value.into());
     self
-  }
-
-  /// Defines whether a given [`Jwk`](crate::jwk::Jwk) used to verify a JWS,
-  /// must have an `alg` parameter corresponding to the one extracted from the JWS header.
-  /// This value is `true` by default.  
-  pub fn jwk_must_have_alg(mut self, value: bool) -> Self {
-    self.config.jwk_must_have_alg = value;
-    self
-  }
-
-  /// When verifying a JWS encoded with the general JWS JSON serialization
-  /// this value decides whether all signatures must be verified (the default behavior),
-  /// otherwise only one signature needs to be verified in order for the entire JWS to be accepted.
-  pub fn strict_signature_verification(mut self, value: bool) -> Self {
-    self.config.strict_signature_verification = value;
-    self
-  }
-
-  /// Specify the serialization format the [`Decoder`](crate::jws::Decoder) accepts. The default is
-  /// [`JwsFormat::Compact`].
-  pub fn format(mut self, value: JwsFormat) -> Self {
-    self.config.format = value;
-    self
-  }
-
-  /// Convenience method equivalent to [`Self::decode(data, &DefaultJwsSignatureVerifier::default(),<other
-  /// parameters>)`](Self::decode()). This method is only available when the `default-jws-signature-verifier` feature
-  /// is enabled.
-  #[cfg(any(feature = "default-jws-signature-verifier", doc))]
-  pub fn decode_default<'b, 'c, F>(
-    &self,
-    jws_bytes: &'b [u8],
-    jwk_provider: F,
-    detached_payload: Option<&'b [u8]>,
-  ) -> Result<Token<'b>>
-  where
-    F: 'c,
-    F: Fn(&JwsHeaderSet<'_>, &mut bool) -> Option<&'c Jwk>,
-  {
-    self.decode(
-      jws_bytes,
-      &DefaultJwsSignatureVerifier::default(),
-      jwk_provider,
-      detached_payload,
-    )
   }
 
   /// Decode a JWS encoded with the [JWS compact serialization](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
   ///
   ///
   /// ### Working with detached payloads
-  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
+  /// A detached payload can be supplied in the `detached_payload` parameter.
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_compact_serialization<'b>(
     &self,
@@ -265,7 +233,7 @@ impl Decoder {
   ///
   ///
   /// ### Working with detached payloads
-  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
+  /// A detached payload can be supplied in the `detached_payload` parameter.
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_flattened_serialization<'b>(
     &self,
@@ -276,29 +244,6 @@ impl Decoder {
     let payload = Self::expand_payload(detached_payload, data.payload)?;
     let signature = data.signature;
     self.decode_signature(payload, signature)
-  }
-
-  /// Decode a JWS encoded with the [general JWS JSON serialization](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.1)
-  ///
-  ///  
-  /// ### Working with detached payloads
-  /// If using `detached_payload` one should supply a `Some` value for the `detached_payload` parameter.
-  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
-  pub fn decode_general_serialization<'decoder, 'data>(
-    &'decoder self,
-    jws_bytes: &'data [u8],
-    detached_payload: Option<&'data [u8]>,
-  ) -> Result<DecodedSignaturesIter<'decoder, 'data, 'data>> {
-    let data: General<'data> = serde_json::from_slice(jws_bytes).map_err(Error::InvalidJson)?;
-
-    let payload = Self::expand_payload(detached_payload, data.payload)?;
-    let signatures = data.signatures;
-
-    Ok(DecodedSignaturesIter {
-      decoder: &self,
-      payload,
-      signatures: signatures.into_iter(),
-    })
   }
 
   fn decode_signature<'a, 'b>(
@@ -316,7 +261,7 @@ impl Decoder {
     validate_jws_headers(
       protected_header.as_ref(),
       unprotected_header.as_ref(),
-      self.config.crits.as_deref(),
+      self.crits.as_deref(),
     )?;
 
     let protected_bytes: &[u8] = protected.map(str::as_bytes).unwrap_or_default();
@@ -337,159 +282,6 @@ impl Decoder {
     })
   }
 
-  /// Decode the given `data` which is a base64url-encoded JWS.
-  ///
-  /// The decoder will verify the JWS signature(s) using the provided [`JwsSignatureVerifier`].
-  ///
-  /// ### Jwk extraction
-  /// The `jwk_provider` argument is a closure responsible for providing a suitable [`Jwk`] or dictating that it should
-  /// be extracted from the header (by setting the provided `bool` to `true`). A suitable [`Jwk`] could be one matching
-  /// the header's `kid`, or some default JWK whenever that is reasonable.
-
-  pub fn decode<'b, 'c, T, F>(
-    &self,
-    data: &'b [u8],
-    verifier: &T,
-    jwk_provider: F,
-    detached_payload: Option<&'b [u8]>,
-  ) -> Result<Token<'b>>
-  where
-    F: 'c,
-    F: Fn(&JwsHeaderSet<'_>, &mut bool) -> Option<&'c Jwk>,
-    T: JwsSignatureVerifier,
-  {
-    // TODO: Only Vec in the general case, consider using OneOrMany or Either to remove the allocation for the other two
-    // cases.
-    let (payload, signatures): (&[u8], Vec<JwsSignature>) = match self.config.format {
-      JwsFormat::Compact => {
-        let split: Vec<&[u8]> = data.split(|byte| *byte == b'.').collect();
-
-        if split.len() != COMPACT_SEGMENTS {
-          return Err(Error::InvalidContent("invalid segments count"));
-        }
-
-        let signature: JwsSignature<'_> = JwsSignature {
-          header: None,
-          protected: Some(parse_utf8(split[0])?),
-          signature: parse_utf8(split[2])?,
-        };
-
-        (Self::expand_payload(detached_payload, Some(split[1]))?, vec![signature])
-      }
-      JwsFormat::General => {
-        let data: General<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
-
-        (Self::expand_payload(detached_payload, data.payload)?, data.signatures)
-      }
-      JwsFormat::Flatten => {
-        let data: Flatten<'_> = serde_json::from_slice(data).map_err(Error::InvalidJson)?;
-
-        (
-          Self::expand_payload(detached_payload, data.payload)?,
-          vec![data.signature],
-        )
-      }
-    };
-
-    let mut result: Result<Token> = Err(Error::InvalidContent("recipient not found"));
-
-    for jws_signature in signatures {
-      result = self.decode_one(verifier, &jwk_provider, payload, jws_signature);
-      if result.is_err() && self.config.strict_signature_verification {
-        // With strict signature verification all validations must be successful
-        // hence we return on the first error discovered.
-        return result;
-      }
-      if result.is_ok() && !self.config.strict_signature_verification {
-        // If signature verification is not strict only one verification must succeed
-        // hence we return on the first one.
-        return result;
-      }
-    }
-    result
-  }
-
-  fn decode_one<'a, 'b, 'c, T, F>(
-    &self,
-    verifier: &T,
-    jwk_provider: &F,
-    payload: &'b [u8],
-    jws_signature: JwsSignature<'a>,
-  ) -> Result<Token<'b>>
-  where
-    F: 'c,
-    F: Fn(&JwsHeaderSet<'_>, &mut bool) -> Option<&'c Jwk>,
-    T: JwsSignatureVerifier,
-  {
-    let JwsSignature {
-      header: unprotected_header,
-      protected,
-      signature,
-    } = jws_signature;
-
-    let protected_header: Option<JwsHeader> = protected.map(decode_b64_json).transpose()?;
-    validate_jws_headers(
-      protected_header.as_ref(),
-      unprotected_header.as_ref(),
-      self.config.crits.as_deref(),
-    )?;
-
-    let merged = JwsHeaderSet::new()
-      .with_protected(protected_header.as_ref())
-      .with_unprotected(unprotected_header.as_ref());
-
-    let payload_is_b64_encoded = merged.b64().unwrap_or(true);
-
-    // Obtain a JWK before proceeding.
-    //let kid = merged.kid();
-    let mut fallback_to_header = false;
-    let provided_key: Option<&Jwk> = jwk_provider(&merged, &mut fallback_to_header);
-    let key = provided_key
-      .or_else(|| if fallback_to_header { merged.jwk() } else { None })
-      .ok_or(Error::JwkNotProvided)?;
-
-    // Validate the header's alg against the requirements of the JWK.
-    let alg: JwsAlgorithm = merged.try_alg()?;
-    {
-      if let Some(key_alg) = key.alg() {
-        if alg.name() != key_alg {
-          return Err(crate::error::Error::AlgorithmMismatch);
-        }
-      } else if self.config.jwk_must_have_alg {
-        return Err(crate::error::Error::JwkWithoutAlg);
-      }
-    }
-
-    // Verify the signature
-    {
-      let protected_bytes: &[u8] = protected.map(str::as_bytes).unwrap_or_default();
-      let message: Vec<u8> = create_message(protected_bytes, payload);
-      let signature: Vec<u8> = decode_b64(signature)?;
-      let verification_input = VerificationInput {
-        jose_header: &merged,
-        signing_input: message,
-        signature: &signature,
-      };
-
-      verifier
-        .verify(&verification_input, key)
-        .map_err(Error::SignatureVerificationError)?;
-    }
-
-    let claims: Cow<'b, [u8]> = if payload_is_b64_encoded {
-      Cow::Owned(decode_b64(payload)?)
-    } else {
-      Cow::Borrowed(payload)
-    };
-
-    Ok(Token {
-      protected: protected_header,
-      unprotected: unprotected_header,
-      claims,
-      _private: (),
-    })
-  }
-
   fn expand_payload<'b>(
     detached_payload: Option<&'b [u8]>,
     parsed_payload: Option<&'b (impl AsRef<[u8]> + ?Sized)>,
@@ -501,6 +293,53 @@ impl Decoder {
       (Some(_), Some(_)) => Err(Error::InvalidContent("multiple payloads")),
       (None, None) => Err(Error::InvalidContent("missing payload")),
     }
+  }
+}
+
+// ======================================================================================================================
+// General JWS Json serialization support
+// ======================================================================================================================
+
+/// An iterator over the [`JwsValidationItems`](JwsValidationItem) corresponding to the
+/// signatures in a JWS encoded with the general JWS JSON serialization format.  
+pub struct JwsValidationIter<'decoder, 'payload, 'signatures> {
+  decoder: &'decoder Decoder,
+  signatures: std::vec::IntoIter<JwsSignature<'signatures>>,
+  payload: &'payload [u8],
+}
+impl<'decoder, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, 'payload, 'signatures> {
+  type Item = Result<JwsValidationItem<'payload>>;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    self
+      .signatures
+      .next()
+      .map(|signature| self.decoder.decode_signature(self.payload, signature))
+  }
+}
+
+impl Decoder {
+  /// Decode a JWS encoded with the [general JWS JSON serialization](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.1)
+  ///
+  ///  
+  /// ### Working with detached payloads
+  /// A detached payload can be supplied in the `detached_payload` parameter.
+  /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
+  pub fn decode_general_serialization<'decoder, 'data>(
+    &'decoder self,
+    jws_bytes: &'data [u8],
+    detached_payload: Option<&'data [u8]>,
+  ) -> Result<JwsValidationIter<'decoder, 'data, 'data>> {
+    let data: General<'data> = serde_json::from_slice(jws_bytes).map_err(Error::InvalidJson)?;
+
+    let payload = Self::expand_payload(detached_payload, data.payload)?;
+    let signatures = data.signatures;
+
+    Ok(JwsValidationIter {
+      decoder: &self,
+      payload,
+      signatures: signatures.into_iter(),
+    })
   }
 }
 

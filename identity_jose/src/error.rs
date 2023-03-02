@@ -27,18 +27,18 @@ pub enum Error {
   InvalidContent(&'static str),
   #[error("invalid key format for type `{0}`")]
   KeyError(&'static str),
-  #[error("failed to obtain a Jwk: Jwk was not provided or extracted otherwise")]
-  JwkNotProvided,
   #[error("mismatch between header and jwk alg values")]
   AlgorithmMismatch,
   #[error("could not extract alg from a jwk required to have this field")]
   JwkWithoutAlg,
-  #[error("unsupported jws algorithm")]
-  UnsupportedAlgorithm,
+  #[error("attempt to parse an unregistered jws algorithms")]
+  JwsAlgorithmParsingError,
   #[error("signature creation error")]
   SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),
   #[error("signature verification error")]
   SignatureVerificationError(#[source] crate::jws::SignatureVerificationError),
   #[error("missing header")]
   MissingHeader,
+  #[error("missing alg in protected header")]
+  ProtectedHeaderWithoutAlg,
 }
