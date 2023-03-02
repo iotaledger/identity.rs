@@ -70,15 +70,16 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(verification_input: &VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
+pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let public_key = expand_public_jwk(jwk);
 
-  let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.signature())
-    .map_err(|err| err.to_string())
-    .unwrap();
+  let signature_arr =
+    <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature)
+      .map_err(|err| err.to_string())
+      .unwrap();
 
   let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
-  if public_key.verify(&signature, verification_input.signing_input()) {
+  if public_key.verify(&signature, verification_input.signing_input) {
     Ok(())
   } else {
     Err(SignatureVerificationErrorKind::InvalidSignature.into())

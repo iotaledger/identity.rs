@@ -43,18 +43,13 @@ async fn test_encoder_decoder_roundtrip() {
 
   let token: String = ed25519::encode(&encoder, &claims_bytes, secret_key).await;
 
-  let verifier = JwsSignatureVerifierFn::from(|input: &VerificationInput, key: &Jwk| {
-    if input
-      .jose_header()
-      .alg()
-      .filter(|value| *value == JwsAlgorithm::EdDSA)
-      .is_none()
-    {
+  let verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
+    if input.alg != JwsAlgorithm::EdDSA {
       panic!("invalid algorithm");
     }
     ed25519::verify(input, key)
   });
-  let decoder = Decoder::new().jwk_must_have_alg(false);
+  let decoder = Decoder::new();
   let mut public_key_jwk = Jwk::new(JwkType::Okp);
   public_key_jwk.set_kid(kid);
   public_key_jwk
@@ -66,17 +61,8 @@ async fn test_encoder_decoder_roundtrip() {
     .unwrap();
 
   let token = decoder
-    .decode(
-      token.as_bytes(),
-      &verifier,
-      |header, _| {
-        header
-          .kid()
-          .filter(|kid| kid == &public_key_jwk.kid().unwrap())
-          .map(|_| &public_key_jwk)
-      },
-      None,
-    )
+    .decode_compact_serialization(token.as_bytes(), None)
+    .and_then(|decoded| decoded.verify(&verifier, &public_key_jwk))
     .unwrap();
 
   let recovered_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(&token.claims).unwrap();

@@ -39,21 +39,19 @@ async fn test_rfc7515() {
       assert_eq!(encoded.as_bytes(), tv.encoded);
     }
 
-    let jws_signature_verifier =
-      JwsSignatureVerifierFn::from(
-        |input: &VerificationInput, key: &Jwk| match input.jose_header().alg().unwrap() {
-          JwsAlgorithm::HS256 => hs256::verify(input, key),
-          JwsAlgorithm::ES256 => es256::verify(input, key),
-          other => unimplemented!("{other}"),
-        },
-      );
+    let jws_signature_verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
+      JwsAlgorithm::HS256 => hs256::verify(input, key),
+      JwsAlgorithm::ES256 => es256::verify(input, key),
+      other => unimplemented!("{other}"),
+    });
 
-    let decoder = jws::Decoder::new().jwk_must_have_alg(false);
-    let decoded = decoder
-      .decode(tv.encoded, &jws_signature_verifier, |_, _| Some(&jwk), None)
+    let decoder = jws::Decoder::new();
+    let token = decoder
+      .decode_compact_serialization(tv.encoded, None)
+      .and_then(|decoded| decoded.verify(&jws_signature_verifier, &jwk))
       .unwrap();
 
-    assert_eq!(decoded.protected.unwrap(), header);
-    assert_eq!(decoded.claims, tv.claims);
+    assert_eq!(token.protected, header);
+    assert_eq!(token.claims, tv.claims);
   }
 }

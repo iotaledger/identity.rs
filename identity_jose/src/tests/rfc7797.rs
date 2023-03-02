@@ -25,29 +25,20 @@ fn test_rfc7797() {
     let header: JwsHeader = serde_json::from_slice(tv.header).unwrap();
     let jwk: Jwk = serde_json::from_str(tv.public_key).unwrap();
 
-    let verifier = JwsSignatureVerifierFn::from(|input: &VerificationInput, key: &Jwk| {
-      if input
-        .jose_header()
-        .alg()
-        .filter(|value| *value == JwsAlgorithm::HS256)
-        .is_none()
-      {
+    let verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
+      if input.alg != JwsAlgorithm::HS256 {
         panic!("unsupported algorithm");
       }
       hs256::verify(input, key)
     });
-    let decoder = Decoder::new().critical("b64").jwk_must_have_alg(false);
+    let decoder = Decoder::new().critical("b64");
 
-    let decoded = decoder
-      .decode(
-        tv.encoded,
-        &verifier,
-        |_, _| Some(&jwk),
-        tv.detach.then_some(tv.payload),
-      )
+    let token = decoder
+      .decode_compact_serialization(tv.encoded, tv.detach.then_some(tv.payload))
+      .and_then(|decoded| decoded.verify(&verifier, &jwk))
       .unwrap();
 
-    assert_eq!(decoded.protected.unwrap(), header);
-    assert_eq!(decoded.claims, tv.payload);
+    assert_eq!(token.protected, header);
+    assert_eq!(token.claims, tv.payload);
   }
 }
