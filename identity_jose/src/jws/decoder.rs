@@ -332,7 +332,7 @@ impl<'decoder, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, '
 }
 
 impl Decoder {
-  /// Decode a JWS encoded with the [general JWS JSON serialization](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.1)
+  /// Decode a JWS encoded with the [general JWS JSON serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.1)
   ///
   ///  
   /// ### Working with detached payloads
