@@ -97,7 +97,7 @@ impl DefaultJwsSignatureVerifier {
   /// [`JwsAlgoritm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`DefaultJwsSignatureVerifier`]
   /// hence extending its capabilities.
   #[cfg(any(feature = "eddsa", doc))]
-  pub fn verify_eddsa_jws_prechecked_alg(
+  pub fn verify_eddsa(
     input: VerificationInput<'_>,
     public_key: &Jwk,
   ) -> Result<(), SignatureVerificationError> {
