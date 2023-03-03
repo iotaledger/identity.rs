@@ -13,7 +13,7 @@ description = "Method-agnostic implementation of the Decentralized Identifiers (
 
 [dependencies]
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-form_urlencoded = { version = "1.0.1", default-features = false }
+form_urlencoded = { version = "=1.1.0" }
 identity_core = { version = "=0.7.0-alpha.5", path = "../identity_core" }
 identity_did = { version = "=0.7.0-alpha.5", path = "../identity_did" }
 identity_verification = { version = "=0.7.0-alpha.5", path = "../identity_verification", default-features = false }
