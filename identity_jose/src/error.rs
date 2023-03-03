@@ -29,7 +29,7 @@ pub enum Error {
   KeyError(&'static str),
   #[error("mismatch between header and jwk alg values")]
   AlgorithmMismatch,
-  #[error("attempt to parse an unregistered jws algorithms")]
+  #[error("attempt to parse an unregistered jws algorithm")]
   JwsAlgorithmParsingError,
   #[error("signature creation error")]
   SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),
