@@ -21,7 +21,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@napi-rs/cli": "^2.4.2",
+    "@napi-rs/cli": "^2.14.8",
     "@rollup/plugin-commonjs": "^21.0.2",
     "@rollup/plugin-typescript": "^8.3.1",
     "@types/node": "^17.0.19",
