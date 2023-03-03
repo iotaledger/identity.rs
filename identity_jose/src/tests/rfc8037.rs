@@ -5,6 +5,7 @@ use crypto::signatures::ed25519::SecretKey;
 
 use crate::jwk::Jwk;
 use crate::jws::Decoder;
+#[cfg(feature = "default-jws-signature-verifier")]
 use crate::jws::DefaultJwsSignatureVerifier;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
