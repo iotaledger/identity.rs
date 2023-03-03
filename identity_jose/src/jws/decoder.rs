@@ -23,11 +23,11 @@ use super::VerificationInput;
 ///
 /// Contains the decoded headers and the raw claims.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Token<'a> {
   pub protected: JwsHeader,
   pub unprotected: Option<Box<JwsHeader>>,
   pub claims: Cow<'a, [u8]>,
-  _private: (),
 }
 
 enum DecodedHeaders {
@@ -155,7 +155,6 @@ impl<'a> JwsValidationItem<'a> {
         protected,
         unprotected,
         claims,
-        _private: (),
       }
     };
     Ok(token)
@@ -350,7 +349,7 @@ impl Decoder {
     let signatures = data.signatures;
 
     Ok(JwsValidationIter {
-      decoder: &self,
+      decoder: self,
       payload,
       signatures: signatures.into_iter(),
     })
