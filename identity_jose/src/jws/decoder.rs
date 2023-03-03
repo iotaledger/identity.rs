@@ -403,8 +403,12 @@ mod tests {
       .decode_general_serialization(general_jws_json_serialized.as_bytes(), None)
       .unwrap()
       .filter_map(|decoded| decoded.ok());
-    // Check assertions for the first signature:
+
+    // Check that the lifetimes are not overly restrictive:
     let first_signature_decoding = signature_iter.next().unwrap();
+    let second_signature_decoding = signature_iter.next().unwrap();
+    drop(signature_iter);
+    // Check assertions for the first signature:
     assert_eq!(first_signature_decoding.alg().unwrap(), JwsAlgorithm::RS256);
     assert_eq!(
       first_signature_decoding
@@ -418,7 +422,6 @@ mod tests {
     assert_eq!(claims, decoded_claims);
 
     // Check assertions for the second signature:
-    let second_signature_decoding = signature_iter.next().unwrap();
     assert_eq!(second_signature_decoding.alg().unwrap(), JwsAlgorithm::ES256);
     assert_eq!(
       second_signature_decoding
