@@ -29,8 +29,6 @@ pub enum Error {
   KeyError(&'static str),
   #[error("mismatch between header and jwk alg values")]
   AlgorithmMismatch,
-  #[error("could not extract alg from a jwk required to have this field")]
-  JwkWithoutAlg,
   #[error("attempt to parse an unregistered jws algorithms")]
   JwsAlgorithmParsingError,
   #[error("signature creation error")]
