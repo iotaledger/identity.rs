@@ -13,7 +13,7 @@ mod encoder;
 mod format;
 mod header;
 mod recipient;
-mod verification_plug_ins;
+mod custom_verification;
 
 pub use self::algorithm::*;
 pub use self::charset::*;
@@ -22,4 +22,4 @@ pub use self::encoder::*;
 pub use self::format::*;
 pub use self::header::*;
 pub use self::recipient::*;
-pub use self::verification_plug_ins::*;
+pub use self::custom_verification::*;
