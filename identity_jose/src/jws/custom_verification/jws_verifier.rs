@@ -43,8 +43,8 @@ pub trait JwsSignatureVerifier {
   /// `public_key`.
   ///
   /// Implementors may decide to error with
-  /// [`SignatureVerificationErrorKind::UnsupportedAlg`](SignatureVerificationErrorKind::UnsupportedAlg) if they
-  /// are not interested in supporting a given algorithm.
+  /// [`SignatureVerificationErrorKind::UnsupportedAlg`](crate::jws::SignatureVerificationErrorKind::UnsupportedAlg) if
+  /// they are not interested in supporting a given algorithm.
   fn verify(&self, input: VerificationInput<'_>, public_key: &Jwk) -> Result<(), SignatureVerificationError>;
 }
 
