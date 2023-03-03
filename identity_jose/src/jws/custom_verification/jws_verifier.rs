@@ -1,18 +1,11 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::jwk::Jwk;
-
-#[cfg(feature = "eddsa")]
-use crate::jwk::EdCurve;
-#[cfg(feature = "eddsa")]
-use crate::jwk::JwkParamsOkp;
-use crate::jws::JwsAlgorithm;
-
 use super::SignatureVerificationError;
-#[cfg(feature = "eddsa")]
-use super::SignatureVerificationErrorKind;
-
+use crate::jwk::Jwk;
+use crate::jws::JwsAlgorithm;
+#[cfg(any(feature = "eddsa", doc))]
+pub use eddsa_verifier::*;
 /// Input a [`JwsSignatureVerifier`] verifies.
 pub struct VerificationInput<'a> {
   /// The `alg` parsed from the protected header.
@@ -82,87 +75,90 @@ where
 }
 
 #[cfg(any(feature = "eddsa", doc))]
-/// An implementor of [`JwsSignatureVerifier`] that can handle the
-/// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
-///
-/// See [`Self::verify`](EdDSAJwsSignatureVerifier::verify).
-///
-/// NOTE: This type can only be constructed when the `eddsa` feature is enabled.
-#[non_exhaustive]
-pub struct EdDSAJwsSignatureVerifier;
-
-impl EdDSAJwsSignatureVerifier {
-  /// Verify a JWS signature secured with the [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
-  /// Only the [`EdCurve::Ed25519`] variant is supported for now. This associated method is only available when the
-  /// `eddsa` feature is enabled.
+mod eddsa_verifier {
+  use super::*;
+  use crate::jwk::EdCurve;
+  use crate::jwk::JwkParamsOkp;
+  use crate::jws::SignatureVerificationErrorKind;
+  /// An implementor of [`JwsSignatureVerifier`] that can handle the
+  /// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
   ///
-  /// This function is useful when one is building a [`JwsSignatureVerifier`] that handles the
-  /// [`JwsAlgoritm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`EdDSAJwsSignatureVerifier`]
-  /// hence extending its capabilities.
+  /// See [`Self::verify`](EdDSAJwsSignatureVerifier::verify).
   ///
-  /// # Warning
-  /// This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-  /// prior to calling the function.
-  #[cfg(any(feature = "eddsa", doc))]
-  pub fn verify_eddsa(input: VerificationInput<'_>, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
-    // Obtain an Ed25519 public key
+  /// NOTE: This type can only be constructed when the `eddsa` feature is enabled.
+  #[non_exhaustive]
+  pub struct EdDSAJwsSignatureVerifier;
 
-    let params: &JwkParamsOkp = public_key
-      .try_okp_params()
-      .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
+  impl EdDSAJwsSignatureVerifier {
+    /// Verify a JWS signature secured with the [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
+    /// Only the [`EdCurve::Ed25519`] variant is supported for now. This associated method is only available when the
+    /// `eddsa` feature is enabled.
+    ///
+    /// This function is useful when one is building a [`JwsSignatureVerifier`] that handles the
+    /// [`JwsAlgoritm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`EdDSAJwsSignatureVerifier`]
+    /// hence extending its capabilities.
+    ///
+    /// # Warning
+    /// This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+    /// prior to calling the function.
+    pub fn verify_eddsa(input: VerificationInput<'_>, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
+      // Obtain an Ed25519 public key
 
-    if params
-      .try_ed_curve()
-      .ok()
-      .filter(|curve_param| *curve_param == EdCurve::Ed25519)
-      .is_none()
-    {
-      return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
-    }
+      let params: &JwkParamsOkp = public_key
+        .try_okp_params()
+        .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
 
-    let pk: [u8; crypto::signatures::ed25519::PUBLIC_KEY_LENGTH] = crate::jwu::decode_b64(params.x.as_str())
-      .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)
-      .and_then(|value| TryInto::try_into(value).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure))?;
+      if params
+        .try_ed_curve()
+        .ok()
+        .filter(|curve_param| *curve_param == EdCurve::Ed25519)
+        .is_none()
+      {
+        return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
+      }
 
-    let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk)
-      .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
+      let pk: [u8; crypto::signatures::ed25519::PUBLIC_KEY_LENGTH] = crate::jwu::decode_b64(params.x.as_str())
+        .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)
+        .and_then(|value| TryInto::try_into(value).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure))?;
 
-    let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.decoded_signature)
-      .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
+      let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk)
+        .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
 
-    let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
+      let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.decoded_signature)
+        .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
 
-    if crypto::signatures::ed25519::PublicKey::verify(&public_key_ed25519, &signature, input.signing_input) {
-      Ok(())
-    } else {
-      Err(SignatureVerificationErrorKind::InvalidSignature.into())
+      let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
+
+      if crypto::signatures::ed25519::PublicKey::verify(&public_key_ed25519, &signature, input.signing_input) {
+        Ok(())
+      } else {
+        Err(SignatureVerificationErrorKind::InvalidSignature.into())
+      }
     }
   }
-}
 
-#[cfg(any(feature = "eddsa", doc))]
-impl Default for EdDSAJwsSignatureVerifier {
-  /// Constructs a [`EdDSAJwsSignatureVerifier`]. This is the only way to obtain an [`EdDSAJwsSignatureVerifier`] and is
-  /// only available when the `eddsa` feature is set.
-  fn default() -> Self {
-    Self
+  impl Default for EdDSAJwsSignatureVerifier {
+    /// Constructs a [`EdDSAJwsSignatureVerifier`]. This is the only way to obtain an [`EdDSAJwsSignatureVerifier`] and
+    /// is only available when the `eddsa` feature is set.
+    fn default() -> Self {
+      Self
+    }
   }
-}
 
-impl JwsSignatureVerifier for EdDSAJwsSignatureVerifier {
-  /// This implements verification of jws signatures signed with the `EdDSA` algorithm. For now
-  /// [`EdDSAJwsSignatureVerifier::verify`](EdDSAJwsSignatureVerifier::verify) can only handle the `alg = EdDSA` with
-  /// `crv = Ed25519`, but the implementation may also support `crv = Ed448` in the future.
-  #[cfg(feature = "eddsa")]
-  fn verify(
-    &self,
-    input: VerificationInput<'_>,
-    public_key: &Jwk,
-  ) -> std::result::Result<(), SignatureVerificationError> {
-    match input.alg {
-      // EdDSA is the only supported algorithm for now, we can consider supporting more by default in the future.
-      JwsAlgorithm::EdDSA => EdDSAJwsSignatureVerifier::verify_eddsa(input, public_key),
-      _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
+  impl JwsSignatureVerifier for EdDSAJwsSignatureVerifier {
+    /// This implements verification of jws signatures signed with the `EdDSA` algorithm. For now
+    /// [`EdDSAJwsSignatureVerifier::verify`](EdDSAJwsSignatureVerifier::verify) can only handle the `alg = EdDSA` with
+    /// `crv = Ed25519`, but the implementation may also support `crv = Ed448` in the future.
+    fn verify(
+      &self,
+      input: VerificationInput<'_>,
+      public_key: &Jwk,
+    ) -> std::result::Result<(), SignatureVerificationError> {
+      match input.alg {
+        // EdDSA is the only supported algorithm for now, we can consider supporting more by default in the future.
+        JwsAlgorithm::EdDSA => EdDSAJwsSignatureVerifier::verify_eddsa(input, public_key),
+        _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
+      }
     }
   }
 }
