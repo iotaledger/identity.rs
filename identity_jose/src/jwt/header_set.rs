@@ -97,7 +97,6 @@ impl<'a, T> JwtHeaderSet<'a, T> {
     self.unprotected
   }
 
-  // TODO: When is this used?
   pub fn header(mut self, value: impl Into<Option<&'a T>>) -> Self {
     self.header = value.into();
     self
