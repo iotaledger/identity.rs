@@ -49,7 +49,7 @@ impl DecodedHeaders {
       }),
       (Some(protected), None) => Ok(Self::Protected(protected)),
       (None, Some(unprotected)) => Ok(Self::Unprotected(unprotected)),
-      (None, None) => Err(Error::MissingHeader),
+      (None, None) => Err(Error::MissingHeader("no headers were decoded")),
     }
   }
 
@@ -124,14 +124,26 @@ impl<'a> JwsValidationItem<'a> {
   where
     T: JwsSignatureVerifier,
   {
-    // Extract and validate alg from the protected header. Note this also implies existence of a decoded protected
-    // header.
-    let alg = self.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
+    // Destructure data
+    let JwsValidationItem {
+      headers,
+      claims,
+      signing_input,
+      decoded_signature,
+    } = self;
+    let (protected, unprotected): (JwsHeader, Option<Box<JwsHeader>>) = match headers {
+      DecodedHeaders::Protected(protected) => (protected, None),
+      DecodedHeaders::Both { protected, unprotected } => (protected, Some(unprotected)),
+      DecodedHeaders::Unprotected(_) => return Err(Error::MissingHeader("missing protected header")),
+    };
+    // Extract and validate alg from the protected header.
+    let alg = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
     public_key.check_alg(alg.name())?;
+
     // Construct verification input
     let input: VerificationInput = {
-      let signing_input = self.signing_input();
-      let decoded_signature = self.decoded_signature();
+      let signing_input = &signing_input;
+      let decoded_signature = &decoded_signature;
       VerificationInput {
         alg,
         signing_input,
@@ -143,21 +155,11 @@ impl<'a> JwsValidationItem<'a> {
       .verify(input, public_key)
       .map_err(Error::SignatureVerificationError)?;
 
-    // Construct token
-    let token: Token = {
-      let JwsValidationItem { headers, claims, .. } = self;
-      let (protected, unprotected): (JwsHeader, Option<Box<JwsHeader>>) = match headers {
-        DecodedHeaders::Protected(protected) => (protected, None),
-        DecodedHeaders::Both { protected, unprotected } => (protected, Some(unprotected)),
-        DecodedHeaders::Unprotected(_) => unreachable!("already checked the existence of protected header"),
-      };
-      Token {
-        protected,
-        unprotected,
-        claims,
-      }
-    };
-    Ok(token)
+    Ok(Token {
+      protected,
+      unprotected,
+      claims,
+    })
   }
 }
 

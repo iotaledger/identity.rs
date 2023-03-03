@@ -36,7 +36,7 @@ pub enum Error {
   #[error("signature verification error")]
   SignatureVerificationError(#[source] crate::jws::SignatureVerificationError),
   #[error("missing header")]
-  MissingHeader,
+  MissingHeader(&'static str),
   #[error("missing alg in protected header")]
   ProtectedHeaderWithoutAlg,
 }
