@@ -89,13 +89,13 @@ pub struct DefaultJwsSignatureVerifier {
 }
 
 impl DefaultJwsSignatureVerifier {
-  /// Verify a JWS signature secured with the [`JwsAlgorithm::EdDSA`] algorithm.
+  /// Verify a JWS signature secured with the [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
   /// Only the [`EdCurve::Ed25519`] variant is supported for now. This associated method is only available when the
   /// `eddsa` feature is enabled.
   ///
-  /// This function is useful when one is building a [`jwsSignatureVerifier`] that handles the
-  /// [`JwsAlgoritm::EdDSA`] in the same manner as the [`DefaultJwsSignatureVerifier`] hence extending its
-  /// capabilities.
+  /// This function is useful when one is building a [`JwsSignatureVerifier`] that handles the
+  /// [`JwsAlgoritm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`DefaultJwsSignatureVerifier`]
+  /// hence extending its capabilities.
   #[cfg(any(feature = "eddsa", doc))]
   pub fn verify_eddsa_jws_prechecked_alg(
     input: VerificationInput<'_>,

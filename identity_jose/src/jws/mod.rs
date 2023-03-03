@@ -8,18 +8,18 @@
 //! and then decode a JWS.
 mod algorithm;
 mod charset;
+mod custom_verification;
 mod decoder;
 mod encoder;
 mod format;
 mod header;
 mod recipient;
-mod custom_verification;
 
 pub use self::algorithm::*;
 pub use self::charset::*;
+pub use self::custom_verification::*;
 pub use self::decoder::*;
 pub use self::encoder::*;
 pub use self::format::*;
 pub use self::header::*;
 pub use self::recipient::*;
-pub use self::custom_verification::*;

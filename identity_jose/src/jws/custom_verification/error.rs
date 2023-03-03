@@ -50,7 +50,7 @@ pub enum SignatureVerificationErrorKind {
   /// the `alg` extracted from the JOSE header.
   UnsupportedAlg,
   /// Indicates that the [`JwsSignatureVerifier`](super::JwsSignatureVerifier) implementation does not support the
-  /// `kty` of the provided [`Jwk`].
+  /// `kty` of the provided [`Jwk`](crate::jwk::Jwk).
   UnsupportedKeyType,
   /// Indicates that the [`JwsSignatureVerifier`](super::JwsSignatureVerifier) implementation does not support the
   /// public key parameters extracted from the provided [`Jwk`](crate::jwk::Jwk).
