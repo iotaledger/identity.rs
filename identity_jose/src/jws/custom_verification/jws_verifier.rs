@@ -42,9 +42,9 @@ pub struct VerificationInput<'a> {
 /// using the [`From`] trait.
 ///
 /// ## Default implementation
-/// When the `default-jws-signature-verifier` feature is enabled one can construct a default implementor
+/// When the `eddsa` feature is enabled one can construct an implementor
 /// provided by the IOTA Identity library. See
-/// [`DefaultJwsSignatureVerifier::verify`](DefaultJwsSignatureVerifier::verify).
+/// [`EdDSAJwsSignatureVerifier::verify`](EdDSAJwsSignatureVerifier::verify).
 pub trait JwsSignatureVerifier {
   /// Validate the `decoded_signature` against the `signing_input` in the manner defined by `alg` using the
   /// `public_key`.
@@ -81,26 +81,30 @@ where
   }
 }
 
-/// The default implementor of [`JwsSignatureVerifier`] provided by the IOTA Identity library.
+#[cfg(any(feature = "eddsa", doc))]
+/// An implementor of [`JwsSignatureVerifier`] that can handle the
+/// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
 ///
-/// NOTE: This type can only be constructed when the `default-jws-signature-verifier` feature is enabled.
-pub struct DefaultJwsSignatureVerifier {
-  _internal: (),
-}
+/// See [`Self::verify`](EdDSAJwsSignatureVerifier::verify).
+///
+/// NOTE: This type can only be constructed when the `eddsa` feature is enabled.
+#[non_exhaustive]
+pub struct EdDSAJwsSignatureVerifier;
 
-impl DefaultJwsSignatureVerifier {
+impl EdDSAJwsSignatureVerifier {
   /// Verify a JWS signature secured with the [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
   /// Only the [`EdCurve::Ed25519`] variant is supported for now. This associated method is only available when the
   /// `eddsa` feature is enabled.
   ///
   /// This function is useful when one is building a [`JwsSignatureVerifier`] that handles the
-  /// [`JwsAlgoritm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`DefaultJwsSignatureVerifier`]
+  /// [`JwsAlgoritm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`EdDSAJwsSignatureVerifier`]
   /// hence extending its capabilities.
+  ///
+  /// # Warning
+  /// This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+  /// prior to calling the function.
   #[cfg(any(feature = "eddsa", doc))]
-  pub fn verify_eddsa_jws_prechecked_alg(
-    input: VerificationInput<'_>,
-    public_key: &Jwk,
-  ) -> Result<(), SignatureVerificationError> {
+  pub fn verify_eddsa(input: VerificationInput<'_>, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
     // Obtain an Ed25519 public key
 
     let params: &JwkParamsOkp = public_key
@@ -136,19 +140,20 @@ impl DefaultJwsSignatureVerifier {
   }
 }
 
-#[cfg(any(feature = "default-jws-signature-verifier", doc))]
-impl Default for DefaultJwsSignatureVerifier {
-  /// Constructs a [`DefaultJwsSignatureVerifier`]. This is the only way to obtain a `DefaultJwsVerifier` and is only
-  /// available when the `default-jws-signature-verifier` feature is set.
+#[cfg(any(feature = "eddsa", doc))]
+impl Default for EdDSAJwsSignatureVerifier {
+  /// Constructs a [`EdDSAJwsSignatureVerifier`]. This is the only way to obtain an [`EdDSAJwsSignatureVerifier`] and is
+  /// only available when the `eddsa` feature is set.
   fn default() -> Self {
-    Self { _internal: () }
+    Self
   }
 }
 
-impl JwsSignatureVerifier for DefaultJwsSignatureVerifier {
-  /// Default implementer of [`JwsSignatureVerifier`]. For now `DefaultJwsVerifier::verify` can only handle the `alg =
-  /// EdDSA` with `crv = Ed25519`, but the implementation may support more algorithms in the future.
-  #[cfg(feature = "default-jws-signature-verifier")]
+impl JwsSignatureVerifier for EdDSAJwsSignatureVerifier {
+  /// This implements verification of jws signatures signed with the `EdDSA` algorithm. For now
+  /// [`EdDSAJwsSignatureVerifier::verify`](EdDSAJwsSignatureVerifier::verify) can only handle the `alg = EdDSA` with
+  /// `crv = Ed25519`, but the implementation may also support `crv = Ed448` in the future.
+  #[cfg(feature = "eddsa")]
   fn verify(
     &self,
     input: VerificationInput<'_>,
@@ -156,21 +161,8 @@ impl JwsSignatureVerifier for DefaultJwsSignatureVerifier {
   ) -> std::result::Result<(), SignatureVerificationError> {
     match input.alg {
       // EdDSA is the only supported algorithm for now, we can consider supporting more by default in the future.
-      JwsAlgorithm::EdDSA => DefaultJwsSignatureVerifier::verify_eddsa_jws_prechecked_alg(input, public_key),
+      JwsAlgorithm::EdDSA => EdDSAJwsSignatureVerifier::verify_eddsa(input, public_key),
       _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
     }
-  }
-
-  // This method can never be called because it is impossible to construct the `DefaultJwsVerifier` without enabling
-  // the `default-jws-signature-verifier` feature. It is still implemented in case we need to parameterize a struct with
-  // DefaultJwsSignatureVerifier as a default also in the case where the `default-jws-signature-verifier` feature is
-  // disabled.
-  #[cfg(not(feature = "default-jws-signature-verifier"))]
-  fn verify(
-    &self,
-    _input: VerificationInput<'_>,
-    _public_key: &Jwk,
-  ) -> std::result::Result<(), SignatureVerificationError> {
-    panic!("it should not be possible to construct a DefaultJwsVerifier without the 'default-jws-signature-verifier' feature. We encourage you to report this bug at: https://github.com/iotaledger/identity.rs/issues");
   }
 }

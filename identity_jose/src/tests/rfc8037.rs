@@ -5,8 +5,8 @@ use crypto::signatures::ed25519::SecretKey;
 
 use crate::jwk::Jwk;
 use crate::jws::Decoder;
-#[cfg(feature = "default-jws-signature-verifier")]
-use crate::jws::DefaultJwsSignatureVerifier;
+#[cfg(feature = "eddsa")]
+use crate::jws::EdDSAJwsSignatureVerifier;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
@@ -55,12 +55,12 @@ async fn test_rfc8037_ed25519() {
       .and_then(|decoded| decoded.verify(&jws_verifier, &public))
       .unwrap();
 
-    #[cfg(feature = "default-jws-signature-verifier")]
+    #[cfg(feature = "eddsa")]
     {
       let decoder = Decoder::default();
       let token_with_default = decoder
         .decode_compact_serialization(encoded.as_bytes(), None)
-        .and_then(|decoded| decoded.verify(&DefaultJwsSignatureVerifier::default(), &public))
+        .and_then(|decoded| decoded.verify(&EdDSAJwsSignatureVerifier::default(), &public))
         .unwrap();
       assert_eq!(token, token_with_default);
     }

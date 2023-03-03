@@ -22,11 +22,9 @@ url = { version = "2.3.1", default-features = false, features = ["serde"] }
 zeroize = { version = "1.5.7", default-features = false, features = ["std", "zeroize_derive"] }
 
 [features]
-# Enables static method `verify_eddsa_jws_prechecked_alg`
+# Enables jws verification based on the EdDSA algorithm.
 eddsa = ["iota-crypto/ed25519"]
-# Enables construction of the default JWS `Decoder`.
-default-jws-signature-verifier = ["eddsa"]
-default = ["default-jws-signature-verifier"]
+default = ["eddsa"]
 
 [dev-dependencies]
 anyhow = "1"
