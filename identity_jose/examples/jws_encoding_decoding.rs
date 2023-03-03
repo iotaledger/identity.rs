@@ -74,7 +74,7 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
   public_key_jwk.set_kid(kid);
   public_key_jwk
     .set_params(JwkParamsOkp {
-      crv: "Ed25519".into(),
+      crv: EdCurve::Ed25519.name().to_owned(),
       x: identity_jose::jwu::encode_b64(public_key.as_slice()),
       d: None,
     })
