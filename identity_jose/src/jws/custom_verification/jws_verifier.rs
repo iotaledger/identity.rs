@@ -61,7 +61,7 @@ pub trait JwsSignatureVerifier {
 /// Simple wrapper around a closure capable of verifying a JWS signature. This wrapper implements
 /// [`JwsSignatureVerifier`].
 ///
-/// Note: One can convert a closure to this wrapper using the [`From`].
+/// Note: One can convert a closure to this wrapper using the [`From`] trait.
 pub struct JwsSignatureVerifierFn<F>(F);
 impl<F> From<F> for JwsSignatureVerifierFn<F>
 where
