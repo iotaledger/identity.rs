@@ -209,7 +209,7 @@ impl Decoder {
     self
   }
 
-  /// Decode a JWS encoded with the [JWS compact serialization](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
+  /// Decode a JWS encoded with the [JWS compact serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
   ///
   ///
   /// ### Working with detached payloads
