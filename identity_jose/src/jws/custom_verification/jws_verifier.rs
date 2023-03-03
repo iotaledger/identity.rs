@@ -7,10 +7,10 @@ use crate::jwk::Jwk;
 use crate::jwk::EdCurve;
 #[cfg(feature = "eddsa")]
 use crate::jwk::JwkParamsOkp;
-#[cfg(feature = "default-jws-signature-verifier")]
 use crate::jws::JwsAlgorithm;
 
 use super::SignatureVerificationError;
+#[cfg(feature = "eddsa")]
 use super::SignatureVerificationErrorKind;
 
 /// Input a [`JwsSignatureVerifier`] verifies.
