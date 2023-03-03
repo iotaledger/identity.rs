@@ -400,7 +400,7 @@ mod tests {
     let decoder = Decoder::new();
 
     let mut signature_iter = decoder
-      .decode_general_serialization(&general_jws_json_serialized.as_bytes(), None)
+      .decode_general_serialization(general_jws_json_serialized.as_bytes(), None)
       .unwrap()
       .filter_map(|decoded| decoded.ok());
     // Check assertions for the first signature:
