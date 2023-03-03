@@ -15,8 +15,8 @@ on:
     paths:
       - '.github/workflows/build-and-test.yml'
       - '.github/actions/**'
-      - '**.rs'
-      - '**.toml'
+      - '**/*.rs'
+      - '**/*.toml'
       - 'bindings/**'
       - '!bindings/**.md'
 
