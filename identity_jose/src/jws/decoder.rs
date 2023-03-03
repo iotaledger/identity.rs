@@ -242,7 +242,7 @@ impl Decoder {
     self.decode_signature(payload, signature)
   }
 
-  /// Decode a JWS encoded with the [flattened JWS JSON serialization](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.2)
+  /// Decode a JWS encoded with the [flattened JWS JSON serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.2)
   ///
   ///
   /// ### Working with detached payloads
