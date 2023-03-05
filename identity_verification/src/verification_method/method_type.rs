@@ -21,6 +21,10 @@ impl MethodType {
   pub const ED25519_VERIFICATION_KEY_2018: Self = Self(Cow::Borrowed(ED25519_VERIFICATION_KEY_2018_STR));
   // The `X25519KeyAgreementKey2019` method type.
   pub const X25519_KEY_AGREEMENT_KEY_2019: Self = Self(Cow::Borrowed(X25519_KEY_AGREEMENT_KEY_2019_STR));
+  /// A verification method for use with JWT verification as prescribed by the [`Jwk`](::identity_jose::jwk::Jwk)
+  /// in the [`publicKeyJwk`](crate::MethodData::PublicKeyJwk) entry.
+  // TODO: Update this if/when the VC-JWT or Data Integrity spec defines a recommendation for use with `VC-JWT`.
+  pub const JWK: Self = Self(Cow::Borrowed("JWK"));
 }
 
 impl MethodType {
