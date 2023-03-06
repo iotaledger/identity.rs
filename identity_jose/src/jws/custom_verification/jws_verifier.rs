@@ -95,7 +95,7 @@ mod eddsa_verifier {
     /// `eddsa` feature is enabled.
     ///
     /// This function is useful when one is building a [`JwsSignatureVerifier`] that handles the
-    /// [`JwsAlgoritm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`EdDSAJwsSignatureVerifier`]
+    /// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`EdDSAJwsSignatureVerifier`]
     /// hence extending its capabilities.
     ///
     /// # Warning
