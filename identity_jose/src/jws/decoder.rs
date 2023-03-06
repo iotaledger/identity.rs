@@ -85,7 +85,7 @@ impl<'a> JwsValidationItem<'a> {
     self.headers.protected_header()
   }
 
-  /// Returns the decoded unproteced header if it exists.
+  /// Returns the decoded unprotected header if it exists.
   pub fn unprotected_header(&self) -> Option<&JwsHeader> {
     self.headers.unprotected_header()
   }
