@@ -108,7 +108,7 @@ impl FromStr for JwsAlgorithm {
       "ES256K" => Ok(Self::ES256K),
       "none" => Ok(Self::NONE),
       "EdDSA" => Ok(Self::EdDSA),
-      _ => Err(Error::UnsupportedAlgorithm),
+      _ => Err(Error::JwsAlgorithmParsingError),
     }
   }
 }
