@@ -32,7 +32,8 @@
     "rollup-plugin-dts": "^4.1.0",
     "ts-mocha": "^9.0.2",
     "ts-node": "^10.5.0",
-    "txm": "^8.0.1"
+    "txm": "^8.0.1",
+    "typescript": "^4.9.5"
   },
   "engines": {
     "node": ">= 16"
@@ -46,7 +47,7 @@
     "prepublishOnly": "napi prepublish -t npm --skip-gh-release",
     "create-npm-dir": "napi create-npm-dir --target ./ ",
     "test": "npm run test:readme && npm run test:examples",
-    "test:examples": "ts-mocha ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
+    "test:examples": "ts-mocha ./examples/src/tests/*.ts --retries 3 --timeout 180000 --exit",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit"
   },
   "peerDependencies": {
