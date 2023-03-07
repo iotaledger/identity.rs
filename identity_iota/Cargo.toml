@@ -28,6 +28,7 @@ tokio = { version = "1.17.0", features = ["full"] }
 
 [features]
 default = ["revocation-bitmap", "client", "iota-client", "resolver"]
+diff = ["identity_core/diff", "identity_did/diff", "identity_verification/diff"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]

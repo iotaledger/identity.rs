@@ -16,10 +16,6 @@ use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 use time::UtcOffset;
 
-use identity_diff::Diff;
-use identity_diff::DiffString;
-
-use crate::diff;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -179,26 +175,35 @@ fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTi
   offset_date_time - time::Duration::nanoseconds(offset_date_time.nanosecond() as i64)
 }
 
-impl Diff for Timestamp {
-  type Type = DiffString;
+#[cfg(feature = "diff")]
+mod diff {
+  use super::*;
+  use identity_diff::Diff;
+  use identity_diff::DiffString;
 
-  fn diff(&self, other: &Self) -> diff::Result<Self::Type> {
-    self.to_string().diff(&other.to_string())
-  }
+  use crate::diff;
 
-  fn merge(&self, diff: Self::Type) -> diff::Result<Self> {
-    self
-      .to_string()
-      .merge(diff)
-      .and_then(|this| Self::parse(&this).map_err(diff::Error::merge))
-  }
+  impl Diff for Timestamp {
+    type Type = DiffString;
 
-  fn from_diff(diff: Self::Type) -> diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(diff::Error::convert))
-  }
+    fn diff(&self, other: &Self) -> diff::Result<Self::Type> {
+      self.to_string().diff(&other.to_string())
+    }
 
-  fn into_diff(self) -> diff::Result<Self::Type> {
-    self.to_string().into_diff()
+    fn merge(&self, diff: Self::Type) -> diff::Result<Self> {
+      self
+        .to_string()
+        .merge(diff)
+        .and_then(|this| Self::parse(&this).map_err(diff::Error::merge))
+    }
+
+    fn from_diff(diff: Self::Type) -> diff::Result<Self> {
+      String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(diff::Error::convert))
+    }
+
+    fn into_diff(self) -> diff::Result<Self::Type> {
+      self.to_string().into_diff()
+    }
   }
 }
 
@@ -241,14 +246,10 @@ impl Duration {
 
 #[cfg(test)]
 mod tests {
-  use proptest::proptest;
-
-  use identity_diff::Diff;
-  use identity_diff::DiffString;
-
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
+  use proptest::proptest;
 
   use super::Duration;
 
@@ -395,8 +396,11 @@ mod tests {
     assert_eq!(time1, time2);
   }
 
+  #[cfg(feature = "diff")]
   #[test]
   fn test_timestamp_diff() {
+    use identity_diff::Diff;
+    use identity_diff::DiffString;
     let time1: Timestamp = Timestamp::parse("2021-01-01T12:00:01Z").unwrap();
     let time2: Timestamp = Timestamp::parse("2022-01-02T12:00:02Z").unwrap();
 

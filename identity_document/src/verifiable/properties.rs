@@ -9,7 +9,6 @@ use identity_core::crypto::GetSignature;
 use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::diff::Diff;
 
 use identity_verification::MethodUriType;
 use identity_verification::TryMethod;
@@ -42,34 +41,39 @@ impl<T> VerifiableProperties<T> {
   }
 }
 
-/// NOTE: excludes the `proof` Signature from the diff to save space on the Tangle and because
-/// a merged signature will be invalid in general.
-impl<T> Diff for VerifiableProperties<T>
-where
-  T: Diff,
-{
-  type Type = <T as Diff>::Type;
+#[cfg(feature = "diff")]
+mod diff {
+  use super::*;
+  use identity_core::diff::Diff;
+  /// NOTE: excludes the `proof` Signature from the diff to save space on the Tangle and because
+  /// a merged signature will be invalid in general.
+  impl<T> Diff for VerifiableProperties<T>
+  where
+    T: Diff,
+  {
+    type Type = <T as Diff>::Type;
 
-  fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
-    self.properties.diff(&other.properties)
-  }
+    fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
+      self.properties.diff(&other.properties)
+    }
 
-  fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
-    let mut this: VerifiableProperties<T> = self.clone();
-    this.properties = this.properties.merge(diff)?;
-    Ok(this)
-  }
+    fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
+      let mut this: VerifiableProperties<T> = self.clone();
+      this.properties = this.properties.merge(diff)?;
+      Ok(this)
+    }
 
-  fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
-    let properties: T = T::from_diff(diff)?;
-    Ok(VerifiableProperties {
-      properties,
-      proof: None, // proof intentionally excluded
-    })
-  }
+    fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
+      let properties: T = T::from_diff(diff)?;
+      Ok(VerifiableProperties {
+        properties,
+        proof: None, // proof intentionally excluded
+      })
+    }
 
-  fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
-    self.properties.into_diff()
+    fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
+      self.properties.into_diff()
+    }
   }
 }
 
