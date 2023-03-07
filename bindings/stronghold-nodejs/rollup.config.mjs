@@ -10,7 +10,7 @@ export default [{
         dir: 'dist',
         format: 'cjs'
     },
-    external: ['napi-dist/*.node', '@iota/identity-wasm/node', 'fs', 'path'], // so it's not included
+    external: ['@iota/identity-wasm/node', 'fs', 'path'], // so it's not included
     plugins: [
         typescript(),
         commonjs({
@@ -21,7 +21,7 @@ export default [{
         }),
         copy({
             targets: [
-                { src: '*.node', dest: 'dist' }
+                { src: 'napi-dist/*.node', dest: 'dist' }
             ]
         })
     ],
