@@ -3,11 +3,12 @@
 
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOct;
-use crate::jws::Decoder;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::Token;
+use crate::jws::SignatureVerificationError;
+use crate::jws::SignatureVerificationErrorKind;
+use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 use crypto::hashes::sha::SHA256_LEN;
@@ -29,7 +30,9 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
     let sk = shared_secret.clone();
     async move {
-      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(&protected).unprotected(&unprotected);
+      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
+        .with_protected(&protected)
+        .with_unprotected(&unprotected);
       if header_set.try_alg().map_err(|_| "missing `alg` parameter".to_owned())? != JwsAlgorithm::HS256 {
         return Err("incompatible `alg` parameter".to_owned());
       }
@@ -42,25 +45,15 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
+pub(crate) fn verify(verification_input: VerificationInput<'_>, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
-  let verify_fn = move |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
-    let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(protected).unprotected(unprotected);
-    let alg: JwsAlgorithm = header_set.try_alg().map_err(|_| "missing `alg` parameter")?;
-    if alg != JwsAlgorithm::HS256 {
-      return Err("incompatible `alg` parameter");
-    }
+  let mut mac: [u8; SHA256_LEN] = Default::default();
+  crypto::macs::hmac::HMAC_SHA256(verification_input.signing_input, &shared_secret, &mut mac);
 
-    let mut mac: [u8; SHA256_LEN] = Default::default();
-    crypto::macs::hmac::HMAC_SHA256(msg, &shared_secret, &mut mac);
-
-    if sig == mac {
-      Ok(())
-    } else {
-      Err("invalid signature")
-    }
-  };
-
-  decoder.decode(&verify_fn, encoded).unwrap()
+  if verification_input.decoded_signature == mac {
+    Ok(())
+  } else {
+    Err(SignatureVerificationErrorKind::InvalidSignature.into())
+  }
 }

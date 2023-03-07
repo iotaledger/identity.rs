@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.7.0-alpha.6](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.6) (2023-03-03)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.5...v0.7.0-alpha.6)
+
+### Added 
+- Implement `JwkStorage` [#1116](https://github.com/iotaledger/identity.rs/pull/1133)
+- Add Wasm Bindings for Domain Linkage [#1115](https://github.com/iotaledger/identity.rs/pull/1115)
+- Introduce `IToCoreDocument` and document locks in the bindings [#1120](https://github.com/iotaledger/identity.rs/pull/1120)
+
+### Patch
+
+- Pin `form_urlencoded` to `1.1.0` [#1136](https://github.com/iotaledger/identity.rs/pull/1136)
+
 ## [v0.7.0-alpha.5](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.5) (2023-02-15)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.4...v0.7.0-alpha.5)

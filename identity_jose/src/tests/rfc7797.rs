@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::jwk::Jwk;
+use crate::jws::Decoder;
+use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::{self};
+use crate::jws::JwsSignatureVerifierFn;
+use crate::jws::VerificationInput;
 use crate::tests::hs256;
 
 #[test]
@@ -22,16 +25,20 @@ fn test_rfc7797() {
     let header: JwsHeader = serde_json::from_slice(tv.header).unwrap();
     let jwk: Jwk = serde_json::from_str(tv.public_key).unwrap();
 
-    let mut decoder = jws::Decoder::new();
+    let verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
+      if input.alg != JwsAlgorithm::HS256 {
+        panic!("unsupported algorithm");
+      }
+      hs256::verify(input, key)
+    });
+    let decoder = Decoder::new().critical("b64");
 
-    if tv.detach {
-      decoder = decoder.payload(tv.payload);
-    }
-    let decoder = decoder.critical("b64");
+    let token = decoder
+      .decode_compact_serialization(tv.encoded, tv.detach.then_some(tv.payload))
+      .and_then(|decoded| decoded.verify(&verifier, &jwk))
+      .unwrap();
 
-    let decoded: _ = hs256::decode(&decoder, tv.encoded, &jwk);
-
-    assert_eq!(decoded.protected.unwrap(), header);
-    assert_eq!(decoded.claims, tv.payload);
+    assert_eq!(token.protected, header);
+    assert_eq!(token.claims, tv.payload);
   }
 }

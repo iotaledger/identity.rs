@@ -1,15 +1,18 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
 
 use crate::jwk::Jwk;
 use crate::jws::Decoder;
+#[cfg(feature = "eddsa")]
+use crate::jws::EdDSAJwsSignatureVerifier;
 use crate::jws::Encoder;
+use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
+use crate::jws::JwsSignatureVerifierFn;
 use crate::jws::Recipient;
-use crate::jws::{self};
+use crate::jws::VerificationInput;
 use crate::tests::ed25519;
 
 #[tokio::test]
@@ -36,15 +39,32 @@ async fn test_rfc8037_ed25519() {
     let encoder: Encoder = Encoder::new().recipient(Recipient::new().protected(&header));
 
     let secret_key: SecretKey = ed25519::expand_secret_jwk(&secret);
-    let public_key: PublicKey = ed25519::expand_public_jwk(&public);
     let encoded: String = ed25519::encode(&encoder, tv.payload.as_bytes(), secret_key).await;
 
     assert_eq!(encoded, tv.encoded);
 
-    let decoder: Decoder = Decoder::new();
-    let decoded: jws::Token = ed25519::decode(&decoder, encoded.as_bytes(), public_key);
+    let jws_verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
+      if input.alg != JwsAlgorithm::EdDSA {
+        panic!("invalid algorithm");
+      }
+      ed25519::verify(input, key)
+    });
+    let decoder = Decoder::new();
+    let token = decoder
+      .decode_compact_serialization(encoded.as_bytes(), None)
+      .and_then(|decoded| decoded.verify(&jws_verifier, &public))
+      .unwrap();
 
-    assert_eq!(decoded.protected.unwrap(), header);
-    assert_eq!(decoded.claims, tv.payload.as_bytes());
+    #[cfg(feature = "eddsa")]
+    {
+      let decoder = Decoder::default();
+      let token_with_default = decoder
+        .decode_compact_serialization(encoded.as_bytes(), None)
+        .and_then(|decoded| decoded.verify(&EdDSAJwsSignatureVerifier::default(), &public))
+        .unwrap();
+      assert_eq!(token, token_with_default);
+    }
+    assert_eq!(token.protected, header);
+    assert_eq!(token.claims, tv.payload.as_bytes());
   }
 }

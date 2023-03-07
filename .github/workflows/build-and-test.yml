@@ -8,8 +8,8 @@ on:
     types: [ opened, synchronize, reopened, ready_for_review ]
     branches:
       - main
-      - epic/*
-      - support/*
+      - 'epic/**'
+      - 'support/**'
     paths:
       - '.github/workflows/build-and-test.yml'
       - '.github/actions/**'

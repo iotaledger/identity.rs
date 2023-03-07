@@ -5,7 +5,9 @@ use crate::jwk::Jwk;
 use crate::jws;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
+use crate::jws::JwsSignatureVerifierFn;
 use crate::jws::Recipient;
+use crate::jws::VerificationInput;
 use crate::tests::es256;
 use crate::tests::hs256;
 
@@ -37,14 +39,19 @@ async fn test_rfc7515() {
       assert_eq!(encoded.as_bytes(), tv.encoded);
     }
 
-    let decoder: jws::Decoder = jws::Decoder::new();
-    let decoded: _ = match header.alg().unwrap() {
-      JwsAlgorithm::HS256 => hs256::decode(&decoder, tv.encoded, &jwk),
-      JwsAlgorithm::ES256 => es256::decode(&decoder, tv.encoded, &jwk),
+    let jws_signature_verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
+      JwsAlgorithm::HS256 => hs256::verify(input, key),
+      JwsAlgorithm::ES256 => es256::verify(input, key),
       other => unimplemented!("{other}"),
-    };
+    });
 
-    assert_eq!(decoded.protected.unwrap(), header);
-    assert_eq!(decoded.claims, tv.claims);
+    let decoder = jws::Decoder::new();
+    let token = decoder
+      .decode_compact_serialization(tv.encoded, None)
+      .and_then(|decoded| decoded.verify(&jws_signature_verifier, &jwk))
+      .unwrap();
+
+    assert_eq!(token.protected, header);
+    assert_eq!(token.claims, tv.claims);
   }
 }

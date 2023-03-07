@@ -1,6 +1,6 @@
 [package]
 name = "identity_jose"
-version = "0.7.0-alpha.5"
+version = "0.7.0-alpha.6"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -21,9 +21,18 @@ thiserror.workspace = true
 url = { version = "2.3.1", default-features = false, features = ["serde"] }
 zeroize = { version = "1.5.7", default-features = false, features = ["std", "zeroize_derive"] }
 
+[features]
+# Enables jws verification based on the EdDSA algorithm.
+eddsa = ["iota-crypto/ed25519"]
+default = ["eddsa"]
+
 [dev-dependencies]
 anyhow = "1"
 iota-crypto = { version = "0.15.3", features = ["ed25519", "random", "hmac"] }
 p256 = { version = "0.12.0", default-features = false, features = ["std", "ecdsa", "ecdsa-core"] }
 signature = { version = "2", default-features = false }
 tokio = { version = "1.24.2", features = ["macros", "rt"] }
+
+[[example]]
+name = "jws_encoding_decoding"
+test = true

@@ -7,8 +7,8 @@ on:
   pull_request:
     branches:
       - main
-      - epic/*
-      - support/*
+      - 'epic/**'
+      - 'support/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
