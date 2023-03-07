@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "paths": {
+      "../../node": ["../../../../../../wasm/node"],
+      "../../dist": ["../../../../../dist"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build"]
+}

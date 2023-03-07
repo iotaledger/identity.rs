@@ -12,3 +12,5 @@ npm/
 # compiled files from napi and ts
 napi-dist/
 dist/
+
+!examples/build/rollup-plugin-dts/dist/
