@@ -1,9 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::key_id_storage::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::key_id_storage_error::KeyIdStorageError;
 use crate::key_id_storage::key_id_storage_error::KeyIdStorageErrorKind;
-use crate::key_id_storage::storage::KeyIdStorage;
 use crate::key_storage::shared::Shared;
 use crate::key_storage::KeyId;
 use async_trait::async_trait;
@@ -11,8 +11,8 @@ use std::collections::HashMap;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
+use super::key_id_storage::KeyIdStorageResult;
 use super::method_digest::MethodDigest;
-use super::storage::KeyIdStorageResult;
 
 type KeyIdStore = HashMap<MethodDigest, KeyId>;
 
@@ -42,11 +42,13 @@ impl Default for KeyIdMemstore {
 impl KeyIdStorage for KeyIdMemstore {
   async fn insert_key_id(&self, key: MethodDigest, value: KeyId) -> KeyIdStorageResult<()> {
     let mut key_id_store: RwLockWriteGuard<'_, KeyIdStore> = self.key_id_store.write().await;
+    if key_id_store.contains_key(&key) {
+      return Err(KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdAlreadyExists));
+    }
     key_id_store.insert(key, value);
     Ok(())
   }
 
-  /// Obtain the `KeyId` associated with the given `key`.
   async fn get_key_id(&self, key: &MethodDigest) -> KeyIdStorageResult<KeyId> {
     let key_id_store: RwLockReadGuard<'_, KeyIdStore> = self.key_id_store.read().await;
     Ok(
@@ -57,8 +59,6 @@ impl KeyIdStorage for KeyIdMemstore {
     )
   }
 
-  /// Delete the [`KeyId`] associated with the given [`MethodDigest`] from the [`KeyIdStorage`].
-  /// Errors if `key` is not found in storage.
   async fn delete_key_id(&self, key: &MethodDigest) -> KeyIdStorageResult<()> {
     let mut key_id_store: RwLockWriteGuard<'_, KeyIdStore> = self.key_id_store.write().await;
     key_id_store
@@ -70,9 +70,9 @@ impl KeyIdStorage for KeyIdMemstore {
 
 #[cfg(test)]
 mod tests {
+  use crate::key_id_storage::key_id_storage::KeyIdStorage;
   use crate::key_id_storage::memstore::KeyIdMemstore;
   use crate::key_id_storage::method_digest::MethodDigest;
-  use crate::key_id_storage::storage::KeyIdStorage;
   use crate::key_id_storage::KeyIdStorageError;
   use crate::key_id_storage::KeyIdStorageErrorKind;
   use crate::key_storage::KeyId;
@@ -99,6 +99,11 @@ mod tests {
       .insert_key_id(method_digest.clone(), key_id_1.clone())
       .await
       .expect("inserting into memstore failed");
+
+    // Double insertion.
+    let insertion_result = memstore.insert_key_id(method_digest.clone(), key_id_1.clone()).await;
+    let _expected_error: KeyIdStorageError = KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdAlreadyExists);
+    assert!(matches!(insertion_result.unwrap_err(), _expected_error));
 
     // Test retrieving.
     let key_id: KeyId = memstore.get_key_id(&method_digest).await.unwrap();

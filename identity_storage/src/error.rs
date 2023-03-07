@@ -15,6 +15,7 @@ pub struct StorageError<T: StorageErrorKind> {
   repr: Repr<T>,
 }
 
+/// Error types that can happen during storage operations.
 pub trait StorageErrorKind: Display + Debug {
   fn description(&self) -> &str;
 }

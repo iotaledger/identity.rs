@@ -6,6 +6,7 @@ use std::fmt::Display;
 use crate::error::StorageError;
 use crate::error::StorageErrorKind;
 
+/// Error type for key storage operations.
 pub type KeyStorageError = StorageError<KeyStorageErrorKind>;
 
 /// The cause of the failed key storage operation.

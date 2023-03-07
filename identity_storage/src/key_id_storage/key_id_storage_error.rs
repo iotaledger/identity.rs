@@ -6,6 +6,7 @@ use std::fmt::Display;
 use crate::StorageError;
 use crate::StorageErrorKind;
 
+/// Error type for key id storage operations.
 pub type KeyIdStorageError = StorageError<KeyIdStorageErrorKind>;
 
 /// The cause of the failed key id storage operation.
@@ -14,6 +15,9 @@ pub type KeyIdStorageError = StorageError<KeyIdStorageErrorKind>;
 pub enum KeyIdStorageErrorKind {
   /// Indicates that the key id storage implementation is not able to find the requested key id.
   KeyIdNotFound,
+
+  /// Indicates that the key id already exists in the storage.
+  KeyIdAlreadyExists,
 
   /// Indicates that the storage is unavailable for an unpredictable amount of time.
   ///
@@ -44,6 +48,7 @@ pub enum KeyIdStorageErrorKind {
 impl StorageErrorKind for KeyIdStorageErrorKind {
   fn description(&self) -> &str {
     match self {
+      Self::KeyIdAlreadyExists => "Key id already exists in storage",
       Self::KeyIdNotFound => "key id not found",
       Self::Unavailable => "key id storage unavailable",
       Self::Unauthenticated => "authentication with the key id storage failed",

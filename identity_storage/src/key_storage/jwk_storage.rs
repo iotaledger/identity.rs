@@ -12,6 +12,7 @@ use identity_jose::jws::JwsAlgorithm;
 
 use super::key_gen::JwkGenOutput;
 
+/// Result of key storage operations.
 pub type KeyStorageResult<T> = Result<T, KeyStorageError>;
 
 #[cfg(not(feature = "send-sync-storage"))]
