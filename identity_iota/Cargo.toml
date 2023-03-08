@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -13,13 +13,13 @@ description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
 # identity_comm = { version = "=0.5.0-dev.4", path = "../identity_comm", optional = true }
-identity_account = { version = "=0.6.1", path = "../identity_account", default-features = false, optional = true }
-identity_account_storage = { version = "=0.6.1", path = "../identity_account_storage", default-features = false, optional = true }
-identity_core = { version = "=0.6.1", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.6.1", path = "../identity_credential", default-features = false }
-identity_did = { version = "=0.6.1", path = "../identity_did", default-features = false }
-identity_iota_client = { version = "=0.6.1", path = "../identity_iota_client", default-features = false }
-identity_iota_core = { version = "=0.6.1", path = "../identity_iota_core", default-features = false }
+identity_account = { version = "=0.6.2", path = "../identity_account", default-features = false, optional = true }
+identity_account_storage = { version = "=0.6.2", path = "../identity_account_storage", default-features = false, optional = true }
+identity_core = { version = "=0.6.2", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.6.2", path = "../identity_credential", default-features = false }
+identity_did = { version = "=0.6.2", path = "../identity_did", default-features = false }
+identity_iota_client = { version = "=0.6.2", path = "../identity_iota_client", default-features = false }
+identity_iota_core = { version = "=0.6.2", path = "../identity_iota_core", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
