@@ -74,7 +74,7 @@ jobs:
               setup: |
                 # actions/setup-node@v2 does not work for musl, install manually.
                 # build-base required for libsodium compilation.
-                apk add --no-cache nodejs@16 npm build-base
+                apk add --no-cache nodejs npm build-base
               build: |
                 export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
                 npm run build && strip dist/*.node
