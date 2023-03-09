@@ -12,7 +12,7 @@ members = [
   "identity_iota_client",
   "identity_iota_core",
 
-  # "examples",
+  "examples",
 ]
 
 exclude = [
