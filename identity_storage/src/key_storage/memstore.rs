@@ -317,12 +317,10 @@ fn random_key_id() -> KeyId {
 fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> KeyStorageResult<()> {
   match (key_type, alg) {
     (MemStoreKeyType::Ed25519, JwsAlgorithm::EdDSA) => Ok(()),
-    (key_type, alg) => {
-      Err(
-        KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::KeyAlgorithmMismatch)
-          .with_custom_message(format!("`cannot use key type `{key_type}` with algorithm `{alg}`")),
-      )
-    }
+    (key_type, alg) => Err(
+      KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::KeyAlgorithmMismatch)
+        .with_custom_message(format!("`cannot use key type `{key_type}` with algorithm `{alg}`")),
+    ),
   }
 }
 
