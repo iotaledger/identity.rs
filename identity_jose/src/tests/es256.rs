@@ -4,11 +4,12 @@
 use crate::jwk::EcCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsEc;
-use crate::jws::Decoder;
 use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::Token;
+use crate::jws::SignatureVerificationError;
+use crate::jws::SignatureVerificationErrorKind;
+use crate::jws::VerificationInput;
 use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 use p256::ecdsa::Signature;
@@ -49,7 +50,9 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
     let sk = signing_key.clone();
     async move {
-      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(&protected).unprotected(&unprotected);
+      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
+        .with_protected(&protected)
+        .with_unprotected(&unprotected);
       if header_set.try_alg().map_err(|_| "missing `alg` parameter".to_owned())? != JwsAlgorithm::ES256 {
         return Err("incompatible `alg` parameter".to_owned());
       }
@@ -62,25 +65,14 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn decode<'a>(decoder: &Decoder<'a>, encoded: &'a [u8], jwk: &Jwk) -> Token<'a> {
+pub(crate) fn verify(verification_input: VerificationInput<'_>, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let (_, public_key) = expand_p256_jwk(jwk);
-
   let verifying_key = VerifyingKey::from(public_key);
 
-  let verify_fn = move |protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>, msg: &[u8], sig: &[u8]| {
-    let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new().protected(protected).unprotected(unprotected);
-    let alg: JwsAlgorithm = header_set.try_alg().map_err(|_| "missing `alg` parameter".to_owned())?;
-    if alg != JwsAlgorithm::ES256 {
-      return Err("incompatible `alg` parameter".to_owned());
-    }
+  let signature = Signature::try_from(verification_input.decoded_signature).unwrap();
 
-    let signature = Signature::try_from(sig).unwrap();
-
-    match signature::Verifier::verify(&verifying_key, msg, &signature) {
-      Ok(()) => Ok(()),
-      Err(err) => Err(err.to_string()),
-    }
-  };
-
-  decoder.decode(&verify_fn, encoded).unwrap()
+  match signature::Verifier::verify(&verifying_key, verification_input.signing_input, &signature) {
+    Ok(()) => Ok(()),
+    Err(err) => Err(SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)),
+  }
 }

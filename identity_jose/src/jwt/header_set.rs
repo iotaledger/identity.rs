@@ -75,14 +75,26 @@ impl<'a, T> JwtHeaderSet<'a, T> {
     }
   }
 
-  pub fn protected(mut self, value: impl Into<Option<&'a T>>) -> Self {
+  /// Set the protected header.
+  pub fn with_protected(mut self, value: impl Into<Option<&'a T>>) -> Self {
     self.protected = value.into();
     self
   }
 
-  pub fn unprotected(mut self, value: impl Into<Option<&'a T>>) -> Self {
+  /// Get the protected header if it is set.
+  pub fn protected(&self) -> Option<&'a T> {
+    self.protected
+  }
+
+  /// Set the unprotected header.
+  pub fn with_unprotected(mut self, value: impl Into<Option<&'a T>>) -> Self {
     self.unprotected = value.into();
     self
+  }
+
+  /// Get the unprotected header if it is set.
+  pub fn unprotected(&self) -> Option<&'a T> {
+    self.unprotected
   }
 
   pub fn header(mut self, value: impl Into<Option<&'a T>>) -> Self {

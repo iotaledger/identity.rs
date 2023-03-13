@@ -27,10 +27,16 @@ pub enum Error {
   InvalidContent(&'static str),
   #[error("invalid key format for type `{0}`")]
   KeyError(&'static str),
-  #[error("unsupported jws algorithm")]
-  UnsupportedAlgorithm,
+  #[error("mismatch between header and jwk alg values")]
+  AlgorithmMismatch,
+  #[error("attempt to parse an unregistered jws algorithm")]
+  JwsAlgorithmParsingError,
   #[error("signature creation error")]
   SignatureCreationError(#[source] Box<dyn std::error::Error + Send + Sync>),
   #[error("signature verification error")]
-  SignatureVerificationError(#[source] Box<dyn std::error::Error + Send + Sync>),
+  SignatureVerificationError(#[source] crate::jws::SignatureVerificationError),
+  #[error("missing header")]
+  MissingHeader(&'static str),
+  #[error("missing alg in protected header")]
+  ProtectedHeaderWithoutAlg,
 }
