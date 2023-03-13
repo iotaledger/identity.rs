@@ -5,7 +5,7 @@
 mod curve;
 #[cfg(feature = "diff")]
 #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-mod diff;
+pub mod diff;
 mod key;
 mod key_operation;
 mod key_params;
