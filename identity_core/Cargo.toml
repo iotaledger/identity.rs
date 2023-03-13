@@ -38,7 +38,6 @@ quickcheck_macros = { version = "1.0" }
 
 [features]
 diff = ["identity-diff"]
-diff-derive = ["diff", "identity-diff/derive"]
 
 [package.metadata.docs.rs]
 # To build locally:
