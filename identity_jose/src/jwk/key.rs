@@ -34,35 +34,35 @@ pub struct Jwk {
   /// Identifies the cryptographic algorithm family used with the key.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.1)
-  kty: JwkType,
+  pub(super) kty: JwkType,
   /// Public Key Use.
   ///
   /// Identifies the intended use of the public key.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.2)
   #[serde(rename = "use", skip_serializing_if = "Option::is_none")]
-  use_: Option<JwkUse>,
+  pub(super) use_: Option<JwkUse>,
   /// Key Operations.
   ///
   /// Identifies the operation(s) for which the key is intended to be used.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.3)
   #[serde(skip_serializing_if = "Option::is_none")]
-  key_ops: Option<Vec<JwkOperation>>,
+  pub(super) key_ops: Option<Vec<JwkOperation>>,
   /// Algorithm.
   ///
   /// Identifies the algorithm intended for use with the key.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.4)
   #[serde(skip_serializing_if = "Option::is_none")]
-  alg: Option<String>,
+  pub(super) alg: Option<String>,
   /// Key ID.
   ///
   /// Used to match a specific key among a set of keys within a JWK Set.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.5)
   #[serde(skip_serializing_if = "Option::is_none")]
-  kid: Option<String>,
+  pub(super) kid: Option<String>,
   /// X.509 URL.
   ///
   /// A URI that refers to a resource for an X.509 public key certificate or
@@ -70,14 +70,14 @@ pub struct Jwk {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.6)
   #[serde(skip_serializing_if = "Option::is_none")]
-  x5u: Option<Url>,
+  pub(super) x5u: Option<Url>,
   /// X.509 Certificate Chain.
   ///
   /// Contains a chain of one or more PKIX certificates.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.7)
   #[serde(skip_serializing_if = "Option::is_none")]
-  x5c: Option<Vec<String>>,
+  pub(super) x5c: Option<Vec<String>>,
   /// X.509 Certificate SHA-1 Thumbprint.
   ///
   /// A base64url-encoded SHA-1 thumbprint of the DER encoding of an X.509
@@ -85,7 +85,7 @@ pub struct Jwk {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.8)
   #[serde(skip_serializing_if = "Option::is_none")]
-  x5t: Option<String>,
+  pub(super) x5t: Option<String>,
   /// X.509 Certificate SHA-256 Thumbprint.
   ///
   /// A base64url-encoded SHA-256 thumbprint of the DER encoding of an X.509
@@ -93,12 +93,12 @@ pub struct Jwk {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.9)
   #[serde(rename = "x5t#S256", skip_serializing_if = "Option::is_none")]
-  x5t_s256: Option<String>,
+  pub(super) x5t_s256: Option<String>,
   /// Type-Specific Key Properties.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4)
   #[serde(flatten)]
-  params: JwkParams,
+  pub(super) params: JwkParams,
 }
 
 impl Jwk {

@@ -27,7 +27,7 @@ impl Diff for JwkParamsRsa {
   fn diff(&self, other: &Self) -> DiffResult<Self::Type> {
     if !(self.is_public() && other.is_public()) {
       return Err(identity_core::diff::Error::DiffError(
-        "cannot diff jwk with private components".to_owned(),
+        "cannot diff jwk rsa params with private components".to_owned(),
       ));
     }
     Ok(DiffJwkParamsRsa {
@@ -89,7 +89,7 @@ impl JwkParamsRsa {
   pub(super) fn take_diff(&mut self) -> DiffResult<DiffJwkParamsRsa> {
     if !self.is_public() {
       return Err(identity_core::diff::Error::ConversionError(
-        "cannot convert jwk with private components to diff".to_owned(),
+        "cannot convert jwk rsa params with private components to diff".to_owned(),
       ));
     }
 

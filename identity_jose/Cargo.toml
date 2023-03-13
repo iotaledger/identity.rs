@@ -20,9 +20,11 @@ serde_json = { version = "1.0", default-features = false, features = ["std"] }
 subtle = { version = "2.4.1", default-features = false }
 thiserror.workspace = true
 zeroize = { version = "1.5.7", default-features = false, features = ["std", "zeroize_derive"] }
+
 [features]
 # Enables jws verification based on the EdDSA algorithm.
 eddsa = ["iota-crypto/ed25519"]
+# Enables Diff implementation for Jwk
 diff = ["identity_core/diff"]
 default = ["diff", "eddsa"]
 

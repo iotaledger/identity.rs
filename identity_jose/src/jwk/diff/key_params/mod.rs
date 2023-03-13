@@ -66,7 +66,22 @@ impl Diff for JwkParams {
   /// # Errors
   /// Errors if the [`JwkParams`] contain private components.
   fn into_diff(mut self) -> DiffResult<Self::Type> {
-    match &mut self {
+    self.take_diff()
+  }
+}
+
+impl JwkParams {
+  /// Obtain [`DiffJwkParams`] from [`&mut JwkParams`](JwkParams) leaving
+  /// empty strings as public parameters in `self`.
+  ///
+  /// # Errors
+  /// Errors immediately if the params contain a private component.
+  ///
+  /// # Motivation
+  /// [`JwkParams`] cannot directly be destructured because of [zeroize(drop)]
+  /// hence this provides workaround to enable a cheap implementation of `into_diff`.
+  pub(super) fn take_diff(&mut self) -> DiffResult<DiffJwkParams> {
+    match self {
       Self::Okp(params) => params.take_diff().map(DiffJwkParams::Okp),
       Self::Ec(params) => params.take_diff().map(DiffJwkParams::Ec),
       Self::Oct(params) => params.take_diff().map(DiffJwkParams::Oct),

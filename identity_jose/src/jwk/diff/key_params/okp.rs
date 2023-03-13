@@ -26,7 +26,7 @@ impl Diff for JwkParamsOkp {
   fn diff(&self, other: &Self) -> DiffResult<Self::Type> {
     if !(self.is_public() && other.is_public()) {
       return Err(identity_core::diff::Error::DiffError(
-        "cannot diff jwk with private components".to_owned(),
+        "cannot diff jwk okp params with private components".to_owned(),
       ));
     }
     Ok(DiffJwkParamsOkp {
@@ -72,7 +72,7 @@ impl JwkParamsOkp {
   pub(super) fn take_diff(&mut self) -> DiffResult<DiffJwkParamsOkp> {
     if !self.is_public() {
       return Err(identity_core::diff::Error::ConversionError(
-        "cannot convert jwk with private components to diff".to_owned(),
+        "cannot convert jwk okp params with private components to diff".to_owned(),
       ));
     }
 

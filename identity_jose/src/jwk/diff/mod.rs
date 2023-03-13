@@ -3,6 +3,7 @@
 //! Provides a [`Diff`](::identity_diff::Diff) implementation for [`Jwk`](crate::jwk::Jwk).
 //!
 //! # Warning: This module has not been tested.  
+#![allow(deprecated)]
 mod key;
 mod key_operations;
 mod key_params;
