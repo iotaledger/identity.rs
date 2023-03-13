@@ -26,7 +26,7 @@ impl Diff for JwkParamsEc {
   /// Errors if either `self` or `other` contains private components.
   fn diff(&self, other: &Self) -> DiffResult<Self::Type> {
     if !(self.is_public() && other.is_public()) {
-      return Err(identity_diff::Error::DiffError(
+      return Err(identity_core::diff::Error::DiffError(
         "cannot diff jwk with private components".to_owned(),
       ));
     }
@@ -75,7 +75,7 @@ impl JwkParamsEc {
   /// hence this provides workaround to enable a cheap implementation of `into_diff`.
   pub(super) fn take_diff(&mut self) -> DiffResult<DiffJwkParamsEc> {
     if !self.is_public() {
-      return Err(identity_diff::Error::ConversionError(
+      return Err(identity_core::diff::Error::ConversionError(
         "cannot convert jwk with private components to diff".to_owned(),
       ));
     }

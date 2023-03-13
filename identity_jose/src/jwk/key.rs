@@ -3,7 +3,7 @@
 
 use crypto::hashes::sha::SHA256;
 use crypto::hashes::sha::SHA256_LEN;
-use url::Url;
+use identity_core::common::Url;
 use zeroize::Zeroize;
 
 use crate::error::Error;

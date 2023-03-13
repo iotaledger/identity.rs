@@ -19,18 +19,18 @@ impl Diff for JwkParamsOct {
 
   /// Finds the difference between `self` and `other` and returns the result as
   /// a [`DiffJwkParamsOct`].
-  fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
+  fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
     Ok(DiffJwkParamsOct {
       k: self.k.diff(&other.k)?,
     })
   }
 
-  fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
+  fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
     let k: String = self.k.merge(diff.k)?;
     Ok(Self { k })
   }
 
-  fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
+  fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
     let k: String = Diff::from_diff(diff.k)?;
     Ok(Self { k })
   }

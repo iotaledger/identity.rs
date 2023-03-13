@@ -1,11 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-//! Provides [`Diff`] implementations for [`JwkParams`].
-//!
-//! # Warning: This module has not been tested.  
-use identity_diff::Diff;
-use identity_diff::DiffString;
-use identity_diff::Result as DiffResult;
+use identity_core::diff::Diff;
+use identity_core::diff::DiffString;
+use identity_core::diff::Result as DiffResult;
 use serde::Deserialize;
 use serde::Serialize;
 mod ec;
@@ -57,10 +54,10 @@ impl Diff for JwkParams {
 
   fn from_diff(diff: Self::Type) -> DiffResult<Self> {
     match diff {
-      DiffJwkParams::Okp(a) => Diff::from_diff(a).map(Self::Okp),
-      DiffJwkParams::Ec(a) => Diff::from_diff(a).map(Self::Ec),
-      DiffJwkParams::Oct(a) => Diff::from_diff(a).map(Self::Oct),
-      DiffJwkParams::Rsa(a) => Diff::from_diff(a).map(Self::Rsa),
+      DiffJwkParams::Okp(diff_params) => Diff::from_diff(diff_params).map(Self::Okp),
+      DiffJwkParams::Ec(diff_params) => Diff::from_diff(diff_params).map(Self::Ec),
+      DiffJwkParams::Oct(diff_params) => Diff::from_diff(diff_params).map(Self::Oct),
+      DiffJwkParams::Rsa(diff_params) => Diff::from_diff(diff_params).map(Self::Rsa),
     }
   }
 
@@ -70,10 +67,10 @@ impl Diff for JwkParams {
   /// Errors if the [`JwkParams`] contain private components.
   fn into_diff(mut self) -> DiffResult<Self::Type> {
     match &mut self {
-      Self::Okp(a) => a.take_diff().map(DiffJwkParams::Okp),
-      Self::Ec(a) => a.take_diff().map(DiffJwkParams::Ec),
-      Self::Oct(a) => a.take_diff().map(DiffJwkParams::Oct),
-      Self::Rsa(a) => a.take_diff().map(DiffJwkParams::Rsa),
+      Self::Okp(params) => params.take_diff().map(DiffJwkParams::Okp),
+      Self::Ec(params) => params.take_diff().map(DiffJwkParams::Ec),
+      Self::Oct(params) => params.take_diff().map(DiffJwkParams::Oct),
+      Self::Rsa(params) => params.take_diff().map(DiffJwkParams::Rsa),
     }
   }
 }
