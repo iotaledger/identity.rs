@@ -230,7 +230,7 @@ impl VerificationMethod {
         .or_else(|| key.kid())
         .ok_or(crate::error::Error::InvalidMethod("could not construct fragment"))?;
       // Make sure the fragment starts with "#"
-      if given_fragment.starts_with("#") {
+      if given_fragment.starts_with('#') {
         Cow::Borrowed(given_fragment)
       } else {
         Cow::Owned(format!("#{}", given_fragment))
