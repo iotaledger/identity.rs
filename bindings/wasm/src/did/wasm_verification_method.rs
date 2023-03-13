@@ -42,11 +42,11 @@ impl WasmVerificationMethod {
   /// will be made to generate it from the `kid` value of the given `key`.
   ///
   /// ### Recommendations
+  /// The following recommendations are essentially taken from the `publicKeyJwk` description from the [DID specification](https://www.w3.org/TR/did-core/#dfn-publickeyjwk):
   /// - It is recommended that verification methods that use `Jwks` to represent their public keys use the value of
   ///   `kid` as their fragment identifier. This is
   /// done automatically if `None` is passed in as the fragment.
   /// - It is recommended that `Jwk` kid values are set to the public key fingerprint. See `Jwk::thumbprint_b64`.
-  // TODO: These recommendations were taken from https://w3c.github.io/vc-data-integrity/#dfn-publickeyjwk. Perhaps add that to the documentation once that specification/link becomes stable?
   #[wasm_bindgen(js_name = newFromJwk)]
   pub fn new_from_jwk(did: &IToCoreDID, key: &WasmJwk, fragment: Option<String>) -> Result<WasmVerificationMethod> {
     VerificationMethod::new_from_jwk(&CoreDID::from(did), key.0.clone(), fragment.as_deref())

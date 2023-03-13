@@ -214,12 +214,13 @@ impl VerificationMethod {
   /// will be made to generate it from the `kid` value of the given `key`.
   ///
   /// # Recommendations
+  /// The following recommendations are essentially taken from the `publicKeyJwk` description from the [DID specification](https://www.w3.org/TR/did-core/#dfn-publickeyjwk):
   /// - It is recommended that verification methods that use [`Jwks`](Jwk) to represent their public keys use the value
   ///   of `kid` as their fragment identifier. This is
   /// done automatically if `None` is passed in as the fragment.
   /// - It is recommended that [`Jwk`] kid values are set to the public key fingerprint. See
   ///   [`Jwk::thumbprint_b64`](Jwk::thumbprint_b64()).
-  // TODO: These recommendations were taken from https://w3c.github.io/vc-data-integrity/#dfn-publickeyjwk. Perhaps add that to the documentation once that specification/link becomes stable?
+  //
   pub fn new_from_jwk<D: DID>(did: &D, key: Jwk, fragment: Option<&str>) -> Result<Self> {
     if !key.is_public() {
       return Err(crate::error::Error::PrivateKeyMaterialExposed);
