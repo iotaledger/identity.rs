@@ -17,7 +17,7 @@ pub trait KeyIdStorage {
   /// Insert a [`KeyId`] into the [`KeyIdStorage`] under the given [`MethodDigest`].
   /// If an entry for `key` already exists in the storage an error must be returned
   ///
-  /// immediately without altering the state the storage.
+  /// immediately without altering the state of the storage.
   async fn insert_key_id(&self, key: MethodDigest, value: KeyId) -> KeyIdStorageResult<()>;
 
   /// Obtain the [`KeyId`] associated with the given [`MethodDigest`].
