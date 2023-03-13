@@ -18,7 +18,6 @@ thiserror.workspace = true
 
 [features]
 diff = ["identity_core/diff", "identity_did/diff", "identity_jose/diff"]
-defualt = ["diff"]
 
 [dev-dependencies]
 serde_json.workspace = true

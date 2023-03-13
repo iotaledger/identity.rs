@@ -5,9 +5,10 @@ use identity_iota::verification::MethodData;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
-use crate::error::WasmResult;
 use crate::error::WasmError;
-use std::borrow::Cow; 
+use crate::error::WasmResult;
+use crate::jose::WasmJwk;
+use std::borrow::Cow;
 
 /// Supported verification method data formats.
 #[wasm_bindgen(js_name = MethodData, inspectable)]
@@ -28,16 +29,20 @@ impl WasmMethodData {
   }
 
   /// Creates a new `MethodData` variant consisting of the given `key`.
-  /// 
+  ///
   /// ### Errors
-  /// An error is thrown if the given `key` contains any private components. 
+  /// An error is thrown if the given `key` contains any private components.
   #[wasm_bindgen(js_name = newJwk)]
-  pub fn new_jwk(key: &WasmJwk) -> Result<Self> {
+  pub fn new_jwk(key: &WasmJwk) -> Result<WasmMethodData> {
     if !key.0.is_public() {
-      return Err(WasmError::new(Cow::Borrowed("PrivateKeyMaterialExposed"), Cow::Borrowed("jwk with private key components is not permitted"))).wasm_result();
+      return Err(WasmError::new(
+        Cow::Borrowed("PrivateKeyMaterialExposed"),
+        Cow::Borrowed("jwk with private key components is not permitted"),
+      ))
+      .wasm_result();
     };
-    
-    Self(MethodData::PublicKeyJwk(key.0.clone()))
+
+    Ok(Self(MethodData::PublicKeyJwk(key.0.clone())))
   }
 
   /// Returns a `Uint8Array` containing the decoded bytes of the `MethodData`.

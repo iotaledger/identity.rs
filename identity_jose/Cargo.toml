@@ -26,7 +26,7 @@ zeroize = { version = "1.5.7", default-features = false, features = ["std", "zer
 eddsa = ["iota-crypto/ed25519"]
 # Enables Diff implementation for Jwk
 diff = ["identity_core/diff"]
-default = ["diff", "eddsa"]
+default = ["eddsa"]
 
 [dev-dependencies]
 anyhow = "1"

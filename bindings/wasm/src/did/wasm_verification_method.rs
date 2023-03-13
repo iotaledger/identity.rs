@@ -15,6 +15,7 @@ use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use super::wasm_core_did::IToCoreDID;
+use crate::jose::WasmJwk;
 
 /// A DID Document Verification Method.
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
@@ -33,6 +34,22 @@ impl WasmVerificationMethod {
   ) -> Result<WasmVerificationMethod> {
     let public_key: PublicKey = PublicKey::from(publicKey);
     VerificationMethod::new(CoreDID::from(did), keyType.into(), &public_key, &fragment)
+      .map(Self)
+      .wasm_result()
+  }
+
+  /// Creates a new `VerificationMethod` from the given `did` and `Jwk`. If a `fragment` is not given an attempt
+  /// will be made to generate it from the `kid` value of the given `key`.
+  ///
+  /// ### Recommendations
+  /// - It is recommended that verification methods that use `Jwks` to represent their public keys use the value of
+  ///   `kid` as their fragment identifier. This is
+  /// done automatically if `None` is passed in as the fragment.
+  /// - It is recommended that `Jwk` kid values are set to the public key fingerprint. See `Jwk::thumbprint_b64`.
+  // TODO: These recommendations were taken from https://w3c.github.io/vc-data-integrity/#dfn-publickeyjwk. Perhaps add that to the documentation once that specification/link becomes stable?
+  #[wasm_bindgen(js_name = newFromJwk)]
+  pub fn new_from_jwk(did: &IToCoreDID, key: &WasmJwk, fragment: Option<String>) -> Result<WasmVerificationMethod> {
+    VerificationMethod::new_from_jwk(&CoreDID::from(did), key.0.clone(), fragment.as_deref())
       .map(Self)
       .wasm_result()
   }
