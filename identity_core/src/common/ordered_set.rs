@@ -252,7 +252,7 @@ where
   where
     I: IntoIterator<Item = T>,
   {
-    let iter: _ = iter.into_iter();
+    let iter = iter.into_iter();
     let size: usize = iter.size_hint().1.unwrap_or(0);
 
     let mut this: Self = Self::with_capacity(size);
