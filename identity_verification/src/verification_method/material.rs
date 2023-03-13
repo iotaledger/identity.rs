@@ -10,6 +10,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 /// Supported verification method data formats.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]

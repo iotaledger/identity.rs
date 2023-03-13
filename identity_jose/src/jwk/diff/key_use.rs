@@ -23,7 +23,7 @@ impl Diff for JwkUse {
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    Ok(diff.0.unwrap_or_else(|| *self))
+    Ok(diff.0.unwrap_or(*self))
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {

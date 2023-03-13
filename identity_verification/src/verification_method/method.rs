@@ -3,7 +3,9 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
+use std::borrow::Cow;
 
+use identity_jose::jwk::Jwk;
 use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
@@ -206,6 +208,42 @@ impl VerificationMethod {
       }
     }
     builder.build()
+  }
+
+  /// Creates a new [`VerificationMethod`] from the given `did` and [`Jwk`]. If a `fragment` is not given an attempt
+  /// will be made to generate it from the `kid` value of the given `key`.
+  ///
+  /// # Recommendations
+  /// - It is recommended that verification methods that use [`Jwks`](Jwk) to represent their public keys use the value
+  ///   of `kid` as their fragment identifier. This is
+  /// done automatically if `None` is passed in as the fragment.
+  /// - It is recommended that [`Jwk`] kid values are set to the public key fingerprint. See
+  ///   [`Jwk::thumbprint_b64`](Jwk::thumbprint_b64()).
+  // TODO: These recommendations were taken from https://w3c.github.io/vc-data-integrity/#dfn-publickeyjwk. Perhaps add that to the documentation once that specification/link becomes stable.
+  pub fn new_from_jwk<D: DID>(did: &D, key: Jwk, fragment: Option<&str>) -> Result<Self> {
+    if !key.is_public() {
+      return Err(crate::error::Error::PrivateKeyMaterialExposed);
+    };
+    // If a fragment is given use that, otherwise use the JWK's `kid` if it is set.
+    let fragment: Cow<'_, str> = {
+      let given_fragment: &str = fragment
+        .or_else(|| key.kid())
+        .ok_or(crate::error::Error::InvalidMethod("could not construct fragment"))?;
+      // Make sure the fragment starts with "#"
+      if given_fragment.starts_with("#") {
+        Cow::Borrowed(given_fragment)
+      } else {
+        Cow::Owned(format!("#{}", given_fragment))
+      }
+    };
+
+    let id: DIDUrl = did.to_url().join(fragment).map_err(Error::DIDUrlConstructionError)?;
+
+    MethodBuilder::default()
+      .id(id)
+      .type_(MethodType::JWK)
+      .data(MethodData::PublicKeyJwk(key))
+      .build()
   }
 }
 

@@ -6,6 +6,8 @@ use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::error::WasmError;
+use std::borrow::Cow; 
 
 /// Supported verification method data formats.
 #[wasm_bindgen(js_name = MethodData, inspectable)]
@@ -23,6 +25,19 @@ impl WasmMethodData {
   #[wasm_bindgen(js_name = newMultibase)]
   pub fn new_multibase(data: Vec<u8>) -> Self {
     Self(MethodData::new_multibase(data))
+  }
+
+  /// Creates a new `MethodData` variant consisting of the given `key`.
+  /// 
+  /// ### Errors
+  /// An error is thrown if the given `key` contains any private components. 
+  #[wasm_bindgen(js_name = newJwk)]
+  pub fn new_jwk(key: &WasmJwk) -> Result<Self> {
+    if !key.0.is_public() {
+      return Err(WasmError::new(Cow::Borrowed("PrivateKeyMaterialExposed"), Cow::Borrowed("jwk with private key components is not permitted"))).wasm_result();
+    };
+    
+    Self(MethodData::PublicKeyJwk(key.0.clone()))
   }
 
   /// Returns a `Uint8Array` containing the decoded bytes of the `MethodData`.

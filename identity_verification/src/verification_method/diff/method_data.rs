@@ -9,6 +9,7 @@ use crate::verification_method::MethodData;
 use identity_jose::jwk::diff::DiffJwk;
 
 // TODO: Test the `PublicKeyJwk` variant.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum DiffMethodData {
   PublicKeyMultibase(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),
