@@ -21,7 +21,7 @@ pub enum DiffOption<T: Diff> {
 /// `Diff` Implementation for `Option<T>`
 impl<T> Diff for Option<T>
 where
-  T: Diff + Clone + Debug + PartialEq + Default + for<'de> Deserialize<'de> + Serialize,
+  T: Diff + Clone + Debug + PartialEq + for<'de> Deserialize<'de> + Serialize,
 {
   /// The Corresponding Diff type for `Option<T>`
   type Type = DiffOption<T>;

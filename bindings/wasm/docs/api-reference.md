@@ -2865,6 +2865,7 @@ Supported verification method data formats.
     * _static_
         * [.newBase58(data)](#MethodData.newBase58) ⇒ [<code>MethodData</code>](#MethodData)
         * [.newMultibase(data)](#MethodData.newMultibase) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.newJwk(key)](#MethodData.newJwk) ⇒ [<code>MethodData</code>](#MethodData)
         * [.fromJSON(json)](#MethodData.fromJSON) ⇒ [<code>MethodData</code>](#MethodData)
 
 <a name="MethodData+tryDecode"></a>
@@ -2912,6 +2913,20 @@ Creates a new `MethodData` variant with Multibase-encoded content.
 | Param | Type |
 | --- | --- |
 | data | <code>Uint8Array</code> | 
+
+<a name="MethodData.newJwk"></a>
+
+### MethodData.newJwk(key) ⇒ [<code>MethodData</code>](#MethodData)
+Creates a new `MethodData` variant consisting of the given `key`.
+
+### Errors
+An error is thrown if the given `key` contains any private components.
+
+**Kind**: static method of [<code>MethodData</code>](#MethodData)  
+
+| Param | Type |
+| --- | --- |
+| key | [<code>Jwk</code>](#Jwk) | 
 
 <a name="MethodData.fromJSON"></a>
 
@@ -3013,6 +3028,7 @@ Supported verification method types.
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.JwkMethodType()](#MethodType.JwkMethodType) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
 <a name="MethodType+toString"></a>
@@ -3040,6 +3056,13 @@ Deep clones the object.
 <a name="MethodType.X25519KeyAgreementKey2019"></a>
 
 ### MethodType.X25519KeyAgreementKey2019() ⇒ [<code>MethodType</code>](#MethodType)
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.JwkMethodType"></a>
+
+### MethodType.JwkMethodType() ⇒ [<code>MethodType</code>](#MethodType)
+A verification method for use with JWT verification as prescribed by the `Jwk`
+in the `publicKeyJwk` entry.
+
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.fromJSON"></a>
 
@@ -3917,6 +3940,7 @@ A DID Document Verification Method.
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
         * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
     * _static_
+        * [.newFromJwk(did, key, fragment)](#VerificationMethod.newFromJwk) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
@@ -4035,6 +4059,27 @@ Serializes this to a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod.newFromJwk"></a>
+
+### VerificationMethod.newFromJwk(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Creates a new `VerificationMethod` from the given `did` and `Jwk`. If a `fragment` is not given an attempt
+will be made to generate it from the `kid` value of the given `key`.
+
+### Recommendations
+The following recommendations are essentially taken from the `publicKeyJwk` description from the [DID specification](https://www.w3.org/TR/did-core/#dfn-publickeyjwk):
+- It is recommended that verification methods that use `Jwks` to represent their public keys use the value of
+  `kid` as their fragment identifier. This is
+done automatically if `None` is passed in as the fragment.
+- It is recommended that `Jwk` kid values are set to the public key fingerprint. See `Jwk::thumbprint_b64`.
+
+**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
+| key | [<code>Jwk</code>](#Jwk) | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
+
 <a name="VerificationMethod.fromJSON"></a>
 
 ### VerificationMethod.fromJSON(json) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)

@@ -13,9 +13,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::common::KeyComparable;
-use crate::diff;
-use crate::diff::Diff;
-use crate::diff::DiffString;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -91,26 +88,33 @@ where
   }
 }
 
-impl Diff for Url {
-  type Type = DiffString;
+#[cfg(feature = "diff")]
+mod diff {
+  use super::*;
+  use crate::diff;
+  use crate::diff::Diff;
+  use crate::diff::DiffString;
+  impl Diff for Url {
+    type Type = DiffString;
 
-  fn diff(&self, other: &Self) -> diff::Result<Self::Type> {
-    self.to_string().diff(&other.to_string())
-  }
+    fn diff(&self, other: &Self) -> diff::Result<Self::Type> {
+      self.to_string().diff(&other.to_string())
+    }
 
-  fn merge(&self, diff: Self::Type) -> diff::Result<Self> {
-    self
-      .to_string()
-      .merge(diff)
-      .and_then(|this| Self::parse(this).map_err(diff::Error::merge))
-  }
+    fn merge(&self, diff: Self::Type) -> diff::Result<Self> {
+      self
+        .to_string()
+        .merge(diff)
+        .and_then(|this| Self::parse(this).map_err(diff::Error::merge))
+    }
 
-  fn from_diff(diff: Self::Type) -> diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(this).map_err(diff::Error::convert))
-  }
+    fn from_diff(diff: Self::Type) -> diff::Result<Self> {
+      String::from_diff(diff).and_then(|this| Self::parse(this).map_err(diff::Error::convert))
+    }
 
-  fn into_diff(self) -> diff::Result<Self::Type> {
-    self.to_string().into_diff()
+    fn into_diff(self) -> diff::Result<Self::Type> {
+      self.to_string().into_diff()
+    }
   }
 }
 

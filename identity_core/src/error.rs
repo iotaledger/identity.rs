@@ -10,6 +10,7 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+#[non_exhaustive]
 pub enum Error {
   /// Caused when a cryptographic operation fails.
   #[error("Crypto Error: {0}")]
@@ -26,6 +27,7 @@ pub enum Error {
   /// Caused by a failure to decode multibase-encoded data.
   #[error("Failed to decode multibase data: {0}")]
   DecodeMultibase(#[from] multibase::Error),
+  #[cfg(feature = "diff")]
   /// Caused by attempting to perform an invalid `Diff` operation.
   #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[error("Invalid Document Diff: {0}")]

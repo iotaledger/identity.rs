@@ -129,7 +129,7 @@ mod __fetch_configuration {
         .map_err(|err| DomainLinkageError(Box::new(err)))?;
 
       // We use a stream so we can limit the size of the response to 1 MiB.
-      let mut stream: _ = client
+      let mut stream = client
         .get(domain.to_string())
         .send()
         .await
