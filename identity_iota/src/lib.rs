@@ -26,6 +26,7 @@ pub mod core {
   pub use identity_core::error::*;
   pub use identity_core::utils::*;
 
+  #[cfg(feature = "diff")]
   #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[doc(inline)]
   pub use identity_core::diff;

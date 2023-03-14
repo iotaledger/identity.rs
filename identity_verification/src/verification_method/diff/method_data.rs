@@ -6,11 +6,15 @@ use identity_core::diff::DiffString;
 use identity_core::diff::Result;
 
 use crate::verification_method::MethodData;
+use identity_jose::jwk::diff::DiffJwk;
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+// TODO: Test the `PublicKeyJwk` variant.
+#[allow(clippy::large_enum_variant)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum DiffMethodData {
   PublicKeyMultibase(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),
   PublicKeyBase58(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),
+  PublicKeyJwk(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffJwk>),
 }
 
 impl Diff for MethodData {
@@ -18,6 +22,8 @@ impl Diff for MethodData {
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     match (self, other) {
+      (Self::PublicKeyJwk(a), Self::PublicKeyJwk(b)) if a == b => Ok(DiffMethodData::PublicKeyJwk(None)),
+      (Self::PublicKeyJwk(a), Self::PublicKeyJwk(b)) => a.diff(b).map(Some).map(DiffMethodData::PublicKeyJwk),
       (Self::PublicKeyMultibase(a), Self::PublicKeyMultibase(b)) if a == b => {
         Ok(DiffMethodData::PublicKeyMultibase(None))
       }
@@ -32,6 +38,8 @@ impl Diff for MethodData {
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
     match (self, diff) {
+      (Self::PublicKeyJwk(a), DiffMethodData::PublicKeyJwk(Some(b))) => a.merge(b).map(Self::PublicKeyJwk),
+      (Self::PublicKeyJwk(a), DiffMethodData::PublicKeyJwk(None)) => Ok(Self::PublicKeyJwk(a.clone())),
       (Self::PublicKeyMultibase(a), DiffMethodData::PublicKeyMultibase(Some(b))) => {
         a.merge(b).map(Self::PublicKeyMultibase)
       }
@@ -50,11 +58,16 @@ impl Diff for MethodData {
       DiffMethodData::PublicKeyMultibase(None) => Ok(Self::PublicKeyMultibase(Default::default())),
       DiffMethodData::PublicKeyBase58(Some(value)) => Diff::from_diff(value).map(Self::PublicKeyBase58),
       DiffMethodData::PublicKeyBase58(None) => Ok(Self::PublicKeyBase58(Default::default())),
+      DiffMethodData::PublicKeyJwk(Some(value)) => Diff::from_diff(value).map(Self::PublicKeyJwk),
+      DiffMethodData::PublicKeyJwk(None) => Err(identity_core::diff::Error::ConversionError(
+        "cannot convert empty diff to jwk method data".to_owned(),
+      )),
     }
   }
 
   fn into_diff(self) -> Result<Self::Type> {
     match self {
+      Self::PublicKeyJwk(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyJwk),
       Self::PublicKeyMultibase(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyMultibase),
       Self::PublicKeyBase58(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyBase58),
     }

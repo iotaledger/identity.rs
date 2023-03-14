@@ -20,6 +20,13 @@ impl WasmMethodType {
     WasmMethodType(MethodType::X25519_KEY_AGREEMENT_KEY_2019)
   }
 
+  /// A verification method for use with JWT verification as prescribed by the `Jwk`
+  /// in the `publicKeyJwk` entry.
+  #[wasm_bindgen(js_name = JwkMethodType)]
+  pub fn jwk_method_type() -> WasmMethodType {
+    WasmMethodType(MethodType::JWK)
+  }
+
   /// Returns the `MethodType` as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]

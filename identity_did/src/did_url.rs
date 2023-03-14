@@ -14,8 +14,6 @@ use did_url::DID as BaseDIDUrl;
 
 use identity_core::common::KeyComparable;
 use identity_core::common::Url;
-use identity_core::diff::Diff;
-use identity_core::diff::DiffString;
 
 use crate::did::is_char_method_id;
 use crate::did::CoreDID;
@@ -517,26 +515,32 @@ impl Display for DIDUrl {
   }
 }
 
-impl Diff for DIDUrl {
-  type Type = DiffString;
+#[cfg(feature = "diff")]
+mod diff {
+  use super::*;
+  use identity_core::diff::Diff;
+  use identity_core::diff::DiffString;
+  impl Diff for DIDUrl {
+    type Type = DiffString;
 
-  fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
-    self.to_string().diff(&other.to_string())
-  }
+    fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
+      self.to_string().diff(&other.to_string())
+    }
 
-  fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
-    self
-      .to_string()
-      .merge(diff)
-      .and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::merge))
-  }
+    fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
+      self
+        .to_string()
+        .merge(diff)
+        .and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::merge))
+    }
 
-  fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::convert))
-  }
+    fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
+      String::from_diff(diff).and_then(|this| Self::parse(this).map_err(identity_core::diff::Error::convert))
+    }
 
-  fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
-    self.to_string().into_diff()
+    fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
+      self.to_string().into_diff()
+    }
   }
 }
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::ops::Deref;
-use url::Url;
+use identity_core::common::Url;
 
 use crate::error::Error;
 use crate::error::Result;
