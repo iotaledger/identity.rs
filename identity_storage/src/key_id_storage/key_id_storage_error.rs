@@ -3,11 +3,11 @@
 
 use std::fmt::Display;
 
-use crate::StorageError;
-use crate::StorageErrorKind;
+use identity_core::common::ErrorCause;
+use identity_core::common::SingleStructError;
 
 /// Error type for key id storage operations.
-pub type KeyIdStorageError = StorageError<KeyIdStorageErrorKind>;
+pub type KeyIdStorageError = SingleStructError<KeyIdStorageErrorKind>;
 
 /// The cause of the failed key id storage operation.
 #[derive(Debug, Clone)]
@@ -39,13 +39,13 @@ pub enum KeyIdStorageErrorKind {
 
   /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
   ///
-  /// When using this variant one may want to attach additional context to the corresponding [`StorageError`]. See
-  /// [`KeyStorageError::with_custom_message`](KeyIdStorageError::with_custom_message()) and
-  /// [`KeyStorageError::with_source`](KeyIdStorageError::with_source()).
+  /// When using this variant one may want to attach additional context to the corresponding [`KeyIdStorageError`]. See
+  /// [`KeyIdStorageError::with_custom_message`](KeyIdStorageError::with_custom_message()) and
+  /// [`KeyIdStorageError::with_source`](KeyIdStorageError::with_source()).
   Unspecified,
 }
 
-impl StorageErrorKind for KeyIdStorageErrorKind {
+impl ErrorCause for KeyIdStorageErrorKind {
   fn description(&self) -> &str {
     match self {
       Self::KeyIdAlreadyExists => "Key id already exists in storage",

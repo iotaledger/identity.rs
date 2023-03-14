@@ -61,8 +61,8 @@ impl MethodDigest {
 
 #[cfg(test)]
 mod test {
+  use crate::key_id_storage::KeyIdStorageError;
   use crate::key_id_storage::KeyIdStorageErrorKind;
-  use crate::StorageError;
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
@@ -118,25 +118,25 @@ mod test {
   pub fn invalid_unpack() {
     let packed: Vec<u8> = vec![1, 255, 212, 82, 63, 57, 19, 134, 193];
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
-    let _expected_error = StorageError::new(KeyIdStorageErrorKind::SerializationError);
+    let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);
     assert!(matches!(method_digest_unpacked, _expected_error));
 
     // Vec size > 9.
     let packed: Vec<u8> = vec![1, 255, 212, 82, 63, 57, 19, 134, 193, 200];
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
-    let _expected_error = StorageError::new(KeyIdStorageErrorKind::SerializationError);
+    let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);
     assert!(matches!(method_digest_unpacked, _expected_error));
 
     // Vec size < 9.
     let packed: Vec<u8> = vec![1, 255, 212, 82, 63, 57, 19, 134];
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
-    let _expected_error = StorageError::new(KeyIdStorageErrorKind::SerializationError);
+    let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);
     assert!(matches!(method_digest_unpacked, _expected_error));
 
     // Vec size 0;
     let packed: Vec<u8> = vec![];
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
-    let _expected_error = StorageError::new(KeyIdStorageErrorKind::SerializationError);
+    let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);
     assert!(matches!(method_digest_unpacked, _expected_error));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
@@ -6,21 +6,24 @@ use std::error::Error;
 use std::fmt::Debug;
 use std::fmt::Display;
 
-/// The error type for key storage operations.
+/// A container implementing the [`std::error::Error`] trait.
 ///
-/// Instances always carry a corresponding [`StorageErrorKind`] and may be extended with custom error messages and
+/// Instances always carry a corresponding [`ErrorCause`] and may be extended with custom error messages and
 /// source.
+///
+/// This type is mainly designed to accommodate for the [single struct error design pattern](https://nrc.github.io/error-docs/error-design/error-type-design.html#single-struct-style).
 #[derive(Debug)]
-pub struct StorageError<T: StorageErrorKind> {
+pub struct SingleStructError<T: ErrorCause> {
   repr: Repr<T>,
 }
 
-/// Error types that can happen during storage operations.
-pub trait StorageErrorKind: Display + Debug {
+/// The cause of an error which does not necessarily implement the [`std::error::Error`] trait.  
+pub trait ErrorCause: Display + Debug {
+  /// Describes the cause of an error as a string slice.
   fn description(&self) -> &str;
 }
 
-impl<T: StorageErrorKind> Display for StorageError<T> {
+impl<T: ErrorCause> Display for SingleStructError<T> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self.repr {
       Repr::Simple(ref cause) => write!(f, "{}", cause.description()),
@@ -33,7 +36,7 @@ impl<T: StorageErrorKind> Display for StorageError<T> {
   }
 }
 
-impl<T: StorageErrorKind> Error for StorageError<T> {
+impl<T: ErrorCause> Error for SingleStructError<T> {
   fn source(&self) -> Option<&(dyn Error + 'static)> {
     self.extensive().and_then(|err| {
       err
@@ -45,25 +48,25 @@ impl<T: StorageErrorKind> Error for StorageError<T> {
 }
 
 #[derive(Debug)]
-struct Extensive<T: StorageErrorKind> {
+struct Extensive<T: ErrorCause> {
   cause: T,
   source: Option<Box<dyn Error + Send + Sync + 'static>>,
   message: Option<Cow<'static, str>>,
 }
 
 #[derive(Debug)]
-enum Repr<T: StorageErrorKind> {
+enum Repr<T: ErrorCause> {
   Simple(T),
   Extensive(Box<Extensive<T>>),
 }
 
-impl<T: StorageErrorKind> From<T> for StorageError<T> {
+impl<T: ErrorCause> From<T> for SingleStructError<T> {
   fn from(cause: T) -> Self {
     Self::new(cause)
   }
 }
 
-impl<T: StorageErrorKind> From<Box<Extensive<T>>> for StorageError<T> {
+impl<T: ErrorCause> From<Box<Extensive<T>>> for SingleStructError<T> {
   fn from(extensive: Box<Extensive<T>>) -> Self {
     Self {
       repr: Repr::Extensive(extensive),
@@ -71,15 +74,15 @@ impl<T: StorageErrorKind> From<Box<Extensive<T>>> for StorageError<T> {
   }
 }
 
-impl<T: StorageErrorKind> StorageError<T> {
-  /// Constructs a new [`StorageError`].  
+impl<T: ErrorCause> SingleStructError<T> {
+  /// Constructs a new [`SingleStructError`].  
   pub fn new(cause: T) -> Self {
     Self {
       repr: Repr::Simple(cause),
     }
   }
 
-  /// Returns a reference to corresponding [`StorageErrorKind`] of this error.
+  /// Returns a reference to the corresponding [`ErrorCause`] of this error.
   pub fn kind(&self) -> &T {
     match self.repr {
       Repr::Simple(ref cause) => cause,
@@ -87,7 +90,7 @@ impl<T: StorageErrorKind> StorageError<T> {
     }
   }
 
-  /// Converts this error into the corresponding [`StorageErrorKind`] of this error.
+  /// Converts this error into the corresponding [`ErrorCause`] of this error.
   pub fn into_kind(self) -> T {
     match self.repr {
       Repr::Simple(cause) => cause,
@@ -95,7 +98,7 @@ impl<T: StorageErrorKind> StorageError<T> {
     }
   }
 
-  /// Returns a reference to the custom message of the [`StorageError`] if it was set.
+  /// Returns a reference to the custom message of the [`SingleStructError`] if it was set.
   pub fn custom_message(&self) -> Option<&str> {
     self
       .extensive()
@@ -104,7 +107,7 @@ impl<T: StorageErrorKind> StorageError<T> {
       .next()
   }
 
-  /// Returns a reference to the attached source of the [`StorageError`] if it was set.
+  /// Returns a reference to the attached source of the [`SingleStructError`] if it was set.
   pub fn source_ref(&self) -> Option<&(dyn Error + Send + Sync + 'static)> {
     self.extensive().and_then(|extensive| extensive.source.as_deref())
   }
@@ -132,7 +135,7 @@ impl<T: StorageErrorKind> StorageError<T> {
     }
   }
 
-  /// Updates the `source` of the [`StorageError`].
+  /// Updates the `source` of the [`SingleStructError`].
   pub fn with_source(self, source: impl Into<Box<dyn Error + Send + Sync + 'static>>) -> Self {
     self._with_source(source.into())
   }
@@ -143,7 +146,7 @@ impl<T: StorageErrorKind> StorageError<T> {
     Self::from(extensive)
   }
 
-  /// Updates the custom message of the [`StorageError`].
+  /// Updates the custom message of the [`SingleStructError`].
   pub fn with_custom_message(self, message: impl Into<Cow<'static, str>>) -> Self {
     self._with_custom_message(message.into())
   }

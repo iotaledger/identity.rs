@@ -3,11 +3,11 @@
 
 use std::fmt::Display;
 
-use crate::error::StorageError;
-use crate::error::StorageErrorKind;
+use identity_core::common::ErrorCause;
+use identity_core::common::SingleStructError;
 
 /// Error type for key storage operations.
-pub type KeyStorageError = StorageError<KeyStorageErrorKind>;
+pub type KeyStorageError = SingleStructError<KeyStorageErrorKind>;
 
 /// The cause of the failed key storage operation.
 #[derive(Debug, Clone)]
@@ -53,7 +53,7 @@ pub enum KeyStorageErrorKind {
   Unspecified,
 }
 
-impl StorageErrorKind for KeyStorageErrorKind {
+impl ErrorCause for KeyStorageErrorKind {
   fn description(&self) -> &str {
     match self {
       Self::UnsupportedKeyType => "key generation failed: the provided multikey schema is not supported",
