@@ -3,11 +3,10 @@
 
 use std::fmt::Display;
 
-use crate::StorageError;
-use crate::StorageErrorKind;
+use identity_core::common::SingleStructError;
 
 /// Error type for key id storage operations.
-pub type KeyIdStorageError = StorageError<KeyIdStorageErrorKind>;
+pub type KeyIdStorageError = SingleStructError<KeyIdStorageErrorKind>;
 
 /// The cause of the failed key id storage operation.
 #[derive(Debug, Clone)]
@@ -39,17 +38,17 @@ pub enum KeyIdStorageErrorKind {
 
   /// Indicates that something went wrong, but it is unclear whether the reason matches any of the other variants.
   ///
-  /// When using this variant one may want to attach additional context to the corresponding [`StorageError`]. See
-  /// [`KeyStorageError::with_custom_message`](KeyIdStorageError::with_custom_message()) and
-  /// [`KeyStorageError::with_source`](KeyIdStorageError::with_source()).
+  /// When using this variant one may want to attach additional context to the corresponding [`KeyIdStorageError`]. See
+  /// [`KeyIdStorageError::with_custom_message`](KeyIdStorageError::with_custom_message()) and
+  /// [`KeyIdStorageError::with_source`](KeyIdStorageError::with_source()).
   Unspecified,
 }
 
-impl StorageErrorKind for KeyIdStorageErrorKind {
-  fn description(&self) -> &str {
+impl KeyIdStorageErrorKind {
+  pub const fn as_str(&self) -> &str {
     match self {
       Self::KeyIdAlreadyExists => "Key id already exists in storage",
-      Self::KeyIdNotFound => "key id not found",
+      Self::KeyIdNotFound => "key id not found in storage",
       Self::Unavailable => "key id storage unavailable",
       Self::Unauthenticated => "authentication with the key id storage failed",
       Self::Unspecified => "key storage operation failed",
@@ -59,8 +58,14 @@ impl StorageErrorKind for KeyIdStorageErrorKind {
   }
 }
 
+impl AsRef<str> for KeyIdStorageErrorKind {
+  fn as_ref(&self) -> &str {
+    self.as_str()
+  }
+}
+
 impl Display for KeyIdStorageErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.description())
+    write!(f, "{}", self.as_str())
   }
 }

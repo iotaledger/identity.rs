@@ -14,6 +14,7 @@ pub use self::ordered_set::OrderedSet;
 pub use self::timestamp::Duration;
 pub use self::timestamp::Timestamp;
 pub use self::url::Url;
+pub use single_struct_error::*;
 
 mod context;
 mod fragment;
@@ -22,5 +23,6 @@ mod object;
 mod one_or_many;
 mod one_or_set;
 mod ordered_set;
+mod single_struct_error;
 mod timestamp;
 mod url;

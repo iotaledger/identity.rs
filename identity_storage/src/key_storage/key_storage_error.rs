@@ -3,11 +3,10 @@
 
 use std::fmt::Display;
 
-use crate::error::StorageError;
-use crate::error::StorageErrorKind;
+use identity_core::common::SingleStructError;
 
 /// Error type for key storage operations.
-pub type KeyStorageError = StorageError<KeyStorageErrorKind>;
+pub type KeyStorageError = SingleStructError<KeyStorageErrorKind>;
 
 /// The cause of the failed key storage operation.
 #[derive(Debug, Clone)]
@@ -53,13 +52,13 @@ pub enum KeyStorageErrorKind {
   Unspecified,
 }
 
-impl StorageErrorKind for KeyStorageErrorKind {
-  fn description(&self) -> &str {
+impl KeyStorageErrorKind {
+  pub const fn as_str(&self) -> &str {
     match self {
       Self::UnsupportedKeyType => "key generation failed: the provided multikey schema is not supported",
       Self::KeyAlgorithmMismatch => "the key type cannot be used with the algorithm",
       Self::UnsupportedSignatureAlgorithm => "signing algorithm parsing failed",
-      Self::KeyNotFound => "key not found",
+      Self::KeyNotFound => "key not found in storage",
       Self::Unavailable => "key storage unavailable",
       Self::Unauthenticated => "authentication with the key storage failed",
       Self::Unspecified => "key storage operation failed",
@@ -68,9 +67,14 @@ impl StorageErrorKind for KeyStorageErrorKind {
     }
   }
 }
+impl AsRef<str> for KeyStorageErrorKind {
+  fn as_ref(&self) -> &str {
+    self.as_str()
+  }
+}
 
 impl Display for KeyStorageErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.description())
+    write!(f, "{}", self.as_str())
   }
 }
