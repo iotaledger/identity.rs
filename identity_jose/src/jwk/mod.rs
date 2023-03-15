@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! JSON Web Keys ([JWK](https://tools.ietf.org/html/rfc7517))
-
 mod curve;
+#[cfg(feature = "diff")]
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
+pub mod diff;
 mod key;
 mod key_operation;
 mod key_params;

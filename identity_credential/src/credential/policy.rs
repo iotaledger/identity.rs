@@ -36,7 +36,7 @@ impl Policy {
   }
 
   /// Creates a new `Policy` instance with the given `id`.
-  pub fn with_id<T, U>(types: T, id: Url) -> Self
+  pub fn with_id<T>(types: T, id: Url) -> Self
   where
     T: Into<OneOrMany<String>>,
   {
@@ -48,7 +48,7 @@ impl Policy {
   }
 
   /// Creates a new `Policy` instance with the given `properties`.
-  pub fn with_properties<T, U>(types: T, properties: Object) -> Self
+  pub fn with_properties<T>(types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
   {
@@ -60,7 +60,7 @@ impl Policy {
   }
 
   /// Creates a new `Policy` instance with the given `id` and `properties`.
-  pub fn with_id_and_properties<T, U, V>(types: T, id: Url, properties: Object) -> Self
+  pub fn with_id_and_properties<T>(types: T, id: Url, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
   {

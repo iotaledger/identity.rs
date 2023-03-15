@@ -9,6 +9,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::common::ArrayString;
 use crate::error::WasmResult;
+use core::ops::Deref;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen(js_name = Jwk, inspectable)]
@@ -77,7 +78,12 @@ impl WasmJwk {
   /// Returns the value of the X.509 URL property (x5u).
   #[wasm_bindgen]
   pub fn x5u(&self) -> Option<String> {
-    self.0.x5u().map(AsRef::<str>::as_ref).map(ToOwned::to_owned)
+    self
+      .0
+      .x5u()
+      .map(Deref::deref)
+      .map(AsRef::<str>::as_ref)
+      .map(ToOwned::to_owned)
   }
 
   /// Returns the value of the X.509 certificate chain property (x5c).
