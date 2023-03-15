@@ -4,43 +4,7 @@
 use std::fmt::Display;
 
 /// Error type for a failed jws signature verification. See [`JwsSignatureVerifier`](super::JwsSignatureVerifier).
-#[derive(Debug, thiserror::Error)]
-#[error("jws signature verification failed: {kind}")]
-pub struct SignatureVerificationError {
-  kind: SignatureVerificationErrorKind,
-  #[source]
-  source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
-}
-
-impl SignatureVerificationError {
-  /// Constructs a new [`SignatureVerificationError`].
-  pub fn new(cause: SignatureVerificationErrorKind) -> Self {
-    Self {
-      kind: cause,
-      source: None,
-    }
-  }
-
-  /// Returns the cause of the [`SignatureVerificationError`].
-  pub fn kind(&self) -> &SignatureVerificationErrorKind {
-    &self.kind
-  }
-  /// Updates the `source` of the [`SignatureVerificationError`].
-  pub fn with_source(self, source: impl Into<Box<dyn std::error::Error + Send + Sync + 'static>>) -> Self {
-    self._with_source(source.into())
-  }
-
-  fn _with_source(mut self, source: Box<dyn std::error::Error + Send + Sync + 'static>) -> Self {
-    self.source = Some(source);
-    self
-  }
-}
-
-impl From<SignatureVerificationErrorKind> for SignatureVerificationError {
-  fn from(value: SignatureVerificationErrorKind) -> Self {
-    Self::new(value)
-  }
-}
+pub type SignatureVerificationError = identity_core::common::SingleStructError<SignatureVerificationErrorKind>;
 
 /// The cause of a failed jws signature verification.
 #[derive(Debug)]
