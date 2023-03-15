@@ -8,13 +8,13 @@ use std::fmt::Display;
 
 /// A container implementing the [`std::error::Error`] trait.
 ///
-/// Instances always carry a corresponding `kind` of type `T` and may be extended with custom error
-/// messages, source and recovery data.
+/// Instances always carry a corresponding `kind` of type `T` and may be extended with a custom error
+/// message and source.
 ///
 /// This type is mainly designed to accommodate for the [single struct error design pattern](https://nrc.github.io/error-docs/error-design/error-type-design.html#single-struct-style).
 ///
 /// When used in a specialized context it is recommended to use a type alias (i.e. `type MyError =
-/// SingleStructError<MyErrorKind>` or `type MyError = SingleStructError<MyErrorKind, MyRecoveryData>`).
+/// SingleStructError<MyErrorKind>`).
 #[derive(Debug)]
 pub struct SingleStructError<T: Debug + Display> {
   repr: Repr<T>,
