@@ -14,6 +14,8 @@ description = "Abstractions over storage for cryptographic keys used in DID Docu
 [dependencies]
 async-trait = { version = "0.1.64", default-features = false }
 identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = ["credential", "presentation"] }
+identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 identity_jose = { version = "=0.7.0-alpha.6", path = "../identity_jose", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default_features = false }
 iota-crypto = { version = "0.15", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }

@@ -4,5 +4,6 @@
 pub mod error;
 pub mod key_id_storage;
 pub mod key_storage;
+pub mod storage;
 
 pub use error::*;
