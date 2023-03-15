@@ -3,7 +3,6 @@
 
 use std::fmt::Display;
 
-use identity_core::common::ErrorCause;
 use identity_core::common::SingleStructError;
 
 /// Error type for key id storage operations.
@@ -45,8 +44,8 @@ pub enum KeyIdStorageErrorKind {
   Unspecified,
 }
 
-impl ErrorCause for KeyIdStorageErrorKind {
-  fn description(&self) -> &str {
+impl KeyIdStorageErrorKind {
+  pub const fn as_str(&self) -> &str {
     match self {
       Self::KeyIdAlreadyExists => "Key id already exists in storage",
       Self::KeyIdNotFound => "key id not found",
@@ -59,8 +58,14 @@ impl ErrorCause for KeyIdStorageErrorKind {
   }
 }
 
+impl AsRef<str> for KeyIdStorageErrorKind {
+  fn as_ref(&self) -> &str {
+    self.as_str()
+  }
+}
+
 impl Display for KeyIdStorageErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.description())
+    write!(f, "{}", self.as_str())
   }
 }

@@ -3,7 +3,6 @@
 
 use std::fmt::Display;
 
-use identity_core::common::ErrorCause;
 use identity_core::common::SingleStructError;
 
 /// Error type for key storage operations.
@@ -53,8 +52,8 @@ pub enum KeyStorageErrorKind {
   Unspecified,
 }
 
-impl ErrorCause for KeyStorageErrorKind {
-  fn description(&self) -> &str {
+impl KeyStorageErrorKind {
+  pub const fn as_str(&self) -> &str {
     match self {
       Self::UnsupportedKeyType => "key generation failed: the provided multikey schema is not supported",
       Self::KeyAlgorithmMismatch => "the key type cannot be used with the algorithm",
@@ -68,9 +67,14 @@ impl ErrorCause for KeyStorageErrorKind {
     }
   }
 }
+impl AsRef<str> for KeyStorageErrorKind {
+  fn as_ref(&self) -> &str {
+    self.as_str()
+  }
+}
 
 impl Display for KeyStorageErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.description())
+    write!(f, "{}", self.as_str())
   }
 }
