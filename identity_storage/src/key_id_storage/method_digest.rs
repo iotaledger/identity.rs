@@ -1,11 +1,35 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_verification::MethodData;
 use identity_verification::VerificationMethod;
 use seahash::SeaHasher;
+use std::fmt::Display;
 use std::hash::Hasher;
 
 use super::KeyIdStorageError;
+
+/// Error that may occur when constructing a [`MethodDigest`].
+pub type MethodDigestConstructionError = identity_core::common::SingleStructError<MethodDigestConstructionErrorKind>;
+#[derive(Debug)]
+
+/// Characterization of the underlying cause of a [`MethodDigestConstructionError`].
+pub enum MethodDigestConstructionErrorKind {
+  // Todo: Do we need this variant? It should be impossible to construct a VerificationMethod without a fragment.
+  MissingIdFragment,
+  DataEncodingFailure,
+  DataDecodingFailure,
+}
+impl Display for MethodDigestConstructionErrorKind {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str("method digest construction failure: ")?;
+    match self {
+      MethodDigestConstructionErrorKind::MissingIdFragment => f.write_str("missing id fragment"),
+      MethodDigestConstructionErrorKind::DataDecodingFailure => f.write_str("data decoding failure"),
+      MethodDigestConstructionErrorKind::DataEncodingFailure => f.write_str("data encoding failure"),
+    }
+  }
+}
 
 /// Unique identifier of a [`VerificationMethod`].
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -18,16 +42,31 @@ pub struct MethodDigest {
 
 impl MethodDigest {
   /// Creates a new [`MethodDigest`].
-  pub fn new(verification_method: &VerificationMethod) -> identity_verification::Result<Self> {
+  pub fn new(verification_method: &VerificationMethod) -> Result<Self, MethodDigestConstructionError> {
+    use MethodDigestConstructionErrorKind::*;
     let mut hasher: SeaHasher = SeaHasher::new();
-    let fragment: &str = verification_method
-      .id()
-      .fragment()
-      .ok_or(identity_verification::Error::MissingIdFragment)?;
+    // Digest is a function of method fragment and verification data
+    let fragment: &str = verification_method.id().fragment().ok_or(MissingIdFragment)?;
+    let method_data: &MethodData = verification_method.data();
 
-    let method_data: Vec<u8> = verification_method.data().try_decode()?;
     hasher.write(fragment.as_bytes());
-    hasher.write(&method_data);
+
+    // If the method data is a jwk we hash the thumbprint,
+    // otherwise we decode the public key and hash that.
+    match method_data {
+      MethodData::PublicKeyJwk(jwk) => hasher.write(
+        jwk
+          .thumbprint_b64()
+          .map_err(|err| MethodDigestConstructionError::new(DataEncodingFailure).with_source(err))?
+          .as_ref(),
+      ),
+      _ => hasher.write(
+        &method_data
+          .try_decode()
+          .map_err(|err| MethodDigestConstructionError::new(DataDecodingFailure).with_source(err))?,
+      ),
+    };
+
     let key_hash: u64 = hasher.finish();
     Ok(Self {
       version: 0,
