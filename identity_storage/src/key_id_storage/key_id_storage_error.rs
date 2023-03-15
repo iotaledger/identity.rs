@@ -48,7 +48,7 @@ impl KeyIdStorageErrorKind {
   pub const fn as_str(&self) -> &str {
     match self {
       Self::KeyIdAlreadyExists => "Key id already exists in storage",
-      Self::KeyIdNotFound => "key id not found",
+      Self::KeyIdNotFound => "key id not found in storage",
       Self::Unavailable => "key id storage unavailable",
       Self::Unauthenticated => "authentication with the key id storage failed",
       Self::Unspecified => "key storage operation failed",

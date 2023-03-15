@@ -58,7 +58,7 @@ impl KeyStorageErrorKind {
       Self::UnsupportedKeyType => "key generation failed: the provided multikey schema is not supported",
       Self::KeyAlgorithmMismatch => "the key type cannot be used with the algorithm",
       Self::UnsupportedSignatureAlgorithm => "signing algorithm parsing failed",
-      Self::KeyNotFound => "key not found",
+      Self::KeyNotFound => "key not found in storage",
       Self::Unavailable => "key storage unavailable",
       Self::Unauthenticated => "authentication with the key storage failed",
       Self::Unspecified => "key storage operation failed",

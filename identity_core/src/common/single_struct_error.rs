@@ -23,9 +23,9 @@ pub struct SingleStructError<T: Debug + Display, S: Debug = ()> {
 impl<T: Display + Debug, S: Debug> Display for SingleStructError<T, S> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self.repr {
-      Repr::Simple(ref cause) => write!(f, "{}", cause),
+      Repr::Simple(ref kind) => write!(f, "{}", kind),
       Repr::Extensive(ref extensive) => {
-        write!(f, "{}", &extensive.cause)?;
+        write!(f, "{}", &extensive.kind)?;
         let Some(ref message) = extensive.message else {return Ok(())};
         write!(f, " message: {}", message.as_ref())
       }
@@ -46,7 +46,7 @@ impl<T: Debug + Display, S: Debug> Error for SingleStructError<T, S> {
 
 #[derive(Debug)]
 struct Extensive<T: Debug + Display, S: Debug> {
-  cause: T,
+  kind: T,
   source: Option<Box<dyn Error + Send + Sync + 'static>>,
   message: Option<Cow<'static, str>>,
   recovery_data: Option<S>,
@@ -59,8 +59,8 @@ enum Repr<T: Debug + Display, S: Debug> {
 }
 
 impl<T: Debug + Display, S: Debug> From<T> for SingleStructError<T, S> {
-  fn from(cause: T) -> Self {
-    Self::new(cause)
+  fn from(kind: T) -> Self {
+    Self::new(kind)
   }
 }
 
@@ -74,25 +74,25 @@ impl<T: Debug + Display, S: Debug> From<Box<Extensive<T, S>>> for SingleStructEr
 
 impl<T: Debug + Display, S: Debug> SingleStructError<T, S> {
   /// Constructs a new [`SingleStructError`].  
-  pub fn new(cause: T) -> Self {
+  pub fn new(kind: T) -> Self {
     Self {
-      repr: Repr::Simple(cause),
+      repr: Repr::Simple(kind),
     }
   }
 
-  /// Returns a reference to the corresponding [`ErrorCause`] of this error.
+  /// Returns a reference to the corresponding `kind` of this error.
   pub fn kind(&self) -> &T {
     match self.repr {
       Repr::Simple(ref cause) => cause,
-      Repr::Extensive(ref extensive) => &extensive.cause,
+      Repr::Extensive(ref extensive) => &extensive.kind,
     }
   }
 
-  /// Converts this error into the corresponding [`ErrorCause`] of this error.
+  /// Converts this error into the corresponding `kind` of this error.
   pub fn into_kind(self) -> T {
     match self.repr {
       Repr::Simple(cause) => cause,
-      Repr::Extensive(extensive) => extensive.cause,
+      Repr::Extensive(extensive) => extensive.kind,
     }
   }
 
@@ -135,8 +135,8 @@ impl<T: Debug + Display, S: Debug> SingleStructError<T, S> {
   fn into_extensive(self) -> Box<Extensive<T, S>> {
     match self.repr {
       Repr::Extensive(extensive) => extensive,
-      Repr::Simple(cause) => Box::new(Extensive {
-        cause,
+      Repr::Simple(kind) => Box::new(Extensive {
+        kind,
         source: None,
         message: None,
         recovery_data: None,
