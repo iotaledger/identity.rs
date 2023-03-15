@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::key_id_storage::KeyIdStorageError;
+use crate::key_id_storage::MethodDigestConstructionError;
 use crate::key_storage::KeyStorageError;
 
 /// Errors that can occur when working with the [`JwkStorageDocumentExt`](crate::storage::JwkStorageDocumentExt) API.
@@ -19,11 +20,13 @@ pub enum JwkStorageDocumentError {
   VerificationMethodConstructionError(#[source] identity_verification::Error),
   #[error("could not produce jwt: encoding error")]
   EncodingError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+  #[error("unable to produce method digest")]
+  MethodDigestConstructionError(#[source] MethodDigestConstructionError),
   #[error("storage operation failed after altering state. Unable to undo operation(s): {message}")]
   UndoOperationFailed {
     message: String,
     source: Box<Self>,
-    undo_error: Box<Self>,
+    undo_error: Option<Box<Self>>,
   },
 }
 

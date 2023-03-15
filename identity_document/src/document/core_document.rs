@@ -452,24 +452,64 @@ impl CoreDocument {
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method(&mut self, did: &DIDUrl) -> Option<VerificationMethod> {
-    for method_ref in [
-      self.data.authentication.remove(did),
-      self.data.assertion_method.remove(did),
-      self.data.key_agreement.remove(did),
-      self.data.capability_delegation.remove(did),
-      self.data.capability_invocation.remove(did),
+    self.remove_method_get_scope(did).map(|(method, _scope)| method)
+  }
+
+  /// Removes and returns the [`VerificationMethod`] from the document. The [`MethodScope`] under which the method was
+  /// found is appended to the second position of the returned tuple.
+  ///
+  /// # Note
+  ///
+  /// All _references to the method_ found in the document will be removed.
+  /// This includes cases where the reference is to a method contained in another DID document.
+  pub fn remove_method_get_scope(&mut self, did: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+    for (method_ref, scope) in [
+      self.data.authentication.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::Authentication),
+        )
+      }),
+      self.data.assertion_method.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod),
+        )
+      }),
+      self.data.key_agreement.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement),
+        )
+      }),
+      self.data.capability_delegation.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation),
+        )
+      }),
+      self.data.capability_invocation.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation),
+        )
+      }),
     ]
     .into_iter()
     .flatten()
     {
-      if let MethodRef::Embed(embedded_method) = method_ref {
+      if let (MethodRef::Embed(embedded_method), scope) = (method_ref, scope) {
         // embedded methods cannot be referenced, or be in the set of general purpose verification methods hence the
         // search is complete
-        return Some(embedded_method);
+        return Some((embedded_method, scope));
       }
     }
 
-    self.data.verification_method.remove(did)
+    self
+      .data
+      .verification_method
+      .remove(did)
+      .map(|method| (method, MethodScope::VerificationMethod))
   }
 
   /// Adds a new [`Service`] to the document.
