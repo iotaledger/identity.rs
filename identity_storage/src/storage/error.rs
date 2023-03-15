@@ -23,7 +23,7 @@ pub enum JwkStorageDocumentError {
   UndoOperationFailed {
     message: String,
     source: Box<Self>,
-    undo_errors: Vec<Self>,
+    undo_error: Box<Self>,
   },
 }
 

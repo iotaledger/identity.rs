@@ -97,7 +97,7 @@ impl JwkStorageDocumentExt for CoreDocument {
       {
         Ok(method) => method,
         Err(source) => {
-          return Err(undo_key_generation(storage, &key_id, source).await);
+          return Err(try_undo_key_generation(storage, &key_id, source).await);
         }
       }
     };
@@ -108,7 +108,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     if let Err(error) =
       CoreDocument::insert_method(&mut self, method, scope).map_err(|_| JwkStorageDocumentError::FragmentAlreadyExists)
     {
-      return Err(undo_key_generation(storage, &key_id, error).await);
+      return Err(try_undo_key_generation(storage, &key_id, error).await);
     };
 
     if let Err(error) = <I as KeyIdStorage>::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
@@ -117,7 +117,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     {
       // Remove method from document
       let _ = self.remove_method(&method_id);
-      return Err(undo_key_generation(storage, &key_id, error).await);
+      return Err(try_undo_key_generation(storage, &key_id, error).await);
     }
 
     Ok(())
@@ -163,7 +163,10 @@ impl JwkStorageDocumentExt for CoreDocument {
   }
 }
 
-async fn undo_key_generation<K, I>(
+/// Attempt to revert key generation if this succeeds the original `source_error` is returned,
+/// otherwise [`JwkStorageDocumentError::UndoOperationFailed`] is returned with the `source_error` attached as
+/// `source`.
+async fn try_undo_key_generation<K, I>(
   storage: &Storage<K, I>,
   key_id: &KeyId,
   source_error: JwkStorageDocumentError,
@@ -177,7 +180,7 @@ where
     return JwkStorageDocumentError::UndoOperationFailed {
       message: format!("unable to delete stray key with id: {}", &key_id),
       source: Box::new(source_error),
-      undo_errors: vec![JwkStorageDocumentError::KeyStorageError(err)],
+      undo_error: Box::new(JwkStorageDocumentError::KeyStorageError(err)),
     };
   } else {
     return source_error;
