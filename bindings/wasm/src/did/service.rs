@@ -71,8 +71,8 @@ impl WasmService {
   }
 }
 
-impl_wasm_json!(WasmService, Service);
 impl_wasm_clone!(WasmService, Service);
+impl_wasm_json!(WasmService, Service);
 
 impl From<Service> for WasmService {
   fn from(service: Service) -> Self {
