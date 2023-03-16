@@ -1,5 +1,4 @@
 export {};
-
 const assert = require("assert");
 import { EdCurve, IJwkParams, Jwk, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
 
