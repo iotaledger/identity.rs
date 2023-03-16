@@ -16,6 +16,12 @@ pub enum JwkStorageDocumentError {
   FragmentAlreadyExists,
   #[error("method not found")]
   MethodNotFound,
+  #[error("invalid method data format: expected publicKeyJwk")]
+  NotPublicKeyJwk,
+  #[error("invalid JWS algorithm")]
+  InvalidJwsAlgorithm,
+  #[error("cannot create jws: unable to produce kid header")]
+  MissingKid,
   #[error("method generation failed: unable to create a valid verification method")]
   VerificationMethodConstructionError(#[source] identity_verification::Error),
   #[error("could not produce jwt: encoding error")]
@@ -33,7 +39,7 @@ pub enum JwkStorageDocumentError {
 #[cfg(test)]
 mod tests {
   use super::JwkStorageDocumentError;
-  fn is_send_sync<T: Send + Sync + 'static>(input: T) {}
+  fn is_send_sync<T: Send + Sync + 'static>(_input: T) {}
 
   #[test]
   fn error_is_send_sync() {

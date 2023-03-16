@@ -15,7 +15,6 @@ use super::key_gen::JwkGenOutput;
 /// Result of key storage operations.
 pub type KeyStorageResult<T> = Result<T, KeyStorageError>;
 
-/* TODO: Don't think this is necessary unless we need dyn JwkStorage.
 #[cfg(not(feature = "send-sync-storage"))]
 mod storage_sub_trait {
   pub trait StorageSendSyncMaybe {}
@@ -27,12 +26,11 @@ mod storage_sub_trait {
   pub trait StorageSendSyncMaybe: Send + Sync {}
   impl<S: Send + Sync + super::JwkStorage> StorageSendSyncMaybe for S {}
 }
-*/
 
 /// Secure storage for cryptographic keys represented as JWKs.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-pub trait JwkStorage {
+pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Generate a new key represented as a JSON Web Key.
   ///
   /// It's recommend that the implementer exposes constants for the supported [`KeyType`].
@@ -44,7 +42,7 @@ pub trait JwkStorage {
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId>;
 
   /// Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>>;
+  async fn sign(&self, key_id: &KeyId, data: Vec<u8>, alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>>;
 
   /// Returns the public key identified by `key_id` as a JSON Web Key.
   async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk>;

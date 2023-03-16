@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 mod error;
 mod jwk_storage_document_ext;
+mod signature_options;
 
 pub use error::*;
 pub use jwk_storage_document_ext::*;
+pub use signature_options::*;
 
 pub struct Storage<K, I> {
   key_storage: K,

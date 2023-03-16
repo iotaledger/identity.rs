@@ -4,6 +4,7 @@
 use crate::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::KeyIdStorageResult;
 use crate::key_id_storage::MethodDigest;
+use crate::key_storage;
 use crate::key_storage::JwkGenOutput;
 use crate::key_storage::JwkStorage;
 use crate::key_storage::KeyId;
@@ -11,6 +12,7 @@ use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
 
 use super::JwkStorageDocumentError as Error;
+use super::JwkStorageDocumentSignatureOptions;
 use super::Storage;
 
 use async_trait::async_trait;
@@ -18,7 +20,12 @@ use async_trait::async_trait;
 // use identity_credential::presentation::Presentation;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
+use identity_jose::jws::Encoder;
 use identity_jose::jws::JwsAlgorithm;
+use identity_jose::jws::JwsFormat;
+use identity_jose::jws::JwsHeader;
+use identity_jose::jws::Recipient;
+use identity_verification::MethodData;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 // use serde::Serialize;
@@ -52,7 +59,13 @@ pub trait JwkStorageDocumentExt {
     K: JwkStorage,
     I: KeyIdStorage;
 
-  async fn sign_bytes<K, I>(&self, storage: &Storage<K, I>, fragment: &str, data: Vec<u8>) -> StorageResult<String>
+  async fn sign_bytes<K, I>(
+    &self,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    payload: Vec<u8>,
+    options: &JwkStorageDocumentSignatureOptions,
+  ) -> StorageResult<String>
   where
     K: JwkStorage,
     I: KeyIdStorage;
@@ -214,12 +227,96 @@ impl JwkStorageDocumentExt for CoreDocument {
     }
   }
 
-  async fn sign_bytes<K, I>(&self, storage: &Storage<K, I>, fragment: &str, data: Vec<u8>) -> StorageResult<String>
+  async fn sign_bytes<K, I>(
+    &self,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    payload: Vec<u8>,
+    options: &JwkStorageDocumentSignatureOptions,
+  ) -> StorageResult<String>
   where
     K: JwkStorage,
     I: KeyIdStorage,
   {
-    todo!()
+    // Obtain the method corresponding to the given fragment.
+    let method: &VerificationMethod = self.resolve_method(fragment, None).ok_or(Error::MethodNotFound)?;
+    let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
+      return Err(Error::NotPublicKeyJwk)
+    };
+    // create JWS header in accordance with options
+    let header: JwsHeader = {
+      let mut header = JwsHeader::new();
+      let alg: JwsAlgorithm = jwk
+        .alg()
+        .unwrap_or("")
+        .parse()
+        .map_err(|_| Error::InvalidJwsAlgorithm)?;
+      header.set_alg(alg);
+
+      // Either take kid from the method's JWK or use the methods id
+      // depending on options.
+      if options.kid_from_jwk {
+        header.set_kid(jwk.kid().ok_or(Error::MissingKid)?.to_owned())
+      } else {
+        header.set_kid(method.id().to_string())
+      };
+
+      if options.attach_jwk {
+        header.set_jwk(jwk.clone())
+      };
+
+      if let Some(b64) = options.b64 {
+        header.set_b64(b64)
+      };
+
+      if let Some(typ) = &options.typ {
+        header.set_typ(typ.clone())
+      };
+
+      if let Some(cty) = &options.cty {
+        header.set_cty(cty.clone())
+      };
+
+      if let Some(crit) = &options.crit {
+        header.set_crit(crit.iter().cloned())
+      };
+
+      if let Some(url) = &options.url {
+        header.set_url(url.clone())
+      };
+
+      if let Some(nonce) = &options.nonce {
+        header.set_nonce(nonce.clone())
+      };
+      header
+    };
+
+    let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
+    let key_id = <I as KeyIdStorage>::get_key_id(&storage.key_id_storage(), &method_digest)
+      .await
+      .map_err(Error::KeyIdStorageError)?;
+
+    let encoder: Encoder = Encoder::new()
+      .recipient(Recipient::new().protected(&header))
+      .format(JwsFormat::Compact)
+      .detached(options.detached_payload);
+
+    let key_storage: &K = storage.key_storage();
+
+    let sign_fn = |protected_header: Option<JwsHeader>, _unprotected_header: Option<JwsHeader>, message: Vec<u8>| async {
+      let alg: JwsAlgorithm = protected_header
+        .expect("protected header should have been set")
+        .alg()
+        .expect("the alg value should have been set");
+      <K as JwkStorage>::sign(&key_storage, &key_id, message, alg)
+        .await
+        .map(identity_jose::jwu::encode_b64)
+    };
+
+    encoder
+      .encode_compact(&sign_fn, &payload)
+      .await
+      .map_err(|error| Error::EncodingError(error.into()))
   }
 }
 

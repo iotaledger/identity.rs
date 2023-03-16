@@ -125,6 +125,18 @@ impl<'a> Encoder<'a> {
       .await
   }
 
+  pub async fn encode_compact<FUN, FUT, ERR>(&self, sign_fn: &FUN, claims: &[u8]) -> Result<String>
+  where
+    FUN: FnOnce(Option<EncoderProtectedHeader>, Option<EncoderUnprotectedHeader>, EncoderMessage) -> FUT
+      + 'static
+      + Send
+      + Sync,
+    FUT: Future<Output = std::result::Result<EncoderSignature, ERR>> + Send,
+    ERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  {
+    todo!()
+  }
+
   /// Encode the given `claims` into a JWS.
   ///
   /// The `sign_fn` closure is called to create a signature for every recipient.
@@ -191,7 +203,7 @@ impl<'a> Encoder<'a> {
         })
       }
       _ => {
-        unreachable!()
+        unreachable!("an error should have been returned because multiple recipients is only permitted with the general JWS JSON serialization format")
       }
     }
   }

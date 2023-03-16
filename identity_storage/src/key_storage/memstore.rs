@@ -113,16 +113,19 @@ impl JwkStorage for JwkMemStore {
     Ok(key_id)
   }
 
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>> {
+  async fn sign(&self, key_id: &KeyId, data: Vec<u8>, alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
     let jwk: &Jwk = jwk_store
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-    let alg: JwsAlgorithm =
-      JwsAlgorithm::from_str(jwk.alg().expect("we should only store Jwks that have an `alg` set"))
-        .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm).with_source(err))?;
+    let jwk_alg = JwsAlgorithm::from_str(jwk.alg().expect("we should only store Jwks that have an `alg` set"))
+      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm).with_source(err))?;
+
+    if jwk_alg != alg {
+      return Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm));
+    };
 
     // Note: Because we check for key type and algorithm compatiblity in generate/insert, these errors are impossible.
     let signature: Vec<u8> = match alg {
