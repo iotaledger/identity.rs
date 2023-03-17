@@ -11,10 +11,10 @@ pub use self::object::Value;
 pub use self::one_or_many::OneOrMany;
 pub use self::one_or_set::OneOrSet;
 pub use self::ordered_set::OrderedSet;
+pub use self::single_struct_error::*;
 pub use self::timestamp::Duration;
 pub use self::timestamp::Timestamp;
 pub use self::url::Url;
-pub use single_struct_error::*;
 
 mod context;
 mod fragment;
