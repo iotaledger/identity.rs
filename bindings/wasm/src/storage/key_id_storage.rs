@@ -17,13 +17,13 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "KeyIdStorage")]
   pub type WasmKeyIdStorage;
 
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = insertKeyId)]
   pub fn insert_key_id(this: &WasmKeyIdStorage, method_digest: WasmMethodDigest, key_id: String) -> Promise;
 
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = getKeyId)]
   pub fn get_key_id(this: &WasmKeyIdStorage, method_digest: WasmMethodDigest) -> PromiseString;
 
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = deleteKeyId)]
   pub fn delete_key_id(this: &WasmKeyIdStorage, method_digest: WasmMethodDigest) -> Promise;
 }
 
@@ -31,7 +31,7 @@ extern "C" {
 impl KeyIdStorage for WasmKeyIdStorage {
   async fn insert_key_id(&self, method_digest: MethodDigest, key_id: KeyId) -> KeyIdStorageResult<()> {
     let promise: Promise = Promise::resolve(&WasmKeyIdStorage::insert_key_id(
-      &self,
+      self,
       WasmMethodDigest(method_digest),
       key_id.clone().into(),
     ));
@@ -40,7 +40,7 @@ impl KeyIdStorage for WasmKeyIdStorage {
   }
   async fn get_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<KeyId> {
     let promise: Promise = Promise::resolve(&WasmKeyIdStorage::get_key_id(
-      &self,
+      self,
       WasmMethodDigest(method_digest.clone()),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -49,7 +49,7 @@ impl KeyIdStorage for WasmKeyIdStorage {
 
   async fn delete_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<()> {
     let promise: Promise = Promise::resolve(&WasmKeyIdStorage::delete_key_id(
-      &self,
+      self,
       WasmMethodDigest(method_digest.clone()),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
