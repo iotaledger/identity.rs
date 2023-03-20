@@ -7,11 +7,11 @@
 //! JWT/JWS perspective. See `identity_jose/examples/jws_encoding_decoding.rs` for a complete example of how to encode
 //! and then decode a JWS.
 mod algorithm;
-// mod encoding;
 mod charset;
 mod custom_verification;
 mod decoder;
 mod encoder;
+mod encoding;
 mod format;
 mod header;
 mod recipient;
