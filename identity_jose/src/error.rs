@@ -39,4 +39,6 @@ pub enum Error {
   MissingHeader(&'static str),
   #[error("missing alg in protected header")]
   ProtectedHeaderWithoutAlg,
+  #[error("unprotected header in compact jws serialization")]
+  UnprotectedHeaderInCompactJwsSerialization,
 }

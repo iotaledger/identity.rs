@@ -28,7 +28,7 @@ impl CharSet {
   /// required to only contain URL-safe characters.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7797#section-5.2)
-  pub fn validate(&self, data: &[u8]) -> Result<()> {
+  pub fn validate<'data>(&self, data: &'data [u8]) -> Result<&'data str> {
     let payload: &str = from_utf8(data).map_err(|_| Error::InvalidContent("invalid UTF-8"))?;
 
     if payload.contains('.') {
@@ -40,7 +40,7 @@ impl CharSet {
       return Err(Error::InvalidContent("invalid character(s)"));
     }
 
-    Ok(())
+    Ok(payload)
   }
 
   fn __validate(&self, data: &str) -> bool {
