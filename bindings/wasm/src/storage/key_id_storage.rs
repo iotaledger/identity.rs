@@ -9,7 +9,7 @@ use identity_iota::storage::key_id_storage::KeyIdStorageResult;
 use identity_iota::storage::key_id_storage::MethodDigest;
 use identity_iota::storage::key_storage::KeyId;
 use js_sys::Promise;
-use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
 #[wasm_bindgen]
@@ -38,6 +38,7 @@ impl KeyIdStorage for WasmKeyIdStorage {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
+
   async fn get_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<KeyId> {
     let promise: Promise = Promise::resolve(&WasmKeyIdStorage::get_key_id(
       self,

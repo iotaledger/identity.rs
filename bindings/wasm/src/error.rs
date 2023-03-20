@@ -194,10 +194,19 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   }
 }
 
-impl<T: Debug + Display> From<identity_iota::core::SingleStructError<T>> for WasmError<'_> {
-  fn from(error: identity_iota::core::SingleStructError<T>) -> Self {
+impl From<identity_iota::core::SingleStructError<KeyStorageErrorKind>> for WasmError<'_> {
+  fn from(error: identity_iota::core::SingleStructError<KeyStorageErrorKind>) -> Self {
     Self {
-      name: Cow::Borrowed("StorageError"),
+      name: Cow::Borrowed("KeyStorageError"),
+      message: Cow::Owned(format!("{}", error)),
+    }
+  }
+}
+
+impl From<identity_iota::core::SingleStructError<KeyIdStorageErrorKind>> for WasmError<'_> {
+  fn from(error: identity_iota::core::SingleStructError<KeyIdStorageErrorKind>) -> Self {
+    Self {
+      name: Cow::Borrowed("KeyIdStorageError"),
       message: Cow::Owned(format!("{}", error)),
     }
   }

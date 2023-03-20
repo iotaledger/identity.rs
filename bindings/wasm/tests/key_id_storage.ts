@@ -14,6 +14,7 @@ describe("Method digest", () => {
         let methodDigest = new MethodDigest(verificationMethod);
 
         let packed = methodDigest.pack();
+        // Packed bytes must be consistent between Rust and Wasm, see Rust tests for `MethodDigest`.
         let packedExpected = new Uint8Array([0, 74, 60, 10, 199, 76, 205, 180, 133]);
         assert.deepStrictEqual(packed, packedExpected);
     });

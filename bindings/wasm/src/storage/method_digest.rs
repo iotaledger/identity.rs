@@ -9,14 +9,14 @@ use crate::did::WasmVerificationMethod;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[wasm_bindgen(js_name = MethodDigest, inspectable)]
-pub struct WasmMethodDigest(pub(crate) MethodDigest);
-
 /// Unique identifier of a [`VerificationMethod`].
 ///
 /// NOTE:
 /// This class does not have a JSON representation,
 /// use the methods `pack` and `unpack` instead.
+#[wasm_bindgen(js_name = MethodDigest, inspectable)]
+pub struct WasmMethodDigest(pub(crate) MethodDigest);
+
 #[wasm_bindgen(js_class = MethodDigest)]
 impl WasmMethodDigest {
   #[wasm_bindgen(constructor)]
@@ -38,4 +38,5 @@ impl WasmMethodDigest {
     Ok(Self(MethodDigest::unpack(bytes).wasm_result()?))
   }
 }
+
 impl_wasm_clone!(WasmMethodDigest, MethodDigest);
