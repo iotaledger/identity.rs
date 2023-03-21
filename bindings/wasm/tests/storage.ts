@@ -18,15 +18,15 @@ import {
 describe("#memstore", function() {
     it("should work", async () => {
         const testData = Uint8Array.from([0xff, 0xee, 0xdd, 0xcc]);
-        const memstore = new MemStore();
+        const memstore = new JwkMemStore();
 
-        let genOutput = await memstore.generate(MemStore.ed25519KeyType(), JwsAlgorithm.EdDSA);
+        let genOutput = await memstore.generate(JwkMemStore.ed25519KeyType(), JwsAlgorithm.EdDSA);
         const keyId = genOutput.keyId();
         const jwk = genOutput.jwk();
         assert.ok(genOutput.jwk());
         assert.ok(keyId);
 
-        const signature = await memstore.sign(keyId, testData);
+        const signature = await memstore.sign(keyId, testData, jwk.toPublic());
         assert.deepStrictEqual(signature.length, Ed25519.SIGNATURE_LENGTH());
 
         const publicJwk = await memstore.public(keyId);
@@ -68,7 +68,7 @@ describe("#memstore", function() {
     });
 });
 
-export class MemStore implements JwkStorage {
+export class JwkMemStore implements JwkStorage {
     /** The map from key identifiers to Jwks. */
     private _keys: Map<string, Jwk>;
 
@@ -82,7 +82,7 @@ export class MemStore implements JwkStorage {
     }
 
     public async generate(keyType: string, algorithm: JwsAlgorithm): Promise<JwkGenOutput> {
-        if (keyType !== MemStore.ed25519KeyType()) {
+        if (keyType !== JwkMemStore.ed25519KeyType()) {
             throw new Error(`unsupported key type ${keyType}`);
         }
 
@@ -100,7 +100,15 @@ export class MemStore implements JwkStorage {
         return new JwkGenOutput(keyId, jwk);
     }
 
-    public async sign(keyId: string, data: Uint8Array): Promise<Uint8Array> {
+    public async sign(keyId: string, data: Uint8Array, publicKey: Jwk): Promise<Uint8Array> {
+        if (publicKey.alg() !== JwsAlgorithm.EdDSA) {
+            throw new Error("unsupported JWS algorithm");
+        } else {
+            if (publicKey.paramsOkp()?.crv !== (EdCurve.Ed25519 as string)) {
+                throw new Error("unsupported Okp parameter");
+            }
+        }
+
         const jwk = this._keys.get(keyId);
 
         if (jwk) {

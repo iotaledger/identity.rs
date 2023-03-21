@@ -7,7 +7,7 @@ use crate::common::PromiseUint8Array;
 use crate::common::PromiseVoid;
 use crate::error::JsValueResult;
 use crate::jose::WasmJwk;
-use crate::jose::WasmJwsAlgorithm;
+// use crate::jose::WasmJwsAlgorithm;
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
 use identity_iota::storage::key_storage::KeyId;
@@ -43,7 +43,7 @@ extern "C" {
   pub fn insert(this: &WasmJwkStorage, jwk: WasmJwk) -> PromiseString;
 
   #[wasm_bindgen(method)]
-  pub fn sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>, alg: WasmJwsAlgorithm) -> PromiseUint8Array;
+  pub fn sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>, public_key: WasmJwk) -> PromiseUint8Array;
 
   #[wasm_bindgen(method)]
   pub fn delete(this: &WasmJwkStorage, key_id: String) -> PromiseVoid;
@@ -66,12 +66,16 @@ impl JwkStorage for WasmJwkStorage {
     result.into()
   }
 
-  async fn sign(&self, key_id: &KeyId, data: &[u8], alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(self, key_id.clone().into(), data.to_owned()));
+  async fn sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(
+      self,
+      key_id.clone().into(),
+      data.to_owned(),
+      WasmJwk(public_key.clone()),
+    ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.to_key_storage_error().map(uint8array_to_bytes)?
   }
-
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
     let promise: Promise = Promise::resolve(&WasmJwkStorage::delete(self, key_id.clone().into()));
@@ -98,8 +102,8 @@ interface JwkStorage {
    * 
    * All private key components of the `jwk` must be set. */
   insert: (jwk: Jwk) => Promise<string>;
-  /** Sign the provided `data` using the private key identified by `keyId` with the specified `algorithm`. */
-  sign: (keyId: string, data: Uint8Array) => Promise<Uint8Array>;
+  /** Sign the provided `data` using the private key identified by `keyId` according to the requirements of the given `public_key` corresponding to `keyId`. */
+  sign: (keyId: string, data: Uint8Array, publicKey: Jwk) => Promise<Uint8Array>;
   /** Returns the public key identified by `keyId` as a JSON Web Key. */
   public: (keyId: string) => Promise<Jwk>;
   /** Deletes the key identified by `keyId`.
