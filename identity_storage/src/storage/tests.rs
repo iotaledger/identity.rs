@@ -138,3 +138,71 @@ async fn purging() {
   assert_eq!(storage.key_id_storage().count().await, 0);
   assert_eq!(storage.key_storage().count().await, 0);
 }
+
+#[cfg(feature = "iota-document")]
+mod iota_document_tests {
+  // Write a single test for the IotaDocument case just to check that it works
+  use super::*;
+  use identity_did::DIDUrl;
+  use identity_did::DID;
+  use identity_iota_core::IotaDocument;
+  #[tokio::test]
+  async fn iota_document_document_jwk_storage_extension() {
+    const DOC_JSON: &str = r#"
+    {
+      "doc": {
+        "id": "did:iota:rms:0x7591a0bc872e3a4ab66228d65773961a7a95d2299ec8464331c80fcd86b35f38",
+        "controller": "did:iota:rms:0xfbaaa919b51112d51a8f18b1500d98f0b2e91d793bc5b27fd5ab04cb1b806343"
+      },
+      "meta": {
+        "created": "2023-01-25T15:48:09Z",
+        "updated": "2023-01-25T15:48:09Z",
+        "governorAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu",
+        "stateControllerAddress": "rms1pra642gek5g394g63uvtz5qdnrct96ga0yautvnl6k4sfjcmsp35xv6nagu"
+      }
+    }
+    "#;
+    let mut iota_document: IotaDocument = IotaDocument::from_json(DOC_JSON).unwrap();
+    let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+    let fragment = "#key-1";
+    // Generate method
+    let _kid = iota_document
+      .generate_method(
+        &storage,
+        JwkMemStore::ED25519_KEY_TYPE,
+        JwsAlgorithm::EdDSA,
+        Some(fragment),
+        MethodScope::VerificationMethod,
+      )
+      .await
+      .unwrap();
+
+    // Extract public key from generated method
+    let public_key: &Jwk = iota_document
+      .resolve_method(fragment, Some(MethodScope::VerificationMethod))
+      .unwrap()
+      .data()
+      .public_key_jwk()
+      .unwrap();
+
+    // Sign the test string
+    let jws = iota_document
+      .sign_bytes(&storage, fragment, b"test", &JwkStorageDocumentSignatureOptions::new())
+      .await
+      .unwrap();
+
+    // Verify the JWS
+    assert!(Decoder::new()
+      .decode_compact_serialization(jws.as_bytes(), None)
+      .and_then(|validation_item| validation_item.verify(&EdDSAJwsSignatureVerifier::default(), public_key))
+      .is_ok());
+
+    // Remove the method from the document
+    let method_id: DIDUrl = iota_document.id().to_url().join(fragment).unwrap();
+    assert!(iota_document.purge_method(&storage, &method_id).await.is_ok());
+    assert!(iota_document.resolve_method(method_id, None).is_none());
+    // The storage should now be empty
+    assert_eq!(storage.key_id_storage().count().await, 0);
+    assert_eq!(storage.key_storage().count().await, 0);
+  }
+}

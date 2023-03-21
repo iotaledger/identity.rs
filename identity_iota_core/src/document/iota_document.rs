@@ -233,9 +233,15 @@ impl IotaDocument {
   ///
   /// # Errors
   ///
-  /// Returns an error if the method does not exist.
+  /// Returns None if the method does not exist.
   pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
     self.core_document_mut().remove_method(did_url)
+  }
+
+  /// Similar to [`Self::remove_method`](Self::remove_method()), but appends the scope where the method was found
+  /// to the second position of the returned tuple.  
+  pub fn remove_method_get_scope(&mut self, did_url: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+    self.core_document_mut().remove_method_get_scope(did_url)
   }
 
   /// Attaches the relationship to the given method, if the method exists.

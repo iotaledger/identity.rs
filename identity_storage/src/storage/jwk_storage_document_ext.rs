@@ -30,7 +30,7 @@ pub type StorageResult<T> = Result<T, Error>;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-pub trait JwkStorageDocumentExt {
+pub trait JwkStorageDocumentExt: private::Sealed {
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
   /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
   // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage`.
@@ -68,10 +68,24 @@ pub trait JwkStorageDocumentExt {
     I: KeyIdStorage;
 }
 
-macro_rules! generate_method {
+mod private {
+  pub trait Sealed {}
+  impl Sealed for identity_document::document::CoreDocument {}
+  #[cfg(feature = "iota-document")]
+  impl Sealed for identity_iota_core::IotaDocument {}
+}
+
+// ====================================================================================================================
+// Implementation
+// ====================================================================================================================
+
+// We want to implement this trait both for CoreDocument and IotaDocument, but the methods that take `&mut self` cannot
+// be implemented in terms of &mut CoreDocument for IotaDocument. To work around this limitation we use macros to avoid
+// copious amounts of repetition.
+macro_rules! generate_method_for_document_type {
   ($t:ty, $name:ident) => {
-    async fn $name<K,I>(
-      &mut t,
+    async fn $name<K, I>(
+      document: &mut $t,
       storage: &Storage<K, I>,
       key_type: KeyType,
       alg: JwsAlgorithm,
@@ -81,8 +95,140 @@ macro_rules! generate_method {
     where
       K: JwkStorage,
       I: KeyIdStorage,
-  }
+    {
+      let JwkGenOutput { key_id, jwk } = <K as JwkStorage>::generate(&storage.key_storage(), key_type, alg)
+        .await
+        .map_err(Error::KeyStorageError)?;
+      let kid = jwk.kid().map(ToOwned::to_owned);
+
+      // Produce a new verification method containing the generated JWK. If this operation fails we handle the error
+      // by attempting to revert key generation before returning an error.
+      let method: VerificationMethod = {
+        match VerificationMethod::new_from_jwk(document.id().clone(), jwk, fragment)
+          .map_err(Error::VerificationMethodConstructionError)
+        {
+          Ok(method) => method,
+          Err(source) => {
+            return Err(try_undo_key_generation(storage, &key_id, source).await);
+          }
+        }
+      };
+
+      // Extract data from method before inserting it into the DID document.
+      let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
+      let method_id: DIDUrl = method.id().clone();
+
+      // Insert method into document and handle error upon failure.
+      if let Err(error) = document
+        .insert_method(method, scope)
+        .map_err(|_| Error::FragmentAlreadyExists)
+      {
+        return Err(try_undo_key_generation(storage, &key_id, error).await);
+      };
+
+      // Insert the generated `KeyId` into storage under the computed method digest and handle the error if the
+      // operation fails.
+      if let Err(error) = <I as KeyIdStorage>::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
+        .await
+        .map_err(Error::KeyIdStorageError)
+      {
+        // Remove the method from the document as it can no longer be used.
+        let _ = document.remove_method(&method_id);
+        return Err(try_undo_key_generation(storage, &key_id, error).await);
+      }
+
+      Ok(kid)
+    }
+  };
 }
+
+macro_rules! purge_method_for_document_type {
+  ($t:ty, $name:ident) => {
+    async fn $name<K, I>(document: &mut $t, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+    {
+      let (method, scope) = document.remove_method_get_scope(id).ok_or(Error::MethodNotFound)?;
+
+      // Obtain method digest and handle error if this operation fails.
+      let method_digest: MethodDigest = match MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError) {
+        Ok(digest) => digest,
+        Err(error) => {
+          // Revert state by reinserting the method before returning the error.
+          let _ = document.insert_method(method, scope);
+          return Err(error);
+        }
+      };
+
+      // Obtain key id and handle error upon failure.
+      let key_id: KeyId = match <I as KeyIdStorage>::get_key_id(&storage.key_id_storage(), &method_digest)
+        .await
+        .map_err(Error::KeyIdStorageError)
+      {
+        Ok(key_id) => key_id,
+        Err(error) => {
+          // Reinsert method before returning.
+          let _ = document.insert_method(method, scope);
+          return Err(error);
+        }
+      };
+
+      // Delete key and key id concurrently.
+      let key_deletion_fut = <K as JwkStorage>::delete(&storage.key_storage(), &key_id);
+      let key_id_deletion_fut = <I as KeyIdStorage>::delete_key_id(&storage.key_id_storage(), &method_digest);
+      let (key_deletion_result, key_id_deletion_result): (KeyStorageResult<()>, KeyIdStorageResult<()>) =
+        futures::join!(key_deletion_fut, key_id_deletion_fut);
+      // Check for any errors that may have occurred. Unfortunately this is somewhat involved.
+      match (key_deletion_result, key_id_deletion_result) {
+        (Ok(_), Ok(_)) => Ok(()),
+        (Ok(_), Err(key_id_deletion_error)) => {
+          // Cannot attempt to revert this operation as the JwkStorage may not return the same KeyId when
+          // JwkStorage::insert is called.
+          Err(Error::UndoOperationFailed {
+            message: format!(
+              "cannot undo key deletion. This results in a stray key id stored under packed method digest: {:?}",
+              &method_digest.pack()
+            ),
+            source: Box::new(Error::KeyIdStorageError(key_id_deletion_error)),
+            undo_error: None,
+          })
+        }
+        (Err(key_deletion_error), Ok(_)) => {
+          // Attempt to revert: Reinsert key id and method if possible.
+          if let Err(key_id_insertion_error) =
+            <I as KeyIdStorage>::insert_key_id(&storage.key_id_storage(), (&method_digest).clone(), key_id.clone())
+              .await
+              .map_err(Error::KeyIdStorageError)
+          {
+            Err(Error::UndoOperationFailed {
+              message: format!("cannot revert key id deletion. This results in stray key with key id: {key_id}"),
+              source: Box::new(Error::KeyStorageError(key_deletion_error)),
+              undo_error: Some(Box::new(key_id_insertion_error)),
+            })
+          } else {
+            // KeyId reinsertion succeeded. Now reinsert method.
+            let _ = document.insert_method(method, scope);
+            Err(Error::KeyStorageError(key_deletion_error))
+          }
+        }
+        (Err(_key_deletion_error), Err(key_id_deletion_error)) => {
+          // We assume this means nothing got deleted. Reinsert the method and return one of the errors (perhaps
+          // key_id_deletion_error as we really expect the key id storage to work as expected at this point).
+          let _ = document.insert_method(method, scope);
+          Err(Error::KeyIdStorageError(key_id_deletion_error))
+        }
+      }
+    }
+  };
+}
+
+// ====================================================================================================================
+// CoreDocument
+// ====================================================================================================================
+
+generate_method_for_document_type!(CoreDocument, generate_method_core_document);
+purge_method_for_document_type!(CoreDocument, purge_method_core_document);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -99,48 +245,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     K: JwkStorage,
     I: KeyIdStorage,
   {
-    let JwkGenOutput { key_id, jwk } = <K as JwkStorage>::generate(&storage.key_storage(), key_type, alg)
-      .await
-      .map_err(Error::KeyStorageError)?;
-    let kid = jwk.kid().map(ToOwned::to_owned);
-
-    // Produce a new verification method containing the generated JWK. If this operation fails we handle the error
-    // by attempting to revert key generation before returning an error.
-    let method: VerificationMethod = {
-      match VerificationMethod::new_from_jwk(self.id().clone(), jwk, fragment)
-        .map_err(Error::VerificationMethodConstructionError)
-      {
-        Ok(method) => method,
-        Err(source) => {
-          return Err(try_undo_key_generation(storage, &key_id, source).await);
-        }
-      }
-    };
-
-    // Extract data from method before inserting it into the DID document.
-    let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
-    let method_id: DIDUrl = method.id().clone();
-
-    // Insert method into document and handle error upon failure.
-    if let Err(error) = self
-      .insert_method(method, scope)
-      .map_err(|_| Error::FragmentAlreadyExists)
-    {
-      return Err(try_undo_key_generation(storage, &key_id, error).await);
-    };
-
-    // Insert the generated `KeyId` into storage under the computed method digest and handle the error if the operation
-    // fails.
-    if let Err(error) = <I as KeyIdStorage>::insert_key_id(&storage.key_id_storage(), method_digest, key_id.clone())
-      .await
-      .map_err(Error::KeyIdStorageError)
-    {
-      // Remove the method from the document as it can no longer be used.
-      let _ = self.remove_method(&method_id);
-      return Err(try_undo_key_generation(storage, &key_id, error).await);
-    }
-
-    Ok(kid)
+    generate_method_core_document(&mut self, storage, key_type, alg, fragment, scope).await
   }
 
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
@@ -148,76 +253,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     K: JwkStorage,
     I: KeyIdStorage,
   {
-    let (method, scope) = self.remove_method_get_scope(id).ok_or(Error::MethodNotFound)?;
-
-    // Obtain method digest and handle error if this operation fails.
-    let method_digest: MethodDigest = match MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError) {
-      Ok(digest) => digest,
-      Err(error) => {
-        // Revert state by reinserting the method before returning the error.
-        let _ = self.insert_method(method, scope);
-        return Err(error);
-      }
-    };
-
-    // Obtain key id and handle error upon failure.
-    let key_id: KeyId = match <I as KeyIdStorage>::get_key_id(&storage.key_id_storage(), &method_digest)
-      .await
-      .map_err(Error::KeyIdStorageError)
-    {
-      Ok(key_id) => key_id,
-      Err(error) => {
-        // Reinsert method before returning.
-        let _ = self.insert_method(method, scope);
-        return Err(error);
-      }
-    };
-
-    // Delete key and key id concurrently.
-    let key_deletion_fut = <K as JwkStorage>::delete(&storage.key_storage(), &key_id);
-    let key_id_deletion_fut = <I as KeyIdStorage>::delete_key_id(&storage.key_id_storage(), &method_digest);
-    let (key_deletion_result, key_id_deletion_result): (KeyStorageResult<()>, KeyIdStorageResult<()>) =
-      futures::join!(key_deletion_fut, key_id_deletion_fut);
-    // Check for any errors that may have occurred. Unfortunately this is somewhat involved.
-    match (key_deletion_result, key_id_deletion_result) {
-      (Ok(_), Ok(_)) => Ok(()),
-      (Ok(_), Err(key_id_deletion_error)) => {
-        // Cannot attempt to revert this operation as the JwkStorage may not return the same KeyId when
-        // JwkStorage::insert is called.
-        Err(Error::UndoOperationFailed {
-          message: format!(
-            "cannot undo key deletion. This results in a stray key id stored under packed method digest: {:?}",
-            &method_digest.pack()
-          ),
-          source: Box::new(Error::KeyIdStorageError(key_id_deletion_error)),
-          undo_error: None,
-        })
-      }
-      (Err(key_deletion_error), Ok(_)) => {
-        // Attempt to revert: Reinsert key id and method if possible.
-        if let Err(key_id_insertion_error) =
-          <I as KeyIdStorage>::insert_key_id(&storage.key_id_storage(), (&method_digest).clone(), key_id.clone())
-            .await
-            .map_err(Error::KeyIdStorageError)
-        {
-          Err(Error::UndoOperationFailed {
-            message: format!("cannot revert key id deletion. This results in stray key with key id: {key_id}"),
-            source: Box::new(Error::KeyStorageError(key_deletion_error)),
-            undo_error: Some(Box::new(key_id_insertion_error)),
-          })
-        } else {
-          // KeyId reinsertion succeeded. Now reinsert method.
-          let _ = self.insert_method(method, scope);
-          Err(Error::KeyStorageError(key_deletion_error))
-        }
-      }
-      (Err(_key_deletion_error), Err(key_id_deletion_error)) => {
-        // We assume this means nothing got deleted. Reinsert the method and return one of the errors (perhaps
-        // key_id_deletion_error as we really expect the key id storage to work as expected at this point).
-        let _ = self.insert_method(method, scope);
-        Err(Error::KeyIdStorageError(key_id_deletion_error))
-      }
-    }
+    purge_method_core_document(&mut self, storage, id).await
   }
 
   async fn sign_bytes<K, I>(
@@ -328,11 +364,16 @@ where
   }
 }
 
+// ====================================================================================================================
+// IotaDocument
+// ====================================================================================================================
 #[cfg(feature = "iota-document")]
 mod iota_document {
   use super::*;
   use identity_iota_core::IotaDocument;
-  /*
+  generate_method_for_document_type!(IotaDocument, generate_method_iota_document);
+  purge_method_for_document_type!(IotaDocument, purge_method_iota_document);
+
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
   impl JwkStorageDocumentExt for IotaDocument {
@@ -344,9 +385,36 @@ mod iota_document {
       fragment: Option<&str>,
       scope: MethodScope,
     ) -> StorageResult<Option<String>>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
     {
+      generate_method_iota_document(&mut self, storage, key_type, alg, fragment, scope).await
+    }
 
+    async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+    {
+      purge_method_iota_document(&mut self, storage, id).await
+    }
+
+    async fn sign_bytes<K, I>(
+      &self,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      payload: &[u8],
+      options: &JwkStorageDocumentSignatureOptions,
+    ) -> StorageResult<String>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+    {
+      self
+        .core_document()
+        .sign_bytes(storage, fragment, payload, options)
+        .await
     }
   }
-  */
 }
