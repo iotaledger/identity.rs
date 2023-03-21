@@ -49,7 +49,7 @@ impl WasmVerificationMethod {
   /// - It is recommended that `Jwk` kid values are set to the public key fingerprint. See `Jwk::thumbprint_b64`.
   #[wasm_bindgen(js_name = newFromJwk)]
   pub fn new_from_jwk(did: &IToCoreDID, key: &WasmJwk, fragment: Option<String>) -> Result<WasmVerificationMethod> {
-    VerificationMethod::new_from_jwk(&CoreDID::from(did), key.0.clone(), fragment.as_deref())
+    VerificationMethod::new_from_jwk(CoreDID::from(did), key.0.clone(), fragment.as_deref())
       .map(Self)
       .wasm_result()
   }

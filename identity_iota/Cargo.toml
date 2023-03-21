@@ -18,7 +18,7 @@ identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-f
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=0.7.0-alpha.6", path = "../identity_iota_core", default-features = false }
 identity_resolver = { version = "=0.7.0-alpha.6", path = "../identity_resolver", default-features = false, optional = true }
-identity_storage = { version = "=0.7.0-alpha.6", path = "../identity_storage", default-features = false }
+identity_storage = { version = "=0.7.0-alpha.6", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]

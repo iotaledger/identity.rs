@@ -7,6 +7,7 @@ use crate::common::PromiseUint8Array;
 use crate::common::PromiseVoid;
 use crate::error::JsValueResult;
 use crate::jose::WasmJwk;
+use crate::jose::WasmJwsAlgorithm;
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
 use identity_iota::storage::key_storage::KeyId;
@@ -42,10 +43,7 @@ extern "C" {
   pub fn insert(this: &WasmJwkStorage, jwk: WasmJwk) -> PromiseString;
 
   #[wasm_bindgen(method)]
-  pub fn sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>) -> PromiseUint8Array;
-
-  #[wasm_bindgen(method)]
-  pub fn public(this: &WasmJwkStorage, key_id: String) -> PromiseJwk;
+  pub fn sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>, alg: WasmJwsAlgorithm) -> PromiseUint8Array;
 
   #[wasm_bindgen(method)]
   pub fn delete(this: &WasmJwkStorage, key_id: String) -> PromiseVoid;
@@ -68,17 +66,12 @@ impl JwkStorage for WasmJwkStorage {
     result.into()
   }
 
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(self, key_id.clone().into(), data));
+  async fn sign(&self, key_id: &KeyId, data: &[u8], alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>> {
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(self, key_id.clone().into(), data.to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.to_key_storage_error().map(uint8array_to_bytes)?
   }
 
-  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::public(self, key_id.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
-  }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
     let promise: Promise = Promise::resolve(&WasmJwkStorage::delete(self, key_id.clone().into()));

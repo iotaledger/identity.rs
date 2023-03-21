@@ -337,7 +337,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     }
     .map_err(|err| Error::EncodingError(err.into()))?;
 
-    let signature = <K as JwkStorage>::sign(&storage.key_storage(), &key_id, &jws_encoder.signing_input(), alg)
+    let signature = <K as JwkStorage>::sign(&storage.key_storage(), &key_id, &jws_encoder.signing_input(), &jwk)
       .await
       .map_err(Error::KeyStorageError)?;
     Ok(jws_encoder.into_jws(&signature))

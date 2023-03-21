@@ -119,24 +119,21 @@ impl JwkStorage for JwkMemStore {
     Ok(key_id)
   }
 
-  async fn sign(&self, key_id: &KeyId, data: &[u8], alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>> {
+  async fn sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
-    let jwk: &Jwk = jwk_store
-      .get(key_id)
-      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
+    // Extract the required alg from the given public key
+    let alg = public_key
+      .alg()
+      .ok_or(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+      .and_then(|alg_str| {
+        JwsAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+      })?;
 
-    let jwk_alg = JwsAlgorithm::from_str(jwk.alg().expect("we should only store Jwks that have an `alg` set"))
-      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm).with_source(err))?;
-
-    if jwk_alg != alg {
-      return Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm));
-    };
-
-    // Note: Because we check for key type and algorithm compatiblity in generate/insert, these errors are impossible.
-    let signature: Vec<u8> = match alg {
+    // Check that `kty` is `Okp` and `crv = Ed25519`.
+    match alg {
       JwsAlgorithm::EdDSA => {
-        let okp_params = jwk.try_okp_params().map_err(|err| {
+        let okp_params = public_key.try_okp_params().map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
             .with_custom_message(format!("expected a Jwk with Okp params in order to sign with {alg}"))
             .with_source(err)
@@ -149,9 +146,6 @@ impl JwkStorage for JwkMemStore {
             )),
           );
         }
-
-        let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
-        secret_key.sign(data).to_bytes().to_vec()
       }
       other => {
         return Err(
@@ -161,7 +155,12 @@ impl JwkStorage for JwkMemStore {
       }
     };
 
-    Ok(signature)
+    // Obtain the corresponding private key and sign `data`.
+    let jwk: &Jwk = jwk_store
+      .get(key_id)
+      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
+    let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
+    Ok(secret_key.sign(data).to_bytes().to_vec())
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
@@ -379,7 +378,7 @@ mod tests {
 
     let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE, JwsAlgorithm::EdDSA).await.unwrap();
 
-    let signature = store.sign(&key_id, test_msg, JwsAlgorithm::EdDSA).await.unwrap();
+    let signature = store.sign(&key_id, test_msg, &jwk.to_public()).await.unwrap();
 
     let public_key: PublicKey = expand_public_jwk(&jwk);
     let signature: Signature = Signature::from_bytes(signature.try_into().unwrap());
