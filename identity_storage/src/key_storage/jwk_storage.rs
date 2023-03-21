@@ -45,9 +45,9 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// the corresponding `public_key` (see [`Jwk::alg`](Jwk::alg()) etc.).
   ///
   /// # Note
-  /// High level methods calling this method are designed to always pass a `public_key` that corresponds
-  /// to `key_id` and additional checks for this in the `sign` implementation are normally not required. This
-  /// is however based on the expectation that the key material associated with a given [`KeyId`] is immutable.  
+  /// High level methods from this library calling this method are designed to always pass a `public_key` that
+  /// corresponds to `key_id` and additional checks for this in the `sign` implementation are normally not required.
+  /// This is however based on the expectation that the key material associated with a given [`KeyId`] is immutable.  
   async fn sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>>;
 
   /// Deletes the key identified by `key_id`.
