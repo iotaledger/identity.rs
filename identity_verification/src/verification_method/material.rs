@@ -54,6 +54,15 @@ impl MethodData {
       Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
     }
   }
+
+  /// Returns the wrapped `Jwk` if the format is [`MethodData::PublicKeyJwk`].
+  pub fn public_key_jwk(&self) -> Option<&Jwk> {
+    if let Self::PublicKeyJwk(ref jwk) = self {
+      Some(jwk)
+    } else {
+      None
+    }
+  }
 }
 
 impl Debug for MethodData {

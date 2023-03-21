@@ -21,6 +21,7 @@ pub use self::charset::*;
 pub use self::custom_verification::*;
 pub use self::decoder::*;
 pub use self::encoder::*;
+pub use self::encoding::*;
 pub use self::format::*;
 pub use self::header::*;
 pub use self::recipient::*;

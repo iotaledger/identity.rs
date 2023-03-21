@@ -42,10 +42,7 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId>;
 
   /// Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>, alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>>;
-
-  /// Returns the public key identified by `key_id` as a JSON Web Key.
-  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk>;
+  async fn sign(&self, key_id: &KeyId, data: &[u8], alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>>;
 
   /// Deletes the key identified by `key_id`.
   ///

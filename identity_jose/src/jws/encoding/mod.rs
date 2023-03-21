@@ -200,7 +200,7 @@ impl<'payload, 'unprotected> GeneralJwsEncoder<'payload, 'unprotected> {
   }
 
   pub fn add_recipient(
-    mut self,
+    self,
     recipient: Recipient<'unprotected>,
   ) -> Result<RecipientProcessingEncoder<'payload, 'unprotected>> {
     // Ensure that the b64 value is consistent across all signatures.

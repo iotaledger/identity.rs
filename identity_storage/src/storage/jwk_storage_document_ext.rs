@@ -4,7 +4,6 @@
 use crate::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::KeyIdStorageResult;
 use crate::key_id_storage::MethodDigest;
-use crate::key_storage;
 use crate::key_storage::JwkGenOutput;
 use crate::key_storage::JwkStorage;
 use crate::key_storage::KeyId;
@@ -20,11 +19,9 @@ use async_trait::async_trait;
 // use identity_credential::presentation::Presentation;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
-use identity_jose::jws::Encoder;
+use identity_jose::jws::CompactJwsEncoder;
 use identity_jose::jws::JwsAlgorithm;
-use identity_jose::jws::JwsFormat;
 use identity_jose::jws::JwsHeader;
-use identity_jose::jws::Recipient;
 use identity_verification::MethodData;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
@@ -35,7 +32,7 @@ pub type StorageResult<T> = Result<T, Error>;
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkStorageDocumentExt {
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into the DID document.
+  /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
   // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage`.
   async fn generate_method<K, I>(
     &mut self,
@@ -44,7 +41,7 @@ pub trait JwkStorageDocumentExt {
     alg: JwsAlgorithm,
     fragment: Option<&str>,
     scope: MethodScope,
-  ) -> StorageResult<()>
+  ) -> StorageResult<Option<String>>
   where
     K: JwkStorage,
     I: KeyIdStorage;
@@ -63,35 +60,28 @@ pub trait JwkStorageDocumentExt {
     &self,
     storage: &Storage<K, I>,
     fragment: &str,
-    payload: Vec<u8>,
+    payload: &[u8],
     options: &JwkStorageDocumentSignatureOptions,
   ) -> StorageResult<String>
   where
     K: JwkStorage,
     I: KeyIdStorage;
+}
 
-  /* TODO: Add and implement these methods later. This requires some more work on converting Credentials & Presentations to JWT which
-  should be addressed in a separate PR.
-
-  async fn create_presentation_jwt<K, I, T, U>(
-    &self,
-    fragment: &str,
-    presentation: &Presentation<T, U>,
-  ) -> StorageResult<String>
-  where
-    K: JwkStorage,
-    I: KeyIdStorage,
-    T: Serialize,
-    U: Serialize
-  ;
-
-  async fn create_credential_jwt<K, I, T>(&self, credential: &Credential<T>, fragment: &str) -> StorageResult<String>
-  where
-    K: JwkStorage,
-    I: KeyIdStorage,
-    T: Serialize
-  ;
-  */
+macro_rules! generate_method {
+  ($t:ty, $name:ident) => {
+    async fn $name<K,I>(
+      &mut t,
+      storage: &Storage<K, I>,
+      key_type: KeyType,
+      alg: JwsAlgorithm,
+      fragment: Option<&str>,
+      scope: MethodScope,
+    ) -> StorageResult<Option<String>>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+  }
 }
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -104,7 +94,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     alg: JwsAlgorithm,
     fragment: Option<&str>,
     scope: MethodScope,
-  ) -> StorageResult<()>
+  ) -> StorageResult<Option<String>>
   where
     K: JwkStorage,
     I: KeyIdStorage,
@@ -112,11 +102,12 @@ impl JwkStorageDocumentExt for CoreDocument {
     let JwkGenOutput { key_id, jwk } = <K as JwkStorage>::generate(&storage.key_storage(), key_type, alg)
       .await
       .map_err(Error::KeyStorageError)?;
+    let kid = jwk.kid().map(ToOwned::to_owned);
 
     // Produce a new verification method containing the generated JWK. If this operation fails we handle the error
     // by attempting to revert key generation before returning an error.
     let method: VerificationMethod = {
-      match VerificationMethod::new_from_jwk(self.id(), jwk, fragment)
+      match VerificationMethod::new_from_jwk(self.id().clone(), jwk, fragment)
         .map_err(Error::VerificationMethodConstructionError)
       {
         Ok(method) => method,
@@ -131,7 +122,9 @@ impl JwkStorageDocumentExt for CoreDocument {
     let method_id: DIDUrl = method.id().clone();
 
     // Insert method into document and handle error upon failure.
-    if let Err(error) = CoreDocument::insert_method(&mut self, method, scope).map_err(|_| Error::FragmentAlreadyExists)
+    if let Err(error) = self
+      .insert_method(method, scope)
+      .map_err(|_| Error::FragmentAlreadyExists)
     {
       return Err(try_undo_key_generation(storage, &key_id, error).await);
     };
@@ -147,7 +140,7 @@ impl JwkStorageDocumentExt for CoreDocument {
       return Err(try_undo_key_generation(storage, &key_id, error).await);
     }
 
-    Ok(())
+    Ok(kid)
   }
 
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
@@ -231,7 +224,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     &self,
     storage: &Storage<K, I>,
     fragment: &str,
-    payload: Vec<u8>,
+    payload: &[u8],
     options: &JwkStorageDocumentSignatureOptions,
   ) -> StorageResult<String>
   where
@@ -243,14 +236,17 @@ impl JwkStorageDocumentExt for CoreDocument {
     let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
       return Err(Error::NotPublicKeyJwk)
     };
+    // Extract JwsAlgorithm
+    let alg: JwsAlgorithm = jwk
+      .alg()
+      .unwrap_or("")
+      .parse()
+      .map_err(|_| Error::InvalidJwsAlgorithm)?;
+
     // create JWS header in accordance with options
     let header: JwsHeader = {
       let mut header = JwsHeader::new();
-      let alg: JwsAlgorithm = jwk
-        .alg()
-        .unwrap_or("")
-        .parse()
-        .map_err(|_| Error::InvalidJwsAlgorithm)?;
+
       header.set_alg(alg);
 
       // Either take kid from the method's JWK or use the methods id
@@ -296,27 +292,19 @@ impl JwkStorageDocumentExt for CoreDocument {
       .await
       .map_err(Error::KeyIdStorageError)?;
 
-    let encoder: Encoder = Encoder::new()
-      .recipient(Recipient::new().protected(&header))
-      .format(JwsFormat::Compact)
-      .detached(options.detached_payload);
+    let jws_encoder: CompactJwsEncoder = {
+      if options.detached_payload {
+        CompactJwsEncoder::new_detached(&payload, &header)
+      } else {
+        CompactJwsEncoder::new(&payload, &header)
+      }
+    }
+    .map_err(|err| Error::EncodingError(err.into()))?;
 
-    let key_storage: &K = storage.key_storage();
-
-    let sign_fn = |protected_header: Option<JwsHeader>, _unprotected_header: Option<JwsHeader>, message: Vec<u8>| async {
-      let alg: JwsAlgorithm = protected_header
-        .expect("protected header should have been set")
-        .alg()
-        .expect("the alg value should have been set");
-      <K as JwkStorage>::sign(&key_storage, &key_id, message, alg)
-        .await
-        .map(identity_jose::jwu::encode_b64)
-    };
-
-    encoder
-      .encode_compact(&sign_fn, &payload)
+    let signature = <K as JwkStorage>::sign(&storage.key_storage(), &key_id, &jws_encoder.signing_input(), alg)
       .await
-      .map_err(|error| Error::EncodingError(error.into()))
+      .map_err(Error::KeyStorageError)?;
+    Ok(jws_encoder.into_jws(&signature))
   }
 }
 
@@ -338,4 +326,27 @@ where
   } else {
     return source_error;
   }
+}
+
+#[cfg(feature = "iota-document")]
+mod iota_document {
+  use super::*;
+  use identity_iota_core::IotaDocument;
+  /*
+  #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+  #[cfg_attr(feature = "send-sync-storage", async_trait)]
+  impl JwkStorageDocumentExt for IotaDocument {
+    async fn generate_method<K, I>(
+      &mut self,
+      storage: &Storage<K, I>,
+      key_type: KeyType,
+      alg: JwsAlgorithm,
+      fragment: Option<&str>,
+      scope: MethodScope,
+    ) -> StorageResult<Option<String>>
+    {
+
+    }
+  }
+  */
 }

@@ -41,6 +41,11 @@ impl JwkMemStore {
       jwk_store: Shared::new(HashMap::new()),
     }
   }
+
+  /// Returns the number of items contained in the [`JwkMemStore`].
+  pub async fn count(&self) -> usize {
+    self.jwk_store.read().await.keys().count()
+  }
 }
 
 // Refer to the `JwkStorage` interface docs for high-level documentation of the individual methods.
@@ -65,7 +70,8 @@ impl JwkStorage for JwkMemStore {
 
     let mut jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
     jwk.set_alg(alg.name());
-    let public_jwk: Jwk = jwk.to_public();
+    let mut public_jwk: Jwk = jwk.to_public();
+    public_jwk.set_kid(kid.clone());
 
     let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
     jwk_store.insert(kid.clone(), jwk);
@@ -113,7 +119,7 @@ impl JwkStorage for JwkMemStore {
     Ok(key_id)
   }
 
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>, alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>> {
+  async fn sign(&self, key_id: &KeyId, data: &[u8], alg: JwsAlgorithm) -> KeyStorageResult<Vec<u8>> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
     let jwk: &Jwk = jwk_store
@@ -145,7 +151,7 @@ impl JwkStorage for JwkMemStore {
         }
 
         let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
-        secret_key.sign(&data).to_bytes().to_vec()
+        secret_key.sign(data).to_bytes().to_vec()
       }
       other => {
         return Err(
@@ -156,14 +162,6 @@ impl JwkStorage for JwkMemStore {
     };
 
     Ok(signature)
-  }
-
-  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
-    let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
-    let jwk: &Jwk = jwk_store
-      .get(key_id)
-      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
-    Ok(jwk.to_public())
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
@@ -247,6 +245,10 @@ pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_
 #[derive(Debug, Copy, Clone)]
 enum MemStoreKeyType {
   Ed25519,
+}
+
+impl JwkMemStore {
+  pub const ED25519_KEY_TYPE: KeyType = ED25519_KEY_TYPE;
 }
 
 impl MemStoreKeyType {
@@ -377,7 +379,7 @@ mod tests {
 
     let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE, JwsAlgorithm::EdDSA).await.unwrap();
 
-    let signature = store.sign(&key_id, test_msg.to_vec()).await.unwrap();
+    let signature = store.sign(&key_id, test_msg, JwsAlgorithm::EdDSA).await.unwrap();
 
     let public_key: PublicKey = expand_public_jwk(&jwk);
     let signature: Signature = Signature::from_bytes(signature.try_into().unwrap());
