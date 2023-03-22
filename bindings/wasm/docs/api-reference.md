@@ -60,7 +60,11 @@ and resolution of DID documents in Alias Outputs.</p>
 <dd><p>Supported verification method data formats.</p>
 </dd>
 <dt><a href="#MethodDigest">MethodDigest</a></dt>
-<dd></dd>
+<dd><p>Unique identifier of a [<code>VerificationMethod</code>].</p>
+<p>NOTE:
+This class does not have a JSON representation,
+use the methods <code>pack</code> and <code>unpack</code> instead.</p>
+</dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
@@ -99,6 +103,8 @@ verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
+<dt><a href="#Storage">Storage</a></dt>
+<dd></dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
@@ -158,11 +164,11 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -400,6 +406,7 @@ A method-agnostic DID Document.
         * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [._strongCountInternal()](#CoreDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
+        * [.generateMethod(storage, key_type, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -741,6 +748,19 @@ This is for internal use only. Do not rely on or call this method.
 Serializes to a plain JS representation.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+<a name="CoreDocument+generateMethod"></a>
+
+### coreDocument.generateMethod(storage, key_type, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| key_type | <code>string</code> | 
+| alg | <code>JwsAlgorithm</code> | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
+
 <a name="CoreDocument.fromJSON"></a>
 
 ### CoreDocument.fromJSON(json) ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -2944,6 +2964,12 @@ Deserializes an instance from a JSON object.
 <a name="MethodDigest"></a>
 
 ## MethodDigest
+Unique identifier of a [`VerificationMethod`].
+
+NOTE:
+This class does not have a JSON representation,
+use the methods `pack` and `unpack` instead.
+
 **Kind**: global class  
 
 * [MethodDigest](#MethodDigest)
@@ -3881,6 +3907,33 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Storage"></a>
+
+## Storage
+**Kind**: global class  
+
+* [Storage](#Storage)
+    * [new Storage(jwkStorage, keyIdStorage)](#new_Storage_new)
+    * [.keyIdStorage()](#Storage+keyIdStorage) ⇒ <code>KeyIdStorage</code>
+    * [.keyStorage()](#Storage+keyStorage) ⇒ <code>JwkStorage</code>
+
+<a name="new_Storage_new"></a>
+
+### new Storage(jwkStorage, keyIdStorage)
+
+| Param | Type |
+| --- | --- |
+| jwkStorage | <code>JwkStorage</code> | 
+| keyIdStorage | <code>KeyIdStorage</code> | 
+
+<a name="Storage+keyIdStorage"></a>
+
+### storage.keyIdStorage() ⇒ <code>KeyIdStorage</code>
+**Kind**: instance method of [<code>Storage</code>](#Storage)  
+<a name="Storage+keyStorage"></a>
+
+### storage.keyStorage() ⇒ <code>JwkStorage</code>
+**Kind**: instance method of [<code>Storage</code>](#Storage)  
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -4338,6 +4391,10 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
@@ -4345,10 +4402,6 @@ Return after the first error occurs.
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

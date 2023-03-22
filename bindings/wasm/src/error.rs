@@ -143,7 +143,7 @@ fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) 
 
 struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
-impl<'a> Display for ErrorMessage<'a, resolver::Error> {
+impl<'a, E: std::error::Error> Display for ErrorMessage<'a, E> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     error_chain_fmt(self.0, f)
   }
@@ -198,7 +198,7 @@ impl From<identity_iota::core::SingleStructError<KeyStorageErrorKind>> for WasmE
   fn from(error: identity_iota::core::SingleStructError<KeyStorageErrorKind>) -> Self {
     Self {
       name: Cow::Borrowed("KeyStorageError"),
-      message: Cow::Owned(format!("{}", error)),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
@@ -207,7 +207,25 @@ impl From<identity_iota::core::SingleStructError<KeyIdStorageErrorKind>> for Was
   fn from(error: identity_iota::core::SingleStructError<KeyIdStorageErrorKind>) -> Self {
     Self {
       name: Cow::Borrowed("KeyIdStorageError"),
-      message: Cow::Owned(format!("{}", error)),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::storage::key_id_storage::MethodDigestConstructionError> for WasmError<'_> {
+  fn from(error: identity_iota::storage::key_id_storage::MethodDigestConstructionError) -> Self {
+    Self {
+      name: Cow::Borrowed("MethodDigestConstructionError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::storage::storage::JwkStorageDocumentError> for WasmError<'_> {
+  fn from(error: identity_iota::storage::storage::JwkStorageDocumentError) -> Self {
+    Self {
+      name: Cow::Borrowed("JwkStorageDocumentExtensionError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }

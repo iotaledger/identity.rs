@@ -11,9 +11,9 @@ use super::KeyIdStorageError;
 
 /// Error that may occur when constructing a [`MethodDigest`].
 pub type MethodDigestConstructionError = identity_core::common::SingleStructError<MethodDigestConstructionErrorKind>;
-#[derive(Debug)]
 
 /// Characterization of the underlying cause of a [`MethodDigestConstructionError`].
+#[derive(Debug)]
 pub enum MethodDigestConstructionErrorKind {
   // Todo: Do we need this variant? It should be impossible to construct a VerificationMethod without a fragment.
   MissingIdFragment,

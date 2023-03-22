@@ -10,6 +10,7 @@ use crate::common::ArrayString;
 use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
+use crate::common::PromiseOptionString;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::crypto::WasmProofOptions;
@@ -22,6 +23,9 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::jose::WasmJwsAlgorithm;
+use crate::storage::WasmStorage;
+use crate::storage::WasmStorageInner;
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OneOrSet;
@@ -34,13 +38,18 @@ use identity_iota::did::CoreDID;
 use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
+use identity_iota::storage::key_storage::KeyType;
+use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodRef;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
 
+use js_sys::Promise;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
 
 pub(crate) struct CoreDocumentLock(tokio::sync::RwLock<CoreDocument>);
 
@@ -59,6 +68,10 @@ impl CoreDocumentLock {
 
   pub(crate) async fn read(&self) -> tokio::sync::RwLockReadGuard<'_, CoreDocument> {
     self.0.read().await
+  }
+
+  pub(crate) async fn write(&self) -> tokio::sync::RwLockWriteGuard<'_, CoreDocument> {
+    self.0.write().await
   }
 }
 
@@ -557,6 +570,35 @@ impl WasmCoreDocument {
       .into_serde()
       .map(|value| Self(Rc::new(CoreDocumentLock::new(value))))
       .wasm_result()
+  }
+
+  // ===========================================================================
+  // Storage
+  // ===========================================================================
+
+  #[wasm_bindgen(js_name = generateMethod)]
+  pub fn generate_method(
+    &self,
+    storage: &WasmStorage,
+    key_type: String,
+    alg: WasmJwsAlgorithm,
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseOptionString> {
+    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let scope: MethodScope = scope.0;
+    let promise: Promise = future_to_promise(async move {
+      let key_id: Option<String> = document_lock_clone
+        .write()
+        .await
+        .generate_method(&storage_clone, KeyType::from(key_type), alg, fragment.as_deref(), scope)
+        .await
+        .wasm_result()?;
+      Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+    });
+    Ok(promise.unchecked_into())
   }
 }
 

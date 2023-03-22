@@ -18,6 +18,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<string>")]
   pub type PromiseString;
 
+  #[wasm_bindgen(typescript_type = "Promise<string | null>")]
+  pub type PromiseOptionString;
+
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromiseUint8Array;
 
