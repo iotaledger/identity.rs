@@ -59,6 +59,8 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#MethodData">MethodData</a></dt>
 <dd><p>Supported verification method data formats.</p>
 </dd>
+<dt><a href="#MethodDigest">MethodDigest</a></dt>
+<dd></dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
@@ -2938,6 +2940,50 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="MethodDigest"></a>
+
+## MethodDigest
+**Kind**: global class  
+
+* [MethodDigest](#MethodDigest)
+    * [new MethodDigest(verification_method)](#new_MethodDigest_new)
+    * _instance_
+        * [.pack()](#MethodDigest+pack) ⇒ <code>Uint8Array</code>
+        * [.clone()](#MethodDigest+clone) ⇒ [<code>MethodDigest</code>](#MethodDigest)
+    * _static_
+        * [.unpack(bytes)](#MethodDigest.unpack) ⇒ [<code>MethodDigest</code>](#MethodDigest)
+
+<a name="new_MethodDigest_new"></a>
+
+### new MethodDigest(verification_method)
+
+| Param | Type |
+| --- | --- |
+| verification_method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="MethodDigest+pack"></a>
+
+### methodDigest.pack() ⇒ <code>Uint8Array</code>
+Packs `MethodDigest` into bytes.
+
+**Kind**: instance method of [<code>MethodDigest</code>](#MethodDigest)  
+<a name="MethodDigest+clone"></a>
+
+### methodDigest.clone() ⇒ [<code>MethodDigest</code>](#MethodDigest)
+Deep clones the object.
+
+**Kind**: instance method of [<code>MethodDigest</code>](#MethodDigest)  
+<a name="MethodDigest.unpack"></a>
+
+### MethodDigest.unpack(bytes) ⇒ [<code>MethodDigest</code>](#MethodDigest)
+Unpacks bytes into [`MethodDigest`].
+
+**Kind**: static method of [<code>MethodDigest</code>](#MethodDigest)  
+
+| Param | Type |
+| --- | --- |
+| bytes | <code>Uint8Array</code> | 
 
 <a name="MethodScope"></a>
 

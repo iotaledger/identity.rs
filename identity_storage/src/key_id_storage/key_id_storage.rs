@@ -15,18 +15,18 @@ pub type KeyIdStorageResult<T> = Result<T, KeyIdStorageError>;
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait KeyIdStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Insert a [`KeyId`] into the [`KeyIdStorage`] under the given [`MethodDigest`].
-  /// If an entry for `key` already exists in the storage an error must be returned
   ///
+  /// If an entry for `key` already exists in the storage an error must be returned
   /// immediately without altering the state of the storage.
-  async fn insert_key_id(&self, key: MethodDigest, value: KeyId) -> KeyIdStorageResult<()>;
+  async fn insert_key_id(&self, method_digest: MethodDigest, key_id: KeyId) -> KeyIdStorageResult<()>;
 
   /// Obtain the [`KeyId`] associated with the given [`MethodDigest`].
-  async fn get_key_id(&self, key: &MethodDigest) -> KeyIdStorageResult<KeyId>;
+  async fn get_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<KeyId>;
 
   /// Delete the [`KeyId`] associated with the given [`MethodDigest`] from the [`KeyIdStorage`].
   ///
   /// If `key` is not found in storage, an Error must be returned.
-  async fn delete_key_id(&self, key: &MethodDigest) -> KeyIdStorageResult<()>;
+  async fn delete_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<()>;
 }
 
 #[cfg(not(feature = "send-sync-storage"))]

@@ -131,6 +131,10 @@ mod test {
       value: 9634551232492878922,
     };
     assert_eq!(method_digest, method_digest_expected);
+
+    let packed: Vec<u8> = method_digest.pack();
+    let packed_expected: Vec<u8> = vec![0, 74, 60, 10, 199, 76, 205, 180, 133];
+    assert_eq!(packed, packed_expected);
   }
 
   #[test]
