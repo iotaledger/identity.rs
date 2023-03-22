@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::convert::Infallible;
 
 use identity_jose::jwk::Jwk;
+use identity_jose::jws::Decoder;
 use identity_jose::jws::JwsSignatureVerifier;
 use identity_jose::jws::Token;
 use serde::Serialize;
@@ -1053,9 +1054,8 @@ impl CoreDocument {
     signature_verifier: &T,
     options: &JwsVerificationOptions,
   ) -> Result<Token<'jws>> {
-    let decoder = &options.decoder;
     let nonce = options.nonce.as_deref();
-    let validation_item = decoder
+    let validation_item = Decoder::new_with_crits(options.crits.as_deref().unwrap_or_default())
       .decode_compact_serialization(jws.as_bytes(), None)
       .map_err(Error::JwsVerificationError)?;
 

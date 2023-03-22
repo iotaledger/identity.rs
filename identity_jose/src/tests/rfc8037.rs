@@ -57,7 +57,7 @@ async fn test_rfc8037_ed25519() {
 
     #[cfg(feature = "eddsa")]
     {
-      let decoder = Decoder::default();
+      let decoder = Decoder::new();
       let token_with_default = decoder
         .decode_compact_serialization(encoded.as_bytes(), None)
         .and_then(|decoded| decoded.verify(&EdDSAJwsSignatureVerifier::default(), &public))

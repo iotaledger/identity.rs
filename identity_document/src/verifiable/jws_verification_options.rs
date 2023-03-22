@@ -1,32 +1,22 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_jose::jws::Decoder;
 use identity_verification::MethodScope;
 
 /// Holds additional options for verifying a JWS with
 /// [`CoreDocument::verify_jws`](crate::document::CoreDocument::verify_jws()).
-#[derive(Default, Debug)]
+#[derive(Default, Debug, serde::Serialize, serde::Deserialize)]
 pub struct JwsVerificationOptions {
-  pub(crate) decoder: Decoder,
+  pub(crate) crits: Option<Vec<String>>,
   pub(crate) nonce: Option<String>,
   pub(crate) method_scope: Option<MethodScope>,
 }
 
 impl JwsVerificationOptions {
   /// Append values to the list of permitted extension parameters.
-  pub fn critical(self, value: impl Into<String>) -> Self {
-    let Self {
-      decoder,
-      nonce,
-      method_scope,
-    } = self;
-    let decoder = decoder.critical(value);
-    Self {
-      decoder,
-      nonce,
-      method_scope,
-    }
+  pub fn critical(mut self, value: impl Into<String>) -> Self {
+    self.crits.get_or_insert(Vec::new()).push(value.into());
+    self
   }
 
   /// Set the expected value for the `nonce` parameter of the protected header.
