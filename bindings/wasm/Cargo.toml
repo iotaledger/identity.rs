@@ -34,7 +34,7 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 version = "0.7.0-alpha.6"
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver"]
+features = ["client", "revocation-bitmap", "resolver", "eddsa"]
 
 [dependencies.identity_jose]
 version = "0.7.0-alpha.6"
