@@ -18,6 +18,7 @@ identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core", default
 identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
+identity_jose = { version = "=0.7.0-alpha.6", path = "../identity_jose", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
 iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls"], optional = true }
 iota-types = { version = "1.0.0-rc.6", default-features = false, features = ["block", "std"], optional = true }

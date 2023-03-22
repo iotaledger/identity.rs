@@ -7,6 +7,9 @@ use core::fmt::Formatter;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
+use identity_jose::jwk::Jwk;
+use identity_jose::jws::JwsSignatureVerifier;
+use identity_jose::jws::Token;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -31,6 +34,7 @@ use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
 use crate::verifiable::DocumentSigner;
+use crate::verifiable::JwsVerificationOptions;
 use crate::verifiable::VerifierOptions;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
@@ -1029,6 +1033,55 @@ impl TryMethod for CoreDocument {
 impl Display for CoreDocument {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
+  }
+}
+
+// =============================================================================
+// JWS verification
+// =============================================================================
+impl CoreDocument {
+  /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
+  /// [`JwsSignatureVerifier`].
+  ///
+  /// Regardless of which options are passed the following statements always apply:
+  /// - The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  ///   otherwise an error is returned.
+  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+    &self,
+    jws: &'jws str,
+    signature_verifier: &T,
+    options: &JwsVerificationOptions,
+  ) -> Result<Token<'jws>> {
+    let decoder = &options.decoder;
+    let nonce = options.nonce.as_deref();
+    let validation_item = decoder
+      .decode_compact_serialization(jws.as_bytes(), None)
+      .map_err(Error::JwsVerificationError)?;
+
+    // Validate the nonce
+    if validation_item.nonce() != nonce {
+      return Err(Error::JwsVerificationError(identity_jose::error::Error::InvalidParam(
+        "invalid nonce value",
+      )));
+    }
+
+    let kid = validation_item
+      .kid()
+      .ok_or(Error::JwsVerificationError(identity_jose::error::Error::InvalidParam(
+        "missing kid value",
+      )))?;
+
+    let public_key: &Jwk = self
+      .resolve_method(kid, options.method_scope)
+      .ok_or(Error::MethodNotFound)?
+      .data()
+      .try_public_key_jwk()
+      .map_err(Error::InvalidKeyData)?;
+
+    validation_item
+      .verify(signature_verifier, public_key)
+      .map_err(Error::JwsVerificationError)
   }
 }
 

@@ -85,6 +85,16 @@ impl<'a> JwsValidationItem<'a> {
     self.headers.protected_header()
   }
 
+  /// Returns the Nonce from the protected header if it is set.
+  pub fn nonce(&self) -> Option<&str> {
+    self.protected_header().and_then(|header| header.nonce())
+  }
+
+  /// Returns the kid from the protected header if it is set.
+  pub fn kid(&self) -> Option<&str> {
+    self.protected_header().and_then(|header| header.kid())
+  }
+
   /// Returns the decoded unprotected header if it exists.
   pub fn unprotected_header(&self) -> Option<&JwsHeader> {
     self.headers.unprotected_header()
@@ -120,6 +130,10 @@ impl<'a> JwsValidationItem<'a> {
   /// Apart from the fallible call to [`JwsSignatureVerifier::verify`] this method can also error if there is no
   /// `alg` present in the protected header (in which case the verifier cannot be called) or if the given `public_key`
   /// has a different value present in its `alg` field.
+  ///
+  /// # Note
+  /// One may want to perform other validations before calling this method, such as for instance checking the nonce
+  /// (see [`Self::nonce`](Self::nonce())).
   pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<Token<'a>>
   where
     T: JwsSignatureVerifier,

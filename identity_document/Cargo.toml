@@ -16,6 +16,7 @@ did_url = { version = "0.1", default-features = false, features = ["std", "serde
 form_urlencoded = { version = "=1.1.0" }
 identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core" }
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did" }
+identity_jose = { version = "=0.7.0-alpha.6", path = "../identity_jose", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
 indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 serde.workspace = true

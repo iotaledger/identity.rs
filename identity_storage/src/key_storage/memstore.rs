@@ -159,7 +159,7 @@ impl JwkStorage for JwkMemStore {
     let jwk: &Jwk = jwk_store
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
-    let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
+    let secret_key = ed25519::expand_secret_jwk(jwk)?;
     Ok(secret_key.sign(data).to_bytes().to_vec())
   }
 

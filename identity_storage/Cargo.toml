@@ -41,4 +41,4 @@ memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "identity_jose/eddsa"]
 send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument
 iota-document = ["dep:identity_iota_core"]
-default = ["iota-document"]
+default = ["iota-document", "memstore"]

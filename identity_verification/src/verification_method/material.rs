@@ -63,6 +63,11 @@ impl MethodData {
       None
     }
   }
+
+  /// Fallible version of [`Self::public_key_jwk`](Self::public_key_jwk()).
+  pub fn try_public_key_jwk(&self) -> Result<&Jwk> {
+    self.public_key_jwk().ok_or(Error::NotPublicKeyJwk)
+  }
 }
 
 impl Debug for MethodData {

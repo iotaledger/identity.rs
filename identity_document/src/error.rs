@@ -63,4 +63,6 @@ pub enum Error {
   BitmapDecodingError(#[source] std::io::Error),
   #[error("revocation bitmap could not be serialized or compressed")]
   BitmapEncodingError(#[source] std::io::Error),
+  #[error("jws verification failed")]
+  JwsVerificationError(#[source] identity_jose::error::Error),
 }

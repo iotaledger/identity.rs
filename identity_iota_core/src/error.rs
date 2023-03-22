@@ -52,4 +52,6 @@ pub enum Error {
   JsError(String),
   #[error("could not sign the data")]
   SigningError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+  #[error("jws signature verification failed")]
+  JwsVerificationError(#[source] identity_document::Error),
 }

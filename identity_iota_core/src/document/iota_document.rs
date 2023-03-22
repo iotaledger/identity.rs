@@ -7,6 +7,9 @@ use core::fmt::Display;
 #[cfg(feature = "client")]
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
+use identity_document::verifiable::JwsVerificationOptions;
+use identity_jose::jws::JwsSignatureVerifier;
+use identity_jose::jws::Token;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -352,6 +355,26 @@ impl IotaDocument {
     X: Serialize + GetSignature + ?Sized,
   {
     self.document.verify_data(data, options)
+  }
+
+  /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
+  /// [`JwsSignatureVerifier`].
+  ///
+  /// Regardless of which options are passed the following statements always apply:
+  /// - The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  ///   otherwise an error is returned.
+  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+    &self,
+    jws: &'jws str,
+    signature_verifier: &T,
+    options: &JwsVerificationOptions,
+  ) -> Result<Token<'jws>> {
+    // TODO: Consider flattening the error somewhat as it is not ideal to just forward the error from identity_document.
+    self
+      .core_document()
+      .verify_jws(jws, signature_verifier, options)
+      .map_err(Error::JwsVerificationError)
   }
 
   // ===========================================================================

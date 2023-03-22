@@ -285,13 +285,7 @@ impl JwkStorageDocumentExt for CoreDocument {
 
       header.set_alg(alg);
 
-      // Either take kid from the method's JWK or use the methods id
-      // depending on options.
-      if options.kid_from_jwk {
-        header.set_kid(jwk.kid().ok_or(Error::MissingKid)?.to_owned())
-      } else {
-        header.set_kid(method.id().to_string())
-      };
+      header.set_kid(method.id().to_string());
 
       if options.attach_jwk {
         header.set_jwk(jwk.clone())
@@ -328,15 +322,8 @@ impl JwkStorageDocumentExt for CoreDocument {
       .await
       .map_err(Error::KeyIdStorageError)?;
 
-    let jws_encoder: CompactJwsEncoder = {
-      if options.detached_payload {
-        CompactJwsEncoder::new_detached(&payload, &header)
-      } else {
-        CompactJwsEncoder::new(&payload, &header)
-      }
-    }
-    .map_err(|err| Error::EncodingError(err.into()))?;
-
+    let jws_encoder: CompactJwsEncoder =
+      CompactJwsEncoder::new(&payload, &header).map_err(|err| Error::EncodingError(err.into()))?;
     let signature = <K as JwkStorage>::sign(&storage.key_storage(), &key_id, &jws_encoder.signing_input(), &jwk)
       .await
       .map_err(Error::KeyStorageError)?;

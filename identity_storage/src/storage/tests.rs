@@ -3,8 +3,7 @@
 
 use identity_core::convert::FromJson;
 use identity_document::document::CoreDocument;
-use identity_jose::jwk::Jwk;
-use identity_jose::jws::Decoder;
+use identity_document::verifiable::JwsVerificationOptions;
 use identity_jose::jws::EdDSAJwsSignatureVerifier;
 use identity_jose::jws::JwsAlgorithm;
 use identity_verification::MethodRelationship;
@@ -100,16 +99,12 @@ async fn signing() {
     .await
     .unwrap();
 
-  // Decode and verify the JWS
-  let public_key: &Jwk = document
-    .resolve_method(kid.as_deref().unwrap(), Some(MethodScope::VerificationMethod))
-    .unwrap()
-    .data()
-    .public_key_jwk()
-    .unwrap();
-  assert!(Decoder::new()
-    .decode_compact_serialization(jws.as_bytes(), None)
-    .and_then(|validation_item| validation_item.verify(&EdDSAJwsSignatureVerifier::default(), public_key))
+  assert!(document
+    .verify_jws(
+      &jws,
+      &EdDSAJwsSignatureVerifier::default(),
+      &JwsVerificationOptions::default()
+    )
     .is_ok());
 }
 
@@ -145,9 +140,11 @@ mod iota_document_tests {
   use super::*;
   use identity_did::DIDUrl;
   use identity_did::DID;
+  use identity_document::verifiable::JwsVerificationOptions;
   use identity_iota_core::IotaDocument;
   #[tokio::test]
   async fn iota_document_document_jwk_storage_extension() {
+    // Construct IotaDocument from json
     const DOC_JSON: &str = r#"
     {
       "doc": {
@@ -163,6 +160,7 @@ mod iota_document_tests {
     }
     "#;
     let mut iota_document: IotaDocument = IotaDocument::from_json(DOC_JSON).unwrap();
+    // Initialize storage
     let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
     let fragment = "#key-1";
     // Generate method
@@ -177,14 +175,6 @@ mod iota_document_tests {
       .await
       .unwrap();
 
-    // Extract public key from generated method
-    let public_key: &Jwk = iota_document
-      .resolve_method(fragment, Some(MethodScope::VerificationMethod))
-      .unwrap()
-      .data()
-      .public_key_jwk()
-      .unwrap();
-
     // Sign the test string
     let jws = iota_document
       .sign_bytes(&storage, fragment, b"test", &JwkStorageDocumentSignatureOptions::new())
@@ -192,10 +182,15 @@ mod iota_document_tests {
       .unwrap();
 
     // Verify the JWS
-    assert!(Decoder::new()
-      .decode_compact_serialization(jws.as_bytes(), None)
-      .and_then(|validation_item| validation_item.verify(&EdDSAJwsSignatureVerifier::default(), public_key))
-      .is_ok());
+    let result = iota_document.verify_jws(
+      &jws,
+      &EdDSAJwsSignatureVerifier::default(),
+      &JwsVerificationOptions::default(),
+    );
+    assert!(result.is_ok());
+
+    // Check that the claims contain the expected string
+    assert!(std::str::from_utf8(&result.unwrap().claims).unwrap().contains("test"));
 
     // Remove the method from the document
     let method_id: DIDUrl = iota_document.id().to_url().join(fragment).unwrap();

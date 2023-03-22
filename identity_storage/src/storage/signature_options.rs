@@ -7,7 +7,6 @@ use identity_core::common::Url;
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
 pub struct JwkStorageDocumentSignatureOptions {
-  pub kid_from_jwk: bool,
   pub attach_jwk: bool,
   pub b64: Option<bool>,
   pub typ: Option<String>,
@@ -15,7 +14,6 @@ pub struct JwkStorageDocumentSignatureOptions {
   pub crit: Option<Vec<String>>,
   pub url: Option<Url>,
   pub nonce: Option<String>,
-  pub detached_payload: bool,
 }
 
 impl JwkStorageDocumentSignatureOptions {
@@ -25,11 +23,6 @@ impl JwkStorageDocumentSignatureOptions {
 
   pub fn attach_jwk_to_header(mut self, value: bool) -> Self {
     self.attach_jwk = value;
-    self
-  }
-
-  pub fn use_kid_from_jwk(mut self, value: bool) -> Self {
-    self.kid_from_jwk = value;
     self
   }
 
@@ -62,11 +55,6 @@ impl JwkStorageDocumentSignatureOptions {
 
   pub fn nonce(mut self, value: String) -> Self {
     self.nonce = Some(value);
-    self
-  }
-
-  pub fn detached_payload(mut self, value: bool) -> Self {
-    self.detached_payload = value;
     self
   }
 }
