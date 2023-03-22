@@ -7,10 +7,10 @@ use core::fmt::Formatter;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
-use identity_jose::jwk::Jwk;
-use identity_jose::jws::Decoder;
-use identity_jose::jws::JwsSignatureVerifier;
-use identity_jose::jws::Token;
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jws::Decoder;
+use identity_verification::jose::jws::JwsSignatureVerifier;
+use identity_verification::jose::jws::Token;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -1061,16 +1061,14 @@ impl CoreDocument {
 
     // Validate the nonce
     if validation_item.nonce() != nonce {
-      return Err(Error::JwsVerificationError(identity_jose::error::Error::InvalidParam(
-        "invalid nonce value",
-      )));
+      return Err(Error::JwsVerificationError(
+        identity_verification::jose::error::Error::InvalidParam("invalid nonce value"),
+      ));
     }
 
-    let kid = validation_item
-      .kid()
-      .ok_or(Error::JwsVerificationError(identity_jose::error::Error::InvalidParam(
-        "missing kid value",
-      )))?;
+    let kid = validation_item.kid().ok_or(Error::JwsVerificationError(
+      identity_verification::jose::error::Error::InvalidParam("missing kid value"),
+    ))?;
 
     let public_key: &Jwk = self
       .resolve_method(kid, options.method_scope)
