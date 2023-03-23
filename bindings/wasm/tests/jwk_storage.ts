@@ -149,6 +149,10 @@ export class JwkMemStore implements JwkStorage {
     public async exists(keyId: string): Promise<boolean> {
         return this._keys.has(keyId);
     }
+
+    public count(): number {
+        return this._keys.size;
+    }
 }
 
 // Encodes a Ed25519 keypair into a Jwk.

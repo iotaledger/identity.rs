@@ -11,6 +11,8 @@ use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::PromiseOptionString;
+use crate::common::PromiseString;
+use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::crypto::WasmProofOptions;
@@ -24,6 +26,7 @@ use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::jose::WasmJwsAlgorithm;
+use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
 use identity_iota::core::Object;
@@ -35,11 +38,13 @@ use identity_iota::credential::RevocationDocumentExt;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::CoreDID;
+use identity_iota::did::DIDUrl;
 use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
 use identity_iota::storage::key_storage::KeyType;
 use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodRef;
 use identity_iota::verification::MethodScope;
@@ -597,6 +602,46 @@ impl WasmCoreDocument {
         .await
         .wasm_result()?;
       Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = purgeMethod)]
+  pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let id: DIDUrl = id.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .write()
+        .await
+        .purge_method(&storage_clone, &id)
+        .await
+        .wasm_result()
+        .map(|_| JsValue::UNDEFINED)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = signString)]
+  pub fn sign_string(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseString> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
   }

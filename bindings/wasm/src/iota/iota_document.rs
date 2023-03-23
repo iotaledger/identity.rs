@@ -11,6 +11,7 @@ use identity_iota::credential::Credential;
 use identity_iota::credential::Presentation;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
+use identity_iota::did::DIDUrl;
 use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
@@ -18,12 +19,18 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
+use identity_iota::storage::key_storage::KeyType;
+use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
+use identity_jose::jws::JwsAlgorithm;
 use iota_types::block::protocol::dto::ProtocolParametersDto;
 use iota_types::block::protocol::ProtocolParameters;
+use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
 
 use crate::common::ArrayService;
 use crate::common::ArrayString;
@@ -31,6 +38,9 @@ use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
+use crate::common::PromiseOptionString;
+use crate::common::PromiseString;
+use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
@@ -52,6 +62,10 @@ use crate::iota::identity_client_ext::IAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
+use crate::jose::WasmJwsAlgorithm;
+use crate::storage::WasmJwsSignatureOptions;
+use crate::storage::WasmStorage;
+use crate::storage::WasmStorageInner;
 
 pub(crate) struct IotaDocumentLock(tokio::sync::RwLock<IotaDocument>);
 
@@ -70,6 +84,10 @@ impl IotaDocumentLock {
 
   pub(crate) async fn read(&self) -> tokio::sync::RwLockReadGuard<'_, IotaDocument> {
     self.0.read().await
+  }
+
+  pub(crate) async fn write(&self) -> tokio::sync::RwLockWriteGuard<'_, IotaDocument> {
+    self.0.write().await
   }
 }
 // =============================================================================
@@ -672,6 +690,75 @@ impl WasmIotaDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(
       self.0.blocking_read().core_document().clone(),
     )))
+  }
+
+  // ===========================================================================
+  // Storage
+  // ===========================================================================
+
+  #[wasm_bindgen(js_name = generateMethod)]
+  pub fn generate_method(
+    &self,
+    storage: &WasmStorage,
+    key_type: String,
+    alg: WasmJwsAlgorithm,
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseOptionString> {
+    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let scope: MethodScope = scope.0;
+    let promise: Promise = future_to_promise(async move {
+      let key_id: Option<String> = document_lock_clone
+        .write()
+        .await
+        .generate_method(&storage_clone, KeyType::from(key_type), alg, fragment.as_deref(), scope)
+        .await
+        .wasm_result()?;
+      Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = purgeMethod)]
+  pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let id: DIDUrl = id.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .write()
+        .await
+        .purge_method(&storage_clone, &id)
+        .await
+        .wasm_result()
+        .map(|_| JsValue::UNDEFINED)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  #[wasm_bindgen(js_name = signString)]
+  pub fn sign_string(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseString> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
   }
 }
 

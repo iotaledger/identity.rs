@@ -111,4 +111,8 @@ export class KeyIdMemStore implements KeyIdStorage {
             throw new Error("KeyId not found!");
         }
     }
+
+    public count(): number {
+        return this._keyIds.size;
+    }
 }

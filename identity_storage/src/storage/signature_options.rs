@@ -6,7 +6,9 @@ use identity_core::common::Url;
 //TODO: Add documentation to this module.
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
-pub struct JwkStorageDocumentSignatureOptions {
+#[serde(rename_all = "camelCase")]
+pub struct JwsSignatureOptions {
+  #[serde(default)]
   pub attach_jwk: bool,
   pub b64: Option<bool>,
   pub typ: Option<String>,
@@ -16,7 +18,7 @@ pub struct JwkStorageDocumentSignatureOptions {
   pub nonce: Option<String>,
 }
 
-impl JwkStorageDocumentSignatureOptions {
+impl JwsSignatureOptions {
   pub fn new() -> Self {
     Self::default()
   }

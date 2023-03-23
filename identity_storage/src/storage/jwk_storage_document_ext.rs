@@ -11,7 +11,7 @@ use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
 
 use super::JwkStorageDocumentError as Error;
-use super::JwkStorageDocumentSignatureOptions;
+use super::JwsSignatureOptions;
 use super::Storage;
 
 use async_trait::async_trait;
@@ -61,7 +61,7 @@ pub trait JwkStorageDocumentExt: private::Sealed {
     storage: &Storage<K, I>,
     fragment: &str,
     payload: &[u8],
-    options: &JwkStorageDocumentSignatureOptions,
+    options: &JwsSignatureOptions,
   ) -> StorageResult<String>
   where
     K: JwkStorage,
@@ -82,6 +82,7 @@ mod private {
 // We want to implement this trait both for CoreDocument and IotaDocument, but the methods that take `&mut self` cannot
 // be implemented in terms of &mut CoreDocument for IotaDocument. To work around this limitation we use macros to avoid
 // copious amounts of repetition.
+// NOTE: If such use of macros becomes very common it is probably better to use the duplicate crate: https://docs.rs/duplicate/latest/duplicate/
 macro_rules! generate_method_for_document_type {
   ($t:ty, $name:ident) => {
     async fn $name<K, I>(
@@ -261,7 +262,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     storage: &Storage<K, I>,
     fragment: &str,
     payload: &[u8],
-    options: &JwkStorageDocumentSignatureOptions,
+    options: &JwsSignatureOptions,
   ) -> StorageResult<String>
   where
     K: JwkStorage,
@@ -392,7 +393,7 @@ mod iota_document {
       storage: &Storage<K, I>,
       fragment: &str,
       payload: &[u8],
-      options: &JwkStorageDocumentSignatureOptions,
+      options: &JwsSignatureOptions,
     ) -> StorageResult<String>
     where
       K: JwkStorage,

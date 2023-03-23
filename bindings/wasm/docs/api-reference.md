@@ -52,6 +52,8 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
 <dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
+<dt><a href="#JwsSignatureOptions">JwsSignatureOptions</a></dt>
+<dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
@@ -164,11 +166,11 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -407,6 +409,8 @@ A method-agnostic DID Document.
         * [._strongCountInternal()](#CoreDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
         * [.generateMethod(storage, key_type, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+        * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+        * [.signString(storage, fragment, payload, options)](#CoreDocument+signString) ⇒ <code>Promise.&lt;string&gt;</code>
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -760,6 +764,28 @@ Serializes to a plain JS representation.
 | alg | <code>JwsAlgorithm</code> | 
 | fragment | <code>string</code> \| <code>undefined</code> | 
 | scope | [<code>MethodScope</code>](#MethodScope) | 
+
+<a name="CoreDocument+purgeMethod"></a>
+
+### coreDocument.purgeMethod(storage, id) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+
+<a name="CoreDocument+signString"></a>
+
+### coreDocument.signString(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| payload | <code>string</code> | 
+| options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
 
 <a name="CoreDocument.fromJSON"></a>
 
@@ -1839,6 +1865,8 @@ Deserializes an instance from a JSON object.
         * [._strongCountInternal()](#IotaDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
+        * [.generateMethod(storage, key_type, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+        * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2253,6 +2281,29 @@ Serializes to a plain JS representation.
 Transforms the `IotaDocument` to its `CoreDocument` representation.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+generateMethod"></a>
+
+### iotaDocument.generateMethod(storage, key_type, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| key_type | <code>string</code> | 
+| alg | <code>JwsAlgorithm</code> | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
+
+<a name="IotaDocument+purgeMethod"></a>
+
+### iotaDocument.purgeMethod(storage, id) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+
 <a name="IotaDocument.newWithId"></a>
 
 ### IotaDocument.newWithId(id) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2705,6 +2756,92 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="JwsSignatureOptions"></a>
+
+## JwsSignatureOptions
+**Kind**: global class  
+
+* [JwsSignatureOptions](#JwsSignatureOptions)
+    * [new JwsSignatureOptions(options)](#new_JwsSignatureOptions_new)
+    * [.setAttachJwk(value)](#JwsSignatureOptions+setAttachJwk)
+    * [.setB64(value)](#JwsSignatureOptions+setB64)
+    * [.setTyp(value)](#JwsSignatureOptions+setTyp)
+    * [.setCty(value)](#JwsSignatureOptions+setCty)
+    * [.addCrit(value)](#JwsSignatureOptions+addCrit)
+    * [.serUrl(value)](#JwsSignatureOptions+serUrl)
+    * [.setNonce(value)](#JwsSignatureOptions+setNonce)
+
+<a name="new_JwsSignatureOptions_new"></a>
+
+### new JwsSignatureOptions(options)
+
+| Param | Type |
+| --- | --- |
+| options | <code>IJwsSignatureOptions</code> \| <code>undefined</code> | 
+
+<a name="JwsSignatureOptions+setAttachJwk"></a>
+
+### jwsSignatureOptions.setAttachJwk(value)
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="JwsSignatureOptions+setB64"></a>
+
+### jwsSignatureOptions.setB64(value)
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="JwsSignatureOptions+setTyp"></a>
+
+### jwsSignatureOptions.setTyp(value)
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsSignatureOptions+setCty"></a>
+
+### jwsSignatureOptions.setCty(value)
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsSignatureOptions+addCrit"></a>
+
+### jwsSignatureOptions.addCrit(value)
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsSignatureOptions+serUrl"></a>
+
+### jwsSignatureOptions.serUrl(value)
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsSignatureOptions+setNonce"></a>
+
+### jwsSignatureOptions.setNonce(value)
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
 
 <a name="KeyPair"></a>
 
@@ -4391,10 +4528,6 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
@@ -4402,6 +4535,10 @@ Return after the first error occurs.
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

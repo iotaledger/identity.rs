@@ -43,16 +43,14 @@ pub struct MethodDigest {
 impl MethodDigest {
   /// Creates a new [`MethodDigest`].
   pub fn new(verification_method: &VerificationMethod) -> Result<Self, MethodDigestConstructionError> {
+    // Method digest version 0 formula:  SeaHash(<fragment><JWK thumbprint if JWK else decoded public key>)
     use MethodDigestConstructionErrorKind::*;
     let mut hasher: SeaHasher = SeaHasher::new();
-    // Digest is a function of method fragment and verification data
     let fragment: &str = verification_method.id().fragment().ok_or(MissingIdFragment)?;
     let method_data: &MethodData = verification_method.data();
 
     hasher.write(fragment.as_bytes());
 
-    // If the method data is a jwk we hash the thumbprint,
-    // otherwise we decode the public key and hash that.
     match method_data {
       MethodData::PublicKeyJwk(jwk) => hasher.write(
         jwk
