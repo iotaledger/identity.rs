@@ -54,6 +54,8 @@ and resolution of DID documents in Alias Outputs.</p>
 </dd>
 <dt><a href="#JwsSignatureOptions">JwsSignatureOptions</a></dt>
 <dd></dd>
+<dt><a href="#JwsVerificationOptions">JwsVerificationOptions</a></dt>
+<dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
@@ -2777,13 +2779,18 @@ Deserializes an instance from a JSON object.
 
 * [JwsSignatureOptions](#JwsSignatureOptions)
     * [new JwsSignatureOptions(options)](#new_JwsSignatureOptions_new)
-    * [.setAttachJwk(value)](#JwsSignatureOptions+setAttachJwk)
-    * [.setB64(value)](#JwsSignatureOptions+setB64)
-    * [.setTyp(value)](#JwsSignatureOptions+setTyp)
-    * [.setCty(value)](#JwsSignatureOptions+setCty)
-    * [.addCrit(value)](#JwsSignatureOptions+addCrit)
-    * [.serUrl(value)](#JwsSignatureOptions+serUrl)
-    * [.setNonce(value)](#JwsSignatureOptions+setNonce)
+    * _instance_
+        * [.setAttachJwk(value)](#JwsSignatureOptions+setAttachJwk)
+        * [.setB64(value)](#JwsSignatureOptions+setB64)
+        * [.setTyp(value)](#JwsSignatureOptions+setTyp)
+        * [.setCty(value)](#JwsSignatureOptions+setCty)
+        * [.addCrit(value)](#JwsSignatureOptions+addCrit)
+        * [.serUrl(value)](#JwsSignatureOptions+serUrl)
+        * [.setNonce(value)](#JwsSignatureOptions+setNonce)
+        * [.toJSON()](#JwsSignatureOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwsSignatureOptions+clone) ⇒ [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)
+    * _static_
+        * [.fromJSON(json)](#JwsSignatureOptions.fromJSON) ⇒ [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)
 
 <a name="new_JwsSignatureOptions_new"></a>
 
@@ -2855,6 +2862,103 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | value | <code>string</code> | 
+
+<a name="JwsSignatureOptions+toJSON"></a>
+
+### jwsSignatureOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+<a name="JwsSignatureOptions+clone"></a>
+
+### jwsSignatureOptions.clone() ⇒ [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+<a name="JwsSignatureOptions.fromJSON"></a>
+
+### JwsSignatureOptions.fromJSON(json) ⇒ [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwsVerificationOptions"></a>
+
+## JwsVerificationOptions
+**Kind**: global class  
+
+* [JwsVerificationOptions](#JwsVerificationOptions)
+    * [new JwsVerificationOptions(options)](#new_JwsVerificationOptions_new)
+    * _instance_
+        * [.setNonce(value)](#JwsVerificationOptions+setNonce)
+        * [.addCrit(value)](#JwsVerificationOptions+addCrit)
+        * [.setScope(value)](#JwsVerificationOptions+setScope)
+        * [.toJSON()](#JwsVerificationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwsVerificationOptions+clone) ⇒ [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)
+    * _static_
+        * [.fromJSON(json)](#JwsVerificationOptions.fromJSON) ⇒ [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)
+
+<a name="new_JwsVerificationOptions_new"></a>
+
+### new JwsVerificationOptions(options)
+
+| Param | Type |
+| --- | --- |
+| options | <code>IJwsVerificationOptions</code> \| <code>undefined</code> | 
+
+<a name="JwsVerificationOptions+setNonce"></a>
+
+### jwsVerificationOptions.setNonce(value)
+**Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsVerificationOptions+addCrit"></a>
+
+### jwsVerificationOptions.addCrit(value)
+**Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsVerificationOptions+setScope"></a>
+
+### jwsVerificationOptions.setScope(value)
+**Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | [<code>MethodScope</code>](#MethodScope) | 
+
+<a name="JwsVerificationOptions+toJSON"></a>
+
+### jwsVerificationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
+<a name="JwsVerificationOptions+clone"></a>
+
+### jwsVerificationOptions.clone() ⇒ [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
+<a name="JwsVerificationOptions.fromJSON"></a>
+
+### JwsVerificationOptions.fromJSON(json) ⇒ [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="KeyPair"></a>
 

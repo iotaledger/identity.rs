@@ -5,11 +5,12 @@ use identity_verification::MethodScope;
 
 /// Holds additional options for verifying a JWS with
 /// [`CoreDocument::verify_jws`](crate::document::CoreDocument::verify_jws()).
-#[derive(Default, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Default, Debug, serde::Serialize, serde::Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct JwsVerificationOptions {
-  pub(crate) crits: Option<Vec<String>>,
-  pub(crate) nonce: Option<String>,
-  pub(crate) method_scope: Option<MethodScope>,
+  pub crits: Option<Vec<String>>,
+  pub nonce: Option<String>,
+  pub method_scope: Option<MethodScope>,
 }
 
 impl JwsVerificationOptions {

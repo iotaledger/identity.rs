@@ -4,6 +4,7 @@
 use std::rc::Rc;
 
 use super::WasmCoreDID;
+use super::WasmJwsVerificationOptions;
 use crate::common::ArrayCoreMethodRef;
 use crate::common::ArrayService;
 use crate::common::ArrayString;
@@ -468,6 +469,10 @@ impl WasmCoreDocument {
   pub fn verify_data(&self, data: &JsValue, options: &WasmVerifierOptions) -> Result<bool> {
     let data: VerifiableProperties = data.into_serde().wasm_result()?;
     Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
+  }
+
+  pub fn verify_jws(&self, jws: &str, options: &WasmJwsVerificationOptions) -> Result {
+    todo!()
   }
 
   // ===========================================================================
