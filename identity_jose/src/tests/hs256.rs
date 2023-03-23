@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOct;
 use crate::jws::Encoder;
@@ -45,13 +47,13 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(verification_input: VerificationInput<'_>, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
+pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(jwk, SHA256_LEN);
 
   let mut mac: [u8; SHA256_LEN] = Default::default();
-  crypto::macs::hmac::HMAC_SHA256(verification_input.signing_input, &shared_secret, &mut mac);
+  crypto::macs::hmac::HMAC_SHA256(&verification_input.signing_input, &shared_secret, &mut mac);
 
-  if verification_input.decoded_signature == mac {
+  if verification_input.decoded_signature.deref() == mac {
     Ok(())
   } else {
     Err(SignatureVerificationErrorKind::InvalidSignature.into())

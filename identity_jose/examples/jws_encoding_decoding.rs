@@ -19,6 +19,7 @@ use identity_jose::jws::VerificationInput;
 use identity_jose::jwt::JwtClaims;
 use identity_jose::jwt::JwtHeaderSet;
 use identity_jose::jwu;
+use std::ops::Deref;
 use std::sync::Arc;
 use std::time::SystemTime;
 
@@ -103,12 +104,12 @@ async fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn st
       let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
 
       let public_key = PublicKey::try_from(pk).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
-      let signature_arr =
-        <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature).map_err(|err| {
+      let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature.deref())
+        .map_err(|err| {
           SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)
         })?;
       let signature = ed25519::Signature::from_bytes(signature_arr);
-      if public_key.verify(&signature, verification_input.signing_input) {
+      if public_key.verify(&signature, &verification_input.signing_input) {
         Ok(())
       } else {
         Err(SignatureVerificationErrorKind::InvalidSignature.into())

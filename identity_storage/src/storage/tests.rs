@@ -11,7 +11,7 @@ use identity_verification::MethodScope;
 
 use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
-use crate::storage::JwkStorageDocumentSignatureOptions;
+use crate::storage::JwsSignatureOptions;
 
 use super::JwkStorageDocumentExt;
 use super::Storage;
@@ -93,7 +93,7 @@ async fn signing() {
   let payload = b"test";
 
   // TODO: Check with more Options
-  let options = JwkStorageDocumentSignatureOptions::new();
+  let options = JwsSignatureOptions::new();
   let jws = document
     .sign_bytes(&storage, kid.as_deref().unwrap(), payload, &options)
     .await
@@ -177,7 +177,7 @@ mod iota_document_tests {
 
     // Sign the test string
     let jws = iota_document
-      .sign_bytes(&storage, fragment, b"test", &JwkStorageDocumentSignatureOptions::new())
+      .sign_bytes(&storage, fragment, b"test", &JwsSignatureOptions::new())
       .await
       .unwrap();
 

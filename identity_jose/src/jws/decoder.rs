@@ -155,14 +155,10 @@ impl<'a> JwsValidationItem<'a> {
     public_key.check_alg(alg.name())?;
 
     // Construct verification input
-    let input: VerificationInput = {
-      let signing_input = &signing_input;
-      let decoded_signature = &decoded_signature;
-      VerificationInput {
-        alg,
-        signing_input,
-        decoded_signature,
-      }
+    let input = VerificationInput {
+      alg,
+      signing_input,
+      decoded_signature,
     };
     // Call verifier
     verifier

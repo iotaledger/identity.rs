@@ -59,6 +59,9 @@ impl WasmJwsSignatureOptions {
   }
 }
 
+impl_wasm_json!(WasmJwsSignatureOptions, JwsSignatureOptions);
+impl_wasm_clone!(WasmJwsSignatureOptions, JwsSignatureOptions);
+
 /// Duck-typed interface to allow creating `JwsSignatureOptions` easily.
 #[wasm_bindgen]
 extern "C" {

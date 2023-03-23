@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use crate::jwk::EcCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsEc;
@@ -65,13 +67,13 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
 
-pub(crate) fn verify(verification_input: VerificationInput<'_>, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
+pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let (_, public_key) = expand_p256_jwk(jwk);
   let verifying_key = VerifyingKey::from(public_key);
 
-  let signature = Signature::try_from(verification_input.decoded_signature).unwrap();
+  let signature = Signature::try_from(verification_input.decoded_signature.deref()).unwrap();
 
-  match signature::Verifier::verify(&verifying_key, verification_input.signing_input, &signature) {
+  match signature::Verifier::verify(&verifying_key, &verification_input.signing_input, &signature) {
     Ok(()) => Ok(()),
     Err(err) => Err(SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)),
   }

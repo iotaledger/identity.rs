@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
 use std::sync::Arc;
 
 use crypto::signatures::ed25519::PublicKey;
@@ -74,12 +75,12 @@ pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result
   let public_key = expand_public_jwk(jwk);
 
   let signature_arr =
-    <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature)
+    <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature.deref())
       .map_err(|err| err.to_string())
       .unwrap();
 
   let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
-  if public_key.verify(&signature, verification_input.signing_input) {
+  if public_key.verify(&signature, &verification_input.signing_input) {
     Ok(())
   } else {
     Err(SignatureVerificationErrorKind::InvalidSignature.into())
