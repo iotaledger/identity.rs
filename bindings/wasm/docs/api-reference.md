@@ -1867,6 +1867,7 @@ Deserializes an instance from a JSON object.
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [.generateMethod(storage, key_type, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+        * [.signString(storage, fragment, payload, options)](#IotaDocument+signString) ⇒ <code>Promise.&lt;string&gt;</code>
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2303,6 +2304,18 @@ Transforms the `IotaDocument` to its `CoreDocument` representation.
 | --- | --- |
 | storage | [<code>Storage</code>](#Storage) | 
 | id | [<code>DIDUrl</code>](#DIDUrl) | 
+
+<a name="IotaDocument+signString"></a>
+
+### iotaDocument.signString(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| payload | <code>string</code> | 
+| options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
 
 <a name="IotaDocument.newWithId"></a>
 

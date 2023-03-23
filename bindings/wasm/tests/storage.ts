@@ -85,4 +85,36 @@ describe("#JwkStorageDocument", function() {
         assert.deepStrictEqual((storage.keyIdStorage() as KeyIdMemStore).count(), 0);
         assert.deepStrictEqual((storage.keyStorage() as JwkMemStore).count(), 0);
     });
+
+    it("The JwkStorageDocument extension should work: IotaDocument", async () => {
+        const keystore = new JwkMemStore();
+        const keyIdStore = new KeyIdMemStore();
+        const storage = new Storage(keystore, keyIdStore);
+        const networkName = "smr";
+        const doc = new IotaDocument(networkName);
+        const fragment = "#key-1";
+        await doc.generateMethod(
+            storage,
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+            fragment,
+            MethodScope.VerificationMethod(),
+        );
+        // Check that we can resolve the generated method.
+        let method = doc.resolveMethod(fragment);
+        assert.deepStrictEqual(method instanceof VerificationMethod, true);
+
+        let testString = "test";
+
+        const signature = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
+        console.log(signature);
+        // Delete the method
+        const methodId = (method as VerificationMethod).id();
+        await doc.purgeMethod(storage, methodId);
+        // Check that the method can no longer be resolved.
+        assert.deepStrictEqual(doc.resolveMethod(fragment), undefined);
+        // The storage should now be empty
+        assert.deepStrictEqual((storage.keyIdStorage() as KeyIdMemStore).count(), 0);
+        assert.deepStrictEqual((storage.keyStorage() as JwkMemStore).count(), 0);
+    });
 });
