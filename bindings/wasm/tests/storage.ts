@@ -107,7 +107,7 @@ describe("#JwkStorageDocument", function() {
         let testString = "test";
 
         const signature = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
-        console.log(signature);
+
         // Delete the method
         const methodId = (method as VerificationMethod).id();
         await doc.purgeMethod(storage, methodId);

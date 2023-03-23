@@ -36,7 +36,6 @@ path = "../../identity_iota"
 default-features = false
 features = ["client", "revocation-bitmap", "resolver", "eddsa"]
 
-
 [dev-dependencies]
 rand = "0.8.5"
 
