@@ -1,10 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_jose::jwk::Jwk;
-use identity_jose::jwk::JwkOperation;
-use identity_jose::jwk::JwkParams;
-use identity_jose::jwk::JwkUse;
+use identity_iota::verification::jose::jwk::Jwk;
+use identity_iota::verification::jose::jwk::JwkOperation;
+use identity_iota::verification::jose::jwk::JwkParams;
+use identity_iota::verification::jose::jwk::JwkUse;
 use wasm_bindgen::prelude::*;
 
 use crate::common::ArrayString;

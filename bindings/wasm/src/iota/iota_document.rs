@@ -24,7 +24,7 @@ use identity_iota::storage::storage::JwkStorageDocumentExt;
 use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use identity_jose::jws::JwsAlgorithm;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
 use iota_types::block::protocol::dto::ProtocolParametersDto;
 use iota_types::block::protocol::ProtocolParameters;
 use js_sys::Promise;
