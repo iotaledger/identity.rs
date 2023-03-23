@@ -249,16 +249,7 @@ impl JsValueResult {
 
   // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
   pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
-    self.0.map_err(|js_value| {
-      let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
-        Ok(js_err) => ToString::to_string(&js_err.to_string()),
-        Err(js_val) => {
-          // Fall back to debug formatting if this is not a proper JS Error instance.
-          format!("{js_val:?}")
-        }
-      };
-      error_string
-    })
+    stringify_js_error(self.0)
   }
 
   /// Consumes the struct and returns a Result<_, identity_iota::iota::Error>, leaving an `Ok` value untouched.
@@ -267,6 +258,19 @@ impl JsValueResult {
   }
 }
 
+/// Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
+pub(crate) fn stringify_js_error<T>(result: Result<T>) -> StdResult<T, String> {
+  result.map_err(|js_value| {
+    let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
+      Ok(js_err) => ToString::to_string(&js_err.to_string()),
+      Err(js_val) => {
+        // Fall back to debug formatting if this is not a proper JS Error instance.
+        format!("{js_val:?}")
+      }
+    };
+    error_string
+  })
+}
 impl From<Result<JsValue>> for JsValueResult {
   fn from(result: Result<JsValue>) -> Self {
     JsValueResult(result)

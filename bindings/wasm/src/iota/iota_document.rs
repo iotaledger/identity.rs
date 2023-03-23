@@ -48,13 +48,9 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
-use crate::did::RefMethodScope;
 use crate::did::WasmCoreDocument;
 use crate::did::WasmDIDUrl;
-use crate::did::WasmMethodRelationship;
-use crate::did::WasmMethodScope;
 use crate::did::WasmService;
-use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -66,6 +62,10 @@ use crate::jose::WasmJwsAlgorithm;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
+use crate::verification::RefMethodScope;
+use crate::verification::WasmMethodRelationship;
+use crate::verification::WasmMethodScope;
+use crate::verification::WasmVerificationMethod;
 
 pub(crate) struct IotaDocumentLock(tokio::sync::RwLock<IotaDocument>);
 

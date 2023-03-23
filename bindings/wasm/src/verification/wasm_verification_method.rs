@@ -1,12 +1,12 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::WasmMethodData;
+use super::WasmMethodType;
 use crate::common::MapStringAny;
 use crate::crypto::WasmKeyType;
-use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmCoreDID;
-use crate::did::WasmMethodData;
-use crate::did::WasmMethodType;
+use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::crypto::PublicKey;
@@ -14,7 +14,7 @@ use identity_iota::did::CoreDID;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
 
-use super::wasm_core_did::IToCoreDID;
+use crate::did::IToCoreDID;
 use crate::jose::WasmJwk;
 
 /// A DID Document Verification Method.
