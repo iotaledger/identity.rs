@@ -5,6 +5,7 @@ import {
     Ed25519,
     EdCurve,
     IJwkParams,
+    IJwsSignatureVerifier,
     IotaDocument,
     Jwk,
     JwkGenOutput,
@@ -18,6 +19,7 @@ import {
     MethodScope,
     Storage,
     VerificationMethod,
+    verifyEdDSA,
 } from "../node";
 import { JwkMemStore } from "./jwk_storage";
 import { createVerificationMethod, KeyIdMemStore } from "./key_id_storage";
@@ -73,12 +75,21 @@ describe("#JwkStorageDocument", function() {
         let method = doc.resolveMethod(fragment);
         assert.deepStrictEqual(method instanceof VerificationMethod, true);
 
+        // Check that signing works
         let testString = "test";
-
         const jws = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
-        // Verify the signature
+
+        // Verify the signature and obtain a decoded token.
         const token = doc.verifyJws(jws, new JwsVerificationOptions());
         assert.deepStrictEqual(testString, token.claims());
+
+        // Check that we can also verify it using a custom verifier
+        let customVerifier = new CustomVerifier();
+        const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
+        assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
+        assert.deepStrictEqual(customVerifier.verifications(), 1);
+
+        // Delete the method
         const methodId = (method as VerificationMethod).id();
         await doc.purgeMethod(storage, methodId);
         // Check that the method can no longer be resolved.
@@ -106,9 +117,19 @@ describe("#JwkStorageDocument", function() {
         let method = doc.resolveMethod(fragment);
         assert.deepStrictEqual(method instanceof VerificationMethod, true);
 
+        // Check that signing works.
         let testString = "test";
+        const jws = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
 
-        const signature = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
+        // Verify the signature and obtain a decoded token.
+        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        assert.deepStrictEqual(testString, token.claims());
+
+        // Check that we can also verify it using a custom verifier
+        let customVerifier = new CustomVerifier();
+        const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
+        assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
+        assert.deepStrictEqual(customVerifier.verifications(), 1);
 
         // Delete the method
         const methodId = (method as VerificationMethod).id();
@@ -120,3 +141,21 @@ describe("#JwkStorageDocument", function() {
         assert.deepStrictEqual((storage.keyStorage() as JwkMemStore).count(), 0);
     });
 });
+
+class CustomVerifier implements IJwsSignatureVerifier {
+    private _verifications: number;
+
+    constructor() {
+        this._verifications = 0;
+    }
+
+    public verifications(): number {
+        return this._verifications;
+    }
+
+    public verify(alg: JwsAlgorithm, signingInput: Uint8Array, decodedSignature: Uint8Array, publicKey: Jwk): void {
+        verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
+        this._verifications += 1;
+        return;
+    }
+}

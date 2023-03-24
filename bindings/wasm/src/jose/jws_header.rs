@@ -3,7 +3,6 @@
 
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::str::FromStr;
 
 use identity_iota::core::Url;
 use identity_iota::verification::jws::JwsAlgorithm;
@@ -44,15 +43,7 @@ impl WasmJwsHeader {
   /// Sets a value for the algorithm claim (alg).
   #[wasm_bindgen(js_name = setAlg)]
   pub fn set_alg(&mut self, value: WasmJwsAlgorithm) -> Result<()> {
-    let alg: JwsAlgorithm = {
-      if let Ok(js_string) = value.dyn_into::<JsString>() {
-        JwsAlgorithm::from_str(String::from(js_string).as_ref()).map_err(|err| js_sys::Error::new(&err.to_string()))
-      } else {
-        Err(js_sys::Error::new("invalid JwsAlgorithm"))
-      }
-    }?;
-
-    self.0.set_alg(alg);
+    self.0.set_alg(JwsAlgorithm::try_from(value)?);
     Ok(())
   }
 

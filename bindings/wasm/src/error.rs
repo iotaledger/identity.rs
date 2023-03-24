@@ -230,6 +230,15 @@ impl From<identity_iota::storage::storage::JwkStorageDocumentError> for WasmErro
   }
 }
 
+impl From<identity_iota::verification::jws::SignatureVerificationError> for WasmError<'_> {
+  fn from(error: identity_iota::verification::jws::SignatureVerificationError) -> Self {
+    Self {
+      name: Cow::Borrowed("SignatureVerificationError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
 impl From<identity_iota::verification::jose::error::Error> for WasmError<'_> {
   fn from(error: identity_iota::verification::jose::error::Error) -> Self {
     Self {

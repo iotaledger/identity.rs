@@ -1,3 +1,7 @@
+use std::str::FromStr;
+
+use identity_iota::verification::jws::JwsAlgorithm;
+use js_sys::JsString;
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use wasm_bindgen::prelude::*;
@@ -22,4 +26,16 @@ extern "C" {
   pub type WasmJwkParamsRsa;
   #[wasm_bindgen(typescript_type = "JwkParamsOct")]
   pub type WasmJwkParamsOct;
+}
+
+impl TryFrom<WasmJwsAlgorithm> for JwsAlgorithm {
+  type Error = JsValue;
+  fn try_from(value: WasmJwsAlgorithm) -> Result<Self, Self::Error> {
+    if let Ok(js_string) = value.dyn_into::<JsString>() {
+      JwsAlgorithm::from_str(String::from(js_string).as_ref())
+        .map_err(|err| js_sys::Error::new(&err.to_string()).into())
+    } else {
+      Err(js_sys::Error::new("invalid JwsAlgorithm").into())
+    }
+  }
 }
