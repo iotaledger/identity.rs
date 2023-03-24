@@ -11,40 +11,49 @@ use std::borrow::Cow;
 
 use crate::jwu;
 
-/// Transform detached payload according to the b64 extracted from the protected header.  
-/// See: https://tools.ietf.org/html/rfc7797#section-3
-pub(super) fn process_detached_payload<'payload>(
-  payload: &'payload [u8],
-  protected_header: Option<&JwsHeader>,
-) -> Cow<'payload, [u8]> {
-  jwu::extract_b64(protected_header)
-    .then(|| Cow::Owned(jwu::encode_b64(payload).into()))
-    .unwrap_or(Cow::Borrowed(payload))
+/// A Payload that has been encoded according to the b64 parameter.
+pub(super) enum MaybeEncodedPayload<'payload> {
+  Encoded(String),
+  NotEncoded(&'payload [u8]),
 }
 
-/// Transform non-detached payload according to the b64 extracted from the protected header.
-///
-/// For non-encoded payloads (b64 = false) validations beyond checking for valid utf-8 encoding
-/// depend on the serialization format and can be specialized with the `additional_validations` parameter.
-pub(super) fn process_payload<'payload, F>(
-  payload: &'payload [u8],
-  protected_header: Option<&JwsHeader>,
-  additional_validations: F,
-) -> Result<Cow<'payload, str>>
-where
-  // TODO: Change to &str
-  F: FnOnce(&[u8]) -> Result<()>,
-{
-  let payload: Cow<'payload, str> = {
-    if jwu::extract_b64(protected_header) {
-      Cow::Owned(jwu::encode_b64(payload))
-    } else {
-      let payload: &str = std::str::from_utf8(payload).map_err(|_| Error::InvalidContent("invalid UTF-8"))?;
-      additional_validations(payload.as_bytes())?;
-      Cow::Borrowed(payload)
+impl<'payload> MaybeEncodedPayload<'payload> {
+  /// Transform payload according to the b64 extracted from the protected header.  
+  /// See: https://tools.ietf.org/html/rfc7797#section-3
+  pub(super) fn encode_if_b64(payload: &'payload [u8], protected_header: Option<&JwsHeader>) -> Self {
+    jwu::extract_b64(protected_header)
+      .then(|| MaybeEncodedPayload::Encoded(jwu::encode_b64(payload).into()))
+      .unwrap_or(MaybeEncodedPayload::NotEncoded(payload))
+  }
+
+  /// Represent the possibly encoded payload as a byte slice.
+  pub(super) fn as_bytes(&self) -> &[u8] {
+    match *self {
+      Self::Encoded(ref value) => value.as_bytes(),
+      Self::NotEncoded(value) => value,
     }
-  };
-  Ok(payload)
+  }
+
+  /// Calls a serialization format dependent validator and converts the possibly encoded payload into
+  /// a string that can be used as a non-decoded payload in a JWS.
+  pub(super) fn into_non_detached<F>(self, not_encoded_validator: F) -> Result<Cow<'payload, str>>
+  where
+    F: FnOnce(&[u8]) -> Result<&str>,
+  {
+    match self {
+      Self::Encoded(value) => Ok(Cow::Owned(value)),
+      Self::NotEncoded(value) => Ok(Cow::Borrowed(not_encoded_validator(value)?)),
+    }
+  }
+}
+
+impl<'payload> From<MaybeEncodedPayload<'payload>> for Cow<'payload, [u8]> {
+  fn from(value: MaybeEncodedPayload<'payload>) -> Self {
+    match value {
+      MaybeEncodedPayload::Encoded(value) => Cow::Owned(value.into()),
+      MaybeEncodedPayload::NotEncoded(value) => Cow::Borrowed(value),
+    }
+  }
 }
 
 // ===================================================================================
