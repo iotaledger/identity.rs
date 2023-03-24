@@ -471,9 +471,7 @@ impl WasmCoreDocument {
     Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
   }
 
-  pub fn verify_jws(&self, jws: &str, options: &WasmJwsVerificationOptions) -> Result {
-    todo!()
-  }
+  // TODO: JWS verification
 
   // ===========================================================================
   // Revocation

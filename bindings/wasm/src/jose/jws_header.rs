@@ -1,81 +1,105 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+use std::ops::DerefMut;
+use std::str::FromStr;
+
+use identity_iota::core::Url;
+use identity_iota::verification::jws::JwsAlgorithm;
+use identity_iota::verification::jws::JwsHeader;
+use js_sys::Array;
+use js_sys::JsString;
 use wasm_bindgen::prelude::*;
 
+use crate::common::ArrayString;
+use crate::error::Result;
+use crate::error::WasmResult;
+use crate::jose::WasmJwk;
+use crate::jose::WasmJwsAlgorithm;
+
 #[wasm_bindgen(js_name = JwsHeader)]
-pub struct WasmJwsHeader(JwsHeader); 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct WasmJwsHeader(JwsHeader);
 
 #[wasm_bindgen(js_class = JwsHeader)]
 impl WasmJwsHeader {
-    /// Create a new empty `JwsHeader`.
-    #[wasm_bindgen(constructor)]
-    pub const fn new() -> Self {
-      Self {
-        common: JwtHeader::new(),
-        alg: None,
-        b64: None,
-        ppt: None,
+  /// Create a new empty `JwsHeader`.
+  #[wasm_bindgen(constructor)]
+  pub fn new() -> WasmJwsHeader {
+    WasmJwsHeader(JwsHeader::new())
+  }
+
+  /// Returns the value for the algorithm claim (alg).
+  #[wasm_bindgen]
+  pub fn alg(&self) -> Option<WasmJwsAlgorithm> {
+    self
+      .0
+      .alg()
+      .map(|alg| alg.name())
+      .map(JsValue::from)
+      .map(JsValue::unchecked_into)
+  }
+
+  /// Sets a value for the algorithm claim (alg).
+  #[wasm_bindgen(js_name = setAlg)]
+  pub fn set_alg(&mut self, value: WasmJwsAlgorithm) -> Result<()> {
+    let alg: JwsAlgorithm = {
+      if let Ok(js_string) = value.dyn_into::<JsString>() {
+        JwsAlgorithm::from_str(String::from(js_string).as_ref()).map_err(|err| js_sys::Error::new(&err.to_string()))
+      } else {
+        Err(js_sys::Error::new("invalid JwsAlgorithm"))
       }
-    }
-  
-    /// Returns the value for the algorithm claim (alg).
-    #[wasm_bindgen]
-    pub fn alg(&self) -> Option<JwsAlgorithm> {
-      self.0.alg().map(|alg| alg.name().to_owned())
-    }
-    
-    
-    /// Sets a value for the algorithm claim (alg).
-    #[wasm_bindgen(js_name = setAlg)]
-    pub fn set_alg(&mut self, value: impl Into<JwsAlgorithm>) {
-      self.0.set_alg(value);
-    }
-  
-    /// Returns the value of the base64url-encode payload claim (b64).
-    pub fn b64(&self) -> Option<bool> {
-      self.0.b64()
-    }
-  
-    /// Sets a value for the base64url-encode payload claim (b64).
-    #[wasm_bindgen(js_name = setB64)]
-    pub fn set_b64(&mut self, value: bool) {
-      self.0.set_b64(value);
-    }
-  
-    /// Returns the value of the passport extension claim (ppt).
-    pub fn ppt(&self) -> Option<String> {
-      self.0.ppt().map(ToOwned::to_owned)
-    }
-  
-    /// Sets a value for the passport extension claim (ppt).
-    #[wasm_bindgen(js_name = setPpt)]
-    pub fn set_ppt(&mut self, value: String) {
-      self.0.set_ppt(value);
-    }
-  
-    // ===========================================================================
-    // ===========================================================================
-    
-    #[wasm_bindgen]
-    pub fn has(&self, claim: &str) -> bool {
-        self.0.has(claim)
-    }
-  
-    /// Returns `true` if none of the fields are set in both `self` and `other`.
-    #[wasm_bindgen(js_name = isDisjoint)]
-    pub fn is_disjoint(&self, other: &WasmJwsHeader) -> bool {
-        self.0.is_disjoint(&other.0)
-    }
+    }?;
 
-// ===========================================================================
-// Common JWT parameters 
-// ===========================================================================
+    self.0.set_alg(alg);
+    Ok(())
+  }
 
-/// Returns the value of the JWK Set URL claim (jku).
-#[wasm_bindgen]
+  /// Returns the value of the base64url-encode payload claim (b64).
+  pub fn b64(&self) -> Option<bool> {
+    self.0.b64()
+  }
+
+  /// Sets a value for the base64url-encode payload claim (b64).
+  #[wasm_bindgen(js_name = setB64)]
+  pub fn set_b64(&mut self, value: bool) {
+    self.0.set_b64(value);
+  }
+
+  /// Returns the value of the passport extension claim (ppt).
+  pub fn ppt(&self) -> Option<String> {
+    self.0.ppt().map(ToOwned::to_owned)
+  }
+
+  /// Sets a value for the passport extension claim (ppt).
+  #[wasm_bindgen(js_name = setPpt)]
+  pub fn set_ppt(&mut self, value: String) {
+    self.0.set_ppt(value);
+  }
+
+  // ===========================================================================
+  // ===========================================================================
+
+  #[wasm_bindgen]
+  pub fn has(&self, claim: &str) -> bool {
+    self.0.has(claim)
+  }
+
+  /// Returns `true` if none of the fields are set in both `self` and `other`.
+  #[wasm_bindgen(js_name = isDisjoint)]
+  pub fn is_disjoint(&self, other: &WasmJwsHeader) -> bool {
+    self.0.is_disjoint(&other.0)
+  }
+
+  // ===========================================================================
+  // Common JWT parameters
+  // ===========================================================================
+
+  /// Returns the value of the JWK Set URL claim (jku).
+  #[wasm_bindgen]
   pub fn jku(&self) -> Option<String> {
-    self.0.deref().jku().map(|url|url.to_string())
+    self.0.deref().jku().map(|url| url.to_string())
   }
 
   /// Sets a value for the JWK Set URL claim (jku).
@@ -83,12 +107,13 @@ impl WasmJwsHeader {
   pub fn set_jku(&mut self, value: String) -> Result<()> {
     let url = Url::parse(value).wasm_result()?;
     self.0.deref_mut().set_jku(url);
+    Ok(())
   }
 
   /// Returns the value of the JWK claim (jwk).
   #[wasm_bindgen]
-  pub fn jwk(&self) -> Option<&Jwk> {
-    self.0.deref().jwk()
+  pub fn jwk(&self) -> Option<WasmJwk> {
+    self.0.deref().jwk().map(ToOwned::to_owned).map(WasmJwk)
   }
 
   /// Sets a value for the JWK claim (jwk).
@@ -99,14 +124,14 @@ impl WasmJwsHeader {
 
   /// Returns the value of the key ID claim (kid).
   #[wasm_bindgen]
-  pub fn kid(&self) -> Option<&str> {
-    self.0.deref()
+  pub fn kid(&self) -> Option<String> {
+    self.0.deref().kid().map(ToOwned::to_owned)
   }
 
   /// Sets a value for the key ID claim (kid).
   #[wasm_bindgen(js_name = setKid)]
   pub fn set_kid(&mut self, value: String) {
-    self.0.deref_mut(value);
+    self.0.deref_mut().set_kid(value);
   }
 
   /// Returns the value of the X.509 URL claim (x5u).
@@ -120,18 +145,32 @@ impl WasmJwsHeader {
   pub fn set_x5u(&mut self, value: String) -> Result<()> {
     let url = Url::parse(value).wasm_result()?;
     self.0.deref_mut().set_x5u(url);
+    Ok(())
   }
 
   /// Returns the value of the X.509 certificate chain claim (x5c).
   #[wasm_bindgen]
-  pub fn x5c(&self) -> Option<Vec<String>> {
-    self.0.deref().x5c().map(ToOwned::to_owned)
+  pub fn x5c(&self) -> ArrayString {
+    self
+      .0
+      .x5c()
+      .unwrap_or_default()
+      .iter()
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
   }
 
   /// Sets values for the X.509 certificate chain claim (x5c).
   #[wasm_bindgen(js_name = setX5c)]
-  pub fn set_x5c(&mut self, value: Vec<String>) {
-    self.0.deref_mut().set_x5c(value);
+  pub fn set_x5c(&mut self, value: ArrayString) -> Result<()> {
+    let array: Array = value.dyn_into()?;
+    let values: Result<Vec<String>> = array
+      .iter()
+      .map(|item| item.dyn_into::<JsString>().map(String::from))
+      .collect();
+    self.0.deref_mut().set_x5c(values?);
+    Ok(())
   }
 
   /// Returns the value of the X.509 certificate SHA-1 thumbprint claim (x5t).
@@ -186,14 +225,27 @@ impl WasmJwsHeader {
 
   /// Returns the value of the critical claim (crit).
   #[wasm_bindgen]
-  pub fn crit(&self) -> Option<Vec<String>> {
-    self.0.deref().crit().map(ToOwned::to_owned)
+  pub fn crit(&self) -> ArrayString {
+    self
+      .0
+      .x5c()
+      .unwrap_or_default()
+      .iter()
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
   }
 
   /// Sets values for the critical claim (crit).
   #[wasm_bindgen(js_name = setCrit)]
-  pub fn set_crit(&mut self, value: Vec<String>) {
-    self.0.deref_mut().set_crit(value)
+  pub fn set_crit(&mut self, value: ArrayString) -> Result<()> {
+    let array: Array = value.dyn_into()?;
+    let values: Result<Vec<String>> = array
+      .iter()
+      .map(|item| item.dyn_into::<JsString>().map(String::from))
+      .collect();
+    self.0.deref_mut().set_crit(values?);
+    Ok(())
   }
 
   /// Returns the value of the url claim (url).
@@ -206,7 +258,8 @@ impl WasmJwsHeader {
   #[wasm_bindgen(js_name = setUrl)]
   pub fn set_url(&mut self, value: String) -> Result<()> {
     let url = Url::parse(value).wasm_result()?;
-    self.0.deref_mut().set_url(value);
+    self.0.deref_mut().set_url(url);
+    Ok(())
   }
 
   /// Returns the value of the nonce claim (nonce).
@@ -219,6 +272,8 @@ impl WasmJwsHeader {
   #[wasm_bindgen(js_name = setNonce)]
   pub fn set_nonce(&mut self, value: String) {
     self.0.deref_mut().set_nonce(value);
-    }
-    
   }
+}
+
+impl_wasm_json!(WasmJwsHeader, JwsHeader);
+impl_wasm_clone!(WasmJwsHeader, JwsHeader);
