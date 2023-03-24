@@ -7,15 +7,22 @@ use identity_core::common::Url;
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[serde(default)]
 pub struct JwsSignatureOptions {
-  #[serde(default)]
   pub attach_jwk: bool,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub b64: Option<bool>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub typ: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub cty: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub crit: Option<Vec<String>>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub url: Option<Url>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub nonce: Option<String>,
+  pub detached_payload: bool,
 }
 
 impl JwsSignatureOptions {
@@ -57,6 +64,11 @@ impl JwsSignatureOptions {
 
   pub fn nonce(mut self, value: String) -> Self {
     self.nonce = Some(value);
+    self
+  }
+
+  pub fn detached_payload(mut self, value: bool) -> Self {
+    self.detached_payload = value;
     self
   }
 }

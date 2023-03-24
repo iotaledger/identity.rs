@@ -19,9 +19,11 @@ use async_trait::async_trait;
 // use identity_credential::presentation::Presentation;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
-use identity_jose::jws::CompactJwsEncoder;
-use identity_jose::jws::JwsAlgorithm;
-use identity_jose::jws::JwsHeader;
+use identity_verification::jose::jws::CompactJwsEncoder;
+use identity_verification::jose::jws::CompactJwsEncodingOptions;
+use identity_verification::jose::jws::JwsAlgorithm;
+use identity_verification::jose::jws::JwsHeader;
+use identity_verification::jws::CharSet;
 use identity_verification::MethodData;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
@@ -320,13 +322,25 @@ impl JwkStorageDocumentExt for CoreDocument {
       header
     };
 
+    // Get the key identifier corresponding to the given method from the KeyId storage.
     let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
     let key_id = <I as KeyIdStorage>::get_key_id(&storage.key_id_storage(), &method_digest)
       .await
       .map_err(Error::KeyIdStorageError)?;
 
-    let jws_encoder: CompactJwsEncoder =
-      CompactJwsEncoder::new(&payload, &header).map_err(|err| Error::EncodingError(err.into()))?;
+    // Extract Compact JWS encoding options.
+    let encoding_options: CompactJwsEncodingOptions = if !options.detached_payload {
+      // We use this as a default and don't provide the extra UrlSafe check for now.
+      // Applications that require such checks can easily do so after JWS creation.
+      CompactJwsEncodingOptions::NonDetached {
+        charset_requirements: CharSet::Default,
+      }
+    } else {
+      CompactJwsEncodingOptions::Detached
+    };
+
+    let jws_encoder: CompactJwsEncoder = CompactJwsEncoder::new_with_options(&payload, &header, encoding_options)
+      .map_err(|err| Error::EncodingError(err.into()))?;
     let signature = <K as JwkStorage>::sign(&storage.key_storage(), &key_id, &jws_encoder.signing_input(), &jwk)
       .await
       .map_err(Error::KeyStorageError)?;

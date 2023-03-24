@@ -7,8 +7,8 @@ pub use crate::key_storage::KeyStorageErrorKind;
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyType;
 use async_trait::async_trait;
-use identity_jose::jwk::Jwk;
-use identity_jose::jws::JwsAlgorithm;
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jws::JwsAlgorithm;
 
 use super::key_gen::JwkGenOutput;
 
