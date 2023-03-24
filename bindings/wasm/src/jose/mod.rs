@@ -4,7 +4,9 @@
 mod jwk;
 mod jws_header;
 mod types;
+mod token;
 
 pub use jwk::*;
 pub use jws_header::*;
 pub use types::*;
+pub use token::*;
