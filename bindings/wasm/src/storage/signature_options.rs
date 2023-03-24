@@ -53,9 +53,16 @@ impl WasmJwsSignatureOptions {
     Ok(())
   }
 
+  /// The nonce to be added to the protected header.
   #[wasm_bindgen(js_name = setNonce)]
   pub fn set_nonce(&mut self, value: String) {
     self.0.nonce = Some(value);
+  }
+
+  /// Whether the JWS signature should have a detached payload.
+  #[wasm_bindgen(js_name = setDetachedPayload)]
+  pub fn set_detachedPayload(&mut self, value: bool) {
+    self.0.detached_payload = value;
   }
 }
 
@@ -106,4 +113,7 @@ interface IJwsSignatureOptions {
      * 
      */
     readonly nonce?: string;
+
+    /** Whether the JWS signature should have a detached payload.*/
+    readonly detachedPayload?: bool
 }"#;

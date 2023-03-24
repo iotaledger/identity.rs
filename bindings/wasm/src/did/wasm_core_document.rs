@@ -478,10 +478,10 @@ impl WasmCoreDocument {
   ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
   /// verifying EdDSA signatures.
   ///
-  /// Regardless of which options are passed the following statements always apply:
-  /// - The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
-  ///   otherwise an error is returned.
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
   #[wasm_bindgen(js_name = verifyJws)]
   #[allow(non_snake_case)]
   pub fn verify_jws(
@@ -489,12 +489,13 @@ impl WasmCoreDocument {
     jws: &str,
     options: &WasmJwsVerificationOptions,
     signatureVerifier: Option<IJwsSignatureVerifier>,
+    detachedPayload: Option<&str>,
   ) -> Result<WasmToken> {
     let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
     self
       .0
       .blocking_read()
-      .verify_jws(jws, &jws_verifier, &options.0)
+      .verify_jws(jws, detachedPayload, &jws_verifier, &options.0)
       .map(WasmToken::from)
       .wasm_result()
   }
