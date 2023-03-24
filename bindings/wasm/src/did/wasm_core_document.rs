@@ -610,6 +610,9 @@ impl WasmCoreDocument {
   // Storage
   // ===========================================================================
 
+  /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
+  /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
+  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage`.
   #[wasm_bindgen(js_name = generateMethod)]
   pub fn generate_method(
     &self,
@@ -635,6 +638,8 @@ impl WasmCoreDocument {
     Ok(promise.unchecked_into())
   }
 
+  /// Remove the method identified by the given fragment from the document and delete the corresponding key material in
+  /// the given `storage`.
   #[wasm_bindgen(js_name = purgeMethod)]
   pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
@@ -652,6 +657,14 @@ impl WasmCoreDocument {
     Ok(promise.unchecked_into())
   }
 
+  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+  /// material in the verification method identified by the given `fragment.
+  ///
+  /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+  // TODO: Should payload be of type `string`, or should we take Uint8Array to match Rust? I chose String here as they
+  // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
+  // as the payload type?
   #[wasm_bindgen(js_name = signString)]
   pub fn sign_string(
     &self,

@@ -1044,19 +1044,20 @@ impl CoreDocument {
   /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
   /// [`JwsSignatureVerifier`].
   ///
-  /// Regardless of which options are passed the following statements always apply:
-  /// - The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
-  ///   otherwise an error is returned.
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
   pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
     &self,
     jws: &'jws str,
+    detached_payload: Option<&'jws [u8]>,
     signature_verifier: &T,
     options: &JwsVerificationOptions,
   ) -> Result<Token<'jws>> {
     let nonce = options.nonce.as_deref();
     let validation_item = Decoder::new_with_crits(options.crits.as_deref().unwrap_or_default())
-      .decode_compact_serialization(jws.as_bytes(), None)
+      .decode_compact_serialization(jws.as_bytes(), detached_payload)
       .map_err(Error::JwsVerificationError)?;
 
     // Validate the nonce

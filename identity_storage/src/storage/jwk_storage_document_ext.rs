@@ -48,14 +48,16 @@ pub trait JwkStorageDocumentExt: private::Sealed {
 
   /// Remove the method identified by the given fragment from the document and delete the corresponding key material in
   /// the given `storage`.
-  //
-  // TODO: Should we take fragment instead of id? id is consistent with CoreDocument::remove_method, but if we expect
-  // the fragment to often be the same as a JWK's kid it could be convenient to pass in a kid value here.
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
   where
     K: JwkStorage,
     I: KeyIdStorage;
 
+  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+  /// material in the verification method identified by the given `fragment.
+  ///
+  /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).   
   async fn sign_bytes<K, I>(
     &self,
     storage: &Storage<K, I>,

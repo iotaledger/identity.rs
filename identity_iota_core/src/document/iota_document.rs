@@ -360,20 +360,21 @@ impl IotaDocument {
   /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
   /// [`JwsSignatureVerifier`].
   ///
-  /// Regardless of which options are passed the following statements always apply:
-  /// - The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
-  ///   otherwise an error is returned.
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
   pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
     &self,
     jws: &'jws str,
+    detached_payload: Option<&'jws [u8]>,
     signature_verifier: &T,
     options: &JwsVerificationOptions,
   ) -> Result<Token<'jws>> {
     // TODO: Consider flattening the error somewhat as it is not ideal to just forward the error from identity_document.
     self
       .core_document()
-      .verify_jws(jws, signature_verifier, options)
+      .verify_jws(jws, detached_payload, signature_verifier, options)
       .map_err(Error::JwsVerificationError)
   }
 
