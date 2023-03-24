@@ -19,7 +19,7 @@ pub enum Error {
   #[error("DID resolution failed")]
   DIDResolutionError(#[source] iota_client::error::Error),
   #[cfg(feature = "iota-client")]
-  #[error("{0}")]
+  #[error("unspecified failure")]
   BasicOutputBuildError(#[source] iota_client::block::Error),
   #[error("\"{0}\" is not a valid network name in the context of the `iota` did method")]
   InvalidNetworkName(String),

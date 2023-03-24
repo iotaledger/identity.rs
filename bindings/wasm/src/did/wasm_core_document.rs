@@ -23,10 +23,13 @@ use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::jose::WasmJwsAlgorithm;
+use crate::jose::WasmToken;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
+use crate::verification::IJwsSignatureVerifier;
 use crate::verification::RefMethodScope;
+use crate::verification::WasmJwsSignatureVerifier;
 use crate::verification::WasmMethodRelationship;
 use crate::verification::WasmMethodScope;
 use crate::verification::WasmVerificationMethod;
@@ -471,7 +474,30 @@ impl WasmCoreDocument {
     Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
   }
 
-  // TODO: JWS verification
+  /// Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
+  ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
+  /// verifying EdDSA signatures.
+  ///
+  /// Regardless of which options are passed the following statements always apply:
+  /// - The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  ///   otherwise an error is returned.
+  #[wasm_bindgen(js_name = verifyJws)]
+  #[allow(non_snake_case)]
+  pub fn verify_jws(
+    &self,
+    jws: &str,
+    options: &WasmJwsVerificationOptions,
+    signatureVerifier: Option<IJwsSignatureVerifier>,
+  ) -> Result<WasmToken> {
+    let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
+    self
+      .0
+      .blocking_read()
+      .verify_jws(jws, &jws_verifier, &options.0)
+      .map(WasmToken::from)
+      .wasm_result()
+  }
 
   // ===========================================================================
   // Revocation

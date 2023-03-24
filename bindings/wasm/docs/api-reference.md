@@ -52,6 +52,8 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
 <dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
+<dt><a href="#JwsHeader">JwsHeader</a></dt>
+<dd></dd>
 <dt><a href="#JwsSignatureOptions">JwsSignatureOptions</a></dt>
 <dd></dd>
 <dt><a href="#JwsVerificationOptions">JwsVerificationOptions</a></dt>
@@ -111,6 +113,10 @@ verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
 <dd></dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
+<dt><a href="#Token">Token</a></dt>
+<dd><p>A cryptographically verified decoded token from a JWS.</p>
+<p>Contains the decoded headers and the raw claims.</p>
+</dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd><p>A DID Document Verification Method.</p>
 </dd>
@@ -181,6 +187,12 @@ This variant is the default used if no other variant is specified when construct
 <dl>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -403,6 +415,7 @@ A method-agnostic DID Document.
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
+        * [.verifyJws(jws, options, signatureVerifier)](#CoreDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
@@ -684,6 +697,26 @@ Verifies the authenticity of `data` using the target verification method.
 | --- | --- |
 | data | <code>any</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="CoreDocument+verifyJws"></a>
+
+### coreDocument.verifyJws(jws, options, signatureVerifier) ⇒ [<code>Token</code>](#Token)
+Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
+ If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
+verifying EdDSA signatures.
+
+Regardless of which options are passed the following statements always apply:
+- The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
+- The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  otherwise an error is returned.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| jws | <code>string</code> | 
+| options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
+| signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+revokeCredentials"></a>
 
@@ -1848,6 +1881,7 @@ Deserializes an instance from a JSON object.
         * [.signPresentation(presentation, privateKey, methodQuery, options)](#IotaDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
+        * [.verifyJws(jws, options, signatureVerifier)](#IotaDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
         * [.metadata()](#IotaDocument+metadata) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
@@ -2122,6 +2156,26 @@ Verifies the authenticity of `data` using the target verification method.
 | --- | --- |
 | data | <code>any</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="IotaDocument+verifyJws"></a>
+
+### iotaDocument.verifyJws(jws, options, signatureVerifier) ⇒ [<code>Token</code>](#Token)
+Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
+ If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
+verifying EdDSA signatures.
+
+Regardless of which options are passed the following statements always apply:
+- The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
+- The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  otherwise an error is returned.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| jws | <code>string</code> | 
+| options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
+| signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+pack"></a>
 
@@ -2767,6 +2821,356 @@ Deep clones the object.
 Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwsHeader"></a>
+
+## JwsHeader
+**Kind**: global class  
+
+* [JwsHeader](#JwsHeader)
+    * [new JwsHeader()](#new_JwsHeader_new)
+    * _instance_
+        * [.alg()](#JwsHeader+alg) ⇒ <code>JwsAlgorithm</code> \| <code>undefined</code>
+        * [.setAlg(value)](#JwsHeader+setAlg)
+        * [.b64()](#JwsHeader+b64) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.setB64(value)](#JwsHeader+setB64)
+        * [.ppt()](#JwsHeader+ppt) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setPpt(value)](#JwsHeader+setPpt)
+        * [.has(claim)](#JwsHeader+has) ⇒ <code>boolean</code>
+        * [.isDisjoint(other)](#JwsHeader+isDisjoint) ⇒ <code>boolean</code>
+        * [.jku()](#JwsHeader+jku) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setJku(value)](#JwsHeader+setJku)
+        * [.jwk()](#JwsHeader+jwk) ⇒ [<code>Jwk</code>](#Jwk) \| <code>undefined</code>
+        * [.setJwk(value)](#JwsHeader+setJwk)
+        * [.kid()](#JwsHeader+kid) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setKid(value)](#JwsHeader+setKid)
+        * [.x5u()](#JwsHeader+x5u) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setX5u(value)](#JwsHeader+setX5u)
+        * [.x5c()](#JwsHeader+x5c) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.setX5c(value)](#JwsHeader+setX5c)
+        * [.x5t()](#JwsHeader+x5t) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setX5t(value)](#JwsHeader+setX5t)
+        * [.x5tS256()](#JwsHeader+x5tS256) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setX5tS256(value)](#JwsHeader+setX5tS256)
+        * [.typ()](#JwsHeader+typ) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setTyp(value)](#JwsHeader+setTyp)
+        * [.cty()](#JwsHeader+cty) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setCty(value)](#JwsHeader+setCty)
+        * [.crit()](#JwsHeader+crit) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.setCrit(value)](#JwsHeader+setCrit)
+        * [.url()](#JwsHeader+url) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setUrl(value)](#JwsHeader+setUrl)
+        * [.nonce()](#JwsHeader+nonce) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.setNonce(value)](#JwsHeader+setNonce)
+        * [.toJSON()](#JwsHeader+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwsHeader+clone) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * _static_
+        * [.fromJSON(json)](#JwsHeader.fromJSON) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+
+<a name="new_JwsHeader_new"></a>
+
+### new JwsHeader()
+Create a new empty `JwsHeader`.
+
+<a name="JwsHeader+alg"></a>
+
+### jwsHeader.alg() ⇒ <code>JwsAlgorithm</code> \| <code>undefined</code>
+Returns the value for the algorithm claim (alg).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setAlg"></a>
+
+### jwsHeader.setAlg(value)
+Sets a value for the algorithm claim (alg).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>JwsAlgorithm</code> | 
+
+<a name="JwsHeader+b64"></a>
+
+### jwsHeader.b64() ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns the value of the base64url-encode payload claim (b64).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setB64"></a>
+
+### jwsHeader.setB64(value)
+Sets a value for the base64url-encode payload claim (b64).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="JwsHeader+ppt"></a>
+
+### jwsHeader.ppt() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the passport extension claim (ppt).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setPpt"></a>
+
+### jwsHeader.setPpt(value)
+Sets a value for the passport extension claim (ppt).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+has"></a>
+
+### jwsHeader.has(claim) ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| claim | <code>string</code> | 
+
+<a name="JwsHeader+isDisjoint"></a>
+
+### jwsHeader.isDisjoint(other) ⇒ <code>boolean</code>
+Returns `true` if none of the fields are set in both `self` and `other`.
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| other | [<code>JwsHeader</code>](#JwsHeader) | 
+
+<a name="JwsHeader+jku"></a>
+
+### jwsHeader.jku() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the JWK Set URL claim (jku).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setJku"></a>
+
+### jwsHeader.setJku(value)
+Sets a value for the JWK Set URL claim (jku).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+jwk"></a>
+
+### jwsHeader.jwk() ⇒ [<code>Jwk</code>](#Jwk) \| <code>undefined</code>
+Returns the value of the JWK claim (jwk).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setJwk"></a>
+
+### jwsHeader.setJwk(value)
+Sets a value for the JWK claim (jwk).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | [<code>Jwk</code>](#Jwk) | 
+
+<a name="JwsHeader+kid"></a>
+
+### jwsHeader.kid() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the key ID claim (kid).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setKid"></a>
+
+### jwsHeader.setKid(value)
+Sets a value for the key ID claim (kid).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+x5u"></a>
+
+### jwsHeader.x5u() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the X.509 URL claim (x5u).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setX5u"></a>
+
+### jwsHeader.setX5u(value)
+Sets a value for the X.509 URL claim (x5u).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+x5c"></a>
+
+### jwsHeader.x5c() ⇒ <code>Array.&lt;string&gt;</code>
+Returns the value of the X.509 certificate chain claim (x5c).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setX5c"></a>
+
+### jwsHeader.setX5c(value)
+Sets values for the X.509 certificate chain claim (x5c).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>Array.&lt;string&gt;</code> | 
+
+<a name="JwsHeader+x5t"></a>
+
+### jwsHeader.x5t() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the X.509 certificate SHA-1 thumbprint claim (x5t).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setX5t"></a>
+
+### jwsHeader.setX5t(value)
+Sets a value for the X.509 certificate SHA-1 thumbprint claim (x5t).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+x5tS256"></a>
+
+### jwsHeader.x5tS256() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the X.509 certificate SHA-256 thumbprint claim
+(x5t#S256).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setX5tS256"></a>
+
+### jwsHeader.setX5tS256(value)
+Sets a value for the X.509 certificate SHA-256 thumbprint claim
+(x5t#S256).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+typ"></a>
+
+### jwsHeader.typ() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the token type claim (typ).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setTyp"></a>
+
+### jwsHeader.setTyp(value)
+Sets a value for the token type claim (typ).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+cty"></a>
+
+### jwsHeader.cty() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the content type claim (cty).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setCty"></a>
+
+### jwsHeader.setCty(value)
+Sets a value for the content type claim (cty).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+crit"></a>
+
+### jwsHeader.crit() ⇒ <code>Array.&lt;string&gt;</code>
+Returns the value of the critical claim (crit).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setCrit"></a>
+
+### jwsHeader.setCrit(value)
+Sets values for the critical claim (crit).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>Array.&lt;string&gt;</code> | 
+
+<a name="JwsHeader+url"></a>
+
+### jwsHeader.url() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the url claim (url).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setUrl"></a>
+
+### jwsHeader.setUrl(value)
+Sets a value for the url claim (url).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+nonce"></a>
+
+### jwsHeader.nonce() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the value of the nonce claim (nonce).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+setNonce"></a>
+
+### jwsHeader.setNonce(value)
+Sets a value for the nonce claim (nonce).
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="JwsHeader+toJSON"></a>
+
+### jwsHeader.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader+clone"></a>
+
+### jwsHeader.clone() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
+<a name="JwsHeader.fromJSON"></a>
+
+### JwsHeader.fromJSON(json) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwsHeader</code>](#JwsHeader)  
 
 | Param | Type |
 | --- | --- |
@@ -4270,6 +4674,57 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Token"></a>
+
+## Token
+A cryptographically verified decoded token from a JWS.
+
+Contains the decoded headers and the raw claims.
+
+**Kind**: global class  
+
+* [Token](#Token)
+    * [.claims()](#Token+claims) ⇒ <code>string</code>
+    * [.claimsBytes()](#Token+claimsBytes) ⇒ <code>Uint8Array</code>
+    * [.protectedHeader()](#Token+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.clone()](#Token+clone) ⇒ [<code>Token</code>](#Token)
+    * [.toJSON()](#Token+toJSON) ⇒ <code>any</code>
+
+<a name="Token+claims"></a>
+
+### token.claims() ⇒ <code>string</code>
+Returns a copy of the parsed claims represented as a string.
+
+# Errors
+An error is thrown if the claims cannot be represented as a string.
+
+This error can only occur if the Token was decoded from a detached payload.
+
+**Kind**: instance method of [<code>Token</code>](#Token)  
+<a name="Token+claimsBytes"></a>
+
+### token.claimsBytes() ⇒ <code>Uint8Array</code>
+Return a copy of the parsed claims represented as an array of bytes.
+
+**Kind**: instance method of [<code>Token</code>](#Token)  
+<a name="Token+protectedHeader"></a>
+
+### token.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header.
+
+**Kind**: instance method of [<code>Token</code>](#Token)  
+<a name="Token+clone"></a>
+
+### token.clone() ⇒ [<code>Token</code>](#Token)
+Deep clones the object.
+
+**Kind**: instance method of [<code>Token</code>](#Token)  
+<a name="Token+toJSON"></a>
+
+### token.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>Token</code>](#Token)  
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod
@@ -4663,3 +5118,25 @@ Return after the first error occurs.
 Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
+<a name="encodeB64"></a>
+
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="decodeB64"></a>
+
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+

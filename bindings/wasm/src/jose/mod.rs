@@ -3,10 +3,12 @@
 
 mod jwk;
 mod jws_header;
-mod types;
+mod jwu;
 mod token;
+mod types;
 
 pub use jwk::*;
 pub use jws_header::*;
-pub use types::*;
+pub use jwu::*;
 pub use token::*;
+pub use types::*;

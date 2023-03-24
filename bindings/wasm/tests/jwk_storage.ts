@@ -1,8 +1,10 @@
 const assert = require("assert");
-import { Base64, RandomHelper } from "@iota/util.js";
+import { RandomHelper } from "@iota/util.js";
 import {
+    decodeB64,
     Ed25519,
     EdCurve,
+    encodeB64,
     IJwkParams,
     Jwk,
     JwkGenOutput,
@@ -157,8 +159,8 @@ export class JwkMemStore implements JwkStorage {
 
 // Encodes a Ed25519 keypair into a Jwk.
 function encodeJwk(keyPair: KeyPair, alg: JwsAlgorithm): Jwk {
-    let x = Base64.encode(keyPair.public());
-    let d = Base64.encode(keyPair.private());
+    let x = encodeB64(keyPair.public());
+    let d = encodeB64(keyPair.private());
 
     return new Jwk({
         "kty": JwkType.Okp,
@@ -179,8 +181,9 @@ function decodeJwk(jwk: Jwk): KeyPair {
         const d = paramsOkp.d;
 
         if (d) {
-            const secret = Base64.decode(d);
-            const pub = Base64.decode(paramsOkp.x);
+            let textEncoder = new TextEncoder();
+            const secret = decodeB64(textEncoder.encode(d));
+            const pub = decodeB64(textEncoder.encode(paramsOkp.x));
             return KeyPair.fromKeys(KeyType.Ed25519, pub, secret);
         } else {
             throw new Error("missing private key component");
@@ -192,5 +195,5 @@ function decodeJwk(jwk: Jwk): KeyPair {
 
 // Returns a random key id.
 function randomKeyId(): string {
-    return Base64.encode(RandomHelper.generate(32));
+    return encodeB64(RandomHelper.generate(32));
 }

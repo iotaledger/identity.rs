@@ -11,6 +11,10 @@ pub mod jws {
   pub use identity_jose::jws::*;
 }
 
+pub mod jwu {
+  pub use identity_jose::jwu::*;
+}
+
 pub mod error {
   pub use identity_jose::error::*;
 }

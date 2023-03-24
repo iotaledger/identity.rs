@@ -1,5 +1,5 @@
 const assert = require("assert");
-import { Base64, RandomHelper } from "@iota/util.js";
+import { RandomHelper } from "@iota/util.js";
 import {
     CoreDocument,
     Ed25519,
@@ -13,6 +13,7 @@ import {
     JwkUse,
     JwsAlgorithm,
     JwsSignatureOptions,
+    JwsVerificationOptions,
     MethodDigest,
     MethodScope,
     Storage,
@@ -74,9 +75,10 @@ describe("#JwkStorageDocument", function() {
 
         let testString = "test";
 
-        const signature = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
-
-        // Delete the method
+        const jws = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
+        // Verify the signature
+        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        assert.deepStrictEqual(testString, token.claims());
         const methodId = (method as VerificationMethod).id();
         await doc.purgeMethod(storage, methodId);
         // Check that the method can no longer be resolved.

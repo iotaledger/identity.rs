@@ -120,11 +120,20 @@ mod eddsa_verifier {
       }
 
       let pk: [u8; crypto::signatures::ed25519::PUBLIC_KEY_LENGTH] = crate::jwu::decode_b64(params.x.as_str())
-        .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)
-        .and_then(|value| TryInto::try_into(value).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure))?;
+        .map_err(|_| {
+          SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
+            .with_custom_message("could not decode x parameter from jwk")
+        })
+        .and_then(|value| {
+          TryInto::try_into(value).map_err(|_| {
+            SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
+              .with_custom_message("invalid public key length")
+          })
+        })?;
 
-      let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk)
-        .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
+      let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk).map_err(|err| {
+        SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure).with_source(err)
+      })?;
 
       let signature_arr =
         <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.decoded_signature.deref())

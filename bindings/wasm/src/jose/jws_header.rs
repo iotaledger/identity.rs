@@ -20,7 +20,7 @@ use crate::jose::WasmJwsAlgorithm;
 
 #[wasm_bindgen(js_name = JwsHeader)]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct WasmJwsHeader(JwsHeader);
+pub struct WasmJwsHeader(pub(crate) JwsHeader);
 
 #[wasm_bindgen(js_class = JwsHeader)]
 impl WasmJwsHeader {

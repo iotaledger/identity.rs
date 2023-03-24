@@ -85,7 +85,7 @@ macro_rules! impl_wasm_error_from {
   $(impl From<$t> for WasmError<'_> {
     fn from(error: $t) -> Self {
       Self {
-        message: Cow::Owned(error.to_string()),
+        message: Cow::Owned(ErrorMessage(&error).to_string()),
         name: Cow::Borrowed(error.into()),
       }
     }
@@ -180,7 +180,7 @@ impl From<identity_iota::credential::CompoundCredentialValidationError> for Wasm
   fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundCredentialValidationError"),
-      message: Cow::Owned(error.to_string()),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
@@ -189,7 +189,7 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   fn from(error: identity_iota::credential::CompoundPresentationValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundPresentationValidationError"),
-      message: Cow::Owned(error.to_string()),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
@@ -225,6 +225,15 @@ impl From<identity_iota::storage::storage::JwkStorageDocumentError> for WasmErro
   fn from(error: identity_iota::storage::storage::JwkStorageDocumentError) -> Self {
     Self {
       name: Cow::Borrowed("JwkStorageDocumentExtensionError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::verification::jose::error::Error> for WasmError<'_> {
+  fn from(error: identity_iota::verification::jose::error::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("JoseError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

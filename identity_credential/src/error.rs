@@ -34,6 +34,6 @@ pub enum Error {
   #[error("invalid credential status: {0}")]
   InvalidStatus(String),
   /// Caused when constructing an invalid `LinkedDomainService` or `DomainLinkageConfiguration`.
-  #[error("domain linkage error: {0}")]
-  DomainLinkageError(Box<dyn std::error::Error + Send + Sync + 'static>),
+  #[error("domain linkage error")]
+  DomainLinkageError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }

@@ -15,6 +15,12 @@ use crate::jose::WasmJwk;
 /// implementation was not passed.
 pub(crate) struct WasmJwsSignatureVerifier(Option<IJwsSignatureVerifier>);
 
+impl WasmJwsSignatureVerifier {
+  pub(crate) fn new(verifier: Option<IJwsSignatureVerifier>) -> Self {
+    Self(verifier)
+  }
+}
+
 impl JwsSignatureVerifier for WasmJwsSignatureVerifier {
   fn verify(
     &self,
@@ -43,7 +49,6 @@ impl JwsSignatureVerifier for WasmJwsSignatureVerifier {
     }
   }
 }
-
 #[wasm_bindgen(typescript_custom_section)]
 const JWS_SIGNATURE_VERIFIER: &'static str = r#"
 /** Interface for cryptographically verifying a JWS signature. 
