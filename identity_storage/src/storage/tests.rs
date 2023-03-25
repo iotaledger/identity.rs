@@ -4,8 +4,8 @@
 use identity_core::convert::FromJson;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
-use identity_jose::jws::EdDSAJwsSignatureVerifier;
-use identity_jose::jws::JwsAlgorithm;
+use identity_verification::jose::jws::EdDSAJwsSignatureVerifier;
+use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
 
@@ -102,6 +102,7 @@ async fn signing() {
   assert!(document
     .verify_jws(
       &jws,
+      None,
       &EdDSAJwsSignatureVerifier::default(),
       &JwsVerificationOptions::default()
     )
@@ -184,6 +185,7 @@ mod iota_document_tests {
     // Verify the JWS
     let result = iota_document.verify_jws(
       &jws,
+      None,
       &EdDSAJwsSignatureVerifier::default(),
       &JwsVerificationOptions::default(),
     );

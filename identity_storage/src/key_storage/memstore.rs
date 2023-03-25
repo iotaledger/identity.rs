@@ -8,10 +8,10 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use crypto::signatures::ed25519::SecretKey;
-use identity_jose::jwk::EdCurve;
-use identity_jose::jwk::Jwk;
-use identity_jose::jwk::JwkType;
-use identity_jose::jws::JwsAlgorithm;
+use identity_verification::jose::jwk::EdCurve;
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jwk::JwkType;
+use identity_verification::jose::jws::JwsAlgorithm;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -70,7 +70,7 @@ impl JwkStorage for JwkMemStore {
 
     let mut jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
     jwk.set_alg(alg.name());
-    let mut public_jwk: Jwk = jwk.to_public();
+    let mut public_jwk: Jwk = jwk.to_public().unwrap();
     public_jwk.set_kid(kid.clone());
 
     let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
@@ -182,10 +182,10 @@ pub(crate) mod ed25519 {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::SecretKey;
   use crypto::signatures::ed25519::{self};
-  use identity_jose::jwk::EdCurve;
-  use identity_jose::jwk::Jwk;
-  use identity_jose::jwk::JwkParamsOkp;
-  use identity_jose::jwu;
+  use identity_verification::jose::jwk::EdCurve;
+  use identity_verification::jose::jwk::Jwk;
+  use identity_verification::jose::jwk::JwkParamsOkp;
+  use identity_verification::jose::jwu;
 
   use crate::key_storage::KeyStorageError;
   use crate::key_storage::KeyStorageErrorKind;
@@ -364,10 +364,10 @@ mod tests {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::Signature;
   use crypto::signatures::ed25519::{self};
-  use identity_jose::jwk::EcCurve;
-  use identity_jose::jwk::JwkParamsEc;
-  use identity_jose::jwk::JwkParamsOkp;
-  use identity_jose::jwu;
+  use identity_verification::jose::jwk::EcCurve;
+  use identity_verification::jose::jwk::JwkParamsEc;
+  use identity_verification::jose::jwk::JwkParamsOkp;
+  use identity_verification::jose::jwu;
 
   use super::*;
 
@@ -378,7 +378,7 @@ mod tests {
 
     let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE, JwsAlgorithm::EdDSA).await.unwrap();
 
-    let signature = store.sign(&key_id, test_msg, &jwk.to_public()).await.unwrap();
+    let signature = store.sign(&key_id, test_msg, &jwk.to_public().unwrap()).await.unwrap();
 
     let public_key: PublicKey = expand_public_jwk(&jwk);
     let signature: Signature = Signature::from_bytes(signature.try_into().unwrap());
@@ -404,7 +404,7 @@ mod tests {
     store.insert(jwk.clone()).await.unwrap();
 
     // INVALID: Inserting a Jwk with all private key components unset should fail.
-    let err = store.insert(jwk.to_public()).await.unwrap_err();
+    let err = store.insert(jwk.to_public().unwrap()).await.unwrap_err();
     assert!(matches!(err.kind(), KeyStorageErrorKind::Unspecified))
   }
 
