@@ -11,6 +11,7 @@ mod domain_linkage_configuration;
 mod domain_linkage_credential_builder;
 mod evidence;
 mod issuer;
+mod jwt;
 mod linked_domain_service;
 mod policy;
 mod refresh;

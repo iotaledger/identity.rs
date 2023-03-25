@@ -36,4 +36,16 @@ pub enum Error {
   /// Caused when constructing an invalid `LinkedDomainService` or `DomainLinkageConfiguration`.
   #[error("domain linkage error")]
   DomainLinkageError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+  /// Caused when attempting to encode a `Credential` containing multiple subjects as a JWT.  
+  #[error("could not create JWT payload from verifiable credential: more than one subject")]
+  MoreThanOneSubjectInJwt,
+  /// Caused when attempting to convert a JWT to a `Credential` that has conflicting values
+  /// between the registered claims and those in the `vc` object.
+  #[error("could not convert JWT to the VC data model: {0}")]
+  InconsistentCredentialJwtClaims(&'static str),
+
+  /// Caused when attempting to parse a timestamp value that is outside the
+  /// valid range defined in [RFC 3339](https://tools.ietf.org/html/rfc3339).  
+  #[error("timestamp conversion failed")]
+  TimestampConversionError,
 }
