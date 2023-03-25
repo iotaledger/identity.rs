@@ -271,8 +271,9 @@ impl JwkParamsOct {
     JwkType::Oct
   }
 
+  // TODO: Make the behaviour consistent with the adapted implementation in `identity_jose`.
   pub fn to_public(&self) -> Self {
-    Self { k: self.k.clone() }
+    unimplemented!("Oct parameters are not considered public by this library");
   }
 }
 
