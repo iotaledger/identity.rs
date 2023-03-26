@@ -25,8 +25,12 @@ use crate::credential::Subject;
 use crate::Error;
 use crate::Result;
 
-// Implementation of JWT Encoding/Decoding according to https://w3c.github.io/vc-jwt/#version-1.1.
-// Note that version 2 seems to be work in progress and meant for the VC 2.0 Credentials.
+/// Implementation of JWT Encoding/Decoding according to https://w3c.github.io/vc-jwt/#version-1.1.
+///
+/// This type is opinionated in the following ways:
+/// 1. Serialization tries to duplicate as little as possible between the required registered claims and the `vc` entry.
+/// 2. Only allows serializing/deserializing claims "exp, iss, nbf &/or iat, jti, sub and vc". Other custom properties
+/// must be set in the `vc` entry.
 #[derive(Serialize, Deserialize)]
 pub(super) struct VerifiableCredentialJwtClaims<'credential, T = Object>
 where
@@ -40,7 +44,8 @@ where
   iss: Cow<'credential, Issuer>,
 
   /// Represents the issuanceDate encoded as a UNIX timestamp.
-  nbf: i64,
+  #[serde(flatten)]
+  issuance_date: IssuanceDateClaims,
 
   /// Represents the id property of the credential.
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -61,15 +66,18 @@ where
   /// Checks whether the fields that are set in the `vc` object are consistent with the corresponding values
   /// set for the registered claims.
   fn check_consistency(&self) -> Result<()> {
+    // Check consistency of issuanceDate
+    let issuance_date_from_claims = self.issuance_date.to_issuance_date()?;
     if !self
       .vc
       .issuance_date
-      .map(|value| value.to_unix() == self.nbf)
+      .map(|value| value == issuance_date_from_claims)
       .unwrap_or(true)
     {
       return Err(Error::InconsistentCredentialJwtClaims("inconsistent issuanceDate"));
     };
 
+    // Check consistency of expirationDate
     if !self
       .vc
       .expiration_date
@@ -81,6 +89,7 @@ where
       ));
     };
 
+    // Check consistency of id
     if !self
       .vc
       .id
@@ -103,7 +112,7 @@ where
     let Self {
       exp,
       iss,
-      nbf,
+      issuance_date,
       jti,
       sub,
       vc,
@@ -137,7 +146,7 @@ where
         })
       },
       issuer: iss.into_owned(),
-      issuance_date: Timestamp::from_unix(nbf).map_err(|_| Error::TimestampConversionError)?,
+      issuance_date: issuance_date.to_issuance_date()?,
       expiration_date: exp
         .map(Timestamp::from_unix)
         .transpose()
@@ -177,14 +186,14 @@ where
     Ok(Self {
       exp: expiration_date.map(|value| Timestamp::to_unix(&value)),
       iss: Cow::Borrowed(issuer),
-      nbf: issuance_date.to_unix(),
+      issuance_date: IssuanceDateClaims::new(*issuance_date),
       jti: id.as_ref().map(Cow::Borrowed),
       sub: subject.id.as_ref().map(Cow::Borrowed),
       vc: InnerCredential {
         context: Cow::Borrowed(context),
         id: None,
         types: Cow::Borrowed(types),
-        credential_subject: SubjectWithoutId::new(subject),
+        credential_subject: InnerCredentialSubject::new(subject),
         issuance_date: None,
         expiration_date: None,
         credential_schema: Cow::Borrowed(credential_schema),
@@ -200,16 +209,55 @@ where
   }
 }
 
+/// The VC-JWT spec states that issuanceDate corresponds to the registered `nbf` claim,
+/// but `iat` is also used in the ecosystem. This type aims to take care of this discrepancy on
+/// a best effort basis.
+#[derive(Serialize, Deserialize, Clone, Copy)]
+struct IssuanceDateClaims {
+  #[serde(skip_serializing_if = "Option::is_none")]
+  iat: Option<i64>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  nbf: Option<i64>,
+}
+
+impl IssuanceDateClaims {
+  fn new(issuance_date: Timestamp) -> Self {
+    Self {
+      iat: None,
+      nbf: Some(issuance_date.to_unix()),
+    }
+  }
+  /// Produces the `issuanceDate` value from `nbf` if it is set,
+  /// otherwise falls back to `iat`. If none of these values are set an error is returned.
+  fn to_issuance_date(self) -> Result<Timestamp> {
+    if let Some(timestamp) = self
+      .nbf
+      .map(Timestamp::from_unix)
+      .transpose()
+      .map_err(|_| Error::TimestampConversionError)?
+    {
+      Ok(timestamp)
+    } else {
+      Timestamp::from_unix(self.iat.ok_or(Error::TimestampConversionError)?)
+        .map_err(|_| Error::TimestampConversionError)
+    }
+  }
+}
 #[derive(Serialize, Deserialize)]
-struct SubjectWithoutId<'credential> {
+struct InnerCredentialSubject<'credential> {
+  // Do not serialize this to save space as the value must be included in the `sub` claim.
+  #[serde(skip_serializing)]
+  id: Option<Url>,
+
   #[serde(flatten)]
   properties: Cow<'credential, Object>,
 }
-impl<'credential> SubjectWithoutId<'credential> {
+
+impl<'credential> InnerCredentialSubject<'credential> {
   fn new(subject: &'credential Subject) -> Self {
-    let Subject { id: _, properties } = subject;
     Self {
-      properties: Cow::Borrowed(properties),
+      id: None,
+      properties: Cow::Borrowed(&subject.properties),
     }
   }
 }
@@ -233,7 +281,7 @@ where
   types: Cow<'credential, OneOrMany<String>>,
   /// One or more `Object`s representing the `Credential` subject(s).
   #[serde(rename = "credentialSubject")]
-  credential_subject: SubjectWithoutId<'credential>,
+  credential_subject: InnerCredentialSubject<'credential>,
   /// A timestamp of when the `Credential` becomes valid.
   #[serde(rename = "issuanceDate", skip_serializing_if = "Option::is_none")]
   issuance_date: Option<Timestamp>,
@@ -265,4 +313,78 @@ where
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
   proof: Option<Cow<'credential, Proof>>,
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_core::common::Object;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
+
+  use crate::credential::Credential;
+
+  use super::VerifiableCredentialJwtClaims;
+
+  #[test]
+  fn roundtrip() {
+    let credential_json: &str = r#"
+    {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "id": "http://example.edu/credentials/3732",
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+      "issuer": "https://example.edu/issuers/14",
+      "issuanceDate": "2010-01-01T19:23:24Z",
+      "credentialSubject": {
+        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "degree": {
+          "type": "BachelorDegree",
+          "name": "Bachelor of Science in Mechanical Engineering"
+        }
+      }
+    }"#;
+
+    let expected_serialization_json: &str = r#"
+    {
+      "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "jti": "http://example.edu/credentials/3732",
+      "iss": "https://example.edu/issuers/14",
+      "nbf":  1262373804,
+      "vc": {
+        "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+      "credentialSubject": {
+        "degree": {
+          "type": "BachelorDegree",
+          "name": "Bachelor of Science in Mechanical Engineering"
+          }
+        }
+      }
+    }"#;
+
+    let credential: Credential = Credential::from_json(credential_json).unwrap();
+    let jwt_credential_claims: VerifiableCredentialJwtClaims<'_> =
+      VerifiableCredentialJwtClaims::new(&credential).unwrap();
+    let jwt_credential_claims_serialized: String = jwt_credential_claims.to_json().unwrap();
+    // Compare JSON representations
+    assert_eq!(
+      Object::from_json(expected_serialization_json).unwrap(),
+      Object::from_json(&jwt_credential_claims_serialized).unwrap()
+    );
+
+    // Retrieve the credential from the JWT serialization
+    let retrieved_credential: Credential = {
+      VerifiableCredentialJwtClaims::<'static, Object>::from_json(&jwt_credential_claims_serialized)
+        .unwrap()
+        .try_into_credential()
+        .unwrap()
+    };
+
+    assert_eq!(credential, retrieved_credential);
+  }
 }
