@@ -11,13 +11,11 @@ use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
 
 use super::JwkStorageDocumentError as Error;
-use super::JwsSignatureOptions;
 use super::Storage;
 
 use async_trait::async_trait;
 use identity_credential::credential::Credential;
-// use identity_credential::credential::Credential;
-// use identity_credential::presentation::Presentation;
+use identity_core::crypto::JwsSignatureOptions;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_verification::jose::jws::CompactJwsEncoder;
