@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::convert::FromJson;
+use identity_credential::credential::Credential;
+
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::EdDSAJwsSignatureVerifier;
@@ -77,7 +79,7 @@ async fn generation() {
 }
 
 #[tokio::test]
-async fn signing() {
+async fn signing_bytes() {
   let (mut document, storage) = setup();
   // Generate a method with the kid as fragment
   let kid: Option<String> = document
@@ -107,6 +109,53 @@ async fn signing() {
       &JwsVerificationOptions::default()
     )
     .is_ok());
+}
+
+#[tokio::test]
+async fn signing_credential() {
+  let (mut document, storage) = setup();
+
+  // Generate a method with the kid as fragment
+  let kid: Option<String> = document
+    .generate_method(
+      &storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await
+    .unwrap();
+
+  let credential_json: &str = r#"
+    {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "id": "http://example.edu/credentials/3732",
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+      "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
+      "issuanceDate": "2010-01-01T19:23:24Z",
+      "credentialSubject": {
+        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "degree": {
+          "type": "BachelorDegree",
+          "name": "Bachelor of Science in Mechanical Engineering"
+        }
+      }
+    }"#;
+
+  let credential: Credential = Credential::from_json(credential_json).unwrap();
+  let jws = document
+    .sign_credential(
+      &credential,
+      &storage,
+      kid.as_deref().unwrap(),
+      &JwsSignatureOptions::default(),
+    )
+    .await
+    .unwrap();
 }
 
 #[tokio::test]

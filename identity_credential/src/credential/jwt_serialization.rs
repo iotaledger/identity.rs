@@ -1,6 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+// Copyright 2020-2023 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::borrow::Cow;
 
 use serde::Deserialize;
@@ -32,7 +35,7 @@ use crate::Result;
 /// 2. Only allows serializing/deserializing claims "exp, iss, nbf &/or iat, jti, sub and vc". Other custom properties
 /// must be set in the `vc` entry.
 #[derive(Serialize, Deserialize)]
-pub(super) struct VerifiableCredentialJwtClaims<'credential, T = Object>
+pub(crate) struct VerifiableCredentialJwtClaims<'credential, T = Object>
 where
   T: ToOwned + Serialize,
   <T as ToOwned>::Owned: DeserializeOwned,
@@ -99,6 +102,19 @@ where
     {
       return Err(Error::InconsistentCredentialJwtClaims("inconsistent credential id"));
     };
+
+    // Check consistency of credentialSubject
+    if let Some(ref inner_credential_subject_id) = self.vc.credential_subject.id {
+      let subject_claim = self.sub.as_ref().ok_or(Error::InconsistentCredentialJwtClaims(
+        "inconsistent credentialSubject: expected identifier in sub",
+      ))?;
+      if subject_claim.as_ref() != inner_credential_subject_id {
+        return Err(Error::InconsistentCredentialJwtClaims(
+          "inconsistent credentialSubject: identifiers do not match",
+        ));
+      }
+    };
+
     Ok(())
   }
 

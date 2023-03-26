@@ -15,6 +15,7 @@ use super::JwsSignatureOptions;
 use super::Storage;
 
 use async_trait::async_trait;
+use identity_credential::credential::Credential;
 // use identity_credential::credential::Credential;
 // use identity_credential::presentation::Presentation;
 use identity_did::DIDUrl;
@@ -27,7 +28,8 @@ use identity_verification::jws::CharSet;
 use identity_verification::MethodData;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
-// use serde::Serialize;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 pub type StorageResult<T> = Result<T, Error>;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -70,6 +72,24 @@ pub trait JwkStorageDocumentExt: private::Sealed {
   where
     K: JwkStorage,
     I: KeyIdStorage;
+
+  /// Produces a JWS where the payload is produced from the given `credential`
+  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  ///
+  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  async fn sign_credential<K, I, T>(
+    &self,
+    credential: &Credential<T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    options: &JwsSignatureOptions,
+  ) -> StorageResult<String>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+    T: ToOwned + Serialize + Sync,
+    <T as ToOwned>::Owned: DeserializeOwned;
 }
 
 mod private {
@@ -346,6 +366,25 @@ impl JwkStorageDocumentExt for CoreDocument {
       .map_err(Error::KeyStorageError)?;
     Ok(jws_encoder.into_jws(&signature))
   }
+
+  async fn sign_credential<K, I, T>(
+    &self,
+    credential: &Credential<T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    options: &JwsSignatureOptions,
+  ) -> StorageResult<String>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+    T: ToOwned + Serialize + Sync,
+    <T as ToOwned>::Owned: DeserializeOwned,
+  {
+    let payload = credential
+      .serialize_jwt()
+      .map_err(|err| Error::ClaimsSerializationError(err))?;
+    self.sign_bytes(storage, fragment, payload.as_bytes(), options).await
+  }
 }
 
 /// Attempt to revert key generation if this succeeds the original `source_error` is returned,
@@ -418,6 +457,25 @@ mod iota_document {
       self
         .core_document()
         .sign_bytes(storage, fragment, payload, options)
+        .await
+    }
+
+    async fn sign_credential<K, I, T>(
+      &self,
+      credential: &Credential<T>,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      options: &JwsSignatureOptions,
+    ) -> StorageResult<String>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+      T: ToOwned + Serialize + Sync,
+      <T as ToOwned>::Owned: DeserializeOwned,
+    {
+      self
+        .core_document()
+        .sign_credential(credential, storage, fragment, options)
         .await
     }
   }

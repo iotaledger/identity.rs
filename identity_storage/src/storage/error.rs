@@ -28,6 +28,8 @@ pub enum JwkStorageDocumentError {
   EncodingError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
   #[error("unable to produce method digest")]
   MethodDigestConstructionError(#[source] MethodDigestConstructionError),
+  #[error("could not produce JWS payload from the given claims: serialization failed")]
+  ClaimsSerializationError(#[source] identity_credential::Error),
   #[error("storage operation failed after altering state. Unable to undo operation(s): {message}")]
   UndoOperationFailed {
     message: String,
