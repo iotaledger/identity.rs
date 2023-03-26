@@ -1026,24 +1026,28 @@ impl CoreDocument {
     DocumentSigner::new(self, private)
   }
 
-  /// Sync version of `identity_storage::JwkStorageDocumentExt::sign_bytes. Only intended for testing purposes. 
+  /// Sync version of `identity_storage::JwkStorageDocumentExt::sign_bytes. Only intended for testing purposes.
   #[cfg(test)]
-  pub fn create_jws_unstable_test_only(&self, payload: &[u8], fragment: &str, sk: &crypto::signatures::ed25519::SecretKey, options: &identity_core::crypto::JwsSignatureOptions) -> std::result::Result<String, Box<dyn std::error::Error + Send + Sync + 'static>> {
-    use identity_verification::MethodData;
-    use identity_verification::jose::jws::{JwsAlgorithm, JwsHeader}; 
-    use identity_verification::jose::jws::CompactJwsEncoder; 
-    use identity_verification::jose::jws::CompactJwsEncodingOptions;
+  pub fn create_jws_unstable_test_only(
+    &self,
+    payload: &[u8],
+    fragment: &str,
+    sk: &crypto::signatures::ed25519::SecretKey,
+    options: &identity_core::crypto::JwsSignatureOptions,
+  ) -> std::result::Result<String, Box<dyn std::error::Error + Send + Sync + 'static>> {
     use identity_verification::jose::jws::CharSet;
+    use identity_verification::jose::jws::CompactJwsEncoder;
+    use identity_verification::jose::jws::CompactJwsEncodingOptions;
+    use identity_verification::jose::jws::JwsAlgorithm;
+    use identity_verification::jose::jws::JwsHeader;
+    use identity_verification::MethodData;
     // Obtain the method corresponding to the given fragment.
     let method: &VerificationMethod = self.resolve_method(fragment, None).ok_or(Error::MethodNotFound)?;
     let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
       return Err("not public key jwk".into())
     };
     // Extract JwsAlgorithm
-    let alg: JwsAlgorithm = jwk
-      .alg()
-      .unwrap_or("")
-      .parse()?;
+    let alg: JwsAlgorithm = jwk.alg().unwrap_or("").parse()?;
 
     // create JWS header in accordance with options
     let header: JwsHeader = {
@@ -1083,7 +1087,6 @@ impl CoreDocument {
       header
     };
 
-
     // Extract Compact JWS encoding options.
     let encoding_options: CompactJwsEncodingOptions = if !options.detached_payload {
       // We use this as a default and don't provide the extra UrlSafe check for now.
@@ -1096,7 +1099,7 @@ impl CoreDocument {
     };
 
     let jws_encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new_with_options(&payload, &header, encoding_options)?;
-    let signature =  sk.sign(&jws_encoder.signing_input());
+    let signature = sk.sign(&jws_encoder.signing_input());
     Ok(jws_encoder.into_jws(&signature.to_bytes()))
   }
 }
@@ -1123,7 +1126,7 @@ impl CoreDocument {
   /// - The JWS must be encoded according to the JWS compact serialization.
   /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
   //
-  // NOTE: This is tested in `identity_storage` and `identity_credential`. 
+  // NOTE: This is tested in `identity_storage` and `identity_credential`.
   // TODO: Consider including some unit tests for this method in this crate.
   pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
     &self,
@@ -1159,7 +1162,6 @@ impl CoreDocument {
       .verify(signature_verifier, public_key)
       .map_err(Error::JwsVerificationError)
   }
- 
 }
 
 #[cfg(test)]

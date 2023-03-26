@@ -14,8 +14,8 @@ use super::JwkStorageDocumentError as Error;
 use super::Storage;
 
 use async_trait::async_trait;
-use identity_credential::credential::Credential;
 use identity_core::crypto::JwsSignatureOptions;
+use identity_credential::credential::Credential;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_verification::jose::jws::CompactJwsEncoder;

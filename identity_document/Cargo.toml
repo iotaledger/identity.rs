@@ -24,8 +24,8 @@ thiserror.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.4.0", default-features = false, features = ["cargo_bench_support"] }
-serde_json.workspace = true
 iota-crypto = { version = "0.15.3", features = ["ed25519"] }
+serde_json.workspace = true
 
 [features]
 diff = ["identity_core/diff", "identity_did/diff"]

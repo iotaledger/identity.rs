@@ -16,13 +16,13 @@ pub use self::proof::ProofPurpose;
 pub use self::proof::ProofValue;
 pub use self::signature::GetSignature;
 pub use self::signature::GetSignatureMut;
+pub use self::signature::JwsSignatureOptions;
 pub use self::signature::Named;
 pub use self::signature::SetSignature;
 pub use self::signature::Sign;
 pub use self::signature::Signer;
 pub use self::signature::Verifier;
 pub use self::signature::Verify;
-pub use self::signature::JwsSignatureOptions;
 
 mod key;
 mod proof;

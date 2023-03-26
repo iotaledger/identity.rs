@@ -3,9 +3,9 @@
 
 use crate::common::Url;
 
-//TODO: Should this module perhaps be moved to `identity_verification`? 
-// Ideally it would be in `identity_storage`, but the test-only JWS signing functionality in `identity_document` 
-// requires this type and that crate cannot depend on `identity_storage`. 
+//TODO: Should this module perhaps be moved to `identity_verification`?
+// Ideally it would be in `identity_storage`, but the test-only JWS signing functionality in `identity_document`
+// requires this type and that crate cannot depend on `identity_storage`.
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
