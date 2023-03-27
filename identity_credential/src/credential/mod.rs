@@ -36,4 +36,4 @@ pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
 
-pub use self::jwt_serialization::*;
+pub(crate) use self::jwt_serialization::*;

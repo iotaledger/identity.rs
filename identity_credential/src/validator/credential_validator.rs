@@ -299,8 +299,6 @@ impl CredentialValidator {
 
 #[cfg(test)]
 mod tests {
-  use proptest::proptest;
-
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
@@ -318,9 +316,6 @@ mod tests {
   use crate::validator::CredentialValidationOptions;
 
   use super::*;
-
-  const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
-  const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
 
   const SIMPLE_CREDENTIAL_JSON: &str = r#"{
     "@context": [
@@ -369,40 +364,6 @@ mod tests {
         issuance_date,
         expiration_date,
       }
-    }
-  }
-
-  #[test]
-  fn simple_expires_on_or_after_with_expiration_date() {
-    let later_than_expiration_date = SIMPLE_CREDENTIAL
-      .expiration_date
-      .unwrap()
-      .checked_add(Duration::minutes(1))
-      .unwrap();
-    assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, later_than_expiration_date).is_err());
-    // and now with an earlier date
-    let earlier_date = Timestamp::parse("2019-12-27T11:35:30Z").unwrap();
-    assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, earlier_date).is_ok());
-  }
-
-  // test with a few timestamps that should be RFC3339 compatible
-  proptest! {
-    #[test]
-    fn property_based_expires_after_with_expiration_date(seconds in 0..1_000_000_000_u32) {
-      let after_expiration_date = SIMPLE_CREDENTIAL.expiration_date.unwrap().checked_add(Duration::seconds(seconds)).unwrap();
-      let before_expiration_date = SIMPLE_CREDENTIAL.expiration_date.unwrap().checked_sub(Duration::seconds(seconds)).unwrap();
-      assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, after_expiration_date).is_err());
-      assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, before_expiration_date).is_ok());
-    }
-  }
-
-  proptest! {
-    #[test]
-    fn property_based_expires_after_no_expiration_date(seconds in FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP..LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP) {
-      let mut credential = SIMPLE_CREDENTIAL.clone();
-      credential.expiration_date = None;
-      // expires after whatever the timestamp may be because the expires_after field is None.
-      assert!(CredentialValidator::check_expires_on_or_after(&credential, Timestamp::from_unix(seconds).unwrap()).is_ok());
     }
   }
 
@@ -463,17 +424,6 @@ mod tests {
         .unwrap()
     )
     .is_ok());
-  }
-
-  proptest! {
-    #[test]
-    fn property_based_issued_before(seconds in 0 ..1_000_000_000_u32) {
-
-      let earlier_than_issuance_date = SIMPLE_CREDENTIAL.issuance_date.checked_sub(Duration::seconds(seconds)).unwrap();
-      let later_than_issuance_date = SIMPLE_CREDENTIAL.issuance_date.checked_add(Duration::seconds(seconds)).unwrap();
-      assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, earlier_than_issuance_date).is_err());
-      assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, later_than_issuance_date).is_ok());
-    }
   }
 
   #[test]

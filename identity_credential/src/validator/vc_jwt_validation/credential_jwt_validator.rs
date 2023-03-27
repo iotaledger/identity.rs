@@ -43,94 +43,8 @@ impl CredentialValidator {
   pub fn new() -> Self {
     Self(EdDSAJwsSignatureVerifier::default())
   }
-}
 
-type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
-
-impl<V> CredentialValidator<V>
-where
-  V: JwsSignatureVerifier,
-{
-  /// Create a new [`CredentialValidator`] that delegates cryptographic signature verification to the given
-  /// `signature_verifier`.
-  pub fn with_signature_verifier(signature_verifier: V) -> Self {
-    Self(signature_verifier)
-  }
-
-  /// Decodes and validates a [`Credential`] issued as a JWS. A [`CredentialToken`] is returned upon success.
-  ///
-  /// The following properties are validated according to `options`:
-  /// - the issuer's signature on the JWS,
-  /// - the expiration date,
-  /// - the issuance date,
-  /// - the semantic structure.
-  ///
-  /// # Warning
-  /// The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
-  /// trusted. This section contains more information on additional checks that should be carried out before and after
-  /// calling this method.
-  ///
-  /// ## The state of the issuer's DID Document
-  /// The caller must ensure that `issuer` represents an up-to-date DID Document.
-  ///
-  /// ## Properties that are not validated
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, `proof` **and more**.
-  /// These should be manually checked after validation, according to your requirements.
-  ///
-  /// # Errors
-  /// An error is returned whenever a validated condition is not satisfied.
-  // TODO: Consider making this more generic so it returns CredentialToken<T>
-  pub fn validate<DOC>(
-    &self,
-    credential_jws: &str,
-    issuer: &DOC,
-    options: &CredentialValidationOptions,
-    fail_fast: FailFast,
-  ) -> Result<CredentialToken, CompoundCredentialValidationError>
-  where
-    DOC: AsRef<CoreDocument>,
-  {
-    Self::validate_extended::<CoreDocument, V>(
-      &self.0,
-      credential_jws,
-      std::slice::from_ref(issuer.as_ref()),
-      options,
-      None,
-      fail_fast,
-    )
-  }
-
-  /// Decode and verify the JWS signature of a [`Credential`] issued as a JWS using the DID Document of a trusted
-  /// issuer.
-  ///
-  /// A [`CredentialToken`] is returned upon success.
-  ///
-  /// # Warning
-  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
-  ///
-  /// ## Proofs
-  ///  Only the JWS signature is verified. If the [`Credential`] contains a `proof` property this will not be verified
-  /// by this method.
-  ///
-  /// # Errors
-  /// This method immediately returns an error if
-  /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
-  /// to verify the credential's signature will be made and an error is returned upon failure.
-  // TODO: Consider making this more generic so it returns CredentialToken<T>
-  pub fn verify_signature<DOC>(
-    &self,
-    credential: &str,
-    trusted_issuers: &[DOC],
-    options: &JwsVerificationOptions,
-  ) -> Result<CredentialToken, ValidationError>
-  where
-    DOC: AsRef<CoreDocument>,
-  {
-    Self::verify_signature_with_verifier(&self.0, credential, trusted_issuers, options)
-  }
-
-  /// Validates the semantic structure of the [`Credential`].
+    /// Validates the semantic structure of the [`Credential`].
   ///
   /// # Warning
   /// This does not validate against the credential's schema nor the structure of the subject claims.
@@ -267,6 +181,94 @@ where
       source: err.into(),
     })
   }
+}
+
+type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
+
+impl<V> CredentialValidator<V>
+where
+  V: JwsSignatureVerifier,
+{
+  /// Create a new [`CredentialValidator`] that delegates cryptographic signature verification to the given
+  /// `signature_verifier`.
+  pub fn with_signature_verifier(signature_verifier: V) -> Self {
+    Self(signature_verifier)
+  }
+
+  /// Decodes and validates a [`Credential`] issued as a JWS. A [`CredentialToken`] is returned upon success.
+  ///
+  /// The following properties are validated according to `options`:
+  /// - the issuer's signature on the JWS,
+  /// - the expiration date,
+  /// - the issuance date,
+  /// - the semantic structure.
+  ///
+  /// # Warning
+  /// The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
+  /// trusted. This section contains more information on additional checks that should be carried out before and after
+  /// calling this method.
+  ///
+  /// ## The state of the issuer's DID Document
+  /// The caller must ensure that `issuer` represents an up-to-date DID Document.
+  ///
+  /// ## Properties that are not validated
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, `proof` **and more**.
+  /// These should be manually checked after validation, according to your requirements.
+  ///
+  /// # Errors
+  /// An error is returned whenever a validated condition is not satisfied.
+  // TODO: Consider making this more generic so it returns CredentialToken<T>
+  pub fn validate<DOC>(
+    &self,
+    credential_jws: &str,
+    issuer: &DOC,
+    options: &CredentialValidationOptions,
+    fail_fast: FailFast,
+  ) -> Result<CredentialToken, CompoundCredentialValidationError>
+  where
+    DOC: AsRef<CoreDocument>,
+  {
+    Self::validate_extended::<CoreDocument, V>(
+      &self.0,
+      credential_jws,
+      std::slice::from_ref(issuer.as_ref()),
+      options,
+      None,
+      fail_fast,
+    )
+  }
+
+  /// Decode and verify the JWS signature of a [`Credential`] issued as a JWS using the DID Document of a trusted
+  /// issuer.
+  ///
+  /// A [`CredentialToken`] is returned upon success.
+  ///
+  /// # Warning
+  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
+  ///
+  /// ## Proofs
+  ///  Only the JWS signature is verified. If the [`Credential`] contains a `proof` property this will not be verified
+  /// by this method.
+  ///
+  /// # Errors
+  /// This method immediately returns an error if
+  /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
+  /// to verify the credential's signature will be made and an error is returned upon failure.
+  // TODO: Consider making this more generic so it returns CredentialToken<T>
+  pub fn verify_signature<DOC>(
+    &self,
+    credential: &str,
+    trusted_issuers: &[DOC],
+    options: &JwsVerificationOptions,
+  ) -> Result<CredentialToken, ValidationError>
+  where
+    DOC: AsRef<CoreDocument>,
+  {
+    Self::verify_signature_with_verifier(&self.0, credential, trusted_issuers, options)
+  }
+
+
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
@@ -296,21 +298,21 @@ where
     // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
 
     let expiry_date_validation = std::iter::once_with(|| {
-      Self::check_expires_on_or_after(
+      CredentialValidator::check_expires_on_or_after(
         &credential_token.credential,
         options.earliest_expiry_date.unwrap_or_default(),
       )
     });
 
     let issuance_date_validation = std::iter::once_with(|| {
-      Self::check_issued_on_or_before(credential, options.latest_issuance_date.unwrap_or_default())
+      CredentialValidator::check_issued_on_or_before(credential, options.latest_issuance_date.unwrap_or_default())
     });
 
-    let structure_validation = std::iter::once_with(|| Self::check_structure(credential));
+    let structure_validation = std::iter::once_with(|| CredentialValidator::check_structure(credential));
 
     let subject_holder_validation = std::iter::once_with(|| {
       relationship_criterion
-        .map(|(holder, relationship)| Self::check_subject_holder_relationship(credential, holder, relationship))
+        .map(|(holder, relationship)| CredentialValidator::check_subject_holder_relationship(credential, holder, relationship))
         .unwrap_or(Ok(()))
     });
 
@@ -321,7 +323,7 @@ where
 
     #[cfg(feature = "revocation-bitmap")]
     let validation_units_iter = {
-      let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
+      let revocation_validation = std::iter::once_with(|| CredentialValidator::check_status(credential, issuers, options.status));
       validation_units_iter.chain(revocation_validation)
     };
 
@@ -401,7 +403,7 @@ where
     // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
     // returning.
 
-    let issuer_id: CoreDID = Self::extract_issuer(&credential_token.credential)?;
+    let issuer_id: CoreDID = CredentialValidator::extract_issuer(&credential_token.credential)?;
     if &issuer_id != method_id.did() {
       return Err(ValidationError::IdentifierMismatch {
         signer_ctx: SignerContext::Issuer,
@@ -455,4 +457,86 @@ where
       header: Box::new(protected),
     })
   }
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_core::common::Duration;
+// All tests here are essentially adaptations of the old CredentialValidator tests. 
+  use identity_core::common::Object;
+  use identity_core::common::Timestamp;
+  use proptest::proptest;
+  use super::*;
+  const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
+  const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
+
+  const SIMPLE_CREDENTIAL_JSON: &str = r#"{
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": "http://example.edu/credentials/3732",
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "https://example.edu/issuers/14",
+    "issuanceDate": "2010-01-01T19:23:24Z",
+    "expirationDate": "2020-01-01T19:23:24Z",
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science in Mechanical Engineering"
+      }
+    }
+  }"#;
+
+  lazy_static::lazy_static! {
+    // A simple credential shared by some of the tests in this module
+    static ref SIMPLE_CREDENTIAL: Credential = Credential::<Object>::from_json(SIMPLE_CREDENTIAL_JSON).unwrap();
+  }
+
+  #[test]
+  fn simple_expires_on_or_after_with_expiration_date() {
+    let later_than_expiration_date = SIMPLE_CREDENTIAL
+      .expiration_date
+      .unwrap()
+      .checked_add(Duration::minutes(1))
+      .unwrap();
+    assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, later_than_expiration_date).is_err());
+    // and now with an earlier date
+    let earlier_date = Timestamp::parse("2019-12-27T11:35:30Z").unwrap();
+    assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, earlier_date).is_ok());
+  }
+
+  // test with a few timestamps that should be RFC3339 compatible
+  proptest! {
+    #[test]
+    fn property_based_expires_after_with_expiration_date(seconds in 0..1_000_000_000_u32) {
+      let after_expiration_date = SIMPLE_CREDENTIAL.expiration_date.unwrap().checked_add(Duration::seconds(seconds)).unwrap();
+      let before_expiration_date = SIMPLE_CREDENTIAL.expiration_date.unwrap().checked_sub(Duration::seconds(seconds)).unwrap();
+      assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, after_expiration_date).is_err());
+      assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, before_expiration_date).is_ok());
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn property_based_expires_after_no_expiration_date(seconds in FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP..LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP) {
+      let mut credential = SIMPLE_CREDENTIAL.clone();
+      credential.expiration_date = None;
+      // expires after whatever the timestamp may be because the expires_after field is None.
+      assert!(CredentialValidator::check_expires_on_or_after(&credential, Timestamp::from_unix(seconds).unwrap()).is_ok());
+    }
+  }
+
+  proptest! {
+    #[test]
+    fn property_based_issued_before(seconds in 0 ..1_000_000_000_u32) {
+
+      let earlier_than_issuance_date = SIMPLE_CREDENTIAL.issuance_date.checked_sub(Duration::seconds(seconds)).unwrap();
+      let later_than_issuance_date = SIMPLE_CREDENTIAL.issuance_date.checked_add(Duration::seconds(seconds)).unwrap();
+      assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, earlier_than_issuance_date).is_err());
+      assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, later_than_issuance_date).is_ok());
+    }
+  }
+
 }

@@ -15,8 +15,8 @@ use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
 use identity_core::crypto::JwsSignatureOptions;
 
-use super::JwkStorageDocumentExt;
-use super::Storage;
+use crate::storage::JwkStorageDocumentExt;
+use crate::Storage;
 
 type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
