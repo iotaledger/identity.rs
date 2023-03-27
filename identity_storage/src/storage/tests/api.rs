@@ -4,6 +4,7 @@
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
+use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::EdDSAJwsSignatureVerifier;
@@ -156,6 +157,16 @@ async fn signing_credential() {
     )
     .await
     .unwrap();
+  // Verify the credential
+  let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
+  assert!(validator
+    .validate(
+      &jws,
+      &document,
+      &CredentialValidationOptions::default(),
+      identity_credential::validator::vc_jwt_validation::FailFast::FirstError
+    )
+    .is_ok());
 }
 
 #[tokio::test]
