@@ -35,3 +35,5 @@ pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
+
+pub use self::jwt_serialization::*;

@@ -53,4 +53,9 @@ pub enum Error {
   /// to JSON.
   #[error("could not serialize JWT claims set")]
   JwtClaimsSetSerializationError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+
+  /// Caused by a failure to deserialize the JWT claims set representation of a `Credential` or `Presentation` from
+  /// JSON.
+  #[error("could not deserialize JWT claims set")]
+  JwtClaimsSetDeserializationError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }

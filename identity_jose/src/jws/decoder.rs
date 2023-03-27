@@ -71,7 +71,7 @@ impl DecodedHeaders {
 }
 
 /// A partially decoded JWS containing claims, and the decoded verification data
-/// for one of its signatures (headers, signing input and signature). This data
+/// for its corresponding signature (headers, signing input and signature). This data
 /// can be cryptographically verified using a [`JwsSignatureVerifier`]. See [`Self::verify`](Self::verify).
 pub struct JwsValidationItem<'a> {
   headers: DecodedHeaders,

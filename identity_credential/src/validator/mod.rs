@@ -26,5 +26,5 @@ mod test_utils;
 mod validation_options;
 
 // Currently conflicting names with the old validator/validation options
-// so we do not re-export the items in vc_jwt_validation for now. 
+// so we do not re-export the items in vc_jwt_validation for now.
 pub mod vc_jwt_validation;

@@ -1,12 +1,41 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+// This module is basically an adaptation of the old credential::validator::error module.
 use std::fmt::Display;
+
+use itertools;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 /// An error associated with validating credentials and presentations.
 pub enum ValidationError {
+  /// Indicates that the JWS representation of an issued credential or presentation could not be decoded.
+  #[error("could not decode jws")]
+  JwsDecodingError(#[source] identity_verification::jose::error::Error),
+
+  /// Indicates that a verification method that both matches the DID Url specified by
+  /// the `kid` value and contains a public key in the JWK format could not be found.
+  #[error("could not find verification material")]
+  MethodDataLookupError {
+    /// The source of the error if set
+    #[source]
+    source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
+    /// A message providing more context
+    message: &'static str,
+    /// Specifies whether the error ocurred when trying to verify the signature of a presentation holder or
+    /// of a credential issuer.
+    signer_ctx: SignerContext,
+  },
+
+  /// The DID part parsed from the `kid` does not match the identifier of the issuer (resp. holder) property
+  /// of the credential (resp. presentation).
+  #[error("identifier mismatch")]
+  IdentifierMismatch {
+    /// The context in which the error occurred.
+    signer_ctx: SignerContext,
+  },
+
   /// Indicates that the expiration date of the credential is not considered valid.
   #[error("the expiration date is in the past or earlier than required")]
   ExpirationDate,
@@ -19,7 +48,7 @@ pub enum ValidationError {
   #[non_exhaustive]
   Signature {
     /// Signature verification error.
-    source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    source: identity_verification::jose::error::Error,
     /// Specifies whether the error was from the DID Document of a credential issuer
     /// or the presentation holder.
     signer_ctx: SignerContext,

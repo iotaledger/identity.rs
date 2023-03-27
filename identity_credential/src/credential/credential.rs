@@ -32,7 +32,7 @@ use crate::credential::Subject;
 use crate::error::Error;
 use crate::error::Result;
 
-use super::jwt_serialization::VerifiableCredentialJwtClaims;
+use super::jwt_serialization::CredentialJwtClaims;
 
 lazy_static! {
   static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
@@ -168,7 +168,7 @@ impl<T> Credential<T> {
     T: ToOwned + Serialize,
     <T as ToOwned>::Owned: DeserializeOwned,
   {
-    let jwt_representation: VerifiableCredentialJwtClaims<'_, T> = VerifiableCredentialJwtClaims::new(self)?;
+    let jwt_representation: CredentialJwtClaims<'_, T> = CredentialJwtClaims::new(self)?;
     jwt_representation
       .to_json()
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))

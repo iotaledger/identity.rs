@@ -35,7 +35,7 @@ use crate::Result;
 /// 2. Only allows serializing/deserializing claims "exp, iss, nbf &/or iat, jti, sub and vc". Other custom properties
 /// must be set in the `vc` entry.
 #[derive(Serialize, Deserialize)]
-pub(crate) struct VerifiableCredentialJwtClaims<'credential, T = Object>
+pub(crate) struct CredentialJwtClaims<'credential, T = Object>
 where
   T: ToOwned + Serialize,
   <T as ToOwned>::Owned: DeserializeOwned,
@@ -61,7 +61,7 @@ where
   vc: InnerCredential<'credential, T>,
 }
 
-impl<'credential, T> VerifiableCredentialJwtClaims<'credential, T>
+impl<'credential, T> CredentialJwtClaims<'credential, T>
 where
   T: ToOwned + Serialize,
   <T as ToOwned>::Owned: DeserializeOwned,
@@ -339,7 +339,7 @@ mod tests {
 
   use crate::credential::Credential;
 
-  use super::VerifiableCredentialJwtClaims;
+  use super::CredentialJwtClaims;
 
   #[test]
   fn roundtrip() {
@@ -384,8 +384,7 @@ mod tests {
     }"#;
 
     let credential: Credential = Credential::from_json(credential_json).unwrap();
-    let jwt_credential_claims: VerifiableCredentialJwtClaims<'_> =
-      VerifiableCredentialJwtClaims::new(&credential).unwrap();
+    let jwt_credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::new(&credential).unwrap();
     let jwt_credential_claims_serialized: String = jwt_credential_claims.to_json().unwrap();
     // Compare JSON representations
     assert_eq!(
@@ -395,7 +394,7 @@ mod tests {
 
     // Retrieve the credential from the JWT serialization
     let retrieved_credential: Credential = {
-      VerifiableCredentialJwtClaims::<'static, Object>::from_json(&jwt_credential_claims_serialized)
+      CredentialJwtClaims::<'static, Object>::from_json(&jwt_credential_claims_serialized)
         .unwrap()
         .try_into_credential()
         .unwrap()

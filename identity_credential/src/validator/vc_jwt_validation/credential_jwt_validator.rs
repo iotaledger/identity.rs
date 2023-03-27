@@ -3,27 +3,31 @@
 
 use std::str::FromStr;
 
-use identity_core::common::Object;
+use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::convert::FromJson;
 use identity_did::CoreDID;
+use identity_did::DIDUrl;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
+use identity_verification::jwk::Jwk;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::EdDSAJwsSignatureVerifier;
 use identity_verification::jws::JwsSignatureVerifier;
-use serde::de::DeserializeOwned;
-use serde::Serialize; 
+use identity_verification::jws::JwsValidationItem;
+use identity_verification::jws::Token;
 
+use super::CompoundCredentialValidationError;
 use super::CredentialToken;
+use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SignerContext;
 use super::SubjectHolderRelationship;
 use super::ValidationError;
-use super::CompoundCredentialValidationError;
-use super::CredentialValidationOptions;
 use crate::credential::Credential;
+use crate::credential::CredentialJwtClaims;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -32,29 +36,28 @@ pub struct CredentialValidator<V: JwsSignatureVerifier = EdDSAJwsSignatureVerifi
 
 impl CredentialValidator {
   /// Creates a new [`CredentialValidator`] capable of verifying a [`Credential`] issued as a JWS
-  /// using the [`EdDSA`](::identity_verification::jose::jws::JwsAlgorithm::EdDSA) algorithm. 
-  /// 
-  /// See [`CredentialValidator::with_signature_verifier`](CredentialValidator::with_signature_verifier()) 
+  /// using the [`EdDSA`](::identity_verification::jose::jws::JwsAlgorithm::EdDSA) algorithm.
+  ///
+  /// See [`CredentialValidator::with_signature_verifier`](CredentialValidator::with_signature_verifier())
   /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
   pub fn new() -> Self {
     Self(EdDSAJwsSignatureVerifier::default())
   }
 }
 
+type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
 
-type ValidationUnitResult<T =()> = std::result::Result<T, ValidationError>;
-
-impl<V> CredentialValidator<V> 
-where 
-  V: JwsSignatureVerifier
+impl<V> CredentialValidator<V>
+where
+  V: JwsSignatureVerifier,
 {
-  /// Create a new [`CredentialValidator`] that delegates cryptographic signature verification to the given 
-  /// `signature_verifier`. 
+  /// Create a new [`CredentialValidator`] that delegates cryptographic signature verification to the given
+  /// `signature_verifier`.
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self(signature_verifier)
   }
 
-  /// Decodes and validates a [`Credential`] issued as a JWS. A [`CredentialToken`] is returned upon success. 
+  /// Decodes and validates a [`Credential`] issued as a JWS. A [`CredentialToken`] is returned upon success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -88,7 +91,7 @@ where
   where
     DOC: AsRef<CoreDocument>,
   {
-    Self::validate_extended::<CoreDocument,Object,V>(
+    Self::validate_extended::<CoreDocument, V>(
       &self.0,
       credential_jws,
       std::slice::from_ref(issuer.as_ref()),
@@ -96,6 +99,35 @@ where
       None,
       fail_fast,
     )
+  }
+
+  /// Decode and verify the JWS signature of a [`Credential`] issued as a JWS using the DID Document of a trusted
+  /// issuer.
+  ///
+  /// A [`CredentialToken`] is returned upon success.
+  ///
+  /// # Warning
+  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
+  ///
+  /// ## Proofs
+  ///  Only the JWS signature is verified. If the [`Credential`] contains a `proof` property this will not be verified
+  /// by this method.
+  ///
+  /// # Errors
+  /// This method immediately returns an error if
+  /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
+  /// to verify the credential's signature will be made and an error is returned upon failure.
+  // TODO: Consider making this more generic so it returns CredentialToken<T>
+  pub fn verify_signature<DOC>(
+    &self,
+    credential: &str,
+    trusted_issuers: &[DOC],
+    options: &JwsVerificationOptions,
+  ) -> Result<CredentialToken, ValidationError>
+  where
+    DOC: AsRef<CoreDocument>,
+  {
+    Self::verify_signature_with_verifier(&self.0, credential, trusted_issuers, options)
   }
 
   /// Validates the semantic structure of the [`Credential`].
@@ -121,53 +153,6 @@ where
     (credential.issuance_date <= timestamp)
       .then_some(())
       .ok_or(ValidationError::IssuanceDate)
-  }
-
-  /// Decode and verify the JWS signature of a [`Credential`] issued as a JWS using the DID Document of a trusted issuer.
-  /// 
-  /// A [`CredentialToken`] is returned upon success. 
-  ///
-  /// # Warning
-  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
-  ///
-  /// # Errors
-  /// This method immediately returns an error if
-  /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
-  /// to verify the credential's signature will be made and an error is returned upon failure.
-  // TODO: Consider making this more generic so it returns CredentialToken<T>
-  pub fn verify_signature<DOC>(
-    &self,
-    credential: &str,
-    trusted_issuers: &[DOC],
-    options: &JwsVerificationOptions,
-  ) -> Result<CredentialToken, ValidationError>
-  where 
-    DOC: AsRef<CoreDocument>
-  { 
-    // Start decoding the signature 
-    let decoder: Decoder<'_> = options.crits.as_deref().map(Decoder::new_with_crits).unwrap_or(Decoder::new());
-    decoder.decode_compact_serialization(credential.as_bytes(), None).map_err();
-
-    /*
-     
-    trusted_issuers
-      .iter()
-      .map(AsRef::as_ref)
-      .find(|issuer_doc| <CoreDocument>::id(issuer_doc) == &issuer_did)
-      .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-      .and_then(|issuer| {
-        issuer
-          .verify_data(credential, options)
-          .map_err(|err| ValidationError::Signature {
-            source: err.into(),
-            signer_ctx: SignerContext::Issuer,
-          })
-      })
-     */
-    todo!()
-
-    
-
   }
 
   /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
@@ -209,14 +194,9 @@ where
   pub fn check_status<DOC: AsRef<CoreDocument>, T>(
     credential: &Credential<T>,
     trusted_issuers: &[DOC],
-    status_check: StatusCheck,
+    status_check: super::StatusCheck,
   ) -> ValidationUnitResult {
-    use identity_did::CoreDID;
-    use identity_document::document::CoreDocument;
-
-    use crate::{revocation::RevocationBitmap, credential::RevocationBitmapStatus, validator::StatusCheck};
-
-    if status_check == StatusCheck::SkipAll {
+    if status_check == super::StatusCheck::SkipAll {
       return Ok(());
     }
 
@@ -224,8 +204,8 @@ where
       None => Ok(()),
       Some(status) => {
         // Check status is supported.
-        if status.type_ != RevocationBitmap::TYPE {
-          if status_check == StatusCheck::SkipUnsupported {
+        if status.type_ != crate::revocation::RevocationBitmap::TYPE {
+          if status_check == super::StatusCheck::SkipUnsupported {
             return Ok(());
           }
           return Err(ValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
@@ -233,8 +213,9 @@ where
             status.type_
           ))));
         }
-        let status: RevocationBitmapStatus =
-          RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
+        let status: crate::credential::RevocationBitmapStatus =
+          crate::credential::RevocationBitmapStatus::try_from(status.clone())
+            .map_err(ValidationError::InvalidStatus)?;
 
         // Check the credential index against the issuer's DID Document.
         let issuer_did: CoreDID = Self::extract_issuer(credential)?;
@@ -242,7 +223,7 @@ where
           .iter()
           .find(|issuer| <CoreDocument>::id(issuer.as_ref()) == &issuer_did)
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-          .and_then(|issuer| CredentialValidator::check_revocation_bitmap_status(issuer, status))
+          .and_then(|issuer| Self::check_revocation_bitmap_status(issuer, status))
       }
     }
   }
@@ -254,12 +235,12 @@ where
     issuer: &DOC,
     status: crate::credential::RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    use crate::revocation::{RevocationDocumentExt, RevocationBitmap};
+    use crate::revocation::RevocationDocumentExt;
 
     let issuer_service_url: identity_did::DIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
-    let revocation_bitmap: RevocationBitmap = issuer
+    let revocation_bitmap: crate::revocation::RevocationBitmap = issuer
       .as_ref()
       .resolve_revocation_bitmap(issuer_service_url.into())
       .map_err(|_| ValidationError::ServiceLookupError)?;
@@ -271,30 +252,54 @@ where
     }
   }
 
+  /// Utility for extracting the issuer field of a [`Credential`] as a DID.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the issuer field is not a valid DID.
+  pub fn extract_issuer<D, T>(credential: &Credential<T>) -> std::result::Result<D, ValidationError>
+  where
+    D: DID,
+    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Issuer,
+      source: err.into(),
+    })
+  }
+
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<DOC, T, S>(
-    signature_verifier: &S, 
+  pub(crate) fn validate_extended<DOC, S>(
+    signature_verifier: &S,
     credential: &str,
     issuers: &[DOC],
     options: &CredentialValidationOptions,
     relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,
-  ) ->  Result<CredentialToken<T>, CompoundCredentialValidationError>
-  where 
-    S: JwsSignatureVerifier, 
-    DOC: AsRef<CoreDocument>, 
-    T: ToOwned + Serialize,
-    <T as ToOwned>::Owned: DeserializeOwned
+  ) -> Result<CredentialToken, CompoundCredentialValidationError>
+  where
+    S: JwsSignatureVerifier,
+    DOC: AsRef<CoreDocument>,
   {
-    /* 
-    // Run all single concern validations in turn and fail immediately if `fail_fast` is true.
-    let signature_validation =
-      std::iter::once_with(|| Self::verify_signature(credential, issuers, &options.verifier_options));
+    // First verify the JWS signature and decode the result into a credential token, then apply all other validations.
+    // If this errors we have to return early regardless of the `fail_fast` flag as all other validations require a
+    // `&Credential`.
+    let credential_token =
+      Self::verify_signature_with_verifier(signature_verifier, credential, issuers, &options.verifier_options)
+        .map_err(|err| CompoundCredentialValidationError {
+          validation_errors: [err].into(),
+        })?;
+
+    let credential: &Credential = &credential_token.credential;
+    // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
 
     let expiry_date_validation = std::iter::once_with(|| {
-      Self::check_expires_on_or_after(credential, options.earliest_expiry_date.unwrap_or_default())
+      Self::check_expires_on_or_after(
+        &credential_token.credential,
+        options.earliest_expiry_date.unwrap_or_default(),
+      )
     });
 
     let issuance_date_validation = std::iter::once_with(|| {
@@ -312,8 +317,7 @@ where
     let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
-      .chain(subject_holder_validation)
-      .chain(signature_validation);
+      .chain(subject_holder_validation);
 
     #[cfg(feature = "revocation-bitmap")]
     let validation_units_iter = {
@@ -328,27 +332,127 @@ where
     };
 
     if validation_errors.is_empty() {
-      Ok(())
+      Ok(credential_token)
     } else {
       Err(CompoundCredentialValidationError { validation_errors })
     }
-    */
-    todo!()
   }
 
-  /// Utility for extracting the issuer field of a [`Credential`] as a DID.
-  ///
-  /// # Errors
-  ///
-  /// Fails if the issuer field is not a valid DID.
-  pub fn extract_issuer<D, T>(credential: &Credential<T>) -> std::result::Result<D, ValidationError>
+  /// Stateless version of [`Self::verify_signature`]
+  fn verify_signature_with_verifier<DOC, S>(
+    signature_verifier: &S,
+    credential: &str,
+    trusted_issuers: &[DOC],
+    options: &JwsVerificationOptions,
+  ) -> Result<CredentialToken, ValidationError>
   where
-     D: DID,
-    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+    DOC: AsRef<CoreDocument>,
+    S: JwsSignatureVerifier,
   {
-    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
-      signer_ctx: SignerContext::Issuer,
-      source: err.into(),
+    // Note the below steps are necessary because `CoreDocument::verify_jws` decodes the JWS and then searches for a
+    // method with a fragment (or full DID Url) matching `kid` in the given document. We do not want to carry out
+    // that process for potentially every document in `trusted_issuers`.
+
+    // Start decoding the credential
+    let decoded: JwsValidationItem<'_> = Self::decode(&credential, options.crits.as_deref())?;
+
+    // Parse the `kid` to a DID Url which should be the identifier of a verification method in a trusted issuer's DID
+    // document TODO: Consider factoring this section into a private method that the (future) PresentationValidator
+    // can also use. In that case The `SignerContext` used in the error would have to be passed as an additional
+    // parameter.
+    let method_id: DIDUrl = {
+      let kid: &str =
+        decoded
+          .protected_header()
+          .and_then(|header| header.kid())
+          .ok_or(ValidationError::MethodDataLookupError {
+            source: None,
+            message: "could not extract kid from protected header",
+            signer_ctx: SignerContext::Issuer,
+          })?;
+
+      // Convert kid to DIDUrl
+      DIDUrl::parse(kid).map_err(|err| ValidationError::MethodDataLookupError {
+        source: Some(err.into()),
+        message: "could not parse kid as a DID Url",
+        signer_ctx: SignerContext::Issuer,
+      })
+    }?;
+
+    // locate the corresponding issuer
+    let issuer: &CoreDocument = trusted_issuers
+      .iter()
+      .map(AsRef::as_ref)
+      .find(|issuer_doc| <CoreDocument>::id(issuer_doc) == method_id.did())
+      .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))?;
+
+    // Obtain the public key from the issuer's DID document
+    let public_key: &Jwk = issuer
+      .resolve_method(&method_id, options.method_scope)
+      .and_then(|method| method.data().public_key_jwk())
+      .ok_or_else(|| ValidationError::MethodDataLookupError {
+        source: None,
+        message: "could not extract JWK from a method identified by kid",
+        signer_ctx: SignerContext::Issuer,
+      })?;
+
+    let credential_token = Self::verify_decoded_signature(decoded, public_key, signature_verifier)?;
+
+    // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
+    // returning.
+
+    let issuer_id: CoreDID = Self::extract_issuer(&credential_token.credential)?;
+    if &issuer_id != method_id.did() {
+      return Err(ValidationError::IdentifierMismatch {
+        signer_ctx: SignerContext::Issuer,
+      });
+    };
+    Ok(credential_token)
+  }
+
+  /// Decode the credential into a [`JwsValidationItem`].
+  fn decode<'credential>(
+    credential_jws: &'credential str,
+    allowed_crits: Option<&[String]>,
+  ) -> Result<JwsValidationItem<'credential>, ValidationError> {
+    // Configure a decoder according to `options`.
+    let decoder: Decoder<'_> = allowed_crits
+      .as_deref()
+      .map(Decoder::new_with_crits)
+      .unwrap_or(Decoder::new());
+
+    decoder
+      .decode_compact_serialization(credential_jws.as_bytes(), None)
+      .map_err(ValidationError::JwsDecodingError)
+  }
+
+  /// Verify the signature using the given `public_key` and `signature_verifier`.
+  fn verify_decoded_signature<'credential, S: JwsSignatureVerifier>(
+    decoded: JwsValidationItem<'credential>,
+    public_key: &Jwk,
+    signature_verifier: &S,
+  ) -> Result<CredentialToken, ValidationError> {
+    // Verify the JWS signature and obtain the decoded token containing the protected header and raw claims
+    let Token { protected, claims, .. } =
+      decoded
+        .verify(signature_verifier, public_key)
+        .map_err(|err| ValidationError::Signature {
+          source: err,
+          signer_ctx: SignerContext::Issuer,
+        })?;
+
+    // Deserialize the raw claims
+    let credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
+      ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+    })?;
+    // Construct the credential token containing the credential and the
+    let credential: Credential = credential_claims
+      .try_into_credential()
+      .map_err(ValidationError::CredentialStructure)?;
+
+    Ok(CredentialToken {
+      credential,
+      header: Box::new(protected),
     })
   }
 }
