@@ -44,7 +44,7 @@ impl CredentialValidator {
     Self(EdDSAJwsSignatureVerifier::default())
   }
 
-    /// Validates the semantic structure of the [`Credential`].
+  /// Validates the semantic structure of the [`Credential`].
   ///
   /// # Warning
   /// This does not validate against the credential's schema nor the structure of the subject claims.
@@ -268,8 +268,6 @@ where
     Self::verify_signature_with_verifier(&self.0, credential, trusted_issuers, options)
   }
 
-
-
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
@@ -312,7 +310,9 @@ where
 
     let subject_holder_validation = std::iter::once_with(|| {
       relationship_criterion
-        .map(|(holder, relationship)| CredentialValidator::check_subject_holder_relationship(credential, holder, relationship))
+        .map(|(holder, relationship)| {
+          CredentialValidator::check_subject_holder_relationship(credential, holder, relationship)
+        })
         .unwrap_or(Ok(()))
     });
 
@@ -323,7 +323,8 @@ where
 
     #[cfg(feature = "revocation-bitmap")]
     let validation_units_iter = {
-      let revocation_validation = std::iter::once_with(|| CredentialValidator::check_status(credential, issuers, options.status));
+      let revocation_validation =
+        std::iter::once_with(|| CredentialValidator::check_status(credential, issuers, options.status));
       validation_units_iter.chain(revocation_validation)
     };
 
@@ -462,11 +463,11 @@ where
 #[cfg(test)]
 mod tests {
   use identity_core::common::Duration;
-// All tests here are essentially adaptations of the old CredentialValidator tests. 
+  // All tests here are essentially adaptations of the old CredentialValidator tests.
+  use super::*;
   use identity_core::common::Object;
   use identity_core::common::Timestamp;
   use proptest::proptest;
-  use super::*;
   const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
   const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
 
@@ -538,5 +539,4 @@ mod tests {
       assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, later_than_issuance_date).is_ok());
     }
   }
-
 }

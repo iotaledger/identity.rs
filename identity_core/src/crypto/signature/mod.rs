@@ -11,7 +11,5 @@ pub use self::core::Verify;
 pub use self::data::GetSignature;
 pub use self::data::GetSignatureMut;
 pub use self::data::SetSignature;
-pub use self::signature_options::JwsSignatureOptions;
 mod core;
 mod data;
-mod signature_options;

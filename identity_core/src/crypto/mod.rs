@@ -16,7 +16,6 @@ pub use self::proof::ProofPurpose;
 pub use self::proof::ProofValue;
 pub use self::signature::GetSignature;
 pub use self::signature::GetSignatureMut;
-pub use self::signature::JwsSignatureOptions;
 pub use self::signature::Named;
 pub use self::signature::SetSignature;
 pub use self::signature::Sign;

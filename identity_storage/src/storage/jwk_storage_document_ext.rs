@@ -13,8 +13,8 @@ use crate::key_storage::KeyType;
 use super::JwkStorageDocumentError as Error;
 use super::Storage;
 
+use super::JwsSignatureOptions;
 use async_trait::async_trait;
-use identity_core::crypto::JwsSignatureOptions;
 use identity_credential::credential::Credential;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
