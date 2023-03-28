@@ -811,7 +811,7 @@ Serializes to a plain JS representation.
 
 ### coreDocument.generateMethod(storage, key_type, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
 Generate new key material in the given `storage` and insert a new verification method with the corresponding
-public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
+public key material into this document. The `kid` of the generated Jwk is returned if it is set.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -826,8 +826,8 @@ public key material into the DID document. The `kid` of the generated Jwk is ret
 <a name="CoreDocument+purgeMethod"></a>
 
 ### coreDocument.purgeMethod(storage, id) ⇒ <code>Promise.&lt;void&gt;</code>
-Remove the method identified by the given fragment from the document and delete the corresponding key material in
-the given `storage`.
+Remove the method identified by the `fragment` from the document and delete the corresponding key material in
+the `storage`.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -1074,7 +1074,7 @@ A cryptographically verified and decoded Credential.
 <a name="CredentialToken+credential"></a>
 
 ### credentialToken.credential() ⇒ [<code>Credential</code>](#Credential)
-Returns a copy of the credential.
+Returns a copy of the credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
 
 **Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
 <a name="CredentialToken+protectedHeader"></a>
@@ -3324,6 +3324,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+setAttachJwk"></a>
 
 ### jwsSignatureOptions.setAttachJwk(value)
+Replace the value of the `attachJwk` field.
+
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
 | Param | Type |
@@ -3333,6 +3335,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+setB64"></a>
 
 ### jwsSignatureOptions.setB64(value)
+Replace the value of the `b64` field.
+
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
 | Param | Type |
@@ -3342,6 +3346,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+setTyp"></a>
 
 ### jwsSignatureOptions.setTyp(value)
+Replace the value of the `typ` field.
+
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
 | Param | Type |
@@ -3351,6 +3357,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+setCty"></a>
 
 ### jwsSignatureOptions.setCty(value)
+Replace the value of the `cty` field.
+
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
 | Param | Type |
@@ -3360,6 +3368,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+addCrit"></a>
 
 ### jwsSignatureOptions.addCrit(value)
+Append a value to the list of permitted extensions.
+
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
 | Param | Type |
@@ -3369,6 +3379,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+serUrl"></a>
 
 ### jwsSignatureOptions.serUrl(value)
+Replace the value of the `url` field.
+
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
 | Param | Type |
@@ -3378,7 +3390,7 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+setNonce"></a>
 
 ### jwsSignatureOptions.setNonce(value)
-The nonce to be added to the protected header.
+Replace the value of the `nonce` field.
 
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
@@ -3389,7 +3401,7 @@ The nonce to be added to the protected header.
 <a name="JwsSignatureOptions+setDetachedPayload"></a>
 
 ### jwsSignatureOptions.setDetachedPayload(value)
-Whether the JWS signature should have a detached payload.
+Replace the value of the `detached_payload` field.
 
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
@@ -3447,6 +3459,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsVerificationOptions+setNonce"></a>
 
 ### jwsVerificationOptions.setNonce(value)
+Set the expected value for the `nonce` parameter of the protected header.
+
 **Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
 
 | Param | Type |
@@ -3456,6 +3470,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsVerificationOptions+addCrit"></a>
 
 ### jwsVerificationOptions.addCrit(value)
+Append values to the list of permitted extension parameters.
+
 **Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
 
 | Param | Type |
@@ -3465,6 +3481,8 @@ Deserializes an instance from a JSON object.
 <a name="JwsVerificationOptions+setScope"></a>
 
 ### jwsVerificationOptions.setScope(value)
+Set the scope of the verification methods that may be used to verify the given JWS.
+
 **Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
 
 | Param | Type |
