@@ -77,7 +77,7 @@ describe("#JwkStorageDocument", function() {
 
         // Check that signing works
         let testString = "test";
-        const jws = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
+        const jws = await doc.createJwt(storage, fragment, testString, new JwsSignatureOptions());
 
         // Verify the signature and obtain a decoded token.
         const token = doc.verifyJws(jws, new JwsVerificationOptions());
@@ -119,7 +119,7 @@ describe("#JwkStorageDocument", function() {
 
         // Check that signing works.
         let testString = "test";
-        const jws = await doc.signString(storage, fragment, testString, new JwsSignatureOptions());
+        const jws = await doc.createJwt(storage, fragment, testString, new JwsSignatureOptions());
 
         // Verify the signature and obtain a decoded token.
         const token = doc.verifyJws(jws, new JwsVerificationOptions());

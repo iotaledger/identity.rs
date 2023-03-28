@@ -188,12 +188,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
 <dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
 Only the <code>EdCurve::Ed25519</code> variant is supported for now.</p>
@@ -202,6 +196,12 @@ the IOTA Identity Framework.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
+</dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -424,7 +424,7 @@ A method-agnostic DID Document.
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier)](#CoreDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
+        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
@@ -434,7 +434,8 @@ A method-agnostic DID Document.
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
         * [.generateMethod(storage, key_type, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
         * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-        * [.signString(storage, fragment, payload, options)](#CoreDocument+signString) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createJwt(storage, fragment, payload, options)](#CoreDocument+createJwt) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createCredentialJwt(storage, fragment, credential, options)](#CoreDocument+createCredentialJwt) ⇒ <code>Promise.&lt;string&gt;</code>
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -709,15 +710,15 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="CoreDocument+verifyJws"></a>
 
-### coreDocument.verifyJws(jws, options, signatureVerifier) ⇒ [<code>Token</code>](#Token)
+### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>Token</code>](#Token)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
 
-Regardless of which options are passed the following statements always apply:
-- The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
-- The `kid` value in the protected header must be an identifier of a verification method in this DID document,
-  otherwise an error is returned.
+Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+take place.
+- The JWS must be encoded according to the JWS compact serialization.
+- The `kid` value in the protected header must be an identifier of a verification method in this DID document.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -726,6 +727,7 @@ Regardless of which options are passed the following statements always apply:
 | jws | <code>string</code> | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
 | signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
+| detachedPayload | <code>string</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+revokeCredentials"></a>
 
@@ -799,6 +801,9 @@ Serializes to a plain JS representation.
 <a name="CoreDocument+generateMethod"></a>
 
 ### coreDocument.generateMethod(storage, key_type, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+Generate new key material in the given `storage` and insert a new verification method with the corresponding
+public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
+
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
@@ -812,6 +817,9 @@ Serializes to a plain JS representation.
 <a name="CoreDocument+purgeMethod"></a>
 
 ### coreDocument.purgeMethod(storage, id) ⇒ <code>Promise.&lt;void&gt;</code>
+Remove the method identified by the given fragment from the document and delete the corresponding key material in
+the given `storage`.
+
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
@@ -819,9 +827,15 @@ Serializes to a plain JS representation.
 | storage | [<code>Storage</code>](#Storage) | 
 | id | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="CoreDocument+signString"></a>
+<a name="CoreDocument+createJwt"></a>
 
-### coreDocument.signString(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+### coreDocument.createJwt(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+material in the verification method identified by the given `fragment.
+
+Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
@@ -829,6 +843,24 @@ Serializes to a plain JS representation.
 | storage | [<code>Storage</code>](#Storage) | 
 | fragment | <code>string</code> | 
 | payload | <code>string</code> | 
+| options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+
+<a name="CoreDocument+createCredentialJwt"></a>
+
+### coreDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ <code>Promise.&lt;string&gt;</code>
+Produces a JWS where the payload is produced from the given `credential`
+in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+
+The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
 
 <a name="CoreDocument.fromJSON"></a>
@@ -1890,7 +1922,7 @@ Deserializes an instance from a JSON object.
         * [.signPresentation(presentation, privateKey, methodQuery, options)](#IotaDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier)](#IotaDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
+        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
         * [.metadata()](#IotaDocument+metadata) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
@@ -1912,7 +1944,8 @@ Deserializes an instance from a JSON object.
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [.generateMethod(storage, key_type, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-        * [.signString(storage, fragment, payload, options)](#IotaDocument+signString) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createCredentialJwt(storage, fragment, credential, options)](#IotaDocument+createCredentialJwt) ⇒ <code>Promise.&lt;string&gt;</code>
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2168,15 +2201,15 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="IotaDocument+verifyJws"></a>
 
-### iotaDocument.verifyJws(jws, options, signatureVerifier) ⇒ [<code>Token</code>](#Token)
+### iotaDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>Token</code>](#Token)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
 
-Regardless of which options are passed the following statements always apply:
-- The JWS must have a non-detached payload and encoded according to the JWS compact serialization.
-- The `kid` value in the protected header must be an identifier of a verification method in this DID document,
-  otherwise an error is returned.
+Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+take place.
+- The JWS must be encoded according to the JWS compact serialization.
+- The `kid` value in the protected header must be an identifier of a verification method in this DID document.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
@@ -2185,6 +2218,7 @@ Regardless of which options are passed the following statements always apply:
 | jws | <code>string</code> | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
 | signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
+| detachedPayload | <code>string</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+pack"></a>
 
@@ -2350,6 +2384,9 @@ Transforms the `IotaDocument` to its `CoreDocument` representation.
 <a name="IotaDocument+generateMethod"></a>
 
 ### iotaDocument.generateMethod(storage, key_type, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+Generate new key material in the given `storage` and insert a new verification method with the corresponding
+public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
+
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
 | Param | Type |
@@ -2363,6 +2400,9 @@ Transforms the `IotaDocument` to its `CoreDocument` representation.
 <a name="IotaDocument+purgeMethod"></a>
 
 ### iotaDocument.purgeMethod(storage, id) ⇒ <code>Promise.&lt;void&gt;</code>
+Remove the method identified by the given fragment from the document and delete the corresponding key material in
+the given `storage`.
+
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
 | Param | Type |
@@ -2370,9 +2410,15 @@ Transforms the `IotaDocument` to its `CoreDocument` representation.
 | storage | [<code>Storage</code>](#Storage) | 
 | id | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="IotaDocument+signString"></a>
+<a name="IotaDocument+createJwt"></a>
 
-### iotaDocument.signString(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+### iotaDocument.createJwt(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+material in the verification method identified by the given `fragment.
+
+Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
 | Param | Type |
@@ -2380,6 +2426,24 @@ Transforms the `IotaDocument` to its `CoreDocument` representation.
 | storage | [<code>Storage</code>](#Storage) | 
 | fragment | <code>string</code> | 
 | payload | <code>string</code> | 
+| options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+
+<a name="IotaDocument+createCredentialJwt"></a>
+
+### iotaDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ <code>Promise.&lt;string&gt;</code>
+Produces a JWS where the payload is produced from the given `credential`
+in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+
+The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
 
 <a name="IotaDocument.newWithId"></a>
@@ -2641,7 +2705,7 @@ Fetches the `IAliasOutput` associated with the given DID.
         * [.paramsOkp()](#Jwk+paramsOkp) ⇒ <code>JwkParamsOkp</code> \| <code>undefined</code>
         * [.paramsOct()](#Jwk+paramsOct) ⇒ <code>JwkParamsOct</code> \| <code>undefined</code>
         * [.paramsRsa()](#Jwk+paramsRsa) ⇒ <code>JwkParamsRsa</code> \| <code>undefined</code>
-        * [.toPublic()](#Jwk+toPublic) ⇒ [<code>Jwk</code>](#Jwk)
+        * [.toPublic()](#Jwk+toPublic) ⇒ [<code>Jwk</code>](#Jwk) \| <code>undefined</code>
         * [.isPublic()](#Jwk+isPublic) ⇒ <code>boolean</code>
         * [.isPrivate()](#Jwk+isPrivate) ⇒ <code>boolean</code>
         * [.toJSON()](#Jwk+toJSON) ⇒ <code>any</code>
@@ -2735,8 +2799,9 @@ If this JWK is of kty RSA, returns those parameters.
 **Kind**: instance method of [<code>Jwk</code>](#Jwk)  
 <a name="Jwk+toPublic"></a>
 
-### jwk.toPublic() ⇒ [<code>Jwk</code>](#Jwk)
+### jwk.toPublic() ⇒ [<code>Jwk</code>](#Jwk) \| <code>undefined</code>
 Returns a clone of the Jwk with _all_ private key components unset.
+Nothing is returned when `kty = oct` as this key type is not considered public by this library.
 
 **Kind**: instance method of [<code>Jwk</code>](#Jwk)  
 <a name="Jwk+isPublic"></a>
@@ -3200,6 +3265,7 @@ Deserializes an instance from a JSON object.
         * [.addCrit(value)](#JwsSignatureOptions+addCrit)
         * [.serUrl(value)](#JwsSignatureOptions+serUrl)
         * [.setNonce(value)](#JwsSignatureOptions+setNonce)
+        * [.setDetachedPayload(value)](#JwsSignatureOptions+setDetachedPayload)
         * [.toJSON()](#JwsSignatureOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwsSignatureOptions+clone) ⇒ [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)
     * _static_
@@ -3270,11 +3336,24 @@ Deserializes an instance from a JSON object.
 <a name="JwsSignatureOptions+setNonce"></a>
 
 ### jwsSignatureOptions.setNonce(value)
+The nonce to be added to the protected header.
+
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
 | Param | Type |
 | --- | --- |
 | value | <code>string</code> | 
+
+<a name="JwsSignatureOptions+setDetachedPayload"></a>
+
+### jwsSignatureOptions.setDetachedPayload(value)
+Whether the JWS signature should have a detached payload.
+
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
 
 <a name="JwsSignatureOptions+toJSON"></a>
 
@@ -5127,28 +5206,6 @@ Return after the first error occurs.
 Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
-<a name="encodeB64"></a>
-
-## encodeB64(data) ⇒ <code>string</code>
-Encode the given bytes in url-safe base64.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
-
-<a name="decodeB64"></a>
-
-## decodeB64(data) ⇒ <code>Uint8Array</code>
-Decode the given url-safe base64-encoded slice into its raw bytes.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
-
 <a name="verifyEdDSA"></a>
 
 ## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
@@ -5170,4 +5227,26 @@ prior to calling the function.
 | signingInput | <code>Uint8Array</code> | 
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
+
+<a name="encodeB64"></a>
+
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="decodeB64"></a>
+
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
 

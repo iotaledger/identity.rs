@@ -115,5 +115,5 @@ interface IJwsSignatureOptions {
     readonly nonce?: string;
 
     /** Whether the JWS signature should have a detached payload.*/
-    readonly detachedPayload?: bool
+    readonly detachedPayload?: boolean
 }"#;

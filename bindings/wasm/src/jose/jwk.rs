@@ -165,9 +165,10 @@ impl WasmJwk {
   }
 
   /// Returns a clone of the Jwk with _all_ private key components unset.
+  /// Nothing is returned when `kty = oct` as this key type is not considered public by this library.
   #[wasm_bindgen(js_name = toPublic)]
-  pub fn to_public(&self) -> WasmJwk {
-    WasmJwk(self.0.to_public())
+  pub fn to_public(&self) -> Option<WasmJwk> {
+    self.0.to_public().map(WasmJwk)
   }
 
   /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.

@@ -16,6 +16,7 @@ use crate::common::PromiseString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
+use crate::credential::WasmCredential;
 use crate::crypto::WasmProofOptions;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
@@ -38,6 +39,7 @@ use identity_iota::core::OneOrMany;
 use identity_iota::core::OneOrSet;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Url;
+use identity_iota::credential::Credential;
 use identity_iota::credential::RevocationDocumentExt;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
@@ -489,13 +491,18 @@ impl WasmCoreDocument {
     jws: &str,
     options: &WasmJwsVerificationOptions,
     signatureVerifier: Option<IJwsSignatureVerifier>,
-    detachedPayload: Option<&str>,
+    detachedPayload: Option<String>,
   ) -> Result<WasmToken> {
     let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
     self
       .0
       .blocking_read()
-      .verify_jws(jws, detachedPayload, &jws_verifier, &options.0)
+      .verify_jws(
+        jws,
+        detachedPayload.as_deref().map(|detached| detached.as_bytes()),
+        &jws_verifier,
+        &options.0,
+      )
       .map(WasmToken::from)
       .wasm_result()
   }
@@ -666,8 +673,9 @@ impl WasmCoreDocument {
   // TODO: Should payload be of type `string`, or should we take Uint8Array to match Rust? I chose String here as they
   // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
   // as the payload type?
-  #[wasm_bindgen(js_name = signString)]
-  pub fn sign_string(
+  // TODO: Perhaps this should be called `signData` (and the old `signData` method would have to be updated or removed)?
+  #[wasm_bindgen(js_name = createJwt)]
+  pub fn create_jwt(
     &self,
     storage: &WasmStorage,
     fragment: String,
@@ -682,6 +690,37 @@ impl WasmCoreDocument {
         .read()
         .await
         .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Produces a JWS where the payload is produced from the given `credential`
+  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  ///
+  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  // TODO: Perhaps this should be called `signCredential` (and the old `signCredential` method would have to be updated
+  // or removed)?
+  #[wasm_bindgen(js_name = createCredentialJwt)]
+  pub fn create_credential_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    credential: &WasmCredential,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseString> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let credential_clone: Credential = credential.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
         .map(JsValue::from)
