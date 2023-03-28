@@ -25,7 +25,7 @@ pub struct CredentialValidationOptions {
 
   /// Validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
   ///
-  /// Default: [`StatusCheck::Strict`].
+  /// Default: [`StatusCheck::Strict`](crate::validator::StatusCheck::Strict).
   #[serde(default)]
   pub status: crate::validator::StatusCheck,
 
