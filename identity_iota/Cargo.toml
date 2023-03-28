@@ -27,7 +27,7 @@ iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["t
 tokio = { version = "1.17.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "resolver"]
+default = ["revocation-bitmap", "client", "iota-client", "resolver", "eddsa"]
 diff = ["identity_core/diff", "identity_did/diff", "identity_verification/diff"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.

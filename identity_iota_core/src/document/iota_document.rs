@@ -8,8 +8,8 @@ use core::fmt::Display;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_document::verifiable::JwsVerificationOptions;
-use identity_jose::jws::JwsSignatureVerifier;
-use identity_jose::jws::Token;
+use identity_verification::jose::jws::JwsSignatureVerifier;
+use identity_verification::jose::jws::Token;
 use serde::Deserialize;
 use serde::Serialize;
 
