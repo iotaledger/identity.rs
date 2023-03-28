@@ -61,7 +61,7 @@ impl WasmJwsSignatureOptions {
 
   /// Whether the JWS signature should have a detached payload.
   #[wasm_bindgen(js_name = setDetachedPayload)]
-  pub fn set_detachedPayload(&mut self, value: bool) {
+  pub fn set_detached_payload(&mut self, value: bool) {
     self.0.detached_payload = value;
   }
 }
