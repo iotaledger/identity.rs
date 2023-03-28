@@ -45,6 +45,6 @@ mod tests {
 
   #[test]
   fn error_is_send_sync() {
-    let _assert_error_is_send_sync = is_send_sync(JwkStorageDocumentError::FragmentAlreadyExists);
+    is_send_sync(JwkStorageDocumentError::FragmentAlreadyExists);
   }
 }

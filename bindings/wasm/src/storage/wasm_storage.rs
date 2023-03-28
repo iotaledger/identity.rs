@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::*;
 
 pub(crate) type WasmStorageInner = Storage<WasmJwkStorage, WasmKeyIdStorage>;
 
-/// A type wrapping a `JwkStorage` and `KeyIdStorage` that should always be used together when 
+/// A type wrapping a `JwkStorage` and `KeyIdStorage` that should always be used together when
 /// working with storage backed DID documents.
 #[wasm_bindgen(js_name = Storage)]
 pub struct WasmStorage(pub(crate) Rc<WasmStorageInner>);
