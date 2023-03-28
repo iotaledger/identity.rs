@@ -17,8 +17,8 @@ use crate::jws::VerificationInput;
 use crate::jwt::JwtClaims;
 use crate::tests::ed25519;
 
-#[tokio::test]
-async fn test_encoder_decoder_roundtrip() {
+#[test]
+fn test_encoder_decoder_roundtrip() {
   let secret_key = SecretKey::generate().unwrap();
   let public_key = secret_key.public_key();
 
