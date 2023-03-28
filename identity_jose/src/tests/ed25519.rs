@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
-use std::sync::Arc;
 
 use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
@@ -11,13 +10,10 @@ use crypto::signatures::ed25519::{self};
 use crate::jwk::EdCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOkp;
-use crate::jws::Encoder;
-use crate::jws::JwsAlgorithm;
-use crate::jws::JwsHeader;
+
 use crate::jws::SignatureVerificationError;
 use crate::jws::SignatureVerificationErrorKind;
 use crate::jws::VerificationInput;
-use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 
 pub(crate) fn expand_secret_jwk(jwk: &Jwk) -> SecretKey {
@@ -51,6 +47,12 @@ pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {
   PublicKey::try_from(pk).unwrap()
 }
 
+pub(crate) fn sign(message: &[u8], private_key: &Jwk) -> impl AsRef<[u8]> {
+  let sk: SecretKey = expand_secret_jwk(private_key);
+  sk.sign(message).to_bytes()
+}
+
+/*
 pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: SecretKey) -> String {
   let sk = Arc::new(secret_key);
 
@@ -70,7 +72,7 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: Sec
 
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
-
+*/
 pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let public_key = expand_public_jwk(jwk);
 

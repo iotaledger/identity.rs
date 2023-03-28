@@ -6,13 +6,9 @@ use std::ops::Deref;
 use crate::jwk::EcCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsEc;
-use crate::jws::Encoder;
-use crate::jws::JwsAlgorithm;
-use crate::jws::JwsHeader;
 use crate::jws::SignatureVerificationError;
 use crate::jws::SignatureVerificationErrorKind;
 use crate::jws::VerificationInput;
-use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 use p256::ecdsa::Signature;
 use p256::ecdsa::SigningKey;
@@ -44,6 +40,13 @@ pub(crate) fn expand_p256_jwk(jwk: &Jwk) -> (SecretKey, PublicKey) {
   (sk, pk)
 }
 
+pub(crate) fn sign(message: &[u8], private_key: &Jwk) -> impl AsRef<[u8]> {
+  let (sk, _): (SecretKey, PublicKey) = expand_p256_jwk(private_key);
+  let signing_key: SigningKey = SigningKey::from(sk);
+  let signature: Signature = signature::Signer::sign(&signing_key, &message);
+  signature.to_bytes()
+}
+/*
 pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> String {
   let (secret_key, _) = expand_p256_jwk(jwk);
 
@@ -66,6 +69,8 @@ pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> S
 
   encoder.encode(&sign_fn, claims).await.unwrap()
 }
+
+*/
 
 pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let (_, public_key) = expand_p256_jwk(jwk);
