@@ -164,7 +164,7 @@ async fn signing_credential() {
       &jws,
       &document,
       &CredentialValidationOptions::default(),
-      identity_credential::validator::vc_jwt_validation::FailFast::FirstError
+      identity_credential::validator::FailFast::FirstError
     )
     .is_ok());
 }
