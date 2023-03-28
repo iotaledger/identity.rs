@@ -9,6 +9,9 @@
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
+<dt><a href="#CredentialToken">CredentialToken</a></dt>
+<dd><p>A cryptographically verified and decoded Credential.</p>
+</dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
 <dd><p>Options to declare validation criteria when validating credentials.</p>
 </dd>
@@ -58,6 +61,12 @@ and resolution of DID documents in Alias Outputs.</p>
 <dd></dd>
 <dt><a href="#JwsVerificationOptions">JwsVerificationOptions</a></dt>
 <dd></dd>
+<dt><a href="#JwtCredentialValidationOptions">JwtCredentialValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating credentials.</p>
+</dd>
+<dt><a href="#JwtCredentialValidator">JwtCredentialValidator</a></dt>
+<dd><p>A type for decoding and validating <code>Credentials</code>.</p>
+</dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
@@ -132,6 +141,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -177,8 +188,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -1050,6 +1059,39 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="CredentialToken"></a>
+
+## CredentialToken
+A cryptographically verified and decoded Credential.
+
+**Kind**: global class  
+
+* [CredentialToken](#CredentialToken)
+    * [.credential()](#CredentialToken+credential) ⇒ [<code>Credential</code>](#Credential)
+    * [.protectedHeader()](#CredentialToken+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.intoCredential()](#CredentialToken+intoCredential) ⇒ [<code>Credential</code>](#Credential)
+
+<a name="CredentialToken+credential"></a>
+
+### credentialToken.credential() ⇒ [<code>Credential</code>](#Credential)
+Returns a copy of the credential.
+
+**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
+<a name="CredentialToken+protectedHeader"></a>
+
+### credentialToken.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header parsed from the decoded JWS.
+
+**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
+<a name="CredentialToken+intoCredential"></a>
+
+### credentialToken.intoCredential() ⇒ [<code>Credential</code>](#Credential)
+Consumes the object and returns the decoded credential.
+
+### Warning
+This destroys the `CredentialToken` object.
+
+**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
 <a name="CredentialValidationOptions"></a>
 
 ## CredentialValidationOptions
@@ -3452,6 +3494,213 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="JwtCredentialValidationOptions"></a>
+
+## JwtCredentialValidationOptions
+Options to declare validation criteria when validating credentials.
+
+**Kind**: global class  
+
+* [JwtCredentialValidationOptions](#JwtCredentialValidationOptions)
+    * _instance_
+        * [.toJSON()](#JwtCredentialValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtCredentialValidationOptions+clone) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
+    * _static_
+        * [.default()](#JwtCredentialValidationOptions.default) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
+        * [.fromJSON(json)](#JwtCredentialValidationOptions.fromJSON) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
+
+<a name="JwtCredentialValidationOptions+toJSON"></a>
+
+### jwtCredentialValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)  
+<a name="JwtCredentialValidationOptions+clone"></a>
+
+### jwtCredentialValidationOptions.clone() ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)  
+<a name="JwtCredentialValidationOptions.default"></a>
+
+### JwtCredentialValidationOptions.default() ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
+Creates a new `JwtCredentialValidationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)  
+<a name="JwtCredentialValidationOptions.fromJSON"></a>
+
+### JwtCredentialValidationOptions.fromJSON(json) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwtCredentialValidator"></a>
+
+## JwtCredentialValidator
+A type for decoding and validating `Credentials`.
+
+**Kind**: global class  
+
+* [JwtCredentialValidator](#JwtCredentialValidator)
+    * [new JwtCredentialValidator(signature_verifier)](#new_JwtCredentialValidator_new)
+    * _instance_
+        * [.validate(credential_jws, issuer, options, fail_fast)](#JwtCredentialValidator+validate) ⇒ [<code>CredentialToken</code>](#CredentialToken)
+        * [.verifySignature(credential, trustedIssuers, options)](#JwtCredentialValidator+verifySignature) ⇒ [<code>CredentialToken</code>](#CredentialToken)
+    * _static_
+        * [.checkExpiresOnOrAfter(credential, timestamp)](#JwtCredentialValidator.checkExpiresOnOrAfter)
+        * [.checkIssuedOnOrBefore(credential, timestamp)](#JwtCredentialValidator.checkIssuedOnOrBefore)
+        * [.checkSubjectHolderRelationship(credential, holder, relationship)](#JwtCredentialValidator.checkSubjectHolderRelationship)
+        * [.checkStatus(credential, trustedIssuers, statusCheck)](#JwtCredentialValidator.checkStatus)
+        * [.extractIssuer(credential)](#JwtCredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
+
+<a name="new_JwtCredentialValidator_new"></a>
+
+### new JwtCredentialValidator(signature_verifier)
+Creates a new `JwtCredentialValidator`. If a `signature_verifier` is provided it will be used when
+verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
+algorithm will be used.
+
+
+| Param | Type |
+| --- | --- |
+| signature_verifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
+
+<a name="JwtCredentialValidator+validate"></a>
+
+### jwtCredentialValidator.validate(credential_jws, issuer, options, fail_fast) ⇒ [<code>CredentialToken</code>](#CredentialToken)
+Decodes and validates a `Credential` issued as a JWS. A `CredentialToken` is returned upon success.
+
+The following properties are validated according to `options`:
+- the issuer's signature on the JWS,
+- the expiration date,
+- the issuance date,
+- the semantic structure.
+
+# Warning
+The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
+trusted. This section contains more information on additional checks that should be carried out before and after
+calling this method.
+
+## The state of the issuer's DID Document
+The caller must ensure that `issuer` represents an up-to-date DID Document.
+
+## Properties that are not validated
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`proof`, `credentialStatus`, `type`, `credentialSchema`, `refreshService` **and more**.
+These should be manually checked after validation, according to your requirements.
+
+# Errors
+An error is returned whenever a validated condition is not satisfied.
+
+**Kind**: instance method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential_jws | <code>string</code> | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
+| fail_fast | <code>number</code> | 
+
+<a name="JwtCredentialValidator+verifySignature"></a>
+
+### jwtCredentialValidator.verifySignature(credential, trustedIssuers, options) ⇒ [<code>CredentialToken</code>](#CredentialToken)
+Decode and verify the JWS signature of a `Credential` issued as a JWS using the DID Document of a trusted
+issuer.
+
+A `CredentialToken` is returned upon success.
+
+# Warning
+The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
+
+## Proofs
+ Only the JWS signature is verified. If the `Credential` contains a `proof` property this will not be verified
+by this method.
+
+# Errors
+This method immediately returns an error if
+the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
+to verify the credential's signature will be made and an error is returned upon failure.
+
+**Kind**: instance method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | <code>string</code> | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
+| options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
+
+<a name="JwtCredentialValidator.checkExpiresOnOrAfter"></a>
+
+### JwtCredentialValidator.checkExpiresOnOrAfter(credential, timestamp)
+Validate that the credential expires on or after the specified timestamp.
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="JwtCredentialValidator.checkIssuedOnOrBefore"></a>
+
+### JwtCredentialValidator.checkIssuedOnOrBefore(credential, timestamp)
+Validate that the credential is issued on or before the specified timestamp.
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="JwtCredentialValidator.checkSubjectHolderRelationship"></a>
+
+### JwtCredentialValidator.checkSubjectHolderRelationship(credential, holder, relationship)
+Validate that the relationship between the `holder` and the credential subjects is in accordance with
+`relationship`. The `holder` parameter is expected to be the URL of the holder.
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| holder | <code>string</code> | 
+| relationship | <code>number</code> | 
+
+<a name="JwtCredentialValidator.checkStatus"></a>
+
+### JwtCredentialValidator.checkStatus(credential, trustedIssuers, statusCheck)
+Checks whether the credential status has been revoked.
+
+Only supports `BitmapRevocation2022`.
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
+| statusCheck | <code>number</code> | 
+
+<a name="JwtCredentialValidator.extractIssuer"></a>
+
+### JwtCredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
+Utility for extracting the issuer field of a `Credential` as a DID.
+
+### Errors
+
+Fails if the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+
 <a name="KeyPair"></a>
 
 ## KeyPair
@@ -5110,6 +5359,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5195,10 +5448,6 @@ Return after the first error occurs.
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

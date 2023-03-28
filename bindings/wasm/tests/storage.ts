@@ -2,8 +2,10 @@ const assert = require("assert");
 import { RandomHelper } from "@iota/util.js";
 import {
     CoreDocument,
+    Credential,
     Ed25519,
     EdCurve,
+    FailFast,
     IJwkParams,
     IJwsSignatureVerifier,
     IotaDocument,
@@ -15,6 +17,8 @@ import {
     JwsAlgorithm,
     JwsSignatureOptions,
     JwsVerificationOptions,
+    JwtCredentialValidationOptions,
+    JwtCredentialValidator,
     MethodDigest,
     MethodScope,
     Storage,
@@ -87,7 +91,50 @@ describe("#JwkStorageDocument", function() {
         let customVerifier = new CustomVerifier();
         const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
         assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
+        // Check that customVerifer.verify was indeed called
         assert.deepStrictEqual(customVerifier.verifications(), 1);
+
+        // Check that issuing a credential as a JWT works
+        const credentialFields = {
+            context: "https://www.w3.org/2018/credentials/examples/v1",
+            id: "https://example.edu/credentials/3732",
+            type: "UniversityDegreeCredential",
+            credentialSubject: {
+                id: "did:example:ebfeb1f712ebc6f1c276e12ec21",
+                degree: {
+                    type: "BachelorDegree",
+                    name: "Bachelor of Science and Arts",
+                },
+            },
+            issuer: doc.id(),
+            issuanceDate: "2010-01-01T00:00:00Z",
+        };
+
+        const credential = new Credential(credentialFields);
+        // Create the JWT
+        const credentialJwt = await doc.createCredentialJwt(storage, fragment, credential, new JwsSignatureOptions());
+
+        // Check that the credentialJwt can be decoded and verified
+        let credentialValidator = new JwtCredentialValidator();
+        const credentialRetrieved = credentialValidator.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.FirstError,
+        ).credential();
+        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+
+        // Also check using our custom verifier
+        let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
+        const credentialRetrievedCustom = credentialValidatorCustom.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.AllErrors,
+        ).credential();
+        // Check that customVerifer.verify was indeed called
+        assert.deepStrictEqual(customVerifier.verifications(), 2);
+        assert.deepStrictEqual(credentialRetrievedCustom.toJSON(), credential.toJSON());
 
         // Delete the method
         const methodId = (method as VerificationMethod).id();
@@ -130,6 +177,48 @@ describe("#JwkStorageDocument", function() {
         const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
         assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
         assert.deepStrictEqual(customVerifier.verifications(), 1);
+
+        // Check that issuing a credential as a JWT works
+        const credentialFields = {
+            context: "https://www.w3.org/2018/credentials/examples/v1",
+            id: "https://example.edu/credentials/3732",
+            type: "UniversityDegreeCredential",
+            credentialSubject: {
+                id: "did:example:ebfeb1f712ebc6f1c276e12ec21",
+                degree: {
+                    type: "BachelorDegree",
+                    name: "Bachelor of Science and Arts",
+                },
+            },
+            issuer: doc.id(),
+            issuanceDate: "2010-01-01T00:00:00Z",
+        };
+
+        const credential = new Credential(credentialFields);
+        // Create the JWT
+        const credentialJwt = await doc.createCredentialJwt(storage, fragment, credential, new JwsSignatureOptions());
+
+        // Check that the credentialJwt can be decoded and verified
+        let credentialValidator = new JwtCredentialValidator();
+        const credentialRetrieved = credentialValidator.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.FirstError,
+        ).credential();
+        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+
+        // Also check using our custom verifier
+        let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
+        const credentialRetrievedCustom = credentialValidatorCustom.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.AllErrors,
+        ).credential();
+        // Check that customVerifer.verify was indeed called
+        assert.deepStrictEqual(customVerifier.verifications(), 2);
+        assert.deepStrictEqual(credentialRetrievedCustom.toJSON(), credential.toJSON());
 
         // Delete the method
         const methodId = (method as VerificationMethod).id();

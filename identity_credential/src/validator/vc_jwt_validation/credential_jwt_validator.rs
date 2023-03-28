@@ -22,14 +22,14 @@ use identity_verification::jws::Token;
 use super::CompoundCredentialValidationError;
 use super::CredentialToken;
 use super::CredentialValidationOptions;
-use super::FailFast;
 use super::SignerContext;
-use super::SubjectHolderRelationship;
 use super::ValidationError;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
+use crate::validator::FailFast;
+use crate::validator::SubjectHolderRelationship;
 
-/// A struct for validating [`Credential`]s.
+/// A type for decoding and validating [`Credential`]s.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct CredentialValidator<V: JwsSignatureVerifier = EdDSAJwsSignatureVerifier>(V);
@@ -108,9 +108,9 @@ impl CredentialValidator {
   pub fn check_status<DOC: AsRef<CoreDocument>, T>(
     credential: &Credential<T>,
     trusted_issuers: &[DOC],
-    status_check: super::StatusCheck,
+    status_check: crate::validator::StatusCheck,
   ) -> ValidationUnitResult {
-    if status_check == super::StatusCheck::SkipAll {
+    if status_check == crate::validator::StatusCheck::SkipAll {
       return Ok(());
     }
 
@@ -119,7 +119,7 @@ impl CredentialValidator {
       Some(status) => {
         // Check status is supported.
         if status.type_ != crate::revocation::RevocationBitmap::TYPE {
-          if status_check == super::StatusCheck::SkipUnsupported {
+          if status_check == crate::validator::StatusCheck::SkipUnsupported {
             return Ok(());
           }
           return Err(ValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
@@ -213,7 +213,7 @@ where
   ///
   /// ## Properties that are not validated
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, `proof` **and more**.
+  /// `proof`, `credentialStatus`, `type`, `credentialSchema`, `refreshService` **and more**.
   /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Errors
@@ -287,7 +287,7 @@ where
     // If this errors we have to return early regardless of the `fail_fast` flag as all other validations require a
     // `&Credential`.
     let credential_token =
-      Self::verify_signature_with_verifier(signature_verifier, credential, issuers, &options.verifier_options)
+      Self::verify_signature_with_verifier(signature_verifier, credential, issuers, &options.verification_options)
         .map_err(|err| CompoundCredentialValidationError {
           validation_errors: [err].into(),
         })?;
