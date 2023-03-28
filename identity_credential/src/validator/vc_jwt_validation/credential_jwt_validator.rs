@@ -34,155 +34,6 @@ use crate::validator::SubjectHolderRelationship;
 #[non_exhaustive]
 pub struct CredentialValidator<V: JwsSignatureVerifier = EdDSAJwsSignatureVerifier>(V);
 
-impl CredentialValidator {
-  /// Creates a new [`CredentialValidator`] capable of verifying a [`Credential`] issued as a JWS
-  /// using the [`EdDSA`](::identity_verification::jose::jws::JwsAlgorithm::EdDSA) algorithm.
-  ///
-  /// See [`CredentialValidator::with_signature_verifier`](CredentialValidator::with_signature_verifier())
-  /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
-  pub fn new() -> Self {
-    Self(EdDSAJwsSignatureVerifier::default())
-  }
-
-  /// Validates the semantic structure of the [`Credential`].
-  ///
-  /// # Warning
-  /// This does not validate against the credential's schema nor the structure of the subject claims.
-  pub fn check_structure<T>(credential: &Credential<T>) -> ValidationUnitResult {
-    credential
-      .check_structure()
-      .map_err(ValidationError::CredentialStructure)
-  }
-
-  /// Validate that the [`Credential`] expires on or after the specified [`Timestamp`].
-  pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
-    let expiration_date: Option<Timestamp> = credential.expiration_date;
-    (expiration_date.is_none() || expiration_date >= Some(timestamp))
-      .then_some(())
-      .ok_or(ValidationError::ExpirationDate)
-  }
-
-  /// Validate that the [`Credential`] is issued on or before the specified [`Timestamp`].
-  pub fn check_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
-    (credential.issuance_date <= timestamp)
-      .then_some(())
-      .ok_or(ValidationError::IssuanceDate)
-  }
-
-  /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
-  /// `relationship`.
-  pub fn check_subject_holder_relationship<T>(
-    credential: &Credential<T>,
-    holder: &Url,
-    relationship: SubjectHolderRelationship,
-  ) -> ValidationUnitResult {
-    let url_matches: bool = match &credential.credential_subject {
-      OneOrMany::One(ref credential_subject) => credential_subject.id.as_ref() == Some(holder),
-      OneOrMany::Many(subjects) => {
-        // need to check the case where the Many variant holds a vector of exactly one subject
-        if let [credential_subject] = subjects.as_slice() {
-          credential_subject.id.as_ref() == Some(holder)
-        } else {
-          // zero or > 1 subjects is interpreted to mean that the holder is not the subject
-          false
-        }
-      }
-    };
-
-    Some(relationship)
-      .filter(|relationship| match relationship {
-        SubjectHolderRelationship::AlwaysSubject => url_matches,
-        SubjectHolderRelationship::SubjectOnNonTransferable => {
-          url_matches || !credential.non_transferable.unwrap_or(false)
-        }
-        SubjectHolderRelationship::Any => true,
-      })
-      .map(|_| ())
-      .ok_or(ValidationError::SubjectHolderRelationship)
-  }
-
-  /// Checks whether the credential status has been revoked.
-  ///
-  /// Only supports `BitmapRevocation2022`.
-  #[cfg(feature = "revocation-bitmap")]
-  pub fn check_status<DOC: AsRef<CoreDocument>, T>(
-    credential: &Credential<T>,
-    trusted_issuers: &[DOC],
-    status_check: crate::validator::StatusCheck,
-  ) -> ValidationUnitResult {
-    if status_check == crate::validator::StatusCheck::SkipAll {
-      return Ok(());
-    }
-
-    match &credential.credential_status {
-      None => Ok(()),
-      Some(status) => {
-        // Check status is supported.
-        if status.type_ != crate::revocation::RevocationBitmap::TYPE {
-          if status_check == crate::validator::StatusCheck::SkipUnsupported {
-            return Ok(());
-          }
-          return Err(ValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
-            "unsupported type '{}'",
-            status.type_
-          ))));
-        }
-        let status: crate::credential::RevocationBitmapStatus =
-          crate::credential::RevocationBitmapStatus::try_from(status.clone())
-            .map_err(ValidationError::InvalidStatus)?;
-
-        // Check the credential index against the issuer's DID Document.
-        let issuer_did: CoreDID = Self::extract_issuer(credential)?;
-        trusted_issuers
-          .iter()
-          .find(|issuer| <CoreDocument>::id(issuer.as_ref()) == &issuer_did)
-          .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-          .and_then(|issuer| Self::check_revocation_bitmap_status(issuer, status))
-      }
-    }
-  }
-
-  /// Check the given `status` against the matching [`RevocationBitmap`] service in the
-  /// issuer's DID Document.
-  #[cfg(feature = "revocation-bitmap")]
-  fn check_revocation_bitmap_status<DOC: AsRef<CoreDocument> + ?Sized>(
-    issuer: &DOC,
-    status: crate::credential::RevocationBitmapStatus,
-  ) -> ValidationUnitResult {
-    use crate::revocation::RevocationDocumentExt;
-
-    let issuer_service_url: identity_did::DIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
-
-    // Check whether index is revoked.
-    let revocation_bitmap: crate::revocation::RevocationBitmap = issuer
-      .as_ref()
-      .resolve_revocation_bitmap(issuer_service_url.into())
-      .map_err(|_| ValidationError::ServiceLookupError)?;
-    let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
-    if revocation_bitmap.is_revoked(index) {
-      Err(ValidationError::Revoked)
-    } else {
-      Ok(())
-    }
-  }
-
-  /// Utility for extracting the issuer field of a [`Credential`] as a DID.
-  ///
-  /// # Errors
-  ///
-  /// Fails if the issuer field is not a valid DID.
-  pub fn extract_issuer<D, T>(credential: &Credential<T>) -> std::result::Result<D, ValidationError>
-  where
-    D: DID,
-    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
-  {
-    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
-      signer_ctx: SignerContext::Issuer,
-      source: err.into(),
-    })
-  }
-}
-
 type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
 
 impl<V> CredentialValidator<V>
@@ -190,7 +41,8 @@ where
   V: JwsSignatureVerifier,
 {
   /// Create a new [`CredentialValidator`] that delegates cryptographic signature verification to the given
-  /// `signature_verifier`.
+  /// `signature_verifier`. If you are only interested in `EdDSA` signatures (with `Ed25519`) then the default
+  /// constructor can be used. See [`CredentialValidator::new`](CredentialValidator::new).
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self(signature_verifier)
   }
@@ -419,9 +271,7 @@ where
     allowed_crits: Option<&[String]>,
   ) -> Result<JwsValidationItem<'credential>, ValidationError> {
     // Configure a decoder according to `options`.
-    let decoder: Decoder<'_> = allowed_crits
-      .map(Decoder::new_with_crits)
-      .unwrap_or(Decoder::new());
+    let decoder: Decoder<'_> = allowed_crits.map(Decoder::new_with_crits).unwrap_or(Decoder::new());
 
     decoder
       .decode_compact_serialization(credential_jws.as_bytes(), None)
@@ -429,8 +279,8 @@ where
   }
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
-  fn verify_decoded_signature<'credential, S: JwsSignatureVerifier>(
-    decoded: JwsValidationItem<'credential>,
+  fn verify_decoded_signature<S: JwsSignatureVerifier>(
+    decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,
   ) -> Result<CredentialToken, ValidationError> {
@@ -456,6 +306,161 @@ where
       credential,
       header: Box::new(protected),
     })
+  }
+}
+
+impl CredentialValidator {
+  /// Creates a new [`CredentialValidator`] capable of verifying a [`Credential`] issued as a JWS
+  /// using the [`EdDSA`](::identity_verification::jose::jws::JwsAlgorithm::EdDSA) algorithm.
+  ///
+  /// See [`CredentialValidator::with_signature_verifier`](CredentialValidator::with_signature_verifier())
+  /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
+  pub fn new() -> Self {
+    Self(EdDSAJwsSignatureVerifier::default())
+  }
+
+  /// Validates the semantic structure of the [`Credential`].
+  ///
+  /// # Warning
+  /// This does not validate against the credential's schema nor the structure of the subject claims.
+  pub fn check_structure<T>(credential: &Credential<T>) -> ValidationUnitResult {
+    credential
+      .check_structure()
+      .map_err(ValidationError::CredentialStructure)
+  }
+
+  /// Validate that the [`Credential`] expires on or after the specified [`Timestamp`].
+  pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
+    let expiration_date: Option<Timestamp> = credential.expiration_date;
+    (expiration_date.is_none() || expiration_date >= Some(timestamp))
+      .then_some(())
+      .ok_or(ValidationError::ExpirationDate)
+  }
+
+  /// Validate that the [`Credential`] is issued on or before the specified [`Timestamp`].
+  pub fn check_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
+    (credential.issuance_date <= timestamp)
+      .then_some(())
+      .ok_or(ValidationError::IssuanceDate)
+  }
+
+  /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
+  /// `relationship`.
+  pub fn check_subject_holder_relationship<T>(
+    credential: &Credential<T>,
+    holder: &Url,
+    relationship: SubjectHolderRelationship,
+  ) -> ValidationUnitResult {
+    let url_matches: bool = match &credential.credential_subject {
+      OneOrMany::One(ref credential_subject) => credential_subject.id.as_ref() == Some(holder),
+      OneOrMany::Many(subjects) => {
+        // need to check the case where the Many variant holds a vector of exactly one subject
+        if let [credential_subject] = subjects.as_slice() {
+          credential_subject.id.as_ref() == Some(holder)
+        } else {
+          // zero or > 1 subjects is interpreted to mean that the holder is not the subject
+          false
+        }
+      }
+    };
+
+    Some(relationship)
+      .filter(|relationship| match relationship {
+        SubjectHolderRelationship::AlwaysSubject => url_matches,
+        SubjectHolderRelationship::SubjectOnNonTransferable => {
+          url_matches || !credential.non_transferable.unwrap_or(false)
+        }
+        SubjectHolderRelationship::Any => true,
+      })
+      .map(|_| ())
+      .ok_or(ValidationError::SubjectHolderRelationship)
+  }
+
+  /// Checks whether the credential status has been revoked.
+  ///
+  /// Only supports `BitmapRevocation2022`.
+  #[cfg(feature = "revocation-bitmap")]
+  pub fn check_status<DOC: AsRef<CoreDocument>, T>(
+    credential: &Credential<T>,
+    trusted_issuers: &[DOC],
+    status_check: crate::validator::StatusCheck,
+  ) -> ValidationUnitResult {
+    if status_check == crate::validator::StatusCheck::SkipAll {
+      return Ok(());
+    }
+
+    match &credential.credential_status {
+      None => Ok(()),
+      Some(status) => {
+        // Check status is supported.
+        if status.type_ != crate::revocation::RevocationBitmap::TYPE {
+          if status_check == crate::validator::StatusCheck::SkipUnsupported {
+            return Ok(());
+          }
+          return Err(ValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
+            "unsupported type '{}'",
+            status.type_
+          ))));
+        }
+        let status: crate::credential::RevocationBitmapStatus =
+          crate::credential::RevocationBitmapStatus::try_from(status.clone())
+            .map_err(ValidationError::InvalidStatus)?;
+
+        // Check the credential index against the issuer's DID Document.
+        let issuer_did: CoreDID = Self::extract_issuer(credential)?;
+        trusted_issuers
+          .iter()
+          .find(|issuer| <CoreDocument>::id(issuer.as_ref()) == &issuer_did)
+          .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
+          .and_then(|issuer| Self::check_revocation_bitmap_status(issuer, status))
+      }
+    }
+  }
+
+  /// Check the given `status` against the matching [`RevocationBitmap`] service in the
+  /// issuer's DID Document.
+  #[cfg(feature = "revocation-bitmap")]
+  fn check_revocation_bitmap_status<DOC: AsRef<CoreDocument> + ?Sized>(
+    issuer: &DOC,
+    status: crate::credential::RevocationBitmapStatus,
+  ) -> ValidationUnitResult {
+    use crate::revocation::RevocationDocumentExt;
+
+    let issuer_service_url: identity_did::DIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+
+    // Check whether index is revoked.
+    let revocation_bitmap: crate::revocation::RevocationBitmap = issuer
+      .as_ref()
+      .resolve_revocation_bitmap(issuer_service_url.into())
+      .map_err(|_| ValidationError::ServiceLookupError)?;
+    let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
+    if revocation_bitmap.is_revoked(index) {
+      Err(ValidationError::Revoked)
+    } else {
+      Ok(())
+    }
+  }
+
+  /// Utility for extracting the issuer field of a [`Credential`] as a DID.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the issuer field is not a valid DID.
+  pub fn extract_issuer<D, T>(credential: &Credential<T>) -> std::result::Result<D, ValidationError>
+  where
+    D: DID,
+    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Issuer,
+      source: err.into(),
+    })
+  }
+}
+
+impl Default for CredentialValidator {
+  fn default() -> Self {
+    Self::new()
   }
 }
 

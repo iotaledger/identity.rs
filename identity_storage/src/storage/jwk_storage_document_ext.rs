@@ -378,9 +378,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     T: ToOwned + Serialize + Sync,
     <T as ToOwned>::Owned: DeserializeOwned,
   {
-    let payload = credential
-      .serialize_jwt()
-      .map_err(Error::ClaimsSerializationError)?;
+    let payload = credential.serialize_jwt().map_err(Error::ClaimsSerializationError)?;
     self.sign_bytes(storage, fragment, payload.as_bytes(), options).await
   }
 }

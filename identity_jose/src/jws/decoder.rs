@@ -381,6 +381,12 @@ impl<'crits> Decoder<'crits> {
   }
 }
 
+impl Default for Decoder<'static> {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use crate::jwt::JwtClaims;
