@@ -82,7 +82,7 @@ impl WasmJwtCredentialValidator {
 
     self
       .0
-      .validate(&credential_jws, &issuer_guard, &options.0, fail_fast.into())
+      .validate(credential_jws, &issuer_guard, &options.0, fail_fast.into())
       .wasm_result()
       .map(WasmCredentialToken)
   }

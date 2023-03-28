@@ -197,6 +197,12 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+</dd>
 <dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
 Only the <code>EdCurve::Ed25519</code> variant is supported for now.</p>
@@ -205,12 +211,6 @@ the IOTA Identity Framework.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
-</dd>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -5455,28 +5455,6 @@ Return after the first error occurs.
 Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
-<a name="verifyEdDSA"></a>
-
-## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `JwsAlgorithm::EdDSA` algorithm.
-Only the `EdCurve::Ed25519` variant is supported for now.
-
-This function is useful when one is building an `IJwsSignatureVerifier` that extends the default provided by
-the IOTA Identity Framework.
-
-# Warning
-This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-prior to calling the function.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| alg | <code>JwsAlgorithm</code> | 
-| signingInput | <code>Uint8Array</code> | 
-| decodedSignature | <code>Uint8Array</code> | 
-| publicKey | [<code>Jwk</code>](#Jwk) | 
-
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -5498,4 +5476,26 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | Param | Type |
 | --- | --- |
 | data | <code>Uint8Array</code> | 
+
+<a name="verifyEdDSA"></a>
+
+## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `JwsAlgorithm::EdDSA` algorithm.
+Only the `EdCurve::Ed25519` variant is supported for now.
+
+This function is useful when one is building an `IJwsSignatureVerifier` that extends the default provided by
+the IOTA Identity Framework.
+
+# Warning
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
 

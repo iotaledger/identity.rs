@@ -48,7 +48,7 @@ impl WasmToken {
   /// Deep clones the object.
   #[wasm_bindgen(js_name = clone)]
   pub fn deep_clone(&self) -> WasmToken {
-    return self.clone();
+    self.clone()
   }
 
   /// Serializes this to a JSON object.
