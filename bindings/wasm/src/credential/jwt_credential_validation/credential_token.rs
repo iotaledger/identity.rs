@@ -14,7 +14,7 @@ pub struct WasmCredentialToken(pub(crate) CredentialToken);
 
 #[wasm_bindgen(js_class = CredentialToken)]
 impl WasmCredentialToken {
-  /// Returns a copy of the credential.
+  /// Returns a copy of the credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
   #[wasm_bindgen]
   pub fn credential(&self) -> WasmCredential {
     WasmCredential(self.0.credential.clone())

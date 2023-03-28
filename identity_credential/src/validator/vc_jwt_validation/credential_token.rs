@@ -9,7 +9,7 @@ use identity_verification::jose::jws::JwsHeader;
 // the functions returning this type to be generic over `T`, or remove the generic parameter.
 #[non_exhaustive]
 pub struct CredentialToken<T = Object> {
-  /// The decoded Credential
+  /// The decoded credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
   pub credential: Credential<T>,
   /// The protected header parsed from the JWS.
   pub header: Box<JwsHeader>,
