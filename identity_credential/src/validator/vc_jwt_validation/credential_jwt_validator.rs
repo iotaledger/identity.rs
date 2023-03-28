@@ -297,7 +297,7 @@ where
     let credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
       ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
     })?;
-    // Construct the credential token containing the credential and the
+    // Construct the credential token containing the credential and the protected header.
     let credential: Credential = credential_claims
       .try_into_credential()
       .map_err(ValidationError::CredentialStructure)?;
