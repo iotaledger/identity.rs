@@ -3,9 +3,6 @@
 
 use wasm_bindgen::prelude::*;
 
-// Note This type from `identity_iota::credential::vc_jwt_validation` and are different from those in
-// `identity_iota::credential`. In the future these new types for credential validation should either replace the old,
-// or the old types should be updated.
 use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions as JwtCredentialValidationOptions;
 
 /// Options to declare validation criteria when validating credentials.

@@ -619,8 +619,8 @@ impl WasmCoreDocument {
   // ===========================================================================
 
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
-  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage`.
+  /// public key material into this document. The `kid` of the generated Jwk is returned if it is set.
+  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage` API.
   #[wasm_bindgen(js_name = generateMethod)]
   pub fn generate_method(
     &self,
@@ -646,8 +646,8 @@ impl WasmCoreDocument {
     Ok(promise.unchecked_into())
   }
 
-  /// Remove the method identified by the given fragment from the document and delete the corresponding key material in
-  /// the given `storage`.
+  /// Remove the method identified by the `fragment` from the document and delete the corresponding key material in
+  /// the `storage`.
   #[wasm_bindgen(js_name = purgeMethod)]
   pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();

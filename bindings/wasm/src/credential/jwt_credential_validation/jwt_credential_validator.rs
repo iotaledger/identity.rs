@@ -103,7 +103,6 @@ impl WasmJwtCredentialValidator {
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-  // TODO: Consider making this more generic so it returns CredentialToken<T>
   #[wasm_bindgen(js_name = verifySignature)]
   #[allow(non_snake_case)]
   pub fn verify_signature(

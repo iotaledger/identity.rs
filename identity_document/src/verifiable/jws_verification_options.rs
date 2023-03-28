@@ -8,8 +8,15 @@ use identity_verification::MethodScope;
 #[derive(Default, Debug, serde::Serialize, serde::Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct JwsVerificationOptions {
+  /// A list of permitted extension parameters.
+  ///
+  /// [More Info](https://www.rfc-editor.org/rfc/rfc7515#section-4.1.11)
   pub crits: Option<Vec<String>>,
+  /// Verify that the nonce set in the protected header matches this value.
+  ///
+  /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
   pub nonce: Option<String>,
+  /// Verify the signing verification method relation matches this.
   pub method_scope: Option<MethodScope>,
 }
 

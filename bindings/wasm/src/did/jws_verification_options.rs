@@ -22,16 +22,19 @@ impl WasmJwsVerificationOptions {
     }
   }
 
+  /// Set the expected value for the `nonce` parameter of the protected header.
   #[wasm_bindgen(js_name = setNonce)]
   pub fn set_nonce(&mut self, value: String) {
     self.0.nonce = Some(value);
   }
 
+  /// Append values to the list of permitted extension parameters.
   #[wasm_bindgen(js_name = addCrit)]
   pub fn add_crit(&mut self, value: String) {
     self.0.crits.get_or_insert(Vec::new()).push(value);
   }
 
+  /// Set the scope of the verification methods that may be used to verify the given JWS.
   #[wasm_bindgen(js_name = setScope)]
   pub fn set_scope(&mut self, value: &WasmMethodScope) {
     self.0.method_scope = Some(value.0);
@@ -53,16 +56,18 @@ const I_JWS_SIGNATURE_OPTIONS: &'static str = r#"
 /** Holds options to create `JwsVerificationOptions`. */
 interface IJwsVerificationOptions {
     /** 
+    * A list of permitted extension parameters. 
     *
+    * [More info](https://www.rfc-editor.org/rfc/rfc7515#section-4.1.11)
     */
     readonly crits?: [string];
 
-    /** 
-    *
-    * Default: false
-    */
+    /** Verify that the `nonce` set in the protected header matches this.
+     * 
+     * [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
+     */
     readonly nonce?: string;
 
-    /**  */
+    /** Verify the signing verification method relationship matches this.*/
     readonly methodScope?: MethodScope;
 }"#;
