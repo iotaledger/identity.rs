@@ -1,9 +1,8 @@
-use std::str::FromStr;
-
-use identity_iota::verification::jws::JwsAlgorithm;
-use js_sys::JsString;
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+use identity_iota::verification::jws::JwsAlgorithm;
+use js_sys::JsString;
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
