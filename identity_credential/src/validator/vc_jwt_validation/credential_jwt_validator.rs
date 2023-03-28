@@ -357,7 +357,7 @@ where
     // that process for potentially every document in `trusted_issuers`.
 
     // Start decoding the credential
-    let decoded: JwsValidationItem<'_> = Self::decode(&credential, options.crits.as_deref())?;
+    let decoded: JwsValidationItem<'_> = Self::decode(credential, options.crits.as_deref())?;
 
     // Parse the `kid` to a DID Url which should be the identifier of a verification method in a trusted issuer's DID
     // document TODO: Consider factoring this section into a private method that the (future) PresentationValidator
@@ -420,7 +420,6 @@ where
   ) -> Result<JwsValidationItem<'credential>, ValidationError> {
     // Configure a decoder according to `options`.
     let decoder: Decoder<'_> = allowed_crits
-      .as_deref()
       .map(Decoder::new_with_crits)
       .unwrap_or(Decoder::new());
 

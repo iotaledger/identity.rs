@@ -25,7 +25,7 @@ pub(crate) fn expand_hmac_jwk(jwk: &Jwk, key_len: usize) -> Vec<u8> {
 pub(crate) fn sign(message: &[u8], private_key: &Jwk) -> impl AsRef<[u8]> {
   let shared_secret: Vec<u8> = expand_hmac_jwk(private_key, SHA256_LEN);
   let mut mac: [u8; SHA256_LEN] = Default::default();
-  crypto::macs::hmac::HMAC_SHA256(&message, &shared_secret, &mut mac);
+  crypto::macs::hmac::HMAC_SHA256(message, &shared_secret, &mut mac);
   mac
 }
 

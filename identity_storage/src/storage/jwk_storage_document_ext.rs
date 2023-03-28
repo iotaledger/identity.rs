@@ -268,7 +268,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     K: JwkStorage,
     I: KeyIdStorage,
   {
-    generate_method_core_document(&mut self, storage, key_type, alg, fragment, scope).await
+    generate_method_core_document(self, storage, key_type, alg, fragment, scope).await
   }
 
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
@@ -276,7 +276,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     K: JwkStorage,
     I: KeyIdStorage,
   {
-    purge_method_core_document(&mut self, storage, id).await
+    purge_method_core_document(self, storage, id).await
   }
 
   async fn sign_bytes<K, I>(
@@ -341,8 +341,8 @@ impl JwkStorageDocumentExt for CoreDocument {
     };
 
     // Get the key identifier corresponding to the given method from the KeyId storage.
-    let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
-    let key_id = <I as KeyIdStorage>::get_key_id(&storage.key_id_storage(), &method_digest)
+    let method_digest: MethodDigest = MethodDigest::new(method).map_err(Error::MethodDigestConstructionError)?;
+    let key_id = <I as KeyIdStorage>::get_key_id(storage.key_id_storage(), &method_digest)
       .await
       .map_err(Error::KeyIdStorageError)?;
 
@@ -357,9 +357,9 @@ impl JwkStorageDocumentExt for CoreDocument {
       CompactJwsEncodingOptions::Detached
     };
 
-    let jws_encoder: CompactJwsEncoder = CompactJwsEncoder::new_with_options(&payload, &header, encoding_options)
+    let jws_encoder: CompactJwsEncoder = CompactJwsEncoder::new_with_options(payload, &header, encoding_options)
       .map_err(|err| Error::EncodingError(err.into()))?;
-    let signature = <K as JwkStorage>::sign(&storage.key_storage(), &key_id, &jws_encoder.signing_input(), &jwk)
+    let signature = <K as JwkStorage>::sign(storage.key_storage(), &key_id, jws_encoder.signing_input(), jwk)
       .await
       .map_err(Error::KeyStorageError)?;
     Ok(jws_encoder.into_jws(&signature))
@@ -380,7 +380,7 @@ impl JwkStorageDocumentExt for CoreDocument {
   {
     let payload = credential
       .serialize_jwt()
-      .map_err(|err| Error::ClaimsSerializationError(err))?;
+      .map_err(Error::ClaimsSerializationError)?;
     self.sign_bytes(storage, fragment, payload.as_bytes(), options).await
   }
 }
@@ -394,14 +394,14 @@ where
   I: KeyIdStorage,
 {
   // Undo key generation
-  if let Err(err) = <K as JwkStorage>::delete(&storage.key_storage(), &key_id).await {
-    return Error::UndoOperationFailed {
+  if let Err(err) = <K as JwkStorage>::delete(storage.key_storage(), key_id).await {
+    Error::UndoOperationFailed {
       message: format!("unable to delete stray key with id: {}", &key_id),
       source: Box::new(source_error),
       undo_error: Some(Box::new(Error::KeyStorageError(err))),
-    };
+    }
   } else {
-    return source_error;
+    source_error
   }
 }
 
@@ -430,7 +430,7 @@ mod iota_document {
       K: JwkStorage,
       I: KeyIdStorage,
     {
-      generate_method_iota_document(&mut self, storage, key_type, alg, fragment, scope).await
+      generate_method_iota_document(self, storage, key_type, alg, fragment, scope).await
     }
 
     async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
@@ -438,7 +438,7 @@ mod iota_document {
       K: JwkStorage,
       I: KeyIdStorage,
     {
-      purge_method_iota_document(&mut self, storage, id).await
+      purge_method_iota_document(self, storage, id).await
     }
 
     async fn sign_bytes<K, I>(

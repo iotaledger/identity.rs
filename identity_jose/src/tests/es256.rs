@@ -43,7 +43,7 @@ pub(crate) fn expand_p256_jwk(jwk: &Jwk) -> (SecretKey, PublicKey) {
 pub(crate) fn sign(message: &[u8], private_key: &Jwk) -> impl AsRef<[u8]> {
   let (sk, _): (SecretKey, PublicKey) = expand_p256_jwk(private_key);
   let signing_key: SigningKey = SigningKey::from(sk);
-  let signature: Signature = signature::Signer::sign(&signing_key, &message);
+  let signature: Signature = signature::Signer::sign(&signing_key, message);
   signature.to_bytes()
 }
 /*

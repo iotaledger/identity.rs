@@ -22,7 +22,7 @@ impl<'payload> MaybeEncodedPayload<'payload> {
   /// See: https://tools.ietf.org/html/rfc7797#section-3
   pub(super) fn encode_if_b64(payload: &'payload [u8], protected_header: Option<&JwsHeader>) -> Self {
     jwu::extract_b64(protected_header)
-      .then(|| MaybeEncodedPayload::Encoded(jwu::encode_b64(payload).into()))
+      .then(|| MaybeEncodedPayload::Encoded(jwu::encode_b64(payload)))
       .unwrap_or(MaybeEncodedPayload::NotEncoded(payload))
   }
 
