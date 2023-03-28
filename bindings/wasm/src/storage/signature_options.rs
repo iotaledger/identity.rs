@@ -22,38 +22,58 @@ impl WasmJwsSignatureOptions {
     }
   }
 
+  /// Whether to attach the public key in the corresponding method
+  /// to the JWS header.
   #[wasm_bindgen(js_name = setAttachJwk)]
   pub fn set_attach_jwk(&mut self, value: bool) {
     self.0.attach_jwk = value;
   }
 
+  /// Set whether the payload should be Base64url encoded.
+  ///
+  /// [More Info](https://tools.ietf.org/html/rfc7797#section-3)
   #[wasm_bindgen(js_name = setB64)]
   pub fn set_b64(&mut self, value: bool) {
     self.0.b64 = Some(value);
   }
 
+  /// Set the Type value to be placed in the protected header.
+  ///
+  /// [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.9)
   #[wasm_bindgen(js_name = setTyp)]
   pub fn set_typ(&mut self, value: String) {
     self.0.typ = Some(value);
   }
 
+  /// Set the Content Type to be placed in the protected header.
+  ///
+  /// [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.10)
   #[wasm_bindgen(js_name = setCty)]
   pub fn set_cty(&mut self, value: String) {
     self.0.cty = Some(value);
   }
 
+  /// Append a value to the list of permitted extension parameters
+  /// to be attached to the protected header.
+  ///
+  ///[More Info](https://tools.ietf.org/html/rfc7515#section-4.1.11)
   #[wasm_bindgen(js_name = addCrit)]
   pub fn add_crit(&mut self, value: String) {
     self.0.crit.get_or_insert(Vec::new()).push(value);
   }
 
+  /// The URL to be placed in the protected header.
+  ///
+  /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.4.1)
   #[wasm_bindgen(js_name = serUrl)]
   pub fn set_url(&mut self, value: String) -> Result<()> {
     self.0.url = Some(Url::parse(value).wasm_result()?);
     Ok(())
   }
 
-  /// The nonce to be added to the protected header.
+  /// Set the nonce to be placed in the protected header.
+  ///
+  /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
   #[wasm_bindgen(js_name = setNonce)]
   pub fn set_nonce(&mut self, value: String) {
     self.0.nonce = Some(value);
