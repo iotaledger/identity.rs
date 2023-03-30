@@ -46,31 +46,6 @@ pub(crate) fn sign(message: &[u8], private_key: &Jwk) -> impl AsRef<[u8]> {
   let signature: Signature = signature::Signer::sign(&signing_key, message);
   signature.to_bytes()
 }
-/*
-pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], jwk: &Jwk) -> String {
-  let (secret_key, _) = expand_p256_jwk(jwk);
-
-  let signing_key = SigningKey::from(secret_key);
-
-  let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
-    let sk = signing_key.clone();
-    async move {
-      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
-        .with_protected(&protected)
-        .with_unprotected(&unprotected);
-      if header_set.try_alg().map_err(|_| "missing `alg` parameter".to_owned())? != JwsAlgorithm::ES256 {
-        return Err("incompatible `alg` parameter".to_owned());
-      }
-      let signature: Signature = signature::Signer::sign(&sk, &msg);
-      let b64 = jwu::encode_b64(signature.to_bytes());
-      Ok(b64)
-    }
-  };
-
-  encoder.encode(&sign_fn, claims).await.unwrap()
-}
-
-*/
 
 pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let (_, public_key) = expand_p256_jwk(jwk);
