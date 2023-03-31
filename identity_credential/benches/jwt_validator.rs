@@ -1,8 +1,8 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use identity_core::{convert::FromJson, crypto};
-use identity_credential::{credential::Credential, validator::{vc_jwt_validation::{CredentialValidator, CredentialValidationOptions}, FailFast}};
+use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use identity_core::{convert::FromJson};
+use identity_credential::{validator::{vc_jwt_validation::{CredentialValidator, CredentialValidationOptions}, FailFast}};
 use identity_document::document::CoreDocument;
-use identity_verification::{jwk::{Jwk, JwkParamsOkp}, jws::{CompactJwsEncoder, JwsHeader, JwsAlgorithm}};
+
 
 struct Input {
     jws: String,
