@@ -30,7 +30,7 @@ Allows discovery of available [`RevocationInfo`](./revocation.md#RevocationInfo)
 
 <div style={{textAlign: 'center'}}>
 
-<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+<sub>For guidance on diagrams see the <a href="../../overview#diagrams">corresponding section in the overview</a>.</sub>
 
 </div>
 

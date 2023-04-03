@@ -13,7 +13,7 @@ keywords:
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 import createDidRustExample from  '!!raw-loader!../../../examples/account/create_did.rs';
 
-If you want to benefit from Self-Sovereign Identity, you need to create a [Decentralized Identity](../concepts/decentralized_identifiers/overview). This identity consists of many parts that have different functions. This page will cover the basics about identity creation and publishing to the Tangle.
+If you want to benefit from Self-Sovereign Identity, you need to create a [Decentralized Identity](../concepts/decentralized_identifiers/overview.md). This identity consists of many parts that have different functions. This page will cover the basics about identity creation and publishing to the Tangle.
 
 ## Identity Generation Process
 
@@ -21,7 +21,7 @@ The generation of an identity starts with a randomly generated [asymmetric key p
 
 ## Using the Account Module
 
-The following example uses the high-level account module of the IOTA Identity framework to create an identity. You should use the account module for most of your use cases, but a lower-level API is also available should you need more flexibility at the cost of more complexity. For more information on APIs please visit the [Rust API Reference](../libraries/rust/getting_started#api-reference) or the [WASM API Reference](../libraries/wasm/api_reference).
+The following example uses the high-level account module of the IOTA Identity framework to create an identity. You should use the account module for most of your use cases, but a lower-level API is also available should you need more flexibility at the cost of more complexity. For more information on APIs please visit the [Rust API Reference](../libraries/rust/getting_started.md#api-reference) or the [WASM API Reference](../libraries/wasm/api_reference.md).
 
 :::tip Using Replit
 
@@ -36,7 +36,7 @@ Select your programming language of choice and press the green play button to ex
     rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/support/v0.6/examples/account/create_did.rs"
 />
 
-The first step in this example is the creation of an account. The account is a stateful object that manages one or more identities. The account provides an interface to execute high-level operations on identities, such as [creating](../concepts/decentralized_identifiers/create) and [updating](../concepts/decentralized_identifiers/update)) them.
+The first step in this example is the creation of an account. The account is a stateful object that manages one or more identities. The account provides an interface to execute high-level operations on identities, such as [creating](../concepts/decentralized_identifiers/create.mdx) and [updating](../concepts/decentralized_identifiers/update.mdx)) them.
 
 Next, the identity is created and published to the IOTA Tangle. This operation will:
 

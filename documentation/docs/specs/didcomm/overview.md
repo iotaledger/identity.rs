@@ -46,7 +46,7 @@ The specification defines several [DIDComm protocols](https://identity.foundatio
 | [Issuance](./protocols/issuance.md) | 0.1 | Allows the exchange of a verifiable credential between an issuer and a holder. | 
 | [Signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. |
 | [Revocation](./protocols/revocation.md) | 0.1 | Allows to request revocation of an issued credential, either by the holder or a trusted-party. |
-| [Revocation Options](./protocols/revocation-options.md) | 0.1 | Allows discovery of available [`RevocationInfo`](./protocols/revocation#RevocationInfo) types for use with the [revocation](./protocols/revocation) protocol. |
+| [Revocation Options](./protocols/revocation-options.md) | 0.1 | Allows discovery of available [`RevocationInfo`](./protocols/revocation.md#RevocationInfo) types for use with the [revocation](./protocols/revocation.md) protocol. |
 | [Post](./protocols/post.md) | 0.1 | Allows the sending of a single message with arbitrary data. |
 | [Termination](./protocols/termination.md) | 0.1 | Indicates the graceful termination of a connection. |
 

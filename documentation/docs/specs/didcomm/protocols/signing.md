@@ -37,7 +37,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 <div style={{textAlign: 'center'}}>
 
-<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+<sub>For guidance on diagrams see the <a href="../../overview#diagrams">corresponding section in the overview</a>.</sub>
 
 </div>
 

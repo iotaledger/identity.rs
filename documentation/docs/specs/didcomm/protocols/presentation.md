@@ -37,7 +37,7 @@ Allows presentation of one or more [verifiable credentials](https://www.w3.org/T
 
 <div style={{textAlign: 'center'}}>
 
-<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+<sub>For guidance on diagrams see the <a href="../../overview#diagrams">corresponding section in the overview</a>.</sub>
 
 </div>
 
@@ -361,4 +361,4 @@ This section is non-normative.
 [VP]: https://www.w3.org/TR/vc-data-model/#presentations-0
 [SAE]: https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption
 [SDM]: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
-[CredentialType2021]: ../resources/credential-info#credentialtype2021
+[CredentialType2021]: ../resources/credential-info.md#credentialtype2021
