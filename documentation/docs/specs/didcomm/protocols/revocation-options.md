@@ -30,7 +30,7 @@ Allows discovery of available [`RevocationInfo`](./revocation.md#RevocationInfo)
 
 <div style={{textAlign: 'center'}}>
 
-<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+<sub>For guidance on diagrams see the <a href="../../overview#diagrams">corresponding section in the overview</a>.</sub>
 
 </div>
 
@@ -90,7 +90,7 @@ Response including all available [RevocationInfo](./revocation.md#RevocationInfo
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.md).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |

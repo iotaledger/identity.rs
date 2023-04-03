@@ -74,7 +74,7 @@ The diagrams in this specification follow the [BPMN 2.0](https://www.omg.org/spe
 
 ## Changelog
 
-See [CHANGELOG](./CHANGELOG).
+See [CHANGELOG](./CHANGELOG.md).
 
 ## Future Work
 
