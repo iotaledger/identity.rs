@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.2](https://github.com/iotaledger/identity.rs/tree/v0.6.2) (2023-03-08)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.1...v0.6.2)
+
+### Patch
+
+- Pin `form_urlencoded` [\#1138](https://github.com/iotaledger/identity.rs/pull/1138)
+
 ## [v0.6.1](https://github.com/iotaledger/identity.rs/tree/v0.6.1) (2022-06-30)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.0...v0.6.1)

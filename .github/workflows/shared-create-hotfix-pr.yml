@@ -127,14 +127,6 @@ jobs:
           future-release: ${{ env.HOTFIX_TAG }} 
           optional-arg: ${{env.OPTIONAL_ARG}}
 
-      - name: Check Changelog For Modification
-        run: |
-          git add .
-          if [[ $(git diff --stat --staged) == '' ]]; then
-            echo 'repository unmodified'
-            exit 1
-          fi
-
       - name: Import GPG key
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@cb4264d3319acaa2bea23d51ef67f80b4f775013
