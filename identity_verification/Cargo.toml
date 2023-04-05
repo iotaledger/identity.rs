@@ -18,6 +18,8 @@ thiserror.workspace = true
 
 [features]
 diff = ["identity_core/diff", "identity_did/diff", "identity_jose/diff"]
+# Enables jws verification based on the EdDSA algorithm.
+eddsa = ["identity_jose/eddsa"]
 
 [dev-dependencies]
 serde_json.workspace = true

@@ -30,6 +30,7 @@ pub mod jose;
 pub mod resolver;
 pub mod revocation;
 pub mod storage;
+pub mod verification;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

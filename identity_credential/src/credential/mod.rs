@@ -11,6 +11,7 @@ mod domain_linkage_configuration;
 mod domain_linkage_credential_builder;
 mod evidence;
 mod issuer;
+mod jwt_serialization;
 mod linked_domain_service;
 mod policy;
 mod refresh;
@@ -34,3 +35,5 @@ pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
+
+pub(crate) use self::jwt_serialization::*;

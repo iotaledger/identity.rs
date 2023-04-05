@@ -7,6 +7,10 @@ use core::fmt::Formatter;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jws::Decoder;
+use identity_verification::jose::jws::JwsSignatureVerifier;
+use identity_verification::jose::jws::Token;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -31,6 +35,7 @@ use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
 use crate::verifiable::DocumentSigner;
+use crate::verifiable::JwsVerificationOptions;
 use crate::verifiable::VerifierOptions;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
@@ -452,24 +457,64 @@ impl CoreDocument {
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method(&mut self, did: &DIDUrl) -> Option<VerificationMethod> {
-    for method_ref in [
-      self.data.authentication.remove(did),
-      self.data.assertion_method.remove(did),
-      self.data.key_agreement.remove(did),
-      self.data.capability_delegation.remove(did),
-      self.data.capability_invocation.remove(did),
+    self.remove_method_get_scope(did).map(|(method, _scope)| method)
+  }
+
+  /// Removes and returns the [`VerificationMethod`] from the document. The [`MethodScope`] under which the method was
+  /// found is appended to the second position of the returned tuple.
+  ///
+  /// # Note
+  ///
+  /// All _references to the method_ found in the document will be removed.
+  /// This includes cases where the reference is to a method contained in another DID document.
+  pub fn remove_method_get_scope(&mut self, did: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+    for (method_ref, scope) in [
+      self.data.authentication.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::Authentication),
+        )
+      }),
+      self.data.assertion_method.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod),
+        )
+      }),
+      self.data.key_agreement.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement),
+        )
+      }),
+      self.data.capability_delegation.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation),
+        )
+      }),
+      self.data.capability_invocation.remove(did).map(|method_ref| {
+        (
+          method_ref,
+          MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation),
+        )
+      }),
     ]
     .into_iter()
     .flatten()
     {
-      if let MethodRef::Embed(embedded_method) = method_ref {
+      if let (MethodRef::Embed(embedded_method), scope) = (method_ref, scope) {
         // embedded methods cannot be referenced, or be in the set of general purpose verification methods hence the
         // search is complete
-        return Some(embedded_method);
+        return Some((embedded_method, scope));
       }
     }
 
-    self.data.verification_method.remove(did)
+    self
+      .data
+      .verification_method
+      .remove(did)
+      .map(|method| (method, MethodScope::VerificationMethod))
   }
 
   /// Adds a new [`Service`] to the document.
@@ -989,6 +1034,56 @@ impl TryMethod for CoreDocument {
 impl Display for CoreDocument {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
+  }
+}
+
+// =============================================================================
+// JWS verification
+// =============================================================================
+impl CoreDocument {
+  /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
+  /// [`JwsSignatureVerifier`].
+  ///
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  //
+  // NOTE: This is tested in `identity_storage` and `identity_credential`.
+  // TODO: Consider including some unit tests for this method in this crate.
+  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+    &self,
+    jws: &'jws str,
+    detached_payload: Option<&'jws [u8]>,
+    signature_verifier: &T,
+    options: &JwsVerificationOptions,
+  ) -> Result<Token<'jws>> {
+    let nonce = options.nonce.as_deref();
+    let validation_item = Decoder::new_with_crits(options.crits.as_deref().unwrap_or_default())
+      .decode_compact_serialization(jws.as_bytes(), detached_payload)
+      .map_err(Error::JwsVerificationError)?;
+
+    // Validate the nonce
+    if validation_item.nonce() != nonce {
+      return Err(Error::JwsVerificationError(
+        identity_verification::jose::error::Error::InvalidParam("invalid nonce value"),
+      ));
+    }
+
+    let kid = validation_item.kid().ok_or(Error::JwsVerificationError(
+      identity_verification::jose::error::Error::InvalidParam("missing kid value"),
+    ))?;
+
+    let public_key: &Jwk = self
+      .resolve_method(kid, options.method_scope)
+      .ok_or(Error::MethodNotFound)?
+      .data()
+      .try_public_key_jwk()
+      .map_err(Error::InvalidKeyData)?;
+
+    validation_item
+      .verify(signature_verifier, public_key)
+      .map_err(Error::JwsVerificationError)
   }
 }
 

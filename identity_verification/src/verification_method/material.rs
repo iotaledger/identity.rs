@@ -1,10 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::jose::jwk::Jwk;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use identity_core::utils::BaseEncoding;
-use identity_jose::jwk::Jwk;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -53,6 +53,20 @@ impl MethodData {
       }
       Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
     }
+  }
+
+  /// Returns the wrapped `Jwk` if the format is [`MethodData::PublicKeyJwk`].
+  pub fn public_key_jwk(&self) -> Option<&Jwk> {
+    if let Self::PublicKeyJwk(ref jwk) = self {
+      Some(jwk)
+    } else {
+      None
+    }
+  }
+
+  /// Fallible version of [`Self::public_key_jwk`](Self::public_key_jwk()).
+  pub fn try_public_key_jwk(&self) -> Result<&Jwk> {
+    self.public_key_jwk().ok_or(Error::NotPublicKeyJwk)
   }
 }
 

@@ -10,12 +10,12 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   /// Caused by errors from the [identity_core] crate.
-  #[error("{0}")]
+  #[error("unspecified failure")]
   CoreError(#[from] ::identity_core::Error),
-  #[error("{0}")]
+  #[error("unspecified failure")]
   InvalidDID(#[from] identity_did::Error),
 
-  #[error("Verification Method Not Found")]
+  #[error("verification method not found")]
   MethodNotFound,
 
   /// Caused by invalid or missing properties when constructing a [`CoreDocument`](crate::document::CoreDocument).
@@ -46,9 +46,9 @@ pub enum Error {
   #[error("unable to insert service: the id is already in use")]
   InvalidServiceInsertion,
 
-  #[error("Unknown Method Scope")]
+  #[error("unknown method scope")]
   UnknownMethodScope,
-  #[error("Unknown Method Type")]
+  #[error("unknown method type")]
   UnknownMethodType,
 
   #[error("invalid key data")]
@@ -63,4 +63,6 @@ pub enum Error {
   BitmapDecodingError(#[source] std::io::Error),
   #[error("revocation bitmap could not be serialized or compressed")]
   BitmapEncodingError(#[source] std::io::Error),
+  #[error("jws verification failed")]
+  JwsVerificationError(#[source] identity_verification::jose::error::Error),
 }

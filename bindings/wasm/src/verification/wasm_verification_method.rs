@@ -1,12 +1,12 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::WasmMethodData;
+use super::WasmMethodType;
 use crate::common::MapStringAny;
 use crate::crypto::WasmKeyType;
-use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmCoreDID;
-use crate::did::WasmMethodData;
-use crate::did::WasmMethodType;
+use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::crypto::PublicKey;
@@ -14,7 +14,7 @@ use identity_iota::did::CoreDID;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
 
-use super::wasm_core_did::IToCoreDID;
+use crate::did::IToCoreDID;
 use crate::jose::WasmJwk;
 
 /// A DID Document Verification Method.
@@ -49,7 +49,7 @@ impl WasmVerificationMethod {
   /// - It is recommended that `Jwk` kid values are set to the public key fingerprint. See `Jwk::thumbprint_b64`.
   #[wasm_bindgen(js_name = newFromJwk)]
   pub fn new_from_jwk(did: &IToCoreDID, key: &WasmJwk, fragment: Option<String>) -> Result<WasmVerificationMethod> {
-    VerificationMethod::new_from_jwk(&CoreDID::from(did), key.0.clone(), fragment.as_deref())
+    VerificationMethod::new_from_jwk(CoreDID::from(did), key.0.clone(), fragment.as_deref())
       .map(Self)
       .wasm_result()
   }

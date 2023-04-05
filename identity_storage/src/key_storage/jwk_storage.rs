@@ -7,8 +7,8 @@ pub use crate::key_storage::KeyStorageErrorKind;
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyType;
 use async_trait::async_trait;
-use identity_jose::jwk::Jwk;
-use identity_jose::jws::JwsAlgorithm;
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jws::JwsAlgorithm;
 
 use super::key_gen::JwkGenOutput;
 
@@ -41,11 +41,14 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// All private key components of the `jwk` must be set.
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId>;
 
-  /// Sign the provided `data` using the private key identified by `key_id` with the specified `algorithm`.
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>>;
-
-  /// Returns the public key identified by `key_id` as a JSON Web Key.
-  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk>;
+  /// Sign the provided `data` using the private key identified by `key_id` according to the requirements of
+  /// the corresponding `public_key` (see [`Jwk::alg`](Jwk::alg()) etc.).
+  ///
+  /// # Note
+  /// High level methods from this library calling this method are designed to always pass a `public_key` that
+  /// corresponds to `key_id` and additional checks for this in the `sign` implementation are normally not required.
+  /// This is however based on the expectation that the key material associated with a given [`KeyId`] is immutable.  
+  async fn sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>>;
 
   /// Deletes the key identified by `key_id`.
   ///

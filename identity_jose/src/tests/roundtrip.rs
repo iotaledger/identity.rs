@@ -8,18 +8,17 @@ use crypto::signatures::ed25519::SecretKey;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkType;
+use crate::jws::CompactJwsEncoder;
 use crate::jws::Decoder;
-use crate::jws::Encoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSignatureVerifierFn;
-use crate::jws::Recipient;
 use crate::jws::VerificationInput;
 use crate::jwt::JwtClaims;
 use crate::tests::ed25519;
 
-#[tokio::test]
-async fn test_encoder_decoder_roundtrip() {
+#[test]
+fn test_encoder_decoder_roundtrip() {
   let secret_key = SecretKey::generate().unwrap();
   let public_key = secret_key.public_key();
 
@@ -38,10 +37,13 @@ async fn test_encoder_decoder_roundtrip() {
   );
   claims.set_custom(serde_json::json!({"num": 42u64}));
 
-  let encoder: Encoder = Encoder::new().recipient(Recipient::new().protected(&header));
   let claims_bytes: Vec<u8> = serde_json::to_vec(&claims).unwrap();
 
-  let token: String = ed25519::encode(&encoder, &claims_bytes, secret_key).await;
+  let encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new(&claims_bytes, &header).unwrap();
+  let signing_input: &[u8] = encoder.signing_input();
+  let signature = secret_key.sign(signing_input).to_bytes();
+  let jws = encoder.into_jws(&signature);
+  //let token: String = ed25519::encode(&encoder, &claims_bytes, secret_key).await;
 
   let verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
     if input.alg != JwsAlgorithm::EdDSA {
@@ -61,7 +63,7 @@ async fn test_encoder_decoder_roundtrip() {
     .unwrap();
 
   let token = decoder
-    .decode_compact_serialization(token.as_bytes(), None)
+    .decode_compact_serialization(jws.as_bytes(), None)
     .and_then(|decoded| decoded.verify(&verifier, &public_key_jwk))
     .unwrap();
 

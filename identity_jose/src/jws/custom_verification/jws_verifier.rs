@@ -7,16 +7,16 @@ use crate::jws::JwsAlgorithm;
 #[cfg(any(feature = "eddsa", doc))]
 pub use eddsa_verifier::*;
 /// Input a [`JwsSignatureVerifier`] verifies.
-pub struct VerificationInput<'a> {
+pub struct VerificationInput {
   /// The `alg` parsed from the protected header.
   pub alg: JwsAlgorithm,
   /// The signing input.
   ///
   /// See [RFC 7515: section 5.2 part 8.](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) and
   /// [RFC 7797 section 3](https://www.rfc-editor.org/rfc/rfc7797#section-3).
-  pub signing_input: &'a [u8],
+  pub signing_input: Box<[u8]>,
   /// The decoded signature to validate the `signing_input` against in the manner defined by the `alg` field.
-  pub decoded_signature: &'a [u8],
+  pub decoded_signature: Box<[u8]>,
 }
 
 /// Trait for cryptographically verifying a JWS signature.
@@ -28,7 +28,7 @@ pub struct VerificationInput<'a> {
 /// [`JwsValidationItem::verify`](crate::jws::JwsValidationItem::verify)
 ///
 /// ## Implementation
-/// Implementors are expected to provide a procedure for step 8 of [RFC 7515 section 5.2](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) for
+/// Implementers are expected to provide a procedure for step 8 of [RFC 7515 section 5.2](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) for
 /// the JWS signature algorithms they want to support.
 ///
 /// Custom implementations can be constructed inline by converting a suitable closure into a [`JwsSignatureVerifierFn`]
@@ -45,7 +45,7 @@ pub trait JwsSignatureVerifier {
   /// Implementors may decide to error with
   /// [`SignatureVerificationErrorKind::UnsupportedAlg`](crate::jws::SignatureVerificationErrorKind::UnsupportedAlg) if
   /// they are not interested in supporting a given algorithm.
-  fn verify(&self, input: VerificationInput<'_>, public_key: &Jwk) -> Result<(), SignatureVerificationError>;
+  fn verify(&self, input: VerificationInput, public_key: &Jwk) -> Result<(), SignatureVerificationError>;
 }
 
 // =================================================================================================================
@@ -58,7 +58,7 @@ pub trait JwsSignatureVerifier {
 pub struct JwsSignatureVerifierFn<F>(F);
 impl<F> From<F> for JwsSignatureVerifierFn<F>
 where
-  for<'a> F: Fn(VerificationInput<'a>, &Jwk) -> Result<(), SignatureVerificationError>,
+  F: Fn(VerificationInput, &Jwk) -> Result<(), SignatureVerificationError>,
 {
   fn from(value: F) -> Self {
     Self(value)
@@ -67,15 +67,17 @@ where
 
 impl<F> JwsSignatureVerifier for JwsSignatureVerifierFn<F>
 where
-  for<'a> F: Fn(VerificationInput<'a>, &Jwk) -> Result<(), SignatureVerificationError>,
+  F: Fn(VerificationInput, &Jwk) -> Result<(), SignatureVerificationError>,
 {
-  fn verify(&self, input: VerificationInput<'_>, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
+  fn verify(&self, input: VerificationInput, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
     self.0(input, public_key)
   }
 }
 
 #[cfg(any(feature = "eddsa", doc))]
 mod eddsa_verifier {
+  use std::ops::Deref;
+
   use super::*;
   use crate::jwk::EdCurve;
   use crate::jwk::JwkParamsOkp;
@@ -101,7 +103,7 @@ mod eddsa_verifier {
     /// # Warning
     /// This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
     /// prior to calling the function.
-    pub fn verify_eddsa(input: VerificationInput<'_>, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
+    pub fn verify_eddsa(input: VerificationInput, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
       // Obtain an Ed25519 public key
 
       let params: &JwkParamsOkp = public_key
@@ -118,18 +120,28 @@ mod eddsa_verifier {
       }
 
       let pk: [u8; crypto::signatures::ed25519::PUBLIC_KEY_LENGTH] = crate::jwu::decode_b64(params.x.as_str())
-        .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)
-        .and_then(|value| TryInto::try_into(value).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure))?;
+        .map_err(|_| {
+          SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
+            .with_custom_message("could not decode x parameter from jwk")
+        })
+        .and_then(|value| {
+          TryInto::try_into(value).map_err(|_| {
+            SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
+              .with_custom_message("invalid public key length")
+          })
+        })?;
 
-      let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk)
-        .map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
+      let public_key_ed25519 = crypto::signatures::ed25519::PublicKey::try_from(pk).map_err(|err| {
+        SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure).with_source(err)
+      })?;
 
-      let signature_arr = <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.decoded_signature)
-        .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
+      let signature_arr =
+        <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.decoded_signature.deref())
+          .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
 
       let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
 
-      if crypto::signatures::ed25519::PublicKey::verify(&public_key_ed25519, &signature, input.signing_input) {
+      if crypto::signatures::ed25519::PublicKey::verify(&public_key_ed25519, &signature, &input.signing_input) {
         Ok(())
       } else {
         Err(SignatureVerificationErrorKind::InvalidSignature.into())
@@ -151,7 +163,7 @@ mod eddsa_verifier {
     /// `crv = Ed25519`, but the implementation may also support `crv = Ed448` in the future.
     fn verify(
       &self,
-      input: VerificationInput<'_>,
+      input: VerificationInput,
       public_key: &Jwk,
     ) -> std::result::Result<(), SignatureVerificationError> {
       match input.alg {

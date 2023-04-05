@@ -13,30 +13,30 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 #[non_exhaustive]
 pub enum Error {
   /// Caused when a cryptographic operation fails.
-  #[error("Crypto Error: {0}")]
-  Crypto(crypto::Error),
+  #[error("crypto error")]
+  Crypto(#[source] crypto::Error),
   /// Caused by a failure to encode Rust types as JSON.
-  #[error("Failed to encode JSON: {0}")]
-  EncodeJSON(serde_json::Error),
+  #[error("failed to encode JSON")]
+  EncodeJSON(#[source] serde_json::Error),
   /// Caused by a failure to decode Rust types from JSON.
-  #[error("Failed to decode JSON: {0}")]
-  DecodeJSON(serde_json::Error),
+  #[error("failed to decode JSON")]
+  DecodeJSON(#[source] serde_json::Error),
   /// Caused by a failure to decode base-encoded data.
   #[error("Failed to decode {0:?} data")]
   DecodeBase(Base, #[source] multibase::Error),
   /// Caused by a failure to decode multibase-encoded data.
-  #[error("Failed to decode multibase data: {0}")]
+  #[error("failed to decode multibase data")]
   DecodeMultibase(#[from] multibase::Error),
   #[cfg(feature = "diff")]
   /// Caused by attempting to perform an invalid `Diff` operation.
   #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-  #[error("Invalid Document Diff: {0}")]
+  #[error("invalid document diff")]
   InvalidDiff(#[from] identity_diff::Error),
   /// Caused by attempting to parse an invalid `Url`.
-  #[error("Invalid Url: {0}")]
+  #[error("invalid url")]
   InvalidUrl(#[from] url::ParseError),
   /// Caused by attempting to parse an invalid `Timestamp`.
-  #[error("Invalid Timestamp: {0}")]
+  #[error("invalid timestamp")]
   InvalidTimestamp(#[from] time::error::Error),
   /// Caused by attempting to create an empty `OneOrSet` instance or remove all its elements.
   #[error("OneOrSet cannot be empty")]
@@ -45,22 +45,22 @@ pub enum Error {
   #[error("duplicate key in OrderedSet")]
   OrderedSetDuplicate,
   /// Caused by attempting to parse an invalid `ProofPurpose`.
-  #[error("Invalid ProofPurpose")]
+  #[error("invalid ProofPurpose")]
   InvalidProofPurpose,
   /// Raised by a validation attempt against an invalid DID proof.
-  #[error("Invalid Proof Value: {0}")]
+  #[error("invalid proof value: {0}")]
   InvalidProofValue(&'static str),
   /// Caused by attempting to parse an invalid cryptographic key.
-  #[error("Invalid Key Format")]
+  #[error("invalid key format")]
   InvalidKeyFormat,
   /// Caused byt attempting to parse as invalid cryptographic key.
-  #[error("Invalid Key Length. Received {0}, Expected {1}")]
+  #[error("invalid key length. Received {0}, expected {1}")]
   InvalidKeyLength(usize, usize),
   /// Caused byt attempting to parse as invalid digital signature.
-  #[error("Invalid Signature Length. Received {0}, Expected {1}")]
+  #[error("invalid signature length. Received {0}, expected {1}")]
   InvalidSigLength(usize, usize),
   /// Caused by a failed attempt at retrieving a digital signature.
-  #[error("Signature Not Found")]
+  #[error("signature not found")]
   MissingSignature,
 }
 

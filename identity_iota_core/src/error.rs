@@ -19,7 +19,7 @@ pub enum Error {
   #[error("DID resolution failed")]
   DIDResolutionError(#[source] iota_client::error::Error),
   #[cfg(feature = "iota-client")]
-  #[error("{0}")]
+  #[error("unspecified failure")]
   BasicOutputBuildError(#[source] iota_client::block::Error),
   #[error("\"{0}\" is not a valid network name in the context of the `iota` did method")]
   InvalidNetworkName(String),
@@ -52,4 +52,6 @@ pub enum Error {
   JsError(String),
   #[error("could not sign the data")]
   SigningError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+  #[error("jws signature verification failed")]
+  JwsVerificationError(#[source] identity_document::Error),
 }

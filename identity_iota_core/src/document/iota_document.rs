@@ -7,6 +7,9 @@ use core::fmt::Display;
 #[cfg(feature = "client")]
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
+use identity_document::verifiable::JwsVerificationOptions;
+use identity_verification::jose::jws::JwsSignatureVerifier;
+use identity_verification::jose::jws::Token;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -233,9 +236,15 @@ impl IotaDocument {
   ///
   /// # Errors
   ///
-  /// Returns an error if the method does not exist.
+  /// Returns None if the method does not exist.
   pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
     self.core_document_mut().remove_method(did_url)
+  }
+
+  /// Similar to [`Self::remove_method`](Self::remove_method()), but appends the scope where the method was found
+  /// to the second position of the returned tuple.  
+  pub fn remove_method_get_scope(&mut self, did_url: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+    self.core_document_mut().remove_method_get_scope(did_url)
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -346,6 +355,27 @@ impl IotaDocument {
     X: Serialize + GetSignature + ?Sized,
   {
     self.document.verify_data(data, options)
+  }
+
+  /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
+  /// [`JwsSignatureVerifier`].
+  ///
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+    &self,
+    jws: &'jws str,
+    detached_payload: Option<&'jws [u8]>,
+    signature_verifier: &T,
+    options: &JwsVerificationOptions,
+  ) -> Result<Token<'jws>> {
+    // TODO: Consider flattening the error somewhat as it is not ideal to just forward the error from identity_document.
+    self
+      .core_document()
+      .verify_jws(jws, detached_payload, signature_verifier, options)
+      .map_err(Error::JwsVerificationError)
   }
 
   // ===========================================================================

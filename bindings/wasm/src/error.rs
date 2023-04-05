@@ -85,7 +85,7 @@ macro_rules! impl_wasm_error_from {
   $(impl From<$t> for WasmError<'_> {
     fn from(error: $t) -> Self {
       Self {
-        message: Cow::Owned(error.to_string()),
+        message: Cow::Owned(ErrorMessage(&error).to_string()),
         name: Cow::Borrowed(error.into()),
       }
     }
@@ -100,6 +100,7 @@ impl_wasm_error_from!(
   identity_iota::document::Error,
   identity_iota::iota::Error,
   identity_iota::credential::ValidationError,
+  identity_iota::credential::vc_jwt_validation::ValidationError,
   identity_iota::credential::RevocationError,
   identity_iota::verification::Error,
   identity_iota::credential::DomainLinkageValidationError
@@ -143,7 +144,7 @@ fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) 
 
 struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
-impl<'a> Display for ErrorMessage<'a, resolver::Error> {
+impl<'a, E: std::error::Error> Display for ErrorMessage<'a, E> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     error_chain_fmt(self.0, f)
   }
@@ -180,7 +181,7 @@ impl From<identity_iota::credential::CompoundCredentialValidationError> for Wasm
   fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundCredentialValidationError"),
-      message: Cow::Owned(error.to_string()),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
@@ -189,7 +190,7 @@ impl From<identity_iota::credential::CompoundPresentationValidationError> for Wa
   fn from(error: identity_iota::credential::CompoundPresentationValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundPresentationValidationError"),
-      message: Cow::Owned(error.to_string()),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
@@ -198,7 +199,7 @@ impl From<identity_iota::core::SingleStructError<KeyStorageErrorKind>> for WasmE
   fn from(error: identity_iota::core::SingleStructError<KeyStorageErrorKind>) -> Self {
     Self {
       name: Cow::Borrowed("KeyStorageError"),
-      message: Cow::Owned(format!("{}", error)),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
@@ -207,7 +208,53 @@ impl From<identity_iota::core::SingleStructError<KeyIdStorageErrorKind>> for Was
   fn from(error: identity_iota::core::SingleStructError<KeyIdStorageErrorKind>) -> Self {
     Self {
       name: Cow::Borrowed("KeyIdStorageError"),
-      message: Cow::Owned(format!("{}", error)),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::storage::key_id_storage::MethodDigestConstructionError> for WasmError<'_> {
+  fn from(error: identity_iota::storage::key_id_storage::MethodDigestConstructionError) -> Self {
+    Self {
+      name: Cow::Borrowed("MethodDigestConstructionError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::storage::storage::JwkStorageDocumentError> for WasmError<'_> {
+  fn from(error: identity_iota::storage::storage::JwkStorageDocumentError) -> Self {
+    Self {
+      name: Cow::Borrowed("JwkStorageDocumentExtensionError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::verification::jws::SignatureVerificationError> for WasmError<'_> {
+  fn from(error: identity_iota::verification::jws::SignatureVerificationError) -> Self {
+    Self {
+      name: Cow::Borrowed("SignatureVerificationError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::verification::jose::error::Error> for WasmError<'_> {
+  fn from(error: identity_iota::verification::jose::error::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("JoseError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+// TODO: This should replace the old `CompoundCredentialValidationError`, or the previous error should be updated.
+impl From<identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError> for WasmError<'_> {
+  fn from(error: identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError) -> Self {
+    Self {
+      name: Cow::Borrowed("CompoundCredentialValidationError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
@@ -231,16 +278,7 @@ impl JsValueResult {
 
   // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
   pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
-    self.0.map_err(|js_value| {
-      let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
-        Ok(js_err) => ToString::to_string(&js_err.to_string()),
-        Err(js_val) => {
-          // Fall back to debug formatting if this is not a proper JS Error instance.
-          format!("{js_val:?}")
-        }
-      };
-      error_string
-    })
+    stringify_js_error(self.0)
   }
 
   /// Consumes the struct and returns a Result<_, identity_iota::iota::Error>, leaving an `Ok` value untouched.
@@ -249,6 +287,19 @@ impl JsValueResult {
   }
 }
 
+/// Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
+pub(crate) fn stringify_js_error<T>(result: Result<T>) -> StdResult<T, String> {
+  result.map_err(|js_value| {
+    let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
+      Ok(js_err) => ToString::to_string(&js_err.to_string()),
+      Err(js_val) => {
+        // Fall back to debug formatting if this is not a proper JS Error instance.
+        format!("{js_val:?}")
+      }
+    };
+    error_string
+  })
+}
 impl From<Result<JsValue>> for JsValueResult {
   fn from(result: Result<JsValue>) -> Self {
     JsValueResult(result)

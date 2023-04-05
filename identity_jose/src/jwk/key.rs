@@ -458,12 +458,7 @@ impl Jwk {
 
   /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
   pub fn is_public(&self) -> bool {
-    match self.params() {
-      JwkParams::Ec(params) => params.is_public(),
-      JwkParams::Rsa(params) => params.is_public(),
-      JwkParams::Oct(_) => true,
-      JwkParams::Okp(params) => params.is_public(),
-    }
+    self.params.is_public()
   }
 
   /// Returns `true` if _all_ private key components of the key are set, `false` otherwise.
@@ -477,8 +472,9 @@ impl Jwk {
   }
 
   /// Returns a clone of the Jwk with _all_ private key components unset.
-  pub fn to_public(&self) -> Jwk {
-    let mut public: Jwk = Jwk::from_params(self.params().to_public());
+  /// The `None` variant is returned when `kty = oct` as this key type is not considered public by this library.
+  pub fn to_public(&self) -> Option<Jwk> {
+    let mut public: Jwk = Jwk::from_params(self.params().to_public()?);
 
     if let Some(value) = self.use_() {
       public.set_use(value);
@@ -496,7 +492,7 @@ impl Jwk {
       public.set_kid(value);
     }
 
-    public
+    Some(public)
   }
 }
 

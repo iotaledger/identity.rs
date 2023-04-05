@@ -4,43 +4,63 @@
 use std::rc::Rc;
 
 use super::WasmCoreDID;
+use super::WasmJwsVerificationOptions;
 use crate::common::ArrayCoreMethodRef;
 use crate::common::ArrayService;
 use crate::common::ArrayString;
 use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
+use crate::common::PromiseOptionString;
+use crate::common::PromiseString;
+use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
+use crate::credential::WasmCredential;
 use crate::crypto::WasmProofOptions;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
-use crate::did::wasm_verification_method::WasmVerificationMethod;
-use crate::did::RefMethodScope;
-use crate::did::WasmMethodRelationship;
-use crate::did::WasmMethodScope;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::jose::WasmJwsAlgorithm;
+use crate::jose::WasmToken;
+use crate::storage::WasmJwsSignatureOptions;
+use crate::storage::WasmStorage;
+use crate::storage::WasmStorageInner;
+use crate::verification::IJwsSignatureVerifier;
+use crate::verification::RefMethodScope;
+use crate::verification::WasmJwsSignatureVerifier;
+use crate::verification::WasmMethodRelationship;
+use crate::verification::WasmMethodScope;
+use crate::verification::WasmVerificationMethod;
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OneOrSet;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Url;
+use identity_iota::credential::Credential;
 use identity_iota::credential::RevocationDocumentExt;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::CoreDID;
+use identity_iota::did::DIDUrl;
 use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
+use identity_iota::storage::key_storage::KeyType;
+use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwsSignatureOptions;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodRef;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
 
+use js_sys::Promise;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
 
 pub(crate) struct CoreDocumentLock(tokio::sync::RwLock<CoreDocument>);
 
@@ -59,6 +79,10 @@ impl CoreDocumentLock {
 
   pub(crate) async fn read(&self) -> tokio::sync::RwLockReadGuard<'_, CoreDocument> {
     self.0.read().await
+  }
+
+  pub(crate) async fn write(&self) -> tokio::sync::RwLockWriteGuard<'_, CoreDocument> {
+    self.0.write().await
   }
 }
 
@@ -452,6 +476,37 @@ impl WasmCoreDocument {
     Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
   }
 
+  /// Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
+  ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
+  /// verifying EdDSA signatures.
+  ///
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  #[wasm_bindgen(js_name = verifyJws)]
+  #[allow(non_snake_case)]
+  pub fn verify_jws(
+    &self,
+    jws: &str,
+    options: &WasmJwsVerificationOptions,
+    signatureVerifier: Option<IJwsSignatureVerifier>,
+    detachedPayload: Option<String>,
+  ) -> Result<WasmToken> {
+    let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
+    self
+      .0
+      .blocking_read()
+      .verify_jws(
+        jws,
+        detachedPayload.as_deref().map(|detached| detached.as_bytes()),
+        &jws_verifier,
+        &options.0,
+      )
+      .map(WasmToken::from)
+      .wasm_result()
+  }
+
   // ===========================================================================
   // Revocation
   // ===========================================================================
@@ -557,6 +612,120 @@ impl WasmCoreDocument {
       .into_serde()
       .map(|value| Self(Rc::new(CoreDocumentLock::new(value))))
       .wasm_result()
+  }
+
+  // ===========================================================================
+  // Storage
+  // ===========================================================================
+
+  /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
+  /// public key material into this document. The `kid` of the generated Jwk is returned if it is set.
+  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage` API.
+  #[wasm_bindgen(js_name = generateMethod)]
+  pub fn generate_method(
+    &self,
+    storage: &WasmStorage,
+    key_type: String,
+    alg: WasmJwsAlgorithm,
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseOptionString> {
+    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let scope: MethodScope = scope.0;
+    let promise: Promise = future_to_promise(async move {
+      let key_id: Option<String> = document_lock_clone
+        .write()
+        .await
+        .generate_method(&storage_clone, KeyType::from(key_type), alg, fragment.as_deref(), scope)
+        .await
+        .wasm_result()?;
+      Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Remove the method identified by the `fragment` from the document and delete the corresponding key material in
+  /// the `storage`.
+  #[wasm_bindgen(js_name = purgeMethod)]
+  pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let id: DIDUrl = id.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .write()
+        .await
+        .purge_method(&storage_clone, &id)
+        .await
+        .wasm_result()
+        .map(|_| JsValue::UNDEFINED)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+  /// material in the verification method identified by the given `fragment.
+  ///
+  /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+  // TODO: Should payload be of type `string`, or should we take Uint8Array to match Rust? I chose String here as they
+  // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
+  // as the payload type?
+  // TODO: Perhaps this should be called `signData` (and the old `signData` method would have to be updated or removed)?
+  #[wasm_bindgen(js_name = createJwt)]
+  pub fn create_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseString> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Produces a JWS where the payload is produced from the given `credential`
+  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  ///
+  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  // TODO: Perhaps this should be called `signCredential` (and the old `signCredential` method would have to be updated
+  // or removed)?
+  #[wasm_bindgen(js_name = createCredentialJwt)]
+  pub fn create_credential_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    credential: &WasmCredential,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseString> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let credential_clone: Credential = credential.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
+        .await
+        .wasm_result()
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
   }
 }
 

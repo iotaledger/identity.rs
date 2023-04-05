@@ -1,187 +1,250 @@
 const assert = require("assert");
-import { Base64, RandomHelper } from "@iota/util.js";
+import { RandomHelper } from "@iota/util.js";
 import {
+    CoreDocument,
+    Credential,
     Ed25519,
     EdCurve,
+    FailFast,
     IJwkParams,
+    IJwsSignatureVerifier,
+    IotaDocument,
     Jwk,
     JwkGenOutput,
     JwkOperation,
-    JwkStorage,
     JwkType,
     JwkUse,
     JwsAlgorithm,
-    KeyPair,
-    KeyType,
+    JwsSignatureOptions,
+    JwsVerificationOptions,
+    JwtCredentialValidationOptions,
+    JwtCredentialValidator,
+    MethodDigest,
+    MethodScope,
+    Storage,
+    VerificationMethod,
+    verifyEdDSA,
 } from "../node";
+import { JwkMemStore } from "./jwk_storage";
+import { createVerificationMethod, KeyIdMemStore } from "./key_id_storage";
 
-describe("#memstore", function() {
-    it("should work", async () => {
-        const testData = Uint8Array.from([0xff, 0xee, 0xdd, 0xcc]);
-        const memstore = new MemStore();
-
-        let genOutput = await memstore.generate(MemStore.ed25519KeyType(), JwsAlgorithm.EdDSA);
+describe("#JwkStorageDocument", function() {
+    it("storage getters should work", async () => {
+        const keystore = new JwkMemStore();
+        // Put some data in the keystore
+        let genOutput = await keystore.generate(JwkMemStore.ed25519KeyType(), JwsAlgorithm.EdDSA);
         const keyId = genOutput.keyId();
         const jwk = genOutput.jwk();
         assert.ok(genOutput.jwk());
         assert.ok(keyId);
 
-        const signature = await memstore.sign(keyId, testData);
-        assert.deepStrictEqual(signature.length, Ed25519.SIGNATURE_LENGTH());
+        const keyIdStore = new KeyIdMemStore();
+        // Put some data in the keyIdStore
+        let vm: VerificationMethod = createVerificationMethod();
+        let methodDigest: MethodDigest = new MethodDigest(vm);
+        keyIdStore.insertKeyId(methodDigest, keyId);
 
-        const publicJwk = await memstore.public(keyId);
-        assert.deepStrictEqual(publicJwk.toJSON(), jwk.toPublic().toJSON());
+        // Create new storage
+        const storage = new Storage(keystore, keyIdStore);
 
-        assert.ok(await memstore.exists(keyId));
-        assert.ok(!await memstore.exists("non-existent-key-id"));
+        // Check that we can retrieve the separate storages and their state is preserved
+        const retrievedKeyIdStore = storage.keyIdStorage();
+        assert.deepStrictEqual(retrievedKeyIdStore instanceof KeyIdMemStore, true);
 
-        assert.doesNotReject(async () => {
-            await memstore.delete(keyId);
+        const retrievedKeyId = await retrievedKeyIdStore.getKeyId(methodDigest);
+        assert.deepStrictEqual(keyId as string, retrievedKeyId);
+
+        const retrievedKeyStore = storage.keyStorage();
+        assert.deepStrictEqual(retrievedKeyStore instanceof JwkMemStore, true);
+        assert.deepStrictEqual(await retrievedKeyStore.exists(retrievedKeyId), true);
+    });
+
+    it("The JwkStorageDocument extension should work: CoreDocument", async () => {
+        const keystore = new JwkMemStore();
+        const keyIdStore = new KeyIdMemStore();
+        const storage = new Storage(keystore, keyIdStore);
+        const VALID_DID_EXAMPLE = "did:example:123";
+        const doc = new CoreDocument({
+            id: VALID_DID_EXAMPLE,
         });
-        assert.rejects(async () => {
-            await memstore.delete("non-existent-key-id");
-        });
+        const fragment = "#key-1";
+        await doc.generateMethod(
+            storage,
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+            fragment,
+            MethodScope.VerificationMethod(),
+        );
+        // Check that we can resolve the generated method.
+        let method = doc.resolveMethod(fragment);
+        assert.deepStrictEqual(method instanceof VerificationMethod, true);
 
-        const jwkParams: IJwkParams = {
-            kty: JwkType.Okp,
-            use: JwkUse.Signature,
-            alg: JwsAlgorithm.EdDSA,
-            key_ops: [JwkOperation.Sign, JwkOperation.Verify],
-            crv: EdCurve.Ed25519,
-            d: "nWGxne_9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A",
-            x: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+        // Check that signing works
+        let testString = "test";
+        const jws = await doc.createJwt(storage, fragment, testString, new JwsSignatureOptions());
+
+        // Verify the signature and obtain a decoded token.
+        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        assert.deepStrictEqual(testString, token.claims());
+
+        // Check that we can also verify it using a custom verifier
+        let customVerifier = new CustomVerifier();
+        const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
+        assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
+        // Check that customVerifer.verify was indeed called
+        assert.deepStrictEqual(customVerifier.verifications(), 1);
+
+        // Check that issuing a credential as a JWT works
+        const credentialFields = {
+            context: "https://www.w3.org/2018/credentials/examples/v1",
+            id: "https://example.edu/credentials/3732",
+            type: "UniversityDegreeCredential",
+            credentialSubject: {
+                id: "did:example:ebfeb1f712ebc6f1c276e12ec21",
+                degree: {
+                    type: "BachelorDegree",
+                    name: "Bachelor of Science and Arts",
+                },
+            },
+            issuer: doc.id(),
+            issuanceDate: "2010-01-01T00:00:00Z",
         };
 
-        const localJwk = new Jwk(jwkParams);
-        assert.ok(await memstore.insert(localJwk));
+        const credential = new Credential(credentialFields);
+        // Create the JWT
+        const credentialJwt = await doc.createCredentialJwt(storage, fragment, credential, new JwsSignatureOptions());
 
-        const pubLocalJwk = new Jwk({
-            ...jwkParams,
-            // Null out the private key component
-            d: undefined,
-        });
+        // Check that the credentialJwt can be decoded and verified
+        let credentialValidator = new JwtCredentialValidator();
+        const credentialRetrieved = credentialValidator.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.FirstError,
+        ).credential();
+        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
 
-        // INVALID: Inserting a JWK without the private key component should fail.
-        assert.rejects(async () => {
-            await memstore.insert(pubLocalJwk);
-        });
+        // Also check using our custom verifier
+        let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
+        const credentialRetrievedCustom = credentialValidatorCustom.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.AllErrors,
+        ).credential();
+        // Check that customVerifer.verify was indeed called
+        assert.deepStrictEqual(customVerifier.verifications(), 2);
+        assert.deepStrictEqual(credentialRetrievedCustom.toJSON(), credential.toJSON());
+
+        // Delete the method
+        const methodId = (method as VerificationMethod).id();
+        await doc.purgeMethod(storage, methodId);
+        // Check that the method can no longer be resolved.
+        assert.deepStrictEqual(doc.resolveMethod(fragment), undefined);
+        // The storage should now be empty
+        assert.deepStrictEqual((storage.keyIdStorage() as KeyIdMemStore).count(), 0);
+        assert.deepStrictEqual((storage.keyStorage() as JwkMemStore).count(), 0);
+    });
+
+    it("The JwkStorageDocument extension should work: IotaDocument", async () => {
+        const keystore = new JwkMemStore();
+        const keyIdStore = new KeyIdMemStore();
+        const storage = new Storage(keystore, keyIdStore);
+        const networkName = "smr";
+        const doc = new IotaDocument(networkName);
+        const fragment = "#key-1";
+        await doc.generateMethod(
+            storage,
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+            fragment,
+            MethodScope.VerificationMethod(),
+        );
+        // Check that we can resolve the generated method.
+        let method = doc.resolveMethod(fragment);
+        assert.deepStrictEqual(method instanceof VerificationMethod, true);
+
+        // Check that signing works.
+        let testString = "test";
+        const jws = await doc.createJwt(storage, fragment, testString, new JwsSignatureOptions());
+
+        // Verify the signature and obtain a decoded token.
+        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        assert.deepStrictEqual(testString, token.claims());
+
+        // Check that we can also verify it using a custom verifier
+        let customVerifier = new CustomVerifier();
+        const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
+        assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
+        assert.deepStrictEqual(customVerifier.verifications(), 1);
+
+        // Check that issuing a credential as a JWT works
+        const credentialFields = {
+            context: "https://www.w3.org/2018/credentials/examples/v1",
+            id: "https://example.edu/credentials/3732",
+            type: "UniversityDegreeCredential",
+            credentialSubject: {
+                id: "did:example:ebfeb1f712ebc6f1c276e12ec21",
+                degree: {
+                    type: "BachelorDegree",
+                    name: "Bachelor of Science and Arts",
+                },
+            },
+            issuer: doc.id(),
+            issuanceDate: "2010-01-01T00:00:00Z",
+        };
+
+        const credential = new Credential(credentialFields);
+        // Create the JWT
+        const credentialJwt = await doc.createCredentialJwt(storage, fragment, credential, new JwsSignatureOptions());
+
+        // Check that the credentialJwt can be decoded and verified
+        let credentialValidator = new JwtCredentialValidator();
+        const credentialRetrieved = credentialValidator.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.FirstError,
+        ).credential();
+        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+
+        // Also check using our custom verifier
+        let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
+        const credentialRetrievedCustom = credentialValidatorCustom.validate(
+            credentialJwt,
+            doc,
+            JwtCredentialValidationOptions.default(),
+            FailFast.AllErrors,
+        ).credential();
+        // Check that customVerifer.verify was indeed called
+        assert.deepStrictEqual(customVerifier.verifications(), 2);
+        assert.deepStrictEqual(credentialRetrievedCustom.toJSON(), credential.toJSON());
+
+        // Delete the method
+        const methodId = (method as VerificationMethod).id();
+        await doc.purgeMethod(storage, methodId);
+        // Check that the method can no longer be resolved.
+        assert.deepStrictEqual(doc.resolveMethod(fragment), undefined);
+        // The storage should now be empty
+        assert.deepStrictEqual((storage.keyIdStorage() as KeyIdMemStore).count(), 0);
+        assert.deepStrictEqual((storage.keyStorage() as JwkMemStore).count(), 0);
     });
 });
 
-export class MemStore implements JwkStorage {
-    /** The map from key identifiers to Jwks. */
-    private _keys: Map<string, Jwk>;
+class CustomVerifier implements IJwsSignatureVerifier {
+    private _verifications: number;
 
-    /** Creates a new, empty `MemStore` instance. */
     constructor() {
-        this._keys = new Map();
+        this._verifications = 0;
     }
 
-    public static ed25519KeyType(): string {
-        return "Ed25519";
+    public verifications(): number {
+        return this._verifications;
     }
 
-    public async generate(keyType: string, algorithm: JwsAlgorithm): Promise<JwkGenOutput> {
-        if (keyType !== MemStore.ed25519KeyType()) {
-            throw new Error(`unsupported key type ${keyType}`);
-        }
-
-        if (algorithm !== JwsAlgorithm.EdDSA) {
-            throw new Error(`unsupported algorithm`);
-        }
-
-        const keyId = randomKeyId();
-        const keyPair = new KeyPair(KeyType.Ed25519);
-
-        const jwk = encodeJwk(keyPair, algorithm);
-
-        this._keys.set(keyId, jwk);
-
-        return new JwkGenOutput(keyId, jwk);
+    public verify(alg: JwsAlgorithm, signingInput: Uint8Array, decodedSignature: Uint8Array, publicKey: Jwk): void {
+        verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
+        this._verifications += 1;
+        return;
     }
-
-    public async sign(keyId: string, data: Uint8Array): Promise<Uint8Array> {
-        const jwk = this._keys.get(keyId);
-
-        if (jwk) {
-            const keyPair = decodeJwk(jwk);
-            return Ed25519.sign(data, keyPair.private());
-        } else {
-            throw new Error(`key with id ${keyId} not found`);
-        }
-    }
-
-    public async insert(jwk: Jwk): Promise<string> {
-        const keyId = randomKeyId();
-
-        if (!jwk.isPrivate) {
-            throw new Error("expected a JWK with all private key components set");
-        }
-
-        if (!jwk.alg()) {
-            throw new Error("expected a Jwk with an `alg` parameter");
-        }
-
-        this._keys.set(keyId, jwk);
-
-        return keyId;
-    }
-
-    public async public(keyId: string): Promise<Jwk> {
-        const jwk = this._keys.get(keyId);
-
-        if (jwk) {
-            return jwk.toPublic();
-        } else {
-            throw new Error("key not found");
-        }
-    }
-
-    public async delete(keyId: string): Promise<void> {
-        this._keys.delete(keyId);
-    }
-
-    public async exists(keyId: string): Promise<boolean> {
-        return this._keys.has(keyId);
-    }
-}
-
-// Encodes a Ed25519 keypair into a Jwk.
-function encodeJwk(keyPair: KeyPair, alg: JwsAlgorithm): Jwk {
-    let x = Base64.encode(keyPair.public());
-    let d = Base64.encode(keyPair.private());
-
-    return new Jwk({
-        "kty": JwkType.Okp,
-        "crv": "Ed25519",
-        d,
-        x,
-        alg,
-    });
-}
-
-function decodeJwk(jwk: Jwk): KeyPair {
-    if (jwk.alg() !== JwsAlgorithm.EdDSA) {
-        throw new Error("unsupported `alg`");
-    }
-
-    const paramsOkp = jwk.paramsOkp();
-    if (paramsOkp) {
-        const d = paramsOkp.d;
-
-        if (d) {
-            const secret = Base64.decode(d);
-            const pub = Base64.decode(paramsOkp.x);
-            return KeyPair.fromKeys(KeyType.Ed25519, pub, secret);
-        } else {
-            throw new Error("missing private key component");
-        }
-    } else {
-        throw new Error("expected Okp params");
-    }
-}
-
-// Returns a random key id.
-function randomKeyId(): string {
-    return Base64.encode(RandomHelper.generate(32));
 }

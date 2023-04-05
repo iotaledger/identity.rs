@@ -71,7 +71,7 @@ impl DecodedHeaders {
 }
 
 /// A partially decoded JWS containing claims, and the decoded verification data
-/// for one of its signatures (headers, signing input and signature). This data
+/// for its corresponding signature (headers, signing input and signature). This data
 /// can be cryptographically verified using a [`JwsSignatureVerifier`]. See [`Self::verify`](Self::verify).
 pub struct JwsValidationItem<'a> {
   headers: DecodedHeaders,
@@ -83,6 +83,16 @@ impl<'a> JwsValidationItem<'a> {
   /// Returns the decoded protected header if it exists.
   pub fn protected_header(&self) -> Option<&JwsHeader> {
     self.headers.protected_header()
+  }
+
+  /// Returns the Nonce from the protected header if it is set.
+  pub fn nonce(&self) -> Option<&str> {
+    self.protected_header().and_then(|header| header.nonce())
+  }
+
+  /// Returns the kid from the protected header if it is set.
+  pub fn kid(&self) -> Option<&str> {
+    self.protected_header().and_then(|header| header.kid())
   }
 
   /// Returns the decoded unprotected header if it exists.
@@ -120,6 +130,10 @@ impl<'a> JwsValidationItem<'a> {
   /// Apart from the fallible call to [`JwsSignatureVerifier::verify`] this method can also error if there is no
   /// `alg` present in the protected header (in which case the verifier cannot be called) or if the given `public_key`
   /// has a different value present in its `alg` field.
+  ///
+  /// # Note
+  /// One may want to perform other validations before calling this method, such as for instance checking the nonce
+  /// (see [`Self::nonce`](Self::nonce())).
   pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<Token<'a>>
   where
     T: JwsSignatureVerifier,
@@ -141,14 +155,10 @@ impl<'a> JwsValidationItem<'a> {
     public_key.check_alg(alg.name())?;
 
     // Construct verification input
-    let input: VerificationInput = {
-      let signing_input = &signing_input;
-      let decoded_signature = &decoded_signature;
-      VerificationInput {
-        alg,
-        signing_input,
-        decoded_signature,
-      }
+    let input = VerificationInput {
+      alg,
+      signing_input,
+      decoded_signature,
     };
     // Call verifier
     verifier
@@ -194,21 +204,34 @@ struct Flatten<'a> {
 // =============================================================================
 
 /// The [`Decoder`] is responsible for decoding a JWS into one or more [`JwsValidationItems`](JwsValidationItem).
-#[derive(Default, Debug, Clone)]
-pub struct Decoder {
-  crits: Option<Vec<String>>,
+#[derive(Debug, Clone)]
+pub struct Decoder<'crits> {
+  crits: Option<Cow<'crits, [String]>>,
 }
 
-impl Decoder {
+impl Decoder<'static> {
   /// Constructs a new [`Decoder`].
-  pub fn new() -> Self {
-    Self::default()
+  pub fn new() -> Decoder<'static> {
+    Self { crits: None }
   }
 
   /// Append values to the list of permitted extension parameters.
-  pub fn critical(mut self, value: impl Into<String>) -> Self {
-    self.crits.get_or_insert_with(Vec::new).push(value.into());
+  pub fn critical(mut self, value: impl Into<String>) -> Decoder<'static> {
     self
+      .crits
+      .get_or_insert_with(Default::default)
+      .to_mut()
+      .push(value.into());
+    self
+  }
+}
+
+impl<'crits> Decoder<'crits> {
+  /// Replace the list of permitted extension parameters with the given `crits`.
+  pub fn new_with_crits(crits: &'crits [String]) -> Decoder<'crits> {
+    Decoder {
+      crits: Some(Cow::Borrowed(crits)),
+    }
   }
 
   /// Decode a JWS encoded with the [JWS compact serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
@@ -317,12 +340,12 @@ impl Decoder {
 
 /// An iterator over the [`JwsValidationItems`](JwsValidationItem) corresponding to the
 /// signatures in a JWS encoded with the general JWS JSON serialization format.  
-pub struct JwsValidationIter<'decoder, 'payload, 'signatures> {
-  decoder: &'decoder Decoder,
+pub struct JwsValidationIter<'decoder, 'crits, 'payload, 'signatures> {
+  decoder: &'decoder Decoder<'crits>,
   signatures: std::vec::IntoIter<JwsSignature<'signatures>>,
   payload: &'payload [u8],
 }
-impl<'decoder, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, 'payload, 'signatures> {
+impl<'decoder, 'crits, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, 'crits, 'payload, 'signatures> {
   type Item = Result<JwsValidationItem<'payload>>;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -333,7 +356,7 @@ impl<'decoder, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, '
   }
 }
 
-impl Decoder {
+impl<'crits> Decoder<'crits> {
   /// Decode a JWS encoded with the [general JWS JSON serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.1)
   ///
   ///  
@@ -344,7 +367,7 @@ impl Decoder {
     &'decoder self,
     jws_bytes: &'data [u8],
     detached_payload: Option<&'data [u8]>,
-  ) -> Result<JwsValidationIter<'decoder, 'data, 'data>> {
+  ) -> Result<JwsValidationIter<'decoder, 'crits, 'data, 'data>> {
     let data: General<'data> = serde_json::from_slice(jws_bytes).map_err(Error::InvalidJson)?;
 
     let payload = Self::expand_payload(detached_payload, data.payload)?;
@@ -355,6 +378,12 @@ impl Decoder {
       payload,
       signatures: signatures.into_iter(),
     })
+  }
+}
+
+impl Default for Decoder<'static> {
+  fn default() -> Self {
+    Self::new()
   }
 }
 
