@@ -51,6 +51,8 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   async fn sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>>;
 
   /// Deletes the key identified by `key_id`.
+  /// If the corresponding key does not exist in storage, a [`KeyStorageError`] with kind
+  /// [`KeyNotFound`](KeyStorageErrorKind::KeyNotFound) must be returned.
   ///
   /// # Warning
   ///
