@@ -10,6 +10,8 @@ mod key_type;
 #[cfg(feature = "memstore")]
 mod memstore;
 mod stronghold;
+#[cfg(test)]
+mod tests;
 
 pub use jwk_storage::*;
 pub use key_gen::*;
