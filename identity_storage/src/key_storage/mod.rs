@@ -9,6 +9,7 @@ mod key_storage_error;
 mod key_type;
 #[cfg(feature = "memstore")]
 mod memstore;
+#[cfg(feature = "stronghold")]
 mod stronghold;
 #[cfg(test)]
 mod tests;
@@ -20,4 +21,5 @@ pub use key_storage_error::*;
 pub use key_type::*;
 #[cfg(feature = "memstore")]
 pub use memstore::*;
+#[cfg(feature = "stronghold")]
 pub use stronghold::*;

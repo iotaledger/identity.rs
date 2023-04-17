@@ -28,6 +28,7 @@ impl StrongholdErrorKind {
     }
   }
 }
+
 impl AsRef<str> for StrongholdErrorKind {
   fn as_ref(&self) -> &str {
     self.as_str()

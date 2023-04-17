@@ -1,28 +1,35 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::Path;
-
-use crate::utils::derive_encryption_key;
-use crate::utils::EncryptionKey;
-
 use super::StrongholdError;
 use super::StrongholdErrorKind;
+use crate::utils::derive_encryption_key;
+use crate::utils::EncryptionKey;
 use futures::executor;
 use iota_stronghold::Client;
 use iota_stronghold::ClientError;
 use iota_stronghold::KeyProvider;
 use iota_stronghold::SnapshotPath;
 use iota_stronghold::Stronghold as IotaStronghold;
+use std::path::Path;
 use zeroize::Zeroize;
 
 pub type StrongholdResult<T> = Result<T, StrongholdError>;
 
+/// A Wrapper around [Stronghold](https://github.com/iotaledger/stronghold.rs).
+///
+/// Stronghold is a secure storage for sensitive data. Private keys stored inside a Stronghold
+/// can never be read, but only be accessed via cryptographic procedures. Data written into a Stronghold
+/// is persisted in snapshots which are encrypted using the provided password.
+///
+/// This wrapper implements [`JwkStorage`](crate::key_storage::JwkStorage) and
+/// [`KeyIdStorage`](crate::key_id_storage::KeyIdStorage).
+#[derive(Debug)]
 pub struct Stronghold {
   pub(crate) stronghold: IotaStronghold,
   snapshot_path: SnapshotPath,
   key_provider: KeyProvider,
-  pub(crate) dropsave: bool,
+  pub(crate) flush_on_drop: bool,
   pub(crate) client_path: Vec<u8>,
   pub(crate) client: Client,
   pub(crate) vault_path: String,
@@ -32,10 +39,22 @@ static DEFAULT_VAULT_PATH: &str = "&default_vault_path";
 static CLIENT_PATH: &[u8] = b"&client_path";
 
 impl Stronghold {
+  /// Constructs a Stronghold storage instance.
+  ///
+  /// Arguments:
+  ///
+  /// * `path`: path to a local Stronghold snapshot file. Will be created if it does not exist.
+  /// * `password`: password for the Stronghold snapshot file. If this is cloned from a reference,
+  /// zeroization of that reference is strongly recommended.
+  /// * `flush_on_drop`: calls [`Self::flush()`] when the instance is dropped. Default: true.
+  /// * `vault_path`: path to the stronghold vault where the secrets are stored. Default: [`DEFAULT_VAULT_PATH`].
+  ///
+  /// Note that the snapshot file does not exist, it will be created on first write when
+  /// [`Self::flush()`] is called.
   pub async fn new<T>(
     path: &T,
     mut password: String,
-    dropsave: Option<bool>,
+    flush_on_drop: Option<bool>,
     vault_path: Option<String>,
   ) -> StrongholdResult<Self>
   where
@@ -76,21 +95,26 @@ impl Stronghold {
       stronghold,
       snapshot_path,
       key_provider,
-      dropsave: dropsave.unwrap_or(true),
+      flush_on_drop: flush_on_drop.unwrap_or(true),
       client_path,
       client,
       vault_path,
     })
   }
 
-  /// Returns whether dropsave is enabled.
-  pub fn dropsave(&self) -> bool {
-    self.dropsave
+  /// Returns whether flush_on_drop is enabled.
+  pub fn flush_on_drop(&self) -> bool {
+    self.flush_on_drop
   }
 
-  /// Sets whether dropsave is enabled.
-  pub fn set_dropsave(&mut self, dropsave: bool) {
-    self.dropsave = dropsave;
+  /// Sets whether flush_on_drop is enabled.
+  pub fn set_flush_on_drop(&mut self, flush_on_drop: bool) {
+    self.flush_on_drop = flush_on_drop;
+  }
+
+  // Returns the vault path.
+  pub fn vault_path(&self) -> String {
+    self.vault_path.clone()
   }
 
   /// Persist changes to disk.
@@ -117,7 +141,7 @@ impl Stronghold {
 
 impl Drop for Stronghold {
   fn drop(&mut self) {
-    if self.dropsave {
+    if self.flush_on_drop {
       let _ = executor::block_on(self.flush());
     }
   }
@@ -134,7 +158,7 @@ mod tests {
   use crate::JwkStorage;
   use crate::KeyType;
   #[tokio::test]
-  pub async fn test_dropsave_true() {
+  pub async fn test_flush_on_drop_true() {
     let path: String = random_temporary_path();
     let stronghold: Stronghold = Stronghold::new(&path, "pass".to_owned(), Some(true), None)
       .await
@@ -153,7 +177,7 @@ mod tests {
   }
 
   #[tokio::test]
-  pub async fn test_dropsave_false() {
+  pub async fn test_flush_on_drop_false() {
     let path: String = random_temporary_path();
     let stronghold: Stronghold = Stronghold::new(&path, "pass".to_owned(), Some(false), None)
       .await
