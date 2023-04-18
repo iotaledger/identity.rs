@@ -14,6 +14,7 @@ use iota_stronghold::Stronghold as IotaStronghold;
 use std::path::Path;
 use zeroize::Zeroize;
 
+/// Result type for stronghold.
 pub type StrongholdResult<T> = Result<T, StrongholdError>;
 
 /// A Wrapper around [Stronghold](https://github.com/iotaledger/stronghold.rs).
@@ -149,13 +150,11 @@ impl Drop for Stronghold {
 
 #[cfg(test)]
 mod tests {
-
-  use identity_verification::jws::JwsAlgorithm;
-
   use crate::stronghold::Stronghold;
   use crate::utils::fs::random_temporary_path;
   use crate::JwkStorage;
   use crate::KeyType;
+  use identity_verification::jws::JwsAlgorithm;
   #[tokio::test]
   pub async fn test_flush_on_drop_true() {
     let path: String = random_temporary_path();

@@ -11,12 +11,14 @@ use std::fmt::Display;
 const ED25519_KEY_TYPE_STR: &str = "Ed25519";
 pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_STR);
 
+/// Key Types supported by the stronghold storage implementation.
 #[derive(Debug, Copy, Clone)]
 pub enum StrongholdKeyType {
   Ed25519,
 }
 
 impl StrongholdKeyType {
+  /// String representation of the key type.
   pub const fn name(&self) -> &'static str {
     match self {
       StrongholdKeyType::Ed25519 => "Ed25519",

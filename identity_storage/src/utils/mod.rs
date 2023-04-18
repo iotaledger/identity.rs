@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod crypto;
-
 pub mod fs;
 
-pub use self::crypto::*;
+pub(crate) use self::crypto::*;
