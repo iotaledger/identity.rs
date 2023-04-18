@@ -4,10 +4,12 @@
 use crate::Stronghold;
 
 use crate::key_id_storage::tests::utils::test_storage_operations;
+use crate::utils::fs::random_temporary_path;
 
 #[tokio::test]
 pub async fn test_stronghold() {
-  let stronghold: Stronghold = Stronghold::new("stronghold.hodl", "test-password".to_owned(), Some(false), None)
+  let path: String = random_temporary_path();
+  let stronghold: Stronghold = Stronghold::new(&path, "pass".to_owned(), Some(true), None)
     .await
     .unwrap();
   test_storage_operations(stronghold).await;

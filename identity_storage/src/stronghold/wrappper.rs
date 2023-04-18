@@ -151,10 +151,9 @@ impl Drop for Stronghold {
 mod tests {
 
   use identity_verification::jws::JwsAlgorithm;
-  use rand::distributions::DistString;
-  use rand::rngs::OsRng;
 
   use crate::stronghold::Stronghold;
+  use crate::utils::fs::random_temporary_path;
   use crate::JwkStorage;
   use crate::KeyType;
   #[tokio::test]
@@ -213,13 +212,5 @@ mod tests {
     std::mem::drop(stronghold);
     let stronghold_2: Stronghold = Stronghold::new(&path, "pass".to_owned(), None, None).await.unwrap();
     assert!(stronghold_2.exists(key_id).await.unwrap());
-  }
-
-  pub(crate) fn random_temporary_path() -> String {
-    let mut file = std::env::temp_dir();
-    file.push("test_strongholds");
-    file.push(rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32));
-    file.set_extension("stronghold");
-    file.to_str().unwrap().to_owned()
   }
 }

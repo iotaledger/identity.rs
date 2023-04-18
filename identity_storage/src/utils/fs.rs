@@ -14,3 +14,15 @@ where
 
   Ok(())
 }
+
+#[cfg(test)]
+pub(crate) fn random_temporary_path() -> String {
+  use rand::distributions::DistString;
+  use rand::rngs::OsRng;
+
+  let mut file = std::env::temp_dir();
+  file.push("test_strongholds");
+  file.push(rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32));
+  file.set_extension("stronghold");
+  file.to_str().unwrap().to_owned()
+}
