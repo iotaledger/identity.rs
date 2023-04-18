@@ -15,7 +15,7 @@ keywords:
 
 ## Abstract
 
-This specification describes an on-Tangle mechanism for publishing the revocation status of [Verifiable Credentials](../concepts/verifiable_credentials/overview) embedded in an issuer's DID document.
+This specification describes an on-Tangle mechanism for publishing the revocation status of [Verifiable Credentials](../concepts/verifiable_credentials/overview.md) embedded in an issuer's DID document.
 
 ## Introduction
 

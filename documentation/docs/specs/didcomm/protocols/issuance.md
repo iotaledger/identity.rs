@@ -37,7 +37,7 @@ Allows a [holder](#roles) to request a [verifiable credential][VC] from an [issu
 
 <div style={{textAlign: 'center'}}>
 
-<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+<sub>For guidance on diagrams see the <a href="../../overview#diagrams">corresponding section in the overview</a>.</sub>
 
 </div>
 
@@ -62,7 +62,7 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`subject`][SUBJECT] | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject][SUBJECT][^1]. | ✔ |
-| `credentialInfo` | A [CredentialInfo](../resources/credential-info) object, specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
+| `credentialInfo` | A [CredentialInfo](../resources/credential-info.md) object, specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
 
 [^1] The [holder](#roles) is usually but not always the [subject][SUBJECT] of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests, or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
@@ -393,7 +393,7 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.md).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
@@ -428,4 +428,4 @@ For guidance on problem-reports and a list of general codes see [problem reports
 <!--- LINKS --->
 [VC]: https://www.w3.org/TR/vc-data-model/#credentials
 [SUBJECT]: https://www.w3.org/TR/vc-data-model/#credential-subject-0
-[CredentialType2021]: ../resources/credential-info#credentialtype2021
+[CredentialType2021]: ../resources/credential-info.md#credentialtype2021
