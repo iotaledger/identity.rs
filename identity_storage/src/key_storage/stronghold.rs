@@ -8,27 +8,39 @@ use super::KeyStorageError;
 use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
-use crate::stronghold::Stronghold;
-use crate::stronghold::StrongholdKeyType;
 use crate::JwkStorage;
 use async_trait::async_trait;
 use identity_verification::jwk::EdCurve;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParamsOkp;
+use identity_verification::jwk::JwkType;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::jwu;
+use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_stronghold::procedures::Ed25519Sign;
 use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::procedures::KeyType as ProceduresKeyType;
 use iota_stronghold::procedures::StrongholdProcedure;
+use iota_stronghold::Client;
+use iota_stronghold::ClientError;
 use iota_stronghold::Location;
+use iota_stronghold::Stronghold;
 use rand::distributions::DistString;
+use std::fmt::Display;
 use std::str::FromStr;
+use tokio::sync::MutexGuard;
+
+const ED25519_KEY_TYPE_STR: &str = "Ed25519";
+static DEFAULT_VAULT_PATH: &str = "&default_vault_path";
+pub(crate) static CLIENT_PATH: &[u8] = b"&identity_client_path";
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl JwkStorage for Stronghold {
+impl JwkStorage for StrongholdSecretManager {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(stronghold)?;
+
     let key_type = StrongholdKeyType::try_from(&key_type)?;
     check_key_alg_compatibility(key_type, alg)?;
 
@@ -39,7 +51,7 @@ impl JwkStorage for Stronghold {
 
     let key_id: KeyId = random_key_id();
     let location = Location::generic(
-      self.vault_path.as_bytes().to_vec(),
+      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
 
@@ -48,8 +60,7 @@ impl JwkStorage for Stronghold {
       output: location.clone(),
     };
 
-    self
-      .client
+    client
       .execute_procedure(StrongholdProcedure::GenerateKey(generate_key_procedure))
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
@@ -62,8 +73,7 @@ impl JwkStorage for Stronghold {
       private_key: location,
     };
 
-    let procedure_result = self
-      .client
+    let procedure_result = client
       .execute_procedure(StrongholdProcedure::PublicKey(public_key_procedure))
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
@@ -108,12 +118,13 @@ impl JwkStorage for Stronghold {
     let key_id: KeyId = random_key_id();
 
     let location = Location::generic(
-      self.vault_path.as_bytes().to_vec(),
+      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
-    self
-      .client
-      .vault(self.vault_path.as_bytes())
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(stronghold)?;
+    client
+      .vault(DEFAULT_VAULT_PATH.as_bytes())
       .write_secret(location, secret_key.to_bytes().to_vec())
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
@@ -159,7 +170,7 @@ impl JwkStorage for Stronghold {
     };
 
     let location = Location::generic(
-      self.vault_path.as_bytes().to_vec(),
+      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
     let procedure: Ed25519Sign = Ed25519Sign {
@@ -167,7 +178,10 @@ impl JwkStorage for Stronghold {
       msg: data.to_vec(),
     };
 
-    let signature: [u8; 64] = self.client.execute_procedure(procedure).map_err(|err| {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(stronghold)?;
+
+    let signature: [u8; 64] = client.execute_procedure(procedure).map_err(|err| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
         .with_custom_message("stronghold procedure failed")
         .with_source(err)
@@ -177,9 +191,10 @@ impl JwkStorage for Stronghold {
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
-    let deleted = self
-      .client
-      .vault(self.vault_path.as_bytes())
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(stronghold)?;
+    let deleted = client
+      .vault(DEFAULT_VAULT_PATH.as_bytes())
       .delete_secret(key_id.to_string().as_bytes())
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
@@ -195,16 +210,23 @@ impl JwkStorage for Stronghold {
   }
 
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(stronghold)?;
     let location = Location::generic(
-      self.vault_path.as_bytes().to_vec(),
+      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
-    Ok(self.client.record_exists(&location).map_err(|err| {
+    let exists = client.record_exists(&location).map_err(|err| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
         .with_custom_message("stronghold client error")
         .with_source(err)
-    })?)
+    })?;
+    Ok(exists)
   }
+}
+
+fn random_key_id() -> KeyId {
+  KeyId::new(rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32))
 }
 
 /// Check that the key type can be used with the algorithm.
@@ -218,7 +240,86 @@ fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: JwsAlgorithm) -
   }
 }
 
-/// Generate a random alphanumeric string of len 32.
-fn random_key_id() -> KeyId {
-  KeyId::new(rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32))
+pub fn get_client(stronghold: MutexGuard<'_, Stronghold>) -> KeyStorageResult<Client> {
+  if let Ok(client) = stronghold.get_client(CLIENT_PATH) {
+    return Ok(client);
+  }
+  let client = stronghold.get_client(CLIENT_PATH);
+  match client {
+    Ok(client) => Ok(client),
+    Err(ClientError::ClientDataNotPresent) => load_or_create_client(stronghold),
+    Err(err) => Err(KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err)),
+  }
+}
+fn load_or_create_client(stronghold: MutexGuard<'_, Stronghold>) -> KeyStorageResult<Client> {
+  match stronghold.load_client(CLIENT_PATH) {
+    Ok(client) => Ok(client),
+    Err(ClientError::ClientDataNotPresent) => stronghold
+      .create_client(CLIENT_PATH)
+      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err)),
+    Err(err) => Err(KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err)),
+  }
+}
+
+/// Key Types supported by the stronghold storage implementation.
+#[derive(Debug, Copy, Clone)]
+pub enum StrongholdKeyType {
+  Ed25519,
+}
+
+impl StrongholdKeyType {
+  /// String representation of the key type.
+  pub const fn name(&self) -> &'static str {
+    match self {
+      StrongholdKeyType::Ed25519 => "Ed25519",
+    }
+  }
+}
+
+impl Display for StrongholdKeyType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(self.name())
+  }
+}
+
+impl TryFrom<&KeyType> for StrongholdKeyType {
+  type Error = KeyStorageError;
+
+  fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
+    match value.as_str() {
+      ED25519_KEY_TYPE_STR => Ok(StrongholdKeyType::Ed25519),
+      _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
+    }
+  }
+}
+
+impl TryFrom<&Jwk> for StrongholdKeyType {
+  type Error = KeyStorageError;
+
+  fn try_from(jwk: &Jwk) -> Result<Self, Self::Error> {
+    match jwk.kty() {
+      JwkType::Okp => {
+        let okp_params = jwk.try_okp_params().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("expected Okp parameters for a JWK with `kty` Okp")
+            .with_source(err)
+        })?;
+        match okp_params.try_ed_curve().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+            .with_custom_message("only Ed curves are supported for signing")
+            .with_source(err)
+        })? {
+          EdCurve::Ed25519 => Ok(StrongholdKeyType::Ed25519),
+          curve => Err(
+            KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+              .with_custom_message(format!("{curve} not supported")),
+          ),
+        }
+      }
+      other => Err(
+        KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+          .with_custom_message(format!("Jwk `kty` {other} not supported")),
+      ),
+    }
+  }
 }

@@ -11,6 +11,7 @@ mod key_type;
 mod memstore;
 #[cfg(feature = "stronghold")]
 mod stronghold;
+
 #[cfg(test)]
 mod tests;
 
