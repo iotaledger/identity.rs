@@ -74,6 +74,7 @@ jobs:
             node-version: 18
             check-latest: true
             cache: yarn
+            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/yarn.lock
         - name: Install
           uses: dtolnay/rust-toolchain@stable
           if: ${{ !matrix.settings.docker }}
@@ -111,6 +112,7 @@ jobs:
             node-version: 18
             check-latest: true
             cache: yarn
+            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/yarn.lock
             architecture: x86
         - name: Build in docker
           uses: addnab/docker-run-action@v3
