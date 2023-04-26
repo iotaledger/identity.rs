@@ -6,8 +6,6 @@ use wasm_bindgen::prelude::*;
 use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions as JwtCredentialValidationOptions;
 
 /// Options to declare validation criteria when validating credentials.
-// TODO: Perhaps rename this to CredentialValidationOptions (in which case the old `CredentialValidationOptions` should
-// be updated or removed)-
 #[wasm_bindgen(js_name = JwtCredentialValidationOptions)]
 pub struct WasmJwtCredentialValidationOptions(pub(crate) JwtCredentialValidationOptions);
 

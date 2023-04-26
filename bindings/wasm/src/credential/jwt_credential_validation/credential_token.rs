@@ -8,7 +8,9 @@ use crate::credential::WasmCredential;
 use crate::jose::WasmJwsHeader;
 
 /// A cryptographically verified and decoded Credential.
-// TODO: Explain that only the JWS signature has been verified and not necessarily the proof property if it is set.
+///
+/// Note that having an instance of this type only means the JWS it was constructed from was verified.
+/// It does not imply anything about a potentially present proof property on the credential itself.
 #[wasm_bindgen(js_name = CredentialToken)]
 pub struct WasmCredentialToken(pub(crate) CredentialToken);
 
