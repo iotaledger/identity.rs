@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::key_id_storage::key_id_storage::KeyIdStorage;
+use crate::KeyIdStorageResult;
 
 use crate::key_id_storage::method_digest::MethodDigest;
 use crate::key_id_storage::KeyIdStorageError;
@@ -40,7 +41,13 @@ pub(crate) async fn test_storage_operations(storage: impl KeyIdStorage) {
   // Test deletion.
   storage.delete_key_id(&method_digest).await.expect("deletion failed");
 
-  let repeat_deletion_result: Result<(), KeyIdStorageError> = storage.delete_key_id(&method_digest).await;
+  let retrieval_result: KeyIdStorageResult<KeyId> = storage.get_key_id(&method_digest).await;
+  let _expected_error: KeyIdStorageError = KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdNotFound);
+  assert!(matches!(retrieval_result.unwrap_err(), _expected_error));
+
+  // Double Deletion.
+
+  let repeat_deletion_result: KeyIdStorageResult<()> = storage.delete_key_id(&method_digest).await;
   let _expected_error: KeyIdStorageError = KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdNotFound);
   assert!(matches!(repeat_deletion_result.unwrap_err(), _expected_error));
 }

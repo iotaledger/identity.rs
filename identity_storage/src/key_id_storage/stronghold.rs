@@ -20,7 +20,7 @@ use tokio::sync::MutexGuard;
 impl KeyIdStorage for StrongholdSecretManager {
   async fn insert_key_id(&self, method_digest: MethodDigest, key_id: KeyId) -> KeyIdStorageResult<()> {
     let stronghold = self.get_stronghold().await;
-    let client = get_client(stronghold)?;
+    let client = get_client(&stronghold)?;
     let store = client.store();
     let key = method_digest.pack();
     let key_exists = store
@@ -35,12 +35,13 @@ impl KeyIdStorage for StrongholdSecretManager {
       .store()
       .insert(method_digest.pack(), value.to_vec(), None)
       .map_err(|err| KeyIdStorageError::new(crate::KeyIdStorageErrorKind::Unspecified).with_source(err))?;
+    persist_changes(self, stronghold).await?;
     Ok(())
   }
 
   async fn get_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<KeyId> {
     let stronghold = self.get_stronghold().await;
-    let store = get_client(stronghold)?.store();
+    let store = get_client(&stronghold)?.store();
     let key: Vec<u8> = method_digest.pack();
     let value: Vec<u8> = store
       .get(key.as_ref())
@@ -56,7 +57,7 @@ impl KeyIdStorage for StrongholdSecretManager {
 
   async fn delete_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<()> {
     let stronghold = self.get_stronghold().await;
-    let store = get_client(stronghold)?.store();
+    let store = get_client(&stronghold)?.store();
     let key: Vec<u8> = method_digest.pack();
 
     let _ = store
@@ -64,11 +65,12 @@ impl KeyIdStorage for StrongholdSecretManager {
       .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err))?
       .ok_or(KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdNotFound))?;
 
+    persist_changes(self, stronghold).await?;
     Ok(())
   }
 }
 
-pub fn get_client(stronghold: MutexGuard<'_, Stronghold>) -> KeyIdStorageResult<Client> {
+pub fn get_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
   if let Ok(client) = stronghold.get_client(CLIENT_PATH) {
     return Ok(client);
   }
@@ -79,7 +81,7 @@ pub fn get_client(stronghold: MutexGuard<'_, Stronghold>) -> KeyIdStorageResult<
     Err(err) => Err(KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err)),
   }
 }
-fn load_or_create_client(stronghold: MutexGuard<'_, Stronghold>) -> KeyIdStorageResult<Client> {
+fn load_or_create_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
   match stronghold.load_client(CLIENT_PATH) {
     Ok(client) => Ok(client),
     Err(ClientError::ClientDataNotPresent) => stronghold
@@ -87,4 +89,23 @@ fn load_or_create_client(stronghold: MutexGuard<'_, Stronghold>) -> KeyIdStorage
       .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err)),
     Err(err) => Err(KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err)),
   }
+}
+
+async fn persist_changes(
+  secreat_manager: &StrongholdSecretManager,
+  stronghold: MutexGuard<'_, Stronghold>,
+) -> KeyIdStorageResult<()> {
+  stronghold.write_client(CLIENT_PATH).map_err(|err| {
+    KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
+      .with_custom_message("stronghold client error")
+      .with_source(err)
+  })?;
+  // Must be dropped since `write_stronghold_snapshot` requiers the stronghold instance.
+  drop(stronghold);
+  secreat_manager.write_stronghold_snapshot(None).await.map_err(|err| {
+    KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
+      .with_custom_message("writing to stronghold snapshot failed")
+      .with_source(err)
+  })?;
+  Ok(())
 }
