@@ -54,10 +54,10 @@ pub enum Error {
   #[error("invalid key format")]
   InvalidKeyFormat,
   /// Caused byt attempting to parse as invalid cryptographic key.
-  #[error("invalid key length. Received {0}, expected {1}")]
+  #[error("invalid key length; Received {0}, expected {1}")]
   InvalidKeyLength(usize, usize),
   /// Caused byt attempting to parse as invalid digital signature.
-  #[error("invalid signature length. Received {0}, expected {1}")]
+  #[error("invalid signature length; Received {0}, expected {1}")]
   InvalidSigLength(usize, usize),
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("signature not found")]

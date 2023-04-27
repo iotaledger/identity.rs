@@ -121,7 +121,7 @@ where
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
-  // validation. It also validates the relation ship between a holder and the credential subjects when
+  // validation. It also validates the relationship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
   pub(crate) fn validate_extended<DOC, S>(
     signature_verifier: &S,
