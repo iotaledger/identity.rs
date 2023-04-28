@@ -138,6 +138,9 @@ jobs:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
     needs:
       - build
+    defaults:
+        run:
+          working-directory: bindings/stronghold-nodejs
     strategy:
       fail-fast: false
       matrix:
@@ -174,6 +177,9 @@ jobs:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
     needs:
       - build
+    defaults:
+        run:
+          working-directory: bindings/stronghold-nodejs
     strategy:
       fail-fast: false
       matrix:
@@ -202,11 +208,14 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn test
+        run: docker run --rm -v $(pwd)/${{ env.WORKING_DIRECTORY }}:/build -w /build node:${{ matrix.node }}-slim yarn test
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
     needs:
       - build
+    defaults:
+        run:
+          working-directory: bindings/stronghold-nodejs
     strategy:
       fail-fast: false
       matrix:
@@ -237,5 +246,5 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine yarn test
+        run: docker run --rm -v $(pwd)/${{ env.WORKING_DIRECTORY }}:/build -w /build node:${{ matrix.node }}-alpine yarn test
   
