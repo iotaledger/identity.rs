@@ -25,6 +25,11 @@ on:
         description: "Name used for the output build artifact. Must be set if `upload-binaries-as-artifacts` is true"
         required: false
         type: string
+
+env:
+  WORKING_DIRECTORY: bindings/stronghold-nodejs
+  APP_NAME: identity-stronghold-nodejs
+
 jobs:
   build:
       defaults:
@@ -32,9 +37,7 @@ jobs:
           working-directory: bindings/stronghold-nodejs
       env:
         DEBUG: napi:*
-        APP_NAME: identity-stronghold-nodejs
         MACOSX_DEPLOYMENT_TARGET: '10.13'
-        WORKING_DIRECTORY: bindings/stronghold-nodejs
       strategy:
         fail-fast: false
         matrix:
