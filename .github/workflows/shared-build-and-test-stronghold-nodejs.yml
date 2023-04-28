@@ -139,8 +139,8 @@ jobs:
     needs:
       - build
     defaults:
-        run:
-          working-directory: bindings/stronghold-nodejs
+      run:
+        working-directory: bindings/stronghold-nodejs
     strategy:
       fail-fast: false
       matrix:
@@ -178,8 +178,8 @@ jobs:
     needs:
       - build
     defaults:
-        run:
-          working-directory: bindings/stronghold-nodejs
+      run:
+        working-directory: bindings/stronghold-nodejs
     strategy:
       fail-fast: false
       matrix:
@@ -214,8 +214,8 @@ jobs:
     needs:
       - build
     defaults:
-        run:
-          working-directory: bindings/stronghold-nodejs
+      run:
+        working-directory: bindings/stronghold-nodejs
     strategy:
       fail-fast: false
       matrix:
