@@ -106,8 +106,18 @@ jobs:
           if: matrix.settings.target == 'i686-pc-windows-msvc'
           run: yarn config set supportedArchitectures.cpu "ia32"
           shell: bash
+        - name: Download bindings/wasm artifacts
+          uses: actions/download-artifact@v2
+          with:
+            name: ${{ inputs.input-artifact-name }}
+            path: bindings/wasm
+        - name: Prepare Wasm bindings link
+          run: |
+            npm ci
+            npm link
+            working-directory: ./bindings/wasm
         - name: Install dependencies
-          run: yarn install
+          run: npm link @iota/identity-wasm && yarn install
         - name: Setup node x86
           uses: actions/setup-node@v3
           if: matrix.settings.target == 'i686-pc-windows-msvc'
