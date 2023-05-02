@@ -194,4 +194,4 @@ Cargo.lock
 !.yarn/sdks
 !.yarn/versions
 
-*.node
+napi-dist

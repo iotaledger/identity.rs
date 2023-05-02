@@ -15,7 +15,17 @@
   "license": "MIT",
   "devDependencies": {
     "@napi-rs/cli": "^2.15.2",
-    "ava": "^5.1.1"
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "ava": "^5.1.1",
+    "rollup": "^3.21.3",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-dts": "^5.3.0",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.4"
+  },
+  "peerDependencies": {
+    "@iota/identity-wasm": "0.7.0-alpha.6"
   },
   "ava": {
     "timeout": "3m"
@@ -25,7 +35,9 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release",
+    "build": "npm run build:napi && npm run build:ts",
+    "build:ts": "rollup -c --failAfterWarnings",
+    "build:napi": "napi build --platform --release --js napi.js --dts napi.d.ts napi-dist",
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
