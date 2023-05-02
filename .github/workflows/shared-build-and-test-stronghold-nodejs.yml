@@ -115,8 +115,7 @@ jobs:
           run: |
             npm ci
             npm link
-          with:
-            working-directory: ./bindings/wasm
+          working-directory: ./bindings/wasm
         - name: Install dependencies
           run: npm link @iota/identity-wasm && yarn install
         - name: Setup node x86
