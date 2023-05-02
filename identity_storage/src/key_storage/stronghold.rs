@@ -31,8 +31,12 @@ use std::str::FromStr;
 use tokio::sync::MutexGuard;
 
 const ED25519_KEY_TYPE_STR: &str = "Ed25519";
-static DEFAULT_VAULT_PATH: &str = "&default_vault_path";
-pub(crate) static CLIENT_PATH: &[u8] = b"&identity_client_path";
+static IDENTITY_VAULT_PATH: &str = "iota_identity_vault";
+pub(crate) static IDENTITY_CLIENT_PATH: &[u8] = b"iota_identity_client";
+
+/// The Ed25519 key type.
+#[allow(dead_code)]
+pub const ED25519_KEY_TYPE: &KeyType = &KeyType::from_static_str(ED25519_KEY_TYPE_STR);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -51,7 +55,7 @@ impl JwkStorage for StrongholdSecretManager {
 
     let key_id: KeyId = random_key_id();
     let location = Location::generic(
-      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
 
@@ -80,7 +84,7 @@ impl JwkStorage for StrongholdSecretManager {
           .with_custom_message("stronghold public key procedure failed")
           .with_source(err)
       })?;
-    presist_changes(self, stronghold).await?;
+    persist_changes(self, stronghold).await?;
     let public_key: Vec<u8> = procedure_result.into();
 
     let mut params = JwkParamsOkp::new();
@@ -119,20 +123,20 @@ impl JwkStorage for StrongholdSecretManager {
     let key_id: KeyId = random_key_id();
 
     let location = Location::generic(
-      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     client
-      .vault(DEFAULT_VAULT_PATH.as_bytes())
+      .vault(IDENTITY_VAULT_PATH.as_bytes())
       .write_secret(location, secret_key.to_bytes().to_vec())
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
           .with_custom_message("stronghold client error")
           .with_source(err)
       })?;
-    presist_changes(self, stronghold).await?;
+    persist_changes(self, stronghold).await?;
 
     Ok(key_id)
   }
@@ -172,7 +176,7 @@ impl JwkStorage for StrongholdSecretManager {
     };
 
     let location = Location::generic(
-      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
     let procedure: Ed25519Sign = Ed25519Sign {
@@ -196,7 +200,7 @@ impl JwkStorage for StrongholdSecretManager {
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     let deleted = client
-      .vault(DEFAULT_VAULT_PATH.as_bytes())
+      .vault(IDENTITY_VAULT_PATH.as_bytes())
       .delete_secret(key_id.to_string().as_bytes())
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
@@ -207,7 +211,7 @@ impl JwkStorage for StrongholdSecretManager {
     if !deleted {
       return Err(KeyStorageError::new(KeyStorageErrorKind::KeyNotFound));
     }
-    presist_changes(self, stronghold).await?;
+    persist_changes(self, stronghold).await?;
 
     Ok(())
   }
@@ -216,7 +220,7 @@ impl JwkStorage for StrongholdSecretManager {
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     let location = Location::generic(
-      DEFAULT_VAULT_PATH.as_bytes().to_vec(),
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
     let exists = client.record_exists(&location).map_err(|err| {
@@ -244,7 +248,7 @@ fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: JwsAlgorithm) -
 }
 
 pub fn get_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
-  let client = stronghold.get_client(CLIENT_PATH);
+  let client = stronghold.get_client(IDENTITY_CLIENT_PATH);
   match client {
     Ok(client) => Ok(client),
     Err(ClientError::ClientDataNotPresent) => load_or_create_client(stronghold),
@@ -253,27 +257,27 @@ pub fn get_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
 }
 
 fn load_or_create_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
-  match stronghold.load_client(CLIENT_PATH) {
+  match stronghold.load_client(IDENTITY_CLIENT_PATH) {
     Ok(client) => Ok(client),
     Err(ClientError::ClientDataNotPresent) => stronghold
-      .create_client(CLIENT_PATH)
+      .create_client(IDENTITY_CLIENT_PATH)
       .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err)),
     Err(err) => Err(KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err)),
   }
 }
 
-async fn presist_changes(
-  secreat_manager: &StrongholdSecretManager,
+async fn persist_changes(
+  secret_manager: &StrongholdSecretManager,
   stronghold: MutexGuard<'_, Stronghold>,
 ) -> KeyStorageResult<()> {
-  stronghold.write_client(CLIENT_PATH).map_err(|err| {
+  stronghold.write_client(IDENTITY_CLIENT_PATH).map_err(|err| {
     KeyStorageError::new(KeyStorageErrorKind::Unspecified)
       .with_custom_message("stronghold write client error")
       .with_source(err)
   })?;
   // Must be dropped since `write_stronghold_snapshot` needs to acquire the stronghold lock.
   drop(stronghold);
-  secreat_manager.write_stronghold_snapshot(None).await.map_err(|err| {
+  secret_manager.write_stronghold_snapshot(None).await.map_err(|err| {
     KeyStorageError::new(KeyStorageErrorKind::Unspecified)
       .with_custom_message("writing to stronghold snapshot failed")
       .with_source(err)
@@ -283,7 +287,7 @@ async fn presist_changes(
 
 /// Key Types supported by the stronghold storage implementation.
 #[derive(Debug, Copy, Clone)]
-pub enum StrongholdKeyType {
+enum StrongholdKeyType {
   Ed25519,
 }
 

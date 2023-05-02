@@ -7,7 +7,7 @@ use crate::KeyIdStorageError;
 use crate::KeyIdStorageErrorKind;
 use crate::KeyIdStorageResult;
 use crate::MethodDigest;
-use crate::CLIENT_PATH;
+use crate::IDENTITY_CLIENT_PATH;
 use async_trait::async_trait;
 use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_stronghold::Client;
@@ -22,18 +22,18 @@ impl KeyIdStorage for StrongholdSecretManager {
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     let store = client.store();
-    let key = method_digest.pack();
+    let method_digest_pack = method_digest.pack();
     let key_exists = store
-      .contains_key(key.as_ref())
+      .contains_key(method_digest_pack.as_ref())
       .map_err(|err| KeyIdStorageError::new(crate::KeyIdStorageErrorKind::Unspecified).with_source(err))?;
 
     if key_exists {
       return Err(KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdAlreadyExists));
     }
-    let value = key_id.as_str().as_bytes();
+    let key_id: String = key_id.into();
     client
       .store()
-      .insert(method_digest.pack(), value.to_vec(), None)
+      .insert(method_digest_pack, key_id.into(), None)
       .map_err(|err| KeyIdStorageError::new(crate::KeyIdStorageErrorKind::Unspecified).with_source(err))?;
     persist_changes(self, stronghold).await?;
     Ok(())
@@ -42,14 +42,14 @@ impl KeyIdStorage for StrongholdSecretManager {
   async fn get_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<KeyId> {
     let stronghold = self.get_stronghold().await;
     let store = get_client(&stronghold)?.store();
-    let key: Vec<u8> = method_digest.pack();
-    let value: Vec<u8> = store
-      .get(key.as_ref())
+    let method_digest_pack: Vec<u8> = method_digest.pack();
+    let key_id_bytes: Vec<u8> = store
+      .get(method_digest_pack.as_ref())
       .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err))?
       .ok_or(KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdNotFound))?;
 
     let key_id: KeyId = KeyId::new(
-      String::from_utf8(value)
+      String::from_utf8(key_id_bytes)
         .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err))?,
     );
     Ok(key_id)
@@ -71,10 +71,10 @@ impl KeyIdStorage for StrongholdSecretManager {
 }
 
 pub fn get_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
-  if let Ok(client) = stronghold.get_client(CLIENT_PATH) {
+  if let Ok(client) = stronghold.get_client(IDENTITY_CLIENT_PATH) {
     return Ok(client);
   }
-  let client = stronghold.get_client(CLIENT_PATH);
+  let client = stronghold.get_client(IDENTITY_CLIENT_PATH);
   match client {
     Ok(client) => Ok(client),
     Err(ClientError::ClientDataNotPresent) => load_or_create_client(stronghold),
@@ -82,27 +82,27 @@ pub fn get_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
   }
 }
 fn load_or_create_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
-  match stronghold.load_client(CLIENT_PATH) {
+  match stronghold.load_client(IDENTITY_CLIENT_PATH) {
     Ok(client) => Ok(client),
     Err(ClientError::ClientDataNotPresent) => stronghold
-      .create_client(CLIENT_PATH)
+      .create_client(IDENTITY_CLIENT_PATH)
       .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err)),
     Err(err) => Err(KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err)),
   }
 }
 
 async fn persist_changes(
-  secreat_manager: &StrongholdSecretManager,
+  secret_manager: &StrongholdSecretManager,
   stronghold: MutexGuard<'_, Stronghold>,
 ) -> KeyIdStorageResult<()> {
-  stronghold.write_client(CLIENT_PATH).map_err(|err| {
+  stronghold.write_client(IDENTITY_CLIENT_PATH).map_err(|err| {
     KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
       .with_custom_message("stronghold write client error")
       .with_source(err)
   })?;
   // Must be dropped since `write_stronghold_snapshot` requires the stronghold instance.
   drop(stronghold);
-  secreat_manager.write_stronghold_snapshot(None).await.map_err(|err| {
+  secret_manager.write_stronghold_snapshot(None).await.map_err(|err| {
     KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
       .with_custom_message("writing to stronghold snapshot failed")
       .with_source(err)
