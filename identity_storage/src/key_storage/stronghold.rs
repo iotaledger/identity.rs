@@ -64,7 +64,7 @@ impl JwkStorage for StrongholdSecretManager {
       .execute_procedure(StrongholdProcedure::GenerateKey(generate_key_procedure))
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("stronghold procedure failed")
+          .with_custom_message("stronghold generate key procedure failed")
           .with_source(err)
       })?;
 
@@ -77,7 +77,7 @@ impl JwkStorage for StrongholdSecretManager {
       .execute_procedure(StrongholdProcedure::PublicKey(public_key_procedure))
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("stronghold procedure failed")
+          .with_custom_message("stronghold public key procedure failed")
           .with_source(err)
       })?;
     presist_changes(self, stronghold).await?;
@@ -185,7 +185,7 @@ impl JwkStorage for StrongholdSecretManager {
 
     let signature: [u8; 64] = client.execute_procedure(procedure).map_err(|err| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-        .with_custom_message("stronghold procedure failed")
+        .with_custom_message("stronghold Ed25519Sign procedure failed")
         .with_source(err)
     })?;
 
@@ -268,10 +268,10 @@ async fn presist_changes(
 ) -> KeyStorageResult<()> {
   stronghold.write_client(CLIENT_PATH).map_err(|err| {
     KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-      .with_custom_message("stronghold client error")
+      .with_custom_message("stronghold write client error")
       .with_source(err)
   })?;
-  // Must be dropped since `write_stronghold_snapshot` requiers the stronghold instance.
+  // Must be dropped since `write_stronghold_snapshot` needs to acquire the stronghold lock.
   drop(stronghold);
   secreat_manager.write_stronghold_snapshot(None).await.map_err(|err| {
     KeyStorageError::new(KeyStorageErrorKind::Unspecified)

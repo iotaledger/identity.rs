@@ -97,10 +97,10 @@ async fn persist_changes(
 ) -> KeyIdStorageResult<()> {
   stronghold.write_client(CLIENT_PATH).map_err(|err| {
     KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
-      .with_custom_message("stronghold client error")
+      .with_custom_message("stronghold write client error")
       .with_source(err)
   })?;
-  // Must be dropped since `write_stronghold_snapshot` requiers the stronghold instance.
+  // Must be dropped since `write_stronghold_snapshot` requires the stronghold instance.
   drop(stronghold);
   secreat_manager.write_stronghold_snapshot(None).await.map_err(|err| {
     KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)

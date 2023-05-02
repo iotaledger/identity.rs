@@ -46,7 +46,6 @@ pub(crate) async fn test_storage_operations(storage: impl KeyIdStorage) {
   assert!(matches!(retrieval_result.unwrap_err(), _expected_error));
 
   // Double Deletion.
-
   let repeat_deletion_result: KeyIdStorageResult<()> = storage.delete_key_id(&method_digest).await;
   let _expected_error: KeyIdStorageError = KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdNotFound);
   assert!(matches!(repeat_deletion_result.unwrap_err(), _expected_error));
