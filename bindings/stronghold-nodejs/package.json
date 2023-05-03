@@ -12,7 +12,7 @@
       ]
     }
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@napi-rs/cli": "^2.15.2",
     "@rollup/plugin-commonjs": "^24.1.0",
