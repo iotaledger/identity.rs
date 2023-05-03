@@ -46,7 +46,7 @@ jobs:
               target: x86_64-apple-darwin
               build: |
                 npm run build
-                strip -x *.node
+                strip -x dist/*.node
             - host: windows-latest
               build: npm run build
               target: x86_64-pc-windows-msvc
@@ -56,16 +56,16 @@ jobs:
               build: |-
                 set -e &&
                 npm run build --target x86_64-unknown-linux-gnu &&
-                strip *.node
+                strip dist/*.node
             - host: ubuntu-latest
               target: x86_64-unknown-linux-musl
               docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-              build: set -e && npm run build && strip *.node
+              build: set -e && npm run build && strip dist/*.node
             - host: macos-latest
               target: aarch64-apple-darwin
               build: |
                 npm run build --target aarch64-apple-darwin
-                strip -x *.node
+                strip -x dist/*.node
       name: stable - ${{ matrix.settings.target }} - node@18
       runs-on: ${{ matrix.settings.host }}
       steps:
@@ -138,7 +138,7 @@ jobs:
           uses: actions/upload-artifact@v3
           with:
             name: bindings-${{ matrix.settings.target }}
-            path: ${{ env.WORKING_DIRECTORY }}/${{ env.APP_NAME }}.*.node
+            path: ${{ env.WORKING_DIRECTORY }}/${{ env.APP_NAME }}/dist/*.node
             if-no-files-found: error
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
