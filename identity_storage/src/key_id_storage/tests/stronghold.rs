@@ -3,12 +3,10 @@
 
 use super::utils::test_storage_operations;
 use crate::key_id_storage::method_digest::MethodDigest;
-use crate::key_id_storage::KeyIdStorageError;
 use crate::key_id_storage::KeyIdStorageErrorKind;
 use crate::key_storage::KeyId;
 use crate::utils::test_utils::create_temp_file;
 use crate::KeyIdStorage;
-use crate::KeyIdStorageResult;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::utils::BaseEncoding;
@@ -58,7 +56,12 @@ pub async fn write_to_disk() {
   drop(secret_manager);
 
   let secret_manager = StrongholdSecretManager::builder().password(PASS).build(&file).unwrap();
-  let retrieval_result: KeyIdStorageResult<KeyId> = secret_manager.get_key_id(&method_digest).await;
-  let _expected_error: KeyIdStorageError = KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdNotFound);
-  assert!(matches!(retrieval_result.unwrap_err(), _expected_error));
+  let error_kind: KeyIdStorageErrorKind = secret_manager
+    .get_key_id(&method_digest)
+    .await
+    .unwrap_err()
+    .kind()
+    .clone();
+
+  assert!(matches!(error_kind, KeyIdStorageErrorKind::KeyIdNotFound));
 }
