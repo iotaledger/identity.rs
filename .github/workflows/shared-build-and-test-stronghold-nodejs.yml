@@ -45,26 +45,26 @@ jobs:
             - host: macos-latest
               target: x86_64-apple-darwin
               build: |
-                yarn build
+                npm build
                 strip -x *.node
             - host: windows-latest
-              build: yarn build
+              build: npm build
               target: x86_64-pc-windows-msvc
             - host: ubuntu-latest
               target: x86_64-unknown-linux-gnu
               docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
               build: |-
                 set -e &&
-                yarn build --target x86_64-unknown-linux-gnu &&
+                npm build --target x86_64-unknown-linux-gnu &&
                 strip *.node
             - host: ubuntu-latest
               target: x86_64-unknown-linux-musl
               docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-              build: set -e && yarn build && strip *.node
+              build: set -e && npm build && strip *.node
             - host: macos-latest
               target: aarch64-apple-darwin
               build: |
-                yarn build --target aarch64-apple-darwin
+                npm build --target aarch64-apple-darwin
                 strip -x *.node
       name: stable - ${{ matrix.settings.target }} - node@18
       runs-on: ${{ matrix.settings.host }}
@@ -76,8 +76,8 @@ jobs:
           with:
             node-version: 18
             check-latest: true
-            cache: yarn
-            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/yarn.lock
+            cache: npm
+            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
         - name: Install
           uses: dtolnay/rust-toolchain@stable
           if: ${{ !matrix.settings.docker }}
@@ -102,10 +102,6 @@ jobs:
           run: ${{ matrix.settings.setup }}
           if: ${{ matrix.settings.setup }}
           shell: bash
-        - name: Setup node x86
-          if: matrix.settings.target == 'i686-pc-windows-msvc'
-          run: yarn config set supportedArchitectures.cpu "ia32"
-          shell: bash
         - name: Download bindings/wasm artifacts
           uses: actions/download-artifact@v2
           with:
@@ -117,15 +113,15 @@ jobs:
             npm link
           working-directory: ./bindings/wasm
         - name: Install dependencies
-          run: npm link @iota/identity-wasm && yarn install
+          run: npm ci && npm link @iota/identity-wasm
         - name: Setup node x86
           uses: actions/setup-node@v3
           if: matrix.settings.target == 'i686-pc-windows-msvc'
           with:
             node-version: 18
             check-latest: true
-            cache: yarn
-            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/yarn.lock
+            cache: npm
+            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
             architecture: x86
         - name: Build in docker
           uses: addnab/docker-run-action@v3
@@ -169,10 +165,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           check-latest: true
-          cache: yarn
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/yarn.lock
+          cache: npm
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
       - name: Install dependencies
-        run: yarn install
+        run: npm install
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -182,7 +178,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: yarn test
+        run: npm test
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
     needs:
@@ -205,10 +201,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           check-latest: true
-          cache: yarn
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/yarn.lock
+          cache: npm
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
       - name: Install dependencies
-        run: yarn install
+        run: npm install
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -218,7 +214,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn test
+        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim npm test
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
     needs:
@@ -241,12 +237,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           check-latest: true
-          cache: yarn
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/yarn.lock
+          cache: npm
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
       - name: Install dependencies
         run: |
-          yarn config set supportedArchitectures.libc "musl"
-          yarn install
+          # yarn config set supportedArchitectures.libc "musl"
+          npm install
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
