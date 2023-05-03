@@ -113,7 +113,7 @@ jobs:
             npm link
           working-directory: ./bindings/wasm
         - name: Install dependencies
-          run: npm ci && npm link @iota/identity-wasm
+          run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
         - name: Setup node x86
           uses: actions/setup-node@v3
           if: matrix.settings.target == 'i686-pc-windows-msvc'
