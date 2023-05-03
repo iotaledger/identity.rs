@@ -45,26 +45,26 @@ jobs:
             - host: macos-latest
               target: x86_64-apple-darwin
               build: |
-                npm build
+                npm run build
                 strip -x *.node
             - host: windows-latest
-              build: npm build
+              build: npm run build
               target: x86_64-pc-windows-msvc
             - host: ubuntu-latest
               target: x86_64-unknown-linux-gnu
               docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
               build: |-
                 set -e &&
-                npm build --target x86_64-unknown-linux-gnu &&
+                npm run build --target x86_64-unknown-linux-gnu &&
                 strip *.node
             - host: ubuntu-latest
               target: x86_64-unknown-linux-musl
               docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-              build: set -e && npm build && strip *.node
+              build: set -e && npm run build && strip *.node
             - host: macos-latest
               target: aarch64-apple-darwin
               build: |
-                npm build --target aarch64-apple-darwin
+                npm run build --target aarch64-apple-darwin
                 strip -x *.node
       name: stable - ${{ matrix.settings.target }} - node@18
       runs-on: ${{ matrix.settings.host }}
