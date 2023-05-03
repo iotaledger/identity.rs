@@ -138,7 +138,7 @@ jobs:
           uses: actions/upload-artifact@v3
           with:
             name: bindings-${{ matrix.settings.target }}
-            path: ${{ env.WORKING_DIRECTORY }}/${{ env.APP_NAME }}/dist/*.node
+            path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
             if-no-files-found: error
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
