@@ -179,8 +179,18 @@ jobs:
           check-latest: true
           cache: npm
           cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ inputs.input-artifact-name }}
+          path: bindings/wasm
+      - name: Prepare Wasm bindings link
+        run: |
+          npm ci
+          npm link
+        working-directory: ./bindings/wasm
       - name: Install dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
@@ -221,8 +231,18 @@ jobs:
           check-latest: true
           cache: npm
           cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ inputs.input-artifact-name }}
+          path: bindings/wasm
+      - name: Prepare Wasm bindings link
+        run: |
+          npm ci
+          npm link
+        working-directory: ./bindings/wasm
       - name: Install dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
@@ -263,10 +283,20 @@ jobs:
           check-latest: true
           cache: npm
           cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ inputs.input-artifact-name }}
+          path: bindings/wasm
+      - name: Prepare Wasm bindings link
+        run: |
+          npm ci
+          npm link
+        working-directory: ./bindings/wasm
       - name: Install dependencies
         run: |
           # yarn config set supportedArchitectures.libc "musl"
-          npm install
+          npm ci --legacy-peer-deps && npm link @iota/identity-wasm
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
