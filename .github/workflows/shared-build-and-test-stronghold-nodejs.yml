@@ -140,7 +140,7 @@ jobs:
             path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
             if-no-files-found: error
             retention-days: 1
-        # Optionally uploads js / ts dist artifact for later release. Since js is cross-platform it only needs to be uploaded from one matrix target.
+        # Uploads js / ts dist artifact for test and later release. Since js is cross-platform it only needs to be uploaded from one matrix target.
         - name: Upload dist artifact
           if: ${{matrix.settings.generate-dist}}
           uses: actions/upload-artifact@v3
@@ -166,7 +166,6 @@ jobs:
           - host: windows-latest
             target: x86_64-pc-windows-msvc
         node:
-          - '14'
           - '16'
           - '18'
     runs-on: ${{ matrix.settings.host }}
@@ -186,9 +185,9 @@ jobs:
           path: bindings/wasm
       - name: Prepare Wasm bindings link
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm link
-        working-directory: ./bindings/wasm
+        working-directory: bindings/wasm
       - name: Install dependencies
         run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
       - name: Download binary artifacts
@@ -218,7 +217,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - '14'
           - '16'
           - '18'
     runs-on: ubuntu-latest
@@ -238,9 +236,9 @@ jobs:
           path: bindings/wasm
       - name: Prepare Wasm bindings link
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm link
-        working-directory: ./bindings/wasm
+        working-directory: bindings/wasm
       - name: Install dependencies
         run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
       - name: Download binary artifacts
@@ -270,7 +268,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - '14'
           - '16'
           - '18'
     runs-on: ubuntu-latest
@@ -290,9 +287,9 @@ jobs:
           path: bindings/wasm
       - name: Prepare Wasm bindings link
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm link
-        working-directory: ./bindings/wasm
+        working-directory: bindings/wasm
       - name: Install dependencies
         run: |
           # yarn config set supportedArchitectures.libc "musl"
