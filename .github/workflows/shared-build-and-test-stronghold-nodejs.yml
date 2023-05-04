@@ -136,7 +136,7 @@ jobs:
         - name: Upload binary artifact
           uses: actions/upload-artifact@v3
           with:
-            name: bindings-${{ matrix.settings.target }}
+            name: ${{ inputs.output-artifact-name }}
             path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
             if-no-files-found: error
             retention-days: 1
@@ -145,7 +145,7 @@ jobs:
           if: ${{matrix.settings.generate-dist}}
           uses: actions/upload-artifact@v3
           with:
-            name: ${{ inputs.output-artifact-name }}
+            name: ${{ inputs.output-artifact-name }}-dist
             path: |
               ${{ env.WORKING_DIRECTORY }}/dist/
               !${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
@@ -195,12 +195,12 @@ jobs:
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
-          name: bindings-${{ matrix.settings.target }}
+          name: ${{ inputs.output-artifact-name }}
           path: ${{ env.WORKING_DIRECTORY }}/dist
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: ${{ inputs.output-artifact-name }}
+          name: ${{ inputs.output-artifact-name }}-dist
           path: ${{ env.WORKING_DIRECTORY }}/dist
       - name: List packages
         run: ls -R .
@@ -248,12 +248,12 @@ jobs:
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
-          name: bindings-x86_64-unknown-linux-gnu
+          name: ${{ inputs.output-artifact-name }}
           path: ${{ env.WORKING_DIRECTORY }}/dist
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: ${{ inputs.output-artifact-name }}
+          name: ${{ inputs.output-artifact-name }}-dist
           path: ${{ env.WORKING_DIRECTORY }}/dist
       - name: List packages
         run: ls -R .
@@ -302,12 +302,12 @@ jobs:
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
-          name: bindings-x86_64-unknown-linux-musl
+          name: ${{ inputs.output-artifact-name }}
           path: ${{ env.WORKING_DIRECTORY }}/dist
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: ${{ inputs.output-artifact-name }}
+          name: ${{ inputs.output-artifact-name }}-dist
           path: ${{ env.WORKING_DIRECTORY }}/dist
       - name: List packages
         run: ls -R .
