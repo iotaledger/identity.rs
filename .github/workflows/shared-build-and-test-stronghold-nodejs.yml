@@ -189,7 +189,9 @@ jobs:
           npm link
         working-directory: bindings/wasm
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
+        run: |
+          npm ci --legacy-peer-deps
+          npm link @iota/identity-wasm
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
@@ -240,7 +242,9 @@ jobs:
           npm link
         working-directory: bindings/wasm
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
+        run: |
+          npm ci --legacy-peer-deps
+          npm link @iota/identity-wasm
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
@@ -255,7 +259,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim npm test
+        run: docker run --rm -v ${{github.workspace}}:/build -w /build/${{ env.WORKING_DIRECTORY }} node:${{ matrix.node }}-slim npm test
 
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
@@ -293,7 +297,8 @@ jobs:
       - name: Install dependencies
         run: |
           # yarn config set supportedArchitectures.libc "musl"
-          npm ci --legacy-peer-deps && npm link @iota/identity-wasm
+          npm ci --legacy-peer-deps
+          npm link @iota/identity-wasm
       - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
@@ -308,5 +313,5 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine npm test
+        run: docker run --rm -v ${{github.workspace}}:/build -w /build/${{ env.WORKING_DIRECTORY }} node:${{ matrix.node }}-alpine npm test
   
