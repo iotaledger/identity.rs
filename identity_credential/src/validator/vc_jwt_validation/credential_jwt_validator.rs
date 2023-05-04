@@ -378,7 +378,7 @@ impl CredentialValidator {
 
   /// Checks whether the credential status has been revoked.
   ///
-  /// Only supports `BitmapRevocation2022`.
+  /// Only supports `RevocationBitmap2022`.
   #[cfg(feature = "revocation-bitmap")]
   pub fn check_status<DOC: AsRef<CoreDocument>, T>(
     credential: &Credential<T>,
