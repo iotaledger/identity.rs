@@ -16,11 +16,6 @@ on:
         description: "Name used for the input Wasm build artifact"
         required: true
         type: string
-      upload-binaries-as-artifacts:
-        description: "Should binaries for each platform be uploaded as artifacts (used for publishing)"
-        required: false
-        type: boolean
-        default: false
       output-artifact-name:
         description: "Name used for the output build artifact. Must be set if `upload-binaries-as-artifacts` is true"
         required: false
@@ -52,6 +47,7 @@ jobs:
               target: x86_64-pc-windows-msvc
             - host: ubuntu-latest
               target: x86_64-unknown-linux-gnu
+              generate-dist: true
               docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
               build: |-
                 set -e &&
@@ -134,12 +130,28 @@ jobs:
           run: ${{ matrix.settings.build }}
           if: ${{ !matrix.settings.docker }}
           shell: bash
+        - name: List packages
+          run: ls -R .
+          shell: bash
         - name: Upload artifact
           uses: actions/upload-artifact@v3
           with:
             name: bindings-${{ matrix.settings.target }}
             path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
             if-no-files-found: error
+            retention-days: 1
+        # Optionally uploads js / ts dist artifact for later release. Since js is cross-platform it only needs to be uploaded from one matrix target.
+        - name: Upload dist artifact
+          if: ${{matrix.settings.generate-dist}}
+          uses: actions/upload-artifact@v3
+          with:
+            name: ${{ inputs.output-artifact-name }}
+            path: |
+              ${{ env.WORKING_DIRECTORY }}/dist/
+              !${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
+            if-no-files-found: error
+            retention-days: 1
+
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
     needs:
@@ -169,16 +181,22 @@ jobs:
           cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
       - name: Install dependencies
         run: npm install
-      - name: Download artifacts
+      - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
           name: bindings-${{ matrix.settings.target }}
+          path: ${{ env.WORKING_DIRECTORY }}
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}
           path: ${{ env.WORKING_DIRECTORY }}
       - name: List packages
         run: ls -R .
         shell: bash
       - name: Test bindings
         run: npm test
+        
   test-linux-x64-gnu-binding:
     name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
     needs:
@@ -205,16 +223,22 @@ jobs:
           cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
       - name: Install dependencies
         run: npm install
-      - name: Download artifacts
+      - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
           name: bindings-x86_64-unknown-linux-gnu
+          path: ${{ env.WORKING_DIRECTORY }}
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}
           path: ${{ env.WORKING_DIRECTORY }}
       - name: List packages
         run: ls -R .
         shell: bash
       - name: Test bindings
         run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim npm test
+
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
     needs:
@@ -243,14 +267,19 @@ jobs:
         run: |
           # yarn config set supportedArchitectures.libc "musl"
           npm install
-      - name: Download artifacts
+      - name: Download binary artifacts
         uses: actions/download-artifact@v3
         with:
           name: bindings-x86_64-unknown-linux-musl
+          path: ${{ env.WORKING_DIRECTORY }}
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}
           path: ${{ env.WORKING_DIRECTORY }}
       - name: List packages
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine yarn test
+        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine npm test
   

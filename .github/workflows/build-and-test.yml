@@ -231,3 +231,4 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@feat/napi-bootstrap
     with:
       input-artifact-name: identity-wasm-bindings-build
+      output-artifact-name: identity-stronghold-nodejs-bindings-build
