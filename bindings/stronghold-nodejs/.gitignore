@@ -195,3 +195,5 @@ Cargo.lock
 !.yarn/versions
 
 napi-dist
+npm
+artifacts

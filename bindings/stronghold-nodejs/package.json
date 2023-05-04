@@ -39,6 +39,7 @@
     "build:ts": "rollup -c --failAfterWarnings",
     "build:napi": "napi build --platform --release --js napi.js --dts napi.d.ts napi-dist",
     "build:debug": "napi build --platform",
+    "create-npm-dir": "napi create-npm-dir --target ./ ",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
     "universal": "napi universal",
