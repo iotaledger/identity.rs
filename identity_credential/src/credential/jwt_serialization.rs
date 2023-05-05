@@ -60,8 +60,7 @@ where
 
 impl<'credential, T> CredentialJwtClaims<'credential, T>
 where
-  T: ToOwned + Serialize,
-  <T as ToOwned>::Owned: DeserializeOwned,
+  T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
   /// Checks whether the fields that are set in the `vc` object are consistent with the corresponding values
   /// set for the registered claims.
@@ -119,7 +118,7 @@ where
   ///
   /// # Errors
   /// Errors if either timestamp conversion or [`Self::check_consistency`] fails.
-  pub(crate) fn try_into_credential(self) -> Result<Credential<T::Owned>> {
+  pub(crate) fn try_into_credential(self) -> Result<Credential<T>> {
     self.check_consistency()?;
 
     let Self {

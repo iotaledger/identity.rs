@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
@@ -160,7 +161,7 @@ async fn signing_credential() {
   // Verify the credential
   let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
   assert!(validator
-    .validate(
+    .validate::<_, Object>(
       &jws,
       &document,
       &CredentialValidationOptions::default(),

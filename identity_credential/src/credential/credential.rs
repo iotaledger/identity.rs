@@ -19,7 +19,6 @@ use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
 use identity_verification::MethodUriType;
 use identity_verification::TryMethod;
-use serde::de::DeserializeOwned;
 
 use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
@@ -165,8 +164,7 @@ impl<T> Credential<T> {
   /// The resulting string can be used as the payload of a JWS when issuing the credential.  
   pub fn serialize_jwt(&self) -> Result<String>
   where
-    T: ToOwned + Serialize,
-    <T as ToOwned>::Owned: DeserializeOwned,
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
   {
     let jwt_representation: CredentialJwtClaims<'_, T> = CredentialJwtClaims::new(self)?;
     jwt_representation

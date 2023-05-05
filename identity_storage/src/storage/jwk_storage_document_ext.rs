@@ -86,8 +86,7 @@ pub trait JwkStorageDocumentExt: private::Sealed {
   where
     K: JwkStorage,
     I: KeyIdStorage,
-    T: ToOwned + Serialize + Sync,
-    <T as ToOwned>::Owned: DeserializeOwned;
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
 }
 
 mod private {
@@ -375,8 +374,7 @@ impl JwkStorageDocumentExt for CoreDocument {
   where
     K: JwkStorage,
     I: KeyIdStorage,
-    T: ToOwned + Serialize + Sync,
-    <T as ToOwned>::Owned: DeserializeOwned,
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
   {
     let payload = credential.serialize_jwt().map_err(Error::ClaimsSerializationError)?;
     self.sign_bytes(storage, fragment, payload.as_bytes(), options).await
@@ -466,8 +464,7 @@ mod iota_document {
     where
       K: JwkStorage,
       I: KeyIdStorage,
-      T: ToOwned + Serialize + Sync,
-      <T as ToOwned>::Owned: DeserializeOwned,
+      T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
     {
       self
         .core_document()

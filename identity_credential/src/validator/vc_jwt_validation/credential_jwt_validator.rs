@@ -70,18 +70,18 @@ where
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  // TODO: Consider making this more generic so it returns CredentialToken<T>
-  pub fn validate<DOC>(
+  pub fn validate<DOC, T>(
     &self,
     credential_jws: &str,
     issuer: &DOC,
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
-  ) -> Result<CredentialToken, CompoundCredentialValidationError>
+  ) -> Result<CredentialToken<T>, CompoundCredentialValidationError>
   where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
-    Self::validate_extended::<CoreDocument, V>(
+    Self::validate_extended::<CoreDocument, V, T>(
       &self.0,
       credential_jws,
       std::slice::from_ref(issuer.as_ref()),
@@ -107,14 +107,14 @@ where
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-  // TODO: Consider making this more generic so it returns CredentialToken<T>
-  pub fn verify_signature<DOC>(
+  pub fn verify_signature<DOC, T>(
     &self,
     credential: &str,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
-  ) -> Result<CredentialToken, ValidationError>
+  ) -> Result<CredentialToken<T>, ValidationError>
   where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
     Self::verify_signature_with_verifier(&self.0, credential, trusted_issuers, options)
@@ -123,15 +123,16 @@ where
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relationship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<DOC, S>(
+  pub(crate) fn validate_extended<DOC, S, T>(
     signature_verifier: &S,
     credential: &str,
     issuers: &[DOC],
     options: &CredentialValidationOptions,
     relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,
-  ) -> Result<CredentialToken, CompoundCredentialValidationError>
+  ) -> Result<CredentialToken<T>, CompoundCredentialValidationError>
   where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     S: JwsSignatureVerifier,
     DOC: AsRef<CoreDocument>,
   {
@@ -144,7 +145,7 @@ where
           validation_errors: [err].into(),
         })?;
 
-    let credential: &Credential = &credential_token.credential;
+    let credential: &Credential<T> = &credential_token.credential;
     // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
 
     let expiry_date_validation = std::iter::once_with(|| {
@@ -194,13 +195,14 @@ where
   }
 
   /// Stateless version of [`Self::verify_signature`]
-  fn verify_signature_with_verifier<DOC, S>(
+  fn verify_signature_with_verifier<DOC, S, T>(
     signature_verifier: &S,
     credential: &str,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
-  ) -> Result<CredentialToken, ValidationError>
+  ) -> Result<CredentialToken<T>, ValidationError>
   where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
     S: JwsSignatureVerifier,
   {
@@ -279,11 +281,14 @@ where
   }
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
-  fn verify_decoded_signature<S: JwsSignatureVerifier>(
+  fn verify_decoded_signature<S: JwsSignatureVerifier, T>(
     decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,
-  ) -> Result<CredentialToken, ValidationError> {
+  ) -> Result<CredentialToken<T>, ValidationError>
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+  {
     // Verify the JWS signature and obtain the decoded token containing the protected header and raw claims
     let Token { protected, claims, .. } =
       decoded
@@ -294,11 +299,12 @@ where
         })?;
 
     // Deserialize the raw claims
-    let credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
-      ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    })?;
+    let credential_claims: CredentialJwtClaims<'_, T> =
+      CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
+        ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+      })?;
     // Construct the credential token containing the credential and the protected header.
-    let credential: Credential = credential_claims
+    let credential: Credential<T> = credential_claims
       .try_into_credential()
       .map_err(ValidationError::CredentialStructure)?;
 
