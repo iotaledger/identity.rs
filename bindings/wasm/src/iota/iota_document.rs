@@ -39,12 +39,12 @@ use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
 use crate::common::PromiseOptionString;
-use crate::common::PromiseString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
+use crate::credential::WasmJws;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
@@ -792,7 +792,7 @@ impl WasmIotaDocument {
     fragment: String,
     payload: String,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
@@ -803,6 +803,7 @@ impl WasmIotaDocument {
         .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
+        .map(|jws| WasmJws(jws))
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -822,7 +823,7 @@ impl WasmIotaDocument {
     fragment: String,
     credential: &WasmCredential,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
@@ -834,6 +835,7 @@ impl WasmIotaDocument {
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
+        .map(|jws| WasmJws(jws))
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -861,6 +863,9 @@ extern "C" {
   // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
   #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
   pub type INodeInfoProtocol;
+
+  #[wasm_bindgen(typescript_type = "Promise<Jws>")]
+  pub type PromiseJws;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

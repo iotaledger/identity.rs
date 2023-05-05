@@ -17,6 +17,7 @@ use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::credential::WasmCredential;
+use crate::credential::WasmJws;
 use crate::crypto::WasmProofOptions;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
@@ -691,6 +692,7 @@ impl WasmCoreDocument {
         .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
+        .map(|jws| WasmJws(jws))
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -722,6 +724,7 @@ impl WasmCoreDocument {
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
+        .map(|jws| WasmJws(jws))
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())

@@ -13,7 +13,7 @@ use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmStatusCheck;
 use crate::credential::WasmCredential;
-use crate::credential::WasmCredentialToken;
+use crate::credential::WasmDecodedJwtCredential;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmSubjectHolderRelationship;
 use crate::did::ArrayIToCoreDocument;
@@ -74,7 +74,7 @@ impl WasmJwtCredentialValidator {
     issuer: &IToCoreDocument,
     options: &WasmJwtCredentialValidationOptions,
     fail_fast: WasmFailFast,
-  ) -> Result<WasmCredentialToken> {
+  ) -> Result<WasmDecodedJwtCredential> {
     let issuer_lock = ImportedDocumentLock::from(issuer);
     let issuer_guard = issuer_lock.blocking_read();
 
@@ -82,7 +82,7 @@ impl WasmJwtCredentialValidator {
       .0
       .validate(credential_jws, &issuer_guard, &options.0, fail_fast.into())
       .wasm_result()
-      .map(WasmCredentialToken)
+      .map(WasmDecodedJwtCredential)
   }
 
   /// Decode and verify the JWS signature of a `Credential` issued as a JWS using the DID Document of a trusted
@@ -108,7 +108,7 @@ impl WasmJwtCredentialValidator {
     credential: &str,
     trustedIssuers: &ArrayIToCoreDocument,
     options: &WasmJwsVerificationOptions,
-  ) -> Result<WasmCredentialToken> {
+  ) -> Result<WasmDecodedJwtCredential> {
     let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
     let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
       issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
@@ -116,7 +116,7 @@ impl WasmJwtCredentialValidator {
       .0
       .verify_signature(credential, &trusted_issuers, &options.0)
       .wasm_result()
-      .map(WasmCredentialToken)
+      .map(WasmDecodedJwtCredential)
   }
 
   /// Validate that the credential expires on or after the specified timestamp.
