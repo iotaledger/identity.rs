@@ -457,7 +457,7 @@ impl CoreDocument {
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method(&mut self, did: &DIDUrl) -> Option<VerificationMethod> {
-    self.remove_method_get_scope(did).map(|(method, _scope)| method)
+    self.remove_method_and_scope(did).map(|(method, _scope)| method)
   }
 
   /// Removes and returns the [`VerificationMethod`] from the document. The [`MethodScope`] under which the method was
@@ -467,7 +467,7 @@ impl CoreDocument {
   ///
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
-  pub fn remove_method_get_scope(&mut self, did: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+  pub fn remove_method_and_scope(&mut self, did: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
     for (method_ref, scope) in [
       self.data.authentication.remove(did).map(|method_ref| {
         (
