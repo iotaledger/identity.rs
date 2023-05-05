@@ -123,7 +123,7 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   let recovered_claims = encode_then_decode()?;
-  println!("{:#?}", recovered_claims);
+  println!("{recovered_claims:#?}");
   Ok(())
 }
 

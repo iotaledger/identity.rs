@@ -234,7 +234,7 @@ impl VerificationMethod {
       if given_fragment.starts_with('#') {
         Cow::Borrowed(given_fragment)
       } else {
-        Cow::Owned(format!("#{}", given_fragment))
+        Cow::Owned(format!("#{given_fragment}"))
       }
     };
 
