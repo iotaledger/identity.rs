@@ -10,9 +10,9 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   /// Caused by errors from the [identity_core] crate.
-  #[error("unspecified failure")]
+  #[error("core error")]
   CoreError(#[from] ::identity_core::Error),
-  #[error("unspecified failure")]
+  #[error("did error")]
   InvalidDID(#[from] identity_did::Error),
 
   #[error("verification method not found")]
