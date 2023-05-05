@@ -134,16 +134,6 @@ export class JwkMemStore implements JwkStorage {
         return keyId;
     }
 
-    public async public(keyId: string): Promise<Jwk> {
-        const jwk = this._keys.get(keyId);
-
-        if (jwk) {
-            return jwk.toPublic();
-        } else {
-            throw new Error("key not found");
-        }
-    }
-
     public async delete(keyId: string): Promise<void> {
         this._keys.delete(keyId);
     }
