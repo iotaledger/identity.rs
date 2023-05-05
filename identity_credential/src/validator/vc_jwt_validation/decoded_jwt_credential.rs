@@ -8,7 +8,7 @@ use identity_verification::jose::jws::JwsHeader;
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the credential itself.
 #[non_exhaustive]
-pub struct CredentialToken<T = Object> {
+pub struct DecodedJwtCredential<T = Object> {
   /// The decoded credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
   pub credential: Credential<T>,
   /// The protected header parsed from the JWS.

@@ -20,8 +20,8 @@ use identity_verification::jws::JwsValidationItem;
 use identity_verification::jws::Token;
 
 use super::CompoundCredentialValidationError;
-use super::CredentialToken;
 use super::CredentialValidationOptions;
+use super::DecodedJwtCredential;
 use super::SignerContext;
 use super::ValidationError;
 use crate::credential::Credential;
@@ -76,7 +76,7 @@ where
     issuer: &DOC,
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
-  ) -> Result<CredentialToken<T>, CompoundCredentialValidationError>
+  ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
@@ -112,7 +112,7 @@ where
     credential: &str,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
-  ) -> Result<CredentialToken<T>, ValidationError>
+  ) -> Result<DecodedJwtCredential<T>, ValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
@@ -130,7 +130,7 @@ where
     options: &CredentialValidationOptions,
     relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,
-  ) -> Result<CredentialToken<T>, CompoundCredentialValidationError>
+  ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     S: JwsSignatureVerifier,
@@ -200,7 +200,7 @@ where
     credential: &str,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
-  ) -> Result<CredentialToken<T>, ValidationError>
+  ) -> Result<DecodedJwtCredential<T>, ValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
@@ -285,7 +285,7 @@ where
     decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,
-  ) -> Result<CredentialToken<T>, ValidationError>
+  ) -> Result<DecodedJwtCredential<T>, ValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
   {
@@ -308,7 +308,7 @@ where
       .try_into_credential()
       .map_err(ValidationError::CredentialStructure)?;
 
-    Ok(CredentialToken {
+    Ok(DecodedJwtCredential {
       credential,
       header: Box::new(protected),
     })
