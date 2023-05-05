@@ -620,7 +620,6 @@ impl WasmCoreDocument {
 
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
   /// public key material into this document. The `kid` of the generated Jwk is returned if it is set.
-  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage` API.
   #[wasm_bindgen(js_name = generateMethod)]
   pub fn generate_method(
     &self,

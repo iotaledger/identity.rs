@@ -58,7 +58,6 @@ const JWS_SIGNATURE_VERIFIER: &'static str = r#"
  * 
  * Implementers are expected to provide a procedure for step 8 of [RFC 7515 section 5.2](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) for 
  * the JWS signature algorithms they want to support.
- * 
 */
 interface IJwsSignatureVerifier {
   /** Validate the `decodedSignature` against the `signingInput` in the manner defined by `alg` using the `publicKey`.

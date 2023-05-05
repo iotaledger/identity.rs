@@ -7,7 +7,7 @@ use crate::common::PromiseUint8Array;
 use crate::common::PromiseVoid;
 use crate::error::JsValueResult;
 use crate::jose::WasmJwk;
-// use crate::jose::WasmJwsAlgorithm;
+
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
 use identity_iota::storage::key_storage::KeyId;
