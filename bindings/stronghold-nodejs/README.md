@@ -14,10 +14,7 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 
 Replace imports with local paths for txm:
 !test program
-cat \
-| sed -e "s#require('@iota/identity-wasm/node')#require('../wasm/node/identity_wasm.js')#" \
-| sed -e "s#require('@iota/identity-stronghold-nodejs')#require('./dist/index.js')#" \
-| node
+sed -e "s#require('@iota/identity-stronghold-nodejs')#require('./dist/index.js')#" && node
 -->
 <!-- !test check Nodejs Example -->
 ```javascript
