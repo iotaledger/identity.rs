@@ -45,6 +45,7 @@ use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
+use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
@@ -786,7 +787,7 @@ impl WasmIotaDocument {
   // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
   // as the payload type?
   #[wasm_bindgen(js_name = createJwt)]
-  pub fn create_jwt(
+  pub fn create_jws(
     &self,
     storage: &WasmStorage,
     fragment: String,
@@ -835,7 +836,7 @@ impl WasmIotaDocument {
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
-        .map(|jws| WasmJws(jws))
+        .map(|jwt| WasmJwt(jwt))
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -866,6 +867,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Promise<Jws>")]
   pub type PromiseJws;
+
+  #[wasm_bindgen(typescript_type = "Promise<Jwt>")]
+  pub type PromiseJwt;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

@@ -17,6 +17,7 @@ use super::JwsSignatureOptions;
 use async_trait::async_trait;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
+use identity_credential::credential::Jwt;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_verification::jose::jws::CompactJwsEncoder;
@@ -82,7 +83,7 @@ pub trait JwkStorageDocumentExt: private::Sealed {
     storage: &Storage<K, I>,
     fragment: &str,
     options: &JwsSignatureOptions,
-  ) -> StorageResult<Jws>
+  ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
     I: KeyIdStorage,
@@ -370,14 +371,17 @@ impl JwkStorageDocumentExt for CoreDocument {
     storage: &Storage<K, I>,
     fragment: &str,
     options: &JwsSignatureOptions,
-  ) -> StorageResult<Jws>
+  ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
   {
     let payload = credential.serialize_jwt().map_err(Error::ClaimsSerializationError)?;
-    self.sign_bytes(storage, fragment, payload.as_bytes(), options).await
+    self
+      .sign_bytes(storage, fragment, payload.as_bytes(), options)
+      .await
+      .map(|jws| Jwt::new(jws.to_string()))
   }
 }
 
@@ -407,6 +411,7 @@ where
 #[cfg(feature = "iota-document")]
 mod iota_document {
   use super::*;
+  use identity_credential::credential::Jwt;
   use identity_iota_core::IotaDocument;
   generate_method_for_document_type!(IotaDocument, generate_method_iota_document);
   purge_method_for_document_type!(IotaDocument, purge_method_iota_document);
@@ -460,7 +465,7 @@ mod iota_document {
       storage: &Storage<K, I>,
       fragment: &str,
       options: &JwsSignatureOptions,
-    ) -> StorageResult<Jws>
+    ) -> StorageResult<Jwt>
     where
       K: JwkStorage,
       I: KeyIdStorage,
