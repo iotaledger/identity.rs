@@ -43,7 +43,6 @@ fn test_encoder_decoder_roundtrip() {
   let signing_input: &[u8] = encoder.signing_input();
   let signature = secret_key.sign(signing_input).to_bytes();
   let jws = encoder.into_jws(&signature);
-  //let token: String = ed25519::encode(&encoder, &claims_bytes, secret_key).await;
 
   let verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
     if input.alg != JwsAlgorithm::EdDSA {

@@ -371,7 +371,6 @@ impl IotaDocument {
     signature_verifier: &T,
     options: &JwsVerificationOptions,
   ) -> Result<Token<'jws>> {
-    // TODO: Consider flattening the error somewhat as it is not ideal to just forward the error from identity_document.
     self
       .core_document()
       .verify_jws(jws, detached_payload, signature_verifier, options)

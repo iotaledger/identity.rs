@@ -35,7 +35,6 @@ pub type StorageResult<T> = Result<T, Error>;
 pub trait JwkStorageDocumentExt: private::Sealed {
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
   /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
-  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage`.
   async fn generate_method<K, I>(
     &mut self,
     storage: &Storage<K, I>,
@@ -171,7 +170,7 @@ macro_rules! purge_method_for_document_type {
       K: JwkStorage,
       I: KeyIdStorage,
     {
-      let (method, scope) = document.remove_method_get_scope(id).ok_or(Error::MethodNotFound)?;
+      let (method, scope) = document.remove_method_and_scope(id).ok_or(Error::MethodNotFound)?;
 
       // Obtain method digest and handle error if this operation fails.
       let method_digest: MethodDigest = match MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError) {
@@ -209,7 +208,7 @@ macro_rules! purge_method_for_document_type {
           // JwkStorage::insert is called.
           Err(Error::UndoOperationFailed {
             message: format!(
-              "cannot undo key deletion. This results in a stray key id stored under packed method digest: {:?}",
+              "cannot undo key deletion: this results in a stray key id stored under packed method digest: {:?}",
               &method_digest.pack()
             ),
             source: Box::new(Error::KeyIdStorageError(key_id_deletion_error)),
@@ -224,7 +223,7 @@ macro_rules! purge_method_for_document_type {
               .map_err(Error::KeyIdStorageError)
           {
             Err(Error::UndoOperationFailed {
-              message: format!("cannot revert key id deletion. This results in stray key with key id: {key_id}"),
+              message: format!("cannot revert key id deletion: this results in stray key with key id: {key_id}"),
               source: Box::new(Error::KeyStorageError(key_deletion_error)),
               undo_error: Some(Box::new(key_id_insertion_error)),
             })
