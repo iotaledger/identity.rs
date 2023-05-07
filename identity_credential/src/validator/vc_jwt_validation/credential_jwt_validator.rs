@@ -26,6 +26,7 @@ use super::SignerContext;
 use super::ValidationError;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
+use crate::credential::Jwt;
 use crate::validator::FailFast;
 use crate::validator::SubjectHolderRelationship;
 
@@ -47,7 +48,7 @@ where
     Self(signature_verifier)
   }
 
-  /// Decodes and validates a [`Credential`] issued as a JWS. A [`CredentialToken`] is returned upon success.
+  /// Decodes and validates a [`Credential`] issued as a JWt. A [`CredentialToken`] is returned upon success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -72,7 +73,7 @@ where
   /// An error is returned whenever a validated condition is not satisfied.
   pub fn validate<DOC, T>(
     &self,
-    credential_jws: &str,
+    credential_jwt: &Jwt,
     issuer: &DOC,
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
@@ -83,7 +84,7 @@ where
   {
     Self::validate_extended::<CoreDocument, V, T>(
       &self.0,
-      credential_jws,
+      credential_jwt,
       std::slice::from_ref(issuer.as_ref()),
       options,
       None,
@@ -91,10 +92,10 @@ where
     )
   }
 
-  /// Decode and verify the JWS signature of a [`Credential`] issued as a JWS using the DID Document of a trusted
+  /// Decode and verify the JWS signature of a [`Credential`] issued as a JWT using the DID Document of a trusted
   /// issuer.
   ///
-  /// A [`CredentialToken`] is returned upon success.
+  /// A [`DecodedJwtCredential`] is returned upon success.
   ///
   /// # Warning
   /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
@@ -109,7 +110,7 @@ where
   /// to verify the credential's signature will be made and an error is returned upon failure.
   pub fn verify_signature<DOC, T>(
     &self,
-    credential: &str,
+    credential: &Jwt,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
   ) -> Result<DecodedJwtCredential<T>, ValidationError>
@@ -125,7 +126,7 @@ where
   // `relationship_criterion` is Some.
   pub(crate) fn validate_extended<DOC, S, T>(
     signature_verifier: &S,
-    credential: &str,
+    credential: &Jwt,
     issuers: &[DOC],
     options: &CredentialValidationOptions,
     relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
@@ -197,7 +198,7 @@ where
   /// Stateless version of [`Self::verify_signature`]
   fn verify_signature_with_verifier<DOC, S, T>(
     signature_verifier: &S,
-    credential: &str,
+    credential: &Jwt,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
   ) -> Result<DecodedJwtCredential<T>, ValidationError>
@@ -211,7 +212,7 @@ where
     // that process for potentially every document in `trusted_issuers`.
 
     // Start decoding the credential
-    let decoded: JwsValidationItem<'_> = Self::decode(credential, options.crits.as_deref())?;
+    let decoded: JwsValidationItem<'_> = Self::decode(credential.as_string(), options.crits.as_deref())?;
 
     // Parse the `kid` to a DID Url which should be the identifier of a verification method in a trusted issuer's DID
     // document TODO: Consider factoring this section into a private method that the (future) PresentationValidator

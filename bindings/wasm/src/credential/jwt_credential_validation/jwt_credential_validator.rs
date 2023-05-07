@@ -15,6 +15,7 @@ use crate::credential::validation_options::WasmStatusCheck;
 use crate::credential::WasmCredential;
 use crate::credential::WasmDecodedJwtCredential;
 use crate::credential::WasmFailFast;
+use crate::credential::WasmJwt;
 use crate::credential::WasmSubjectHolderRelationship;
 use crate::did::ArrayIToCoreDocument;
 use crate::did::IToCoreDocument;
@@ -70,7 +71,7 @@ impl WasmJwtCredentialValidator {
   #[wasm_bindgen]
   pub fn validate(
     &self,
-    credential_jws: &str,
+    credential_jwt: &WasmJwt,
     issuer: &IToCoreDocument,
     options: &WasmJwtCredentialValidationOptions,
     fail_fast: WasmFailFast,
@@ -80,12 +81,12 @@ impl WasmJwtCredentialValidator {
 
     self
       .0
-      .validate(credential_jws, &issuer_guard, &options.0, fail_fast.into())
+      .validate(&credential_jwt.0, &issuer_guard, &options.0, fail_fast.into())
       .wasm_result()
       .map(WasmDecodedJwtCredential)
   }
 
-  /// Decode and verify the JWS signature of a `Credential` issued as a JWS using the DID Document of a trusted
+  /// Decode and verify the JWS signature of a `Credential` issued as a JWT using the DID Document of a trusted
   /// issuer.
   ///
   /// A `CredentialToken` is returned upon success.
@@ -105,7 +106,7 @@ impl WasmJwtCredentialValidator {
   #[allow(non_snake_case)]
   pub fn verify_signature(
     &self,
-    credential: &str,
+    credential: &WasmJwt,
     trustedIssuers: &ArrayIToCoreDocument,
     options: &WasmJwsVerificationOptions,
   ) -> Result<WasmDecodedJwtCredential> {
@@ -114,7 +115,7 @@ impl WasmJwtCredentialValidator {
       issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     self
       .0
-      .verify_signature(credential, &trusted_issuers, &options.0)
+      .verify_signature(&credential.0, &trusted_issuers, &options.0)
       .wasm_result()
       .map(WasmDecodedJwtCredential)
   }

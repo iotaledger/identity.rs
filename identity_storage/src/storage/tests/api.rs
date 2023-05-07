@@ -105,7 +105,7 @@ async fn signing_bytes() {
 
   assert!(document
     .verify_jws(
-      &jws,
+      jws.as_string(),
       None,
       &EdDSAJwsSignatureVerifier::default(),
       &JwsVerificationOptions::default()

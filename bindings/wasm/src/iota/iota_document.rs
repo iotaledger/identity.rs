@@ -49,6 +49,8 @@ use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
+use crate::did::PromiseJws;
+use crate::did::PromiseJwt;
 use crate::did::WasmCoreDocument;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmJwsVerificationOptions;
@@ -444,7 +446,7 @@ impl WasmIotaDocument {
   #[allow(non_snake_case)]
   pub fn verify_jws(
     &self,
-    jws: &str,
+    jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
     signatureVerifier: Option<IJwsSignatureVerifier>,
     detachedPayload: Option<String>,
@@ -454,7 +456,7 @@ impl WasmIotaDocument {
       .0
       .blocking_read()
       .verify_jws(
-        jws,
+        &jws.0,
         detachedPayload.as_deref().map(|detached| detached.as_bytes()),
         &jws_verifier,
         &options.0,
@@ -824,7 +826,7 @@ impl WasmIotaDocument {
     fragment: String,
     credential: &WasmCredential,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseJws> {
+  ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
@@ -864,12 +866,6 @@ extern "C" {
   // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
   #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
   pub type INodeInfoProtocol;
-
-  #[wasm_bindgen(typescript_type = "Promise<Jws>")]
-  pub type PromiseJws;
-
-  #[wasm_bindgen(typescript_type = "Promise<Jwt>")]
-  pub type PromiseJwt;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
