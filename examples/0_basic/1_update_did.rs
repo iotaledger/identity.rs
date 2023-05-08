@@ -21,11 +21,11 @@ use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::verification::MethodRelationship;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::AliasOutputBuilder;
 
 /// Demonstrates how to update a DID document in an existing Alias Output.
 #[tokio::main]

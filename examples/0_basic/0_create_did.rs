@@ -11,11 +11,11 @@ use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::output::AliasOutput;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///

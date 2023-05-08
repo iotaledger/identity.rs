@@ -15,17 +15,25 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 async-trait = { version = "0.1.56", default-features = false, optional = true }
 futures = { version = "0.3" }
 identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = ["validator"] }
+identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = [
+  "validator",
+] }
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
-iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls"], optional = true }
-iota-types = { version = "1.0.0-rc.6", default-features = false, features = ["block", "std"], optional = true }
+iota-types = { version = "1.0.0-rc.6", default-features = false, features = [
+  "block",
+  "std",
+], optional = true }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.4", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
+iota-sdk = { version = "0.3.0", default-features = true, features = [
+  "tls",
+  "client",
+], optional = true }
 
 serde.workspace = true
 strum.workspace = true
@@ -33,9 +41,15 @@ thiserror.workspace = true
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
-iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
+iota-crypto = { version = "0.12.1", default-features = false, features = [
+  "bip39",
+  "bip39-en",
+] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.17.0", default-features = false, features = [
+  "rt-multi-thread",
+  "macros",
+] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -48,7 +62,7 @@ default = ["client", "iota-client", "revocation-bitmap", "send-sync-client-ext"]
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["dep:async-trait", "dep:iota-types"]
 # Enables the iota-client dependency, the client trait implementations for it, and the `IotaClientExt` trait.
-iota-client = ["dep:iota-client", "client"]
+iota-client = ["dep:iota-sdk", "client"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_credential/revocation-bitmap"]
 # Adds Send bounds on the futures produces by the client extension traits.

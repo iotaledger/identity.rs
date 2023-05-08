@@ -7,6 +7,8 @@ use anyhow::Context;
 
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
+use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::block::output::Output;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
@@ -14,13 +16,11 @@ use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
 
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::Output;
-use iota_client::crypto::keys::bip39;
-use iota_client::node_api::indexer::query_parameters::QueryParameter;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::crypto::keys::bip39;
+use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
 use rand::distributions::DistString;
 
 pub static API_ENDPOINT: &str = "http://localhost:14265";
@@ -91,13 +91,13 @@ pub async fn get_address_with_funds(
 pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<Address> {
   let keypair = KeyPair::new(KeyType::Ed25519)?;
   let mnemonic =
-    iota_client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
+    iota_sdk::client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
       .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
 
   if let SecretManager::Stronghold(ref mut stronghold) = secret_manager {
     match stronghold.store_mnemonic(mnemonic).await {
       Ok(()) => (),
-      Err(iota_client::Error::StrongholdMnemonicAlreadyStored) => (),
+      Err(iota_sdk::client::stronghold::Error::MnemonicAlreadyStored) => (),
       Err(err) => anyhow::bail!(err),
     }
   } else {
@@ -118,7 +118,7 @@ async fn request_faucet_funds(
 ) -> anyhow::Result<()> {
   let address_bech32 = address.to_bech32(network_hrp);
 
-  iota_client::request_funds_from_faucet(faucet_endpoint, &address_bech32).await?;
+  iota_sdk::client::request_funds_from_faucet(faucet_endpoint, &address_bech32).await?;
 
   tokio::time::timeout(std::time::Duration::from_secs(45), async {
     loop {
@@ -150,7 +150,7 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
     ])
     .await?;
 
-  let outputs_responses = client.get_outputs(output_ids).await?;
+  let outputs_responses = client.get_outputs(output_ids.items).await?;
 
   let mut total_amount = 0;
   for output_response in outputs_responses {

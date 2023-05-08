@@ -10,10 +10,10 @@ use identity_iota::iota::block::address::Address;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::prelude::Resolver;
-use iota_client::block::output::AliasOutput;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::output::AliasOutput;
 
 /// Demonstrates how to resolve an existing DID in an Alias Output.
 #[tokio::main]

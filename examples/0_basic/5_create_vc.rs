@@ -9,10 +9,10 @@
 //!
 //! cargo run --example 5_create_vc
 
-use iota_client::block::address::Address;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
 
 use examples::create_did;
 use examples::random_stronghold_path;

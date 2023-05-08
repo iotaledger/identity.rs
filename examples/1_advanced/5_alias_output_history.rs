@@ -21,20 +21,20 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClient;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::verification::MethodRelationship;
-use iota_client::block::input::Input;
-use iota_client::block::output::dto::OutputMetadataDto;
-use iota_client::block::output::AliasId;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::block::output::Output;
-use iota_client::block::output::OutputId;
-use iota_client::block::payload::transaction::TransactionEssence;
-use iota_client::block::payload::Payload;
-use iota_client::block::Block;
-use iota_client::block::BlockId;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::input::Input;
+use iota_sdk::types::block::output::dto::OutputMetadataDto;
+use iota_sdk::types::block::output::AliasId;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::AliasOutputBuilder;
+use iota_sdk::types::block::output::Output;
+use iota_sdk::types::block::output::OutputId;
+use iota_sdk::types::block::payload::transaction::TransactionEssence;
+use iota_sdk::types::block::payload::Payload;
+use iota_sdk::types::block::Block;
+use iota_sdk::types::block::BlockId;
 
 /// Demonstrates how to obtain the alias output history.
 #[tokio::main]

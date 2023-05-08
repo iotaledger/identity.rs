@@ -1,11 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::api::input_selection::Burn;
-use iota_client::block::output::dto::OutputDto;
-use iota_client::block::protocol::ProtocolParameters;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::api::input_selection::Burn;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::output::dto::OutputDto;
+use iota_sdk::types::block::protocol::ProtocolParameters;
 
 use crate::block::address::Address;
 use crate::block::output::unlock_condition::AddressUnlockCondition;
@@ -83,7 +83,6 @@ impl IotaClientExt for Client {
     let (output_id, alias_output) = self.get_alias_output(alias_id).await?;
 
     let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())
-      .map_err(Error::BasicOutputBuildError)?
       .with_native_tokens(alias_output.native_tokens().clone())
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
       .finish_output(self.get_token_supply().await.map_err(Error::TokenSupplyError)?)
@@ -151,7 +150,7 @@ async fn publish_output(
   client: &Client,
   secret_manager: &SecretManager,
   alias_output: AliasOutput,
-) -> iota_client::Result<Block> {
+) -> iota_sdk::client::error::Result<Block> {
   let block: Block = client
     .block()
     .with_secret_manager(secret_manager)

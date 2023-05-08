@@ -64,7 +64,7 @@ identity_iota = { version = "0.7.0-alpha" }
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Build the repository with `cargo build `
+2. Build the repository with `cargo build`
 3. Run your first example using `cargo run --example getting_started`
 
 ## Example: Creating an Identity
@@ -82,7 +82,7 @@ edition = "2021"
 
 [dependencies]
 identity_iota = { version = "0.7.0-alpha" }
-iota-client = { version = "2.0.1-rc", default-features = false, features = ["tls", "stronghold"] }
+iota-sdk = { version = "0.3.0", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -98,12 +98,12 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::verification::VerificationMethod;
 use identity_iota::iota::NetworkName;
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::crypto::keys::bip39;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::client::crypto::keys::bip39;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.

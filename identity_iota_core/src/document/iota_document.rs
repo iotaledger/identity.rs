@@ -820,7 +820,6 @@ mod tests {
       .parse()
       .unwrap();
     let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&did))
-      .unwrap()
       .add_unlock_condition(UnlockCondition::StateControllerAddress(
         StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&controller_did)))),
       ))

@@ -17,15 +17,15 @@ use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_client::block::address::Address;
-use iota_client::block::address::AliasAddress;
-use iota_client::block::output::feature::IssuerFeature;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::block::output::RentStructure;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::address::AliasAddress;
+use iota_sdk::types::block::output::feature::IssuerFeature;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::AliasOutputBuilder;
+use iota_sdk::types::block::output::RentStructure;
 
 /// Demonstrates how an identity can control another identity.
 ///
@@ -72,7 +72,9 @@ async fn main() -> anyhow::Result<()> {
     // Optionally, we can mark the company as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as a resolver can
     // verify that the subsidiary DID was created by the parent company.
-    .add_immutable_feature(IssuerFeature::new(AliasAddress::new(AliasId::from(&company_did)).into()).into())
+    .add_immutable_feature(IssuerFeature::new(
+      AliasAddress::new(AliasId::from(&company_did)).into(),
+    ))
     // Adding the issuer feature means we have to recalculate the required storage deposit.
     .with_minimum_storage_deposit(rent_structure.clone())
     .finish(client.get_token_supply().await?)?;
