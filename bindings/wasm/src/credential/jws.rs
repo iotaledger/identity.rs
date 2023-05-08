@@ -10,15 +10,18 @@ pub struct WasmJws(pub(crate) Jws);
 
 #[wasm_bindgen(js_class = Jws)]
 impl WasmJws {
+  pub(crate) fn new(jws: Jws) -> Self {
+    WasmJws(jws)
+  }
   /// Creates a new `Jws`.
   #[wasm_bindgen(constructor)]
-  pub fn new(jws_string: String) -> Self {
+  pub fn constructor(jws_string: String) -> Self {
     Self(Jws::new(jws_string))
   }
 
   /// Returns a clone of the JWS string.
   #[wasm_bindgen(js_name = toString)]
-  pub fn to_string(&self) -> String {
+  pub fn to_string_clone(&self) -> String {
     self.0.as_string().clone()
   }
 }

@@ -10,15 +10,18 @@ pub struct WasmJwt(pub(crate) Jwt);
 
 #[wasm_bindgen(js_class = Jwt)]
 impl WasmJwt {
+  pub(crate) fn new(jwt: Jwt) -> Self {
+    WasmJwt(jwt)
+  }
   /// Creates a new `Jwt`.
   #[wasm_bindgen(constructor)]
-  pub fn new(jwt_string: String) -> Self {
+  pub fn constructor(jwt_string: String) -> Self {
     Self(Jwt::new(jwt_string))
   }
 
   /// Returns a clone of the JWT string.
   #[wasm_bindgen(js_name = toString)]
-  pub fn to_string(&self) -> String {
+  pub fn to_string_clone(&self) -> String {
     self.0.as_string().clone()
   }
 }

@@ -806,7 +806,7 @@ impl WasmIotaDocument {
         .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
-        .map(|jws| WasmJws(jws))
+        .map(WasmJws::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -838,7 +838,7 @@ impl WasmIotaDocument {
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
-        .map(|jwt| WasmJwt(jwt))
+        .map(WasmJwt::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
