@@ -16,8 +16,5 @@ serde.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 
-[features]
-diff = ["identity_core/diff", "identity_did/diff", "identity_jose/diff"]
-
 [dev-dependencies]
 serde_json.workspace = true

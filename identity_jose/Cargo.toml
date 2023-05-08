@@ -24,8 +24,6 @@ zeroize = { version = "1.5.7", default-features = false, features = ["std", "zer
 [features]
 # Enables jws verification based on the EdDSA algorithm.
 eddsa = ["iota-crypto/ed25519"]
-# Enables Diff implementation for Jwk
-diff = ["identity_core/diff"]
 default = ["eddsa"]
 
 [dev-dependencies]
