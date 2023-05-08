@@ -22,6 +22,10 @@ It does not imply anything about a potentially present proof property on the cre
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
+<dt><a href="#DecodedJws">DecodedJws</a></dt>
+<dd><p>A cryptographically verified decoded token from a JWS.</p>
+<p>Contains the decoded headers and the raw claims.</p>
+</dd>
 <dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
 <dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
 It can be placed in an origin&#39;s <code>.well-known</code> directory to prove linkage between the origin and a DID.
@@ -132,10 +136,6 @@ working with storage backed DID documents.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
-<dt><a href="#Token">Token</a></dt>
-<dd><p>A cryptographically verified decoded token from a JWS.</p>
-<p>Contains the decoded headers and the raw claims.</p>
-</dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd><p>A DID Document Verification Method.</p>
 </dd>
@@ -443,7 +443,7 @@ A method-agnostic DID Document.
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
+        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
@@ -729,7 +729,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="CoreDocument+verifyJws"></a>
 
-### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>Token</code>](#Token)
+### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -1463,6 +1463,14 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="DecodedJws"></a>
+
+## DecodedJws
+A cryptographically verified decoded token from a JWS.
+
+Contains the decoded headers and the raw claims.
+
+**Kind**: global class  
 <a name="DomainLinkageConfiguration"></a>
 
 ## DomainLinkageConfiguration
@@ -1977,7 +1985,7 @@ Deserializes an instance from a JSON object.
         * [.signPresentation(presentation, privateKey, methodQuery, options)](#IotaDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
+        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
         * [.metadata()](#IotaDocument+metadata) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
@@ -2256,7 +2264,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="IotaDocument+verifyJws"></a>
 
-### iotaDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>Token</code>](#Token)
+### iotaDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -5114,57 +5122,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Token"></a>
-
-## Token
-A cryptographically verified decoded token from a JWS.
-
-Contains the decoded headers and the raw claims.
-
-**Kind**: global class  
-
-* [Token](#Token)
-    * [.claims()](#Token+claims) ⇒ <code>string</code>
-    * [.claimsBytes()](#Token+claimsBytes) ⇒ <code>Uint8Array</code>
-    * [.protectedHeader()](#Token+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
-    * [.clone()](#Token+clone) ⇒ [<code>Token</code>](#Token)
-    * [.toJSON()](#Token+toJSON) ⇒ <code>any</code>
-
-<a name="Token+claims"></a>
-
-### token.claims() ⇒ <code>string</code>
-Returns a copy of the parsed claims represented as a string.
-
-# Errors
-An error is thrown if the claims cannot be represented as a string.
-
-This error can only occur if the Token was decoded from a detached payload.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+claimsBytes"></a>
-
-### token.claimsBytes() ⇒ <code>Uint8Array</code>
-Return a copy of the parsed claims represented as an array of bytes.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+protectedHeader"></a>
-
-### token.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
-Returns a copy of the protected header.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+clone"></a>
-
-### token.clone() ⇒ [<code>Token</code>](#Token)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+toJSON"></a>
-
-### token.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod

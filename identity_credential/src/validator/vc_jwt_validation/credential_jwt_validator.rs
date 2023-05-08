@@ -13,11 +13,11 @@ use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jwk::Jwk;
+use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::EdDSAJwsSignatureVerifier;
 use identity_verification::jws::JwsSignatureVerifier;
 use identity_verification::jws::JwsValidationItem;
-use identity_verification::jws::Token;
 
 use super::CompoundCredentialValidationError;
 use super::CredentialValidationOptions;
@@ -291,7 +291,7 @@ where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
   {
     // Verify the JWS signature and obtain the decoded token containing the protected header and raw claims
-    let Token { protected, claims, .. } =
+    let DecodedJws { protected, claims, .. } =
       decoded
         .verify(signature_verifier, public_key)
         .map_err(|err| ValidationError::Signature {

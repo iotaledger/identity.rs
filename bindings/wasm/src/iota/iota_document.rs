@@ -62,8 +62,8 @@ use crate::iota::identity_client_ext::IAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
+use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
-use crate::jose::WasmToken;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
@@ -450,7 +450,7 @@ impl WasmIotaDocument {
     options: &WasmJwsVerificationOptions,
     signatureVerifier: Option<IJwsSignatureVerifier>,
     detachedPayload: Option<String>,
-  ) -> Result<WasmToken> {
+  ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
     self
       .0
@@ -461,7 +461,7 @@ impl WasmIotaDocument {
         &jws_verifier,
         &options.0,
       )
-      .map(WasmToken::from)
+      .map(WasmDecodedJws::from)
       .wasm_result()
   }
 

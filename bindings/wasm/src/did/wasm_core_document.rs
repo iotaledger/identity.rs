@@ -24,8 +24,8 @@ use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
-use crate::jose::WasmToken;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
@@ -493,7 +493,7 @@ impl WasmCoreDocument {
     options: &WasmJwsVerificationOptions,
     signatureVerifier: Option<IJwsSignatureVerifier>,
     detachedPayload: Option<String>,
-  ) -> Result<WasmToken> {
+  ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
     self
       .0
@@ -504,7 +504,7 @@ impl WasmCoreDocument {
         &jws_verifier,
         &options.0,
       )
-      .map(WasmToken::from)
+      .map(WasmDecodedJws::from)
       .wasm_result()
   }
 

@@ -4,16 +4,16 @@
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::jose::WasmJwsHeader;
-use identity_iota::verification::jws::Token;
+use identity_iota::verification::jws::DecodedJws;
 use wasm_bindgen::prelude::*;
 
 /// A cryptographically verified decoded token from a JWS.
 ///
 /// Contains the decoded headers and the raw claims.
-#[wasm_bindgen(js_name = Token, inspectable)]
+#[wasm_bindgen(js_name = DecodedJws, inspectable)]
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct WasmToken {
+pub struct WasmDecodedJws {
   // We don't include the unprotected header for now as the bindings only support the compact JWS serialization format
   // for now.
   pub(crate) protected_header: WasmJwsHeader,
@@ -21,7 +21,7 @@ pub struct WasmToken {
 }
 
 #[wasm_bindgen(js_class = Token)]
-impl WasmToken {
+impl WasmDecodedJws {
   /// Returns a copy of the parsed claims represented as a string.
   ///
   /// # Errors
@@ -47,7 +47,7 @@ impl WasmToken {
 
   /// Deep clones the object.
   #[wasm_bindgen(js_name = clone)]
-  pub fn deep_clone(&self) -> WasmToken {
+  pub fn deep_clone(&self) -> WasmDecodedJws {
     self.clone()
   }
 
@@ -58,9 +58,9 @@ impl WasmToken {
   }
 }
 
-impl<'a> From<Token<'a>> for WasmToken {
-  fn from(token: Token<'a>) -> Self {
-    let Token { protected, claims, .. } = token;
+impl<'a> From<DecodedJws<'a>> for WasmDecodedJws {
+  fn from(decoded_jws: DecodedJws<'a>) -> Self {
+    let DecodedJws { protected, claims, .. } = decoded_jws;
     Self {
       protected_header: WasmJwsHeader(protected),
       claims: claims.into(),

@@ -9,8 +9,8 @@ use identity_credential::credential::Jws;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_document::verifiable::JwsVerificationOptions;
+use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::JwsSignatureVerifier;
-use identity_verification::jose::jws::Token;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -371,7 +371,7 @@ impl IotaDocument {
     detached_payload: Option<&'jws [u8]>,
     signature_verifier: &T,
     options: &JwsVerificationOptions,
-  ) -> Result<Token<'jws>> {
+  ) -> Result<DecodedJws<'jws>> {
     self
       .core_document()
       .verify_jws(jws.as_string(), detached_payload, signature_verifier, options)
