@@ -381,7 +381,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     self
       .sign_bytes(storage, fragment, payload.as_bytes(), options)
       .await
-      .map(|jws| Jwt::new(jws.to_string()))
+      .map(|jws| Jwt::new(jws.into()))
   }
 }
 

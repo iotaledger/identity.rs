@@ -10,18 +10,19 @@ impl Jwt {
     Self(jwt_string)
   }
 
-  /// Returns a clone of the JWT string.
-  pub fn to_string(&self) -> String {
-    self.0.clone()
-  }
-
-  /// Converts `Jwt` into a string.
-  pub fn into_string(self) -> String {
-    self.0
-  }
-
   /// Returns a reference of the JWT string.
   pub fn as_string(&self) -> &String {
     &self.0
+  }
+}
+
+impl From<String> for Jwt {
+  fn from(jwt: String) -> Self {
+    Self::new(jwt)
+  }
+}
+impl From<Jwt> for String {
+  fn from(jwt: Jwt) -> Self {
+    jwt.0
   }
 }

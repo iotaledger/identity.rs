@@ -10,18 +10,19 @@ impl Jws {
     Self(jwt_string)
   }
 
-  /// Returns a clone of the JWS string.
-  pub fn to_string(&self) -> String {
-    self.0.clone()
-  }
-
-  /// Converts `Jws` into a string.
-  pub fn into_string(self) -> String {
-    self.0
-  }
-
   /// Returns a reference of the JWS string.
   pub fn as_string(&self) -> &String {
     &self.0
+  }
+}
+
+impl From<String> for Jws {
+  fn from(jws: String) -> Self {
+    Self::new(jws)
+  }
+}
+impl From<Jws> for String {
+  fn from(jws: Jws) -> Self {
+    jws.0
   }
 }
