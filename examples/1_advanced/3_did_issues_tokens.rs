@@ -95,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create the Foundry Output.
   let carbon_credits_foundry: FoundryOutput =
-    FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone(), 1, token_scheme)
+    FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, 1, token_scheme)
       // Initially, all carbon credits are owned by the foundry.
       .add_native_token(NativeToken::new(TokenId::from(foundry_id), U256::from(500_000u32))?)
       // The authority is set as the immutable owner.

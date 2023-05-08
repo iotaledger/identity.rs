@@ -175,7 +175,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     self
       .get_protocol_parameters()
       .await
-      .map(|parameters| parameters.rent_structure().clone())
+      .map(|parameters| *parameters.rent_structure())
   }
 
   /// Gets the token supply of the node we're connecting to.

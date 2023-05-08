@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure: RentStructure = client.get_rent_structure().await?;
 
   // Create the car NFT with an Ed25519 address as the unlock condition.
-  let car_nft: NftOutput = NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone(), NftId::null())
+  let car_nft: NftOutput = NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
     .finish(client.get_token_supply().await?)?;
 

@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
     .new_did_output(
       Address::Alias(AliasAddress::new(AliasId::from(&company_did))),
       subsidiary_document,
-      Some(rent_structure.clone()),
+      Some(rent_structure),
     )
     .await?;
 
@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
       AliasAddress::new(AliasId::from(&company_did)).into(),
     ))
     // Adding the issuer feature means we have to recalculate the required storage deposit.
-    .with_minimum_storage_deposit(rent_structure.clone())
+    .with_minimum_storage_deposit(rent_structure)
     .finish(client.get_token_supply().await?)?;
 
   // Publish the subsidiary's DID.
@@ -101,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
   // and increase the storage deposit.
   let subsidiary_alias: AliasOutput = client.update_did_output(subsidiary_document).await?;
   let subsidiary_alias: AliasOutput = AliasOutputBuilder::from(&subsidiary_alias)
-    .with_minimum_storage_deposit(rent_structure.clone())
+    .with_minimum_storage_deposit(rent_structure)
     .finish(client.get_token_supply().await?)?;
 
   // Publish the updated subsidiary's DID.

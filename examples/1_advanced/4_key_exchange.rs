@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Publish the DID.
     let alice_output: AliasOutput = client
-      .new_did_output(address, alice_document, Some(rent_structure.clone()))
+      .new_did_output(address, alice_document, Some(rent_structure))
       .await?;
     let alice_document: IotaDocument = client.publish_did_output(&secret_manager, alice_output).await?;
 
