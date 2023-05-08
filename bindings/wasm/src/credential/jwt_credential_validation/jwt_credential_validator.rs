@@ -45,7 +45,7 @@ impl WasmJwtCredentialValidator {
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Decodes and validates a `Credential` issued as a JWS. A `CredentialToken` is returned upon success.
+  /// Decodes and validates a `Credential` issued as a JWS. A `DecodedJwtCredential` is returned upon success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -89,7 +89,7 @@ impl WasmJwtCredentialValidator {
   /// Decode and verify the JWS signature of a `Credential` issued as a JWT using the DID Document of a trusted
   /// issuer.
   ///
-  /// A `CredentialToken` is returned upon success.
+  /// A `DecodedJwtCredential` is returned upon success.
   ///
   /// # Warning
   /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.

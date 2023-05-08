@@ -9,11 +9,6 @@
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
-<dt><a href="#CredentialToken">CredentialToken</a></dt>
-<dd><p>A cryptographically verified and decoded Credential.</p>
-<p>Note that having an instance of this type only means the JWS it was constructed from was verified.
-It does not imply anything about a potentially present proof property on the credential itself.</p>
-</dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
 <dd><p>Options to declare validation criteria when validating credentials.</p>
 </dd>
@@ -25,6 +20,11 @@ It does not imply anything about a potentially present proof property on the cre
 <dt><a href="#DecodedJws">DecodedJws</a></dt>
 <dd><p>A cryptographically verified decoded token from a JWS.</p>
 <p>Contains the decoded headers and the raw claims.</p>
+</dd>
+<dt><a href="#DecodedJwtCredential">DecodedJwtCredential</a></dt>
+<dd><p>A cryptographically verified and decoded Credential.</p>
+<p>Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the credential itself.</p>
 </dd>
 <dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
 <dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
@@ -1069,42 +1069,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="CredentialToken"></a>
-
-## CredentialToken
-A cryptographically verified and decoded Credential.
-
-Note that having an instance of this type only means the JWS it was constructed from was verified.
-It does not imply anything about a potentially present proof property on the credential itself.
-
-**Kind**: global class  
-
-* [CredentialToken](#CredentialToken)
-    * [.credential()](#CredentialToken+credential) ⇒ [<code>Credential</code>](#Credential)
-    * [.protectedHeader()](#CredentialToken+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
-    * [.intoCredential()](#CredentialToken+intoCredential) ⇒ [<code>Credential</code>](#Credential)
-
-<a name="CredentialToken+credential"></a>
-
-### credentialToken.credential() ⇒ [<code>Credential</code>](#Credential)
-Returns a copy of the credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
-
-**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
-<a name="CredentialToken+protectedHeader"></a>
-
-### credentialToken.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
-Returns a copy of the protected header parsed from the decoded JWS.
-
-**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
-<a name="CredentialToken+intoCredential"></a>
-
-### credentialToken.intoCredential() ⇒ [<code>Credential</code>](#Credential)
-Consumes the object and returns the decoded credential.
-
-### Warning
-This destroys the `DecodedCredential` object.
-
-**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
 <a name="CredentialValidationOptions"></a>
 
 ## CredentialValidationOptions
@@ -1471,6 +1435,85 @@ A cryptographically verified decoded token from a JWS.
 Contains the decoded headers and the raw claims.
 
 **Kind**: global class  
+
+* [DecodedJws](#DecodedJws)
+    * [.claims()](#DecodedJws+claims) ⇒ <code>string</code>
+    * [.claimsBytes()](#DecodedJws+claimsBytes) ⇒ <code>Uint8Array</code>
+    * [.protectedHeader()](#DecodedJws+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.clone()](#DecodedJws+clone) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+    * [.toJSON()](#DecodedJws+toJSON) ⇒ <code>any</code>
+
+<a name="DecodedJws+claims"></a>
+
+### decodedJws.claims() ⇒ <code>string</code>
+Returns a copy of the parsed claims represented as a string.
+
+# Errors
+An error is thrown if the claims cannot be represented as a string.
+
+This error can only occur if the Token was decoded from a detached payload.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+claimsBytes"></a>
+
+### decodedJws.claimsBytes() ⇒ <code>Uint8Array</code>
+Return a copy of the parsed claims represented as an array of bytes.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+protectedHeader"></a>
+
+### decodedJws.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+clone"></a>
+
+### decodedJws.clone() ⇒ [<code>DecodedJws</code>](#DecodedJws)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+toJSON"></a>
+
+### decodedJws.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJwtCredential"></a>
+
+## DecodedJwtCredential
+A cryptographically verified and decoded Credential.
+
+Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the credential itself.
+
+**Kind**: global class  
+
+* [DecodedJwtCredential](#DecodedJwtCredential)
+    * [.credential()](#DecodedJwtCredential+credential) ⇒ [<code>Credential</code>](#Credential)
+    * [.protectedHeader()](#DecodedJwtCredential+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.intoCredential()](#DecodedJwtCredential+intoCredential) ⇒ [<code>Credential</code>](#Credential)
+
+<a name="DecodedJwtCredential+credential"></a>
+
+### decodedJwtCredential.credential() ⇒ [<code>Credential</code>](#Credential)
+Returns a copy of the credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
+
+**Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
+<a name="DecodedJwtCredential+protectedHeader"></a>
+
+### decodedJwtCredential.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header parsed from the decoded JWS.
+
+**Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
+<a name="DecodedJwtCredential+intoCredential"></a>
+
+### decodedJwtCredential.intoCredential() ⇒ [<code>Credential</code>](#Credential)
+Consumes the object and returns the decoded credential.
+
+### Warning
+This destroys the `DecodedCredential` object.
+
+**Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
 <a name="DomainLinkageConfiguration"></a>
 
 ## DomainLinkageConfiguration
@@ -3650,8 +3693,8 @@ A type for decoding and validating `Credentials`.
 * [JwtCredentialValidator](#JwtCredentialValidator)
     * [new JwtCredentialValidator(signature_verifier)](#new_JwtCredentialValidator_new)
     * _instance_
-        * [.validate(credential_jwt, issuer, options, fail_fast)](#JwtCredentialValidator+validate) ⇒ [<code>CredentialToken</code>](#CredentialToken)
-        * [.verifySignature(credential, trustedIssuers, options)](#JwtCredentialValidator+verifySignature) ⇒ [<code>CredentialToken</code>](#CredentialToken)
+        * [.validate(credential_jwt, issuer, options, fail_fast)](#JwtCredentialValidator+validate) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+        * [.verifySignature(credential, trustedIssuers, options)](#JwtCredentialValidator+verifySignature) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
     * _static_
         * [.checkExpiresOnOrAfter(credential, timestamp)](#JwtCredentialValidator.checkExpiresOnOrAfter)
         * [.checkIssuedOnOrBefore(credential, timestamp)](#JwtCredentialValidator.checkIssuedOnOrBefore)
@@ -3673,8 +3716,8 @@ algorithm will be used.
 
 <a name="JwtCredentialValidator+validate"></a>
 
-### jwtCredentialValidator.validate(credential_jwt, issuer, options, fail_fast) ⇒ [<code>CredentialToken</code>](#CredentialToken)
-Decodes and validates a `Credential` issued as a JWS. A `CredentialToken` is returned upon success.
+### jwtCredentialValidator.validate(credential_jwt, issuer, options, fail_fast) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+Decodes and validates a `Credential` issued as a JWS. A `DecodedJwtCredential` is returned upon success.
 
 The following properties are validated according to `options`:
 - the issuer's signature on the JWS,
@@ -3709,11 +3752,11 @@ An error is returned whenever a validated condition is not satisfied.
 
 <a name="JwtCredentialValidator+verifySignature"></a>
 
-### jwtCredentialValidator.verifySignature(credential, trustedIssuers, options) ⇒ [<code>CredentialToken</code>](#CredentialToken)
+### jwtCredentialValidator.verifySignature(credential, trustedIssuers, options) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
 Decode and verify the JWS signature of a `Credential` issued as a JWT using the DID Document of a trusted
 issuer.
 
-A `CredentialToken` is returned upon success.
+A `DecodedJwtCredential` is returned upon success.
 
 # Warning
 The caller must ensure that the DID Documents of the trusted issuers are up-to-date.

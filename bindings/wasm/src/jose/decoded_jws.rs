@@ -20,7 +20,7 @@ pub struct WasmDecodedJws {
   pub(crate) claims: Vec<u8>,
 }
 
-#[wasm_bindgen(js_class = Token)]
+#[wasm_bindgen(js_class = DecodedJws)]
 impl WasmDecodedJws {
   /// Returns a copy of the parsed claims represented as a string.
   ///

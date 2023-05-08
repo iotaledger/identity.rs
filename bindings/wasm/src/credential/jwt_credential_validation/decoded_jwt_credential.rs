@@ -11,10 +11,10 @@ use crate::jose::WasmJwsHeader;
 ///
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the credential itself.
-#[wasm_bindgen(js_name = CredentialToken)]
+#[wasm_bindgen(js_name = DecodedJwtCredential)]
 pub struct WasmDecodedJwtCredential(pub(crate) DecodedJwtCredential);
 
-#[wasm_bindgen(js_class = CredentialToken)]
+#[wasm_bindgen(js_class = DecodedJwtCredential)]
 impl WasmDecodedJwtCredential {
   /// Returns a copy of the credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
   #[wasm_bindgen]
