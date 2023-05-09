@@ -313,7 +313,10 @@ impl JwkStorageDocumentExt for CoreDocument {
       };
 
       if let Some(b64) = options.b64 {
-        header.set_b64(b64)
+        // Follow recommendation in https://datatracker.ietf.org/doc/html/rfc7797#section-7.
+        if !b64 {
+          header.set_b64(b64)
+        }
       };
 
       if let Some(typ) = &options.typ {
@@ -375,6 +378,19 @@ impl JwkStorageDocumentExt for CoreDocument {
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
   {
+    if options.detached_payload {
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use detached payload for credential signing",
+      )));
+    }
+
+    if !options.b64.unwrap_or(true) {
+      // JWTs should not have `b64` set per https://datatracker.ietf.org/doc/html/rfc7797#section-7.
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use `b64 = false` with JWTs",
+      )));
+    }
+
     let payload = credential.serialize_jwt().map_err(Error::ClaimsSerializationError)?;
     self.sign_bytes(storage, fragment, payload.as_bytes(), options).await
   }

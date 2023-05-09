@@ -65,9 +65,17 @@ impl JwsSignatureOptions {
   }
 
   /// Replace the value of the `b64` field.
+  ///
+  /// Setting this to `false` will also add `"b64"` to the `crit` parameters, while
+  /// setting `true` will omit the parameter from the header and the string from the `crit` parameters,
+  /// as recommended in <https://datatracker.ietf.org/doc/html/rfc7797#section-7>.
   pub fn b64(mut self, value: bool) -> Self {
     self.b64 = Some(value);
-    self
+    if !value {
+      self.add_crit("b64".to_owned())
+    } else {
+      self
+    }
   }
 
   /// Replace the value of the `typ` field.
