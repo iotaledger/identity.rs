@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
   let mut resolver: Resolver<Document> = Resolver::new();
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish().await?;
 
   // This is a convenience method for attaching a handler for the "iota" method by providing just a client.
   resolver.attach_iota_handler(client.clone());

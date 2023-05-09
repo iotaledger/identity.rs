@@ -43,7 +43,10 @@ async fn main() -> anyhow::Result<()> {
   // ==============================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
@@ -99,11 +102,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Fetch the NFT Output.
   let nft_output_id: OutputId = client.nft_output_id(nft_id).await?;
-  let output_dto: OutputDto = client
-    .get_output(&nft_output_id)
-    .await
-    .map(|response| response.output)?;
-  let output: Output = Output::try_from_dto(&output_dto, client.get_token_supply().await?)?;
+  let output: Output = client.get_output(&nft_output_id).await?.into_output();
 
   // Extract the issuer of the NFT.
   let nft_output: NftOutput = if let Output::Nft(nft_output) = output {

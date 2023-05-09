@@ -125,11 +125,14 @@ impl IotaIdentityClient for Client {
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {
     let output_id: OutputId = self.alias_output_id(id).await.map_err(Error::DIDResolutionError)?;
-    let output: OutputWithMetadata = self.get_output(&output_id).await.map_err(Error::DIDResolutionError)?;
+    let output: Output = self
+      .get_output(&output_id)
+      .await
+      .map_err(Error::DIDResolutionError)?
+      .into_output();
 
-    if let Output::Alias(alias_output) = output.output() {
-      // TODO: Avoid clone when there is a conversion path from OutputWithMetadata to Output.
-      Ok((output_id, alias_output.clone()))
+    if let Output::Alias(alias_output) = output {
+      Ok((output_id, alias_output))
     } else {
       Err(Error::NotAnAliasOutput(output_id))
     }

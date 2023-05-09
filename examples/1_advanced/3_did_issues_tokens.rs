@@ -53,7 +53,10 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
@@ -121,11 +124,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Get the latest output that contains the foundry.
   let foundry_output_id: OutputId = client.foundry_output_id(carbon_credits_foundry_id).await?;
-  let carbon_credits_foundry: OutputDto = client
-    .get_output(&foundry_output_id)
-    .await
-    .map(|response| response.output)?;
-  let carbon_credits_foundry: Output = Output::try_from_dto(&carbon_credits_foundry, client.get_token_supply().await?)?;
+  let carbon_credits_foundry: Output = client.get_output(&foundry_output_id).await?.into_output();
 
   let carbon_credits_foundry: FoundryOutput = if let Output::Foundry(foundry_output) = carbon_credits_foundry {
     foundry_output

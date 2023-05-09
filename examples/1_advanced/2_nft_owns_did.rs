@@ -16,7 +16,6 @@ use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::types::block::address::Address;
-use iota_sdk::types::block::output::dto::OutputDto;
 use iota_sdk::types::block::output::unlock_condition::AddressUnlockCondition;
 use iota_sdk::types::block::output::NftId;
 use iota_sdk::types::block::output::NftOutput;
@@ -41,7 +40,10 @@ async fn main() -> anyhow::Result<()> {
   // =============================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
@@ -117,8 +119,7 @@ async fn main() -> anyhow::Result<()> {
   // Retrieve the NFT Output of the car.
   let car_nft_id: &NftId = car_nft_address.nft_id();
   let output_id: OutputId = client.nft_output_id(*car_nft_id).await?;
-  let output_dto: OutputDto = client.get_output(&output_id).await.map(|response| response.output)?;
-  let output: Output = Output::try_from_dto(&output_dto, client.get_token_supply().await?)?;
+  let output: Output = client.get_output(&output_id).await?.into_output();
 
   let car_nft: NftOutput = if let Output::Nft(nft_output) = output {
     nft_output

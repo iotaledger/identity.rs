@@ -33,7 +33,10 @@ async fn main() -> anyhow::Result<()> {
   let faucet_endpoint: &str = "http://127.0.0.1:8091/api/enqueue";
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(api_endpoint, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(api_endpoint, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(

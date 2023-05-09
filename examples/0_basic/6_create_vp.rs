@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish().await?;
 
   // Create an identity for the issuer with one verification method `key-1`.
   let mut secret_manager_issuer: SecretManager = SecretManager::Stronghold(

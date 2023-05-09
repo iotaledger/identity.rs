@@ -31,7 +31,7 @@ thiserror.workspace = true
 
 [dependencies.iota-sdk]
 git = "https://github.com/iotaledger/iota-sdk"
-rev = "2c9b75d039d8e53442232af75c135b7dd1c5871b"
+rev = "e654876fb847a410f42e0313fe746665e948ea5d"
 default-features = false
 features = [
   "tls",

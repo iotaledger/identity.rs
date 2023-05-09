@@ -15,7 +15,7 @@ members = [
   "identity_resolver",
   "identity_verification",
   "identity_jose",
-  # "examples",
+  "examples",
 ]
 
 exclude = [

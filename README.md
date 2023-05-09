@@ -100,7 +100,7 @@ use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
-use iota_sdk::client::crypto::keys::bip39;
+use iota_sdk::crypto::keys::bip39;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -113,7 +113,7 @@ static API_ENDPOINT: &str = "http://127.0.0.1:14265";
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish().await?;
 
   // Create a new Stronghold.
   let mut stronghold = StrongholdSecretManager::builder()
