@@ -366,8 +366,6 @@ impl IotaDocument {
 
 #[cfg(feature = "client")]
 mod client_document {
-  use std::ops::Deref;
-
   use crate::block::address::Address;
   use crate::block::output::AliasId;
   use crate::block::output::AliasOutput;
@@ -448,7 +446,7 @@ mod client_document {
               alias_output.alias_id().to_owned()
             };
 
-            let did: IotaDID = IotaDID::new(alias_id.deref(), network);
+            let did: IotaDID = IotaDID::new(&alias_id, network);
             documents.push(IotaDocument::unpack_from_output(&did, alias_output, true)?);
           }
         }
