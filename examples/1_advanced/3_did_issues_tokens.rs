@@ -24,7 +24,6 @@ use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::address::AliasAddress;
-use iota_sdk::types::block::output::dto::OutputDto;
 use iota_sdk::types::block::output::unlock_condition::ImmutableAliasAddressUnlockCondition;
 use iota_sdk::types::block::output::AliasId;
 use iota_sdk::types::block::output::AliasOutput;

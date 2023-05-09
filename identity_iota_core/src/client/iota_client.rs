@@ -4,7 +4,6 @@
 use iota_sdk::client::api::input_selection::Burn;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
-use iota_sdk::types::block::output::OutputWithMetadata;
 use iota_sdk::types::block::protocol::ProtocolParameters;
 
 use crate::block::address::Address;
