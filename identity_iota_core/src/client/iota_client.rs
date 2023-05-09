@@ -4,7 +4,7 @@
 use iota_sdk::client::api::input_selection::Burn;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
-use iota_sdk::types::block::output::dto::OutputDto;
+use iota_sdk::types::block::output::OutputWithMetadata;
 use iota_sdk::types::block::protocol::ProtocolParameters;
 
 use crate::block::address::Address;
@@ -125,19 +125,11 @@ impl IotaIdentityClient for Client {
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {
     let output_id: OutputId = self.alias_output_id(id).await.map_err(Error::DIDResolutionError)?;
-    let output_dto: OutputDto = self
-      .get_output(&output_id)
-      .await
-      .map(|response| response.output)
-      .map_err(Error::DIDResolutionError)?;
-    let output: Output = Output::try_from_dto(
-      &output_dto,
-      <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
-    )
-    .map_err(Error::OutputConversionError)?;
+    let output: OutputWithMetadata = self.get_output(&output_id).await.map_err(Error::DIDResolutionError)?;
 
-    if let Output::Alias(alias_output) = output {
-      Ok((output_id, alias_output))
+    if let Output::Alias(alias_output) = output.output() {
+      // TODO: Avoid clone when there is a conversion path from OutputWithMetadata to Output.
+      Ok((output_id, alias_output.clone()))
     } else {
       Err(Error::NotAnAliasOutput(output_id))
     }

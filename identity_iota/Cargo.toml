@@ -23,8 +23,17 @@ identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verifi
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-sdk = { version = "0.3.0", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1.17.0", features = ["full"] }
+
+[dev-dependencies.iota-sdk]
+git = "https://github.com/iotaledger/iota-sdk"
+rev = "2c9b75d039d8e53442232af75c135b7dd1c5871b"
+default-features = false
+features = [
+  "tls",
+  "client",
+  "stronghold",
+]
 
 [features]
 default = ["revocation-bitmap", "client", "iota-client", "resolver"]

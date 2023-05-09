@@ -8,7 +8,6 @@ use anyhow::Context;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::KeyType;
 use identity_iota::iota::block::output::AliasOutput;
-use identity_iota::iota::block::output::Output;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
@@ -16,10 +15,10 @@ use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
 
-use iota_sdk::client::crypto::keys::bip39;
 use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::crypto::keys::bip39;
 use iota_sdk::types::block::address::Address;
 use rand::distributions::DistString;
 
@@ -90,9 +89,8 @@ pub async fn get_address_with_funds(
 /// and generates an address from the given [`SecretManager`].
 pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<Address> {
   let keypair = KeyPair::new(KeyType::Ed25519)?;
-  let mnemonic =
-    iota_sdk::client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
-      .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
+  let mnemonic = bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
+    .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
 
   if let SecretManager::Stronghold(ref mut stronghold) = secret_manager {
     match stronghold.store_mnemonic(mnemonic).await {
@@ -150,12 +148,11 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
     ])
     .await?;
 
-  let outputs_responses = client.get_outputs(output_ids.items).await?;
+  let outputs: _ = client.get_outputs(output_ids.items).await?;
 
   let mut total_amount = 0;
-  for output_response in outputs_responses {
-    let output = Output::try_from_dto(&output_response.output, client.get_token_supply().await?)?;
-    total_amount += output.amount();
+  for output_response in outputs {
+    total_amount += output_response.output().amount();
   }
 
   Ok(total_amount)

@@ -11,11 +11,15 @@ identity_iota = { path = "../identity_iota" }
 primitive-types = "0.12.1"
 rand = "0.8.5"
 tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
-iota-sdk = { version = "0.3.0", default-features = true, features = [
+
+[dependencies.iota-sdk]
+git = "https://github.com/iotaledger/iota-sdk"
+rev = "2c9b75d039d8e53442232af75c135b7dd1c5871b"
+features = [
   "tls",
   "client",
   "stronghold",
-] }
+]
 
 [lib]
 path = "utils/utils.rs"

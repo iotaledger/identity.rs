@@ -546,7 +546,7 @@ mod tests {
   use identity_document::verifiable::VerifiableProperties;
   use identity_verification::MethodData;
   use identity_verification::MethodType;
-  use iota_types::block::protocol::ProtocolParameters;
+  use iota_sdk::types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;
   use crate::block::address::AliasAddress;
