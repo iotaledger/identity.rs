@@ -91,9 +91,9 @@ impl JwsSignatureOptions {
   }
 
   /// Append a value to the list of permitted extensions.
-  pub fn add_crit(mut self, value: String) -> Self {
+  pub fn add_crit(mut self, value: impl Into<String>) -> Self {
     let mut crits = self.crit.unwrap_or_default();
-    crits.push(value);
+    crits.push(value.into());
     self.crit = Some(crits);
     self
   }

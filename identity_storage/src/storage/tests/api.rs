@@ -114,6 +114,39 @@ async fn signing_bytes() {
 }
 
 #[tokio::test]
+async fn signing_bytes_detached_without_b64() {
+  let (mut document, storage) = setup();
+
+  // Generate a method with the kid as fragment
+  let kid: Option<String> = document
+    .generate_method(
+      &storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await
+    .unwrap();
+  let payload = b"test";
+
+  let options = JwsSignatureOptions::new().b64(false).detached_payload(true);
+  let jws = document
+    .sign_bytes(&storage, kid.as_deref().unwrap(), payload, &options)
+    .await
+    .unwrap();
+
+  document
+    .verify_jws(
+      &jws,
+      Some(payload),
+      &EdDSAJwsSignatureVerifier::default(),
+      &JwsVerificationOptions::default().critical("b64"),
+    )
+    .unwrap();
+}
+
+#[tokio::test]
 async fn signing_credential() {
   let (mut document, storage) = setup();
 
