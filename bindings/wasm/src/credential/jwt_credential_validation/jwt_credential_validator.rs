@@ -13,8 +13,9 @@ use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmStatusCheck;
 use crate::credential::WasmCredential;
-use crate::credential::WasmCredentialToken;
+use crate::credential::WasmDecodedJwtCredential;
 use crate::credential::WasmFailFast;
+use crate::credential::WasmJwt;
 use crate::credential::WasmSubjectHolderRelationship;
 use crate::did::ArrayIToCoreDocument;
 use crate::did::IToCoreDocument;
@@ -44,7 +45,7 @@ impl WasmJwtCredentialValidator {
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Decodes and validates a `Credential` issued as a JWS. A `CredentialToken` is returned upon success.
+  /// Decodes and validates a `Credential` issued as a JWS. A `DecodedJwtCredential` is returned upon success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -70,25 +71,25 @@ impl WasmJwtCredentialValidator {
   #[wasm_bindgen]
   pub fn validate(
     &self,
-    credential_jws: &str,
+    credential_jwt: &WasmJwt,
     issuer: &IToCoreDocument,
     options: &WasmJwtCredentialValidationOptions,
     fail_fast: WasmFailFast,
-  ) -> Result<WasmCredentialToken> {
+  ) -> Result<WasmDecodedJwtCredential> {
     let issuer_lock = ImportedDocumentLock::from(issuer);
     let issuer_guard = issuer_lock.blocking_read();
 
     self
       .0
-      .validate(credential_jws, &issuer_guard, &options.0, fail_fast.into())
+      .validate(&credential_jwt.0, &issuer_guard, &options.0, fail_fast.into())
       .wasm_result()
-      .map(WasmCredentialToken)
+      .map(WasmDecodedJwtCredential)
   }
 
-  /// Decode and verify the JWS signature of a `Credential` issued as a JWS using the DID Document of a trusted
+  /// Decode and verify the JWS signature of a `Credential` issued as a JWT using the DID Document of a trusted
   /// issuer.
   ///
-  /// A `CredentialToken` is returned upon success.
+  /// A `DecodedJwtCredential` is returned upon success.
   ///
   /// # Warning
   /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
@@ -105,18 +106,18 @@ impl WasmJwtCredentialValidator {
   #[allow(non_snake_case)]
   pub fn verify_signature(
     &self,
-    credential: &str,
+    credential: &WasmJwt,
     trustedIssuers: &ArrayIToCoreDocument,
     options: &WasmJwsVerificationOptions,
-  ) -> Result<WasmCredentialToken> {
+  ) -> Result<WasmDecodedJwtCredential> {
     let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
     let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
       issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     self
       .0
-      .verify_signature(credential, &trusted_issuers, &options.0)
+      .verify_signature(&credential.0, &trusted_issuers, &options.0)
       .wasm_result()
-      .map(WasmCredentialToken)
+      .map(WasmDecodedJwtCredential)
   }
 
   /// Validate that the credential expires on or after the specified timestamp.

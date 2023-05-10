@@ -16,6 +16,8 @@ pub use self::wasm_core_did::WasmCoreDID;
 pub use self::wasm_core_document::ArrayIToCoreDocument;
 pub(crate) use self::wasm_core_document::CoreDocumentLock;
 pub use self::wasm_core_document::IToCoreDocument;
+pub use self::wasm_core_document::PromiseJws;
+pub use self::wasm_core_document::PromiseJwt;
 pub use self::wasm_core_document::WasmCoreDocument;
 pub use self::wasm_did_url::WasmDIDUrl;
 

@@ -9,11 +9,6 @@
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
-<dt><a href="#CredentialToken">CredentialToken</a></dt>
-<dd><p>A cryptographically verified and decoded Credential.</p>
-<p>Note that having an instance of this type only means the JWS it was constructed from was verified.
-It does not imply anything about a potentially present proof property on the credential itself.</p>
-</dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
 <dd><p>Options to declare validation criteria when validating credentials.</p>
 </dd>
@@ -21,6 +16,15 @@ It does not imply anything about a potentially present proof property on the cre
 <dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
+</dd>
+<dt><a href="#DecodedJws">DecodedJws</a></dt>
+<dd><p>A cryptographically verified decoded token from a JWS.</p>
+<p>Contains the decoded headers and the raw claims.</p>
+</dd>
+<dt><a href="#DecodedJwtCredential">DecodedJwtCredential</a></dt>
+<dd><p>A cryptographically verified and decoded Credential.</p>
+<p>Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the credential itself.</p>
 </dd>
 <dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
 <dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
@@ -57,12 +61,18 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
 <dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
+<dt><a href="#Jws">Jws</a></dt>
+<dd><p>A wrapper around a JSON Web Signature (JWS).</p>
+</dd>
 <dt><a href="#JwsHeader">JwsHeader</a></dt>
 <dd></dd>
 <dt><a href="#JwsSignatureOptions">JwsSignatureOptions</a></dt>
 <dd></dd>
 <dt><a href="#JwsVerificationOptions">JwsVerificationOptions</a></dt>
 <dd></dd>
+<dt><a href="#Jwt">Jwt</a></dt>
+<dd><p>A wrapper around a JSON Web Token (JWK).</p>
+</dd>
 <dt><a href="#JwtCredentialValidationOptions">JwtCredentialValidationOptions</a></dt>
 <dd><p>Options to declare validation criteria when validating credentials.</p>
 </dd>
@@ -126,10 +136,6 @@ working with storage backed DID documents.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
-<dt><a href="#Token">Token</a></dt>
-<dd><p>A cryptographically verified decoded token from a JWS.</p>
-<p>Contains the decoded headers and the raw claims.</p>
-</dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd><p>A DID Document Verification Method.</p>
 </dd>
@@ -437,7 +443,7 @@ A method-agnostic DID Document.
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
+        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
@@ -447,8 +453,8 @@ A method-agnostic DID Document.
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
         * [.generateMethod(storage, key_type, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
         * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-        * [.createJwt(storage, fragment, payload, options)](#CoreDocument+createJwt) ⇒ <code>Promise.&lt;string&gt;</code>
-        * [.createCredentialJwt(storage, fragment, credential, options)](#CoreDocument+createCredentialJwt) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createJws(storage, fragment, payload, options)](#CoreDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
+        * [.createCredentialJwt(storage, fragment, credential, options)](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -723,7 +729,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="CoreDocument+verifyJws"></a>
 
-### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>Token</code>](#Token)
+### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -737,7 +743,7 @@ take place.
 
 | Param | Type |
 | --- | --- |
-| jws | <code>string</code> | 
+| jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
 | signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
 | detachedPayload | <code>string</code> \| <code>undefined</code> | 
@@ -840,9 +846,9 @@ the `storage`.
 | storage | [<code>Storage</code>](#Storage) | 
 | id | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="CoreDocument+createJwt"></a>
+<a name="CoreDocument+createJws"></a>
 
-### coreDocument.createJwt(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+### coreDocument.createJws(storage, fragment, payload, options) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
 Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
 material in the verification method identified by the given `fragment.
 
@@ -860,7 +866,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 <a name="CoreDocument+createCredentialJwt"></a>
 
-### coreDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ <code>Promise.&lt;string&gt;</code>
+### coreDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWS where the payload is produced from the given `credential`
 in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
 
@@ -1063,42 +1069,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="CredentialToken"></a>
-
-## CredentialToken
-A cryptographically verified and decoded Credential.
-
-Note that having an instance of this type only means the JWS it was constructed from was verified.
-It does not imply anything about a potentially present proof property on the credential itself.
-
-**Kind**: global class  
-
-* [CredentialToken](#CredentialToken)
-    * [.credential()](#CredentialToken+credential) ⇒ [<code>Credential</code>](#Credential)
-    * [.protectedHeader()](#CredentialToken+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
-    * [.intoCredential()](#CredentialToken+intoCredential) ⇒ [<code>Credential</code>](#Credential)
-
-<a name="CredentialToken+credential"></a>
-
-### credentialToken.credential() ⇒ [<code>Credential</code>](#Credential)
-Returns a copy of the credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
-
-**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
-<a name="CredentialToken+protectedHeader"></a>
-
-### credentialToken.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
-Returns a copy of the protected header parsed from the decoded JWS.
-
-**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
-<a name="CredentialToken+intoCredential"></a>
-
-### credentialToken.intoCredential() ⇒ [<code>Credential</code>](#Credential)
-Consumes the object and returns the decoded credential.
-
-### Warning
-This destroys the `CredentialToken` object.
-
-**Kind**: instance method of [<code>CredentialToken</code>](#CredentialToken)  
 <a name="CredentialValidationOptions"></a>
 
 ## CredentialValidationOptions
@@ -1457,6 +1427,93 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="DecodedJws"></a>
+
+## DecodedJws
+A cryptographically verified decoded token from a JWS.
+
+Contains the decoded headers and the raw claims.
+
+**Kind**: global class  
+
+* [DecodedJws](#DecodedJws)
+    * [.claims()](#DecodedJws+claims) ⇒ <code>string</code>
+    * [.claimsBytes()](#DecodedJws+claimsBytes) ⇒ <code>Uint8Array</code>
+    * [.protectedHeader()](#DecodedJws+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.clone()](#DecodedJws+clone) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+    * [.toJSON()](#DecodedJws+toJSON) ⇒ <code>any</code>
+
+<a name="DecodedJws+claims"></a>
+
+### decodedJws.claims() ⇒ <code>string</code>
+Returns a copy of the parsed claims represented as a string.
+
+# Errors
+An error is thrown if the claims cannot be represented as a string.
+
+This error can only occur if the Token was decoded from a detached payload.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+claimsBytes"></a>
+
+### decodedJws.claimsBytes() ⇒ <code>Uint8Array</code>
+Return a copy of the parsed claims represented as an array of bytes.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+protectedHeader"></a>
+
+### decodedJws.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+clone"></a>
+
+### decodedJws.clone() ⇒ [<code>DecodedJws</code>](#DecodedJws)
+Deep clones the object.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJws+toJSON"></a>
+
+### decodedJws.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>DecodedJws</code>](#DecodedJws)  
+<a name="DecodedJwtCredential"></a>
+
+## DecodedJwtCredential
+A cryptographically verified and decoded Credential.
+
+Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the credential itself.
+
+**Kind**: global class  
+
+* [DecodedJwtCredential](#DecodedJwtCredential)
+    * [.credential()](#DecodedJwtCredential+credential) ⇒ [<code>Credential</code>](#Credential)
+    * [.protectedHeader()](#DecodedJwtCredential+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.intoCredential()](#DecodedJwtCredential+intoCredential) ⇒ [<code>Credential</code>](#Credential)
+
+<a name="DecodedJwtCredential+credential"></a>
+
+### decodedJwtCredential.credential() ⇒ [<code>Credential</code>](#Credential)
+Returns a copy of the credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
+
+**Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
+<a name="DecodedJwtCredential+protectedHeader"></a>
+
+### decodedJwtCredential.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header parsed from the decoded JWS.
+
+**Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
+<a name="DecodedJwtCredential+intoCredential"></a>
+
+### decodedJwtCredential.intoCredential() ⇒ [<code>Credential</code>](#Credential)
+Consumes the object and returns the decoded credential.
+
+### Warning
+This destroys the `DecodedCredential` object.
+
+**Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
 <a name="DomainLinkageConfiguration"></a>
 
 ## DomainLinkageConfiguration
@@ -1971,7 +2028,7 @@ Deserializes an instance from a JSON object.
         * [.signPresentation(presentation, privateKey, methodQuery, options)](#IotaDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>Token</code>](#Token)
+        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
         * [.metadata()](#IotaDocument+metadata) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
@@ -1993,8 +2050,8 @@ Deserializes an instance from a JSON object.
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [.generateMethod(storage, key_type, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-        * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ <code>Promise.&lt;string&gt;</code>
-        * [.createCredentialJwt(storage, fragment, credential, options)](#IotaDocument+createCredentialJwt) ⇒ <code>Promise.&lt;string&gt;</code>
+        * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
+        * [.createCredentialJwt(storage, fragment, credential, options)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2250,7 +2307,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="IotaDocument+verifyJws"></a>
 
-### iotaDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>Token</code>](#Token)
+### iotaDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -2264,7 +2321,7 @@ take place.
 
 | Param | Type |
 | --- | --- |
-| jws | <code>string</code> | 
+| jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
 | signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
 | detachedPayload | <code>string</code> \| <code>undefined</code> | 
@@ -2461,7 +2518,7 @@ the given `storage`.
 
 <a name="IotaDocument+createJwt"></a>
 
-### iotaDocument.createJwt(storage, fragment, payload, options) ⇒ <code>Promise.&lt;string&gt;</code>
+### iotaDocument.createJwt(storage, fragment, payload, options) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
 Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
 material in the verification method identified by the given `fragment.
 
@@ -2479,7 +2536,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 <a name="IotaDocument+createCredentialJwt"></a>
 
-### iotaDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ <code>Promise.&lt;string&gt;</code>
+### iotaDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWS where the payload is produced from the given `credential`
 in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
 
@@ -2949,6 +3006,33 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Jws"></a>
+
+## Jws
+A wrapper around a JSON Web Signature (JWS).
+
+**Kind**: global class  
+
+* [Jws](#Jws)
+    * [new Jws(jws_string)](#new_Jws_new)
+    * [.toString()](#Jws+toString) ⇒ <code>string</code>
+
+<a name="new_Jws_new"></a>
+
+### new Jws(jws_string)
+Creates a new `Jws`.
+
+
+| Param | Type |
+| --- | --- |
+| jws_string | <code>string</code> | 
+
+<a name="Jws+toString"></a>
+
+### jws.toString() ⇒ <code>string</code>
+Returns a clone of the JWS string.
+
+**Kind**: instance method of [<code>Jws</code>](#Jws)  
 <a name="JwsHeader"></a>
 
 ## JwsHeader
@@ -3519,6 +3603,33 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Jwt"></a>
+
+## Jwt
+A wrapper around a JSON Web Token (JWK).
+
+**Kind**: global class  
+
+* [Jwt](#Jwt)
+    * [new Jwt(jwt_string)](#new_Jwt_new)
+    * [.toString()](#Jwt+toString) ⇒ <code>string</code>
+
+<a name="new_Jwt_new"></a>
+
+### new Jwt(jwt_string)
+Creates a new `Jwt`.
+
+
+| Param | Type |
+| --- | --- |
+| jwt_string | <code>string</code> | 
+
+<a name="Jwt+toString"></a>
+
+### jwt.toString() ⇒ <code>string</code>
+Returns a clone of the JWT string.
+
+**Kind**: instance method of [<code>Jwt</code>](#Jwt)  
 <a name="JwtCredentialValidationOptions"></a>
 
 ## JwtCredentialValidationOptions
@@ -3582,8 +3693,8 @@ A type for decoding and validating `Credentials`.
 * [JwtCredentialValidator](#JwtCredentialValidator)
     * [new JwtCredentialValidator(signature_verifier)](#new_JwtCredentialValidator_new)
     * _instance_
-        * [.validate(credential_jws, issuer, options, fail_fast)](#JwtCredentialValidator+validate) ⇒ [<code>CredentialToken</code>](#CredentialToken)
-        * [.verifySignature(credential, trustedIssuers, options)](#JwtCredentialValidator+verifySignature) ⇒ [<code>CredentialToken</code>](#CredentialToken)
+        * [.validate(credential_jwt, issuer, options, fail_fast)](#JwtCredentialValidator+validate) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+        * [.verifySignature(credential, trustedIssuers, options)](#JwtCredentialValidator+verifySignature) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
     * _static_
         * [.checkExpiresOnOrAfter(credential, timestamp)](#JwtCredentialValidator.checkExpiresOnOrAfter)
         * [.checkIssuedOnOrBefore(credential, timestamp)](#JwtCredentialValidator.checkIssuedOnOrBefore)
@@ -3605,8 +3716,8 @@ algorithm will be used.
 
 <a name="JwtCredentialValidator+validate"></a>
 
-### jwtCredentialValidator.validate(credential_jws, issuer, options, fail_fast) ⇒ [<code>CredentialToken</code>](#CredentialToken)
-Decodes and validates a `Credential` issued as a JWS. A `CredentialToken` is returned upon success.
+### jwtCredentialValidator.validate(credential_jwt, issuer, options, fail_fast) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+Decodes and validates a `Credential` issued as a JWS. A `DecodedJwtCredential` is returned upon success.
 
 The following properties are validated according to `options`:
 - the issuer's signature on the JWS,
@@ -3634,18 +3745,18 @@ An error is returned whenever a validated condition is not satisfied.
 
 | Param | Type |
 | --- | --- |
-| credential_jws | <code>string</code> | 
+| credential_jwt | [<code>Jwt</code>](#Jwt) | 
 | issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
 <a name="JwtCredentialValidator+verifySignature"></a>
 
-### jwtCredentialValidator.verifySignature(credential, trustedIssuers, options) ⇒ [<code>CredentialToken</code>](#CredentialToken)
-Decode and verify the JWS signature of a `Credential` issued as a JWS using the DID Document of a trusted
+### jwtCredentialValidator.verifySignature(credential, trustedIssuers, options) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+Decode and verify the JWS signature of a `Credential` issued as a JWT using the DID Document of a trusted
 issuer.
 
-A `CredentialToken` is returned upon success.
+A `DecodedJwtCredential` is returned upon success.
 
 # Warning
 The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
@@ -3663,7 +3774,7 @@ to verify the credential's signature will be made and an error is returned upon 
 
 | Param | Type |
 | --- | --- |
-| credential | <code>string</code> | 
+| credential | [<code>Jwt</code>](#Jwt) | 
 | trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
 
@@ -5054,57 +5165,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Token"></a>
-
-## Token
-A cryptographically verified decoded token from a JWS.
-
-Contains the decoded headers and the raw claims.
-
-**Kind**: global class  
-
-* [Token](#Token)
-    * [.claims()](#Token+claims) ⇒ <code>string</code>
-    * [.claimsBytes()](#Token+claimsBytes) ⇒ <code>Uint8Array</code>
-    * [.protectedHeader()](#Token+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
-    * [.clone()](#Token+clone) ⇒ [<code>Token</code>](#Token)
-    * [.toJSON()](#Token+toJSON) ⇒ <code>any</code>
-
-<a name="Token+claims"></a>
-
-### token.claims() ⇒ <code>string</code>
-Returns a copy of the parsed claims represented as a string.
-
-# Errors
-An error is thrown if the claims cannot be represented as a string.
-
-This error can only occur if the Token was decoded from a detached payload.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+claimsBytes"></a>
-
-### token.claimsBytes() ⇒ <code>Uint8Array</code>
-Return a copy of the parsed claims represented as an array of bytes.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+protectedHeader"></a>
-
-### token.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
-Returns a copy of the protected header.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+clone"></a>
-
-### token.clone() ⇒ [<code>Token</code>](#Token)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
-<a name="Token+toJSON"></a>
-
-### token.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>Token</code>](#Token)  
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod

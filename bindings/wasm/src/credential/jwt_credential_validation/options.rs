@@ -3,9 +3,6 @@
 
 use crate::error::Result;
 use crate::error::WasmResult;
-// use identity_iota::credential::StatusCheck;
-// use serde_repr::Deserialize_repr;
-// use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 
 use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions as JwtCredentialValidationOptions;
