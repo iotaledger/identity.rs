@@ -60,7 +60,11 @@ and resolution of DID documents in Alias Outputs.</p>
 <dd><p>Supported verification method data formats.</p>
 </dd>
 <dt><a href="#MethodDigest">MethodDigest</a></dt>
-<dd></dd>
+<dd><p>Unique identifier of a [<code>VerificationMethod</code>].</p>
+<p>NOTE:
+This class does not have a JSON representation,
+use the methods <code>pack</code> and <code>unpack</code> instead.</p>
+</dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
@@ -2944,6 +2948,12 @@ Deserializes an instance from a JSON object.
 <a name="MethodDigest"></a>
 
 ## MethodDigest
+Unique identifier of a [`VerificationMethod`].
+
+NOTE:
+This class does not have a JSON representation,
+use the methods `pack` and `unpack` instead.
+
 **Kind**: global class  
 
 * [MethodDigest](#MethodDigest)
