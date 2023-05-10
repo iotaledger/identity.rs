@@ -499,7 +499,7 @@ impl WasmCoreDocument {
       .0
       .blocking_read()
       .verify_jws(
-        jws.0.as_string(),
+        jws.0.as_str(),
         detachedPayload.as_deref().map(|detached| detached.as_bytes()),
         &jws_verifier,
         &options.0,

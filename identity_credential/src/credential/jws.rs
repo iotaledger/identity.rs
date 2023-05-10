@@ -11,7 +11,7 @@ impl Jws {
   }
 
   /// Returns a reference of the JWS string.
-  pub fn as_string(&self) -> &String {
+  pub fn as_str(&self) -> &str {
     &self.0
   }
 }

@@ -374,7 +374,7 @@ impl IotaDocument {
   ) -> Result<DecodedJws<'jws>> {
     self
       .core_document()
-      .verify_jws(jws.as_string(), detached_payload, signature_verifier, options)
+      .verify_jws(jws.as_str(), detached_payload, signature_verifier, options)
       .map_err(Error::JwsVerificationError)
   }
 

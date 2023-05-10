@@ -22,6 +22,6 @@ impl WasmJwt {
   /// Returns a clone of the JWT string.
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string_clone(&self) -> String {
-    self.0.as_string().clone()
+    self.0.as_str().to_owned()
   }
 }

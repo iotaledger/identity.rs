@@ -11,7 +11,7 @@ impl Jwt {
   }
 
   /// Returns a reference of the JWT string.
-  pub fn as_string(&self) -> &String {
+  pub fn as_str(&self) -> &str {
     &self.0
   }
 }
