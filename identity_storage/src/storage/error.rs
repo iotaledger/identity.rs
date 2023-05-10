@@ -39,7 +39,7 @@ pub enum JwkStorageDocumentError {
   #[error("{0}")]
   Custom(
     &'static str,
-    #[source] Box<dyn std::error::Error + Send + Sync + 'static>,
+    #[source] Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
   ),
 }
 
