@@ -7,6 +7,7 @@ use identity_credential::credential::Credential;
 
 use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
 use identity_document::document::CoreDocument;
+use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::MethodScope;
 
@@ -43,7 +44,7 @@ async fn setup() -> (CoreDocument, MemStorage, String, Credential) {
       JwkMemStore::ED25519_KEY_TYPE,
       JwsAlgorithm::EdDSA,
       None,
-      MethodScope::VerificationMethod,
+      MethodScope::assertion_method(),
     )
     .await
     .unwrap();
@@ -88,15 +89,16 @@ async fn signing_credential_with_detached_option_fails() {
 }
 
 #[tokio::test]
-async fn signing_credential_with_nonce() {
+async fn signing_credential_with_nonce_and_scope() {
   let (document, storage, kid, credential) = setup().await;
+  let nonce: &str = "0xaabbccddeeff";
 
   let jws = document
     .sign_credential(
       &credential,
       &storage,
       kid.as_ref(),
-      &JwsSignatureOptions::default().nonce("0xaabbccddeeff".to_owned()),
+      &JwsSignatureOptions::default().nonce(nonce.to_owned()),
     )
     .await
     .unwrap();
@@ -106,10 +108,42 @@ async fn signing_credential_with_nonce() {
     .validate::<_, Object>(
       &jws,
       &document,
-      &CredentialValidationOptions::default(),
+      &CredentialValidationOptions::default().verification_options(
+        JwsVerificationOptions::default()
+          .nonce(nonce.to_owned())
+          .method_scope(MethodScope::assertion_method())
+      ),
       identity_credential::validator::FailFast::FirstError,
     )
     .is_ok());
+
+  // Invalid: Nonce mismatch.
+  assert!(validator
+    .validate::<_, Object>(
+      &jws,
+      &document,
+      &CredentialValidationOptions::default().verification_options(
+        JwsVerificationOptions::default()
+          .nonce("other-nonce".to_owned())
+          .method_scope(MethodScope::assertion_method())
+      ),
+      identity_credential::validator::FailFast::FirstError,
+    )
+    .is_err());
+
+  // Invalid: MethodScope mismatch.
+  assert!(validator
+    .validate::<_, Object>(
+      &jws,
+      &document,
+      &CredentialValidationOptions::default().verification_options(
+        JwsVerificationOptions::default()
+          .nonce(nonce.to_owned())
+          .method_scope(MethodScope::key_agreement())
+      ),
+      identity_credential::validator::FailFast::FirstError,
+    )
+    .is_err());
 }
 
 #[tokio::test]

@@ -1058,11 +1058,11 @@ impl CoreDocument {
     signature_verifier: &T,
     options: &JwsVerificationOptions,
   ) -> Result<Token<'jws>> {
-    let nonce = options.nonce.as_deref();
     let validation_item = Decoder::new_with_crits(options.crits.as_deref().unwrap_or_default())
       .decode_compact_serialization(jws.as_bytes(), detached_payload)
       .map_err(Error::JwsVerificationError)?;
 
+    let nonce: Option<&str> = options.nonce.as_deref();
     // Validate the nonce
     if validation_item.nonce() != nonce {
       return Err(Error::JwsVerificationError(

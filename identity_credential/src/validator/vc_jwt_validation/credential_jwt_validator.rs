@@ -213,6 +213,14 @@ where
     // Start decoding the credential
     let decoded: JwsValidationItem<'_> = Self::decode(credential, options.crits.as_deref())?;
 
+    let nonce: Option<&str> = options.nonce.as_deref();
+    // Validate the nonce
+    if decoded.nonce() != nonce {
+      return Err(ValidationError::JwsDecodingError(
+        identity_verification::jose::error::Error::InvalidParam("invalid nonce value"),
+      ));
+    }
+
     // Parse the `kid` to a DID Url which should be the identifier of a verification method in a trusted issuer's DID
     // document TODO: Consider factoring this section into a private method that the (future) PresentationValidator
     // can also use. In that case The `SignerContext` used in the error would have to be passed as an additional
@@ -257,7 +265,6 @@ where
 
     // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
     // returning.
-
     let issuer_id: CoreDID = CredentialValidator::extract_issuer(&credential_token.credential)?;
     if &issuer_id != method_id.did() {
       return Err(ValidationError::IdentifierMismatch {
@@ -303,6 +310,7 @@ where
       CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
         ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
+
     // Construct the credential token containing the credential and the protected header.
     let credential: Credential<T> = credential_claims
       .try_into_credential()
