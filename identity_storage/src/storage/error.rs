@@ -36,6 +36,11 @@ pub enum JwkStorageDocumentError {
     source: Box<Self>,
     undo_error: Option<Box<Self>>,
   },
+  #[error("{0}")]
+  Custom(
+    &'static str,
+    #[source] Box<dyn std::error::Error + Send + Sync + 'static>,
+  ),
 }
 
 #[cfg(test)]
