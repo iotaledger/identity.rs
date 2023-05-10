@@ -1058,7 +1058,7 @@ impl CoreDocument {
     signature_verifier: &T,
     options: &JwsVerificationOptions,
   ) -> Result<Token<'jws>> {
-    let validation_item = Decoder::new_with_crits(options.crits.as_deref().unwrap_or_default())
+    let validation_item = Decoder::new()
       .decode_compact_serialization(jws.as_bytes(), detached_payload)
       .map_err(Error::JwsVerificationError)?;
 

@@ -141,7 +141,7 @@ async fn signing_bytes_detached_without_b64() {
       &jws,
       Some(payload),
       &EdDSAJwsSignatureVerifier::default(),
-      &JwsVerificationOptions::default().critical("b64"),
+      &JwsVerificationOptions::default(),
     )
     .unwrap();
 }

@@ -205,33 +205,12 @@ struct Flatten<'a> {
 
 /// The [`Decoder`] is responsible for decoding a JWS into one or more [`JwsValidationItems`](JwsValidationItem).
 #[derive(Debug, Clone)]
-pub struct Decoder<'crits> {
-  crits: Option<Cow<'crits, [String]>>,
-}
+pub struct Decoder;
 
-impl Decoder<'static> {
+impl Decoder {
   /// Constructs a new [`Decoder`].
-  pub fn new() -> Decoder<'static> {
-    Self { crits: None }
-  }
-
-  /// Append values to the list of permitted extension parameters.
-  pub fn critical(mut self, value: impl Into<String>) -> Decoder<'static> {
-    self
-      .crits
-      .get_or_insert_with(Default::default)
-      .to_mut()
-      .push(value.into());
-    self
-  }
-}
-
-impl<'crits> Decoder<'crits> {
-  /// Replace the list of permitted extension parameters with the given `crits`.
-  pub fn new_with_crits(crits: &'crits [String]) -> Decoder<'crits> {
-    Decoder {
-      crits: Some(Cow::Borrowed(crits)),
-    }
+  pub fn new() -> Decoder {
+    Self
   }
 
   /// Decode a JWS encoded with the [JWS compact serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
@@ -296,11 +275,7 @@ impl<'crits> Decoder<'crits> {
     } = jws_signature;
 
     let protected_header: Option<JwsHeader> = protected.map(decode_b64_json).transpose()?;
-    validate_jws_headers(
-      protected_header.as_ref(),
-      unprotected_header.as_ref(),
-      self.crits.as_deref(),
-    )?;
+    validate_jws_headers(protected_header.as_ref(), unprotected_header.as_ref())?;
 
     let protected_bytes: &[u8] = protected.map(str::as_bytes).unwrap_or_default();
     let signing_input: Box<[u8]> = create_message(protected_bytes, payload).into();
@@ -340,12 +315,12 @@ impl<'crits> Decoder<'crits> {
 
 /// An iterator over the [`JwsValidationItems`](JwsValidationItem) corresponding to the
 /// signatures in a JWS encoded with the general JWS JSON serialization format.  
-pub struct JwsValidationIter<'decoder, 'crits, 'payload, 'signatures> {
-  decoder: &'decoder Decoder<'crits>,
+pub struct JwsValidationIter<'decoder, 'payload, 'signatures> {
+  decoder: &'decoder Decoder,
   signatures: std::vec::IntoIter<JwsSignature<'signatures>>,
   payload: &'payload [u8],
 }
-impl<'decoder, 'crits, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, 'crits, 'payload, 'signatures> {
+impl<'decoder, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, 'payload, 'signatures> {
   type Item = Result<JwsValidationItem<'payload>>;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -356,7 +331,7 @@ impl<'decoder, 'crits, 'payload, 'signatures> Iterator for JwsValidationIter<'de
   }
 }
 
-impl<'crits> Decoder<'crits> {
+impl Decoder {
   /// Decode a JWS encoded with the [general JWS JSON serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.1)
   ///
   ///  
@@ -367,7 +342,7 @@ impl<'crits> Decoder<'crits> {
     &'decoder self,
     jws_bytes: &'data [u8],
     detached_payload: Option<&'data [u8]>,
-  ) -> Result<JwsValidationIter<'decoder, 'crits, 'data, 'data>> {
+  ) -> Result<JwsValidationIter<'decoder, 'data, 'data>> {
     let data: General<'data> = serde_json::from_slice(jws_bytes).map_err(Error::InvalidJson)?;
 
     let payload = Self::expand_payload(detached_payload, data.payload)?;
@@ -381,7 +356,7 @@ impl<'crits> Decoder<'crits> {
   }
 }
 
-impl Default for Decoder<'static> {
+impl Default for Decoder {
   fn default() -> Self {
     Self::new()
   }

@@ -66,7 +66,7 @@ pub(super) fn validate_headers_json_serialization(recipient: Recipient<'_>) -> R
     return Err(Error::MissingHeader("at least one header must be set"));
   };
 
-  jwu::validate_jws_headers(protected, unprotected, protected.and_then(|header| header.crit()))
+  jwu::validate_jws_headers(protected, unprotected)
 }
 
 #[derive(Serialize)]

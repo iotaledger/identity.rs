@@ -186,5 +186,3 @@ async fn signing_credential_with_b64() {
     .await
     .is_err());
 }
-
-// TODO: Test that setting `b64 = true` adds the crit param.

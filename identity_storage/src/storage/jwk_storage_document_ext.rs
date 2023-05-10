@@ -315,7 +315,8 @@ impl JwkStorageDocumentExt for CoreDocument {
       if let Some(b64) = options.b64 {
         // Follow recommendation in https://datatracker.ietf.org/doc/html/rfc7797#section-7.
         if !b64 {
-          header.set_b64(b64)
+          header.set_b64(b64);
+          header.set_crit(["b64"]);
         }
       };
 
@@ -325,10 +326,6 @@ impl JwkStorageDocumentExt for CoreDocument {
 
       if let Some(cty) = &options.cty {
         header.set_cty(cty.clone())
-      };
-
-      if let Some(crit) = &options.crit {
-        header.set_crit(crit.iter().cloned())
       };
 
       if let Some(url) = &options.url {

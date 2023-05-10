@@ -211,7 +211,7 @@ where
     // that process for potentially every document in `trusted_issuers`.
 
     // Start decoding the credential
-    let decoded: JwsValidationItem<'_> = Self::decode(credential, options.crits.as_deref())?;
+    let decoded: JwsValidationItem<'_> = Self::decode(credential)?;
 
     let nonce: Option<&str> = options.nonce.as_deref();
     // Validate the nonce
@@ -275,12 +275,8 @@ where
   }
 
   /// Decode the credential into a [`JwsValidationItem`].
-  fn decode<'credential>(
-    credential_jws: &'credential str,
-    allowed_crits: Option<&[String]>,
-  ) -> Result<JwsValidationItem<'credential>, ValidationError> {
-    // Configure a decoder according to `options`.
-    let decoder: Decoder<'_> = allowed_crits.map(Decoder::new_with_crits).unwrap_or(Decoder::new());
+  fn decode<'credential>(credential_jws: &'credential str) -> Result<JwsValidationItem<'credential>, ValidationError> {
+    let decoder: Decoder = Decoder::new();
 
     decoder
       .decode_compact_serialization(credential_jws.as_bytes(), None)
