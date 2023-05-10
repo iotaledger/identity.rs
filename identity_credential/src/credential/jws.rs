@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// A wrapper around a JSON Web Signature (JWS).
+#[derive(Debug, Clone)]
 pub struct Jws(String);
 
 impl Jws {
-  /// Creates a new `Jws`.
-  pub fn new(jwt_string: String) -> Self {
-    Self(jwt_string)
+  /// Creates a new `Jws` from the given string.
+  pub fn new(jws_string: String) -> Self {
+    Self(jws_string)
   }
 
   /// Returns a reference of the JWS string.

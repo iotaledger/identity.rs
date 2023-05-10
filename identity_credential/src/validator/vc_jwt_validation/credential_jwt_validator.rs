@@ -48,7 +48,7 @@ where
     Self(signature_verifier)
   }
 
-  /// Decodes and validates a [`Credential`] issued as a JWt. A [`CredentialToken`] is returned upon success.
+  /// Decodes and validates a [`Credential`] issued as a JWT. A [`CredentialToken`] is returned upon success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,

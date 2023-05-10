@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// A wrapper around a JSON Web Token (JWK).
+#[derive(Debug, Clone)]
 pub struct Jwt(String);
 
 impl Jwt {
-  /// Creates a new `Jwt`.
+  /// Creates a new `Jwt` from the given string.
   pub fn new(jwt_string: String) -> Self {
     Self(jwt_string)
   }
