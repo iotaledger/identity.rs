@@ -39,15 +39,18 @@ use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
 use crate::common::PromiseOptionString;
-use crate::common::PromiseString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
+use crate::credential::WasmJws;
+use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
+use crate::did::PromiseJws;
+use crate::did::PromiseJwt;
 use crate::did::WasmCoreDocument;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmJwsVerificationOptions;
@@ -59,8 +62,8 @@ use crate::iota::identity_client_ext::IAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
+use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
-use crate::jose::WasmToken;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
@@ -443,22 +446,22 @@ impl WasmIotaDocument {
   #[allow(non_snake_case)]
   pub fn verify_jws(
     &self,
-    jws: &str,
+    jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
     signatureVerifier: Option<IJwsSignatureVerifier>,
     detachedPayload: Option<String>,
-  ) -> Result<WasmToken> {
+  ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
     self
       .0
       .blocking_read()
       .verify_jws(
-        jws,
+        &jws.0,
         detachedPayload.as_deref().map(|detached| detached.as_bytes()),
         &jws_verifier,
         &options.0,
       )
-      .map(WasmToken::from)
+      .map(WasmDecodedJws::from)
       .wasm_result()
   }
 
@@ -786,13 +789,13 @@ impl WasmIotaDocument {
   // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
   // as the payload type?
   #[wasm_bindgen(js_name = createJwt)]
-  pub fn create_jwt(
+  pub fn create_jws(
     &self,
     storage: &WasmStorage,
     fragment: String,
     payload: String,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
@@ -803,6 +806,7 @@ impl WasmIotaDocument {
         .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
+        .map(WasmJws::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -822,7 +826,7 @@ impl WasmIotaDocument {
     fragment: String,
     credential: &WasmCredential,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
@@ -834,6 +838,7 @@ impl WasmIotaDocument {
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
+        .map(WasmJwt::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())

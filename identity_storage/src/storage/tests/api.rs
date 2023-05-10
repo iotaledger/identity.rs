@@ -105,7 +105,7 @@ async fn signing_bytes() {
 
   assert!(document
     .verify_jws(
-      &jws,
+      jws.as_str(),
       None,
       &EdDSAJwsSignatureVerifier::default(),
       &JwsVerificationOptions::default()
@@ -138,7 +138,7 @@ async fn signing_bytes_detached_without_b64() {
 
   document
     .verify_jws(
-      &jws,
+      jws.as_str(),
       Some(payload),
       &EdDSAJwsSignatureVerifier::default(),
       &JwsVerificationOptions::default(),

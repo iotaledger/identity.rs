@@ -24,7 +24,7 @@ use super::VerificationInput;
 /// Contains the decoded headers and the raw claims.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Token<'a> {
+pub struct DecodedJws<'a> {
   pub protected: JwsHeader,
   pub unprotected: Option<Box<JwsHeader>>,
   pub claims: Cow<'a, [u8]>,
@@ -134,7 +134,7 @@ impl<'a> JwsValidationItem<'a> {
   /// # Note
   /// One may want to perform other validations before calling this method, such as for instance checking the nonce
   /// (see [`Self::nonce`](Self::nonce())).
-  pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<Token<'a>>
+  pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<DecodedJws<'a>>
   where
     T: JwsSignatureVerifier,
   {
@@ -165,7 +165,7 @@ impl<'a> JwsValidationItem<'a> {
       .verify(input, public_key)
       .map_err(Error::SignatureVerificationError)?;
 
-    Ok(Token {
+    Ok(DecodedJws {
       protected,
       unprotected,
       claims,

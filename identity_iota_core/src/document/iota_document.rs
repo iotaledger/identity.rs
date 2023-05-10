@@ -4,12 +4,13 @@
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
+use identity_credential::credential::Jws;
 #[cfg(feature = "client")]
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_document::verifiable::JwsVerificationOptions;
+use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::JwsSignatureVerifier;
-use identity_verification::jose::jws::Token;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -366,14 +367,14 @@ impl IotaDocument {
   /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
   pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
     &self,
-    jws: &'jws str,
+    jws: &'jws Jws,
     detached_payload: Option<&'jws [u8]>,
     signature_verifier: &T,
     options: &JwsVerificationOptions,
-  ) -> Result<Token<'jws>> {
+  ) -> Result<DecodedJws<'jws>> {
     self
       .core_document()
-      .verify_jws(jws, detached_payload, signature_verifier, options)
+      .verify_jws(jws.as_str(), detached_payload, signature_verifier, options)
       .map_err(Error::JwsVerificationError)
   }
 
