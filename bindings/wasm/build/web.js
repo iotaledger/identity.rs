@@ -44,10 +44,10 @@ let initTs = `/**
 * Loads the Wasm file so the lib can be used, relative path to Wasm file
 * @param {string | undefined} path
 */
-export function init (path?: string): Promise<void>;`
+export function init (path?: string): Promise<void>;`;
 let changedFileTs = entryFileTs.replace(
     wbgInitTs,
-    initTs
+    initTs,
 );
 fs.writeFileSync(
     entryFilePathTs,
