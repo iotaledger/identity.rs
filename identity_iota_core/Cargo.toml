@@ -15,9 +15,7 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 async-trait = { version = "0.1.56", default-features = false, optional = true }
 futures = { version = "0.3" }
 identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = [
-  "validator",
-] }
+identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
@@ -40,15 +38,9 @@ optional = true
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
-iota-crypto = { version = "0.18", default-features = false, features = [
-  "bip39",
-  "bip39-en",
-] }
+iota-crypto = { version = "0.18", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-tokio = { version = "1.17.0", default-features = false, features = [
-  "rt-multi-thread",
-  "macros",
-] }
+tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:

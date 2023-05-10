@@ -46,9 +46,7 @@ rand = "0.8.5"
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
-instant = { version = "0.1", default-features = false, features = [
-  "wasm-bindgen",
-] }
+instant = { version = "0.1", default-features = false, features = ["wasm-bindgen"] }
 
 [profile.release]
 opt-level = 's'
