@@ -30,10 +30,24 @@ fs.writeFileSync(
 const entryFilePathTs = path.join(RELEASE_FOLDER, "identity_wasm.d.ts");
 const entryFileTs = fs.readFileSync(entryFilePathTs).toString();
 // Replace the init function in the ts file.
-// TODO
+let wbgInitTs = `/**
+* If \`module_or_path\` is {RequestInfo} or {URL}, makes a request and
+* for everything else, calls \`WebAssembly.instantiate\` directly.
+*
+* @param {InitInput | Promise<InitInput>} module_or_path
+*
+* @returns {Promise<InitOutput>}
+*/
+export default function __wbg_init (module_or_path?: InitInput | Promise<InitInput>): Promise<InitOutput>;`;
+
+let initTs = `/**
+* Loads the Wasm file so the lib can be used, relative path to Wasm file
+* @param {string | undefined} path
+*/
+export function init (path?: string): Promise<void>;`
 let changedFileTs = entryFileTs.replace(
-    "/**\n* If `module_or_path` is {RequestInfo} or {URL}, makes a request and\n* for everything else, calls `WebAssembly.instantiate` directly.\n*\n* @param {InitInput | Promise<InitInput>} module_or_path\n*\n* @returns {Promise<InitOutput>}\n*/\nexport default function init (module_or_path?: InitInput | Promise<InitInput>): Promise<InitOutput>;",
-    "\/**\r\n* Loads the Wasm file so the lib can be used, relative path to Wasm file\r\n* @param {string | undefined} path\r\n*\/\r\nexport function init (path?: string): Promise<void>;",
+    wbgInitTs,
+    initTs
 );
 fs.writeFileSync(
     entryFilePathTs,
