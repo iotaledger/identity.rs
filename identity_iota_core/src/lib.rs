@@ -6,6 +6,10 @@
 #[cfg(feature = "iota-client")]
 pub use iota_sdk::types::block;
 
+// Re-export the `iota_types::block` module for implementer convenience.
+#[cfg(all(feature = "client", not(feature = "iota-client")))]
+pub use iota_sdk::types::block;
+
 #[cfg(feature = "client")]
 pub use client::*;
 pub use did::IotaDID;

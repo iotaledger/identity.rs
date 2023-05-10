@@ -19,7 +19,6 @@ crate-type = ["cdylib", "rlib"]
 async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
-iota-types = { version = "1.0.0-rc.6", default-features = false, features = ["block", "api", "dto", "std"] }
 js-sys = { version = "0.3.61" }
 proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
@@ -47,7 +46,9 @@ rand = "0.8.5"
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", default-features = false, features = ["js"] }
-instant = { version = "0.1", default-features = false, features = ["wasm-bindgen"] }
+instant = { version = "0.1", default-features = false, features = [
+  "wasm-bindgen",
+] }
 
 [profile.release]
 opt-level = 's'
