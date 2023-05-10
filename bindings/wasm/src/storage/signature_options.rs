@@ -29,9 +29,16 @@ impl WasmJwsSignatureOptions {
   }
 
   /// Replace the value of the `b64` field.
+  ///
+  /// Setting this to `false` will also add `"b64"` to the `crit` parameters, while
+  /// setting `true` will omit the parameter from the header and the string from the `crit` parameters,
+  /// as recommended in <https://datatracker.ietf.org/doc/html/rfc7797#section-7>.
   #[wasm_bindgen(js_name = setB64)]
   pub fn set_b64(&mut self, value: bool) {
     self.0.b64 = Some(value);
+    if !value {
+      self.add_crit("b64".to_owned());
+    }
   }
 
   /// Replace the value of the `typ` field.
