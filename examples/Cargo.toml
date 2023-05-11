@@ -14,7 +14,7 @@ tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
 
 [dependencies.iota-sdk]
 git = "https://github.com/iotaledger/iota-sdk"
-rev = "e654876fb847a410f42e0313fe746665e948ea5d"
+rev = "6e939cfdc9d6075d024ccb43506a50da1cc4afcc"
 features = [
   "tls",
   "client",
