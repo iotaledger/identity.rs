@@ -40,11 +40,11 @@ async fn main() -> anyhow::Result<()> {
   // Deletion can only be done by the governor of the Alias Output.
   client.delete_did_output(&secret_manager, address, &did).await?;
 
-  // Attempting to resolve a deleted DID results in a `NotFound` error.
+  // Attempting to resolve a deleted DID results in a `NoOutput` error.
   let error: Error = client.resolve_did(&did).await.unwrap_err();
   assert!(matches!(
     error,
-    identity_iota::iota::Error::DIDResolutionError(iota_sdk::client::Error::NotFound(..))
+    identity_iota::iota::Error::DIDResolutionError(iota_sdk::client::Error::NoOutput(..))
   ));
 
   Ok(())
