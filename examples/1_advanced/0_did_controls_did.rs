@@ -17,15 +17,15 @@ use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_client::block::address::Address;
-use iota_client::block::address::AliasAddress;
-use iota_client::block::output::feature::IssuerFeature;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::block::output::RentStructure;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::address::AliasAddress;
+use iota_sdk::types::block::output::feature::IssuerFeature;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::AliasOutputBuilder;
+use iota_sdk::types::block::output::RentStructure;
 
 /// Demonstrates how an identity can control another identity.
 ///
@@ -37,7 +37,10 @@ async fn main() -> anyhow::Result<()> {
   // ========================================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
@@ -64,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
     .new_did_output(
       Address::Alias(AliasAddress::new(AliasId::from(&company_did))),
       subsidiary_document,
-      Some(rent_structure.clone()),
+      Some(rent_structure),
     )
     .await?;
 
@@ -72,9 +75,11 @@ async fn main() -> anyhow::Result<()> {
     // Optionally, we can mark the company as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as a resolver can
     // verify that the subsidiary DID was created by the parent company.
-    .add_immutable_feature(IssuerFeature::new(AliasAddress::new(AliasId::from(&company_did)).into()).into())
+    .add_immutable_feature(IssuerFeature::new(
+      AliasAddress::new(AliasId::from(&company_did)).into(),
+    ))
     // Adding the issuer feature means we have to recalculate the required storage deposit.
-    .with_minimum_storage_deposit(rent_structure.clone())
+    .with_minimum_storage_deposit(rent_structure)
     .finish(client.get_token_supply().await?)?;
 
   // Publish the subsidiary's DID.
@@ -99,7 +104,7 @@ async fn main() -> anyhow::Result<()> {
   // and increase the storage deposit.
   let subsidiary_alias: AliasOutput = client.update_did_output(subsidiary_document).await?;
   let subsidiary_alias: AliasOutput = AliasOutputBuilder::from(&subsidiary_alias)
-    .with_minimum_storage_deposit(rent_structure.clone())
+    .with_minimum_storage_deposit(rent_structure)
     .finish(client.get_token_supply().await?)?;
 
   // Publish the updated subsidiary's DID.

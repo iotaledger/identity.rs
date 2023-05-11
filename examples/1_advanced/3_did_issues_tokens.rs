@@ -19,26 +19,25 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
-use iota_client::block::address::Address;
-use iota_client::block::address::AliasAddress;
-use iota_client::block::output::dto::OutputDto;
-use iota_client::block::output::unlock_condition::ImmutableAliasAddressUnlockCondition;
-use iota_client::block::output::AliasId;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::block::output::FoundryId;
-use iota_client::block::output::FoundryOutput;
-use iota_client::block::output::FoundryOutputBuilder;
-use iota_client::block::output::NativeToken;
-use iota_client::block::output::RentStructure;
-use iota_client::block::output::SimpleTokenScheme;
-use iota_client::block::output::TokenId;
-use iota_client::block::output::TokenScheme;
-use iota_client::block::output::UnlockCondition;
-use iota_client::block::Block;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::address::AliasAddress;
+use iota_sdk::types::block::output::unlock_condition::ImmutableAliasAddressUnlockCondition;
+use iota_sdk::types::block::output::AliasId;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::AliasOutputBuilder;
+use iota_sdk::types::block::output::FoundryId;
+use iota_sdk::types::block::output::FoundryOutput;
+use iota_sdk::types::block::output::FoundryOutputBuilder;
+use iota_sdk::types::block::output::NativeToken;
+use iota_sdk::types::block::output::RentStructure;
+use iota_sdk::types::block::output::SimpleTokenScheme;
+use iota_sdk::types::block::output::TokenId;
+use iota_sdk::types::block::output::TokenScheme;
+use iota_sdk::types::block::output::UnlockCondition;
+use iota_sdk::types::block::Block;
 use primitive_types::U256;
 
 /// Demonstrates how an identity can issue and control
@@ -53,7 +52,10 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
@@ -95,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create the Foundry Output.
   let carbon_credits_foundry: FoundryOutput =
-    FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure.clone(), 1, token_scheme)?
+    FoundryOutputBuilder::new_with_minimum_storage_deposit(rent_structure, 1, token_scheme)
       // Initially, all carbon credits are owned by the foundry.
       .add_native_token(NativeToken::new(TokenId::from(foundry_id), U256::from(500_000u32))?)
       // The authority is set as the immutable owner.
@@ -121,11 +123,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Get the latest output that contains the foundry.
   let foundry_output_id: OutputId = client.foundry_output_id(carbon_credits_foundry_id).await?;
-  let carbon_credits_foundry: OutputDto = client
-    .get_output(&foundry_output_id)
-    .await
-    .map(|response| response.output)?;
-  let carbon_credits_foundry: Output = Output::try_from_dto(&carbon_credits_foundry, client.get_token_supply().await?)?;
+  let carbon_credits_foundry: Output = client.get_output(&foundry_output_id).await?.into_output();
 
   let carbon_credits_foundry: FoundryOutput = if let Output::Foundry(foundry_output) = carbon_credits_foundry {
     foundry_output
@@ -161,7 +159,7 @@ async fn main() -> anyhow::Result<()> {
     .map_err(|err| anyhow::anyhow!("cannot fit timestamp into u32: {err}"))?;
 
   // Create a basic output containing our carbon credits that we'll send to the company's address.
-  let basic_output: BasicOutput = BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)?
+  let basic_output: BasicOutput = BasicOutputBuilder::new_with_minimum_storage_deposit(rent_structure)
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(company_address)))
     .add_native_token(NativeToken::new(carbon_credits_foundry.token_id(), U256::from(1000))?)
     // Allow the company to claim the credits within 24 hours by using an expiration unlock condition.

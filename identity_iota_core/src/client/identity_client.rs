@@ -65,7 +65,6 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     };
 
     AliasOutputBuilder::new_with_minimum_storage_deposit(rent_structure, AliasId::null())
-      .map_err(Error::AliasOutputBuildError)?
       .with_state_index(0)
       .with_foundry_counter(0)
       .with_state_metadata(document.pack()?)
@@ -141,7 +140,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// # Errors
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
-  /// - [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output was not found.
+  /// - [`NotFound`](iota_sdk::client::Error::NoOutput) if the associated Alias Output was not found.
   async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
     validate_network(self, did).await?;
 
@@ -155,7 +154,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// # Errors
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
-  /// - [`NotFound`](iota_client::Error::NotFound) if the associated Alias Output was not found.
+  /// - [`NotFound`](iota_sdk::client::Error::NoOutput) if the associated Alias Output was not found.
   async fn resolve_did_output(&self, did: &IotaDID) -> Result<AliasOutput> {
     validate_network(self, did).await?;
 
@@ -176,7 +175,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     self
       .get_protocol_parameters()
       .await
-      .map(|parameters| parameters.rent_structure().clone())
+      .map(|parameters| *parameters.rent_structure())
   }
 
   /// Gets the token supply of the node we're connecting to.
