@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use iota_sdk::client::api::input_selection::Burn;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -84,7 +86,7 @@ impl IotaClientExt for Client {
     let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())
       .with_native_tokens(alias_output.native_tokens().clone())
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-      .finish_output(self.get_token_supply().await.map_err(Error::TokenSupplyError)?)
+      .finish_output(self.deref().get_token_supply().await.map_err(Error::TokenSupplyError)?)
       .map_err(Error::BasicOutputBuildError)?;
 
     let block: Block = self
@@ -117,6 +119,7 @@ impl IotaClientExt for Client {
 impl IotaIdentityClient for Client {
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters> {
     self
+      .deref()
       .get_protocol_parameters()
       .await
       .map_err(Error::ProtocolParametersError)

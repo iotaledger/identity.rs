@@ -140,7 +140,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// # Errors
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
-  /// - [`NotFound`](iota_sdk::client::Error::NotFound) if the associated Alias Output was not found.
+  /// - [`NotFound`](iota_sdk::client::Error::NoOutput) if the associated Alias Output was not found.
   async fn resolve_did(&self, did: &IotaDID) -> Result<IotaDocument> {
     validate_network(self, did).await?;
 
@@ -154,7 +154,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// # Errors
   ///
   /// - [`NetworkMismatch`](Error::NetworkMismatch) if the network of the DID and client differ.
-  /// - [`NotFound`](iota_sdk::client::Error::NotFound) if the associated Alias Output was not found.
+  /// - [`NotFound`](iota_sdk::client::Error::NoOutput) if the associated Alias Output was not found.
   async fn resolve_did_output(&self, did: &IotaDID) -> Result<AliasOutput> {
     validate_network(self, did).await?;
 
