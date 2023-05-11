@@ -19,9 +19,9 @@ use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
 
 /// Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.
 ///
@@ -35,7 +35,10 @@ async fn main() -> anyhow::Result<()> {
   // ==============================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
@@ -65,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Publish the DID.
     let alice_output: AliasOutput = client
-      .new_did_output(address, alice_document, Some(rent_structure.clone()))
+      .new_did_output(address, alice_document, Some(rent_structure))
       .await?;
     let alice_document: IotaDocument = client.publish_did_output(&secret_manager, alice_output).await?;
 

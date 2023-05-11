@@ -366,8 +366,6 @@ impl IotaDocument {
 
 #[cfg(feature = "client")]
 mod client_document {
-  use std::ops::Deref;
-
   use crate::block::address::Address;
   use crate::block::output::AliasId;
   use crate::block::output::AliasOutput;
@@ -448,7 +446,7 @@ mod client_document {
               alias_output.alias_id().to_owned()
             };
 
-            let did: IotaDID = IotaDID::new(alias_id.deref(), network);
+            let did: IotaDID = IotaDID::new(&alias_id, network);
             documents.push(IotaDocument::unpack_from_output(&did, alias_output, true)?);
           }
         }
@@ -546,7 +544,7 @@ mod tests {
   use identity_document::verifiable::VerifiableProperties;
   use identity_verification::MethodData;
   use identity_verification::MethodType;
-  use iota_types::block::protocol::ProtocolParameters;
+  use iota_sdk::types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;
   use crate::block::address::AliasAddress;
@@ -820,7 +818,6 @@ mod tests {
       .parse()
       .unwrap();
     let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&did))
-      .unwrap()
       .add_unlock_condition(UnlockCondition::StateControllerAddress(
         StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&controller_did)))),
       ))
