@@ -15,6 +15,8 @@ use identity_iota::did::DIDUrl;
 use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::block::protocol::dto::ProtocolParametersDto;
+use identity_iota::iota::block::protocol::ProtocolParameters;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
@@ -25,8 +27,6 @@ use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_types::block::protocol::dto::ProtocolParametersDto;
-use iota_types::block::protocol::ProtocolParameters;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -530,7 +530,7 @@ impl WasmIotaDocument {
     protocol_parameters: &INodeInfoProtocol,
   ) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    let block_dto: iota_types::block::BlockDto = block
+    let block_dto: identity_iota::iota::block::BlockDto = block
       .into_serde()
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {err}"))
@@ -546,9 +546,12 @@ impl WasmIotaDocument {
       .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {err}")))
       .wasm_result()?;
 
-    let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
-      .wasm_result()?;
+    let block: identity_iota::iota::block::Block =
+      identity_iota::iota::block::Block::try_from_dto(&block_dto, &protocol_parameters)
+        .map_err(|err| {
+          identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}"))
+        })
+        .wasm_result()?;
 
     Ok(
       IotaDocument::unpack_from_block(&network_name, &block)

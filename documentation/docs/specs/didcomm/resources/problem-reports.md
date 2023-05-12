@@ -56,7 +56,7 @@ In addition to the [problem report descriptors in the DIDComm specification](htt
 | `e.p.msg.trust.crypto` | Any general cryptography-related error. E.g. the signature in a message payload or on a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) fails validation, or [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) fails. |
 | `e.p.req.time` | The party has timed out waiting for a response. |
 
-These messages may be raised during or between protocols to inform the other party that something went wrong. A problem report with the error sorter `e` and protocol scope `p` terminates the protocol on the current thread and MAY be followed by a connection [termination](../protocols/termination).
+These messages may be raised during or between protocols to inform the other party that something went wrong. A problem report with the error sorter `e` and protocol scope `p` terminates the protocol on the current thread and MAY be followed by a connection [termination](../protocols/termination.md).
 
 ## Unresolved Questions
 - Should we support the message scope `m` to allow resending / retrying individual messages?
