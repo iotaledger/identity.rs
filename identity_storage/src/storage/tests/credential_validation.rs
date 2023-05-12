@@ -8,14 +8,20 @@ use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
+use identity_credential::credential::RevocationBitmapStatus;
+use identity_credential::credential::Status;
 use identity_credential::credential::Subject;
+use identity_credential::revocation::RevocationBitmap;
+use identity_credential::revocation::RevocationDocumentExt;
 use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
 use identity_credential::validator::vc_jwt_validation::CredentialValidator;
 use identity_credential::validator::vc_jwt_validation::ValidationError;
 use identity_credential::validator::FailFast;
+use identity_credential::validator::StatusCheck;
 use identity_credential::validator::SubjectHolderRelationship;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
+use identity_document::service::Service;
 use identity_document::verifiable::JwsVerificationOptions;
 use once_cell::sync::Lazy;
 use proptest::proptest;
@@ -434,3 +440,103 @@ async fn check_subject_holder_relationship() {
   check_subject_holder_relationship_impl(test_utils::setup_coredocument(None).await).await;
   check_subject_holder_relationship_impl(test_utils::setup_iotadocument(None).await).await;
 }
+
+// fn check_status_impl<T, F>(setup: Setup<T>, insert_service: F)
+// where
+//   T: JwkStorageDocumentExt + AsRef<CoreDocument> + RevocationDocumentExt,
+//   F: Fn(&mut T, Service),
+// {
+//   let Setup {
+//     mut issuer_doc,
+//     subject_doc,
+//     ..
+//   } = setup;
+//   let CredentialSetup { mut credential, .. } =
+//     test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
+
+//   // 0: missing status always succeeds.
+//   for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
+//     assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+//   }
+
+//   // 1: unsupported status type.
+//   credential.credential_status = Some(Status::new(
+//     Url::parse("https://example.com/").unwrap(),
+//     "UnsupportedStatus2023".to_owned(),
+//   ));
+//   for (status_check, expected) in [
+//     (StatusCheck::Strict, false),
+//     (StatusCheck::SkipUnsupported, true),
+//     (StatusCheck::SkipAll, true),
+//   ] {
+//     assert_eq!(
+//       CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+//       expected
+//     );
+//   }
+
+//   // Add a RevocationBitmap status to the credential.
+//   let service_url: identity_did::DIDUrl = issuer_doc.as_ref().id().to_url().join("#revocation-service").unwrap();
+//   let index: u32 = 42;
+//   credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
+
+//   // 2: missing service in DID Document.
+//   for (status_check, expected) in [
+//     (StatusCheck::Strict, false),
+//     (StatusCheck::SkipUnsupported, false),
+//     (StatusCheck::SkipAll, true),
+//   ] {
+//     assert_eq!(
+//       CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+//       expected
+//     );
+//   }
+
+//   // Add a RevocationBitmap service to the issuer.
+//   let bitmap: RevocationBitmap = RevocationBitmap::new();
+
+//   insert_service(
+//     &mut issuer_doc,
+//     Service::builder(Object::new())
+//       .id(service_url.clone())
+//       .type_(RevocationBitmap::TYPE)
+//       .service_endpoint(bitmap.to_endpoint().unwrap())
+//       .build()
+//       .unwrap(),
+//   );
+
+//   // 3: un-revoked index always succeeds.
+//   for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
+//     assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+//   }
+
+//   // 4: revoked index.
+//   <T as RevocationDocumentExt>::revoke_credentials(&mut issuer_doc, &service_url, &[index]).unwrap();
+//   for (status_check, expected) in [
+//     (StatusCheck::Strict, false),
+//     (StatusCheck::SkipUnsupported, false),
+//     (StatusCheck::SkipAll, true),
+//   ] {
+//     assert_eq!(
+//       CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+//       expected
+//     );
+//   }
+// }
+
+// TODO: IotaDocument doesn't implement RevocationDocumentExt.
+// #[tokio::test]
+// async fn check_status() {
+//   check_status_impl(
+//     test_utils::setup_coredocument(None).await,
+//     |document: &mut CoreDocument, service: Service| {
+//       document.insert_service(service).unwrap();
+//     },
+//   );
+//   check_status_impl(
+//     test_utils::setup_iotadocument(None).await,
+//     |document: &mut IotaDocument, service: Service| {
+//       document.insert_service(service).unwrap();
+//     },
+//   );
+// }
