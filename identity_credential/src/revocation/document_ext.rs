@@ -9,6 +9,7 @@ use identity_document::utils::Queryable;
 
 use super::RevocationError;
 use super::RevocationResult;
+
 /// Extension trait providing convenience methods to update a `RevocationBitmap2022` service
 /// in a [`CoreDocument`](::identity_document::document::CoreDocument).   
 pub trait RevocationDocumentExt: private::Sealed {
@@ -30,7 +31,6 @@ pub trait RevocationDocumentExt: private::Sealed {
   ///
   /// Fails if the referenced service is not found, or is not a
   /// valid `RevocationBitmap2022` service.
-  #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> RevocationResult<RevocationBitmap>;
 }
 
