@@ -12,6 +12,7 @@ use identity_credential::validator::vc_jwt_validation::CredentialValidator;
 use identity_credential::validator::vc_jwt_validation::ValidationError;
 use identity_credential::validator::FailFast;
 use identity_document::document::CoreDocument;
+use identity_document::verifiable::JwsVerificationOptions;
 use once_cell::sync::Lazy;
 use proptest::proptest;
 
@@ -77,7 +78,7 @@ proptest! {
   }
 }
 
-async fn invalid_expiration_date_impl<T>(setup: Setup<T>)
+async fn invalid_expiration_or_issuance_date_impl<T>(setup: Setup<T>)
 where
   T: JwkStorageDocumentExt + AsRef<CoreDocument>,
 {
@@ -92,38 +93,64 @@ where
     credential,
     issuance_date,
     expiration_date,
-  } = test_utils::generate_credential(&issuer_doc, &[subject_doc], None, None);
+  } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
     .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
     .await
     .unwrap();
 
-  let issued_on_or_before = issuance_date;
-  // expires_on_or_after > expiration_date
-  let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
-  let options = CredentialValidationOptions::default()
-    .latest_issuance_date(issued_on_or_before)
-    .earliest_expiry_date(expires_on_or_after);
+  // Test invalid expiration date.
+  {
+    let issued_on_or_before = issuance_date;
+    // expires_on_or_after > expiration_date
+    let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
+    let options = CredentialValidationOptions::default()
+      .latest_issuance_date(issued_on_or_before)
+      .earliest_expiry_date(expires_on_or_after);
 
-  // validate and extract the nested error according to our expectations
-  let validation_errors = CredentialValidator::new()
-    .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
-    .unwrap_err()
-    .validation_errors;
+    // validate and extract the nested error according to our expectations
+    let validation_errors = CredentialValidator::new()
+      .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
+      .unwrap_err()
+      .validation_errors;
 
-  let error = match validation_errors.as_slice() {
-    [validation_error] => validation_error,
-    _ => unreachable!(),
-  };
+    let error = match validation_errors.as_slice() {
+      [validation_error] => validation_error,
+      _ => unreachable!(),
+    };
 
-  assert!(matches!(error, &ValidationError::ExpirationDate));
+    assert!(matches!(error, &ValidationError::ExpirationDate));
+  }
+
+  // Test invalid issuance date.
+  {
+    // issued_on_or_before < issuance_date
+    let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
+    let expires_on_or_after = expiration_date;
+    let options = CredentialValidationOptions::default()
+      .latest_issuance_date(issued_on_or_before)
+      .earliest_expiry_date(expires_on_or_after);
+
+    // validate and extract the nested error according to our expectations
+    let validation_errors = CredentialValidator::new()
+      .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
+      .unwrap_err()
+      .validation_errors;
+
+    let error = match validation_errors.as_slice() {
+      [validation_error] => validation_error,
+      _ => unreachable!(),
+    };
+
+    assert!(matches!(error, &ValidationError::IssuanceDate));
+  }
 }
 
 #[tokio::test]
-async fn invalid_expiration_date() {
-  invalid_expiration_date_impl(test_utils::setup_coredocument().await).await;
-  invalid_expiration_date_impl(test_utils::setup_iotadocument().await).await;
+async fn invalid_expiration_or_issuance_date() {
+  invalid_expiration_or_issuance_date_impl(test_utils::setup_coredocument().await).await;
+  invalid_expiration_or_issuance_date_impl(test_utils::setup_iotadocument().await).await;
 }
 
 async fn full_validation_impl<T>(setup: Setup<T>)
@@ -141,7 +168,7 @@ where
     credential,
     issuance_date,
     expiration_date,
-  } = test_utils::generate_credential(&issuer_doc, &[subject_doc], None, None);
+  } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
     .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
@@ -162,4 +189,53 @@ where
 async fn full_validation() {
   full_validation_impl(test_utils::setup_coredocument().await).await;
   full_validation_impl(test_utils::setup_iotadocument().await).await;
+}
+
+async fn matches_issuer_did_unrelated_issuer_impl<T>(setup: Setup<T>)
+where
+  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+{
+  let Setup {
+    issuer_doc,
+    subject_doc,
+    storage,
+    kid,
+  } = setup;
+
+  let CredentialSetup { credential, .. } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
+
+  let jwt: Jwt = issuer_doc
+    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .await
+    .unwrap();
+
+  // the credential was not signed by this issuer
+  // check that `verify_signature` returns the expected error
+  let error = CredentialValidator::new()
+    .verify_signature::<_, Object>(&jwt, &[&subject_doc], &JwsVerificationOptions::default())
+    .unwrap_err();
+
+  assert!(matches!(error, ValidationError::DocumentMismatch { .. }));
+
+  // also check that the full validation fails as expected
+  let options = CredentialValidationOptions::default();
+
+  // validate and extract the nested error according to our expectations
+  let validation_errors = CredentialValidator::new()
+    .validate::<_, Object>(&jwt, &subject_doc, &options, FailFast::FirstError)
+    .unwrap_err()
+    .validation_errors;
+
+  let error = match validation_errors.as_slice() {
+    [validation_error] => validation_error,
+    _ => unreachable!(),
+  };
+
+  assert!(matches!(error, ValidationError::DocumentMismatch { .. }));
+}
+
+#[tokio::test]
+async fn matches_issuer_did_unrelated_issuer() {
+  matches_issuer_did_unrelated_issuer_impl(test_utils::setup_coredocument().await).await;
+  matches_issuer_did_unrelated_issuer_impl(test_utils::setup_iotadocument().await).await;
 }

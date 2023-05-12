@@ -104,7 +104,7 @@ pub(super) struct CredentialSetup {
 
 pub(super) fn generate_credential<T: AsRef<CoreDocument>>(
   issuer: T,
-  subjects: &[CoreDocument],
+  subjects: &[&CoreDocument],
   issuance_date: Option<Timestamp>,
   expiration_date: Option<Timestamp>,
 ) -> CredentialSetup {
