@@ -1,23 +1,23 @@
 [package]
-name = "identity-stronghold-nodejs"
-version = "0.7.0-alpha.3"
+name = "iota_identity-stronghold-nodejs"
+version = "0.0.0"
 edition = "2021"
 publish = false
+
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-# identity_account_storage = { version = "0.7.0-alpha.1", path = "../../identity_account_storage", default-features = false, features = ["stronghold", "send-sync-storage", "encryption"] }
-identity_core = { version = "0.7.0-alpha.3", path = "../../identity_core", default-features = false }
-identity_did = { version = "0.7.0-alpha.3", path = "../../identity_did", default-features = false }
-identity_iota_core_legacy = { version = "0.7.0-alpha.1", path = "../../identity_iota_core_legacy", default-features = false }
-napi = { version = "2.4.3", default-features = false, features = ["napi4", "tokio_rt", "serde-json"] }
-napi-derive = { version = "2.4.1", default-features = false, features = ["compat-mode", "full"] }
+# Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
+identity_core = { version = "0.7.0-alpha.6", path = "../../identity_core", default-features = false }
+identity_iota = { version = "0.7.0-alpha.6", path = "../../identity_iota", default-features = false }
+napi = { version = "2.12.0", default-features = false, features = ["napi4", "serde-json"] }
+napi-derive = "2.12.2"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 
 [build-dependencies]
-napi-build = { version = "2.0.0", default-features = false }
+napi-build = "2.0.1"
 
 [profile.release]
 lto = true

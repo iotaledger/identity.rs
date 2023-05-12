@@ -12,7 +12,11 @@ export default [{
     external: ["@iota/identity-wasm/node", "fs", "path"], // so it's not included
     plugins: [
         typescript(),
-        commonjs(),
+        commonjs({
+            ignore: (id) => {
+                return id.endsWith('.node');
+            } 
+        }),
         copy({
             targets: [
                 { src: "napi-dist/*.node", dest: "dist" },

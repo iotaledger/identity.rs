@@ -1,55 +1,50 @@
 {
   "name": "@iota/identity-stronghold-nodejs",
-  "version": "0.7.0-alpha.3",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/*"
-  ],
+  "version": "0.0.0",
+  "main": "index.js",
+  "types": "index.d.ts",
   "napi": {
     "name": "identity-stronghold-nodejs",
     "triples": {
-      "defaults": false,
       "additional": [
         "aarch64-apple-darwin",
-        "x86_64-apple-darwin",
-        "x86_64-pc-windows-msvc",
-        "x86_64-unknown-linux-gnu",
         "x86_64-unknown-linux-musl"
       ]
     }
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@napi-rs/cli": "^2.4.2",
-    "@rollup/plugin-commonjs": "^21.0.2",
-    "@rollup/plugin-typescript": "^8.3.1",
-    "@types/node": "^17.0.19",
-    "cross-env": "^7.0.3",
-    "mocha": "^9.2.1",
-    "rollup": "^2.68.0",
+    "@napi-rs/cli": "^2.15.2",
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "ava": "^5.1.1",
+    "rollup": "^3.21.3",
     "rollup-plugin-copy": "^3.4.0",
-    "rollup-plugin-dts": "^4.1.0",
-    "ts-mocha": "^9.0.2",
-    "ts-node": "^10.5.0",
-    "txm": "^8.0.1"
+    "rollup-plugin-dts": "^5.3.0",
+    "tslib": "^2.5.0",
+    "txm": "^8.1.0",
+    "typescript": "^5.0.4"
+  },
+  "peerDependencies": {
+    "@iota/identity-wasm": "0.7.0-alpha.6"
+  },
+  "ava": {
+    "timeout": "3m"
   },
   "engines": {
-    "node": ">= 16"
+    "node": ">= 10"
   },
   "scripts": {
     "artifacts": "napi artifacts",
     "build": "npm run build:napi && npm run build:ts",
     "build:ts": "rollup -c --failAfterWarnings",
-    "build:napi": "cross-env-shell napi build --platform --release --js napi-dist/napi.js --dts napi.d.ts $NPM_BUILD_NAPI_ARGS napi-dist",
-    "build:napi:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish -t npm --skip-gh-release",
+    "build:napi": "napi build --platform --release --js napi.js --dts napi.d.ts napi-dist",
+    "build:debug": "napi build --platform",
     "create-npm-dir": "napi create-npm-dir --target ./ ",
-    "test": "npm run test:readme && npm run test:examples",
-    "test:examples": "ts-mocha ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
-    "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit"
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "ava",
+    "universal": "napi universal",
+    "version": "napi version"
   },
-  "peerDependencies": {
-    "@iota/identity-wasm": "0.7.0-alpha.3"
-  }
+  "packageManager": "yarn@3.5.0"
 }

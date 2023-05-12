@@ -222,12 +222,13 @@ jobs:
         if: always()
         uses: './.github/actions/private-tangle/tear-down'
 
-  # build-and-test-stronghold-nodejs:
-  #   needs:
-  #     - check-for-run-condition
-  #     - build-wasm
-  #   if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-  #   # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@main
-  #   with:
-  #     input-artifact-name: identity-wasm-bindings-build
+  build-and-test-stronghold-nodejs:
+    needs:
+      - check-for-run-condition
+      - build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@feat/napi-bootstrap
+    with:
+      input-artifact-name: identity-wasm-bindings-build
+      output-artifact-name: identity-stronghold-nodejs-bindings-build
