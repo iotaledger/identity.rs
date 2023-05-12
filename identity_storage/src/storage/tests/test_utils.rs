@@ -49,12 +49,12 @@ pub(super) struct Setup<T: JwkStorageDocumentExt> {
   pub kid: String,
 }
 
-pub(super) async fn setup_iotadocument() -> Setup<IotaDocument> {
+pub(super) async fn setup_iotadocument(fragment: Option<&'static str>) -> Setup<IotaDocument> {
   let mut issuer_doc = IotaDocument::from_json(ISSUER_IOTA_DOCUMENT_JSON).unwrap();
   let subject_doc = CoreDocument::from_json(SUBJECT_DOCUMENT_JSON).unwrap();
   let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let kid: String = generate_method(&storage, &mut issuer_doc).await;
+  let kid: String = generate_method(&storage, &mut issuer_doc, fragment).await;
 
   Setup {
     issuer_doc,
@@ -64,12 +64,12 @@ pub(super) async fn setup_iotadocument() -> Setup<IotaDocument> {
   }
 }
 
-pub(super) async fn setup_coredocument() -> Setup<CoreDocument> {
+pub(super) async fn setup_coredocument(fragment: Option<&'static str>) -> Setup<CoreDocument> {
   let mut issuer_doc = CoreDocument::from_json(ISSUER_DOCUMENT_JSON).unwrap();
   let subject_doc = CoreDocument::from_json(SUBJECT_DOCUMENT_JSON).unwrap();
   let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let kid: String = generate_method(&storage, &mut issuer_doc).await;
+  let kid: String = generate_method(&storage, &mut issuer_doc, fragment).await;
 
   Setup {
     issuer_doc,
@@ -79,7 +79,7 @@ pub(super) async fn setup_coredocument() -> Setup<CoreDocument> {
   }
 }
 
-async fn generate_method<T>(storage: &MemStorage, document: &mut T) -> String
+async fn generate_method<T>(storage: &MemStorage, document: &mut T, fragment: Option<&'static str>) -> String
 where
   T: JwkStorageDocumentExt,
 {
@@ -88,7 +88,7 @@ where
       storage,
       JwkMemStore::ED25519_KEY_TYPE,
       JwsAlgorithm::EdDSA,
-      None,
+      fragment,
       MethodScope::assertion_method(),
     )
     .await

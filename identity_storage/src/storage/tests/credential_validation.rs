@@ -149,8 +149,8 @@ where
 
 #[tokio::test]
 async fn invalid_expiration_or_issuance_date() {
-  invalid_expiration_or_issuance_date_impl(test_utils::setup_coredocument().await).await;
-  invalid_expiration_or_issuance_date_impl(test_utils::setup_iotadocument().await).await;
+  invalid_expiration_or_issuance_date_impl(test_utils::setup_coredocument(None).await).await;
+  invalid_expiration_or_issuance_date_impl(test_utils::setup_iotadocument(None).await).await;
 }
 
 async fn full_validation_impl<T>(setup: Setup<T>)
@@ -187,8 +187,8 @@ where
 
 #[tokio::test]
 async fn full_validation() {
-  full_validation_impl(test_utils::setup_coredocument().await).await;
-  full_validation_impl(test_utils::setup_iotadocument().await).await;
+  full_validation_impl(test_utils::setup_coredocument(None).await).await;
+  full_validation_impl(test_utils::setup_iotadocument(None).await).await;
 }
 
 async fn matches_issuer_did_unrelated_issuer_impl<T>(setup: Setup<T>)
@@ -236,6 +236,82 @@ where
 
 #[tokio::test]
 async fn matches_issuer_did_unrelated_issuer() {
-  matches_issuer_did_unrelated_issuer_impl(test_utils::setup_coredocument().await).await;
-  matches_issuer_did_unrelated_issuer_impl(test_utils::setup_iotadocument().await).await;
+  matches_issuer_did_unrelated_issuer_impl(test_utils::setup_coredocument(None).await).await;
+  matches_issuer_did_unrelated_issuer_impl(test_utils::setup_iotadocument(None).await).await;
+}
+
+async fn verify_invalid_signature_impl<T>(setup: Setup<T>, other_setup: Setup<T>, fragment: &'static str)
+where
+  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+{
+  let Setup {
+    issuer_doc,
+    subject_doc,
+    ..
+  } = setup;
+
+  let Setup {
+    issuer_doc: other_issuer_doc,
+    storage: other_storage,
+    ..
+  } = other_setup;
+
+  let CredentialSetup {
+    credential,
+    issuance_date,
+    expiration_date,
+  } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
+
+  // Sign the credential with the *other* issuer.
+  let jwt: Jwt = other_issuer_doc
+    .sign_credential(&credential, &other_storage, fragment, &JwsSignatureOptions::default())
+    .await
+    .unwrap();
+
+  let err: _ = CredentialValidator::new()
+    .verify_signature::<_, Object>(&jwt, &[&issuer_doc], &JwsVerificationOptions::default())
+    .unwrap_err();
+
+  // run the validation unit
+  // we expect that the kid won't resolve to a method on the issuer_doc's document.
+  assert!(matches!(err, ValidationError::Signature { .. }));
+
+  // check that full_validation also fails as expected
+  let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
+  let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
+  let options = CredentialValidationOptions::default()
+    .latest_issuance_date(issued_on_or_before)
+    .earliest_expiry_date(expires_on_or_after);
+
+  // validate and extract the nested error according to our expectations
+  let validation_errors = CredentialValidator::new()
+    .validate::<_, Object>(&jwt, &issuer_doc, &options, FailFast::FirstError)
+    .unwrap_err()
+    .validation_errors;
+
+  let error = match validation_errors.as_slice() {
+    [validation_error] => validation_error,
+    _ => unreachable!(),
+  };
+
+  // we expect that the kid won't resolve to a method on the issuer_doc's document.
+  assert!(matches!(error, &ValidationError::Signature { .. }));
+}
+
+#[tokio::test]
+async fn verify_invalid_signature() {
+  // Ensure the fragment is the same on both documents so we can produce the signature verification error.
+  let fragment = "signing-key";
+  verify_invalid_signature_impl(
+    test_utils::setup_coredocument(Some(fragment)).await,
+    test_utils::setup_coredocument(Some(fragment)).await,
+    fragment,
+  )
+  .await;
+  verify_invalid_signature_impl(
+    test_utils::setup_iotadocument(Some(fragment)).await,
+    test_utils::setup_iotadocument(Some(fragment)).await,
+    fragment,
+  )
+  .await;
 }
