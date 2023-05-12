@@ -29,4 +29,6 @@ pub enum Error {
   InvalidMethodDataTransformation(&'static str),
   #[error("invalid verification material: private key material exposed")]
   PrivateKeyMaterialExposed,
+  #[error("verification material format is not publicKeyJwk")]
+  NotPublicKeyJwk,
 }

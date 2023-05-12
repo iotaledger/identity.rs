@@ -1,4 +1,4 @@
-import type { CoreDocument, ICoreDocument, IotaDocument } from "../node";
+import type { ICoreDocument } from "../node";
 
 export {};
 

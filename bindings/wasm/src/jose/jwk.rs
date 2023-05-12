@@ -1,14 +1,23 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_jose::jwk::Jwk;
-use identity_jose::jwk::JwkOperation;
-use identity_jose::jwk::JwkParams;
-use identity_jose::jwk::JwkUse;
+use identity_iota::verification::jose::jwk::Jwk;
+use identity_iota::verification::jose::jwk::JwkOperation;
+use identity_iota::verification::jose::jwk::JwkParams;
+use identity_iota::verification::jose::jwk::JwkUse;
 use wasm_bindgen::prelude::*;
 
 use crate::common::ArrayString;
 use crate::error::WasmResult;
+use crate::jose::ArrayJwkOperation;
+use crate::jose::IJwkParams;
+use crate::jose::WasmJwkParamsEc;
+use crate::jose::WasmJwkParamsOct;
+use crate::jose::WasmJwkParamsOkp;
+use crate::jose::WasmJwkParamsRsa;
+use crate::jose::WasmJwkType;
+use crate::jose::WasmJwkUse;
+use crate::jose::WasmJwsAlgorithm;
 use core::ops::Deref;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -156,9 +165,10 @@ impl WasmJwk {
   }
 
   /// Returns a clone of the Jwk with _all_ private key components unset.
+  /// Nothing is returned when `kty = oct` as this key type is not considered public by this library.
   #[wasm_bindgen(js_name = toPublic)]
-  pub fn to_public(&self) -> WasmJwk {
-    WasmJwk(self.0.to_public())
+  pub fn to_public(&self) -> Option<WasmJwk> {
+    self.0.to_public().map(WasmJwk)
   }
 
   /// Returns `true` if _all_ private key components of the key are unset, `false` otherwise.
@@ -188,28 +198,6 @@ impl From<Jwk> for WasmJwk {
 
 impl_wasm_json!(WasmJwk, Jwk);
 impl_wasm_clone!(WasmJwk, Jwk);
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "IJwkParams")]
-  pub type IJwkParams;
-  #[wasm_bindgen(typescript_type = "JwsAlgorithm")]
-  pub type WasmJwsAlgorithm;
-  #[wasm_bindgen(typescript_type = "JwkUse")]
-  pub type WasmJwkUse;
-  #[wasm_bindgen(typescript_type = "JwkType")]
-  pub type WasmJwkType;
-  #[wasm_bindgen(typescript_type = "Array<JwkOperation>")]
-  pub type ArrayJwkOperation;
-  #[wasm_bindgen(typescript_type = "JwkParamsEc")]
-  pub type WasmJwkParamsEc;
-  #[wasm_bindgen(typescript_type = "JwkParamsOkp")]
-  pub type WasmJwkParamsOkp;
-  #[wasm_bindgen(typescript_type = "JwkParamsRsa")]
-  pub type WasmJwkParamsRsa;
-  #[wasm_bindgen(typescript_type = "JwkParamsOct")]
-  pub type WasmJwkParamsOct;
-}
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWK: &'static str = r#"
