@@ -48,7 +48,7 @@ where
     Self(signature_verifier)
   }
 
-  /// Decodes and validates a [`Credential`] issued as a JWT. A [`CredentialToken`] is returned upon success.
+  /// Decodes and validates a [`Credential`] issued as a JWT. A [`DecodedJwtCredential`] is returned upon success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -276,7 +276,7 @@ where
   }
 
   /// Decode the credential into a [`JwsValidationItem`].
-  fn decode<'credential>(credential_jws: &'credential str) -> Result<JwsValidationItem<'credential>, ValidationError> {
+  fn decode(credential_jws: &str) -> Result<JwsValidationItem<'_>, ValidationError> {
     let decoder: Decoder = Decoder::new();
 
     decoder
