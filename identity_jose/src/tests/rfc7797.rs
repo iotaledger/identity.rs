@@ -31,7 +31,7 @@ fn test_rfc7797() {
       }
       hs256::verify(input, key)
     });
-    let decoder = Decoder::new().critical("b64");
+    let decoder = Decoder::new();
 
     let token = decoder
       .decode_compact_serialization(tv.encoded, tv.detach.then_some(tv.payload))

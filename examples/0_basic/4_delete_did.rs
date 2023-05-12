@@ -42,9 +42,12 @@ async fn main() -> anyhow::Result<()> {
 
   // Attempting to resolve a deleted DID results in a `NoOutput` error.
   let error: Error = client.resolve_did(&did).await.unwrap_err();
+
   assert!(matches!(
     error,
-    identity_iota::iota::Error::DIDResolutionError(iota_sdk::client::Error::NoOutput(..))
+    identity_iota::iota::Error::DIDResolutionError(iota_sdk::client::Error::Node(
+      iota_sdk::client::node_api::error::Error::NotFound(..)
+    ))
   ));
 
   Ok(())

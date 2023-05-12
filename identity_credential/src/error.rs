@@ -6,7 +6,7 @@
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
-/// This type represents errors that can occur when constructing credentials and presentations.
+/// This type represents errors that can occur when constructing credentials and presentations or their serializations.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   /// Caused when constructing a credential or presentation without a valid base context.
@@ -34,6 +34,28 @@ pub enum Error {
   #[error("invalid credential status: {0}")]
   InvalidStatus(String),
   /// Caused when constructing an invalid `LinkedDomainService` or `DomainLinkageConfiguration`.
-  #[error("domain linkage error: {0}")]
-  DomainLinkageError(Box<dyn std::error::Error + Send + Sync + 'static>),
+  #[error("domain linkage error")]
+  DomainLinkageError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+  /// Caused when attempting to encode a `Credential` containing multiple subjects as a JWT.  
+  #[error("could not create JWT claim set from verifiable credential: more than one subject")]
+  MoreThanOneSubjectInJwt,
+  /// Caused when attempting to convert a JWT to a `Credential` that has conflicting values
+  /// between the registered claims and those in the `vc` object.
+  #[error("could not convert JWT to the VC data model: {0}")]
+  InconsistentCredentialJwtClaims(&'static str),
+
+  /// Caused when attempting to parse a timestamp value that is outside the
+  /// valid range defined in [RFC 3339](https://tools.ietf.org/html/rfc3339).  
+  #[error("timestamp conversion failed")]
+  TimestampConversionError,
+
+  /// Caused by a failure to serialize the JWT claims set representation of a `Credential` or `Presentation`
+  /// to JSON.
+  #[error("could not serialize JWT claims set")]
+  JwtClaimsSetSerializationError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+
+  /// Caused by a failure to deserialize the JWT claims set representation of a `Credential` or `Presentation` from
+  /// JSON.
+  #[error("could not deserialize JWT claims set")]
+  JwtClaimsSetDeserializationError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }

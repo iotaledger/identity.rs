@@ -57,7 +57,7 @@ jobs:
              CORE_MODIFIED=false
           fi
           echo CORE_MODIFIED=$CORE_MODIFIED
-          echo "{core-modified}={$CORE_MODIFIED}" >> $GITHUB_OUTPUT
+          echo "core-modified=$CORE_MODIFIED" >> $GITHUB_OUTPUT
 
   build-and-test:
     runs-on: ${{ matrix.os }}

@@ -8,10 +8,10 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use crypto::signatures::ed25519::SecretKey;
-use identity_jose::jwk::EdCurve;
-use identity_jose::jwk::Jwk;
-use identity_jose::jwk::JwkType;
-use identity_jose::jws::JwsAlgorithm;
+use identity_verification::jose::jwk::EdCurve;
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jwk::JwkType;
+use identity_verification::jose::jws::JwsAlgorithm;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -41,6 +41,11 @@ impl JwkMemStore {
       jwk_store: Shared::new(HashMap::new()),
     }
   }
+
+  /// Returns the number of items contained in the [`JwkMemStore`].
+  pub async fn count(&self) -> usize {
+    self.jwk_store.read().await.keys().count()
+  }
 }
 
 // Refer to the `JwkStorage` interface docs for high-level documentation of the individual methods.
@@ -65,7 +70,8 @@ impl JwkStorage for JwkMemStore {
 
     let mut jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
     jwk.set_alg(alg.name());
-    let public_jwk: Jwk = jwk.to_public();
+    let mut public_jwk: Jwk = jwk.to_public().unwrap();
+    public_jwk.set_kid(kid.clone());
 
     let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
     jwk_store.insert(kid.clone(), jwk);
@@ -113,21 +119,21 @@ impl JwkStorage for JwkMemStore {
     Ok(key_id)
   }
 
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>> {
+  async fn sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
-    let jwk: &Jwk = jwk_store
-      .get(key_id)
-      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
+    // Extract the required alg from the given public key
+    let alg = public_key
+      .alg()
+      .ok_or(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+      .and_then(|alg_str| {
+        JwsAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+      })?;
 
-    let alg: JwsAlgorithm =
-      JwsAlgorithm::from_str(jwk.alg().expect("we should only store Jwks that have an `alg` set"))
-        .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm).with_source(err))?;
-
-    // Note: Because we check for key type and algorithm compatiblity in generate/insert, these errors are impossible.
-    let signature: Vec<u8> = match alg {
+    // Check that `kty` is `Okp` and `crv = Ed25519`.
+    match alg {
       JwsAlgorithm::EdDSA => {
-        let okp_params = jwk.try_okp_params().map_err(|err| {
+        let okp_params = public_key.try_okp_params().map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
             .with_custom_message(format!("expected a Jwk with Okp params in order to sign with {alg}"))
             .with_source(err)
@@ -140,9 +146,6 @@ impl JwkStorage for JwkMemStore {
             )),
           );
         }
-
-        let secret_key: _ = ed25519::expand_secret_jwk(jwk)?;
-        secret_key.sign(&data).to_bytes().to_vec()
       }
       other => {
         return Err(
@@ -152,15 +155,12 @@ impl JwkStorage for JwkMemStore {
       }
     };
 
-    Ok(signature)
-  }
-
-  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
-    let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
+    // Obtain the corresponding private key and sign `data`.
     let jwk: &Jwk = jwk_store
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
-    Ok(jwk.to_public())
+    let secret_key = ed25519::expand_secret_jwk(jwk)?;
+    Ok(secret_key.sign(data).to_bytes().to_vec())
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
@@ -182,10 +182,10 @@ pub(crate) mod ed25519 {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::SecretKey;
   use crypto::signatures::ed25519::{self};
-  use identity_jose::jwk::EdCurve;
-  use identity_jose::jwk::Jwk;
-  use identity_jose::jwk::JwkParamsOkp;
-  use identity_jose::jwu;
+  use identity_verification::jose::jwk::EdCurve;
+  use identity_verification::jose::jwk::Jwk;
+  use identity_verification::jose::jwk::JwkParamsOkp;
+  use identity_verification::jose::jwu;
 
   use crate::key_storage::KeyStorageError;
   use crate::key_storage::KeyStorageErrorKind;
@@ -244,6 +244,10 @@ pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_
 #[derive(Debug, Copy, Clone)]
 enum MemStoreKeyType {
   Ed25519,
+}
+
+impl JwkMemStore {
+  pub const ED25519_KEY_TYPE: KeyType = ED25519_KEY_TYPE;
 }
 
 impl MemStoreKeyType {
@@ -360,10 +364,10 @@ mod tests {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::Signature;
   use crypto::signatures::ed25519::{self};
-  use identity_jose::jwk::EcCurve;
-  use identity_jose::jwk::JwkParamsEc;
-  use identity_jose::jwk::JwkParamsOkp;
-  use identity_jose::jwu;
+  use identity_verification::jose::jwk::EcCurve;
+  use identity_verification::jose::jwk::JwkParamsEc;
+  use identity_verification::jose::jwk::JwkParamsOkp;
+  use identity_verification::jose::jwu;
 
   use super::*;
 
@@ -374,7 +378,7 @@ mod tests {
 
     let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE, JwsAlgorithm::EdDSA).await.unwrap();
 
-    let signature = store.sign(&key_id, test_msg.to_vec()).await.unwrap();
+    let signature = store.sign(&key_id, test_msg, &jwk.to_public().unwrap()).await.unwrap();
 
     let public_key: PublicKey = expand_public_jwk(&jwk);
     let signature: Signature = Signature::from_bytes(signature.try_into().unwrap());
@@ -400,7 +404,7 @@ mod tests {
     store.insert(jwk.clone()).await.unwrap();
 
     // INVALID: Inserting a Jwk with all private key components unset should fail.
-    let err = store.insert(jwk.to_public()).await.unwrap_err();
+    let err = store.insert(jwk.to_public().unwrap()).await.unwrap_err();
     assert!(matches!(err.kind(), KeyStorageErrorKind::Unspecified))
   }
 

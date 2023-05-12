@@ -17,6 +17,9 @@ const PREDEFINED: &[&str] = &[
   "iv", "tag", "p2s", "p2c",
 ];
 
+// The extension parameters supported by this library.
+const PERMITTED_CRITS: &[&str] = &["b64"];
+
 pub fn parse_utf8(slice: &(impl AsRef<[u8]> + ?Sized)) -> Result<&str> {
   str::from_utf8(slice.as_ref()).map_err(Error::InvalidUtf8)
 }
@@ -43,13 +46,9 @@ pub fn extract_b64(header: Option<&JwsHeader>) -> bool {
   header.and_then(JwsHeader::b64).unwrap_or(DEFAULT_B64)
 }
 
-pub fn validate_jws_headers(
-  protected: Option<&JwsHeader>,
-  unprotected: Option<&JwsHeader>,
-  permitted: Option<&[String]>,
-) -> Result<()> {
+pub fn validate_jws_headers(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
   validate_disjoint(protected, unprotected)?;
-  validate_crit(protected, unprotected, permitted)?;
+  validate_crit(protected, unprotected)?;
   validate_b64(protected, unprotected)?;
 
   Ok(())
@@ -64,7 +63,7 @@ pub fn validate_jws_headers(
 /// 5. All values in "crit" are present in at least one of the `protected` or `unprotected` headers.
 ///
 /// See (<https://www.rfc-editor.org/rfc/rfc7515#section-4.1.11>)
-pub fn validate_crit<T>(protected: Option<&T>, unprotected: Option<&T>, permitted: Option<&[String]>) -> Result<()>
+pub fn validate_crit<T>(protected: Option<&T>, unprotected: Option<&T>) -> Result<()>
 where
   T: JoseHeader,
 {
@@ -80,7 +79,6 @@ where
     return Err(Error::InvalidParam("empty crit"));
   }
 
-  let permitted: &[String] = permitted.unwrap_or_default();
   let values: &[String] = values.unwrap_or_default();
 
   for value in values {
@@ -91,7 +89,7 @@ where
     }
 
     // The "crit" parameter MUST be understood by the application.
-    if !permitted.contains(value) {
+    if !PERMITTED_CRITS.contains(&AsRef::<str>::as_ref(value)) {
       return Err(Error::InvalidParam("unpermitted crit"));
     }
 
