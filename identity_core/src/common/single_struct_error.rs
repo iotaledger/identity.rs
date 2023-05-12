@@ -23,7 +23,7 @@ pub struct SingleStructError<T: Debug + Display> {
 impl<T: Display + Debug> Display for SingleStructError<T> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self.repr {
-      Repr::Simple(ref kind) => write!(f, "{}", kind),
+      Repr::Simple(ref kind) => write!(f, "{kind}"),
       Repr::Extensive(ref extensive) => {
         write!(f, "{}", &extensive.kind)?;
         let Some(ref message) = extensive.message else {return Ok(())};

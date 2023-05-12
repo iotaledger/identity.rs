@@ -29,6 +29,11 @@ impl KeyIdMemstore {
       key_id_store: Shared::new(HashMap::new()),
     }
   }
+
+  /// Returns the number of items contained in the [`KeyIdMemstore`].
+  pub async fn count(&self) -> usize {
+    self.key_id_store.read().await.keys().count()
+  }
 }
 
 impl Default for KeyIdMemstore {

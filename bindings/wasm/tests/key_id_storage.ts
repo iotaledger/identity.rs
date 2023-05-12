@@ -52,7 +52,7 @@ describe("Key Id Storage", () => {
     });
 });
 
-function createVerificationMethod(): VerificationMethod {
+export function createVerificationMethod(): VerificationMethod {
     let id = CoreDID.parse("did:example:abc123");
     let keypair = new KeyPair(KeyType.Ed25519);
     let method = new VerificationMethod(id, keypair.type(), keypair.public(), "#key-1");
@@ -77,7 +77,7 @@ function stringToMethodDigest(input: string): MethodDigest {
     return MethodDigest.unpack(byteArray);
 }
 
-class KeyIdMemStore implements KeyIdStorage {
+export class KeyIdMemStore implements KeyIdStorage {
     private _keyIds: Map<string, string>;
 
     constructor() {
@@ -110,5 +110,9 @@ class KeyIdMemStore implements KeyIdStorage {
         } else {
             throw new Error("KeyId not found!");
         }
+    }
+
+    public count(): number {
+        return this._keyIds.size;
     }
 }

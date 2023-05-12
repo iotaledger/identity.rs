@@ -24,7 +24,7 @@ use super::VerificationInput;
 /// Contains the decoded headers and the raw claims.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Token<'a> {
+pub struct DecodedJws<'a> {
   pub protected: JwsHeader,
   pub unprotected: Option<Box<JwsHeader>>,
   pub claims: Cow<'a, [u8]>,
@@ -71,7 +71,7 @@ impl DecodedHeaders {
 }
 
 /// A partially decoded JWS containing claims, and the decoded verification data
-/// for one of its signatures (headers, signing input and signature). This data
+/// for its corresponding signature (headers, signing input and signature). This data
 /// can be cryptographically verified using a [`JwsSignatureVerifier`]. See [`Self::verify`](Self::verify).
 pub struct JwsValidationItem<'a> {
   headers: DecodedHeaders,
@@ -83,6 +83,16 @@ impl<'a> JwsValidationItem<'a> {
   /// Returns the decoded protected header if it exists.
   pub fn protected_header(&self) -> Option<&JwsHeader> {
     self.headers.protected_header()
+  }
+
+  /// Returns the Nonce from the protected header if it is set.
+  pub fn nonce(&self) -> Option<&str> {
+    self.protected_header().and_then(|header| header.nonce())
+  }
+
+  /// Returns the kid from the protected header if it is set.
+  pub fn kid(&self) -> Option<&str> {
+    self.protected_header().and_then(|header| header.kid())
   }
 
   /// Returns the decoded unprotected header if it exists.
@@ -120,7 +130,11 @@ impl<'a> JwsValidationItem<'a> {
   /// Apart from the fallible call to [`JwsSignatureVerifier::verify`] this method can also error if there is no
   /// `alg` present in the protected header (in which case the verifier cannot be called) or if the given `public_key`
   /// has a different value present in its `alg` field.
-  pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<Token<'a>>
+  ///
+  /// # Note
+  /// One may want to perform other validations before calling this method, such as for instance checking the nonce
+  /// (see [`Self::nonce`](Self::nonce())).
+  pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<DecodedJws<'a>>
   where
     T: JwsSignatureVerifier,
   {
@@ -141,21 +155,17 @@ impl<'a> JwsValidationItem<'a> {
     public_key.check_alg(alg.name())?;
 
     // Construct verification input
-    let input: VerificationInput = {
-      let signing_input = &signing_input;
-      let decoded_signature = &decoded_signature;
-      VerificationInput {
-        alg,
-        signing_input,
-        decoded_signature,
-      }
+    let input = VerificationInput {
+      alg,
+      signing_input,
+      decoded_signature,
     };
     // Call verifier
     verifier
       .verify(input, public_key)
       .map_err(Error::SignatureVerificationError)?;
 
-    Ok(Token {
+    Ok(DecodedJws {
       protected,
       unprotected,
       claims,
@@ -194,21 +204,13 @@ struct Flatten<'a> {
 // =============================================================================
 
 /// The [`Decoder`] is responsible for decoding a JWS into one or more [`JwsValidationItems`](JwsValidationItem).
-#[derive(Default, Debug, Clone)]
-pub struct Decoder {
-  crits: Option<Vec<String>>,
-}
+#[derive(Debug, Clone)]
+pub struct Decoder;
 
 impl Decoder {
   /// Constructs a new [`Decoder`].
-  pub fn new() -> Self {
-    Self::default()
-  }
-
-  /// Append values to the list of permitted extension parameters.
-  pub fn critical(mut self, value: impl Into<String>) -> Self {
-    self.crits.get_or_insert_with(Vec::new).push(value.into());
-    self
+  pub fn new() -> Decoder {
+    Self
   }
 
   /// Decode a JWS encoded with the [JWS compact serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
@@ -273,11 +275,7 @@ impl Decoder {
     } = jws_signature;
 
     let protected_header: Option<JwsHeader> = protected.map(decode_b64_json).transpose()?;
-    validate_jws_headers(
-      protected_header.as_ref(),
-      unprotected_header.as_ref(),
-      self.crits.as_deref(),
-    )?;
+    validate_jws_headers(protected_header.as_ref(), unprotected_header.as_ref())?;
 
     let protected_bytes: &[u8] = protected.map(str::as_bytes).unwrap_or_default();
     let signing_input: Box<[u8]> = create_message(protected_bytes, payload).into();
@@ -355,6 +353,12 @@ impl Decoder {
       payload,
       signatures: signatures.into_iter(),
     })
+  }
+}
+
+impl Default for Decoder {
+  fn default() -> Self {
+    Self::new()
   }
 }
 

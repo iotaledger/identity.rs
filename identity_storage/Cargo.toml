@@ -13,11 +13,15 @@ description = "Abstractions over storage for cryptographic keys used in DID Docu
 
 [dependencies]
 async-trait = { version = "0.1.64", default-features = false }
+futures = { version = "0.3.27", default-features = false, features = ["async-await"] }
 identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core", default-features = false }
-identity_jose = { version = "=0.7.0-alpha.6", path = "../identity_jose", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = ["credential", "presentation"] }
+identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
+identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
+identity_iota_core = { version = "=0.7.0-alpha.6", path = "../identity_iota_core", default-features = false, optional = true }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default_features = false }
 iota-crypto = { version = "0.18", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }
-rand = { version = "0.8.5", default-features = false, features = ["std"], optional = true }
+rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default_features = false }
 serde.workspace = true
 serde_json.workspace = true
@@ -26,11 +30,15 @@ tokio = { version = "1.23.0", default-features = false, features = ["macros", "s
 
 [dev-dependencies]
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
-rand = { version = "0.8.5" }
+once_cell = { version = "1.17.1", default-features = false }
+proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
-memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
+memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "identity_verification/eddsa"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = []
+# Implements the JwkStorageDocumentExt trait for IotaDocument
+iota-document = ["dep:identity_iota_core"]
+default = ["iota-document", "memstore"]

@@ -5,8 +5,8 @@ use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Result;
 
+use crate::jwk::diff::DiffJwk;
 use crate::verification_method::MethodData;
-use identity_jose::jwk::diff::DiffJwk;
 
 // TODO: Test the `PublicKeyJwk` variant.
 #[allow(clippy::large_enum_variant)]

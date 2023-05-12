@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use std::ops::Deref;
 
 use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
@@ -10,13 +10,10 @@ use crypto::signatures::ed25519::{self};
 use crate::jwk::EdCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkParamsOkp;
-use crate::jws::Encoder;
-use crate::jws::JwsAlgorithm;
-use crate::jws::JwsHeader;
+
 use crate::jws::SignatureVerificationError;
 use crate::jws::SignatureVerificationErrorKind;
 use crate::jws::VerificationInput;
-use crate::jwt::JwtHeaderSet;
 use crate::jwu;
 
 pub(crate) fn expand_secret_jwk(jwk: &Jwk) -> SecretKey {
@@ -50,36 +47,21 @@ pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {
   PublicKey::try_from(pk).unwrap()
 }
 
-pub(crate) async fn encode(encoder: &Encoder<'_>, claims: &[u8], secret_key: SecretKey) -> String {
-  let sk = Arc::new(secret_key);
-
-  let sign_fn = move |protected: Option<JwsHeader>, unprotected: Option<JwsHeader>, msg: Vec<u8>| {
-    let sk = sk.clone();
-    async move {
-      let header_set: JwtHeaderSet<JwsHeader> = JwtHeaderSet::new()
-        .with_protected(&protected)
-        .with_unprotected(&unprotected);
-      if header_set.try_alg().map_err(|_| "missing `alg` parameter")? != JwsAlgorithm::EdDSA {
-        return Err("incompatible `alg` parameter");
-      }
-      let sig: _ = sk.sign(msg.as_slice()).to_bytes();
-      Ok(jwu::encode_b64(sig))
-    }
-  };
-
-  encoder.encode(&sign_fn, claims).await.unwrap()
+pub(crate) fn sign(message: &[u8], private_key: &Jwk) -> impl AsRef<[u8]> {
+  let sk: SecretKey = expand_secret_jwk(private_key);
+  sk.sign(message).to_bytes()
 }
 
 pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let public_key = expand_public_jwk(jwk);
 
   let signature_arr =
-    <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature)
+    <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature.deref())
       .map_err(|err| err.to_string())
       .unwrap();
 
   let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
-  if public_key.verify(&signature, verification_input.signing_input) {
+  if public_key.verify(&signature, &verification_input.signing_input) {
     Ok(())
   } else {
     Err(SignatureVerificationErrorKind::InvalidSignature.into())

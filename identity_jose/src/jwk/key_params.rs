@@ -43,12 +43,25 @@ impl JwkParams {
     }
   }
 
-  pub fn to_public(&self) -> Self {
+  /// Returns a clone with _all_ private key components unset. The `None` variant is returned
+  /// in the case of [`JwkParams::Oct`] as such keys are not considered public by
+  /// this library.
+  pub fn to_public(&self) -> Option<Self> {
     match self {
-      Self::Ec(inner) => Self::Ec(inner.to_public()),
-      Self::Rsa(inner) => Self::Rsa(inner.to_public()),
-      Self::Oct(inner) => Self::Oct(inner.to_public()),
-      Self::Okp(inner) => Self::Okp(inner.to_public()),
+      Self::Okp(inner) => Some(Self::Okp(inner.to_public())),
+      Self::Ec(inner) => Some(Self::Ec(inner.to_public())),
+      Self::Rsa(inner) => Some(Self::Rsa(inner.to_public())),
+      Self::Oct(_) => None,
+    }
+  }
+
+  /// Returns `true` if _all_ private key components are unset, `false` otherwise.
+  pub fn is_public(&self) -> bool {
+    match self {
+      Self::Okp(value) => value.is_public(),
+      Self::Ec(value) => value.is_public(),
+      Self::Rsa(value) => value.is_public(),
+      Self::Oct(value) => value.is_public(),
     }
   }
 }
@@ -303,8 +316,10 @@ impl JwkParamsOct {
     JwkType::Oct
   }
 
-  pub fn to_public(&self) -> Self {
-    Self { k: self.k.clone() }
+  /// Always returns `false`. Octet sequence keys
+  /// are not considered public by this library.
+  pub fn is_public(&self) -> bool {
+    false
   }
 }
 

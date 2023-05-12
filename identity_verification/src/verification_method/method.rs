@@ -221,7 +221,7 @@ impl VerificationMethod {
   /// - It is recommended that [`Jwk`] kid values are set to the public key fingerprint. See
   ///   [`Jwk::thumbprint_b64`](Jwk::thumbprint_b64()).
   //
-  pub fn new_from_jwk<D: DID>(did: &D, key: Jwk, fragment: Option<&str>) -> Result<Self> {
+  pub fn new_from_jwk<D: DID>(did: D, key: Jwk, fragment: Option<&str>) -> Result<Self> {
     if !key.is_public() {
       return Err(crate::error::Error::PrivateKeyMaterialExposed);
     };
@@ -234,7 +234,7 @@ impl VerificationMethod {
       if given_fragment.starts_with('#') {
         Cow::Borrowed(given_fragment)
       } else {
-        Cow::Owned(format!("#{}", given_fragment))
+        Cow::Owned(format!("#{given_fragment}"))
       }
     };
 
@@ -242,6 +242,7 @@ impl VerificationMethod {
 
     MethodBuilder::default()
       .id(id)
+      .controller(did.into())
       .type_(MethodType::JWK)
       .data(MethodData::PublicKeyJwk(key))
       .build()

@@ -46,5 +46,5 @@ default = ["revocation-bitmap", "validator", "credential", "presentation", "doma
 credential = []
 presentation = ["credential"]
 revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
-validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
+validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation", "identity_verification/eddsa"]
 domain-linkage-fetch = ["dep:reqwest", "dep:futures", "credential"]
