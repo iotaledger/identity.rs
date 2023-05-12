@@ -4,13 +4,17 @@
 use identity_core::common::Duration;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
+use identity_credential::credential::Subject;
 use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
 use identity_credential::validator::vc_jwt_validation::CredentialValidator;
 use identity_credential::validator::vc_jwt_validation::ValidationError;
 use identity_credential::validator::FailFast;
+use identity_credential::validator::SubjectHolderRelationship;
+use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use once_cell::sync::Lazy;
@@ -314,4 +318,119 @@ async fn verify_invalid_signature() {
     fragment,
   )
   .await;
+}
+
+async fn check_subject_holder_relationship_impl<T>(setup: Setup<T>)
+where
+  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+{
+  let Setup { issuer_doc, .. } = setup;
+
+  let mut credential: Credential = SIMPLE_CREDENTIAL.clone();
+
+  // first ensure that holder_url is the subject and set the nonTransferable property
+  let actual_holder_url = credential.credential_subject.first().unwrap().id.clone().unwrap();
+  assert_eq!(credential.credential_subject.len(), 1);
+  credential.non_transferable = Some(true);
+
+  // checking with holder = subject passes for all defined subject holder relationships:
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential,
+    &actual_holder_url,
+    SubjectHolderRelationship::AlwaysSubject
+  )
+  .is_ok());
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential,
+    &actual_holder_url,
+    SubjectHolderRelationship::SubjectOnNonTransferable
+  )
+  .is_ok());
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential,
+    &actual_holder_url,
+    SubjectHolderRelationship::Any
+  )
+  .is_ok());
+
+  // check with a holder different from the subject of the credential:
+  let issuer_url = Url::parse(issuer_doc.as_ref().id().as_str()).unwrap();
+  assert!(actual_holder_url != issuer_url);
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential,
+    &issuer_url,
+    SubjectHolderRelationship::AlwaysSubject
+  )
+  .is_err());
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential,
+    &issuer_url,
+    SubjectHolderRelationship::SubjectOnNonTransferable
+  )
+  .is_err());
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential,
+    &issuer_url,
+    SubjectHolderRelationship::Any
+  )
+  .is_ok());
+
+  let mut credential_transferable = credential.clone();
+
+  credential_transferable.non_transferable = Some(false);
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential_transferable,
+    &issuer_url,
+    SubjectHolderRelationship::SubjectOnNonTransferable
+  )
+  .is_ok());
+
+  credential_transferable.non_transferable = None;
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential_transferable,
+    &issuer_url,
+    SubjectHolderRelationship::SubjectOnNonTransferable
+  )
+  .is_ok());
+
+  // two subjects (even when they are both the holder) should fail for all defined values except "Any"
+
+  let mut credential_duplicated_holder = credential;
+  credential_duplicated_holder
+    .credential_subject
+    .push(Subject::with_id(actual_holder_url));
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential_duplicated_holder,
+    &issuer_url,
+    SubjectHolderRelationship::AlwaysSubject
+  )
+  .is_err());
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential_duplicated_holder,
+    &issuer_url,
+    SubjectHolderRelationship::SubjectOnNonTransferable
+  )
+  .is_err());
+
+  assert!(CredentialValidator::check_subject_holder_relationship(
+    &credential_duplicated_holder,
+    &issuer_url,
+    SubjectHolderRelationship::Any
+  )
+  .is_ok());
+}
+
+#[tokio::test]
+async fn check_subject_holder_relationship() {
+  check_subject_holder_relationship_impl(test_utils::setup_coredocument(None).await).await;
+  check_subject_holder_relationship_impl(test_utils::setup_iotadocument(None).await).await;
 }
