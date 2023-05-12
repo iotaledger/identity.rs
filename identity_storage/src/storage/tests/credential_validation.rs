@@ -6,13 +6,16 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
+use identity_credential::credential::Jwt;
 use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
 use identity_credential::validator::vc_jwt_validation::CredentialValidator;
 use identity_credential::validator::vc_jwt_validation::ValidationError;
 use identity_credential::validator::FailFast;
+use identity_document::document::CoreDocument;
 use once_cell::sync::Lazy;
 use proptest::proptest;
 
+use crate::storage::tests::test_utils::CredentialSetup;
 use crate::storage::tests::test_utils::Setup;
 use crate::storage::tests::test_utils::{self};
 use crate::storage::JwkStorageDocumentExt;
@@ -41,45 +44,7 @@ const SIMPLE_CREDENTIAL_JSON: &str = r#"{
 static SIMPLE_CREDENTIAL: Lazy<Credential> =
   Lazy::new(|| Credential::<Object>::from_json(SIMPLE_CREDENTIAL_JSON).unwrap());
 
-#[tokio::test]
-async fn invalid_expiration_date() {
-  let Setup {
-    issuer_doc,
-    subject_doc,
-    storage,
-    kid,
-  } = test_utils::setup().await;
-
-  let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-  let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-  let credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
-
-  let jws = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
-    .await
-    .unwrap();
-
-  let issued_on_or_before = issuance_date;
-  // expires_on_or_after > expiration_date
-  let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
-  let options = CredentialValidationOptions::default()
-    .latest_issuance_date(issued_on_or_before)
-    .earliest_expiry_date(expires_on_or_after);
-
-  // validate and extract the nested error according to our expectations
-  let validation_errors = CredentialValidator::new()
-    .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
-    .unwrap_err()
-    .validation_errors;
-
-  let error = match validation_errors.as_slice() {
-    [validation_error] => validation_error,
-    _ => unreachable!(),
-  };
-
-  assert!(matches!(error, &ValidationError::ExpirationDate));
-}
-
+// TODO: Move to identity_credential?
 #[test]
 fn issued_on_or_before() {
   assert!(CredentialValidator::check_issued_on_or_before(
@@ -110,4 +75,91 @@ proptest! {
     assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, earlier_than_issuance_date).is_err());
     assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, later_than_issuance_date).is_ok());
   }
+}
+
+async fn invalid_expiration_date_impl<T>(setup: Setup<T>)
+where
+  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+{
+  let Setup {
+    issuer_doc,
+    subject_doc,
+    storage,
+    kid,
+  } = setup;
+
+  let CredentialSetup {
+    credential,
+    issuance_date,
+    expiration_date,
+  } = test_utils::generate_credential(&issuer_doc, &[subject_doc], None, None);
+
+  let jws = issuer_doc
+    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .await
+    .unwrap();
+
+  let issued_on_or_before = issuance_date;
+  // expires_on_or_after > expiration_date
+  let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
+  let options = CredentialValidationOptions::default()
+    .latest_issuance_date(issued_on_or_before)
+    .earliest_expiry_date(expires_on_or_after);
+
+  // validate and extract the nested error according to our expectations
+  let validation_errors = CredentialValidator::new()
+    .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
+    .unwrap_err()
+    .validation_errors;
+
+  let error = match validation_errors.as_slice() {
+    [validation_error] => validation_error,
+    _ => unreachable!(),
+  };
+
+  assert!(matches!(error, &ValidationError::ExpirationDate));
+}
+
+#[tokio::test]
+async fn invalid_expiration_date() {
+  invalid_expiration_date_impl(test_utils::setup_coredocument().await).await;
+  invalid_expiration_date_impl(test_utils::setup_iotadocument().await).await;
+}
+
+async fn full_validation_impl<T>(setup: Setup<T>)
+where
+  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+{
+  let Setup {
+    issuer_doc,
+    subject_doc,
+    storage,
+    kid,
+  } = setup;
+
+  let CredentialSetup {
+    credential,
+    issuance_date,
+    expiration_date,
+  } = test_utils::generate_credential(&issuer_doc, &[subject_doc], None, None);
+
+  let jwt: Jwt = issuer_doc
+    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .await
+    .unwrap();
+
+  let issued_on_or_before: Timestamp = issuance_date.checked_add(Duration::days(14)).unwrap();
+  let expires_on_or_after: Timestamp = expiration_date.checked_sub(Duration::hours(1)).unwrap();
+  let options = CredentialValidationOptions::default()
+    .latest_issuance_date(issued_on_or_before)
+    .earliest_expiry_date(expires_on_or_after);
+  assert!(CredentialValidator::new()
+    .validate::<_, Object>(&jwt, &issuer_doc, &options, FailFast::FirstError)
+    .is_ok());
+}
+
+#[tokio::test]
+async fn full_validation() {
+  full_validation_impl(test_utils::setup_coredocument().await).await;
+  full_validation_impl(test_utils::setup_iotadocument().await).await;
 }
