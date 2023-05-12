@@ -38,7 +38,7 @@ const SIMPLE_CREDENTIAL_JSON: &str = r#"{
 }"#;
 
 // A simple credential shared by some of the tests in this module
-const SIMPLE_CREDENTIAL: Lazy<Credential> =
+static SIMPLE_CREDENTIAL: Lazy<Credential> =
   Lazy::new(|| Credential::<Object>::from_json(SIMPLE_CREDENTIAL_JSON).unwrap());
 
 #[tokio::test]
