@@ -151,8 +151,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -197,6 +195,8 @@ This variant is the default used if no other variant is specified when construct
 </dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
@@ -207,6 +207,12 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+</dd>
 <dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
 Only the <code>EdCurve::Ed25519</code> variant is supported for now.</p>
@@ -215,12 +221,6 @@ the IOTA Identity Framework.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
-</dd>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -3020,7 +3020,7 @@ A wrapper around a JSON Web Signature (JWS).
 <a name="new_Jws_new"></a>
 
 ### new Jws(jws_string)
-Creates a new `Jws`.
+Creates a new `Jws` from the given string.
 
 
 | Param | Type |
@@ -3395,7 +3395,6 @@ Deserializes an instance from a JSON object.
         * [.setB64(value)](#JwsSignatureOptions+setB64)
         * [.setTyp(value)](#JwsSignatureOptions+setTyp)
         * [.setCty(value)](#JwsSignatureOptions+setCty)
-        * [.addCrit(value)](#JwsSignatureOptions+addCrit)
         * [.serUrl(value)](#JwsSignatureOptions+serUrl)
         * [.setNonce(value)](#JwsSignatureOptions+setNonce)
         * [.setDetachedPayload(value)](#JwsSignatureOptions+setDetachedPayload)
@@ -3449,17 +3448,6 @@ Replace the value of the `typ` field.
 
 ### jwsSignatureOptions.setCty(value)
 Replace the value of the `cty` field.
-
-**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="JwsSignatureOptions+addCrit"></a>
-
-### jwsSignatureOptions.addCrit(value)
-Append a value to the list of permitted extensions.
 
 **Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
 
@@ -3532,7 +3520,6 @@ Deserializes an instance from a JSON object.
     * [new JwsVerificationOptions(options)](#new_JwsVerificationOptions_new)
     * _instance_
         * [.setNonce(value)](#JwsVerificationOptions+setNonce)
-        * [.addCrit(value)](#JwsVerificationOptions+addCrit)
         * [.setScope(value)](#JwsVerificationOptions+setScope)
         * [.toJSON()](#JwsVerificationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwsVerificationOptions+clone) ⇒ [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)
@@ -3551,17 +3538,6 @@ Deserializes an instance from a JSON object.
 
 ### jwsVerificationOptions.setNonce(value)
 Set the expected value for the `nonce` parameter of the protected header.
-
-**Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="JwsVerificationOptions+addCrit"></a>
-
-### jwsVerificationOptions.addCrit(value)
-Append values to the list of permitted extension parameters.
 
 **Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
 
@@ -3617,7 +3593,7 @@ A wrapper around a JSON Web Token (JWK).
 <a name="new_Jwt_new"></a>
 
 ### new Jwt(jwt_string)
-Creates a new `Jwt`.
+Creates a new `Jwt` from the given string.
 
 
 | Param | Type |
@@ -5462,10 +5438,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5548,6 +5520,10 @@ Return after the first error occurs.
 
 ## KeyType
 **Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -5558,28 +5534,6 @@ Return after the first error occurs.
 Initializes the console error panic hook for better error messages
 
 **Kind**: global function  
-<a name="verifyEdDSA"></a>
-
-## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `JwsAlgorithm::EdDSA` algorithm.
-Only the `EdCurve::Ed25519` variant is supported for now.
-
-This function is useful when one is building an `IJwsSignatureVerifier` that extends the default provided by
-the IOTA Identity Framework.
-
-# Warning
-This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-prior to calling the function.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| alg | <code>JwsAlgorithm</code> | 
-| signingInput | <code>Uint8Array</code> | 
-| decodedSignature | <code>Uint8Array</code> | 
-| publicKey | [<code>Jwk</code>](#Jwk) | 
-
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -5601,4 +5555,26 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | Param | Type |
 | --- | --- |
 | data | <code>Uint8Array</code> | 
+
+<a name="verifyEdDSA"></a>
+
+## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `JwsAlgorithm::EdDSA` algorithm.
+Only the `EdCurve::Ed25519` variant is supported for now.
+
+This function is useful when one is building an `IJwsSignatureVerifier` that extends the default provided by
+the IOTA Identity Framework.
+
+# Warning
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
 
