@@ -62,6 +62,58 @@ impl<'credential, T> CredentialJwtClaims<'credential, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
+  pub(super) fn new(credential: &'credential Credential<T>) -> Result<Self> {
+    let Credential {
+        context,
+        id,
+        types,
+        credential_subject: OneOrMany::One(subject),
+        issuer,
+        issuance_date,
+        expiration_date,
+        credential_status,
+        credential_schema,
+        refresh_service,
+        terms_of_use,
+        evidence,
+        non_transferable,
+        properties,
+        proof
+        } = credential else {
+            return Err(Error::MoreThanOneSubjectInJwt)
+        };
+
+    Ok(Self {
+      exp: expiration_date.map(|value| Timestamp::to_unix(&value)),
+      iss: Cow::Borrowed(issuer),
+      issuance_date: IssuanceDateClaims::new(*issuance_date),
+      jti: id.as_ref().map(Cow::Borrowed),
+      sub: subject.id.as_ref().map(Cow::Borrowed),
+      vc: InnerCredential {
+        context: Cow::Borrowed(context),
+        id: None,
+        types: Cow::Borrowed(types),
+        credential_subject: InnerCredentialSubject::new(subject),
+        issuance_date: None,
+        expiration_date: None,
+        credential_schema: Cow::Borrowed(credential_schema),
+        credential_status: credential_status.as_ref().map(Cow::Borrowed),
+        refresh_service: Cow::Borrowed(refresh_service),
+        terms_of_use: Cow::Borrowed(terms_of_use),
+        evidence: Cow::Borrowed(evidence),
+        non_transferable: *non_transferable,
+        properties: Cow::Borrowed(properties),
+        proof: proof.as_ref().map(Cow::Borrowed),
+      },
+    })
+  }
+}
+
+#[cfg(feature = "validator")]
+impl<'credential, T> CredentialJwtClaims<'credential, T>
+where
+  T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
+{
   /// Checks whether the fields that are set in the `vc` object are consistent with the corresponding values
   /// set for the registered claims.
   fn check_consistency(&self) -> Result<()> {
@@ -173,52 +225,6 @@ where
       proof: proof.map(Cow::into_owned),
     })
   }
-
-  pub(super) fn new(credential: &'credential Credential<T>) -> Result<Self> {
-    let Credential {
-        context,
-        id,
-        types,
-        credential_subject: OneOrMany::One(subject),
-        issuer,
-        issuance_date,
-        expiration_date,
-        credential_status,
-        credential_schema,
-        refresh_service,
-        terms_of_use,
-        evidence,
-        non_transferable,
-        properties,
-        proof
-        } = credential else {
-            return Err(Error::MoreThanOneSubjectInJwt)
-        };
-
-    Ok(Self {
-      exp: expiration_date.map(|value| Timestamp::to_unix(&value)),
-      iss: Cow::Borrowed(issuer),
-      issuance_date: IssuanceDateClaims::new(*issuance_date),
-      jti: id.as_ref().map(Cow::Borrowed),
-      sub: subject.id.as_ref().map(Cow::Borrowed),
-      vc: InnerCredential {
-        context: Cow::Borrowed(context),
-        id: None,
-        types: Cow::Borrowed(types),
-        credential_subject: InnerCredentialSubject::new(subject),
-        issuance_date: None,
-        expiration_date: None,
-        credential_schema: Cow::Borrowed(credential_schema),
-        credential_status: credential_status.as_ref().map(Cow::Borrowed),
-        refresh_service: Cow::Borrowed(refresh_service),
-        terms_of_use: Cow::Borrowed(terms_of_use),
-        evidence: Cow::Borrowed(evidence),
-        non_transferable: *non_transferable,
-        properties: Cow::Borrowed(properties),
-        proof: proof.as_ref().map(Cow::Borrowed),
-      },
-    })
-  }
 }
 
 /// The VC-JWT spec states that issuanceDate corresponds to the registered `nbf` claim,
@@ -241,6 +247,7 @@ impl IssuanceDateClaims {
   }
   /// Produces the `issuanceDate` value from `nbf` if it is set,
   /// otherwise falls back to `iat`. If none of these values are set an error is returned.
+  #[cfg(feature = "validator")]
   fn to_issuance_date(self) -> Result<Timestamp> {
     if let Some(timestamp) = self
       .nbf
@@ -255,9 +262,11 @@ impl IssuanceDateClaims {
     }
   }
 }
+
 #[derive(Serialize, Deserialize)]
 struct InnerCredentialSubject<'credential> {
   // Do not serialize this to save space as the value must be included in the `sub` claim.
+  #[cfg(feature = "validator")]
   #[serde(skip_serializing)]
   id: Option<Url>,
 
@@ -268,6 +277,7 @@ struct InnerCredentialSubject<'credential> {
 impl<'credential> InnerCredentialSubject<'credential> {
   fn new(subject: &'credential Subject) -> Self {
     Self {
+      #[cfg(feature = "validator")]
       id: None,
       properties: Cow::Borrowed(&subject.properties),
     }
