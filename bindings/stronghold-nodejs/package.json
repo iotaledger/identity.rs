@@ -36,7 +36,8 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "npm run build:napi && npm run build:ts",
+    "build": "npm run build:napi",
+    "postbuild": "npm run build:ts",
     "build:ts": "rollup -c --failAfterWarnings",
     "build:napi": "napi build --platform --release --js napi.js --dts napi.d.ts napi-dist",
     "build:debug": "napi build --platform",
