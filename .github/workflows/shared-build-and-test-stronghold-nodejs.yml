@@ -51,7 +51,7 @@ jobs:
               docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
               build: |-
                 set -e &&
-                npm run build --target x86_64-unknown-linux-gnu &&
+                npm run build -- --target x86_64-unknown-linux-gnu &&
                 strip dist/*.node
             - host: ubuntu-latest
               target: x86_64-unknown-linux-musl
