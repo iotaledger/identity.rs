@@ -18,6 +18,8 @@ pub enum Error {
   /// Caused when constructing a credential without an issuer.
   #[error("missing credential issuer")]
   MissingIssuer,
+  #[error("missing presentation holder")]
+  MissingHolder,
   /// Caused when constructing a credential without a subject.
   #[error("missing credential subject")]
   MissingSubject,

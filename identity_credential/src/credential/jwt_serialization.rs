@@ -231,7 +231,7 @@ where
 /// but `iat` is also used in the ecosystem. This type aims to take care of this discrepancy on
 /// a best effort basis.
 #[derive(Serialize, Deserialize, Clone, Copy)]
-struct IssuanceDateClaims {
+pub(crate) struct IssuanceDateClaims {
   #[serde(skip_serializing_if = "Option::is_none")]
   iat: Option<i64>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -239,7 +239,7 @@ struct IssuanceDateClaims {
 }
 
 impl IssuanceDateClaims {
-  fn new(issuance_date: Timestamp) -> Self {
+  pub(crate) fn new(issuance_date: Timestamp) -> Self {
     Self {
       iat: None,
       nbf: Some(issuance_date.to_unix()),
