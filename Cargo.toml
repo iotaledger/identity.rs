@@ -22,7 +22,6 @@ exclude = [
   "identity_iota_core_legacy",
   "bindings/stronghold-nodejs",
   "bindings/wasm",
-  "libjose",
 ]
 
 [workspace.dependencies]
