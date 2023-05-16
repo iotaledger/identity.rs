@@ -524,14 +524,64 @@ where
   }
 }
 
-// TODO: IotaDocument doesn't implement RevocationDocumentExt.
+// Note: We don't test `IotaDocument` because it (intentionally) doesn't implement RevocationDocumentExt.
 #[tokio::test]
 async fn check_status() {
-  // We don't test `IotaDocument` because it (intentionally) doesn't implement RevocationDocumentExt.
   check_status_impl(
     test_utils::setup_coredocument(None).await,
     |document: &mut CoreDocument, service: Service| {
       document.insert_service(service).unwrap();
     },
   );
+}
+
+async fn full_validation_fail_fast_impl<T>(setup: Setup<T>)
+where
+  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+{
+  let Setup {
+    issuer_doc,
+    subject_doc,
+    storage,
+    kid,
+  } = setup;
+
+  let CredentialSetup {
+    credential,
+    issuance_date,
+    expiration_date,
+  } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
+
+  let jws = issuer_doc
+    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .await
+    .unwrap();
+
+  // issued_on_or_before < issuance_date
+  let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
+  // expires_on_or_after > expiration_date
+  let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
+  let options = CredentialValidationOptions::default()
+    .latest_issuance_date(issued_on_or_before)
+    .earliest_expiry_date(expires_on_or_after);
+
+  let validation_errors = CredentialValidator::new()
+    .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
+    .unwrap_err()
+    .validation_errors;
+
+  assert!(validation_errors.len() == 1);
+
+  let validation_errors = CredentialValidator::new()
+    .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::AllErrors)
+    .unwrap_err()
+    .validation_errors;
+
+  assert!(validation_errors.len() >= 2);
+}
+
+#[tokio::test]
+async fn full_validation_fail_fast() {
+  full_validation_fail_fast_impl(test_utils::setup_coredocument(None).await).await;
+  full_validation_fail_fast_impl(test_utils::setup_iotadocument(None).await).await;
 }
