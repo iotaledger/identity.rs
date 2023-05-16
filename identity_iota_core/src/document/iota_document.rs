@@ -4,9 +4,13 @@
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
+use identity_credential::credential::Jws;
 #[cfg(feature = "client")]
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
+use identity_document::verifiable::JwsVerificationOptions;
+use identity_verification::jose::jws::DecodedJws;
+use identity_verification::jose::jws::JwsSignatureVerifier;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -233,9 +237,15 @@ impl IotaDocument {
   ///
   /// # Errors
   ///
-  /// Returns an error if the method does not exist.
+  /// Returns None if the method does not exist.
   pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
     self.core_document_mut().remove_method(did_url)
+  }
+
+  /// Similar to [`Self::remove_method`](Self::remove_method()), but appends the scope where the method was found
+  /// to the second position of the returned tuple.  
+  pub fn remove_method_and_scope(&mut self, did_url: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+    self.core_document_mut().remove_method_and_scope(did_url)
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -348,6 +358,26 @@ impl IotaDocument {
     self.document.verify_data(data, options)
   }
 
+  /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
+  /// [`JwsSignatureVerifier`].
+  ///
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+    &self,
+    jws: &'jws Jws,
+    detached_payload: Option<&'jws [u8]>,
+    signature_verifier: &T,
+    options: &JwsVerificationOptions,
+  ) -> Result<DecodedJws<'jws>> {
+    self
+      .core_document()
+      .verify_jws(jws.as_str(), detached_payload, signature_verifier, options)
+      .map_err(Error::JwsVerificationError)
+  }
+
   // ===========================================================================
   // Packing
   // ===========================================================================
@@ -366,8 +396,6 @@ impl IotaDocument {
 
 #[cfg(feature = "client")]
 mod client_document {
-  use std::ops::Deref;
-
   use crate::block::address::Address;
   use crate::block::output::AliasId;
   use crate::block::output::AliasOutput;
@@ -448,7 +476,7 @@ mod client_document {
               alias_output.alias_id().to_owned()
             };
 
-            let did: IotaDID = IotaDID::new(alias_id.deref(), network);
+            let did: IotaDID = IotaDID::new(&alias_id, network);
             documents.push(IotaDocument::unpack_from_output(&did, alias_output, true)?);
           }
         }
@@ -546,7 +574,7 @@ mod tests {
   use identity_document::verifiable::VerifiableProperties;
   use identity_verification::MethodData;
   use identity_verification::MethodType;
-  use iota_types::block::protocol::ProtocolParameters;
+  use iota_sdk::types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;
   use crate::block::address::AliasAddress;
@@ -820,7 +848,6 @@ mod tests {
       .parse()
       .unwrap();
     let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&did))
-      .unwrap()
       .add_unlock_condition(UnlockCondition::StateControllerAddress(
         StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&controller_did)))),
       ))

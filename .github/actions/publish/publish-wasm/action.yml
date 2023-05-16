@@ -10,6 +10,10 @@ inputs:
   input-artifact-name:
     description: "Name used for the input Wasm build artifact"
     required: true
+  dry-run:
+    description: "'true' = only log potential result; 'false' = publish'"
+    required: true
+
 runs:
   using: "composite"
   steps:
@@ -29,6 +33,9 @@ runs:
       shell: sh
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
-      # will publish 'latest' tag if no tag is passed
-      run: npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
       working-directory: bindings/wasm
+      # will publish 'latest' tag if no tag is passed
+      run: |
+        echo "dry-run: '${{ inputs.dry-run }}'"
+        echo "tag: '${{ inputs.tag }}'"
+        npm publish $(if [ "${{ inputs.dry-run }}" != "false" ]; then echo --dry-run; fi) $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public

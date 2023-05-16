@@ -36,7 +36,7 @@ Once the `Resolver` has been configured with a `Client` it will resolve IOTA DID
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
-use iota_client::Client;
+use iota_sdk::client::Client;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()>{
@@ -97,7 +97,7 @@ The `Client` can also be used directly, to resolve individual DIDs from its conf
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use iota_client::Client;
+use iota_sdk::client::Client;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()>{

@@ -9,10 +9,10 @@
 //!
 //! cargo run --example 5_create_vc
 
-use iota_client::block::address::Address;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
 
 use examples::create_did;
 use examples::random_stronghold_path;
@@ -35,7 +35,10 @@ use identity_iota::iota::IotaDocument;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create an identity for the issuer with one verification method `key-1`.
   let mut secret_manager_issuer: SecretManager = SecretManager::Stronghold(

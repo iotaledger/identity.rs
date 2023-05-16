@@ -28,18 +28,21 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::resolver::Resolver;
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::block::output::AliasOutputBuilder;
-use iota_client::block::output::RentStructure;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::AliasOutputBuilder;
+use iota_sdk::types::block::output::RentStructure;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(

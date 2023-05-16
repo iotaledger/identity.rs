@@ -5,9 +5,9 @@ use identity_iota::storage::key_id_storage::MethodDigest;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
-use crate::did::WasmVerificationMethod;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::verification::WasmVerificationMethod;
 
 /// Unique identifier of a [`VerificationMethod`].
 ///

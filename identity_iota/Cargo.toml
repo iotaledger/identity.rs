@@ -18,16 +18,25 @@ identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-f
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=0.7.0-alpha.6", path = "../identity_iota_core", default-features = false }
 identity_resolver = { version = "=0.7.0-alpha.6", path = "../identity_resolver", default-features = false, optional = true }
-identity_storage = { version = "=0.7.0-alpha.6", path = "../identity_storage", default-features = false }
+identity_storage = { version = "=0.7.0-alpha.6", path = "../identity_storage", default-features = false, features = ["iota-document"] }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls", "stronghold"] }
 tokio = { version = "1.17.0", features = ["full"] }
 
+[dev-dependencies.iota-sdk]
+git = "https://github.com/iotaledger/iota-sdk"
+rev = "6e939cfdc9d6075d024ccb43506a50da1cc4afcc"
+default-features = false
+features = [
+  "tls",
+  "client",
+  "stronghold",
+]
+
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "resolver"]
+default = ["revocation-bitmap", "client", "iota-client", "resolver", "eddsa"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
@@ -50,6 +59,9 @@ send-sync-storage = ["identity_storage/send-sync-storage"]
 
 # Enables fetching domain linkage configuration files.
 domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
+
+# Enables JWS verification with the EdDSA algorithm
+eddsa = ["identity_verification/eddsa"]
 
 [package.metadata.docs.rs]
 # To build locally:

@@ -7,6 +7,7 @@ use crate::common::PromiseUint8Array;
 use crate::common::PromiseVoid;
 use crate::error::JsValueResult;
 use crate::jose::WasmJwk;
+
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
 use identity_iota::storage::key_storage::KeyId;
@@ -14,8 +15,8 @@ use identity_iota::storage::key_storage::KeyStorageError;
 use identity_iota::storage::key_storage::KeyStorageErrorKind;
 use identity_iota::storage::key_storage::KeyStorageResult;
 use identity_iota::storage::key_storage::KeyType;
-use identity_jose::jwk::Jwk;
-use identity_jose::jws::JwsAlgorithm;
+use identity_iota::verification::jose::jwk::Jwk;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
 use js_sys::Array;
 use js_sys::Promise;
 use js_sys::Uint8Array;
@@ -42,10 +43,7 @@ extern "C" {
   pub fn insert(this: &WasmJwkStorage, jwk: WasmJwk) -> PromiseString;
 
   #[wasm_bindgen(method)]
-  pub fn sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>) -> PromiseUint8Array;
-
-  #[wasm_bindgen(method)]
-  pub fn public(this: &WasmJwkStorage, key_id: String) -> PromiseJwk;
+  pub fn sign(this: &WasmJwkStorage, key_id: String, data: Vec<u8>, public_key: WasmJwk) -> PromiseUint8Array;
 
   #[wasm_bindgen(method)]
   pub fn delete(this: &WasmJwkStorage, key_id: String) -> PromiseVoid;
@@ -68,16 +66,15 @@ impl JwkStorage for WasmJwkStorage {
     result.into()
   }
 
-  async fn sign(&self, key_id: &KeyId, data: Vec<u8>) -> KeyStorageResult<Vec<u8>> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(self, key_id.clone().into(), data));
+  async fn sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
+    let promise: Promise = Promise::resolve(&WasmJwkStorage::sign(
+      self,
+      key_id.clone().into(),
+      data.to_owned(),
+      WasmJwk(public_key.clone()),
+    ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.to_key_storage_error().map(uint8array_to_bytes)?
-  }
-
-  async fn public(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
-    let promise: Promise = Promise::resolve(&WasmJwkStorage::public(self, key_id.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
@@ -105,10 +102,8 @@ interface JwkStorage {
    * 
    * All private key components of the `jwk` must be set. */
   insert: (jwk: Jwk) => Promise<string>;
-  /** Sign the provided `data` using the private key identified by `keyId` with the specified `algorithm`. */
-  sign: (keyId: string, data: Uint8Array) => Promise<Uint8Array>;
-  /** Returns the public key identified by `keyId` as a JSON Web Key. */
-  public: (keyId: string) => Promise<Jwk>;
+  /** Sign the provided `data` using the private key identified by `keyId` according to the requirements of the given `public_key` corresponding to `keyId`. */
+  sign: (keyId: string, data: Uint8Array, publicKey: Jwk) => Promise<Uint8Array>;
   /** Deletes the key identified by `keyId`.
    * 
    * # Warning

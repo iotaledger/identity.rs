@@ -11,6 +11,5 @@ pub use self::core::Verify;
 pub use self::data::GetSignature;
 pub use self::data::GetSignatureMut;
 pub use self::data::SetSignature;
-
 mod core;
 mod data;
