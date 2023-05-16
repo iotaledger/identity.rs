@@ -10,7 +10,11 @@ keywords:
 import create_vp_rs from  '!!raw-loader!../../../../examples/account/create_vp.rs';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
 
-A verifiable presentation is the recommended data format for sharing one or more [verifiable credentials](./overview.md).
+import ZeroFiveDeprecation from '../../../src/partials/_05_deprecation_announcement.mdx';
+
+<ZeroFiveDeprecation/>
+
+A verifiable presentation is the recommended data format for sharing one or more [verifiable credentials](./overview.mdx).
 It is constructed and signed by a holder to prove control over their credentials and can be presented to a verifier for [validation](#validation).
 
 For instance: after an issuer [creates and issues a verifiable credential](./create.mdx) to a holder, such as a university issuing a degree to a graduate,

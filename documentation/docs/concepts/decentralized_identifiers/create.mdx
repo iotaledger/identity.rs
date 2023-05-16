@@ -13,6 +13,10 @@ keywords:
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
 import createDidRustExample from  '!!raw-loader!../../../../examples/account/create_did.rs';
 
+import ZeroFiveDeprecation from '../../../src/partials/_05_deprecation_announcement.mdx';
+
+<ZeroFiveDeprecation/>
+
 When someone or something wants to benefit from Self-Sovereign Identity, they must first create a Decentralized Identity. This identity consists of many parts that have different functions. This page will cover both the basics and the details about identity creation, storage, and publishing to the Tangle.
 
 The example below utilizes the high-level account module of the IOTA Identity framework to create an identity. The account is the easiest method of using IOTA Identity. It is recommended to use the account for your use cases, although a lower-level API is also available, providing more flexibility at the cost of more complexity.

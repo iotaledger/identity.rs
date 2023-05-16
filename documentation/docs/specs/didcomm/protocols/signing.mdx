@@ -1,0 +1,212 @@
+---
+title: Signing
+sidebar_label: Signing
+---
+
+import ZeroFiveDeprecation from '../../../../src/partials/_05_deprecation_announcement.mdx';
+
+<ZeroFiveDeprecation/>
+
+:::info
+
+The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Suggestions are welcome at [GitHub #464](https://github.com/iotaledger/identity.rs/discussions/464).
+
+:::
+
+- Version: 0.1
+- Status: `IN-PROGRESS`
+- Last Updated: 2021-10-29
+
+## Overview
+
+Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer.
+
+### Relationships
+
+- [Issuance](./issuance.mdx): an [issuer](./issuance.mdx#roles) may take on the role of [trusted-party](#roles) to request a different [issuer](#roles) to sign a new credential.
+
+### Example Use-Cases
+
+- A separate department requests a signature by the legal department of a company.
+- A subsidiary requests the parent company to sign a credential.
+- An IOT device generates an unsigned credential and requests a secure server to sign it.
+
+### Roles
+- Trusted-Party: trusted by the issuer to generate unsigned credentials asserting claims about one or more subjects.
+- [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): has the capability to cryptographically sign credentials.
+
+### Interaction
+
+![SigningDiagram](/img/didcomm/signing.drawio.svg)
+
+<div style={{textAlign: 'center'}}>
+
+<sub>For guidance on diagrams see the <a href="../overview.mdx#diagrams">corresponding section in the overview</a>.</sub>
+
+</div>
+
+
+## Messages
+
+### 1. signing-request {#signing-request}
+
+- Type: `iota/signing/0.1/signing-request`
+- Role: [trusted-party](#roles)
+
+Request by a [trusted-party](#roles) for an [issuer](#roles) to sign a credential.
+
+To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender authenticated encryption][SAE] established in a preceding [authentication](./authentication.mdx) protocol. For non-repudiation or auditing, the [issuer](#role) MAY enforce that the [signing-request](#signing-request) be a [signed DIDComm message][SDM].
+
+#### Structure
+```json
+{
+  "unsignedCredential": Credential // REQUIRED
+}
+```
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| [`unsignedCredential`][VC] | Unsigned [verifiable credential][VC] requested to be signed by the [issuer](#roles).[^1] | ✔ |
+
+[^1] The initial credential MUST NOT have a `proof` section.
+
+#### Examples
+
+1. Request to sign a bachelors degree.
+
+```json
+{
+  "unsignedCredential": {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f",
+    "issuanceDate": "2021-05-03T19:73:24Z",
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts"
+      }
+    }
+  }
+}
+```
+
+### 2. signing-response {#signing-response}
+
+- Type: `iota/signing/0.1/signing-response`
+- Role: [issuer](#roles)
+
+Response from the [issuer](#roles) returning the signed credential back to the [trusted-party](#roles).
+
+#### Structure
+```json
+{
+  "signedCredential": Credential // REQUIRED
+}
+```
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| [`signedCredential`][VC] | Signed [verifiable credential][VC] matching the [signing-request](#signing-request).[^1] | ✔ |
+
+[^1] The [trusted-party](#roles) MUST validate the signature in the `proof` section and issue a problem-report if invalid. The [trusted-party](#roles) SHOULD also verify that the contents of the `signedCredential` sent back by the [issuer](#roles) are complete and unaltered from the [signing-request](#signing-request).
+
+The [issuer](#roles) may request in turn that the credential be signed by a different issuer unknown to the [trusted-party](#roles), by repeating this protocol or through alternative means. In such a case, it is up to the initial [trusted-party](#roles) whether or not to accept the final signature if not signed by the initial [issuer](#roles) they requested.
+
+#### Examples
+
+1. Respond with a signed a bachelors degree.
+
+```json
+{
+  "signedCredential": {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f",
+    "issuanceDate": "2021-05-03T19:73:24Z",
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts"
+      }
+    },
+    "proof": {...}
+  }
+}
+```
+
+### 3. signing-acknowledgement {#signing-acknowledgement}
+
+- Type: `iota/signing/0.1/signing-acknowledgement`
+- Role: [trusted-party](#roles)
+
+Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledgement is received. For auditing or non-repudiation the [issuer](#roles) MAY require that the [signing-acknowledgement](#signing-acknowledgement) be a [signed DIDComm message][SDM].
+
+#### Structure
+```json
+{
+  "accepted": bool // REQUIRED
+}
+```
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| `accepted` | Indicates that the `signedCredential` was received and validated by the [trusted-party](#roles).[^1] | ✔ |
+
+[^1] `accepted` MUST be `true`. Invalid signatures or credentials SHOULD result in problem-reports by the [trusted-party](#roles).
+
+#### Examples
+
+1. Accept the credential.
+
+```json
+{
+  "accepted": true
+}
+```
+### Problem Reports {#problem-reports}
+
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
+
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.mdx).
+
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.signing.reject-request` | [signing-request](#signing-request) | The [issuer](#roles) rejects a signing request for any reason, e.g. malformed credential, unrecognised credential type, or unwillingness to sign the specific credential for the [trusted-party](#roles). |
+| `e.p.msg.iota.signing.reject-response` | [signing-response](#signing-response) | The [trusted-party](#roles) rejects a signing response for any reason, e.g. mismatch between request and response credentials. |
+
+## Unresolved Questions
+
+- Using a signed DIDComm message for auditing requires retaining the entire message including the credential itself. While this may be desired or required for some purposes, it could complicate or violate GDPR laws. Should an explicit signature of the credential hash be used instead, similar to the [issuance](./issuance.mdx) protocol?
+
+## Considerations
+
+This section is non-normative.
+
+- **Security**: implementors SHOULD transmit credentials over an encrypted channel to prevent leaking sensitive information on subjects. See [sender-authenticated encryption][SAE].
+- **Authentication**: it is RECOMMENDED to use sender-authenticated encryption for continuous authentication of both parties in the DIDComm thread. Anonymous encryption and/or once-off authentication may be insufficient.
+- **Authorisation**: the [issuer](#roles) should establish whether a trusted-party is allowed to request signing of a particular credential or at all.
+- **Validation**: apart from verifying the proof on the signed credential returned in the [signing-response](#signing-response), how the [issuer](#roles) validates the contents of a well-formed credential from a [trusted-party](#roles) and chooses whether or not to sign it is out-of-scope.
+
+## Related Work
+
+- Aries Hyperledger: https://github.com/hyperledger/aries-rfcs/tree/08653f21a489bf4717b54e4d7fd2d0bdfe6b4d1a/features/0327-crypto-service
+
+## Further Reading
+
+- [Verifiable Credentials Data Model 1.0](https://www.w3.org/TR/vc-data-model)
+
+<!--- LINKS --->
+[VC]: https://www.w3.org/TR/vc-data-model/#credentials
+[SAE]: https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption
+[SDM]: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
