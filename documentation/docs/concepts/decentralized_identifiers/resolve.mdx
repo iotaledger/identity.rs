@@ -27,7 +27,7 @@ The following examples demonstrate how to resolve an IOTA DID Document from its 
 
 ### Resolver 
 
-Once the `Resolver` has been configured with a `Client` it will resolve IOTA DID Documents according to the read procedure defined in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#read). It fetches the latest [Alias Output](../../specs/did/iota_did_method_spec.md#alias-output) from the network specified in the DID (see [DID Format](../../specs/did/iota_did_method_spec.md#did-format)), then extracts and validates the DID Document from it.
+Once the `Resolver` has been configured with a `Client` it will resolve IOTA DID Documents according to the read procedure defined in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.mdx#read). It fetches the latest [Alias Output](../../specs/did/iota_did_method_spec.mdx#alias-output) from the network specified in the DID (see [DID Format](../../specs/did/iota_did_method_spec.mdx#did-format)), then extracts and validates the DID Document from it.
 
 <Tabs>
 <TabItem value="rust" label="Rust">
@@ -151,7 +151,7 @@ a particular DID method (such as for instance the IOTA method) gets resolved. Th
 
 
 ## Resolution for Verifiable Presentations
-When validating [verifiable presentations](../verifiable_credentials/verifiable_presentations.mdx), it is necessary to resolve the DID Documents of the [verifiable credential](../verifiable_credentials/overview.md) issuers and presentation holder to verify their signatures. Resolving the necessary DID Documents is performed automatically when verifying presentations via the `Resolver` (see this [example](../verifiable_credentials/verifiable_presentations.mdx#example)).
+When validating [verifiable presentations](../verifiable_credentials/verifiable_presentations.mdx), it is necessary to resolve the DID Documents of the [verifiable credential](../verifiable_credentials/overview.mdx) issuers and presentation holder to verify their signatures. Resolving the necessary DID Documents is performed automatically when verifying presentations via the `Resolver` (see this [example](../verifiable_credentials/verifiable_presentations.mdx#example)).
 
 When direct access to these DID Documents is desired, the `Resolver` also provides standalone methods to:
 - Resolve a presentation holder's DID Document.

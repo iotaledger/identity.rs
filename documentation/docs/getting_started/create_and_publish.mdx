@@ -13,19 +13,19 @@ import CodeSnippet from '../../src/components/CodeSnippetComponent'
 import create_did_rust from "!!raw-loader!../../../examples/0_basic/0_create_did.rs";
 import create_did_node from "!!raw-loader!../../../bindings/wasm/examples/src/0_basic/0_create_did.ts";
 
-If you want to benefit from Self-Sovereign Identity, you need to create a [Decentralized Identity](../concepts/decentralized_identifiers/overview.md). This identity consists of many parts that have different functions. This page will cover the basics about identity creation and publishing.
+If you want to benefit from Self-Sovereign Identity, you need to create a [Decentralized Identity](../concepts/decentralized_identifiers/overview.mdx). This identity consists of many parts that have different functions. This page will cover the basics about identity creation and publishing.
 
 ## Identity Generation Process
-1. The generation of an identity requires a address with funds to cover the [Storage Deposit](../concepts/decentralized_identifiers/alias.md#storage-deposit). In test networks, a faucet can be used to request funds.
+1. The generation of an identity requires a address with funds to cover the [Storage Deposit](../concepts/decentralized_identifiers/alias.mdx#storage-deposit). In test networks, a faucet can be used to request funds.
 2. Create the content of the DID Document, a minimal document contains one verification method.
-3. Construct a new [Alias Output](../concepts/decentralized_identifiers/alias.md) that includes the DID Document in the [State Metadata](../concepts/decentralized_identifiers/alias.md).
+3. Construct a new [Alias Output](../concepts/decentralized_identifiers/alias.mdx) that includes the DID Document in the [State Metadata](../concepts/decentralized_identifiers/alias.mdx).
 4. Publish the generated Alias Output.
 
-The DID is only known once the [Alias Output](../concepts/decentralized_identifiers/alias.md) is successfully published, since the DID's [Tag](../specs/did/iota_did_method_spec.md#iota-tag) contains the [Alias ID](../concepts/decentralized_identifiers/alias.md#alias-id).
+The DID is only known once the [Alias Output](../concepts/decentralized_identifiers/alias.mdx) is successfully published, since the DID's [Tag](../specs/did/iota_did_method_spec.mdx#iota-tag) contains the [Alias ID](../concepts/decentralized_identifiers/alias.mdx#alias-id).
 
 See the example below to create an identity in Rust or Node.js.
 
-As this page is a simple overview about creating an identity, further wiki pages are available for more in-depth explanation. Note that the Iota Identity Framework follows [IOTA DID Method Specification](../specs/did/iota_did_method_spec.md).
+As this page is a simple overview about creating an identity, further wiki pages are available for more in-depth explanation. Note that the Iota Identity Framework follows [IOTA DID Method Specification](../specs/did/iota_did_method_spec.mdx).
 
 <CodeSnippet
     nodeContent={create_did_node}

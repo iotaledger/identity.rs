@@ -37,7 +37,7 @@ Data saved in an output and covered by the storage deposit will be stored in *al
 
 ### Alias Output
 
-The [Alias Output](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.md#alias-output) is a specific implementation of the [UTXO state machine](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.md#chain-constraint-in-utxo). Some of its relevant properties are:
+The [Alias Output](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.mdx#alias-output) is a specific implementation of the [UTXO state machine](https://github.com/lzpap/tips/blob/master/tips/TIP-0018/tip-0018.mdx#chain-constraint-in-utxo). Some of its relevant properties are:
 
 * **Amount**: the amount of IOTA coins held by the output.
 * **Alias ID**: 32 byte array, a unique identifier of the alias, which is the BLAKE2b-256 hash
@@ -228,7 +228,7 @@ The IOTA Identity framework currently supports two Verification Method Types:
 
 ### Revocation
 
-Revocation of Verifiable Credentials and signatures can be achieved using the [Revocation Bitmap 2022](../revocation_bitmap_2022.md) where issuers store a bitmap of indices in the DID Document. These indices correspond to verifiable credentials they have issued. If the binary value of the index in the bitmap is 1 (one), the verifiable credential is revoked, if it is 0 (zero) it is not revoked.
+Revocation of Verifiable Credentials and signatures can be achieved using the [Revocation Bitmap 2022](../revocation_bitmap_2022.mdx) where issuers store a bitmap of indices in the DID Document. These indices correspond to verifiable credentials they have issued. If the binary value of the index in the bitmap is 1 (one), the verifiable credential is revoked, if it is 0 (zero) it is not revoked.
 
 ### Standardized Services
 
@@ -236,7 +236,7 @@ The IOTA Identity framework also standardized certain `services` that are embedd
 
 Currently standardized `services`:
 
-* [Revocation Bitmap Service](../revocation_bitmap_2022.md#revocation-bitmap-service)
+* [Revocation Bitmap Service](../revocation_bitmap_2022.mdx#revocation-bitmap-service)
 
 ## Security Considerations
 The `did:iota` method is implemented on the [IOTA](https://iota.org), a public permissionless and feeless Distributed Ledger Technology (DLT), making it resistant against almost all censorship attack vectors. Up until the `Coordicide` update for the IOTA network, a reliability on the coordinator exists for resolving ordering conflicts. This has a minor censorship possibility, that, in the wrost case, can prevent transactions from getting confirmed.
