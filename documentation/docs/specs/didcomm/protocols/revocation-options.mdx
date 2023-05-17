@@ -14,11 +14,11 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 - Last Updated: 2021-10-29
 
 ## Overview
-Allows discovery of available [`RevocationInfo`](./revocation.md#RevocationInfo) types for use with the [revocation](./revocation.md) protocol.
+Allows discovery of available [`RevocationInfo`](./revocation.mdx#RevocationInfo) types for use with the [revocation](./revocation.mdx) protocol.
 
 ### Relationships
 
-- [revocation](./revocation.md): this protocol is used to discover the `revocationInfoType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation.md#revocation-request).
+- [revocation](./revocation.mdx): this protocol is used to discover the `revocationInfoType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation.md#revocation-request).
 
 ### Roles
 - Trusted-Party: requests supported methods of revocation.
@@ -90,7 +90,7 @@ Response including all available [RevocationInfo](./revocation.md#RevocationInfo
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.md).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.mdx).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
@@ -100,7 +100,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Privacy**: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a party partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation.md) or return a subset/superset of its actual supported options.
+- **Privacy**: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a party partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation.mdx) or return a subset/superset of its actual supported options.
 
 ## Unresolved Questions
 

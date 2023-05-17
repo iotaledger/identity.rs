@@ -18,8 +18,8 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 Allows a [holder](#roles) to request a [verifiable credential][VC] from an [issuer](#roles). The [issuer](#roles) may alternatively initiate the issuance without a request from the [holder](#roles). This protocol also allows the [issuer](#roles) to request additional information and to offload the actual signing to a different party.
 
 ### Relationships
-- [Presentation](./presentation.md): the [issuer](#roles) may request a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) from the [holder](#roles) during the course of this protocol if additional information is required.
-- [Signing](./signing.md): the [issuer](#roles) may delegate signing to another [issuer](#roles) if they lack the needed authority or private key, in which case the [issuer](#roles) takes on the role of [trusted-party](./signing.md#roles).
+- [Presentation](./presentation.mdx): the [issuer](#roles) may request a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) from the [holder](#roles) during the course of this protocol if additional information is required.
+- [Signing](./signing.mdx): the [issuer](#roles) may delegate signing to another [issuer](#roles) if they lack the needed authority or private key, in which case the [issuer](#roles) takes on the role of [trusted-party](./signing.md#roles).
 
 ### Example Use-Cases
 
@@ -62,7 +62,7 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`subject`][SUBJECT] | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject][SUBJECT][^1]. | ✔ |
-| `credentialInfo` | A [CredentialInfo](../resources/credential-info.md) object, specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
+| `credentialInfo` | A [CredentialInfo](../resources/credential-info.mdx) object, specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
 
 [^1] The [holder](#roles) is usually but not always the [subject][SUBJECT] of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests, or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
@@ -128,7 +128,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `unsignedCredential` formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
 | `offerExpiry` | A string formatted as an [XML DateTime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
 
-[^1] Issuing challenges should be done with due consideration to security and privacy concerns: not all applications require non-repudiation to third-parties and a [holder](#roles) [may wish to deny that they ever requested or accepted a particular credential](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0049-repudiation/README.md#summary). The challenge SHOULD NOT be used for authentication of the [holder](#roles); see the [authentication](./authentication.md) protocol and [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
+[^1] Issuing challenges should be done with due consideration to security and privacy concerns: not all applications require non-repudiation to third-parties and a [holder](#roles) [may wish to deny that they ever requested or accepted a particular credential](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0049-repudiation/README.md#summary). The challenge SHOULD NOT be used for authentication of the [holder](#roles); see the [authentication](./authentication.mdx) protocol and [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
 
 [^2] If present, an `offerExpiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protocol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `offerExpiry` should override any default message timeouts.
 
@@ -393,7 +393,7 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.md).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports.mdx).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
@@ -401,7 +401,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 | `e.p.msg.iota.issuance.reject-request.invalid-subject` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `subject` being unrecognised, missing, or otherwise invalid. |
 | `e.p.msg.iota.issuance.reject-request.invalid-type` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `type` or `@context` being unsupported or otherwise invalid. |
 | `e.p.msg.iota.issuance.reject-request.invalid-issuer` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to `trustedIssuers` being unrecognised, unsupported or otherwise invalid. |
-| `e.p.msg.iota.issuance.presentation-failed` | [issuance-offer](#issuance-offer) | [Issuer](#roles) terminates the protocol due to a failed [presentation](./presentation.md) request for more information prior to a [issuance-offer](#issuance-offer). |
+| `e.p.msg.iota.issuance.presentation-failed` | [issuance-offer](#issuance-offer) | [Issuer](#roles) terminates the protocol due to a failed [presentation](./presentation.mdx) request for more information prior to a [issuance-offer](#issuance-offer). |
 | `e.p.msg.iota.issuance.reject-response.missing-signature` | [issuance-response](#issuance-response) | [Issuer](#roles) rejects an [issuance-response](#issuance-response) missing a `signature` when `offerChallenge` was included in the preceding [issuance-offer](#issuance-offer) message. |
 | `e.p.msg.iota.issuance.reject-issuance` | [issuance](#issuance-message) | [Holder](#roles) rejects a credential issuance for any reason, e.g. mismatch with the credential in the [issuance-offer](#issuance-offer). Note that disputes are handled in [issuance-response](#issuance-response) prior to [issuance](#issuance-message). |
 | `e.p.msg.iota.issuance.expired` | [issuance](#issuance-message) | [Issuer](#roles) notifies the [holder](#roles) that an [issuance](#issuance-message) message has expired without a valid [issuance-acknowledgement](#issuance-acknowledgement). |
