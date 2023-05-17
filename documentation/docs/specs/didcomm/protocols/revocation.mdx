@@ -57,7 +57,7 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 | :--- | :--- | :--- |
 | [`revocationInfo`](#RevocationInfo) | Contains information sufficient to specify which credential should be revoked. See [`revocationInfo`](#RevocationInfo).[^1] | ✔ |
 
-[^1] If an unsupported `revocationInfo` type is received, the [revoker](#roles) MUST issue a problem-report. The specific problem-report descriptor is `invalid-revocation-type` but if privacy is a concern, a [revoker](#roles) may send a more generic descriptor such as `reject-request` to avoid disclosing its capabilities more than the [revocation-options](./revocation-options.md#Considerations) protocol would reveal.
+[^1] If an unsupported `revocationInfo` type is received, the [revoker](#roles) MUST issue a problem-report. The specific problem-report descriptor is `invalid-revocation-type` but if privacy is a concern, a [revoker](#roles) may send a more generic descriptor such as `reject-request` to avoid disclosing its capabilities more than the [revocation-options](./revocation-options.mdx#Considerations) protocol would reveal.
 
 #### Examples
 

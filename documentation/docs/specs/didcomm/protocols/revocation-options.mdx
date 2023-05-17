@@ -18,7 +18,7 @@ Allows discovery of available [`RevocationInfo`](./revocation.mdx#RevocationInfo
 
 ### Relationships
 
-- [revocation](./revocation.mdx): this protocol is used to discover the `revocationInfoType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation.md#revocation-request).
+- [revocation](./revocation.mdx): this protocol is used to discover the `revocationInfoType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation.mdx#revocation-request).
 
 ### Roles
 - Trusted-Party: requests supported methods of revocation.
@@ -41,7 +41,7 @@ Allows discovery of available [`RevocationInfo`](./revocation.mdx#RevocationInfo
 - Type: `iota/revocation-options/0.1/revocation-options-request`
 - Role: [trusted-party](#roles)
 
-Empty message requesting all available [`RevocationInfo`](./revocation.md#RevocationInfo) types.
+Empty message requesting all available [`RevocationInfo`](./revocation.mdx#RevocationInfo) types.
 
 #### Structure
 ```json
@@ -53,7 +53,7 @@ Empty message requesting all available [`RevocationInfo`](./revocation.md#Revoca
 - Type: `iota/revocation-options/0.1/revocation-options`
 - Role: [revoker](#roles)
 
-Response including all available [RevocationInfo](./revocation.md#RevocationInfo) types supported by the [revoker](#roles).
+Response including all available [RevocationInfo](./revocation.mdx#RevocationInfo) types supported by the [revoker](#roles).
 
 #### Structure
 ```json
@@ -64,13 +64,13 @@ Response including all available [RevocationInfo](./revocation.md#RevocationInfo
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `revocationInfoTypes` | List of supported [RevocationInfo](./revocation.md#RevocationInfo) types.[^1] | ✔ |
+| `revocationInfoTypes` | List of supported [RevocationInfo](./revocation.mdx#RevocationInfo) types.[^1] | ✔ |
 
 [^1] The actual list of supported types may be vague or exact depending on how much the [revoker](#roles) trusts the requester. The supported types may also differ per requester.
 
 #### Examples
 
-1. Response including multiple [RevocationInfo](./revocation.md#RevocationInfo) types:
+1. Response including multiple [RevocationInfo](./revocation.mdx#RevocationInfo) types:
 
 ```json
 {
@@ -78,7 +78,7 @@ Response including all available [RevocationInfo](./revocation.md#RevocationInfo
 }
 ```
 
-2. Response including a single [RevocationInfo](./revocation.md#RevocationInfo) type:
+2. Response including a single [RevocationInfo](./revocation.mdx#RevocationInfo) type:
 
 ```json
 {
