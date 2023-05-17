@@ -18,6 +18,10 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 
+import ZeroSixNotice from '../../../src/partials/_06_notice.mdx';
+
+<ZeroSixNotice/>
+
 ## Introduction
 
 The high-level account API takes care of publishing updates to an identity and storing secrets securely. It does the latter by using an implementation of the `Storage` interface. In this section, we will go into more depth of the interface, and how to implement that interface.
@@ -109,7 +113,7 @@ Since this also needs to happen before the DID can be derived from the public ke
 
 ### Storage Test Suite
 
-The `StorageTestSuite` can be used to test the basic functionality of storage implementations. See its documentation ([Rust docs](https://docs.rs/identity_iota/0.6.1/identity_iota/account_storage/struct.StorageTestSuite.html), [Wasm docs](../../libraries/wasm/api_reference.md#StorageTestSuite)) for more details.
+The `StorageTestSuite` can be used to test the basic functionality of storage implementations. See its documentation ([Rust docs](https://docs.rs/identity_iota/0.6.1/identity_iota/account_storage/struct.StorageTestSuite.html), [Wasm docs](../../libraries/wasm/api_reference.mdx#StorageTestSuite)) for more details.
 
 ### Examples
 
