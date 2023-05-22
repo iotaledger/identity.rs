@@ -120,3 +120,17 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   proof: Option<Cow<'presentation, Proof>>,
 }
+
+impl<'presentation, T> PresentationJwtClaims<'presentation, T>
+where
+  T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
+{
+  pub(crate) fn try_into_presentation(&self) -> Result<JwtPresentation> {
+    OK(())
+  }
+
+  fn check_consistency(&self) -> Result<()> {
+    // todo!
+    OK(())
+  }
+}

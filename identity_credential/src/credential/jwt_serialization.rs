@@ -248,7 +248,7 @@ impl IssuanceDateClaims {
   /// Produces the `issuanceDate` value from `nbf` if it is set,
   /// otherwise falls back to `iat`. If none of these values are set an error is returned.
   #[cfg(feature = "validator")]
-  fn to_issuance_date(self) -> Result<Timestamp> {
+  pub(crate) fn to_issuance_date(self) -> Result<Timestamp> {
     if let Some(timestamp) = self
       .nbf
       .map(Timestamp::from_unix)

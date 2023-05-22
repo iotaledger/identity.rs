@@ -17,3 +17,6 @@ pub use self::jwt_presentation::JwtPresentation;
 pub use self::jwt_presentation_builder::JwtPresentationBuilder;
 pub use self::jwt_presentation_options::JwtPresentationOptions;
 pub use self::presentation::Presentation;
+
+#[cfg(feature = "validator")]
+pub(crate) use self::jwt_serialization::*;
