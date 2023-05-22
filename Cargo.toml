@@ -4,7 +4,6 @@ members = [
   "identity_core",
   "identity_credential",
   "identity_did",
-  "identity_diff",
   "identity_document",
   "identity_iota",
   "identity_storage",

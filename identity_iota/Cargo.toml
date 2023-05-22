@@ -37,7 +37,6 @@ features = [
 
 [features]
 default = ["revocation-bitmap", "client", "iota-client", "resolver", "eddsa"]
-diff = ["identity_core/diff", "identity_did/diff", "identity_verification/diff"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
