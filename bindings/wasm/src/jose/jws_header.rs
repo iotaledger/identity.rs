@@ -59,17 +59,6 @@ impl WasmJwsHeader {
     self.0.set_b64(value);
   }
 
-  /// Returns the value of the passport extension claim (ppt).
-  pub fn ppt(&self) -> Option<String> {
-    self.0.ppt().map(ToOwned::to_owned)
-  }
-
-  /// Sets a value for the passport extension claim (ppt).
-  #[wasm_bindgen(js_name = setPpt)]
-  pub fn set_ppt(&mut self, value: String) {
-    self.0.set_ppt(value);
-  }
-
   // ===========================================================================
   // ===========================================================================
 
