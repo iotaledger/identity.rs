@@ -29,9 +29,9 @@ use crate::jose::WasmJwsAlgorithm;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
-use crate::verification::IJwsSignatureVerifier;
+use crate::verification::IJwsVerifier;
 use crate::verification::RefMethodScope;
-use crate::verification::WasmJwsSignatureVerifier;
+use crate::verification::WasmJwsVerifier;
 use crate::verification::WasmMethodRelationship;
 use crate::verification::WasmMethodScope;
 use crate::verification::WasmVerificationMethod;
@@ -491,10 +491,10 @@ impl WasmCoreDocument {
     &self,
     jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: Option<IJwsSignatureVerifier>,
+    signatureVerifier: Option<IJwsVerifier>,
     detachedPayload: Option<String>,
   ) -> Result<WasmDecodedJws> {
-    let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
+    let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
     self
       .0
       .blocking_read()

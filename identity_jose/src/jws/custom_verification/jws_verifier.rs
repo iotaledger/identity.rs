@@ -6,7 +6,7 @@ use crate::jwk::Jwk;
 use crate::jws::JwsAlgorithm;
 #[cfg(any(feature = "eddsa", doc))]
 pub use eddsa_verifier::*;
-/// Input a [`JwsSignatureVerifier`] verifies.
+/// Input a [`JwsVerifier`] verifies.
 pub struct VerificationInput {
   /// The `alg` parsed from the protected header.
   pub alg: JwsAlgorithm,
@@ -31,14 +31,14 @@ pub struct VerificationInput {
 /// Implementers are expected to provide a procedure for step 8 of [RFC 7515 section 5.2](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) for
 /// the JWS signature algorithms they want to support.
 ///
-/// Custom implementations can be constructed inline by converting a suitable closure into a [`JwsSignatureVerifierFn`]
+/// Custom implementations can be constructed inline by converting a suitable closure into a [`JwsVerifierFn`]
 /// using the [`From`] trait.
 ///
 /// ## Default implementation
 /// When the `eddsa` feature is enabled one can construct an implementor
 /// provided by the IOTA Identity library. See
-/// [`EdDSAJwsSignatureVerifier::verify`](EdDSAJwsSignatureVerifier::verify).
-pub trait JwsSignatureVerifier {
+/// [`EdDSAJwsVerifier::verify`](EdDSAJwsVerifier::verify).
+pub trait JwsVerifier {
   /// Validate the `decoded_signature` against the `signing_input` in the manner defined by `alg` using the
   /// `public_key`.
   ///
@@ -52,11 +52,11 @@ pub trait JwsSignatureVerifier {
 // Implementation
 // ================================================================================================================
 /// Simple wrapper around a closure capable of verifying a JWS signature. This wrapper implements
-/// [`JwsSignatureVerifier`].
+/// [`JwsVerifier`].
 ///
 /// Note: One can convert a closure to this wrapper using the [`From`] trait.
-pub struct JwsSignatureVerifierFn<F>(F);
-impl<F> From<F> for JwsSignatureVerifierFn<F>
+pub struct JwsVerifierFn<F>(F);
+impl<F> From<F> for JwsVerifierFn<F>
 where
   F: Fn(VerificationInput, &Jwk) -> Result<(), SignatureVerificationError>,
 {
@@ -65,7 +65,7 @@ where
   }
 }
 
-impl<F> JwsSignatureVerifier for JwsSignatureVerifierFn<F>
+impl<F> JwsVerifier for JwsVerifierFn<F>
 where
   F: Fn(VerificationInput, &Jwk) -> Result<(), SignatureVerificationError>,
 {
@@ -82,22 +82,22 @@ mod eddsa_verifier {
   use crate::jwk::EdCurve;
   use crate::jwk::JwkParamsOkp;
   use crate::jws::SignatureVerificationErrorKind;
-  /// An implementor of [`JwsSignatureVerifier`] that can handle the
+  /// An implementor of [`JwsVerifier`] that can handle the
   /// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
   ///
-  /// See [`Self::verify`](EdDSAJwsSignatureVerifier::verify).
+  /// See [`Self::verify`](EdDSAJwsVerifier::verify).
   ///
   /// NOTE: This type can only be constructed when the `eddsa` feature is enabled.
   #[non_exhaustive]
-  pub struct EdDSAJwsSignatureVerifier;
+  pub struct EdDSAJwsVerifier;
 
-  impl EdDSAJwsSignatureVerifier {
+  impl EdDSAJwsVerifier {
     /// Verify a JWS signature secured with the [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
     /// Only the [`EdCurve::Ed25519`] variant is supported for now. This associated method is only available when the
     /// `eddsa` feature is enabled.
     ///
-    /// This function is useful when one is building a [`JwsSignatureVerifier`] that handles the
-    /// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`EdDSAJwsSignatureVerifier`]
+    /// This function is useful when one is building a [`JwsVerifier`] that handles the
+    /// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) in the same manner as the [`EdDSAJwsVerifier`]
     /// hence extending its capabilities.
     ///
     /// # Warning
@@ -149,17 +149,17 @@ mod eddsa_verifier {
     }
   }
 
-  impl Default for EdDSAJwsSignatureVerifier {
-    /// Constructs a [`EdDSAJwsSignatureVerifier`]. This is the only way to obtain an [`EdDSAJwsSignatureVerifier`] and
+  impl Default for EdDSAJwsVerifier {
+    /// Constructs a [`EdDSAJwsVerifier`]. This is the only way to obtain an [`EdDSAJwsVerifier`] and
     /// is only available when the `eddsa` feature is set.
     fn default() -> Self {
       Self
     }
   }
 
-  impl JwsSignatureVerifier for EdDSAJwsSignatureVerifier {
+  impl JwsVerifier for EdDSAJwsVerifier {
     /// This implements verification of jws signatures signed with the `EdDSA` algorithm. For now
-    /// [`EdDSAJwsSignatureVerifier::verify`](EdDSAJwsSignatureVerifier::verify) can only handle the `alg = EdDSA` with
+    /// [`EdDSAJwsVerifier::verify`](EdDSAJwsVerifier::verify) can only handle the `alg = EdDSA` with
     /// `crv = Ed25519`, but the implementation may also support `crv = Ed448` in the future.
     fn verify(
       &self,
@@ -168,7 +168,7 @@ mod eddsa_verifier {
     ) -> std::result::Result<(), SignatureVerificationError> {
       match input.alg {
         // EdDSA is the only supported algorithm for now, we can consider supporting more by default in the future.
-        JwsAlgorithm::EdDSA => EdDSAJwsSignatureVerifier::verify_eddsa(input, public_key),
+        JwsAlgorithm::EdDSA => EdDSAJwsVerifier::verify_eddsa(input, public_key),
         _ => Err(SignatureVerificationErrorKind::UnsupportedAlg.into()),
       }
     }

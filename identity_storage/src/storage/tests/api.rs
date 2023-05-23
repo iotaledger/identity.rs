@@ -8,7 +8,7 @@ use identity_credential::credential::Credential;
 use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
-use identity_verification::jose::jws::EdDSAJwsSignatureVerifier;
+use identity_verification::jose::jws::EdDSAJwsVerifier;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
@@ -107,7 +107,7 @@ async fn signing_bytes() {
     .verify_jws(
       jws.as_str(),
       None,
-      &EdDSAJwsSignatureVerifier::default(),
+      &EdDSAJwsVerifier::default(),
       &JwsVerificationOptions::default()
     )
     .is_ok());
@@ -140,7 +140,7 @@ async fn signing_bytes_detached_without_b64() {
     .verify_jws(
       jws.as_str(),
       Some(payload),
-      &EdDSAJwsSignatureVerifier::default(),
+      &EdDSAJwsVerifier::default(),
       &JwsVerificationOptions::default(),
     )
     .unwrap();
@@ -280,7 +280,7 @@ mod iota_document_tests {
     let result = iota_document.verify_jws(
       &jws,
       None,
-      &EdDSAJwsSignatureVerifier::default(),
+      &EdDSAJwsVerifier::default(),
       &JwsVerificationOptions::default(),
     );
     assert!(result.is_ok());

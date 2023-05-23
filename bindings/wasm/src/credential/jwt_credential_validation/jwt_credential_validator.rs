@@ -23,8 +23,8 @@ use crate::did::WasmCoreDID;
 use crate::did::WasmJwsVerificationOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::verification::IJwsSignatureVerifier;
-use crate::verification::WasmJwsSignatureVerifier;
+use crate::verification::IJwsVerifier;
+use crate::verification::WasmJwsVerifier;
 
 use wasm_bindgen::prelude::*;
 
@@ -32,7 +32,7 @@ use wasm_bindgen::prelude::*;
 // NOTE: The methods that take `&Credential` have been copied over from the old `CredentialValidator`. The old
 // `CredentialValidator` either needs to be updated or removed.
 #[wasm_bindgen(js_name = JwtCredentialValidator)]
-pub struct WasmJwtCredentialValidator(JwtCredentialValidator<WasmJwsSignatureVerifier>);
+pub struct WasmJwtCredentialValidator(JwtCredentialValidator<WasmJwsVerifier>);
 
 #[wasm_bindgen(js_class = JwtCredentialValidator)]
 impl WasmJwtCredentialValidator {
@@ -40,8 +40,8 @@ impl WasmJwtCredentialValidator {
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
-  pub fn new(signature_verifier: Option<IJwsSignatureVerifier>) -> WasmJwtCredentialValidator {
-    let signature_verifier = WasmJwsSignatureVerifier::new(signature_verifier);
+  pub fn new(signature_verifier: Option<IJwsVerifier>) -> WasmJwtCredentialValidator {
+    let signature_verifier = WasmJwsVerifier::new(signature_verifier);
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
 

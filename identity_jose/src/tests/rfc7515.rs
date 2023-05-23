@@ -5,7 +5,7 @@ use crate::jwk::Jwk;
 use crate::jws;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::JwsSignatureVerifierFn;
+use crate::jws::JwsVerifierFn;
 use crate::jws::VerificationInput;
 use crate::tests::es256;
 use crate::tests::hs256;
@@ -44,7 +44,7 @@ fn test_rfc7515() {
       assert_eq!(encoded.as_bytes(), tv.encoded);
     }
 
-    let jws_signature_verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
+    let jws_signature_verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
       JwsAlgorithm::HS256 => hs256::verify(input, key),
       JwsAlgorithm::ES256 => es256::verify(input, key),
       other => unimplemented!("{other}"),

@@ -10,7 +10,7 @@ use std::convert::Infallible;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
-use identity_verification::jose::jws::JwsSignatureVerifier;
+use identity_verification::jose::jws::JwsVerifier;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -1042,7 +1042,7 @@ impl Display for CoreDocument {
 // =============================================================================
 impl CoreDocument {
   /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
-  /// [`JwsSignatureVerifier`].
+  /// [`JwsVerifier`].
   ///
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
@@ -1051,7 +1051,7 @@ impl CoreDocument {
   //
   // NOTE: This is tested in `identity_storage` and `identity_credential`.
   // TODO: Consider including some unit tests for this method in this crate.
-  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+  pub fn verify_jws<'jws, T: JwsVerifier>(
     &self,
     jws: &'jws str,
     detached_payload: Option<&'jws [u8]>,
