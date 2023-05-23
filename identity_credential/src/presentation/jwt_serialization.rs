@@ -125,12 +125,53 @@ impl<'presentation, T> PresentationJwtClaims<'presentation, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
-  pub(crate) fn try_into_presentation(&self) -> Result<JwtPresentation> {
-    OK(())
+  pub(crate) fn try_into_presentation(self) -> Result<JwtPresentation<T>> {
+    self.check_consistency()?;
+    let Self {
+      exp,
+      iss,
+      issuance_date,
+      jti,
+      aud,
+      vp,
+    } = self;
+    let InnerPresentation {
+      context,
+      id,
+      types,
+      verifiable_credential,
+      refresh_service,
+      terms_of_use,
+      properties,
+      proof,
+    } = vp;
+
+    let presentation = JwtPresentation {
+      context: context.into_owned(),
+      id: jti.map(Cow::into_owned),
+      types: types.into_owned(),
+      verifiable_credential: verifiable_credential.into_owned(),
+      holder: Some(iss.into_owned()),
+      refresh_service: refresh_service.into_owned(),
+      terms_of_use: terms_of_use.into_owned(),
+      properties: properties.into_owned(),
+      proof: proof.map(Cow::into_owned),
+    };
+
+    Ok(presentation)
   }
 
   fn check_consistency(&self) -> Result<()> {
-    // todo!
-    OK(())
+    // Check consistency of id
+    if !self
+      .vp
+      .id
+      .as_ref()
+      .map(|value| self.jti.as_ref().filter(|jti| jti.as_ref() == value).is_some())
+      .unwrap_or(true)
+    {
+      return Err(Error::InconsistentPresentationJwtClaims("inconsistent presentation id"));
+    };
+    Ok(())
   }
 }
