@@ -14,6 +14,7 @@ use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
 use iota_stronghold::Location;
+use zeroize::Zeroizing;
 
 use crate::storage::stronghold::aead_decrypt;
 use crate::storage::stronghold::aead_encrypt;
@@ -54,7 +55,7 @@ async fn test_mutate_client_persists_client_into_snapshot() {
       let vault: ClientVault = client.vault(b"vault");
 
       vault
-        .write_secret(location.into(), keypair.private().as_ref().to_vec())
+        .write_secret(location.into(), Zeroizing::new(keypair.private().as_ref().to_vec()))
         .unwrap();
 
       Ok(())

@@ -31,6 +31,8 @@ pub enum StrongholdError {
   Snapshot(SnapshotOperation, SnapshotPath, #[source] ClientError),
   #[error("failed to load password into key provider")]
   Memory(#[source] MemoryError),
+  #[error("failed to construct a key provider from a password")]
+  Key(#[source] ClientError),
 }
 
 #[non_exhaustive]

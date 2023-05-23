@@ -29,6 +29,7 @@ use rand::distributions::DistString;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
+use zeroize::Zeroizing;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -468,7 +469,7 @@ pub(crate) fn insert_private_key(client: &Client, mut private_key: PrivateKey, l
   private_key.zeroize();
 
   vault
-    .write_secret(stronghold_location, private_key_vec)
+    .write_secret(stronghold_location, Zeroizing::new(private_key_vec))
     .map_err(|err| StrongholdError::Vault(VaultOperation::WriteSecret, err))
     .map_err(Into::into)
 }
