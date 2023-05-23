@@ -17,7 +17,7 @@ use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
 use crate::storage::JwsOptions;
 
-use crate::storage::JwkStorageDocumentExt;
+use crate::storage::JwkDocumentExt;
 use crate::Storage;
 
 type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;

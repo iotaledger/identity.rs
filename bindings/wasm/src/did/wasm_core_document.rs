@@ -50,7 +50,7 @@ use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
 use identity_iota::storage::key_storage::KeyType;
-use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwkDocumentExt;
 use identity_iota::storage::storage::JwsOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodRef;

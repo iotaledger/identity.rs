@@ -14,8 +14,8 @@ use identity_verification::jws::JwsAlgorithm;
 use identity_verification::MethodScope;
 use serde_json::json;
 
+use crate::JwkDocumentExt;
 use crate::JwkMemStore;
-use crate::JwkStorageDocumentExt;
 use crate::KeyIdMemstore;
 use crate::Storage;
 
@@ -42,7 +42,7 @@ const ISSUER_IOTA_DOCUMENT_JSON: &str = r#"
   }
 }"#;
 
-pub(super) struct Setup<T: JwkStorageDocumentExt> {
+pub(super) struct Setup<T: JwkDocumentExt> {
   pub issuer_doc: T,
   pub subject_doc: CoreDocument,
   pub storage: MemStorage,
@@ -81,7 +81,7 @@ pub(super) async fn setup_coredocument(fragment: Option<&'static str>) -> Setup<
 
 async fn generate_method<T>(storage: &MemStorage, document: &mut T, fragment: Option<&'static str>) -> String
 where
-  T: JwkStorageDocumentExt,
+  T: JwkDocumentExt,
 {
   document
     .generate_method(

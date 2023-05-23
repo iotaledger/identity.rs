@@ -34,7 +34,7 @@ pub type StorageResult<T> = Result<T, Error>;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-pub trait JwkStorageDocumentExt: private::Sealed {
+pub trait JwkDocumentExt: private::Sealed {
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
   /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
   async fn generate_method<K, I>(
@@ -255,7 +255,7 @@ purge_method_for_document_type!(CoreDocument, purge_method_core_document);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl JwkStorageDocumentExt for CoreDocument {
+impl JwkDocumentExt for CoreDocument {
   async fn generate_method<K, I>(
     &mut self,
     storage: &Storage<K, I>,
@@ -431,7 +431,7 @@ mod iota_document {
 
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
   #[cfg_attr(feature = "send-sync-storage", async_trait)]
-  impl JwkStorageDocumentExt for IotaDocument {
+  impl JwkDocumentExt for IotaDocument {
     async fn generate_method<K, I>(
       &mut self,
       storage: &Storage<K, I>,

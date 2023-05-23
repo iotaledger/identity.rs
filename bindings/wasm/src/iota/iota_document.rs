@@ -22,7 +22,7 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
 use identity_iota::storage::key_storage::KeyType;
-use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwkDocumentExt;
 use identity_iota::storage::storage::JwsOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;

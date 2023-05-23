@@ -5,7 +5,7 @@ use crate::key_id_storage::KeyIdStorageError;
 use crate::key_id_storage::MethodDigestConstructionError;
 use crate::key_storage::KeyStorageError;
 
-/// Errors that can occur when working with the [`JwkStorageDocumentExt`](crate::storage::JwkStorageDocumentExt) API.
+/// Errors that can occur when working with the [`JwkDocumentExt`](crate::storage::JwkDocumentExt) API.
 #[derive(Debug, thiserror::Error)]
 pub enum JwkStorageDocumentError {
   #[error("storage operation failed: key storage error")]

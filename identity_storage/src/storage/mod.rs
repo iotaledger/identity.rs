@@ -12,7 +12,7 @@ pub use signature_options::*;
 
 /// A type wrapping a [`JwkStorage`](crate::key_storage::JwkStorage) and
 /// [`KeyIdStorage`](crate::key_id_storage::KeyIdStorage) that should always be used together when calling methods from
-/// [`JwkStorageDocumentExt`](crate::storage::JwkStorageDocumentExt).
+/// [`JwkDocumentExt`](crate::storage::JwkDocumentExt).
 pub struct Storage<K, I> {
   key_storage: K,
   key_id_storage: I,
