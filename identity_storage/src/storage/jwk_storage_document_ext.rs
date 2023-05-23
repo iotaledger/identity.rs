@@ -13,7 +13,7 @@ use crate::key_storage::KeyType;
 use super::JwkStorageDocumentError as Error;
 use super::Storage;
 
-use super::JwsSignatureOptions;
+use super::JwsOptions;
 use async_trait::async_trait;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
@@ -66,7 +66,7 @@ pub trait JwkStorageDocumentExt: private::Sealed {
     storage: &Storage<K, I>,
     fragment: &str,
     payload: &[u8],
-    options: &JwsSignatureOptions,
+    options: &JwsOptions,
   ) -> StorageResult<Jws>
   where
     K: JwkStorage,
@@ -82,7 +82,7 @@ pub trait JwkStorageDocumentExt: private::Sealed {
     credential: &Credential<T>,
     storage: &Storage<K, I>,
     fragment: &str,
-    options: &JwsSignatureOptions,
+    options: &JwsOptions,
   ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
@@ -284,7 +284,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     storage: &Storage<K, I>,
     fragment: &str,
     payload: &[u8],
-    options: &JwsSignatureOptions,
+    options: &JwsOptions,
   ) -> StorageResult<Jws>
   where
     K: JwkStorage,
@@ -370,7 +370,7 @@ impl JwkStorageDocumentExt for CoreDocument {
     credential: &Credential<T>,
     storage: &Storage<K, I>,
     fragment: &str,
-    options: &JwsSignatureOptions,
+    options: &JwsOptions,
   ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
@@ -460,7 +460,7 @@ mod iota_document {
       storage: &Storage<K, I>,
       fragment: &str,
       payload: &[u8],
-      options: &JwsSignatureOptions,
+      options: &JwsOptions,
     ) -> StorageResult<Jws>
     where
       K: JwkStorage,
@@ -477,7 +477,7 @@ mod iota_document {
       credential: &Credential<T>,
       storage: &Storage<K, I>,
       fragment: &str,
-      options: &JwsSignatureOptions,
+      options: &JwsOptions,
     ) -> StorageResult<Jwt>
     where
       K: JwkStorage,

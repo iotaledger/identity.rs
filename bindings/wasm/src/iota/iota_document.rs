@@ -23,7 +23,7 @@ use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
 use identity_iota::storage::key_storage::KeyType;
 use identity_iota::storage::storage::JwkStorageDocumentExt;
-use identity_iota::storage::storage::JwsSignatureOptions;
+use identity_iota::storage::storage::JwsOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
@@ -64,7 +64,7 @@ use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
 use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
-use crate::storage::WasmJwsSignatureOptions;
+use crate::storage::WasmJwsOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
 use crate::verification::IJwsVerifier;
@@ -797,10 +797,10 @@ impl WasmIotaDocument {
     storage: &WasmStorage,
     fragment: String,
     payload: String,
-    options: &WasmJwsSignatureOptions,
+    options: &WasmJwsOptions,
   ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
-    let options_clone: JwsSignatureOptions = options.0.clone();
+    let options_clone: JwsOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       document_lock_clone
@@ -828,10 +828,10 @@ impl WasmIotaDocument {
     storage: &WasmStorage,
     fragment: String,
     credential: &WasmCredential,
-    options: &WasmJwsSignatureOptions,
+    options: &WasmJwsOptions,
   ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
-    let options_clone: JwsSignatureOptions = options.0.clone();
+    let options_clone: JwsOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let credential_clone: Credential = credential.0.clone();
     let promise: Promise = future_to_promise(async move {

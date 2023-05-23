@@ -6,7 +6,7 @@ use identity_core::common::Url;
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
-pub struct JwsSignatureOptions {
+pub struct JwsOptions {
   /// Whether to attach the public key in the corresponding method
   /// to the JWS header.
   pub attach_jwk: bool,
@@ -46,8 +46,8 @@ pub struct JwsSignatureOptions {
   pub detached_payload: bool,
 }
 
-impl JwsSignatureOptions {
-  /// Creates a new [`JwsSignatureOptions`].
+impl JwsOptions {
+  /// Creates a new [`JwsOptions`].
   pub fn new() -> Self {
     Self::default()
   }
