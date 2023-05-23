@@ -340,8 +340,8 @@ impl Jwk {
   /// `SHA2-256` is used as the hash function *H*.
   ///
   /// The thumbprint is returned as a base64url-encoded string.
-  pub fn thumbprint_sha256_b64(&self) -> Result<String> {
-    self.thumbprint_sha256().map(encode_b64)
+  pub fn thumbprint_sha256_b64(&self) -> String {
+    encode_b64(self.thumbprint_sha256())
   }
 
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
@@ -349,14 +349,14 @@ impl Jwk {
   /// `SHA2-256` is used as the hash function *H*.
   ///
   /// The thumbprint is returned as an unencoded array of bytes.
-  pub fn thumbprint_sha256(&self) -> Result<JwkThumbprintSha256> {
+  pub fn thumbprint_sha256(&self) -> JwkThumbprintSha256 {
     let json: String = self.thumbprint_hash_input();
 
     let mut out: JwkThumbprintSha256 = Default::default();
 
     SHA256(json.as_bytes(), &mut out);
 
-    Ok(out)
+    out
   }
 
   /// Creates the JSON string of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638),

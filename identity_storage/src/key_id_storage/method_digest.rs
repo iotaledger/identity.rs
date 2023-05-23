@@ -17,7 +17,6 @@ pub type MethodDigestConstructionError = identity_core::common::SingleStructErro
 pub enum MethodDigestConstructionErrorKind {
   // Todo: Do we need this variant? It should be impossible to construct a VerificationMethod without a fragment.
   MissingIdFragment,
-  DataEncodingFailure,
   DataDecodingFailure,
 }
 impl Display for MethodDigestConstructionErrorKind {
@@ -26,7 +25,6 @@ impl Display for MethodDigestConstructionErrorKind {
     match self {
       MethodDigestConstructionErrorKind::MissingIdFragment => f.write_str("missing id fragment"),
       MethodDigestConstructionErrorKind::DataDecodingFailure => f.write_str("data decoding failure"),
-      MethodDigestConstructionErrorKind::DataEncodingFailure => f.write_str("data encoding failure"),
     }
   }
 }
@@ -52,12 +50,7 @@ impl MethodDigest {
     hasher.write(fragment.as_bytes());
 
     match method_data {
-      MethodData::PublicKeyJwk(jwk) => hasher.write(
-        jwk
-          .thumbprint_sha256_b64()
-          .map_err(|err| MethodDigestConstructionError::new(DataEncodingFailure).with_source(err))?
-          .as_ref(),
-      ),
+      MethodData::PublicKeyJwk(jwk) => hasher.write(jwk.thumbprint_sha256().as_ref()),
       _ => hasher.write(
         &method_data
           .try_decode()
