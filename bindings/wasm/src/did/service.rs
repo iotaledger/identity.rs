@@ -155,7 +155,7 @@ interface IService {
     /**
      * Type of service.
      *
-     * E.g. "LinkedDomains" or "DIDCommMessaging".
+     * E.g. "LinkedDomains".
      */
     readonly type: string | string[];
 
