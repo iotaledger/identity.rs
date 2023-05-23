@@ -54,7 +54,7 @@ impl MethodDigest {
     match method_data {
       MethodData::PublicKeyJwk(jwk) => hasher.write(
         jwk
-          .thumbprint_b64()
+          .thumbprint_sha256_b64()
           .map_err(|err| MethodDigestConstructionError::new(DataEncodingFailure).with_source(err))?
           .as_ref(),
       ),

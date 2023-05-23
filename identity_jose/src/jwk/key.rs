@@ -22,7 +22,7 @@ use crate::jwk::JwkUse;
 use crate::jwu::encode_b64;
 
 /// A SHA256 JSON Web Key Thumbprint.
-pub type JwkThumbprint = [u8; SHA256_LEN];
+pub type JwkThumbprintSha256 = [u8; SHA256_LEN];
 
 /// JSON Web Key.
 ///
@@ -340,19 +340,31 @@ impl Jwk {
   /// `SHA2-256` is used as the hash function *H*.
   ///
   /// The thumbprint is returned as a base64url-encoded string.
-  pub fn thumbprint_b64(&self) -> Result<String> {
-    self.thumbprint_raw().map(encode_b64)
+  pub fn thumbprint_sha256_b64(&self) -> Result<String> {
+    self.thumbprint_sha256().map(encode_b64)
   }
 
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
   ///
   /// `SHA2-256` is used as the hash function *H*.
   ///
-  /// The thumbprint is returned as an unencoded vector of bytes.
-  pub fn thumbprint_raw(&self) -> Result<JwkThumbprint> {
+  /// The thumbprint is returned as an unencoded array of bytes.
+  pub fn thumbprint_sha256(&self) -> Result<JwkThumbprintSha256> {
+    let json: String = self.thumbprint_hash_input();
+
+    let mut out: JwkThumbprintSha256 = Default::default();
+
+    SHA256(json.as_bytes(), &mut out);
+
+    Ok(out)
+  }
+
+  /// Creates the JSON string of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638),
+  /// which is used as the input for hashing to produce a JWK thumbprint with a custom hash function.
+  pub fn thumbprint_hash_input(&self) -> String {
     let kty: &str = self.kty.name();
 
-    let json: String = match self.params() {
+    match self.params() {
       JwkParams::Ec(JwkParamsEc { crv, x, y, .. }) => {
         format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}","y":"{y}"}}"#)
       }
@@ -366,13 +378,7 @@ impl Jwk {
       JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
         format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}"}}"#)
       }
-    };
-
-    let mut out: JwkThumbprint = Default::default();
-
-    SHA256(json.as_bytes(), &mut out);
-
-    Ok(out)
+    }
   }
 
   // ===========================================================================
