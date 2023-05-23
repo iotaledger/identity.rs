@@ -1,13 +1,13 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 mod error;
-mod jwk_storage_document_ext;
+mod jwk_document_ext;
 mod signature_options;
 #[cfg(all(test, feature = "memstore"))]
 mod tests;
 
 pub use error::*;
-pub use jwk_storage_document_ext::*;
+pub use jwk_document_ext::*;
 pub use signature_options::*;
 
 /// A type wrapping a [`JwkStorage`](crate::key_storage::JwkStorage) and
