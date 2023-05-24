@@ -13,7 +13,7 @@ use identity_verification::MethodScope;
 
 use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
-use crate::storage::JwsOptions;
+use crate::storage::JwsSignatureOptions;
 
 use crate::storage::JwkDocumentExt;
 use crate::Storage;
@@ -82,7 +82,7 @@ async fn signing_credential_with_detached_option_fails() {
       &credential,
       &storage,
       kid.as_ref(),
-      &JwsOptions::default().detached_payload(true),
+      &JwsSignatureOptions::default().detached_payload(true),
     )
     .await
     .is_err());
@@ -98,7 +98,7 @@ async fn signing_credential_with_nonce_and_scope() {
       &credential,
       &storage,
       kid.as_ref(),
-      &JwsOptions::default().nonce(nonce.to_owned()),
+      &JwsSignatureOptions::default().nonce(nonce.to_owned()),
     )
     .await
     .unwrap();
@@ -151,7 +151,12 @@ async fn signing_credential_with_b64() {
   let (document, storage, kid, credential) = setup().await;
 
   let jws = document
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsOptions::default().b64(true))
+    .sign_credential(
+      &credential,
+      &storage,
+      kid.as_ref(),
+      &JwsSignatureOptions::default().b64(true),
+    )
     .await
     .unwrap();
 
@@ -172,7 +177,12 @@ async fn signing_credential_with_b64() {
 
   // JWTs should not have `b64` set per https://datatracker.ietf.org/doc/html/rfc7797#section-7.
   assert!(document
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsOptions::default().b64(false),)
+    .sign_credential(
+      &credential,
+      &storage,
+      kid.as_ref(),
+      &JwsSignatureOptions::default().b64(false),
+    )
     .await
     .is_err());
 }

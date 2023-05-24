@@ -30,7 +30,7 @@ use crate::storage::tests::test_utils::CredentialSetup;
 use crate::storage::tests::test_utils::Setup;
 use crate::storage::tests::test_utils::{self};
 use crate::storage::JwkDocumentExt;
-use crate::storage::JwsOptions;
+use crate::storage::JwsSignatureOptions;
 
 const SIMPLE_CREDENTIAL_JSON: &str = r#"{
   "@context": [
@@ -106,7 +106,12 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 
@@ -181,7 +186,12 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 
@@ -215,7 +225,12 @@ where
   let CredentialSetup { credential, .. } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 
@@ -274,7 +289,7 @@ where
 
   // Sign the credential with the *other* issuer.
   let jwt: Jwt = other_issuer_doc
-    .sign_credential(&credential, &other_storage, fragment, &JwsOptions::default())
+    .sign_credential(&credential, &other_storage, fragment, &JwsSignatureOptions::default())
     .await
     .unwrap();
 
@@ -553,7 +568,12 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 

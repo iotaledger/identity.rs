@@ -4,21 +4,21 @@
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::core::Url;
-use identity_iota::storage::JwsOptions;
+use identity_iota::storage::JwsSignatureOptions;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen(js_name = JwsOptions, inspectable)]
-pub struct WasmJwsOptions(pub(crate) JwsOptions);
+#[wasm_bindgen(js_name = JwsSignatureOptions, inspectable)]
+pub struct WasmJwsSignatureOptions(pub(crate) JwsSignatureOptions);
 
-#[wasm_bindgen(js_class = JwsOptions)]
-impl WasmJwsOptions {
+#[wasm_bindgen(js_class = JwsSignatureOptions)]
+impl WasmJwsSignatureOptions {
   #[wasm_bindgen(constructor)]
-  pub fn new(options: Option<IJwsOptions>) -> Result<WasmJwsOptions> {
+  pub fn new(options: Option<IJwsSignatureOptions>) -> Result<WasmJwsSignatureOptions> {
     if let Some(options) = options {
-      let options: JwsOptions = options.into_serde().wasm_result()?;
-      Ok(WasmJwsOptions(options))
+      let options: JwsSignatureOptions = options.into_serde().wasm_result()?;
+      Ok(WasmJwsSignatureOptions(options))
     } else {
-      Ok(WasmJwsOptions(Default::default()))
+      Ok(WasmJwsSignatureOptions(Default::default()))
     }
   }
 
@@ -66,20 +66,20 @@ impl WasmJwsOptions {
   }
 }
 
-impl_wasm_json!(WasmJwsOptions, JwsOptions);
-impl_wasm_clone!(WasmJwsOptions, JwsOptions);
+impl_wasm_json!(WasmJwsSignatureOptions, JwsSignatureOptions);
+impl_wasm_clone!(WasmJwsSignatureOptions, JwsSignatureOptions);
 
-/// Duck-typed interface to allow creating `JwsOptions` easily.
+/// Duck-typed interface to allow creating `JwsSignatureOptions` easily.
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IJwsOptions")]
-  pub type IJwsOptions;
+  #[wasm_bindgen(typescript_type = "IJwsSignatureOptions")]
+  pub type IJwsSignatureOptions;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWS_SIGNATURE_OPTIONS: &'static str = r#"
-/** Holds options to create `JwsOptions`. */
-interface IJwsOptions {
+/** Holds options to create `JwsSignatureOptions`. */
+interface IJwsSignatureOptions {
     /** Whether to attach the public key in the corresponding method
      * to the JWS header.
      * 

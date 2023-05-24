@@ -16,7 +16,7 @@ use identity_verification::MethodScope;
 
 use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
-use crate::storage::JwsOptions;
+use crate::storage::JwsSignatureOptions;
 
 use crate::storage::JwkDocumentExt;
 use crate::Storage;
@@ -99,7 +99,7 @@ async fn signing_bytes() {
   let payload = b"test";
 
   // TODO: Check with more Options
-  let options = JwsOptions::new();
+  let options = JwsSignatureOptions::new();
   let jws = document
     .sign_bytes(&storage, &method_fragment, payload, &options)
     .await
@@ -132,7 +132,7 @@ async fn signing_bytes_detached_without_b64() {
     .unwrap();
   let payload = b"test";
 
-  let options = JwsOptions::new().b64(false).detached_payload(true);
+  let options = JwsSignatureOptions::new().b64(false).detached_payload(true);
   let jws = document
     .sign_bytes(&storage, method_fragment.as_ref(), payload, &options)
     .await
@@ -185,7 +185,7 @@ async fn signing_credential() {
 
   let credential: Credential = Credential::from_json(credential_json).unwrap();
   let jws = document
-    .sign_credential(&credential, &storage, &method_fragment, &JwsOptions::default())
+    .sign_credential(&credential, &storage, &method_fragment, &JwsSignatureOptions::default())
     .await
     .unwrap();
   // Verify the credential
@@ -267,7 +267,7 @@ mod iota_document_tests {
 
     // Sign the test string
     let jws = iota_document
-      .sign_bytes(&storage, fragment, b"test", &JwsOptions::new())
+      .sign_bytes(&storage, fragment, b"test", &JwsSignatureOptions::new())
       .await
       .unwrap();
 
