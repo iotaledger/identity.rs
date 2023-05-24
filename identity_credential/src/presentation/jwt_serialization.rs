@@ -31,23 +31,23 @@ where
 {
   /// Represents the expirationDate encoded as a UNIX timestamp.  
   #[serde(skip_serializing_if = "Option::is_none")]
-  exp: Option<i64>,
+  pub(crate) exp: Option<i64>,
   /// Represents the issuer of the presentation who is the same as the holder of the verifiable
   /// credentials.
   iss: Cow<'presentation, Url>,
 
   /// Represents the issuanceDate encoded as a UNIX timestamp.
   #[serde(flatten)]
-  issuance_date: Option<IssuanceDateClaims>,
+  pub(crate) issuance_date: Option<IssuanceDateClaims>,
 
   /// Represents the id property of the credential.
   #[serde(skip_serializing_if = "Option::is_none")]
   jti: Option<Cow<'presentation, Url>>,
 
   #[serde(skip_serializing_if = "Option::is_none")]
-  aud: Option<Url>,
+  pub(crate) aud: Option<Url>,
 
-  vp: InnerPresentation<'presentation, T>,
+  pub(crate) vp: InnerPresentation<'presentation, T>,
 }
 
 impl<'presentation, T> PresentationJwtClaims<'presentation, T>
@@ -90,7 +90,7 @@ where
 }
 
 #[derive(Serialize, Deserialize)]
-struct InnerPresentation<'presentation, T = Object>
+pub(crate) struct InnerPresentation<'presentation, T = Object>
 where
   T: ToOwned + Serialize,
   <T as ToOwned>::Owned: DeserializeOwned,

@@ -1,3 +1,4 @@
+use identity_core::common::Timestamp;
 use identity_document::verifiable::JwsVerificationOptions;
 
 use crate::validator::vc_jwt_validation::CredentialValidationOptions;
@@ -19,10 +20,21 @@ pub struct JwtPresentationValidationOptions {
   #[serde(default)]
   pub subject_holder_relationship: SubjectHolderRelationship,
 
-  /// Determines if the JWT expiration date claim `exp` should be skipped during validation.
-  /// Default: false.
+  // /// Determines if the JWT expiration date claim `exp` should be skipped during validation.
+  // /// Default: false.
+  // #[serde(default)]
+  // pub skip_exp: bool,
+  /// Declares that the credential is **not** considered valid if it expires before this
+  /// [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
   #[serde(default)]
-  pub skip_exp: bool,
+  pub earliest_expiry_date: Option<Timestamp>,
+
+  /// Declares that the credential is **not** considered valid if it was issued later than this
+  /// [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
+  #[serde(default)]
+  pub latest_issuance_date: Option<Timestamp>,
 }
 
 fn bool_true() -> bool {
@@ -51,6 +63,8 @@ impl JwtPresentationValidationOptions {
     self.subject_holder_relationship = options;
     self
   }
+
+  //todo expiry date
 }
 
 /// Declares how credential subjects must relate to the presentation holder during validation.

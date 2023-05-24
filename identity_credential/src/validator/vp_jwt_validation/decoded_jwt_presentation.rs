@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Object;
+use identity_core::common::{Object, Timestamp, Url};
 use identity_verification::jws::JwsHeader;
 
 use crate::presentation::JwtPresentation;
@@ -16,4 +16,8 @@ pub struct DecodedJwtPresentation<T = Object> {
   pub presentation: JwtPresentation<T>,
   /// The protected header parsed from the JWS.
   pub header: Box<JwsHeader>,
+
+  pub expiration_date: Option<Timestamp>,
+
+  pub aud: Option<Url>,
 }
