@@ -36,7 +36,14 @@ pub type StorageResult<T> = Result<T, Error>;
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkDocumentExt: private::Sealed {
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `key_type` must be compatible with the given `storage`. [`Storage`]s are expected to export key type
+  ///   constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
   async fn generate_method<K, I>(
     &mut self,
     storage: &Storage<K, I>,
@@ -44,7 +51,7 @@ pub trait JwkDocumentExt: private::Sealed {
     alg: JwsAlgorithm,
     fragment: Option<&str>,
     scope: MethodScope,
-  ) -> StorageResult<Option<String>>
+  ) -> StorageResult<String>
   where
     K: JwkStorage,
     I: KeyIdStorage;
@@ -114,7 +121,7 @@ macro_rules! generate_method_for_document_type {
       alg: JwsAlgorithm,
       fragment: Option<&str>,
       scope: MethodScope,
-    ) -> StorageResult<Option<String>>
+    ) -> StorageResult<String>
     where
       K: JwkStorage,
       I: KeyIdStorage,
@@ -122,7 +129,6 @@ macro_rules! generate_method_for_document_type {
       let JwkGenOutput { key_id, jwk } = <K as JwkStorage>::generate(&storage.key_storage(), key_type, alg)
         .await
         .map_err(Error::KeyStorageError)?;
-      let kid = jwk.kid().map(ToOwned::to_owned);
 
       // Produce a new verification method containing the generated JWK. If this operation fails we handle the error
       // by attempting to revert key generation before returning an error.
@@ -140,6 +146,12 @@ macro_rules! generate_method_for_document_type {
       // Extract data from method before inserting it into the DID document.
       let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
       let method_id: DIDUrl = method.id().clone();
+      // The fragment is always set on a method, so this error will never occur.
+      let fragment: String = method_id
+        .fragment()
+        .ok_or(identity_verification::Error::MissingIdFragment)
+        .map_err(Error::VerificationMethodConstructionError)?
+        .to_owned();
 
       // Insert method into document and handle error upon failure.
       if let Err(error) = document
@@ -160,7 +172,7 @@ macro_rules! generate_method_for_document_type {
         return Err(try_undo_key_generation(storage, &key_id, error).await);
       }
 
-      Ok(kid)
+      Ok(fragment)
     }
   };
 }
@@ -263,7 +275,7 @@ impl JwkDocumentExt for CoreDocument {
     alg: JwsAlgorithm,
     fragment: Option<&str>,
     scope: MethodScope,
-  ) -> StorageResult<Option<String>>
+  ) -> StorageResult<String>
   where
     K: JwkStorage,
     I: KeyIdStorage,
@@ -439,7 +451,7 @@ mod iota_document {
       alg: JwsAlgorithm,
       fragment: Option<&str>,
       scope: MethodScope,
-    ) -> StorageResult<Option<String>>
+    ) -> StorageResult<String>
     where
       K: JwkStorage,
       I: KeyIdStorage,

@@ -738,12 +738,19 @@ impl WasmIotaDocument {
   // ===========================================================================
 
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
   #[wasm_bindgen(js_name = generateMethod)]
+  #[allow(non_snake_case)]
   pub fn generate_method(
     &self,
     storage: &WasmStorage,
-    key_type: String,
+    keyType: String,
     alg: WasmJwsAlgorithm,
     fragment: Option<String>,
     scope: WasmMethodScope,
@@ -753,13 +760,13 @@ impl WasmIotaDocument {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let scope: MethodScope = scope.0;
     let promise: Promise = future_to_promise(async move {
-      let key_id: Option<String> = document_lock_clone
+      let method_fragment: String = document_lock_clone
         .write()
         .await
-        .generate_method(&storage_clone, KeyType::from(key_type), alg, fragment.as_deref(), scope)
+        .generate_method(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
         .await
         .wasm_result()?;
-      Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+      Ok(JsValue::from(method_fragment))
     });
     Ok(promise.unchecked_into())
   }

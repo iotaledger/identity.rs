@@ -96,7 +96,7 @@ where
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup {
@@ -106,7 +106,7 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsOptions::default())
+    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
     .await
     .unwrap();
 
@@ -171,7 +171,7 @@ where
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup {
@@ -181,7 +181,7 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsOptions::default())
+    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
     .await
     .unwrap();
 
@@ -209,13 +209,13 @@ where
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup { credential, .. } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsOptions::default())
+    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
     .await
     .unwrap();
 
@@ -543,7 +543,7 @@ where
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup {
@@ -553,7 +553,7 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsOptions::default())
+    .sign_credential(&credential, &storage, method_fragment.as_ref(), &JwsOptions::default())
     .await
     .unwrap();
 

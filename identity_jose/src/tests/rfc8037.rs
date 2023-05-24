@@ -29,8 +29,8 @@ fn test_rfc8037_ed25519() {
     let secret: Jwk = serde_json::from_str(tv.private_jwk).unwrap();
     let public: Jwk = serde_json::from_str(tv.public_jwk).unwrap();
 
-    assert_eq!(secret.thumbprint_sha256_b64().unwrap(), tv.thumbprint_b64);
-    assert_eq!(public.thumbprint_sha256_b64().unwrap(), tv.thumbprint_b64);
+    assert_eq!(secret.thumbprint_sha256_b64(), tv.thumbprint_b64);
+    assert_eq!(public.thumbprint_sha256_b64(), tv.thumbprint_b64);
 
     let header: JwsHeader = serde_json::from_str(tv.header).unwrap();
     let encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new(tv.payload.as_bytes(), &header).unwrap();
