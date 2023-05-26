@@ -148,32 +148,6 @@ jobs:
         with:
           os: ${{matrix.os}}
 
-  build-and-test-libjose:
-    needs: check-for-run-condition
-    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        include:
-          - os: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Rust
-        uses: './.github/actions/rust/rust-setup'
-        with:
-          os: ${{ runner.os }}
-          job: ${{ github.job }}
-
-      - name: Build
-        run: cargo build --manifest-path ./libjose/Cargo.toml --release
-
-      - name: Run tests
-        run: cargo test --manifest-path ./libjose/Cargo.toml --release
-
   build-wasm:
     needs: check-for-run-condition
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
@@ -222,12 +196,13 @@ jobs:
         if: always()
         uses: './.github/actions/private-tangle/tear-down'
 
-  # build-and-test-stronghold-nodejs:
-  #   needs:
-  #     - check-for-run-condition
-  #     - build-wasm
-  #   if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-  #   # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-  #   uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@main
-  #   with:
-  #     input-artifact-name: identity-wasm-bindings-build
+  build-and-test-stronghold-nodejs:
+    needs:
+      - check-for-run-condition
+      - build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@main
+    with:
+      input-artifact-name: identity-wasm-bindings-build
+      output-artifact-name: identity-stronghold-nodejs-bindings-build

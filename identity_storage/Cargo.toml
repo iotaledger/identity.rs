@@ -29,7 +29,7 @@ thiserror.workspace = true
 tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync"], optional = true }
 
 [dev-dependencies]
-identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", features = ["revocation-bitmap"] }
 once_cell = { version = "1.17.1", default-features = false }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync", "rt"] }

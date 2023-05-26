@@ -1,13 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-  # Temporarily excluded for the 0.7.0-alpha.5 release.
-  # "identity_agent",
-  # "identity_comm",
   "identity_core",
   "identity_credential",
   "identity_did",
-  "identity_diff",
   "identity_document",
   "identity_iota",
   "identity_storage",
@@ -22,7 +18,6 @@ exclude = [
   "identity_iota_core_legacy",
   "bindings/stronghold-nodejs",
   "bindings/wasm",
-  "libjose",
 ]
 
 [workspace.dependencies]

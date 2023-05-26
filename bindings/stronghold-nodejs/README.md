@@ -14,41 +14,16 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 
 Replace imports with local paths for txm:
 !test program
-cat \
-| sed -e "s#require('@iota/identity-wasm/node')#require('../wasm/node/identity_wasm.js')#" \
-| sed -e "s#require('@iota/identity-stronghold-nodejs')#require('./dist/index.js')#" \
-| node
+sed -e "s#require('@iota/identity-stronghold-nodejs')#require('./dist/index.js')#" && node
 -->
 <!-- !test check Nodejs Example -->
 ```javascript
 const { AccountBuilder, ExplorerUrl } = require('@iota/identity-wasm/node')
-const { Stronghold } = require('@iota/identity-stronghold-nodejs')
+const { sum } = require('@iota/identity-stronghold-nodejs')
 
 
 async function main() {
-    // Stronghold settings for the Account storage.
-    // This will load an existing Stronghold or create a new one automatically.
-    const filepath = "./example-strong.hodl";
-    const password = "my-password";
-    const stronghold = await Stronghold.build(filepath, password);
-    
-    // This generates a new keypair stored securely in the above Stronghold, 
-    // constructs a new DID Document, and publishes it to the IOTA Mainnet.
-    let builder = new AccountBuilder({
-        storage: stronghold,
-    });
-    let account = await builder.createIdentity();
-
-    // Print the DID of the newly created identity.
-    const did = account.did();
-    console.log(did.toString());
-
-    // Print the local state of the DID Document.
-    const document = account.document();
-    console.log(JSON.stringify(document, null, 2));
-
-    // Print the Explorer URL for the DID.
-    console.log(`Explorer URL:`, ExplorerUrl.mainnet().resolverUrl(did));
+    console.log(sum(1,2))
 }
 
 main()
@@ -85,5 +60,4 @@ npm install
 ## Minimum Requirements
 
 The minimum supported version for node is: `v16.0.0`
-
 

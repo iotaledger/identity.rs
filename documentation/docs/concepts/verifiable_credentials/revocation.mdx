@@ -12,12 +12,15 @@ keywords:
 import revoke_vc_ts from '!!raw-loader!../../../../bindings/wasm/examples/src/0_basic/7_revoke_vc.ts'
 import revoke_vc_rs from "!!raw-loader!../../../../examples/0_basic/7_revoke_vc.rs";
 import CodeSnippet from "../../../src/components/CodeSnippetComponent";
+import Announcement from '../../../src/partials/_announcement.mdx';
+
+<Announcement/>
 
 ## Overview
 
 The [example](#example) below demonstrates two methods that an issuer can use to revoke a verifiable credential using the IOTA Identity Framework:
 
-1. By using the [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) field in a credential and linking to a revocation bitmap, using the [`RevocationBitmap2022`](../../specs/revocation_bitmap_2022.md).
+1. By using the [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) field in a credential and linking to a revocation bitmap, using the [`RevocationBitmap2022`](../../specs/revocation_bitmap_2022.mdx).
 2. By removing the verification method that signed the credential. This invalidates all credentials that were signed with that verification method.
 
 ## Revocation Bitmap
@@ -52,7 +55,7 @@ A less efficient alternative is to remove the verification method that signed th
 
 ## Example {#example}
 
-The following code exemplifies how you can revoke a [Verifiable Credential (VC)](./overview.md).
+The following code exemplifies how you can revoke a [Verifiable Credential (VC)](./overview.mdx).
 
 <CodeSnippet 
     nodeContent={revoke_vc_ts}

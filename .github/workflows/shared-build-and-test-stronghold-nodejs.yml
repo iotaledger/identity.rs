@@ -16,144 +16,134 @@ on:
         description: "Name used for the input Wasm build artifact"
         required: true
         type: string
-      upload-binaries-as-artifacts:
-        description: "Should binaries for each platform be uploaded as artifacts (used for publishing)"
-        required: false
-        type: boolean
-        default: false
       output-artifact-name:
         description: "Name used for the output build artifact. Must be set if `upload-binaries-as-artifacts` is true"
         required: false
         type: string
+
+env:
+  WORKING_DIRECTORY: bindings/stronghold-nodejs
+  APP_NAME: identity-stronghold-nodejs
+
 jobs:
-  build-stronghold-nodejs:
+  build:
       defaults:
         run:
           working-directory: bindings/stronghold-nodejs
       env:
         DEBUG: napi:*
-        APP_NAME: identity-stronghold-nodejs
         MACOSX_DEPLOYMENT_TARGET: '10.13'
-        WORKING_DIRECTORY: bindings/stronghold-nodejs
       strategy:
         fail-fast: false
         matrix:
           settings:
             - host: macos-latest
-              container: null
               target: x86_64-apple-darwin
-              architecture: x64
               build: |
                 npm run build
                 strip -x dist/*.node
-              test: |
-                npm run test
             - host: windows-latest
-              container: null
+              build: npm run build
               target: x86_64-pc-windows-msvc
-              architecture: x64
-              build: |
-                npm run build
-              test: |
-                npm run test:examples
             - host: ubuntu-latest
-              container: null
-              generate-dist: true
               target: x86_64-unknown-linux-gnu
-              architecture: x64
-              build: |
-                npm run build && strip dist/*.node
-              test: |
-                npm run test
+              generate-dist: true
+              docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+              build: |-
+                set -e &&
+                npm run build -- -- --target x86_64-unknown-linux-gnu &&
+                strip dist/*.node
             - host: ubuntu-latest
-              # Use container to build musl as `rand::thread_rng()` or `rand::random()` (in our code or dependencies)
-              # causes the '__register_atfork' symbol to not be found at runtime when cross-compiled.
-              container: rust:1-alpine
               target: x86_64-unknown-linux-musl
-              architecture: x64
-              setup: |
-                # actions/setup-node@v2 does not work for musl, install manually.
-                # build-base required for libsodium compilation.
-                apk add --no-cache nodejs npm build-base
-              build: |
-                export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
-                npm run build && strip dist/*.node
-              test: |
-                ldd dist/identity-stronghold-nodejs.linux-x64-musl.node || true 
-                npm run test:examples
+              docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+              build: set -e && npm run build && strip dist/*.node
             - host: macos-latest
-              container: null
               target: aarch64-apple-darwin
               build: |
-                export NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
-                npm run build && strip -x dist/*.node
-              # we can't test this properly because the macos-latest runners don't have apple silicon / aarch64
-              test: |
-                echo "let's hope for the best"
-      name: stable - ${{ matrix.settings.target }} - node@16
+                npm run build -- -- --target aarch64-apple-darwin
+                strip -x dist/*.node
+      name: stable - ${{ matrix.settings.target }} - node@18
       runs-on: ${{ matrix.settings.host }}
-      container: ${{ matrix.settings.container }}
       steps:
         - uses: actions/checkout@v3
-
         - name: Setup node
-          uses: actions/setup-node@v2
+          uses: actions/setup-node@v3
+          if: ${{ !matrix.settings.docker }}
           with:
-            node-version: 16
-            architecture: ${{ matrix.settings.architecture }}
-
-        - name: Setup Rust and cache
-          uses: './.github/actions/rust/rust-setup'
+            node-version: 18
+            check-latest: true
+            cache: npm
+            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+        - name: Install
+          uses: dtolnay/rust-toolchain@stable
+          if: ${{ !matrix.settings.docker }}
           with:
-            os: ${{ matrix.settings.host }}
-            job: ${{ github.job }}
-            target: ${{ matrix.settings.target }}
-            cargo-cache-enabled: true
-
-        - name: Setup
-          if: ${{ matrix.settings.setup }}
+            toolchain: stable
+            targets: ${{ matrix.settings.target }}
+        - name: Cache cargo
+          uses: actions/cache@v3
+          with:
+            path: |
+              ~/.cargo/registry/index/
+              ~/.cargo/registry/cache/
+              ~/.cargo/git/db/
+              .cargo-cache
+              target/
+            key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
+        - uses: goto-bus-stop/setup-zig@v2
+          if: ${{ matrix.settings.target == 'armv7-unknown-linux-gnueabihf' }}
+          with:
+            version: 0.10.1
+        - name: Setup toolchain
           run: ${{ matrix.settings.setup }}
-
+          if: ${{ matrix.settings.setup }}
+          shell: bash
         - name: Download bindings/wasm artifacts
           uses: actions/download-artifact@v2
           with:
             name: ${{ inputs.input-artifact-name }}
             path: bindings/wasm
-
         - name: Prepare Wasm bindings link
           run: |
             npm ci
             npm link
           working-directory: ./bindings/wasm
-
         - name: Install dependencies
-          # ignore peer dependencies, because in the case of publishing the identity-wasm peer dependency is not released yet
-          run: npm ci --ignore-scripts --legacy-peer-deps && npm link @iota/identity-wasm
-
+          run: npm ci --legacy-peer-deps && npm link @iota/identity-wasm
+        - name: Setup node x86
+          uses: actions/setup-node@v3
+          if: matrix.settings.target == 'i686-pc-windows-msvc'
+          with:
+            node-version: 18
+            check-latest: true
+            cache: npm
+            cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+            architecture: x86
+        - name: Build in docker
+          uses: addnab/docker-run-action@v3
+          if: ${{ matrix.settings.docker }}
+          with:
+            image: ${{ matrix.settings.docker }}
+            options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build/${{ env.WORKING_DIRECTORY }}'
+            run: ${{ matrix.settings.build }}
         - name: Build
           run: ${{ matrix.settings.build }}
-
+          if: ${{ !matrix.settings.docker }}
+          shell: bash
         - name: List packages
           run: ls -R .
-
-        - name: Test bindings
-          if: ${{ inputs.run-tests && matrix.settings.test }}
-          run: ${{ matrix.settings.test }}
-
-        # Optionally uploads binary artifact for current matrix target for later release.
+          shell: bash
         - name: Upload binary artifact
-          if: ${{inputs.upload-binaries-as-artifacts}}
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v3
           with:
             name: ${{ inputs.output-artifact-name }}
             path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
             if-no-files-found: error
             retention-days: 1
-
-        # Optionally uploads js / ts dist artifact for later release. Since js is cross-platform it only needs to be uploaded from one matrix target.
+        # Uploads js / ts dist artifact for test and later release. Since js is cross-platform it only needs to be uploaded from one matrix target.
         - name: Upload dist artifact
-          if: ${{inputs.upload-binaries-as-artifacts && matrix.settings.generate-dist}}
-          uses: actions/upload-artifact@v2
+          if: ${{matrix.settings.generate-dist}}
+          uses: actions/upload-artifact@v3
           with:
             name: ${{ inputs.output-artifact-name }}-dist
             path: |
@@ -162,3 +152,166 @@ jobs:
             if-no-files-found: error
             retention-days: 1
 
+  test-macOS-windows-binding:
+    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
+    needs:
+      - build
+    defaults:
+      run:
+        working-directory: bindings/stronghold-nodejs
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+        node:
+          - '16'
+          - '18'
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+          cache: npm
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ inputs.input-artifact-name }}
+          path: bindings/wasm
+      - name: Prepare Wasm bindings link
+        run: |
+          npm ci --ignore-scripts
+          npm link
+        working-directory: bindings/wasm
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+          npm link @iota/identity-wasm
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}-dist
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Test bindings
+        run: npm test
+
+  test-linux-x64-gnu-binding:
+    name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
+    needs:
+      - build
+    defaults:
+      run:
+        working-directory: bindings/stronghold-nodejs
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - '16'
+          - '18'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+          cache: npm
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ inputs.input-artifact-name }}
+          path: bindings/wasm
+      - name: Prepare Wasm bindings link
+        run: |
+          npm ci --ignore-scripts
+          npm link
+        working-directory: bindings/wasm
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+          npm link @iota/identity-wasm
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}-dist
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Test bindings
+        run: docker run --rm -v ${{github.workspace}}:/build -w /build/${{ env.WORKING_DIRECTORY }} node:${{ matrix.node }}-slim npm test
+
+  test-linux-x64-musl-binding:
+    name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
+    needs:
+      - build
+    defaults:
+      run:
+        working-directory: bindings/stronghold-nodejs
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - '16'
+          - '18'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+          cache: npm
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ inputs.input-artifact-name }}
+          path: bindings/wasm
+      - name: Prepare Wasm bindings link
+        run: |
+          npm ci --ignore-scripts
+          npm link
+        working-directory: bindings/wasm
+      - name: Install dependencies
+        run: |
+          # yarn config set supportedArchitectures.libc "musl"
+          npm ci --legacy-peer-deps
+          npm link @iota/identity-wasm
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.output-artifact-name }}-dist
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Test bindings
+        run: docker run --rm -v ${{github.workspace}}:/build -w /build/${{ env.WORKING_DIRECTORY }} node:${{ matrix.node }}-alpine npm test
+  

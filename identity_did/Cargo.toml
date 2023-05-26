@@ -22,9 +22,6 @@ thiserror.workspace = true
 proptest = { version = "1.0" }
 serde_json.workspace = true
 
-[features]
-diff = ["identity_core/diff"]
-
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
