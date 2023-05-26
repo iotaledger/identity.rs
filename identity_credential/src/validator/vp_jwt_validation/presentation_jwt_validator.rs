@@ -2,10 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_core::convert::FromJson;
+use identity_did::CoreDID;
+use identity_did::DID;
 use identity_document::document::CoreDocument;
+use identity_verification::jws::DecodedJws;
+use identity_verification::jws::Decoder;
 use identity_verification::jws::EdDSAJwsSignatureVerifier;
 use identity_verification::jws::JwsSignatureVerifier;
 
@@ -15,6 +21,7 @@ use crate::presentation::PresentationJwtClaims;
 use crate::validator::vc_jwt_validation::CompoundCredentialValidationError;
 use crate::validator::vc_jwt_validation::CredentialValidator;
 use crate::validator::vc_jwt_validation::DecodedJwtCredential;
+use crate::validator::vc_jwt_validation::SignerContext;
 use crate::validator::vc_jwt_validation::ValidationError;
 use crate::validator::FailFast;
 
@@ -25,8 +32,6 @@ use super::JwtPresentationValidationOptions;
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct PresentationJwtValidator<V: JwsSignatureVerifier = EdDSAJwsSignatureVerifier>(V);
-// type PresentationValidationResult<T = ()> =
-//   std::result::Result<DecodedJwtPresentation<T>, CompoundPresentationValidationError>;
 
 impl PresentationJwtValidator {
   pub fn new() -> Self {
@@ -56,7 +61,18 @@ where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     U: ToOwned<Owned = U> + serde::Serialize + serde::de::DeserializeOwned,
   {
-    let decoded_jws = holder
+    // Verify that holder document matches holder in presentation.
+    let holder_did: CoreDID = Self::extract_holder::<CoreDID, T>(presentation)
+      .map_err(|err| CompoundPresentationValidationError::one_prsentation_error(err))?;
+
+    if &holder_did != <CoreDocument>::id(holder.as_ref()) {
+      return Err(CompoundPresentationValidationError::one_prsentation_error(
+        ValidationError::DocumentMismatch(SignerContext::Holder),
+      ));
+    }
+
+    // Verify JWS.
+    let decoded_jws: DecodedJws<'_> = holder
       .as_ref()
       .verify_jws(
         presentation.as_str(),
@@ -111,11 +127,11 @@ where
 
     let aud = claims.aud.clone();
 
-    // Validate credentials.
     let presentation: JwtPresentation<T> = claims.try_into_presentation().map_err(|err| {
       CompoundPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(err))
     })?;
 
+    // Validate credentials.
     let credentials: Vec<DecodedJwtCredential<U>> = self
       .validate_credentials::<IDOC, T, U>(&presentation, issuers, options, fail_fast)
       .map_err(|err| CompoundPresentationValidationError {
@@ -130,9 +146,28 @@ where
       aud,
       credentials,
     };
-    //todo: check holder id;
-    //todo: check subject relationship
+
     Ok(decoded_jwt_presentation)
+  }
+
+  pub fn extract_holder<D: DID, T>(presentation: &Jwt) -> std::result::Result<D, ValidationError>
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    let validation_item = Decoder::new()
+      .decode_compact_serialization(presentation.as_str().as_bytes(), None)
+      .map_err(ValidationError::JwsDecodingError)?;
+
+    let claims: PresentationJwtClaims<'_, T> = PresentationJwtClaims::from_json_slice(&validation_item.claims())
+      .map_err(|err| {
+        ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+      })?;
+    let iss: Url = claims.iss.into_owned();
+    D::from_str(iss.as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Holder,
+      source: err.into(),
+    })
   }
 
   fn validate_credentials<DOC, T, U>(

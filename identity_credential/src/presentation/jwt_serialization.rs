@@ -34,7 +34,7 @@ where
   pub(crate) exp: Option<i64>,
   /// Represents the issuer of the presentation who is the same as the holder of the verifiable
   /// credentials.
-  iss: Cow<'presentation, Url>,
+  pub(crate) iss: Cow<'presentation, Url>,
 
   /// Represents the issuanceDate encoded as a UNIX timestamp.
   #[serde(flatten)]
