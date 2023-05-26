@@ -1,7 +1,7 @@
 use identity_core::common::Timestamp;
 use identity_document::verifiable::JwsVerificationOptions;
 
-use crate::validator::vc_jwt_validation::CredentialValidationOptions;
+use crate::validator::{vc_jwt_validation::CredentialValidationOptions, SubjectHolderRelationship};
 
 /// Criteria for validating a [`Presentation`](crate::presentation::Presentation), such as with
 /// [`PresentationValidator::validate`](crate::validator::PresentationValidator::validate()).
@@ -37,10 +37,6 @@ pub struct JwtPresentationValidationOptions {
   pub latest_issuance_date: Option<Timestamp>,
 }
 
-fn bool_true() -> bool {
-  true
-}
-
 impl JwtPresentationValidationOptions {
   /// Constructor that sets all options to their defaults.
   pub fn new() -> Self {
@@ -63,30 +59,17 @@ impl JwtPresentationValidationOptions {
     self.subject_holder_relationship = options;
     self
   }
+  /// Declare that the presentation is **not** considered valid if it expires before this [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
+  pub fn earliest_expiry_date(mut self, timestamp: Timestamp) -> Self {
+    self.earliest_expiry_date = Some(timestamp);
+    self
+  }
 
-  //todo expiry date
-}
-
-/// Declares how credential subjects must relate to the presentation holder during validation.
-/// See [`PresentationValidationOptions::subject_holder_relationship()`].
-///
-/// See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
-// Need to use serde_repr to make this work with duck typed interfaces in the Wasm bindings.
-#[derive(Debug, Clone, Copy, serde_repr::Serialize_repr, serde_repr::Deserialize_repr)]
-#[repr(u8)]
-pub enum SubjectHolderRelationship {
-  /// The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-  /// This is the variant returned by [Self::default](Self::default()) and the default used in
-  /// [`PresentationValidationOptions`].
-  AlwaysSubject = 0,
-  /// The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
-  SubjectOnNonTransferable = 1,
-  /// Declares that the subject is not required to have any kind of relationship to the holder.
-  Any = 2,
-}
-
-impl Default for SubjectHolderRelationship {
-  fn default() -> Self {
-    Self::AlwaysSubject
+  /// Declare that the presentation is **not** considered valid if it was issued later than this [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
+  pub fn latest_issuance_date(mut self, timestamp: Timestamp) -> Self {
+    self.latest_issuance_date = Some(timestamp);
+    self
   }
 }
