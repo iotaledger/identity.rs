@@ -33,7 +33,7 @@ zeroize = { version = "1.5.7" }
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs.git"
-branch = "snapshot-migration-v3age-2.0"
+branch = "2.0"
 default-features = false
 features = ["std"]
 optional = true
