@@ -5,10 +5,10 @@ use crate::jwk::Jwk;
 use crate::jws::CompactJwsEncoder;
 use crate::jws::Decoder;
 #[cfg(feature = "eddsa")]
-use crate::jws::EdDSAJwsSignatureVerifier;
+use crate::jws::EdDSAJwsVerifier;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::JwsSignatureVerifierFn;
+use crate::jws::JwsVerifierFn;
 use crate::jws::VerificationInput;
 use crate::tests::ed25519;
 
@@ -29,8 +29,8 @@ fn test_rfc8037_ed25519() {
     let secret: Jwk = serde_json::from_str(tv.private_jwk).unwrap();
     let public: Jwk = serde_json::from_str(tv.public_jwk).unwrap();
 
-    assert_eq!(secret.thumbprint_b64().unwrap(), tv.thumbprint_b64);
-    assert_eq!(public.thumbprint_b64().unwrap(), tv.thumbprint_b64);
+    assert_eq!(secret.thumbprint_sha256_b64(), tv.thumbprint_b64);
+    assert_eq!(public.thumbprint_sha256_b64(), tv.thumbprint_b64);
 
     let header: JwsHeader = serde_json::from_str(tv.header).unwrap();
     let encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new(tv.payload.as_bytes(), &header).unwrap();
@@ -40,7 +40,7 @@ fn test_rfc8037_ed25519() {
 
     assert_eq!(jws, tv.encoded);
 
-    let jws_verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
+    let jws_verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| {
       if input.alg != JwsAlgorithm::EdDSA {
         panic!("invalid algorithm");
       }
@@ -57,7 +57,7 @@ fn test_rfc8037_ed25519() {
       let decoder = Decoder::new();
       let token_with_default = decoder
         .decode_compact_serialization(jws.as_bytes(), None)
-        .and_then(|decoded| decoded.verify(&EdDSAJwsSignatureVerifier::default(), &public))
+        .and_then(|decoded| decoded.verify(&EdDSAJwsVerifier::default(), &public))
         .unwrap();
       assert_eq!(token, token_with_default);
     }

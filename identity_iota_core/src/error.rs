@@ -6,7 +6,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 pub enum Error {
-  #[error("serialization error")]
+  #[error("serialization error: {0}")]
   SerializationError(&'static str, #[source] Option<identity_core::Error>),
   #[error("invalid did")]
   DIDSyntaxError(#[source] identity_did::Error),

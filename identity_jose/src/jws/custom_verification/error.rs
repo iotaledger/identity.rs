@@ -3,30 +3,30 @@
 
 use std::fmt::Display;
 
-/// Error type for a failed jws signature verification. See [`JwsSignatureVerifier`](super::JwsSignatureVerifier).
+/// Error type for a failed jws signature verification. See [`JwsVerifier`](super::JwsVerifier).
 pub type SignatureVerificationError = identity_core::common::SingleStructError<SignatureVerificationErrorKind>;
 
 /// The cause of a failed jws signature verification.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum SignatureVerificationErrorKind {
-  /// Indicates that the [`JwsSignatureVerifier`](super::JwsSignatureVerifier) implementation is not compatible with
+  /// Indicates that the [`JwsVerifier`](super::JwsVerifier) implementation is not compatible with
   /// the `alg` extracted from the JOSE header.
   UnsupportedAlg,
-  /// Indicates that the [`JwsSignatureVerifier`](super::JwsSignatureVerifier) implementation does not support the
+  /// Indicates that the [`JwsVerifier`](super::JwsVerifier) implementation does not support the
   /// `kty` of the provided [`Jwk`](crate::jwk::Jwk).
   UnsupportedKeyType,
-  /// Indicates that the [`JwsSignatureVerifier`](super::JwsSignatureVerifier) implementation does not support the
+  /// Indicates that the [`JwsVerifier`](super::JwsVerifier) implementation does not support the
   /// public key parameters extracted from the provided [`Jwk`](crate::jwk::Jwk).
   UnsupportedKeyParams,
-  /// Indicates that the [`JwsSignatureVerifier`](super::JwsSignatureVerifier) implementation failed to decode the
+  /// Indicates that the [`JwsVerifier`](super::JwsVerifier) implementation failed to decode the
   /// public key extracted from the provided [`Jwk`](crate::jwk::Jwk).
   KeyDecodingFailure,
-  /// Indicates that the [`JwsSignatureVerifier`](super::JwsSignatureVerifier) implementation considers the signature
+  /// Indicates that the [`JwsVerifier`](super::JwsVerifier) implementation considers the signature
   /// to be invalid.
   InvalidSignature,
   /// Indicates that something went wrong when calling
-  /// [`JwsSignatureVerifier::verify`](super::JwsSignatureVerifier::verify), but it is unclear whether the reason
+  /// [`JwsVerifier::verify`](super::JwsVerifier::verify), but it is unclear whether the reason
   /// matches any of the other variants.
   Unspecified,
 }

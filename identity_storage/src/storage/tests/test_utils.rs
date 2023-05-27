@@ -14,8 +14,8 @@ use identity_verification::jws::JwsAlgorithm;
 use identity_verification::MethodScope;
 use serde_json::json;
 
+use crate::JwkDocumentExt;
 use crate::JwkMemStore;
-use crate::JwkStorageDocumentExt;
 use crate::KeyIdMemstore;
 use crate::Storage;
 
@@ -42,11 +42,11 @@ const ISSUER_IOTA_DOCUMENT_JSON: &str = r#"
   }
 }"#;
 
-pub(super) struct Setup<T: JwkStorageDocumentExt> {
+pub(super) struct Setup<T: JwkDocumentExt> {
   pub issuer_doc: T,
   pub subject_doc: CoreDocument,
   pub storage: MemStorage,
-  pub kid: String,
+  pub method_fragment: String,
 }
 
 pub(super) async fn setup_iotadocument(fragment: Option<&'static str>) -> Setup<IotaDocument> {
@@ -54,13 +54,13 @@ pub(super) async fn setup_iotadocument(fragment: Option<&'static str>) -> Setup<
   let subject_doc = CoreDocument::from_json(SUBJECT_DOCUMENT_JSON).unwrap();
   let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let kid: String = generate_method(&storage, &mut issuer_doc, fragment).await;
+  let method_fragment: String = generate_method(&storage, &mut issuer_doc, fragment).await;
 
   Setup {
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   }
 }
 
@@ -69,19 +69,19 @@ pub(super) async fn setup_coredocument(fragment: Option<&'static str>) -> Setup<
   let subject_doc = CoreDocument::from_json(SUBJECT_DOCUMENT_JSON).unwrap();
   let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let kid: String = generate_method(&storage, &mut issuer_doc, fragment).await;
+  let method_fragment: String = generate_method(&storage, &mut issuer_doc, fragment).await;
 
   Setup {
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   }
 }
 
 async fn generate_method<T>(storage: &MemStorage, document: &mut T, fragment: Option<&'static str>) -> String
 where
-  T: JwkStorageDocumentExt,
+  T: JwkDocumentExt,
 {
   document
     .generate_method(
@@ -92,7 +92,6 @@ where
       MethodScope::assertion_method(),
     )
     .await
-    .unwrap()
     .unwrap()
 }
 

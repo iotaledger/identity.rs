@@ -4,7 +4,7 @@ import {
     CoreDocument,
     Credential,
     FailFast,
-    IJwsSignatureVerifier,
+    IJwsVerifier,
     IotaDocument,
     Jwk,
     JwsAlgorithm,
@@ -224,7 +224,7 @@ describe("#JwkStorageDocument", function() {
     });
 });
 
-class CustomVerifier implements IJwsSignatureVerifier {
+class CustomVerifier implements IJwsVerifier {
     private _verifications: number;
 
     constructor() {

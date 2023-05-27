@@ -14,7 +14,7 @@ fn test_rfc7638() {
 
   for tv in TVS {
     let key: Jwk = serde_json::from_str(tv.jwk_json).unwrap();
-    let kid: String = key.thumbprint_b64().unwrap();
+    let kid: String = key.thumbprint_sha256_b64();
 
     assert_eq!(kid, tv.thumbprint_b64);
   }
