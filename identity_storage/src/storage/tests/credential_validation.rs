@@ -29,7 +29,7 @@ use proptest::proptest;
 use crate::storage::tests::test_utils::CredentialSetup;
 use crate::storage::tests::test_utils::Setup;
 use crate::storage::tests::test_utils::{self};
-use crate::storage::JwkStorageDocumentExt;
+use crate::storage::JwkDocumentExt;
 use crate::storage::JwsSignatureOptions;
 
 const SIMPLE_CREDENTIAL_JSON: &str = r#"{
@@ -90,13 +90,13 @@ proptest! {
 
 async fn invalid_expiration_or_issuance_date_impl<T>(setup: Setup<T>)
 where
-  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+  T: JwkDocumentExt + AsRef<CoreDocument>,
 {
   let Setup {
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup {
@@ -106,7 +106,12 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 
@@ -165,13 +170,13 @@ async fn invalid_expiration_or_issuance_date() {
 
 async fn full_validation_impl<T>(setup: Setup<T>)
 where
-  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+  T: JwkDocumentExt + AsRef<CoreDocument>,
 {
   let Setup {
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup {
@@ -181,7 +186,12 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 
@@ -203,19 +213,24 @@ async fn full_validation() {
 
 async fn matches_issuer_did_unrelated_issuer_impl<T>(setup: Setup<T>)
 where
-  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+  T: JwkDocumentExt + AsRef<CoreDocument>,
 {
   let Setup {
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup { credential, .. } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 
@@ -252,7 +267,7 @@ async fn matches_issuer_did_unrelated_issuer() {
 
 async fn verify_invalid_signature_impl<T>(setup: Setup<T>, other_setup: Setup<T>, fragment: &'static str)
 where
-  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+  T: JwkDocumentExt + AsRef<CoreDocument>,
 {
   let Setup {
     issuer_doc,
@@ -328,7 +343,7 @@ async fn verify_invalid_signature() {
 
 async fn check_subject_holder_relationship_impl<T>(setup: Setup<T>)
 where
-  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+  T: JwkDocumentExt + AsRef<CoreDocument>,
 {
   let Setup { issuer_doc, .. } = setup;
 
@@ -443,7 +458,7 @@ async fn check_subject_holder_relationship() {
 
 fn check_status_impl<T, F>(setup: Setup<T>, insert_service: F)
 where
-  T: JwkStorageDocumentExt + AsRef<CoreDocument> + RevocationDocumentExt,
+  T: JwkDocumentExt + AsRef<CoreDocument> + RevocationDocumentExt,
   F: Fn(&mut T, Service),
 {
   let Setup {
@@ -537,13 +552,13 @@ async fn check_status() {
 
 async fn full_validation_fail_fast_impl<T>(setup: Setup<T>)
 where
-  T: JwkStorageDocumentExt + AsRef<CoreDocument>,
+  T: JwkDocumentExt + AsRef<CoreDocument>,
 {
   let Setup {
     issuer_doc,
     subject_doc,
     storage,
-    kid,
+    method_fragment,
   } = setup;
 
   let CredentialSetup {
@@ -553,7 +568,12 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(&credential, &storage, kid.as_ref(), &JwsSignatureOptions::default())
+    .sign_credential(
+      &credential,
+      &storage,
+      method_fragment.as_ref(),
+      &JwsSignatureOptions::default(),
+    )
     .await
     .unwrap();
 

@@ -15,7 +15,7 @@ use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
 use crate::storage::JwsSignatureOptions;
 
-use crate::storage::JwkStorageDocumentExt;
+use crate::storage::JwkDocumentExt;
 use crate::Storage;
 
 type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
@@ -38,7 +38,7 @@ async fn setup() -> (CoreDocument, MemStorage, String, Credential) {
   let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   // Generate a method with the kid as fragment
-  let kid: Option<String> = mock_document
+  let method_fragment: String = mock_document
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
@@ -70,7 +70,7 @@ async fn setup() -> (CoreDocument, MemStorage, String, Credential) {
 
   let credential: Credential = Credential::from_json(credential_json).unwrap();
 
-  (mock_document, storage, kid.unwrap(), credential)
+  (mock_document, storage, method_fragment, credential)
 }
 
 #[tokio::test]

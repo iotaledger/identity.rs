@@ -45,11 +45,6 @@ pub struct JwsHeader {
   /// +-------+-----------------------------------------------------------+
   #[serde(skip_serializing_if = "Option::is_none")]
   b64: Option<bool>,
-  /// PASSporT extension identifier.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc8225#section-8.1)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  ppt: Option<String>,
 }
 
 impl JwsHeader {
@@ -59,7 +54,6 @@ impl JwsHeader {
       common: JwtHeader::new(),
       alg: None,
       b64: None,
-      ppt: None,
     }
   }
 
@@ -83,16 +77,6 @@ impl JwsHeader {
     self.b64 = Some(value.into());
   }
 
-  /// Returns the value of the passport extension claim (ppt).
-  pub fn ppt(&self) -> Option<&str> {
-    self.ppt.as_deref()
-  }
-
-  /// Sets a value for the passport extension claim (ppt).
-  pub fn set_ppt(&mut self, value: impl Into<String>) {
-    self.ppt = Some(value.into());
-  }
-
   // ===========================================================================
   // ===========================================================================
 
@@ -100,16 +84,13 @@ impl JwsHeader {
     match claim {
       "alg" => self.alg().is_some(),
       "b64" => self.b64().is_some(),
-      "ppt" => self.ppt().is_some(),
       _ => self.common.has(claim),
     }
   }
 
   /// Returns `true` if none of the fields are set in both `self` and `other`.
   pub fn is_disjoint(&self, other: &JwsHeader) -> bool {
-    let has_duplicate: bool = self.alg().is_some() && other.alg.is_some()
-      || self.b64.is_some() && other.b64.is_some()
-      || self.ppt.is_some() && other.ppt.is_some();
+    let has_duplicate: bool = self.alg().is_some() && other.alg.is_some() || self.b64.is_some() && other.b64.is_some();
 
     !has_duplicate && self.common.is_disjoint(other.common())
   }
@@ -162,7 +143,7 @@ mod tests {
     }))
     .unwrap();
     let header3: JwsHeader = serde_json::from_value(serde_json::json!({
-      "ppt": "pptx",
+      "kid": "kid value",
       "cty": "mediatype"
     }))
     .unwrap();

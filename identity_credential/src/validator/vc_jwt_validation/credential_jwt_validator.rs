@@ -15,9 +15,9 @@ use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jwk::Jwk;
 use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
-use identity_verification::jws::EdDSAJwsSignatureVerifier;
-use identity_verification::jws::JwsSignatureVerifier;
+use identity_verification::jws::EdDSAJwsVerifier;
 use identity_verification::jws::JwsValidationItem;
+use identity_verification::jws::JwsVerifier;
 
 use super::CompoundCredentialValidationError;
 use super::CredentialValidationOptions;
@@ -33,13 +33,13 @@ use crate::validator::SubjectHolderRelationship;
 /// A type for decoding and validating [`Credential`]s.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
-pub struct CredentialValidator<V: JwsSignatureVerifier = EdDSAJwsSignatureVerifier>(V);
+pub struct CredentialValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
 pub type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
 
 impl<V> CredentialValidator<V>
 where
-  V: JwsSignatureVerifier,
+  V: JwsVerifier,
 {
   /// Create a new [`CredentialValidator`] that delegates cryptographic signature verification to the given
   /// `signature_verifier`. If you are only interested in `EdDSA` signatures (with `Ed25519`) then the default
@@ -134,7 +134,7 @@ where
   ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-    S: JwsSignatureVerifier,
+    S: JwsVerifier,
     DOC: AsRef<CoreDocument>,
   {
     // First verify the JWS signature and decode the result into a credential token, then apply all other validations.
@@ -205,7 +205,7 @@ where
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
-    S: JwsSignatureVerifier,
+    S: JwsVerifier,
   {
     // Note the below steps are necessary because `CoreDocument::verify_jws` decodes the JWS and then searches for a
     // method with a fragment (or full DID Url) matching `kid` in the given document. We do not want to carry out
@@ -285,7 +285,7 @@ where
   }
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
-  fn verify_decoded_signature<S: JwsSignatureVerifier, T>(
+  fn verify_decoded_signature<S: JwsVerifier, T>(
     decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,
@@ -327,7 +327,7 @@ impl CredentialValidator {
   /// See [`CredentialValidator::with_signature_verifier`](CredentialValidator::with_signature_verifier())
   /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
   pub fn new() -> Self {
-    Self(EdDSAJwsSignatureVerifier::default())
+    Self(EdDSAJwsVerifier::default())
   }
 
   /// Validates the semantic structure of the [`Credential`].

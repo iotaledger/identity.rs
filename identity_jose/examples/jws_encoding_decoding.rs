@@ -11,7 +11,7 @@ use identity_jose::jws::CompactJwsEncoder;
 use identity_jose::jws::Decoder;
 use identity_jose::jws::JwsAlgorithm;
 use identity_jose::jws::JwsHeader;
-use identity_jose::jws::JwsSignatureVerifierFn;
+use identity_jose::jws::JwsVerifierFn;
 use identity_jose::jws::SignatureVerificationError;
 use identity_jose::jws::SignatureVerificationErrorKind;
 use identity_jose::jws::VerificationInput;
@@ -74,7 +74,7 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
   // ==================
 
   // Set up a verifier that verifies JWS signatures secured with the Ed25519 algorithm
-  let verify_fn = JwsSignatureVerifierFn::from(
+  let verify_fn = JwsVerifierFn::from(
     |verification_input: VerificationInput, jwk: &Jwk| -> Result<(), SignatureVerificationError> {
       if verification_input.alg != JwsAlgorithm::EdDSA {
         return Err(SignatureVerificationErrorKind::UnsupportedAlg.into());

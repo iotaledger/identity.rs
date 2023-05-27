@@ -10,7 +10,7 @@ use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::DecodedJws;
-use identity_verification::jose::jws::JwsSignatureVerifier;
+use identity_verification::jose::jws::JwsVerifier;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -359,13 +359,13 @@ impl IotaDocument {
   }
 
   /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
-  /// [`JwsSignatureVerifier`].
+  /// [`JwsVerifier`].
   ///
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
   /// - The JWS must be encoded according to the JWS compact serialization.
   /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
-  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+  pub fn verify_jws<'jws, T: JwsVerifier>(
     &self,
     jws: &'jws Jws,
     detached_payload: Option<&'jws [u8]>,

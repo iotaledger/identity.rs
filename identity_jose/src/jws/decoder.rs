@@ -16,7 +16,7 @@ use crate::jwu::filter_non_empty_bytes;
 use crate::jwu::parse_utf8;
 use crate::jwu::validate_jws_headers;
 
-use super::JwsSignatureVerifier;
+use super::JwsVerifier;
 use super::VerificationInput;
 
 /// A cryptographically verified decoded token from a JWS.
@@ -72,7 +72,7 @@ impl DecodedHeaders {
 
 /// A partially decoded JWS containing claims, and the decoded verification data
 /// for its corresponding signature (headers, signing input and signature). This data
-/// can be cryptographically verified using a [`JwsSignatureVerifier`]. See [`Self::verify`](Self::verify).
+/// can be cryptographically verified using a [`JwsVerifier`]. See [`Self::verify`](Self::verify).
 pub struct JwsValidationItem<'a> {
   headers: DecodedHeaders,
   signing_input: Box<[u8]>,
@@ -127,7 +127,7 @@ impl<'a> JwsValidationItem<'a> {
   /// provided `public_key`.
   ///
   /// # Errors
-  /// Apart from the fallible call to [`JwsSignatureVerifier::verify`] this method can also error if there is no
+  /// Apart from the fallible call to [`JwsVerifier::verify`] this method can also error if there is no
   /// `alg` present in the protected header (in which case the verifier cannot be called) or if the given `public_key`
   /// has a different value present in its `alg` field.
   ///
@@ -136,7 +136,7 @@ impl<'a> JwsValidationItem<'a> {
   /// (see [`Self::nonce`](Self::nonce())).
   pub fn verify<T>(self, verifier: &T, public_key: &Jwk) -> Result<DecodedJws<'a>>
   where
-    T: JwsSignatureVerifier,
+    T: JwsVerifier,
   {
     // Destructure data
     let JwsValidationItem {

@@ -29,9 +29,9 @@ use crate::jose::WasmJwsAlgorithm;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
-use crate::verification::IJwsSignatureVerifier;
+use crate::verification::IJwsVerifier;
 use crate::verification::RefMethodScope;
-use crate::verification::WasmJwsSignatureVerifier;
+use crate::verification::WasmJwsVerifier;
 use crate::verification::WasmMethodRelationship;
 use crate::verification::WasmMethodScope;
 use crate::verification::WasmVerificationMethod;
@@ -50,7 +50,7 @@ use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
 use identity_iota::storage::key_storage::KeyType;
-use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwkDocumentExt;
 use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodRef;
@@ -491,10 +491,10 @@ impl WasmCoreDocument {
     &self,
     jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: Option<IJwsSignatureVerifier>,
+    signatureVerifier: Option<IJwsVerifier>,
     detachedPayload: Option<String>,
   ) -> Result<WasmDecodedJws> {
-    let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
+    let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
     self
       .0
       .blocking_read()
@@ -620,12 +620,19 @@ impl WasmCoreDocument {
   // ===========================================================================
 
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into this document. The `kid` of the generated Jwk is returned if it is set.
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
   #[wasm_bindgen(js_name = generateMethod)]
+  #[allow(non_snake_case)]
   pub fn generate_method(
     &self,
     storage: &WasmStorage,
-    key_type: String,
+    keyType: String,
     alg: WasmJwsAlgorithm,
     fragment: Option<String>,
     scope: WasmMethodScope,
@@ -635,13 +642,13 @@ impl WasmCoreDocument {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let scope: MethodScope = scope.0;
     let promise: Promise = future_to_promise(async move {
-      let key_id: Option<String> = document_lock_clone
+      let method_fragment: String = document_lock_clone
         .write()
         .await
-        .generate_method(&storage_clone, KeyType::from(key_type), alg, fragment.as_deref(), scope)
+        .generate_method(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
         .await
         .wasm_result()?;
-      Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+      Ok(JsValue::from(method_fragment))
     });
     Ok(promise.unchecked_into())
   }

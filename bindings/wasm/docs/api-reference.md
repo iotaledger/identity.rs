@@ -151,6 +151,12 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -193,12 +199,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -216,7 +216,7 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
 Only the <code>EdCurve::Ed25519</code> variant is supported for now.</p>
-<p>This function is useful when one is building an <code>IJwsSignatureVerifier</code> that extends the default provided by
+<p>This function is useful when one is building an <code>IJwsVerifier</code> that extends the default provided by
 the IOTA Identity Framework.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
@@ -451,7 +451,7 @@ A method-agnostic DID Document.
         * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [._strongCountInternal()](#CoreDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
-        * [.generateMethod(storage, key_type, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+        * [.generateMethod(storage, keyType, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
         * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJws(storage, fragment, payload, options)](#CoreDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options)](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
@@ -745,7 +745,7 @@ take place.
 | --- | --- |
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
-| signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 | detachedPayload | <code>string</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+revokeCredentials"></a>
@@ -819,16 +819,22 @@ Serializes to a plain JS representation.
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+generateMethod"></a>
 
-### coreDocument.generateMethod(storage, key_type, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+### coreDocument.generateMethod(storage, keyType, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
 Generate new key material in the given `storage` and insert a new verification method with the corresponding
-public key material into this document. The `kid` of the generated Jwk is returned if it is set.
+public key material into the DID document.
+
+- If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+- The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+for that use case.
+
+The fragment of the generated method is returned.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
 | Param | Type |
 | --- | --- |
 | storage | [<code>Storage</code>](#Storage) | 
-| key_type | <code>string</code> | 
+| keyType | <code>string</code> | 
 | alg | <code>JwsAlgorithm</code> | 
 | fragment | <code>string</code> \| <code>undefined</code> | 
 | scope | [<code>MethodScope</code>](#MethodScope) | 
@@ -2048,7 +2054,7 @@ Deserializes an instance from a JSON object.
         * [._strongCountInternal()](#IotaDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
-        * [.generateMethod(storage, key_type, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+        * [.generateMethod(storage, keyType, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
@@ -2323,7 +2329,7 @@ take place.
 | --- | --- |
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
-| signatureVerifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 | detachedPayload | <code>string</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+pack"></a>
@@ -2489,16 +2495,22 @@ Transforms the `IotaDocument` to its `CoreDocument` representation.
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+generateMethod"></a>
 
-### iotaDocument.generateMethod(storage, key_type, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+### iotaDocument.generateMethod(storage, keyType, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
 Generate new key material in the given `storage` and insert a new verification method with the corresponding
-public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
+public key material into the DID document.
+
+- If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+- The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+for that use case.
+
+The fragment of the generated method is returned.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
 | Param | Type |
 | --- | --- |
 | storage | [<code>Storage</code>](#Storage) | 
-| key_type | <code>string</code> | 
+| keyType | <code>string</code> | 
 | alg | <code>JwsAlgorithm</code> | 
 | fragment | <code>string</code> \| <code>undefined</code> | 
 | scope | [<code>MethodScope</code>](#MethodScope) | 
@@ -3045,8 +3057,6 @@ Returns a clone of the JWS string.
         * [.setAlg(value)](#JwsHeader+setAlg)
         * [.b64()](#JwsHeader+b64) ⇒ <code>boolean</code> \| <code>undefined</code>
         * [.setB64(value)](#JwsHeader+setB64)
-        * [.ppt()](#JwsHeader+ppt) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setPpt(value)](#JwsHeader+setPpt)
         * [.has(claim)](#JwsHeader+has) ⇒ <code>boolean</code>
         * [.isDisjoint(other)](#JwsHeader+isDisjoint) ⇒ <code>boolean</code>
         * [.jku()](#JwsHeader+jku) ⇒ <code>string</code> \| <code>undefined</code>
@@ -3116,23 +3126,6 @@ Sets a value for the base64url-encode payload claim (b64).
 | Param | Type |
 | --- | --- |
 | value | <code>boolean</code> | 
-
-<a name="JwsHeader+ppt"></a>
-
-### jwsHeader.ppt() ⇒ <code>string</code> \| <code>undefined</code>
-Returns the value of the passport extension claim (ppt).
-
-**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
-<a name="JwsHeader+setPpt"></a>
-
-### jwsHeader.setPpt(value)
-Sets a value for the passport extension claim (ppt).
-
-**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
 
 <a name="JwsHeader+has"></a>
 
@@ -3688,7 +3681,7 @@ algorithm will be used.
 
 | Param | Type |
 | --- | --- |
-| signature_verifier | <code>IJwsSignatureVerifier</code> \| <code>undefined</code> | 
+| signature_verifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
 <a name="JwtCredentialValidator+validate"></a>
 
@@ -5286,15 +5279,15 @@ Deep clones the object.
 <a name="VerificationMethod.newFromJwk"></a>
 
 ### VerificationMethod.newFromJwk(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Creates a new `VerificationMethod` from the given `did` and `Jwk`. If a `fragment` is not given an attempt
-will be made to generate it from the `kid` value of the given `key`.
+Creates a new `VerificationMethod` from the given `did` and `Jwk`. If `fragment` is not given
+the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
 
 ### Recommendations
 The following recommendations are essentially taken from the `publicKeyJwk` description from the [DID specification](https://www.w3.org/TR/did-core/#dfn-publickeyjwk):
 - It is recommended that verification methods that use `Jwks` to represent their public keys use the value of
   `kid` as their fragment identifier. This is
 done automatically if `None` is passed in as the fragment.
-- It is recommended that `Jwk` kid values are set to the public key fingerprint. See `Jwk::thumbprint_b64`.
+- It is recommended that `Jwk` kid values are set to the public key fingerprint.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -5438,6 +5431,18 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5516,18 +5521,6 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="start"></a>
 
 ## start()
@@ -5562,7 +5555,7 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 Verify a JWS signature secured with the `JwsAlgorithm::EdDSA` algorithm.
 Only the `EdCurve::Ed25519` variant is supported for now.
 
-This function is useful when one is building an `IJwsSignatureVerifier` that extends the default provided by
+This function is useful when one is building an `IJwsVerifier` that extends the default provided by
 the IOTA Identity Framework.
 
 # Warning

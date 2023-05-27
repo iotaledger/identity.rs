@@ -225,7 +225,7 @@ impl From<identity_iota::storage::key_id_storage::MethodDigestConstructionError>
 impl From<identity_iota::storage::storage::JwkStorageDocumentError> for WasmError<'_> {
   fn from(error: identity_iota::storage::storage::JwkStorageDocumentError) -> Self {
     Self {
-      name: Cow::Borrowed("JwkStorageDocumentExtensionError"),
+      name: Cow::Borrowed("JwkDocumentExtensionError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

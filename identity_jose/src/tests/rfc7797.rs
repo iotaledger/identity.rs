@@ -5,7 +5,7 @@ use crate::jwk::Jwk;
 use crate::jws::Decoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::JwsSignatureVerifierFn;
+use crate::jws::JwsVerifierFn;
 use crate::jws::VerificationInput;
 use crate::tests::hs256;
 
@@ -25,7 +25,7 @@ fn test_rfc7797() {
     let header: JwsHeader = serde_json::from_slice(tv.header).unwrap();
     let jwk: Jwk = serde_json::from_str(tv.public_key).unwrap();
 
-    let verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
+    let verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| {
       if input.alg != JwsAlgorithm::HS256 {
         panic!("unsupported algorithm");
       }
