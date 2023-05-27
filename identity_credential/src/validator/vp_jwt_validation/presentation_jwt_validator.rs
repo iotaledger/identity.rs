@@ -12,8 +12,8 @@ use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
-use identity_verification::jws::EdDSAJwsSignatureVerifier;
-use identity_verification::jws::JwsSignatureVerifier;
+use identity_verification::jws::EdDSAJwsVerifier;
+use identity_verification::jws::JwsVerifier;
 
 use crate::credential::Jwt;
 use crate::presentation::JwtPresentation;
@@ -31,16 +31,16 @@ use super::JwtPresentationValidationOptions;
 
 #[derive(Debug, Clone)]
 #[non_exhaustive]
-pub struct PresentationJwtValidator<V: JwsSignatureVerifier = EdDSAJwsSignatureVerifier>(V);
+pub struct PresentationJwtValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
 impl PresentationJwtValidator {
   pub fn new() -> Self {
-    Self(EdDSAJwsSignatureVerifier::default())
+    Self(EdDSAJwsVerifier::default())
   }
 }
 impl<V> PresentationJwtValidator<V>
 where
-  V: JwsSignatureVerifier,
+  V: JwsVerifier,
 {
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self(signature_verifier)
