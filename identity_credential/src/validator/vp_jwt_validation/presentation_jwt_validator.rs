@@ -46,7 +46,6 @@ where
     Self(signature_verifier)
   }
 
-  /// todo
   pub fn validate<HDOC, IDOC, T, U>(
     &self,
     presentation: &Jwt,

@@ -4,4 +4,5 @@
 mod api;
 mod credential_jws;
 mod credential_validation;
+mod presentation_validation;
 mod test_utils;
