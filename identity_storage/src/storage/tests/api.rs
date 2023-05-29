@@ -1,18 +1,12 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::thread::Builder;
-
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
-use identity_credential::presentation::JwtPresentation;
-use identity_credential::presentation::JwtPresentationBuilder;
-use identity_credential::presentation::JwtPresentationOptions;
 use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
 use identity_did::DIDUrl;
-use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::EdDSAJwsVerifier;
@@ -206,157 +200,6 @@ async fn signing_credential() {
     .is_ok());
 }
 
-#[tokio::test]
-async fn signing_presentation() {
-  let (mut issuer_document, issuer_storage) = setup();
-  let (mut holder_document, holder_storage) = setup();
-
-  let method_fragment_issuer: String = issuer_document
-    .generate_method(
-      &issuer_storage,
-      JwkMemStore::ED25519_KEY_TYPE,
-      JwsAlgorithm::EdDSA,
-      None,
-      MethodScope::VerificationMethod,
-    )
-    .await
-    .unwrap();
-
-  let method_fragment_holder: String = holder_document
-    .generate_method(
-      &holder_storage,
-      JwkMemStore::ED25519_KEY_TYPE,
-      JwsAlgorithm::EdDSA,
-      None,
-      MethodScope::VerificationMethod,
-    )
-    .await
-    .unwrap();
-
-  let credential_json: &str = r#"
-    {
-      "@context": [
-        "https://www.w3.org/2018/credentials/v1",
-        "https://www.w3.org/2018/credentials/examples/v1"
-      ],
-      "id": "http://example.edu/credentials/3732",
-      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-      "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-      "issuanceDate": "2010-01-01T19:23:24Z",
-      "credentialSubject": {
-        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-        "degree": {
-          "type": "BachelorDegree",
-          "name": "Bachelor of Science in Mechanical Engineering"
-        }
-      }
-    }"#;
-
-  let credential: Credential = Credential::from_json(credential_json).unwrap();
-  let jws = issuer_document
-    .sign_credential(
-      &credential,
-      &issuer_storage,
-      &method_fragment_issuer,
-      &JwsSignatureOptions::default(),
-    )
-    .await
-    .unwrap();
-
-  let presentation: JwtPresentation = JwtPresentationBuilder::default()
-    .holder(holder_document.id().to_url().into())
-    .credential(jws)
-    .build()
-    .unwrap();
-
-  println!("{}", presentation);
-  println!("{:?}", presentation.serialize_jwt(&JwtPresentationOptions::default()));
-
-  let jws_2 = holder_document
-    .sign_presentation(
-      &presentation,
-      &holder_storage,
-      &method_fragment_holder,
-      &JwsSignatureOptions::default(),
-      &JwtPresentationOptions::default(),
-    )
-    .await
-    .unwrap();
-  println!("{}", jws_2.as_str());
-
-  // let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
-  // assert!(validator
-  //   .validate::<_, Object>(
-  //     &jws,
-  //     &issuer_document,
-  //     &CredentialValidationOptions::default(),
-  //     identity_credential::validator::FailFast::FirstError
-  //   )
-  //   .is_ok());
-
-  // let (mut issuer, storage) = setup();
-  // let (mut holder, storage2) = setup();
-  //
-  // // Generate a method with the kid as fragment
-  // let fragment: String = issuer
-  //   .generate_method(
-  //     &storage,
-  //     JwkMemStore::ED25519_KEY_TYPE,
-  //     JwsAlgorithm::EdDSA,
-  //     None,
-  //     MethodScope::VerificationMethod,
-  //   )
-  //   .await
-  //   .unwrap();
-  //
-  // let credential_json: &str = r#"
-  //   {
-  //     "@context": [
-  //       "https://www.w3.org/2018/credentials/v1",
-  //       "https://www.w3.org/2018/credentials/examples/v1"
-  //     ],
-  //     "id": "http://example.edu/credentials/3732",
-  //     "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-  //     "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-  //     "issuanceDate": "2010-01-01T19:23:24Z",
-  //     "credentialSubject": {
-  //       "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-  //       "degree": {
-  //         "type": "BachelorDegree",
-  //         "name": "Bachelor of Science in Mechanical Engineering"
-  //       }
-  //     }
-  //   }"#;
-  //
-  // let credential: Credential = Credential::from_json(credential_json).unwrap();
-  // let jws = issuer
-  //   .sign_credential(
-  //     &credential,
-  //     &storage,
-  //     kid.as_deref().unwrap(),
-  //     &JwsSignatureOptions::default(),
-  //   )
-  //   .await
-  //   .unwrap();
-  //
-  // let presentation: JwtPresentation = JwtPresentationBuilder::default()
-  //   .holder(holder.id().to_url().into())
-  //   .build()
-  //   .unwrap();
-  //
-  // println!("{}", presentation);
-  //
-  // // Verify the credential
-  // let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
-  // assert!(validator
-  //   .validate::<_, Object>(
-  //     &jws,
-  //     &document,
-  //     &CredentialValidationOptions::default(),
-  //     identity_credential::validator::FailFast::FirstError
-  //   )
-  //   .is_ok());
-}
 #[tokio::test]
 async fn purging() {
   let (mut document, storage) = setup();

@@ -35,7 +35,7 @@ use crate::validator::SubjectHolderRelationship;
 #[non_exhaustive]
 pub struct CredentialValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
-pub type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
+type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
 
 impl<V> CredentialValidator<V>
 where

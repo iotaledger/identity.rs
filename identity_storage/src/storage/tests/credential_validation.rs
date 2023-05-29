@@ -26,9 +26,9 @@ use identity_document::verifiable::JwsVerificationOptions;
 use once_cell::sync::Lazy;
 use proptest::proptest;
 
+use crate::storage::tests::test_utils;
 use crate::storage::tests::test_utils::CredentialSetup;
 use crate::storage::tests::test_utils::Setup;
-use crate::storage::tests::test_utils::{self};
 use crate::storage::JwkDocumentExt;
 use crate::storage::JwsSignatureOptions;
 
@@ -97,8 +97,8 @@ where
     subject_doc,
     issuer_storage: storage,
     issuer_method_fragment: method_fragment,
-    subject_storage,
-    subject_method_fragment,
+    subject_storage: _,
+    subject_method_fragment: _,
   } = setup;
 
   let CredentialSetup {
@@ -179,8 +179,8 @@ where
     subject_doc,
     issuer_storage: storage,
     issuer_method_fragment: method_fragment,
-    subject_storage,
-    subject_method_fragment,
+    subject_storage: _,
+    subject_method_fragment: _,
   } = setup;
 
   let CredentialSetup {

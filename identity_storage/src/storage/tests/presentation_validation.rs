@@ -31,11 +31,11 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation = JwtPresentationBuilder::default()
-    .holder(setup.subject_doc.as_ref().id().to_url().into())
-    .credential(jws)
-    .build()
-    .unwrap();
+  let presentation: JwtPresentation =
+    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+      .credential(jws)
+      .build()
+      .unwrap();
 
   let presentation_jwt = setup
     .subject_doc
@@ -74,11 +74,11 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation = JwtPresentationBuilder::default()
-    .holder(setup.subject_doc.as_ref().id().to_url().into())
-    .credential(jws)
-    .build()
-    .unwrap();
+  let presentation: JwtPresentation =
+    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+      .credential(jws)
+      .build()
+      .unwrap();
 
   // Sign presentation using the issuer's method and try to verify it using the holder's document.
   // Since the holder's document doesn't include that verification method, Error is returned.

@@ -152,7 +152,7 @@ where
     (issuance_date.is_none() || issuance_date <= Some(options.latest_issuance_date.unwrap_or_default()))
       .then_some(())
       .ok_or(CompoundJwtPresentationValidationError::one_prsentation_error(
-        ValidationError::ExpirationDate,
+        ValidationError::IssuanceDate,
       ))?;
 
     let aud = claims.aud.clone();
