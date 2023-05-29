@@ -1,34 +1,45 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Duration;
 use identity_core::common::Object;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
 use identity_credential::presentation::JwtPresentation;
 use identity_credential::presentation::JwtPresentationBuilder;
 use identity_credential::presentation::JwtPresentationOptions;
 use identity_credential::validator::vc_jwt_validation::ValidationError;
+use identity_credential::validator::DecodedJwtPresentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::JwtPresentationValidationOptions;
 use identity_credential::validator::PresentationJwtValidator;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
+use identity_verification::jws::JwsAlgorithm;
+use identity_verification::jws::SignatureVerificationError;
+use identity_verification::MethodScope;
 
 use crate::storage::tests::test_utils::generate_credential;
 use crate::storage::tests::test_utils::setup_coredocument;
 use crate::storage::tests::test_utils::setup_iotadocument;
 use crate::storage::tests::test_utils::Setup;
 use crate::JwkDocumentExt;
+use crate::JwkMemStore;
+use crate::JwkStorage;
 use crate::JwsSignatureOptions;
+use crate::KeyType;
+use crate::MethodDigest;
 
 use super::test_utils::CredentialSetup;
 
 #[tokio::test]
-async fn test_presentation() {
-  test_presentation_impl(setup_coredocument(None, None).await).await;
-  test_presentation_impl(setup_iotadocument(None, None).await).await;
+async fn test_valid_presentation() {
+  test_valid_presentation_impl(setup_coredocument(None, None).await).await;
+  test_valid_presentation_impl(setup_iotadocument(None, None).await).await;
 }
-async fn test_presentation_impl<T>(setup: Setup<T, T>)
+async fn test_valid_presentation_impl<T>(setup: Setup<T, T>)
 where
   T: JwkDocumentExt + AsRef<CoreDocument>,
 {
@@ -41,6 +52,12 @@ where
       .build()
       .unwrap();
 
+  let presentation_options = JwtPresentationOptions {
+    expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
+    issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
+    audience: Some(Url::parse("did:test:123").unwrap()),
+  };
+
   let presentation_jwt = setup
     .subject_doc
     .sign_presentation(
@@ -48,13 +65,13 @@ where
       &setup.subject_storage,
       &setup.subject_method_fragment,
       &JwsSignatureOptions::default(),
-      &JwtPresentationOptions::default(),
+      &presentation_options,
     )
     .await
     .unwrap();
 
   let validator: PresentationJwtValidator = PresentationJwtValidator::new();
-  validator
+  let decoded_presentation: DecodedJwtPresentation = validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -63,6 +80,248 @@ where
       FailFast::FirstError,
     )
     .unwrap();
+
+  assert_eq!(
+    decoded_presentation.expiration_date,
+    presentation_options.expiration_date
+  );
+  assert_eq!(decoded_presentation.issuance_date, presentation_options.issuance_date);
+  assert_eq!(decoded_presentation.aud, presentation_options.audience);
+  assert_eq!(
+    decoded_presentation.credentials.into_iter().next().unwrap().credential,
+    credential.credential
+  );
+}
+
+// > Create a VP signed by a verification method with `subject_method_fragment`.
+// > Replace the verification method but keep the same fragment.
+// > Validation fails due to invalid signature since key material changed.
+#[tokio::test]
+async fn test_invalid_signature() {
+  test_invalid_signature_impl(setup_coredocument(None, None).await).await;
+  test_invalid_signature_impl(setup_iotadocument(None, None).await).await;
+}
+async fn test_invalid_signature_impl<T>(mut setup: Setup<T, T>)
+where
+  T: JwkDocumentExt + AsRef<CoreDocument>,
+{
+  let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
+  let jws = sign_credential(&setup, &credential.credential).await;
+
+  let presentation: JwtPresentation =
+    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+      .credential(jws)
+      .build()
+      .unwrap();
+
+  let presentation_options = JwtPresentationOptions {
+    expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
+    issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
+    audience: Some(Url::parse("did:test:123").unwrap()),
+  };
+
+  let presentation_jwt = setup
+    .subject_doc
+    .sign_presentation(
+      &presentation,
+      &setup.subject_storage,
+      &setup.subject_method_fragment,
+      &JwsSignatureOptions::default(),
+      &presentation_options,
+    )
+    .await
+    .unwrap();
+
+  let method_url = setup
+    .subject_doc
+    .as_ref()
+    .id()
+    .to_url()
+    .clone()
+    .join(format!("#{}", setup.subject_method_fragment.clone()))
+    .unwrap();
+
+  setup
+    .subject_doc
+    .purge_method(&setup.subject_storage, &method_url)
+    .await
+    .unwrap();
+
+  setup
+    .subject_doc
+    .generate_method(
+      &setup.subject_storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      Some(&setup.subject_method_fragment),
+      MethodScope::assertion_method(),
+    )
+    .await
+    .unwrap();
+  // setup.subject_doc.generate_method(setup.subject_storage, KeyType::, alg, fragment, scope)
+  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validation_error: ValidationError = validator
+    .validate::<_, _, Object, Object>(
+      &presentation_jwt,
+      &setup.subject_doc,
+      &[&setup.issuer_doc],
+      &JwtPresentationValidationOptions::default(),
+      FailFast::FirstError,
+    )
+    .err()
+    .unwrap()
+    .presentation_validation_errors
+    .into_iter()
+    .next()
+    .unwrap();
+
+  assert!(matches!(
+    validation_error,
+    ValidationError::PresentationJwsError(identity_document::Error::JwsVerificationError(_))
+  ));
+}
+
+#[tokio::test]
+async fn expiration_date() {
+  expiration_date_impl(setup_coredocument(None, None).await).await;
+  expiration_date_impl(setup_iotadocument(None, None).await).await;
+}
+async fn expiration_date_impl<T>(setup: Setup<T, T>)
+where
+  T: JwkDocumentExt + AsRef<CoreDocument> + Clone,
+{
+  let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
+  let jws = sign_credential(&setup, &credential.credential).await;
+
+  let presentation: JwtPresentation =
+    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+      .credential(jws)
+      .build()
+      .unwrap();
+
+  // Presentation expired in the past must be invalid.
+
+  let mut presentation_options = JwtPresentationOptions::default();
+  presentation_options.expiration_date = Some(Timestamp::now_utc().checked_sub(Duration::hours(1)).unwrap());
+
+  let presentation_jwt = setup
+    .subject_doc
+    .sign_presentation(
+      &presentation,
+      &setup.subject_storage,
+      &setup.subject_method_fragment,
+      &JwsSignatureOptions::default(),
+      &presentation_options,
+    )
+    .await
+    .unwrap();
+
+  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validation_error: ValidationError = validator
+    .validate::<_, _, Object, Object>(
+      &presentation_jwt,
+      &setup.subject_doc,
+      &[&setup.issuer_doc],
+      &JwtPresentationValidationOptions::default(),
+      FailFast::FirstError,
+    )
+    .err()
+    .unwrap()
+    .presentation_validation_errors
+    .into_iter()
+    .next()
+    .unwrap();
+
+  assert!(matches!(validation_error, ValidationError::ExpirationDate));
+
+  // Set Validation options to allow expired presentation that were valid 2 hours back.
+
+  let mut validation_options = JwtPresentationValidationOptions::default();
+  validation_options =
+    validation_options.earliest_expiry_date(Timestamp::now_utc().checked_sub(Duration::hours(2)).unwrap());
+
+  let validation_ok: bool = validator
+    .validate::<_, _, Object, Object>(
+      &presentation_jwt,
+      &setup.subject_doc,
+      &[&setup.issuer_doc],
+      &validation_options,
+      FailFast::FirstError,
+    )
+    .is_ok();
+  assert!(validation_ok);
+}
+
+#[tokio::test]
+async fn issuance_date() {
+  issuance_date_impl(setup_coredocument(None, None).await).await;
+  issuance_date_impl(setup_iotadocument(None, None).await).await;
+}
+
+async fn issuance_date_impl<T>(setup: Setup<T, T>)
+where
+  T: JwkDocumentExt + AsRef<CoreDocument> + Clone,
+{
+  let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
+  let jws = sign_credential(&setup, &credential.credential).await;
+
+  let presentation: JwtPresentation =
+    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+      .credential(jws)
+      .build()
+      .unwrap();
+
+  // Presentation issued in the future must be invalid.
+
+  let mut presentation_options = JwtPresentationOptions::default();
+  presentation_options.issuance_date = Some(Timestamp::now_utc().checked_add(Duration::hours(1)).unwrap());
+
+  let presentation_jwt = setup
+    .subject_doc
+    .sign_presentation(
+      &presentation,
+      &setup.subject_storage,
+      &setup.subject_method_fragment,
+      &JwsSignatureOptions::default(),
+      &presentation_options,
+    )
+    .await
+    .unwrap();
+
+  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validation_error: ValidationError = validator
+    .validate::<_, _, Object, Object>(
+      &presentation_jwt,
+      &setup.subject_doc,
+      &[&setup.issuer_doc],
+      &JwtPresentationValidationOptions::default(),
+      FailFast::FirstError,
+    )
+    .err()
+    .unwrap()
+    .presentation_validation_errors
+    .into_iter()
+    .next()
+    .unwrap();
+
+  assert!(matches!(validation_error, ValidationError::IssuanceDate));
+
+  // Set Validation options to allow presentation "issued" 2 hours in the future.
+
+  let mut validation_options = JwtPresentationValidationOptions::default();
+  validation_options =
+    validation_options.latest_issuance_date(Timestamp::now_utc().checked_add(Duration::hours(2)).unwrap());
+
+  let validation_ok: bool = validator
+    .validate::<_, _, Object, Object>(
+      &presentation_jwt,
+      &setup.subject_doc,
+      &[&setup.issuer_doc],
+      &validation_options,
+      FailFast::FirstError,
+    )
+    .is_ok();
+  assert!(validation_ok);
 }
 
 #[tokio::test]
@@ -85,7 +344,7 @@ where
       .unwrap();
 
   // Sign presentation using the issuer's method and try to verify it using the holder's document.
-  // Since the holder's document doesn't include that verification method, Error is returned.
+  // Since the holder's document doesn't include that verification method, `MethodNotFound`is returned.
 
   let presentation_jwt = setup
     .issuer_doc

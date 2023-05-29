@@ -179,6 +179,7 @@ where
       presentation,
       header: Box::new(decoded_jws.protected),
       expiration_date,
+      issuance_date,
       aud,
       credentials,
     };

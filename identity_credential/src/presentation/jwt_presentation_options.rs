@@ -11,9 +11,9 @@ pub struct JwtPresentationOptions {
   /// Default: `None`.
   pub expiration_date: Option<Timestamp>,
   /// Set the issuance date.
-  /// Default: current datetime current datetime.
+  /// Default: current datetime.
   pub issuance_date: Option<Timestamp>,
-  /// Sets the audience for presentation.
+  /// Sets the audience for presentation (`aud` property in JWT claims).
   /// Default: `None`.
   pub audience: Option<Url>,
 }
