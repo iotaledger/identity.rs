@@ -172,13 +172,13 @@ mod tests {
       .build()
       .unwrap();
 
-    let document: CoreDocument = DocumentBuilder::default()
+    let _document: CoreDocument = DocumentBuilder::default()
       .id(controller)
       .verification_method(method)
       .build()
       .unwrap();
 
-    let mut credential: Credential = CredentialBuilder::default()
+    let credential: Credential = CredentialBuilder::default()
       .type_("ExampleCredential")
       .subject(subject())
       .issuer(issuer())
@@ -186,12 +186,6 @@ mod tests {
       .unwrap();
 
     let credential_jwt = Jwt::new(credential.serialize_jwt().unwrap());
-
-    document
-      .signer(keypair.private())
-      .method("#key-1")
-      .sign(&mut credential)
-      .unwrap();
 
     let presentation: JwtPresentation =
       JwtPresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
