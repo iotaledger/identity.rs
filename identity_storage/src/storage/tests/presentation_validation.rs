@@ -2,20 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
-use identity_credential::{
-  credential::{Credential, Jwt},
-  presentation::{JwtPresentation, JwtPresentationBuilder, JwtPresentationOptions},
-  validator::{
-    vc_jwt_validation::ValidationError, FailFast, JwtPresentationValidationOptions, PresentationJwtValidator,
-  },
-};
+use identity_credential::credential::Credential;
+use identity_credential::credential::Jwt;
+use identity_credential::presentation::JwtPresentation;
+use identity_credential::presentation::JwtPresentationBuilder;
+use identity_credential::presentation::JwtPresentationOptions;
+use identity_credential::validator::vc_jwt_validation::ValidationError;
+use identity_credential::validator::FailFast;
+use identity_credential::validator::JwtPresentationValidationOptions;
+use identity_credential::validator::PresentationJwtValidator;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 
-use crate::{
-  storage::tests::test_utils::{generate_credential, setup_coredocument, setup_iotadocument, Setup},
-  JwkDocumentExt, JwsSignatureOptions,
-};
+use crate::storage::tests::test_utils::generate_credential;
+use crate::storage::tests::test_utils::setup_coredocument;
+use crate::storage::tests::test_utils::setup_iotadocument;
+use crate::storage::tests::test_utils::Setup;
+use crate::JwkDocumentExt;
+use crate::JwsSignatureOptions;
 
 use super::test_utils::CredentialSetup;
 

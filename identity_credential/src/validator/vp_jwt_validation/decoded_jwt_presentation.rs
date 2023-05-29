@@ -1,10 +1,13 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::{Object, Timestamp, Url};
+use identity_core::common::Object;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_verification::jws::JwsHeader;
 
-use crate::{presentation::JwtPresentation, validator::vc_jwt_validation::DecodedJwtCredential};
+use crate::presentation::JwtPresentation;
+use crate::validator::vc_jwt_validation::DecodedJwtCredential;
 
 /// Decoded [`JwtPresentation`] from a cryptographically verified JWS.
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.

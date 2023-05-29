@@ -1,7 +1,8 @@
 use identity_core::common::Timestamp;
 use identity_document::verifiable::JwsVerificationOptions;
 
-use crate::validator::{vc_jwt_validation::CredentialValidationOptions, SubjectHolderRelationship};
+use crate::validator::vc_jwt_validation::CredentialValidationOptions;
+use crate::validator::SubjectHolderRelationship;
 
 /// Criteria for validating a [`Presentation`](crate::presentation::Presentation), such as with
 /// [`PresentationValidator::validate`](crate::validator::PresentationValidator::validate()).
