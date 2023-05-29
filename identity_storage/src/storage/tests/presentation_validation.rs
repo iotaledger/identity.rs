@@ -18,7 +18,7 @@ use identity_credential::validator::PresentationJwtValidator;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_verification::jws::JwsAlgorithm;
-use identity_verification::jws::SignatureVerificationError;
+
 use identity_verification::MethodScope;
 
 use crate::storage::tests::test_utils::generate_credential;
@@ -27,10 +27,8 @@ use crate::storage::tests::test_utils::setup_iotadocument;
 use crate::storage::tests::test_utils::Setup;
 use crate::JwkDocumentExt;
 use crate::JwkMemStore;
-use crate::JwkStorage;
+
 use crate::JwsSignatureOptions;
-use crate::KeyType;
-use crate::MethodDigest;
 
 use super::test_utils::CredentialSetup;
 
@@ -137,7 +135,6 @@ where
     .as_ref()
     .id()
     .to_url()
-    .clone()
     .join(format!("#{}", setup.subject_method_fragment.clone()))
     .unwrap();
 
@@ -201,8 +198,11 @@ where
 
   // Presentation expired in the past must be invalid.
 
-  let mut presentation_options = JwtPresentationOptions::default();
-  presentation_options.expiration_date = Some(Timestamp::now_utc().checked_sub(Duration::hours(1)).unwrap());
+  let presentation_options = JwtPresentationOptions {
+    issuance_date: None,
+    expiration_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(1)).unwrap()),
+    audience: None,
+  };
 
   let presentation_jwt = setup
     .subject_doc
@@ -273,8 +273,11 @@ where
 
   // Presentation issued in the future must be invalid.
 
-  let mut presentation_options = JwtPresentationOptions::default();
-  presentation_options.issuance_date = Some(Timestamp::now_utc().checked_add(Duration::hours(1)).unwrap());
+  let presentation_options = JwtPresentationOptions {
+    issuance_date: Some(Timestamp::now_utc().checked_add(Duration::hours(1)).unwrap()),
+    expiration_date: None,
+    audience: None,
+  };
 
   let presentation_jwt = setup
     .subject_doc

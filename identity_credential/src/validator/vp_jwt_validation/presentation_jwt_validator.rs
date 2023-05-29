@@ -58,10 +58,10 @@ where
   /// Validates a [`JwtPresentation`].
   ///
   /// The following properties are validated according to `options`:
-  /// - the JWT can be decoded into semantically valid presentation,
+  /// - the JWT can be decoded into semantically valid presentation.
   /// - the expiration and issuance date contained in the JWT claims.
-  /// - the holder's signature,
-  /// - the relationship between the holder and the credential subjects,
+  /// - the holder's signature.
+  /// - the relationship between the holder and the credential subjects.
   /// - the signatures and some properties of the constituent credentials (see [`CredentialValidator`]).
   ///
   /// Validation is done with respect to the properties set in [`options`].

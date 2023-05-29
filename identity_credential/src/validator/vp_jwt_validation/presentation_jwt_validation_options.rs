@@ -4,8 +4,7 @@ use identity_document::verifiable::JwsVerificationOptions;
 use crate::validator::vc_jwt_validation::CredentialValidationOptions;
 use crate::validator::SubjectHolderRelationship;
 
-/// Criteria for validating a [`Presentation`](crate::presentation::Presentation), such as with
-/// [`PresentationValidator::validate`](crate::validator::PresentationValidator::validate()).
+/// Criteria for validating a [`JwtPresentation`](crate::presentation::JwtPresentation).
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
 #[serde(rename_all = "camelCase")]
@@ -21,10 +20,6 @@ pub struct JwtPresentationValidationOptions {
   #[serde(default)]
   pub subject_holder_relationship: SubjectHolderRelationship,
 
-  // /// Determines if the JWT expiration date claim `exp` should be skipped during validation.
-  // /// Default: false.
-  // #[serde(default)]
-  // pub skip_exp: bool,
   /// Declares that the credential is **not** considered valid if it expires before this
   /// [`Timestamp`].
   /// Uses the current datetime during validation if not set.

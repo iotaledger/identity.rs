@@ -31,8 +31,8 @@ where
   /// Represents the expirationDate encoded as a UNIX timestamp.  
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) exp: Option<i64>,
-  /// Represents the issuer of the presentation who is the same as the holder of the verifiable
-  /// credentials.
+
+  /// Represents the holder of the verifiable presentation.
   pub(crate) iss: Cow<'presentation, Url>,
 
   /// Represents the issuanceDate encoded as a UNIX timestamp.
@@ -92,28 +92,28 @@ where
   T: ToOwned + Serialize,
   <T as ToOwned>::Owned: DeserializeOwned,
 {
-  /// The JSON-LD context(s) applicable to the `Presentation`.
+  /// The JSON-LD context(s) applicable to the `JwtPresentation`.
   #[serde(rename = "@context")]
   context: Cow<'presentation, OneOrMany<Context>>,
-  /// A unique `URI` that may be used to identify the `Presentation`.
+  /// A unique `URI` that may be used to identify the `JwtPresentation`.
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<Url>,
-  /// One or more URIs defining the type of the `Presentation`.
+  /// One or more URIs defining the type of the `JwtPresentation`.
   #[serde(rename = "type")]
   types: Cow<'presentation, OneOrMany<String>>,
-  /// Credential(s) expressing the claims of the `Presentation`.
+  /// Credential(s) expressing the claims of the `JwtPresentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
   verifiable_credential: Cow<'presentation, OneOrMany<Jwt>>,
-  /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
+  /// Service(s) used to refresh an expired [`Credential`] in the `JwtPresentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   refresh_service: Cow<'presentation, OneOrMany<RefreshService>>,
-  /// Terms-of-use specified by the `Presentation` holder.
+  /// Terms-of-use specified by the `JwtPresentation` holder.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   terms_of_use: Cow<'presentation, OneOrMany<Policy>>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   properties: Cow<'presentation, T>,
-  /// Proof(s) used to verify a `Presentation`
+  /// Proof(s) used to verify a `JwtPresentation`
   #[serde(skip_serializing_if = "Option::is_none")]
   proof: Option<Cow<'presentation, Object>>,
 }
@@ -159,7 +159,6 @@ where
   }
 
   fn check_consistency(&self) -> Result<()> {
-    // Check consistency of id
     if !self
       .vp
       .id

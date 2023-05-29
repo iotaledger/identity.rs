@@ -19,7 +19,7 @@ pub struct DecodedJwtPresentation<T = Object, U = Object> {
   pub presentation: JwtPresentation<T>,
   /// The protected header parsed from the JWS.
   pub header: Box<JwsHeader>,
-  /// The expiration dated parsed from the JWT claims.
+  /// The expiration date parsed from the JWT claims.
   pub expiration_date: Option<Timestamp>,
   /// The issuance dated parsed from the JWT claims.
   pub issuance_date: Option<Timestamp>,

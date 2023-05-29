@@ -42,7 +42,6 @@ pub struct JwtPresentation<T = Object> {
   #[serde(default = "Default::default", rename = "verifiableCredential")]
   pub verifiable_credential: OneOrMany<Jwt>,
   /// The entity that generated the `Presentation`.
-  #[serde()]
   pub holder: Url,
   /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
@@ -89,7 +88,6 @@ impl<T> JwtPresentation<T> {
       properties: builder.properties,
       proof: None,
     };
-
     this.check_structure()?;
 
     Ok(this)
