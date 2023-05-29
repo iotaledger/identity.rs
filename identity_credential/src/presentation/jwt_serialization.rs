@@ -10,7 +10,6 @@ use identity_core::common::Context;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
-use identity_core::crypto::Proof;
 use serde::de::DeserializeOwned;
 
 use crate::credential::IssuanceDateClaims;
@@ -56,21 +55,19 @@ where
 {
   pub(super) fn new(presentation: &'presentation JwtPresentation<T>, options: &JwtPresentationOptions) -> Result<Self> {
     let JwtPresentation {
-        context,
-        id,
-        types,
-        verifiable_credential,
-        holder: Some(holder_url),
-        refresh_service,
-        terms_of_use,
-        properties,
-        proof
-    } = presentation else {
-            return Err(Error::MissingHolder)
-        };
+      context,
+      id,
+      types,
+      verifiable_credential,
+      holder,
+      refresh_service,
+      terms_of_use,
+      properties,
+      proof,
+    } = presentation;
 
     Ok(Self {
-      iss: Cow::Borrowed(holder_url),
+      iss: Cow::Borrowed(holder),
       jti: id.as_ref().map(Cow::Borrowed),
       vp: InnerPresentation {
         context: Cow::Borrowed(context),
@@ -118,7 +115,7 @@ where
   properties: Cow<'presentation, T>,
   /// Proof(s) used to verify a `Presentation`
   #[serde(skip_serializing_if = "Option::is_none")]
-  proof: Option<Cow<'presentation, Proof>>,
+  proof: Option<Cow<'presentation, Object>>,
 }
 
 impl<'presentation, T> PresentationJwtClaims<'presentation, T>
@@ -128,16 +125,16 @@ where
   pub(crate) fn try_into_presentation(self) -> Result<JwtPresentation<T>> {
     self.check_consistency()?;
     let Self {
-      exp,
+      exp: _,
       iss,
-      issuance_date,
+      issuance_date: _,
       jti,
-      aud,
+      aud: _,
       vp,
     } = self;
     let InnerPresentation {
       context,
-      id,
+      id: _,
       types,
       verifiable_credential,
       refresh_service,
@@ -151,7 +148,7 @@ where
       id: jti.map(Cow::into_owned),
       types: types.into_owned(),
       verifiable_credential: verifiable_credential.into_owned(),
-      holder: Some(iss.into_owned()),
+      holder: iss.into_owned(),
       refresh_service: refresh_service.into_owned(),
       terms_of_use: terms_of_use.into_owned(),
       properties: properties.into_owned(),

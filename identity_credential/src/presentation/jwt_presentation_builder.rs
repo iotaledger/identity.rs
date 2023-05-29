@@ -6,7 +6,6 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::common::Value;
 
-use crate::credential::Credential;
 use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
@@ -15,28 +14,28 @@ use crate::presentation::Presentation;
 
 use super::JwtPresentation;
 
-/// A `PresentationBuilder` is used to create a customized [Presentation].
+/// A `JwtPresentationBuilder` is used to create a customized [JwtPresentation].
 #[derive(Clone, Debug)]
 pub struct JwtPresentationBuilder<T = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
   pub(crate) credentials: Vec<Jwt>,
-  pub(crate) holder: Option<Url>,
+  pub(crate) holder: Url,
   pub(crate) refresh_service: Vec<RefreshService>,
   pub(crate) terms_of_use: Vec<Policy>,
   pub(crate) properties: T,
 }
 
 impl<T> JwtPresentationBuilder<T> {
-  /// Creates a new `PresentationBuilder`.
-  pub fn new(properties: T) -> Self {
+  /// Creates a new `JwtPresentationBuilder`.
+  pub fn new(holder: Url, properties: T) -> Self {
     Self {
       context: vec![Presentation::<T>::base_context().clone()],
       id: None,
       types: vec![Presentation::<T>::base_type().into()],
       credentials: Vec::new(),
-      holder: None,
+      holder,
       refresh_service: Vec::new(),
       terms_of_use: Vec::new(),
       properties,
@@ -68,13 +67,6 @@ impl<T> JwtPresentationBuilder<T> {
   #[must_use]
   pub fn credential(mut self, value: Jwt) -> Self {
     self.credentials.push(value);
-    self
-  }
-
-  /// Sets the value of the `holder`.
-  #[must_use]
-  pub fn holder(mut self, value: Url) -> Self {
-    self.holder = Some(value);
     self
   }
 
@@ -125,15 +117,6 @@ impl JwtPresentationBuilder<Object> {
   }
 }
 
-impl<T> Default for JwtPresentationBuilder<T>
-where
-  T: Default,
-{
-  fn default() -> Self {
-    Self::new(T::default())
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use serde_json::json;
@@ -155,9 +138,10 @@ mod tests {
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;
+  use crate::credential::Jwt;
   use crate::credential::Subject;
-  use crate::presentation::Presentation;
-  use crate::presentation::PresentationBuilder;
+  use crate::presentation::JwtPresentation;
+  use crate::presentation::JwtPresentationBuilder;
 
   fn subject() -> Subject {
     let json: Value = json!({
@@ -201,34 +185,32 @@ mod tests {
       .build()
       .unwrap();
 
+    let credential_jwt = Jwt::new(credential.serialize_jwt().unwrap());
+
     document
       .signer(keypair.private())
       .method("#key-1")
       .sign(&mut credential)
       .unwrap();
 
-    let presentation: Presentation = PresentationBuilder::default()
-      .type_("ExamplePresentation")
-      .credential(credential)
-      .build()
-      .unwrap();
+    let presentation: JwtPresentation =
+      JwtPresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
+        .type_("ExamplePresentation")
+        .credential(credential_jwt)
+        .build()
+        .unwrap();
 
     assert_eq!(presentation.context.len(), 1);
     assert_eq!(
       presentation.context.get(0).unwrap(),
-      Presentation::<Object>::base_context()
+      JwtPresentation::<Object>::base_context()
     );
     assert_eq!(presentation.types.len(), 2);
-    assert_eq!(presentation.types.get(0).unwrap(), Presentation::<Object>::base_type());
+    assert_eq!(
+      presentation.types.get(0).unwrap(),
+      JwtPresentation::<Object>::base_type()
+    );
     assert_eq!(presentation.types.get(1).unwrap(), "ExamplePresentation");
     assert_eq!(presentation.verifiable_credential.len(), 1);
-    assert_eq!(
-      presentation.verifiable_credential.get(0).unwrap().types.get(0).unwrap(),
-      Credential::<Object>::base_type()
-    );
-    assert_eq!(
-      presentation.verifiable_credential.get(0).unwrap().types.get(1).unwrap(),
-      "ExampleCredential"
-    );
   }
 }

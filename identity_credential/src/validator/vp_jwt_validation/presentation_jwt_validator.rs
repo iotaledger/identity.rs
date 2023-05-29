@@ -29,11 +29,13 @@ use super::CompoundJwtPresentationValidationError;
 use super::DecodedJwtPresentation;
 use super::JwtPresentationValidationOptions;
 
+/// Struct for validating [`JwtPresentation`].
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct PresentationJwtValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
 impl PresentationJwtValidator {
+  /// Creates a new [`PresentationJwtValidator`].
   pub fn new() -> Self {
     Self(EdDSAJwsVerifier::default())
   }
@@ -42,10 +44,37 @@ impl<V> PresentationJwtValidator<V>
 where
   V: JwsVerifier,
 {
+  /// Creates a new [`PresentationJwtValidator`] using a specific [`JwsVerifier`].
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self(signature_verifier)
   }
 
+  /// Validates a [`JwtPresentation`].
+  ///
+  /// The following properties are validated according to `options`:
+  /// - the JWT can be decoded into semantically valid presentation,
+  /// - the expiration and issuance date contained in the JWT claims.
+  /// - the holder's signature,
+  /// - the relationship between the holder and the credential subjects,
+  /// - the signatures and some properties of the constituent credentials (see [`CredentialValidator`]).
+  ///
+  /// Validation is done with respect to the properties set in [`options`].
+  ///
+  /// # Warning
+  /// The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
+  /// trusted. This section contains more information on additional checks that should be carried out before and after
+  /// calling this method.
+  ///
+  /// ## The state of the supplied DID Documents.
+  /// The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date.
+  ///
+  /// ## Properties that are not validated
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// These should be manually checked after validation, according to your requirements.
+  ///
+  /// # Errors
+  /// An error is returned whenever a validated condition is not satisfied or when decoding fails.
   pub fn validate<HDOC, IDOC, T, U>(
     &self,
     presentation: &Jwt,
@@ -151,6 +180,7 @@ where
     Ok(decoded_jwt_presentation)
   }
 
+  /// Extracts the holder from a JWT presentation..
   pub fn extract_holder<D: DID, T>(presentation: &Jwt) -> std::result::Result<D, ValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
@@ -194,10 +224,7 @@ where
           credential,
           issuers,
           &options.shared_validation_options,
-          presentation
-            .holder
-            .as_ref()
-            .map(|holder_url| (holder_url, options.subject_holder_relationship)),
+          Some((&presentation.holder, options.subject_holder_relationship)),
           fail_fast,
         )
       })
