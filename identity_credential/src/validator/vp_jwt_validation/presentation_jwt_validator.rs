@@ -64,7 +64,7 @@ where
   /// - the relationship between the holder and the credential subjects.
   /// - the signatures and some properties of the constituent credentials (see [`CredentialValidator`]).
   ///
-  /// Validation is done with respect to the properties set in [`options`].
+  /// Validation is done with respect to the properties set in `options`.
   ///
   /// # Warning
   /// The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
