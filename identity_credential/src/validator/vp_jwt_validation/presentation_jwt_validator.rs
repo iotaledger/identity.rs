@@ -144,16 +144,20 @@ where
       ))?;
 
     // Check issuance date.
-    let issuance_date: Option<Timestamp> = claims
-      .issuance_date
-      .map(|iss| {
-        iss.to_issuance_date().map_err(|err| {
-          CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
-            crate::Error::JwtClaimsSetDeserializationError(err.into()),
-          ))
-        })
-      })
-      .transpose()?;
+    let issuance_date: Option<Timestamp> = match claims.issuance_date {
+      Some(iss) => {
+        if iss.iat.is_some() || iss.nbf.is_some() {
+          Some(iss.to_issuance_date().map_err(|err| {
+            CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
+              crate::Error::JwtClaimsSetDeserializationError(err.into()),
+            ))
+          })?)
+        } else {
+          None
+        }
+      }
+      None => None,
+    };
 
     (issuance_date.is_none() || issuance_date <= Some(options.latest_issuance_date.unwrap_or_default()))
       .then_some(())

@@ -233,9 +233,9 @@ where
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub(crate) struct IssuanceDateClaims {
   #[serde(skip_serializing_if = "Option::is_none")]
-  iat: Option<i64>,
+  pub(crate) iat: Option<i64>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  nbf: Option<i64>,
+  pub(crate) nbf: Option<i64>,
 }
 
 impl IssuanceDateClaims {

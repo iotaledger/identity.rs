@@ -200,9 +200,11 @@ where
 
   let presentation_options = JwtPresentationOptions {
     issuance_date: None,
-    expiration_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(1)).unwrap()),
+    expiration_date: Some(Timestamp::now_utc().checked_sub(Duration::days(1)).unwrap()),
     audience: None,
   };
+  // let mut presentation_options = JwtPresentationOptions::default();
+  // presentation_options.expiration_date = Some(Timestamp::now_utc().checked_sub(Duration::hours(1)).unwrap());
 
   let presentation_jwt = setup
     .subject_doc
@@ -238,9 +240,10 @@ where
 
   let mut validation_options = JwtPresentationValidationOptions::default();
   validation_options =
-    validation_options.earliest_expiry_date(Timestamp::now_utc().checked_sub(Duration::hours(2)).unwrap());
+    validation_options.earliest_expiry_date(Timestamp::now_utc().checked_sub(Duration::days(2)).unwrap());
 
-  let validation_ok: bool = validator
+  // let validation_ok: bool = validator
+  validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -248,8 +251,8 @@ where
       &validation_options,
       FailFast::FirstError,
     )
-    .is_ok();
-  assert!(validation_ok);
+    .unwrap();
+  // assert!(validation_ok);
 }
 
 #[tokio::test]
