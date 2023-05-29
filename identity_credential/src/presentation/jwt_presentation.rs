@@ -21,7 +21,6 @@ use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::error::Error;
 use crate::error::Result;
-use crate::presentation::PresentationBuilder;
 
 use super::jwt_serialization::PresentationJwtClaims;
 use super::JwtPresentationBuilder;
@@ -73,8 +72,8 @@ impl<T> JwtPresentation<T> {
   /// Creates a `JwtPresentationBuilder` to configure a new Presentation.
   ///
   /// This is the same as [JwtPresentationBuilder::new].
-  pub fn builder(properties: T) -> PresentationBuilder<T> {
-    PresentationBuilder::new(properties)
+  pub fn builder(holder: Url, properties: T) -> JwtPresentationBuilder<T> {
+    JwtPresentationBuilder::new(holder, properties)
   }
 
   /// Returns a new `JwtPresentation` based on the `JwtPresentationBuilder` configuration.
