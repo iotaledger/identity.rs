@@ -3,45 +3,46 @@
 
 use identity_core::common::Object;
 use identity_credential::{
+  credential::{Credential, Jwt},
   presentation::{JwtPresentation, JwtPresentationBuilder, JwtPresentationOptions},
-  validator::{FailFast, JwtPresentationValidationOptions, PresentationJwtValidator},
+  validator::{
+    vc_jwt_validation::ValidationError, FailFast, JwtPresentationValidationOptions, PresentationJwtValidator,
+  },
 };
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 
 use crate::{
-  storage::tests::test_utils::{generate_credential, setup_coredocument, Setup},
+  storage::tests::test_utils::{generate_credential, setup_coredocument, setup_iotadocument, Setup},
   JwkDocumentExt, JwsSignatureOptions,
 };
 
+use super::test_utils::CredentialSetup;
+
 #[tokio::test]
 async fn test_presentation() {
-  let issuer_setup: Setup<CoreDocument> = setup_coredocument(None).await;
-  let holder_setup: Setup<CoreDocument> = setup_coredocument(None).await;
-  let credential = generate_credential(&issuer_setup.issuer_doc, &[&issuer_setup.issuer_doc], None, None);
-  let jws = issuer_setup
-    .issuer_doc
-    .sign_credential(
-      &credential.credential,
-      &issuer_setup.storage,
-      &issuer_setup.method_fragment,
-      &JwsSignatureOptions::default(),
-    )
-    .await
-    .unwrap();
+  test_presentation_impl(setup_coredocument(None, None).await).await;
+  test_presentation_impl(setup_iotadocument(None, None).await).await;
+}
+async fn test_presentation_impl<T>(setup: Setup<T, T>)
+where
+  T: JwkDocumentExt + AsRef<CoreDocument>,
+{
+  let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
+  let jws = sign_credential(&setup, &credential.credential).await;
 
   let presentation: JwtPresentation = JwtPresentationBuilder::default()
-    .holder(holder_setup.issuer_doc.id().to_url().into())
+    .holder(setup.subject_doc.as_ref().id().to_url().into())
     .credential(jws)
     .build()
     .unwrap();
 
-  let presentation_jwt = holder_setup
-    .issuer_doc
+  let presentation_jwt = setup
+    .subject_doc
     .sign_presentation(
       &presentation,
-      &holder_setup.storage,
-      &holder_setup.method_fragment,
+      &setup.subject_storage,
+      &setup.subject_method_fragment,
       &JwsSignatureOptions::default(),
       &JwtPresentationOptions::default(),
     )
@@ -52,10 +53,82 @@ async fn test_presentation() {
   validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
-      &holder_setup.issuer_doc,
-      &vec![issuer_setup.issuer_doc],
+      &setup.subject_doc,
+      &vec![setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
       FailFast::FirstError,
     )
     .unwrap();
+}
+
+#[tokio::test]
+async fn presentation_jws_error() {
+  presentation_jws_error_impl(setup_coredocument(None, None).await).await;
+  presentation_jws_error_impl(setup_iotadocument(None, None).await).await;
+}
+
+async fn presentation_jws_error_impl<T>(setup: Setup<T, T>)
+where
+  T: JwkDocumentExt + AsRef<CoreDocument> + Clone,
+{
+  let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
+  let jws = sign_credential(&setup, &credential.credential).await;
+
+  let presentation: JwtPresentation = JwtPresentationBuilder::default()
+    .holder(setup.subject_doc.as_ref().id().to_url().into())
+    .credential(jws)
+    .build()
+    .unwrap();
+
+  // Sign presentation using the issuer's method and try to verify it using the holder's document.
+  // Since the holder's document doesn't include that verification method, Error is returned.
+
+  let presentation_jwt = setup
+    .issuer_doc
+    .sign_presentation(
+      &presentation,
+      &setup.issuer_storage,
+      &setup.issuer_method_fragment,
+      &JwsSignatureOptions::default(),
+      &JwtPresentationOptions::default(),
+    )
+    .await
+    .unwrap();
+
+  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validation_error: ValidationError = validator
+    .validate::<_, _, Object, Object>(
+      &presentation_jwt,
+      &setup.subject_doc,
+      &vec![setup.issuer_doc],
+      &JwtPresentationValidationOptions::default(),
+      FailFast::FirstError,
+    )
+    .err()
+    .unwrap()
+    .presentation_validation_errors
+    .into_iter()
+    .next()
+    .unwrap();
+
+  assert!(matches!(
+    validation_error,
+    ValidationError::PresentationJwsError(identity_document::Error::MethodNotFound)
+  ));
+}
+
+async fn sign_credential<T>(setup: &Setup<T, T>, credential: &Credential) -> Jwt
+where
+  T: JwkDocumentExt + AsRef<CoreDocument>,
+{
+  setup
+    .issuer_doc
+    .sign_credential(
+      credential,
+      &setup.issuer_storage,
+      &setup.issuer_method_fragment,
+      &JwsSignatureOptions::default(),
+    )
+    .await
+    .unwrap()
 }

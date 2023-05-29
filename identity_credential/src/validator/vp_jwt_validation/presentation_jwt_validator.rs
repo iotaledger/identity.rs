@@ -25,7 +25,7 @@ use crate::validator::vc_jwt_validation::SignerContext;
 use crate::validator::vc_jwt_validation::ValidationError;
 use crate::validator::FailFast;
 
-use super::CompoundPresentationValidationError;
+use super::CompoundJwtPresentationValidationError;
 use super::DecodedJwtPresentation;
 use super::JwtPresentationValidationOptions;
 
@@ -53,7 +53,7 @@ where
     issuers: &[IDOC],
     options: &JwtPresentationValidationOptions,
     fail_fast: FailFast,
-  ) -> Result<DecodedJwtPresentation<T, U>, CompoundPresentationValidationError>
+  ) -> Result<DecodedJwtPresentation<T, U>, CompoundJwtPresentationValidationError>
   where
     HDOC: AsRef<CoreDocument> + ?Sized,
     IDOC: AsRef<CoreDocument>,
@@ -62,10 +62,10 @@ where
   {
     // Verify that holder document matches holder in presentation.
     let holder_did: CoreDID = Self::extract_holder::<CoreDID, T>(presentation)
-      .map_err(|err| CompoundPresentationValidationError::one_prsentation_error(err))?;
+      .map_err(|err| CompoundJwtPresentationValidationError::one_prsentation_error(err))?;
 
     if &holder_did != <CoreDocument>::id(holder.as_ref()) {
-      return Err(CompoundPresentationValidationError::one_prsentation_error(
+      return Err(CompoundJwtPresentationValidationError::one_prsentation_error(
         ValidationError::DocumentMismatch(SignerContext::Holder),
       ));
     }
@@ -79,11 +79,13 @@ where
         &self.0,
         &options.presentation_verifier_options,
       )
-      .unwrap();
+      .map_err(|err| {
+        CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationJwsError(err))
+      })?;
 
     let claims: PresentationJwtClaims<'_, T> =
       PresentationJwtClaims::from_json_slice(&decoded_jws.claims).map_err(|err| {
-        CompoundPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
+        CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
           crate::Error::JwtClaimsSetDeserializationError(err.into()),
         ))
       })?;
@@ -93,7 +95,7 @@ where
       .exp
       .map(|exp| {
         Timestamp::from_unix(exp).map_err(|err| {
-          CompoundPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
+          CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
             crate::Error::JwtClaimsSetDeserializationError(err.into()),
           ))
         })
@@ -102,7 +104,7 @@ where
 
     (expiration_date.is_none() || expiration_date >= Some(options.earliest_expiry_date.unwrap_or_default()))
       .then_some(())
-      .ok_or(CompoundPresentationValidationError::one_prsentation_error(
+      .ok_or(CompoundJwtPresentationValidationError::one_prsentation_error(
         ValidationError::ExpirationDate,
       ))?;
 
@@ -111,7 +113,7 @@ where
       .issuance_date
       .map(|iss| {
         iss.to_issuance_date().map_err(|err| {
-          CompoundPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
+          CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
             crate::Error::JwtClaimsSetDeserializationError(err.into()),
           ))
         })
@@ -120,20 +122,20 @@ where
 
     (issuance_date.is_none() || issuance_date <= Some(options.latest_issuance_date.unwrap_or_default()))
       .then_some(())
-      .ok_or(CompoundPresentationValidationError::one_prsentation_error(
+      .ok_or(CompoundJwtPresentationValidationError::one_prsentation_error(
         ValidationError::ExpirationDate,
       ))?;
 
     let aud = claims.aud.clone();
 
     let presentation: JwtPresentation<T> = claims.try_into_presentation().map_err(|err| {
-      CompoundPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(err))
+      CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(err))
     })?;
 
     // Validate credentials.
     let credentials: Vec<DecodedJwtCredential<U>> = self
       .validate_credentials::<IDOC, T, U>(&presentation, issuers, options, fail_fast)
-      .map_err(|err| CompoundPresentationValidationError {
+      .map_err(|err| CompoundJwtPresentationValidationError {
         credential_errors: err,
         presentation_validation_errors: vec![],
       })?;

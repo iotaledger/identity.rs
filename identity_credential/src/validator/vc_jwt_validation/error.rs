@@ -14,6 +14,9 @@ pub enum ValidationError {
   #[error("could not decode jws")]
   JwsDecodingError(#[source] identity_verification::jose::error::Error),
 
+  #[error("could not verify jws")]
+  PresentationJwsError(#[source] identity_document::error::Error),
+
   /// Indicates that a verification method that both matches the DID Url specified by
   /// the `kid` value and contains a public key in the JWK format could not be found.
   #[error("could not find verification material")]

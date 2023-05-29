@@ -8,12 +8,9 @@ use std::fmt::Display;
 use crate::validator::vc_jwt_validation::CompoundCredentialValidationError;
 use crate::validator::vc_jwt_validation::ValidationError;
 
-use super::DecodedJwtPresentation;
-type PresentationValidationResult = std::result::Result<DecodedJwtPresentation, CompoundPresentationValidationError>;
-
 #[derive(Debug)]
 /// An error caused by a failure to validate a Presentation.
-pub struct CompoundPresentationValidationError {
+pub struct CompoundJwtPresentationValidationError {
   /// Errors that occurred during validation of individual credentials, mapped by index of their
   /// order in the presentation.
   pub credential_errors: BTreeMap<usize, CompoundCredentialValidationError>,
@@ -21,7 +18,7 @@ pub struct CompoundPresentationValidationError {
   pub presentation_validation_errors: Vec<ValidationError>,
 }
 
-impl CompoundPresentationValidationError {
+impl CompoundJwtPresentationValidationError {
   pub(crate) fn one_prsentation_error(error: ValidationError) -> Self {
     Self {
       credential_errors: BTreeMap::new(),
@@ -30,7 +27,7 @@ impl CompoundPresentationValidationError {
   }
 }
 
-impl Display for CompoundPresentationValidationError {
+impl Display for CompoundJwtPresentationValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let credential_error_formatter = |(position, reason): (&usize, &CompoundCredentialValidationError)| -> String {
       format!("credential num. {} errors: {}", position, reason.to_string().as_str())
@@ -46,4 +43,4 @@ impl Display for CompoundPresentationValidationError {
   }
 }
 
-impl Error for CompoundPresentationValidationError {}
+impl Error for CompoundJwtPresentationValidationError {}

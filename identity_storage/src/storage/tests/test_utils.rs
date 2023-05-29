@@ -31,6 +31,17 @@ const SUBJECT_DOCUMENT_JSON: &str = r#"
     "id": "did:foo:0xabcdef"
 }"#;
 
+const SUBJECT_IOTA_DOCUMENT_JSON: &str = r#"
+{
+  "doc": {
+    "id": "did:iota:tst2:0xdfda8bcfb959c3e6ef261343c3e1a8310e9c8294eeafee326a4e96d65dbeaca0"
+  },
+  "meta": {
+    "created": "2023-05-12T15:09:50Z",
+    "updated": "2023-05-12T15:09:50Z"
+  }
+}"#;
+
 const ISSUER_IOTA_DOCUMENT_JSON: &str = r#"
 {
   "doc": {
@@ -42,40 +53,56 @@ const ISSUER_IOTA_DOCUMENT_JSON: &str = r#"
   }
 }"#;
 
-pub(super) struct Setup<T: JwkDocumentExt> {
+pub(super) struct Setup<T: JwkDocumentExt, U: JwkDocumentExt> {
   pub issuer_doc: T,
-  pub subject_doc: CoreDocument,
-  pub storage: MemStorage,
-  pub method_fragment: String,
+  pub subject_doc: U,
+  pub issuer_storage: MemStorage,
+  pub issuer_method_fragment: String,
+  pub subject_storage: MemStorage,
+  pub subject_method_fragment: String,
 }
 
-pub(super) async fn setup_iotadocument(fragment: Option<&'static str>) -> Setup<IotaDocument> {
+pub(super) async fn setup_iotadocument(
+  issuer_fragment: Option<&'static str>,
+  subject_fragment: Option<&'static str>,
+) -> Setup<IotaDocument, IotaDocument> {
   let mut issuer_doc = IotaDocument::from_json(ISSUER_IOTA_DOCUMENT_JSON).unwrap();
-  let subject_doc = CoreDocument::from_json(SUBJECT_DOCUMENT_JSON).unwrap();
-  let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let mut subject_doc = IotaDocument::from_json(SUBJECT_IOTA_DOCUMENT_JSON).unwrap();
+  let issuer_storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let subject_storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let method_fragment: String = generate_method(&storage, &mut issuer_doc, fragment).await;
+  let issuer_method_fragment: String = generate_method(&issuer_storage, &mut issuer_doc, issuer_fragment).await;
+  let subject_method_fragment: String = generate_method(&subject_storage, &mut subject_doc, subject_fragment).await;
 
   Setup {
     issuer_doc,
     subject_doc,
-    storage,
-    method_fragment,
+    issuer_storage,
+    subject_storage,
+    issuer_method_fragment,
+    subject_method_fragment,
   }
 }
 
-pub(super) async fn setup_coredocument(fragment: Option<&'static str>) -> Setup<CoreDocument> {
+pub(super) async fn setup_coredocument(
+  issuer_fragment: Option<&'static str>,
+  subject_fragment: Option<&'static str>,
+) -> Setup<CoreDocument, CoreDocument> {
   let mut issuer_doc = CoreDocument::from_json(ISSUER_DOCUMENT_JSON).unwrap();
-  let subject_doc = CoreDocument::from_json(SUBJECT_DOCUMENT_JSON).unwrap();
-  let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let mut subject_doc = CoreDocument::from_json(SUBJECT_DOCUMENT_JSON).unwrap();
+  let issuer_storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let subject_storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
-  let method_fragment: String = generate_method(&storage, &mut issuer_doc, fragment).await;
+  let issuer_method_fragment: String = generate_method(&issuer_storage, &mut issuer_doc, issuer_fragment).await;
+  let subject_method_fragment: String = generate_method(&subject_storage, &mut subject_doc, subject_fragment).await;
 
   Setup {
     issuer_doc,
     subject_doc,
-    storage,
-    method_fragment,
+    issuer_storage,
+    subject_storage,
+    issuer_method_fragment,
+    subject_method_fragment,
   }
 }
 
@@ -101,9 +128,9 @@ pub(super) struct CredentialSetup {
   pub expiration_date: Timestamp,
 }
 
-pub(super) fn generate_credential<T: AsRef<CoreDocument>>(
+pub(super) fn generate_credential<T: AsRef<CoreDocument>, U: AsRef<CoreDocument>>(
   issuer: T,
-  subjects: &[&CoreDocument],
+  subjects: &[&U],
   issuance_date: Option<Timestamp>,
   expiration_date: Option<Timestamp>,
 ) -> CredentialSetup {
@@ -114,7 +141,7 @@ pub(super) fn generate_credential<T: AsRef<CoreDocument>>(
     .iter()
     .map(|subject| {
       Subject::from_json_value(json!({
-        "id": subject.id().as_str(),
+        "id": subject.as_ref().id().as_str(),
         "name": "Alice",
         "degree": {
           "type": "BachelorDegree",
