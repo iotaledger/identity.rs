@@ -40,6 +40,12 @@ impl PresentationJwtValidator {
     Self(EdDSAJwsVerifier::default())
   }
 }
+impl Default for PresentationJwtValidator {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl<V> PresentationJwtValidator<V>
 where
   V: JwsVerifier,
@@ -91,7 +97,7 @@ where
   {
     // Verify that holder document matches holder in presentation.
     let holder_did: CoreDID = Self::extract_holder::<CoreDID, T>(presentation)
-      .map_err(|err| CompoundJwtPresentationValidationError::one_prsentation_error(err))?;
+      .map_err(CompoundJwtPresentationValidationError::one_prsentation_error)?;
 
     if &holder_did != <CoreDocument>::id(holder.as_ref()) {
       return Err(CompoundJwtPresentationValidationError::one_prsentation_error(

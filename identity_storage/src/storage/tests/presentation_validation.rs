@@ -58,7 +58,7 @@ where
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
       &setup.subject_doc,
-      &vec![setup.issuer_doc],
+      &[setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
       FailFast::FirstError,
     )
@@ -104,7 +104,7 @@ where
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
       &setup.subject_doc,
-      &vec![setup.issuer_doc],
+      &[setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
       FailFast::FirstError,
     )
