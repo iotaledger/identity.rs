@@ -118,6 +118,7 @@ where
   proof: Option<Cow<'presentation, Object>>,
 }
 
+#[cfg(feature = "validator")]
 impl<'presentation, T> PresentationJwtClaims<'presentation, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
