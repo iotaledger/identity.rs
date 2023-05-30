@@ -14,7 +14,7 @@ use identity_credential::validator::vc_jwt_validation::ValidationError;
 use identity_credential::validator::DecodedJwtPresentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::JwtPresentationValidationOptions;
-use identity_credential::validator::PresentationJwtValidator;
+use identity_credential::validator::JwtPresentationValidator;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_verification::jws::JwsAlgorithm;
@@ -68,7 +68,7 @@ where
     .await
     .unwrap();
 
-  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let decoded_presentation: DecodedJwtPresentation = validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
@@ -156,7 +156,7 @@ where
     .await
     .unwrap();
   // setup.subject_doc.generate_method(setup.subject_storage, KeyType::, alg, fragment, scope)
-  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
@@ -218,7 +218,7 @@ where
     .await
     .unwrap();
 
-  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
@@ -294,7 +294,7 @@ where
     .await
     .unwrap();
 
-  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
@@ -364,7 +364,7 @@ where
     .await
     .unwrap();
 
-  let validator: PresentationJwtValidator = PresentationJwtValidator::new();
+  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,

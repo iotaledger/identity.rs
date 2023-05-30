@@ -32,25 +32,25 @@ use super::JwtPresentationValidationOptions;
 /// Struct for validating [`JwtPresentation`].
 #[derive(Debug, Clone)]
 #[non_exhaustive]
-pub struct PresentationJwtValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
+pub struct JwtPresentationValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
-impl PresentationJwtValidator {
-  /// Creates a new [`PresentationJwtValidator`].
+impl JwtPresentationValidator {
+  /// Creates a new [`JwtPresentationValidator`].
   pub fn new() -> Self {
     Self(EdDSAJwsVerifier::default())
   }
 }
-impl Default for PresentationJwtValidator {
+impl Default for JwtPresentationValidator {
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl<V> PresentationJwtValidator<V>
+impl<V> JwtPresentationValidator<V>
 where
   V: JwsVerifier,
 {
-  /// Creates a new [`PresentationJwtValidator`] using a specific [`JwsVerifier`].
+  /// Creates a new [`JwtPresentationValidator`] using a specific [`JwsVerifier`].
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self(signature_verifier)
   }
