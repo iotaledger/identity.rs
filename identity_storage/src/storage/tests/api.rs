@@ -1,13 +1,15 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
 use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
+use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
-use identity_verification::jose::jws::EdDSAJwsSignatureVerifier;
+use identity_verification::jose::jws::EdDSAJwsVerifier;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
@@ -16,7 +18,7 @@ use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
 use crate::storage::JwsSignatureOptions;
 
-use crate::storage::JwkStorageDocumentExt;
+use crate::storage::JwkDocumentExt;
 use crate::Storage;
 
 type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
@@ -58,7 +60,7 @@ async fn generation() {
   assert!(document.resolve_method(fragment, None).is_some());
 
   // Insert a method backed by storage without passing a fragment
-  let kid: Option<String> = document
+  let method_fragment: String = document
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
@@ -68,10 +70,11 @@ async fn generation() {
     )
     .await
     .unwrap();
+
   // Check that the method can be resolved by passing the `kid` as a fragment
   assert!(document
     .resolve_method(
-      kid.as_deref().unwrap(),
+      &method_fragment,
       Some(MethodScope::VerificationRelationship(
         MethodRelationship::AssertionMethod
       ))
@@ -83,7 +86,7 @@ async fn generation() {
 async fn signing_bytes() {
   let (mut document, storage) = setup();
   // Generate a method with the kid as fragment
-  let kid: Option<String> = document
+  let method_fragment: String = document
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
@@ -98,18 +101,51 @@ async fn signing_bytes() {
   // TODO: Check with more Options
   let options = JwsSignatureOptions::new();
   let jws = document
-    .sign_bytes(&storage, kid.as_deref().unwrap(), payload, &options)
+    .sign_bytes(&storage, &method_fragment, payload, &options)
     .await
     .unwrap();
 
   assert!(document
     .verify_jws(
-      &jws,
+      jws.as_str(),
       None,
-      &EdDSAJwsSignatureVerifier::default(),
+      &EdDSAJwsVerifier::default(),
       &JwsVerificationOptions::default()
     )
     .is_ok());
+}
+
+#[tokio::test]
+async fn signing_bytes_detached_without_b64() {
+  let (mut document, storage) = setup();
+
+  // Generate a method with the kid as fragment
+  let method_fragment: String = document
+    .generate_method(
+      &storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await
+    .unwrap();
+  let payload = b"test";
+
+  let options = JwsSignatureOptions::new().b64(false).detached_payload(true);
+  let jws = document
+    .sign_bytes(&storage, method_fragment.as_ref(), payload, &options)
+    .await
+    .unwrap();
+
+  document
+    .verify_jws(
+      jws.as_str(),
+      Some(payload),
+      &EdDSAJwsVerifier::default(),
+      &JwsVerificationOptions::default(),
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -117,7 +153,7 @@ async fn signing_credential() {
   let (mut document, storage) = setup();
 
   // Generate a method with the kid as fragment
-  let kid: Option<String> = document
+  let method_fragment: String = document
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
@@ -149,18 +185,13 @@ async fn signing_credential() {
 
   let credential: Credential = Credential::from_json(credential_json).unwrap();
   let jws = document
-    .sign_credential(
-      &credential,
-      &storage,
-      kid.as_deref().unwrap(),
-      &JwsSignatureOptions::default(),
-    )
+    .sign_credential(&credential, &storage, &method_fragment, &JwsSignatureOptions::default())
     .await
     .unwrap();
   // Verify the credential
   let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
   assert!(validator
-    .validate(
+    .validate::<_, Object>(
       &jws,
       &document,
       &CredentialValidationOptions::default(),
@@ -172,7 +203,7 @@ async fn signing_credential() {
 #[tokio::test]
 async fn purging() {
   let (mut document, storage) = setup();
-  let kid: Option<String> = document
+  let method_fragment: String = document
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
@@ -182,14 +213,12 @@ async fn purging() {
     )
     .await
     .unwrap();
-  let method_id = document
-    .resolve_method(kid.as_deref().unwrap(), None)
-    .unwrap()
-    .id()
-    .to_owned();
+
+  let method_id: DIDUrl = document.resolve_method(&method_fragment, None).unwrap().id().to_owned();
+
   assert!(document.purge_method(&storage, &method_id).await.is_ok());
   // Check that the method is no longer contained in the document
-  assert!(document.resolve_method(kid.as_deref().unwrap(), None).is_none());
+  assert!(document.resolve_method(&method_fragment, None).is_none());
   // there should now be no items left in the storage
   assert_eq!(storage.key_id_storage().count().await, 0);
   assert_eq!(storage.key_storage().count().await, 0);
@@ -246,7 +275,7 @@ mod iota_document_tests {
     let result = iota_document.verify_jws(
       &jws,
       None,
-      &EdDSAJwsSignatureVerifier::default(),
+      &EdDSAJwsVerifier::default(),
       &JwsVerificationOptions::default(),
     );
     assert!(result.is_ok());

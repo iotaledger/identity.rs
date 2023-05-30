@@ -47,7 +47,10 @@ runs:
     - name: Setup rust toolchain
       shell: bash
       run: |
-        rustup self update
+
+        if ! rustup self update; then
+            echo "rustup self update failed"
+        fi
         
         TARGET=${{ inputs.target }}
         if [[ $TARGET != '' ]]; then

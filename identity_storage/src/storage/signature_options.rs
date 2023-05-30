@@ -29,12 +29,6 @@ pub struct JwsSignatureOptions {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub cty: Option<String>,
 
-  /// A list of permitted extension parameters to be attached to the protected header.
-  ///
-  ///[More Info](https://tools.ietf.org/html/rfc7515#section-4.1.11)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub crit: Option<Vec<String>>,
-
   /// The URL to be placed in the protected header.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.4.1)
@@ -79,14 +73,6 @@ impl JwsSignatureOptions {
   /// Replace the value of the `cty` field.
   pub fn cty(mut self, value: String) -> Self {
     self.cty = Some(value);
-    self
-  }
-
-  /// Append a value to the list of permitted extensions.
-  pub fn add_crit(mut self, value: String) -> Self {
-    let mut crits = self.crit.unwrap_or_default();
-    crits.push(value);
-    self.crit = Some(crits);
     self
   }
 

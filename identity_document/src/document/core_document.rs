@@ -8,9 +8,9 @@ use std::collections::HashMap;
 use std::convert::Infallible;
 
 use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jws::DecodedJws;
 use identity_verification::jose::jws::Decoder;
-use identity_verification::jose::jws::JwsSignatureVerifier;
-use identity_verification::jose::jws::Token;
+use identity_verification::jose::jws::JwsVerifier;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -457,7 +457,7 @@ impl CoreDocument {
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method(&mut self, did: &DIDUrl) -> Option<VerificationMethod> {
-    self.remove_method_get_scope(did).map(|(method, _scope)| method)
+    self.remove_method_and_scope(did).map(|(method, _scope)| method)
   }
 
   /// Removes and returns the [`VerificationMethod`] from the document. The [`MethodScope`] under which the method was
@@ -467,7 +467,7 @@ impl CoreDocument {
   ///
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
-  pub fn remove_method_get_scope(&mut self, did: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+  pub fn remove_method_and_scope(&mut self, did: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
     for (method_ref, scope) in [
       self.data.authentication.remove(did).map(|method_ref| {
         (
@@ -1042,7 +1042,7 @@ impl Display for CoreDocument {
 // =============================================================================
 impl CoreDocument {
   /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
-  /// [`JwsSignatureVerifier`].
+  /// [`JwsVerifier`].
   ///
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
@@ -1051,18 +1051,18 @@ impl CoreDocument {
   //
   // NOTE: This is tested in `identity_storage` and `identity_credential`.
   // TODO: Consider including some unit tests for this method in this crate.
-  pub fn verify_jws<'jws, T: JwsSignatureVerifier>(
+  pub fn verify_jws<'jws, T: JwsVerifier>(
     &self,
     jws: &'jws str,
     detached_payload: Option<&'jws [u8]>,
     signature_verifier: &T,
     options: &JwsVerificationOptions,
-  ) -> Result<Token<'jws>> {
-    let nonce = options.nonce.as_deref();
-    let validation_item = Decoder::new_with_crits(options.crits.as_deref().unwrap_or_default())
+  ) -> Result<DecodedJws<'jws>> {
+    let validation_item = Decoder::new()
       .decode_compact_serialization(jws.as_bytes(), detached_payload)
       .map_err(Error::JwsVerificationError)?;
 
+    let nonce: Option<&str> = options.nonce.as_deref();
     // Validate the nonce
     if validation_item.nonce() != nonce {
       return Err(Error::JwsVerificationError(

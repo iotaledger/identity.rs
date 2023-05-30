@@ -90,7 +90,7 @@ impl<'payload> CompactJwsEncoder<'payload> {
   }
 
   fn validate_header(protected_header: &JwsHeader) -> Result<()> {
-    jwu::validate_jws_headers(Some(protected_header), None, protected_header.crit())
+    jwu::validate_jws_headers(Some(protected_header), None)
   }
 
   /// convert this into a JWS. The `signature` value is expected to be

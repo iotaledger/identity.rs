@@ -50,8 +50,3 @@ jobs:
       #   uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
       #   with:    
       #     args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all-targets --all-features -- -D warnings
-
-      - name: libjose clippy check
-        uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
-        with:
-          args: --manifest-path ./libjose/Cargo.toml --all-targets --all-features -- -D warnings

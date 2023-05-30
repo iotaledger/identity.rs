@@ -24,7 +24,7 @@
 
 ## Introduction
 
-IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements standards such as the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/), [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/), and the DIF [DIDComm Messaging](https://identity.foundation/didcomm-messaging/spec/) specifications alongside supporting methods. This framework can be used to create and authenticate digital identities, creating a trusted connection and sharing verifiable information, establishing trust in the digital world.
+IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements standards such as the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) specifications alongside supporting methods. This framework can be used to create and authenticate digital identities, creating a trusted connection and sharing verifiable information, establishing trust in the digital world.
 
 The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
@@ -64,7 +64,7 @@ identity_iota = { version = "0.7.0-alpha" }
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Build the repository with `cargo build `
+2. Build the repository with `cargo build`
 3. Run your first example using `cargo run --example getting_started`
 
 ## Example: Creating an Identity
@@ -82,7 +82,7 @@ edition = "2021"
 
 [dependencies]
 identity_iota = { version = "0.7.0-alpha" }
-iota-client = { version = "2.0.1-rc", default-features = false, features = ["tls", "stronghold"] }
+iota-sdk = { version = "0.3.0", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -98,12 +98,12 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::crypto::keys::bip39;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::crypto::keys::bip39;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
@@ -113,7 +113,7 @@ static API_ENDPOINT: &str = "http://127.0.0.1:14265";
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish().await?;
 
   // Create a new Stronghold.
   let mut stronghold = StrongholdSecretManager::builder()
@@ -197,8 +197,6 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 | [IOTA DID Method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec) |             |             |                |  ✔️  | Finished implementation. |
 |           [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)            |             |             |                |  ✔️  | Finished implementation. |
 |                                       Account                                       |             |             |                |  ✔️  | Finished implementation. |
-| [Identity Agent](https://github.com/iotaledger/identity.rs/tree/main/identity_agent) |             |             |       🔶       |      |                          |
-|         [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview)         |             |             |       🔶       |      |  In-progress with Agent  |
 |                                Selective Disclosure                                 |             |     🔶      |                |      |                          |
 |                                Zero Knowledge Proofs                                |             |     🔶      |                |      |                          |
 |                                Support Embedded Rust                                |             |     🔶      |                |      |                          |

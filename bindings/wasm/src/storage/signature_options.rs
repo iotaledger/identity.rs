@@ -46,12 +46,6 @@ impl WasmJwsSignatureOptions {
     self.0.cty = Some(value);
   }
 
-  /// Append a value to the list of permitted extensions.
-  #[wasm_bindgen(js_name = addCrit)]
-  pub fn add_crit(&mut self, value: String) {
-    self.0.crit.get_or_insert(Vec::new()).push(value);
-  }
-
   /// Replace the value of the `url` field.
   #[wasm_bindgen(js_name = serUrl)]
   pub fn set_url(&mut self, value: String) -> Result<()> {
@@ -110,12 +104,6 @@ interface IJwsSignatureOptions {
      * [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.10)
      */
     readonly cty?: string;
-
-    /** A list of permitted extension parameters to be attached to the protected header.
-     * 
-     * [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.11)
-     */
-    readonly crit?: [string];
 
     /** The URL to be placed in the protected header.
      * 

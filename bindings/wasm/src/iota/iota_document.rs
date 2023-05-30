@@ -15,18 +15,18 @@ use identity_iota::did::DIDUrl;
 use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::block::protocol::dto::ProtocolParametersDto;
+use identity_iota::iota::block::protocol::ProtocolParameters;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
 use identity_iota::storage::key_storage::KeyType;
-use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwkDocumentExt;
 use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
-use iota_types::block::protocol::dto::ProtocolParametersDto;
-use iota_types::block::protocol::ProtocolParameters;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -39,15 +39,18 @@ use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
 use crate::common::PromiseOptionString;
-use crate::common::PromiseString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
+use crate::credential::WasmJws;
+use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
+use crate::did::PromiseJws;
+use crate::did::PromiseJwt;
 use crate::did::WasmCoreDocument;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmJwsVerificationOptions;
@@ -59,14 +62,14 @@ use crate::iota::identity_client_ext::IAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
+use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
-use crate::jose::WasmToken;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
-use crate::verification::IJwsSignatureVerifier;
+use crate::verification::IJwsVerifier;
 use crate::verification::RefMethodScope;
-use crate::verification::WasmJwsSignatureVerifier;
+use crate::verification::WasmJwsVerifier;
 use crate::verification::WasmMethodRelationship;
 use crate::verification::WasmMethodScope;
 use crate::verification::WasmVerificationMethod;
@@ -443,22 +446,22 @@ impl WasmIotaDocument {
   #[allow(non_snake_case)]
   pub fn verify_jws(
     &self,
-    jws: &str,
+    jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: Option<IJwsSignatureVerifier>,
+    signatureVerifier: Option<IJwsVerifier>,
     detachedPayload: Option<String>,
-  ) -> Result<WasmToken> {
-    let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
+  ) -> Result<WasmDecodedJws> {
+    let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
     self
       .0
       .blocking_read()
       .verify_jws(
-        jws,
+        &jws.0,
         detachedPayload.as_deref().map(|detached| detached.as_bytes()),
         &jws_verifier,
         &options.0,
       )
-      .map(WasmToken::from)
+      .map(WasmDecodedJws::from)
       .wasm_result()
   }
 
@@ -527,7 +530,7 @@ impl WasmIotaDocument {
     protocol_parameters: &INodeInfoProtocol,
   ) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    let block_dto: iota_types::block::BlockDto = block
+    let block_dto: identity_iota::iota::block::BlockDto = block
       .into_serde()
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {err}"))
@@ -543,9 +546,12 @@ impl WasmIotaDocument {
       .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {err}")))
       .wasm_result()?;
 
-    let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
-      .wasm_result()?;
+    let block: identity_iota::iota::block::Block =
+      identity_iota::iota::block::Block::try_from_dto(&block_dto, &protocol_parameters)
+        .map_err(|err| {
+          identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}"))
+        })
+        .wasm_result()?;
 
     Ok(
       IotaDocument::unpack_from_block(&network_name, &block)
@@ -732,13 +738,19 @@ impl WasmIotaDocument {
   // ===========================================================================
 
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into the DID document. The `kid` of the generated Jwk is returned if it is set.
-  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage` API.
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
   #[wasm_bindgen(js_name = generateMethod)]
+  #[allow(non_snake_case)]
   pub fn generate_method(
     &self,
     storage: &WasmStorage,
-    key_type: String,
+    keyType: String,
     alg: WasmJwsAlgorithm,
     fragment: Option<String>,
     scope: WasmMethodScope,
@@ -748,13 +760,13 @@ impl WasmIotaDocument {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let scope: MethodScope = scope.0;
     let promise: Promise = future_to_promise(async move {
-      let key_id: Option<String> = document_lock_clone
+      let method_fragment: String = document_lock_clone
         .write()
         .await
-        .generate_method(&storage_clone, KeyType::from(key_type), alg, fragment.as_deref(), scope)
+        .generate_method(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
         .await
         .wasm_result()?;
-      Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+      Ok(JsValue::from(method_fragment))
     });
     Ok(promise.unchecked_into())
   }
@@ -787,13 +799,13 @@ impl WasmIotaDocument {
   // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
   // as the payload type?
   #[wasm_bindgen(js_name = createJwt)]
-  pub fn create_jwt(
+  pub fn create_jws(
     &self,
     storage: &WasmStorage,
     fragment: String,
     payload: String,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
@@ -804,6 +816,7 @@ impl WasmIotaDocument {
         .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
+        .map(WasmJws::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -823,7 +836,7 @@ impl WasmIotaDocument {
     fragment: String,
     credential: &WasmCredential,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
@@ -835,6 +848,7 @@ impl WasmIotaDocument {
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
+        .map(WasmJwt::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())

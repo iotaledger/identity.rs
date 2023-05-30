@@ -12,25 +12,26 @@ use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::PromiseOptionString;
-use crate::common::PromiseString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::credential::WasmCredential;
+use crate::credential::WasmJws;
+use crate::credential::WasmJwt;
 use crate::crypto::WasmProofOptions;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
-use crate::jose::WasmToken;
 use crate::storage::WasmJwsSignatureOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
-use crate::verification::IJwsSignatureVerifier;
+use crate::verification::IJwsVerifier;
 use crate::verification::RefMethodScope;
-use crate::verification::WasmJwsSignatureVerifier;
+use crate::verification::WasmJwsVerifier;
 use crate::verification::WasmMethodRelationship;
 use crate::verification::WasmMethodScope;
 use crate::verification::WasmVerificationMethod;
@@ -49,7 +50,7 @@ use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
 use identity_iota::storage::key_storage::KeyType;
-use identity_iota::storage::storage::JwkStorageDocumentExt;
+use identity_iota::storage::storage::JwkDocumentExt;
 use identity_iota::storage::storage::JwsSignatureOptions;
 use identity_iota::verification::jose::jws::JwsAlgorithm;
 use identity_iota::verification::MethodRef;
@@ -488,22 +489,22 @@ impl WasmCoreDocument {
   #[allow(non_snake_case)]
   pub fn verify_jws(
     &self,
-    jws: &str,
+    jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: Option<IJwsSignatureVerifier>,
+    signatureVerifier: Option<IJwsVerifier>,
     detachedPayload: Option<String>,
-  ) -> Result<WasmToken> {
-    let jws_verifier = WasmJwsSignatureVerifier::new(signatureVerifier);
+  ) -> Result<WasmDecodedJws> {
+    let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
     self
       .0
       .blocking_read()
       .verify_jws(
-        jws,
+        jws.0.as_str(),
         detachedPayload.as_deref().map(|detached| detached.as_bytes()),
         &jws_verifier,
         &options.0,
       )
-      .map(WasmToken::from)
+      .map(WasmDecodedJws::from)
       .wasm_result()
   }
 
@@ -619,13 +620,19 @@ impl WasmCoreDocument {
   // ===========================================================================
 
   /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
-  /// public key material into this document. The `kid` of the generated Jwk is returned if it is set.
-  // TODO: Also make it possible to set the value of `kid`. This will require changes to the `JwkStorage` API.
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
   #[wasm_bindgen(js_name = generateMethod)]
+  #[allow(non_snake_case)]
   pub fn generate_method(
     &self,
     storage: &WasmStorage,
-    key_type: String,
+    keyType: String,
     alg: WasmJwsAlgorithm,
     fragment: Option<String>,
     scope: WasmMethodScope,
@@ -635,13 +642,13 @@ impl WasmCoreDocument {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let scope: MethodScope = scope.0;
     let promise: Promise = future_to_promise(async move {
-      let key_id: Option<String> = document_lock_clone
+      let method_fragment: String = document_lock_clone
         .write()
         .await
-        .generate_method(&storage_clone, KeyType::from(key_type), alg, fragment.as_deref(), scope)
+        .generate_method(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
         .await
         .wasm_result()?;
-      Ok(key_id.map(JsValue::from).unwrap_or(JsValue::NULL))
+      Ok(JsValue::from(method_fragment))
     });
     Ok(promise.unchecked_into())
   }
@@ -670,18 +677,15 @@ impl WasmCoreDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
-  // TODO: Should payload be of type `string`, or should we take Uint8Array to match Rust? I chose String here as they
-  // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
-  // as the payload type?
   // TODO: Perhaps this should be called `signData` (and the old `signData` method would have to be updated or removed)?
-  #[wasm_bindgen(js_name = createJwt)]
-  pub fn create_jwt(
+  #[wasm_bindgen(js_name = createJws)]
+  pub fn create_jws(
     &self,
     storage: &WasmStorage,
     fragment: String,
     payload: String,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJws> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
@@ -692,6 +696,7 @@ impl WasmCoreDocument {
         .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
+        .map(WasmJws::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -711,7 +716,7 @@ impl WasmCoreDocument {
     fragment: String,
     credential: &WasmCredential,
     options: &WasmJwsSignatureOptions,
-  ) -> Result<PromiseString> {
+  ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
@@ -723,6 +728,7 @@ impl WasmCoreDocument {
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
+        .map(WasmJwt::new)
         .map(JsValue::from)
     });
     Ok(promise.unchecked_into())
@@ -795,6 +801,12 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<CoreDocument | IToCoreDocument>")]
   pub type ArrayIToCoreDocument;
+
+  #[wasm_bindgen(typescript_type = "Promise<Jws>")]
+  pub type PromiseJws;
+
+  #[wasm_bindgen(typescript_type = "Promise<Jwt>")]
+  pub type PromiseJwt;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

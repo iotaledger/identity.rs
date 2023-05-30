@@ -210,31 +210,33 @@ impl VerificationMethod {
     builder.build()
   }
 
-  /// Creates a new [`VerificationMethod`] from the given `did` and [`Jwk`]. If a `fragment` is not given an attempt
-  /// will be made to generate it from the `kid` value of the given `key`.
+  /// Creates a new [`VerificationMethod`] from the given `did` and [`Jwk`]. If `fragment` is not given
+  /// the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
   ///
   /// # Recommendations
-  /// The following recommendations are essentially taken from the `publicKeyJwk` description from the [DID specification](https://www.w3.org/TR/did-core/#dfn-publickeyjwk):
+  /// The following recommendations are essentially taken from the `publicKeyJwk` description from
+  /// the [DID specification](https://www.w3.org/TR/did-core/#dfn-publickeyjwk):
   /// - It is recommended that verification methods that use [`Jwks`](Jwk) to represent their public keys use the value
-  ///   of `kid` as their fragment identifier. This is
-  /// done automatically if `None` is passed in as the fragment.
+  ///   of `kid` as their fragment identifier. This is done automatically if `None` is passed in as the fragment.
   /// - It is recommended that [`Jwk`] kid values are set to the public key fingerprint. See
-  ///   [`Jwk::thumbprint_b64`](Jwk::thumbprint_b64()).
-  //
+  ///   [`Jwk::thumbprint_sha256_b64`](Jwk::thumbprint_sha256_b64).
   pub fn new_from_jwk<D: DID>(did: D, key: Jwk, fragment: Option<&str>) -> Result<Self> {
     if !key.is_public() {
       return Err(crate::error::Error::PrivateKeyMaterialExposed);
     };
+
     // If a fragment is given use that, otherwise use the JWK's `kid` if it is set.
     let fragment: Cow<'_, str> = {
       let given_fragment: &str = fragment
         .or_else(|| key.kid())
-        .ok_or(crate::error::Error::InvalidMethod("could not construct fragment"))?;
+        .ok_or(crate::error::Error::InvalidMethod(
+          "an explicit fragment or JWK kid is required",
+        ))?;
       // Make sure the fragment starts with "#"
       if given_fragment.starts_with('#') {
         Cow::Borrowed(given_fragment)
       } else {
-        Cow::Owned(format!("#{}", given_fragment))
+        Cow::Owned(format!("#{given_fragment}"))
       }
     };
 

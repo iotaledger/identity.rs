@@ -7,7 +7,7 @@ use crate::common::PromiseUint8Array;
 use crate::common::PromiseVoid;
 use crate::error::JsValueResult;
 use crate::jose::WasmJwk;
-// use crate::jose::WasmJwsAlgorithm;
+
 use identity_iota::storage::key_storage::JwkGenOutput;
 use identity_iota::storage::key_storage::JwkStorage;
 use identity_iota::storage::key_storage::KeyId;
@@ -104,8 +104,6 @@ interface JwkStorage {
   insert: (jwk: Jwk) => Promise<string>;
   /** Sign the provided `data` using the private key identified by `keyId` according to the requirements of the given `public_key` corresponding to `keyId`. */
   sign: (keyId: string, data: Uint8Array, publicKey: Jwk) => Promise<Uint8Array>;
-  /** Returns the public key identified by `keyId` as a JSON Web Key. */
-  public: (keyId: string) => Promise<Jwk>;
   /** Deletes the key identified by `keyId`.
    * 
    * # Warning

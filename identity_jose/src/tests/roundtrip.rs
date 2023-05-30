@@ -12,7 +12,7 @@ use crate::jws::CompactJwsEncoder;
 use crate::jws::Decoder;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
-use crate::jws::JwsSignatureVerifierFn;
+use crate::jws::JwsVerifierFn;
 use crate::jws::VerificationInput;
 use crate::jwt::JwtClaims;
 use crate::tests::ed25519;
@@ -43,9 +43,8 @@ fn test_encoder_decoder_roundtrip() {
   let signing_input: &[u8] = encoder.signing_input();
   let signature = secret_key.sign(signing_input).to_bytes();
   let jws = encoder.into_jws(&signature);
-  //let token: String = ed25519::encode(&encoder, &claims_bytes, secret_key).await;
 
-  let verifier = JwsSignatureVerifierFn::from(|input: VerificationInput, key: &Jwk| {
+  let verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| {
     if input.alg != JwsAlgorithm::EdDSA {
       panic!("invalid algorithm");
     }

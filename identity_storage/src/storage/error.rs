@@ -5,14 +5,14 @@ use crate::key_id_storage::KeyIdStorageError;
 use crate::key_id_storage::MethodDigestConstructionError;
 use crate::key_storage::KeyStorageError;
 
-/// Errors that can occur when working with the [`JwkStorageDocumentExt`](crate::storage::JwkStorageDocumentExt) API.
+/// Errors that can occur when working with the [`JwkDocumentExt`](crate::storage::JwkDocumentExt) API.
 #[derive(Debug, thiserror::Error)]
 pub enum JwkStorageDocumentError {
   #[error("storage operation failed: key storage error")]
   KeyStorageError(KeyStorageError),
   #[error("storage operation failed: key id storage error")]
   KeyIdStorageError(KeyIdStorageError),
-  #[error("could not add method. The fragment already exists")]
+  #[error("could not add method: the fragment already exists")]
   FragmentAlreadyExists,
   #[error("method not found")]
   MethodNotFound,
@@ -36,6 +36,11 @@ pub enum JwkStorageDocumentError {
     source: Box<Self>,
     undo_error: Option<Box<Self>>,
   },
+  #[error("{0}")]
+  Custom(
+    &'static str,
+    #[source] Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
+  ),
 }
 
 #[cfg(test)]

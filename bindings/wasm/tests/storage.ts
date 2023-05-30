@@ -3,17 +3,10 @@ import { RandomHelper } from "@iota/util.js";
 import {
     CoreDocument,
     Credential,
-    Ed25519,
-    EdCurve,
     FailFast,
-    IJwkParams,
-    IJwsSignatureVerifier,
+    IJwsVerifier,
     IotaDocument,
     Jwk,
-    JwkGenOutput,
-    JwkOperation,
-    JwkType,
-    JwkUse,
     JwsAlgorithm,
     JwsSignatureOptions,
     JwsVerificationOptions,
@@ -81,7 +74,7 @@ describe("#JwkStorageDocument", function() {
 
         // Check that signing works
         let testString = "test";
-        const jws = await doc.createJwt(storage, fragment, testString, new JwsSignatureOptions());
+        const jws = await doc.createJws(storage, fragment, testString, new JwsSignatureOptions());
 
         // Verify the signature and obtain a decoded token.
         const token = doc.verifyJws(jws, new JwsVerificationOptions());
@@ -231,7 +224,7 @@ describe("#JwkStorageDocument", function() {
     });
 });
 
-class CustomVerifier implements IJwsSignatureVerifier {
+class CustomVerifier implements IJwsVerifier {
     private _verifications: number;
 
     constructor() {

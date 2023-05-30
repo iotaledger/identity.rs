@@ -28,12 +28,6 @@ impl WasmJwsVerificationOptions {
     self.0.nonce = Some(value);
   }
 
-  /// Append values to the list of permitted extension parameters.
-  #[wasm_bindgen(js_name = addCrit)]
-  pub fn add_crit(&mut self, value: String) {
-    self.0.crits.get_or_insert(Vec::new()).push(value);
-  }
-
   /// Set the scope of the verification methods that may be used to verify the given JWS.
   #[wasm_bindgen(js_name = setScope)]
   pub fn set_scope(&mut self, value: &WasmMethodScope) {

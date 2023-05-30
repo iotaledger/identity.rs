@@ -12,7 +12,6 @@ rust-version.workspace = true
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
-identity-diff = { version = "=0.7.0-alpha.6", path = "../identity_diff", default-features = false, optional = true }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_jcs = { version = "0.1", default-features = false }
@@ -24,7 +23,7 @@ url = { version = "2.2", default-features = false, features = ["serde"] }
 zeroize = { version = "1.4", default-features = false }
 
 [dependencies.iota-crypto]
-version = "0.12.1"
+version = "0.18"
 default-features = false
 features = ["ed25519", "random", "sha", "x25519", "std"]
 
@@ -35,9 +34,6 @@ js-sys = { version = "0.3.55", default-features = false }
 proptest = { version = "1.0.0" }
 quickcheck = { version = "1.0" }
 quickcheck_macros = { version = "1.0" }
-
-[features]
-diff = ["identity-diff"]
 
 [package.metadata.docs.rs]
 # To build locally:

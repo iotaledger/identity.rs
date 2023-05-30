@@ -3,6 +3,7 @@
 
 use identity_core::crypto::KeyType;
 use napi::bindgen_prelude::ToNapiValue;
+use napi::bindgen_prelude::FromNapiValue;
 use napi_derive::napi;
 
 #[napi]

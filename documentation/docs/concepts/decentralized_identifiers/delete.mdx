@@ -14,7 +14,9 @@ import deactivate_did_js from '!!raw-loader!../../../../bindings/wasm/examples/s
 import delete_did_rs from '!!raw-loader!../../../../examples/0_basic/4_delete_did.rs';
 import delete_did_js from '!!raw-loader!../../../../bindings/wasm/examples/src/0_basic/4_delete_did.ts';
 import CodeSnippet from '../../../src/components/CodeSnippetComponent'
+import Announcement from '../../../src/partials/_announcement.mdx';
 
+<Announcement/>
 
 There are two approaches to delete an IOTA Identity, with different implications:
 
@@ -24,7 +26,7 @@ There are two approaches to delete an IOTA Identity, with different implications
 
 ## Deactivate
 
-As detailed in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.md#deactivate), the state controller of an IOTA Identity may [deactivate](https://www.w3.org/TR/did-core/#did-document-metadata) it by publishing an update that either:
+As detailed in the [IOTA DID Method Specification](../../specs/did/iota_did_method_spec.mdx#deactivate), the state controller of an IOTA Identity may [deactivate](https://www.w3.org/TR/did-core/#did-document-metadata) it by publishing an update that either:
 
 - deletes the contents of the DID Document entirely, leaving the state metadata empty, OR
 - sets the `deactivated` field in the DID Document metadata to `true`.
@@ -48,9 +50,9 @@ The following example demonstrates deactivating and reactivating an IOTA DID Doc
 
 ## Destroy
 
-Alternatively, an IOTA Identity can be permanently [destroyed](../../specs/did/iota_did_method_spec.md#destroy).
+Alternatively, an IOTA Identity can be permanently [destroyed](../../specs/did/iota_did_method_spec.mdx#destroy).
 
-This is achieved by the governor of a DID publishing a transaction consuming the [Alias Output](../../specs/did/iota_did_method_spec.md#alias-output) containing the IOTA DID Document, without a corresponding Alias Output on the output side.
+This is achieved by the governor of a DID publishing a transaction consuming the [Alias Output](../../specs/did/iota_did_method_spec.mdx#alias-output) containing the IOTA DID Document, without a corresponding Alias Output on the output side.
 
 Any coins and tokens in the Alias Output are reclaimed and can be sent to another address.
 

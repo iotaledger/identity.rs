@@ -52,9 +52,6 @@ jobs:
       # - name: stronghold-nodejs fmt check
       #   run: cargo fmt --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all -- --check
 
-      - name: libjose fmt check
-        run: cargo +nightly fmt --manifest-path ./libjose/Cargo.toml --all -- --check
-
       # Use `dprint` to check Cargo.toml formatting.
       # To fix, run `dprint fmt` locally.
       - name: Cargo.toml fmt check
