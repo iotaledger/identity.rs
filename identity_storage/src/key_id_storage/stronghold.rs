@@ -9,7 +9,7 @@ use crate::KeyIdStorageResult;
 use crate::MethodDigest;
 use crate::IDENTITY_CLIENT_PATH;
 use async_trait::async_trait;
-use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_stronghold::Client;
 use iota_stronghold::ClientError;
 use iota_stronghold::Stronghold;
@@ -19,7 +19,7 @@ use tokio::sync::MutexGuard;
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl KeyIdStorage for StrongholdSecretManager {
   async fn insert_key_id(&self, method_digest: MethodDigest, key_id: KeyId) -> KeyIdStorageResult<()> {
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
     let client = get_client(&stronghold)?;
     let store = client.store();
     let method_digest_pack = method_digest.pack();
@@ -40,7 +40,7 @@ impl KeyIdStorage for StrongholdSecretManager {
   }
 
   async fn get_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<KeyId> {
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
     let store = get_client(&stronghold)?.store();
     let method_digest_pack: Vec<u8> = method_digest.pack();
     let key_id_bytes: Vec<u8> = store
@@ -56,7 +56,7 @@ impl KeyIdStorage for StrongholdSecretManager {
   }
 
   async fn delete_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<()> {
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
     let store = get_client(&stronghold)?.store();
     let key: Vec<u8> = method_digest.pack();
 

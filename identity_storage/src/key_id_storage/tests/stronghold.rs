@@ -12,7 +12,7 @@ use identity_core::crypto::KeyType;
 use identity_core::utils::BaseEncoding;
 use identity_did::CoreDID;
 use identity_verification::VerificationMethod;
-use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use std::path::PathBuf;
 
 const PASS: &str = "secure_password";

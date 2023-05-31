@@ -16,7 +16,9 @@ use identity_verification::jwk::JwkParamsOkp;
 use identity_verification::jwk::JwkType;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::jwu;
-use iota_client::secret::stronghold::StrongholdSecretManager;
+// use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+// use iota_sdk::client::Client;
 use iota_stronghold::procedures::Ed25519Sign;
 use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::procedures::KeyType as ProceduresKeyType;
@@ -42,7 +44,7 @@ pub const ED25519_KEY_TYPE: &KeyType = &KeyType::from_static_str(ED25519_KEY_TYP
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl JwkStorage for StrongholdSecretManager {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
 
     let client = get_client(&stronghold)?;
     let key_type = StrongholdKeyType::try_from(&key_type)?;
@@ -126,7 +128,7 @@ impl JwkStorage for StrongholdSecretManager {
       IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
     let client = get_client(&stronghold)?;
     client
       .vault(IDENTITY_VAULT_PATH.as_bytes())
@@ -184,7 +186,7 @@ impl JwkStorage for StrongholdSecretManager {
       msg: data.to_vec(),
     };
 
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
     let client = get_client(&stronghold)?;
 
     let signature: [u8; 64] = client.execute_procedure(procedure).map_err(|err| {
@@ -197,7 +199,7 @@ impl JwkStorage for StrongholdSecretManager {
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
     let client = get_client(&stronghold)?;
     let deleted = client
       .vault(IDENTITY_VAULT_PATH.as_bytes())
@@ -217,7 +219,7 @@ impl JwkStorage for StrongholdSecretManager {
   }
 
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
-    let stronghold = self.get_stronghold().await;
+    let stronghold = self.inner().await;
     let client = get_client(&stronghold)?;
     let location = Location::generic(
       IDENTITY_VAULT_PATH.as_bytes().to_vec(),
