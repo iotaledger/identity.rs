@@ -155,7 +155,6 @@ where
     )
     .await
     .unwrap();
-  // setup.subject_doc.generate_method(setup.subject_storage, KeyType::, alg, fragment, scope)
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
     .validate::<_, _, Object, Object>(
@@ -197,14 +196,11 @@ where
       .unwrap();
 
   // Presentation expired in the past must be invalid.
-
   let presentation_options = JwtPresentationOptions {
     issuance_date: None,
     expiration_date: Some(Timestamp::now_utc().checked_sub(Duration::days(1)).unwrap()),
     audience: None,
   };
-  // let mut presentation_options = JwtPresentationOptions::default();
-  // presentation_options.expiration_date = Some(Timestamp::now_utc().checked_sub(Duration::hours(1)).unwrap());
 
   let presentation_jwt = setup
     .subject_doc
@@ -237,12 +233,10 @@ where
   assert!(matches!(validation_error, ValidationError::ExpirationDate));
 
   // Set Validation options to allow expired presentation that were valid 2 hours back.
-
   let mut validation_options = JwtPresentationValidationOptions::default();
   validation_options =
     validation_options.earliest_expiry_date(Timestamp::now_utc().checked_sub(Duration::days(2)).unwrap());
 
-  // let validation_ok: bool = validator
   validator
     .validate::<_, _, Object, Object>(
       &presentation_jwt,
@@ -252,7 +246,6 @@ where
       FailFast::FirstError,
     )
     .unwrap();
-  // assert!(validation_ok);
 }
 
 #[tokio::test]
@@ -275,7 +268,6 @@ where
       .unwrap();
 
   // Presentation issued in the future must be invalid.
-
   let presentation_options = JwtPresentationOptions {
     issuance_date: Some(Timestamp::now_utc().checked_add(Duration::hours(1)).unwrap()),
     expiration_date: None,
@@ -313,7 +305,6 @@ where
   assert!(matches!(validation_error, ValidationError::IssuanceDate));
 
   // Set Validation options to allow presentation "issued" 2 hours in the future.
-
   let mut validation_options = JwtPresentationValidationOptions::default();
   validation_options =
     validation_options.latest_issuance_date(Timestamp::now_utc().checked_add(Duration::hours(2)).unwrap());

@@ -10,6 +10,7 @@ use crate::presentation::JwtPresentation;
 use crate::validator::vc_jwt_validation::DecodedJwtCredential;
 
 /// Decoded [`JwtPresentation`] from a cryptographically verified JWS.
+///
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the presentation itself.
 #[non_exhaustive]

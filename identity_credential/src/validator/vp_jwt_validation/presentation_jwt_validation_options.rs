@@ -23,13 +23,13 @@ pub struct JwtPresentationValidationOptions {
   #[serde(default)]
   pub subject_holder_relationship: SubjectHolderRelationship,
 
-  /// Declares that the credential is **not** considered valid if it expires before this
+  /// Declares that the presentation is **not** considered valid if it expires before this
   /// [`Timestamp`].
   /// Uses the current datetime during validation if not set.
   #[serde(default)]
   pub earliest_expiry_date: Option<Timestamp>,
 
-  /// Declares that the credential is **not** considered valid if it was issued later than this
+  /// Declares that the presentation is **not** considered valid if it was issued later than this
   /// [`Timestamp`].
   /// Uses the current datetime during validation if not set.
   #[serde(default)]

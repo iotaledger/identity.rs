@@ -26,7 +26,7 @@ use super::jwt_serialization::PresentationJwtClaims;
 use super::JwtPresentationBuilder;
 use super::JwtPresentationOptions;
 
-/// Represents a bundle of one or more [Credential]s.
+/// Represents a bundle of one or more [`Credential`]s expressed as [`Jwt`]s.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct JwtPresentation<T = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
@@ -94,6 +94,11 @@ impl<T> JwtPresentation<T> {
   }
 
   /// Validates the semantic structure of the `JwtPresentation`.
+  ///
+  /// # Warning
+  ///
+  /// This does not check the semantic structure of the contained credentials. This needs to be done as part of
+  /// signature validation on the credentials as they are encoded as JWTs.
   pub fn check_structure(&self) -> Result<()> {
     // Ensure the base context is present and in the correct location
     match self.context.get(0) {
@@ -125,7 +130,10 @@ impl<T> JwtPresentation<T> {
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
   }
 
-  /// Returns a reference to the `JwtPresentation` proof.
+  /// Returns a reference to the `JwtPresentation` proof, if it exists.
+  ///
+  /// Note that this is not the JWS or JWT of the presentation but a separate field that can be used to
+  /// prove additional claims or include proofs not based on digital signatures like Proof-of-Work.
   pub fn proof(&self) -> Option<&Object> {
     self.proof.as_ref()
   }

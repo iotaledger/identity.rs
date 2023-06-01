@@ -165,7 +165,7 @@ where
         ValidationError::IssuanceDate,
       ))?;
 
-    let aud = claims.aud.clone();
+    let aud: Option<Url> = claims.aud.clone();
 
     let presentation: JwtPresentation<T> = claims.try_into_presentation().map_err(|err| {
       CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(err))
