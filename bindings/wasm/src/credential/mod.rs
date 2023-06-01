@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::module_inception)]
@@ -28,6 +28,8 @@ mod domain_linkage_validator;
 mod jws;
 mod jwt;
 mod jwt_credential_validation;
+mod jwt_presentation;
+mod jwt_presentation_validation;
 mod linked_domain_service;
 mod presentation;
 mod presentation_builder;

@@ -31,6 +31,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<Credential>")]
   pub type ArrayCredential;
+
+  #[wasm_bindgen(typescript_type = "Array<Jwt>")]
+  pub type ArrayJwt;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

@@ -79,6 +79,11 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#JwtCredentialValidator">JwtCredentialValidator</a></dt>
 <dd><p>A type for decoding and validating <code>Credentials</code>.</p>
 </dd>
+<dt><a href="#JwtPresentation">JwtPresentation</a></dt>
+<dd></dd>
+<dt><a href="#JwtPresentationValidationOptions">JwtPresentationValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating presentation.</p>
+</dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
@@ -151,12 +156,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -199,6 +198,12 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -3815,6 +3820,186 @@ Fails if the issuer field is not a valid DID.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 
+<a name="JwtPresentation"></a>
+
+## JwtPresentation
+**Kind**: global class  
+
+* [JwtPresentation](#JwtPresentation)
+    * [new JwtPresentation(values)](#new_JwtPresentation_new)
+    * _instance_
+        * [.context()](#JwtPresentation+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+        * [.id()](#JwtPresentation+id) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.type()](#JwtPresentation+type) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.verifiableCredential()](#JwtPresentation+verifiableCredential) ⇒ [<code>Array.&lt;Jwt&gt;</code>](#Jwt)
+        * [.holder()](#JwtPresentation+holder) ⇒ <code>string</code>
+        * [.refreshService()](#JwtPresentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
+        * [.termsOfUse()](#JwtPresentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
+        * [.proof()](#JwtPresentation+proof) ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
+        * [.properties()](#JwtPresentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#JwtPresentation+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtPresentation+clone) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+    * _static_
+        * [.BaseContext()](#JwtPresentation.BaseContext) ⇒ <code>string</code>
+        * [.BaseType()](#JwtPresentation.BaseType) ⇒ <code>string</code>
+        * [.fromJSON(json)](#JwtPresentation.fromJSON) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+
+<a name="new_JwtPresentation_new"></a>
+
+### new JwtPresentation(values)
+Constructs a new presentation.
+
+
+| Param | Type |
+| --- | --- |
+| values | <code>IJwtPresentation</code> | 
+
+<a name="JwtPresentation+context"></a>
+
+### jwtPresentation.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+Returns a copy of the JSON-LD context(s) applicable to the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+id"></a>
+
+### jwtPresentation.id() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the unique `URI` identifying the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+type"></a>
+
+### jwtPresentation.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the URIs defining the type of the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+verifiableCredential"></a>
+
+### jwtPresentation.verifiableCredential() ⇒ [<code>Array.&lt;Jwt&gt;</code>](#Jwt)
+Returns a copy of the [Credential](#Credential)(s) expressing the claims of the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+holder"></a>
+
+### jwtPresentation.holder() ⇒ <code>string</code>
+Returns a copy of the URI of the entity that generated the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+refreshService"></a>
+
+### jwtPresentation.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
+Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+termsOfUse"></a>
+
+### jwtPresentation.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
+Returns a copy of the terms-of-use specified by the presentation holder
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+proof"></a>
+
+### jwtPresentation.proof() ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
+Returns a copy of the proof property.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+properties"></a>
+
+### jwtPresentation.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the miscellaneous properties on the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+toJSON"></a>
+
+### jwtPresentation.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+clone"></a>
+
+### jwtPresentation.clone() ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation.BaseContext"></a>
+
+### JwtPresentation.BaseContext() ⇒ <code>string</code>
+Returns the base JSON-LD context.
+
+**Kind**: static method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation.BaseType"></a>
+
+### JwtPresentation.BaseType() ⇒ <code>string</code>
+Returns the base type.
+
+**Kind**: static method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation.fromJSON"></a>
+
+### JwtPresentation.fromJSON(json) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwtPresentation</code>](#JwtPresentation)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwtPresentationValidationOptions"></a>
+
+## JwtPresentationValidationOptions
+Options to declare validation criteria when validating presentation.
+
+**Kind**: global class  
+
+* [JwtPresentationValidationOptions](#JwtPresentationValidationOptions)
+    * [new JwtPresentationValidationOptions(options)](#new_JwtPresentationValidationOptions_new)
+    * _instance_
+        * [.toJSON()](#JwtPresentationValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtPresentationValidationOptions+clone) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+    * _static_
+        * [.default()](#JwtPresentationValidationOptions.default) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+        * [.fromJSON(json)](#JwtPresentationValidationOptions.fromJSON) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+
+<a name="new_JwtPresentationValidationOptions_new"></a>
+
+### new JwtPresentationValidationOptions(options)
+Creates a new `JwtPresentationValidationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IJwtPresentationValidationOptions</code> | 
+
+<a name="JwtPresentationValidationOptions+toJSON"></a>
+
+### jwtPresentationValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions+clone"></a>
+
+### jwtPresentationValidationOptions.clone() ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions.default"></a>
+
+### JwtPresentationValidationOptions.default() ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Creates a new `JwtPresentationValidationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions.fromJSON"></a>
+
+### JwtPresentationValidationOptions.fromJSON(json) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="KeyPair"></a>
 
 ## KeyPair
@@ -5431,18 +5616,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5520,6 +5693,18 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 
