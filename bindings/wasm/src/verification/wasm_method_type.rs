@@ -24,7 +24,7 @@ impl WasmMethodType {
   /// in the `publicKeyJwk` entry.
   #[wasm_bindgen(js_name = JwkMethodType)]
   pub fn jwk_method_type() -> WasmMethodType {
-    WasmMethodType(MethodType::JWK)
+    WasmMethodType(MethodType::JSON_WEB_KEY)
   }
 
   /// Returns the `MethodType` as a string.
