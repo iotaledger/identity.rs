@@ -245,7 +245,7 @@ impl VerificationMethod {
     MethodBuilder::default()
       .id(id)
       .controller(did.into())
-      .type_(MethodType::JWK)
+      .type_(MethodType::JSON_WEB_KEY)
       .data(MethodData::PublicKeyJwk(key))
       .build()
   }

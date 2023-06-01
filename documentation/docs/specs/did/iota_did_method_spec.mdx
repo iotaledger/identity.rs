@@ -18,7 +18,7 @@ import Announcement from '../../../src/partials/_announcement.mdx';
 
 <Announcement/>
 
-Draft 11 August 2022
+Version 1.0 2023-06-01
 
 ## Abstract
 
@@ -61,6 +61,7 @@ The state controller can unlock a state transition. It is identified by an incre
 The governor, on the other hand, can unlock a governance transition indicated by an unchanged `State Index`. A governance transition can change the addresses of the state controller and governor. It also allows destroying the Alias Output.
 
 ### Ledger and DID
+
 Storing DID Documents in the ledger state means they inherently benefit from the guarantees the ledger provides.
 
 1. Conflicts among nodes are sorted out and dealt with by the ledger.
@@ -80,13 +81,13 @@ The DIDs that follow this method have the following ABNF syntax. It uses the syn
 ```
 iota-did = "did:iota:" iota-specific-idstring
 iota-specific-idstring = [ iota-network ":" ] iota-tag 
-iota-network = 0*6lowercase-alpha
+iota-network = 1*6network-char
 iota-tag = "0x" 64lowercase-hex
-lowercase-alpha = %x61-7A ; corresponds to the character range from "a" to "z".
 lowercase-hex = digit / "a" / "b" / "c" / "d" / "e" / "f"
+network-char = %x61-7A / digit ; corresponds to the character range from "a" to "z" and "0" to "9".
 ```
 
-It starts with the string "did:iota:", followed by an optional network name (0 to 6 lowercase alpha characters) and a colon, then the tag.
+It starts with the string "did:iota:", followed by an optional network name (1 to 6 lowercase alpha characters) and a colon, then the tag.
 The tag starts with "0x" followed by a hex-encoded `Alias ID` with lower case a-f.
 
 ### IOTA-Network
@@ -108,6 +109,7 @@ did:iota:0xe4edef97da1257e83cbeb49159cfdd2da6ac971ac447f233f8439cf29376ebfe
 ```
 
 ### IOTA-Tag
+
 An IOTA-tag is a hex-encoded `Alias ID`. The `Alias ID` itself is a unique identifier of the alias, which is the BLAKE2b-256 hash of the Output ID that created it.
 This tag identifies the Alias Output where the DID Document is stored, and it will not be known before the generation of the DID since it will be assigned when the Alias Output is created.
 
@@ -134,7 +136,7 @@ The payload must contain the following fields:
 
 Example State Metadata Document:
 
-```Json
+```json
 {
    "document":{
       "id":"did:0:0",
@@ -168,6 +170,7 @@ Create, Read, Update and Delete (CRUD) operations that change the DID Documents 
 **These operations require fund transfer to cover byte cost. Transactions must be carefully done in order to avoid fund loss.** For example, the amount of funds in the inputs should equal these in the outputs. Additionally, private keys of controllers must be stored securely.
 
 ### Create
+
 In order to create a simple self controlled DID two things are required:
 1. An Ed25519 Address for which the private key is available, or control over an Alias or NFT Output.
 2. A Basic, Alias or NFT Output with enough coins to cover the byte cost.
@@ -243,8 +246,8 @@ Currently standardized `services`:
 * [Revocation Bitmap Service](../revocation_bitmap_2022.mdx#revocation-bitmap-service)
 
 ## Security Considerations
-The `did:iota` method is implemented on the [IOTA](https://iota.org), a public permissionless and feeless Distributed Ledger Technology (DLT), making it resistant against almost all censorship attack vectors. Up until the `Coordicide` update for the IOTA network, a reliability on the coordinator exists for resolving ordering conflicts. This has a minor censorship possibility, that, in the wrost case, can prevent transactions from getting confirmed.
 
+The `did:iota` method is implemented on the [IOTA](https://iota.org), a public permissionless and feeless Distributed Ledger Technology (DLT), making it resistant against almost all censorship attack vectors. Up until the `Coordicide` update for the IOTA network, a reliability on the coordinator exists for resolving ordering conflicts. This has a minor censorship possibility, that, in the wrost case, can prevent transactions from getting confirmed.
 
 ### Private Key Management
 

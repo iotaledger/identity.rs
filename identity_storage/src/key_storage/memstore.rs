@@ -70,6 +70,7 @@ impl JwkStorage for JwkMemStore {
 
     let mut jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
     jwk.set_alg(alg.name());
+    // Unwrapping is OK because the None variant only occurs for kty = oct.
     let mut public_jwk: Jwk = jwk.to_public().unwrap();
     public_jwk.set_kid(kid.clone());
 
