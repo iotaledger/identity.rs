@@ -95,16 +95,6 @@ where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     U: ToOwned<Owned = U> + serde::Serialize + serde::de::DeserializeOwned,
   {
-    // Verify that holder document matches holder in presentation.
-    let holder_did: CoreDID = Self::extract_holder::<CoreDID, T>(presentation)
-      .map_err(CompoundJwtPresentationValidationError::one_prsentation_error)?;
-
-    if &holder_did != <CoreDocument>::id(holder.as_ref()) {
-      return Err(CompoundJwtPresentationValidationError::one_prsentation_error(
-        ValidationError::DocumentMismatch(SignerContext::Holder),
-      ));
-    }
-
     // Verify JWS.
     let decoded_jws: DecodedJws<'_> = holder
       .as_ref()
@@ -115,22 +105,37 @@ where
         &options.presentation_verifier_options,
       )
       .map_err(|err| {
-        CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationJwsError(err))
+        CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationJwsError(err))
       })?;
 
     let claims: PresentationJwtClaims<'_, T> =
       PresentationJwtClaims::from_json_slice(&decoded_jws.claims).map_err(|err| {
-        CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
+        CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationStructure(
           crate::Error::JwtClaimsSetDeserializationError(err.into()),
         ))
       })?;
+
+    // Verify that holder document matches holder in presentation.
+    let iss: Url = claims.iss.clone().into_owned();
+    let holder_did: CoreDID = CoreDID::from_str(iss.as_str()).map_err(|err| {
+      CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::SignerUrl {
+        signer_ctx: SignerContext::Holder,
+        source: err.into(),
+      })
+    })?;
+
+    if &holder_did != <CoreDocument>::id(holder.as_ref()) {
+      return Err(CompoundJwtPresentationValidationError::one_presentation_error(
+        ValidationError::DocumentMismatch(SignerContext::Holder),
+      ));
+    }
 
     // Check the expiration date.
     let expiration_date: Option<Timestamp> = claims
       .exp
       .map(|exp| {
         Timestamp::from_unix(exp).map_err(|err| {
-          CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
+          CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationStructure(
             crate::Error::JwtClaimsSetDeserializationError(err.into()),
           ))
         })
@@ -139,7 +144,7 @@ where
 
     (expiration_date.is_none() || expiration_date >= Some(options.earliest_expiry_date.unwrap_or_default()))
       .then_some(())
-      .ok_or(CompoundJwtPresentationValidationError::one_prsentation_error(
+      .ok_or(CompoundJwtPresentationValidationError::one_presentation_error(
         ValidationError::ExpirationDate,
       ))?;
 
@@ -148,7 +153,7 @@ where
       Some(iss) => {
         if iss.iat.is_some() || iss.nbf.is_some() {
           Some(iss.to_issuance_date().map_err(|err| {
-            CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(
+            CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationStructure(
               crate::Error::JwtClaimsSetDeserializationError(err.into()),
             ))
           })?)
@@ -161,14 +166,14 @@ where
 
     (issuance_date.is_none() || issuance_date <= Some(options.latest_issuance_date.unwrap_or_default()))
       .then_some(())
-      .ok_or(CompoundJwtPresentationValidationError::one_prsentation_error(
+      .ok_or(CompoundJwtPresentationValidationError::one_presentation_error(
         ValidationError::IssuanceDate,
       ))?;
 
     let aud: Option<Url> = claims.aud.clone();
 
     let presentation: JwtPresentation<T> = claims.try_into_presentation().map_err(|err| {
-      CompoundJwtPresentationValidationError::one_prsentation_error(ValidationError::PresentationStructure(err))
+      CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationStructure(err))
     })?;
 
     // Validate credentials.
@@ -191,25 +196,11 @@ where
     Ok(decoded_jwt_presentation)
   }
 
-  /// Extracts the holder from a JWT presentation..
-  pub fn extract_holder<D: DID, T>(presentation: &Jwt) -> std::result::Result<D, ValidationError>
-  where
-    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
-  {
-    let validation_item = Decoder::new()
-      .decode_compact_serialization(presentation.as_str().as_bytes(), None)
-      .map_err(ValidationError::JwsDecodingError)?;
-
-    let claims: PresentationJwtClaims<'_, T> = PresentationJwtClaims::from_json_slice(&validation_item.claims())
-      .map_err(|err| {
-        ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-      })?;
-    let iss: Url = claims.iss.into_owned();
-    D::from_str(iss.as_str()).map_err(|err| ValidationError::SignerUrl {
-      signer_ctx: SignerContext::Holder,
-      source: err.into(),
-    })
+  /// Validates the semantic structure of the `JwtPresentation`.
+  pub fn check_structure<U>(presentation: &JwtPresentation<U>) -> Result<(), ValidationError> {
+    presentation
+      .check_structure()
+      .map_err(ValidationError::PresentationStructure)
   }
 
   fn validate_credentials<DOC, T, U>(
@@ -261,5 +252,49 @@ where
     } else {
       Err(credential_errors)
     }
+  }
+}
+
+impl JwtPresentationValidator {
+  /// Attempt to extract the holder of the presentation and the issuers of the included
+  /// credentials.
+  ///
+  /// # Errors:
+  /// * If deserialization/decoding of the presentation or any of the credentials
+  /// fails.
+  /// * If the holder or any of the issuers can't be parsed as DIDs.
+  /// * If the presentation has inconsistent claims.
+  ///
+  /// Returned tuple: (presentation_holder, credentials_issuers).
+  pub fn extract_dids<H: DID, I: DID, T, U>(presentation: &Jwt) -> std::result::Result<(H, Vec<I>), ValidationError>
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+    U: ToOwned<Owned = U> + serde::Serialize + serde::de::DeserializeOwned,
+    <H as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+    <I as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    let validation_item = Decoder::new()
+      .decode_compact_serialization(presentation.as_str().as_bytes(), None)
+      .map_err(ValidationError::JwsDecodingError)?;
+
+    let claims: PresentationJwtClaims<'_, T> = PresentationJwtClaims::from_json_slice(&validation_item.claims())
+      .map_err(|err| {
+        ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+      })?;
+
+    let presentation = claims.try_into_presentation().map_err(|err| {
+      ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+    })?;
+
+    let holder: H = H::from_str(presentation.holder.as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Holder,
+      source: err.into(),
+    })?;
+
+    let mut issuers: Vec<I> = vec![];
+    for vc in presentation.verifiable_credential {
+      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I, U>(&vc)?)
+    }
+    Ok((holder, issuers))
   }
 }

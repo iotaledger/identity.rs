@@ -108,8 +108,8 @@ pub trait JwkDocumentExt: private::Sealed {
     presentation: &JwtPresentation<T>,
     storage: &Storage<K, I>,
     fragment: &str,
-    options: &JwsSignatureOptions,
-    jwt_options: &JwtPresentationOptions,
+    signature_options: &JwsSignatureOptions,
+    presentation_options: &JwtPresentationOptions,
   ) -> StorageResult<Jwt>
   where
     K: JwkStorage,

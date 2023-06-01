@@ -15,6 +15,7 @@ use identity_credential::validator::DecodedJwtPresentation;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::JwtPresentationValidationOptions;
 use identity_credential::validator::JwtPresentationValidator;
+use identity_did::CoreDID;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_verification::jws::JwsAlgorithm;
@@ -88,6 +89,51 @@ where
   assert_eq!(
     decoded_presentation.credentials.into_iter().next().unwrap().credential,
     credential.credential
+  );
+}
+
+#[tokio::test]
+async fn test_extract_dids() {
+  test_extract_dids_impl(setup_coredocument(None, None).await).await;
+  test_extract_dids_impl(setup_iotadocument(None, None).await).await;
+}
+async fn test_extract_dids_impl<T>(setup: Setup<T, T>)
+where
+  T: JwkDocumentExt + AsRef<CoreDocument>,
+{
+  let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
+  let jws = sign_credential(&setup, &credential.credential).await;
+
+  let presentation: JwtPresentation =
+    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+      .credential(jws)
+      .build()
+      .unwrap();
+
+  let presentation_options = JwtPresentationOptions {
+    expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
+    issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
+    audience: Some(Url::parse("did:test:123").unwrap()),
+  };
+
+  let presentation_jwt = setup
+    .subject_doc
+    .sign_presentation(
+      &presentation,
+      &setup.subject_storage,
+      &setup.subject_method_fragment,
+      &JwsSignatureOptions::default(),
+      &presentation_options,
+    )
+    .await
+    .unwrap();
+
+  let (holder, issuers) =
+    JwtPresentationValidator::extract_dids::<CoreDID, CoreDID, Object, Object>(&presentation_jwt).unwrap();
+  assert_eq!(holder.to_url(), setup.subject_doc.as_ref().id().to_url());
+  assert_eq!(
+    issuers.into_iter().next().unwrap().to_url(),
+    setup.issuer_doc.as_ref().id().to_url()
   );
 }
 

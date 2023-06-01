@@ -40,4 +40,5 @@ pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
 
+#[cfg(feature = "validator")]
 pub(crate) use self::jwt_serialization::*;

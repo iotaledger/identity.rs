@@ -110,9 +110,6 @@ impl<T> JwtPresentation<T> {
     if !self.types.iter().any(|type_| type_ == Self::base_type()) {
       return Err(Error::MissingBaseType);
     }
-
-    //Todo: should check credentials structure?
-
     Ok(())
   }
 
@@ -138,9 +135,9 @@ impl<T> JwtPresentation<T> {
     self.proof.as_ref()
   }
 
-  /// Returns a mutable reference to the `JwtPresentation` proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Object> {
-    self.proof.as_mut()
+  /// Sets the value of the proof property.
+  pub fn set_proof(&mut self, proof: Option<Object>) {
+    self.proof = proof;
   }
 }
 

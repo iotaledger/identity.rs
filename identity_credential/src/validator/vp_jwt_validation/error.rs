@@ -19,7 +19,7 @@ pub struct CompoundJwtPresentationValidationError {
 }
 
 impl CompoundJwtPresentationValidationError {
-  pub(crate) fn one_prsentation_error(error: ValidationError) -> Self {
+  pub(crate) fn one_presentation_error(error: ValidationError) -> Self {
     Self {
       credential_errors: BTreeMap::new(),
       presentation_validation_errors: vec![error],

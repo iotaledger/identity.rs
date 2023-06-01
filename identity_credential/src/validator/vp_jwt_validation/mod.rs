@@ -3,10 +3,10 @@
 
 mod decoded_jwt_presentation;
 mod error;
-mod presentation_jwt_validation_options;
-mod presentation_jwt_validator;
+mod jwt_presentation_validation_options;
+mod jwt_presentation_validator;
 
 pub use decoded_jwt_presentation::*;
 pub use error::*;
-pub use presentation_jwt_validation_options::*;
-pub use presentation_jwt_validator::*;
+pub use jwt_presentation_validation_options::*;
+pub use jwt_presentation_validator::*;

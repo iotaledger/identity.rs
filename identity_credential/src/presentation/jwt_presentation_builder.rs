@@ -125,16 +125,6 @@ mod tests {
   use identity_core::common::Object;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
-  use identity_did::CoreDID;
-  use identity_did::DID;
-  use identity_document::document::CoreDocument;
-  use identity_document::document::DocumentBuilder;
-  use identity_verification::MethodBuilder;
-  use identity_verification::MethodData;
-  use identity_verification::MethodType;
-  use identity_verification::VerificationMethod;
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;
@@ -161,23 +151,6 @@ mod tests {
 
   #[test]
   fn test_presentation_builder_valid() {
-    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let controller: CoreDID = "did:example:1234".parse().unwrap();
-
-    let method: VerificationMethod = MethodBuilder::default()
-      .id(controller.to_url().join("#key-1").unwrap())
-      .controller(controller.clone())
-      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
-      .data(MethodData::new_multibase(keypair.public()))
-      .build()
-      .unwrap();
-
-    let _document: CoreDocument = DocumentBuilder::default()
-      .id(controller)
-      .verification_method(method)
-      .build()
-      .unwrap();
-
     let credential: Credential = CredentialBuilder::default()
       .type_("ExampleCredential")
       .subject(subject())
