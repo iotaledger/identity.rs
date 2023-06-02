@@ -148,7 +148,7 @@ async fn get_address_balance(client: &Client, address: &str) -> anyhow::Result<u
     ])
     .await?;
 
-  let outputs: _ = client.get_outputs(output_ids.items).await?;
+  let outputs = client.get_outputs(output_ids.items).await?;
 
   let mut total_amount = 0;
   for output_response in outputs {

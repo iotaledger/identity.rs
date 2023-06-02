@@ -116,8 +116,7 @@ where
       })?;
 
     // Verify that holder document matches holder in presentation.
-    let iss: Url = claims.iss.clone().into_owned();
-    let holder_did: CoreDID = CoreDID::from_str(iss.as_str()).map_err(|err| {
+    let holder_did: CoreDID = CoreDID::from_str(claims.iss.as_str()).map_err(|err| {
       CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::SignerUrl {
         signer_ctx: SignerContext::Holder,
         source: err.into(),
@@ -263,7 +262,6 @@ impl JwtPresentationValidator {
   /// * If deserialization/decoding of the presentation or any of the credentials
   /// fails.
   /// * If the holder or any of the issuers can't be parsed as DIDs.
-  /// * If the presentation has inconsistent claims.
   ///
   /// Returned tuple: (presentation_holder, credentials_issuers).
   pub fn extract_dids<H: DID, I: DID, T, U>(presentation: &Jwt) -> std::result::Result<(H, Vec<I>), ValidationError>
@@ -282,18 +280,14 @@ impl JwtPresentationValidator {
         ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
 
-    let presentation = claims.try_into_presentation().map_err(|err| {
-      ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    })?;
-
-    let holder: H = H::from_str(presentation.holder.as_str()).map_err(|err| ValidationError::SignerUrl {
+    let holder: H = H::from_str(claims.iss.as_str()).map_err(|err| ValidationError::SignerUrl {
       signer_ctx: SignerContext::Holder,
       source: err.into(),
     })?;
 
     let mut issuers: Vec<I> = vec![];
-    for vc in presentation.verifiable_credential {
-      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I, U>(&vc)?)
+    for vc in claims.vp.verifiable_credential.iter() {
+      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I, U>(vc)?)
     }
     Ok((holder, issuers))
   }

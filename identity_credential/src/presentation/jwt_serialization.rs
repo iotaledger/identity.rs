@@ -17,6 +17,7 @@ use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::presentation::JwtPresentation;
+#[cfg(feature = "validator")]
 use crate::Error;
 use crate::Result;
 
@@ -103,7 +104,7 @@ where
   types: Cow<'presentation, OneOrMany<String>>,
   /// Credential(s) expressing the claims of the `JwtPresentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
-  verifiable_credential: Cow<'presentation, OneOrMany<Jwt>>,
+  pub(crate) verifiable_credential: Cow<'presentation, OneOrMany<Jwt>>,
   /// Service(s) used to refresh an expired [`Credential`] in the `JwtPresentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   refresh_service: Cow<'presentation, OneOrMany<RefreshService>>,

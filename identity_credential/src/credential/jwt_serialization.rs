@@ -41,7 +41,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   exp: Option<i64>,
   /// Represents the issuer.
-  iss: Cow<'credential, Issuer>,
+  pub(crate) iss: Cow<'credential, Issuer>,
 
   /// Represents the issuanceDate encoded as a UNIX timestamp.
   #[serde(flatten)]

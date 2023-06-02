@@ -299,7 +299,7 @@ where
     .await
     .unwrap();
 
-  let err: _ = CredentialValidator::new()
+  let err = CredentialValidator::new()
     .verify_signature::<_, Object>(&jwt, &[&issuer_doc], &JwsVerificationOptions::default())
     .unwrap_err();
 

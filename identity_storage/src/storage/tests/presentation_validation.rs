@@ -5,6 +5,7 @@ use identity_core::common::Duration;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
 use identity_credential::presentation::JwtPresentation;
@@ -102,11 +103,16 @@ where
   T: JwkDocumentExt + AsRef<CoreDocument>,
 {
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
+
+  let issuer_2 = CoreDocument::from_json(r#"{"id": "did:test:123"}"#).unwrap();
+  let credential_2: CredentialSetup = generate_credential(&issuer_2, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
+  let jws_2 = sign_credential(&setup, &credential_2.credential).await;
 
   let presentation: JwtPresentation =
     JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
+      .credential(jws_2)
       .build()
       .unwrap();
 
@@ -132,9 +138,10 @@ where
     JwtPresentationValidator::extract_dids::<CoreDID, CoreDID, Object, Object>(&presentation_jwt).unwrap();
   assert_eq!(holder.to_url(), setup.subject_doc.as_ref().id().to_url());
   assert_eq!(
-    issuers.into_iter().next().unwrap().to_url(),
+    issuers.get(0).unwrap().to_url(),
     setup.issuer_doc.as_ref().id().to_url()
   );
+  assert_eq!(issuers.get(1).unwrap().to_url(), issuer_2.as_ref().id().to_url());
 }
 
 // > Create a VP signed by a verification method with `subject_method_fragment`.

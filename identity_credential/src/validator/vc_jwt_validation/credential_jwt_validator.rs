@@ -488,11 +488,7 @@ impl CredentialValidator {
         ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
 
-    let credential = claims.try_into_credential().map_err(|err| {
-      ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    })?;
-
-    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+    D::from_str(claims.iss.url().as_str()).map_err(|err| ValidationError::SignerUrl {
       signer_ctx: SignerContext::Issuer,
       source: err.into(),
     })

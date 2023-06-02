@@ -425,7 +425,7 @@ mod tests {
     ec_params.d = Some("".to_owned());
     let jwk_ec = Jwk::from_params(ec_params);
 
-    let err: _ = store.insert(jwk_ec).await.unwrap_err();
+    let err = store.insert(jwk_ec).await.unwrap_err();
     assert!(matches!(err.kind(), KeyStorageErrorKind::UnsupportedKeyType));
   }
 

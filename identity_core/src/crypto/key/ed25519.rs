@@ -100,7 +100,7 @@ mod tests {
     let message = BaseEncoding::decode(MESSAGE_HEX, Base::Base16Lower).unwrap();
     let signature = Ed25519::sign(&message, &private_key).unwrap();
     assert_eq!(&BaseEncoding::encode(&signature, Base::Base16Lower), SIGNATURE_HEX);
-    let verified: _ = Ed25519::verify(
+    let verified = Ed25519::verify(
       &BaseEncoding::decode(MESSAGE_HEX, Base::Base16Lower).unwrap()[..],
       &signature,
       &public_key,
