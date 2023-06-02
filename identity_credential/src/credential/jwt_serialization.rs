@@ -41,7 +41,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   exp: Option<i64>,
   /// Represents the issuer.
-  iss: Cow<'credential, Issuer>,
+  pub(crate) iss: Cow<'credential, Issuer>,
 
   /// Represents the issuanceDate encoded as a UNIX timestamp.
   #[serde(flatten)]
@@ -231,15 +231,15 @@ where
 /// but `iat` is also used in the ecosystem. This type aims to take care of this discrepancy on
 /// a best effort basis.
 #[derive(Serialize, Deserialize, Clone, Copy)]
-struct IssuanceDateClaims {
+pub(crate) struct IssuanceDateClaims {
   #[serde(skip_serializing_if = "Option::is_none")]
-  iat: Option<i64>,
+  pub(crate) iat: Option<i64>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  nbf: Option<i64>,
+  pub(crate) nbf: Option<i64>,
 }
 
 impl IssuanceDateClaims {
-  fn new(issuance_date: Timestamp) -> Self {
+  pub(crate) fn new(issuance_date: Timestamp) -> Self {
     Self {
       iat: None,
       nbf: Some(issuance_date.to_unix()),
@@ -248,7 +248,7 @@ impl IssuanceDateClaims {
   /// Produces the `issuanceDate` value from `nbf` if it is set,
   /// otherwise falls back to `iat`. If none of these values are set an error is returned.
   #[cfg(feature = "validator")]
-  fn to_issuance_date(self) -> Result<Timestamp> {
+  pub(crate) fn to_issuance_date(self) -> Result<Timestamp> {
     if let Some(timestamp) = self
       .nbf
       .map(Timestamp::from_unix)

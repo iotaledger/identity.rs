@@ -14,6 +14,10 @@ pub enum ValidationError {
   #[error("could not decode jws")]
   JwsDecodingError(#[source] identity_verification::jose::error::Error),
 
+  /// Indicates error while verifying the JWS of a presentation.
+  #[error("could not verify jws")]
+  PresentationJwsError(#[source] identity_document::error::Error),
+
   /// Indicates that a verification method that both matches the DID Url specified by
   /// the `kid` value and contains a public key in the JWK format could not be found.
   #[error("could not find verification material")]
@@ -36,10 +40,10 @@ pub enum ValidationError {
     signer_ctx: SignerContext,
   },
 
-  /// Indicates that the expiration date of the credential is not considered valid.
+  /// Indicates that the expiration date of the credential or presentation is not considered valid.
   #[error("the expiration date is in the past or earlier than required")]
   ExpirationDate,
-  /// Indicates that the issuance date of the credential is not considered valid.
+  /// Indicates that the issuance date of the credential or presentation is not considered valid.
   #[error("issuance date is in the future or later than required")]
   IssuanceDate,
   /// Indicates that the credential's (resp. presentation's) signature could not be verified using

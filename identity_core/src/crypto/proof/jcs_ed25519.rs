@@ -143,7 +143,7 @@ mod tests {
       assert!(Verifier::verify(&input, &signature, &badkey).is_err());
 
       // Fails when the signature is mutated
-      let signature: _ = ProofValue::Signature("IOTA".into());
+      let signature = ProofValue::Signature("IOTA".into());
       assert!(Verifier::verify(&input, &signature, &public).is_err());
     }
   }
@@ -173,7 +173,7 @@ mod tests {
     let data1: Value = json!({ "msg": "IOTA Identity" });
     let data2: Value = json!({ "msg": "IOTA Identity 2" });
 
-    let signature: _ = Signer::sign(&data1, key1.private()).unwrap();
+    let signature = Signer::sign(&data1, key1.private()).unwrap();
 
     // The signature should be valid
     assert!(Verifier::verify(&data1, &signature, key1.public()).is_ok());

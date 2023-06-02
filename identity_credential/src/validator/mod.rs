@@ -16,6 +16,7 @@ pub use self::validation_options::FailFast;
 pub use self::validation_options::PresentationValidationOptions;
 pub use self::validation_options::StatusCheck;
 pub use self::validation_options::SubjectHolderRelationship;
+pub use vp_jwt_validation::*;
 
 mod credential_validator;
 mod domain_linkage_validator;
@@ -24,6 +25,7 @@ mod presentation_validator;
 #[cfg(test)]
 mod test_utils;
 mod validation_options;
+mod vp_jwt_validation;
 
 // Currently conflicting names with the old validator/validation options
 // so we do not re-export the items in vc_jwt_validation for now.

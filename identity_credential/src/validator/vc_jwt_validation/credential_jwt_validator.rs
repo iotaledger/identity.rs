@@ -467,6 +467,32 @@ impl CredentialValidator {
       source: err.into(),
     })
   }
+
+  /// Utility for extracting the issuer field of a credential in JWT representation as DID.
+  ///
+  /// # Errors
+  ///
+  /// If the JWT decoding fails or the issuer field is not a valid DID.
+  pub fn extract_issuer_from_jwt<D, T>(credential: &Jwt) -> std::result::Result<D, ValidationError>
+  where
+    D: DID,
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    let validation_item = Decoder::new()
+      .decode_compact_serialization(credential.as_str().as_bytes(), None)
+      .map_err(ValidationError::JwsDecodingError)?;
+
+    let claims: CredentialJwtClaims<'_, T> =
+      CredentialJwtClaims::from_json_slice(&validation_item.claims()).map_err(|err| {
+        ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+      })?;
+
+    D::from_str(claims.iss.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Issuer,
+      source: err.into(),
+    })
+  }
 }
 
 impl Default for CredentialValidator {

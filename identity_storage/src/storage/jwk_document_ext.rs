@@ -18,6 +18,8 @@ use async_trait::async_trait;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
 use identity_credential::credential::Jwt;
+use identity_credential::presentation::JwtPresentation;
+use identity_credential::presentation::JwtPresentationOptions;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_verification::jose::jws::CompactJwsEncoder;
@@ -95,8 +97,25 @@ pub trait JwkDocumentExt: private::Sealed {
     K: JwkStorage,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
-}
 
+  /// Produces a JWS where the payload is produced from the given `presentation`
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+  ///
+  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  async fn sign_presentation<K, I, T>(
+    &self,
+    presentation: &JwtPresentation<T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    signature_options: &JwsSignatureOptions,
+    presentation_options: &JwtPresentationOptions,
+  ) -> StorageResult<Jwt>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
+}
 mod private {
   pub trait Sealed {}
   impl Sealed for identity_document::document::CoreDocument {}
@@ -408,6 +427,40 @@ impl JwkDocumentExt for CoreDocument {
       .await
       .map(|jws| Jwt::new(jws.into()))
   }
+
+  async fn sign_presentation<K, I, T>(
+    &self,
+    presentation: &JwtPresentation<T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    jws_options: &JwsSignatureOptions,
+    jwt_options: &JwtPresentationOptions,
+  ) -> StorageResult<Jwt>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+  {
+    if jws_options.detached_payload {
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use detached payload for presentation signing",
+      )));
+    }
+
+    if !jws_options.b64.unwrap_or(true) {
+      // JWTs should not have `b64` set per https://datatracker.ietf.org/doc/html/rfc7797#section-7.
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use `b64 = false` with JWTs",
+      )));
+    }
+    let payload = presentation
+      .serialize_jwt(jwt_options)
+      .map_err(Error::ClaimsSerializationError)?;
+    self
+      .sign_bytes(storage, fragment, payload.as_bytes(), jws_options)
+      .await
+      .map(|jws| Jwt::new(jws.into()))
+  }
 }
 
 /// Attempt to revert key generation if this succeeds the original `source_error` is returned,
@@ -499,6 +552,24 @@ mod iota_document {
       self
         .core_document()
         .sign_credential(credential, storage, fragment, options)
+        .await
+    }
+    async fn sign_presentation<K, I, T>(
+      &self,
+      presentation: &JwtPresentation<T>,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      options: &JwsSignatureOptions,
+      jwt_options: &JwtPresentationOptions,
+    ) -> StorageResult<Jwt>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+      T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    {
+      self
+        .core_document()
+        .sign_presentation(presentation, storage, fragment, options, jwt_options)
         .await
     }
   }

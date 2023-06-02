@@ -11,10 +11,10 @@ pub struct JwsSignatureOptions {
   /// to the JWS header.
   pub attach_jwk: bool,
 
-  #[serde(skip_serializing_if = "Option::is_none")]
   /// Whether to Base64url encode the payload or not.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7797#section-3)
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub b64: Option<bool>,
 
   /// The Type value to be placed in the protected header.
