@@ -15,7 +15,6 @@ members = [
 ]
 
 exclude = [
-  "bindings/stronghold-nodejs",
   "bindings/wasm",
 ]
 

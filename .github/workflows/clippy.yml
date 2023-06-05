@@ -44,9 +44,3 @@ jobs:
         uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
         with:
           args: --manifest-path ./bindings/wasm/Cargo.toml --target wasm32-unknown-unknown --all-targets --all-features -- -D warnings
-
-      # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
-      # - name: stronghold-nodejs clippy check
-      #   uses: actions-rs-plus/clippy-check@b09a9c37c9df7db8b1a5d52e8fe8e0b6e3d574c4
-      #   with:    
-      #     args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all-targets --all-features -- -D warnings

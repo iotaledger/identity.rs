@@ -48,12 +48,6 @@ jobs:
       - name: wasm fmt check
         run: cargo +nightly fmt --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
 
-      # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
-      # - name: stronghold-nodejs fmt check
-      #   run: cargo fmt --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all -- --check
-
-      # Use `dprint` to check Cargo.toml formatting.
-      # To fix, run `dprint fmt` locally.
       - name: Cargo.toml fmt check
         run:
           dprint check
