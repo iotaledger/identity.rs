@@ -47,30 +47,12 @@ runs:
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y -a
 
-    # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
-    # - name: Bump stronghold nodejs bindings crate version
-    #   shell: bash
-    #   if: ${{inputs.release-target == 'wasm'}}
-    #   working-directory: bindings/stronghold-nodejs
-    #   run: |
-    #     cargo set-version ${{ inputs.version }}
-
     - name: Replace identity_iota version in Wasm bindings
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
       working-directory: bindings/wasm
       run: |
         cargo add identity_iota --path=../../identity_iota
-
-    # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
-    # - name: Replace identity versions in stronghold nodejs bindings
-    #   shell: bash
-    #   if: ${{inputs.release-target == 'rust'}}
-    #   working-directory: bindings/stronghold-nodejs
-    #   run: |
-    #     cargo add identity_core --path=../../identity_core
-    #     cargo add identity_did --path=../../identity_did
-    #     cargo add identity_iota_core_legacy --path=../../identity_iota_core_legacy
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
@@ -85,13 +67,3 @@ runs:
       working-directory: bindings/wasm
       run: |
         npm version ${{ inputs.version }}
-
-    # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
-    # - name: Bump stronghold nodejs npm package version
-    #   shell: bash
-    #   if: ${{inputs.release-target == 'wasm'}}
-    #   working-directory: bindings/stronghold-nodejs
-    #   run: |
-    #     npm version ${{ inputs.version }}
-    #     # set peer dependency version
-    #     echo "`jq '.peerDependencies."@iota/identity-wasm"="${{ inputs.version }}"' package.json`" > package.json
