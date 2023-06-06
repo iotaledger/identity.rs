@@ -34,7 +34,7 @@ impl WasmDecodedJwtPresentation {
   ///
   /// ### Warning
   /// This destroys the `DecodedJwtPresentation` object.
-  #[wasm_bindgen(js_name = intoCredential)]
+  #[wasm_bindgen(js_name = intoPresentation)]
   pub fn into_presentation(self) -> WasmJwtPresentation {
     WasmJwtPresentation(self.0.presentation)
   }
@@ -45,7 +45,7 @@ impl WasmDecodedJwtPresentation {
     self.0.expiration_date.map(WasmTimestamp::from)
   }
 
-  /// The issuance dated parsed from the JWT claims.
+  /// The issuance date parsed from the JWT claims.
   #[wasm_bindgen(js_name = "issuanceDate")]
   pub fn issuance_date(&self) -> Option<WasmTimestamp> {
     self.0.issuance_date.map(WasmTimestamp::from)

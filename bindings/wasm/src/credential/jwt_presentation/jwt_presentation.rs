@@ -78,7 +78,7 @@ impl WasmJwtPresentation {
       .unchecked_into::<ArrayString>()
   }
 
-  /// Returns a copy of the {@link Credential}(s) expressing the claims of the presentation.
+  /// Returns the JWT credentials expressing the claims of the presentation.
   #[wasm_bindgen(js_name = verifiableCredential)]
   pub fn verifiable_credential(&self) -> ArrayJwt {
     self
@@ -124,7 +124,7 @@ impl WasmJwtPresentation {
       .map(|value| value.unchecked_into::<ArrayPolicy>())
   }
 
-  /// Returns a copy of the proof property.
+  /// Optional proof that can be verified by users in addition to JWS.
   #[wasm_bindgen]
   pub fn proof(&self) -> Result<Option<MapStringAny>> {
     self.0.proof.clone().map(MapStringAny::try_from).transpose()

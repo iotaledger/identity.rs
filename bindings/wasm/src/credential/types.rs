@@ -140,7 +140,7 @@ interface Subject {
 }"#;
 
 #[wasm_bindgen(typescript_custom_section)]
-const I_SUBJECT: &'static str = r#"
+const I_JWT_PRESENTATOIN_DIDS: &'static str = r#"
 /**
  * DIDs of the presentation holder and the issuers of the contained credentials.
  */

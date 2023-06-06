@@ -54,7 +54,7 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const I_PRESENTATION_OPTIONS: &'static str = r#"
+const I_JWT_PRESENTATION_OPTIONS: &'static str = r#"
 /**  Options to be set in the JWT claims of a verifiable presentation. */
 interface IJwtPresentationOptions {
     /**
@@ -64,7 +64,7 @@ interface IJwtPresentationOptions {
     readonly expirationDate?: Timestamp;
  
     /**
-     * Set the issuance date.
+     * Set the presentation's issuance date.
      * Default: current datetime.
      */
     readonly issuanceDate?: Timestamp;
@@ -75,7 +75,7 @@ interface IJwtPresentationOptions {
      * ## Note:
      * Value must be a valid URL.
      *
-     * Default: `undefined`
+     * Default: `undefined`.
      */
     readonly audience?: string;
 }"#;

@@ -856,7 +856,7 @@ impl WasmIotaDocument {
     Ok(promise.unchecked_into())
   }
 
-  /// Produces a JWT where the payload is produced from the given `presentation`
+  /// Produces a JWT where the payload is produced from the given presentation.
   /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be

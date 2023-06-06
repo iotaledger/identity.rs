@@ -192,7 +192,7 @@ describe("#JwkStorageDocument", function() {
         const keystore = new JwkMemStore();
         const keyIdStore = new KeyIdMemStore();
         const storage = new Storage(keystore, keyIdStore);
-        const issuerDoc = new IotaDocument("n1");
+        const issuerDoc = new IotaDocument("tst1");
         const fragment = "#key-1";
         await issuerDoc.generateMethod(
             storage,
@@ -202,7 +202,7 @@ describe("#JwkStorageDocument", function() {
             MethodScope.VerificationMethod(),
         );
 
-        const holderDoc = new IotaDocument("n2");
+        const holderDoc = new IotaDocument("tst2");
         await holderDoc.generateMethod(
             storage,
             JwkMemStore.ed25519KeyType(),
