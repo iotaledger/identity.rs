@@ -5,23 +5,20 @@ use std::collections::BTreeMap;
 
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
-use identity_iota::core::Url;
-use identity_iota::credential::vc_jwt_validation::CredentialValidator as JwtCredentialValidator;
-use identity_iota::credential::DecodedJwtPresentation;
-use identity_iota::credential::StatusCheck;
+
 use identity_iota::did::CoreDID;
 
 use crate::common::ImportedDocumentLock;
 use crate::common::ImportedDocumentReadGuard;
-use crate::common::WasmTimestamp;
+
 use crate::credential::jwt_presentation::WasmJwtPresentation;
-use crate::credential::types::ArrayCoreDID;
+
 use crate::credential::JwtPresentationDids;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmJwt;
 use crate::did::ArrayIToCoreDocument;
 use crate::did::IToCoreDocument;
-use crate::did::WasmCoreDID;
+
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::verification::IJwsVerifier;

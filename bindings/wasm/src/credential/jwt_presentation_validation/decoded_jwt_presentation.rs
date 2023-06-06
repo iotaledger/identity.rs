@@ -6,7 +6,8 @@ use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
 use crate::credential::jwt_presentation::WasmJwtPresentation;
-use crate::credential::{ArrayDecodedJwtCredential, WasmDecodedJwtCredential};
+use crate::credential::ArrayDecodedJwtCredential;
+use crate::credential::WasmDecodedJwtCredential;
 use crate::jose::WasmJwsHeader;
 
 /// A cryptographically verified and decoded presentation.
