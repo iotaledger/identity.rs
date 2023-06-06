@@ -15,8 +15,6 @@ members = [
 ]
 
 exclude = [
-  "identity_iota_core_legacy",
-  "bindings/stronghold-nodejs",
   "bindings/wasm",
 ]
 
