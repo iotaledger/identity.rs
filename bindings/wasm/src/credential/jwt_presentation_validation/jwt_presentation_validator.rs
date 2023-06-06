@@ -1,34 +1,26 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::BTreeMap;
-
-use identity_iota::core::Object;
-use identity_iota::core::OneOrMany;
-
-use identity_iota::did::CoreDID;
-
+use super::decoded_jwt_presentation::WasmDecodedJwtPresentation;
+use super::options::WasmJwtPresentationValidationOptions;
 use crate::common::ImportedDocumentLock;
 use crate::common::ImportedDocumentReadGuard;
-
 use crate::credential::jwt_presentation::WasmJwtPresentation;
-
 use crate::credential::JwtPresentationDids;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmJwt;
 use crate::did::ArrayIToCoreDocument;
 use crate::did::IToCoreDocument;
-
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::verification::IJwsVerifier;
 use crate::verification::WasmJwsVerifier;
-
+use identity_iota::core::Object;
+use identity_iota::core::OneOrMany;
 use identity_iota::credential::JwtPresentationValidator;
+use identity_iota::did::CoreDID;
+use std::collections::BTreeMap;
 use wasm_bindgen::prelude::*;
-
-use super::decoded_jwt_presentation::WasmDecodedJwtPresentation;
-use super::options::WasmJwtPresentationValidationOptions;
 
 #[wasm_bindgen(js_name = JwtPresentationValidator, inspectable)]
 pub struct WasmJwtPresentationValidator(JwtPresentationValidator<WasmJwsVerifier>);

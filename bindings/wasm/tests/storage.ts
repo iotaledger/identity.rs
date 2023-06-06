@@ -23,12 +23,12 @@ import {
     Storage,
     Timestamp,
     VerificationMethod,
-    verifyEdDSA
+    verifyEdDSA,
 } from "../node";
 import { JwkMemStore } from "./jwk_storage";
 import { createVerificationMethod, KeyIdMemStore } from "./key_id_storage";
 
-describe("#JwkStorageDocument", function () {
+describe("#JwkStorageDocument", function() {
     it("storage getters should work", async () => {
         const keystore = new JwkMemStore();
         // Put some data in the keystore
@@ -65,7 +65,7 @@ describe("#JwkStorageDocument", function () {
         const storage = new Storage(keystore, keyIdStore);
         const VALID_DID_EXAMPLE = "did:example:123";
         const doc = new CoreDocument({
-            id: VALID_DID_EXAMPLE
+            id: VALID_DID_EXAMPLE,
         });
         const fragment = "#key-1";
         await doc.generateMethod(
@@ -73,7 +73,7 @@ describe("#JwkStorageDocument", function () {
             JwkMemStore.ed25519KeyType(),
             JwsAlgorithm.EdDSA,
             fragment,
-            MethodScope.VerificationMethod()
+            MethodScope.VerificationMethod(),
         );
         // Check that we can resolve the generated method.
         let method = doc.resolveMethod(fragment);
@@ -103,11 +103,11 @@ describe("#JwkStorageDocument", function () {
                 id: "did:example:ebfeb1f712ebc6f1c276e12ec21",
                 degree: {
                     type: "BachelorDegree",
-                    name: "Bachelor of Science and Arts"
-                }
+                    name: "Bachelor of Science and Arts",
+                },
             },
             issuer: doc.id(),
-            issuanceDate: "2010-01-01T00:00:00Z"
+            issuanceDate: "2010-01-01T00:00:00Z",
         };
 
         const credential = new Credential(credentialFields);
@@ -151,7 +151,7 @@ describe("#JwkStorageDocument", function () {
             JwkMemStore.ed25519KeyType(),
             JwsAlgorithm.EdDSA,
             fragment,
-            MethodScope.VerificationMethod()
+            MethodScope.VerificationMethod(),
         );
         // Check that we can resolve the generated method.
         let method = doc.resolveMethod(fragment);
@@ -180,11 +180,11 @@ describe("#JwkStorageDocument", function () {
                 id: "did:example:ebfeb1f712ebc6f1c276e12ec21",
                 degree: {
                     type: "BachelorDegree",
-                    name: "Bachelor of Science and Arts"
-                }
+                    name: "Bachelor of Science and Arts",
+                },
             },
             issuer: doc.id(),
-            issuanceDate: "2010-01-01T00:00:00Z"
+            issuanceDate: "2010-01-01T00:00:00Z",
         };
     });
 
@@ -199,7 +199,7 @@ describe("#JwkStorageDocument", function () {
             JwkMemStore.ed25519KeyType(),
             JwsAlgorithm.EdDSA,
             fragment,
-            MethodScope.VerificationMethod()
+            MethodScope.VerificationMethod(),
         );
 
         const holderDoc = new IotaDocument("n2");
@@ -208,7 +208,7 @@ describe("#JwkStorageDocument", function () {
             JwkMemStore.ed25519KeyType(),
             JwsAlgorithm.EdDSA,
             fragment,
-            MethodScope.VerificationMethod()
+            MethodScope.VerificationMethod(),
         );
 
         let customVerifier = new CustomVerifier();
@@ -220,11 +220,11 @@ describe("#JwkStorageDocument", function () {
                 id: holderDoc.id(),
                 degree: {
                     type: "BachelorDegree",
-                    name: "Bachelor of Science and Arts"
-                }
+                    name: "Bachelor of Science and Arts",
+                },
             },
             issuer: issuerDoc.id(),
-            issuanceDate: Timestamp.nowUTC()
+            issuanceDate: Timestamp.nowUTC(),
         };
 
         const credential = new Credential(credentialFields);
@@ -232,12 +232,12 @@ describe("#JwkStorageDocument", function () {
             storage,
             fragment,
             credential,
-            new JwsSignatureOptions()
+            new JwsSignatureOptions(),
         );
 
         const presentation = new JwtPresentation({
             holder: holderDoc.id(),
-            verifiableCredential: [credentialJwt.toString(), credentialJwt.toString()]
+            verifiableCredential: [credentialJwt.toString(), credentialJwt.toString()],
         });
 
         const expirationDate = Timestamp.nowUTC().checkedAdd(Duration.days(2));
@@ -250,8 +250,8 @@ describe("#JwkStorageDocument", function () {
             new JwtPresentationOptions({
                 expirationDate,
                 issuanceDate: Timestamp.nowUTC(),
-                audience
-            })
+                audience,
+            }),
         );
 
         let validator = new JwtPresentationValidator(customVerifier);
@@ -260,7 +260,7 @@ describe("#JwkStorageDocument", function () {
             holderDoc,
             [issuerDoc],
             JwtPresentationValidationOptions.default(),
-            FailFast.FirstError
+            FailFast.FirstError,
         );
 
         assert.deepStrictEqual(decoded.credentials()[0].credential().toJSON(), credential.toJSON());
@@ -270,7 +270,7 @@ describe("#JwkStorageDocument", function () {
 
         // check issuance date validation.
         let options = new JwtPresentationValidationOptions({
-            latestIssuanceDate: Timestamp.nowUTC().checkedSub(Duration.days(1))
+            latestIssuanceDate: Timestamp.nowUTC().checkedSub(Duration.days(1)),
         });
         assert.throws(() => {
             validator.validate(presentationJwt, holderDoc, [issuerDoc], options, FailFast.FirstError);
@@ -278,12 +278,12 @@ describe("#JwkStorageDocument", function () {
 
         // Check expiration date validation.
         options = new JwtPresentationValidationOptions({
-            earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(1))
+            earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(1)),
         });
         validator.validate(presentationJwt, holderDoc, [issuerDoc], options, FailFast.FirstError);
 
         options = new JwtPresentationValidationOptions({
-            earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(3))
+            earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(3)),
         });
         assert.throws(() => {
             validator.validate(presentationJwt, holderDoc, [issuerDoc], options, FailFast.FirstError);
