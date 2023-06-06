@@ -10,6 +10,8 @@ pub use self::domain_linkage_configuration::WasmDomainLinkageConfiguration;
 pub use self::jws::WasmJws;
 pub use self::jwt::WasmJwt;
 pub use self::jwt_credential_validation::*;
+pub use self::jwt_presentation::*;
+pub use self::jwt_presentation_validation::*;
 pub use self::presentation::WasmPresentation;
 pub use self::presentation_builder::*;
 pub use self::presentation_validator::WasmPresentationValidator;

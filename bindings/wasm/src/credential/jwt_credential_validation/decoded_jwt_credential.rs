@@ -37,3 +37,9 @@ impl WasmDecodedJwtCredential {
     WasmCredential(self.0.credential)
   }
 }
+
+impl From<DecodedJwtCredential> for WasmDecodedJwtCredential {
+  fn from(credential: DecodedJwtCredential) -> Self {
+    Self(credential)
+  }
+}

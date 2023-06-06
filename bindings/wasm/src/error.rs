@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::credential::CompoundJwtPresentationValidationError;
 use identity_iota::resolver;
 use identity_iota::storage::key_id_storage::KeyIdStorageError;
 use identity_iota::storage::key_id_storage::KeyIdStorageErrorKind;
@@ -254,6 +255,15 @@ impl From<identity_iota::credential::vc_jwt_validation::CompoundCredentialValida
   fn from(error: identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundCredentialValidationError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<CompoundJwtPresentationValidationError> for WasmError<'_> {
+  fn from(error: CompoundJwtPresentationValidationError) -> Self {
+    Self {
+      name: Cow::Borrowed("CompoundJwtPresentationValidationError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

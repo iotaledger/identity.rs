@@ -45,10 +45,8 @@ impl TryFrom<IJwtPresentation> for JwtPresentationBuilder {
         builder = builder.type_(value);
       }
     }
-    if let Some(credentials) = verifiable_credential {
-      for credential in credentials.into_vec() {
-        builder = builder.credential(credential);
-      }
+    for credential in verifiable_credential.into_vec() {
+      builder = builder.credential(Jwt::new(credential));
     }
     if let Some(refresh_service) = refresh_service {
       for service in refresh_service.into_vec() {
@@ -71,7 +69,7 @@ extern "C" {
   pub type IJwtPresentation;
 }
 
-/// Fields for constructing a new {@link Presentation}.
+/// Fields for constructing a new {@link JwtPresentation}.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[typescript(name = "IJwtPresentation", readonly, optional)]
@@ -85,13 +83,9 @@ struct IJwtPresentationHelper {
   /// One or more URIs defining the type of the presentation. Contains the base context by default.
   #[typescript(name = "type", type = "string | Array<string>")]
   r#type: Option<OneOrMany<String>>,
-  /// Credential(s) expressing the claims of the presentation.
-  #[typescript(
-    optional = false,
-    name = "verifiableCredential",
-    type = "Credential | Array<Credential>"
-  )]
-  verifiable_credential: Option<OneOrMany<Jwt>>,
+  /// JWT Credential(s) expressing the claims of the presentation.
+  #[typescript(optional = false, name = "verifiableCredential", type = "string | Array<string>")]
+  verifiable_credential: OneOrMany<String>,
   /// The entity that generated the presentation.
   #[typescript(optional = false, type = "string | CoreDID | IotaDID ")]
   holder: String,

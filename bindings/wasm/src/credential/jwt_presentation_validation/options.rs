@@ -68,4 +68,12 @@ interface IJwtPresentationValidationOptions {
 
     /** Options which affect the verification of the signature on the credential. */
     readonly verifierOptions?: VerifierOptions;
+
+    /** Declare that the presentation is **not** considered valid if it expires before this `Timestamp`.
+     * Uses the current datetime during validation if not set. */
+    readonly earliestExpiryDate?: Timestamp;
+
+    /** Declare that the presentation is **not** considered valid if it was issued later than this `Timestamp`.
+     * Uses the current datetime during validation if not set. */
+    readonly latestIssuanceDate?: Timestamp;
 }"#;

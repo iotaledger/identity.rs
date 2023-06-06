@@ -69,6 +69,5 @@ interface IJwtCredentialValidationOptions {
     readonly status?: StatusCheck;
 
     /** Options which affect the verification of the signature on the credential. */
-    readonly verifierOptions?: VerifierOptions;
-
+    readonly verifierOptions?: JwsVerificationOptions;
 }"#;

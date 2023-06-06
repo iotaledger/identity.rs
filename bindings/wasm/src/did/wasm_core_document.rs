@@ -18,6 +18,7 @@ use crate::common::UOneOrManyNumber;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
+use crate::credential::WasmJwtPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
@@ -27,6 +28,7 @@ use crate::error::WasmResult;
 use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
 use crate::storage::WasmJwsSignatureOptions;
+use crate::storage::WasmJwtPresentationOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
 use crate::verification::IJwsVerifier;
@@ -41,6 +43,8 @@ use identity_iota::core::OneOrSet;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
+use identity_iota::credential::JwtPresentation;
+use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::RevocationDocumentExt;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
@@ -702,13 +706,11 @@ impl WasmCoreDocument {
     Ok(promise.unchecked_into())
   }
 
-  /// Produces a JWS where the payload is produced from the given `credential`
+  /// Produces a JWT where the payload is produced from the given `credential`
   /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
-  // TODO: Perhaps this should be called `signCredential` (and the old `signCredential` method would have to be updated
-  // or removed)?
   #[wasm_bindgen(js_name = createCredentialJwt)]
   pub fn create_credential_jwt(
     &self,
@@ -726,6 +728,44 @@ impl WasmCoreDocument {
         .read()
         .await
         .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
+        .await
+        .wasm_result()
+        .map(WasmJwt::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Produces a JWT where the payload is produced from the given `presentation`
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+  ///
+  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  #[wasm_bindgen(js_name = createPresentationJwt)]
+  pub fn create_presentation_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    presentation: &WasmJwtPresentation,
+    signature_options: &WasmJwsSignatureOptions,
+    presentation_options: &WasmJwtPresentationOptions,
+  ) -> Result<PromiseJwt> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = signature_options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let presentation_clone: JwtPresentation = presentation.0.clone();
+    let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .sign_presentation(
+          &presentation_clone,
+          &storage_clone,
+          &fragment,
+          &options_clone,
+          &presentation_options_clone,
+        )
         .await
         .wasm_result()
         .map(WasmJwt::new)
