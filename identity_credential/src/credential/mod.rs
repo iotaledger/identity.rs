@@ -7,7 +7,10 @@
 
 mod builder;
 mod credential;
+// TODO: Feature-gate Domain Linkage Types behind its own flag and require flag = ["validator"].
+#[cfg(feature = "validator")]
 mod domain_linkage_configuration;
+#[cfg(feature = "validator")]
 mod domain_linkage_credential_builder;
 mod evidence;
 mod issuer;
@@ -25,7 +28,9 @@ mod subject;
 
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
+#[cfg(feature = "validator")]
 pub use self::domain_linkage_configuration::DomainLinkageConfiguration;
+#[cfg(feature = "validator")]
 pub use self::domain_linkage_credential_builder::DomainLinkageCredentialBuilder;
 pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;
