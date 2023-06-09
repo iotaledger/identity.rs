@@ -1,8 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_did;
+use examples::create_did_storage;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_iota::core::Duration;
 use identity_iota::core::FromJson;
@@ -11,15 +12,15 @@ use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
+use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions;
 use identity_iota::credential::Credential;
-use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
 use identity_iota::credential::DomainLinkageValidationError;
 use identity_iota::credential::DomainLinkageValidator;
+use identity_iota::credential::Jwt;
 use identity_iota::credential::LinkedDomainService;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::ProofOptions;
+use identity_iota::did::CoreDID;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaClientExt;
@@ -27,6 +28,10 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::resolver::Resolver;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::JwsSignatureOptions;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -51,8 +56,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a DID for the entity that will issue the Domain Linkage Credential.
-  let (_, mut did_document, keypair): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager).await?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, mut did_document, fragment): (Address, IotaDocument, String) =
+    create_did_storage(&client, &mut secret_manager, &storage).await?;
   let did: IotaDID = did_document.id().clone();
 
   // =====================================================
@@ -87,7 +93,7 @@ async fn main() -> anyhow::Result<()> {
   // and can be made available on the domain.
 
   // Create the Domain Linkage Credential.
-  let mut domain_linkage_credential: Credential = DomainLinkageCredentialBuilder::new()
+  let domain_linkage_credential: Credential = DomainLinkageCredentialBuilder::new()
     .issuer(updated_did_document.id().clone().into())
     .origin(domain_1.clone())
     .issuance_date(Timestamp::now_utc())
@@ -95,17 +101,18 @@ async fn main() -> anyhow::Result<()> {
     .expiration_date(Timestamp::now_utc().checked_add(Duration::days(365)).unwrap())
     .build()?;
 
-  // Sign the credential.
-  updated_did_document.sign_data(
-    &mut domain_linkage_credential,
-    keypair.private(),
-    "#key-1",
-    ProofOptions::default(),
-  )?;
+  let jwt: Jwt = updated_did_document
+    .sign_credential(
+      &domain_linkage_credential,
+      &storage,
+      &fragment,
+      &JwsSignatureOptions::default(),
+    )
+    .await
+    .unwrap();
 
   // Create the DID Configuration Resource which wraps the Domain Linkage credential.
-  let configuration_resource: DomainLinkageConfiguration =
-    DomainLinkageConfiguration::new(vec![domain_linkage_credential]);
+  let configuration_resource: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt]);
   println!("Configuration Resource >>: {configuration_resource:#}");
 
   // The DID Configuration resource can be made available on `https://foo.example.com/.well-known/did-configuration.json`.
@@ -133,7 +140,9 @@ async fn main() -> anyhow::Result<()> {
 
   // Fetch the DID Configuration resource
   // let configuration_resource: DomainLinkageConfiguration =
-  // DomainLinkageConfiguration::fetch_configuration(domain_foo).await.unwrap();
+  //   DomainLinkageConfiguration::fetch_configuration(domain_foo.clone())
+  //     .await
+  //     .unwrap();
 
   // But since the DID Configuration
   // resource isn't available online in this example, we will simply deserialize the JSON.
@@ -141,14 +150,14 @@ async fn main() -> anyhow::Result<()> {
     DomainLinkageConfiguration::from_json(&configuration_resource_json)?;
 
   // Retrieve the issuers of the Domain Linkage Credentials which correspond to the possibly linked DIDs.
-  let linked_dids: Vec<&Url> = configuration_resource.issuers().collect();
+  let linked_dids: Vec<CoreDID> = configuration_resource.issuers()?;
   assert_eq!(linked_dids.len(), 1);
 
   // Resolve the DID Document of the DID that issued the credential.
   let issuer_did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
-  let validation_result: Result<(), DomainLinkageValidationError> = DomainLinkageValidator::validate_linkage(
+  let validation_result: Result<(), DomainLinkageValidationError> = DomainLinkageValidator::new().validate_linkage(
     &issuer_did_document,
     &configuration_resource,
     &domain_foo,
@@ -178,7 +187,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Fetch the DID Configuration resource
   // let configuration_resource: DomainLinkageConfiguration =
-  // DomainLinkageConfiguration::fetch_configuration(domain_foo).await.unwrap();
+  //   DomainLinkageConfiguration::fetch_configuration(domain_foo.clone()).await?;
 
   // But since the DID Configuration
   // resource isn't available online in this example, we will simply deserialize the JSON.
@@ -186,7 +195,7 @@ async fn main() -> anyhow::Result<()> {
     DomainLinkageConfiguration::from_json(&configuration_resource_json)?;
 
   // Validate the linkage.
-  let validation_result: Result<(), DomainLinkageValidationError> = DomainLinkageValidator::validate_linkage(
+  let validation_result: Result<(), DomainLinkageValidationError> = DomainLinkageValidator::new().validate_linkage(
     &did_document,
     &configuration_resource,
     &domain_foo,
