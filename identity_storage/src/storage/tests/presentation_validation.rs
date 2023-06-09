@@ -134,8 +134,7 @@ where
     .await
     .unwrap();
 
-  let (holder, issuers) =
-    JwtPresentationValidator::extract_dids::<CoreDID, CoreDID, Object, Object>(&presentation_jwt).unwrap();
+  let (holder, issuers) = JwtPresentationValidator::extract_dids::<CoreDID, CoreDID>(&presentation_jwt).unwrap();
   assert_eq!(holder.to_url(), setup.subject_doc.as_ref().id().to_url());
   assert_eq!(
     issuers.get(0).unwrap().to_url(),

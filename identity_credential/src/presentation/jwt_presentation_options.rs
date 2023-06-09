@@ -19,6 +19,26 @@ pub struct JwtPresentationOptions {
   pub audience: Option<Url>,
 }
 
+impl JwtPresentationOptions {
+  /// Set the presentation's expiration date.
+  pub fn expiration_date(mut self, expires: Timestamp) -> Self {
+    self.expiration_date = Some(expires);
+    self
+  }
+
+  /// Set the issuance date.
+  pub fn issuance_date(mut self, issued_at: Timestamp) -> Self {
+    self.issuance_date = Some(issued_at);
+    self
+  }
+
+  /// Sets the audience for presentation (`aud` property in JWT claims).
+  pub fn audience(mut self, audience: Url) -> Self {
+    self.audience = Some(audience);
+    self
+  }
+}
+
 impl Default for JwtPresentationOptions {
   fn default() -> Self {
     Self {

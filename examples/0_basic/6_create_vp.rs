@@ -7,34 +7,42 @@
 //!
 //! cargo run --example 6_create_vp
 
+use examples::create_did_storage;
+use examples::MemStorage;
+use identity_iota::core::Object;
+use identity_iota::credential::DecodedJwtPresentation;
+use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtPresentation;
+use identity_iota::credential::JwtPresentationBuilder;
+use identity_iota::credential::JwtPresentationOptions;
+use identity_iota::credential::JwtPresentationValidationOptions;
+use identity_iota::credential::JwtPresentationValidator;
+use identity_iota::did::CoreDID;
+use identity_iota::document::verifiable::JwsVerificationOptions;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::JwsSignatureOptions;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::types::block::address::Address;
 
-use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::Duration;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
-use identity_iota::core::ToJson;
 use identity_iota::core::Url;
+use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions;
+use identity_iota::credential::vc_jwt_validation::CredentialValidator;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-use identity_iota::credential::CredentialValidationOptions;
-use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::FailFast;
-use identity_iota::credential::Presentation;
-use identity_iota::credential::PresentationBuilder;
-use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::credential::Subject;
 use identity_iota::credential::SubjectHolderRelationship;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DID;
-use identity_iota::document::verifiable::VerifierOptions;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
 
@@ -56,8 +64,9 @@ async fn main() -> anyhow::Result<()> {
       .password("secure_password_1")
       .build(random_stronghold_path())?,
   );
-  let (_, issuer_document, key_pair_issuer): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager_issuer).await?;
+  let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) =
+    create_did_storage(&client, &mut secret_manager_issuer, &storage_issuer).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
@@ -65,8 +74,9 @@ async fn main() -> anyhow::Result<()> {
       .password("secure_password_2")
       .build(random_stronghold_path())?,
   );
-  let (_, alice_document, key_pair_alice): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager_alice).await?;
+  let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, alice_document, fragment_alice): (Address, IotaDocument, String) =
+    create_did_storage(&client, &mut secret_manager_alice, &storage_alice).await?;
 
   // ===========================================================================
   // Step 2: Issuer creates and signs a Verifiable Credential.
@@ -84,34 +94,36 @@ async fn main() -> anyhow::Result<()> {
   }))?;
 
   // Build credential using subject above and issuer.
-  let mut credential: Credential = CredentialBuilder::default()
+  let credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer_document.id().as_str())?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;
-
-  // Sign the Credential with the issuer's verification method.
-  issuer_document.sign_data(
-    &mut credential,
-    key_pair_issuer.private(),
-    "#key-1",
-    ProofOptions::default(),
-  )?;
   println!("Credential JSON > {credential:#}");
+
+  let credential_jwt: Jwt = issuer_document
+    .sign_credential(
+      &credential,
+      &storage_issuer,
+      &fragment_issuer,
+      &JwsSignatureOptions::default(),
+    )
+    .await?;
 
   // Before sending this credential to the holder the issuer wants to validate that some properties
   // of the credential satisfy their expectations.
 
   // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
-  CredentialValidator::validate(
-    &credential,
-    &issuer_document,
-    &CredentialValidationOptions::default(),
-    FailFast::FirstError,
-  )
-  .unwrap();
+  CredentialValidator::new()
+    .validate::<_, Object>(
+      &credential_jwt,
+      &issuer_document,
+      &CredentialValidationOptions::default(),
+      FailFast::FirstError,
+    )
+    .unwrap();
 
   println!("VC successfully validated");
 
@@ -119,15 +131,11 @@ async fn main() -> anyhow::Result<()> {
   // Step 3: Issuer sends the Verifiable Credential to the holder.
   // ===========================================================================
 
-  // The issuer is now sure that the credential they are about to issue satisfies their expectations.
-  // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
-  let credential_json: String = credential.to_json()?;
-
   // ===========================================================================
   // Step 4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
   // ===========================================================================
 
-  // A unique random challenge generated by the requester per presentation can mitigate replay attacks
+  // A unique random challenge generated by the requester per presentation can mitigate replay attacks.
   let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
 
   // The verifier and holder also agree that the signature should have an expiry date
@@ -138,37 +146,27 @@ async fn main() -> anyhow::Result<()> {
   // Step 5: Holder creates and signs a verifiable presentation from the issued credential.
   // ===========================================================================
 
-  // Deserialize the credential.
-  let credential: Credential = Credential::from_json(credential_json.as_str())?;
-
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
-  let mut presentation: Presentation = PresentationBuilder::default()
-    .holder(Url::parse(alice_document.id().as_ref())?)
-    .credential(credential)
-    .build()?;
+  let presentation: JwtPresentation =
+    JwtPresentationBuilder::new(alice_document.id().to_url().into(), Default::default())
+      .credential(credential_jwt)
+      .build()?;
 
   // Sign the verifiable presentation using the holder's verification method
   // and include the requested challenge and expiry timestamp.
-  alice_document.sign_data(
-    &mut presentation,
-    key_pair_alice.private(),
-    "#key-1",
-    ProofOptions::new().challenge(challenge.to_string()).expires(expires),
-  )?;
+  let presentation_jwt: Jwt = alice_document
+    .sign_presentation(
+      &presentation,
+      &storage_alice,
+      &fragment_alice,
+      &JwsSignatureOptions::default().nonce(challenge.to_owned()),
+      &JwtPresentationOptions::default().expiration_date(expires),
+    )
+    .await?;
 
   // ===========================================================================
-  // Step 6: Holder sends a verifiable presentation to the verifier.
+  // Step 6: Verifier receives the Verifiable Presentation and verifies it.
   // ===========================================================================
-
-  // Convert the Verifiable Presentation to JSON to send it to the verifier.
-  let presentation_json: String = presentation.to_json()?;
-
-  // ===========================================================================
-  // Step 7: Verifier receives the Verifiable Presentation and verifies it.
-  // ===========================================================================
-
-  // Deserialize the presentation from the holder:
-  let presentation: Presentation = Presentation::from_json(&presentation_json)?;
 
   // The verifier wants the following requirements to be satisfied:
   // - Signature verification (including checking the requested challenge to mitigate replay attacks)
@@ -176,35 +174,39 @@ async fn main() -> anyhow::Result<()> {
   // - The presentation holder must always be the subject, regardless of the presence of the nonTransferable property
   // - The issuance date must not be in the future.
 
-  let presentation_verifier_options: VerifierOptions = VerifierOptions::new()
-    .challenge(challenge.to_owned())
-    .allow_expired(false);
+  let presentation_verifier_options: JwsVerificationOptions =
+    JwsVerificationOptions::default().nonce(challenge.to_owned());
 
   // Do not allow credentials that expire within the next 10 hours.
   let credential_validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
     .earliest_expiry_date(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap());
 
-  let presentation_validation_options = PresentationValidationOptions::default()
+  let presentation_validation_options = JwtPresentationValidationOptions::default()
     .presentation_verifier_options(presentation_verifier_options)
     .shared_validation_options(credential_validation_options)
     .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
+
+  let (holder_did, issuer_dids): (CoreDID, Vec<CoreDID>) = JwtPresentationValidator::extract_dids(&presentation_jwt)?;
 
   // Resolve issuer and holder documents and verify presentation.
   // Passing the holder and issuer to `verify_presentation` will bypass the resolution step.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
-  resolver
-    .verify_presentation(
-      &presentation,
-      &presentation_validation_options,
-      FailFast::FirstError,
-      None,
-      None,
-    )
-    .await?;
+
+  let holder: IotaDocument = resolver.resolve(&holder_did).await?;
+  // TODO: Add convenience method Resolver::resolve_multiple/resolve_all?
+  let issuer: IotaDocument = resolver.resolve(&issuer_dids[0]).await?;
+
+  let presentation: DecodedJwtPresentation = JwtPresentationValidator::new().validate(
+    &presentation_jwt,
+    &holder,
+    &[issuer],
+    &presentation_validation_options,
+    FailFast::FirstError,
+  )?;
 
   // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
-  println!("VP successfully validated");
+  println!("VP successfully validated: {:#?}", presentation.presentation);
 
   // Note that we did not declare a latest allowed issuance date for credentials. This is because we only want to check
   // that the credentials do not have an issuance date in the future which is a default check.
