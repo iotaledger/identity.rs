@@ -18,8 +18,8 @@ import {
     VerificationMethod,
     verifyEdDSA,
 } from "../node";
-import { JwkMemStore } from "./jwk_storage";
-import { createVerificationMethod, KeyIdMemStore } from "./key_id_storage";
+import { JwkMemStore, KeyIdMemStore } from "../node";
+import { createVerificationMethod } from "./key_id_storage";
 
 describe("#JwkStorageDocument", function() {
     it("storage getters should work", async () => {
