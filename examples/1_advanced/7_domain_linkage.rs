@@ -17,7 +17,6 @@ use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
 use identity_iota::credential::DomainLinkageValidationError;
 use identity_iota::credential::DomainLinkageValidator;
-use identity_iota::credential::Issuer;
 use identity_iota::credential::LinkedDomainService;
 use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
@@ -89,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create the Domain Linkage Credential.
   let mut domain_linkage_credential: Credential = DomainLinkageCredentialBuilder::new()
-    .issuer(Issuer::Url(updated_did_document.id().to_url().into()))
+    .issuer(updated_did_document.id().clone().into())
     .origin(domain_1.clone())
     .issuance_date(Timestamp::now_utc())
     // Expires after a year.

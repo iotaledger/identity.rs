@@ -176,7 +176,6 @@ mod tests {
   use crate::credential::Credential;
   use crate::credential::DomainLinkageConfiguration;
   use crate::credential::DomainLinkageCredentialBuilder;
-  use crate::credential::Issuer;
   use crate::credential::Subject;
   use crate::validator::domain_linkage_validator::DomainLinkageValidationResult;
   use crate::validator::domain_linkage_validator::DomainLinkageValidator;
@@ -192,7 +191,6 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_did::DID;
   use identity_document::document::CoreDocument;
 
   #[test]
@@ -457,7 +455,7 @@ mod tests {
     domains.append(domain_1.clone());
 
     let credential: Credential = DomainLinkageCredentialBuilder::new()
-      .issuer(Issuer::Url(doc.id().to_url().into()))
+      .issuer(doc.id().clone())
       .origin(domain_1)
       .issuance_date(Timestamp::now_utc())
       .expiration_date(Timestamp::now_utc().checked_add(Duration::days(365)).unwrap())
