@@ -177,20 +177,20 @@ mod tests {
 
   #[test]
   fn test_from_json_valid() {
-    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-valid.json");
+    const JSON1: &str = include_str!("../../tests/fixtures/domain-config-valid.json");
     DomainLinkageConfiguration::from_json(JSON1).unwrap();
   }
 
   #[test]
   fn test_from_json_invalid_context() {
-    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-invalid-context.json");
+    const JSON1: &str = include_str!("../../tests/fixtures/domain-config-invalid-context.json");
     let deserialization_result: Result<DomainLinkageConfiguration> = DomainLinkageConfiguration::from_json(JSON1);
     assert!(deserialization_result.is_err());
   }
 
   #[test]
   fn test_from_json_extra_property() {
-    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-extra-property.json");
+    const JSON1: &str = include_str!("../../tests/fixtures/domain-config-extra-property.json");
     let deserialization_result: Result<DomainLinkageConfiguration> = DomainLinkageConfiguration::from_json(JSON1);
     assert!(deserialization_result.is_err());
   }
