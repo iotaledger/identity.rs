@@ -27,8 +27,7 @@ lazy_static! {
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 ///
 /// Note:
-/// - Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
-///   is supported.
+/// - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(try_from = "__DomainLinkageConfiguration")]
 pub struct DomainLinkageConfiguration(__DomainLinkageConfiguration);

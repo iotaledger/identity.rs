@@ -14,7 +14,7 @@ use identity_core::common::Url;
 use identity_did::CoreDID;
 use identity_did::DID;
 
-/// Convenient builder to create a spec compliant Linked Data Domain Linkage Credential.
+/// Convenient builder to create a spec compliant Domain Linkage Credential.
 ///
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format>
 ///
