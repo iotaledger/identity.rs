@@ -3,6 +3,7 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
+    JwkMemStore,
     JwsAlgorithm,
     KeyPair,
     KeyType,
@@ -46,9 +47,9 @@ export async function createDidStorage(client: Client, secretManager: SecretMana
 
     const fragment = await document.generateMethod(
         storage,
-        "TODO",
+        JwkMemStore.ed25519KeyType(),
         JwsAlgorithm.EdDSA,
-        undefined,
+        "#jwk",
         MethodScope.AssertionMethod(),
     );
 

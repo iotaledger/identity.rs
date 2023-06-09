@@ -26,6 +26,9 @@ impl WasmJwt {
   }
 }
 
+impl_wasm_json!(WasmJwt, Jwt);
+impl_wasm_clone!(WasmJwt, Jwt);
+
 impl From<Jwt> for WasmJwt {
   fn from(value: Jwt) -> Self {
     WasmJwt(value)

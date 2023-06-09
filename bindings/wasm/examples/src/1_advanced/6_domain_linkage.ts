@@ -14,8 +14,10 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
+    JwkMemStore,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
+    KeyIdMemStore,
     LinkedDomainService,
     ProofOptions,
     Storage,
@@ -39,7 +41,7 @@ export async function domainLinkage() {
         mnemonic: Bip39.randomMnemonic(),
     };
 
-    const storage: Storage = storage_impl();
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
 
     // Creates a new wallet and identity (see "0_create_did" example).
     let { document, fragment } = await createDidStorage(client, secretManager, storage);
@@ -88,11 +90,11 @@ export async function domainLinkage() {
     );
 
     // Create the DID Configuration Resource which wraps the Domain Linkage credential.
-    let configurationResource: DomainLinkageConfiguration = new DomainLinkageConfiguration([domainLinkageCredential]);
+    let configurationResource: DomainLinkageConfiguration = new DomainLinkageConfiguration([credentialJwt]);
 
     // The DID Configuration resource can be made available on `https://foo.example.com/.well-known/did-configuration.json`.
     let configurationResourceJson = configurationResource.toJSON();
-    console.log("Configuration Resource:", JSON.stringify(configurationResource.toJSON(), null, 2));
+    console.log("Configuration Resource:", JSON.stringify(configurationResourceJson, null, 2));
 
     // Now the DID Document links to the Domains through the service, and the Foo domain links to the DID
     // through the DID Configuration resource. A bidirectional linkage is established.
@@ -165,12 +167,8 @@ export async function domainLinkage() {
         domains[0],
         JwtCredentialValidationOptions.default(),
     );
-}
 
-// TODO: Port memstores.
-function storage_impl(): Storage {
-    // @ts-ignore
-    return new Object();
+    console.log("Successfully validated Domain Linkage!");
 }
 
 async function publishDocument(
