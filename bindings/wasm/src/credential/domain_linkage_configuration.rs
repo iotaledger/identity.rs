@@ -1,24 +1,26 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::ArrayString;
-use crate::credential::ArrayCredential;
-use crate::credential::WasmCredential;
+use crate::credential::ArrayCoreDID;
+use crate::credential::WasmJwt;
+use crate::did::WasmCoreDID;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity_iota::credential::Credential;
+
 use identity_iota::credential::DomainLinkageConfiguration;
+use identity_iota::credential::Jwt;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+
+use super::ArrayJwt;
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
 /// It can be placed in an origin's `.well-known` directory to prove linkage between the origin and a DID.
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 ///
 /// Note:
-/// - Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
-///   is supported.
+/// - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
 #[wasm_bindgen(js_name = DomainLinkageConfiguration, inspectable)]
 pub struct WasmDomainLinkageConfiguration(pub(crate) DomainLinkageConfiguration);
 
@@ -26,35 +28,39 @@ pub struct WasmDomainLinkageConfiguration(pub(crate) DomainLinkageConfiguration)
 impl WasmDomainLinkageConfiguration {
   /// Constructs a new `DomainLinkageConfiguration`.
   #[wasm_bindgen(constructor)]
-  pub fn new(linked_dids: ArrayCredential) -> Result<WasmDomainLinkageConfiguration> {
-    let wasm_credentials: Vec<Credential> = linked_dids.into_serde().wasm_result()?;
+  pub fn new(linked_dids: ArrayJwt) -> Result<WasmDomainLinkageConfiguration> {
+    let wasm_credentials: Vec<Jwt> = linked_dids.into_serde().wasm_result()?;
     Ok(Self(DomainLinkageConfiguration::new(wasm_credentials)))
   }
 
   /// List of the Domain Linkage Credentials.
   #[wasm_bindgen(js_name = linkedDids)]
-  pub fn linked_dids(&self) -> ArrayCredential {
+  pub fn linked_dids(&self) -> ArrayJwt {
     self
       .0
       .linked_dids()
       .iter()
       .cloned()
-      .map(WasmCredential::from)
+      .map(WasmJwt::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCredential>()
+      .unchecked_into::<ArrayJwt>()
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
   #[wasm_bindgen]
-  pub fn issuers(&self) -> ArrayString {
-    self
-      .0
-      .issuers()
-      .map(|url| url.to_string())
-      .map(JsValue::from)
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayString>()
+  pub fn issuers(&self) -> Result<ArrayCoreDID> {
+    Ok(
+      self
+        .0
+        .issuers()
+        .wasm_result()?
+        .into_iter()
+        .map(WasmCoreDID::from)
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayCoreDID>(),
+    )
   }
 }
 

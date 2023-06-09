@@ -15,6 +15,7 @@ use crate::common::PromiseOptionString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
+use crate::credential::ArrayCoreDID;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
@@ -740,12 +741,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "ICoreDocument")]
   pub type ICoreDocument;
 
-  #[wasm_bindgen(typescript_type = "CoreDID[]")]
-  pub type ArrayCoreDID;
-
   #[wasm_bindgen(typescript_type = "CoreDID | CoreDID[] | null")]
   pub type OptionOneOrManyCoreDID;
-
 }
 
 #[derive(Deserialize)]

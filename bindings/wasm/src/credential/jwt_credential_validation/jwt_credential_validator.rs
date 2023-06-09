@@ -36,12 +36,13 @@ pub struct WasmJwtCredentialValidator(JwtCredentialValidator<WasmJwsVerifier>);
 
 #[wasm_bindgen(js_class = JwtCredentialValidator)]
 impl WasmJwtCredentialValidator {
-  /// Creates a new `JwtCredentialValidator`. If a `signature_verifier` is provided it will be used when
+  /// Creates a new `JwtCredentialValidator`. If a `signatureVerifier` is provided it will be used when
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
-  pub fn new(signature_verifier: Option<IJwsVerifier>) -> WasmJwtCredentialValidator {
-    let signature_verifier = WasmJwsVerifier::new(signature_verifier);
+  #[allow(non_snake_case)]
+  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtCredentialValidator {
+    let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
 

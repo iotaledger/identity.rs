@@ -25,3 +25,15 @@ impl WasmJwt {
     self.0.as_str().to_owned()
   }
 }
+
+impl From<Jwt> for WasmJwt {
+  fn from(value: Jwt) -> Self {
+    WasmJwt(value)
+  }
+}
+
+impl From<WasmJwt> for Jwt {
+  fn from(value: WasmJwt) -> Self {
+    value.0
+  }
+}
