@@ -1,16 +1,21 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::credential::Credential;
 use crate::error::Result;
+use crate::validator::vc_jwt_validation::CredentialValidator;
+use crate::validator::vc_jwt_validation::ValidationError;
 use identity_core::common::Context;
+use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_did::CoreDID;
 use serde::Deserialize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
 use crate::Error::DomainLinkageError;
+
+use super::Jwt;
 
 lazy_static! {
   static ref WELL_KNOWN_CONTEXT: Context =
@@ -34,8 +39,8 @@ struct __DomainLinkageConfiguration {
   /// Fixed context.
   #[serde(rename = "@context")]
   context: Context,
-  /// Linked credentials.
-  linked_dids: Vec<Credential>,
+  /// Linked JWT credentials.
+  linked_dids: Vec<Jwt>,
 }
 
 impl __DomainLinkageConfiguration {
@@ -68,7 +73,7 @@ impl Display for DomainLinkageConfiguration {
 
 impl DomainLinkageConfiguration {
   /// Creates a new DID Configuration Resource.
-  pub fn new(linked_dids: Vec<Credential>) -> Self {
+  pub fn new(linked_dids: Vec<Jwt>) -> Self {
     Self(__DomainLinkageConfiguration {
       context: Self::well_known_context().clone(),
       linked_dids,
@@ -84,17 +89,22 @@ impl DomainLinkageConfiguration {
   }
 
   /// List of Domain Linkage Credentials.
-  pub fn linked_dids(&self) -> &Vec<Credential> {
+  pub fn linked_dids(&self) -> &Vec<Jwt> {
     &self.0.linked_dids
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
-  pub fn issuers(&self) -> impl Iterator<Item = &Url> {
-    self.0.linked_dids.iter().map(|linked_did| linked_did.issuer.url())
+  pub fn issuers(&self) -> std::result::Result<Vec<CoreDID>, ValidationError> {
+    self
+      .0
+      .linked_dids
+      .iter()
+      .map(CredentialValidator::extract_issuer_from_jwt::<CoreDID, Object>)
+      .collect()
   }
 
   /// List of domain Linkage Credentials.
-  pub fn linked_dids_mut(&mut self) -> &mut Vec<Credential> {
+  pub fn linked_dids_mut(&mut self) -> &mut Vec<Jwt> {
     &mut self.0.linked_dids
   }
 }

@@ -3,24 +3,56 @@
 
 use crate::credential::Credential;
 use crate::credential::DomainLinkageConfiguration;
+use crate::credential::Jwt;
 use crate::validator::errors::DomainLinkageValidationError;
 use crate::validator::errors::DomainLinkageValidationErrorCause;
-use crate::validator::CredentialValidationOptions;
-use crate::validator::CredentialValidator;
+use crate::validator::vc_jwt_validation::CredentialValidationOptions;
+use crate::validator::vc_jwt_validation::CredentialValidator;
 use crate::validator::FailFast;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_did::CoreDID;
-use identity_did::DID;
 use identity_document::document::CoreDocument;
-use serde::Serialize;
+use identity_verification::jws::EdDSAJwsVerifier;
+use identity_verification::jws::JwsVerifier;
+
+use super::vc_jwt_validation::DecodedJwtCredential;
 
 type DomainLinkageValidationResult = Result<(), DomainLinkageValidationError>;
 
 /// A validator for a Domain Linkage Configuration and Credentials.
-pub struct DomainLinkageValidator {}
+
+#[derive(Debug, Clone)]
+pub struct DomainLinkageValidator<V: JwsVerifier = EdDSAJwsVerifier> {
+  validator: CredentialValidator<V>,
+}
 
 impl DomainLinkageValidator {
+  /// Creates a new [`DomainLinkageValidator`] capable of verifying a Domain Linkage Credential issued as a JWS
+  /// using the [`EdDSA`](::identity_verification::jose::jws::JwsAlgorithm::EdDSA) algorithm.
+  ///
+  /// See [`DomainLinkageValidator::with_signature_verifier`](DomainLinkageValidator::with_signature_verifier)
+  /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
+  pub fn new() -> Self {
+    Self {
+      validator: CredentialValidator::new(),
+    }
+  }
+}
+
+impl<V> DomainLinkageValidator<V>
+where
+  V: JwsVerifier,
+{
+  /// Create a new [`DomainLinkageValidator`] that delegates cryptographic signature verification to the given
+  /// `signature_verifier`. If you are only interested in `EdDSA` signatures (with `Ed25519`) then the default
+  /// constructor can be used. See [`DomainLinkageValidator::new`](DomainLinkageValidator::new).
+  pub fn with_signature_verifier(signature_verifier: V) -> Self {
+    Self {
+      validator: CredentialValidator::with_signature_verifier(signature_verifier),
+    }
+  }
+
   /// Validates the linkage between a domain and a DID.
   /// [`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
   ///
@@ -31,8 +63,8 @@ impl DomainLinkageValidator {
   /// * `validation_options`: Further validation options to be applied on the Domain Linkage Credential.
   ///
   /// # Note:
-  /// - Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
-  ///   is supported.
+  /// - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
+  /// is supported.
   /// - Only the Credential issued by `issuer` is verified.
   ///
   /// # Errors
@@ -40,32 +72,45 @@ impl DomainLinkageValidator {
   ///  - `configuration` includes multiple credentials issued by `issuer`.
   ///  - Validation of the matched Domain Linkage Credential fails.
   pub fn validate_linkage<DOC: AsRef<CoreDocument>>(
+    &self,
     issuer: &DOC,
     configuration: &DomainLinkageConfiguration,
     domain: &Url,
     validation_options: &CredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
-    let mut matched_credentials = configuration
-      .linked_dids()
-      .iter()
-      .filter(|credential| credential.issuer.url().as_str() == CoreDocument::id(issuer.as_ref()).as_str());
+    let issuers: Vec<CoreDID> = configuration.issuers().map_err(|err| DomainLinkageValidationError {
+      cause: DomainLinkageValidationErrorCause::InvalidJwt,
+      source: Some(err.into()),
+    })?;
 
-    match matched_credentials.next() {
-      None => Err(DomainLinkageValidationError {
+    // Multiple credentials for the same issuer are an error.
+    if issuers.iter().filter(|iss| *iss == issuer.as_ref().id()).count() > 1 {
+      return Err(DomainLinkageValidationError {
         cause: DomainLinkageValidationErrorCause::InvalidStructure,
         source: None,
-      }),
-      Some(credential) => {
-        if matched_credentials.next().is_some() {
-          Err(DomainLinkageValidationError {
-            cause: DomainLinkageValidationErrorCause::InvalidStructure,
-            source: None,
-          })
-        } else {
-          Self::validate_credential(issuer, credential, domain, validation_options)
-        }
-      }
-    }
+      });
+    };
+
+    // Find the index of the issuer in the JWT credentials if present.
+    let (jwt_index, _): (usize, _) = issuers
+      .iter()
+      .enumerate()
+      .find(|(_index, iss)| *iss == issuer.as_ref().id())
+      .ok_or_else(|| DomainLinkageValidationError {
+        cause: DomainLinkageValidationErrorCause::InvalidIssuer,
+        source: None,
+      })?;
+
+    // Validate the credential at the corresponding index.
+    let credential: &Jwt = configuration
+      .linked_dids()
+      .get(jwt_index)
+      .ok_or_else(|| DomainLinkageValidationError {
+        cause: DomainLinkageValidationErrorCause::InvalidIssuer,
+        source: None,
+      })?;
+
+    self.validate_credential(issuer, credential, domain, validation_options)
   }
 
   /// Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
@@ -73,24 +118,28 @@ impl DomainLinkageValidator {
   /// *`issuer`: issuer of the credential.
   /// *`credential`: domain linkage Credential to be verified.
   /// *`domain`: the domain hosting the credential.
-  pub fn validate_credential<T: Serialize, DOC: AsRef<CoreDocument>>(
+  pub fn validate_credential<DOC: AsRef<CoreDocument>>(
+    &self,
     issuer: &DOC,
-    credential: &Credential<T>,
+    credential: &Jwt,
     domain: &Url,
     validation_options: &CredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
+    let decoded_credential: DecodedJwtCredential = self
+      .validator
+      .validate(credential, issuer, validation_options, FailFast::AllErrors)
+      .map_err(|err| DomainLinkageValidationError {
+        cause: DomainLinkageValidationErrorCause::CredentialValidationError,
+        source: Some(Box::new(err)),
+      })?;
+
+    let credential: &Credential = &decoded_credential.credential;
+
     let issuer_did: CoreDID =
       CoreDID::parse(credential.issuer.url().as_str()).map_err(|err| DomainLinkageValidationError {
         cause: DomainLinkageValidationErrorCause::InvalidIssuer,
         source: Some(Box::new(err)),
       })?;
-
-    CredentialValidator::validate(credential, issuer, validation_options, FailFast::AllErrors).map_err(|err| {
-      DomainLinkageValidationError {
-        cause: DomainLinkageValidationErrorCause::CredentialValidationError,
-        source: Some(Box::new(err)),
-      }
-    })?;
 
     if credential.id.is_some() {
       return Err(DomainLinkageValidationError {
@@ -171,49 +220,69 @@ impl DomainLinkageValidator {
   }
 }
 
+impl Default for DomainLinkageValidator {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use crate::credential::Credential;
   use crate::credential::DomainLinkageConfiguration;
   use crate::credential::DomainLinkageCredentialBuilder;
-  use crate::credential::Subject;
+  use crate::credential::Jws;
+  use crate::credential::Jwt;
   use crate::validator::domain_linkage_validator::DomainLinkageValidationResult;
   use crate::validator::domain_linkage_validator::DomainLinkageValidator;
   use crate::validator::errors::DomainLinkageValidationErrorCause;
-  use crate::validator::test_utils::generate_document_with_keys;
-  use crate::validator::CredentialValidationOptions;
+  use crate::validator::test_utils::generate_jwk_document_with_keys;
+  use crate::validator::vc_jwt_validation::CredentialValidationOptions;
 
+  use crypto::signatures::ed25519::SecretKey;
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
   use identity_core::common::OrderedSet;
   use identity_core::common::Timestamp;
   use identity_core::common::Url;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::ProofOptions;
+  use identity_did::CoreDID;
   use identity_document::document::CoreDocument;
+  use identity_verification::jws::CharSet;
+  use identity_verification::jws::CompactJwsEncoder;
+  use identity_verification::jws::CompactJwsEncodingOptions;
+  use identity_verification::jws::JwsAlgorithm;
+  use identity_verification::jws::JwsHeader;
+  use identity_verification::MethodData;
+  use identity_verification::VerificationMethod;
 
   #[test]
   pub(crate) fn test_valid_credential() {
-    let (mut credential, document, keypair) = create_valid_credential();
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let credential: Credential = create_domain_linkage_credential(document.id());
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(validation_result.is_ok());
   }
 
   #[test]
   pub(crate) fn test_invalid_credential_signature() {
-    let (mut credential, document, keypair) = create_valid_credential();
-    sign_credential(&mut credential, &document, keypair);
-    credential.expiration_date = Some(Timestamp::now_utc().checked_add(Duration::days(10)).unwrap());
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let (document, _secret_key, fragment) = generate_jwk_document_with_keys();
+    let credential: Credential = create_domain_linkage_credential(document.id());
+    let other_secret_key: SecretKey = SecretKey::generate().unwrap();
+    // Sign with `other_secret_key` to produce an invalid signature.
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &other_secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
@@ -225,15 +294,18 @@ mod tests {
 
   #[test]
   pub(crate) fn test_invalid_id_property() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
     credential.id = Some(Url::parse("http://random.credential.id").unwrap());
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(matches!(
       validation_result.unwrap_err().cause,
       DomainLinkageValidationErrorCause::ImpermissibleIdProperty
@@ -242,15 +314,18 @@ mod tests {
 
   #[test]
   pub(crate) fn test_domain_linkage_type_missing() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
     credential.types = OneOrMany::One(Credential::<Object>::base_type().to_owned());
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(matches!(
       validation_result.unwrap_err().cause,
       DomainLinkageValidationErrorCause::InvalidTypeProperty
@@ -259,37 +334,44 @@ mod tests {
 
   #[test]
   pub(crate) fn test_extra_type() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
     credential.types = OneOrMany::Many(vec![
       Credential::<Object>::base_type().to_owned(),
       DomainLinkageConfiguration::domain_linkage_type().to_owned(),
       "not-allowed-type".to_owned(),
     ]);
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(validation_result.is_ok());
   }
 
   #[test]
   pub(crate) fn test_origin_mismatch() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
+
     let mut properties: Object = Object::new();
     properties.insert("origin".into(), "http://www.example-1.com".into());
     if let OneOrMany::One(ref mut subject) = credential.credential_subject {
       subject.properties = properties;
     }
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(matches!(
       validation_result.unwrap_err().cause,
       DomainLinkageValidationErrorCause::OriginMismatch
@@ -298,18 +380,22 @@ mod tests {
 
   #[test]
   pub(crate) fn test_empty_origin() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
+
     let properties: Object = Object::new();
     if let OneOrMany::One(ref mut subject) = credential.credential_subject {
       subject.properties = properties;
     }
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(matches!(
       validation_result.unwrap_err().cause,
       DomainLinkageValidationErrorCause::InvalidSubjectOrigin
@@ -318,55 +404,43 @@ mod tests {
 
   #[test]
   pub(crate) fn test_origin_without_scheme() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
+
     let mut properties: Object = Object::new();
     properties.insert("origin".into(), "foo.example.com".into());
     if let OneOrMany::One(ref mut subject) = credential.credential_subject {
       subject.properties = properties;
     }
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(validation_result.is_ok());
   }
 
   #[test]
-  pub(crate) fn test_multiple_subjects() {
-    let (mut credential, document, keypair) = create_valid_credential();
-    let mut subjects: Vec<Subject> = credential.credential_subject.clone().to_vec();
-    subjects.push(subjects.get(0).unwrap().clone());
-    let subjects = OneOrMany::Many(subjects);
-    credential.credential_subject = subjects;
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
-      &document,
-      &credential,
-      &url_foo(),
-      &CredentialValidationOptions::default(),
-    );
-    assert!(matches!(
-      validation_result.unwrap_err().cause,
-      DomainLinkageValidationErrorCause::MultipleCredentialSubjects
-    ));
-  }
-
-  #[test]
   pub(crate) fn test_no_subject_id() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
+
     if let OneOrMany::One(ref mut subject) = credential.credential_subject {
       subject.id = None;
     }
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(matches!(
       validation_result.unwrap_err().cause,
       DomainLinkageValidationErrorCause::MissingSubjectId
@@ -375,17 +449,22 @@ mod tests {
 
   #[test]
   pub(crate) fn test_invalid_subject_id() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
+
     if let OneOrMany::One(ref mut subject) = credential.credential_subject {
       subject.id = Some(Url::parse("http://invalid.did").unwrap());
     }
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(matches!(
       validation_result.unwrap_err().cause,
       DomainLinkageValidationErrorCause::InvalidSubjectId
@@ -394,17 +473,21 @@ mod tests {
 
   #[test]
   pub(crate) fn test_issuer_subject_mismatch() {
-    let (mut credential, document, keypair) = create_valid_credential();
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let mut credential: Credential = create_domain_linkage_credential(document.id());
+
     if let OneOrMany::One(ref mut subject) = credential.credential_subject {
       subject.id = Some(Url::parse("did:abc:xyz").unwrap());
     }
-    sign_credential(&mut credential, &document, keypair);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_credential(
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_credential(
       &document,
-      &credential,
+      &jwt,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(matches!(
       validation_result.unwrap_err().cause,
       DomainLinkageValidationErrorCause::IssuerSubjectMismatch
@@ -413,11 +496,13 @@ mod tests {
 
   #[test]
   pub(crate) fn test_multiple_credentials_for_same_did() {
-    let (mut credential, document, keypair) = create_valid_credential();
-    sign_credential(&mut credential, &document, keypair);
-    let configuration: DomainLinkageConfiguration =
-      DomainLinkageConfiguration::new(vec![credential.clone(), credential]);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_linkage(
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let credential: Credential = create_domain_linkage_credential(document.id());
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let configuration: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt.clone(), jwt]);
+
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_linkage(
       &document,
       &configuration,
       &url_foo(),
@@ -431,15 +516,18 @@ mod tests {
 
   #[test]
   pub(crate) fn test_valid_configuration() {
-    let (mut credential, document, keypair) = create_valid_credential();
-    sign_credential(&mut credential, &document, keypair);
-    let configuration: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![credential]);
-    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::validate_linkage(
+    let (document, secret_key, fragment) = generate_jwk_document_with_keys();
+    let credential: Credential = create_domain_linkage_credential(document.id());
+    let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
+
+    let configuration: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt]);
+    let validation_result: DomainLinkageValidationResult = DomainLinkageValidator::new().validate_linkage(
       &document,
       &configuration,
       &url_foo(),
       &CredentialValidationOptions::default(),
     );
+
     assert!(validation_result.is_ok());
   }
 
@@ -447,29 +535,53 @@ mod tests {
     Url::parse("https://foo.example.com").unwrap()
   }
 
-  fn create_valid_credential() -> (Credential, CoreDocument, KeyPair) {
-    let (doc, keypair) = generate_document_with_keys();
-    let domain_1: Url = url_foo();
+  fn create_domain_linkage_credential(did: &CoreDID) -> Credential {
+    let domain: Url = url_foo();
 
     let mut domains: OrderedSet<Url> = OrderedSet::new();
-    domains.append(domain_1.clone());
+    domains.append(domain.clone());
 
     let credential: Credential = DomainLinkageCredentialBuilder::new()
-      .issuer(doc.id().clone())
-      .origin(domain_1)
+      .issuer(did.clone())
+      .origin(domain)
       .issuance_date(Timestamp::now_utc())
       .expiration_date(Timestamp::now_utc().checked_add(Duration::days(365)).unwrap())
       .build()
       .unwrap();
-    (credential, doc, keypair)
+    credential
   }
 
-  fn sign_credential(credential: &mut Credential, document: &CoreDocument, keypair: KeyPair) {
-    document
-      .signer(keypair.private())
-      .options(ProofOptions::default())
-      .method(document.methods(None).get(0).unwrap().id())
-      .sign(credential)
-      .unwrap();
+  fn sign_credential_jwt(
+    credential: &Credential,
+    document: &CoreDocument,
+    fragment: &str,
+    secret_key: &SecretKey,
+  ) -> Jwt {
+    let payload: String = credential.serialize_jwt().unwrap();
+    Jwt::new(sign_bytes(document, fragment, payload.as_ref(), secret_key).into())
+  }
+
+  fn sign_bytes(document: &CoreDocument, fragment: &str, payload: &[u8], secret_key: &SecretKey) -> Jws {
+    let method: &VerificationMethod = document.resolve_method(fragment, None).unwrap();
+    let MethodData::PublicKeyJwk(ref jwk) = method.data() else { panic!("not a jwk"); };
+    let alg: JwsAlgorithm = jwk.alg().unwrap_or("").parse().unwrap();
+
+    let header: JwsHeader = {
+      let mut header = JwsHeader::new();
+      header.set_alg(alg);
+      header.set_kid(method.id().to_string());
+      header
+    };
+
+    let encoding_options: CompactJwsEncodingOptions = CompactJwsEncodingOptions::NonDetached {
+      charset_requirements: CharSet::Default,
+    };
+
+    let jws_encoder: CompactJwsEncoder<'_> =
+      CompactJwsEncoder::new_with_options(payload, &header, encoding_options).unwrap();
+
+    let signature: [u8; 64] = secret_key.sign(jws_encoder.signing_input()).to_bytes();
+
+    Jws::new(jws_encoder.into_jws(&signature))
   }
 }

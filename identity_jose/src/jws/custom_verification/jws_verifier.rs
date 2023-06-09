@@ -82,12 +82,14 @@ mod eddsa_verifier {
   use crate::jwk::EdCurve;
   use crate::jwk::JwkParamsOkp;
   use crate::jws::SignatureVerificationErrorKind;
+
   /// An implementor of [`JwsVerifier`] that can handle the
   /// [`JwsAlgorithm::EdDSA`](crate::jws::JwsAlgorithm::EdDSA) algorithm.
   ///
   /// See [`Self::verify`](EdDSAJwsVerifier::verify).
   ///
   /// NOTE: This type can only be constructed when the `eddsa` feature is enabled.
+  #[derive(Debug)]
   #[non_exhaustive]
   pub struct EdDSAJwsVerifier;
 
