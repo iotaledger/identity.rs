@@ -5,13 +5,6 @@ use std::error::Error;
 use std::fmt::Debug;
 use std::str::FromStr;
 
-use identity_credential::credential::Credential;
-use identity_credential::credential::CredentialBuilder;
-use identity_credential::credential::Subject;
-use identity_credential::presentation::Presentation;
-use identity_credential::presentation::PresentationBuilder;
-use identity_credential::validator::FailFast;
-use identity_credential::validator::PresentationValidationOptions;
 use identity_did::BaseDIDUrl;
 use identity_did::CoreDID;
 use identity_did::Error as DIDError;
@@ -21,7 +14,6 @@ use identity_document::document::DocumentBuilder;
 
 use crate::Error as ResolverError;
 use crate::ErrorCause;
-use crate::ResolutionAction;
 use crate::Resolver;
 
 /// A very simple handler
@@ -32,24 +24,6 @@ async fn mock_handler(did: CoreDID) -> std::result::Result<CoreDocument, std::io
 /// Create a [`CoreDocument`]
 fn core_document(did: CoreDID) -> CoreDocument {
   DocumentBuilder::default().id(did).build().unwrap()
-}
-
-// make a simple self issued credential with the given did
-fn make_credential(did: impl DID) -> Credential {
-  CredentialBuilder::default()
-    .issuer(did.to_url())
-    .subject(Subject::with_id(did.to_url().into()))
-    .build()
-    .unwrap()
-}
-
-// make a simple presentation consisting of the given credentials
-fn make_presentation(credentials: impl Iterator<Item = Credential>, holder: CoreDID) -> Presentation {
-  let mut builder = PresentationBuilder::default().holder(holder.to_url().into());
-  for credential in credentials {
-    builder = builder.credential(credential);
-  }
-  builder.build().unwrap()
 }
 
 /// A custom document type
@@ -66,95 +40,6 @@ impl From<CoreDocument> for FooDocument {
   }
 }
 
-/// Checks that all methods on the resolver involving resolution fail under the assumption that
-/// the resolver is set up in such a way that the `resolve` method must fail for this DID (because of a specific
-/// cause), but succeed with `good_did`. The `assertions` argument is a function or closure that asserts that the
-/// [`ErrorCause`] is of the expected value.
-async fn check_failure_for_all_methods<F, D, DOC>(resolver: Resolver<DOC>, bad_did: CoreDID, good_did: D, assertions: F)
-where
-  F: Fn(ErrorCause),
-  D: DID,
-  DOC: AsRef<CoreDocument> + Send + Sync + 'static + From<CoreDocument> + Debug,
-{
-  // resolving bad_did fails
-  let err: ResolverError = resolver.resolve(&bad_did).await.unwrap_err();
-  assertions(err.into_error_cause());
-
-  // resolving the issuer of the bad credential fails
-  let cred: Credential = make_credential(bad_did.clone());
-
-  let err: ResolverError = resolver.resolve_credential_issuer(&cred).await.unwrap_err();
-  assertions(err.into_error_cause());
-
-  // set up a presentation of the form: holder: bad_did , verifiableCredential: [good_credential, bad_credential,
-  // good_credential] , other stuff irrelevant for this test.
-  let other_credential: Credential = make_credential(good_did.clone());
-  let presentation: Presentation = make_presentation(
-    [other_credential.clone(), cred, other_credential.clone()].into_iter(),
-    bad_did.clone(),
-  );
-
-  // resolving the holder of the presentation fails
-  let err: ResolverError = resolver.resolve_presentation_holder(&presentation).await.unwrap_err();
-  assert!(err.action().unwrap() == ResolutionAction::PresentationHolderResolution);
-  assertions(err.into_error_cause());
-
-  //resolving the presentation issuers will fail because of the bad credential at position 1.
-  let err: ResolverError = resolver.resolve_presentation_issuers(&presentation).await.unwrap_err();
-  assert!(err.action().unwrap() == ResolutionAction::PresentationIssuersResolution(1));
-  assertions(err.into_error_cause());
-  // check that our expectations are also matched when calling `verify_presentation`.
-
-  // this can be passed as an argument to `verify_presentation` to avoid resolution of the holder or issuers.
-  let mock_document: DOC = core_document(bad_did.clone()).into();
-  let err: ResolverError = resolver
-    .verify_presentation(
-      &presentation,
-      &PresentationValidationOptions::default(),
-      FailFast::FirstError,
-      Some(&mock_document),
-      None,
-    )
-    .await
-    .unwrap_err();
-
-  assert!(err.action().unwrap() == ResolutionAction::PresentationIssuersResolution(1));
-  assertions(err.into_error_cause());
-
-  let err: ResolverError = resolver
-    .verify_presentation(
-      &presentation,
-      &PresentationValidationOptions::default(),
-      FailFast::FirstError,
-      None,
-      Some(std::slice::from_ref(&mock_document)),
-    )
-    .await
-    .unwrap_err();
-
-  assert!(err.action().unwrap() == ResolutionAction::PresentationHolderResolution);
-  assertions(err.into_error_cause());
-
-  // finally when both holder and issuer needs to be resolved we check that resolution fails
-  let err: ResolverError = resolver
-    .verify_presentation(
-      &presentation,
-      &PresentationValidationOptions::default(),
-      FailFast::FirstError,
-      None,
-      None,
-    )
-    .await
-    .unwrap_err();
-
-  assert!(matches!(
-    err.action().unwrap(),
-    ResolutionAction::PresentationIssuersResolution(..) | ResolutionAction::PresentationHolderResolution
-  ));
-
-  assertions(err.into_error_cause());
-}
-
 // ===========================================================================
 // Missing handler for DID method failure tests
 // ===========================================================================
@@ -164,22 +49,23 @@ async fn missing_handler_errors() {
   let bad_did: CoreDID = CoreDID::parse(format!("did:{method_name}:1234")).unwrap();
   let other_method: String = "bar".to_owned();
   let good_did: CoreDID = CoreDID::parse(format!("did:{other_method}:1234")).unwrap();
+
   // configure `resolver` to resolve the "bar" method
   let mut resolver_foo: Resolver<FooDocument> = Resolver::new();
   let mut resolver_core: Resolver<CoreDocument> = Resolver::new();
   resolver_foo.attach_handler(other_method.clone(), mock_handler);
   resolver_core.attach_handler(other_method, mock_handler);
 
-  // to avoid boiler plate
-  let check_match = move |err| match err {
-    ErrorCause::UnsupportedMethodError { method } => {
-      assert_eq!(method_name, method);
-    }
-    _ => unreachable!(),
-  };
+  let err: ResolverError = resolver_foo.resolve(&bad_did).await.unwrap_err();
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  assert_eq!(method_name, method);
 
-  check_failure_for_all_methods(resolver_foo, bad_did.clone(), good_did.clone(), check_match.clone()).await;
-  check_failure_for_all_methods(resolver_core, bad_did, good_did, check_match).await;
+  let err: ResolverError = resolver_core.resolve(&bad_did).await.unwrap_err();
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  assert_eq!(method_name, method);
+
+  assert!(resolver_foo.resolve(&good_did).await.is_ok());
+  assert!(resolver_core.resolve(&good_did).await.is_ok());
 }
 
 // ===========================================================================
@@ -281,8 +167,14 @@ async fn resolve_unparsable() {
     }
   };
 
-  check_failure_for_all_methods(resolver_foo, bad_did.clone(), good_did.clone(), error_matcher).await;
-  check_failure_for_all_methods(resolver_core, bad_did, good_did, error_matcher).await;
+  let err_cause: ErrorCause = resolver_foo.resolve(&bad_did).await.unwrap_err().into_error_cause();
+  error_matcher(err_cause);
+
+  let err_cause: ErrorCause = resolver_core.resolve(&bad_did).await.unwrap_err().into_error_cause();
+  error_matcher(err_cause);
+
+  assert!(resolver_foo.resolve(&good_did).await.is_ok());
+  assert!(resolver_core.resolve(&good_did).await.is_ok());
 }
 
 // ===========================================================================
@@ -317,6 +209,12 @@ async fn handler_failure() {
     }
   };
 
-  check_failure_for_all_methods(resolver_foo, bad_did.clone(), good_did.clone(), error_matcher).await;
-  check_failure_for_all_methods(resolver_core, bad_did, good_did, error_matcher).await;
+  let err_cause: ErrorCause = resolver_foo.resolve(&bad_did).await.unwrap_err().into_error_cause();
+  error_matcher(err_cause);
+
+  let err_cause: ErrorCause = resolver_core.resolve(&bad_did).await.unwrap_err().into_error_cause();
+  error_matcher(err_cause);
+
+  assert!(resolver_foo.resolve(&good_did).await.is_ok());
+  assert!(resolver_core.resolve(&good_did).await.is_ok());
 }
