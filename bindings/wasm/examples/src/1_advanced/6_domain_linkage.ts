@@ -4,6 +4,7 @@
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import {
+    CoreDID,
     Credential,
     CredentialValidationOptions,
     DIDUrl,
@@ -13,12 +14,15 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
+    JwsSignatureOptions,
+    JwtCredentialValidationOptions,
     LinkedDomainService,
     ProofOptions,
+    Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDid, createDidStorage } from "../util";
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.
@@ -35,8 +39,10 @@ export async function domainLinkage() {
         mnemonic: Bip39.randomMnemonic(),
     };
 
+    const storage: Storage = storage_impl();
+
     // Creates a new wallet and identity (see "0_create_did" example).
-    let { document, keypair } = await createDid(client, secretManager);
+    let { document, fragment } = await createDidStorage(client, secretManager, storage);
     const did: IotaDID = document.id();
 
     // =====================================================
@@ -74,11 +80,11 @@ export async function domainLinkage() {
     });
 
     // Sign the credential.
-    domainLinkageCredential = document.signCredential(
+    const credentialJwt = await document.createCredentialJwt(
+        storage,
+        fragment,
         domainLinkageCredential,
-        keypair.private(),
-        "#key-1",
-        ProofOptions.default(),
+        new JwsSignatureOptions(),
     );
 
     // Create the DID Configuration Resource which wraps the Domain Linkage credential.
@@ -114,16 +120,16 @@ export async function domainLinkage() {
 
     // Retrieve the issuers of the Domain Linkage Credentials which correspond to the possibly linked DIDs.
     // Note that in this example only the first entry in the credential is validated.
-    let issuers: Array<string> = fetchedConfigurationResource.issuers();
-    const issuerDocument: IotaDocument = await didClient.resolveDid(IotaDID.parse(issuers[0]));
+    let issuers: Array<CoreDID> = fetchedConfigurationResource.issuers();
+    const issuerDocument: IotaDocument = await didClient.resolveDid(IotaDID.parse(issuers[0].toString()));
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    DomainLinkageValidator.validateLinkage(
+    new DomainLinkageValidator().validateLinkage(
         issuerDocument,
         fetchedConfigurationResource,
         domainFoo,
-        CredentialValidationOptions.default(),
+        JwtCredentialValidationOptions.default(),
     );
 
     // =====================================================
@@ -153,12 +159,18 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    DomainLinkageValidator.validateLinkage(
+    new DomainLinkageValidator().validateLinkage(
         didDocument,
         fetchedConfigurationResource,
         domains[0],
-        CredentialValidationOptions.default(),
+        JwtCredentialValidationOptions.default(),
     );
+}
+
+// TODO: Port memstores.
+function storage_impl(): Storage {
+    // @ts-ignore
+    return new Object();
 }
 
 async function publishDocument(
