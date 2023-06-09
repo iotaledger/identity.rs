@@ -58,6 +58,8 @@ impl DomainLinkageCredentialBuilder {
   }
 
   /// Sets the origin in `credentialSubject`.
+  ///
+  /// Must be a domain origin.
   #[must_use]
   pub fn origin(mut self, value: Url) -> Self {
     self.origin = Some(value);
@@ -67,6 +69,12 @@ impl DomainLinkageCredentialBuilder {
   /// Returns a new `Credential` based on the `DomainLinkageCredentialBuilder` configuration.
   pub fn build(self) -> Result<Credential<Object>> {
     let origin: Url = self.origin.ok_or(Error::MissingOrigin)?;
+    if origin.domain().is_none() {
+      return Err(Error::DomainLinkageError(
+        "origin must be a domain with http(s) scheme".into(),
+      ));
+    }
+
     let mut properties: Object = Object::new();
     properties.insert("origin".into(), origin.into_string().into());
     let issuer: Url = self.issuer.ok_or(Error::MissingIssuer)?;
@@ -117,6 +125,19 @@ mod tests {
       .origin(Url::parse("http://www.example.com").unwrap())
       .build()
       .is_ok());
+  }
+
+  #[test]
+  fn test_builder_origin_is_not_a_domain() {
+    let issuer: CoreDID = "did:example:issuer".parse().unwrap();
+    let err: Error = DomainLinkageCredentialBuilder::new()
+      .issuance_date(Timestamp::now_utc())
+      .expiration_date(Timestamp::now_utc())
+      .issuer(issuer)
+      .origin(Url::parse("did:example:origin").unwrap())
+      .build()
+      .unwrap_err();
+    assert!(matches!(err, Error::DomainLinkageError(_)));
   }
 
   #[test]
