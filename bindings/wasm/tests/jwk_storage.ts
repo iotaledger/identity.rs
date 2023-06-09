@@ -1,15 +1,5 @@
 const assert = require("assert");
-import {
-    Ed25519,
-    EdCurve,
-    IJwkParams,
-    Jwk,
-    JwkOperation,
-    JwkMemStore,
-    JwkType,
-    JwkUse,
-    JwsAlgorithm,
-} from "../node";
+import { Ed25519, EdCurve, IJwkParams, Jwk, JwkMemStore, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
 
 describe("#JwkMemstore", function() {
     it("should work", async () => {
@@ -60,4 +50,3 @@ describe("#JwkMemstore", function() {
         });
     });
 });
-

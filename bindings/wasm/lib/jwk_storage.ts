@@ -1,20 +1,7 @@
 import { RandomHelper } from "@iota/util.js";
-import {
-    decodeB64,
-    Ed25519,
-    encodeB64,
-    Jwk,
-    JwkGenOutput,
-    JwkStorage,
-    KeyPair,
-    KeyType,
-} from "~identity_wasm";
+import { decodeB64, Ed25519, encodeB64, Jwk, JwkGenOutput, JwkStorage, KeyPair, KeyType } from "~identity_wasm";
 
-import {
-    EdCurve,
-    JwkType,
-    JwsAlgorithm,
-} from "./jose";
+import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
 
 export class JwkMemStore implements JwkStorage {
     /** The map from key identifiers to Jwks. */
@@ -37,14 +24,14 @@ export class JwkMemStore implements JwkStorage {
         if (algorithm !== JwsAlgorithm.EdDSA) {
             throw new Error(`unsupported algorithm`);
         }
-        
+
         const keyId = randomKeyId();
         const keyPair = new KeyPair(KeyType.Ed25519);
-        
+
         const jwk = encodeJwk(keyPair, algorithm);
-        
+
         this._keys.set(keyId, jwk);
-        
+
         const publicJWK = jwk.toPublic();
         if (!publicJWK) {
             throw new Error(`JWK is not a public key`);
