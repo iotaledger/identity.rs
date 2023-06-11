@@ -26,6 +26,11 @@
 <p>Note that having an instance of this type only means the JWS it was constructed from was verified.
 It does not imply anything about a potentially present proof property on the credential itself.</p>
 </dd>
+<dt><a href="#DecodedJwtPresentation">DecodedJwtPresentation</a></dt>
+<dd><p>A cryptographically verified and decoded presentation.</p>
+<p>Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the presentation itself.</p>
+</dd>
 <dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
 <dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
 It can be placed in an origin&#39;s <code>.well-known</code> directory to prove linkage between the origin and a DID.
@@ -79,6 +84,15 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#JwtCredentialValidator">JwtCredentialValidator</a></dt>
 <dd><p>A type for decoding and validating <code>Credentials</code>.</p>
 </dd>
+<dt><a href="#JwtPresentation">JwtPresentation</a></dt>
+<dd></dd>
+<dt><a href="#JwtPresentationOptions">JwtPresentationOptions</a></dt>
+<dd></dd>
+<dt><a href="#JwtPresentationValidationOptions">JwtPresentationValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating presentation.</p>
+</dd>
+<dt><a href="#JwtPresentationValidator">JwtPresentationValidator</a></dt>
+<dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
@@ -151,11 +165,7 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -199,20 +209,15 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
 <dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
 Only the <code>EdCurve::Ed25519</code> variant is supported for now.</p>
@@ -221,6 +226,15 @@ the IOTA Identity Framework.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
+</dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+</dd>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -455,6 +469,7 @@ A method-agnostic DID Document.
         * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJws(storage, fragment, payload, options)](#CoreDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options)](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#CoreDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -887,6 +902,19 @@ produced by the corresponding private key backed by the `storage` in accordance 
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+
+<a name="CoreDocument+createPresentationJwt"></a>
+
+### coreDocument.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| presentation | [<code>JwtPresentation</code>](#JwtPresentation) | 
+| signature_options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+| presentation_options | [<code>JwtPresentationOptions</code>](#JwtPresentationOptions) | 
 
 <a name="CoreDocument.fromJSON"></a>
 
@@ -1520,6 +1548,61 @@ Consumes the object and returns the decoded credential.
 This destroys the `DecodedCredential` object.
 
 **Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
+<a name="DecodedJwtPresentation"></a>
+
+## DecodedJwtPresentation
+A cryptographically verified and decoded presentation.
+
+Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the presentation itself.
+
+**Kind**: global class  
+
+* [DecodedJwtPresentation](#DecodedJwtPresentation)
+    * [.presentation()](#DecodedJwtPresentation+presentation) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+    * [.protectedHeader()](#DecodedJwtPresentation+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.intoCredential()](#DecodedJwtPresentation+intoCredential) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+    * [.expirationDate()](#DecodedJwtPresentation+expirationDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+    * [.issuanceDate()](#DecodedJwtPresentation+issuanceDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+    * [.credentials()](#DecodedJwtPresentation+credentials) ⇒ [<code>Array.&lt;DecodedJwtCredential&gt;</code>](#DecodedJwtCredential)
+
+<a name="DecodedJwtPresentation+presentation"></a>
+
+### decodedJwtPresentation.presentation() ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+protectedHeader"></a>
+
+### decodedJwtPresentation.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header parsed from the decoded JWS.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+intoCredential"></a>
+
+### decodedJwtPresentation.intoCredential() ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+Consumes the object and returns the decoded presentation.
+
+### Warning
+This destroys the `DecodedJwtPresentation` object.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+expirationDate"></a>
+
+### decodedJwtPresentation.expirationDate() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+The expiration date parsed from the JWT claims.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+issuanceDate"></a>
+
+### decodedJwtPresentation.issuanceDate() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+The issuance dated parsed from the JWT claims.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+credentials"></a>
+
+### decodedJwtPresentation.credentials() ⇒ [<code>Array.&lt;DecodedJwtCredential&gt;</code>](#DecodedJwtCredential)
+The credentials included in the presentation (decoded).
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
 <a name="DomainLinkageConfiguration"></a>
 
 ## DomainLinkageConfiguration
@@ -2058,6 +2141,7 @@ Deserializes an instance from a JSON object.
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2563,6 +2647,25 @@ produced by the corresponding private key backed by the `storage` in accordance 
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+
+<a name="IotaDocument+createPresentationJwt"></a>
+
+### iotaDocument.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+Produces a JWT where the payload is produced from the given `presentation`
+in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+
+The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| presentation | [<code>JwtPresentation</code>](#JwtPresentation) | 
+| signature_options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+| presentation_options | [<code>JwtPresentationOptions</code>](#JwtPresentationOptions) | 
 
 <a name="IotaDocument.newWithId"></a>
 
@@ -3814,6 +3917,297 @@ Fails if the issuer field is not a valid DID.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
+
+<a name="JwtPresentation"></a>
+
+## JwtPresentation
+**Kind**: global class  
+
+* [JwtPresentation](#JwtPresentation)
+    * [new JwtPresentation(values)](#new_JwtPresentation_new)
+    * _instance_
+        * [.context()](#JwtPresentation+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+        * [.id()](#JwtPresentation+id) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.type()](#JwtPresentation+type) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.verifiableCredential()](#JwtPresentation+verifiableCredential) ⇒ [<code>Array.&lt;Jwt&gt;</code>](#Jwt)
+        * [.holder()](#JwtPresentation+holder) ⇒ <code>string</code>
+        * [.refreshService()](#JwtPresentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
+        * [.termsOfUse()](#JwtPresentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
+        * [.proof()](#JwtPresentation+proof) ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
+        * [.properties()](#JwtPresentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#JwtPresentation+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtPresentation+clone) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+    * _static_
+        * [.BaseContext()](#JwtPresentation.BaseContext) ⇒ <code>string</code>
+        * [.BaseType()](#JwtPresentation.BaseType) ⇒ <code>string</code>
+        * [.fromJSON(json)](#JwtPresentation.fromJSON) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+
+<a name="new_JwtPresentation_new"></a>
+
+### new JwtPresentation(values)
+Constructs a new presentation.
+
+
+| Param | Type |
+| --- | --- |
+| values | <code>IJwtPresentation</code> | 
+
+<a name="JwtPresentation+context"></a>
+
+### jwtPresentation.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+Returns a copy of the JSON-LD context(s) applicable to the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+id"></a>
+
+### jwtPresentation.id() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the unique `URI` identifying the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+type"></a>
+
+### jwtPresentation.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the URIs defining the type of the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+verifiableCredential"></a>
+
+### jwtPresentation.verifiableCredential() ⇒ [<code>Array.&lt;Jwt&gt;</code>](#Jwt)
+Returns a copy of the [Credential](#Credential)(s) expressing the claims of the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+holder"></a>
+
+### jwtPresentation.holder() ⇒ <code>string</code>
+Returns a copy of the URI of the entity that generated the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+refreshService"></a>
+
+### jwtPresentation.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
+Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+termsOfUse"></a>
+
+### jwtPresentation.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
+Returns a copy of the terms-of-use specified by the presentation holder
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+proof"></a>
+
+### jwtPresentation.proof() ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
+Returns a copy of the proof property.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+properties"></a>
+
+### jwtPresentation.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the miscellaneous properties on the presentation.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+toJSON"></a>
+
+### jwtPresentation.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation+clone"></a>
+
+### jwtPresentation.clone() ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation.BaseContext"></a>
+
+### JwtPresentation.BaseContext() ⇒ <code>string</code>
+Returns the base JSON-LD context.
+
+**Kind**: static method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation.BaseType"></a>
+
+### JwtPresentation.BaseType() ⇒ <code>string</code>
+Returns the base type.
+
+**Kind**: static method of [<code>JwtPresentation</code>](#JwtPresentation)  
+<a name="JwtPresentation.fromJSON"></a>
+
+### JwtPresentation.fromJSON(json) ⇒ [<code>JwtPresentation</code>](#JwtPresentation)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwtPresentation</code>](#JwtPresentation)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwtPresentationOptions"></a>
+
+## JwtPresentationOptions
+**Kind**: global class  
+
+* [JwtPresentationOptions](#JwtPresentationOptions)
+    * [new JwtPresentationOptions(options)](#new_JwtPresentationOptions_new)
+    * _instance_
+        * [.toJSON()](#JwtPresentationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtPresentationOptions+clone) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+    * _static_
+        * [.default()](#JwtPresentationOptions.default) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+        * [.fromJSON(json)](#JwtPresentationOptions.fromJSON) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+
+<a name="new_JwtPresentationOptions_new"></a>
+
+### new JwtPresentationOptions(options)
+Creates a new `JwtPresentationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IJwtPresentationOptions</code> \| <code>undefined</code> | 
+
+<a name="JwtPresentationOptions+toJSON"></a>
+
+### jwtPresentationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+<a name="JwtPresentationOptions+clone"></a>
+
+### jwtPresentationOptions.clone() ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+<a name="JwtPresentationOptions.default"></a>
+
+### JwtPresentationOptions.default() ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+Creates a new `JwtPresentationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+<a name="JwtPresentationOptions.fromJSON"></a>
+
+### JwtPresentationOptions.fromJSON(json) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwtPresentationValidationOptions"></a>
+
+## JwtPresentationValidationOptions
+Options to declare validation criteria when validating presentation.
+
+**Kind**: global class  
+
+* [JwtPresentationValidationOptions](#JwtPresentationValidationOptions)
+    * [new JwtPresentationValidationOptions(options)](#new_JwtPresentationValidationOptions_new)
+    * _instance_
+        * [.toJSON()](#JwtPresentationValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtPresentationValidationOptions+clone) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+    * _static_
+        * [.default()](#JwtPresentationValidationOptions.default) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+        * [.fromJSON(json)](#JwtPresentationValidationOptions.fromJSON) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+
+<a name="new_JwtPresentationValidationOptions_new"></a>
+
+### new JwtPresentationValidationOptions(options)
+Creates a new `JwtPresentationValidationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IJwtPresentationValidationOptions</code> | 
+
+<a name="JwtPresentationValidationOptions+toJSON"></a>
+
+### jwtPresentationValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions+clone"></a>
+
+### jwtPresentationValidationOptions.clone() ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions.default"></a>
+
+### JwtPresentationValidationOptions.default() ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Creates a new `JwtPresentationValidationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions.fromJSON"></a>
+
+### JwtPresentationValidationOptions.fromJSON(json) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwtPresentationValidator"></a>
+
+## JwtPresentationValidator
+**Kind**: global class  
+
+* [JwtPresentationValidator](#JwtPresentationValidator)
+    * [new JwtPresentationValidator(signature_verifier)](#new_JwtPresentationValidator_new)
+    * _instance_
+        * [.validate(presentation_jwt, holder, issuers, options, fail_fast)](#JwtPresentationValidator+validate) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+    * _static_
+        * [.checkStructure(presentation)](#JwtPresentationValidator.checkStructure)
+        * [.extractDids(presentation)](#JwtPresentationValidator.extractDids) ⇒ <code>JwtPresentationDids</code>
+
+<a name="new_JwtPresentationValidator_new"></a>
+
+### new JwtPresentationValidator(signature_verifier)
+Creates a new `JwtPresentationValidator`. If a `signature_verifier` is provided it will be used when
+verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
+algorithm will be used.
+
+
+| Param | Type |
+| --- | --- |
+| signature_verifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+
+<a name="JwtPresentationValidator+validate"></a>
+
+### jwtPresentationValidator.validate(presentation_jwt, holder, issuers, options, fail_fast) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+**Kind**: instance method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation_jwt | [<code>Jwt</code>](#Jwt) | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
+| options | [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions) | 
+| fail_fast | <code>number</code> | 
+
+<a name="JwtPresentationValidator.checkStructure"></a>
+
+### JwtPresentationValidator.checkStructure(presentation)
+**Kind**: static method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>JwtPresentation</code>](#JwtPresentation) | 
+
+<a name="JwtPresentationValidator.extractDids"></a>
+
+### JwtPresentationValidator.extractDids(presentation) ⇒ <code>JwtPresentationDids</code>
+**Kind**: static method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Jwt</code>](#Jwt) | 
 
 <a name="KeyPair"></a>
 
@@ -5431,17 +5825,9 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -5521,34 +5907,14 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="start"></a>
+<a name="KeyType"></a>
 
-## start()
-Initializes the console error panic hook for better error messages
+## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
 
-**Kind**: global function  
-<a name="encodeB64"></a>
-
-## encodeB64(data) ⇒ <code>string</code>
-Encode the given bytes in url-safe base64.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
-
-<a name="decodeB64"></a>
-
-## decodeB64(data) ⇒ <code>Uint8Array</code>
-Decode the given url-safe base64-encoded slice into its raw bytes.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
-
+## MethodRelationship
+**Kind**: global variable  
 <a name="verifyEdDSA"></a>
 
 ## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
@@ -5571,3 +5937,31 @@ prior to calling the function.
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
 
+<a name="encodeB64"></a>
+
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="decodeB64"></a>
+
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  

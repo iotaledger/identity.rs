@@ -22,7 +22,7 @@ pub struct DecodedJwtPresentation<T = Object, U = Object> {
   pub header: Box<JwsHeader>,
   /// The expiration date parsed from the JWT claims.
   pub expiration_date: Option<Timestamp>,
-  /// The issuance dated parsed from the JWT claims.
+  /// The issuance date parsed from the JWT claims.
   pub issuance_date: Option<Timestamp>,
   /// The `aud` property parsed from the JWT claims.
   pub aud: Option<Url>,
