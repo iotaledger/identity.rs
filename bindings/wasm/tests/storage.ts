@@ -264,7 +264,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         assert.deepStrictEqual(decoded.credentials()[0].credential().toJSON(), credential.toJSON());
-        assert.equal(decoded.expirationDate()?.toString(), expirationDate?.toString());
+        assert.equal(decoded.expirationDate()!.toString(), expirationDate!.toString());
         assert.deepStrictEqual(decoded.presentation().toJSON(), presentation.toJSON());
         assert.equal(decoded.audience(), audience);
 
