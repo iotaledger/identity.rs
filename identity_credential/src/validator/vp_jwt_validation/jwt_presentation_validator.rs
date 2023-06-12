@@ -279,7 +279,7 @@ impl JwtPresentationValidator {
 
     let mut issuers: Vec<I> = vec![];
     for vc in claims.vp.verifiable_credential.iter() {
-      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I, Object>(vc)?)
+      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I>(vc)?)
     }
     Ok((holder, issuers))
   }

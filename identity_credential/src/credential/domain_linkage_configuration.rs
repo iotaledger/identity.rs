@@ -5,7 +5,6 @@ use crate::error::Result;
 use crate::validator::vc_jwt_validation::CredentialValidator;
 use crate::validator::vc_jwt_validation::ValidationError;
 use identity_core::common::Context;
-use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_did::CoreDID;
@@ -98,7 +97,7 @@ impl DomainLinkageConfiguration {
       .0
       .linked_dids
       .iter()
-      .map(CredentialValidator::extract_issuer_from_jwt::<CoreDID, Object>)
+      .map(CredentialValidator::extract_issuer_from_jwt::<CoreDID>)
       .collect()
   }
 
