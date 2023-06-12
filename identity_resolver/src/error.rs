@@ -5,9 +5,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// Error returned from the [Resolver's](crate::Resolver) methods.
 ///
-/// The [`Self::error_cause`](Self::error_cause()) method provides information about the cause of the error,
-/// while [`Self::action`](Self::action()) provides more context about the action the resolver was carrying out when the
-/// error occurred.
+/// The [`Self::error_cause`](Self::error_cause()) method provides information about the cause of the error.
 #[derive(Debug)]
 pub struct Error {
   error_cause: ErrorCause,

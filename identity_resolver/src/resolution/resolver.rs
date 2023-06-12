@@ -17,11 +17,9 @@ use super::commands::SendSyncCommand;
 use super::commands::SingleThreadedCommand;
 
 /// Convenience type for resolving DID documents from different DID methods.   
-///  
-/// Also provides methods for resolving DID Documents associated with
-/// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
 ///
 /// # Configuration
+///
 /// The resolver will only be able to resolve DID documents for methods it has been configured for. This is done by
 /// attaching method specific handlers with [`Self::attach_handler`](Self::attach_handler()).
 pub struct Resolver<DOC = CoreDocument, CMD = SendSyncCommand<DOC>>
