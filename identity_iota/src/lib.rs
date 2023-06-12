@@ -47,6 +47,8 @@ pub mod credential {
   //! [Specification](https://www.w3.org/TR/vc-data-model/)
 
   pub use identity_credential::credential::*;
+  #[cfg(feature = "domain-linkage")]
+  pub use identity_credential::domain_linkage::*;
   pub use identity_credential::error::*;
   pub use identity_credential::presentation::*;
   #[cfg(feature = "revocation-bitmap")]
