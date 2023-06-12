@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::credential::Credential;
-use crate::credential::DomainLinkageConfiguration;
 use crate::credential::Jwt;
-use crate::validator::errors::DomainLinkageValidationError;
-use crate::validator::errors::DomainLinkageValidationErrorCause;
+use crate::domain_linkage::DomainLinkageConfiguration;
+use crate::domain_linkage::DomainLinkageValidationError;
+use crate::domain_linkage::DomainLinkageValidationErrorCause;
 use crate::validator::vc_jwt_validation::CredentialValidationOptions;
 use crate::validator::vc_jwt_validation::CredentialValidator;
 use crate::validator::FailFast;
@@ -16,9 +16,9 @@ use identity_document::document::CoreDocument;
 use identity_verification::jws::EdDSAJwsVerifier;
 use identity_verification::jws::JwsVerifier;
 
-use super::vc_jwt_validation::DecodedJwtCredential;
+use crate::validator::vc_jwt_validation::DecodedJwtCredential;
 
-type DomainLinkageValidationResult = Result<(), DomainLinkageValidationError>;
+use super::DomainLinkageValidationResult;
 
 /// A validator for a Domain Linkage Configuration and Credentials.
 
@@ -229,13 +229,13 @@ impl Default for DomainLinkageValidator {
 #[cfg(test)]
 mod tests {
   use crate::credential::Credential;
-  use crate::credential::DomainLinkageConfiguration;
-  use crate::credential::DomainLinkageCredentialBuilder;
   use crate::credential::Jws;
   use crate::credential::Jwt;
-  use crate::validator::domain_linkage_validator::DomainLinkageValidationResult;
-  use crate::validator::domain_linkage_validator::DomainLinkageValidator;
-  use crate::validator::errors::DomainLinkageValidationErrorCause;
+  use crate::domain_linkage::DomainLinkageConfiguration;
+  use crate::domain_linkage::DomainLinkageCredentialBuilder;
+  use crate::domain_linkage::DomainLinkageValidationErrorCause;
+  use crate::domain_linkage::DomainLinkageValidationResult;
+  use crate::domain_linkage::DomainLinkageValidator;
   use crate::validator::test_utils::generate_jwk_document_with_keys;
   use crate::validator::vc_jwt_validation::CredentialValidationOptions;
 

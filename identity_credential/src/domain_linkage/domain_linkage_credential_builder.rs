@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::credential::Credential;
-use crate::credential::DomainLinkageConfiguration;
 use crate::credential::Issuer;
 use crate::credential::Subject;
+use crate::domain_linkage::DomainLinkageConfiguration;
 use crate::error::Result;
 use crate::Error;
 use identity_core::common::Object;
@@ -107,8 +107,8 @@ impl DomainLinkageCredentialBuilder {
 
 #[cfg(test)]
 mod tests {
-  use crate::credential::domain_linkage_credential_builder::DomainLinkageCredentialBuilder;
   use crate::credential::Credential;
+  use crate::domain_linkage::DomainLinkageCredentialBuilder;
   use crate::error::Result;
   use crate::Error;
   use identity_core::common::Timestamp;

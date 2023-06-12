@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::credential::Jwt;
 use crate::error::Result;
 use crate::validator::vc_jwt_validation::CredentialValidator;
 use crate::validator::vc_jwt_validation::ValidationError;
@@ -14,8 +15,6 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 
 use crate::Error::DomainLinkageError;
-
-use super::Jwt;
 
 lazy_static! {
   static ref WELL_KNOWN_CONTEXT: Context =
@@ -110,7 +109,7 @@ impl DomainLinkageConfiguration {
 
 #[cfg(feature = "domain-linkage-fetch")]
 mod __fetch_configuration {
-  use crate::credential::DomainLinkageConfiguration;
+  use crate::domain_linkage::DomainLinkageConfiguration;
   use crate::error::Result;
   use crate::Error::DomainLinkageError;
   use futures::StreamExt;
@@ -168,7 +167,7 @@ mod __fetch_configuration {
 
 #[cfg(test)]
 mod tests {
-  use crate::credential::domain_linkage_configuration::DomainLinkageConfiguration;
+  use crate::domain_linkage::DomainLinkageConfiguration;
   use identity_core::convert::FromJson;
   use identity_core::error::Result;
   use serde_json::json;

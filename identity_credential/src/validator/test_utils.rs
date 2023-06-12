@@ -36,7 +36,7 @@ pub(crate) fn encode_public_ed25519_jwk(public_key: &PublicKey) -> Jwk {
   jwk
 }
 
-pub(super) fn generate_jwk_document_with_keys() -> (CoreDocument, SecretKey, String) {
+pub(crate) fn generate_jwk_document_with_keys() -> (CoreDocument, SecretKey, String) {
   let secret: SecretKey = SecretKey::generate().unwrap();
   let public: PublicKey = secret.public_key();
   let jwk: Jwk = encode_public_ed25519_jwk(&public);
@@ -51,7 +51,7 @@ pub(super) fn generate_jwk_document_with_keys() -> (CoreDocument, SecretKey, Str
   (document, secret, fragment)
 }
 
-pub(super) fn generate_document_with_keys() -> (CoreDocument, KeyPair) {
+pub(crate) fn generate_document_with_keys() -> (CoreDocument, KeyPair) {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let did: CoreDID = CoreDID::parse(format!("did:example:{}", BaseEncoding::encode_base58(keypair.public()))).unwrap();
   let document: CoreDocument = CoreDocument::builder(Object::new())
@@ -62,7 +62,7 @@ pub(super) fn generate_document_with_keys() -> (CoreDocument, KeyPair) {
   (document, keypair)
 }
 
-pub(super) fn generate_credential(
+pub(crate) fn generate_credential(
   issuer: &CoreDocument,
   subjects: &[CoreDocument],
   issuance_date: Timestamp,
@@ -97,7 +97,7 @@ pub(super) fn generate_credential(
 }
 
 // generates a triple: issuer document, issuer's keys, unsigned credential issued by issuer
-pub(super) fn credential_setup() -> (CoreDocument, KeyPair, Credential) {
+pub(crate) fn credential_setup() -> (CoreDocument, KeyPair, Credential) {
   let (issuer_doc, issuer_key) = generate_document_with_keys();
   let (subject_doc, _) = generate_document_with_keys();
   let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
