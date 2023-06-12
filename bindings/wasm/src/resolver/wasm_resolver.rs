@@ -4,9 +4,6 @@
 use std::borrow::Cow;
 use std::rc::Rc;
 
-use identity_iota::credential::Presentation;
-use identity_iota::credential::PresentationValidationOptions;
-use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDID;
@@ -17,13 +14,6 @@ use js_sys::Map;
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
-use crate::common::ImportedDocumentLock;
-use crate::common::ImportedDocumentReadGuard;
-use crate::common::PromiseVoid;
-use crate::credential::WasmFailFast;
-use crate::credential::WasmPresentation;
-use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayIToCoreDocument;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::iota::IotaDocumentLock;
@@ -32,15 +22,10 @@ use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
 use crate::resolver::constructor_input::MapResolutionHandler;
 use crate::resolver::constructor_input::ResolverConfig;
-use crate::resolver::type_definitions::OptionArrayIToCoreDocument;
-use crate::resolver::type_definitions::OptionIToCoreDocument;
 
-use super::type_definitions::PromiseArrayIToCoreDocument;
 use super::type_definitions::PromiseIToCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use futures::stream::StreamExt;
-use futures::stream::{self};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
@@ -166,126 +151,6 @@ impl WasmResolver {
     };
 
     resolver.attach_handler(method, fun);
-  }
-
-  /// Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
-  /// Issuer documents are returned in arbitrary order.
-  ///
-  /// # Errors
-  /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
-  /// resolution fails.
-  #[wasm_bindgen(js_name = resolvePresentationIssuers)]
-  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArrayIToCoreDocument> {
-    let resolver: Rc<JsDocumentResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
-
-    let promise: Promise = future_to_promise(async move {
-      let issuer_documents: Vec<JsValue> = resolver
-        .resolve_presentation_issuers(&presentation)
-        .await
-        .wasm_result()?;
-      Ok(issuer_documents.into_iter().collect::<js_sys::Array>().into())
-    });
-
-    Ok(promise.unchecked_into::<PromiseArrayIToCoreDocument>())
-  }
-
-  /// Fetches the DID Document of the holder of a `Presentation`.
-  ///
-  /// # Errors
-  /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
-  /// DID resolution fails.
-  #[wasm_bindgen(js_name = resolvePresentationHolder)]
-  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseIToCoreDocument> {
-    let resolver: Rc<JsDocumentResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
-
-    let promise: Promise = future_to_promise(async move {
-      resolver
-        .resolve_presentation_holder(&presentation)
-        .await
-        .wasm_result()
-        .map(JsValue::from)
-    });
-    Ok(promise.unchecked_into::<PromiseIToCoreDocument>())
-  }
-
-  /// Verifies a `Presentation`.
-  ///
-  /// ### Important
-  /// See `PresentationValidator::validate` for information about which properties get
-  /// validated and what is expected of the optional arguments `holder` and `issuer`.
-  ///
-  /// ### Resolution
-  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
-  /// If you already have up-to-date versions of these DID Documents, you may want
-  /// to use `PresentationValidator::validate`.
-  /// See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
-  ///
-  /// ### Errors
-  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
-  /// Otherwise, errors from validating the presentation and its credentials will be returned
-  /// according to the `fail_fast` parameter.
-  #[wasm_bindgen(js_name = verifyPresentation)]
-  pub fn verify_presentation(
-    &self,
-    presentation: &WasmPresentation,
-    options: &WasmPresentationValidationOptions,
-    fail_fast: WasmFailFast,
-    holder: &OptionIToCoreDocument,
-    issuers: &OptionArrayIToCoreDocument,
-  ) -> Result<PromiseVoid> {
-    let resolver: Rc<JsDocumentResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
-    let options: PresentationValidationOptions = options.0.clone();
-
-    let holder_clone: JsValue = JsValue::from(holder);
-    let issuers_clone: JsValue = JsValue::from(issuers);
-
-    let promise: Promise = future_to_promise(async move {
-      let holder_handler = || async {
-        if holder_clone.is_null() || holder_clone.is_undefined() {
-          resolver
-            .resolve_presentation_holder(&presentation)
-            .await
-            .map(|value| ImportedDocumentLock::from_js_value_unchecked(&value))
-        } else {
-          Ok(ImportedDocumentLock::from_js_value_unchecked(&holder_clone))
-        }
-      };
-
-      let issuers_handler = || async {
-        if issuers_clone.is_null() || issuers_clone.is_undefined() {
-          resolver.resolve_presentation_issuers(&presentation).await.map(|value| {
-            value
-              .into_iter()
-              .map(|entry| ImportedDocumentLock::from_js_value_unchecked(&entry))
-              .collect::<Vec<ImportedDocumentLock>>()
-          })
-        } else {
-          Ok(Vec::<ImportedDocumentLock>::from(
-            issuers_clone.unchecked_ref::<ArrayIToCoreDocument>(),
-          ))
-        }
-      };
-
-      let (holder_result, issuers_result) = futures::join!(holder_handler(), issuers_handler());
-
-      let holder = holder_result.wasm_result()?;
-      let issuers = issuers_result.wasm_result()?;
-
-      let holder_guard = holder.read().await;
-      let issuers_guard: Vec<ImportedDocumentReadGuard<'_>> = stream::iter(issuers.iter())
-        .then(ImportedDocumentLock::read)
-        .collect()
-        .await;
-
-      PresentationValidator::validate(&presentation, &holder_guard, &issuers_guard, &options, fail_fast.into())
-        .wasm_result()
-        .map(|_| JsValue::UNDEFINED)
-    });
-
-    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 
   /// Fetches the DID Document of the given DID.

@@ -22,6 +22,7 @@ impl From<String> for Jwt {
     Self::new(jwt)
   }
 }
+
 impl From<Jwt> for String {
   fn from(jwt: Jwt) -> Self {
     jwt.0

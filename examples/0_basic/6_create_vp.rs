@@ -100,7 +100,6 @@ async fn main() -> anyhow::Result<()> {
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;
-  println!("Credential JSON > {credential:#}");
 
   let credential_jwt: Jwt = issuer_document
     .sign_credential(
@@ -130,6 +129,7 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
   // Step 3: Issuer sends the Verifiable Credential to the holder.
   // ===========================================================================
+  println!("Sending credential (as JWT) to the holder: {credential:#}");
 
   // ===========================================================================
   // Step 4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
@@ -165,7 +165,12 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
   // ===========================================================================
-  // Step 6: Verifier receives the Verifiable Presentation and verifies it.
+  // Step 6: Holder sends a verifiable presentation to the verifier.
+  // ===========================================================================
+  println!("Sending presentation (as JWT) to the verifier: {presentation:#}");
+
+  // ===========================================================================
+  // Step 7: Verifier receives the Verifiable Presentation and verifies it.
   // ===========================================================================
 
   // The verifier wants the following requirements to be satisfied:
