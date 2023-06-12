@@ -1,3 +1,6 @@
+// Copyright 2020-2023 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::error::Error;
 
 pub(crate) type DomainLinkageValidationResult = Result<(), DomainLinkageValidationError>;
