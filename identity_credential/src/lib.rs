@@ -6,7 +6,7 @@
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
-  missing_docs,
+  // missing_docs,
   rustdoc::missing_crate_level_docs,
   rustdoc::broken_intra_doc_links,
   rustdoc::private_intra_doc_links,
@@ -25,6 +25,8 @@ pub use self::error::Result;
 
 #[cfg(feature = "credential")]
 pub mod credential;
+#[cfg(feature = "domain-linkage")]
+pub mod domain_linkage;
 pub mod error;
 #[cfg(feature = "presentation")]
 pub mod presentation;
