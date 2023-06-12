@@ -5,7 +5,8 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 
 /// Options to be set in the JWT claims of a verifiable presentation.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct JwtPresentationOptions {
   /// Set the presentation's expiration date.
   /// Default: `None`.

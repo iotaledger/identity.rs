@@ -81,7 +81,7 @@ pub trait JwkDocumentExt: private::Sealed {
     K: JwkStorage,
     I: KeyIdStorage;
 
-  /// Produces a JWS where the payload is produced from the given `credential`
+  /// Produces a JWT where the payload is produced from the given `credential`
   /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
@@ -98,7 +98,7 @@ pub trait JwkDocumentExt: private::Sealed {
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
 
-  /// Produces a JWS where the payload is produced from the given `presentation`
+  /// Produces a JWT where the payload is produced from the given `presentation`
   /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be

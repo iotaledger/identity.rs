@@ -195,13 +195,6 @@ where
     Ok(decoded_jwt_presentation)
   }
 
-  /// Validates the semantic structure of the `JwtPresentation`.
-  pub fn check_structure<U>(presentation: &JwtPresentation<U>) -> Result<(), ValidationError> {
-    presentation
-      .check_structure()
-      .map_err(ValidationError::PresentationStructure)
-  }
-
   fn validate_credentials<DOC, T, U>(
     &self,
     presentation: &JwtPresentation<T>,
@@ -290,5 +283,12 @@ impl JwtPresentationValidator {
       issuers.push(CredentialValidator::extract_issuer_from_jwt::<I, U>(vc)?)
     }
     Ok((holder, issuers))
+  }
+
+  /// Validates the semantic structure of the `JwtPresentation`.
+  pub fn check_structure<U>(presentation: &JwtPresentation<U>) -> Result<(), ValidationError> {
+    presentation
+      .check_structure()
+      .map_err(ValidationError::PresentationStructure)
   }
 }

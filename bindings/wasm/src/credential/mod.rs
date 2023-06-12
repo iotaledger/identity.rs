@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::module_inception)]
@@ -10,6 +10,8 @@ pub use self::domain_linkage_configuration::WasmDomainLinkageConfiguration;
 pub use self::jws::WasmJws;
 pub use self::jwt::WasmJwt;
 pub use self::jwt_credential_validation::*;
+pub use self::jwt_presentation::*;
+pub use self::jwt_presentation_validation::*;
 pub use self::presentation::WasmPresentation;
 pub use self::presentation_builder::*;
 pub use self::presentation_validator::WasmPresentationValidator;
@@ -28,6 +30,8 @@ mod domain_linkage_validator;
 mod jws;
 mod jwt;
 mod jwt_credential_validation;
+mod jwt_presentation;
+mod jwt_presentation_validation;
 mod linked_domain_service;
 mod presentation;
 mod presentation_builder;
