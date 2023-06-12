@@ -76,8 +76,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a Linked Domain Service to enable the discovery of the linked domains through the DID Document.
   // This is optional since it is not a hard requirement by the specs.
   let service_url: DIDUrl = did.clone().join("#domain-linkage")?;
-  let linked_domain_service: LinkedDomainService =
-    LinkedDomainService::new(service_url, domains, Object::new()).unwrap();
+  let linked_domain_service: LinkedDomainService = LinkedDomainService::new(service_url, domains, Object::new())?;
   did_document.insert_service(linked_domain_service.into())?;
   let updated_did_document: IotaDocument = publish_document(client.clone(), secret_manager, did_document).await?;
 
@@ -98,7 +97,11 @@ async fn main() -> anyhow::Result<()> {
     .origin(domain_1.clone())
     .issuance_date(Timestamp::now_utc())
     // Expires after a year.
-    .expiration_date(Timestamp::now_utc().checked_add(Duration::days(365)).unwrap())
+    .expiration_date(
+      Timestamp::now_utc()
+        .checked_add(Duration::days(365))
+        .ok_or_else(|| anyhow::anyhow!("calculation should not overflow"))?,
+    )
     .build()?;
 
   let jwt: Jwt = updated_did_document
@@ -108,8 +111,7 @@ async fn main() -> anyhow::Result<()> {
       &fragment,
       &JwsSignatureOptions::default(),
     )
-    .await
-    .unwrap();
+    .await?;
 
   // Create the DID Configuration Resource which wraps the Domain Linkage credential.
   let configuration_resource: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt]);
@@ -140,9 +142,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Fetch the DID Configuration resource
   // let configuration_resource: DomainLinkageConfiguration =
-  //   DomainLinkageConfiguration::fetch_configuration(domain_foo.clone())
-  //     .await
-  //     .unwrap();
+  //   DomainLinkageConfiguration::fetch_configuration(domain_foo.clone()).await?;
 
   // But since the DID Configuration
   // resource isn't available online in this example, we will simply deserialize the JSON.
@@ -154,7 +154,7 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(linked_dids.len(), 1);
 
   // Resolve the DID Document of the DID that issued the credential.
-  let issuer_did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
+  let issuer_did_document: IotaDocument = resolver.resolve(&did).await?;
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
   let validation_result: Result<(), DomainLinkageValidationError> = DomainLinkageValidator::new().validate_linkage(
@@ -168,7 +168,7 @@ async fn main() -> anyhow::Result<()> {
   // =====================================================
   // → Case 2: starting from a DID
   // =====================================================
-  let did_document: IotaDocument = resolver.resolve(&did).await.unwrap();
+  let did_document: IotaDocument = resolver.resolve(&did).await?;
 
   // Get the Linked Domain Services from the DID Document.
   let linked_domain_services: Vec<LinkedDomainService> = did_document
@@ -180,9 +180,15 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(linked_domain_services.len(), 1);
 
   // Get the domains included in the Linked Domain Service.
-  let domains: &[Url] = linked_domain_services.get(0).unwrap().domains();
+  let domains: &[Url] = linked_domain_services
+    .get(0)
+    .ok_or_else(|| anyhow::anyhow!("expected a domain"))?
+    .domains();
 
-  let domain_foo: Url = domains.get(0).unwrap().clone();
+  let domain_foo: Url = domains
+    .get(0)
+    .ok_or_else(|| anyhow::anyhow!("expected a domain"))?
+    .clone();
   assert_eq!(domain_foo, domain_1);
 
   // Fetch the DID Configuration resource
@@ -221,5 +227,5 @@ async fn publish_document(
     .finish(client.get_token_supply().await?)?;
 
   // Publish the updated Alias Output.
-  Ok(client.publish_did_output(&secret_manager, alias_output).await.unwrap())
+  Ok(client.publish_did_output(&secret_manager, alias_output).await?)
 }
