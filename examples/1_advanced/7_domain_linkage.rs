@@ -144,11 +144,6 @@ async fn main() -> anyhow::Result<()> {
   // let configuration_resource: DomainLinkageConfiguration =
   //   DomainLinkageConfiguration::fetch_configuration(domain_foo.clone()).await?;
 
-  // But since the DID Configuration
-  // resource isn't available online in this example, we will simply deserialize the JSON.
-  let configuration_resource: DomainLinkageConfiguration =
-    DomainLinkageConfiguration::from_json(&configuration_resource_json)?;
-
   // Retrieve the issuers of the Domain Linkage Credentials which correspond to the possibly linked DIDs.
   let linked_dids: Vec<CoreDID> = configuration_resource.issuers()?;
   assert_eq!(linked_dids.len(), 1);
