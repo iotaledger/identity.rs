@@ -4,8 +4,8 @@
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
-## [Account Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples-account/README.md)
-## [Low-Level Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
+## [Account Examples](https://github.com/iotaledger/identity.rs/blob/support/v0.6/bindings/wasm/examples-account/README.md)
+## [Low-Level Examples](https://github.com/iotaledger/identity.rs/blob/support/v0.6/bindings/wasm/examples/README.md)
 
 ## Install the library:
 
