@@ -1,16 +1,21 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::credential::Credential;
 use crate::error::Result;
+use crate::validator::vc_jwt_validation::CredentialValidator;
+use crate::validator::vc_jwt_validation::ValidationError;
 use identity_core::common::Context;
+use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_did::CoreDID;
 use serde::Deserialize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
 use crate::Error::DomainLinkageError;
+
+use super::Jwt;
 
 lazy_static! {
   static ref WELL_KNOWN_CONTEXT: Context =
@@ -22,8 +27,7 @@ lazy_static! {
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 ///
 /// Note:
-/// - Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
-///   is supported.
+/// - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(try_from = "__DomainLinkageConfiguration")]
 pub struct DomainLinkageConfiguration(__DomainLinkageConfiguration);
@@ -34,8 +38,8 @@ struct __DomainLinkageConfiguration {
   /// Fixed context.
   #[serde(rename = "@context")]
   context: Context,
-  /// Linked credentials.
-  linked_dids: Vec<Credential>,
+  /// Linked JWT credentials.
+  linked_dids: Vec<Jwt>,
 }
 
 impl __DomainLinkageConfiguration {
@@ -68,7 +72,7 @@ impl Display for DomainLinkageConfiguration {
 
 impl DomainLinkageConfiguration {
   /// Creates a new DID Configuration Resource.
-  pub fn new(linked_dids: Vec<Credential>) -> Self {
+  pub fn new(linked_dids: Vec<Jwt>) -> Self {
     Self(__DomainLinkageConfiguration {
       context: Self::well_known_context().clone(),
       linked_dids,
@@ -84,17 +88,22 @@ impl DomainLinkageConfiguration {
   }
 
   /// List of Domain Linkage Credentials.
-  pub fn linked_dids(&self) -> &Vec<Credential> {
+  pub fn linked_dids(&self) -> &Vec<Jwt> {
     &self.0.linked_dids
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
-  pub fn issuers(&self) -> impl Iterator<Item = &Url> {
-    self.0.linked_dids.iter().map(|linked_did| linked_did.issuer.url())
+  pub fn issuers(&self) -> std::result::Result<Vec<CoreDID>, ValidationError> {
+    self
+      .0
+      .linked_dids
+      .iter()
+      .map(CredentialValidator::extract_issuer_from_jwt::<CoreDID, Object>)
+      .collect()
   }
 
   /// List of domain Linkage Credentials.
-  pub fn linked_dids_mut(&mut self) -> &mut Vec<Credential> {
+  pub fn linked_dids_mut(&mut self) -> &mut Vec<Jwt> {
     &mut self.0.linked_dids
   }
 }
@@ -167,20 +176,20 @@ mod tests {
 
   #[test]
   fn test_from_json_valid() {
-    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-valid.json");
+    const JSON1: &str = include_str!("../../tests/fixtures/domain-config-valid.json");
     DomainLinkageConfiguration::from_json(JSON1).unwrap();
   }
 
   #[test]
   fn test_from_json_invalid_context() {
-    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-invalid-context.json");
+    const JSON1: &str = include_str!("../../tests/fixtures/domain-config-invalid-context.json");
     let deserialization_result: Result<DomainLinkageConfiguration> = DomainLinkageConfiguration::from_json(JSON1);
     assert!(deserialization_result.is_err());
   }
 
   #[test]
   fn test_from_json_extra_property() {
-    const JSON1: &str = include_str!("../../tests/fixtures/dn-config-extra-property.json");
+    const JSON1: &str = include_str!("../../tests/fixtures/domain-config-extra-property.json");
     let deserialization_result: Result<DomainLinkageConfiguration> = DomainLinkageConfiguration::from_json(JSON1);
     assert!(deserialization_result.is_err());
   }

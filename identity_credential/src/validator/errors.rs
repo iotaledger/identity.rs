@@ -169,6 +169,8 @@ impl From<DomainLinkageValidationError> for &str {
 pub enum DomainLinkageValidationErrorCause {
   #[error("invalid credential")]
   CredentialValidationError,
+  #[error("invalid JWT")]
+  InvalidJwt,
   #[error("the expiration date is missing")]
   MissingExpirationDate,
   #[error("id property is not allowed")]

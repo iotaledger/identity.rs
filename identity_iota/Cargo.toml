@@ -63,6 +63,9 @@ domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
 # Enables JWS verification with the EdDSA algorithm
 eddsa = ["identity_verification/eddsa"]
 
+# Exposes in-memory implementations of the storage traits intended exclusively for testing.
+memstore = ["identity_storage/memstore"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open

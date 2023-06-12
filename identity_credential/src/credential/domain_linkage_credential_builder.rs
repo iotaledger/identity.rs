@@ -11,8 +11,10 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_did::CoreDID;
+use identity_did::DID;
 
-/// Convenient builder to create a spec compliant Linked Data Domain Linkage Credential.
+/// Convenient builder to create a spec compliant Domain Linkage Credential.
 ///
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format>
 ///
@@ -32,16 +34,12 @@ impl DomainLinkageCredentialBuilder {
     Self::default()
   }
 
-  /// Sets the value of the `issuer`, only the URL is used, other properties are ignored.
+  /// Sets the value of the `issuer`.
   ///
-  /// The issuer will also be set as the `credentialSubject`.
+  /// The issuer will also be set as `credentialSubject.id`.
   #[must_use]
-  pub fn issuer(mut self, value: Issuer) -> Self {
-    let issuer: Url = match value {
-      Issuer::Url(url) => url,
-      Issuer::Obj(data) => data.id,
-    };
-    self.issuer = Some(issuer);
+  pub fn issuer(mut self, did: CoreDID) -> Self {
+    self.issuer = Some(did.into_url().into());
     self
   }
 
@@ -60,6 +58,8 @@ impl DomainLinkageCredentialBuilder {
   }
 
   /// Sets the origin in `credentialSubject`.
+  ///
+  /// Must be a domain origin.
   #[must_use]
   pub fn origin(mut self, value: Url) -> Self {
     self.origin = Some(value);
@@ -69,6 +69,12 @@ impl DomainLinkageCredentialBuilder {
   /// Returns a new `Credential` based on the `DomainLinkageCredentialBuilder` configuration.
   pub fn build(self) -> Result<Credential<Object>> {
     let origin: Url = self.origin.ok_or(Error::MissingOrigin)?;
+    if origin.domain().is_none() {
+      return Err(Error::DomainLinkageError(
+        "origin must be a domain with http(s) scheme".into(),
+      ));
+    }
+
     let mut properties: Object = Object::new();
     properties.insert("origin".into(), origin.into_string().into());
     let issuer: Url = self.issuer.ok_or(Error::MissingIssuer)?;
@@ -103,22 +109,35 @@ impl DomainLinkageCredentialBuilder {
 mod tests {
   use crate::credential::domain_linkage_credential_builder::DomainLinkageCredentialBuilder;
   use crate::credential::Credential;
-  use crate::credential::Issuer;
   use crate::error::Result;
   use crate::Error;
   use identity_core::common::Timestamp;
   use identity_core::common::Url;
+  use identity_did::CoreDID;
 
   #[test]
   fn test_builder_with_all_fields_set_succeeds() {
-    let issuer = Issuer::Url(Url::parse("did:example:issuer").unwrap());
-    let _credential: Credential = DomainLinkageCredentialBuilder::new()
+    let issuer: CoreDID = "did:example:issuer".parse().unwrap();
+    assert!(DomainLinkageCredentialBuilder::new()
       .issuance_date(Timestamp::now_utc())
       .expiration_date(Timestamp::now_utc())
       .issuer(issuer)
       .origin(Url::parse("http://www.example.com").unwrap())
       .build()
-      .unwrap();
+      .is_ok());
+  }
+
+  #[test]
+  fn test_builder_origin_is_not_a_domain() {
+    let issuer: CoreDID = "did:example:issuer".parse().unwrap();
+    let err: Error = DomainLinkageCredentialBuilder::new()
+      .issuance_date(Timestamp::now_utc())
+      .expiration_date(Timestamp::now_utc())
+      .issuer(issuer)
+      .origin(Url::parse("did:example:origin").unwrap())
+      .build()
+      .unwrap_err();
+    assert!(matches!(err, Error::DomainLinkageError(_)));
   }
 
   #[test]
@@ -134,7 +153,7 @@ mod tests {
 
   #[test]
   fn test_builder_no_origin() {
-    let issuer = Issuer::Url(Url::parse("did:example:issuer").unwrap());
+    let issuer: CoreDID = "did:example:issuer".parse().unwrap();
     let credential: Result<Credential> = DomainLinkageCredentialBuilder::new()
       .issuance_date(Timestamp::now_utc())
       .expiration_date(Timestamp::now_utc())
@@ -146,7 +165,7 @@ mod tests {
 
   #[test]
   fn test_builder_no_expiration_date() {
-    let issuer = Issuer::Url(Url::parse("did:example:issuer").unwrap());
+    let issuer: CoreDID = "did:example:issuer".parse().unwrap();
     let credential: Result<Credential> = DomainLinkageCredentialBuilder::new()
       .issuance_date(Timestamp::now_utc())
       .issuer(issuer)

@@ -12,9 +12,14 @@ use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
+use identity_iota::storage::Storage;
 use identity_iota::verification::MethodScope;
 use identity_iota::verification::VerificationMethod;
 
+use identity_iota::verification::jws::JwsAlgorithm;
 use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -24,6 +29,32 @@ use rand::distributions::DistString;
 
 pub static API_ENDPOINT: &str = "http://localhost:14265";
 pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
+
+pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
+
+/// Creates a DID Document and publishes it in a new Alias Output.
+///
+/// Its functionality is equivalent to the "create DID" example
+/// and exists for convenient calling from the other examples.
+pub async fn create_did_storage(
+  client: &Client,
+  secret_manager: &mut SecretManager,
+  storage: &MemStorage,
+) -> anyhow::Result<(Address, IotaDocument, String)> {
+  let address: Address = get_address_with_funds(client, secret_manager, FAUCET_ENDPOINT)
+    .await
+    .context("failed to get address with funds")?;
+
+  let network_name: NetworkName = client.network_name().await?;
+
+  let (document, fragment): (IotaDocument, String) = create_did_document_storage(&network_name, storage).await?;
+
+  let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
+
+  let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
+
+  Ok((address, document, fragment))
+}
 
 /// Creates a DID Document and publishes it in a new Alias Output.
 ///
@@ -46,6 +77,29 @@ pub async fn create_did(
   let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
 
   Ok((address, document, key_pair))
+}
+
+/// Creates an example DID document with the given `network_name`.
+///
+/// Its functionality is equivalent to the "create DID" example
+/// and exists for convenient calling from the other examples.
+pub async fn create_did_document_storage(
+  network_name: &NetworkName,
+  storage: &MemStorage,
+) -> anyhow::Result<(IotaDocument, String)> {
+  let mut document: IotaDocument = IotaDocument::new(network_name);
+
+  let fragment: String = document
+    .generate_method(
+      storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await?;
+
+  Ok((document, fragment))
 }
 
 /// Creates an example DID document with the given `network_name`.

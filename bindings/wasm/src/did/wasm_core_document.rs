@@ -11,10 +11,11 @@ use crate::common::ArrayString;
 use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
-use crate::common::PromiseOptionString;
+use crate::common::PromiseString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
+use crate::credential::ArrayCoreDID;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
@@ -640,7 +641,7 @@ impl WasmCoreDocument {
     alg: WasmJwsAlgorithm,
     fragment: Option<String>,
     scope: WasmMethodScope,
-  ) -> Result<PromiseOptionString> {
+  ) -> Result<PromiseString> {
     let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
@@ -780,12 +781,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "ICoreDocument")]
   pub type ICoreDocument;
 
-  #[wasm_bindgen(typescript_type = "CoreDID[]")]
-  pub type ArrayCoreDID;
-
   #[wasm_bindgen(typescript_type = "CoreDID | CoreDID[] | null")]
   pub type OptionOneOrManyCoreDID;
-
 }
 
 #[derive(Deserialize)]

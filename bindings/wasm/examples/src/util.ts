@@ -3,15 +3,65 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
+    JwkMemStore,
+    JwsAlgorithm,
     KeyPair,
     KeyType,
     MethodScope,
+    Storage,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { AddressTypes, Bech32Helper, IAliasOutput } from "@iota/iota.js";
 
 export const API_ENDPOINT = "http://localhost:14265";
 export const FAUCET_ENDPOINT = "http://localhost:8091/api/enqueue";
+
+/** Creates a DID Document and publishes it in a new Alias Output.
+
+Its functionality is equivalent to the "create DID" example
+and exists for convenient calling from the other examples. */
+export async function createDidStorage(client: Client, secretManager: SecretManager, storage: Storage): Promise<{
+    address: AddressTypes;
+    document: IotaDocument;
+    fragment: string;
+}> {
+    const didClient = new IotaIdentityClient(client);
+    const networkHrp: string = await didClient.getNetworkHrp();
+
+    const walletAddressBech32 = (await client.generateAddresses(secretManager, {
+        accountIndex: 0,
+        range: {
+            start: 0,
+            end: 1,
+        },
+    }))[0];
+    console.log("Wallet address Bech32:", walletAddressBech32);
+
+    await ensureAddressHasFunds(client, walletAddressBech32);
+
+    const address = Bech32Helper.addressFromBech32(walletAddressBech32, networkHrp);
+
+    // Create a new DID document with a placeholder DID.
+    // The DID will be derived from the Alias Id of the Alias Output after publishing.
+    const document = new IotaDocument(networkHrp);
+
+    const fragment = await document.generateMethod(
+        storage,
+        JwkMemStore.ed25519KeyType(),
+        JwsAlgorithm.EdDSA,
+        "#jwk",
+        MethodScope.AssertionMethod(),
+    );
+
+    // Construct an Alias Output containing the DID document, with the wallet address
+    // set as both the state controller and governor.
+    const aliasOutput: IAliasOutput = await didClient.newDidOutput(address, document);
+
+    // Publish the Alias Output and get the published DID document.
+    const published = await didClient.publishDidOutput(secretManager, aliasOutput);
+
+    return { address, document: published, fragment };
+}
 
 /** Creates a DID Document and publishes it in a new Alias Output.
 
