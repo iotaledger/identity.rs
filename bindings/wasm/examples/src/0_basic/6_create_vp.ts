@@ -178,22 +178,14 @@ export async function createVP() {
     const resolvedHolder = await resolver.resolve(presentationDids.holder.toString());
     const resolvedIssuer = await resolver.resolve(presentationDids.issuers[0].toString());
 
-    // Validate the presentation and all the credentials included in it according to the validation options
-    // Note that the `verifyPresentation` method we called automatically resolves all DID Documents that are necessary to validate the presentation.
-    // It is also possible to supply extra arguments to avoid some resolutions if one already has up-to-date resolved documents of
-    // either the holder or issuers (see the method's documentation).
-    try {
-        new JwtPresentationValidator().validate(
-            presentationJwt,
-            resolvedHolder,
-            [resolvedIssuer],
-            jwtPresentationValidationOptions,
-            FailFast.FirstError,
-        );
-    } catch (err) {
-        console.log("nope");
-        console.error(err);
-    }
+    // Validate the presentation and all the credentials included in it according to the validation options.
+    new JwtPresentationValidator().validate(
+        presentationJwt,
+        resolvedHolder,
+        [resolvedIssuer],
+        jwtPresentationValidationOptions,
+        FailFast.FirstError,
+    );
 
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful.
     console.log(`VP successfully validated`);

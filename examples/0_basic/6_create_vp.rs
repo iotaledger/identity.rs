@@ -199,7 +199,6 @@ async fn main() -> anyhow::Result<()> {
   resolver.attach_iota_handler(client);
 
   let holder: IotaDocument = resolver.resolve(&holder_did).await?;
-  // TODO: Add convenience method Resolver::resolve_multiple/resolve_all?
   let issuer: IotaDocument = resolver.resolve(&issuer_dids[0]).await?;
 
   let presentation: DecodedJwtPresentation = JwtPresentationValidator::new().validate(
