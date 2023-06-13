@@ -35,8 +35,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new DID in an Alias Output for us to resolve.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  let (_, document, _): (Address, IotaDocument, String) =
-    create_did(&client, &mut secret_manager, &storage).await?;
+  let (_, document, _): (Address, IotaDocument, String) = create_did(&client, &mut secret_manager, &storage).await?;
 
   let did = document.id().clone();
 
