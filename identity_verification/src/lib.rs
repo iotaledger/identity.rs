@@ -25,5 +25,7 @@ pub mod jose;
 pub mod verification_method;
 pub use error::Error;
 pub use error::Result;
-pub use jose::*;
+pub use jose::jwk;
+pub use jose::jws;
+pub use jose::jwu;
 pub use verification_method::*;

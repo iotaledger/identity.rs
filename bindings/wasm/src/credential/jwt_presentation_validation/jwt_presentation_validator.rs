@@ -15,7 +15,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::verification::IJwsVerifier;
 use crate::verification::WasmJwsVerifier;
-use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::credential::JwtPresentationValidator;
 use identity_iota::did::CoreDID;
@@ -108,7 +107,7 @@ impl WasmJwtPresentationValidator {
   #[wasm_bindgen(js_name = extractDids)]
   pub fn extract_dids(presentation: &WasmJwt) -> Result<JwtPresentationDids> {
     let (holder, issuers) =
-      JwtPresentationValidator::extract_dids::<CoreDID, CoreDID, Object, Object>(&presentation.0).wasm_result()?;
+      JwtPresentationValidator::extract_dids::<CoreDID, CoreDID>(&presentation.0).wasm_result()?;
     let mut map = BTreeMap::<&str, OneOrMany<CoreDID>>::new();
     map.insert("holder", OneOrMany::One(holder));
     map.insert("issuers", OneOrMany::Many(issuers));

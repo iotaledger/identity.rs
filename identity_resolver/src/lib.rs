@@ -6,6 +6,5 @@ mod resolution;
 
 pub use self::error::Error;
 pub use self::error::ErrorCause;
-pub use self::error::ResolutionAction;
 pub use self::error::Result;
 pub use resolution::*;

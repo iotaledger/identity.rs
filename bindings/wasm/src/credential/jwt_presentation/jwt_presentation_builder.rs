@@ -84,7 +84,11 @@ struct IJwtPresentationHelper {
   #[typescript(name = "type", type = "string | Array<string>")]
   r#type: Option<OneOrMany<String>>,
   /// JWT Credential(s) expressing the claims of the presentation.
-  #[typescript(optional = false, name = "verifiableCredential", type = "string | Array<string>")]
+  #[typescript(
+    optional = false,
+    name = "verifiableCredential",
+    type = "Jwt | Array<Jwt> | string | Array<string>"
+  )]
   verifiable_credential: OneOrMany<String>,
   /// The entity that generated the presentation.
   #[typescript(optional = false, type = "string | CoreDID | IotaDID ")]
