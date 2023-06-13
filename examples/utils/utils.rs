@@ -17,7 +17,6 @@ use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
 use identity_iota::storage::Storage;
 use identity_iota::verification::MethodScope;
-use identity_iota::verification::VerificationMethod;
 
 use identity_iota::verification::jws::JwsAlgorithm;
 use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
@@ -56,29 +55,6 @@ pub async fn create_did_storage(
   Ok((address, document, fragment))
 }
 
-/// Creates a DID Document and publishes it in a new Alias Output.
-///
-/// Its functionality is equivalent to the "create DID" example
-/// and exists for convenient calling from the other examples.
-pub async fn create_did(
-  client: &Client,
-  secret_manager: &mut SecretManager,
-) -> anyhow::Result<(Address, IotaDocument, KeyPair)> {
-  let address: Address = get_address_with_funds(client, secret_manager, FAUCET_ENDPOINT)
-    .await
-    .context("failed to get address with funds")?;
-
-  let network_name: NetworkName = client.network_name().await?;
-
-  let (document, key_pair): (IotaDocument, KeyPair) = create_did_document(&network_name)?;
-
-  let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
-
-  let document: IotaDocument = client.publish_did_output(secret_manager, alias_output).await?;
-
-  Ok((address, document, key_pair))
-}
-
 /// Creates an example DID document with the given `network_name`.
 ///
 /// Its functionality is equivalent to the "create DID" example
@@ -100,23 +76,6 @@ pub async fn create_did_document_storage(
     .await?;
 
   Ok((document, fragment))
-}
-
-/// Creates an example DID document with the given `network_name`.
-///
-/// Its functionality is equivalent to the "create DID" example
-/// and exists for convenient calling from the other examples.
-pub fn create_did_document(network_name: &NetworkName) -> anyhow::Result<(IotaDocument, KeyPair)> {
-  let mut document: IotaDocument = IotaDocument::new(network_name);
-
-  let key_pair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-
-  let method: VerificationMethod =
-    VerificationMethod::new(document.id().clone(), key_pair.type_(), key_pair.public(), "#key-1")?;
-
-  document.insert_method(method, MethodScope::VerificationMethod)?;
-
-  Ok((document, key_pair))
 }
 
 /// Generates an address from the given [`SecretManager`] and adds funds from the faucet.

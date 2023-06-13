@@ -3,12 +3,12 @@
 
 use std::ops::Deref;
 
-use examples::create_did;
+use examples::create_did_storage;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_iota::core::Duration;
 use identity_iota::core::Timestamp;
-use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::output::unlock_condition::AddressUnlockCondition;
 use identity_iota::iota::block::output::unlock_condition::ExpirationUnlockCondition;
 use identity_iota::iota::block::output::BasicOutput;
@@ -19,6 +19,8 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -65,7 +67,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the authority.
-  let (_, authority_document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, authority_document, _): (Address, IotaDocument, String) =
+    create_did_storage(&client, &mut secret_manager, &storage).await?;
   let authority_did = authority_document.id().clone();
 
   let rent_structure: RentStructure = client.get_rent_structure().await?;

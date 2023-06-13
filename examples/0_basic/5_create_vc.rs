@@ -25,20 +25,15 @@ use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::types::block::address::Address;
 
-use examples::create_did;
 use examples::random_stronghold_path;
 use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
-use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-// use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::FailFast;
 use identity_iota::credential::Subject;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDocument;
 

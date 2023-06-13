@@ -3,14 +3,16 @@
 
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
+use examples::MemStorage;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
+use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
-use identity_iota::verification::VerificationMethod;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -56,10 +58,16 @@ async fn main() -> anyhow::Result<()> {
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
   // Insert a new Ed25519 verification method in the DID document.
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: VerificationMethod =
-    VerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
-  document.insert_method(method, MethodScope::VerificationMethod)?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let _fragment: String = document
+    .generate_method(
+      &storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await?;
 
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.

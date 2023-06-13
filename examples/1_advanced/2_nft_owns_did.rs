@@ -1,9 +1,10 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_did_document;
+use examples::create_did_document_storage;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
 use examples::FAUCET_ENDPOINT;
 use identity_iota::iota::block::address::NftAddress;
@@ -12,6 +13,8 @@ use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -81,7 +84,8 @@ async fn main() -> anyhow::Result<()> {
   let network: NetworkName = client.network_name().await?;
 
   // Construct a DID document for the car.
-  let (car_document, _): (IotaDocument, _) = create_did_document(&network)?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (car_document, _): (IotaDocument, _) = create_did_document_storage(&network, &storage).await?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client
