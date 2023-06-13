@@ -25,7 +25,7 @@ import {
 import type { IFoundryOutput } from "@iota/types";
 import { HexHelper } from "@iota/util.js";
 import bigInt from "big-integer";
-import { API_ENDPOINT, createDid, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and control a Token Foundry and its tokens.
 
@@ -50,7 +50,7 @@ export async function didIssuesTokens() {
 
     // Create a new DID for the authority. (see "0_create_did" example).
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document } = await createDidStorage(
+    let { document } = await createDid(
         client,
         secretManager,
         storage,

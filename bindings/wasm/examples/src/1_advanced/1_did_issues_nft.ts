@@ -23,7 +23,7 @@ import {
     TransactionHelper,
 } from "@iota/iota.js";
 import { Converter } from "@iota/util.js";
-import { API_ENDPOINT, createDid, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and own NFTs,
 and how observers can verify the issuer of the NFT.
@@ -49,7 +49,7 @@ export async function didIssuesNft() {
 
     // Create a new DID for the manufacturer. (see "0_create_did" example).
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document } = await createDidStorage(
+    let { document } = await createDid(
         client,
         secretManager,
         storage,

@@ -4,7 +4,7 @@
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import { IotaIdentityClient, Storage, JwkMemStore, KeyIdMemStore } from "@iota/identity-wasm/node";
-import { API_ENDPOINT, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. */
 export async function deleteIdentity() {
@@ -22,7 +22,7 @@ export async function deleteIdentity() {
     // Creates a new wallet and identity (see "0_create_did" example).
     // const { address, document } = await createDid(client, secretManager);
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { address, document } = await createDidStorage(
+    let { address, document } = await createDid(
         client,
         secretManager,
         storage,

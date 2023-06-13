@@ -23,7 +23,7 @@ import {
     SubjectHolderRelationship,
     Timestamp,
 } from "@iota/identity-wasm/node";
-import { API_ENDPOINT, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * This example shows how to create a Verifiable Presentation and validate it.
@@ -46,7 +46,7 @@ export async function createVP() {
         mnemonic: Bip39.randomMnemonic(),
     };
     const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: issuerDocument, fragment: issuerFragment } = await createDidStorage(
+    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
         client,
         issuerSecretManager,
         issuerStorage,
@@ -57,7 +57,7 @@ export async function createVP() {
         mnemonic: Bip39.randomMnemonic(),
     };
     const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: aliceDocument, fragment: aliceFragment } = await createDidStorage(
+    let { document: aliceDocument, fragment: aliceFragment } = await createDid(
         client,
         aliceSecretManager,
         aliceStorage,

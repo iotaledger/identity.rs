@@ -1,15 +1,11 @@
 import type { Client, SecretManager } from "@iota/client-wasm/node";
 import {
-    IotaDID,
     IotaDocument,
     IotaIdentityClient,
     JwkMemStore,
     JwsAlgorithm,
-    KeyPair,
-    KeyType,
     MethodScope,
     Storage,
-    VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { AddressTypes, Bech32Helper, IAliasOutput } from "@iota/iota.js";
 
@@ -20,7 +16,7 @@ export const FAUCET_ENDPOINT = "http://localhost:8091/api/enqueue";
 
 Its functionality is equivalent to the "create DID" example
 and exists for convenient calling from the other examples. */
-export async function createDidStorage(client: Client, secretManager: SecretManager, storage: Storage): Promise<{
+export async function createDid(client: Client, secretManager: SecretManager, storage: Storage): Promise<{
     address: AddressTypes;
     document: IotaDocument;
     fragment: string;
@@ -61,50 +57,6 @@ export async function createDidStorage(client: Client, secretManager: SecretMana
     const published = await didClient.publishDidOutput(secretManager, aliasOutput);
 
     return { address, document: published, fragment };
-}
-
-/** Creates a DID Document and publishes it in a new Alias Output.
-
-Its functionality is equivalent to the "create DID" example
-and exists for convenient calling from the other examples. */
-export async function createDid(client: Client, secretManager: SecretManager): Promise<{
-    address: AddressTypes;
-    document: IotaDocument;
-    keypair: KeyPair;
-}> {
-    const didClient = new IotaIdentityClient(client);
-    const networkHrp: string = await didClient.getNetworkHrp();
-
-    const walletAddressBech32 = (await client.generateAddresses(secretManager, {
-        accountIndex: 0,
-        range: {
-            start: 0,
-            end: 1,
-        },
-    }))[0];
-    console.log("Wallet address Bech32:", walletAddressBech32);
-
-    await ensureAddressHasFunds(client, walletAddressBech32);
-
-    const address = Bech32Helper.addressFromBech32(walletAddressBech32, networkHrp);
-
-    // Create a new DID document with a placeholder DID.
-    // The DID will be derived from the Alias Id of the Alias Output after publishing.
-    const document = new IotaDocument(networkHrp);
-
-    // Insert a new Ed25519 verification method in the DID document.
-    let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new VerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
-    document.insertMethod(method, MethodScope.VerificationMethod());
-
-    // Construct an Alias Output containing the DID document, with the wallet address
-    // set as both the state controller and governor.
-    const aliasOutput: IAliasOutput = await didClient.newDidOutput(address, document);
-
-    // Publish the Alias Output and get the published DID document.
-    const published = await didClient.publishDidOutput(secretManager, aliasOutput);
-
-    return { address, document: published, keypair };
 }
 
 /** Request funds from the faucet API, if needed, and wait for them to show in the wallet. */

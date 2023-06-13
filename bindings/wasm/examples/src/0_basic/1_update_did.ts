@@ -17,7 +17,7 @@ import {
     JwsAlgorithm
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
-import { API_ENDPOINT, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
@@ -34,7 +34,7 @@ export async function updateIdentity() {
 
     // Creates a new wallet and identity (see "0_create_did" example).
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document } = await createDidStorage(
+    let { document } = await createDid(
         client,
         secretManager,
         storage,

@@ -27,7 +27,7 @@ import {
     STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE,
     TransactionHelper,
 } from "@iota/iota.js";
-import { API_ENDPOINT, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can control another identity.
 
@@ -51,7 +51,7 @@ export async function didControlsDid() {
 
     // Creates a new wallet and identity (see "0_create_did" example).
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document } = await createDidStorage(
+    let { document } = await createDid(
         client,
         secretManager,
         storage,

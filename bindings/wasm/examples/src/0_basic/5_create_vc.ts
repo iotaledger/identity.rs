@@ -13,7 +13,7 @@ import {
     JwtCredentialValidator,
     JwtCredentialValidationOptions,
 } from "@iota/identity-wasm/node";
-import { API_ENDPOINT, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.
@@ -34,7 +34,7 @@ export async function createVC() {
 
     // Create an identity for the issuer with one verification method `key-1`.
     const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: issuerDocument, fragment: issuerFragment } = await createDidStorage(
+    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
         client,
         secretManager,
         issuerStorage,
@@ -43,7 +43,7 @@ export async function createVC() {
     // Create an identity for the holder, in this case also the subject.
     // const { document: aliceDocument } = await createDid(client, secretManager);
     const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: aliceDocument } = await createDidStorage(
+    let { document: aliceDocument } = await createDid(
         client,
         secretManager,
         aliceStorage,

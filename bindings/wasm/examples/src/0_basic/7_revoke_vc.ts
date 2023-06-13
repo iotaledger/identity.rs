@@ -20,7 +20,7 @@ import {
     JwtCredentialValidationOptions,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
-import { API_ENDPOINT, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * This example shows how to revoke a verifiable credential.
@@ -48,7 +48,7 @@ export async function revokeVC() {
 
     // Create an identity for the issuer with one verification method `key-1`.
     const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: issuerDocument, fragment: issuerFragment } = await createDidStorage(
+    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
         client,
         issuerSecretManager,
         issuerStorage,
@@ -56,7 +56,7 @@ export async function revokeVC() {
 
     // Create an identity for the holder, in this case also the subject.
     const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: aliceDocument, fragment: aliceFragment } = await createDidStorage(
+    let { document: aliceDocument, fragment: aliceFragment } = await createDid(
         client,
         issuerSecretManager,
         aliceStorage,
