@@ -7,10 +7,14 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
+    JwkMemStore,
+    KeyIdMemStore,
     KeyPair,
     KeyType,
     MethodScope,
     VerificationMethod,
+    Storage,
+    JwsAlgorithm
 } from "@iota/identity-wasm/node";
 import {
     AddressTypes,
@@ -23,8 +27,7 @@ import {
     STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE,
     TransactionHelper,
 } from "@iota/iota.js";
-import { Converter } from "@iota/util.js";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDidStorage } from "../util";
 
 /** Demonstrates how an identity can control another identity.
 
@@ -47,7 +50,12 @@ export async function didControlsDid() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    var { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDidStorage(
+        client,
+        secretManager,
+        storage,
+    );
     let companyDid = document.id();
 
     // Get the current byte costs.
@@ -99,14 +107,13 @@ export async function didControlsDid() {
 
     // Add a verification method to the subsidiary.
     // This only serves as an example for updating the subsidiary DID.
-    const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-    const method: VerificationMethod = new VerificationMethod(
-        subsidiaryDocument.id(),
-        KeyType.Ed25519,
-        keyPair.public(),
+    await subsidiaryDocument.generateMethod(
+        storage,
+        JwkMemStore.ed25519KeyType(),
+        JwsAlgorithm.EdDSA,
         "#key-2",
+        MethodScope.VerificationMethod(),
     );
-    subsidiaryDocument.insertMethod(method, MethodScope.VerificationMethod());
 
     // Update the subsidiary's Alias Output with the updated document
     // and increase the storage deposit.

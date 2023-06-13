@@ -6,7 +6,6 @@ import { Bip39 } from "@iota/crypto.js";
 import {
     CoreDID,
     Credential,
-    CredentialValidationOptions,
     DIDUrl,
     DomainLinkageConfiguration,
     DomainLinkageValidator,
@@ -19,7 +18,6 @@ import {
     JwtCredentialValidationOptions,
     KeyIdMemStore,
     LinkedDomainService,
-    ProofOptions,
     Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";

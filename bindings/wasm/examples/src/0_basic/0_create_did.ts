@@ -7,10 +7,12 @@ import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    KeyPair,
-    KeyType,
+    JwkMemStore,
+    KeyIdMemStore,
+    Storage,
     MethodScope,
-    VerificationMethod,
+    JwsAlgorithm,
+
 } from "@iota/identity-wasm/node";
 import { Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
@@ -50,11 +52,16 @@ export async function createIdentity(): Promise<{
     // Create a new DID document with a placeholder DID.
     // The DID will be derived from the Alias Id of the Alias Output after publishing.
     const document = new IotaDocument(networkHrp);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
 
     // Insert a new Ed25519 verification method in the DID document.
-    let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new VerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-1");
-    document.insertMethod(method, MethodScope.VerificationMethod());
+    document.generateMethod(
+        storage,
+        JwkMemStore.ed25519KeyType(),
+        JwsAlgorithm.EdDSA,
+        "#key-1",
+        MethodScope.VerificationMethod(),
+    );
 
     // Construct an Alias Output containing the DID document, with the wallet address
     // set as both the state controller and governor.

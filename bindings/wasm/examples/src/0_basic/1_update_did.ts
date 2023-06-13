@@ -6,16 +6,18 @@ import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDocument,
     IotaIdentityClient,
-    KeyPair,
-    KeyType,
+    JwkMemStore,
+    KeyIdMemStore,
     MethodRelationship,
     MethodScope,
     Service,
     Timestamp,
     VerificationMethod,
+    Storage,
+    JwsAlgorithm
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDidStorage } from "../util";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
 export async function updateIdentity() {
@@ -31,7 +33,12 @@ export async function updateIdentity() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    let { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDidStorage(
+        client,
+        secretManager,
+        storage,
+    );
     const did = document.id();
 
     // Resolve the latest state of the document.
@@ -39,9 +46,13 @@ export async function updateIdentity() {
     document = await didClient.resolveDid(did);
 
     // Insert a new Ed25519 verification method in the DID document.
-    let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new VerificationMethod(document.id(), keypair.type(), keypair.public(), "#key-2");
-    document.insertMethod(method, MethodScope.VerificationMethod());
+    await document.generateMethod(
+        storage,
+        JwkMemStore.ed25519KeyType(),
+        JwsAlgorithm.EdDSA,
+        "#key-2",
+        MethodScope.VerificationMethod(),
+    );
 
     // Attach a new method relationship to the inserted method.
     document.attachMethodRelationship(did.join("#key-2"), MethodRelationship.Authentication);
@@ -57,7 +68,7 @@ export async function updateIdentity() {
 
     // Remove a verification method.
     let originalMethod = document.resolveMethod("key-1") as VerificationMethod;
-    document.removeMethod(originalMethod?.id());
+    await document.purgeMethod(storage, originalMethod?.id())
 
     // Resolve the latest output and update it with the given document.
     const aliasOutput: IAliasOutput = await didClient.updateDidOutput(document);

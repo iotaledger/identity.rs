@@ -1,16 +1,19 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import {
     Credential,
-    CredentialValidationOptions,
-    CredentialValidator,
+    Storage,
     FailFast,
-    ProofOptions,
+    JwkMemStore,
+    KeyIdMemStore,
+    JwsSignatureOptions,
+    JwtCredentialValidator,
+    JwtCredentialValidationOptions,
 } from "@iota/identity-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDidStorage } from "../util";
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.
@@ -30,10 +33,21 @@ export async function createVC() {
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
-    const { document: issuerDocument, keypair: keypairIssuer } = await createDid(client, secretManager);
+    const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document: issuerDocument, fragment: issuerFragment } = await createDidStorage(
+        client,
+        secretManager,
+        issuerStorage,
+    );
 
     // Create an identity for the holder, in this case also the subject.
-    const { document: aliceDocument } = await createDid(client, secretManager);
+    // const { document: aliceDocument } = await createDid(client, secretManager);
+    const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document: aliceDocument } = await createDidStorage(
+        client,
+        secretManager,
+        aliceStorage,
+    );
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -52,22 +66,32 @@ export async function createVC() {
         credentialSubject: subject,
     });
 
-    // Sign Credential.
-    let signedVc = issuerDocument.signCredential(unsignedVc, keypairIssuer.private(), "#key-1", ProofOptions.default());
+    // Create signed JWT credential.
+    const credentialJwt = await issuerDocument.createCredentialJwt(
+        issuerStorage,
+        issuerFragment,
+        unsignedVc,
+        new JwsSignatureOptions(),
+    );
+    console.log(`Credential JWT > ${credentialJwt.toString()}`);
 
     // Before sending this credential to the holder the issuer wants to validate that some properties
     // of the credential satisfy their expectations.
 
     // Validate the credential's signature, the credential's semantic structure,
     // check that the issuance date is not in the future and that the expiration date is not in the past.
-    CredentialValidator.validate(signedVc, issuerDocument, CredentialValidationOptions.default(), FailFast.AllErrors);
+    // Note that the validation returns an object containing the decoded credential.
+    const res = new JwtCredentialValidator().validate(
+        credentialJwt,
+        issuerDocument,
+        new JwtCredentialValidationOptions({}),
+        FailFast.FirstError,
+    );
 
     // Since `validate` did not throw any errors we know that the credential was successfully validated.
     console.log(`VC successfully validated`);
 
     // The issuer is now sure that the credential they are about to issue satisfies their expectations.
-    // The credential is then serialized to JSON and transmitted to the holder in a secure manner.
     // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
-    const credentialJSON = signedVc.toJSON();
-    console.log(`Issued credential: ${JSON.stringify(credentialJSON, null, 2)}`);
+    console.log(`Issued credential: ${JSON.stringify(res.intoCredential(), null, 2)}`);
 }

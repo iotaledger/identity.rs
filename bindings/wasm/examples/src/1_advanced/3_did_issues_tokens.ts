@@ -1,9 +1,9 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
-import { IotaDID, IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
+import { IotaDID, IotaDocument, IotaIdentityClient, Storage, JwkMemStore, KeyIdMemStore } from "@iota/identity-wasm/node";
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
     ALIAS_ADDRESS_TYPE,
@@ -25,7 +25,7 @@ import {
 import type { IFoundryOutput } from "@iota/types";
 import { HexHelper } from "@iota/util.js";
 import bigInt from "big-integer";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDid, createDidStorage } from "../util";
 
 /** Demonstrates how an identity can issue and control a Token Foundry and its tokens.
 
@@ -49,7 +49,12 @@ export async function didIssuesTokens() {
     };
 
     // Create a new DID for the authority. (see "0_create_did" example).
-    const { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDidStorage(
+        client,
+        secretManager,
+        storage,
+    )
     let authorityDid = document.id();
 
     // Get the current byte costs.

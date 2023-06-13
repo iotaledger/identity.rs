@@ -5238,9 +5238,6 @@ The resolver will only be able to resolve DID documents for methods it has been 
 
 * [Resolver](#Resolver)
     * [new Resolver(config)](#new_Resolver_new)
-    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
-    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
-    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
 
 <a name="new_Resolver_new"></a>
@@ -5256,67 +5253,6 @@ will throw an error because the handler for the "iota" method then becomes ambig
 | Param | Type |
 | --- | --- |
 | config | <code>ResolverConfig</code> | 
-
-<a name="Resolver+resolvePresentationIssuers"></a>
-
-### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
-Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
-Issuer documents are returned in arbitrary order.
-
-# Errors
-Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
-resolution fails.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="Resolver+resolvePresentationHolder"></a>
-
-### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
-Fetches the DID Document of the holder of a `Presentation`.
-
-# Errors
-Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
-DID resolution fails.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="Resolver+verifyPresentation"></a>
-
-### resolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
-Verifies a `Presentation`.
-
-### Important
-See `PresentationValidator::validate` for information about which properties get
-validated and what is expected of the optional arguments `holder` and `issuer`.
-
-### Resolution
-The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
-If you already have up-to-date versions of these DID Documents, you may want
-to use `PresentationValidator::validate`.
-See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
-
-### Errors
-Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
-Otherwise, errors from validating the presentation and its credentials will be returned
-according to the `fail_fast` parameter.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
-| fail_fast | <code>number</code> | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> \| <code>undefined</code> | 
-| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="Resolver+resolve"></a>
 

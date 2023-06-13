@@ -1,7 +1,7 @@
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
-import { CoreDocument, IotaDocument, IotaIdentityClient, Resolver } from "@iota/identity-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { CoreDocument, Storage, IotaDocument, IotaIdentityClient, JwkMemStore, KeyIdMemStore, Resolver } from "@iota/identity-wasm/node";
+import { API_ENDPOINT, createDidStorage } from "../util";
 
 // Use this external package to avoid implementing the entire did:key method in this example.
 import * as ed25519 from "@transmute/did-key-ed25519";
@@ -45,7 +45,12 @@ export async function customResolution() {
     };
 
     // Creates a new wallet and identity for us to resolve (see "0_create_did" example).
-    const { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDidStorage(
+        client,
+        secretManager,
+        storage,
+    );
     const did = document.id();
 
     // Resolve didKey into a DID document.
