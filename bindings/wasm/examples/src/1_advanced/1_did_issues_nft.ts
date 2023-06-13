@@ -23,7 +23,7 @@ import {
     TransactionHelper,
 } from "@iota/iota.js";
 import { Converter } from "@iota/util.js";
-import { API_ENDPOINT, createDid, createDid } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and own NFTs,
 and how observers can verify the issuer of the NFT.

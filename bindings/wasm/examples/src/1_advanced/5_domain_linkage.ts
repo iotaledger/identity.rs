@@ -22,7 +22,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
-import { API_ENDPOINT, createDid, createDid } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.

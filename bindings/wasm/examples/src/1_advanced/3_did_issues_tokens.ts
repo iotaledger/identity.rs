@@ -25,7 +25,7 @@ import {
 import type { IFoundryOutput } from "@iota/types";
 import { HexHelper } from "@iota/util.js";
 import bigInt from "big-integer";
-import { API_ENDPOINT, createDid, createDid } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and control a Token Foundry and its tokens.
 

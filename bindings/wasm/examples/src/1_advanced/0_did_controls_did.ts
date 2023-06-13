@@ -9,10 +9,7 @@ import {
     IotaIdentityClient,
     JwkMemStore,
     KeyIdMemStore,
-    KeyPair,
-    KeyType,
     MethodScope,
-    VerificationMethod,
     Storage,
     JwsAlgorithm
 } from "@iota/identity-wasm/node";
