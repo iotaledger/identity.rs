@@ -10,31 +10,40 @@
 //!
 //! cargo run --example 7_revoke_vc
 
-use examples::create_did;
+use anyhow::anyhow;
+use examples::create_did_storage;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
+use identity_iota::core::Object;
 use identity_iota::core::Url;
+use identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError;
+use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions;
+use identity_iota::credential::vc_jwt_validation::CredentialValidator;
+use identity_iota::credential::vc_jwt_validation::DecodedJwtCredential;
+use identity_iota::credential::vc_jwt_validation::ValidationError;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-use identity_iota::credential::CredentialValidationOptions;
-use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::FailFast;
+use identity_iota::credential::Jwt;
 use identity_iota::credential::RevocationBitmap;
 use identity_iota::credential::RevocationBitmapStatus;
 use identity_iota::credential::Status;
 use identity_iota::credential::Subject;
-use identity_iota::credential::ValidationError;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
 use identity_iota::document::Service;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::prelude::IotaDID;
 use identity_iota::resolver::Resolver;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::JwsSignatureOptions;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -55,14 +64,16 @@ async fn main() -> anyhow::Result<()> {
     .finish()
     .await?;
 
-  // Create an identity for the issuer with one verification method `key-1`.
   let mut secret_manager_issuer: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password("secure_password_1")
       .build(random_stronghold_path())?,
   );
-  let (_, mut issuer_document, key_pair): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager_issuer).await?;
+
+  // Create an identity for the issuer with one verification method `key-1`.
+  let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, mut issuer_document, fragment_issuer): (Address, IotaDocument, String) =
+    create_did_storage(&client, &mut secret_manager_issuer, &storage_issuer).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
@@ -70,7 +81,9 @@ async fn main() -> anyhow::Result<()> {
       .password("secure_password_2")
       .build(random_stronghold_path())?,
   );
-  let (_, alice_document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager_alice).await?;
+  let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, alice_document, _): (Address, IotaDocument, String) =
+    create_did_storage(&client, &mut secret_manager_alice, &storage_alice).await?;
 
   // Create a new empty revocation bitmap. No credential is revoked yet.
   let revocation_bitmap: RevocationBitmap = RevocationBitmap::new();
@@ -114,7 +127,7 @@ async fn main() -> anyhow::Result<()> {
   let status: Status = RevocationBitmapStatus::new(service_url, credential_index).into();
 
   // Build credential using subject above, status, and issuer.
-  let mut credential: Credential = CredentialBuilder::default()
+  let credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer_document.id().as_str())?)
     .type_("UniversityDegreeCredential")
@@ -122,18 +135,24 @@ async fn main() -> anyhow::Result<()> {
     .subject(subject)
     .build()?;
 
-  // Sign the Credential with the issuer's verification method.
-  issuer_document.sign_data(&mut credential, key_pair.private(), "#key-1", ProofOptions::default())?;
   println!("Credential JSON > {credential:#}");
 
+  let credential_jwt: Jwt = issuer_document
+    .sign_credential(
+      &credential,
+      &storage_issuer,
+      &fragment_issuer,
+      &JwsSignatureOptions::default(),
+    )
+    .await?;
+
   // Validate the credential's signature using the issuer's DID Document.
-  CredentialValidator::validate(
-    &credential,
+  CredentialValidator::new().validate::<_, Object>(
+    &credential_jwt,
     &issuer_document,
     &CredentialValidationOptions::default(),
     FailFast::FirstError,
-  )
-  .unwrap();
+  )?;
 
   // ===========================================================================
   // Revocation of the Verifiable Credential.
@@ -151,12 +170,13 @@ async fn main() -> anyhow::Result<()> {
     .finish(client.get_token_supply().await?)?;
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
-  let validation_result = CredentialValidator::validate(
-    &credential,
-    &issuer_document,
-    &CredentialValidationOptions::default(),
-    FailFast::FirstError,
-  );
+  let validation_result: std::result::Result<DecodedJwtCredential, CompoundCredentialValidationError> =
+    CredentialValidator::new().validate(
+      &credential_jwt,
+      &issuer_document,
+      &CredentialValidationOptions::default(),
+      FailFast::FirstError,
+    );
 
   // We expect validation to no longer succeed because the credential was revoked.
   assert!(matches!(
@@ -170,8 +190,14 @@ async fn main() -> anyhow::Result<()> {
 
   // By removing the verification method, that signed the credential, from the issuer's DID document,
   // we effectively revoke the credential, as it will no longer be possible to validate the signature.
-  let original_method: DIDUrl = issuer_document.resolve_method("#key-1", None).unwrap().id().clone();
-  issuer_document.remove_method(&original_method).unwrap();
+  let original_method: DIDUrl = issuer_document
+    .resolve_method(&fragment_issuer, None)
+    .ok_or_else(|| anyhow!("expected method to exist"))?
+    .id()
+    .clone();
+  issuer_document
+    .remove_method(&original_method)
+    .ok_or_else(|| anyhow!("expected method to exist"))?;
 
   // Publish the changes.
   let alias_output: AliasOutput = client.update_did_output(issuer_document.clone()).await?;
@@ -181,10 +207,11 @@ async fn main() -> anyhow::Result<()> {
   // We expect the verifiable credential to be revoked.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
-  let resolved_issuer_doc: IotaDocument = resolver.resolve_credential_issuer(&credential).await?;
+  let resolved_issuer_did: IotaDID = CredentialValidator::extract_issuer_from_jwt(&credential_jwt)?;
+  let resolved_issuer_doc: IotaDocument = resolver.resolve(&resolved_issuer_did).await?;
 
-  let validation_result = CredentialValidator::validate(
-    &credential,
+  let validation_result = CredentialValidator::new().validate::<_, Object>(
+    &credential_jwt,
     &resolved_issuer_doc,
     &CredentialValidationOptions::default(),
     FailFast::FirstError,

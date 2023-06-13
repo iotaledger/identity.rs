@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
+use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
@@ -257,10 +258,8 @@ impl JwtPresentationValidator {
   /// * If the holder or any of the issuers can't be parsed as DIDs.
   ///
   /// Returned tuple: (presentation_holder, credentials_issuers).
-  pub fn extract_dids<H: DID, I: DID, T, U>(presentation: &Jwt) -> std::result::Result<(H, Vec<I>), ValidationError>
+  pub fn extract_dids<H: DID, I: DID>(presentation: &Jwt) -> std::result::Result<(H, Vec<I>), ValidationError>
   where
-    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-    U: ToOwned<Owned = U> + serde::Serialize + serde::de::DeserializeOwned,
     <H as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     <I as FromStr>::Err: std::error::Error + Send + Sync + 'static,
   {
@@ -268,10 +267,10 @@ impl JwtPresentationValidator {
       .decode_compact_serialization(presentation.as_str().as_bytes(), None)
       .map_err(ValidationError::JwsDecodingError)?;
 
-    let claims: PresentationJwtClaims<'_, T> = PresentationJwtClaims::from_json_slice(&validation_item.claims())
+    let claims: PresentationJwtClaims<'_, Object> = PresentationJwtClaims::from_json_slice(&validation_item.claims())
       .map_err(|err| {
-        ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-      })?;
+      ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+    })?;
 
     let holder: H = H::from_str(claims.iss.as_str()).map_err(|err| ValidationError::SignerUrl {
       signer_ctx: SignerContext::Holder,
@@ -280,7 +279,7 @@ impl JwtPresentationValidator {
 
     let mut issuers: Vec<I> = vec![];
     for vc in claims.vp.verifiable_credential.iter() {
-      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I, U>(vc)?)
+      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I>(vc)?)
     }
     Ok((holder, issuers))
   }

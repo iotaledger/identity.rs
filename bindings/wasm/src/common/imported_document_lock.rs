@@ -45,6 +45,8 @@ impl ImportedDocumentLock {
     }
   }
 
+  // Currently unused, but might be needed in the future.
+  #[allow(dead_code)]
   pub(crate) async fn read(&self) -> ImportedDocumentReadGuard<'_> {
     match self {
       Self::Iota(lock) => ImportedDocumentReadGuard(tokio::sync::RwLockReadGuard::map(
