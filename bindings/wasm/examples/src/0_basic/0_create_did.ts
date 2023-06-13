@@ -54,7 +54,7 @@ export async function createIdentity(): Promise<{
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
 
     // Insert a new Ed25519 verification method in the DID document.
-    document.generateMethod(
+    await document.generateMethod(
         storage,
         JwkMemStore.ed25519KeyType(),
         JwsAlgorithm.EdDSA,
