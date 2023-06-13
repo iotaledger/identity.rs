@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_did_document_storage;
+use examples::create_did_document;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use examples::MemStorage;
@@ -85,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Construct a DID document for the car.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  let (car_document, _): (IotaDocument, _) = create_did_document_storage(&network, &storage).await?;
+  let (car_document, _): (IotaDocument, _) = create_did_document(&network, &storage).await?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client

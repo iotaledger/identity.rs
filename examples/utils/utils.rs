@@ -46,7 +46,7 @@ pub async fn create_did(
 
   let network_name: NetworkName = client.network_name().await?;
 
-  let (document, fragment): (IotaDocument, String) = create_did_document_storage(&network_name, storage).await?;
+  let (document, fragment): (IotaDocument, String) = create_did_document(&network_name, storage).await?;
 
   let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
 
@@ -59,7 +59,7 @@ pub async fn create_did(
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub async fn create_did_document_storage(
+pub async fn create_did_document(
   network_name: &NetworkName,
   storage: &MemStorage,
 ) -> anyhow::Result<(IotaDocument, String)> {
