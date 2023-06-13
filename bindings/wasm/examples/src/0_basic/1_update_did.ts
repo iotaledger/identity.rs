@@ -34,7 +34,7 @@ export async function updateIdentity() {
 
     // Creates a new wallet and identity (see "0_create_did" example).
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document } = await createDid(
+    let { document, fragment } = await createDid(
         client,
         secretManager,
         storage,
@@ -67,7 +67,7 @@ export async function updateIdentity() {
     document.setMetadataUpdated(Timestamp.nowUTC());
 
     // Remove a verification method.
-    let originalMethod = document.resolveMethod("key-1") as VerificationMethod;
+    let originalMethod = document.resolveMethod(fragment) as VerificationMethod;
     await document.purgeMethod(storage, originalMethod?.id());
 
     // Resolve the latest output and update it with the given document.

@@ -1,8 +1,8 @@
-import { keyExchange } from "../1_advanced/4_key_exchange";
+import { domainLinkage } from "../1_advanced/5_domain_linkage";
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
 describe("Test node examples", function() {
-    it("Key exchange", async () => {
-        await keyExchange();
+    it("Domain Linkage", async () => {
+        await domainLinkage();
     });
 });
