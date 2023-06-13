@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use examples::create_did_storage;
+use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new DID for the manufacturer.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, manufacturer_document, _): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager, &storage).await?;
+    create_did(&client, &mut secret_manager, &storage).await?;
   let manufacturer_did = manufacturer_document.id().clone();
 
   // Get the current byte cost.

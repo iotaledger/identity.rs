@@ -3,7 +3,7 @@
 
 use std::ops::Deref;
 
-use examples::create_did_storage;
+use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
@@ -54,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new DID for the company.
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, company_document, _): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager, &storage_issuer).await?;
+    create_did(&client, &mut secret_manager, &storage_issuer).await?;
   let company_did = company_document.id().clone();
 
   // Get the current byte costs and network name.

@@ -11,7 +11,7 @@
 //! cargo run --example 7_revoke_vc
 
 use anyhow::anyhow;
-use examples::create_did_storage;
+use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
   // Create an identity for the issuer with one verification method `key-1`.
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, mut issuer_document, fragment_issuer): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager_issuer, &storage_issuer).await?;
+    create_did(&client, &mut secret_manager_issuer, &storage_issuer).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
   );
   let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, alice_document, _): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager_alice, &storage_alice).await?;
+    create_did(&client, &mut secret_manager_alice, &storage_alice).await?;
 
   // Create a new empty revocation bitmap. No credential is revoked yet.
   let revocation_bitmap: RevocationBitmap = RevocationBitmap::new();

@@ -4,7 +4,7 @@
 use std::str::FromStr;
 
 use anyhow::Context;
-use examples::create_did_storage;
+use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
@@ -58,7 +58,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new DID in an Alias Output for us to modify.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, document, _): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager, &storage).await?;
+    create_did(&client, &mut secret_manager, &storage).await?;
   let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.

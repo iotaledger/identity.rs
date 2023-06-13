@@ -35,7 +35,7 @@ pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub async fn create_did_storage(
+pub async fn create_did(
   client: &Client,
   secret_manager: &mut SecretManager,
   storage: &MemStorage,

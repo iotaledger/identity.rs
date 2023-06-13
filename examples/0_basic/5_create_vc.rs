@@ -9,7 +9,7 @@
 //!
 //! cargo run --example 5_create_vc
 
-use examples::create_did_storage;
+use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
 use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions;
@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
   );
   let issuer_storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, issuer_document, fragment): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager_issuer, &issuer_storage).await?;
+    create_did(&client, &mut secret_manager_issuer, &issuer_storage).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
@@ -63,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
   );
   let alice_storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, alice_document, _): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager_alice, &alice_storage).await?;
+    create_did(&client, &mut secret_manager_alice, &alice_storage).await?;
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
