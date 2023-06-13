@@ -3,7 +3,14 @@
 
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
-import { IotaDID, IotaDocument, IotaIdentityClient, JwkMemStore, KeyIdMemStore, Storage } from "@iota/identity-wasm/node";
+import {
+    IotaDID,
+    IotaDocument,
+    IotaIdentityClient,
+    JwkMemStore,
+    KeyIdMemStore,
+    Storage,
+} from "@iota/identity-wasm/node";
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
     AddressTypes,

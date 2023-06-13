@@ -1,6 +1,14 @@
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
-import { CoreDocument, Storage, IotaDocument, IotaIdentityClient, JwkMemStore, KeyIdMemStore, Resolver } from "@iota/identity-wasm/node";
+import {
+    CoreDocument,
+    IotaDocument,
+    IotaIdentityClient,
+    JwkMemStore,
+    KeyIdMemStore,
+    Resolver,
+    Storage,
+} from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 // Use this external package to avoid implementing the entire did:key method in this example.

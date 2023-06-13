@@ -9,15 +9,15 @@ import {
     IotaDocument,
     IotaIdentityClient,
     JwkMemStore,
-    Storage,
+    JwsSignatureOptions,
+    JwtCredentialValidationOptions,
+    JwtCredentialValidator,
     KeyIdMemStore,
     Resolver,
     RevocationBitmap,
     Service,
+    Storage,
     VerificationMethod,
-    JwsSignatureOptions,
-    JwtCredentialValidator,
-    JwtCredentialValidationOptions,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
 import { API_ENDPOINT, createDid } from "../util";

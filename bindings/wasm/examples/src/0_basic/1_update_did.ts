@@ -7,14 +7,14 @@ import {
     IotaDocument,
     IotaIdentityClient,
     JwkMemStore,
+    JwsAlgorithm,
     KeyIdMemStore,
     MethodRelationship,
     MethodScope,
     Service,
+    Storage,
     Timestamp,
     VerificationMethod,
-    Storage,
-    JwsAlgorithm
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
 import { API_ENDPOINT, createDid } from "../util";
@@ -68,7 +68,7 @@ export async function updateIdentity() {
 
     // Remove a verification method.
     let originalMethod = document.resolveMethod("key-1") as VerificationMethod;
-    await document.purgeMethod(storage, originalMethod?.id())
+    await document.purgeMethod(storage, originalMethod?.id());
 
     // Resolve the latest output and update it with the given document.
     const aliasOutput: IAliasOutput = await didClient.updateDidOutput(document);

@@ -8,11 +8,10 @@ import {
     IotaDocument,
     IotaIdentityClient,
     JwkMemStore,
-    KeyIdMemStore,
-    Storage,
-    MethodScope,
     JwsAlgorithm,
-
+    KeyIdMemStore,
+    MethodScope,
+    Storage,
 } from "@iota/identity-wasm/node";
 import { Bech32Helper, IAliasOutput } from "@iota/iota.js";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";

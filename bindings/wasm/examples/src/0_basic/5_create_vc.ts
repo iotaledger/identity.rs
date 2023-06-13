@@ -5,13 +5,13 @@ import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import {
     Credential,
-    Storage,
     FailFast,
     JwkMemStore,
-    KeyIdMemStore,
     JwsSignatureOptions,
-    JwtCredentialValidator,
     JwtCredentialValidationOptions,
+    JwtCredentialValidator,
+    KeyIdMemStore,
+    Storage,
 } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 

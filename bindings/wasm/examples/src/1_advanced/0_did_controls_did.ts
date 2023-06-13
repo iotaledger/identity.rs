@@ -8,10 +8,10 @@ import {
     IotaDocument,
     IotaIdentityClient,
     JwkMemStore,
+    JwsAlgorithm,
     KeyIdMemStore,
     MethodScope,
     Storage,
-    JwsAlgorithm
 } from "@iota/identity-wasm/node";
 import {
     AddressTypes,
