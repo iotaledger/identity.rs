@@ -5,15 +5,18 @@ import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import {
     Credential,
-    CredentialValidationOptions,
-    CredentialValidator,
     FailFast,
     IotaDocument,
     IotaIdentityClient,
-    ProofOptions,
+    JwkMemStore,
+    JwsSignatureOptions,
+    JwtCredentialValidationOptions,
+    JwtCredentialValidator,
+    KeyIdMemStore,
     Resolver,
     RevocationBitmap,
     Service,
+    Storage,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
@@ -39,15 +42,25 @@ export async function revokeVC() {
     const didClient = new IotaIdentityClient(client);
 
     // Generate a random mnemonic for our wallet.
-    const secretManager: MnemonicSecretManager = {
+    const issuerSecretManager: MnemonicSecretManager = {
         mnemonic: Bip39.randomMnemonic(),
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
-    let { document: issuerDocument, keypair: keypairIssuer } = await createDid(client, secretManager);
+    const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document: issuerDocument, fragment: issuerFragment } = await createDid(
+        client,
+        issuerSecretManager,
+        issuerStorage,
+    );
 
     // Create an identity for the holder, in this case also the subject.
-    const { document: aliceDocument } = await createDid(client, secretManager);
+    const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document: aliceDocument, fragment: aliceFragment } = await createDid(
+        client,
+        issuerSecretManager,
+        aliceStorage,
+    );
 
     // Create a new empty revocation bitmap. No credential is revoked yet.
     const revocationBitmap = new RevocationBitmap();
@@ -69,7 +82,7 @@ export async function revokeVC() {
     aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
 
     // Publish the document.
-    issuerDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
+    issuerDocument = await didClient.publishDidOutput(issuerSecretManager, aliasOutput);
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -95,12 +108,23 @@ export async function revokeVC() {
         credentialSubject: subject,
     });
 
-    // Sign Credential.
-    let signedVc = issuerDocument.signCredential(unsignedVc, keypairIssuer.private(), "#key-1", ProofOptions.default());
-    console.log(`Credential JSON > ${JSON.stringify(signedVc, null, 2)}`);
+    // Create signed JWT credential.
+    const credentialJwt = await issuerDocument.createCredentialJwt(
+        issuerStorage,
+        issuerFragment,
+        unsignedVc,
+        new JwsSignatureOptions(),
+    );
+    console.log(`Credential JWT > ${credentialJwt.toString()}`);
 
-    // Validate the credential's signature using the issuer's DID Document.
-    CredentialValidator.validate(signedVc, issuerDocument, CredentialValidationOptions.default(), FailFast.AllErrors);
+    // Validate the credential using the issuer's DID Document.
+    let jwtCredentialValidator = new JwtCredentialValidator();
+    jwtCredentialValidator.validate(
+        credentialJwt,
+        issuerDocument,
+        new JwtCredentialValidationOptions({}),
+        FailFast.FirstError,
+    );
 
     // ===========================================================================
     // Revocation of the Verifiable Credential.
@@ -114,11 +138,16 @@ export async function revokeVC() {
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
     aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
-    const update2: IotaDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
+    const update2: IotaDocument = await didClient.publishDidOutput(issuerSecretManager, aliasOutput);
 
     // Credential verification now fails.
     try {
-        CredentialValidator.validate(signedVc, update2, CredentialValidationOptions.default(), FailFast.FirstError);
+        jwtCredentialValidator.validate(
+            credentialJwt,
+            issuerDocument,
+            new JwtCredentialValidationOptions({}),
+            FailFast.FirstError,
+        );
         console.log("Revocation Failed!");
     } catch (e) {
         console.log(`Error during validation: ${e}`);
@@ -130,28 +159,28 @@ export async function revokeVC() {
 
     // By removing the verification method, that signed the credential, from the issuer's DID document,
     // we effectively revoke the credential, as it will no longer be possible to validate the signature.
-    let originalMethod = issuerDocument.resolveMethod("#key-1") as VerificationMethod;
-    await issuerDocument.removeMethod(originalMethod.id());
+    let originalMethod = issuerDocument.resolveMethod(`#${issuerFragment}`) as VerificationMethod;
+    await issuerDocument.purgeMethod(issuerStorage, originalMethod.id());
 
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
     aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
-    issuerDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
+    issuerDocument = await didClient.publishDidOutput(issuerSecretManager, aliasOutput);
 
     // We expect the verifiable credential to be revoked.
     const resolver = new Resolver({ client: didClient });
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
         const resolvedIssuerDoc = await resolver.resolve(issuerDocument.id().toString());
-        CredentialValidator.validate(
-            signedVc,
+        jwtCredentialValidator.validate(
+            credentialJwt,
             resolvedIssuerDoc,
-            CredentialValidationOptions.default(),
+            new JwtCredentialValidationOptions({}),
             FailFast.FirstError,
         );
 
-        // `CredentialValidator.validate` will throw an error, hence this will not be reached.
+        // `jwtCredentialValidator.validate` will throw an error, hence this will not be reached.
         console.log("Revocation failed!");
     } catch (e) {
         console.log(`Error during validation: ${e}`);

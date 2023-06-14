@@ -1,9 +1,9 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
-import { IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
+import { IotaDocument, IotaIdentityClient, JwkMemStore, KeyIdMemStore, Storage } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
 import { API_ENDPOINT, createDid } from "../util";
 
@@ -21,7 +21,12 @@ export async function deactivateIdentity() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    let { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDid(
+        client,
+        secretManager,
+        storage,
+    );
     const did = document.id();
 
     // Resolve the latest state of the DID document, so we can reactivate it later.

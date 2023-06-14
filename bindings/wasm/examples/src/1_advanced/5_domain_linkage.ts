@@ -6,7 +6,6 @@ import { Bip39 } from "@iota/crypto.js";
 import {
     CoreDID,
     Credential,
-    CredentialValidationOptions,
     DIDUrl,
     DomainLinkageConfiguration,
     DomainLinkageValidator,
@@ -19,12 +18,11 @@ import {
     JwtCredentialValidationOptions,
     KeyIdMemStore,
     LinkedDomainService,
-    ProofOptions,
     Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
-import { API_ENDPOINT, createDid, createDidStorage } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.
@@ -44,7 +42,7 @@ export async function domainLinkage() {
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    let { document, fragment } = await createDidStorage(client, secretManager, storage);
+    let { document, fragment } = await createDid(client, secretManager, storage);
     const did: IotaDID = document.id();
 
     // =====================================================

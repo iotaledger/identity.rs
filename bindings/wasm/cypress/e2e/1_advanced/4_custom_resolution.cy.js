@@ -1,4 +1,4 @@
-import { customResolution } from "../../../examples/dist/web/1_advanced/5_custom_resolution";
+import { customResolution } from "../../../examples/dist/web/1_advanced/4_custom_resolution";
 import { setup } from "../../support/setup";
 
 describe(

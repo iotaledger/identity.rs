@@ -1,9 +1,9 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
-import { IotaIdentityClient } from "@iota/identity-wasm/node";
+import { IotaIdentityClient, JwkMemStore, KeyIdMemStore, Storage } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. */
@@ -20,7 +20,13 @@ export async function deleteIdentity() {
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    const { address, document } = await createDid(client, secretManager);
+    // const { address, document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { address, document } = await createDid(
+        client,
+        secretManager,
+        storage,
+    );
     const did = document.id();
 
     // Deletes the Alias Output and its contained DID Document, rendering the DID permanently destroyed.

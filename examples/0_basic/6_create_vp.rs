@@ -7,7 +7,7 @@
 //!
 //! cargo run --example 6_create_vp
 
-use examples::create_did_storage;
+use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
 use identity_iota::credential::DecodedJwtPresentation;
@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
   );
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager_issuer, &storage_issuer).await?;
+    create_did(&client, &mut secret_manager_issuer, &storage_issuer).await?;
 
   // Create an identity for the holder, in this case also the subject.
   let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
   );
   let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (_, alice_document, fragment_alice): (Address, IotaDocument, String) =
-    create_did_storage(&client, &mut secret_manager_alice, &storage_alice).await?;
+    create_did(&client, &mut secret_manager_alice, &storage_alice).await?;
 
   // ===========================================================================
   // Step 2: Issuer creates and signs a Verifiable Credential.

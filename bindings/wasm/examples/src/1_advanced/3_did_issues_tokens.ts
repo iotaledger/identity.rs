@@ -1,9 +1,16 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
-import { IotaDID, IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
+import {
+    IotaDID,
+    IotaDocument,
+    IotaIdentityClient,
+    JwkMemStore,
+    KeyIdMemStore,
+    Storage,
+} from "@iota/identity-wasm/node";
 import {
     ADDRESS_UNLOCK_CONDITION_TYPE,
     ALIAS_ADDRESS_TYPE,
@@ -49,7 +56,12 @@ export async function didIssuesTokens() {
     };
 
     // Create a new DID for the authority. (see "0_create_did" example).
-    const { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDid(
+        client,
+        secretManager,
+        storage,
+    );
     let authorityDid = document.id();
 
     // Get the current byte costs.

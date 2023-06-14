@@ -3,16 +3,18 @@
 
 use examples::create_did;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_iota::core::FromJson;
 use identity_iota::core::ToJson;
-use identity_iota::crypto::KeyPair as IotaKeyPair;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::document::CoreDocument;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::resolver::Resolver;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -49,7 +51,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for us to resolve.
-  let (_, iota_document, _): (Address, IotaDocument, IotaKeyPair) = create_did(&client, &mut secret_manager).await?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, iota_document, _): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager, &storage).await?;
   let iota_did: IotaDID = iota_document.id().clone();
 
   // Resolve did_foo to get an abstract document.

@@ -6,11 +6,11 @@ use std::str::FromStr;
 use anyhow::Context;
 use examples::create_did;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Timestamp;
-use identity_iota::crypto::KeyPair;
 use identity_iota::did::DID;
 use identity_iota::document::Service;
 use identity_iota::iota::block::address::Address;
@@ -20,6 +20,8 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClient;
 use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
 use identity_iota::verification::MethodRelationship;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
@@ -54,7 +56,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  let (_, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, document, fragment): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager, &storage).await?;
   let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
@@ -62,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Attach a new method relationship to the existing method.
   document.attach_method_relationship(
-    &document.id().to_url().join("#key-1")?,
+    &document.id().to_url().join(format!("#{fragment}"))?,
     MethodRelationship::Authentication,
   )?;
 

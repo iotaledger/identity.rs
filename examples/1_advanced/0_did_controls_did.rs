@@ -5,9 +5,8 @@ use std::ops::Deref;
 
 use examples::create_did;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
 use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::block::output::UnlockCondition;
 use identity_iota::iota::IotaClientExt;
@@ -15,8 +14,11 @@ use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
+use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
-use identity_iota::verification::VerificationMethod;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
@@ -50,7 +52,9 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID for the company.
-  let (_, company_document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
+  let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, company_document, _): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager, &storage_issuer).await?;
   let company_did = company_document.id().clone();
 
   // Get the current byte costs and network name.
@@ -91,14 +95,17 @@ async fn main() -> anyhow::Result<()> {
 
   // Add a verification method to the subsidiary.
   // This only serves as an example for updating the subsidiary DID.
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: VerificationMethod = VerificationMethod::new(
-    subsidiary_document.id().clone(),
-    keypair.type_(),
-    keypair.public(),
-    "#key-2",
-  )?;
-  subsidiary_document.insert_method(method, MethodScope::VerificationMethod)?;
+
+  let storage_subsidary: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  subsidiary_document
+    .generate_method(
+      &storage_subsidary,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await?;
 
   // Update the subsidiary's Alias Output with the updated document
   // and increase the storage deposit.
