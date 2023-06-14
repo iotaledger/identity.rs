@@ -57,7 +57,8 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new DID in an Alias Output for us to modify.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  let (_, document, _): (Address, IotaDocument, String) = create_did(&client, &mut secret_manager, &storage).await?;
+  let (_, document, fragment): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager, &storage).await?;
   let did: IotaDID = document.id().clone();
 
   // Resolve the latest state of the document.
@@ -65,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Attach a new method relationship to the existing method.
   document.attach_method_relationship(
-    &document.id().to_url().join("#key-1")?,
+    &document.id().to_url().join(format!("#{fragment}"))?,
     MethodRelationship::Authentication,
   )?;
 

@@ -34,7 +34,6 @@ async fn main() -> anyhow::Result<()> {
   );
 
   // Create a new DID in an Alias Output for us to modify.
-  // let (address, document, _): (Address, IotaDocument, KeyPair) = create_did(&client, &mut secret_manager).await?;
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
   let (address, document, _): (Address, IotaDocument, String) =
     create_did(&client, &mut secret_manager, &storage).await?;

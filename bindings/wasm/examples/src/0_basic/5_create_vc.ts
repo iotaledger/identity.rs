@@ -41,7 +41,6 @@ export async function createVC() {
     );
 
     // Create an identity for the holder, in this case also the subject.
-    // const { document: aliceDocument } = await createDid(client, secretManager);
     const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
     let { document: aliceDocument } = await createDid(
         client,
@@ -81,7 +80,7 @@ export async function createVC() {
     // Validate the credential's signature, the credential's semantic structure,
     // check that the issuance date is not in the future and that the expiration date is not in the past.
     // Note that the validation returns an object containing the decoded credential.
-    const res = new JwtCredentialValidator().validate(
+    const decoded_credential = new JwtCredentialValidator().validate(
         credentialJwt,
         issuerDocument,
         new JwtCredentialValidationOptions({}),
@@ -93,5 +92,5 @@ export async function createVC() {
 
     // The issuer is now sure that the credential they are about to issue satisfies their expectations.
     // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
-    console.log(`Issued credential: ${JSON.stringify(res.intoCredential(), null, 2)}`);
+    console.log(`Issued credential: ${JSON.stringify(decoded_credential.intoCredential(), null, 2)}`);
 }

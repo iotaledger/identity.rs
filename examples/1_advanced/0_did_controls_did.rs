@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
   // This only serves as an example for updating the subsidiary DID.
 
   let storage_subsidary: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  let _fragment: String = subsidiary_document
+  subsidiary_document
     .generate_method(
       &storage_subsidary,
       JwkMemStore::ED25519_KEY_TYPE,

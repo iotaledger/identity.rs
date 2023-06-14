@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Insert a new Ed25519 verification method in the DID document.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  let _fragment: String = document
+  document
     .generate_method(
       &storage,
       JwkMemStore::ED25519_KEY_TYPE,
