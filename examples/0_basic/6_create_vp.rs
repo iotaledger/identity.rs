@@ -183,10 +183,8 @@ async fn main() -> anyhow::Result<()> {
   let presentation_verifier_options: JwsVerificationOptions =
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
-  let presentation_validation_options = JwtPresentationValidationOptions::default()
-    .presentation_verifier_options(presentation_verifier_options)
-    // .shared_validation_options(credential_validation_options)
-    .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
+  let presentation_validation_options =
+    JwtPresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
 
   let holder_did: CoreDID = JwtPresentationValidator::extract_holder(&presentation_jwt)?;
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
