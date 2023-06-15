@@ -63,8 +63,7 @@ where
   /// * This method does NOT validate the constituent credentials, nor the relationship between the
   /// credentials' issuers and the presentation holder.
   /// * The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
-  ///   be
-  /// trusted. This section contains more information on additional checks that should be carried out before and after
+  /// be trusted. This section contains more information on additional checks that should be carried out before and after
   /// calling this method.
   ///
   /// ## The state of the supplied DID Documents.
