@@ -208,7 +208,7 @@ async fn main() -> anyhow::Result<()> {
     // Validate credential.
     let decoded_credential: DecodedJwtCredential<Object> = credential_validator
       .validate::<_, Object>(
-        &credential_jwt,
+        credential_jwt,
         &issuer_document,
         &CredentialValidationOptions::default(),
         FailFast::FirstError,
