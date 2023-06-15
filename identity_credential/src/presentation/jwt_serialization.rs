@@ -24,9 +24,11 @@ use crate::Result;
 use super::JwtPresentationOptions;
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct PresentationJwtClaims<'presentation, T = Object>
+pub(crate) struct PresentationJwtClaims<'presentation, CRED, T = Object>
 where
   T: ToOwned + Serialize,
+  CRED: ToOwned + Serialize + Clone,
+  <CRED as ToOwned>::Owned: DeserializeOwned,
   <T as ToOwned>::Owned: DeserializeOwned,
 {
   /// Represents the expirationDate encoded as a UNIX timestamp.  
@@ -47,14 +49,18 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) aud: Option<Url>,
 
-  pub(crate) vp: InnerPresentation<'presentation, T>,
+  pub(crate) vp: InnerPresentation<'presentation, CRED, T>,
 }
 
-impl<'presentation, T> PresentationJwtClaims<'presentation, T>
+impl<'presentation, CRED, T> PresentationJwtClaims<'presentation, CRED, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
+  CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone,
 {
-  pub(super) fn new(presentation: &'presentation JwtPresentation<T>, options: &JwtPresentationOptions) -> Result<Self> {
+  pub(super) fn new(
+    presentation: &'presentation JwtPresentation<CRED, T>,
+    options: &JwtPresentationOptions,
+  ) -> Result<Self> {
     let JwtPresentation {
       context,
       id,
@@ -88,8 +94,9 @@ where
 }
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct InnerPresentation<'presentation, T = Object>
+pub(crate) struct InnerPresentation<'presentation, CRED = Jwt, T = Object>
 where
+  CRED: Clone + Serialize,
   T: ToOwned + Serialize,
   <T as ToOwned>::Owned: DeserializeOwned,
 {
@@ -104,7 +111,7 @@ where
   types: Cow<'presentation, OneOrMany<String>>,
   /// Credential(s) expressing the claims of the `JwtPresentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
-  pub(crate) verifiable_credential: Cow<'presentation, OneOrMany<Jwt>>,
+  pub(crate) verifiable_credential: Cow<'presentation, OneOrMany<CRED>>,
   /// Service(s) used to refresh an expired [`Credential`] in the `JwtPresentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   refresh_service: Cow<'presentation, OneOrMany<RefreshService>>,
@@ -120,11 +127,12 @@ where
 }
 
 #[cfg(feature = "validator")]
-impl<'presentation, T> PresentationJwtClaims<'presentation, T>
+impl<'presentation, CRED, T> PresentationJwtClaims<'presentation, CRED, T>
 where
+  CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone,
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
-  pub(crate) fn try_into_presentation(self) -> Result<JwtPresentation<T>> {
+  pub(crate) fn try_into_presentation(self) -> Result<JwtPresentation<CRED, T>> {
     self.check_consistency()?;
     let Self {
       exp: _,

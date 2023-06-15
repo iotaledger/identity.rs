@@ -1,9 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::BTreeMap;
-use std::str::FromStr;
-
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -15,16 +12,13 @@ use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::EdDSAJwsVerifier;
 use identity_verification::jws::JwsVerifier;
+use std::str::FromStr;
 
 use crate::credential::Jwt;
 use crate::presentation::JwtPresentation;
 use crate::presentation::PresentationJwtClaims;
-use crate::validator::vc_jwt_validation::CompoundCredentialValidationError;
-use crate::validator::vc_jwt_validation::CredentialValidator;
-use crate::validator::vc_jwt_validation::DecodedJwtCredential;
 use crate::validator::vc_jwt_validation::SignerContext;
 use crate::validator::vc_jwt_validation::ValidationError;
-use crate::validator::FailFast;
 
 use super::CompoundJwtPresentationValidationError;
 use super::DecodedJwtPresentation;
@@ -62,13 +56,13 @@ where
   /// - the JWT can be decoded into semantically valid presentation.
   /// - the expiration and issuance date contained in the JWT claims.
   /// - the holder's signature.
-  /// - the relationship between the holder and the credential subjects.
-  /// - the signatures and some properties of the constituent credentials (see [`CredentialValidator`]).
   ///
   /// Validation is done with respect to the properties set in `options`.
   ///
   /// # Warning
-  /// The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
+  /// * This method does NOT validate the constituent credentials, nor the relationship between the
+  /// credentials' issuers and the presentation holder.
+  /// * The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
   /// trusted. This section contains more information on additional checks that should be carried out before and after
   /// calling this method.
   ///
@@ -77,24 +71,21 @@ where
   ///
   /// ## Properties that are not validated
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// `verifiableCredential`, credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
   /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied or when decoding fails.
-  pub fn validate<HDOC, IDOC, T, U>(
+  pub fn validate<HDOC, CRED, T>(
     &self,
     presentation: &Jwt,
     holder: &HDOC,
-    issuers: &[IDOC],
     options: &JwtPresentationValidationOptions,
-    fail_fast: FailFast,
-  ) -> Result<DecodedJwtPresentation<T, U>, CompoundJwtPresentationValidationError>
+  ) -> Result<DecodedJwtPresentation<CRED, T>, CompoundJwtPresentationValidationError>
   where
     HDOC: AsRef<CoreDocument> + ?Sized,
-    IDOC: AsRef<CoreDocument>,
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-    U: ToOwned<Owned = U> + serde::Serialize + serde::de::DeserializeOwned,
+    CRED: ToOwned<Owned = CRED> + serde::Serialize + serde::de::DeserializeOwned + Clone,
   {
     // Verify JWS.
     let decoded_jws: DecodedJws<'_> = holder
@@ -109,8 +100,8 @@ where
         CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationJwsError(err))
       })?;
 
-    let claims: PresentationJwtClaims<'_, T> =
-      PresentationJwtClaims::from_json_slice(&decoded_jws.claims).map_err(|err| {
+    let claims: PresentationJwtClaims<'_, CRED, T> = PresentationJwtClaims::from_json_slice(&decoded_jws.claims)
+      .map_err(|err| {
         CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationStructure(
           crate::Error::JwtClaimsSetDeserializationError(err.into()),
         ))
@@ -172,116 +163,46 @@ where
 
     let aud: Option<Url> = claims.aud.clone();
 
-    let presentation: JwtPresentation<T> = claims.try_into_presentation().map_err(|err| {
+    let presentation: JwtPresentation<CRED, T> = claims.try_into_presentation().map_err(|err| {
       CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationStructure(err))
     })?;
 
-    // Validate credentials.
-    let credentials: Vec<DecodedJwtCredential<U>> = self
-      .validate_credentials::<IDOC, T, U>(&presentation, issuers, options, fail_fast)
-      .map_err(|err| CompoundJwtPresentationValidationError {
-        credential_errors: err,
-        presentation_validation_errors: vec![],
-      })?;
-
-    let decoded_jwt_presentation: DecodedJwtPresentation<T, U> = DecodedJwtPresentation {
+    let decoded_jwt_presentation: DecodedJwtPresentation<CRED, T> = DecodedJwtPresentation {
       presentation,
       header: Box::new(decoded_jws.protected),
       expiration_date,
       issuance_date,
       aud,
-      credentials,
     };
 
     Ok(decoded_jwt_presentation)
   }
-
-  fn validate_credentials<DOC, T, U>(
-    &self,
-    presentation: &JwtPresentation<T>,
-    issuers: &[DOC],
-    options: &JwtPresentationValidationOptions,
-    fail_fast: FailFast,
-  ) -> Result<Vec<DecodedJwtCredential<U>>, BTreeMap<usize, CompoundCredentialValidationError>>
-  where
-    DOC: AsRef<CoreDocument>,
-    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-    U: ToOwned<Owned = U> + serde::Serialize + serde::de::DeserializeOwned,
-  {
-    let number_of_credentials = presentation.verifiable_credential.len();
-    let mut decoded_credentials: Vec<DecodedJwtCredential<U>> = vec![];
-    let credential_errors_iter = presentation
-      .verifiable_credential
-      .iter()
-      .map(|credential| {
-        CredentialValidator::<V>::validate_extended::<DOC, V, U>(
-          &self.0,
-          credential,
-          issuers,
-          &options.shared_validation_options,
-          Some((&presentation.holder, options.subject_holder_relationship)),
-          fail_fast,
-        )
-      })
-      .enumerate()
-      .filter_map(|(position, result)| {
-        if let Ok(decoded_credential) = result {
-          decoded_credentials.push(decoded_credential);
-          None
-        } else {
-          result.err().map(|error| (position, error))
-        }
-      });
-
-    let credential_errors: BTreeMap<usize, CompoundCredentialValidationError> = credential_errors_iter
-      .take(match fail_fast {
-        FailFast::FirstError => 1,
-        FailFast::AllErrors => number_of_credentials,
-      })
-      .collect();
-
-    if credential_errors.is_empty() {
-      Ok(decoded_credentials)
-    } else {
-      Err(credential_errors)
-    }
-  }
 }
 
 impl JwtPresentationValidator {
-  /// Attempt to extract the holder of the presentation and the issuers of the included
-  /// credentials.
+  /// Attempt to extract the holder of the presentation.
   ///
   /// # Errors:
-  /// * If deserialization/decoding of the presentation or any of the credentials
-  /// fails.
-  /// * If the holder or any of the issuers can't be parsed as DIDs.
-  ///
-  /// Returned tuple: (presentation_holder, credentials_issuers).
-  pub fn extract_dids<H: DID, I: DID>(presentation: &Jwt) -> std::result::Result<(H, Vec<I>), ValidationError>
+  /// * If deserialization/decoding of the presentation fails.
+  /// * If the holder can't be parsed as DIDs.
+  pub fn extract_holder<H: DID>(presentation: &Jwt) -> std::result::Result<H, ValidationError>
   where
     <H as FromStr>::Err: std::error::Error + Send + Sync + 'static,
-    <I as FromStr>::Err: std::error::Error + Send + Sync + 'static,
   {
     let validation_item = Decoder::new()
       .decode_compact_serialization(presentation.as_str().as_bytes(), None)
       .map_err(ValidationError::JwsDecodingError)?;
 
-    let claims: PresentationJwtClaims<'_, Object> = PresentationJwtClaims::from_json_slice(&validation_item.claims())
-      .map_err(|err| {
-      ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    })?;
+    let claims: PresentationJwtClaims<'_, Jwt, Object> =
+      PresentationJwtClaims::from_json_slice(&validation_item.claims()).map_err(|err| {
+        ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+      })?;
 
     let holder: H = H::from_str(claims.iss.as_str()).map_err(|err| ValidationError::SignerUrl {
       signer_ctx: SignerContext::Holder,
       source: err.into(),
     })?;
-
-    let mut issuers: Vec<I> = vec![];
-    for vc in claims.vp.verifiable_credential.iter() {
-      issuers.push(CredentialValidator::extract_issuer_from_jwt::<I>(vc)?)
-    }
-    Ok((holder, issuers))
+    Ok(holder)
   }
 
   /// Validates the semantic structure of the `JwtPresentation`.

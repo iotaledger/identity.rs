@@ -10,6 +10,7 @@
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
+use identity_iota::credential::vc_jwt_validation::DecodedJwtCredential;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtPresentation;
@@ -182,38 +183,49 @@ async fn main() -> anyhow::Result<()> {
   let presentation_verifier_options: JwsVerificationOptions =
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
-  // Do not allow credentials that expire within the next 10 hours.
-  let credential_validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
-    .earliest_expiry_date(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap());
+  // // Do not allow credentials that expire within the next 10 hours.
+  // let credential_validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
+  //   .earliest_expiry_date(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap());
 
   let presentation_validation_options = JwtPresentationValidationOptions::default()
     .presentation_verifier_options(presentation_verifier_options)
-    .shared_validation_options(credential_validation_options)
+    // .shared_validation_options(credential_validation_options)
     .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
-  let (holder_did, issuer_dids): (CoreDID, Vec<CoreDID>) = JwtPresentationValidator::extract_dids(&presentation_jwt)?;
-
-  // Resolve issuer and holder documents and verify presentation.
-  // Passing the holder and issuer to `verify_presentation` will bypass the resolution step.
+  let holder_did: CoreDID = JwtPresentationValidator::extract_holder(&presentation_jwt)?;
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
 
   let holder: IotaDocument = resolver.resolve(&holder_did).await?;
-  let issuer: IotaDocument = resolver.resolve(&issuer_dids[0]).await?;
 
-  let presentation: DecodedJwtPresentation = JwtPresentationValidator::new().validate(
-    &presentation_jwt,
-    &holder,
-    &[issuer],
-    &presentation_validation_options,
-    FailFast::FirstError,
-  )?;
+  // Validate presentation, Note that this doesn't validate the included credentials.
+  let presentation: DecodedJwtPresentation =
+    JwtPresentationValidator::new().validate(&presentation_jwt, &holder, &presentation_validation_options)?;
+
+  // Validate the credentials in the presentation.
+  let credential_validator = CredentialValidator::new();
+  for credential_jwt in presentation.presentation.verifiable_credential.iter() {
+    // Validate credential.
+    let decoded_credential: DecodedJwtCredential<Object> = credential_validator
+      .validate::<_, Object>(
+        &credential_jwt,
+        &issuer_document,
+        &CredentialValidationOptions::default(),
+        FailFast::FirstError,
+      )
+      .unwrap();
+    // Check the presentation holder is the credential subject.
+    CredentialValidator::check_subject_holder_relationship(
+      &decoded_credential.credential,
+      &holder_did.to_url().into(),
+      SubjectHolderRelationship::AlwaysSubject,
+    )?;
+  }
 
   // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
   println!("VP successfully validated: {:#?}", presentation.presentation);
 
   // Note that we did not declare a latest allowed issuance date for credentials. This is because we only want to check
   // that the credentials do not have an issuance date in the future which is a default check.
-
   Ok(())
 }

@@ -12,9 +12,6 @@ use crate::validator::SubjectHolderRelationship;
 #[non_exhaustive]
 #[serde(rename_all = "camelCase")]
 pub struct JwtPresentationValidationOptions {
-  /// Options which affect the validation of *all* credentials in the presentation.
-  #[serde(default)]
-  pub shared_validation_options: CredentialValidationOptions,
   /// Options which affect the verification of the signature on the presentation.
   #[serde(default)]
   pub presentation_verifier_options: JwsVerificationOptions,
@@ -42,11 +39,6 @@ impl JwtPresentationValidationOptions {
     Self::default()
   }
 
-  /// Set options which affect the validation of *all* credentials in the presentation.
-  pub fn shared_validation_options(mut self, options: CredentialValidationOptions) -> Self {
-    self.shared_validation_options = options;
-    self
-  }
   /// Set options which affect the verification of the signature on the presentation.
   pub fn presentation_verifier_options(mut self, options: JwsVerificationOptions) -> Self {
     self.presentation_verifier_options = options;

@@ -15,18 +15,18 @@ use super::JwtPresentation;
 
 /// A `JwtPresentationBuilder` is used to create a customized [JwtPresentation].
 #[derive(Clone, Debug)]
-pub struct JwtPresentationBuilder<T = Object> {
+pub struct JwtPresentationBuilder<CRED = Jwt, T = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
-  pub(crate) credentials: Vec<Jwt>,
+  pub(crate) credentials: Vec<CRED>,
   pub(crate) holder: Url,
   pub(crate) refresh_service: Vec<RefreshService>,
   pub(crate) terms_of_use: Vec<Policy>,
   pub(crate) properties: T,
 }
 
-impl<T> JwtPresentationBuilder<T> {
+impl<CRED, T> JwtPresentationBuilder<CRED, T> {
   /// Creates a new `JwtPresentationBuilder`.
   pub fn new(holder: Url, properties: T) -> Self {
     Self {
@@ -64,7 +64,7 @@ impl<T> JwtPresentationBuilder<T> {
 
   /// Adds a value to the `verifiableCredential` set.
   #[must_use]
-  pub fn credential(mut self, value: Jwt) -> Self {
+  pub fn credential(mut self, value: CRED) -> Self {
     self.credentials.push(value);
     self
   }
@@ -84,7 +84,7 @@ impl<T> JwtPresentationBuilder<T> {
   }
 
   /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
-  pub fn build(self) -> Result<JwtPresentation<T>> {
+  pub fn build(self) -> Result<JwtPresentation<CRED, T>> {
     JwtPresentation::from_builder(self)
   }
 }
