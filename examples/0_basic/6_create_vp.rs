@@ -183,10 +183,6 @@ async fn main() -> anyhow::Result<()> {
   let presentation_verifier_options: JwsVerificationOptions =
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
-  // // Do not allow credentials that expire within the next 10 hours.
-  // let credential_validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
-  //   .earliest_expiry_date(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap());
-
   let presentation_validation_options = JwtPresentationValidationOptions::default()
     .presentation_verifier_options(presentation_verifier_options)
     // .shared_validation_options(credential_validation_options)
