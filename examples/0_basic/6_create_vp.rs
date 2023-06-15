@@ -199,11 +199,13 @@ async fn main() -> anyhow::Result<()> {
   // Validate the credentials in the presentation.
   let credential_validator = CredentialValidator::new();
   for credential_jwt in presentation.presentation.verifiable_credential.iter() {
+    let issuer_did: CoreDID = CredentialValidator::extract_issuer_from_jwt(credential_jwt)?;
+    let resolved_issuer_doc: IotaDocument = resolver.resolve(&issuer_did).await?;
     // Validate credential.
     let decoded_credential: DecodedJwtCredential<Object> = credential_validator
       .validate::<_, Object>(
         credential_jwt,
-        &issuer_document,
+        &resolved_issuer_doc,
         &CredentialValidationOptions::default(),
         FailFast::FirstError,
       )
