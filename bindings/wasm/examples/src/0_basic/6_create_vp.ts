@@ -175,7 +175,7 @@ export async function createVP() {
     let credentialValidator = new JwtCredentialValidator();
     let validationOptions = new JwtCredentialValidationOptions({});
     for (let credentialJwt of decodedPresentation.presentation().verifiableCredential()) {
-        let credentialIssuerDid = JwtCredentialValidator.extractIssuerFromJwt(credentialJwt)
+        let credentialIssuerDid = JwtCredentialValidator.extractIssuerFromJwt(credentialJwt);
         let resolvedIssuer = await resolver.resolve(credentialIssuerDid.toString());
         // Validate credential.
         let decodedCredential = credentialValidator.validate(
@@ -189,8 +189,8 @@ export async function createVP() {
         JwtCredentialValidator.checkSubjectHolderRelationship(
             decodedCredential.credential(),
             presentationHolderDID.toString(),
-            SubjectHolderRelationship.AlwaysSubject
-        )
+            SubjectHolderRelationship.AlwaysSubject,
+        );
     }
 
     // Since no errors were thrown we know that the validation was successful.
