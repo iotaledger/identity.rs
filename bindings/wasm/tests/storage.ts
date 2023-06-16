@@ -314,9 +314,7 @@ describe("#JwkStorageDocument", function() {
         let decoded: DecodedJwtPresentation = validator.validate(
             presentationJwt,
             holderDoc,
-            [issuerDoc],
             JwtPresentationValidationOptions.default(),
-            FailFast.FirstError,
         );
 
         assert.deepStrictEqual(

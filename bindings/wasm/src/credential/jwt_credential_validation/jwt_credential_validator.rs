@@ -173,4 +173,16 @@ impl WasmJwtCredentialValidator {
       .map(WasmCoreDID::from)
       .wasm_result()
   }
+
+  /// Utility for extracting the issuer field of a credential in JWT representation as DID.
+  ///
+  /// # Errors
+  ///
+  /// If the JWT decoding fails or the issuer field is not a valid DID.
+  #[wasm_bindgen(js_name = extractIssuerFromJwt)]
+  pub fn extract_issuer_from_jwt(credential: &WasmJwt) -> Result<WasmCoreDID> {
+    JwtCredentialValidator::extract_issuer_from_jwt::<CoreDID>(&credential.0)
+      .map(WasmCoreDID::from)
+      .wasm_result()
+  }
 }

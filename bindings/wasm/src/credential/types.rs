@@ -40,9 +40,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<CoreDID>")]
   pub type ArrayCoreDID;
-
-  #[wasm_bindgen(typescript_type = "JwtPresentationDids")]
-  pub type JwtPresentationDids;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -137,20 +134,4 @@ interface Subject {
   readonly id?: string | CoreDID | IotaDID;
   /** Additional properties of the credential subject. */
   readonly [properties: string]: unknown;
-}"#;
-
-#[wasm_bindgen(typescript_custom_section)]
-const I_JWT_PRESENTATOIN_DIDS: &'static str = r#"
-/**
- * DIDs of the presentation holder and the issuers of the contained credentials.
- */
-interface JwtPresentationDids {
-  /**
-   * Presentation holder.
-   */
-  holder: CoreDID;
-  /**
-   * Issuers of the verifiable credentials contained in the presentation.
-   */
-  issuers: Array<CoreDID>;
 }"#;
