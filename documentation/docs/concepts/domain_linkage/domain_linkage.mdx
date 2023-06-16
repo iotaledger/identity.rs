@@ -19,6 +19,10 @@ import Announcement from '../../../src/partials/_announcement.mdx';
 
 <Announcement/>
 
+:::info
+To use Domain Linkage in Rust you have to enable the `domain-linkage` feature.
+:::
+
 ## Overview
 
 Domain Linkage can provide proof for a connection between a DID and a domain being controlled by the same entity. This linkage can transfer trust from a domain to a DID and vice verca. For instance, if an entity trusts a domain, it can also trust the linked DID and all documents signed by verification methods included in the DID Document. A use case coud be a verifier that trusts `www.example.com` and receives a Verifiable Presentation issued by `did:foo:abc`. By `did:foo:abc` being linked to `www.example.com`, the verifier can trust that the Verifiable Presentation is issued by the same entity controlling `www.example.com`.
