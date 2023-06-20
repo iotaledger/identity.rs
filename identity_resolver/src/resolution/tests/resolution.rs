@@ -66,6 +66,15 @@ async fn missing_handler_errors() {
 
   assert!(resolver_foo.resolve(&good_did).await.is_ok());
   assert!(resolver_core.resolve(&good_did).await.is_ok());
+
+  let both_dids = [good_did, bad_did];
+  let err: ResolverError = resolver_foo.resolve_multiple(&both_dids).await.unwrap_err();
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  assert_eq!(method_name, method);
+
+  let err: ResolverError = resolver_core.resolve_multiple(&both_dids).await.unwrap_err();
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  assert_eq!(method_name, method);
 }
 
 // ===========================================================================
@@ -217,4 +226,69 @@ async fn handler_failure() {
 
   assert!(resolver_foo.resolve(&good_did).await.is_ok());
   assert!(resolver_core.resolve(&good_did).await.is_ok());
+}
+
+// ===========================================================================
+// Resolve Multiple.
+// ===========================================================================
+
+#[tokio::test]
+async fn resolve_multiple() {
+  let method_name: String = "foo".to_owned();
+
+  let did_1: CoreDID = CoreDID::parse(format!("did:{method_name}:1111")).unwrap();
+  let did_2: CoreDID = CoreDID::parse(format!("did:{method_name}:2222")).unwrap();
+  let did_3: CoreDID = CoreDID::parse(format!("did:{method_name}:3333")).unwrap();
+  let did_4: CoreDID = CoreDID::parse(format!("did:{method_name}:4444")).unwrap();
+
+  let mut resolver: Resolver<CoreDocument> = Resolver::new();
+  resolver.attach_handler(method_name, mock_handler);
+
+  // Resolve with duplicate `did_3`.
+  let resolved_dids: Vec<CoreDocument> = resolver
+    .resolve_multiple(&[
+      did_1.clone(),
+      did_2.clone(),
+      did_3.clone(),
+      did_4.clone(),
+      did_3.clone(),
+    ])
+    .await
+    .unwrap();
+
+  // Check duplicate only resolved once.
+  assert_eq!(resolved_dids.len(), 4);
+
+  assert_eq!(
+    resolved_dids
+      .iter()
+      .filter(|doc| doc.id().clone() == did_1)
+      .collect::<Vec<&CoreDocument>>()
+      .len(),
+    1
+  );
+  assert_eq!(
+    resolved_dids
+      .iter()
+      .filter(|doc| doc.id().clone() == did_2)
+      .collect::<Vec<&CoreDocument>>()
+      .len(),
+    1
+  );
+  assert_eq!(
+    resolved_dids
+      .iter()
+      .filter(|doc| doc.id().clone() == did_3)
+      .collect::<Vec<&CoreDocument>>()
+      .len(),
+    1
+  );
+  assert_eq!(
+    resolved_dids
+      .iter()
+      .filter(|doc| doc.id().clone() == did_4)
+      .collect::<Vec<&CoreDocument>>()
+      .len(),
+    1
+  );
 }

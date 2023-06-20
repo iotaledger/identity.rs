@@ -1,8 +1,11 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2023 IOTA Siftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
+use futures::stream::FuturesUnordered;
+use futures::TryStreamExt;
 use identity_did::DID;
+use std::collections::HashSet;
 
 use identity_document::document::CoreDocument;
 use std::collections::HashMap;
@@ -94,6 +97,24 @@ where
       .map_err(Error::new)?;
 
     delegate.apply(did.as_str()).await
+  }
+
+  /// Concurrently fetches the DID Documents of the multiple given DIDs.
+  ///
+  /// # Errors
+  /// * If the resolver has not been configured to handle the method of any of the given DIDs.
+  /// * If the resolution process of any DID fails.
+  ///
+  /// ## Note
+  /// * This method filters any duplicates in `dids` before resolving.
+  /// * The returned vector is NOT ordered.
+  pub async fn resolve_multiple<D: DID>(&self, dids: &[D]) -> Result<Vec<DOC>> {
+    let futures = FuturesUnordered::new();
+    let dids_set: HashSet<D> = dids.iter().cloned().collect();
+    for did in dids_set {
+      futures.push(async move { self.resolve(&did).await });
+    }
+    futures.try_collect().await
   }
 }
 
