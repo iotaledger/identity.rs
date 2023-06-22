@@ -1,4 +1,4 @@
-export {};
+export { };
 
 import { CoreDID, CoreDocument, IotaDID, IotaDocument, IToCoreDocument, Resolver } from "../node";
 import assert = require("assert");
@@ -104,6 +104,15 @@ describe("Resolver", function() {
             assert.deepStrictEqual(barDoc.toJSON(), (resolvedBarDoc as CoreDocument).toJSON());
             assert.deepStrictEqual(iotaDoc.toJSON(), (resolvedIotaDoc as IotaDocument).toJSON());
             assert.deepStrictEqual(fooDoc.toJSON(), (resolvedFooDoc as MockFooDocument).toCoreDocument().toJSON());
+
+            let dids = [barDoc.id().toString(), iotaDoc.id().toString(), fooDoc.id().toString(), iotaDoc.id().toString()];
+            let documents = await resolver.resolveMultiple(dids);
+
+            assert.equal(documents.length, 4);
+            assert.deepStrictEqual(barDoc.toJSON(), (documents[0] as CoreDocument).toJSON());
+            assert.deepStrictEqual(iotaDoc.toJSON(), (documents[1] as IotaDocument).toJSON());
+            assert.deepStrictEqual(fooDoc.toJSON(), (documents[2] as MockFooDocument).toCoreDocument().toJSON());
+            assert.deepStrictEqual(iotaDoc.toJSON(), (documents[3] as IotaDocument).toJSON());
         });
 
         it("should fail resolution when configured incorrectly", async () => {

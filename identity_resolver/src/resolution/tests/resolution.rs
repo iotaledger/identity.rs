@@ -27,7 +27,7 @@ fn core_document(did: CoreDID) -> CoreDocument {
 }
 
 /// A custom document type
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FooDocument(CoreDocument);
 impl AsRef<CoreDocument> for FooDocument {
   fn as_ref(&self) -> &CoreDocument {
@@ -256,39 +256,10 @@ async fn resolve_multiple() {
     .await
     .unwrap();
 
-  // Check duplicate only resolved once.
-  assert_eq!(resolved_dids.len(), 4);
-
-  assert_eq!(
-    resolved_dids
-      .iter()
-      .filter(|doc| doc.id().clone() == did_1)
-      .collect::<Vec<&CoreDocument>>()
-      .len(),
-    1
-  );
-  assert_eq!(
-    resolved_dids
-      .iter()
-      .filter(|doc| doc.id().clone() == did_2)
-      .collect::<Vec<&CoreDocument>>()
-      .len(),
-    1
-  );
-  assert_eq!(
-    resolved_dids
-      .iter()
-      .filter(|doc| doc.id().clone() == did_3)
-      .collect::<Vec<&CoreDocument>>()
-      .len(),
-    1
-  );
-  assert_eq!(
-    resolved_dids
-      .iter()
-      .filter(|doc| doc.id().clone() == did_4)
-      .collect::<Vec<&CoreDocument>>()
-      .len(),
-    1
-  );
+  assert_eq!(resolved_dids.len(), 5);
+  assert_eq!(resolved_dids.get(0).unwrap().id(), &did_1);
+  assert_eq!(resolved_dids.get(1).unwrap().id(), &did_2);
+  assert_eq!(resolved_dids.get(2).unwrap().id(), &did_3);
+  assert_eq!(resolved_dids.get(3).unwrap().id(), &did_4);
+  assert_eq!(resolved_dids.get(4).unwrap().id(), &did_3);
 }

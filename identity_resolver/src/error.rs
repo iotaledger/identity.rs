@@ -62,4 +62,7 @@ pub enum ErrorCause {
   /// [`Resolver`](crate::resolution::Resolver).
   #[error("did resolution failed: the DID method \"{method}\" is not supported by the resolver")]
   UnsupportedMethodError { method: String },
+
+  #[error("Unspecific error")]
+  UnspecificError { message: String },
 }

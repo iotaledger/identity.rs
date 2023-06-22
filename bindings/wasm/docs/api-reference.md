@@ -208,9 +208,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -5239,6 +5239,7 @@ The resolver will only be able to resolve DID documents for methods it has been 
 * [Resolver](#Resolver)
     * [new Resolver(config)](#new_Resolver_new)
     * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
+    * [.resolveMultiple(did)](#Resolver+resolveMultiple) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -5269,6 +5270,26 @@ corresponding to the given DID or the resolution process itself fails.
 | Param | Type |
 | --- | --- |
 | did | <code>string</code> | 
+
+<a name="Resolver+resolveMultiple"></a>
+
+### resolver.resolveMultiple(did) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
+Concurrently fetches the DID Documents of the multiple given DIDs.
+
+# Errors
+* If the resolver has not been configured to handle the method of any of the given DIDs.
+* If the resolution process of any DID fails.
+
+## Note
+* The order of the documents in the returned vector matches that in `dids`.
+* If `dids` contains duplicates, these will be resolved only once and the resolved document
+is copied into the returned vector to match the order of `dids`.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| did | <code>Array.&lt;string&gt;</code> | 
 
 <a name="RevocationBitmap"></a>
 
@@ -5931,13 +5952,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="verifyEdDSA"></a>
 
