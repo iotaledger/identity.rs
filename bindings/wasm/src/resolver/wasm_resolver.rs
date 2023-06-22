@@ -187,9 +187,9 @@ impl WasmResolver {
   /// * If the resolution process of any DID fails.
   ///
   /// ## Note
-  /// * The order of the documents in the returned vector matches that in `dids`.
+  /// * The order of the documents in the returned array matches that in `dids`.
   /// * If `dids` contains duplicates, these will be resolved only once and the resolved document
-  /// is copied into the returned vector to match the order of `dids`.
+  /// is copied into the returned array to match the order of `dids`.
   #[wasm_bindgen(js_name=resolveMultiple)]
   pub fn resolve_multiple(&self, dids: ArrayString) -> Result<PromiseArrayIToCoreDocument> {
     let dids: Vec<String> = dids
