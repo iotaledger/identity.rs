@@ -262,4 +262,12 @@ async fn resolve_multiple() {
   assert_eq!(resolved_dids.get(2).unwrap().id(), &did_3);
   assert_eq!(resolved_dids.get(3).unwrap().id(), &did_4);
   assert_eq!(resolved_dids.get(4).unwrap().id(), &did_3);
+
+  let dids: &[CoreDID] = &[];
+  let resolved_dids: Vec<CoreDocument> = resolver.resolve_multiple(dids).await.unwrap();
+  assert_eq!(resolved_dids.len(), 0);
+
+  let resolved_dids: Vec<CoreDocument> = resolver.resolve_multiple(&[did_1.clone()]).await.unwrap();
+  assert_eq!(resolved_dids.len(), 1);
+  assert_eq!(resolved_dids.get(0).unwrap().id(), &did_1);
 }
