@@ -5239,7 +5239,7 @@ The resolver will only be able to resolve DID documents for methods it has been 
 * [Resolver](#Resolver)
     * [new Resolver(config)](#new_Resolver_new)
     * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
-    * [.resolveMultiple(did)](#Resolver+resolveMultiple) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
+    * [.resolveMultiple(dids)](#Resolver+resolveMultiple) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -5273,7 +5273,7 @@ corresponding to the given DID or the resolution process itself fails.
 
 <a name="Resolver+resolveMultiple"></a>
 
-### resolver.resolveMultiple(did) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
+### resolver.resolveMultiple(dids) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
 Concurrently fetches the DID Documents of the multiple given DIDs.
 
 # Errors
@@ -5289,7 +5289,7 @@ is copied into the returned vector to match the order of `dids`.
 
 | Param | Type |
 | --- | --- |
-| did | <code>Array.&lt;string&gt;</code> | 
+| dids | <code>Array.&lt;string&gt;</code> | 
 
 <a name="RevocationBitmap"></a>
 

@@ -191,19 +191,19 @@ impl WasmResolver {
   /// * If `dids` contains duplicates, these will be resolved only once and the resolved document
   /// is copied into the returned vector to match the order of `dids`.
   #[wasm_bindgen(js_name=resolveMultiple)]
-  pub fn resolve_multiple(&self, did: ArrayString) -> Result<PromiseArrayIToCoreDocument> {
-    let array: Array = did.dyn_into()?;
-    let values: Result<Vec<String>> = array
+  pub fn resolve_multiple(&self, dids: ArrayString) -> Result<PromiseArrayIToCoreDocument> {
+    let dids: Vec<String> = dids
+      .dyn_into::<Array>()?
       .iter()
       .map(|item| item.dyn_into::<JsString>().map(String::from))
-      .collect();
+      .collect::<Result<Vec<String>>>()?;
+    let core_dids: Vec<CoreDID> = dids
+      .iter()
+      .map(CoreDID::parse)
+      .collect::<std::result::Result<Vec<CoreDID>, identity_iota::did::Error>>()
+      .wasm_result()?;
 
-    let values: Vec<String> = values?;
-    let core_dids: std::result::Result<Vec<CoreDID>, identity_iota::did::Error> =
-      values.iter().map(CoreDID::parse).collect();
-    let core_dids: Vec<CoreDID> = core_dids.wasm_result()?;
     let resolver: Rc<JsDocumentResolver> = self.0.clone();
-
     let promise: Promise = future_to_promise(async move {
       resolver
         .resolve_multiple(&core_dids)
