@@ -1,4 +1,4 @@
-export { };
+export {};
 
 import { CoreDID, CoreDocument, IotaDID, IotaDocument, IToCoreDocument, Resolver } from "../node";
 import assert = require("assert");
@@ -105,7 +105,8 @@ describe("Resolver", function() {
             assert.deepStrictEqual(iotaDoc.toJSON(), (resolvedIotaDoc as IotaDocument).toJSON());
             assert.deepStrictEqual(fooDoc.toJSON(), (resolvedFooDoc as MockFooDocument).toCoreDocument().toJSON());
 
-            let dids = [barDoc.id().toString(), iotaDoc.id().toString(), fooDoc.id().toString(), iotaDoc.id().toString()];
+            let dids = [barDoc.id().toString(), iotaDoc.id().toString(), fooDoc.id().toString(),
+                iotaDoc.id().toString()];
             let documents = await resolver.resolveMultiple(dids);
 
             assert.equal(documents.length, 4);
