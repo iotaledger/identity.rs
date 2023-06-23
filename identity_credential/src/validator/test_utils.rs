@@ -95,13 +95,3 @@ pub(crate) fn generate_credential(
     .build()
     .unwrap()
 }
-
-// generates a triple: issuer document, issuer's keys, unsigned credential issued by issuer
-pub(crate) fn credential_setup() -> (CoreDocument, KeyPair, Credential) {
-  let (issuer_doc, issuer_key) = generate_document_with_keys();
-  let (subject_doc, _) = generate_document_with_keys();
-  let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-  let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-  let credential = generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
-  (issuer_doc, issuer_key, credential)
-}

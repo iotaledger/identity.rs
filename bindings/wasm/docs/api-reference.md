@@ -111,13 +111,6 @@ use the methods <code>pack</code> and <code>unpack</code> instead.</p>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
-<dt><a href="#Presentation">Presentation</a></dt>
-<dd></dd>
-<dt><a href="#PresentationValidationOptions">PresentationValidationOptions</a></dt>
-<dd><p>Options to declare validation criteria when validating presentation.</p>
-</dd>
-<dt><a href="#PresentationValidator">PresentationValidator</a></dt>
-<dd></dd>
 <dt><a href="#Proof">Proof</a></dt>
 <dd><p>A digital signature.</p>
 <p>For field definitions see: <a href="https://w3c-ccg.github.io/security-vocab/">https://w3c-ccg.github.io/security-vocab/</a></p>
@@ -164,8 +157,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -208,6 +199,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
@@ -1048,7 +1041,7 @@ Returns a copy of the human-readable evidence used to support the claims within 
 <a name="Credential+nonTransferable"></a>
 
 ### credential.nonTransferable() ⇒ <code>boolean</code> \| <code>undefined</code>
-Returns whether or not the `Credential` must only be contained within a [Presentation](#Presentation)
+Returns whether or not the `Credential` must only be contained within a [Presentation](Presentation)
 with a proof issued from the `Credential` subject.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
@@ -2137,7 +2130,6 @@ Deserializes an instance from a JSON object.
         * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signCredential(credential, privateKey, methodQuery, options)](#IotaDocument+signCredential) ⇒ [<code>Credential</code>](#Credential)
-        * [.signPresentation(presentation, privateKey, methodQuery, options)](#IotaDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
         * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
@@ -2370,21 +2362,6 @@ Verification Method.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="IotaDocument+signPresentation"></a>
-
-### iotaDocument.signPresentation(presentation, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
-Creates a signature for the given `Presentation` with the specified DID Document
-Verification Method.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
 | privateKey | <code>Uint8Array</code> | 
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
@@ -4738,283 +4715,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Presentation"></a>
-
-## Presentation
-**Kind**: global class  
-
-* [Presentation](#Presentation)
-    * [new Presentation(values)](#new_Presentation_new)
-    * _instance_
-        * [.context()](#Presentation+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
-        * [.id()](#Presentation+id) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.type()](#Presentation+type) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-        * [.holder()](#Presentation+holder) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.refreshService()](#Presentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
-        * [.termsOfUse()](#Presentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
-        * [.proof()](#Presentation+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.properties()](#Presentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
-    * _static_
-        * [.BaseContext()](#Presentation.BaseContext) ⇒ <code>string</code>
-        * [.BaseType()](#Presentation.BaseType) ⇒ <code>string</code>
-        * [.fromJSON(json)](#Presentation.fromJSON) ⇒ [<code>Presentation</code>](#Presentation)
-
-<a name="new_Presentation_new"></a>
-
-### new Presentation(values)
-Constructs a new `Presentation`.
-
-
-| Param | Type |
-| --- | --- |
-| values | <code>IPresentation</code> | 
-
-<a name="Presentation+context"></a>
-
-### presentation.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
-Returns a copy of the JSON-LD context(s) applicable to the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+id"></a>
-
-### presentation.id() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the unique `URI` identifying the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+type"></a>
-
-### presentation.type() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a copy of the URIs defining the type of the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+verifiableCredential"></a>
-
-### presentation.verifiableCredential() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-Returns a copy of the [Credential](#Credential)(s) expressing the claims of the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+holder"></a>
-
-### presentation.holder() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the URI of the entity that generated the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+refreshService"></a>
-
-### presentation.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
-Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+termsOfUse"></a>
-
-### presentation.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
-Returns a copy of the terms-of-use specified by the `Presentation` holder
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+proof"></a>
-
-### presentation.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-Returns a copy of the proof used to verify the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+properties"></a>
-
-### presentation.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the miscellaneous properties on the `Presentation`.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+toJSON"></a>
-
-### presentation.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+clone"></a>
-
-### presentation.clone() ⇒ [<code>Presentation</code>](#Presentation)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation.BaseContext"></a>
-
-### Presentation.BaseContext() ⇒ <code>string</code>
-Returns the base JSON-LD context.
-
-**Kind**: static method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation.BaseType"></a>
-
-### Presentation.BaseType() ⇒ <code>string</code>
-Returns the base type.
-
-**Kind**: static method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation.fromJSON"></a>
-
-### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>Presentation</code>](#Presentation)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="PresentationValidationOptions"></a>
-
-## PresentationValidationOptions
-Options to declare validation criteria when validating presentation.
-
-**Kind**: global class  
-
-* [PresentationValidationOptions](#PresentationValidationOptions)
-    * [new PresentationValidationOptions(options)](#new_PresentationValidationOptions_new)
-    * _instance_
-        * [.toJSON()](#PresentationValidationOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#PresentationValidationOptions+clone) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-    * _static_
-        * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-        * [.fromJSON(json)](#PresentationValidationOptions.fromJSON) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-
-<a name="new_PresentationValidationOptions_new"></a>
-
-### new PresentationValidationOptions(options)
-Creates a new `PresentationValidationOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>IPresentationValidationOptions</code> | 
-
-<a name="PresentationValidationOptions+toJSON"></a>
-
-### presentationValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-<a name="PresentationValidationOptions+clone"></a>
-
-### presentationValidationOptions.clone() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-<a name="PresentationValidationOptions.default"></a>
-
-### PresentationValidationOptions.default() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Creates a new `PresentationValidationOptions` with defaults.
-
-**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-<a name="PresentationValidationOptions.fromJSON"></a>
-
-### PresentationValidationOptions.fromJSON(json) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="PresentationValidator"></a>
-
-## PresentationValidator
-**Kind**: global class  
-
-* [PresentationValidator](#PresentationValidator)
-    * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
-    * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
-    * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
-    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
-
-<a name="PresentationValidator.validate"></a>
-
-### PresentationValidator.validate(presentation, holder, issuers, options, fail_fast)
-Validate a `Presentation`.
-
-The following properties are validated according to `options`:
-- the semantic structure of the presentation,
-- the holder's signature,
-- the relationship between the holder and the credential subjects,
-- the signatures and some properties of the constituent credentials (see
-`CredentialValidator::validate`).
-
-### Warning
-The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
-trusted. This section contains more information on additional checks that should be carried out before and after
-calling this method.
-
-#### The state of the supplied DID Documents.
-The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
-`Resolver::resolve_presentation_holder` and `Resolver::resolve_presentation_issuers`
-can help extract the latest available states of these DID Documents.
-
-#### Properties that are not validated
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-These should be manually checked after validation, according to your requirements.
-
-### Errors
-An error is returned whenever a validated condition is not satisfied.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
-| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
-| fail_fast | <code>number</code> | 
-
-<a name="PresentationValidator.verifyPresentationSignature"></a>
-
-### PresentationValidator.verifyPresentationSignature(presentation, holder, options)
-Verify the presentation's signature using the resolved document of the holder.
-
-### Warning
-The caller must ensure that the DID Document of the holder is up-to-date.
-
-### Errors
-Fails if the `holder` does not match the `presentation`'s holder property.
-Fails if signature verification against the holder document fails.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
-<a name="PresentationValidator.checkStructure"></a>
-
-### PresentationValidator.checkStructure(presentation)
-Validates the semantic structure of the `Presentation`.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="PresentationValidator.extractHolder"></a>
-
-### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
-Utility for extracting the holder field of a `Presentation` as a DID.
-
-### Errors
-
-Fails if the holder field is missing or not a valid DID.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
 <a name="Proof"></a>
 
 ## Proof
@@ -5849,10 +5549,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5930,6 +5626,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="KeyType"></a>
 

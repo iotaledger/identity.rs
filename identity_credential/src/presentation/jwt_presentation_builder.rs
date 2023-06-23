@@ -10,7 +10,6 @@ use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::error::Result;
-use crate::presentation::Presentation;
 
 use super::JwtPresentation;
 
@@ -31,9 +30,9 @@ impl<T> JwtPresentationBuilder<T> {
   /// Creates a new `JwtPresentationBuilder`.
   pub fn new(holder: Url, properties: T) -> Self {
     Self {
-      context: vec![Presentation::<T>::base_context().clone()],
+      context: vec![JwtPresentation::<T>::base_context().clone()],
       id: None,
-      types: vec![Presentation::<T>::base_type().into()],
+      types: vec![JwtPresentation::<T>::base_type().into()],
       credentials: Vec::new(),
       holder,
       refresh_service: Vec::new(),

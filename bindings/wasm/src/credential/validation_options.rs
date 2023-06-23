@@ -3,7 +3,6 @@
 
 use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::FailFast;
-use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::credential::StatusCheck;
 use identity_iota::credential::SubjectHolderRelationship;
 use serde_repr::Deserialize_repr;
@@ -47,44 +46,6 @@ impl From<CredentialValidationOptions> for WasmCredentialValidationOptions {
 
 impl From<WasmCredentialValidationOptions> for CredentialValidationOptions {
   fn from(options: WasmCredentialValidationOptions) -> Self {
-    options.0
-  }
-}
-
-/// Options to declare validation criteria when validating presentation.
-#[wasm_bindgen(js_name = PresentationValidationOptions)]
-pub struct WasmPresentationValidationOptions(pub(crate) PresentationValidationOptions);
-
-#[wasm_bindgen(js_class = PresentationValidationOptions)]
-impl WasmPresentationValidationOptions {
-  /// Creates a new `PresentationValidationOptions` from the given fields.
-  ///
-  /// Throws an error if any of the options are invalid.
-  #[wasm_bindgen(constructor)]
-  pub fn new(options: IPresentationValidationOptions) -> Result<WasmPresentationValidationOptions> {
-    let options: PresentationValidationOptions = options.into_serde().wasm_result()?;
-    Ok(WasmPresentationValidationOptions::from(options))
-  }
-
-  /// Creates a new `PresentationValidationOptions` with defaults.
-  #[allow(clippy::should_implement_trait)]
-  #[wasm_bindgen]
-  pub fn default() -> WasmPresentationValidationOptions {
-    WasmPresentationValidationOptions::from(PresentationValidationOptions::default())
-  }
-}
-
-impl_wasm_json!(WasmPresentationValidationOptions, PresentationValidationOptions);
-impl_wasm_clone!(WasmPresentationValidationOptions, PresentationValidationOptions);
-
-impl From<PresentationValidationOptions> for WasmPresentationValidationOptions {
-  fn from(options: PresentationValidationOptions) -> Self {
-    Self(options)
-  }
-}
-
-impl From<WasmPresentationValidationOptions> for PresentationValidationOptions {
-  fn from(options: WasmPresentationValidationOptions) -> Self {
     options.0
   }
 }
@@ -176,24 +137,6 @@ interface ICredentialValidationOptions {
 
     /** Options which affect the verification of the signature on the credential. */
     readonly verifierOptions?: VerifierOptions;
-
-}"#;
-
-#[wasm_bindgen(typescript_custom_section)]
-const I_PRESENTATION_VALIDATION_OPTIONS: &'static str = r#"
-/** Holds options to create a new `PresentationValidationOptions`. */
-interface IPresentationValidationOptions {
-    /** Declare that the credentials of the presentation must all be validated according to these `CredentialValidationOptions`. */
-    readonly sharedValidationOptions?: CredentialValidationOptions;
-
-    /** Options which affect the verification of the signature on the presentation. */
-    readonly presentationVerifierOptions?: VerifierOptions;
-
-    /** Declare how the presentation's credential subjects must relate to the holder.
-     *
-     * Default: SubjectHolderRelationship.AlwaysSubject
-     */
-    readonly subjectHolderRelationship?: SubjectHolderRelationship;
 
 }"#;
 
