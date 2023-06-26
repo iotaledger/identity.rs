@@ -189,7 +189,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayEvidence>())
   }
 
-  /// Returns whether or not the `Credential` must only be contained within a {@link Presentation}
+  /// Returns whether or not the `Credential` must only be contained within a  `Presentation`
   /// with a proof issued from the `Credential` subject.
   #[wasm_bindgen(js_name = "nonTransferable")]
   pub fn non_transferable(&self) -> Option<bool> {
