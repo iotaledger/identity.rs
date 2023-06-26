@@ -3,8 +3,8 @@
 
 use crate::credential::Jwt;
 use crate::error::Result;
-use crate::validator::vc_jwt_validation::CredentialValidator;
-use crate::validator::vc_jwt_validation::ValidationError;
+use crate::validator::CredentialValidator;
+use crate::validator::ValidationError;
 use identity_core::common::Context;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;

@@ -9,11 +9,6 @@
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
-<dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
-<dd><p>Options to declare validation criteria when validating credentials.</p>
-</dd>
-<dt><a href="#CredentialValidator">CredentialValidator</a></dt>
-<dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
@@ -157,6 +152,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -199,8 +196,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
@@ -1100,217 +1095,6 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
-
-<a name="CredentialValidationOptions"></a>
-
-## CredentialValidationOptions
-Options to declare validation criteria when validating credentials.
-
-**Kind**: global class  
-
-* [CredentialValidationOptions](#CredentialValidationOptions)
-    * [new CredentialValidationOptions(options)](#new_CredentialValidationOptions_new)
-    * _instance_
-        * [.toJSON()](#CredentialValidationOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#CredentialValidationOptions+clone) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-    * _static_
-        * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-        * [.fromJSON(json)](#CredentialValidationOptions.fromJSON) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-
-<a name="new_CredentialValidationOptions_new"></a>
-
-### new CredentialValidationOptions(options)
-Creates a new `CredentialValidationOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>ICredentialValidationOptions</code> | 
-
-<a name="CredentialValidationOptions+toJSON"></a>
-
-### credentialValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-<a name="CredentialValidationOptions+clone"></a>
-
-### credentialValidationOptions.clone() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-<a name="CredentialValidationOptions.default"></a>
-
-### CredentialValidationOptions.default() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Creates a new `CredentialValidationOptions` with defaults.
-
-**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-<a name="CredentialValidationOptions.fromJSON"></a>
-
-### CredentialValidationOptions.fromJSON(json) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="CredentialValidator"></a>
-
-## CredentialValidator
-**Kind**: global class  
-
-* [CredentialValidator](#CredentialValidator)
-    * [.validate(credential, issuer, options, fail_fast)](#CredentialValidator.validate)
-    * [.checkStructure(credential)](#CredentialValidator.checkStructure)
-    * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
-    * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
-    * [.verifySignature(credential, trustedIssuers, options)](#CredentialValidator.verifySignature)
-    * [.checkSubjectHolderRelationship(credential, holder, relationship)](#CredentialValidator.checkSubjectHolderRelationship)
-    * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
-    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
-
-<a name="CredentialValidator.validate"></a>
-
-### CredentialValidator.validate(credential, issuer, options, fail_fast)
-Validates a `Credential`.
-
-The following properties are validated according to `options`:
-- the issuer's signature,
-- the expiration date,
-- the issuance date,
-- the semantic structure.
-
-### Warning
-The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
-trusted. This section contains more information on additional checks that should be carried out before and after
-calling this method.
-
-#### The state of the issuer's DID Document
-The caller must ensure that `issuer` represents an up-to-date DID Document. The convenience method
-`Resolver::resolveCredentialIssuer` can help extract the latest available state of the issuer's DID Document.
-
-#### Properties that are not validated
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-These should be manually checked after validation, according to your requirements.
-
-### Errors
-An error is returned whenever a validated condition is not satisfied.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
-| fail_fast | <code>number</code> | 
-
-<a name="CredentialValidator.checkStructure"></a>
-
-### CredentialValidator.checkStructure(credential)
-Validates the semantic structure of the `Credential`.
-
-### Warning
-This does not validate against the credential's schema nor the structure of the subject claims.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-
-<a name="CredentialValidator.checkExpiresOnOrAfter"></a>
-
-### CredentialValidator.checkExpiresOnOrAfter(credential, timestamp)
-Validate that the credential expires on or after the specified timestamp.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| timestamp | [<code>Timestamp</code>](#Timestamp) | 
-
-<a name="CredentialValidator.checkIssuedOnOrBefore"></a>
-
-### CredentialValidator.checkIssuedOnOrBefore(credential, timestamp)
-Validate that the credential is issued on or before the specified timestamp.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| timestamp | [<code>Timestamp</code>](#Timestamp) | 
-
-<a name="CredentialValidator.verifySignature"></a>
-
-### CredentialValidator.verifySignature(credential, trustedIssuers, options)
-Verify the signature using the DID Document of a trusted issuer.
-
-# Warning
-The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
-### Errors
-This method immediately returns an error if
-the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
-to verify the credential's signature will be made and an error is returned upon failure.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
-<a name="CredentialValidator.checkSubjectHolderRelationship"></a>
-
-### CredentialValidator.checkSubjectHolderRelationship(credential, holder, relationship)
-Validate that the relationship between the `holder` and the credential subjects is in accordance with
-`relationship`. The `holder` parameter is expected to be the URL of the holder.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| holder | <code>string</code> | 
-| relationship | <code>number</code> | 
-
-<a name="CredentialValidator.checkStatus"></a>
-
-### CredentialValidator.checkStatus(credential, trustedIssuers, statusCheck)
-Checks whether the credential status has been revoked.
-
-Only supports `BitmapRevocation2022`.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
-| statusCheck | <code>number</code> | 
-
-<a name="CredentialValidator.extractIssuer"></a>
-
-### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
-Utility for extracting the issuer field of a `Credential` as a DID.
-
-### Errors
-
-Fails if the issuer field is not a valid DID.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
 
 <a name="DIDUrl"></a>
 
@@ -5549,6 +5333,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5626,10 +5414,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="KeyType"></a>
 

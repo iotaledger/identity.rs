@@ -2,24 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Verifiable Credential and Presentation validators.
-pub use self::credential_validator::CredentialValidator;
-pub use self::errors::CompoundCredentialValidationError;
-pub use self::errors::CompoundPresentationValidationError;
-pub use self::errors::SignerContext;
-pub use self::errors::ValidationError;
-pub use self::validation_options::CredentialValidationOptions;
-pub use self::validation_options::FailFast;
-pub use self::validation_options::StatusCheck;
-pub use self::validation_options::SubjectHolderRelationship;
-pub use vp_jwt_validation::*;
+pub use self::options::FailFast;
+pub use self::options::StatusCheck;
+pub use self::options::SubjectHolderRelationship;
+pub use self::vc_jwt_validation::*;
+pub use self::vp_jwt_validation::*;
 
-mod credential_validator;
-mod errors;
+mod options;
 #[cfg(test)]
 pub(crate) mod test_utils;
-mod validation_options;
+mod vc_jwt_validation;
 mod vp_jwt_validation;
-
-// Currently conflicting names with the old validator/validation options
-// so we do not re-export the items in vc_jwt_validation for now.
-pub mod vc_jwt_validation;

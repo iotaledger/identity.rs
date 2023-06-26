@@ -1,54 +1,12 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::FailFast;
 use identity_iota::credential::StatusCheck;
 use identity_iota::credential::SubjectHolderRelationship;
 use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
-
-use crate::error::Result;
-use crate::error::WasmResult;
-
-/// Options to declare validation criteria when validating credentials.
-#[wasm_bindgen(js_name = CredentialValidationOptions)]
-pub struct WasmCredentialValidationOptions(pub(crate) CredentialValidationOptions);
-
-#[wasm_bindgen(js_class = CredentialValidationOptions)]
-impl WasmCredentialValidationOptions {
-  /// Creates a new `CredentialValidationOptions` from the given fields.
-  ///
-  /// Throws an error if any of the options are invalid.
-  #[wasm_bindgen(constructor)]
-  pub fn new(options: ICredentialValidationOptions) -> Result<WasmCredentialValidationOptions> {
-    let options: CredentialValidationOptions = options.into_serde().wasm_result()?;
-    Ok(WasmCredentialValidationOptions::from(options))
-  }
-
-  /// Creates a new `CredentialValidationOptions` with defaults.
-  #[allow(clippy::should_implement_trait)]
-  #[wasm_bindgen]
-  pub fn default() -> WasmCredentialValidationOptions {
-    WasmCredentialValidationOptions::from(CredentialValidationOptions::default())
-  }
-}
-
-impl_wasm_json!(WasmCredentialValidationOptions, CredentialValidationOptions);
-impl_wasm_clone!(WasmCredentialValidationOptions, CredentialValidationOptions);
-
-impl From<CredentialValidationOptions> for WasmCredentialValidationOptions {
-  fn from(options: CredentialValidationOptions) -> Self {
-    Self(options)
-  }
-}
-
-impl From<WasmCredentialValidationOptions> for CredentialValidationOptions {
-  fn from(options: WasmCredentialValidationOptions) -> Self {
-    options.0
-  }
-}
 
 /// Controls validation behaviour when checking whether or not a credential has been revoked by its
 /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
@@ -107,38 +65,6 @@ impl From<WasmSubjectHolderRelationship> for SubjectHolderRelationship {
     }
   }
 }
-
-// Interface to allow creating `CredentialValidationOptions` easily.
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "ICredentialValidationOptions")]
-  pub type ICredentialValidationOptions;
-
-  #[wasm_bindgen(typescript_type = "IPresentationValidationOptions")]
-  pub type IPresentationValidationOptions;
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const I_CREDENTIAL_VALIDATION_OPTIONS: &'static str = r#"
-/** Holds options to create a new `CredentialValidationOptions`. */
-interface ICredentialValidationOptions {
-    /** Declare that the credential is **not** considered valid if it expires before this `Timestamp`.
-     * Uses the current datetime during validation if not set. */
-    readonly earliestExpiryDate?: Timestamp;
-
-    /** Declare that the credential is **not** considered valid if it was issued later than this `Timestamp`.
-     * Uses the current datetime during validation if not set. */
-    readonly latestIssuanceDate?: Timestamp;
-
-    /** Validation behaviour for `credentialStatus`.
-     *
-     * Default: `StatusCheck.Strict`. */
-    readonly status?: StatusCheck;
-
-    /** Options which affect the verification of the signature on the credential. */
-    readonly verifierOptions?: VerifierOptions;
-
-}"#;
 
 /// Declares when validation should return if an error occurs.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]

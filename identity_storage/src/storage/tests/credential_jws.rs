@@ -5,7 +5,7 @@ use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
-use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
+use identity_credential::validator::CredentialValidationOptions;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::JwsAlgorithm;
@@ -103,7 +103,7 @@ async fn signing_credential_with_nonce_and_scope() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
+  let validator = identity_credential::validator::CredentialValidator::new();
   assert!(validator
     .validate::<_, Object>(
       &jws,
@@ -160,7 +160,7 @@ async fn signing_credential_with_b64() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
+  let validator = identity_credential::validator::CredentialValidator::new();
   let decoded = validator
     .validate::<_, Object>(
       &jws,
