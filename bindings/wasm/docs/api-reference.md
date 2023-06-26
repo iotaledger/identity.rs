@@ -1036,7 +1036,7 @@ Returns a copy of the human-readable evidence used to support the claims within 
 <a name="Credential+nonTransferable"></a>
 
 ### credential.nonTransferable() ⇒ <code>boolean</code> \| <code>undefined</code>
-Returns whether or not the `Credential` must only be contained within a [Presentation](Presentation)
+Returns whether or not the `Credential` must only be contained within a  `Presentation`
 with a proof issued from the `Credential` subject.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
