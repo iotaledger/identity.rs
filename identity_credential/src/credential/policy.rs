@@ -6,7 +6,7 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 
 /// Information used to express obligations, prohibitions, and permissions about
-/// a [`Credential`][crate::credential::Credential] or [`Presentation`][crate::presentation::Presentation].
+/// a [`Credential`][crate::credential::Credential] or [`Presentation`][crate::presentation::JwtPresentation].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#terms-of-use)
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]

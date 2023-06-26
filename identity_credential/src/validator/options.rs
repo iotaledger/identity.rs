@@ -30,7 +30,7 @@ impl Default for StatusCheck {
 }
 
 /// Declares how credential subjects must relate to the presentation holder during validation.
-/// See [`PresentationValidationOptions::subject_holder_relationship()`].
+/// See [`crate::validator::JwtPresentationValidationOptions::subject_holder_relationship()`].
 ///
 /// See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 // Need to use serde_repr to make this work with duck typed interfaces in the Wasm bindings.
@@ -39,7 +39,7 @@ impl Default for StatusCheck {
 pub enum SubjectHolderRelationship {
   /// The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
   /// This is the variant returned by [Self::default](Self::default()) and the default used in
-  /// [`PresentationValidationOptions`].
+  /// [`crate::validator::JwtPresentationValidationOptions`].
   AlwaysSubject = 0,
   /// The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
   SubjectOnNonTransferable = 1,
