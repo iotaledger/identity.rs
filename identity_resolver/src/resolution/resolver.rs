@@ -106,13 +106,8 @@ where
   /// * If the resolution process of any DID fails.
   ///
   /// ## Note
-  /// * The order of the documents in the returned vector matches that in `dids`.
-  /// * If `dids` contains duplicates, these will be resolved only once and the resolved document
-  /// is copied into the returned vector to match the order of `dids`.
-  pub async fn resolve_multiple<D: DID>(&self, dids: &[D]) -> Result<Vec<DOC>>
-  where
-    DOC: Clone,
-  {
+  /// * If `dids` contains duplicates, these will be resolved only once.
+  pub async fn resolve_multiple<D: DID>(&self, dids: &[D]) -> Result<HashMap<D, DOC>> {
     let futures = FuturesUnordered::new();
     // Create set to remove duplicates to avoid unnecessary resolution.
     let dids_set: HashSet<D> = dids.iter().cloned().collect();
@@ -123,19 +118,7 @@ where
       });
     }
     let documents: HashMap<D, DOC> = futures.try_collect().await?;
-    let mut ordered_documents: Vec<DOC> = Vec::with_capacity(dids.len());
-    // Reconstructs the order of `dids`.
-    for did in dids {
-      let doc: DOC = documents
-        .get(did)
-        .cloned()
-        // Error instead of `unwrap`.
-        .ok_or(Error::new(ErrorCause::UnspecificError {
-          message: "Internal Error".to_owned(),
-        }))?;
-      ordered_documents.push(doc);
-    }
-    Ok(ordered_documents)
+    Ok(documents)
   }
 }
 

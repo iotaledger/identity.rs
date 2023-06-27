@@ -211,8 +211,17 @@ impl WasmResolver {
         .map_err(WasmError::from)
         .map_err(JsValue::from)
         .map(|documents| {
+          let mut ordered_documents: Vec<JsValue> = Vec::with_capacity(core_dids.len());
+          // Reconstructs the order of `dids`.
+          for did in core_dids {
+            let doc: JsValue = documents.get(&did).cloned().unwrap();
+            ordered_documents.push(doc);
+          }
+          ordered_documents
+        })
+        .map(|documents| {
           documents
-            .iter()
+            .into_iter()
             .map(JsValue::from)
             .collect::<js_sys::Array>()
             .unchecked_into::<JsValue>()

@@ -5281,9 +5281,9 @@ Concurrently fetches the DID Documents of the multiple given DIDs.
 * If the resolution process of any DID fails.
 
 ## Note
-* The order of the documents in the returned vector matches that in `dids`.
+* The order of the documents in the returned array matches that in `dids`.
 * If `dids` contains duplicates, these will be resolved only once and the resolved document
-is copied into the returned vector to match the order of `dids`.
+is copied into the returned array to match the order of `dids`.
 
 **Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
