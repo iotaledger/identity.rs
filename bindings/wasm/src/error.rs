@@ -101,7 +101,6 @@ impl_wasm_error_from!(
   identity_iota::document::Error,
   identity_iota::iota::Error,
   identity_iota::credential::ValidationError,
-  identity_iota::credential::vc_jwt_validation::ValidationError,
   identity_iota::credential::RevocationError,
   identity_iota::verification::Error,
   identity_iota::credential::DomainLinkageValidationError
@@ -187,15 +186,6 @@ impl From<identity_iota::credential::CompoundCredentialValidationError> for Wasm
   }
 }
 
-impl From<identity_iota::credential::CompoundPresentationValidationError> for WasmError<'_> {
-  fn from(error: identity_iota::credential::CompoundPresentationValidationError) -> Self {
-    Self {
-      name: Cow::Borrowed("CompoundPresentationValidationError"),
-      message: Cow::Owned(ErrorMessage(&error).to_string()),
-    }
-  }
-}
-
 impl From<identity_iota::core::SingleStructError<KeyStorageErrorKind>> for WasmError<'_> {
   fn from(error: identity_iota::core::SingleStructError<KeyStorageErrorKind>) -> Self {
     Self {
@@ -245,16 +235,6 @@ impl From<identity_iota::verification::jose::error::Error> for WasmError<'_> {
   fn from(error: identity_iota::verification::jose::error::Error) -> Self {
     Self {
       name: Cow::Borrowed("JoseError"),
-      message: Cow::Owned(ErrorMessage(&error).to_string()),
-    }
-  }
-}
-
-// TODO: This should replace the old `CompoundCredentialValidationError`, or the previous error should be updated.
-impl From<identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError> for WasmError<'_> {
-  fn from(error: identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError) -> Self {
-    Self {
-      name: Cow::Borrowed("CompoundCredentialValidationError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

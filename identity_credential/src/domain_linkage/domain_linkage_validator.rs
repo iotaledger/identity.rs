@@ -6,8 +6,8 @@ use crate::credential::Jwt;
 use crate::domain_linkage::DomainLinkageConfiguration;
 use crate::domain_linkage::DomainLinkageValidationError;
 use crate::domain_linkage::DomainLinkageValidationErrorCause;
-use crate::validator::vc_jwt_validation::CredentialValidationOptions;
-use crate::validator::vc_jwt_validation::CredentialValidator;
+use crate::validator::CredentialValidationOptions;
+use crate::validator::CredentialValidator;
 use crate::validator::FailFast;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
@@ -16,7 +16,7 @@ use identity_document::document::CoreDocument;
 use identity_verification::jws::EdDSAJwsVerifier;
 use identity_verification::jws::JwsVerifier;
 
-use crate::validator::vc_jwt_validation::DecodedJwtCredential;
+use crate::validator::DecodedJwtCredential;
 
 use super::DomainLinkageValidationResult;
 
@@ -237,7 +237,7 @@ mod tests {
   use crate::domain_linkage::DomainLinkageValidationResult;
   use crate::domain_linkage::DomainLinkageValidator;
   use crate::validator::test_utils::generate_jwk_document_with_keys;
-  use crate::validator::vc_jwt_validation::CredentialValidationOptions;
+  use crate::validator::CredentialValidationOptions;
 
   use crypto::signatures::ed25519::SecretKey;
   use identity_core::common::Duration;

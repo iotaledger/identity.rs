@@ -12,9 +12,9 @@
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
-use identity_iota::credential::vc_jwt_validation::CredentialValidationOptions;
-use identity_iota::credential::vc_jwt_validation::CredentialValidator;
-use identity_iota::credential::vc_jwt_validation::DecodedJwtCredential;
+use identity_iota::credential::CredentialValidationOptions;
+use identity_iota::credential::CredentialValidator;
+use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::Jwt;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;

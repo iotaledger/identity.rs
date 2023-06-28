@@ -10,7 +10,6 @@ use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::JwtPresentation;
 use identity_iota::credential::JwtPresentationOptions;
-use identity_iota::credential::Presentation;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DIDUrl;
@@ -49,7 +48,6 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
 use crate::credential::WasmJwtPresentation;
-use crate::credential::WasmPresentation;
 use crate::crypto::WasmProofOptions;
 use crate::did::CoreDocumentLock;
 use crate::did::PromiseJws;
@@ -374,30 +372,6 @@ impl WasmIotaDocument {
       .sign_data(&mut data, &private_key, &method_query, options)
       .wasm_result()?;
     Ok(WasmCredential::from(data))
-  }
-
-  /// Creates a signature for the given `Presentation` with the specified DID Document
-  /// Verification Method.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signPresentation)]
-  pub fn sign_presentation(
-    &self,
-    presentation: &WasmPresentation,
-    privateKey: Vec<u8>,
-    methodQuery: &UDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<WasmPresentation> {
-    let mut data: Presentation = presentation.0.clone();
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
-
-    self
-      .0
-      .blocking_read()
-      .sign_data(&mut data, &private_key, &method_query, options)
-      .wasm_result()?;
-    Ok(WasmPresentation::from(data))
   }
 
   /// Creates a signature for the given `data` with the specified DID Document

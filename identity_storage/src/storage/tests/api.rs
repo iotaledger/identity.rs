@@ -5,7 +5,7 @@ use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
-use identity_credential::validator::vc_jwt_validation::CredentialValidationOptions;
+use identity_credential::validator::CredentialValidationOptions;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
@@ -189,7 +189,7 @@ async fn signing_credential() {
     .await
     .unwrap();
   // Verify the credential
-  let validator = identity_credential::validator::vc_jwt_validation::CredentialValidator::new();
+  let validator = identity_credential::validator::CredentialValidator::new();
   assert!(validator
     .validate::<_, Object>(
       &jws,

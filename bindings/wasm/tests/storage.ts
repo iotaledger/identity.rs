@@ -32,9 +32,11 @@ describe("#JwkStorageDocument", function() {
     it("storage getters should work", async () => {
         const keystore = new JwkMemStore();
         // Put some data in the keystore
-        let genOutput = await keystore.generate(JwkMemStore.ed25519KeyType(), JwsAlgorithm.EdDSA);
+        let genOutput = await keystore.generate(
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+        );
         const keyId = genOutput.keyId();
-        const jwk = genOutput.jwk();
         assert.ok(genOutput.jwk());
         assert.ok(keyId);
 
@@ -56,7 +58,10 @@ describe("#JwkStorageDocument", function() {
 
         const retrievedKeyStore = storage.keyStorage();
         assert.deepStrictEqual(retrievedKeyStore instanceof JwkMemStore, true);
-        assert.deepStrictEqual(await retrievedKeyStore.exists(retrievedKeyId), true);
+        assert.deepStrictEqual(
+            await retrievedKeyStore.exists(retrievedKeyId),
+            true,
+        );
     });
 
     it("The JwkStorageDocument extension should work: CoreDocument", async () => {
@@ -81,7 +86,12 @@ describe("#JwkStorageDocument", function() {
 
         // Check that signing works
         let testString = "test";
-        const jws = await doc.createJws(storage, fragment, testString, new JwsSignatureOptions());
+        const jws = await doc.createJws(
+            storage,
+            fragment,
+            testString,
+            new JwsSignatureOptions(),
+        );
 
         // Verify the signature and obtain a decoded token.
         const token = doc.verifyJws(jws, new JwsVerificationOptions());
@@ -89,8 +99,15 @@ describe("#JwkStorageDocument", function() {
 
         // Check that we can also verify it using a custom verifier
         let customVerifier = new CustomVerifier();
-        const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
-        assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
+        const tokenFromCustomVerification = doc.verifyJws(
+            jws,
+            new JwsVerificationOptions(),
+            customVerifier,
+        );
+        assert.deepStrictEqual(
+            token.toJSON(),
+            tokenFromCustomVerification.toJSON(),
+        );
         // Check that customVerifer.verify was indeed called
         assert.deepStrictEqual(customVerifier.verifications(), 1);
 
@@ -112,30 +129,51 @@ describe("#JwkStorageDocument", function() {
 
         const credential = new Credential(credentialFields);
         // Create the JWT
-        const credentialJwt = await doc.createCredentialJwt(storage, fragment, credential, new JwsSignatureOptions());
+        const credentialJwt = await doc.createCredentialJwt(
+            storage,
+            fragment,
+            credential,
+            new JwsSignatureOptions(),
+        );
 
         // Check that the credentialJwt can be decoded and verified
         let credentialValidator = new JwtCredentialValidator();
         const credentialRetrieved = credentialValidator
-            .validate(credentialJwt, doc, JwtCredentialValidationOptions.default(), FailFast.FirstError)
+            .validate(
+                credentialJwt,
+                doc,
+                JwtCredentialValidationOptions.default(),
+                FailFast.FirstError,
+            )
             .credential();
         assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
 
         // Also check using our custom verifier
         let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
         const credentialRetrievedCustom = credentialValidatorCustom
-            .validate(credentialJwt, doc, JwtCredentialValidationOptions.default(), FailFast.AllErrors)
+            .validate(
+                credentialJwt,
+                doc,
+                JwtCredentialValidationOptions.default(),
+                FailFast.AllErrors,
+            )
             .credential();
         // Check that customVerifer.verify was indeed called
         assert.deepStrictEqual(customVerifier.verifications(), 2);
-        assert.deepStrictEqual(credentialRetrievedCustom.toJSON(), credential.toJSON());
+        assert.deepStrictEqual(
+            credentialRetrievedCustom.toJSON(),
+            credential.toJSON(),
+        );
 
         // Delete the method
         const methodId = (method as VerificationMethod).id();
         await doc.purgeMethod(storage, methodId); // Check that the method can no longer be resolved.
         assert.deepStrictEqual(doc.resolveMethod(fragment), undefined);
         // The storage should now be empty
-        assert.deepStrictEqual((storage.keyIdStorage() as KeyIdMemStore).count(), 0);
+        assert.deepStrictEqual(
+            (storage.keyIdStorage() as KeyIdMemStore).count(),
+            0,
+        );
         assert.deepStrictEqual((storage.keyStorage() as JwkMemStore).count(), 0);
     });
 
@@ -159,7 +197,12 @@ describe("#JwkStorageDocument", function() {
 
         // Check that signing works.
         let testString = "test";
-        const jws = await doc.createJwt(storage, fragment, testString, new JwsSignatureOptions());
+        const jws = await doc.createJwt(
+            storage,
+            fragment,
+            testString,
+            new JwsSignatureOptions(),
+        );
 
         // Verify the signature and obtain a decoded token.
         const token = doc.verifyJws(jws, new JwsVerificationOptions());
@@ -167,8 +210,15 @@ describe("#JwkStorageDocument", function() {
 
         // Check that we can also verify it using a custom verifier
         let customVerifier = new CustomVerifier();
-        const tokenFromCustomVerification = doc.verifyJws(jws, new JwsVerificationOptions(), customVerifier);
-        assert.deepStrictEqual(token.toJSON(), tokenFromCustomVerification.toJSON());
+        const tokenFromCustomVerification = doc.verifyJws(
+            jws,
+            new JwsVerificationOptions(),
+            customVerifier,
+        );
+        assert.deepStrictEqual(
+            token.toJSON(),
+            tokenFromCustomVerification.toJSON(),
+        );
         assert.deepStrictEqual(customVerifier.verifications(), 1);
 
         // Check that issuing a credential as a JWT works
@@ -235,9 +285,14 @@ describe("#JwkStorageDocument", function() {
             new JwsSignatureOptions(),
         );
 
+        console.log(credentialJwt.toString());
+
         const presentation = new JwtPresentation({
             holder: holderDoc.id(),
-            verifiableCredential: [credentialJwt.toString(), credentialJwt.toString()],
+            verifiableCredential: [
+                credentialJwt.toString(),
+                credentialJwt.toString(),
+            ],
         });
 
         const expirationDate = Timestamp.nowUTC().checkedAdd(Duration.days(2));
@@ -263,9 +318,18 @@ describe("#JwkStorageDocument", function() {
             FailFast.FirstError,
         );
 
-        assert.deepStrictEqual(decoded.credentials()[0].credential().toJSON(), credential.toJSON());
-        assert.equal(decoded.expirationDate()!.toString(), expirationDate!.toString());
-        assert.deepStrictEqual(decoded.presentation().toJSON(), presentation.toJSON());
+        assert.deepStrictEqual(
+            decoded.credentials()[0].credential().toJSON(),
+            credential.toJSON(),
+        );
+        assert.equal(
+            decoded.expirationDate()!.toString(),
+            expirationDate!.toString(),
+        );
+        assert.deepStrictEqual(
+            decoded.presentation().toJSON(),
+            presentation.toJSON(),
+        );
         assert.equal(decoded.audience(), audience);
 
         // check issuance date validation.
@@ -273,28 +337,52 @@ describe("#JwkStorageDocument", function() {
             latestIssuanceDate: Timestamp.nowUTC().checkedSub(Duration.days(1)),
         });
         assert.throws(() => {
-            validator.validate(presentationJwt, holderDoc, [issuerDoc], options, FailFast.FirstError);
+            validator.validate(
+                presentationJwt,
+                holderDoc,
+                [issuerDoc],
+                options,
+                FailFast.FirstError,
+            );
         });
 
         // Check expiration date validation.
         options = new JwtPresentationValidationOptions({
             earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(1)),
         });
-        validator.validate(presentationJwt, holderDoc, [issuerDoc], options, FailFast.FirstError);
+        validator.validate(
+            presentationJwt,
+            holderDoc,
+            [issuerDoc],
+            options,
+            FailFast.FirstError,
+        );
 
         options = new JwtPresentationValidationOptions({
             earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(3)),
         });
         assert.throws(() => {
-            validator.validate(presentationJwt, holderDoc, [issuerDoc], options, FailFast.FirstError);
+            validator.validate(
+                presentationJwt,
+                holderDoc,
+                [issuerDoc],
+                options,
+                FailFast.FirstError,
+            );
         });
 
         // Check `extractDids`.
         let presentationDids = JwtPresentationValidator.extractDids(presentationJwt);
         assert.equal(presentationDids.holder.toString(), holderDoc.id().toString());
         assert.equal(presentationDids.issuers.length, 2);
-        assert.equal(presentationDids.issuers[0].toString(), issuerDoc.id().toString());
-        assert.equal(presentationDids.issuers[1].toString(), issuerDoc.id().toString());
+        assert.equal(
+            presentationDids.issuers[0].toString(),
+            issuerDoc.id().toString(),
+        );
+        assert.equal(
+            presentationDids.issuers[1].toString(),
+            issuerDoc.id().toString(),
+        );
     });
 
     class CustomVerifier implements IJwsVerifier {
@@ -308,7 +396,12 @@ describe("#JwkStorageDocument", function() {
             return this._verifications;
         }
 
-        public verify(alg: JwsAlgorithm, signingInput: Uint8Array, decodedSignature: Uint8Array, publicKey: Jwk): void {
+        public verify(
+            alg: JwsAlgorithm,
+            signingInput: Uint8Array,
+            decodedSignature: Uint8Array,
+            publicKey: Jwk,
+        ): void {
             verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
             this._verifications += 1;
             return;

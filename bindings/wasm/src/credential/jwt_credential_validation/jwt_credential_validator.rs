@@ -3,7 +3,7 @@
 
 use identity_iota::core::Object;
 use identity_iota::core::Url;
-use identity_iota::credential::vc_jwt_validation::CredentialValidator as JwtCredentialValidator;
+use identity_iota::credential::CredentialValidator as JwtCredentialValidator;
 use identity_iota::credential::StatusCheck;
 use identity_iota::did::CoreDID;
 
@@ -11,7 +11,7 @@ use super::options::WasmJwtCredentialValidationOptions;
 use crate::common::ImportedDocumentLock;
 use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
-use crate::credential::validation_options::WasmStatusCheck;
+use crate::credential::options::WasmStatusCheck;
 use crate::credential::WasmCredential;
 use crate::credential::WasmDecodedJwtCredential;
 use crate::credential::WasmFailFast;

@@ -148,7 +148,7 @@ struct ICredentialHelper {
   /// Human-readable evidence used to support the claims within the `Credential`.
   #[typescript(type = "Evidence | Array<Evidence>")]
   evidence: Option<OneOrMany<Evidence>>,
-  /// Indicates that the `Credential` must only be contained within a {@link Presentation} with a proof issued from the
+  /// Indicates that the `Credential` must only be contained within a `Presentation` with a proof issued from the
   /// `Credential` subject.
   #[typescript(name = "nonTransferable", type = "boolean")]
   non_transferable: Option<bool>,
