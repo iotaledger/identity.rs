@@ -982,6 +982,7 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_did::DID;
+  use identity_verification::MethodType;
 
   use crate::service::ServiceBuilder;
   use identity_verification::MethodBuilder;
@@ -997,8 +998,7 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      // TODO: Update.
-      // .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
@@ -1360,8 +1360,7 @@ mod tests {
 
     // inserting a method with the same identifier as an existing service should fail
     let method: VerificationMethod = MethodBuilder::default()
-      // TODO: Update?
-      // .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyBase58(
         "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
       ))
