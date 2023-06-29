@@ -4,12 +4,10 @@
 use super::WasmMethodData;
 use super::WasmMethodType;
 use crate::common::MapStringAny;
-use crate::crypto::WasmKeyType;
 use crate::did::WasmCoreDID;
 use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity_iota::crypto::PublicKey;
 use identity_iota::did::CoreDID;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
@@ -23,21 +21,6 @@ pub struct WasmVerificationMethod(pub(crate) VerificationMethod);
 
 #[wasm_bindgen(js_class = VerificationMethod)]
 impl WasmVerificationMethod {
-  /// Creates a new `VerificationMethod` from the given `did` and public key.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(constructor)]
-  pub fn new(
-    did: &IToCoreDID,
-    keyType: WasmKeyType,
-    publicKey: Vec<u8>,
-    fragment: String,
-  ) -> Result<WasmVerificationMethod> {
-    let public_key: PublicKey = PublicKey::from(publicKey);
-    VerificationMethod::new(CoreDID::from(did), keyType.into(), &public_key, &fragment)
-      .map(Self)
-      .wasm_result()
-  }
-
   /// Creates a new `VerificationMethod` from the given `did` and `Jwk`. If `fragment` is not given
   /// the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
   ///
