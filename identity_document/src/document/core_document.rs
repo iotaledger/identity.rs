@@ -22,7 +22,6 @@ use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::GetSignature;
 use identity_core::crypto::JcsEd25519;
-use identity_core::crypto::PrivateKey;
 use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Verifier;
@@ -34,7 +33,6 @@ use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
-use crate::verifiable::DocumentSigner;
 use crate::verifiable::JwsVerificationOptions;
 use crate::verifiable::VerifierOptions;
 use identity_did::CoreDID;
@@ -1012,18 +1010,6 @@ impl TryFrom<CoreDocumentData> for CoreDocument {
       Ok(_) => Ok(Self { data: value }),
       Err(err) => Err(err),
     }
-  }
-}
-
-// =============================================================================
-// Signature Extensions
-// =============================================================================
-
-impl CoreDocument {
-  /// Creates a new [`DocumentSigner`] that can be used to create digital
-  /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_> {
-    DocumentSigner::new(self, private)
   }
 }
 

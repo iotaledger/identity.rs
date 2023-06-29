@@ -21,13 +21,9 @@ use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::GetSignature;
-use identity_core::crypto::PrivateKey;
-use identity_core::crypto::ProofOptions;
-use identity_core::crypto::SetSignature;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
-use identity_document::verifiable::DocumentSigner;
 use identity_document::verifiable::VerifierOptions;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
@@ -309,41 +305,6 @@ impl IotaDocument {
   // Signatures
   // ===========================================================================
 
-  /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
-  /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_> {
-    self.document.signer(private_key)
-  }
-
-  /// Signs the provided `data` with the verification method specified by `method_query`.
-  /// See [`IotaDocument::signer`] for creating signatures with a builder pattern.
-  ///
-  /// NOTE: does not validate whether `private_key` corresponds to the verification method.
-  /// See [`IotaDocument::verify_data`].
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the signature operation fails.
-  pub fn sign_data<'query, 'this: 'query, X, Q>(
-    &'this self,
-    data: &mut X,
-    private_key: &'this PrivateKey,
-    method_query: Q,
-    options: ProofOptions,
-  ) -> Result<()>
-  where
-    X: Serialize + SetSignature + TryMethod,
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self
-      .signer(private_key)
-      .method(method_query)
-      .options(options)
-      .sign(data)
-      .map_err(|err| Error::SigningError(err.into()))
-  }
-
   /// Verifies the signature of the provided `data` was created using a verification method
   /// in this DID Document.
   ///
@@ -571,7 +532,6 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_did::DID;
-  use identity_document::verifiable::VerifiableProperties;
   use identity_verification::MethodData;
   use identity_verification::MethodType;
   use iota_sdk::types::block::protocol::ProtocolParameters;
@@ -659,75 +619,6 @@ mod tests {
     assert_eq!(methods.next(), Some(&expected[2]));
     assert_eq!(methods.next(), Some(&expected[3]));
     assert_eq!(methods.next(), None);
-  }
-
-  #[test]
-  fn test_verify_data_with_scope() {
-    fn generate_data() -> VerifiableProperties {
-      use identity_core::json;
-      let mut properties: VerifiableProperties = VerifiableProperties::default();
-      properties.properties.insert("int_key".to_owned(), json!(1));
-      properties.properties.insert("str".to_owned(), json!("some value"));
-      properties
-        .properties
-        .insert("object".to_owned(), json!({ "inner": 42 }));
-      properties
-    }
-
-    let mut document: IotaDocument = IotaDocument::new_with_id(valid_did());
-
-    // Try sign using each type of verification relationship.
-    for scope in [
-      MethodScope::assertion_method(),
-      MethodScope::authentication(),
-      MethodScope::capability_delegation(),
-      MethodScope::capability_invocation(),
-      MethodScope::key_agreement(),
-      MethodScope::VerificationMethod,
-    ] {
-      // Add a new method.
-      let key_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-      let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
-      let method_new: VerificationMethod = VerificationMethod::new(
-        document.id().clone(),
-        key_new.type_(),
-        key_new.public(),
-        method_fragment.as_str(),
-      )
-      .unwrap();
-      document.insert_method(method_new, scope).unwrap();
-
-      // Sign and verify data.
-      let mut data = generate_data();
-      document
-        .sign_data(
-          &mut data,
-          key_new.private(),
-          method_fragment.as_str(),
-          ProofOptions::default(),
-        )
-        .unwrap();
-      // Signature should still be valid for every scope.
-      assert!(document.verify_data(&data, &VerifierOptions::default()).is_ok());
-
-      // Ensure only the correct scope is valid.
-      for scope_check in [
-        MethodScope::assertion_method(),
-        MethodScope::authentication(),
-        MethodScope::capability_delegation(),
-        MethodScope::capability_invocation(),
-        MethodScope::key_agreement(),
-        MethodScope::VerificationMethod,
-      ] {
-        let result = document.verify_data(&data, &VerifierOptions::new().method_scope(scope_check));
-        // Any other scope should fail validation.
-        if scope_check == scope {
-          assert!(result.is_ok());
-        } else {
-          assert!(result.is_err());
-        }
-      }
-    }
   }
 
   #[test]
