@@ -13,10 +13,6 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::GetSignature;
-use identity_core::crypto::GetSignatureMut;
-use identity_core::crypto::Proof;
-use identity_core::crypto::SetSignature;
 use identity_verification::MethodUriType;
 use identity_verification::TryMethod;
 
@@ -84,7 +80,7 @@ pub struct Credential<T = Object> {
   pub properties: T,
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Proof>,
+  pub proof: Option<Object>,
 }
 
 impl<T> Credential<T> {
@@ -173,12 +169,12 @@ impl<T> Credential<T> {
   }
 
   /// Returns a reference to the proof.
-  pub fn proof(&self) -> Option<&Proof> {
+  pub fn proof(&self) -> Option<&Object> {
     self.proof.as_ref()
   }
 
   /// Returns a mutable reference to the proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Proof> {
+  pub fn proof_mut(&mut self) -> Option<&mut Object> {
     self.proof.as_mut()
   }
 }
@@ -189,24 +185,6 @@ where
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
-  }
-}
-
-impl<T> GetSignature for Credential<T> {
-  fn signature(&self) -> Option<&Proof> {
-    self.proof.as_ref()
-  }
-}
-
-impl<T> GetSignatureMut for Credential<T> {
-  fn signature_mut(&mut self) -> Option<&mut Proof> {
-    self.proof.as_mut()
-  }
-}
-
-impl<T> SetSignature for Credential<T> {
-  fn set_signature(&mut self, value: Proof) {
-    self.proof.replace(value);
   }
 }
 

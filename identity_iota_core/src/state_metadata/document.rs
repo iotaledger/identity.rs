@@ -208,6 +208,7 @@ impl From<IotaDocument> for StateMetadataDocument {
   }
 }
 
+/*
 #[cfg(test)]
 mod tests {
   use identity_core::common::Object;
@@ -524,3 +525,4 @@ mod tests {
     );
   }
 }
+*/

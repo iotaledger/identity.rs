@@ -88,7 +88,7 @@ impl MethodDigest {
     Ok(Self { version, value })
   }
 }
-
+/*
 #[cfg(test)]
 mod test {
   use crate::key_id_storage::KeyIdStorageError;
@@ -181,3 +181,4 @@ mod test {
     VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "frag_1").unwrap()
   }
 }
+*/

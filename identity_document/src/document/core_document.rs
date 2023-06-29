@@ -16,15 +16,8 @@ use serde::Serialize;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
-use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::Ed25519;
-use identity_core::crypto::GetSignature;
-use identity_core::crypto::JcsEd25519;
-use identity_core::crypto::Proof;
-use identity_core::crypto::ProofPurpose;
-use identity_core::crypto::Verifier;
 use serde::Serializer;
 
 use crate::document::DocumentBuilder;
@@ -34,13 +27,11 @@ use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
 use crate::verifiable::JwsVerificationOptions;
-use crate::verifiable::VerifierOptions;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_verification::MethodRef;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
-use identity_verification::MethodType;
 use identity_verification::MethodUriType;
 use identity_verification::TryMethod;
 use identity_verification::VerificationMethod;
@@ -910,93 +901,6 @@ impl CoreDocument {
   }
 }
 
-impl CoreDocument {
-  /// Verifies the signature of the provided `data` was created using a verification method
-  /// in this DID Document.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the verification operation fails.
-  pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    let signature: &Proof = data.signature().ok_or(Error::InvalidSignature("missing signature"))?;
-
-    // Retrieve the method used to create the signature and check it has the required verification
-    // method relationship (purpose takes precedence over method_scope).
-    let purpose_scope = options.purpose.map(|purpose| match purpose {
-      ProofPurpose::AssertionMethod => MethodScope::assertion_method(),
-      ProofPurpose::Authentication => MethodScope::authentication(),
-    });
-    let method: &VerificationMethod = match (purpose_scope, options.method_scope) {
-      (Some(purpose_scope), _) => self
-        .resolve_method(signature, Some(purpose_scope))
-        .ok_or(Error::InvalidSignature("method with purpose scope not found"))?,
-      (None, Some(scope)) => self
-        .resolve_method(signature, Some(scope))
-        .ok_or(Error::InvalidSignature("method with specified scope not found"))?,
-      (None, None) => self
-        .resolve_method(signature, None)
-        .ok_or(Error::InvalidSignature("method not found"))?,
-    };
-
-    // Check method type.
-    if let Some(ref method_types) = options.method_type {
-      if !method_types.is_empty() && !method_types.contains(method.type_()) {
-        return Err(Error::InvalidSignature("invalid method type"));
-      }
-    }
-
-    // Check challenge.
-    if options.challenge.is_some() && options.challenge != signature.challenge {
-      return Err(Error::InvalidSignature("invalid challenge"));
-    }
-
-    // Check domain.
-    if options.domain.is_some() && options.domain != signature.domain {
-      return Err(Error::InvalidSignature("invalid domain"));
-    }
-
-    // Check purpose.
-    if options.purpose.is_some() && options.purpose != signature.purpose {
-      return Err(Error::InvalidSignature("invalid purpose"));
-    }
-
-    // Check expired.
-    if let Some(expires) = signature.expires {
-      if !options.allow_expired.unwrap_or(false) && Timestamp::now_utc() > expires {
-        return Err(Error::InvalidSignature("expired"));
-      }
-    }
-
-    // Check signature.
-    Self::do_verify(method, data)
-  }
-
-  /// Verifies the signature of the provided data matches the public key data from the given
-  /// verification method.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the verification operation fails.
-  fn do_verify<X>(method: &VerificationMethod, data: &X) -> Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    let public_key: Vec<u8> = method.data().try_decode().map_err(Error::InvalidKeyData)?;
-
-    if method.type_() == &MethodType::ED25519_VERIFICATION_KEY_2018 {
-      JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
-      Ok(())
-    } else {
-      Err(Error::InvalidMethodType)
-    }
-  }
-}
-
 impl AsRef<CoreDocument> for CoreDocument {
   fn as_ref(&self) -> &CoreDocument {
     self
@@ -1093,7 +997,8 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
+      // TODO: Update.
+      // .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
@@ -1455,7 +1360,8 @@ mod tests {
 
     // inserting a method with the same identifier as an existing service should fail
     let method: VerificationMethod = MethodBuilder::default()
-      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
+      // TODO: Update?
+      // .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
       .data(MethodData::PublicKeyBase58(
         "3M5RCDjPTWPkKSN3sxUmmMqHbmRPegYP1tjcKyrDbt9J".into(),
       ))

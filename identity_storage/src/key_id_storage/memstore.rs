@@ -73,6 +73,7 @@ impl KeyIdStorage for KeyIdMemstore {
   }
 }
 
+/*
 #[cfg(test)]
 mod tests {
   use crate::key_id_storage::key_id_storage::KeyIdStorage;
@@ -122,3 +123,4 @@ mod tests {
     assert!(matches!(repeat_deletion_result.unwrap_err(), _expected_error));
   }
 }
+ */

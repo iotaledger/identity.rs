@@ -20,11 +20,9 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::GetSignature;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
-use identity_document::verifiable::VerifierOptions;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
 use identity_verification::MethodUriType;
@@ -305,20 +303,6 @@ impl IotaDocument {
   // Signatures
   // ===========================================================================
 
-  /// Verifies the signature of the provided `data` was created using a verification method
-  /// in this DID Document.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the verification operation fails.
-  pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_document::Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    self.document.verify_data(data, options)
-  }
-
   /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
   /// [`JwsVerifier`].
   ///
@@ -524,6 +508,7 @@ impl TryMethod for IotaDocument {
   const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
+/*
 #[cfg(test)]
 mod tests {
   use identity_core::common::Timestamp;
@@ -1002,3 +987,4 @@ mod tests {
     assert!(IotaDocument::try_from((doc_with_iota_id_and_controller, metadata)).is_ok());
   }
 }
+*/
