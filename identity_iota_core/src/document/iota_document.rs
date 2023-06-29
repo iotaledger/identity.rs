@@ -508,17 +508,12 @@ impl TryMethod for IotaDocument {
   const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
-/*
 #[cfg(test)]
 mod tests {
   use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
   use identity_did::DID;
-  use identity_verification::MethodData;
-  use identity_verification::MethodType;
   use iota_sdk::types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;
@@ -531,20 +526,11 @@ mod tests {
   use crate::block::output::UnlockCondition;
 
   use super::*;
+  use crate::test_utils::generate_method;
 
   fn valid_did() -> IotaDID {
     "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       .parse()
-      .unwrap()
-  }
-
-  fn generate_method(controller: &IotaDID, fragment: &str) -> VerificationMethod {
-    VerificationMethod::builder(Default::default())
-      .id(controller.to_url().join(fragment).unwrap())
-      .controller(controller.clone().into())
-      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
-      .data(MethodData::new_multibase(fragment.as_bytes()))
-      .build()
       .unwrap()
   }
 
@@ -591,18 +577,13 @@ mod tests {
   fn test_methods() {
     let controller: IotaDID = valid_did();
     let document: IotaDocument = generate_document(&controller);
-    let expected: Vec<VerificationMethod> = vec![
-      generate_method(&controller, "#key-1"),
-      generate_method(&controller, "#key-2"),
-      generate_method(&controller, "#key-3"),
-      generate_method(&controller, "#auth-key"),
-    ];
+    let expected: [&'static str; 4] = ["key-1", "key-2", "key-3", "auth-key"];
 
     let mut methods = document.methods(None).into_iter();
-    assert_eq!(methods.next(), Some(&expected[0]));
-    assert_eq!(methods.next(), Some(&expected[1]));
-    assert_eq!(methods.next(), Some(&expected[2]));
-    assert_eq!(methods.next(), Some(&expected[3]));
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[0]);
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[1]);
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[2]);
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[3]);
     assert_eq!(methods.next(), None);
   }
 
@@ -673,23 +654,14 @@ mod tests {
   #[test]
   fn test_document_equality() {
     let mut original_doc: IotaDocument = IotaDocument::new_with_id(valid_did());
-    let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method1: VerificationMethod = VerificationMethod::new(
-      original_doc.id().to_owned(),
-      keypair1.type_(),
-      keypair1.public(),
-      "test-0",
-    )
-    .unwrap();
+    let method1: VerificationMethod = generate_method(original_doc.id(), "test-0");
     original_doc
       .insert_method(method1, MethodScope::capability_invocation())
       .unwrap();
 
     // Update the key material of the existing verification method #test-0.
     let mut doc1 = original_doc.clone();
-    let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method2: VerificationMethod =
-      VerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
+    let method2: VerificationMethod = generate_method(original_doc.id(), "test-0");
 
     doc1
       .remove_method(&doc1.id().to_url().join("#test-0").unwrap())
@@ -703,9 +675,7 @@ mod tests {
     assert_ne!(original_doc, doc1);
 
     let mut doc2 = doc1.clone();
-    let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method3: VerificationMethod =
-      VerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
+    let method3: VerificationMethod = generate_method(original_doc.id(), "test-0");
 
     let insertion_result = doc2.insert_method(method3, MethodScope::capability_invocation());
 
@@ -987,4 +957,3 @@ mod tests {
     assert!(IotaDocument::try_from((doc_with_iota_id_and_controller, metadata)).is_ok());
   }
 }
-*/

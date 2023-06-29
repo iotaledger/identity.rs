@@ -73,7 +73,6 @@ impl KeyIdStorage for KeyIdMemstore {
   }
 }
 
-/*
 #[cfg(test)]
 mod tests {
   use crate::key_id_storage::key_id_storage::KeyIdStorage;
@@ -82,20 +81,11 @@ mod tests {
   use crate::key_id_storage::KeyIdStorageError;
   use crate::key_id_storage::KeyIdStorageErrorKind;
   use crate::key_storage::KeyId;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
-  use identity_core::utils::BaseEncoding;
-  use identity_did::CoreDID;
   use identity_verification::VerificationMethod;
 
   #[tokio::test]
   pub async fn memstore_operations() {
-    // Create a Verification Method.
-    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let did: CoreDID =
-      CoreDID::parse(format!("did:example:{}", BaseEncoding::encode_base58(keypair.public()))).unwrap();
-    let verification_method: VerificationMethod =
-      VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "frag_1").unwrap();
+    let verification_method: VerificationMethod = crate::storage::tests::test_utils::create_verification_method();
 
     // Test insertion.
     let memstore: KeyIdMemstore = KeyIdMemstore::new();
@@ -123,4 +113,3 @@ mod tests {
     assert!(matches!(repeat_deletion_result.unwrap_err(), _expected_error));
   }
 }
- */
