@@ -89,7 +89,6 @@ tokio = { version = "1", features = ["full"] }
 _main._<span></span>_rs_
 
 ```rust,no_run
-use examples::MemStorage;
 use identity_iota::core::ToJson;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
@@ -98,6 +97,7 @@ use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
+use identity_iota::storage::Storage;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
@@ -149,7 +149,7 @@ async fn main() -> anyhow::Result<()> {
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
   // Insert a new Ed25519 verification method in the DID document.
-  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let storage: Storage<JwkMemStore, KeyIdMemstore> = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
   document
     .generate_method(
       &storage,
