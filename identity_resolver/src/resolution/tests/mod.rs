@@ -2,5 +2,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::resolver::*;
-mod resolution_errors;
+mod resolution;
 mod send_sync;

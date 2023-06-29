@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
+use futures::stream::FuturesUnordered;
+use futures::TryStreamExt;
 use identity_did::DID;
+use std::collections::HashSet;
 
 use identity_document::document::CoreDocument;
 use std::collections::HashMap;
@@ -94,6 +97,28 @@ where
       .map_err(Error::new)?;
 
     delegate.apply(did.as_str()).await
+  }
+
+  /// Concurrently fetches the DID Documents of the multiple given DIDs.
+  ///
+  /// # Errors
+  /// * If the resolver has not been configured to handle the method of any of the given DIDs.
+  /// * If the resolution process of any DID fails.
+  ///
+  /// ## Note
+  /// * If `dids` contains duplicates, these will be resolved only once.
+  pub async fn resolve_multiple<D: DID>(&self, dids: &[D]) -> Result<HashMap<D, DOC>> {
+    let futures = FuturesUnordered::new();
+    // Create set to remove duplicates to avoid unnecessary resolution.
+    let dids_set: HashSet<D> = dids.iter().cloned().collect();
+    for did in dids_set {
+      futures.push(async move {
+        let doc = self.resolve(&did).await;
+        doc.map(|doc| (did, doc))
+      });
+    }
+    let documents: HashMap<D, DOC> = futures.try_collect().await?;
+    Ok(documents)
   }
 }
 
