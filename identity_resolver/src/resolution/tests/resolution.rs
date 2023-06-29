@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -27,7 +28,7 @@ fn core_document(did: CoreDID) -> CoreDocument {
 }
 
 /// A custom document type
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FooDocument(CoreDocument);
 impl AsRef<CoreDocument> for FooDocument {
   fn as_ref(&self) -> &CoreDocument {
@@ -66,6 +67,15 @@ async fn missing_handler_errors() {
 
   assert!(resolver_foo.resolve(&good_did).await.is_ok());
   assert!(resolver_core.resolve(&good_did).await.is_ok());
+
+  let both_dids = [good_did, bad_did];
+  let err: ResolverError = resolver_foo.resolve_multiple(&both_dids).await.unwrap_err();
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  assert_eq!(method_name, method);
+
+  let err: ResolverError = resolver_core.resolve_multiple(&both_dids).await.unwrap_err();
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  assert_eq!(method_name, method);
 }
 
 // ===========================================================================
@@ -217,4 +227,47 @@ async fn handler_failure() {
 
   assert!(resolver_foo.resolve(&good_did).await.is_ok());
   assert!(resolver_core.resolve(&good_did).await.is_ok());
+}
+
+// ===========================================================================
+// Resolve Multiple.
+// ===========================================================================
+
+#[tokio::test]
+async fn resolve_multiple() {
+  let method_name: String = "foo".to_owned();
+
+  let did_1: CoreDID = CoreDID::parse(format!("did:{method_name}:1111")).unwrap();
+  let did_2: CoreDID = CoreDID::parse(format!("did:{method_name}:2222")).unwrap();
+  let did_3: CoreDID = CoreDID::parse(format!("did:{method_name}:3333")).unwrap();
+  let did_1_clone: CoreDID = CoreDID::parse(format!("did:{method_name}:1111")).unwrap();
+
+  let mut resolver: Resolver<CoreDocument> = Resolver::new();
+  resolver.attach_handler(method_name, mock_handler);
+
+  // Resolve with duplicate `did_3`.
+  let resolved_dids: HashMap<CoreDID, CoreDocument> = resolver
+    .resolve_multiple(&[
+      did_1.clone(),
+      did_2.clone(),
+      did_3.clone(),
+      did_1_clone.clone(),
+      did_3.clone(),
+    ])
+    .await
+    .unwrap();
+
+  assert_eq!(resolved_dids.len(), 3);
+  assert_eq!(resolved_dids.get(&did_1).unwrap().id(), &did_1);
+  assert_eq!(resolved_dids.get(&did_2).unwrap().id(), &did_2);
+  assert_eq!(resolved_dids.get(&did_3).unwrap().id(), &did_3);
+  assert_eq!(resolved_dids.get(&did_1_clone).unwrap().id(), &did_1_clone);
+
+  let dids: &[CoreDID] = &[];
+  let resolved_dids: HashMap<CoreDID, CoreDocument> = resolver.resolve_multiple(dids).await.unwrap();
+  assert_eq!(resolved_dids.len(), 0);
+
+  let resolved_dids: HashMap<CoreDID, CoreDocument> = resolver.resolve_multiple(&[did_1.clone()]).await.unwrap();
+  assert_eq!(resolved_dids.len(), 1);
+  assert_eq!(resolved_dids.get(&did_1).unwrap().id(), &did_1);
 }

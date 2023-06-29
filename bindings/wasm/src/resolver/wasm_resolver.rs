@@ -9,11 +9,14 @@ use identity_iota::did::DID;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::resolver::SingleThreadedResolver;
+use js_sys::Array;
 use js_sys::Function;
+use js_sys::JsString;
 use js_sys::Map;
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
+use crate::common::ArrayString;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::iota::IotaDocumentLock;
@@ -22,6 +25,7 @@ use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
 use crate::resolver::constructor_input::MapResolutionHandler;
 use crate::resolver::constructor_input::ResolverConfig;
+use crate::resolver::PromiseArrayIToCoreDocument;
 
 use super::type_definitions::PromiseIToCoreDocument;
 use crate::error::Result;
@@ -174,5 +178,56 @@ impl WasmResolver {
     });
 
     Ok(promise.unchecked_into::<PromiseIToCoreDocument>())
+  }
+
+  /// Concurrently fetches the DID Documents of the multiple given DIDs.
+  ///
+  /// # Errors
+  /// * If the resolver has not been configured to handle the method of any of the given DIDs.
+  /// * If the resolution process of any DID fails.
+  ///
+  /// ## Note
+  /// * The order of the documents in the returned array matches that in `dids`.
+  /// * If `dids` contains duplicates, these will be resolved only once and the resolved document
+  /// is copied into the returned array to match the order of `dids`.
+  #[wasm_bindgen(js_name=resolveMultiple)]
+  pub fn resolve_multiple(&self, dids: ArrayString) -> Result<PromiseArrayIToCoreDocument> {
+    let dids: Vec<String> = dids
+      .dyn_into::<Array>()?
+      .iter()
+      .map(|item| item.dyn_into::<JsString>().map(String::from))
+      .collect::<Result<Vec<String>>>()?;
+    let core_dids: Vec<CoreDID> = dids
+      .iter()
+      .map(CoreDID::parse)
+      .collect::<std::result::Result<Vec<CoreDID>, identity_iota::did::Error>>()
+      .wasm_result()?;
+
+    let resolver: Rc<JsDocumentResolver> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      resolver
+        .resolve_multiple(&core_dids)
+        .await
+        .map_err(WasmError::from)
+        .map_err(JsValue::from)
+        .map(|documents| {
+          let mut ordered_documents: Vec<JsValue> = Vec::with_capacity(core_dids.len());
+          // Reconstructs the order of `dids`.
+          for did in core_dids {
+            let doc: JsValue = documents.get(&did).cloned().unwrap();
+            ordered_documents.push(doc);
+          }
+          ordered_documents
+        })
+        .map(|documents| {
+          documents
+            .into_iter()
+            .map(JsValue::from)
+            .collect::<js_sys::Array>()
+            .unchecked_into::<JsValue>()
+        })
+    });
+
+    Ok(promise.unchecked_into::<PromiseArrayIToCoreDocument>())
   }
 }
