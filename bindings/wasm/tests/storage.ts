@@ -124,7 +124,7 @@ describe("#JwkStorageDocument", function() {
                 },
             },
             issuer: doc.id(),
-            issuanceDate: "2010-01-01T00:00:00Z",
+            issuanceDate: Timestamp.parse("2010-01-01T00:00:00Z"),
         };
 
         const credential = new Credential(credentialFields);

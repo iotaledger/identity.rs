@@ -1,6 +1,7 @@
 export {};
 
 const assert = require("assert");
+import type { CoreDID as CoreDIDType } from "../node";
 const {
     CoreDID,
     CoreDocument,
@@ -18,11 +19,12 @@ const KEY_BYTES = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
     25, 26, 27, 28, 29, 30, 31, 32]);
 
 class MockDID {
-    inner: CoreDID;
-    constructor(inner: CoreDID) {
+    inner: CoreDIDType;
+
+    constructor(inner: CoreDIDType) {
         this.inner = inner;
     }
-    toCoreDid(): CoreDID {
+    toCoreDid(): CoreDIDType {
         return this.inner;
     }
 }

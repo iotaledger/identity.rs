@@ -79,7 +79,7 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/client-wasm": "^1.0.0-alpha.1",
+    "@iota/client-wasm": "=1.0.0-alpha.1",
     "@iota/iota.js": "^2.0.0-rc.2"
   },
   "engines": {
