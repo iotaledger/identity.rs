@@ -5,8 +5,6 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
@@ -101,8 +99,8 @@ pub async fn get_address_with_funds(
 /// Initializes the [`SecretManager`] with a new mnemonic, if necessary,
 /// and generates an address from the given [`SecretManager`].
 pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<Address> {
-  let keypair = KeyPair::new(KeyType::Ed25519)?;
-  let mnemonic = bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
+  let random: [u8; 32] = rand::random();
+  let mnemonic = bip39::wordlist::encode(random.as_ref(), &bip39::wordlist::ENGLISH)
     .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
 
   if let SecretManager::Stronghold(ref mut stronghold) = secret_manager {

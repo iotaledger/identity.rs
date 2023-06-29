@@ -27,7 +27,6 @@ pub use identity_diff as diff;
 
 pub mod common;
 pub mod convert;
-pub mod crypto;
 pub mod error;
 pub mod utils;
 
