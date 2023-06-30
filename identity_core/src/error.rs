@@ -12,9 +12,6 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 pub enum Error {
-  /// Caused when a cryptographic operation fails.
-  #[error("crypto error")]
-  Crypto(#[source] crypto::Error),
   /// Caused by a failure to encode Rust types as JSON.
   #[error("failed to encode JSON")]
   EncodeJSON(#[source] serde_json::Error),
@@ -57,10 +54,4 @@ pub enum Error {
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("signature not found")]
   MissingSignature,
-}
-
-impl From<crypto::Error> for Error {
-  fn from(other: crypto::Error) -> Self {
-    Self::Crypto(other)
-  }
 }
