@@ -577,7 +577,6 @@ impl CoreDocument {
   ///
   /// If the method is referenced in the given scope, but the document does not contain the referenced verification
   /// method, then the reference will persist in the document (i.e. it is not removed).
-  // TODO: Is this the behaviour we want?
   pub fn detach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
@@ -940,7 +939,6 @@ impl CoreDocument {
   /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
   //
   // NOTE: This is tested in `identity_storage` and `identity_credential`.
-  // TODO: Consider including some unit tests for this method in this crate.
   pub fn verify_jws<'jws, T: JwsVerifier>(
     &self,
     jws: &'jws str,
