@@ -23,8 +23,8 @@ identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verifi
 
 [dev-dependencies]
 anyhow = "1.0.64"
-tokio = { version = "1.17.0", features = ["full"] }
 rand = "0.8.5"
+tokio = { version = "1.17.0", features = ["full"] }
 
 [dev-dependencies.iota-sdk]
 git = "https://github.com/iotaledger/iota-sdk"
