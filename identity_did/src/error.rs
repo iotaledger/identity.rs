@@ -7,17 +7,17 @@ use core::fmt::Debug;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 pub enum Error {
-  #[error("Invalid Fragment")]
+  #[error("invalid fragment")]
   InvalidFragment,
-  #[error("Invalid Method Id")]
+  #[error("invalid method id")]
   InvalidMethodId,
-  #[error("Invalid Method Name")]
+  #[error("invalid method name")]
   InvalidMethodName,
-  #[error("Invalid Path")]
+  #[error("invalid path")]
   InvalidPath,
-  #[error("Invalid Query")]
+  #[error("invalid query")]
   InvalidQuery,
-  #[error("Invalid Scheme")]
+  #[error("invalid scheme")]
   InvalidScheme,
   #[error("{0}")]
   Other(&'static str),
