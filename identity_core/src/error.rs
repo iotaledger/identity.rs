@@ -19,7 +19,7 @@ pub enum Error {
   #[error("failed to decode JSON")]
   DecodeJSON(#[source] serde_json::Error),
   /// Caused by a failure to decode base-encoded data.
-  #[error("Failed to decode {0:?} data")]
+  #[error("failed to decode {0:?} data")]
   DecodeBase(Base, #[source] multibase::Error),
   /// Caused by a failure to decode multibase-encoded data.
   #[error("failed to decode multibase data")]
