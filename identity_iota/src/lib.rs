@@ -30,12 +30,6 @@ pub mod core {
   pub use identity_core::json;
 }
 
-pub mod crypto {
-  //! Cryptographic Utilities
-
-  pub use identity_core::crypto::*;
-}
-
 pub mod credential {
   //! Verifiable Credentials
   //!
@@ -104,9 +98,6 @@ pub mod prelude {
   #[cfg(feature = "client")]
   #[cfg_attr(docsrs, doc(cfg(feature = "client")))]
   pub use identity_iota_core::IotaIdentityClientExt;
-
-  pub use identity_core::crypto::KeyPair;
-  pub use identity_core::crypto::KeyType;
 
   #[cfg(feature = "resolver")]
   #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]

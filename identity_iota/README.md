@@ -90,20 +90,22 @@ _main._<span></span>_rs_
 
 ```rust,no_run
 use identity_iota::core::ToJson;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
-use identity_iota::verification::MethodScope;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::verification::VerificationMethod;
 use identity_iota::iota::NetworkName;
-use iota_sdk::types::block::address::Address;
-use iota_sdk::types::block::output::AliasOutput;
-use iota_sdk::crypto::keys::bip39;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
+use identity_iota::storage::Storage;
+use identity_iota::verification::jws::JwsAlgorithm;
+use identity_iota::verification::MethodScope;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::crypto::keys::bip39;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::output::AliasOutput;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
@@ -113,17 +115,20 @@ static API_ENDPOINT: &str = "http://127.0.0.1:14265";
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish().await?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new Stronghold.
-  let mut stronghold = StrongholdSecretManager::builder()
+  let stronghold = StrongholdSecretManager::builder()
     .password("secure_password")
     .build("./example-strong.hodl")?;
 
   // Generate a mnemonic and store it in the Stronghold.
-  let keypair = KeyPair::new(KeyType::Ed25519)?;
-  let mnemonic = bip39::wordlist::encode(keypair.private().as_ref(), &bip39::wordlist::ENGLISH)
-    .map_err(|err| anyhow::anyhow!("{err:?}"))?;
+  let random: [u8; 32] = rand::random();
+  let mnemonic =
+    bip39::wordlist::encode(random.as_ref(), &bip39::wordlist::ENGLISH).map_err(|err| anyhow::anyhow!("{err:?}"))?;
   stronghold.store_mnemonic(mnemonic).await?;
 
   // Create a new secret manager backed by the Stronghold.
@@ -144,10 +149,16 @@ async fn main() -> anyhow::Result<()> {
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
   // Insert a new Ed25519 verification method in the DID document.
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: VerificationMethod =
-    VerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
-  document.insert_method(method, MethodScope::VerificationMethod)?;
+  let storage: Storage<JwkMemStore, KeyIdMemstore> = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  document
+    .generate_method(
+      &storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await?;
 
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.

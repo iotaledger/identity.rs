@@ -13,8 +13,6 @@ use serde::Serialize;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::KeyType;
-use identity_core::crypto::PublicKey;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -183,32 +181,6 @@ impl VerificationMethod {
   // ===========================================================================
   // Constructors
   // ===========================================================================
-
-  /// Creates a new [`VerificationMethod`] from the given `did` and public key.
-  pub fn new<D: DID>(did: D, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
-    let method_fragment: String = if !fragment.starts_with('#') {
-      format!("#{fragment}")
-    } else {
-      fragment.to_owned()
-    };
-    let id: DIDUrl = did
-      .to_url()
-      .join(method_fragment)
-      .map_err(Error::DIDUrlConstructionError)?;
-
-    let mut builder: MethodBuilder = MethodBuilder::default().id(id).controller(did.into());
-    match key_type {
-      KeyType::Ed25519 => {
-        builder = builder.type_(MethodType::ED25519_VERIFICATION_KEY_2018);
-        builder = builder.data(MethodData::new_multibase(public_key));
-      }
-      KeyType::X25519 => {
-        builder = builder.type_(MethodType::X25519_KEY_AGREEMENT_KEY_2019);
-        builder = builder.data(MethodData::new_multibase(public_key));
-      }
-    }
-    builder.build()
-  }
 
   /// Creates a new [`VerificationMethod`] from the given `did` and [`Jwk`]. If `fragment` is not given
   /// the `kid` value of the given `key` will be used, if present, otherwise an error is returned.

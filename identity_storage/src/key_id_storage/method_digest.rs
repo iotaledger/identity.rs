@@ -94,11 +94,7 @@ mod test {
   use crate::key_id_storage::KeyIdStorageError;
   use crate::key_id_storage::KeyIdStorageErrorKind;
   use identity_core::convert::FromJson;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
   use identity_core::json;
-  use identity_core::utils::BaseEncoding;
-  use identity_did::CoreDID;
   use identity_verification::VerificationMethod;
   use serde_json::Value;
 
@@ -130,7 +126,7 @@ mod test {
 
   #[test]
   pub fn pack() {
-    let verification_method: VerificationMethod = create_verification_method();
+    let verification_method: VerificationMethod = crate::storage::tests::test_utils::create_verification_method();
     let method_digest: MethodDigest = MethodDigest::new(&verification_method).unwrap();
     let packed: Vec<u8> = method_digest.pack();
     let method_digest_unpacked: MethodDigest = MethodDigest::unpack(packed).unwrap();
@@ -172,12 +168,5 @@ mod test {
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
     let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);
     assert!(matches!(method_digest_unpacked, _expected_error));
-  }
-
-  fn create_verification_method() -> VerificationMethod {
-    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let did: CoreDID =
-      CoreDID::parse(format!("did:example:{}", BaseEncoding::encode_base58(keypair.public()))).unwrap();
-    VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "frag_1").unwrap()
   }
 }

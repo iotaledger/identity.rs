@@ -22,7 +22,7 @@ mod macros;
 
 pub mod common;
 pub mod credential;
-pub mod crypto;
+// pub mod crypto;
 pub mod did;
 pub mod error;
 pub mod iota;

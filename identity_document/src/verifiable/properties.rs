@@ -5,10 +5,6 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 
 use identity_core::common::Object;
-use identity_core::crypto::GetSignature;
-use identity_core::crypto::GetSignatureMut;
-use identity_core::crypto::Proof;
-use identity_core::crypto::SetSignature;
 
 use identity_verification::MethodUriType;
 use identity_verification::TryMethod;

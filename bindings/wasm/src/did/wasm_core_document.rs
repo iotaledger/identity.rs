@@ -20,10 +20,8 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
 use crate::credential::WasmJwtPresentation;
-use crate::crypto::WasmProofOptions;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
-use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::jose::WasmDecodedJws;
@@ -47,11 +45,8 @@ use identity_iota::credential::Credential;
 use identity_iota::credential::JwtPresentation;
 use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::RevocationDocumentExt;
-use identity_iota::crypto::PrivateKey;
-use identity_iota::crypto::ProofOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DIDUrl;
-use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
 use identity_iota::storage::key_storage::KeyType;
@@ -475,13 +470,6 @@ impl WasmCoreDocument {
   // Verification
   // ===========================================================================
 
-  /// Verifies the authenticity of `data` using the target verification method.
-  #[wasm_bindgen(js_name = verifyData)]
-  pub fn verify_data(&self, data: &JsValue, options: &WasmVerifierOptions) -> Result<bool> {
-    let data: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
-  }
-
   /// Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
   ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
   /// verifying EdDSA signatures.
@@ -545,36 +533,6 @@ impl WasmCoreDocument {
       .blocking_write()
       .unrevoke_credentials(&query, indices.as_slice())
       .wasm_result()
-  }
-
-  // ===========================================================================
-  // Signatures
-  // ===========================================================================
-
-  /// Creates a signature for the given `data` with the specified DID Document
-  /// Verification Method.
-  ///
-  /// NOTE: use `signSelf` or `signDocument` for DID Documents.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(
-    &self,
-    data: &JsValue,
-    privateKey: Vec<u8>,
-    methodQuery: &UDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<JsValue> {
-    let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
-
-    let guard = self.0.blocking_read();
-    let signer = guard.signer(&private_key);
-    let signer = signer.options(options);
-    let signer = signer.method(&method_query);
-    signer.sign(&mut data).wasm_result()?;
-    JsValue::from_serde(&data).wasm_result()
   }
 
   // ===========================================================================

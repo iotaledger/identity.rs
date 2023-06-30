@@ -1,5 +1,5 @@
 const assert = require("assert");
-import { Ed25519, EdCurve, IJwkParams, Jwk, JwkMemStore, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
+import { EdCurve, IJwkParams, Jwk, JwkMemStore, JwkOperation, JwkType, JwkUse, JwsAlgorithm } from "../node";
 
 describe("#JwkMemstore", function() {
     it("should work", async () => {
@@ -12,8 +12,9 @@ describe("#JwkMemstore", function() {
         assert.ok(genOutput.jwk());
         assert.ok(keyId);
 
-        const signature = await memstore.sign(keyId, testData, jwk.toPublic());
-        assert.deepStrictEqual(signature.length, Ed25519.SIGNATURE_LENGTH());
+        const signature = await memstore.sign(keyId, testData, jwk.toPublic()!);
+        // Ed25519 Signature Length = 64.
+        assert.deepStrictEqual(signature.length, 64);
 
         assert.ok(await memstore.exists(keyId));
         assert.ok(!await memstore.exists("non-existent-key-id"));

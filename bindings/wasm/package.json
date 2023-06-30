@@ -74,11 +74,12 @@
   },
   "dependencies": {
     "@iota/types": "^1.0.0-beta.11",
+    "@noble/ed25519": "^1.7.3",
     "@types/node-fetch": "^2.6.2",
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/client-wasm": "^1.0.0-alpha.1",
+    "@iota/client-wasm": "=1.0.0-alpha.1",
     "@iota/iota.js": "^2.0.0-rc.2"
   },
   "engines": {

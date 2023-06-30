@@ -24,7 +24,7 @@ describe("Jwk", function() {
             assert.ok(!jwk.isPublic());
             assert.ok(jwk.isPrivate());
 
-            const publicJwk = jwk.toPublic();
+            const publicJwk = jwk.toPublic()!;
             assert.ok(publicJwk.isPublic());
             assert.ok(!publicJwk.isPrivate());
         });

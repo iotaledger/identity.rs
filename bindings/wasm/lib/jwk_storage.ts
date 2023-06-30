@@ -1,7 +1,11 @@
 import { RandomHelper } from "@iota/util.js";
-import { decodeB64, Ed25519, encodeB64, Jwk, JwkGenOutput, JwkStorage, KeyPair, KeyType } from "~identity_wasm";
+import * as ed from "@noble/ed25519";
+import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage } from "~identity_wasm";
 
 import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
+
+type Ed25519PrivateKey = Uint8Array;
+type Ed25519PublicKey = Uint8Array;
 
 export class JwkMemStore implements JwkStorage {
     /** The map from key identifiers to Jwks. */
@@ -26,9 +30,8 @@ export class JwkMemStore implements JwkStorage {
         }
 
         const keyId = randomKeyId();
-        const keyPair = new KeyPair(KeyType.Ed25519);
-
-        const jwk = encodeJwk(keyPair, algorithm);
+        const privKey: Ed25519PrivateKey = ed.utils.randomPrivateKey();
+        const jwk = await encodeJwk(privKey, algorithm);
 
         this._keys.set(keyId, jwk);
 
@@ -52,8 +55,8 @@ export class JwkMemStore implements JwkStorage {
         const jwk = this._keys.get(keyId);
 
         if (jwk) {
-            const keyPair = decodeJwk(jwk);
-            return Ed25519.sign(data, keyPair.private());
+            const [privateKey, _] = decodeJwk(jwk);
+            return ed.sign(data, privateKey);
         } else {
             throw new Error(`key with id ${keyId} not found`);
         }
@@ -89,9 +92,10 @@ export class JwkMemStore implements JwkStorage {
 }
 
 // Encodes a Ed25519 keypair into a Jwk.
-function encodeJwk(keyPair: KeyPair, alg: JwsAlgorithm): Jwk {
-    let x = encodeB64(keyPair.public());
-    let d = encodeB64(keyPair.private());
+async function encodeJwk(privateKey: Ed25519PrivateKey, alg: JwsAlgorithm): Promise<Jwk> {
+    const publicKey = await ed.getPublicKey(privateKey);
+    let x = encodeB64(publicKey);
+    let d = encodeB64(privateKey);
 
     return new Jwk({
         "kty": JwkType.Okp,
@@ -102,7 +106,7 @@ function encodeJwk(keyPair: KeyPair, alg: JwsAlgorithm): Jwk {
     });
 }
 
-function decodeJwk(jwk: Jwk): KeyPair {
+function decodeJwk(jwk: Jwk): [Ed25519PrivateKey, Ed25519PublicKey] {
     if (jwk.alg() !== JwsAlgorithm.EdDSA) {
         throw new Error("unsupported `alg`");
     }
@@ -113,9 +117,9 @@ function decodeJwk(jwk: Jwk): KeyPair {
 
         if (d) {
             let textEncoder = new TextEncoder();
-            const secret = decodeB64(textEncoder.encode(d));
-            const pub = decodeB64(textEncoder.encode(paramsOkp.x));
-            return KeyPair.fromKeys(KeyType.Ed25519, pub, secret);
+            const privateKey = decodeB64(textEncoder.encode(d));
+            const publicKey = decodeB64(textEncoder.encode(paramsOkp.x));
+            return [privateKey, publicKey];
         } else {
             throw new Error("missing private key component");
         }

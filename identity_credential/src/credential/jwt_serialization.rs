@@ -11,7 +11,6 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::Proof;
 use serde::de::DeserializeOwned;
 
 use crate::credential::Credential;
@@ -334,7 +333,7 @@ where
   properties: Cow<'credential, T>,
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
-  proof: Option<Cow<'credential, Proof>>,
+  proof: Option<Cow<'credential, Object>>,
 }
 
 #[cfg(test)]

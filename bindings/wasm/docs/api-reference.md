@@ -41,8 +41,6 @@ See: <a href="https://identity.foundation/.well-known/resources/did-configuratio
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
-<dt><a href="#Ed25519">Ed25519</a></dt>
-<dd></dd>
 <dt><a href="#IotaDID">IotaDID</a></dt>
 <dd><p>A DID conforming to the IOTA DID method specification.</p>
 </dd>
@@ -87,8 +85,6 @@ and resolution of DID documents in Alias Outputs.</p>
 </dd>
 <dt><a href="#JwtPresentationValidator">JwtPresentationValidator</a></dt>
 <dd></dd>
-<dt><a href="#KeyPair">KeyPair</a></dt>
-<dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
 <dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
@@ -105,18 +101,6 @@ use the methods <code>pack</code> and <code>unpack</code> instead.</p>
 </dd>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
-</dd>
-<dt><a href="#Proof">Proof</a></dt>
-<dd><p>A digital signature.</p>
-<p>For field definitions see: <a href="https://w3c-ccg.github.io/security-vocab/">https://w3c-ccg.github.io/security-vocab/</a></p>
-</dd>
-<dt><a href="#ProofOptions">ProofOptions</a></dt>
-<dd><p>Holds additional options for creating signatures.
-See <code>IProofOptions</code>.</p>
-</dd>
-<dt><a href="#ProofPurpose">ProofPurpose</a></dt>
-<dd><p>Associates a purpose with a <a href="#Proof">Proof</a>.</p>
-<p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
 </dd>
 <dt><a href="#Resolver">Resolver</a></dt>
 <dd><p>Convenience type for resolving DID documents from different DID methods.</p>
@@ -140,19 +124,12 @@ working with storage backed DID documents.</p>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd><p>A DID Document Verification Method.</p>
 </dd>
-<dt><a href="#VerifierOptions">VerifierOptions</a></dt>
-<dd><p>Holds additional proof verification options.
-See <code>IVerifierOptions</code>.</p>
-</dd>
-<dt><a href="#X25519">X25519</a></dt>
-<dd><p>An implementation of <code>X25519</code> Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.</p>
-</dd>
 </dl>
 
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -196,15 +173,16 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#KeyType">KeyType</a></dt>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
 <dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
 Only the <code>EdCurve::Ed25519</code> variant is supported for now.</p>
@@ -219,9 +197,6 @@ prior to calling the function.</p>
 </dd>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -443,11 +418,9 @@ A method-agnostic DID Document.
         * [.resolveMethod(query, scope)](#CoreDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
         * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
-        * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [._strongCountInternal()](#CoreDocument+_strongCountInternal) ⇒ <code>number</code>
@@ -717,18 +690,6 @@ Detaches the given relationship from the given method, if the method exists.
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
-<a name="CoreDocument+verifyData"></a>
-
-### coreDocument.verifyData(data, options) ⇒ <code>boolean</code>
-Verifies the authenticity of `data` using the target verification method.
-
-**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
 <a name="CoreDocument+verifyJws"></a>
 
 ### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
@@ -775,23 +736,6 @@ unrevoke all specified `indices`.
 | --- | --- |
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
-
-<a name="CoreDocument+signData"></a>
-
-### coreDocument.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
-Creates a signature for the given `data` with the specified DID Document
-Verification Method.
-
-NOTE: use `signSelf` or `signDocument` for DID Documents.
-
-**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="CoreDocument+clone"></a>
 
@@ -941,7 +885,7 @@ Deserializes an instance from a plain JS representation.
         * [.termsOfUse()](#Credential+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
         * [.evidence()](#Credential+evidence) ⇒ <code>Array.&lt;Evidence&gt;</code>
         * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
-        * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.proof()](#Credential+proof) ⇒ <code>any</code>
         * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
@@ -1042,7 +986,7 @@ with a proof issued from the `Credential` subject.
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+proof"></a>
 
-### credential.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+### credential.proof() ⇒ <code>any</code>
 Returns a copy of the proof used to verify the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
@@ -1614,70 +1558,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Ed25519"></a>
-
-## Ed25519
-**Kind**: global class  
-
-* [Ed25519](#Ed25519)
-    * [.PRIVATE_KEY_LENGTH()](#Ed25519.PRIVATE_KEY_LENGTH) ⇒ <code>number</code>
-    * [.PUBLIC_KEY_LENGTH()](#Ed25519.PUBLIC_KEY_LENGTH) ⇒ <code>number</code>
-    * [.SIGNATURE_LENGTH()](#Ed25519.SIGNATURE_LENGTH) ⇒ <code>number</code>
-    * [.sign(message, privateKey)](#Ed25519.sign) ⇒ <code>Uint8Array</code>
-    * [.verify(message, signature, publicKey)](#Ed25519.verify)
-
-<a name="Ed25519.PRIVATE_KEY_LENGTH"></a>
-
-### Ed25519.PRIVATE\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an Ed25519 private key.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-<a name="Ed25519.PUBLIC_KEY_LENGTH"></a>
-
-### Ed25519.PUBLIC\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an Ed25519 public key.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-<a name="Ed25519.SIGNATURE_LENGTH"></a>
-
-### Ed25519.SIGNATURE\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an Ed25519 signature.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-<a name="Ed25519.sign"></a>
-
-### Ed25519.sign(message, privateKey) ⇒ <code>Uint8Array</code>
-Computes an EdDSA signature using an Ed25519 private key.
-
-NOTE: this differs from [Document.signData](#Document+signData) which uses JCS
-to canonicalize JSON messages.
-
-The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
-Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>Uint8Array</code> | 
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="Ed25519.verify"></a>
-
-### Ed25519.verify(message, signature, publicKey)
-Verifies an EdDSA signature against an Ed25519 public key.
-
-NOTE: this differs from [Document.verifyData](#Document+verifyData) which uses JCS
-to canonicalize JSON messages.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>Uint8Array</code> | 
-| signature | <code>Uint8Array</code> | 
-| publicKey | <code>Uint8Array</code> | 
-
 <a name="IotaDID"></a>
 
 ## IotaDID
@@ -1913,9 +1793,6 @@ Deserializes an instance from a JSON object.
         * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.signCredential(credential, privateKey, methodQuery, options)](#IotaDocument+signCredential) ⇒ [<code>Credential</code>](#Credential)
-        * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
-        * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
         * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
@@ -2134,50 +2011,6 @@ Detaches the given relationship from the given method, if the method exists.
 | --- | --- |
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
-
-<a name="IotaDocument+signCredential"></a>
-
-### iotaDocument.signCredential(credential, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
-Creates a signature for the given `Credential` with the specified DID Document
-Verification Method.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="IotaDocument+signData"></a>
-
-### iotaDocument.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
-Creates a signature for the given `data` with the specified DID Document
-Verification Method.
-
-NOTE: use `signSelf` or `signDocument` for DID Documents.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="IotaDocument+verifyData"></a>
-
-### iotaDocument.verifyData(data, options) ⇒ <code>boolean</code>
-Verifies the authenticity of `data` using the target verification method.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="IotaDocument+verifyJws"></a>
 
@@ -4058,104 +3891,6 @@ fails.
 | --- | --- |
 | presentation | [<code>Jwt</code>](#Jwt) | 
 
-<a name="KeyPair"></a>
-
-## KeyPair
-**Kind**: global class  
-
-* [KeyPair](#KeyPair)
-    * [new KeyPair(type_)](#new_KeyPair_new)
-    * _instance_
-        * [.type()](#KeyPair+type) ⇒ <code>number</code>
-        * [.public()](#KeyPair+public) ⇒ <code>Uint8Array</code>
-        * [.private()](#KeyPair+private) ⇒ <code>Uint8Array</code>
-        * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
-        * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
-    * _static_
-        * [.fromKeys(type_, public_key, private_key)](#KeyPair.fromKeys) ⇒ [<code>KeyPair</code>](#KeyPair)
-        * [.tryFromPrivateKeyBytes(keyType, privateKeyBytes)](#KeyPair.tryFromPrivateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
-        * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
-
-<a name="new_KeyPair_new"></a>
-
-### new KeyPair(type_)
-Generates a new `KeyPair` object.
-
-
-| Param | Type |
-| --- | --- |
-| type_ | <code>number</code> | 
-
-<a name="KeyPair+type"></a>
-
-### keyPair.type() ⇒ <code>number</code>
-Returns the `KeyType` of the `KeyPair` object.
-
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+public"></a>
-
-### keyPair.public() ⇒ <code>Uint8Array</code>
-Returns a copy of the public key as a `Uint8Array`.
-
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+private"></a>
-
-### keyPair.private() ⇒ <code>Uint8Array</code>
-Returns a copy of the private key as a `Uint8Array`.
-
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+toJSON"></a>
-
-### keyPair.toJSON() ⇒ <code>any</code>
-Serializes a `KeyPair` object as a JSON object.
-
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+clone"></a>
-
-### keyPair.clone() ⇒ [<code>KeyPair</code>](#KeyPair)
-Deep clones the object.
-
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair.fromKeys"></a>
-
-### KeyPair.fromKeys(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
-Parses a `KeyPair` object from the public/private keys.
-
-**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
-
-| Param | Type |
-| --- | --- |
-| type_ | <code>number</code> | 
-| public_key | <code>Uint8Array</code> | 
-| private_key | <code>Uint8Array</code> | 
-
-<a name="KeyPair.tryFromPrivateKeyBytes"></a>
-
-### KeyPair.tryFromPrivateKeyBytes(keyType, privateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
-Reconstructs a `KeyPair` from the bytes of a private key.
-
-The private key for `Ed25519` must be a 32-byte seed in compliance
-with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
-Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-
-**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
-
-| Param | Type |
-| --- | --- |
-| keyType | <code>number</code> | 
-| privateKeyBytes | <code>Uint8Array</code> | 
-
-<a name="KeyPair.fromJSON"></a>
-
-### KeyPair.fromJSON(json) ⇒ [<code>KeyPair</code>](#KeyPair)
-Deserializes a `KeyPair` object from a JSON object.
-
-**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="LinkedDomainService"></a>
 
 ## LinkedDomainService
@@ -4234,6 +3969,7 @@ Supported verification method data formats.
 * [MethodData](#MethodData)
     * _instance_
         * [.tryDecode()](#MethodData+tryDecode) ⇒ <code>Uint8Array</code>
+        * [.tryPublicKeyJwk()](#MethodData+tryPublicKeyJwk) ⇒ [<code>Jwk</code>](#Jwk)
         * [.toJSON()](#MethodData+toJSON) ⇒ <code>any</code>
         * [.clone()](#MethodData+clone) ⇒ [<code>MethodData</code>](#MethodData)
     * _static_
@@ -4252,6 +3988,12 @@ This is generally a public key identified by a `MethodData` value.
 ### Errors
 Decoding can fail if `MethodData` has invalid content or cannot be
 represented as a vector of bytes.
+
+**Kind**: instance method of [<code>MethodData</code>](#MethodData)  
+<a name="MethodData+tryPublicKeyJwk"></a>
+
+### methodData.tryPublicKeyJwk() ⇒ [<code>Jwk</code>](#Jwk)
+Returns the wrapped `Jwk` if the format is `PublicKeyJwk`.
 
 **Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+toJSON"></a>
@@ -4452,7 +4194,7 @@ Supported verification method types.
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.JwkMethodType()](#MethodType.JwkMethodType) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.JsonWebKey()](#MethodType.JsonWebKey) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
 <a name="MethodType+toString"></a>
@@ -4481,9 +4223,9 @@ Deep clones the object.
 
 ### MethodType.X25519KeyAgreementKey2019() ⇒ [<code>MethodType</code>](#MethodType)
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
-<a name="MethodType.JwkMethodType"></a>
+<a name="MethodType.JsonWebKey"></a>
 
-### MethodType.JwkMethodType() ⇒ [<code>MethodType</code>](#MethodType)
+### MethodType.JsonWebKey() ⇒ [<code>MethodType</code>](#MethodType)
 A verification method for use with JWT verification as prescribed by the `Jwk`
 in the `publicKeyJwk` entry.
 
@@ -4494,214 +4236,6 @@ in the `publicKeyJwk` entry.
 Deserializes an instance from a JSON object.
 
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="Proof"></a>
-
-## Proof
-A digital signature.
-
-For field definitions see: https://w3c-ccg.github.io/security-vocab/
-
-**Kind**: global class  
-
-* [Proof](#Proof)
-    * _instance_
-        * [.type()](#Proof+type) ⇒ <code>string</code>
-        * [.value()](#Proof+value) ⇒ <code>string</code>
-        * [.verificationMethod()](#Proof+verificationMethod) ⇒ <code>string</code>
-        * [.created()](#Proof+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-        * [.expires()](#Proof+expires) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-        * [.challenge()](#Proof+challenge) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.domain()](#Proof+domain) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.purpose()](#Proof+purpose) ⇒ [<code>ProofPurpose</code>](#ProofPurpose) \| <code>undefined</code>
-        * [.toJSON()](#Proof+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Proof+clone) ⇒ [<code>Proof</code>](#Proof)
-    * _static_
-        * [.fromJSON(json)](#Proof.fromJSON) ⇒ [<code>Proof</code>](#Proof)
-
-<a name="Proof+type"></a>
-
-### proof.type() ⇒ <code>string</code>
-Returns a copy of the proof type.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+value"></a>
-
-### proof.value() ⇒ <code>string</code>
-Returns a copy of the proof value string.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+verificationMethod"></a>
-
-### proof.verificationMethod() ⇒ <code>string</code>
-Returns a copy of the identifier of the DID method used to create this proof.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+created"></a>
-
-### proof.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-When the proof was generated.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+expires"></a>
-
-### proof.expires() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-When the proof expires.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+challenge"></a>
-
-### proof.challenge() ⇒ <code>string</code> \| <code>undefined</code>
-Challenge from a proof requester to mitigate replay attacks.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+domain"></a>
-
-### proof.domain() ⇒ <code>string</code> \| <code>undefined</code>
-Domain for which a proof is valid to mitigate replay attacks.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+purpose"></a>
-
-### proof.purpose() ⇒ [<code>ProofPurpose</code>](#ProofPurpose) \| <code>undefined</code>
-Purpose for which the proof was generated.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+toJSON"></a>
-
-### proof.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+clone"></a>
-
-### proof.clone() ⇒ [<code>Proof</code>](#Proof)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof.fromJSON"></a>
-
-### Proof.fromJSON(json) ⇒ [<code>Proof</code>](#Proof)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>Proof</code>](#Proof)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="ProofOptions"></a>
-
-## ProofOptions
-Holds additional options for creating signatures.
-See `IProofOptions`.
-
-**Kind**: global class  
-
-* [ProofOptions](#ProofOptions)
-    * [new ProofOptions(options)](#new_ProofOptions_new)
-    * _instance_
-        * [.toJSON()](#ProofOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#ProofOptions+clone) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-    * _static_
-        * [.default()](#ProofOptions.default) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-        * [.fromJSON(json)](#ProofOptions.fromJSON) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-
-<a name="new_ProofOptions_new"></a>
-
-### new ProofOptions(options)
-Creates a new `ProofOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>IProofOptions</code> | 
-
-<a name="ProofOptions+toJSON"></a>
-
-### proofOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>ProofOptions</code>](#ProofOptions)  
-<a name="ProofOptions+clone"></a>
-
-### proofOptions.clone() ⇒ [<code>ProofOptions</code>](#ProofOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>ProofOptions</code>](#ProofOptions)  
-<a name="ProofOptions.default"></a>
-
-### ProofOptions.default() ⇒ [<code>ProofOptions</code>](#ProofOptions)
-Creates a new `ProofOptions` with default options.
-
-**Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
-<a name="ProofOptions.fromJSON"></a>
-
-### ProofOptions.fromJSON(json) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="ProofPurpose"></a>
-
-## ProofPurpose
-Associates a purpose with a [Proof](#Proof).
-
-See https://w3c-ccg.github.io/security-vocab/#proofPurpose
-
-**Kind**: global class  
-
-* [ProofPurpose](#ProofPurpose)
-    * _instance_
-        * [.toJSON()](#ProofPurpose+toJSON) ⇒ <code>any</code>
-        * [.clone()](#ProofPurpose+clone) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-    * _static_
-        * [.assertionMethod()](#ProofPurpose.assertionMethod) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-        * [.authentication()](#ProofPurpose.authentication) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-        * [.fromJSON(json)](#ProofPurpose.fromJSON) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-
-<a name="ProofPurpose+toJSON"></a>
-
-### proofPurpose.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose+clone"></a>
-
-### proofPurpose.clone() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Deep clones the object.
-
-**Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose.assertionMethod"></a>
-
-### ProofPurpose.assertionMethod() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Purpose is to assert a claim.
-See https://www.w3.org/TR/did-core/#assertion
-
-**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose.authentication"></a>
-
-### ProofPurpose.authentication() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Purpose is to authenticate the signer.
-See https://www.w3.org/TR/did-core/#authentication
-
-**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose.fromJSON"></a>
-
-### ProofPurpose.fromJSON(json) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
 
 | Param | Type |
 | --- | --- |
@@ -5065,7 +4599,6 @@ A DID Document Verification Method.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(did, keyType, publicKey, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.setId(id)](#VerificationMethod+setId)
@@ -5082,19 +4615,6 @@ A DID Document Verification Method.
     * _static_
         * [.newFromJwk(did, key, fragment)](#VerificationMethod.newFromJwk) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-
-<a name="new_VerificationMethod_new"></a>
-
-### new VerificationMethod(did, keyType, publicKey, fragment)
-Creates a new `VerificationMethod` from the given `did` and public key.
-
-
-| Param | Type |
-| --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
-| keyType | <code>number</code> | 
-| publicKey | <code>Uint8Array</code> | 
-| fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
 
@@ -5231,132 +4751,9 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="VerifierOptions"></a>
+<a name="MethodRelationship"></a>
 
-## VerifierOptions
-Holds additional proof verification options.
-See `IVerifierOptions`.
-
-**Kind**: global class  
-
-* [VerifierOptions](#VerifierOptions)
-    * [new VerifierOptions(options)](#new_VerifierOptions_new)
-    * _instance_
-        * [.toJSON()](#VerifierOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#VerifierOptions+clone) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-    * _static_
-        * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-        * [.fromJSON(json)](#VerifierOptions.fromJSON) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-
-<a name="new_VerifierOptions_new"></a>
-
-### new VerifierOptions(options)
-Creates a new `VerifierOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>IVerifierOptions</code> | 
-
-<a name="VerifierOptions+toJSON"></a>
-
-### verifierOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="VerifierOptions+clone"></a>
-
-### verifierOptions.clone() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="VerifierOptions.default"></a>
-
-### VerifierOptions.default() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Creates a new `VerifierOptions` with default options.
-
-**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="VerifierOptions.fromJSON"></a>
-
-### VerifierOptions.fromJSON(json) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="X25519"></a>
-
-## X25519
-An implementation of `X25519` Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
-
-**Kind**: global class  
-
-* [X25519](#X25519)
-    * [.PRIVATE_KEY_LENGTH()](#X25519.PRIVATE_KEY_LENGTH) ⇒ <code>number</code>
-    * [.PUBLIC_KEY_LENGTH()](#X25519.PUBLIC_KEY_LENGTH) ⇒ <code>number</code>
-    * [.keyExchange(privateKey, publicKey)](#X25519.keyExchange) ⇒ <code>Uint8Array</code>
-    * [.Ed25519toX25519Private(privateKey)](#X25519.Ed25519toX25519Private) ⇒ <code>Uint8Array</code>
-    * [.Ed25519toX25519Public(publicKey)](#X25519.Ed25519toX25519Public) ⇒ <code>Uint8Array</code>
-
-<a name="X25519.PRIVATE_KEY_LENGTH"></a>
-
-### X25519.PRIVATE\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an X25519 private key.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-<a name="X25519.PUBLIC_KEY_LENGTH"></a>
-
-### X25519.PUBLIC\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an X25519 public key.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-<a name="X25519.keyExchange"></a>
-
-### X25519.keyExchange(privateKey, publicKey) ⇒ <code>Uint8Array</code>
-Performs Diffie-Hellman key exchange using the private key of the first party with the
-public key of the second party, resulting in a shared secret.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-| publicKey | <code>Uint8Array</code> | 
-
-<a name="X25519.Ed25519toX25519Private"></a>
-
-### X25519.Ed25519toX25519Private(privateKey) ⇒ <code>Uint8Array</code>
-Transforms an `Ed25519` private key to an `X25519` private key.
-
-This is possible because Ed25519 is birationally equivalent to Curve25519 used by X25519.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="X25519.Ed25519toX25519Public"></a>
-
-### X25519.Ed25519toX25519Public(publicKey) ⇒ <code>Uint8Array</code>
-Transforms an `Ed25519` public key to an `X25519` public key.
-
-This is possible because Ed25519 is birationally equivalent to Curve25519 used by X25519.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-
-| Param | Type |
-| --- | --- |
-| publicKey | <code>Uint8Array</code> | 
-
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
+## MethodRelationship
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -5436,14 +4833,16 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
+<a name="StateMetadataEncoding"></a>
 
-## MethodRelationship
+## StateMetadataEncoding
 **Kind**: global variable  
-<a name="KeyType"></a>
+<a name="start"></a>
 
-## KeyType
-**Kind**: global variable  
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
 <a name="verifyEdDSA"></a>
 
 ## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
@@ -5488,9 +4887,3 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  

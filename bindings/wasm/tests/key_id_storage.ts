@@ -1,5 +1,5 @@
 const assert = require("assert");
-import { CoreDID, KeyIdMemStore, KeyPair, KeyType, MethodDigest, VerificationMethod } from "../node";
+import { CoreDID, EdCurve, Jwk, JwkType, KeyIdMemStore, MethodDigest, VerificationMethod } from "../node";
 
 describe("Method digest", () => {
     it("should have consistent hashing", () => {
@@ -66,12 +66,11 @@ describe("Key Id Storage", () => {
 
 export function createVerificationMethod(): VerificationMethod {
     let id = CoreDID.parse("did:example:abc123");
-    let keypair = new KeyPair(KeyType.Ed25519);
-    let method = new VerificationMethod(
-        id,
-        keypair.type(),
-        keypair.public(),
-        "#key-1",
-    );
+    const jwk = new Jwk({
+        kty: JwkType.Okp,
+        crv: EdCurve.Ed25519,
+        x: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+    });
+    const method = VerificationMethod.newFromJwk(id, jwk, "#key-1");
     return method;
 }

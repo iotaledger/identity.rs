@@ -4,7 +4,7 @@ mod error;
 mod jwk_document_ext;
 mod signature_options;
 #[cfg(all(test, feature = "memstore"))]
-mod tests;
+pub(crate) mod tests;
 
 pub use error::*;
 pub use jwk_document_ext::*;
