@@ -25,7 +25,7 @@ pub struct Url(::url::Url);
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
-    ::url::Url::parse(input.as_ref()).map_err(Into::into).map(Self)
+    ::url::Url::parse(input.as_ref()).map_err(Error::InvalidUrl).map(Self)
   }
 
   /// Consumes the [`Url`] and returns the value as a `String`.
@@ -35,7 +35,7 @@ impl Url {
 
   /// Parses the given input string as a [`Url`], with `self` as the base Url.
   pub fn join(&self, input: impl AsRef<str>) -> Result<Self> {
-    self.0.join(input.as_ref()).map_err(Into::into).map(Self)
+    self.0.join(input.as_ref()).map_err(Error::InvalidUrl).map(Self)
   }
 }
 

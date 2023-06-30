@@ -23,13 +23,13 @@ pub enum Error {
   DecodeBase(Base, #[source] multibase::Error),
   /// Caused by a failure to decode multibase-encoded data.
   #[error("failed to decode multibase data")]
-  DecodeMultibase(#[from] multibase::Error),
+  DecodeMultibase(#[source] multibase::Error),
   /// Caused by attempting to parse an invalid `Url`.
   #[error("invalid url")]
-  InvalidUrl(#[from] url::ParseError),
+  InvalidUrl(#[source] url::ParseError),
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("invalid timestamp")]
-  InvalidTimestamp(#[from] time::error::Error),
+  InvalidTimestamp(#[source] time::error::Error),
   /// Caused by attempting to create an empty `OneOrSet` instance or remove all its elements.
   #[error("OneOrSet cannot be empty")]
   OneOrSetEmpty,
