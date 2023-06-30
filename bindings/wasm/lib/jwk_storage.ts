@@ -31,7 +31,7 @@ export class JwkMemStore implements JwkStorage {
 
         const keyId = randomKeyId();
         const privKey: Ed25519PrivateKey = ed.utils.randomPrivateKey();
-        const jwk = encodeJwk(privKey, algorithm);
+        const jwk = await encodeJwk(privKey, algorithm);
 
         this._keys.set(keyId, jwk);
 
@@ -92,8 +92,8 @@ export class JwkMemStore implements JwkStorage {
 }
 
 // Encodes a Ed25519 keypair into a Jwk.
-function encodeJwk(privateKey: Ed25519PrivateKey, alg: JwsAlgorithm): Jwk {
-    const publicKey = ed.getPublicKey(privateKey);
+async function encodeJwk(privateKey: Ed25519PrivateKey, alg: JwsAlgorithm): Promise<Jwk> {
+    const publicKey = await ed.getPublicKey(privateKey);
     let x = encodeB64(publicKey);
     let d = encodeB64(privateKey);
 

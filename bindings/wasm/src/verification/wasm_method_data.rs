@@ -56,6 +56,12 @@ impl WasmMethodData {
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     self.0.try_decode().wasm_result()
   }
+
+  /// Returns the wrapped `Jwk` if the format is `PublicKeyJwk`.
+  #[wasm_bindgen(js_name = tryPublicKeyJwk)]
+  pub fn try_public_key_jwk(&self) -> Result<WasmJwk> {
+    self.0.try_public_key_jwk().cloned().map(WasmJwk::from).wasm_result()
+  }
 }
 
 impl_wasm_json!(WasmMethodData, MethodData);

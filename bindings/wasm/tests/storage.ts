@@ -8,6 +8,7 @@ import {
     IJwsVerifier,
     IotaDocument,
     Jwk,
+    JwkMemStore,
     JwsAlgorithm,
     JwsSignatureOptions,
     JwsVerificationOptions,
@@ -18,6 +19,7 @@ import {
     JwtPresentationOptions,
     JwtPresentationValidationOptions,
     JwtPresentationValidator,
+    KeyIdMemStore,
     MethodDigest,
     MethodScope,
     Storage,
@@ -25,7 +27,6 @@ import {
     VerificationMethod,
     verifyEdDSA,
 } from "../node";
-import { JwkMemStore, KeyIdMemStore } from "../node";
 import { createVerificationMethod } from "./key_id_storage";
 
 describe("#JwkStorageDocument", function() {

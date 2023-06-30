@@ -22,8 +22,8 @@ impl WasmMethodType {
 
   /// A verification method for use with JWT verification as prescribed by the `Jwk`
   /// in the `publicKeyJwk` entry.
-  #[wasm_bindgen(js_name = JwkMethodType)]
-  pub fn jwk_method_type() -> WasmMethodType {
+  #[wasm_bindgen(js_name = JsonWebKey)]
+  pub fn json_web_key() -> WasmMethodType {
     WasmMethodType(MethodType::JSON_WEB_KEY)
   }
 
