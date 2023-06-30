@@ -30,12 +30,6 @@ pub trait ToJson: Serialize + Sized {
   fn to_json_pretty(&self) -> Result<String> {
     serde_json::to_string_pretty(self).map_err(Error::EncodeJSON)
   }
-
-  /// Serialize `self` as a JSON byte vector, normalized using JSON
-  /// Canonicalization Scheme (JCS).
-  fn to_jcs(&self) -> Result<Vec<u8>> {
-    serde_jcs::to_vec(self).map_err(Error::EncodeJSON)
-  }
 }
 
 impl<T> ToJson for T where T: Serialize {}
