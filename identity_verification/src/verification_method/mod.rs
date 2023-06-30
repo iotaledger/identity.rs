@@ -7,9 +7,6 @@
 //! `identity_iota_core_legacy` crate.
 
 mod builder;
-#[cfg(feature = "diff")]
-#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-pub mod diff;
 mod material;
 mod method;
 mod method_ref;

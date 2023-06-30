@@ -27,11 +27,6 @@ pub enum Error {
   /// Caused by a failure to decode multibase-encoded data.
   #[error("failed to decode multibase data")]
   DecodeMultibase(#[from] multibase::Error),
-  #[cfg(feature = "diff")]
-  /// Caused by attempting to perform an invalid `Diff` operation.
-  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-  #[error("invalid document diff")]
-  InvalidDiff(#[from] identity_diff::Error),
   /// Caused by attempting to parse an invalid `Url`.
   #[error("invalid url")]
   InvalidUrl(#[from] url::ParseError),
