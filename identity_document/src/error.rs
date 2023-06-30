@@ -9,6 +9,7 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  /// Caused by querying for a method that does not exist.
   #[error("verification method not found")]
   MethodNotFound,
   /// Caused by invalid or missing properties when constructing a [`CoreDocument`](crate::document::CoreDocument).
@@ -17,6 +18,7 @@ pub enum Error {
   /// Caused by invalid or missing properties when constructing a [`Service`](crate::service::Service).
   #[error("invalid service property: {0}")]
   InvalidService(&'static str),
+  /// Caused by an invalid or empty fragment.
   #[error("invalid or empty `id` fragment")]
   MissingIdFragment,
   /// Caused by attempting to add a verification method to a document, where a method or service with the same fragment
@@ -30,8 +32,10 @@ pub enum Error {
   /// service.
   #[error("unable to insert service: the id is already in use")]
   InvalidServiceInsertion,
-  #[error("invalid key data")]
-  InvalidKeyData(#[source] identity_verification::Error),
+  /// Caused by an attempt to use a method's key material in an incompatible context.
+  #[error("invalid key material")]
+  InvalidKeyMaterial(#[source] identity_verification::Error),
+  /// Caused by a failure to verify a JSON Web Signature.
   #[error("jws verification failed")]
   JwsVerificationError(#[source] identity_verification::jose::error::Error),
 }

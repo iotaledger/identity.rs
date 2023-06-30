@@ -967,7 +967,7 @@ impl CoreDocument {
       .ok_or(Error::MethodNotFound)?
       .data()
       .try_public_key_jwk()
-      .map_err(Error::InvalidKeyData)?;
+      .map_err(Error::InvalidKeyMaterial)?;
 
     validation_item
       .verify(signature_verifier, public_key)
