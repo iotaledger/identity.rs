@@ -13,8 +13,6 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_verification::MethodUriType;
-use identity_verification::TryMethod;
 
 use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
@@ -186,10 +184,6 @@ where
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
-}
-
-impl<T> TryMethod for Credential<T> {
-  const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
 #[cfg(test)]
