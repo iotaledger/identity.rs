@@ -4,7 +4,7 @@
 use crate::jose::jwk::Jwk;
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use identity_core::utils::BaseEncoding;
+use identity_core::convert::BaseEncoding;
 
 use crate::error::Error;
 use crate::error::Result;

@@ -3,7 +3,7 @@
 
 //! Errors that may occur in the identity core crate.
 
-use crate::utils::Base;
+use crate::convert::Base;
 
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;

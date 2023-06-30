@@ -24,7 +24,6 @@ pub mod core {
   pub use identity_core::common::*;
   pub use identity_core::convert::*;
   pub use identity_core::error::*;
-  pub use identity_core::utils::*;
 
   #[doc(inline)]
   pub use identity_core::json;
