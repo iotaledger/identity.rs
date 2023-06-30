@@ -3,12 +3,10 @@
 
 use core::fmt::Debug;
 
+/// Error type caused by invalid DID handling.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
-/// Error type caused by invalid DID handling.
 pub enum Error {
-  #[error("Invalid Authority")]
-  InvalidAuthority,
   #[error("Invalid Fragment")]
   InvalidFragment,
   #[error("Invalid Method Id")]
@@ -21,7 +19,6 @@ pub enum Error {
   InvalidQuery,
   #[error("Invalid Scheme")]
   InvalidScheme,
-
   #[error("{0}")]
   Other(&'static str),
 }
@@ -29,7 +26,6 @@ pub enum Error {
 impl From<did_url::Error> for Error {
   fn from(error: did_url::Error) -> Self {
     match error {
-      did_url::Error::InvalidAuthority => Self::InvalidAuthority,
       did_url::Error::InvalidFragment => Self::InvalidFragment,
       did_url::Error::InvalidMethodId => Self::InvalidMethodId,
       did_url::Error::InvalidMethodName => Self::InvalidMethodName,
