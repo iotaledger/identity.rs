@@ -36,22 +36,4 @@ pub enum Error {
   /// Caused by attempting to convert a collection with duplicate keys into an OrderedSet.
   #[error("duplicate key in OrderedSet")]
   OrderedSetDuplicate,
-  /// Caused by attempting to parse an invalid `ProofPurpose`.
-  #[error("invalid ProofPurpose")]
-  InvalidProofPurpose,
-  /// Raised by a validation attempt against an invalid DID proof.
-  #[error("invalid proof value: {0}")]
-  InvalidProofValue(&'static str),
-  /// Caused by attempting to parse an invalid cryptographic key.
-  #[error("invalid key format")]
-  InvalidKeyFormat,
-  /// Caused byt attempting to parse as invalid cryptographic key.
-  #[error("invalid key length; Received {0}, expected {1}")]
-  InvalidKeyLength(usize, usize),
-  /// Caused byt attempting to parse as invalid digital signature.
-  #[error("invalid signature length; Received {0}, expected {1}")]
-  InvalidSigLength(usize, usize),
-  /// Caused by a failed attempt at retrieving a digital signature.
-  #[error("signature not found")]
-  MissingSignature,
 }
