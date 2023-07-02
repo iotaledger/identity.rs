@@ -286,8 +286,6 @@ describe("#JwkStorageDocument", function() {
             new JwsSignatureOptions(),
         );
 
-        console.log(credentialJwt.toString());
-
         const presentation = new JwtPresentation({
             holder: holderDoc.id(),
             verifiableCredential: [
@@ -317,10 +315,6 @@ describe("#JwkStorageDocument", function() {
             JwtPresentationValidationOptions.default(),
         );
 
-        assert.deepStrictEqual(
-            decoded.credentials()[0].credential().toJSON(),
-            credential.toJSON(),
-        );
         assert.equal(
             decoded.expirationDate()!.toString(),
             expirationDate!.toString(),
@@ -336,52 +330,24 @@ describe("#JwkStorageDocument", function() {
             latestIssuanceDate: Timestamp.nowUTC().checkedSub(Duration.days(1)),
         });
         assert.throws(() => {
-            validator.validate(
-                presentationJwt,
-                holderDoc,
-                [issuerDoc],
-                options,
-                FailFast.FirstError,
-            );
+            validator.validate(presentationJwt, holderDoc, options);
         });
 
         // Check expiration date validation.
         options = new JwtPresentationValidationOptions({
             earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(1)),
         });
-        validator.validate(
-            presentationJwt,
-            holderDoc,
-            [issuerDoc],
-            options,
-            FailFast.FirstError,
-        );
+        validator.validate(presentationJwt, holderDoc, options);
 
         options = new JwtPresentationValidationOptions({
             earliestExpiryDate: Timestamp.nowUTC().checkedAdd(Duration.days(3)),
         });
         assert.throws(() => {
-            validator.validate(
-                presentationJwt,
-                holderDoc,
-                [issuerDoc],
-                options,
-                FailFast.FirstError,
-            );
+            validator.validate(presentationJwt, holderDoc, options);
         });
 
-        // Check `extractDids`.
-        let presentationDids = JwtPresentationValidator.extractDids(presentationJwt);
-        assert.equal(presentationDids.holder.toString(), holderDoc.id().toString());
-        assert.equal(presentationDids.issuers.length, 2);
-        assert.equal(
-            presentationDids.issuers[0].toString(),
-            issuerDoc.id().toString(),
-        );
-        assert.equal(
-            presentationDids.issuers[1].toString(),
-            issuerDoc.id().toString(),
-        );
+        let holder_did = JwtPresentationValidator.extractHolder(presentationJwt);
+        assert.equal(holder_did.toString(), holderDoc.id().toString());
     });
 
     class CustomVerifier implements IJwsVerifier {
