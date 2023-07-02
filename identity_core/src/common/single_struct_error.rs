@@ -26,7 +26,9 @@ impl<T: Display + Debug> Display for SingleStructError<T> {
       Repr::Simple(ref kind) => write!(f, "{kind}"),
       Repr::Extensive(ref extensive) => {
         write!(f, "{}", &extensive.kind)?;
-        let Some(ref message) = extensive.message else {return Ok(())};
+        let Some(ref message) = extensive.message else {
+          return Ok(());
+        };
         write!(f, " message: {}", message.as_ref())
       }
     }

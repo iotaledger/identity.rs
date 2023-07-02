@@ -58,11 +58,15 @@ async fn missing_handler_errors() {
   resolver_core.attach_handler(other_method, mock_handler);
 
   let err: ResolverError = resolver_foo.resolve(&bad_did).await.unwrap_err();
-  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else {
+    unreachable!()
+  };
   assert_eq!(method_name, method);
 
   let err: ResolverError = resolver_core.resolve(&bad_did).await.unwrap_err();
-  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else {
+    unreachable!()
+  };
   assert_eq!(method_name, method);
 
   assert!(resolver_foo.resolve(&good_did).await.is_ok());
@@ -70,11 +74,15 @@ async fn missing_handler_errors() {
 
   let both_dids = [good_did, bad_did];
   let err: ResolverError = resolver_foo.resolve_multiple(&both_dids).await.unwrap_err();
-  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else {
+    unreachable!()
+  };
   assert_eq!(method_name, method);
 
   let err: ResolverError = resolver_core.resolve_multiple(&both_dids).await.unwrap_err();
-  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else { unreachable!() };
+  let ErrorCause::UnsupportedMethodError { method } = err.into_error_cause() else {
+    unreachable!()
+  };
   assert_eq!(method_name, method);
 }
 

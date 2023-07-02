@@ -325,7 +325,7 @@ impl JwkDocumentExt for CoreDocument {
     // Obtain the method corresponding to the given fragment.
     let method: &VerificationMethod = self.resolve_method(fragment, None).ok_or(Error::MethodNotFound)?;
     let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
-      return Err(Error::NotPublicKeyJwk)
+      return Err(Error::NotPublicKeyJwk);
     };
     // Extract JwsAlgorithm
     let alg: JwsAlgorithm = jwk

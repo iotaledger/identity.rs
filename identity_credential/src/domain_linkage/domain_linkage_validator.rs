@@ -563,7 +563,9 @@ mod tests {
 
   fn sign_bytes(document: &CoreDocument, fragment: &str, payload: &[u8], secret_key: &SecretKey) -> Jws {
     let method: &VerificationMethod = document.resolve_method(fragment, None).unwrap();
-    let MethodData::PublicKeyJwk(ref jwk) = method.data() else { panic!("not a jwk"); };
+    let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
+      panic!("not a jwk");
+    };
     let alg: JwsAlgorithm = jwk.alg().unwrap_or("").parse().unwrap();
 
     let header: JwsHeader = {

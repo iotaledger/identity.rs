@@ -63,24 +63,25 @@ where
 {
   pub(super) fn new(credential: &'credential Credential<T>) -> Result<Self> {
     let Credential {
-        context,
-        id,
-        types,
-        credential_subject: OneOrMany::One(subject),
-        issuer,
-        issuance_date,
-        expiration_date,
-        credential_status,
-        credential_schema,
-        refresh_service,
-        terms_of_use,
-        evidence,
-        non_transferable,
-        properties,
-        proof
-        } = credential else {
-            return Err(Error::MoreThanOneSubjectInJwt)
-        };
+      context,
+      id,
+      types,
+      credential_subject: OneOrMany::One(subject),
+      issuer,
+      issuance_date,
+      expiration_date,
+      credential_status,
+      credential_schema,
+      refresh_service,
+      terms_of_use,
+      evidence,
+      non_transferable,
+      properties,
+      proof,
+    } = credential
+    else {
+      return Err(Error::MoreThanOneSubjectInJwt);
+    };
 
     Ok(Self {
       exp: expiration_date.map(|value| Timestamp::to_unix(&value)),
