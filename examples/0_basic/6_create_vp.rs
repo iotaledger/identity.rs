@@ -202,7 +202,7 @@ async fn main() -> anyhow::Result<()> {
   let jwt_credentials = &presentation.presentation.verifiable_credential;
   let issuers: Vec<CoreDID> = jwt_credentials
     .iter()
-    .map(|vc| CredentialValidator::extract_issuer_from_jwt(vc))
+    .map(CredentialValidator::extract_issuer_from_jwt)
     .collect::<Result<Vec<CoreDID>, _>>()?;
   let issuers_documents: HashMap<CoreDID, IotaDocument> = resolver.resolve_multiple(&issuers).await?;
 
