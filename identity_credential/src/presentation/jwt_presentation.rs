@@ -16,7 +16,6 @@ use identity_verification::MethodUriType;
 use identity_verification::TryMethod;
 
 use crate::credential::Credential;
-use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::error::Error;
@@ -28,7 +27,7 @@ use super::JwtPresentationOptions;
 
 /// Represents a bundle of one or more [`Credential`]s expressed as [`Jwt`]s.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct JwtPresentation<CRED = Jwt, T = Object> {
+pub struct JwtPresentation<CRED, T = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
   #[serde(rename = "@context")]
   pub context: OneOrMany<Context>,

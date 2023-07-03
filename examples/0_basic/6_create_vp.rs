@@ -150,7 +150,7 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(alice_document.id().to_url().into(), Default::default())
       .credential(credential_jwt)
       .build()?;
@@ -195,7 +195,7 @@ async fn main() -> anyhow::Result<()> {
   // Validate presentation. Note that this doesn't validate the included credentials.
   let presentation_validation_options =
     JwtPresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
-  let presentation: DecodedJwtPresentation =
+  let presentation: DecodedJwtPresentation<Jwt> =
     JwtPresentationValidator::new().validate(&presentation_jwt, &holder, &presentation_validation_options)?;
 
   // Concurrently resolve the issuers' documents.

@@ -6,7 +6,6 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::common::Value;
 
-use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::error::Result;
@@ -15,7 +14,7 @@ use super::JwtPresentation;
 
 /// A `JwtPresentationBuilder` is used to create a customized [JwtPresentation].
 #[derive(Clone, Debug)]
-pub struct JwtPresentationBuilder<CRED = Jwt, T = Object> {
+pub struct JwtPresentationBuilder<CRED, T = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
@@ -159,7 +158,7 @@ mod tests {
 
     let credential_jwt = Jwt::new(credential.serialize_jwt().unwrap());
 
-    let presentation: JwtPresentation =
+    let presentation: JwtPresentation<Jwt> =
       JwtPresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
         .type_("ExamplePresentation")
         .credential(credential_jwt)
