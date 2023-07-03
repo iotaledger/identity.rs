@@ -20,7 +20,6 @@ pub enum ServiceEndpoint {
   One(Url),
   Set(OrderedSet<Url>),
   Map(IndexMap<String, OrderedSet<Url>>),
-  // TODO: enforce set/map is non-empty?
 }
 
 impl From<Url> for ServiceEndpoint {

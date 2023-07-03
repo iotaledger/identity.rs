@@ -89,7 +89,6 @@ impl<'query> From<DIDUrl> for DIDUrlQuery<'query> {
 
 impl<'query> From<&'query RelativeDIDUrl> for DIDUrlQuery<'query> {
   fn from(other: &'query RelativeDIDUrl) -> Self {
-    // TODO: improve RelativeDIDUrl performance - internal string segments representation
     Self(Cow::Owned(other.to_string()))
   }
 }
