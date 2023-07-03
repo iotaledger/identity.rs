@@ -41,6 +41,7 @@ use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
+use crate::credential::UntypedCredential;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
@@ -780,7 +781,7 @@ impl WasmIotaDocument {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = signature_options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
-    let presentation_clone: JwtPresentation = presentation.0.clone();
+    let presentation_clone: JwtPresentation<UntypedCredential> = presentation.0.clone();
     let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
     let promise: Promise = future_to_promise(async move {
       document_lock_clone

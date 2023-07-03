@@ -193,7 +193,7 @@ impl JwtPresentationValidator {
       .decode_compact_serialization(presentation.as_str().as_bytes(), None)
       .map_err(ValidationError::JwsDecodingError)?;
 
-    let claims: PresentationJwtClaims<'_, Jwt, Object> =
+    let claims: PresentationJwtClaims<'_, identity_core::common::Value, Object> =
       PresentationJwtClaims::from_json_slice(&validation_item.claims()).map_err(|err| {
         ValidationError::PresentationStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;

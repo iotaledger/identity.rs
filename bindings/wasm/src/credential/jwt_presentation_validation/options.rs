@@ -16,9 +16,13 @@ impl WasmJwtPresentationValidationOptions {
   ///
   /// Throws an error if any of the options are invalid.
   #[wasm_bindgen(constructor)]
-  pub fn new(options: IJwtPresentationValidationOptions) -> Result<WasmJwtPresentationValidationOptions> {
-    let options: JwtPresentationValidationOptions = options.into_serde().wasm_result()?;
-    Ok(WasmJwtPresentationValidationOptions::from(options))
+  pub fn new(options: Option<IJwtPresentationValidationOptions>) -> Result<WasmJwtPresentationValidationOptions> {
+    if let Some(opts) = options {
+      let options: JwtPresentationValidationOptions = opts.into_serde().wasm_result()?;
+      Ok(WasmJwtPresentationValidationOptions::from(options))
+    } else {
+      Ok(Self::default())
+    }
   }
 
   /// Creates a new `JwtPresentationValidationOptions` with defaults.

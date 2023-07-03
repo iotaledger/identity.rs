@@ -14,9 +14,13 @@ pub struct WasmJwtCredentialValidationOptions(pub(crate) JwtCredentialValidation
 #[wasm_bindgen(js_class = JwtCredentialValidationOptions)]
 impl WasmJwtCredentialValidationOptions {
   #[wasm_bindgen(constructor)]
-  pub fn new(options: IJwtCredentialValidationOptions) -> Result<WasmJwtCredentialValidationOptions> {
-    let options: JwtCredentialValidationOptions = options.into_serde().wasm_result()?;
-    Ok(WasmJwtCredentialValidationOptions::from(options))
+  pub fn new(options: Option<IJwtCredentialValidationOptions>) -> Result<WasmJwtCredentialValidationOptions> {
+    if let Some(opts) = options {
+      let options: JwtCredentialValidationOptions = opts.into_serde().wasm_result()?;
+      Ok(WasmJwtCredentialValidationOptions::from(options))
+    } else {
+      Ok(Self::default())
+    }
   }
 
   /// Creates a new `JwtCredentialValidationOptions` with defaults.

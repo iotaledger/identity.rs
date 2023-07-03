@@ -12,15 +12,16 @@ use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::credential::jwt_presentation::jwt_presentation_builder::IJwtPresentation;
 use crate::credential::ArrayContext;
-use crate::credential::ArrayJwt;
 use crate::credential::ArrayPolicy;
 use crate::credential::ArrayRefreshService;
-use crate::credential::WasmJwt;
+use crate::credential::ArrayUntypedCredential;
+use crate::credential::UntypedCredential;
+use crate::credential::WasmUntypedCredentialContainer;
 use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = JwtPresentation, inspectable)]
-pub struct WasmJwtPresentation(pub(crate) JwtPresentation);
+pub struct WasmJwtPresentation(pub(crate) JwtPresentation<UntypedCredential>);
 
 #[wasm_bindgen(js_class = JwtPresentation)]
 impl WasmJwtPresentation {
@@ -42,7 +43,8 @@ impl WasmJwtPresentation {
   /// Constructs a new presentation.
   #[wasm_bindgen(constructor)]
   pub fn new(values: IJwtPresentation) -> Result<WasmJwtPresentation> {
-    let builder: JwtPresentationBuilder = JwtPresentationBuilder::try_from(values)?;
+    let builder: JwtPresentationBuilder<UntypedCredential, Object> =
+      JwtPresentationBuilder::<UntypedCredential, Object>::try_from(values)?;
     builder.build().map(Self).wasm_result()
   }
 
@@ -80,16 +82,16 @@ impl WasmJwtPresentation {
 
   /// Returns the JWT credentials expressing the claims of the presentation.
   #[wasm_bindgen(js_name = verifiableCredential)]
-  pub fn verifiable_credential(&self) -> ArrayJwt {
+  pub fn verifiable_credential(&self) -> ArrayUntypedCredential {
     self
       .0
       .verifiable_credential
       .iter()
       .cloned()
-      .map(WasmJwt::new)
+      .map(WasmUntypedCredentialContainer::new)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayJwt>()
+      .unchecked_into::<ArrayUntypedCredential>()
   }
 
   /// Returns a copy of the URI of the entity that generated the presentation.
@@ -140,8 +142,8 @@ impl WasmJwtPresentation {
 impl_wasm_json!(WasmJwtPresentation, JwtPresentation);
 impl_wasm_clone!(WasmJwtPresentation, JwtPresentation);
 
-impl From<JwtPresentation> for WasmJwtPresentation {
-  fn from(presentation: JwtPresentation) -> WasmJwtPresentation {
+impl From<JwtPresentation<UntypedCredential>> for WasmJwtPresentation {
+  fn from(presentation: JwtPresentation<UntypedCredential>) -> WasmJwtPresentation {
     Self(presentation)
   }
 }

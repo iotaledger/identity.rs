@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
 use crate::credential::jwt_presentation::WasmJwtPresentation;
+use crate::credential::UntypedCredential;
 use crate::jose::WasmJwsHeader;
 
 /// A cryptographically verified and decoded presentation.
@@ -13,7 +14,7 @@ use crate::jose::WasmJwsHeader;
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the presentation itself.
 #[wasm_bindgen(js_name = DecodedJwtPresentation)]
-pub struct WasmDecodedJwtPresentation(pub(crate) DecodedJwtPresentation);
+pub struct WasmDecodedJwtPresentation(pub(crate) DecodedJwtPresentation<UntypedCredential>);
 
 #[wasm_bindgen(js_class = DecodedJwtPresentation)]
 impl WasmDecodedJwtPresentation {
@@ -56,8 +57,8 @@ impl WasmDecodedJwtPresentation {
   }
 }
 
-impl From<DecodedJwtPresentation> for WasmDecodedJwtPresentation {
-  fn from(decoded_presentation: DecodedJwtPresentation) -> Self {
+impl From<DecodedJwtPresentation<UntypedCredential>> for WasmDecodedJwtPresentation {
+  fn from(decoded_presentation: DecodedJwtPresentation<UntypedCredential>) -> Self {
     Self(decoded_presentation)
   }
 }

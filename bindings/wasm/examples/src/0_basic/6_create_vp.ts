@@ -24,6 +24,7 @@ import {
     Storage,
     SubjectHolderRelationship,
     Timestamp,
+    UntypedCredential,
 } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
@@ -132,7 +133,7 @@ export async function createVP() {
     // Create a Verifiable Presentation from the Credential
     const unsignedVp = new JwtPresentation({
         holder: aliceDocument.id(),
-        verifiableCredential: credentialJwt,
+        verifiableCredential: [credentialJwt],
     });
 
     // Create a JWT verifiable presentation using the holder's verification method
@@ -191,12 +192,20 @@ export async function createVP() {
 
     let jwtCredentials: Jwt[] = decodedPresentation
         .presentation()
-        .verifiableCredential();
+        .verifiableCredential()
+        .map(credential => {
+            const jwt = credential.tryIntoJwt();
+            if (!jwt) {
+                throw new Error("expected a JWT credential");
+            } else {
+                return jwt;
+            }
+        });
 
     // Concurrently resolve the issuers' documents.
     let issuers: string[] = [];
-    for (let credentialJwt of jwtCredentials) {
-        let issuer = JwtCredentialValidator.extractIssuerFromJwt(credentialJwt);
+    for (let jwtCredential of jwtCredentials) {
+        let issuer = JwtCredentialValidator.extractIssuerFromJwt(jwtCredential);
         issuers.push(issuer.toString());
     }
     let resolvedIssuers = await resolver.resolveMultiple(issuers);
