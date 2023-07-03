@@ -23,7 +23,6 @@ pub use serde_json::json;
 pub mod common;
 pub mod convert;
 pub mod error;
-pub mod utils;
 
 pub use self::error::Error;
 pub use self::error::Result;

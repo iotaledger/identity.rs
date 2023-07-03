@@ -4,7 +4,7 @@
 use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
 use identity_core::common::Object;
-use identity_core::utils::BaseEncoding;
+use identity_core::convert::BaseEncoding;
 use identity_did::CoreDID;
 use identity_document::document::CoreDocument;
 use identity_verification::jwk::EdCurve;

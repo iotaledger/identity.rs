@@ -10,7 +10,6 @@ The types and traits exposed by this crate are mainly intended to be used by the
 This crate exposes some fundamental data types used across the IOTA Identity Framework:
 
 - [`Context`](crate::common::Context): represents [JSON-LD contexts](https://www.w3.org/TR/vc-data-model/#contexts).
-- [`Fragment`](crate::common::Fragment): a [DID URL fragment](https://www.w3.org/TR/did-core/#dfn-did-fragments).
 - [`Timestamp`](crate::common::Timestamp): an [RFC3339](https://datatracker.ietf.org/doc/html/rfc3339) compliant timestamp.
 - [`Url`](crate::common::Url): a URL string.
 - Collections: [`OneOrMany`](crate::common::OneOrMany), [`OneOrSet`](crate::common::OneOrSet), and [`OrderedSet`](crate::common::OrderedSet).
@@ -23,4 +22,4 @@ The [`ToJson`](crate::convert::ToJson) and [`FromJson`](crate::convert::FromJson
 
 ## Base Encoding Utilities
 
-[`BaseEncoding`](crate::utils::BaseEncoding) provides methods to encode and decode binary text with respect to several bases.
+[`BaseEncoding`](crate::convert::BaseEncoding) provides methods to encode and decode binary text with respect to several bases.

@@ -12,8 +12,6 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_verification::MethodUriType;
-use identity_verification::TryMethod;
 
 use crate::credential::Credential;
 use crate::credential::Jwt;
@@ -148,8 +146,4 @@ where
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
-}
-
-impl<T> TryMethod for JwtPresentation<T> {
-  const TYPE: MethodUriType = MethodUriType::Absolute;
 }

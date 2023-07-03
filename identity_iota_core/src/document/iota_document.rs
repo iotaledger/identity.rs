@@ -25,8 +25,6 @@ use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
-use identity_verification::MethodUriType;
-use identity_verification::TryMethod;
 use identity_verification::VerificationMethod;
 
 use crate::error::Result;
@@ -502,10 +500,6 @@ impl Display for IotaDocument {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.fmt_json(f)
   }
-}
-
-impl TryMethod for IotaDocument {
-  const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
 #[cfg(test)]

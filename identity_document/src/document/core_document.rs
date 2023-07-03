@@ -32,8 +32,6 @@ use identity_did::DIDUrl;
 use identity_verification::MethodRef;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
-use identity_verification::MethodUriType;
-use identity_verification::TryMethod;
 use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -915,10 +913,6 @@ impl TryFrom<CoreDocumentData> for CoreDocument {
       Err(err) => Err(err),
     }
   }
-}
-
-impl TryMethod for CoreDocument {
-  const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
 impl Display for CoreDocument {

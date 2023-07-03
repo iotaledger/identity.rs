@@ -8,8 +8,8 @@ use flate2::write::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use identity_core::common::Url;
-use identity_core::utils::Base;
-use identity_core::utils::BaseEncoding;
+use identity_core::convert::Base;
+use identity_core::convert::BaseEncoding;
 use roaring::RoaringBitmap;
 
 use super::error::RevocationError;
