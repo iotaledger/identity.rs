@@ -20,9 +20,6 @@ pub enum MethodData {
   PublicKeyJwk(Jwk),
 }
 
-// TODO: Do we need checks that the Jwk does not contain private key components?
-// Perhaps this can be done at the DID document level?
-
 impl MethodData {
   /// Creates a new `MethodData` variant with base58-encoded content.
   pub fn new_base58(data: impl AsRef<[u8]>) -> Self {

@@ -71,6 +71,12 @@ impl VerificationMethod {
       return Err(Error::InvalidMethod("empty id fragment"));
     }
 
+    if let Some(MethodData::PublicKeyJwk(ref jwk)) = builder.data {
+      if !jwk.is_public() {
+        return Err(crate::error::Error::PrivateKeyMaterialExposed);
+      }
+    };
+
     Ok(VerificationMethod {
       id,
       controller: builder.controller.ok_or(Error::InvalidMethod("missing controller"))?,
@@ -193,10 +199,6 @@ impl VerificationMethod {
   /// - It is recommended that [`Jwk`] kid values are set to the public key fingerprint. See
   ///   [`Jwk::thumbprint_sha256_b64`](Jwk::thumbprint_sha256_b64).
   pub fn new_from_jwk<D: DID>(did: D, key: Jwk, fragment: Option<&str>) -> Result<Self> {
-    if !key.is_public() {
-      return Err(crate::error::Error::PrivateKeyMaterialExposed);
-    };
-
     // If a fragment is given use that, otherwise use the JWK's `kid` if it is set.
     let fragment: Cow<'_, str> = {
       let given_fragment: &str = fragment

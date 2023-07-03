@@ -17,13 +17,11 @@ pub enum Error {
   DIDUrlConstructionError(#[source] identity_did::Error),
   #[error("invalid or empty `id` fragment")]
   MissingIdFragment,
-  #[error("Unknown Method Scope")]
+  #[error("unknown method scope")]
   UnknownMethodScope,
-  #[error("Unknown Method Type")]
-  UnknownMethodType,
-  #[error("Invalid Base58 Key Data")]
+  #[error("invalid base58 key data")]
   InvalidKeyDataBase58,
-  #[error("Invalid Multibase Key Data")]
+  #[error("invalid multibase key data")]
   InvalidKeyDataMultibase,
   #[error("the method data could not be transformed to the desired type")]
   InvalidMethodDataTransformation(&'static str),

@@ -68,6 +68,10 @@ impl MethodBuilder {
 
 #[cfg(test)]
 mod tests {
+  use identity_core::convert::FromJson;
+  use identity_did::DID;
+  use identity_jose::jwk::Jwk;
+
   use crate::Error;
 
   use super::*;
@@ -134,5 +138,32 @@ mod tests {
       .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
+  }
+
+  #[test]
+  fn test_jwk_contains_private_key_material() {
+    let jwk: Jwk = Jwk::from_json(
+      r#"
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "d": "nWGxne_9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A",
+        "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
+      }
+    "#,
+    )
+    .unwrap();
+
+    let did: CoreDID = "did:example:123".parse().unwrap();
+    let result: Result<VerificationMethod> = MethodBuilder::default()
+      .id(did.clone().join("#key-0").unwrap())
+      .controller(did.clone())
+      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
+      .data(MethodData::PublicKeyJwk(jwk.clone()))
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::PrivateKeyMaterialExposed));
+
+    let err: Error = VerificationMethod::new_from_jwk(did, jwk, Some("#frag")).unwrap_err();
+    assert!(matches!(err, Error::PrivateKeyMaterialExposed));
   }
 }

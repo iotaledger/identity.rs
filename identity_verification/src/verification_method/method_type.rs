@@ -11,7 +11,6 @@ use crate::error::Result;
 
 const ED25519_VERIFICATION_KEY_2018_STR: &str = "Ed25519VerificationKey2018";
 const X25519_KEY_AGREEMENT_KEY_2019_STR: &str = "X25519KeyAgreementKey2019";
-// TODO: Update this if/when the VC-JWT or Data Integrity spec defines a recommendation for use with `VC-JWT`.
 const JSON_WEB_KEY_METHOD_TYPE: &str = "JsonWebKey";
 
 /// verification method types.
