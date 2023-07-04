@@ -46,8 +46,6 @@ impl From<WasmJwtCredentialValidationOptions> for JwtCredentialValidationOptions
   }
 }
 
-//Todo: add `StatusCheck` here if `CredentialValidationOptions` is be deleted.
-
 // Interface to allow creating `JwtCredentialValidationOptions` easily.
 #[wasm_bindgen]
 extern "C" {
@@ -71,6 +69,11 @@ interface IJwtCredentialValidationOptions {
      *
      * Default: `StatusCheck.Strict`. */
     readonly status?: StatusCheck;
+
+    /** Declares how credential subjects must relate to the presentation holder during validation.
+    *
+    * <https://www.w3.org/TR/vc-data-model/#subject-holder-relationships> */
+    readonly subjectHolderRelationship?: [string, SubjectHolderRelationship];
 
     /** Options which affect the verification of the signature on the credential. */
     readonly verifierOptions?: JwsVerificationOptions;

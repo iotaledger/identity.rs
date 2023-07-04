@@ -188,7 +188,9 @@ export async function createVP() {
 
     // Validate the credentials in the presentation.
     let credentialValidator = new JwtCredentialValidator();
-    let validationOptions = new JwtCredentialValidationOptions({});
+    let validationOptions = new JwtCredentialValidationOptions({
+        subjectHolderRelationship: [presentationHolderDID.toString(), SubjectHolderRelationship.AlwaysSubject],
+    });
 
     let jwtCredentials: Jwt[] = decodedPresentation
         .presentation()
@@ -212,18 +214,11 @@ export async function createVP() {
 
     // Validate the credentials in the presentation.
     for (let i = 0; i < jwtCredentials.length; i++) {
-        let decodedCredential = credentialValidator.validate(
+        const _decodedCredential = credentialValidator.validate(
             jwtCredentials[i],
             resolvedIssuers[i],
             validationOptions,
             FailFast.FirstError,
-        );
-
-        // Check that the presentation holder matches the credential subject.
-        JwtCredentialValidator.checkSubjectHolderRelationship(
-            decodedCredential.credential(),
-            presentationHolderDID.toString(),
-            SubjectHolderRelationship.AlwaysSubject,
         );
     }
 
