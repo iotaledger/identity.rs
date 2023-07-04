@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
+use identity_iota::core::OneOrMany;
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
@@ -199,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
     JwtPresentationValidator::new().validate(&presentation_jwt, &holder, &presentation_validation_options)?;
 
   // Concurrently resolve the issuers' documents.
-  let jwt_credentials = &presentation.presentation.verifiable_credential;
+  let jwt_credentials: &OneOrMany<Jwt> = &presentation.presentation.verifiable_credential;
   let issuers: Vec<CoreDID> = jwt_credentials
     .iter()
     .map(CredentialValidator::extract_issuer_from_jwt)
@@ -208,23 +209,18 @@ async fn main() -> anyhow::Result<()> {
 
   // Validate the credentials in the presentation.
   let credential_validator: CredentialValidator = CredentialValidator::new();
-  let validation_options = CredentialValidationOptions::default();
+  let validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
+    .subject_holder_relationship(holder_did.to_url().into(), SubjectHolderRelationship::AlwaysSubject);
+
   for (index, jwt_vc) in jwt_credentials.iter().enumerate() {
-    //SAFETY: Indexing should be fine since we extracted the DID from each credential.
-    let issuer_document = issuers_documents
-      .get(&issuers[index])
-      .ok_or_else(|| anyhow::anyhow!("expected DID to be resolved"))?;
-    let decoded_credential: DecodedJwtCredential<Object> = credential_validator
+    // SAFETY: Indexing should be fine since we extracted the DID from each credential and resolved it.
+    let issuer_document: &IotaDocument = &issuers_documents[&issuers[index]];
+
+    let _decoded_credential: DecodedJwtCredential<Object> = credential_validator
       .validate::<_, Object>(jwt_vc, issuer_document, &validation_options, FailFast::FirstError)
       .unwrap();
-
-    // Check that the presentation holder matches the credential subject.
-    CredentialValidator::check_subject_holder_relationship(
-      &decoded_credential.credential,
-      &holder_did.to_url().into(),
-      SubjectHolderRelationship::AlwaysSubject,
-    )?;
   }
+
   // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
   println!("VP successfully validated: {:#?}", presentation.presentation);
 
