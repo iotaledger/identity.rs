@@ -25,7 +25,7 @@ use super::jwt_serialization::PresentationJwtClaims;
 use super::JwtPresentationBuilder;
 use super::JwtPresentationOptions;
 
-/// Represents a bundle of one or more [`Credential`]s expressed as [`Jwt`]s.
+/// Represents a bundle of one or more [`Credential`]s.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct JwtPresentation<CRED, T = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
