@@ -1,3 +1,4 @@
+import * as assert from "assert";
 import {
     CoreDocument,
     Credential,
@@ -12,11 +13,11 @@ import {
     MethodScope,
     Storage,
     Timestamp,
+    UnknownCredential,
 } from "../node";
-
 export {};
 
-const assert = require("assert");
+// const assert = require("assert");
 
 const credentialFields = {
     context: "https://www.w3.org/2018/credentials/examples/v1",
@@ -228,9 +229,15 @@ describe("Presentation", function() {
                 new JwsSignatureOptions(),
             );
 
+            const otherCredential = {
+                "custom": "property",
+                "other": 5,
+                "isCredential": true,
+            };
+
             const unsignedVp = new JwtPresentation({
                 holder: doc.id(),
-                verifiableCredential: [credentialJwt, unsignedVc],
+                verifiableCredential: [credentialJwt, unsignedVc, otherCredential],
             });
 
             const presentationJwt = await doc.createPresentationJwt(
@@ -244,11 +251,17 @@ describe("Presentation", function() {
             let issuer = JwtPresentationValidator.extractHolder(presentationJwt);
             assert.deepStrictEqual(issuer.toString(), doc.id().toString());
 
-            new JwtPresentationValidator().validate(
+            const decodedPresentation = new JwtPresentationValidator().validate(
                 presentationJwt,
                 doc,
                 new JwtPresentationValidationOptions(),
             );
+
+            const credentials: UnknownCredential[] = decodedPresentation.presentation().verifiableCredential();
+
+            assert.deepStrictEqual(credentials[0].tryIntoJwt()?.toString(), credentialJwt.toString());
+            assert.deepStrictEqual(credentials[1].tryIntoCredential()?.toJSON(), unsignedVc.toJSON());
+            assert.deepStrictEqual(credentials[2].tryIntoRaw(), otherCredential);
         });
     });
 });
