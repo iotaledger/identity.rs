@@ -6,7 +6,6 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::common::Value;
 
-use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::error::Result;
@@ -15,18 +14,18 @@ use super::JwtPresentation;
 
 /// A `JwtPresentationBuilder` is used to create a customized [JwtPresentation].
 #[derive(Clone, Debug)]
-pub struct JwtPresentationBuilder<T = Object> {
+pub struct JwtPresentationBuilder<CRED, T = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
-  pub(crate) credentials: Vec<Jwt>,
+  pub(crate) credentials: Vec<CRED>,
   pub(crate) holder: Url,
   pub(crate) refresh_service: Vec<RefreshService>,
   pub(crate) terms_of_use: Vec<Policy>,
   pub(crate) properties: T,
 }
 
-impl<T> JwtPresentationBuilder<T> {
+impl<CRED, T> JwtPresentationBuilder<CRED, T> {
   /// Creates a new `JwtPresentationBuilder`.
   pub fn new(holder: Url, properties: T) -> Self {
     Self {
@@ -64,7 +63,7 @@ impl<T> JwtPresentationBuilder<T> {
 
   /// Adds a value to the `verifiableCredential` set.
   #[must_use]
-  pub fn credential(mut self, value: Jwt) -> Self {
+  pub fn credential(mut self, value: CRED) -> Self {
     self.credentials.push(value);
     self
   }
@@ -84,7 +83,7 @@ impl<T> JwtPresentationBuilder<T> {
   }
 
   /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
-  pub fn build(self) -> Result<JwtPresentation<T>> {
+  pub fn build(self) -> Result<JwtPresentation<CRED, T>> {
     JwtPresentation::from_builder(self)
   }
 }
@@ -159,7 +158,7 @@ mod tests {
 
     let credential_jwt = Jwt::new(credential.serialize_jwt().unwrap());
 
-    let presentation: JwtPresentation =
+    let presentation: JwtPresentation<Jwt> =
       JwtPresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
         .type_("ExamplePresentation")
         .credential(credential_jwt)

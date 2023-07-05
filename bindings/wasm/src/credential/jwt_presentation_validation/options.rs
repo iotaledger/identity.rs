@@ -16,9 +16,13 @@ impl WasmJwtPresentationValidationOptions {
   ///
   /// Throws an error if any of the options are invalid.
   #[wasm_bindgen(constructor)]
-  pub fn new(options: IJwtPresentationValidationOptions) -> Result<WasmJwtPresentationValidationOptions> {
-    let options: JwtPresentationValidationOptions = options.into_serde().wasm_result()?;
-    Ok(WasmJwtPresentationValidationOptions::from(options))
+  pub fn new(options: Option<IJwtPresentationValidationOptions>) -> Result<WasmJwtPresentationValidationOptions> {
+    if let Some(opts) = options {
+      let options: JwtPresentationValidationOptions = opts.into_serde().wasm_result()?;
+      Ok(WasmJwtPresentationValidationOptions::from(options))
+    } else {
+      Ok(Self::default())
+    }
   }
 
   /// Creates a new `JwtPresentationValidationOptions` with defaults.
@@ -54,22 +58,10 @@ extern "C" {
 const I_JWT_PRESENTATION_VALIDATION_OPTIONS: &'static str = r#"
 /** Holds options to create a new `JwtPresentationValidationOptions`. */
 interface IJwtPresentationValidationOptions {
-    /**
-     * Options which affect the validation of *all* credentials in the presentation. 
-     */
-    readonly sharedValidationOptions?: JwtCredentialValidationOptions;
-
     /** 
      * Options which affect the verification of the signature on the presentation. 
      */
     readonly presentationVerifierOptions?: JwsVerificationOptions;
-
-    /** 
-     * Declare how the presentation's credential subjects must relate to the holder.
-     *
-     * Default: `SubjectHolderRelationship.AlwaysSubject`
-     */
-    readonly subjectHolderRelationship?: SubjectHolderRelationship;
 
     /**
      * Declare that the presentation is **not** considered valid if it expires before this `Timestamp`.

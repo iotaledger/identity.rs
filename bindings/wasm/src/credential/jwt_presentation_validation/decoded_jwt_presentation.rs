@@ -6,8 +6,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
 use crate::credential::jwt_presentation::WasmJwtPresentation;
-use crate::credential::ArrayDecodedJwtCredential;
-use crate::credential::WasmDecodedJwtCredential;
+use crate::credential::UnknownCredential;
 use crate::jose::WasmJwsHeader;
 
 /// A cryptographically verified and decoded presentation.
@@ -15,7 +14,7 @@ use crate::jose::WasmJwsHeader;
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the presentation itself.
 #[wasm_bindgen(js_name = DecodedJwtPresentation)]
-pub struct WasmDecodedJwtPresentation(pub(crate) DecodedJwtPresentation);
+pub struct WasmDecodedJwtPresentation(pub(crate) DecodedJwtPresentation<UnknownCredential>);
 
 #[wasm_bindgen(js_class = DecodedJwtPresentation)]
 impl WasmDecodedJwtPresentation {
@@ -56,24 +55,10 @@ impl WasmDecodedJwtPresentation {
   pub fn audience(&self) -> Option<String> {
     self.0.aud.clone().map(|aud| aud.to_string())
   }
-
-  /// The credentials included in the presentation (decoded).
-  #[wasm_bindgen(js_name = "credentials")]
-  pub fn credentials(&self) -> ArrayDecodedJwtCredential {
-    self
-      .0
-      .credentials
-      .iter()
-      .cloned()
-      .map(WasmDecodedJwtCredential::from)
-      .map(JsValue::from)
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayDecodedJwtCredential>()
-  }
 }
 
-impl From<DecodedJwtPresentation> for WasmDecodedJwtPresentation {
-  fn from(decoded_presentation: DecodedJwtPresentation) -> Self {
+impl From<DecodedJwtPresentation<UnknownCredential>> for WasmDecodedJwtPresentation {
+  fn from(decoded_presentation: DecodedJwtPresentation<UnknownCredential>) -> Self {
     Self(decoded_presentation)
   }
 }

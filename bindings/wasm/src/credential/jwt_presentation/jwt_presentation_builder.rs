@@ -5,16 +5,16 @@ use identity_iota::core::Context;
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::Url;
-use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtPresentationBuilder;
 use identity_iota::credential::Policy;
 use identity_iota::credential::RefreshService;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 
+use crate::credential::UnknownCredential;
 use crate::error::WasmResult;
 
-impl TryFrom<IJwtPresentation> for JwtPresentationBuilder {
+impl TryFrom<IJwtPresentation> for JwtPresentationBuilder<UnknownCredential> {
   type Error = JsValue;
 
   fn try_from(values: IJwtPresentation) -> std::result::Result<Self, Self::Error> {
@@ -29,7 +29,7 @@ impl TryFrom<IJwtPresentation> for JwtPresentationBuilder {
       properties,
     } = values.into_serde::<IJwtPresentationHelper>().wasm_result()?;
 
-    let mut builder: JwtPresentationBuilder =
+    let mut builder: JwtPresentationBuilder<UnknownCredential> =
       JwtPresentationBuilder::new(Url::parse(holder).wasm_result()?, properties);
 
     if let Some(context) = context {
@@ -46,7 +46,7 @@ impl TryFrom<IJwtPresentation> for JwtPresentationBuilder {
       }
     }
     for credential in verifiable_credential.into_vec() {
-      builder = builder.credential(Jwt::new(credential));
+      builder = builder.credential(credential);
     }
     if let Some(refresh_service) = refresh_service {
       for service in refresh_service.into_vec() {
@@ -87,9 +87,9 @@ struct IJwtPresentationHelper {
   #[typescript(
     optional = false,
     name = "verifiableCredential",
-    type = "Jwt | Array<Jwt> | string | Array<string>"
+    type = "Jwt | Credential | any | Array<Jwt | Credential | any>"
   )]
-  verifiable_credential: OneOrMany<String>,
+  verifiable_credential: OneOrMany<UnknownCredential>,
   /// The entity that generated the presentation.
   #[typescript(optional = false, type = "string | CoreDID | IotaDID ")]
   holder: String,

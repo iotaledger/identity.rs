@@ -7,7 +7,6 @@ use identity_core::common::Url;
 use identity_verification::jws::JwsHeader;
 
 use crate::presentation::JwtPresentation;
-use crate::validator::vc_jwt_validation::DecodedJwtCredential;
 
 /// Decoded [`JwtPresentation`] from a cryptographically verified JWS.
 ///
@@ -15,9 +14,9 @@ use crate::validator::vc_jwt_validation::DecodedJwtCredential;
 /// It does not imply anything about a potentially present proof property on the presentation itself.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub struct DecodedJwtPresentation<T = Object, U = Object> {
+pub struct DecodedJwtPresentation<CRED, T = Object> {
   /// The decoded presentation parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
-  pub presentation: JwtPresentation<T>,
+  pub presentation: JwtPresentation<CRED, T>,
   /// The protected header parsed from the JWS.
   pub header: Box<JwsHeader>,
   /// The expiration date parsed from the JWT claims.
@@ -26,6 +25,4 @@ pub struct DecodedJwtPresentation<T = Object, U = Object> {
   pub issuance_date: Option<Timestamp>,
   /// The `aud` property parsed from the JWT claims.
   pub aud: Option<Url>,
-  /// The credentials included in the presentation (decoded).
-  pub credentials: Vec<DecodedJwtCredential<U>>,
 }

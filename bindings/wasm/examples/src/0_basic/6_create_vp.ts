@@ -4,6 +4,7 @@
 import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import {
+    CoreDID,
     Credential,
     Duration,
     FailFast,
@@ -11,6 +12,7 @@ import {
     JwkMemStore,
     JwsSignatureOptions,
     JwsVerificationOptions,
+    Jwt,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
     JwtPresentation,
@@ -45,7 +47,10 @@ export async function createVP() {
     const issuerSecretManager: MnemonicSecretManager = {
         mnemonic: Bip39.randomMnemonic(),
     };
-    const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    const issuerStorage: Storage = new Storage(
+        new JwkMemStore(),
+        new KeyIdMemStore(),
+    );
     let { document: issuerDocument, fragment: issuerFragment } = await createDid(
         client,
         issuerSecretManager,
@@ -56,7 +61,10 @@ export async function createVP() {
     const aliceSecretManager: MnemonicSecretManager = {
         mnemonic: Bip39.randomMnemonic(),
     };
-    const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    const aliceStorage: Storage = new Storage(
+        new JwkMemStore(),
+        new KeyIdMemStore(),
+    );
     let { document: aliceDocument, fragment: aliceFragment } = await createDid(
         client,
         aliceSecretManager,
@@ -124,10 +132,10 @@ export async function createVP() {
     // Create a Verifiable Presentation from the Credential
     const unsignedVp = new JwtPresentation({
         holder: aliceDocument.id(),
-        verifiableCredential: credentialJwt,
+        verifiableCredential: [credentialJwt],
     });
 
-    // Sign the verifiable presentation using the holder's verification method
+    // Create a JWT verifiable presentation using the holder's verification method
     // and include the requested challenge and expiry timestamp.
     const presentationJwt = await aliceDocument.createPresentationJwt(
         aliceStorage,
@@ -140,52 +148,79 @@ export async function createVP() {
     // ===========================================================================
     // Step 6: Holder sends a verifiable presentation to the verifier.
     // ===========================================================================
-    console.log(`Sending presentation (as JWT) to the verifier`, unsignedVp.toJSON());
+    console.log(
+        `Sending presentation (as JWT) to the verifier`,
+        unsignedVp.toJSON(),
+    );
 
     // ===========================================================================
     // Step 7: Verifier receives the Verifiable Presentation and verifies it.
     // ===========================================================================
 
     // The verifier wants the following requirements to be satisfied:
-    // - Signature verification (including checking the requested challenge to mitigate replay attacks)
-    // - Presentation validation must fail if credentials expiring within the next 10 hours are encountered
+    // - JWT verification of the presentation (including checking the requested challenge to mitigate replay attacks)
+    // - JWT verification of the credentials.
     // - The presentation holder must always be the subject, regardless of the presence of the nonTransferable property
     // - The issuance date must not be in the future.
 
-    // Declare that any credential contained in the presentation are not allowed to expire within the next 10 hours:
-    const earliestExpiryDate = Timestamp.nowUTC().checkedAdd(Duration.hours(10));
-    const sharedValidationOptions = new JwtCredentialValidationOptions({
-        earliestExpiryDate,
-    });
+    const jwtPresentationValidationOptions = new JwtPresentationValidationOptions(
+        {
+            presentationVerifierOptions: new JwsVerificationOptions({ nonce }),
+        },
+    );
 
-    // Declare that the presentation holder's DID must match the subject ID on all credentials in the presentation.
-    const subjectHolderRelationship = SubjectHolderRelationship.AlwaysSubject;
-
-    const jwtPresentationValidationOptions = new JwtPresentationValidationOptions({
-        presentationVerifierOptions: new JwsVerificationOptions({ nonce }),
-        sharedValidationOptions,
-        subjectHolderRelationship,
-    });
-
-    // In order to validate presentations and credentials one needs to resolve the DID Documents of
-    // the presentation holder and of credential issuers. This is something the `Resolver` can help with.
     const resolver = new Resolver({
         client: didClient,
     });
-
-    const presentationDids = JwtPresentationValidator.extractDids(presentationJwt);
-    const resolvedHolder = await resolver.resolve(presentationDids.holder.toString());
-    const resolvedIssuer = await resolver.resolve(presentationDids.issuers[0].toString());
-
-    // Validate the presentation and all the credentials included in it according to the validation options.
-    new JwtPresentationValidator().validate(
-        presentationJwt,
-        resolvedHolder,
-        [resolvedIssuer],
-        jwtPresentationValidationOptions,
-        FailFast.FirstError,
+    // Resolve the presentation holder.
+    const presentationHolderDID: CoreDID = JwtPresentationValidator.extractHolder(presentationJwt);
+    const resolvedHolder = await resolver.resolve(
+        presentationHolderDID.toString(),
     );
 
-    // Since no errors were thrown by `verifyPresentation` we know that the validation was successful.
+    // Validate presentation. Note that this doesn't validate the included credentials.
+    let decodedPresentation = new JwtPresentationValidator().validate(
+        presentationJwt,
+        resolvedHolder,
+        jwtPresentationValidationOptions,
+    );
+
+    // Validate the credentials in the presentation.
+    let credentialValidator = new JwtCredentialValidator();
+    let validationOptions = new JwtCredentialValidationOptions({
+        subjectHolderRelationship: [presentationHolderDID.toString(), SubjectHolderRelationship.AlwaysSubject],
+    });
+
+    let jwtCredentials: Jwt[] = decodedPresentation
+        .presentation()
+        .verifiableCredential()
+        .map(credential => {
+            const jwt = credential.tryIntoJwt();
+            if (!jwt) {
+                throw new Error("expected a JWT credential");
+            } else {
+                return jwt;
+            }
+        });
+
+    // Concurrently resolve the issuers' documents.
+    let issuers: string[] = [];
+    for (let jwtCredential of jwtCredentials) {
+        let issuer = JwtCredentialValidator.extractIssuerFromJwt(jwtCredential);
+        issuers.push(issuer.toString());
+    }
+    let resolvedIssuers = await resolver.resolveMultiple(issuers);
+
+    // Validate the credentials in the presentation.
+    for (let i = 0; i < jwtCredentials.length; i++) {
+        credentialValidator.validate(
+            jwtCredentials[i],
+            resolvedIssuers[i],
+            validationOptions,
+            FailFast.FirstError,
+        );
+    }
+
+    // Since no errors were thrown we know that the validation was successful.
     console.log(`VP successfully validated`);
 }

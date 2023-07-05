@@ -14,7 +14,6 @@ use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 
 use crate::credential::Credential;
-use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::error::Error;
@@ -24,9 +23,9 @@ use super::jwt_serialization::PresentationJwtClaims;
 use super::JwtPresentationBuilder;
 use super::JwtPresentationOptions;
 
-/// Represents a bundle of one or more [`Credential`]s expressed as [`Jwt`]s.
+/// Represents a bundle of one or more [`Credential`]s.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct JwtPresentation<T = Object> {
+pub struct JwtPresentation<CRED, T = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
   #[serde(rename = "@context")]
   pub context: OneOrMany<Context>,
@@ -38,7 +37,7 @@ pub struct JwtPresentation<T = Object> {
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
-  pub verifiable_credential: OneOrMany<Jwt>,
+  pub verifiable_credential: OneOrMany<CRED>,
   /// The entity that generated the `Presentation`.
   pub holder: Url,
   /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
@@ -55,7 +54,7 @@ pub struct JwtPresentation<T = Object> {
   pub proof: Option<Object>,
 }
 
-impl<T> JwtPresentation<T> {
+impl<CRED, T> JwtPresentation<CRED, T> {
   /// Returns the base JSON-LD context for `JwtPresentation`s.
   pub fn base_context() -> &'static Context {
     Credential::<Object>::base_context()
@@ -69,12 +68,12 @@ impl<T> JwtPresentation<T> {
   /// Creates a `JwtPresentationBuilder` to configure a new Presentation.
   ///
   /// This is the same as [JwtPresentationBuilder::new].
-  pub fn builder(holder: Url, properties: T) -> JwtPresentationBuilder<T> {
+  pub fn builder(holder: Url, properties: T) -> JwtPresentationBuilder<CRED, T> {
     JwtPresentationBuilder::new(holder, properties)
   }
 
   /// Returns a new `JwtPresentation` based on the `JwtPresentationBuilder` configuration.
-  pub fn from_builder(builder: JwtPresentationBuilder<T>) -> Result<Self> {
+  pub fn from_builder(builder: JwtPresentationBuilder<CRED, T>) -> Result<Self> {
     let this: Self = Self {
       context: builder.context.into(),
       id: builder.id,
@@ -118,8 +117,9 @@ impl<T> JwtPresentation<T> {
   pub fn serialize_jwt(&self, options: &JwtPresentationOptions) -> Result<String>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+    CRED: ToOwned<Owned = CRED> + serde::Serialize + serde::de::DeserializeOwned + Clone,
   {
-    let jwt_representation: PresentationJwtClaims<'_, T> = PresentationJwtClaims::new(self, options)?;
+    let jwt_representation: PresentationJwtClaims<'_, CRED, T> = PresentationJwtClaims::new(self, options)?;
     jwt_representation
       .to_json()
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))

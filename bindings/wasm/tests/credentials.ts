@@ -1,7 +1,23 @@
+import * as assert from "assert";
+import {
+    CoreDocument,
+    Credential,
+    JwkMemStore,
+    JwsAlgorithm,
+    JwsSignatureOptions,
+    JwtPresentation,
+    JwtPresentationOptions,
+    JwtPresentationValidationOptions,
+    JwtPresentationValidator,
+    KeyIdMemStore,
+    MethodScope,
+    Storage,
+    Timestamp,
+    UnknownCredential,
+} from "../node";
 export {};
 
-const assert = require("assert");
-const { Credential, JwtPresentation } = require("../node");
+// const assert = require("assert");
 
 const credentialFields = {
     context: "https://www.w3.org/2018/credentials/examples/v1",
@@ -15,8 +31,8 @@ const credentialFields = {
         },
     },
     issuer: "https://example.edu/issuers/565049",
-    issuanceDate: "2010-01-01T00:00:00Z",
-    expirationDate: "2020-01-01T19:23:24Z",
+    issuanceDate: Timestamp.parse("2010-01-01T00:00:00Z"),
+    expirationDate: Timestamp.parse("2020-01-01T19:23:24Z"),
     credentialStatus: {
         id: "https://example.edu/status/24",
         type: "CredentialStatusList2017",
@@ -75,11 +91,11 @@ describe("Credential", function() {
             assert.deepStrictEqual(credential.issuer(), credentialFields.issuer);
             assert.deepStrictEqual(
                 credential.issuanceDate().toRFC3339(),
-                credentialFields.issuanceDate,
+                credentialFields.issuanceDate.toRFC3339(),
             );
             assert.deepStrictEqual(
-                credential.expirationDate().toRFC3339(),
-                credentialFields.expirationDate,
+                credential.expirationDate()!.toRFC3339(),
+                credentialFields.expirationDate.toRFC3339(),
             );
             assert.deepStrictEqual(credential.credentialStatus(), [
                 credentialFields.credentialStatus,
@@ -152,7 +168,7 @@ describe("Presentation", function() {
                 presentationFields.type,
             ]);
             assert.deepStrictEqual(
-                presentation.verifiableCredential()[0].toString(),
+                presentation.verifiableCredential()[0].tryIntoJwt()!.toString(),
                 presentationFields.verifiableCredential[0],
             );
             assert.deepStrictEqual(presentation.holder(), presentationFields.holder);
@@ -167,6 +183,85 @@ describe("Presentation", function() {
             properties.set("custom2", 1234);
             assert.deepStrictEqual(presentation.properties(), properties);
             assert.deepStrictEqual(presentation.proof(), undefined);
+        });
+    });
+});
+
+describe("Presentation", function() {
+    describe("#mixed credentials", function() {
+        it("should work", async () => {
+            const keystore = new JwkMemStore();
+            const keyIdStore = new KeyIdMemStore();
+            const storage = new Storage(keystore, keyIdStore);
+            const VALID_DID_EXAMPLE = "did:example:123";
+            const doc = new CoreDocument({
+                id: VALID_DID_EXAMPLE,
+            });
+            const fragment = "#key-1";
+            await doc.generateMethod(
+                storage,
+                JwkMemStore.ed25519KeyType(),
+                JwsAlgorithm.EdDSA,
+                fragment,
+                MethodScope.VerificationMethod(),
+            );
+
+            const subject = {
+                id: doc.id(),
+                name: "Alice",
+                degreeName: "Bachelor of Science and Arts",
+                degreeType: "BachelorDegree",
+                GPA: "4.0",
+            };
+
+            // Create an unsigned `UniversityDegree` credential for Alice
+            const unsignedVc = new Credential({
+                id: "https://example.edu/credentials/3732",
+                type: "UniversityDegreeCredential",
+                issuer: doc.id(),
+                credentialSubject: subject,
+            });
+
+            const credentialJwt = await doc.createCredentialJwt(
+                storage,
+                fragment,
+                unsignedVc,
+                new JwsSignatureOptions(),
+            );
+
+            const otherCredential = {
+                "custom": "property",
+                "other": 5,
+                "isCredential": true,
+            };
+
+            const unsignedVp = new JwtPresentation({
+                holder: doc.id(),
+                verifiableCredential: [credentialJwt, unsignedVc, otherCredential],
+            });
+
+            const presentationJwt = await doc.createPresentationJwt(
+                storage,
+                fragment,
+                unsignedVp,
+                new JwsSignatureOptions(),
+                new JwtPresentationOptions(),
+            );
+
+            let issuer = JwtPresentationValidator.extractHolder(presentationJwt);
+            assert.deepStrictEqual(issuer.toString(), doc.id().toString());
+
+            const decodedPresentation = new JwtPresentationValidator().validate(
+                presentationJwt,
+                doc,
+                new JwtPresentationValidationOptions(),
+            );
+
+            const credentials: UnknownCredential[] = decodedPresentation.presentation().verifiableCredential();
+
+            assert.deepStrictEqual(credentials[0].tryIntoJwt()?.toString(), credentialJwt.toString());
+            assert.deepStrictEqual(credentials[1].tryIntoCredential()?.toJSON(), unsignedVc.toJSON());
+            assert.deepStrictEqual(credentials[2].tryIntoRaw(), otherCredential);
         });
     });
 });

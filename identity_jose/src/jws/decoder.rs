@@ -226,12 +226,9 @@ impl Decoder {
   ) -> Result<JwsValidationItem<'b>> {
     let mut segments = jws_bytes.split(|byte| *byte == b'.');
 
-    let (Some(protected), Some(payload), Some(signature), None) = (
-      segments.next(),
-      segments.next(),
-      segments.next(),
-      segments.next()
-    ) else {
+    let (Some(protected), Some(payload), Some(signature), None) =
+      (segments.next(), segments.next(), segments.next(), segments.next())
+    else {
       return Err(Error::InvalidContent("invalid segments count"));
     };
 

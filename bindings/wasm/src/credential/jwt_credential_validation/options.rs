@@ -14,9 +14,13 @@ pub struct WasmJwtCredentialValidationOptions(pub(crate) JwtCredentialValidation
 #[wasm_bindgen(js_class = JwtCredentialValidationOptions)]
 impl WasmJwtCredentialValidationOptions {
   #[wasm_bindgen(constructor)]
-  pub fn new(options: IJwtCredentialValidationOptions) -> Result<WasmJwtCredentialValidationOptions> {
-    let options: JwtCredentialValidationOptions = options.into_serde().wasm_result()?;
-    Ok(WasmJwtCredentialValidationOptions::from(options))
+  pub fn new(options: Option<IJwtCredentialValidationOptions>) -> Result<WasmJwtCredentialValidationOptions> {
+    if let Some(opts) = options {
+      let options: JwtCredentialValidationOptions = opts.into_serde().wasm_result()?;
+      Ok(WasmJwtCredentialValidationOptions::from(options))
+    } else {
+      Ok(Self::default())
+    }
   }
 
   /// Creates a new `JwtCredentialValidationOptions` with defaults.
@@ -42,8 +46,6 @@ impl From<WasmJwtCredentialValidationOptions> for JwtCredentialValidationOptions
   }
 }
 
-//Todo: add `StatusCheck` here if `CredentialValidationOptions` is be deleted.
-
 // Interface to allow creating `JwtCredentialValidationOptions` easily.
 #[wasm_bindgen]
 extern "C" {
@@ -67,6 +69,11 @@ interface IJwtCredentialValidationOptions {
      *
      * Default: `StatusCheck.Strict`. */
     readonly status?: StatusCheck;
+
+    /** Declares how credential subjects must relate to the presentation holder during validation.
+    *
+    * <https://www.w3.org/TR/vc-data-model/#subject-holder-relationships> */
+    readonly subjectHolderRelationship?: [string, SubjectHolderRelationship];
 
     /** Options which affect the verification of the signature on the credential. */
     readonly verifierOptions?: JwsVerificationOptions;

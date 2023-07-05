@@ -30,7 +30,6 @@ impl Default for StatusCheck {
 }
 
 /// Declares how credential subjects must relate to the presentation holder during validation.
-/// See [`crate::validator::JwtPresentationValidationOptions::subject_holder_relationship()`].
 ///
 /// See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 // Need to use serde_repr to make this work with duck typed interfaces in the Wasm bindings.

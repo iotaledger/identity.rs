@@ -129,8 +129,6 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -173,6 +171,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -1291,7 +1291,6 @@ It does not imply anything about a potentially present proof property on the pre
     * [.expirationDate()](#DecodedJwtPresentation+expirationDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
     * [.issuanceDate()](#DecodedJwtPresentation+issuanceDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
     * [.audience()](#DecodedJwtPresentation+audience) ⇒ <code>string</code> \| <code>undefined</code>
-    * [.credentials()](#DecodedJwtPresentation+credentials) ⇒ [<code>Array.&lt;DecodedJwtCredential&gt;</code>](#DecodedJwtCredential)
 
 <a name="DecodedJwtPresentation+presentation"></a>
 
@@ -1328,12 +1327,6 @@ The issuance date parsed from the JWT claims.
 
 ### decodedJwtPresentation.audience() ⇒ <code>string</code> \| <code>undefined</code>
 The `aud` property parsed from JWT claims.
-
-**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
-<a name="DecodedJwtPresentation+credentials"></a>
-
-### decodedJwtPresentation.credentials() ⇒ [<code>Array.&lt;DecodedJwtCredential&gt;</code>](#DecodedJwtCredential)
-The credentials included in the presentation (decoded).
 
 **Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
 <a name="DomainLinkageConfiguration"></a>
@@ -3418,6 +3411,7 @@ A type for decoding and validating `Credentials`.
         * [.checkSubjectHolderRelationship(credential, holder, relationship)](#JwtCredentialValidator.checkSubjectHolderRelationship)
         * [.checkStatus(credential, trustedIssuers, statusCheck)](#JwtCredentialValidator.checkStatus)
         * [.extractIssuer(credential)](#JwtCredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.extractIssuerFromJwt(credential)](#JwtCredentialValidator.extractIssuerFromJwt) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="new_JwtCredentialValidator_new"></a>
 
@@ -3562,6 +3556,21 @@ Fails if the issuer field is not a valid DID.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
+
+<a name="JwtCredentialValidator.extractIssuerFromJwt"></a>
+
+### JwtCredentialValidator.extractIssuerFromJwt(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
+Utility for extracting the issuer field of a credential in JWT representation as DID.
+
+# Errors
+
+If the JWT decoding fails or the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Jwt</code>](#Jwt) | 
 
 <a name="JwtPresentation"></a>
 
@@ -3806,10 +3815,10 @@ Deserializes an instance from a JSON object.
 * [JwtPresentationValidator](#JwtPresentationValidator)
     * [new JwtPresentationValidator(signature_verifier)](#new_JwtPresentationValidator_new)
     * _instance_
-        * [.validate(presentation_jwt, holder, issuers, validation_options, fail_fast)](#JwtPresentationValidator+validate) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+        * [.validate(presentation_jwt, holder, validation_options)](#JwtPresentationValidator+validate) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
     * _static_
         * [.checkStructure(presentation)](#JwtPresentationValidator.checkStructure)
-        * [.extractDids(presentation)](#JwtPresentationValidator.extractDids) ⇒ <code>JwtPresentationDids</code>
+        * [.extractHolder(presentation)](#JwtPresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="new_JwtPresentationValidator_new"></a>
 
@@ -3825,29 +3834,29 @@ algorithm will be used.
 
 <a name="JwtPresentationValidator+validate"></a>
 
-### jwtPresentationValidator.validate(presentation_jwt, holder, issuers, validation_options, fail_fast) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
-Validates a `JwtPresentation`.
+### jwtPresentationValidator.validate(presentation_jwt, holder, validation_options) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+Validates a [`JwtPresentation`].
 
 The following properties are validated according to `options`:
 - the JWT can be decoded into semantically valid presentation.
 - the expiration and issuance date contained in the JWT claims.
 - the holder's signature.
-- the relationship between the holder and the credential subjects.
-- the signatures and some properties of the constituent credentials (see `CredentialValidator`).
 
 Validation is done with respect to the properties set in `options`.
 
 # Warning
-The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
-trusted. This section contains more information on additional checks that should be carried out before and after
-calling this method.
+* This method does NOT validate the constituent credentials, nor the relationship between the
+credentials' issuers and the presentation holder.
+* The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
+be trusted. This section contains more information on additional checks that should be carried out before and
+after calling this method.
 
 ## The state of the supplied DID Documents.
 The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date.
 
 ## Properties that are not validated
  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+`verifiableCredential`, credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
 These should be manually checked after validation, according to your requirements.
 
 # Errors
@@ -3859,9 +3868,7 @@ An error is returned whenever a validated condition is not satisfied or when dec
 | --- | --- |
 | presentation_jwt | [<code>Jwt</code>](#Jwt) | 
 | holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
 | validation_options | [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions) | 
-| fail_fast | <code>number</code> | 
 
 <a name="JwtPresentationValidator.checkStructure"></a>
 
@@ -3874,16 +3881,14 @@ Validates the semantic structure of the `JwtPresentation`.
 | --- | --- |
 | presentation | [<code>JwtPresentation</code>](#JwtPresentation) | 
 
-<a name="JwtPresentationValidator.extractDids"></a>
+<a name="JwtPresentationValidator.extractHolder"></a>
 
-### JwtPresentationValidator.extractDids(presentation) ⇒ <code>JwtPresentationDids</code>
-Attempt to extract the holder of the presentation and the issuers of the included
-credentials.
+### JwtPresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
+Attempt to extract the holder of the presentation.
 
 # Errors:
-* If deserialization/decoding of the presentation or any of the constituent credentials
-fails.
-* If the holder or any of the issuers can't be parsed as DIDs.
+* If deserialization/decoding of the presentation fails.
+* If the holder can't be parsed as DIDs.
 
 **Kind**: static method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
 
@@ -4751,10 +4756,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4832,6 +4833,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 

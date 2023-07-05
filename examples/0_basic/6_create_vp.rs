@@ -7,9 +7,13 @@
 //!
 //! cargo run --example 6_create_vp
 
+use std::collections::HashMap;
+
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
+use identity_iota::core::OneOrMany;
+use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtPresentation;
@@ -147,12 +151,12 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(alice_document.id().to_url().into(), Default::default())
       .credential(credential_jwt)
       .build()?;
 
-  // Sign the verifiable presentation using the holder's verification method
+  // Create a JWT verifiable presentation using the holder's verification method
   // and include the requested challenge and expiry timestamp.
   let presentation_jwt: Jwt = alice_document
     .sign_presentation(
@@ -174,46 +178,53 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // The verifier wants the following requirements to be satisfied:
-  // - Signature verification (including checking the requested challenge to mitigate replay attacks)
-  // - Presentation validation must fail if credentials expiring within the next 10 hours are encountered
+  // - JWT verification of the presentation (including checking the requested challenge to mitigate replay attacks)
+  // - JWT verification of the credentials.
   // - The presentation holder must always be the subject, regardless of the presence of the nonTransferable property
   // - The issuance date must not be in the future.
 
   let presentation_verifier_options: JwsVerificationOptions =
     JwsVerificationOptions::default().nonce(challenge.to_owned());
 
-  // Do not allow credentials that expire within the next 10 hours.
-  let credential_validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
-    .earliest_expiry_date(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap());
-
-  let presentation_validation_options = JwtPresentationValidationOptions::default()
-    .presentation_verifier_options(presentation_verifier_options)
-    .shared_validation_options(credential_validation_options)
-    .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
-
-  let (holder_did, issuer_dids): (CoreDID, Vec<CoreDID>) = JwtPresentationValidator::extract_dids(&presentation_jwt)?;
-
-  // Resolve issuer and holder documents and verify presentation.
-  // Passing the holder and issuer to `verify_presentation` will bypass the resolution step.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
 
+  // Resolve the holder's document.
+  let holder_did: CoreDID = JwtPresentationValidator::extract_holder(&presentation_jwt)?;
   let holder: IotaDocument = resolver.resolve(&holder_did).await?;
-  let issuer: IotaDocument = resolver.resolve(&issuer_dids[0]).await?;
 
-  let presentation: DecodedJwtPresentation = JwtPresentationValidator::new().validate(
-    &presentation_jwt,
-    &holder,
-    &[issuer],
-    &presentation_validation_options,
-    FailFast::FirstError,
-  )?;
+  // Validate presentation. Note that this doesn't validate the included credentials.
+  let presentation_validation_options =
+    JwtPresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
+  let presentation: DecodedJwtPresentation<Jwt> =
+    JwtPresentationValidator::new().validate(&presentation_jwt, &holder, &presentation_validation_options)?;
+
+  // Concurrently resolve the issuers' documents.
+  let jwt_credentials: &OneOrMany<Jwt> = &presentation.presentation.verifiable_credential;
+  let issuers: Vec<CoreDID> = jwt_credentials
+    .iter()
+    .map(CredentialValidator::extract_issuer_from_jwt)
+    .collect::<Result<Vec<CoreDID>, _>>()?;
+  let issuers_documents: HashMap<CoreDID, IotaDocument> = resolver.resolve_multiple(&issuers).await?;
+
+  // Validate the credentials in the presentation.
+  let credential_validator: CredentialValidator = CredentialValidator::new();
+  let validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
+    .subject_holder_relationship(holder_did.to_url().into(), SubjectHolderRelationship::AlwaysSubject);
+
+  for (index, jwt_vc) in jwt_credentials.iter().enumerate() {
+    // SAFETY: Indexing should be fine since we extracted the DID from each credential and resolved it.
+    let issuer_document: &IotaDocument = &issuers_documents[&issuers[index]];
+
+    let _decoded_credential: DecodedJwtCredential<Object> = credential_validator
+      .validate::<_, Object>(jwt_vc, issuer_document, &validation_options, FailFast::FirstError)
+      .unwrap();
+  }
 
   // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
   println!("VP successfully validated: {:#?}", presentation.presentation);
 
   // Note that we did not declare a latest allowed issuance date for credentials. This is because we only want to check
   // that the credentials do not have an issuance date in the future which is a default check.
-
   Ok(())
 }

@@ -12,7 +12,6 @@ use identity_credential::presentation::JwtPresentation;
 use identity_credential::presentation::JwtPresentationBuilder;
 use identity_credential::presentation::JwtPresentationOptions;
 use identity_credential::validator::DecodedJwtPresentation;
-use identity_credential::validator::FailFast;
 use identity_credential::validator::JwtPresentationValidationOptions;
 use identity_credential::validator::JwtPresentationValidator;
 use identity_credential::validator::ValidationError;
@@ -46,7 +45,7 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
@@ -71,13 +70,11 @@ where
     .unwrap();
 
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let decoded_presentation: DecodedJwtPresentation = validator
-    .validate::<_, _, Object, Object>(
+  let decoded_presentation: DecodedJwtPresentation<Jwt> = validator
+    .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
-      &[setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
-      FailFast::FirstError,
     )
     .unwrap();
 
@@ -87,18 +84,14 @@ where
   );
   assert_eq!(decoded_presentation.issuance_date, presentation_options.issuance_date);
   assert_eq!(decoded_presentation.aud, presentation_options.audience);
-  assert_eq!(
-    decoded_presentation.credentials.into_iter().next().unwrap().credential,
-    credential.credential
-  );
 }
 
 #[tokio::test]
-async fn test_extract_dids() {
-  test_extract_dids_impl(setup_coredocument(None, None).await).await;
-  test_extract_dids_impl(setup_iotadocument(None, None).await).await;
+async fn test_extract_holder() {
+  test_extract_holder_impl(setup_coredocument(None, None).await).await;
+  test_extract_holder_impl(setup_iotadocument(None, None).await).await;
 }
-async fn test_extract_dids_impl<T>(setup: Setup<T, T>)
+async fn test_extract_holder_impl<T>(setup: Setup<T, T>)
 where
   T: JwkDocumentExt + AsRef<CoreDocument>,
 {
@@ -109,10 +102,10 @@ where
   let jws = sign_credential(&setup, &credential.credential).await;
   let jws_2 = sign_credential(&setup, &credential_2.credential).await;
 
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
-      .credential(jws)
-      .credential(jws_2)
+      .credential(jws.clone())
+      .credential(jws_2.clone())
       .build()
       .unwrap();
 
@@ -134,13 +127,22 @@ where
     .await
     .unwrap();
 
-  let (holder, issuers) = JwtPresentationValidator::extract_dids::<CoreDID, CoreDID>(&presentation_jwt).unwrap();
+  let holder = JwtPresentationValidator::extract_holder::<CoreDID>(&presentation_jwt).unwrap();
   assert_eq!(holder.to_url(), setup.subject_doc.as_ref().id().to_url());
+
+  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
+  let decoded_presentation: DecodedJwtPresentation<Jwt> = validator
+    .validate::<_, _, Object>(
+      &presentation_jwt,
+      &setup.subject_doc,
+      &JwtPresentationValidationOptions::default(),
+    )
+    .unwrap();
+  assert_eq!(decoded_presentation.presentation.verifiable_credential.to_vec()[0], jws);
   assert_eq!(
-    issuers.get(0).unwrap().to_url(),
-    setup.issuer_doc.as_ref().id().to_url()
+    decoded_presentation.presentation.verifiable_credential.to_vec()[1],
+    jws_2
   );
-  assert_eq!(issuers.get(1).unwrap().to_url(), issuer_2.as_ref().id().to_url());
 }
 
 // > Create a VP signed by a verification method with `subject_method_fragment`.
@@ -158,7 +160,7 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
@@ -209,12 +211,10 @@ where
     .unwrap();
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
-    .validate::<_, _, Object, Object>(
+    .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
-      &[&setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
-      FailFast::FirstError,
     )
     .err()
     .unwrap()
@@ -241,7 +241,7 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
@@ -268,12 +268,10 @@ where
 
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
-    .validate::<_, _, Object, Object>(
+    .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
-      &[&setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
-      FailFast::FirstError,
     )
     .err()
     .unwrap()
@@ -282,6 +280,7 @@ where
     .next()
     .unwrap();
 
+  println!("{validation_error:?}");
   assert!(matches!(validation_error, ValidationError::ExpirationDate));
 
   // Set Validation options to allow expired presentation that were valid 2 hours back.
@@ -290,13 +289,7 @@ where
     validation_options.earliest_expiry_date(Timestamp::now_utc().checked_sub(Duration::days(2)).unwrap());
 
   validator
-    .validate::<_, _, Object, Object>(
-      &presentation_jwt,
-      &setup.subject_doc,
-      &[&setup.issuer_doc],
-      &validation_options,
-      FailFast::FirstError,
-    )
+    .validate::<_, Jwt, Object>(&presentation_jwt, &setup.subject_doc, &validation_options)
     .unwrap();
 }
 
@@ -313,7 +306,7 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
@@ -340,12 +333,10 @@ where
 
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
-    .validate::<_, _, Object, Object>(
+    .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
-      &[&setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
-      FailFast::FirstError,
     )
     .err()
     .unwrap()
@@ -362,13 +353,7 @@ where
     validation_options.latest_issuance_date(Timestamp::now_utc().checked_add(Duration::hours(2)).unwrap());
 
   let validation_ok: bool = validator
-    .validate::<_, _, Object, Object>(
-      &presentation_jwt,
-      &setup.subject_doc,
-      &[&setup.issuer_doc],
-      &validation_options,
-      FailFast::FirstError,
-    )
+    .validate::<_, Jwt, Object>(&presentation_jwt, &setup.subject_doc, &validation_options)
     .is_ok();
   assert!(validation_ok);
 }
@@ -386,7 +371,7 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation =
+  let presentation: JwtPresentation<Jwt> =
     JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
@@ -409,12 +394,10 @@ where
 
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
   let validation_error: ValidationError = validator
-    .validate::<_, _, Object, Object>(
+    .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
-      &[setup.issuer_doc],
       &JwtPresentationValidationOptions::default(),
-      FailFast::FirstError,
     )
     .err()
     .unwrap()

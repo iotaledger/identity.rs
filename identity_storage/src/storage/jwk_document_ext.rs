@@ -103,9 +103,9 @@ pub trait JwkDocumentExt: private::Sealed {
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
-  async fn sign_presentation<K, I, T>(
+  async fn sign_presentation<K, I, CRED, T>(
     &self,
-    presentation: &JwtPresentation<T>,
+    presentation: &JwtPresentation<CRED, T>,
     storage: &Storage<K, I>,
     fragment: &str,
     signature_options: &JwsSignatureOptions,
@@ -114,7 +114,8 @@ pub trait JwkDocumentExt: private::Sealed {
   where
     K: JwkStorage,
     I: KeyIdStorage,
-    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync;
 }
 mod private {
   pub trait Sealed {}
@@ -324,7 +325,7 @@ impl JwkDocumentExt for CoreDocument {
     // Obtain the method corresponding to the given fragment.
     let method: &VerificationMethod = self.resolve_method(fragment, None).ok_or(Error::MethodNotFound)?;
     let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
-      return Err(Error::NotPublicKeyJwk)
+      return Err(Error::NotPublicKeyJwk);
     };
     // Extract JwsAlgorithm
     let alg: JwsAlgorithm = jwk
@@ -428,9 +429,9 @@ impl JwkDocumentExt for CoreDocument {
       .map(|jws| Jwt::new(jws.into()))
   }
 
-  async fn sign_presentation<K, I, T>(
+  async fn sign_presentation<K, I, CRED, T>(
     &self,
-    presentation: &JwtPresentation<T>,
+    presentation: &JwtPresentation<CRED, T>,
     storage: &Storage<K, I>,
     fragment: &str,
     jws_options: &JwsSignatureOptions,
@@ -440,6 +441,7 @@ impl JwkDocumentExt for CoreDocument {
     K: JwkStorage,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync,
   {
     if jws_options.detached_payload {
       return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
@@ -554,9 +556,9 @@ mod iota_document {
         .sign_credential(credential, storage, fragment, options)
         .await
     }
-    async fn sign_presentation<K, I, T>(
+    async fn sign_presentation<K, I, CRED, T>(
       &self,
-      presentation: &JwtPresentation<T>,
+      presentation: &JwtPresentation<CRED, T>,
       storage: &Storage<K, I>,
       fragment: &str,
       options: &JwsSignatureOptions,
@@ -566,6 +568,7 @@ mod iota_document {
       K: JwkStorage,
       I: KeyIdStorage,
       T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+      CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync,
     {
       self
         .core_document()

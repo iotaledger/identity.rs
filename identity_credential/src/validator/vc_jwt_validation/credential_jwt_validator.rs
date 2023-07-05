@@ -88,7 +88,6 @@ where
       credential_jwt,
       std::slice::from_ref(issuer.as_ref()),
       options,
-      None,
       fail_fast,
     )
   }
@@ -130,7 +129,6 @@ where
     credential: &Jwt,
     issuers: &[DOC],
     options: &CredentialValidationOptions,
-    relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,
   ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
@@ -164,9 +162,11 @@ where
     let structure_validation = std::iter::once_with(|| CredentialValidator::check_structure(credential));
 
     let subject_holder_validation = std::iter::once_with(|| {
-      relationship_criterion
+      options
+        .subject_holder_relationship
+        .as_ref()
         .map(|(holder, relationship)| {
-          CredentialValidator::check_subject_holder_relationship(credential, holder, relationship)
+          CredentialValidator::check_subject_holder_relationship(credential, holder, *relationship)
         })
         .unwrap_or(Ok(()))
     });
