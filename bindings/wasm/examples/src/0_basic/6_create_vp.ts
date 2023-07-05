@@ -213,7 +213,7 @@ export async function createVP() {
 
     // Validate the credentials in the presentation.
     for (let i = 0; i < jwtCredentials.length; i++) {
-        const _decodedCredential = credentialValidator.validate(
+        credentialValidator.validate(
             jwtCredentials[i],
             resolvedIssuers[i],
             validationOptions,
