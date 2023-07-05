@@ -24,7 +24,6 @@ import {
     Storage,
     SubjectHolderRelationship,
     Timestamp,
-    UntypedCredential,
 } from "@iota/identity-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 

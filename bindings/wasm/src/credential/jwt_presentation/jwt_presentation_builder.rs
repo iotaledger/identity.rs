@@ -11,10 +11,10 @@ use identity_iota::credential::RefreshService;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 
-use crate::credential::UntypedCredential;
+use crate::credential::UnknownCredential;
 use crate::error::WasmResult;
 
-impl TryFrom<IJwtPresentation> for JwtPresentationBuilder<UntypedCredential> {
+impl TryFrom<IJwtPresentation> for JwtPresentationBuilder<UnknownCredential> {
   type Error = JsValue;
 
   fn try_from(values: IJwtPresentation) -> std::result::Result<Self, Self::Error> {
@@ -29,7 +29,7 @@ impl TryFrom<IJwtPresentation> for JwtPresentationBuilder<UntypedCredential> {
       properties,
     } = values.into_serde::<IJwtPresentationHelper>().wasm_result()?;
 
-    let mut builder: JwtPresentationBuilder<UntypedCredential> =
+    let mut builder: JwtPresentationBuilder<UnknownCredential> =
       JwtPresentationBuilder::new(Url::parse(holder).wasm_result()?, properties);
 
     if let Some(context) = context {
@@ -89,7 +89,7 @@ struct IJwtPresentationHelper {
     name = "verifiableCredential",
     type = "Jwt | string | Credential | Array<Jwt | string | Credential>"
   )]
-  verifiable_credential: OneOrMany<UntypedCredential>,
+  verifiable_credential: OneOrMany<UnknownCredential>,
   /// The entity that generated the presentation.
   #[typescript(optional = false, type = "string | CoreDID | IotaDID ")]
   holder: String,

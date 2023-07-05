@@ -38,8 +38,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Array<Jwt>")]
   pub type ArrayJwt;
 
-  #[wasm_bindgen(typescript_type = "Array<UntypedCredential>")]
-  pub type ArrayUntypedCredential;
+  #[wasm_bindgen(typescript_type = "Array<UnknownCredential>")]
+  pub type ArrayUnknownCredential;
 
   #[wasm_bindgen(typescript_type = "Array<CoreDID>")]
   pub type ArrayCoreDID;
