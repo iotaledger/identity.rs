@@ -40,7 +40,7 @@ impl WasmJwtPresentationValidator {
   /// Validation is done with respect to the properties set in `options`.
   ///
   /// # Warning
-  /// 
+  ///
   /// * This method does NOT validate the constituent credentials and therefore also not the relationship between the
   /// credentials' subjects and the presentation holder. This can be done with `JwtCredentialValidationOptions`.
   /// * The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
@@ -48,11 +48,11 @@ impl WasmJwtPresentationValidator {
   /// after calling this method.
   ///
   /// ## The state of the supplied DID Documents.
-  /// 
+  ///
   /// The caller must ensure that the DID Documents in `holder` are up-to-date.
   ///
   /// # Errors
-  /// 
+  ///
   /// An error is returned whenever a validated condition is not satisfied or when decoding fails.
   #[wasm_bindgen]
   pub fn validate(
