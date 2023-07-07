@@ -16,11 +16,11 @@ use identity_iota::core::OneOrMany;
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
-use identity_iota::credential::JwtPresentation;
-use identity_iota::credential::JwtPresentationBuilder;
 use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::JwtPresentationValidationOptions;
 use identity_iota::credential::JwtPresentationValidator;
+use identity_iota::credential::Presentation;
+use identity_iota::credential::PresentationBuilder;
 use identity_iota::did::CoreDID;
 use identity_iota::document::verifiable::JwsVerificationOptions;
 use identity_iota::storage::JwkDocumentExt;
@@ -151,8 +151,8 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
-  let presentation: JwtPresentation<Jwt> =
-    JwtPresentationBuilder::new(alice_document.id().to_url().into(), Default::default())
+  let presentation: Presentation<Jwt> =
+    PresentationBuilder::new(alice_document.id().to_url().into(), Default::default())
       .credential(credential_jwt)
       .build()?;
 

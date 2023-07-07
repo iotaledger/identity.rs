@@ -10,11 +10,11 @@ use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::error::Result;
 
-use super::JwtPresentation;
+use super::Presentation;
 
-/// A `JwtPresentationBuilder` is used to create a customized [JwtPresentation].
+/// A `PresentationBuilder` is used to create a customized [Presentation].
 #[derive(Clone, Debug)]
-pub struct JwtPresentationBuilder<CRED, T = Object> {
+pub struct PresentationBuilder<CRED, T = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
@@ -25,13 +25,13 @@ pub struct JwtPresentationBuilder<CRED, T = Object> {
   pub(crate) properties: T,
 }
 
-impl<CRED, T> JwtPresentationBuilder<CRED, T> {
-  /// Creates a new `JwtPresentationBuilder`.
+impl<CRED, T> PresentationBuilder<CRED, T> {
+  /// Creates a new `PresentationBuilder`.
   pub fn new(holder: Url, properties: T) -> Self {
     Self {
-      context: vec![JwtPresentation::<T>::base_context().clone()],
+      context: vec![Presentation::<T>::base_context().clone()],
       id: None,
-      types: vec![JwtPresentation::<T>::base_type().into()],
+      types: vec![Presentation::<T>::base_type().into()],
       credentials: Vec::new(),
       holder,
       refresh_service: Vec::new(),
@@ -83,12 +83,12 @@ impl<CRED, T> JwtPresentationBuilder<CRED, T> {
   }
 
   /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
-  pub fn build(self) -> Result<JwtPresentation<CRED, T>> {
-    JwtPresentation::from_builder(self)
+  pub fn build(self) -> Result<Presentation<CRED, T>> {
+    Presentation::from_builder(self)
   }
 }
 
-impl JwtPresentationBuilder<Object> {
+impl PresentationBuilder<Object> {
   /// Adds a new custom property.
   #[must_use]
   pub fn property<K, V>(mut self, key: K, value: V) -> Self
@@ -128,8 +128,8 @@ mod tests {
   use crate::credential::CredentialBuilder;
   use crate::credential::Jwt;
   use crate::credential::Subject;
-  use crate::presentation::JwtPresentation;
-  use crate::presentation::JwtPresentationBuilder;
+  use crate::presentation::Presentation;
+  use crate::presentation::PresentationBuilder;
 
   fn subject() -> Subject {
     let json: Value = json!({
@@ -158,23 +158,19 @@ mod tests {
 
     let credential_jwt = Jwt::new(credential.serialize_jwt().unwrap());
 
-    let presentation: JwtPresentation<Jwt> =
-      JwtPresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
-        .type_("ExamplePresentation")
-        .credential(credential_jwt)
-        .build()
-        .unwrap();
+    let presentation: Presentation<Jwt> = PresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
+      .type_("ExamplePresentation")
+      .credential(credential_jwt)
+      .build()
+      .unwrap();
 
     assert_eq!(presentation.context.len(), 1);
     assert_eq!(
       presentation.context.get(0).unwrap(),
-      JwtPresentation::<Object>::base_context()
+      Presentation::<Object>::base_context()
     );
     assert_eq!(presentation.types.len(), 2);
-    assert_eq!(
-      presentation.types.get(0).unwrap(),
-      JwtPresentation::<Object>::base_type()
-    );
+    assert_eq!(presentation.types.get(0).unwrap(), Presentation::<Object>::base_type());
     assert_eq!(presentation.types.get(1).unwrap(), "ExamplePresentation");
     assert_eq!(presentation.verifiable_credential.len(), 1);
   }

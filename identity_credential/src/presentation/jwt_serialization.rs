@@ -16,7 +16,7 @@ use crate::credential::IssuanceDateClaims;
 use crate::credential::Jwt;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
-use crate::presentation::JwtPresentation;
+use crate::presentation::Presentation;
 #[cfg(feature = "validator")]
 use crate::Error;
 use crate::Result;
@@ -58,10 +58,10 @@ where
   CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone,
 {
   pub(super) fn new(
-    presentation: &'presentation JwtPresentation<CRED, T>,
+    presentation: &'presentation Presentation<CRED, T>,
     options: &JwtPresentationOptions,
   ) -> Result<Self> {
-    let JwtPresentation {
+    let Presentation {
       context,
       id,
       types,
@@ -100,28 +100,28 @@ where
   T: ToOwned + Serialize,
   <T as ToOwned>::Owned: DeserializeOwned,
 {
-  /// The JSON-LD context(s) applicable to the `JwtPresentation`.
+  /// The JSON-LD context(s) applicable to the `Presentation`.
   #[serde(rename = "@context")]
   context: Cow<'presentation, OneOrMany<Context>>,
-  /// A unique `URI` that may be used to identify the `JwtPresentation`.
+  /// A unique `URI` that may be used to identify the `Presentation`.
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<Url>,
-  /// One or more URIs defining the type of the `JwtPresentation`.
+  /// One or more URIs defining the type of the `Presentation`.
   #[serde(rename = "type")]
   types: Cow<'presentation, OneOrMany<String>>,
-  /// Credential(s) expressing the claims of the `JwtPresentation`.
+  /// Credential(s) expressing the claims of the `Presentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
   pub(crate) verifiable_credential: Cow<'presentation, OneOrMany<CRED>>,
-  /// Service(s) used to refresh an expired [`Credential`] in the `JwtPresentation`.
+  /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   refresh_service: Cow<'presentation, OneOrMany<RefreshService>>,
-  /// Terms-of-use specified by the `JwtPresentation` holder.
+  /// Terms-of-use specified by the `Presentation` holder.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   terms_of_use: Cow<'presentation, OneOrMany<Policy>>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   properties: Cow<'presentation, T>,
-  /// Proof(s) used to verify a `JwtPresentation`
+  /// Proof(s) used to verify a `Presentation`
   #[serde(skip_serializing_if = "Option::is_none")]
   proof: Option<Cow<'presentation, Object>>,
 }
@@ -132,7 +132,7 @@ where
   CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone,
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
-  pub(crate) fn try_into_presentation(self) -> Result<JwtPresentation<CRED, T>> {
+  pub(crate) fn try_into_presentation(self) -> Result<Presentation<CRED, T>> {
     self.check_consistency()?;
     let Self {
       exp: _,
@@ -153,7 +153,7 @@ where
       proof,
     } = vp;
 
-    let presentation = JwtPresentation {
+    let presentation = Presentation {
       context: context.into_owned(),
       id: jti.map(Cow::into_owned),
       types: types.into_owned(),

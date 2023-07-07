@@ -4,7 +4,7 @@
 use identity_core::common::Timestamp;
 use identity_document::verifiable::JwsVerificationOptions;
 
-/// Criteria for validating a [`JwtPresentation`](crate::presentation::JwtPresentation).
+/// Criteria for validating a [`Presentation`](crate::presentation::Presentation).
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
 #[serde(rename_all = "camelCase")]

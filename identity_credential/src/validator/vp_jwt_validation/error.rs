@@ -9,7 +9,7 @@ use crate::validator::vc_jwt_validation::CompoundCredentialValidationError;
 use crate::validator::vc_jwt_validation::ValidationError;
 
 #[derive(Debug)]
-/// An error caused by a failure to validate a `JwtPresentation`.
+/// An error caused by a failure to validate a `Presentation`.
 pub struct CompoundJwtPresentationValidationError {
   /// Errors that occurred during validation of individual credentials, mapped by index of their
   /// order in the presentation.
