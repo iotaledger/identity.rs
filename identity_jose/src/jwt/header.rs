@@ -246,9 +246,7 @@ impl JwtHeader {
     self.nonce = Some(value.into());
   }
 
-  // ===========================================================================
-  // ===========================================================================
-
+  /// Returns `true` if the header contains the given `claim`, `false` otherwise.
   pub fn has(&self, claim: &str) -> bool {
     match claim {
       "jku" => self.jku().is_some(),

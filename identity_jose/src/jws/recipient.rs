@@ -29,11 +29,13 @@ impl<'a> Recipient<'a> {
     }
   }
 
+  /// Set the integrity-protected JOSE header.
   pub fn protected(mut self, value: &'a JwsHeader) -> Self {
     self.protected = Some(value);
     self
   }
 
+  /// Set the non integrity-protected JOSE header.
   pub fn unprotected(mut self, value: &'a JwsHeader) -> Self {
     self.unprotected = Some(value);
     self

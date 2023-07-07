@@ -40,8 +40,8 @@ pub enum JwsAlgorithm {
   ES512,
   /// ECDSA using secp256k1 curve and SHA-256
   ES256K,
-  #[serde(rename = "none")]
   /// No digital signature or MAC performed
+  #[serde(rename = "none")]
   NONE,
   /// EdDSA signature algorithms
   EdDSA,
@@ -59,10 +59,10 @@ impl JwsAlgorithm {
     Self::PS384,
     Self::PS512,
     Self::ES256,
-    Self::ES384, // unsupported
-    Self::ES512, // unsupported
+    Self::ES384,
+    Self::ES512,
     Self::ES256K,
-    Self::NONE, // unsupported
+    Self::NONE,
     Self::EdDSA,
   ];
 
