@@ -360,7 +360,8 @@ impl Jwk {
   }
 
   /// Creates the JSON string of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638),
-  /// which is used as the input for hashing to produce a JWK thumbprint with a custom hash function.
+  /// which is used as the input for the JWK thumbprint hashing procedure.
+  /// This can be used as input for a custom hash function.
   pub fn thumbprint_hash_input(&self) -> String {
     let kty: &str = self.kty.name();
 
