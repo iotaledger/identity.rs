@@ -80,7 +80,7 @@ pub enum ValidationError {
   /// correct.
   #[error("the credential's structure is not semantically correct")]
   CredentialStructure(#[source] crate::Error),
-  /// Indicates that the structure of the [JwtPresentation](crate::presentation::JwtPresentation) is not
+  /// Indicates that the structure of the [Presentation](crate::presentation::Presentation) is not
   /// semantically correct.
   #[error("the presentation's structure is not semantically correct")]
   PresentationStructure(#[source] crate::Error),

@@ -70,7 +70,7 @@ pub struct Credential<T = Object> {
   #[serde(default, skip_serializing_if = "OneOrMany::is_empty")]
   pub evidence: OneOrMany<Evidence>,
   /// Indicates that the `Credential` must only be contained within a
-  /// [`Presentation`][crate::presentation::JwtPresentation] with a proof issued from the `Credential` subject.
+  /// [`Presentation`][crate::presentation::Presentation] with a proof issued from the `Credential` subject.
   #[serde(rename = "nonTransferable", skip_serializing_if = "Option::is_none")]
   pub non_transferable: Option<bool>,
   /// Miscellaneous properties.

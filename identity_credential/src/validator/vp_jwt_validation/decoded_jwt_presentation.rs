@@ -8,7 +8,7 @@ use identity_verification::jws::JwsHeader;
 
 use crate::presentation::Presentation;
 
-/// Decoded [`JwtPresentation`] from a cryptographically verified JWS.
+/// Decoded [`Presentation`] from a cryptographically verified JWS.
 ///
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the presentation itself.

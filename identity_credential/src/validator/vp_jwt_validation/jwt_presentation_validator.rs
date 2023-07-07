@@ -30,7 +30,7 @@ use super::JwtPresentationValidationOptions;
 pub struct JwtPresentationValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
 impl JwtPresentationValidator {
-  /// Creates a new [`PresentationValidator`].
+  /// Creates a new [`JwtPresentationValidator`].
   pub fn new() -> Self {
     Self(EdDSAJwsVerifier::default())
   }
