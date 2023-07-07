@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -6,7 +6,6 @@ use core::fmt::Formatter;
 use core::hash::Hash;
 use core::mem::replace;
 use core::ops::Deref;
-use core::slice::from_ref;
 use std::vec::IntoIter;
 
 use serde;
@@ -122,7 +121,7 @@ impl<T> Deref for OneOrMany<T> {
 
   fn deref(&self) -> &Self::Target {
     match self {
-      Self::One(inner) => from_ref(inner),
+      Self::One(inner) => core::slice::from_ref(inner),
       Self::Many(inner) => inner,
     }
   }
