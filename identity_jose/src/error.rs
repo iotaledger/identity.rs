@@ -12,7 +12,7 @@ pub enum Error {
   #[error("invalid json")]
   InvalidJson(#[source] serde_json::Error),
   #[error("invalid base64")]
-  InvalidBase64(#[source] base64::DecodeError),
+  InvalidBase64(#[source] identity_core::error::Error),
   #[error("invalid utf-8")]
   InvalidUtf8(#[source] core::str::Utf8Error),
   #[error("invalid claim `{0}`")]

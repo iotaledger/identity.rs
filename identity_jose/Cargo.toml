@@ -12,7 +12,6 @@ rust-version.workspace = true
 description = "A library for JOSE (JSON Object Signing and Encryption)"
 
 [dependencies]
-base64 = { version = "0.21.0", default-features = false, features = ["std"] }
 identity_core = { version = "0.7.0-alpha.6", path = "../identity_core", default-features = false }
 iota-crypto = { version = "0.18", default-features = false, features = ["std", "sha"] }
 serde.workspace = true
