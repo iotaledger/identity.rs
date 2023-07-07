@@ -4,7 +4,7 @@
 use super::decoded_jwt_presentation::WasmDecodedJwtPresentation;
 use super::options::WasmJwtPresentationValidationOptions;
 use crate::common::ImportedDocumentLock;
-use crate::credential::jwt_presentation::WasmJwtPresentation;
+use crate::credential::jwt_presentation::WasmPresentation;
 use crate::credential::WasmJwt;
 use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDID;
@@ -73,7 +73,7 @@ impl WasmJwtPresentationValidator {
 
   /// Validates the semantic structure of the `JwtPresentation`.
   #[wasm_bindgen(js_name = checkStructure)]
-  pub fn check_structure(presentation: &WasmJwtPresentation) -> Result<()> {
+  pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
     JwtPresentationValidator::check_structure(&presentation.0).wasm_result()?;
     Ok(())
   }

@@ -15,7 +15,7 @@ use identity_verification::jws::JwsVerifier;
 use std::str::FromStr;
 
 use crate::credential::Jwt;
-use crate::presentation::JwtPresentation;
+use crate::presentation::Presentation;
 use crate::presentation::PresentationJwtClaims;
 use crate::validator::vc_jwt_validation::SignerContext;
 use crate::validator::vc_jwt_validation::ValidationError;
@@ -24,7 +24,7 @@ use super::CompoundJwtPresentationValidationError;
 use super::DecodedJwtPresentation;
 use super::JwtPresentationValidationOptions;
 
-/// Struct for validating [`JwtPresentation`].
+/// Struct for validating [`Presentation`].
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct JwtPresentationValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
@@ -50,7 +50,7 @@ where
     Self(signature_verifier)
   }
 
-  /// Validates a [`JwtPresentation`].
+  /// Validates a [`Presentation`].
   ///
   /// The following properties are validated according to `options`:
   /// - the JWT can be decoded into a semantically valid presentation.
@@ -162,7 +162,7 @@ where
 
     let aud: Option<Url> = claims.aud.clone();
 
-    let presentation: JwtPresentation<CRED, T> = claims.try_into_presentation().map_err(|err| {
+    let presentation: Presentation<CRED, T> = claims.try_into_presentation().map_err(|err| {
       CompoundJwtPresentationValidationError::one_presentation_error(ValidationError::PresentationStructure(err))
     })?;
 
@@ -204,8 +204,8 @@ impl JwtPresentationValidator {
     Ok(holder)
   }
 
-  /// Validates the semantic structure of the `JwtPresentation`.
-  pub fn check_structure<U>(presentation: &JwtPresentation<U>) -> Result<(), ValidationError> {
+  /// Validates the semantic structure of the `Presentation`.
+  pub fn check_structure<U>(presentation: &Presentation<U>) -> Result<(), ValidationError> {
     presentation
       .check_structure()
       .map_err(ValidationError::PresentationStructure)

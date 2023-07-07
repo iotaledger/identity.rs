@@ -15,13 +15,13 @@ import {
     Jwt,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
-    JwtPresentation,
     JwtPresentationOptions,
     JwtPresentationValidationOptions,
     JwtPresentationValidator,
     KeyIdMemStore,
     MethodDigest,
     MethodScope,
+    Presentation,
     Storage,
     Timestamp,
     VerificationMethod,
@@ -335,7 +335,7 @@ describe("#JwkStorageDocument", function() {
             new JwsSignatureOptions(),
         );
 
-        const presentation = new JwtPresentation({
+        const presentation = new Presentation({
             holder: holderDoc.id(),
             verifiableCredential: [
                 credentialJwt.toString(),

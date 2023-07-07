@@ -8,9 +8,9 @@ use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jwt;
-use identity_credential::presentation::JwtPresentation;
-use identity_credential::presentation::JwtPresentationBuilder;
 use identity_credential::presentation::JwtPresentationOptions;
+use identity_credential::presentation::Presentation;
+use identity_credential::presentation::PresentationBuilder;
 use identity_credential::validator::DecodedJwtPresentation;
 use identity_credential::validator::JwtPresentationValidationOptions;
 use identity_credential::validator::JwtPresentationValidator;
@@ -45,8 +45,8 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation<Jwt> =
-    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+  let presentation: Presentation<Jwt> =
+    PresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
       .unwrap();
@@ -102,8 +102,8 @@ where
   let jws = sign_credential(&setup, &credential.credential).await;
   let jws_2 = sign_credential(&setup, &credential_2.credential).await;
 
-  let presentation: JwtPresentation<Jwt> =
-    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+  let presentation: Presentation<Jwt> =
+    PresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws.clone())
       .credential(jws_2.clone())
       .build()
@@ -160,8 +160,8 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation<Jwt> =
-    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+  let presentation: Presentation<Jwt> =
+    PresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
       .unwrap();
@@ -241,8 +241,8 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation<Jwt> =
-    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+  let presentation: Presentation<Jwt> =
+    PresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
       .unwrap();
@@ -306,8 +306,8 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation<Jwt> =
-    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+  let presentation: Presentation<Jwt> =
+    PresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
       .unwrap();
@@ -371,8 +371,8 @@ where
   let credential: CredentialSetup = generate_credential(&setup.issuer_doc, &[&setup.subject_doc], None, None);
   let jws = sign_credential(&setup, &credential.credential).await;
 
-  let presentation: JwtPresentation<Jwt> =
-    JwtPresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
+  let presentation: Presentation<Jwt> =
+    PresentationBuilder::new(setup.subject_doc.as_ref().id().to_url().into(), Object::new())
       .credential(jws)
       .build()
       .unwrap();

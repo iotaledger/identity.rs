@@ -6,9 +6,9 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_verification::jws::JwsHeader;
 
-use crate::presentation::JwtPresentation;
+use crate::presentation::Presentation;
 
-/// Decoded [`JwtPresentation`] from a cryptographically verified JWS.
+/// Decoded [`Presentation`] from a cryptographically verified JWS.
 ///
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the presentation itself.
@@ -16,7 +16,7 @@ use crate::presentation::JwtPresentation;
 #[derive(Debug, Clone)]
 pub struct DecodedJwtPresentation<CRED, T = Object> {
   /// The decoded presentation parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
-  pub presentation: JwtPresentation<CRED, T>,
+  pub presentation: Presentation<CRED, T>,
   /// The protected header parsed from the JWS.
   pub header: Box<JwsHeader>,
   /// The expiration date parsed from the JWT claims.

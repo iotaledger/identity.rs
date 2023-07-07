@@ -5,8 +5,8 @@ use identity_iota::core::Context;
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::Url;
-use identity_iota::credential::JwtPresentationBuilder;
 use identity_iota::credential::Policy;
+use identity_iota::credential::PresentationBuilder;
 use identity_iota::credential::RefreshService;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
@@ -14,11 +14,11 @@ use wasm_bindgen::prelude::*;
 use crate::credential::UnknownCredential;
 use crate::error::WasmResult;
 
-impl TryFrom<IJwtPresentation> for JwtPresentationBuilder<UnknownCredential> {
+impl TryFrom<IPresentation> for PresentationBuilder<UnknownCredential> {
   type Error = JsValue;
 
-  fn try_from(values: IJwtPresentation) -> std::result::Result<Self, Self::Error> {
-    let IJwtPresentationHelper {
+  fn try_from(values: IPresentation) -> std::result::Result<Self, Self::Error> {
+    let IPresentationHelper {
       context,
       id,
       r#type,
@@ -27,10 +27,10 @@ impl TryFrom<IJwtPresentation> for JwtPresentationBuilder<UnknownCredential> {
       refresh_service,
       terms_of_use,
       properties,
-    } = values.into_serde::<IJwtPresentationHelper>().wasm_result()?;
+    } = values.into_serde::<IPresentationHelper>().wasm_result()?;
 
-    let mut builder: JwtPresentationBuilder<UnknownCredential> =
-      JwtPresentationBuilder::new(Url::parse(holder).wasm_result()?, properties);
+    let mut builder: PresentationBuilder<UnknownCredential> =
+      PresentationBuilder::new(Url::parse(holder).wasm_result()?, properties);
 
     if let Some(context) = context {
       for value in context.into_vec() {
@@ -65,15 +65,15 @@ impl TryFrom<IJwtPresentation> for JwtPresentationBuilder<UnknownCredential> {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IJwtPresentation")]
-  pub type IJwtPresentation;
+  #[wasm_bindgen(typescript_type = "IPresentation")]
+  pub type IPresentation;
 }
 
-/// Fields for constructing a new {@link JwtPresentation}.
+/// Fields for constructing a new {@link Presentation}.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[typescript(name = "IJwtPresentation", readonly, optional)]
-struct IJwtPresentationHelper {
+#[typescript(name = "IPresentation", readonly, optional)]
+struct IPresentationHelper {
   /// The JSON-LD context(s) applicable to the presentation.
   #[typescript(type = "string | Record<string, any> | Array<string | Record<string, any>>")]
   context: Option<OneOrMany<Context>>,

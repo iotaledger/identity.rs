@@ -18,8 +18,8 @@ use async_trait::async_trait;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
 use identity_credential::credential::Jwt;
-use identity_credential::presentation::JwtPresentation;
 use identity_credential::presentation::JwtPresentationOptions;
+use identity_credential::presentation::Presentation;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_verification::jose::jws::CompactJwsEncoder;
@@ -105,7 +105,7 @@ pub trait JwkDocumentExt: private::Sealed {
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
   async fn sign_presentation<K, I, CRED, T>(
     &self,
-    presentation: &JwtPresentation<CRED, T>,
+    presentation: &Presentation<CRED, T>,
     storage: &Storage<K, I>,
     fragment: &str,
     signature_options: &JwsSignatureOptions,
@@ -431,7 +431,7 @@ impl JwkDocumentExt for CoreDocument {
 
   async fn sign_presentation<K, I, CRED, T>(
     &self,
-    presentation: &JwtPresentation<CRED, T>,
+    presentation: &Presentation<CRED, T>,
     storage: &Storage<K, I>,
     fragment: &str,
     jws_options: &JwsSignatureOptions,
@@ -558,7 +558,7 @@ mod iota_document {
     }
     async fn sign_presentation<K, I, CRED, T>(
       &self,
-      presentation: &JwtPresentation<CRED, T>,
+      presentation: &Presentation<CRED, T>,
       storage: &Storage<K, I>,
       fragment: &str,
       options: &JwsSignatureOptions,

@@ -20,12 +20,12 @@ use crate::error::Error;
 use crate::error::Result;
 
 use super::jwt_serialization::PresentationJwtClaims;
-use super::JwtPresentationBuilder;
 use super::JwtPresentationOptions;
+use super::PresentationBuilder;
 
 /// Represents a bundle of one or more [`Credential`]s.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct JwtPresentation<CRED, T = Object> {
+pub struct Presentation<CRED, T = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
   #[serde(rename = "@context")]
   pub context: OneOrMany<Context>,
@@ -54,26 +54,26 @@ pub struct JwtPresentation<CRED, T = Object> {
   pub proof: Option<Object>,
 }
 
-impl<CRED, T> JwtPresentation<CRED, T> {
-  /// Returns the base JSON-LD context for `JwtPresentation`s.
+impl<CRED, T> Presentation<CRED, T> {
+  /// Returns the base JSON-LD context for `Presentation`s.
   pub fn base_context() -> &'static Context {
     Credential::<Object>::base_context()
   }
 
-  /// Returns the base type for `JwtPresentation`s.
+  /// Returns the base type for `Presentation`s.
   pub const fn base_type() -> &'static str {
     "VerifiablePresentation"
   }
 
-  /// Creates a `JwtPresentationBuilder` to configure a new Presentation.
+  /// Creates a `PresentationBuilder` to configure a new Presentation.
   ///
-  /// This is the same as [JwtPresentationBuilder::new].
-  pub fn builder(holder: Url, properties: T) -> JwtPresentationBuilder<CRED, T> {
-    JwtPresentationBuilder::new(holder, properties)
+  /// This is the same as [PresentationBuilder::new].
+  pub fn builder(holder: Url, properties: T) -> PresentationBuilder<CRED, T> {
+    PresentationBuilder::new(holder, properties)
   }
 
-  /// Returns a new `JwtPresentation` based on the `JwtPresentationBuilder` configuration.
-  pub fn from_builder(builder: JwtPresentationBuilder<CRED, T>) -> Result<Self> {
+  /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
+  pub fn from_builder(builder: PresentationBuilder<CRED, T>) -> Result<Self> {
     let this: Self = Self {
       context: builder.context.into(),
       id: builder.id,
@@ -90,7 +90,7 @@ impl<CRED, T> JwtPresentation<CRED, T> {
     Ok(this)
   }
 
-  /// Validates the semantic structure of the `JwtPresentation`.
+  /// Validates the semantic structure of the `Presentation`.
   ///
   /// # Warning
   ///
@@ -110,7 +110,7 @@ impl<CRED, T> JwtPresentation<CRED, T> {
     Ok(())
   }
 
-  /// Serializes the [`JwtPresentation`] as a JWT claims set
+  /// Serializes the [`Presentation`] as a JWT claims set
   /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The resulting string can be used as the payload of a JWS when issuing the credential.  
@@ -125,7 +125,7 @@ impl<CRED, T> JwtPresentation<CRED, T> {
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
   }
 
-  /// Returns a reference to the `JwtPresentation` proof, if it exists.
+  /// Returns a reference to the `Presentation` proof, if it exists.
   ///
   /// Note that this is not the JWS or JWT of the presentation but a separate field that can be used to
   /// prove additional claims or include proofs not based on digital signatures like Proof-of-Work.
@@ -139,7 +139,7 @@ impl<CRED, T> JwtPresentation<CRED, T> {
   }
 }
 
-impl<T> Display for JwtPresentation<T>
+impl<T> Display for Presentation<T>
 where
   T: Serialize,
 {
