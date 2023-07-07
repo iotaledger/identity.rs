@@ -5,12 +5,12 @@ import {
     JwkMemStore,
     JwsAlgorithm,
     JwsSignatureOptions,
-    JwtPresentation,
     JwtPresentationOptions,
     JwtPresentationValidationOptions,
     JwtPresentationValidator,
     KeyIdMemStore,
     MethodScope,
+    Presentation,
     Storage,
     Timestamp,
     UnknownCredential,
@@ -157,14 +157,14 @@ const presentationFields = {
 describe("Presentation", function() {
     describe("#new and field getters", function() {
         it("should work", async () => {
-            const presentation = new JwtPresentation(presentationFields);
+            const presentation = new Presentation(presentationFields);
             assert.deepStrictEqual(presentation.context(), [
-                JwtPresentation.BaseContext(),
+                Presentation.BaseContext(),
                 presentationFields.context,
             ]);
             assert.deepStrictEqual(presentation.id(), presentationFields.id);
             assert.deepStrictEqual(presentation.type(), [
-                JwtPresentation.BaseType(),
+                Presentation.BaseType(),
                 presentationFields.type,
             ]);
             assert.deepStrictEqual(
@@ -230,12 +230,12 @@ describe("Presentation", function() {
             );
 
             const otherCredential = {
-                "custom": "property",
-                "other": 5,
-                "isCredential": true,
+                custom: "property",
+                other: 5,
+                isCredential: true,
             };
 
-            const unsignedVp = new JwtPresentation({
+            const unsignedVp = new Presentation({
                 holder: doc.id(),
                 verifiableCredential: [credentialJwt, unsignedVc, otherCredential],
             });
@@ -257,10 +257,18 @@ describe("Presentation", function() {
                 new JwtPresentationValidationOptions(),
             );
 
-            const credentials: UnknownCredential[] = decodedPresentation.presentation().verifiableCredential();
+            const credentials: UnknownCredential[] = decodedPresentation
+                .presentation()
+                .verifiableCredential();
 
-            assert.deepStrictEqual(credentials[0].tryIntoJwt()?.toString(), credentialJwt.toString());
-            assert.deepStrictEqual(credentials[1].tryIntoCredential()?.toJSON(), unsignedVc.toJSON());
+            assert.deepStrictEqual(
+                credentials[0].tryIntoJwt()?.toString(),
+                credentialJwt.toString(),
+            );
+            assert.deepStrictEqual(
+                credentials[1].tryIntoCredential()?.toJSON(),
+                unsignedVc.toJSON(),
+            );
             assert.deepStrictEqual(credentials[2].tryIntoRaw()!, otherCredential);
         });
     });

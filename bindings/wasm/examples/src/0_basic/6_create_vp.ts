@@ -15,11 +15,11 @@ import {
     Jwt,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
-    JwtPresentation,
     JwtPresentationOptions,
     JwtPresentationValidationOptions,
     JwtPresentationValidator,
     KeyIdMemStore,
+    Presentation,
     Resolver,
     Storage,
     SubjectHolderRelationship,
@@ -130,7 +130,7 @@ export async function createVP() {
     // ===========================================================================
 
     // Create a Verifiable Presentation from the Credential
-    const unsignedVp = new JwtPresentation({
+    const unsignedVp = new Presentation({
         holder: aliceDocument.id(),
         verifiableCredential: [credentialJwt],
     });
@@ -188,13 +188,16 @@ export async function createVP() {
     // Validate the credentials in the presentation.
     let credentialValidator = new JwtCredentialValidator();
     let validationOptions = new JwtCredentialValidationOptions({
-        subjectHolderRelationship: [presentationHolderDID.toString(), SubjectHolderRelationship.AlwaysSubject],
+        subjectHolderRelationship: [
+            presentationHolderDID.toString(),
+            SubjectHolderRelationship.AlwaysSubject,
+        ],
     });
 
     let jwtCredentials: Jwt[] = decodedPresentation
         .presentation()
         .verifiableCredential()
-        .map(credential => {
+        .map((credential) => {
             const jwt = credential.tryIntoJwt();
             if (!jwt) {
                 throw new Error("expected a JWT credential");

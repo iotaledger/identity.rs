@@ -3,48 +3,48 @@
 
 use identity_iota::core::Context;
 use identity_iota::core::Object;
-use identity_iota::credential::JwtPresentation;
-use identity_iota::credential::JwtPresentationBuilder;
+use identity_iota::credential::Presentation;
+use identity_iota::credential::PresentationBuilder;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
-use crate::credential::jwt_presentation::jwt_presentation_builder::IJwtPresentation;
 use crate::credential::ArrayContext;
 use crate::credential::ArrayPolicy;
 use crate::credential::ArrayRefreshService;
 use crate::credential::ArrayUnknownCredential;
+use crate::credential::IPresentation;
 use crate::credential::UnknownCredential;
 use crate::credential::WasmUnknownCredentialContainer;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[wasm_bindgen(js_name = JwtPresentation, inspectable)]
-pub struct WasmJwtPresentation(pub(crate) JwtPresentation<UnknownCredential>);
+#[wasm_bindgen(js_name = Presentation, inspectable)]
+pub struct WasmPresentation(pub(crate) Presentation<UnknownCredential>);
 
-#[wasm_bindgen(js_class = JwtPresentation)]
-impl WasmJwtPresentation {
+#[wasm_bindgen(js_class = Presentation)]
+impl WasmPresentation {
   /// Returns the base JSON-LD context.
   #[wasm_bindgen(js_name = "BaseContext")]
   pub fn base_context() -> Result<String> {
-    match JwtPresentation::<Object>::base_context() {
+    match Presentation::<Object>::base_context() {
       Context::Url(url) => Ok(url.to_string()),
-      Context::Obj(_) => Err(JsError::new("JwtPresentation.BaseContext should be a single URL").into()),
+      Context::Obj(_) => Err(JsError::new("Presentation.BaseContext should be a single URL").into()),
     }
   }
 
   /// Returns the base type.
   #[wasm_bindgen(js_name = "BaseType")]
   pub fn base_type() -> String {
-    JwtPresentation::<Object>::base_type().to_owned()
+    Presentation::<Object>::base_type().to_owned()
   }
 
   /// Constructs a new presentation.
   #[wasm_bindgen(constructor)]
-  pub fn new(values: IJwtPresentation) -> Result<WasmJwtPresentation> {
-    let builder: JwtPresentationBuilder<UnknownCredential, Object> =
-      JwtPresentationBuilder::<UnknownCredential, Object>::try_from(values)?;
+  pub fn new(values: IPresentation) -> Result<WasmPresentation> {
+    let builder: PresentationBuilder<UnknownCredential, Object> =
+      PresentationBuilder::<UnknownCredential, Object>::try_from(values)?;
     builder.build().map(Self).wasm_result()
   }
 
@@ -139,11 +139,11 @@ impl WasmJwtPresentation {
   }
 }
 
-impl_wasm_json!(WasmJwtPresentation, JwtPresentation);
-impl_wasm_clone!(WasmJwtPresentation, JwtPresentation);
+impl_wasm_json!(WasmPresentation, Presentation);
+impl_wasm_clone!(WasmPresentation, Presentation);
 
-impl From<JwtPresentation<UnknownCredential>> for WasmJwtPresentation {
-  fn from(presentation: JwtPresentation<UnknownCredential>) -> WasmJwtPresentation {
+impl From<Presentation<UnknownCredential>> for WasmPresentation {
+  fn from(presentation: Presentation<UnknownCredential>) -> WasmPresentation {
     Self(presentation)
   }
 }

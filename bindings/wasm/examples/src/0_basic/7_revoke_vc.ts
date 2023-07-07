@@ -47,7 +47,10 @@ export async function revokeVC() {
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
-    const issuerStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    const issuerStorage: Storage = new Storage(
+        new JwkMemStore(),
+        new KeyIdMemStore(),
+    );
     let { document: issuerDocument, fragment: issuerFragment } = await createDid(
         client,
         issuerSecretManager,
@@ -55,8 +58,11 @@ export async function revokeVC() {
     );
 
     // Create an identity for the holder, in this case also the subject.
-    const aliceStorage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
-    let { document: aliceDocument, fragment: aliceFragment } = await createDid(
+    const aliceStorage: Storage = new Storage(
+        new JwkMemStore(),
+        new KeyIdMemStore(),
+    );
+    let { document: aliceDocument } = await createDid(
         client,
         issuerSecretManager,
         aliceStorage,
@@ -74,15 +80,23 @@ export async function revokeVC() {
     issuerDocument.insertService(service);
 
     // Resolve the latest output and update it with the given document.
-    let aliasOutput: IAliasOutput = await didClient.updateDidOutput(issuerDocument);
+    let aliasOutput: IAliasOutput = await didClient.updateDidOutput(
+        issuerDocument,
+    );
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     let rentStructure: IRent = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
+    aliasOutput.amount = TransactionHelper.getStorageDeposit(
+        aliasOutput,
+        rentStructure,
+    ).toString();
 
     // Publish the document.
-    issuerDocument = await didClient.publishDidOutput(issuerSecretManager, aliasOutput);
+    issuerDocument = await didClient.publishDidOutput(
+        issuerSecretManager,
+        aliasOutput,
+    );
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -137,8 +151,14 @@ export async function revokeVC() {
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
-    const update2: IotaDocument = await didClient.publishDidOutput(issuerSecretManager, aliasOutput);
+    aliasOutput.amount = TransactionHelper.getStorageDeposit(
+        aliasOutput,
+        rentStructure,
+    ).toString();
+    const update2: IotaDocument = await didClient.publishDidOutput(
+        issuerSecretManager,
+        aliasOutput,
+    );
 
     // Credential verification now fails.
     try {
@@ -159,20 +179,30 @@ export async function revokeVC() {
 
     // By removing the verification method, that signed the credential, from the issuer's DID document,
     // we effectively revoke the credential, as it will no longer be possible to validate the signature.
-    let originalMethod = issuerDocument.resolveMethod(`#${issuerFragment}`) as VerificationMethod;
+    let originalMethod = issuerDocument.resolveMethod(
+        `#${issuerFragment}`,
+    ) as VerificationMethod;
     await issuerDocument.purgeMethod(issuerStorage, originalMethod.id());
 
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
-    issuerDocument = await didClient.publishDidOutput(issuerSecretManager, aliasOutput);
+    aliasOutput.amount = TransactionHelper.getStorageDeposit(
+        aliasOutput,
+        rentStructure,
+    ).toString();
+    issuerDocument = await didClient.publishDidOutput(
+        issuerSecretManager,
+        aliasOutput,
+    );
 
     // We expect the verifiable credential to be revoked.
     const resolver = new Resolver({ client: didClient });
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
-        const resolvedIssuerDoc = await resolver.resolve(issuerDocument.id().toString());
+        const resolvedIssuerDoc = await resolver.resolve(
+            issuerDocument.id().toString(),
+        );
         jwtCredentialValidator.validate(
             credentialJwt,
             resolvedIssuerDoc,

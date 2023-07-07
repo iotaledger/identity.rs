@@ -5,7 +5,7 @@ use identity_iota::credential::DecodedJwtPresentation;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
-use crate::credential::jwt_presentation::WasmJwtPresentation;
+use crate::credential::jwt_presentation::WasmPresentation;
 use crate::credential::UnknownCredential;
 use crate::jose::WasmJwsHeader;
 
@@ -19,8 +19,8 @@ pub struct WasmDecodedJwtPresentation(pub(crate) DecodedJwtPresentation<UnknownC
 #[wasm_bindgen(js_class = DecodedJwtPresentation)]
 impl WasmDecodedJwtPresentation {
   #[wasm_bindgen]
-  pub fn presentation(&self) -> WasmJwtPresentation {
-    WasmJwtPresentation(self.0.presentation.clone())
+  pub fn presentation(&self) -> WasmPresentation {
+    WasmPresentation(self.0.presentation.clone())
   }
 
   /// Returns a copy of the protected header parsed from the decoded JWS.
@@ -34,8 +34,8 @@ impl WasmDecodedJwtPresentation {
   /// ### Warning
   /// This destroys the `DecodedJwtPresentation` object.
   #[wasm_bindgen(js_name = intoPresentation)]
-  pub fn into_presentation(self) -> WasmJwtPresentation {
-    WasmJwtPresentation(self.0.presentation)
+  pub fn into_presentation(self) -> WasmPresentation {
+    WasmPresentation(self.0.presentation)
   }
 
   /// The expiration date parsed from the JWT claims.
