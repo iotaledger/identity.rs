@@ -261,7 +261,7 @@ describe("Presentation", function() {
 
             assert.deepStrictEqual(credentials[0].tryIntoJwt()?.toString(), credentialJwt.toString());
             assert.deepStrictEqual(credentials[1].tryIntoCredential()?.toJSON(), unsignedVc.toJSON());
-            assert.deepStrictEqual(credentials[2].tryIntoRaw(), otherCredential);
+            assert.deepStrictEqual(credentials[2].tryIntoRaw()!, otherCredential);
         });
     });
 });
