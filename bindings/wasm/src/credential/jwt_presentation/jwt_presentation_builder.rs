@@ -87,7 +87,7 @@ struct IJwtPresentationHelper {
   #[typescript(
     optional = false,
     name = "verifiableCredential",
-    type = "Jwt | Credential | any | Array<Jwt | Credential | any>"
+    type = "Jwt | Credential | Record<string, any> | Array<Jwt | Credential | Record<string, any>>"
   )]
   verifiable_credential: OneOrMany<UnknownCredential>,
   /// The entity that generated the presentation.

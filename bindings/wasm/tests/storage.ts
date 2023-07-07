@@ -235,8 +235,57 @@ describe("#JwkStorageDocument", function() {
                 },
             },
             issuer: doc.id(),
-            issuanceDate: "2010-01-01T00:00:00Z",
+            issuanceDate: Timestamp.parse("2010-01-01T00:00:00Z"),
         };
+
+        const credential = new Credential(credentialFields);
+        // Create the JWT
+        const credentialJwt = await doc.createCredentialJwt(
+            storage,
+            fragment,
+            credential,
+            new JwsSignatureOptions(),
+        );
+
+        // Check that the credentialJwt can be decoded and verified
+        let credentialValidator = new JwtCredentialValidator();
+        const credentialRetrieved = credentialValidator
+            .validate(
+                credentialJwt,
+                doc,
+                JwtCredentialValidationOptions.default(),
+                FailFast.FirstError,
+            )
+            .credential();
+        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+
+        // Also check using our custom verifier
+        let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
+        const credentialRetrievedCustom = credentialValidatorCustom
+            .validate(
+                credentialJwt,
+                doc,
+                JwtCredentialValidationOptions.default(),
+                FailFast.AllErrors,
+            )
+            .credential();
+        // Check that customVerifer.verify was indeed called
+        assert.deepStrictEqual(customVerifier.verifications(), 2);
+        assert.deepStrictEqual(
+            credentialRetrievedCustom.toJSON(),
+            credential.toJSON(),
+        );
+
+        // Delete the method
+        const methodId = (method as VerificationMethod).id();
+        await doc.purgeMethod(storage, methodId); // Check that the method can no longer be resolved.
+        assert.deepStrictEqual(doc.resolveMethod(fragment), undefined);
+        // The storage should now be empty
+        assert.deepStrictEqual(
+            (storage.keyIdStorage() as KeyIdMemStore).count(),
+            0,
+        );
+        assert.deepStrictEqual((storage.keyStorage() as JwkMemStore).count(), 0);
     });
 
     it("JwtPresentation should work", async () => {
