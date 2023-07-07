@@ -278,11 +278,12 @@ impl JwkParamsRsa {
       && self.dp.is_none()
       && self.dq.is_none()
       && self.qi.is_none()
-      // TODO: `oth` consists of multiple fields; check individually?
       && self.oth.is_none()
   }
 
   /// Returns `true` if _all_ private key components of the key are set, `false` otherwise.
+  ///
+  /// Since the `oth` parameter is optional in a private key, its presence is not checked.
   pub fn is_private(&self) -> bool {
     self.d.is_some()
       && self.p.is_some()
@@ -290,7 +291,6 @@ impl JwkParamsRsa {
       && self.dp.is_some()
       && self.dq.is_some()
       && self.qi.is_some()
-      && self.oth.is_some()
   }
 }
 
