@@ -150,8 +150,9 @@ impl<'a> JwsValidationItem<'a> {
       DecodedHeaders::Both { protected, unprotected } => (protected, Some(unprotected)),
       DecodedHeaders::Unprotected(_) => return Err(Error::MissingHeader("missing protected header")),
     };
+
     // Extract and validate alg from the protected header.
-    let alg = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
+    let alg: JwsAlgorithm = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
     public_key.check_alg(alg.name())?;
 
     // Construct verification input

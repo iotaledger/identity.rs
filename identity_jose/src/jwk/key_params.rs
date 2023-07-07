@@ -25,6 +25,7 @@ pub enum JwkParams {
 }
 
 impl JwkParams {
+  /// Creates new `JwkParams` with the given `kty` parameter.
   pub const fn new(kty: JwkType) -> Self {
     match kty {
       JwkType::Ec => Self::Ec(JwkParamsEc::new()),
@@ -34,6 +35,7 @@ impl JwkParams {
     }
   }
 
+  /// Returns the key type `kty`.
   pub const fn kty(&self) -> JwkType {
     match self {
       Self::Ec(inner) => inner.kty(),
@@ -98,6 +100,7 @@ pub struct JwkParamsEc {
 }
 
 impl JwkParamsEc {
+  /// Creates new JWK EC Params.
   pub const fn new() -> Self {
     Self {
       crv: String::new(),
@@ -107,10 +110,12 @@ impl JwkParamsEc {
     }
   }
 
+  /// Returns the key type `kty`.
   pub const fn kty(&self) -> JwkType {
     JwkType::Ec
   }
 
+  /// Returns a clone with _all_ private key components unset.
   pub fn to_public(&self) -> Self {
     Self {
       crv: self.crv.clone(),
@@ -130,6 +135,7 @@ impl JwkParamsEc {
     self.d.is_some()
   }
 
+  /// Returns the [`EcCurve`] if it is of a supported type.
   pub fn try_ec_curve(&self) -> Result<EcCurve> {
     match &*self.crv {
       "P-256" => Ok(EcCurve::P256),
@@ -229,6 +235,7 @@ pub struct JwkParamsRsaPrime {
 }
 
 impl JwkParamsRsa {
+  /// Creates new JWK RSA Params.
   pub const fn new() -> Self {
     Self {
       n: String::new(),
@@ -243,10 +250,12 @@ impl JwkParamsRsa {
     }
   }
 
+  /// Returns the key type `kty`.
   pub const fn kty(&self) -> JwkType {
     JwkType::Rsa
   }
 
+  /// Returns a clone with _all_ private key components unset.
   pub fn to_public(&self) -> Self {
     Self {
       n: self.n.clone(),
@@ -308,10 +317,12 @@ pub struct JwkParamsOct {
 }
 
 impl JwkParamsOct {
+  /// Creates new JWK Oct Params.
   pub const fn new() -> Self {
     Self { k: String::new() }
   }
 
+  /// Returns the key type `kty`.
   pub const fn kty(&self) -> JwkType {
     JwkType::Oct
   }
@@ -355,6 +366,7 @@ pub struct JwkParamsOkp {
 }
 
 impl JwkParamsOkp {
+  /// Creates new JWK OKP Params.
   pub const fn new() -> Self {
     Self {
       crv: String::new(),
@@ -363,10 +375,12 @@ impl JwkParamsOkp {
     }
   }
 
+  /// Returns the key type `kty`.
   pub const fn kty(&self) -> JwkType {
     JwkType::Okp
   }
 
+  /// Returns a clone with _all_ private key components unset.
   pub fn to_public(&self) -> Self {
     Self {
       crv: self.crv.clone(),
@@ -385,6 +399,7 @@ impl JwkParamsOkp {
     self.d.is_some()
   }
 
+  /// Returns the [`EdCurve`] if it is of a supported type.
   pub fn try_ed_curve(&self) -> Result<EdCurve> {
     match &*self.crv {
       "Ed25519" => Ok(EdCurve::Ed25519),
@@ -393,6 +408,7 @@ impl JwkParamsOkp {
     }
   }
 
+  /// Returns the [`EcxCurve`] if it is of a supported type.
   pub fn try_ecx_curve(&self) -> Result<EcxCurve> {
     match &*self.crv {
       "X25519" => Ok(EcxCurve::X25519),

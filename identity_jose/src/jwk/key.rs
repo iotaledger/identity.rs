@@ -275,6 +275,7 @@ impl Jwk {
     self.params = value.into();
   }
 
+  /// Returns the [`JwkParamsEc`] in this JWK if it is of type `Ec`.
   pub fn try_ec_params(&self) -> Result<&JwkParamsEc> {
     match self.params() {
       JwkParams::Ec(params) => Ok(params),
@@ -282,6 +283,7 @@ impl Jwk {
     }
   }
 
+  /// Returns a mutable reference to the [`JwkParamsEc`] in this JWK if it is of type `Ec`.
   pub fn try_ec_params_mut(&mut self) -> Result<&mut JwkParamsEc> {
     match self.params_mut() {
       JwkParams::Ec(params) => Ok(params),
@@ -289,6 +291,7 @@ impl Jwk {
     }
   }
 
+  /// Returns the [`JwkParamsRsa`] in this JWK if it is of type `Rsa`.
   pub fn try_rsa_params(&self) -> Result<&JwkParamsRsa> {
     match self.params() {
       JwkParams::Rsa(params) => Ok(params),
@@ -296,6 +299,7 @@ impl Jwk {
     }
   }
 
+  /// Returns a mutable reference to the [`JwkParamsRsa`] in this JWK if it is of type `Rsa`.
   pub fn try_rsa_params_mut(&mut self) -> Result<&mut JwkParamsRsa> {
     match self.params_mut() {
       JwkParams::Rsa(params) => Ok(params),
@@ -303,6 +307,7 @@ impl Jwk {
     }
   }
 
+  /// Returns the [`JwkParamsOct`] in this JWK if it is of type `Oct`.
   pub fn try_oct_params(&self) -> Result<&JwkParamsOct> {
     match self.params() {
       JwkParams::Oct(params) => Ok(params),
@@ -310,6 +315,7 @@ impl Jwk {
     }
   }
 
+  /// Returns a mutable reference to the [`JwkParamsOct`] in this JWK if it is of type `Oct`.
   pub fn try_oct_params_mut(&mut self) -> Result<&mut JwkParamsOct> {
     match self.params_mut() {
       JwkParams::Oct(params) => Ok(params),
@@ -317,6 +323,7 @@ impl Jwk {
     }
   }
 
+  /// Returns the [`JwkParamsOkp`] in this JWK if it is of type `Okp`.
   pub fn try_okp_params(&self) -> Result<&JwkParamsOkp> {
     match self.params() {
       JwkParams::Okp(params) => Ok(params),
@@ -324,6 +331,7 @@ impl Jwk {
     }
   }
 
+  /// Returns a mutable reference to the [`JwkParamsOkp`] in this JWK if it is of type `Okp`.
   pub fn try_okp_params_mut(&mut self) -> Result<&mut JwkParamsOkp> {
     match self.params_mut() {
       JwkParams::Okp(params) => Ok(params),
@@ -386,22 +394,7 @@ impl Jwk {
   // Validations
   // ===========================================================================
 
-  pub fn check_use(&self, expected: JwkUse) -> Result<()> {
-    match self.use_() {
-      Some(value) if value == expected => Ok(()),
-      Some(_) => Err(Error::InvalidClaim("use")),
-      None => Ok(()),
-    }
-  }
-
-  pub fn check_ops(&self, expected: JwkOperation) -> Result<()> {
-    match self.key_ops() {
-      Some(ops) if ops.contains(&expected) => Ok(()),
-      Some(_) => Err(Error::InvalidClaim("key_ops")),
-      None => Ok(()),
-    }
-  }
-
+  /// Checks if the `alg` claim of the JWK is equal to `expected`.
   pub fn check_alg(&self, expected: &str) -> Result<()> {
     match self.alg() {
       Some(value) if value == expected => Ok(()),
@@ -410,38 +403,7 @@ impl Jwk {
     }
   }
 
-  pub fn check_signing_key(&self, algorithm: &str) -> Result<()> {
-    self.check_use(JwkUse::Signature)?;
-    self.check_ops(JwkOperation::Sign)?;
-    self.check_alg(algorithm)?;
-
-    Ok(())
-  }
-
-  pub fn check_verifying_key(&self, algorithm: &str) -> Result<()> {
-    self.check_use(JwkUse::Signature)?;
-    self.check_ops(JwkOperation::Verify)?;
-    self.check_alg(algorithm)?;
-
-    Ok(())
-  }
-
-  pub fn check_encryption_key(&self, algorithm: &str) -> Result<()> {
-    self.check_use(JwkUse::Encryption)?;
-    self.check_ops(JwkOperation::Encrypt)?;
-    self.check_alg(algorithm)?;
-
-    Ok(())
-  }
-
-  pub fn check_decryption_key(&self, algorithm: &str) -> Result<()> {
-    self.check_use(JwkUse::Encryption)?;
-    self.check_ops(JwkOperation::Decrypt)?;
-    self.check_alg(algorithm)?;
-
-    Ok(())
-  }
-
+  /// Returns the [`EcCurve`] of this JWK if it is of type `Ec`.
   pub fn try_ec_curve(&self) -> Result<EcCurve> {
     match self.params() {
       JwkParams::Ec(inner) => inner.try_ec_curve(),
@@ -449,6 +411,7 @@ impl Jwk {
     }
   }
 
+  /// Returns the [`EdCurve`] of this JWK if it is of type `Okp`.
   pub fn try_ed_curve(&self) -> Result<EdCurve> {
     match self.params() {
       JwkParams::Okp(inner) => inner.try_ed_curve(),
@@ -456,6 +419,7 @@ impl Jwk {
     }
   }
 
+  /// Returns the [`EcxCurve`] of this JWK if it is of type `Okp`.
   pub fn try_ecx_curve(&self) -> Result<EcxCurve> {
     match self.params() {
       JwkParams::Okp(inner) => inner.try_ecx_curve(),
@@ -479,6 +443,7 @@ impl Jwk {
   }
 
   /// Returns a clone of the Jwk with _all_ private key components unset.
+  ///
   /// The `None` variant is returned when `kty = oct` as this key type is not considered public by this library.
   pub fn to_public(&self) -> Option<Jwk> {
     let mut public: Jwk = Jwk::from_params(self.params().to_public()?);
