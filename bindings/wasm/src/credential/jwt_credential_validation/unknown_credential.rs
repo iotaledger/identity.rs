@@ -6,6 +6,7 @@ use identity_iota::credential::Credential;
 use identity_iota::credential::Jwt;
 use wasm_bindgen::prelude::*;
 
+use crate::common::RecordStringAny;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJwt;
 
@@ -46,14 +47,13 @@ impl WasmUnknownCredentialContainer {
 
   /// Returns the contained value as JSON, if it can be converted, `undefined` otherwise.
   #[wasm_bindgen(js_name = tryIntoRaw)]
-  pub fn try_into_raw(&self) -> JsValue {
-    let js_value: Option<JsValue> = match &self.0 {
-      UnknownCredential::Jwt(jwt) => JsValue::from_serde(jwt).ok(),
-      UnknownCredential::Credential(credential) => JsValue::from_serde(credential).ok(),
-      UnknownCredential::Other(object) => JsValue::from_serde(object).ok(),
-    };
-
-    js_value.unwrap_or_else(JsValue::undefined)
+  pub fn try_into_raw(&self) -> Option<RecordStringAny> {
+    match &self.0 {
+      UnknownCredential::Other(object) => JsValue::from_serde(object)
+        .map(|js_val| js_val.unchecked_into::<RecordStringAny>())
+        .ok(),
+      _ => None,
+    }
   }
 }
 
