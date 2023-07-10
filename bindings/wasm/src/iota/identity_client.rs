@@ -86,12 +86,12 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_IOTA_IDENTITY_CLIENT: &'static str = r#"
-import type { IAliasOutput, IRent } from '@iota/types';
+import type { AliasOutput } from '~sdk-wasm';
 /** Helper interface necessary for `IotaIdentityClientExt`. */
 interface IIotaIdentityClient {
 
   /** Resolve an Alias identifier, returning its latest `OutputId` and `AliasOutput`. */
-  getAliasOutput(aliasId: string): Promise<[string, IAliasOutput]>;
+  getAliasOutput(aliasId: string): Promise<[string, AliasOutput]>;
 
   /** Returns the protocol parameters. */
   getProtocolParameters(): Promise<INodeInfoProtocol>; 

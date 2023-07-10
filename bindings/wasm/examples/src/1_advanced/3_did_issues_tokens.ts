@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDID,
     IotaDocument,
@@ -12,25 +10,24 @@ import {
     Storage,
 } from "@iota/identity-wasm/node";
 import {
-    ADDRESS_UNLOCK_CONDITION_TYPE,
-    ALIAS_ADDRESS_TYPE,
-    Bech32Helper,
-    EXPIRATION_UNLOCK_CONDITION_TYPE,
-    FOUNDRY_OUTPUT_TYPE,
-    IAliasAddress,
-    IAliasOutput,
-    IBasicOutput,
-    IImmutableAliasUnlockCondition,
-    IMMUTABLE_ALIAS_UNLOCK_CONDITION_TYPE,
-    IOutputResponse,
+    AddressUnlockCondition,
+    AliasAddress,
+    AliasOutput,
+    BasicOutput,
+    Client,
+    ExpirationUnlockCondition,
+    FoundryOutput,
+    ImmutableAliasAddressUnlockCondition,
     IRent,
-    ISimpleTokenScheme,
-    OutputTypes,
-    SIMPLE_TOKEN_SCHEME_TYPE,
-    TransactionHelper,
-} from "@iota/iota.js";
-import type { IFoundryOutput } from "@iota/types";
-import { HexHelper } from "@iota/util.js";
+    MnemonicSecretManager,
+    Output,
+    OutputResponse,
+    OutputType,
+    SecretManager,
+    SimpleTokenScheme,
+    UnlockConditionType,
+    Utils,
+} from "@iota/sdk-wasm/node";
 import bigInt from "big-integer";
 import { API_ENDPOINT, createDid } from "../util";
 
@@ -52,7 +49,7 @@ export async function didIssuesTokens() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Create a new DID for the authority. (see "0_create_did" example).
@@ -74,24 +71,24 @@ export async function didIssuesTokens() {
     // updated version of the output. We pass in the previous document,
     // because we don't want to modify it in this update.
     var authorityDocument: IotaDocument = await didClient.resolveDid(authorityDid);
-    const authorityAliasOutput: IAliasOutput = await didClient.updateDidOutput(authorityDocument);
+    const authorityAliasOutput: AliasOutput = await didClient.updateDidOutput(authorityDocument);
 
     // We will add one foundry to this Alias Output.
     authorityAliasOutput.foundryCounter += 1;
 
     // Create a token foundry that represents carbon credits.
-    const tokenScheme: ISimpleTokenScheme = {
-        type: SIMPLE_TOKEN_SCHEME_TYPE,
-        mintedTokens: HexHelper.fromBigInt256(bigInt(500_000)),
-        meltedTokens: HexHelper.fromBigInt256(bigInt(0)),
-        maximumSupply: HexHelper.fromBigInt256(bigInt(1_000_000)),
-    };
+    // TODO: Big Int.
+    const tokenScheme: SimpleTokenScheme = new SimpleTokenScheme(
+        "HexHelper.fromBigInt256(bigInt(500_000))",
+        "HexHelper.fromBigInt256(bigInt(0))",
+        "HexHelper.fromBigInt256(bigInt(1_000_000))",
+    );
 
     // Create the identifier of the token, which is partially derived from the Alias Address.
-    const tokenId: string = TransactionHelper.constructTokenId(authorityDid.toAliasId(), 1, tokenScheme.type);
+    const tokenId: string = Utils.computeTokenId(authorityDid.toAliasId(), 1, tokenScheme.getType());
 
     // Create a token foundry that represents carbon credits.
-    var carbonCreditsFoundry: IFoundryOutput = await client.buildFoundryOutput({
+    var carbonCreditsFoundry: FoundryOutput = await client.buildFoundryOutput({
         tokenScheme,
         serialNumber: 1,
         // Initially, all carbon credits are owned by the foundry.
@@ -103,18 +100,14 @@ export async function didIssuesTokens() {
         ],
         // The authority is set as the immutable owner.
         unlockConditions: [
-            {
-                type: IMMUTABLE_ALIAS_UNLOCK_CONDITION_TYPE,
-                address: {
-                    type: ALIAS_ADDRESS_TYPE,
-                    aliasId: authorityDid.toAliasId(),
-                },
-            },
+            new ImmutableAliasAddressUnlockCondition(
+                new AliasAddress(Utils.aliasIdToBech32(authorityDid.toAliasId(), networkName)),
+            ),
         ],
     });
 
     // Set the appropriate storage deposit.
-    carbonCreditsFoundry.amount = TransactionHelper.getStorageDeposit(carbonCreditsFoundry, rentStructure).toString();
+    carbonCreditsFoundry.amount = Utils.computeStorageDeposit(carbonCreditsFoundry, rentStructure);
 
     // Publish the foundry.
     const [blockId, block] = await client.buildAndPostBlock(secretManager, {
@@ -129,23 +122,23 @@ export async function didIssuesTokens() {
     // Get the latest output that contains the foundry.
     const carbonCreditsFoundryId: string = tokenId;
     const outputId: string = await client.foundryOutputId(carbonCreditsFoundryId);
-    const outputResponse: IOutputResponse = await client.getOutput(outputId);
-    const output: OutputTypes = outputResponse.output;
+    const outputResponse: OutputResponse = await client.getOutput(outputId);
+    const output: Output = outputResponse.output;
 
-    if (output.type === FOUNDRY_OUTPUT_TYPE) {
-        carbonCreditsFoundry = output;
+    if (output.getType() === OutputType.Foundry) {
+        carbonCreditsFoundry = output as FoundryOutput;
     } else {
         throw new Error("expected foundry output");
     }
 
     // Get the Alias Id of the authority that issued the carbon credits foundry.
     // Non-null assertion is safe as each founry output needs to have an immutable alias unlock condition.
-    const aliasUnlockCondition: IImmutableAliasUnlockCondition = carbonCreditsFoundry.unlockConditions.find(
-        unlockCondition => unlockCondition.type === IMMUTABLE_ALIAS_UNLOCK_CONDITION_TYPE,
-    )! as IImmutableAliasUnlockCondition;
+    const aliasUnlockCondition: ImmutableAliasAddressUnlockCondition = carbonCreditsFoundry.getUnlockConditions().find(
+        unlockCondition => unlockCondition.getType() === UnlockConditionType.ImmutableAliasAddress,
+    )! as ImmutableAliasAddressUnlockCondition;
 
     // We know the immutable alias unlock condition contains an alias address.
-    const authorityAliasId: string = (aliasUnlockCondition.address as IAliasAddress).aliasId;
+    const authorityAliasId: string = (aliasUnlockCondition.getAddress() as AliasAddress).getAliasId();
 
     // Reconstruct the DID of the authority.
     authorityDid = IotaDID.fromAliasId(authorityAliasId, networkName);
@@ -160,20 +153,20 @@ export async function didIssuesTokens() {
     // =========================================================
 
     // Create a new address that represents the company.
-    const companyAddressBech32: string = (await client.generateAddresses(secretManager, {
+    const companyAddressBech32: string = (await new SecretManager(secretManager).generateEd25519Addresses({
         accountIndex: 0,
         range: {
             start: 1,
             end: 2,
         },
     }))[0];
-    const companyAddress = Bech32Helper.addressFromBech32(companyAddressBech32, networkName);
+    const companyAddress = Utils.parseBech32Address(companyAddressBech32);
 
     // Create a timestamp 24 hours from now.
     const tomorrow: number = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
 
     // Create a basic output containing our carbon credits that we'll send to the company's address.
-    const basicOutput: IBasicOutput = await client.buildBasicOutput({
+    const basicOutput: BasicOutput = await client.buildBasicOutput({
         nativeTokens: [
             {
                 amount: HexHelper.fromBigInt256(bigInt(1000)),
@@ -182,28 +175,21 @@ export async function didIssuesTokens() {
         ],
         // Allow the company to claim the credits within 24 hours by using an expiration unlock condition.
         unlockConditions: [
-            {
-                type: ADDRESS_UNLOCK_CONDITION_TYPE,
-                address: companyAddress,
-            },
-            {
-                type: EXPIRATION_UNLOCK_CONDITION_TYPE,
-                unixTime: tomorrow,
-                returnAddress: {
-                    type: ALIAS_ADDRESS_TYPE,
-                    aliasId: authorityAliasId,
-                },
-            },
+            new AddressUnlockCondition(companyAddress),
+            new ExpirationUnlockCondition(
+                new AliasAddress(Utils.aliasIdToBech32(authorityAliasId, networkName)),
+                tomorrow,
+            ),
         ],
     });
 
     // Reduce the carbon credits in the foundry by the amount that is sent to the company.
-    carbonCreditsFoundry.nativeTokens = [
+    carbonCreditsFoundry.setNativeTokens([
         {
             amount: HexHelper.fromBigInt256(bigInt(499_000)),
             id: tokenId,
         },
-    ];
+    ]);
 
     // Publish the Basic Output and the updated foundry.
     const [blockId2, block2] = await client.buildAndPostBlock(secretManager, {

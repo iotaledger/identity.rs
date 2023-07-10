@@ -24,20 +24,20 @@ use crate::iota::WasmIotaDocument;
 // `IAliasOutput`, `AddressTypes`, and `IRent` are external interfaces.
 // See the custom TypeScript section in `identity_client.rs` for the first import statement.
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import type { AddressTypes } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { Address, IRent } from '~sdk-wasm';"#;
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<IAliasOutput>")]
+  #[wasm_bindgen(typescript_type = "Promise<AliasOutput>")]
   pub type PromiseAliasOutput;
 
   #[wasm_bindgen(typescript_type = "Promise<IotaDocument>")]
   pub type PromiseIotaDocument;
 
-  #[wasm_bindgen(typescript_type = "AddressTypes")]
-  pub type AddressTypes;
+  #[wasm_bindgen(typescript_type = "Address")]
+  pub type WasmAddress;
 
-  #[wasm_bindgen(typescript_type = "IAliasOutput")]
-  pub type IAliasOutput;
+  #[wasm_bindgen(typescript_type = "AliasOutput")]
+  pub type WasmAliasOutput;
 
   #[wasm_bindgen(typescript_type = "IRent")]
   pub type IRent;
@@ -62,7 +62,7 @@ impl WasmIotaIdentityClientExt {
   #[wasm_bindgen(js_name = newDidOutput)]
   pub fn new_did_output(
     client: WasmIotaIdentityClient,
-    address: AddressTypes,
+    address: WasmAddress,
     document: &WasmIotaDocument,
     rentStructure: Option<IRent>,
   ) -> Result<PromiseAliasOutput> {

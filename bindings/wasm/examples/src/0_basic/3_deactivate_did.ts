@@ -1,10 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
 import { Bip39 } from "@iota/crypto.js";
 import { IotaDocument, IotaIdentityClient, JwkMemStore, KeyIdMemStore, Storage } from "@iota/identity-wasm/node";
-import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
+import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to deactivate a DID in an Alias Output. */
@@ -36,11 +35,11 @@ export async function deactivateIdentity() {
     // Deactivate the DID by publishing an empty document.
     // This process can be reversed since the Alias Output is not destroyed.
     // Deactivation may only be performed by the state controller of the Alias Output.
-    let deactivatedOutput: IAliasOutput = await didClient.deactivateDidOutput(did);
+    let deactivatedOutput: AliasOutput = await didClient.deactivateDidOutput(did);
 
     // Optional: reduce and reclaim the storage deposit, sending the tokens to the state controller.
     const rentStructure: IRent = await didClient.getRentStructure();
-    deactivatedOutput.amount = TransactionHelper.getStorageDeposit(deactivatedOutput, rentStructure).toString();
+    deactivatedOutput.amount = Utils.computeStorageDeposit(deactivatedOutput, rentStructure);
 
     // Publish the deactivated DID document.
     await didClient.publishDidOutput(secretManager, deactivatedOutput);
@@ -54,10 +53,10 @@ export async function deactivateIdentity() {
     }
 
     // Re-activate the DID by publishing a valid DID document.
-    let reactivatedOutput: IAliasOutput = await didClient.updateDidOutput(document);
+    let reactivatedOutput: AliasOutput = await didClient.updateDidOutput(document);
 
     // Increase the storage deposit to the minimum again, if it was reclaimed during deactivation.
-    reactivatedOutput.amount = TransactionHelper.getStorageDeposit(reactivatedOutput, rentStructure).toString();
+    reactivatedOutput.amount = Utils.computeStorageDeposit(reactivatedOutput, rentStructure);
     await didClient.publishDidOutput(secretManager, reactivatedOutput);
 
     // Resolve the reactivated DID document.

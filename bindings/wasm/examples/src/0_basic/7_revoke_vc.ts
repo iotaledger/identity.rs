@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     Credential,
     FailFast,
@@ -19,7 +17,7 @@ import {
     Storage,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
-import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
+import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -43,7 +41,7 @@ export async function revokeVC() {
 
     // Generate a random mnemonic for our wallet.
     const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
@@ -80,14 +78,14 @@ export async function revokeVC() {
     issuerDocument.insertService(service);
 
     // Resolve the latest output and update it with the given document.
-    let aliasOutput: IAliasOutput = await didClient.updateDidOutput(
+    let aliasOutput: AliasOutput = await didClient.updateDidOutput(
         issuerDocument,
     );
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     let rentStructure: IRent = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(
+    aliasOutput.amount = Utils.computeStorageDeposit(
         aliasOutput,
         rentStructure,
     ).toString();
@@ -151,7 +149,7 @@ export async function revokeVC() {
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(
+    aliasOutput.amount = Utils.computeStorageDeposit(
         aliasOutput,
         rentStructure,
     ).toString();
@@ -187,7 +185,7 @@ export async function revokeVC() {
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(
+    aliasOutput.amount = Utils.computeStorageDeposit(
         aliasOutput,
         rentStructure,
     ).toString();

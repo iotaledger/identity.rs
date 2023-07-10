@@ -55,7 +55,7 @@ use crate::did::WasmJwsVerificationOptions;
 use crate::did::WasmService;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::iota::identity_client_ext::IAliasOutput;
+use crate::iota::identity_client_ext::WasmAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
@@ -413,7 +413,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = unpackFromOutput)]
   pub fn unpack_from_output(
     did: &WasmIotaDID,
-    aliasOutput: IAliasOutput,
+    aliasOutput: WasmAliasOutput,
     allowEmpty: bool,
     tokenSupply: u64,
   ) -> Result<WasmIotaDocument> {
@@ -438,7 +438,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = unpackFromBlock)]
   pub fn unpack_from_block(
     network: String,
-    block: &IBlock,
+    block: &WasmBlock,
     protocol_parameters: &INodeInfoProtocol,
   ) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
@@ -817,14 +817,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IotaDocument[]")]
   pub type ArrayIotaDocument;
 
-  // External interface from `@iota/types`, must be deserialized via BlockDto.
-  #[wasm_bindgen(typescript_type = "IBlock")]
-  pub type IBlock;
+  // External interface from `@iota/sdk-wasm`, must be deserialized via BlockDto.
+  #[wasm_bindgen(typescript_type = "Block")]
+  pub type WasmBlock;
 
-  // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
+  // External interface from `@iota/sdk-wasm`, must be deserialized via ProtocolParameters.
   #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
   pub type INodeInfoProtocol;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import type { IBlock, INodeInfoProtocol } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { Block, INodeInfoProtocol } from '~sdk-wasm';"#;

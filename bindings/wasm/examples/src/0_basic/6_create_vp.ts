@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     CoreDID,
     Credential,
@@ -25,6 +23,7 @@ import {
     SubjectHolderRelationship,
     Timestamp,
 } from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -45,7 +44,7 @@ export async function createVP() {
 
     // Creates a new wallet and identity (see "0_create_did" example).
     const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
     const issuerStorage: Storage = new Storage(
         new JwkMemStore(),
@@ -59,7 +58,7 @@ export async function createVP() {
 
     // Create an identity for the holder, in this case also the subject.
     const aliceSecretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
     const aliceStorage: Storage = new Storage(
         new JwkMemStore(),

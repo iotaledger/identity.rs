@@ -3,18 +3,22 @@
 
 import { IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt } from "~identity_wasm";
 
-import {
-    ADDRESS_UNLOCK_CONDITION_TYPE,
-    AddressTypes,
-    ALIAS_OUTPUT_TYPE,
-    IAliasOutput,
-    IOutputResponse,
-    IRent,
-    IUTXOInput,
-    TransactionHelper,
-} from "@iota/iota.js";
 import type { INodeInfoProtocol } from "@iota/types";
-import type { Client, INodeInfoWrapper, SecretManager } from "~client-wasm";
+import {
+    Address,
+    AddressUnlockCondition,
+    AliasOutput,
+    Client,
+    INodeInfoWrapper,
+    IRent,
+    OutputResponse,
+    OutputType,
+    SecretManager,
+    SecretManagerType,
+    UnlockConditionType,
+    Utils,
+    UTXOInput,
+} from "~sdk-wasm";
 
 /** Provides operations for IOTA DID Documents with Alias Outputs. */
 export class IotaIdentityClient implements IIotaIdentityClient {
@@ -33,13 +37,14 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         const outputId = await this.client.aliasOutputId(aliasId);
 
         // Fetch AliasOutput.
-        const outputResponse: IOutputResponse = await this.client.getOutput(outputId);
+        const outputResponse: OutputResponse = await this.client.getOutput(outputId);
         const output = outputResponse.output;
-        if (output.type != ALIAS_OUTPUT_TYPE) {
-            throw new Error("AliasId '" + aliasId + "' returned incorrect output type '" + output.type + "'");
+        if (output.getType() != OutputType.Alias) {
+            throw new Error("AliasId '" + aliasId + "' returned incorrect output type '" + output.getType() + "'");
         }
         // Coerce to tuple instead of an array.
-        const ret: [string, IAliasOutput] = [outputId, output];
+        // Cast of output is fine as we checked the type earlier.
+        const ret: [string, AliasOutput] = [outputId, output as AliasOutput];
         return ret;
     }
 
@@ -73,7 +78,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      *
      * NOTE: this does *not* publish the Alias Output.
      */
-    async newDidOutput(address: AddressTypes, document: IotaDocument, rentStructure?: IRent): Promise<IAliasOutput> {
+    async newDidOutput(address: Address, document: IotaDocument, rentStructure?: IRent): Promise<AliasOutput> {
         return await IotaIdentityClientExt.newDidOutput(this, address, document, rentStructure);
     }
 
@@ -83,7 +88,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      *
      * NOTE: this does *not* publish the updated Alias Output.
      */
-    async updateDidOutput(document: IotaDocument): Promise<IAliasOutput> {
+    async updateDidOutput(document: IotaDocument): Promise<AliasOutput> {
         return await IotaIdentityClientExt.updateDidOutput(this, document);
     }
 
@@ -96,7 +101,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      *
      * NOTE: this does *not* publish the updated Alias Output.
      */
-    async deactivateDidOutput(did: IotaDID): Promise<IAliasOutput> {
+    async deactivateDidOutput(did: IotaDID): Promise<AliasOutput> {
         return await IotaIdentityClientExt.deactivateDidOutput(this, did);
     }
 
@@ -108,11 +113,11 @@ export class IotaIdentityClient implements IIotaIdentityClient {
     }
 
     /** Fetches the Alias Output associated with the given DID. */
-    async resolveDidOutput(did: IotaDID): Promise<IAliasOutput> {
+    async resolveDidOutput(did: IotaDID): Promise<AliasOutput> {
         return await IotaIdentityClientExt.resolveDidOutput(this, did);
     }
 
-    /** Publish the given `aliasOutput` with the provided ` `, and returns
+    /** Publish the given `aliasOutput` with the provided `secretManager`, and returns
      * the DID document extracted from the published block.
      *
      * Note that only the state controller of an Alias Output is allowed to update its state.
@@ -121,7 +126,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      *
      * This method modifies the on-ledger state.
      */
-    async publishDidOutput(secretManager: SecretManager, aliasOutput: IAliasOutput): Promise<IotaDocument> {
+    async publishDidOutput(secretManager: SecretManagerType, aliasOutput: AliasOutput): Promise<IotaDocument> {
         const networkHrp = await this.getNetworkHrp();
         // Publish block.
         const [blockId, block] = await this.client.buildAndPostBlock(secretManager, {
@@ -147,7 +152,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      *
      * This destroys the Alias Output and DID document, rendering them permanently unrecoverable.
      */
-    async deleteDidOutput(secretManager: SecretManager, address: AddressTypes, did: IotaDID) {
+    async deleteDidOutput(secretManager: SecretManagerType, address: Address, did: IotaDID) {
         const networkHrp = await this.getNetworkHrp();
         if (networkHrp !== did.networkStr()) {
             throw new Error(
@@ -158,17 +163,16 @@ export class IotaIdentityClient implements IIotaIdentityClient {
 
         const aliasId: string = did.tag();
         const [outputId, aliasOutput] = await this.getAliasOutput(aliasId);
-        const aliasInput: IUTXOInput = TransactionHelper.inputFromOutputId(outputId);
+        // TODO: Update with conversion function.
+        // const aliasInput: UTXOInput = TransactionHelper.inputFromOutputId(outputId);
+        const aliasInput: UTXOInput = new UTXOInput("TODO", 0);
 
         // Send funds to the address.
         const basicOutput = await this.client.buildBasicOutput({
-            amount: aliasOutput.amount,
-            nativeTokens: aliasOutput.nativeTokens,
+            amount: aliasOutput.getAmount(),
+            nativeTokens: aliasOutput.getNativeTokens(),
             unlockConditions: [
-                {
-                    type: ADDRESS_UNLOCK_CONDITION_TYPE,
-                    address: address,
-                },
+                new AddressUnlockCondition(address),
             ],
         });
 
@@ -176,7 +180,9 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         const [blockId, _block] = await this.client.buildAndPostBlock(secretManager, {
             inputs: [aliasInput],
             outputs: [basicOutput],
-            allowBurning: true,
+            burn: {
+                aliases: [aliasId],
+            },
         });
         await this.client.retryUntilIncluded(blockId);
     }
