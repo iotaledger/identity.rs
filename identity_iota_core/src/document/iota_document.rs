@@ -594,7 +594,7 @@ mod tests {
     let placeholder: IotaDID = IotaDID::placeholder(&network);
     let doc1: IotaDocument = IotaDocument::new(&network);
     assert_eq!(doc1.id().network_str(), network.as_ref());
-    assert_eq!(doc1.id().tag(), placeholder.tag());
+    assert_eq!(doc1.id().tag_str(), placeholder.tag_str());
     assert_eq!(doc1.id(), &placeholder);
     assert_eq!(doc1.methods(None).len(), 0);
     assert!(doc1.service().is_empty());

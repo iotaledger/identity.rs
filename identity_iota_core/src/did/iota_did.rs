@@ -76,15 +76,15 @@ impl IotaDID {
   /// #
   /// let did = IotaDID::new(&[1;32], &NetworkName::try_from("smr").unwrap());
   /// assert_eq!(did.as_str(), "did:iota:smr:0x0101010101010101010101010101010101010101010101010101010101010101");
-  pub fn new(bytes: &[u8; 32], network_name: &NetworkName) -> Self {
-    let tag = prefix_hex::encode(bytes);
+  pub fn new(bytes: &[u8; Self::TAG_BYTES_LEN], network_name: &NetworkName) -> Self {
+    let tag: String = prefix_hex::encode(bytes);
     let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, tag);
 
     Self::parse(did).expect("DIDs constructed with new should be valid")
   }
 
   /// Constructs a new [`IotaDID`] from a hex representation of an Alias Id and the given
-  /// network name.
+  /// `network_name`.
   pub fn from_alias_id(alias_id: &str, network_name: &NetworkName) -> Self {
     let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name, alias_id);
     Self::parse(did).expect("DIDs constructed with new should be valid")
@@ -118,7 +118,7 @@ impl IotaDID {
   /// let placeholder = IotaDID::placeholder(&NetworkName::try_from("smr").unwrap());
   /// assert!(placeholder.is_placeholder());
   pub fn is_placeholder(&self) -> bool {
-    self.tag() == Self::PLACEHOLDER_TAG
+    self.tag_str() == Self::PLACEHOLDER_TAG
   }
 
   /// Parses an [`IotaDID`] from the given `input`.
@@ -151,7 +151,7 @@ impl IotaDID {
   }
 
   /// Returns the tag of the `DID`, which is a hex-encoded Alias ID.
-  pub fn tag(&self) -> &str {
+  pub fn tag_str(&self) -> &str {
     Self::denormalized_components(self.method_id()).1
   }
 
@@ -295,6 +295,7 @@ impl From<IotaDID> for String {
 
 impl TryFrom<CoreDID> for IotaDID {
   type Error = DIDError;
+
   fn try_from(value: CoreDID) -> std::result::Result<Self, Self::Error> {
     Self::try_from_core(value)
   }
@@ -332,7 +333,7 @@ mod __iota_did_client {
   impl From<&IotaDID> for AliasId {
     /// Creates an [`AliasId`] from the DID tag.
     fn from(did: &IotaDID) -> Self {
-      let tag_bytes: [u8; IotaDID::TAG_BYTES_LEN] = prefix_hex::decode(did.tag())
+      let tag_bytes: [u8; IotaDID::TAG_BYTES_LEN] = prefix_hex::decode(did.tag_str())
         .expect("being able to successfully decode the tag should be checked during DID creation");
       AliasId::new(tag_bytes)
     }
@@ -648,7 +649,7 @@ mod tests {
     fn property_based_alias_id_string_representation_roundtrip(alias_id in arbitrary_alias_id()) {
       for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
         assert_eq!(
-          iota_sdk::types::block::output::AliasId::from_str(IotaDID::new(&alias_id, &network_name).tag()).unwrap(),
+          iota_sdk::types::block::output::AliasId::from_str(IotaDID::new(&alias_id, &network_name).tag_str()).unwrap(),
           alias_id
         );
       }
@@ -756,7 +757,7 @@ mod tests {
   fn test_tag() {
     let execute_assertions = |valid_alias_id: &str| {
       let did: IotaDID = format!("did:{}:{}", IotaDID::METHOD, valid_alias_id).parse().unwrap();
-      assert_eq!(did.tag(), valid_alias_id);
+      assert_eq!(did.tag_str(), valid_alias_id);
 
       let did: IotaDID = format!(
         "did:{}:{}:{}",
@@ -766,17 +767,17 @@ mod tests {
       )
       .parse()
       .unwrap();
-      assert_eq!(did.tag(), valid_alias_id);
+      assert_eq!(did.tag_str(), valid_alias_id);
 
       let did: IotaDID = format!("did:{}:dev:{}", IotaDID::METHOD, valid_alias_id)
         .parse()
         .unwrap();
-      assert_eq!(did.tag(), valid_alias_id);
+      assert_eq!(did.tag_str(), valid_alias_id);
 
       let did: IotaDID = format!("did:{}:custom:{}", IotaDID::METHOD, valid_alias_id)
         .parse()
         .unwrap();
-      assert_eq!(did.tag(), valid_alias_id);
+      assert_eq!(did.tag_str(), valid_alias_id);
     };
     execute_assertions(IotaDID::PLACEHOLDER_TAG);
     execute_assertions(VALID_ALIAS_ID_STR);
