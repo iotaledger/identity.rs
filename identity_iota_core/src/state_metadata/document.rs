@@ -39,18 +39,19 @@ impl StateMetadataDocument {
   /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
   pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
+
     // Transform identifiers: Replace placeholder identifiers, and ensure that `id` and `controller` adhere to the
     // specification.
     let replace_placeholder_with_method_check = |did: CoreDID| -> Result<CoreDID> {
       if did == PLACEHOLDER_DID.as_ref() {
         Ok(CoreDID::from(original_did.clone()))
       } else {
-        // TODO: Consider introducing better error variant
         IotaDID::check_validity(&did).map_err(Error::DIDSyntaxError)?;
         Ok(did)
       }
     };
     let [id_update, controller_update] = [replace_placeholder_with_method_check; 2];
+
     // Methods and services are not required to be IOTA UTXO DIDs, but we still want to replace placeholders
     let replace_placeholder = |did: CoreDID| -> Result<CoreDID> {
       if did == PLACEHOLDER_DID.as_ref() {
