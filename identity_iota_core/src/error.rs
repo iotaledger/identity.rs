@@ -42,16 +42,11 @@ pub enum Error {
   #[cfg(feature = "iota-client")]
   #[error("output with id `{0}` is not an alias output")]
   NotAnAliasOutput(iota_sdk::types::block::output::OutputId),
-  #[cfg(feature = "iota-client")]
-  #[error("converting a DTO to an output failed")]
-  OutputConversionError(#[source] iota_sdk::types::block::Error),
   #[error("conversion to an OutputId failed: {0}")]
   OutputIdConversionError(String),
   #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
   #[error("JavaScript function threw an exception: {0}")]
   JsError(String),
-  #[error("could not sign the data")]
-  SigningError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
   #[error("jws signature verification failed")]
   JwsVerificationError(#[source] identity_document::Error),
 }
