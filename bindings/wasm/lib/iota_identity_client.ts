@@ -3,20 +3,17 @@
 
 import { IIotaIdentityClient, IotaDID, IotaDocument, IotaIdentityClientExt } from "~identity_wasm";
 
-import type { INodeInfoProtocol } from "@iota/types";
 import {
     Address,
     AddressUnlockCondition,
     AliasOutput,
     Client,
+    INodeInfoProtocol,
     INodeInfoWrapper,
     IRent,
     OutputResponse,
     OutputType,
-    SecretManager,
     SecretManagerType,
-    UnlockConditionType,
-    Utils,
     UTXOInput,
 } from "~sdk-wasm";
 

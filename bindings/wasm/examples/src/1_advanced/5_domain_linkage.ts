@@ -19,8 +19,7 @@ import {
     Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";
-import { AliasOutput, Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import type { IRent } from "@iota/types";
+import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**

@@ -1,7 +1,5 @@
-import { RandomHelper } from "@iota/util.js";
 import * as ed from "@noble/ed25519";
 import { decodeB64, encodeB64, Jwk, JwkGenOutput, JwkStorage } from "~identity_wasm";
-
 import { EdCurve, JwkType, JwsAlgorithm } from "./jose";
 
 type Ed25519PrivateKey = Uint8Array;
@@ -128,7 +126,19 @@ function decodeJwk(jwk: Jwk): [Ed25519PrivateKey, Ed25519PublicKey] {
     }
 }
 
+// Returns a random number between `min` and `max` (inclusive).
+// SAFETY NOTE: This is not cryptographically secure randomness and thus not suitable for production use.
+// It suffices for our testing implementation however and avoids an external dependency.
+function getRandomNumber(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 // Returns a random key id.
 function randomKeyId(): string {
-    return encodeB64(RandomHelper.generate(32));
+    const randomness = new Uint8Array(20);
+    for (let index = 0; index < randomness.length; index++) {
+        randomness[index] = getRandomNumber(0, 255);
+    }
+
+    return encodeB64(randomness);
 }
