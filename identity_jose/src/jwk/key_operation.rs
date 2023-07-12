@@ -44,6 +44,7 @@ impl JwkOperation {
     }
   }
 
+  /// Returns the inverse operation of `self`.
   pub const fn invert(&self) -> Self {
     match self {
       Self::Sign => Self::Verify,

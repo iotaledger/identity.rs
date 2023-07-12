@@ -3,9 +3,9 @@
 
 use serde::Serialize;
 
-use super::JwsHeader;
 use crate::error::Error;
 use crate::error::Result;
+use crate::jws::JwsHeader;
 use crate::jws::Recipient;
 use std::borrow::Cow;
 

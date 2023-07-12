@@ -1,24 +1,24 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use base64::engine::general_purpose;
-use base64::Engine;
+use identity_core::convert::Base;
+use identity_core::convert::BaseEncoding;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::error::Error;
 use crate::error::Result;
 
-/// Encode the given slice in url-safe base64.
+/// Encode the given slice in url-safe base64 with no padding.
 pub fn encode_b64(data: impl AsRef<[u8]>) -> String {
-  general_purpose::URL_SAFE_NO_PAD.encode(data)
+  BaseEncoding::encode(data.as_ref(), Base::Base64Url)
 }
 
-/// Decode the given url-safe base64-encoded slice into its raw bytes.
+/// Decode the given url-safe, unpadded base64-encoded slice into its raw bytes.
 pub fn decode_b64(data: impl AsRef<[u8]>) -> Result<Vec<u8>> {
-  general_purpose::URL_SAFE_NO_PAD
-    .decode(data)
-    .map_err(Error::InvalidBase64)
+  std::str::from_utf8(data.as_ref())
+    .map_err(Error::InvalidUtf8)
+    .and_then(|string| BaseEncoding::decode(string, Base::Base64Url).map_err(Error::InvalidBase64))
 }
 
 /// Serialize the given data into JSON and encode the result in url-safe base64.
