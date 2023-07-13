@@ -28,8 +28,3 @@ pub mod validator;
 
 pub use error::Error;
 pub use error::Result;
-
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate serde;

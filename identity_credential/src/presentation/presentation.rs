@@ -4,7 +4,7 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
-use identity_core::convert::ToJson;
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Context;
@@ -12,6 +12,7 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_core::convert::ToJson;
 
 use crate::credential::Credential;
 use crate::credential::Policy;

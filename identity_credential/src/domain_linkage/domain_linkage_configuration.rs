@@ -10,12 +10,13 @@ use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_did::CoreDID;
 use serde::Deserialize;
+use serde::Serialize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
 use crate::Error::DomainLinkageError;
 
-lazy_static! {
+lazy_static::lazy_static! {
   static ref WELL_KNOWN_CONTEXT: Context =
     Context::Url(Url::parse("https://identity.foundation/.well-known/did-configuration/v1").unwrap());
 }

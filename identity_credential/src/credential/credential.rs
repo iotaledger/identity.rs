@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use identity_core::convert::ToJson;
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Context;
@@ -27,7 +28,7 @@ use crate::error::Result;
 
 use super::jwt_serialization::CredentialJwtClaims;
 
-lazy_static! {
+lazy_static::lazy_static! {
   static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
 }
 
