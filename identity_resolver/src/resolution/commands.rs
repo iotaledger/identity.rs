@@ -15,6 +15,7 @@ use std::pin::Pin;
 /// support for both multi-threaded and single threaded use cases.
 pub trait Command<'a, T>: std::fmt::Debug + private::Sealed {
   type Output: Future<Output = T> + 'a;
+
   fn apply(&self, input: &'a str) -> Self::Output;
 }
 
@@ -71,10 +72,11 @@ impl<DOC: 'static> SendSyncCommand<DOC> {
     DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let fun: SendSyncCallback<DOC> = Box::new(move |input: &str| {
-      let handler_clone = handler.clone();
+      let handler_clone: F = handler.clone();
       let did_parse_attempt = D::try_from(input)
         .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
         .map_err(Error::new);
+
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
@@ -84,6 +86,7 @@ impl<DOC: 'static> SendSyncCommand<DOC> {
           .map_err(Error::new)
       })
     });
+
     Self { fun }
   }
 }
@@ -119,10 +122,11 @@ impl<DOC: 'static> SingleThreadedCommand<DOC> {
     DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let fun: SingleThreadedCallback<DOC> = Box::new(move |input: &str| {
-      let handler_clone = handler.clone();
+      let handler_clone: F = handler.clone();
       let did_parse_attempt = D::try_from(input)
         .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
         .map_err(Error::new);
+
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
@@ -132,6 +136,7 @@ impl<DOC: 'static> SingleThreadedCommand<DOC> {
           .map_err(Error::new)
       })
     });
+
     Self { fun }
   }
 }

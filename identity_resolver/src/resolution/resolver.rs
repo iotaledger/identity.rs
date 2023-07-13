@@ -40,6 +40,7 @@ where
   /// Constructs a new [`Resolver`].
   ///
   /// # Example
+  ///
   /// Construct a `Resolver` that resolves DID documents of type
   /// [`CoreDocument`](::identity_document::document::CoreDocument).
   ///  ```
@@ -59,10 +60,12 @@ where
   /// Fetches the DID Document of the given DID.
   ///
   /// # Errors
+  ///
   /// Errors if the resolver has not been configured to handle the method corresponding to the given DID or the
   /// resolution process itself fails.
   ///
   /// ## Example
+  ///
   /// ```
   /// # use identity_resolver::Resolver;
   /// # use identity_did::CoreDID;
@@ -87,8 +90,8 @@ where
   /// }
   /// ```
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
-    let method = did.method();
-    let delegate = self
+    let method: &str = did.method();
+    let delegate: &M = self
       .command_map
       .get(method)
       .ok_or_else(|| ErrorCause::UnsupportedMethodError {
@@ -109,6 +112,7 @@ where
   /// * If `dids` contains duplicates, these will be resolved only once.
   pub async fn resolve_multiple<D: DID>(&self, dids: &[D]) -> Result<HashMap<D, DOC>> {
     let futures = FuturesUnordered::new();
+
     // Create set to remove duplicates to avoid unnecessary resolution.
     let dids_set: HashSet<D> = dids.iter().cloned().collect();
     for did in dids_set {
@@ -117,7 +121,9 @@ where
         doc.map(|doc| (did, doc))
       });
     }
+
     let documents: HashMap<D, DOC> = futures.try_collect().await?;
+
     Ok(documents)
   }
 }
