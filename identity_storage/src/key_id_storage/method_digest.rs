@@ -101,7 +101,7 @@ mod test {
   use super::MethodDigest;
 
   #[test]
-  pub fn hash() {
+  fn hash() {
     // These values should be tested in the bindings too.
     let a: Value = json!(
       {
@@ -125,7 +125,7 @@ mod test {
   }
 
   #[test]
-  pub fn pack() {
+  fn pack() {
     let verification_method: VerificationMethod = crate::storage::tests::test_utils::create_verification_method();
     let method_digest: MethodDigest = MethodDigest::new(&verification_method).unwrap();
     let packed: Vec<u8> = method_digest.pack();
@@ -134,7 +134,7 @@ mod test {
   }
 
   #[test]
-  pub fn unpack() {
+  fn unpack() {
     let packed: Vec<u8> = vec![0, 255, 212, 82, 63, 57, 19, 134, 193];
     let method_digest_unpacked: MethodDigest = MethodDigest::unpack(packed).unwrap();
     let method_digest_expected: MethodDigest = MethodDigest {
@@ -145,7 +145,7 @@ mod test {
   }
 
   #[test]
-  pub fn invalid_unpack() {
+  fn invalid_unpack() {
     let packed: Vec<u8> = vec![1, 255, 212, 82, 63, 57, 19, 134, 193];
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
     let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);

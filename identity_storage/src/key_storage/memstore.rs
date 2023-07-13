@@ -252,7 +252,7 @@ impl JwkMemStore {
 }
 
 impl MemStoreKeyType {
-  pub const fn name(&self) -> &'static str {
+  const fn name(&self) -> &'static str {
     match self {
       MemStoreKeyType::Ed25519 => "Ed25519",
     }
@@ -337,18 +337,18 @@ pub(crate) mod shared {
   use tokio::sync::RwLockWriteGuard;
 
   #[derive(Default)]
-  pub struct Shared<T>(RwLock<T>);
+  pub(crate) struct Shared<T>(RwLock<T>);
 
   impl<T> Shared<T> {
-    pub fn new(data: T) -> Self {
+    pub(crate) fn new(data: T) -> Self {
       Self(RwLock::new(data))
     }
 
-    pub async fn read(&self) -> RwLockReadGuard<'_, T> {
+    pub(crate) async fn read(&self) -> RwLockReadGuard<'_, T> {
       self.0.read().await
     }
 
-    pub async fn write(&self) -> RwLockWriteGuard<'_, T> {
+    pub(crate) async fn write(&self) -> RwLockWriteGuard<'_, T> {
       self.0.write().await
     }
   }

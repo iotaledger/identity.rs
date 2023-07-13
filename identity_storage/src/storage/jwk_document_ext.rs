@@ -397,7 +397,7 @@ impl JwkDocumentExt for CoreDocument {
       CompactJwsEncodingOptions::Detached
     };
 
-    let jws_encoder: CompactJwsEncoder = CompactJwsEncoder::new_with_options(payload, &header, encoding_options)
+    let jws_encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new_with_options(payload, &header, encoding_options)
       .map_err(|err| Error::EncodingError(err.into()))?;
     let signature = <K as JwkStorage>::sign(storage.key_storage(), &key_id, jws_encoder.signing_input(), jwk)
       .await
