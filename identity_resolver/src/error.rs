@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// Error returned from the [Resolver's](crate::Resolver) methods.
@@ -49,6 +50,7 @@ pub enum ErrorCause {
   #[error("did resolution failed: could not parse the given did")]
   #[non_exhaustive]
   DIDParsingError {
+    /// The source of the parsing error.
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
   },
   /// A handler attached to the [`Resolver`](crate::resolution::Resolver) attempted to resolve the DID, but the
@@ -56,10 +58,14 @@ pub enum ErrorCause {
   #[error("did resolution failed: the attached handler failed")]
   #[non_exhaustive]
   HandlerError {
+    /// The source of the handler error.
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
   },
   /// Caused by attempting to resolve a DID whose method does not have a corresponding handler attached to the
   /// [`Resolver`](crate::resolution::Resolver).
   #[error("did resolution failed: the DID method \"{method}\" is not supported by the resolver")]
-  UnsupportedMethodError { method: String },
+  UnsupportedMethodError {
+    /// The method that is unsupported.
+    method: String,
+  },
 }
