@@ -21,6 +21,7 @@ use crate::error::Result;
 pub struct NetworkName(Cow<'static, str>);
 
 impl NetworkName {
+  /// The maximum length of a network name.
   pub const MAX_LENGTH: usize = 6;
 
   /// Creates a new [`NetworkName`] if the name passes validation.

@@ -19,7 +19,8 @@ use serde::Serialize;
 
 use crate::NetworkName;
 
-pub type Result<T> = std::result::Result<T, DIDError>;
+/// Alias for a `Result` with the error type [`DIDError`].
+type Result<T> = std::result::Result<T, DIDError>;
 
 /// A DID conforming to the IOTA DID method specification.
 ///

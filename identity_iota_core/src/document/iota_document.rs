@@ -80,8 +80,10 @@ impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "ProvisionalIotaDocument")]
 pub struct IotaDocument {
+  /// The DID document.
   #[serde(rename = "doc")]
   pub(crate) document: CoreDocument,
+  /// The metadata of an IOTA DID document.
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
 }
