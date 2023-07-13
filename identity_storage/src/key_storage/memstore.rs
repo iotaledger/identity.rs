@@ -17,7 +17,7 @@ use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
-use super::key_gen::JwkGenOutput;
+use super::jwk_gen_output::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
 use super::KeyStorageErrorKind;

@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
 
-use super::key_gen::JwkGenOutput;
+use super::jwk_gen_output::JwkGenOutput;
 
 /// Result of key storage operations.
 pub type KeyStorageResult<T> = Result<T, KeyStorageError>;

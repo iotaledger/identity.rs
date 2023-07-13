@@ -6,6 +6,7 @@ use identity_verification::jose::jwk::Jwk;
 use super::KeyId;
 
 /// The output of a JWK key generation.
+#[non_exhaustive]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct JwkGenOutput {
   pub key_id: KeyId,
