@@ -26,12 +26,6 @@ pub enum KeyStorageErrorKind {
   /// Indicates that the key storage implementation is not able to find the requested key.
   KeyNotFound,
 
-  /// Indicates that the storage is unavailable for an unpredictable amount of time.
-  ///
-  /// Occurrences of this variant should hopefully be rare, but could occur if hardware fails, or a hosted key store
-  /// goes offline.
-  Unavailable,
-
   /// Indicates that an attempt was made to authenticate with the key storage, but the operation did not succeed.
   Unauthenticated,
 
@@ -59,7 +53,6 @@ impl KeyStorageErrorKind {
       Self::KeyAlgorithmMismatch => "the key type cannot be used with the algorithm",
       Self::UnsupportedSignatureAlgorithm => "signing algorithm parsing failed",
       Self::KeyNotFound => "key not found in storage",
-      Self::Unavailable => "key storage unavailable",
       Self::Unauthenticated => "authentication with the key storage failed",
       Self::Unspecified => "key storage operation failed",
       Self::RetryableIOFailure => "key storage was unsuccessful because of an I/O failure",

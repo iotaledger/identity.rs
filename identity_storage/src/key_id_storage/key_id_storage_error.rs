@@ -18,12 +18,6 @@ pub enum KeyIdStorageErrorKind {
   /// Indicates that the key id already exists in the storage.
   KeyIdAlreadyExists,
 
-  /// Indicates that the storage is unavailable for an unpredictable amount of time.
-  ///
-  /// Occurrences of this variant should hopefully be rare, but could occur if hardware fails, or a hosted key store
-  /// goes offline.
-  Unavailable,
-
   /// Indicates that an attempt was made to authenticate with the key storage, but the operation did not succeed.
   Unauthenticated,
 
@@ -49,7 +43,6 @@ impl KeyIdStorageErrorKind {
     match self {
       Self::KeyIdAlreadyExists => "Key id already exists in storage",
       Self::KeyIdNotFound => "key id not found in storage",
-      Self::Unavailable => "key id storage unavailable",
       Self::Unauthenticated => "authentication with the key id storage failed",
       Self::Unspecified => "key storage operation failed",
       Self::RetryableIOFailure => "key id storage was unsuccessful because of an I/O failure",
