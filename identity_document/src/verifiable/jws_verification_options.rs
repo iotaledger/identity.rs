@@ -5,6 +5,7 @@ use identity_verification::MethodScope;
 
 /// Holds additional options for verifying a JWS with
 /// [`CoreDocument::verify_jws`](crate::document::CoreDocument::verify_jws()).
+#[non_exhaustive]
 #[derive(Default, Debug, serde::Serialize, serde::Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct JwsVerificationOptions {
@@ -17,6 +18,11 @@ pub struct JwsVerificationOptions {
 }
 
 impl JwsVerificationOptions {
+  /// Creates a new [`JwsVerificationOptions`].
+  pub fn new() -> Self {
+    Self::default()
+  }
+
   /// Set the expected value for the `nonce` parameter of the protected header.
   pub fn nonce(mut self, value: impl Into<String>) -> Self {
     self.nonce = Some(value.into());

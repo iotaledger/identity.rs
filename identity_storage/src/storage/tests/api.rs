@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
+use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
+use identity_credential::credential::Jws;
 use identity_credential::validator::CredentialValidationOptions;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::EdDSAJwsVerifier;
 use identity_verification::jose::jws::JwsAlgorithm;
+use identity_verification::jwk::Jwk;
+use identity_verification::jws::DecodedJws;
+use identity_verification::jwu::encode_b64;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
 
@@ -40,6 +45,24 @@ fn setup() -> (CoreDocument, MemStorage) {
   let mock_document = CoreDocument::from_json(MOCK_DOCUMENT_JSON).unwrap();
   let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
   (mock_document, storage)
+}
+
+async fn setup_with_method() -> (CoreDocument, MemStorage, String) {
+  let mut mock_document = CoreDocument::from_json(MOCK_DOCUMENT_JSON).unwrap();
+  let storage = Storage::new(JwkMemStore::new(), KeyIdMemstore::new());
+
+  let method_fragment: String = mock_document
+    .generate_method(
+      &storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await
+    .unwrap();
+
+  (mock_document, storage, method_fragment)
 }
 
 #[tokio::test]
@@ -83,69 +106,145 @@ async fn generation() {
 }
 
 #[tokio::test]
-async fn signing_bytes() {
-  let (mut document, storage) = setup();
-  // Generate a method with the kid as fragment
-  let method_fragment: String = document
-    .generate_method(
-      &storage,
-      JwkMemStore::ED25519_KEY_TYPE,
-      JwsAlgorithm::EdDSA,
-      None,
-      MethodScope::VerificationMethod,
-    )
-    .await
-    .unwrap();
-  let payload = b"test";
+async fn sign_bytes() {
+  let (document, storage, fragment) = setup_with_method().await;
 
-  // TODO: Check with more Options
-  let options = JwsSignatureOptions::new();
-  let jws = document
-    .sign_bytes(&storage, &method_fragment, payload, &options)
+  let payload: &[u8] = b"test";
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new();
+  let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
+
+  let jws: Jws = document
+    .sign_bytes(&storage, &fragment, payload, &signature_options)
     .await
     .unwrap();
+
+  assert!(document
+    .verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options)
+    .is_ok());
+}
+
+#[tokio::test]
+async fn sign_bytes_with_nonce() {
+  let (document, storage, fragment) = setup_with_method().await;
+
+  let payload: &[u8] = b"test";
+  let nonce: &str = "nonce";
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().nonce(nonce);
+  let verification_options: JwsVerificationOptions = JwsVerificationOptions::new().nonce(nonce);
+
+  let jws: Jws = document
+    .sign_bytes(&storage, &fragment, payload, &signature_options)
+    .await
+    .unwrap();
+
+  assert!(document
+    .verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options)
+    .is_ok());
 
   assert!(document
     .verify_jws(
       jws.as_str(),
       None,
       &EdDSAJwsVerifier::default(),
-      &JwsVerificationOptions::default()
+      &JwsVerificationOptions::new()
     )
-    .is_ok());
+    .is_err());
+
+  assert!(document
+    .verify_jws(
+      jws.as_str(),
+      None,
+      &EdDSAJwsVerifier::default(),
+      &JwsVerificationOptions::new().nonce("other")
+    )
+    .is_err());
 }
 
 #[tokio::test]
-async fn signing_bytes_detached_without_b64() {
-  let (mut document, storage) = setup();
+async fn sign_bytes_with_header_copy_options() {
+  let (document, storage, fragment) = setup_with_method().await;
 
-  // Generate a method with the kid as fragment
-  let method_fragment: String = document
-    .generate_method(
-      &storage,
-      JwkMemStore::ED25519_KEY_TYPE,
-      JwsAlgorithm::EdDSA,
-      None,
-      MethodScope::VerificationMethod,
-    )
+  let payload: &[u8] = b"test";
+  let url: Url = Url::parse("https://example.com/").unwrap();
+  let typ: &str = "typ";
+  let cty: &str = "content_type";
+
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new()
+    .url(url.clone())
+    .typ(typ)
+    .cty(cty)
+    .attach_jwk_to_header(true);
+
+  let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
+
+  let jws: Jws = document
+    .sign_bytes(&storage, &fragment, payload, &signature_options)
     .await
     .unwrap();
-  let payload = b"test";
 
-  let options = JwsSignatureOptions::new().b64(false).detached_payload(true);
-  let jws = document
-    .sign_bytes(&storage, method_fragment.as_ref(), payload, &options)
+  let decoded_jws: DecodedJws<'_> = document
+    .verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options)
+    .unwrap();
+
+  let jwk: &Jwk = document
+    .resolve_method(&fragment, None)
+    .unwrap()
+    .data()
+    .try_public_key_jwk()
+    .unwrap();
+
+  assert_eq!(decoded_jws.protected.typ().unwrap(), typ);
+  assert_eq!(decoded_jws.protected.cty().unwrap(), cty);
+  assert_eq!(decoded_jws.protected.url().unwrap(), &url);
+  assert_eq!(decoded_jws.protected.jwk().unwrap(), jwk);
+}
+
+#[tokio::test]
+async fn sign_bytes_detached() {
+  let (document, storage, fragment) = setup_with_method().await;
+
+  // =====================
+  // Without B64 Encoding
+  // =====================
+
+  let payload: &[u8] = b"test";
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().b64(false).detached_payload(true);
+  let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
+
+  let jws: Jws = document
+    .sign_bytes(&storage, fragment.as_ref(), payload, &signature_options)
     .await
     .unwrap();
 
-  document
+  assert!(document
     .verify_jws(
       jws.as_str(),
       Some(payload),
       &EdDSAJwsVerifier::default(),
-      &JwsVerificationOptions::default(),
+      &verification_options,
     )
+    .is_ok());
+
+  // ==================
+  // With B64 Encoding
+  // ==================
+
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().b64(true).detached_payload(true);
+
+  let jws: Jws = document
+    .sign_bytes(&storage, fragment.as_ref(), payload, &signature_options)
+    .await
     .unwrap();
+  let payload_b64: String = encode_b64(payload);
+
+  assert!(document
+    .verify_jws(
+      jws.as_str(),
+      Some(payload_b64.as_ref()),
+      &EdDSAJwsVerifier::default(),
+      &verification_options,
+    )
+    .is_ok());
 }
 
 #[tokio::test]
