@@ -11,9 +11,9 @@ use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
 
 use super::JwkStorageDocumentError as Error;
+use super::JwsSignatureOptions;
 use super::Storage;
 
-use super::JwsSignatureOptions;
 use async_trait::async_trait;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
@@ -32,6 +32,7 @@ use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+
 pub type StorageResult<T> = Result<T, Error>;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -42,8 +43,7 @@ pub trait JwkDocumentExt: private::Sealed {
   ///
   /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
   /// - The `key_type` must be compatible with the given `storage`. [`Storage`]s are expected to export key type
-  ///   constants
-  /// for that use case.
+  ///   constants for that use case.
   ///
   /// The fragment of the generated method is returned.
   async fn generate_method<K, I>(
@@ -58,15 +58,19 @@ pub trait JwkDocumentExt: private::Sealed {
     K: JwkStorage,
     I: KeyIdStorage;
 
-  /// Remove the method identified by the given fragment from the document and delete the corresponding key material in
+  /// Remove the method identified by the given `id` from the document and delete the corresponding key material in
   /// the given `storage`.
+  ///
+  /// ## Warning
+  ///
+  /// This will delete the key material permanently and irrecoverably.
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
   where
     K: JwkStorage,
     I: KeyIdStorage;
 
-  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
-  /// material in the verification method identified by the given `fragment.
+  /// Sign the arbitrary `payload` according to `options` with the storage backed private key corresponding to the
+  /// public key material in the verification method identified by the given `fragment.
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).   
@@ -82,7 +86,7 @@ pub trait JwkDocumentExt: private::Sealed {
     I: KeyIdStorage;
 
   /// Produces a JWT where the payload is produced from the given `credential`
-  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -117,6 +121,7 @@ pub trait JwkDocumentExt: private::Sealed {
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
     CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync;
 }
+
 mod private {
   pub trait Sealed {}
   impl Sealed for identity_document::document::CoreDocument {}
@@ -166,6 +171,7 @@ macro_rules! generate_method_for_document_type {
       // Extract data from method before inserting it into the DID document.
       let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
       let method_id: DIDUrl = method.id().clone();
+
       // The fragment is always set on a method, so this error will never occur.
       let fragment: String = method_id
         .fragment()
@@ -234,6 +240,7 @@ macro_rules! purge_method_for_document_type {
       let key_id_deletion_fut = <I as KeyIdStorage>::delete_key_id(&storage.key_id_storage(), &method_digest);
       let (key_deletion_result, key_id_deletion_result): (KeyStorageResult<()>, KeyIdStorageResult<()>) =
         futures::join!(key_deletion_fut, key_id_deletion_fut);
+
       // Check for any errors that may have occurred. Unfortunately this is somewhat involved.
       match (key_deletion_result, key_id_deletion_result) {
         (Ok(_), Ok(_)) => Ok(()),
@@ -327,14 +334,15 @@ impl JwkDocumentExt for CoreDocument {
     let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
       return Err(Error::NotPublicKeyJwk);
     };
-    // Extract JwsAlgorithm
+
+    // Extract JwsAlgorithm.
     let alg: JwsAlgorithm = jwk
       .alg()
       .unwrap_or("")
       .parse()
       .map_err(|_| Error::InvalidJwsAlgorithm)?;
 
-    // create JWS header in accordance with options
+    // Create JWS header in accordance with options.
     let header: JwsHeader = {
       let mut header = JwsHeader::new();
 
@@ -465,7 +473,7 @@ impl JwkDocumentExt for CoreDocument {
   }
 }
 
-/// Attempt to revert key generation if this succeeds the original `source_error` is returned,
+/// Attempt to revert key generation. If this succeeds the original `source_error` is returned,
 /// otherwise [`JwkStorageDocumentError::UndoOperationFailed`] is returned with the `source_error` attached as
 /// `source`.
 async fn try_undo_key_generation<K, I>(storage: &Storage<K, I>, key_id: &KeyId, source_error: Error) -> Error
@@ -493,6 +501,7 @@ mod iota_document {
   use super::*;
   use identity_credential::credential::Jwt;
   use identity_iota_core::IotaDocument;
+
   generate_method_for_document_type!(IotaDocument, generate_method_iota_document);
   purge_method_for_document_type!(IotaDocument, purge_method_iota_document);
 
