@@ -16,10 +16,7 @@ pub struct WasmJwkGenOutput(pub(crate) JwkGenOutput);
 impl WasmJwkGenOutput {
   #[wasm_bindgen(constructor)]
   pub fn new(key_id: String, jwk: &WasmJwk) -> Self {
-    Self(JwkGenOutput {
-      key_id: KeyId::new(key_id),
-      jwk: jwk.clone().into(),
-    })
+    Self(JwkGenOutput::new(KeyId::new(key_id), jwk.clone().into()))
   }
 
   /// Returns the generated public JWK.
