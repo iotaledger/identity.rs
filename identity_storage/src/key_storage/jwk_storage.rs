@@ -33,7 +33,7 @@ mod storage_sub_trait {
 pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Generate a new key represented as a JSON Web Key.
   ///
-  /// It's recommend that the implementer exposes constants for the supported [`KeyType`].
+  /// It is recommended that the implementer exposes constants for the supported [`KeyType`].
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
   /// Insert an existing JSON Web Key into the storage.
@@ -45,6 +45,7 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// the corresponding `public_key` (see [`Jwk::alg`](Jwk::alg()) etc.).
   ///
   /// # Note
+  ///
   /// High level methods from this library calling this method are designed to always pass a `public_key` that
   /// corresponds to `key_id` and additional checks for this in the `sign` implementation are normally not required.
   /// This is however based on the expectation that the key material associated with a given [`KeyId`] is immutable.  

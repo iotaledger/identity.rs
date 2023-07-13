@@ -67,6 +67,7 @@ impl KeyStorageErrorKind {
     }
   }
 }
+
 impl AsRef<str> for KeyStorageErrorKind {
   fn as_ref(&self) -> &str {
     self.as_str()
