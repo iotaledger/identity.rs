@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Implementation of Domain Linkage according to <https://identity.foundation/.well-known/resources/did-configuration/>.
+//! Implementation of [Domain Linkage](https://identity.foundation/.well-known/resources/did-configuration/).
 
 mod domain_linkage_configuration;
 mod domain_linkage_credential_builder;
