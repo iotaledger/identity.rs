@@ -3,6 +3,7 @@
 
 use identity_core::common::Url;
 
+/// Options for creating a JSON Web Signature.
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]

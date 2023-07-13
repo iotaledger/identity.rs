@@ -15,10 +15,14 @@ pub type MethodDigestConstructionError = identity_core::common::SingleStructErro
 /// Characterization of the underlying cause of a [`MethodDigestConstructionError`].
 #[derive(Debug)]
 pub enum MethodDigestConstructionErrorKind {
-  // Todo: Do we need this variant? It should be impossible to construct a VerificationMethod without a fragment.
+  /// Caused by a missing id on a verification method.
+  ///
+  /// This error should be impossible but exists for safety reasons.
   MissingIdFragment,
+  /// Caused by a failure to decode a method's [key material](identity_verification::MethodData).
   DataDecodingFailure,
 }
+
 impl Display for MethodDigestConstructionErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("method digest construction failure: ")?;
@@ -41,7 +45,7 @@ pub struct MethodDigest {
 impl MethodDigest {
   /// Creates a new [`MethodDigest`].
   pub fn new(verification_method: &VerificationMethod) -> Result<Self, MethodDigestConstructionError> {
-    // Method digest version 0 formula:  SeaHash(<fragment><JWK thumbprint if JWK else decoded public key>)
+    // Method digest version 0 formula: SeaHash(<fragment><JWK thumbprint if JWK else decoded public key>)
     use MethodDigestConstructionErrorKind::*;
     let mut hasher: SeaHasher = SeaHasher::new();
     let fragment: &str = verification_method.id().fragment().ok_or(MissingIdFragment)?;
@@ -59,6 +63,7 @@ impl MethodDigest {
     };
 
     let key_hash: u64 = hasher.finish();
+
     Ok(Self {
       version: 0,
       value: key_hash,

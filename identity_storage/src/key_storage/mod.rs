@@ -1,6 +1,11 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! A Key Storage is used to securely store private keys.
+//!
+//! This module provides the [`JwkStorage`] trait that
+//! abstracts over storages that store JSON Web Keys.
+
 mod jwk_gen_output;
 mod jwk_storage;
 mod key_id;

@@ -33,8 +33,17 @@ use identity_verification::VerificationMethod;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+/// Alias for a `Result` with the error type [`Error`].
 pub type StorageResult<T> = Result<T, Error>;
 
+/// Extension trait for JWK-based operations on DID documents.
+///
+/// This trait is deliberately sealed and cannot be implemented by external crates.
+/// The trait only exists as an extension of existing DID documents implemented in
+/// dependent crates. Because those crates cannot also depend on this crate,
+/// the extension trait is necessary. External crates however should simply wrap the methods
+/// on the trait if they wish to reexport them on their DID document type.
+/// This also allows them to use their own error type on those methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkDocumentExt: private::Sealed {

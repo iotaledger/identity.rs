@@ -45,6 +45,7 @@ pub enum KeyIdStorageErrorKind {
 }
 
 impl KeyIdStorageErrorKind {
+  /// Returns the string representation of the error.
   pub const fn as_str(&self) -> &str {
     match self {
       Self::KeyIdAlreadyExists => "Key id already exists in storage",

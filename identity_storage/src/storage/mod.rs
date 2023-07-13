@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! This module provides a type wrapping a key and key id storage.
+
 mod error;
 mod jwk_document_ext;
 mod signature_options;
