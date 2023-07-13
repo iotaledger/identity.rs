@@ -74,7 +74,7 @@ impl RevocationBitmap {
   }
 
   /// Construct a `RevocationBitmap` from a data url embedded in `service_endpoint`.
-  pub fn from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
+  pub fn try_from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
     if let ServiceEndpoint::One(url) = service_endpoint {
       let data_url: DataUrl = DataUrl::parse(url.as_str())
         .map_err(|_| RevocationError::InvalidService("invalid url - expected a data url"))?;
@@ -159,7 +159,7 @@ impl TryFrom<&Service> for RevocationBitmap {
       ));
     }
 
-    Self::from_endpoint(service.service_endpoint())
+    Self::try_from_endpoint(service.service_endpoint())
   }
 }
 
@@ -199,7 +199,7 @@ mod tests {
   fn test_revocation_bitmap_test_vector_1() {
     const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQUFBd0FES0FCcg==";
 
-    let bitmap: RevocationBitmap = RevocationBitmap::from_endpoint(&identity_document::service::ServiceEndpoint::One(
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(&identity_document::service::ServiceEndpoint::One(
       Url::parse(URL).unwrap(),
     ))
     .unwrap();
@@ -212,7 +212,7 @@ mod tests {
     const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQmdZR0lBQVVZZ1pHQ1FBR0laSUdabDZHUGN3UW9BRXVvQjlB";
     const EXPECTED: &[u32] = &[5, 398, 67000];
 
-    let bitmap: RevocationBitmap = RevocationBitmap::from_endpoint(&identity_document::service::ServiceEndpoint::One(
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(&identity_document::service::ServiceEndpoint::One(
       Url::parse(URL).unwrap(),
     ))
     .unwrap();
@@ -228,7 +228,7 @@ mod tests {
   fn test_revocation_bitmap_test_vector_3() {
     const URL: &str = "data:application/octet-stream;base64,ZUp6dHhERVJBQ0FNQkxESEFWS1lXZkN2Q3E0MmFESmtyMlNrM0ROckFLQ2RBQUFBQUFBQTMzbGhHZm9q";
 
-    let bitmap: RevocationBitmap = RevocationBitmap::from_endpoint(&identity_document::service::ServiceEndpoint::One(
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(&identity_document::service::ServiceEndpoint::One(
       Url::parse(URL).unwrap(),
     ))
     .unwrap();
