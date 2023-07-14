@@ -90,7 +90,7 @@ impl RevocationBitmap {
   }
 
   /// Construct a `RevocationBitmap` from a data url embedded in `service_endpoint`.
-  pub fn try_from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
+  pub(crate) fn try_from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
     if let ServiceEndpoint::One(url) = service_endpoint {
       let data_url: DataUrl = DataUrl::parse(url.as_str())
         .map_err(|_| RevocationError::InvalidService("invalid url - expected a data url"))?;
