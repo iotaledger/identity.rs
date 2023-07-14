@@ -89,11 +89,9 @@ async fn main() -> anyhow::Result<()> {
   let revocation_bitmap: RevocationBitmap = RevocationBitmap::new();
 
   // Add the revocation bitmap to the DID document of the issuer as a service.
-  let service: Service = Service::from_json_value(json!({
-    "id": issuer_document.id().to_url().join("#my-revocation-service")?,
-    "type": RevocationBitmap::TYPE,
-    "serviceEndpoint": revocation_bitmap.to_endpoint()?
-  }))?;
+  let service_id: DIDUrl = issuer_document.id().to_url().join("#my-revocation-service")?;
+  let service: Service = revocation_bitmap.to_service(service_id)?;
+
   assert!(issuer_document.insert_service(service).is_ok());
 
   // Resolve the latest output and update it with the given document.

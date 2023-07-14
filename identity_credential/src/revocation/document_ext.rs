@@ -97,7 +97,6 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-  use identity_core::common::Object;
   use identity_core::convert::FromJson;
   use identity_did::DID;
 
@@ -156,15 +155,9 @@ mod tests {
     for index in indices_1.iter() {
       bitmap.revoke(*index);
     }
+
     assert!(document
-      .insert_service(
-        Service::builder(Object::new())
-          .id(service_id.clone())
-          .type_(crate::revocation::RevocationBitmap::TYPE)
-          .service_endpoint(bitmap.to_endpoint().unwrap())
-          .build()
-          .unwrap()
-      )
+      .insert_service(bitmap.to_service(service_id.clone()).unwrap())
       .is_ok());
 
     // Revoke indices_2.
