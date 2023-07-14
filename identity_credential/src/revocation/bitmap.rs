@@ -168,6 +168,8 @@ impl RevocationBitmap {
 impl TryFrom<&Service> for RevocationBitmap {
   type Error = RevocationError;
 
+  /// Try to construct a `RevocationBitmap` from a service
+  /// if it is a valid Revocation Bitmap Service.
   fn try_from(service: &Service) -> Result<Self, RevocationError> {
     if !service.type_().contains(Self::TYPE) {
       return Err(RevocationError::InvalidService(
