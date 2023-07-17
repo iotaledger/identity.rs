@@ -13,12 +13,12 @@ use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
-use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
 use identity_iota::credential::DomainLinkageValidationError;
 use identity_iota::credential::DomainLinkageValidator;
 use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::LinkedDomainService;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DIDUrl;
@@ -156,7 +156,7 @@ async fn main() -> anyhow::Result<()> {
     &issuer_did_document,
     &configuration_resource,
     &domain_foo,
-    &CredentialValidationOptions::default(),
+    &JwtCredentialValidationOptions::default(),
   );
   assert!(validation_result.is_ok());
 
@@ -200,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
     &did_document,
     &configuration_resource,
     &domain_foo,
-    &CredentialValidationOptions::default(),
+    &JwtCredentialValidationOptions::default(),
   );
   assert!(validation_result.is_ok());
   Ok(())

@@ -21,8 +21,8 @@ use identity_verification::jws::JwsValidationItem;
 use identity_verification::jws::JwsVerifier;
 
 use super::CompoundCredentialValidationError;
-use super::CredentialValidationOptions;
 use super::DecodedJwtCredential;
+use super::JwtCredentialValidationOptions;
 use super::SignerContext;
 use super::ValidationError;
 use crate::credential::Credential;
@@ -34,17 +34,17 @@ use crate::validator::SubjectHolderRelationship;
 /// A type for decoding and validating [`Credential`]s.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
-pub struct CredentialValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
+pub struct JwtCredentialValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
 type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
 
-impl<V> CredentialValidator<V>
+impl<V> JwtCredentialValidator<V>
 where
   V: JwsVerifier,
 {
-  /// Create a new [`CredentialValidator`] that delegates cryptographic signature verification to the given
+  /// Create a new [`JwtCredentialValidator`] that delegates cryptographic signature verification to the given
   /// `signature_verifier`. If you are only interested in `EdDSA` signatures (with `Ed25519`) then the default
-  /// constructor can be used. See [`CredentialValidator::new`](CredentialValidator::new).
+  /// constructor can be used. See [`JwtCredentialValidator::new`](JwtCredentialValidator::new).
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self(signature_verifier)
   }
@@ -76,7 +76,7 @@ where
     &self,
     credential_jwt: &Jwt,
     issuer: &DOC,
-    options: &CredentialValidationOptions,
+    options: &JwtCredentialValidationOptions,
     fail_fast: FailFast,
   ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
@@ -128,7 +128,7 @@ where
     signature_verifier: &S,
     credential: &Jwt,
     issuers: &[DOC],
-    options: &CredentialValidationOptions,
+    options: &JwtCredentialValidationOptions,
     fail_fast: FailFast,
   ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
@@ -149,24 +149,24 @@ where
     // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
 
     let expiry_date_validation = std::iter::once_with(|| {
-      CredentialValidator::check_expires_on_or_after(
+      JwtCredentialValidator::check_expires_on_or_after(
         &credential_token.credential,
         options.earliest_expiry_date.unwrap_or_default(),
       )
     });
 
     let issuance_date_validation = std::iter::once_with(|| {
-      CredentialValidator::check_issued_on_or_before(credential, options.latest_issuance_date.unwrap_or_default())
+      JwtCredentialValidator::check_issued_on_or_before(credential, options.latest_issuance_date.unwrap_or_default())
     });
 
-    let structure_validation = std::iter::once_with(|| CredentialValidator::check_structure(credential));
+    let structure_validation = std::iter::once_with(|| JwtCredentialValidator::check_structure(credential));
 
     let subject_holder_validation = std::iter::once_with(|| {
       options
         .subject_holder_relationship
         .as_ref()
         .map(|(holder, relationship)| {
-          CredentialValidator::check_subject_holder_relationship(credential, holder, *relationship)
+          JwtCredentialValidator::check_subject_holder_relationship(credential, holder, *relationship)
         })
         .unwrap_or(Ok(()))
     });
@@ -179,7 +179,7 @@ where
     #[cfg(feature = "revocation-bitmap")]
     let validation_units_iter = {
       let revocation_validation =
-        std::iter::once_with(|| CredentialValidator::check_status(credential, issuers, options.status));
+        std::iter::once_with(|| JwtCredentialValidator::check_status(credential, issuers, options.status));
       validation_units_iter.chain(revocation_validation)
     };
 
@@ -267,7 +267,7 @@ where
 
     // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
     // returning.
-    let issuer_id: CoreDID = CredentialValidator::extract_issuer(&credential_token.credential)?;
+    let issuer_id: CoreDID = JwtCredentialValidator::extract_issuer(&credential_token.credential)?;
     if &issuer_id != method_id.did() {
       return Err(ValidationError::IdentifierMismatch {
         signer_ctx: SignerContext::Issuer,
@@ -321,11 +321,11 @@ where
   }
 }
 
-impl CredentialValidator {
-  /// Creates a new [`CredentialValidator`] capable of verifying a [`Credential`] issued as a JWS
+impl JwtCredentialValidator {
+  /// Creates a new [`JwtCredentialValidator`] capable of verifying a [`Credential`] issued as a JWS
   /// using the [`EdDSA`](::identity_verification::jose::jws::JwsAlgorithm::EdDSA) algorithm.
   ///
-  /// See [`CredentialValidator::with_signature_verifier`](CredentialValidator::with_signature_verifier())
+  /// See [`JwtCredentialValidator::with_signature_verifier`](JwtCredentialValidator::with_signature_verifier())
   /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
   pub fn new() -> Self {
     Self(EdDSAJwsVerifier::default())
@@ -495,7 +495,7 @@ impl CredentialValidator {
   }
 }
 
-impl Default for CredentialValidator {
+impl Default for JwtCredentialValidator {
   fn default() -> Self {
     Self::new()
   }
@@ -506,7 +506,7 @@ mod tests {
   use crate::credential::Subject;
   use identity_core::common::Duration;
 
-  // All tests here are essentially adaptations of the old CredentialValidator tests.
+  // All tests here are essentially adaptations of the old JwtCredentialValidator tests.
   use super::*;
   use identity_core::common::Object;
   use identity_core::common::Timestamp;
@@ -540,7 +540,7 @@ mod tests {
 
   #[test]
   fn issued_on_or_before() {
-    assert!(CredentialValidator::check_issued_on_or_before(
+    assert!(JwtCredentialValidator::check_issued_on_or_before(
       &SIMPLE_CREDENTIAL,
       SIMPLE_CREDENTIAL
         .issuance_date
@@ -550,7 +550,7 @@ mod tests {
     .is_err());
 
     // and now with a later timestamp
-    assert!(CredentialValidator::check_issued_on_or_before(
+    assert!(JwtCredentialValidator::check_issued_on_or_before(
       &SIMPLE_CREDENTIAL,
       SIMPLE_CREDENTIAL
         .issuance_date
@@ -570,21 +570,21 @@ mod tests {
     credential.non_transferable = Some(true);
 
     // checking with holder = subject passes for all defined subject holder relationships:
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential,
       &actual_holder_url,
       SubjectHolderRelationship::AlwaysSubject
     )
     .is_ok());
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential,
       &actual_holder_url,
       SubjectHolderRelationship::SubjectOnNonTransferable
     )
     .is_ok());
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential,
       &actual_holder_url,
       SubjectHolderRelationship::Any
@@ -595,21 +595,21 @@ mod tests {
     let issuer_url = Url::parse("did:core:0x1234567890").unwrap();
     assert!(actual_holder_url != issuer_url);
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential,
       &issuer_url,
       SubjectHolderRelationship::AlwaysSubject
     )
     .is_err());
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential,
       &issuer_url,
       SubjectHolderRelationship::SubjectOnNonTransferable
     )
     .is_err());
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential,
       &issuer_url,
       SubjectHolderRelationship::Any
@@ -620,7 +620,7 @@ mod tests {
 
     credential_transferable.non_transferable = Some(false);
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential_transferable,
       &issuer_url,
       SubjectHolderRelationship::SubjectOnNonTransferable
@@ -629,7 +629,7 @@ mod tests {
 
     credential_transferable.non_transferable = None;
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential_transferable,
       &issuer_url,
       SubjectHolderRelationship::SubjectOnNonTransferable
@@ -642,21 +642,21 @@ mod tests {
       .credential_subject
       .push(Subject::with_id(actual_holder_url));
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential_duplicated_holder,
       &issuer_url,
       SubjectHolderRelationship::AlwaysSubject
     )
     .is_err());
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential_duplicated_holder,
       &issuer_url,
       SubjectHolderRelationship::SubjectOnNonTransferable
     )
     .is_err());
 
-    assert!(CredentialValidator::check_subject_holder_relationship(
+    assert!(JwtCredentialValidator::check_subject_holder_relationship(
       &credential_duplicated_holder,
       &issuer_url,
       SubjectHolderRelationship::Any
@@ -671,10 +671,10 @@ mod tests {
       .unwrap()
       .checked_add(Duration::minutes(1))
       .unwrap();
-    assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, later_than_expiration_date).is_err());
+    assert!(JwtCredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, later_than_expiration_date).is_err());
     // and now with an earlier date
     let earlier_date = Timestamp::parse("2019-12-27T11:35:30Z").unwrap();
-    assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, earlier_date).is_ok());
+    assert!(JwtCredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, earlier_date).is_ok());
   }
 
   // test with a few timestamps that should be RFC3339 compatible
@@ -683,8 +683,8 @@ mod tests {
     fn property_based_expires_after_with_expiration_date(seconds in 0..1_000_000_000_u32) {
       let after_expiration_date = SIMPLE_CREDENTIAL.expiration_date.unwrap().checked_add(Duration::seconds(seconds)).unwrap();
       let before_expiration_date = SIMPLE_CREDENTIAL.expiration_date.unwrap().checked_sub(Duration::seconds(seconds)).unwrap();
-      assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, after_expiration_date).is_err());
-      assert!(CredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, before_expiration_date).is_ok());
+      assert!(JwtCredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, after_expiration_date).is_err());
+      assert!(JwtCredentialValidator::check_expires_on_or_after(&SIMPLE_CREDENTIAL, before_expiration_date).is_ok());
     }
   }
 
@@ -694,7 +694,7 @@ mod tests {
       let mut credential = SIMPLE_CREDENTIAL.clone();
       credential.expiration_date = None;
       // expires after whatever the timestamp may be because the expires_after field is None.
-      assert!(CredentialValidator::check_expires_on_or_after(&credential, Timestamp::from_unix(seconds).unwrap()).is_ok());
+      assert!(JwtCredentialValidator::check_expires_on_or_after(&credential, Timestamp::from_unix(seconds).unwrap()).is_ok());
     }
   }
 
@@ -704,8 +704,8 @@ mod tests {
 
       let earlier_than_issuance_date = SIMPLE_CREDENTIAL.issuance_date.checked_sub(Duration::seconds(seconds)).unwrap();
       let later_than_issuance_date = SIMPLE_CREDENTIAL.issuance_date.checked_add(Duration::seconds(seconds)).unwrap();
-      assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, earlier_than_issuance_date).is_err());
-      assert!(CredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, later_than_issuance_date).is_ok());
+      assert!(JwtCredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, earlier_than_issuance_date).is_err());
+      assert!(JwtCredentialValidator::check_issued_on_or_before(&SIMPLE_CREDENTIAL, later_than_issuance_date).is_ok());
     }
   }
 }

@@ -5,7 +5,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::prelude::*;
 
-use identity_iota::credential::CredentialValidationOptions as JwtCredentialValidationOptions;
+use identity_iota::credential::JwtCredentialValidationOptions;
 
 /// Options to declare validation criteria when validating credentials.
 #[wasm_bindgen(js_name = JwtCredentialValidationOptions)]

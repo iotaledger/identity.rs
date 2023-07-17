@@ -6,9 +6,9 @@ use crate::credential::Jwt;
 use crate::domain_linkage::DomainLinkageConfiguration;
 use crate::domain_linkage::DomainLinkageValidationError;
 use crate::domain_linkage::DomainLinkageValidationErrorCause;
-use crate::validator::CredentialValidationOptions;
-use crate::validator::CredentialValidator;
 use crate::validator::FailFast;
+use crate::validator::JwtCredentialValidationOptions;
+use crate::validator::JwtCredentialValidator;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_did::CoreDID;
@@ -24,7 +24,7 @@ use super::DomainLinkageValidationResult;
 
 #[derive(Debug, Clone)]
 pub struct DomainLinkageValidator<V: JwsVerifier = EdDSAJwsVerifier> {
-  validator: CredentialValidator<V>,
+  validator: JwtCredentialValidator<V>,
 }
 
 impl DomainLinkageValidator {
@@ -35,7 +35,7 @@ impl DomainLinkageValidator {
   /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
   pub fn new() -> Self {
     Self {
-      validator: CredentialValidator::new(),
+      validator: JwtCredentialValidator::new(),
     }
   }
 }
@@ -49,7 +49,7 @@ where
   /// constructor can be used. See [`DomainLinkageValidator::new`](DomainLinkageValidator::new).
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self {
-      validator: CredentialValidator::with_signature_verifier(signature_verifier),
+      validator: JwtCredentialValidator::with_signature_verifier(signature_verifier),
     }
   }
 
@@ -76,7 +76,7 @@ where
     issuer: &DOC,
     configuration: &DomainLinkageConfiguration,
     domain: &Url,
-    validation_options: &CredentialValidationOptions,
+    validation_options: &JwtCredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
     let issuers: Vec<CoreDID> = configuration.issuers().map_err(|err| DomainLinkageValidationError {
       cause: DomainLinkageValidationErrorCause::InvalidJwt,
@@ -123,7 +123,7 @@ where
     issuer: &DOC,
     credential: &Jwt,
     domain: &Url,
-    validation_options: &CredentialValidationOptions,
+    validation_options: &JwtCredentialValidationOptions,
   ) -> DomainLinkageValidationResult {
     let decoded_credential: DecodedJwtCredential = self
       .validator
@@ -237,7 +237,7 @@ mod tests {
   use crate::domain_linkage::DomainLinkageValidationResult;
   use crate::domain_linkage::DomainLinkageValidator;
   use crate::validator::test_utils::generate_jwk_document_with_keys;
-  use crate::validator::CredentialValidationOptions;
+  use crate::validator::JwtCredentialValidationOptions;
 
   use crypto::signatures::ed25519::SecretKey;
   use identity_core::common::Duration;
@@ -266,7 +266,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(validation_result.is_ok());
@@ -284,7 +284,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
     assert!(matches!(
       validation_result.unwrap_err().cause,
@@ -303,7 +303,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(matches!(
@@ -323,7 +323,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(matches!(
@@ -347,7 +347,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(validation_result.is_ok());
@@ -369,7 +369,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(matches!(
@@ -393,7 +393,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(matches!(
@@ -418,7 +418,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(validation_result.is_ok());
@@ -438,7 +438,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(matches!(
@@ -462,7 +462,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(matches!(
@@ -485,7 +485,7 @@ mod tests {
       &document,
       &jwt,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(matches!(
@@ -506,7 +506,7 @@ mod tests {
       &document,
       &configuration,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
     assert!(matches!(
       validation_result.unwrap_err().cause,
@@ -525,7 +525,7 @@ mod tests {
       &document,
       &configuration,
       &url_foo(),
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
     );
 
     assert!(validation_result.is_ok());
