@@ -19,15 +19,8 @@ impl WasmJwtCredentialValidationOptions {
       let options: JwtCredentialValidationOptions = opts.into_serde().wasm_result()?;
       Ok(WasmJwtCredentialValidationOptions::from(options))
     } else {
-      Ok(Self::default())
+      Ok(WasmJwtCredentialValidationOptions::from(JwtCredentialValidationOptions::default()))
     }
-  }
-
-  /// Creates a new `JwtCredentialValidationOptions` with defaults.
-  #[allow(clippy::should_implement_trait)]
-  #[wasm_bindgen]
-  pub fn default() -> WasmJwtCredentialValidationOptions {
-    WasmJwtCredentialValidationOptions::from(JwtCredentialValidationOptions::default())
   }
 }
 

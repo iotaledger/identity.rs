@@ -23,13 +23,6 @@ impl WasmJwtPresentationOptions {
       Ok(WasmJwtPresentationOptions::from(JwtPresentationOptions::default()))
     }
   }
-
-  /// Creates a new `JwtPresentationOptions` with defaults.
-  #[allow(clippy::should_implement_trait)]
-  #[wasm_bindgen]
-  pub fn default() -> WasmJwtPresentationOptions {
-    WasmJwtPresentationOptions::from(JwtPresentationOptions::default())
-  }
 }
 
 impl_wasm_json!(WasmJwtPresentationOptions, JwtPresentationOptions);

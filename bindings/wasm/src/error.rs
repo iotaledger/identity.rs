@@ -171,7 +171,7 @@ impl From<serde_json::Error> for WasmError<'_> {
 impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {
-      name: Cow::Borrowed("iota_types::block::Error"),
+      name: Cow::Borrowed("iota_sdk::types::block::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }

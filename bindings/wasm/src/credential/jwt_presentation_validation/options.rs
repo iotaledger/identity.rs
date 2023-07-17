@@ -21,15 +21,8 @@ impl WasmJwtPresentationValidationOptions {
       let options: JwtPresentationValidationOptions = opts.into_serde().wasm_result()?;
       Ok(WasmJwtPresentationValidationOptions::from(options))
     } else {
-      Ok(Self::default())
+      Ok(WasmJwtPresentationValidationOptions::from(JwtPresentationValidationOptions::default()))
     }
-  }
-
-  /// Creates a new `JwtPresentationValidationOptions` with defaults.
-  #[allow(clippy::should_implement_trait)]
-  #[wasm_bindgen]
-  pub fn default() -> WasmJwtPresentationValidationOptions {
-    WasmJwtPresentationValidationOptions::from(JwtPresentationValidationOptions::default())
   }
 }
 

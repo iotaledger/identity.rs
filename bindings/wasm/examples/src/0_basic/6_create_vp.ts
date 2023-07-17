@@ -101,7 +101,7 @@ export async function createVP() {
     const res = new JwtCredentialValidator().validate(
         credentialJwt,
         issuerDocument,
-        new JwtCredentialValidationOptions({}),
+        new JwtCredentialValidationOptions(),
         FailFast.FirstError,
     );
     console.log("credentialjwt validation", res.intoCredential());

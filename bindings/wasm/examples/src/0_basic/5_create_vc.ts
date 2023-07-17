@@ -83,7 +83,7 @@ export async function createVC() {
     const decoded_credential = new JwtCredentialValidator().validate(
         credentialJwt,
         issuerDocument,
-        new JwtCredentialValidationOptions({}),
+        new JwtCredentialValidationOptions(),
         FailFast.FirstError,
     );
 
