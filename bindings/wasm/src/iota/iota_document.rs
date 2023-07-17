@@ -707,9 +707,6 @@ impl WasmIotaDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
-  // TODO: Should payload be of type `string`, or should we take Uint8Array to match Rust? I chose String here as they
-  // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
-  // as the payload type?
   #[wasm_bindgen(js_name = createJwt)]
   pub fn create_jws(
     &self,

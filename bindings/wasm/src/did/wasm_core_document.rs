@@ -641,7 +641,6 @@ impl WasmCoreDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
-  // TODO: Perhaps this should be called `signData` (and the old `signData` method would have to be updated or removed)?
   #[wasm_bindgen(js_name = createJws)]
   pub fn create_jws(
     &self,
