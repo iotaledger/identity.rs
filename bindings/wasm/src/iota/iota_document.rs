@@ -732,7 +732,7 @@ impl WasmIotaDocument {
   }
 
   /// Produces a JWS where the payload is produced from the given `credential`
-  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
