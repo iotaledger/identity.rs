@@ -13,7 +13,7 @@ description = "An IOTA Ledger integration for the IOTA DID Method."
 
 [dependencies]
 async-trait = { version = "0.1.56", default-features = false, optional = true }
-futures = { version = "0.3" }
+futures = { version = "0.3", default-features = false }
 identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = ["validator"] }
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }

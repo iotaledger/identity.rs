@@ -33,7 +33,7 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.tag(), aliasIdHex);
             assert.deepStrictEqual(did.method(), IotaDID.METHOD);
-            assert.deepStrictEqual(did.networkStr(), networkName);
+            assert.deepStrictEqual(did.network(), networkName);
             assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.scheme(), "did");
@@ -55,7 +55,7 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.tag(), aliasIdHex);
             assert.deepStrictEqual(did.method(), IotaDID.METHOD);
-            assert.deepStrictEqual(did.networkStr(), networkName);
+            assert.deepStrictEqual(did.network(), networkName);
             assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.scheme(), "did");
@@ -68,7 +68,7 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.tag(), expectedTag);
             assert.deepStrictEqual(did.method(), IotaDID.METHOD);
-            assert.deepStrictEqual(did.networkStr(), networkName);
+            assert.deepStrictEqual(did.network(), networkName);
             assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.scheme(), "did");

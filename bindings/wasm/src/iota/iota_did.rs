@@ -80,15 +80,15 @@ impl WasmIotaDID {
   // ===========================================================================
 
   /// Returns the Tangle network name of the `IotaDID`.
-  #[wasm_bindgen(js_name = networkStr)]
-  pub fn network_str(&self) -> String {
+  #[wasm_bindgen]
+  pub fn network(&self) -> String {
     self.0.network_str().to_owned()
   }
 
   /// Returns a copy of the unique tag of the `IotaDID`.
   #[wasm_bindgen]
   pub fn tag(&self) -> String {
-    self.0.tag().to_owned()
+    self.0.tag_str().to_owned()
   }
 
   #[wasm_bindgen(js_name = toCoreDid)]

@@ -35,8 +35,8 @@ use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
-#[derive(Debug, Deserialize)]
 /// Struct used internally when deserializing [`IotaDocument`].
+#[derive(Debug, Deserialize)]
 struct ProvisionalIotaDocument {
   #[serde(rename = "doc")]
   document: CoreDocument,
@@ -55,6 +55,7 @@ impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
         None,
       )
     })?;
+
     for controller_id in document
       .controller()
       .map(|controller_set| controller_set.iter())
@@ -68,17 +69,21 @@ impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
         )
       })?;
     }
+
     Ok(IotaDocument { document, metadata })
   }
 }
+
 /// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "ProvisionalIotaDocument")]
 pub struct IotaDocument {
+  /// The DID document.
   #[serde(rename = "doc")]
   pub(crate) document: CoreDocument,
+  /// The metadata of an IOTA DID document.
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
 }
@@ -91,7 +96,6 @@ impl IotaDocument {
   /// Constructs an empty DID Document with a [`IotaDID::placeholder`] identifier
   /// for the given `network`.
   // TODO: always take Option<NetworkName> or `new_with_options` for a particular network?
-  // TODO: store the network in the serialized state metadata? Currently it's lost during packing.
   pub fn new(network: &NetworkName) -> Self {
     Self::new_with_id(IotaDID::placeholder(network))
   }
@@ -208,7 +212,7 @@ impl IotaDocument {
 
   /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
   ///
-  /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
+  /// If `scope` is `None`, all **embedded** methods are returned.
   pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod> {
     self.document.methods(scope)
   }
@@ -225,76 +229,114 @@ impl IotaDocument {
       .map_err(Error::InvalidDoc)
   }
 
-  /// Removes all references to the specified [`VerificationMethod`].
+  /// Removes and returns the [`VerificationMethod`] identified by `did_url` from the document.
   ///
-  /// # Errors
+  /// # Note
   ///
-  /// Returns None if the method does not exist.
+  /// All _references to the method_ found in the document will be removed.
+  /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
     self.core_document_mut().remove_method(did_url)
   }
 
-  /// Similar to [`Self::remove_method`](Self::remove_method()), but appends the scope where the method was found
-  /// to the second position of the returned tuple.  
+  /// Removes and returns the [`VerificationMethod`] from the document. The [`MethodScope`] under which the method was
+  /// found is appended to the second position of the returned tuple.
+  ///
+  /// # Note
+  ///
+  /// All _references to the method_ found in the document will be removed.
+  /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method_and_scope(&mut self, did_url: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
     self.core_document_mut().remove_method_and_scope(did_url)
   }
 
-  /// Attaches the relationship to the given method, if the method exists.
+  /// Attaches the relationship to the method resolved by `method_query`.
   ///
-  /// Note: The method needs to be in the set of verification methods,
-  /// so it cannot be an embedded one.
-  pub fn attach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist or if it is embedded.
+  /// To convert an embedded method into a generic verification method, remove it first
+  /// and insert it with [`MethodScope::VerificationMethod`].
+  pub fn attach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
     self
       .core_document_mut()
-      .attach_method_relationship(did_url, relationship)
+      .attach_method_relationship(method_query, relationship)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  /// Detaches the `relationship` from the method identified by `did_url`.
+  /// Returns `true` if the relationship was found and removed, `false` otherwise.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist or is embedded.
+  /// To remove an embedded method, use [`Self::remove_method`].
+  ///
+  /// # Note
+  ///
+  /// If the method is referenced in the given scope, but the document does not contain the referenced verification
+  /// method, then the reference will persist in the document (i.e. it is not removed).
+  pub fn detach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
     self
       .core_document_mut()
-      .detach_method_relationship(did_url, relationship)
+      .detach_method_relationship(method_query, relationship)
       .map_err(Error::InvalidDoc)
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
-  /// provided `query` and the verification relationship specified by `scope` if present.
+  /// provided `method_query` and the verification relationship specified by `scope` if present.
   ///
   /// # Warning
   ///
   /// Incorrect use of this method can lead to distinct document resources being identified by the same DID URL.
   pub fn resolve_method_mut<'query, Q>(
     &mut self,
-    query: Q,
+    method_query: Q,
     scope: Option<MethodScope>,
   ) -> Option<&mut VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.document.resolve_method_mut(query, scope)
+    self.document.resolve_method_mut(method_query, scope)
   }
 
-  /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
+  /// Returns the first [`Service`] with an `id` property matching the provided `service_query`, if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
   // services whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
+  pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&Service>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.document.resolve_service(query)
+    self.document.resolve_service(service_query)
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
-  /// provided `query` and the verification relationship specified by `scope` if present.
+  /// provided `method_query` and the verification relationship specified by `scope` if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
   // whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
+  pub fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    method_query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.document.resolve_method(query, scope)
+    self.document.resolve_method(method_query, scope)
   }
 
   // ===========================================================================
@@ -554,7 +596,7 @@ mod tests {
     let placeholder: IotaDID = IotaDID::placeholder(&network);
     let doc1: IotaDocument = IotaDocument::new(&network);
     assert_eq!(doc1.id().network_str(), network.as_ref());
-    assert_eq!(doc1.id().tag(), placeholder.tag());
+    assert_eq!(doc1.id().tag_str(), placeholder.tag_str());
     assert_eq!(doc1.id(), &placeholder);
     assert_eq!(doc1.methods(None).len(), 0);
     assert!(doc1.service().is_empty());

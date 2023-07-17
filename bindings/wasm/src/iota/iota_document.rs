@@ -548,10 +548,10 @@ impl WasmIotaDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.blocking_write().metadata.properties.insert(key, value);
+        self.0.blocking_write().metadata.properties_mut().insert(key, value);
       }
       None => {
-        self.0.blocking_write().metadata.properties.remove(&key);
+        self.0.blocking_write().metadata.properties_mut().remove(&key);
       }
     }
     Ok(())
