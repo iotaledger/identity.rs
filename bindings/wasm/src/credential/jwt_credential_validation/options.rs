@@ -19,7 +19,9 @@ impl WasmJwtCredentialValidationOptions {
       let options: JwtCredentialValidationOptions = opts.into_serde().wasm_result()?;
       Ok(WasmJwtCredentialValidationOptions::from(options))
     } else {
-      Ok(WasmJwtCredentialValidationOptions::from(JwtCredentialValidationOptions::default()))
+      Ok(WasmJwtCredentialValidationOptions::from(
+        JwtCredentialValidationOptions::default(),
+      ))
     }
   }
 }

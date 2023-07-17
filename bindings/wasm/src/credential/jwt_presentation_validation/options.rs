@@ -21,7 +21,9 @@ impl WasmJwtPresentationValidationOptions {
       let options: JwtPresentationValidationOptions = opts.into_serde().wasm_result()?;
       Ok(WasmJwtPresentationValidationOptions::from(options))
     } else {
-      Ok(WasmJwtPresentationValidationOptions::from(JwtPresentationValidationOptions::default()))
+      Ok(WasmJwtPresentationValidationOptions::from(
+        JwtPresentationValidationOptions::default(),
+      ))
     }
   }
 }
