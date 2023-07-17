@@ -17,7 +17,7 @@ use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
-use super::key_gen::JwkGenOutput;
+use super::jwk_gen_output::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
 use super::KeyStorageErrorKind;
@@ -239,20 +239,19 @@ pub(crate) mod ed25519 {
   }
 }
 
-const ED25519_KEY_TYPE_STR: &str = "Ed25519";
-pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_STR);
-
 #[derive(Debug, Copy, Clone)]
 enum MemStoreKeyType {
   Ed25519,
 }
 
 impl JwkMemStore {
-  pub const ED25519_KEY_TYPE: KeyType = ED25519_KEY_TYPE;
+  const ED25519_KEY_TYPE_STR: &str = "Ed25519";
+  /// The Ed25519 key type.
+  pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
 }
 
 impl MemStoreKeyType {
-  pub const fn name(&self) -> &'static str {
+  const fn name(&self) -> &'static str {
     match self {
       MemStoreKeyType::Ed25519 => "Ed25519",
     }
@@ -270,7 +269,7 @@ impl TryFrom<&KeyType> for MemStoreKeyType {
 
   fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
     match value.as_str() {
-      ED25519_KEY_TYPE_STR => Ok(MemStoreKeyType::Ed25519),
+      JwkMemStore::ED25519_KEY_TYPE_STR => Ok(MemStoreKeyType::Ed25519),
       _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
     }
   }
@@ -337,18 +336,18 @@ pub(crate) mod shared {
   use tokio::sync::RwLockWriteGuard;
 
   #[derive(Default)]
-  pub struct Shared<T>(RwLock<T>);
+  pub(crate) struct Shared<T>(RwLock<T>);
 
   impl<T> Shared<T> {
-    pub fn new(data: T) -> Self {
+    pub(crate) fn new(data: T) -> Self {
       Self(RwLock::new(data))
     }
 
-    pub async fn read(&self) -> RwLockReadGuard<'_, T> {
+    pub(crate) async fn read(&self) -> RwLockReadGuard<'_, T> {
       self.0.read().await
     }
 
-    pub async fn write(&self) -> RwLockWriteGuard<'_, T> {
+    pub(crate) async fn write(&self) -> RwLockWriteGuard<'_, T> {
       self.0.write().await
     }
   }
@@ -377,7 +376,10 @@ mod tests {
     let test_msg: &[u8] = b"test";
     let store: JwkMemStore = JwkMemStore::new();
 
-    let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE, JwsAlgorithm::EdDSA).await.unwrap();
+    let JwkGenOutput { key_id, jwk } = store
+      .generate(JwkMemStore::ED25519_KEY_TYPE, JwsAlgorithm::EdDSA)
+      .await
+      .unwrap();
 
     let signature = store.sign(&key_id, test_msg, &jwk.to_public().unwrap()).await.unwrap();
 

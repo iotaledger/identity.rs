@@ -3,6 +3,8 @@
 
 use identity_core::common::Url;
 
+/// Options for creating a JSON Web Signature.
+#[non_exhaustive]
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
@@ -40,6 +42,7 @@ pub struct JwsSignatureOptions {
   /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
   #[serde(skip_serializing_if = "Option::is_none")]
   pub nonce: Option<String>,
+
   /// Whether the payload should be detached from the JWS.
   ///
   /// [More Info](https://www.rfc-editor.org/rfc/rfc7515#appendix-F).
@@ -65,14 +68,14 @@ impl JwsSignatureOptions {
   }
 
   /// Replace the value of the `typ` field.
-  pub fn typ(mut self, value: String) -> Self {
-    self.typ = Some(value);
+  pub fn typ(mut self, value: impl Into<String>) -> Self {
+    self.typ = Some(value.into());
     self
   }
 
   /// Replace the value of the `cty` field.
-  pub fn cty(mut self, value: String) -> Self {
-    self.cty = Some(value);
+  pub fn cty(mut self, value: impl Into<String>) -> Self {
+    self.cty = Some(value.into());
     self
   }
 
@@ -83,8 +86,8 @@ impl JwsSignatureOptions {
   }
 
   /// Replace the value of the `nonce` field.
-  pub fn nonce(mut self, value: String) -> Self {
-    self.nonce = Some(value);
+  pub fn nonce(mut self, value: impl Into<String>) -> Self {
+    self.nonce = Some(value.into());
     self
   }
 

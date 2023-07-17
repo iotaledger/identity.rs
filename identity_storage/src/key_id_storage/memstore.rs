@@ -84,7 +84,7 @@ mod tests {
   use identity_verification::VerificationMethod;
 
   #[tokio::test]
-  pub async fn memstore_operations() {
+  async fn memstore_operations() {
     let verification_method: VerificationMethod = crate::storage::tests::test_utils::create_verification_method();
 
     // Test insertion.

@@ -62,12 +62,12 @@ const ISSUER_IOTA_DOCUMENT_JSON: &str = r#"
 }"#;
 
 pub(super) struct Setup<T: JwkDocumentExt, U: JwkDocumentExt> {
-  pub issuer_doc: T,
-  pub subject_doc: U,
-  pub issuer_storage: MemStorage,
-  pub issuer_method_fragment: String,
-  pub subject_storage: MemStorage,
-  pub subject_method_fragment: String,
+  pub(crate) issuer_doc: T,
+  pub(crate) subject_doc: U,
+  pub(crate) issuer_storage: MemStorage,
+  pub(crate) issuer_method_fragment: String,
+  pub(crate) subject_storage: MemStorage,
+  pub(crate) subject_method_fragment: String,
 }
 
 pub(super) async fn setup_iotadocument(
@@ -131,9 +131,9 @@ where
 }
 
 pub(super) struct CredentialSetup {
-  pub credential: Credential,
-  pub issuance_date: Timestamp,
-  pub expiration_date: Timestamp,
+  pub(crate) credential: Credential,
+  pub(crate) issuance_date: Timestamp,
+  pub(crate) expiration_date: Timestamp,
 }
 
 pub(super) fn generate_credential<T: AsRef<CoreDocument>, U: AsRef<CoreDocument>>(

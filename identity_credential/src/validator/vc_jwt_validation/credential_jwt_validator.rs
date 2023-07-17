@@ -503,7 +503,9 @@ impl Default for CredentialValidator {
 
 #[cfg(test)]
 mod tests {
+  use crate::credential::Subject;
   use identity_core::common::Duration;
+
   // All tests here are essentially adaptations of the old CredentialValidator tests.
   use super::*;
   use identity_core::common::Object;
@@ -534,6 +536,132 @@ mod tests {
   lazy_static::lazy_static! {
     // A simple credential shared by some of the tests in this module
     static ref SIMPLE_CREDENTIAL: Credential = Credential::<Object>::from_json(SIMPLE_CREDENTIAL_JSON).unwrap();
+  }
+
+  #[test]
+  fn issued_on_or_before() {
+    assert!(CredentialValidator::check_issued_on_or_before(
+      &SIMPLE_CREDENTIAL,
+      SIMPLE_CREDENTIAL
+        .issuance_date
+        .checked_sub(Duration::minutes(1))
+        .unwrap()
+    )
+    .is_err());
+
+    // and now with a later timestamp
+    assert!(CredentialValidator::check_issued_on_or_before(
+      &SIMPLE_CREDENTIAL,
+      SIMPLE_CREDENTIAL
+        .issuance_date
+        .checked_add(Duration::minutes(1))
+        .unwrap()
+    )
+    .is_ok());
+  }
+
+  #[test]
+  fn check_subject_holder_relationship() {
+    let mut credential: Credential = SIMPLE_CREDENTIAL.clone();
+
+    // first ensure that holder_url is the subject and set the nonTransferable property
+    let actual_holder_url = credential.credential_subject.first().unwrap().id.clone().unwrap();
+    assert_eq!(credential.credential_subject.len(), 1);
+    credential.non_transferable = Some(true);
+
+    // checking with holder = subject passes for all defined subject holder relationships:
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &actual_holder_url,
+      SubjectHolderRelationship::AlwaysSubject
+    )
+    .is_ok());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &actual_holder_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_ok());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &actual_holder_url,
+      SubjectHolderRelationship::Any
+    )
+    .is_ok());
+
+    // check with a holder different from the subject of the credential:
+    let issuer_url = Url::parse("did:core:0x1234567890").unwrap();
+    assert!(actual_holder_url != issuer_url);
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &issuer_url,
+      SubjectHolderRelationship::AlwaysSubject
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &issuer_url,
+      SubjectHolderRelationship::Any
+    )
+    .is_ok());
+
+    let mut credential_transferable = credential.clone();
+
+    credential_transferable.non_transferable = Some(false);
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_transferable,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_ok());
+
+    credential_transferable.non_transferable = None;
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_transferable,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_ok());
+
+    // two subjects (even when they are both the holder) should fail for all defined values except "Any"
+    let mut credential_duplicated_holder = credential;
+    credential_duplicated_holder
+      .credential_subject
+      .push(Subject::with_id(actual_holder_url));
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_duplicated_holder,
+      &issuer_url,
+      SubjectHolderRelationship::AlwaysSubject
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_duplicated_holder,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_duplicated_holder,
+      &issuer_url,
+      SubjectHolderRelationship::Any
+    )
+    .is_ok());
   }
 
   #[test]
