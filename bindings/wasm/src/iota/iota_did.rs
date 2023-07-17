@@ -60,7 +60,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::from_alias_id(aliasId.as_ref(), &network_name)))
   }
 
-  /// Creates a new placeholder [`IotaDID`] with the given network name.
+  /// Creates a new placeholder `IotaDID` with the given network name.
   ///
   /// E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
   #[wasm_bindgen]

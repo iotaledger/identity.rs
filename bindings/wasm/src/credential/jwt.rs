@@ -13,6 +13,7 @@ impl WasmJwt {
   pub(crate) fn new(jwt: Jwt) -> Self {
     WasmJwt(jwt)
   }
+
   /// Creates a new `Jwt` from the given string.
   #[wasm_bindgen(constructor)]
   pub fn constructor(jwt_string: String) -> Self {

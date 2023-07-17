@@ -28,8 +28,9 @@ pub struct WasmDomainLinkageConfiguration(pub(crate) DomainLinkageConfiguration)
 impl WasmDomainLinkageConfiguration {
   /// Constructs a new `DomainLinkageConfiguration`.
   #[wasm_bindgen(constructor)]
-  pub fn new(linked_dids: &ArrayJwt) -> Result<WasmDomainLinkageConfiguration> {
-    let wasm_credentials: Vec<Jwt> = linked_dids.into_serde().wasm_result()?;
+  #[allow(non_snake_case)]
+  pub fn new(linkedDids: &ArrayJwt) -> Result<WasmDomainLinkageConfiguration> {
+    let wasm_credentials: Vec<Jwt> = linkedDids.into_serde().wasm_result()?;
     Ok(Self(DomainLinkageConfiguration::new(wasm_credentials)))
   }
 

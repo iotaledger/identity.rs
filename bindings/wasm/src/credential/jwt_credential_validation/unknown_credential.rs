@@ -45,7 +45,7 @@ impl WasmUnknownCredentialContainer {
     }
   }
 
-  /// Returns the contained value as JSON, if it can be converted, `undefined` otherwise.
+  /// Returns the contained value as an Object, if it can be converted, `undefined` otherwise.
   #[wasm_bindgen(js_name = tryIntoRaw)]
   pub fn try_into_raw(&self) -> Option<RecordStringAny> {
     match &self.0 {

@@ -29,8 +29,6 @@ use crate::verification::WasmJwsVerifier;
 use wasm_bindgen::prelude::*;
 
 /// A type for decoding and validating `Credentials`.
-// NOTE: The methods that take `&Credential` have been copied over from the old `CredentialValidator`. The old
-// `CredentialValidator` either needs to be updated or removed.
 #[wasm_bindgen(js_name = JwtCredentialValidator)]
 pub struct WasmJwtCredentialValidator(JwtCredentialValidator<WasmJwsVerifier>);
 

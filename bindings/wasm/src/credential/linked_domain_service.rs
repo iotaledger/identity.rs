@@ -19,10 +19,12 @@ use wasm_bindgen::JsCast;
 #[wasm_bindgen(js_name = LinkedDomainService, inspectable)]
 pub struct WasmLinkedDomainService(LinkedDomainService);
 
-/// A service wrapper for a [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
+/// A service wrapper for a
+/// [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
 #[wasm_bindgen(js_class = LinkedDomainService)]
 impl WasmLinkedDomainService {
-  /// Constructs a new `LinkedDomainService` that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
+  /// Constructs a new `LinkedDomainService` that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
+  ///
   /// Domain URLs must include the `https` scheme in order to pass the domain linkage validation.
   #[wasm_bindgen(constructor)]
   pub fn new(options: ILinkedDomainService) -> Result<WasmLinkedDomainService> {
@@ -54,15 +56,17 @@ impl WasmLinkedDomainService {
     WasmService(service)
   }
 
-  /// Creates a new @link{LinkedDomainService} from a @link{Service}.
+  /// Creates a new {@link LinkedDomainService} from a {@link Service}.
+  ///
   /// # Error
+  ///
   /// Errors if `service` is not a valid Linked Domain Service.
   #[wasm_bindgen(js_name = fromService)]
   pub fn from_service(service: &WasmService) -> Result<WasmLinkedDomainService> {
     Ok(Self(LinkedDomainService::try_from(service.0.clone()).wasm_result()?))
   }
 
-  /// Returns `true` if a @link{Service} is a valid Linked Domain Service.
+  /// Returns `true` if a {@link Service} is a valid Linked Domain Service.
   #[wasm_bindgen(js_name = isValid)]
   pub fn is_valid(service: &WasmService) -> bool {
     LinkedDomainService::check_structure(&service.0).is_ok()

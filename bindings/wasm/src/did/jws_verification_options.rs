@@ -12,6 +12,7 @@ pub struct WasmJwsVerificationOptions(pub(crate) JwsVerificationOptions);
 
 #[wasm_bindgen(js_class = JwsVerificationOptions)]
 impl WasmJwsVerificationOptions {
+  /// Creates a new `JwsVerificationOptions` from the given fields.
   #[wasm_bindgen(constructor)]
   pub fn new(options: Option<IJwsVerificationOptions>) -> Result<WasmJwsVerificationOptions> {
     if let Some(options) = options {

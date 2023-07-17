@@ -21,16 +21,17 @@ pub struct WasmJwtPresentationValidator(JwtPresentationValidator<WasmJwsVerifier
 
 #[wasm_bindgen(js_class = JwtPresentationValidator)]
 impl WasmJwtPresentationValidator {
-  /// Creates a new `JwtPresentationValidator`. If a `signature_verifier` is provided it will be used when
+  /// Creates a new `JwtPresentationValidator`. If a `signatureVerifier` is provided it will be used when
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
-  pub fn new(signature_verifier: Option<IJwsVerifier>) -> WasmJwtPresentationValidator {
-    let signature_verifier = WasmJwsVerifier::new(signature_verifier);
+  #[allow(non_snake_case)]
+  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtPresentationValidator {
+    let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtPresentationValidator(JwtPresentationValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Validates a [`JwtPresentation`].
+  /// Validates a `JwtPresentation`.
   ///
   /// The following properties are validated according to `options`:
   /// - the JWT can be decoded into a semantically valid presentation.
@@ -55,9 +56,10 @@ impl WasmJwtPresentationValidator {
   ///
   /// An error is returned whenever a validated condition is not satisfied or when decoding fails.
   #[wasm_bindgen]
+  #[allow(non_snake_case)]
   pub fn validate(
     &self,
-    presentation_jwt: &WasmJwt,
+    presentationJwt: &WasmJwt,
     holder: &IToCoreDocument,
     validation_options: &WasmJwtPresentationValidationOptions,
   ) -> Result<WasmDecodedJwtPresentation> {
@@ -66,7 +68,7 @@ impl WasmJwtPresentationValidator {
 
     self
       .0
-      .validate(&presentation_jwt.0, &holder_guard, &validation_options.0)
+      .validate(&presentationJwt.0, &holder_guard, &validation_options.0)
       .map(WasmDecodedJwtPresentation::from)
       .wasm_result()
   }

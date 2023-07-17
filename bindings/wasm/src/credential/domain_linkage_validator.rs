@@ -36,15 +36,17 @@ impl WasmDomainLinkageValidator {
   }
 
   /// Validates the linkage between a domain and a DID.
-  /// [`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+  /// `DomainLinkageConfiguration` is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
   ///
   /// Linkage is valid if no error is thrown.
   ///
   /// # Note:
   /// - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
+  ///   is supported.
   /// - Only the Credential issued by `issuer` is verified.
   ///
   /// # Errors
+  ///
   ///  - Semantic structure of `configuration` is invalid.
   ///  - `configuration` includes multiple credentials issued by `issuer`.
   ///  - Validation of the matched Domain Linkage Credential fails.
@@ -66,6 +68,7 @@ impl WasmDomainLinkageValidator {
   }
 
   /// Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+  ///
   /// Error will be thrown in case the validation fails.
   #[wasm_bindgen(js_name = validateCredential)]
   #[allow(non_snake_case)]
