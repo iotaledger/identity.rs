@@ -10,28 +10,28 @@ use crate::error::WasmResult;
 use crate::verification::IJwsVerifier;
 use crate::verification::WasmJwsVerifier;
 use identity_iota::core::Url;
-use identity_iota::credential::DomainLinkageValidator;
+use identity_iota::credential::JwtDomainLinkageValidator;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use super::WasmJwt;
 
 /// A validator for a Domain Linkage Configuration and Credentials.
-#[wasm_bindgen(js_name = DomainLinkageValidator)]
-pub struct WasmDomainLinkageValidator {
-  validator: DomainLinkageValidator<WasmJwsVerifier>,
+#[wasm_bindgen(js_name = JwtDomainLinkageValidator)]
+pub struct WasmJwtDomainLinkageValidator {
+  validator: JwtDomainLinkageValidator<WasmJwsVerifier>,
 }
 
-#[wasm_bindgen(js_class = DomainLinkageValidator)]
-impl WasmDomainLinkageValidator {
-  /// Creates a new `DomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
+#[wasm_bindgen(js_class = JwtDomainLinkageValidator)]
+impl WasmJwtDomainLinkageValidator {
+  /// Creates a new `JwtDomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmDomainLinkageValidator {
+  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtDomainLinkageValidator {
     let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
-    WasmDomainLinkageValidator {
-      validator: DomainLinkageValidator::with_signature_verifier(signature_verifier),
+    WasmJwtDomainLinkageValidator {
+      validator: JwtDomainLinkageValidator::with_signature_verifier(signature_verifier),
     }
   }
 

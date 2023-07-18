@@ -35,9 +35,6 @@ See: <a href="https://identity.foundation/.well-known/resources/did-configuratio
 <li>Only the <a href="https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format">JSON Web Token Proof Format</a></li>
 </ul>
 </dd>
-<dt><a href="#DomainLinkageValidator">DomainLinkageValidator</a></dt>
-<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
-</dd>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
@@ -75,6 +72,9 @@ and resolution of DID documents in Alias Outputs.</p>
 </dd>
 <dt><a href="#JwtCredentialValidator">JwtCredentialValidator</a></dt>
 <dd><p>A type for decoding and validating <code>Credentials</code>.</p>
+</dd>
+<dt><a href="#JwtDomainLinkageValidator">JwtDomainLinkageValidator</a></dt>
+<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
 </dd>
 <dt><a href="#JwtPresentationOptions">JwtPresentationOptions</a></dt>
 <dd></dd>
@@ -822,7 +822,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 ### coreDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWT where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
 
 The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
 produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -1398,71 +1398,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="DomainLinkageValidator"></a>
-
-## DomainLinkageValidator
-A validator for a Domain Linkage Configuration and Credentials.
-
-**Kind**: global class  
-
-* [DomainLinkageValidator](#DomainLinkageValidator)
-    * [new DomainLinkageValidator(signatureVerifier)](#new_DomainLinkageValidator_new)
-    * [.validateLinkage(issuer, configuration, domain, options)](#DomainLinkageValidator+validateLinkage)
-    * [.validateCredential(issuer, credentialJwt, domain, options)](#DomainLinkageValidator+validateCredential)
-
-<a name="new_DomainLinkageValidator_new"></a>
-
-### new DomainLinkageValidator(signatureVerifier)
-Creates a new `DomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
-verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
-algorithm will be used.
-
-
-| Param | Type |
-| --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
-
-<a name="DomainLinkageValidator+validateLinkage"></a>
-
-### domainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
-Validates the linkage between a domain and a DID.
-[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
-
-Linkage is valid if no error is thrown.
-
-# Note:
-- Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
-- Only the Credential issued by `issuer` is verified.
-
-# Errors
- - Semantic structure of `configuration` is invalid.
- - `configuration` includes multiple credentials issued by `issuer`.
- - Validation of the matched Domain Linkage Credential fails.
-
-**Kind**: instance method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
-| domain | <code>string</code> | 
-| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
-
-<a name="DomainLinkageValidator+validateCredential"></a>
-
-### domainLinkageValidator.validateCredential(issuer, credentialJwt, domain, options)
-Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
-Error will be thrown in case the validation fails.
-
-**Kind**: instance method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| credentialJwt | [<code>Jwt</code>](#Jwt) | 
-| domain | <code>string</code> | 
-| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
-
 <a name="Duration"></a>
 
 ## Duration
@@ -1563,7 +1498,7 @@ A DID conforming to the IOTA DID method specification.
 * [IotaDID](#IotaDID)
     * [new IotaDID(bytes, network)](#new_IotaDID_new)
     * _instance_
-        * [.networkStr()](#IotaDID+networkStr) ⇒ <code>string</code>
+        * [.network()](#IotaDID+network) ⇒ <code>string</code>
         * [.tag()](#IotaDID+tag) ⇒ <code>string</code>
         * [.toCoreDid()](#IotaDID+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.scheme()](#IotaDID+scheme) ⇒ <code>string</code>
@@ -1599,9 +1534,9 @@ See also [placeholder](#IotaDID.placeholder).
 | bytes | <code>Uint8Array</code> | 
 | network | <code>string</code> | 
 
-<a name="IotaDID+networkStr"></a>
+<a name="IotaDID+network"></a>
 
-### did.networkStr() ⇒ <code>string</code>
+### did.network() ⇒ <code>string</code>
 Returns the Tangle network name of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -2246,7 +2181,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 ### iotaDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWS where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
 
 The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
 produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -3573,6 +3508,71 @@ If the JWT decoding fails or the issuer field is not a valid DID.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Jwt</code>](#Jwt) | 
+
+<a name="JwtDomainLinkageValidator"></a>
+
+## JwtDomainLinkageValidator
+A validator for a Domain Linkage Configuration and Credentials.
+
+**Kind**: global class  
+
+* [JwtDomainLinkageValidator](#JwtDomainLinkageValidator)
+    * [new JwtDomainLinkageValidator(signatureVerifier)](#new_JwtDomainLinkageValidator_new)
+    * [.validateLinkage(issuer, configuration, domain, options)](#JwtDomainLinkageValidator+validateLinkage)
+    * [.validateCredential(issuer, credentialJwt, domain, options)](#JwtDomainLinkageValidator+validateCredential)
+
+<a name="new_JwtDomainLinkageValidator_new"></a>
+
+### new JwtDomainLinkageValidator(signatureVerifier)
+Creates a new `JwtDomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
+verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
+algorithm will be used.
+
+
+| Param | Type |
+| --- | --- |
+| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+
+<a name="JwtDomainLinkageValidator+validateLinkage"></a>
+
+### jwtDomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
+Validates the linkage between a domain and a DID.
+[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+
+Linkage is valid if no error is thrown.
+
+# Note:
+- Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
+- Only the Credential issued by `issuer` is verified.
+
+# Errors
+ - Semantic structure of `configuration` is invalid.
+ - `configuration` includes multiple credentials issued by `issuer`.
+ - Validation of the matched Domain Linkage Credential fails.
+
+**Kind**: instance method of [<code>JwtDomainLinkageValidator</code>](#JwtDomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
+| domain | <code>string</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
+
+<a name="JwtDomainLinkageValidator+validateCredential"></a>
+
+### jwtDomainLinkageValidator.validateCredential(issuer, credentialJwt, domain, options)
+Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+Error will be thrown in case the validation fails.
+
+**Kind**: instance method of [<code>JwtDomainLinkageValidator</code>](#JwtDomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| credentialJwt | [<code>Jwt</code>](#Jwt) | 
+| domain | <code>string</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
 
 <a name="JwtPresentationOptions"></a>
 
