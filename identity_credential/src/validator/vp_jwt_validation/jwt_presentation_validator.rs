@@ -63,7 +63,7 @@ where
   ///
   /// * This method does NOT validate the constituent credentials and therefore also not the relationship between the
   /// credentials' subjects and the presentation holder. This can be done with
-  /// [`CredentialValidationOptions`](crate::validator::CredentialValidationOptions).
+  /// [`JwtCredentialValidationOptions`](crate::validator::JwtCredentialValidationOptions).
   /// * The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
   /// be trusted. This section contains more information on additional checks that should be carried out before and
   /// after calling this method.
