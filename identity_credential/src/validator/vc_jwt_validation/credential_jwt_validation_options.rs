@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO: Replace or update the equivalent types in the parent module.
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_document::verifiable::JwsVerificationOptions;
@@ -10,7 +9,7 @@ use serde::Serialize;
 
 use crate::validator::SubjectHolderRelationship;
 
-/// Options to declare validation criteria for credentials.
+/// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
 #[non_exhaustive]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

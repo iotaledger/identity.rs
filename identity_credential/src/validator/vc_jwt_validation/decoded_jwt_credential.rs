@@ -6,6 +6,7 @@ use identity_core::common::Object;
 use identity_verification::jose::jws::JwsHeader;
 
 /// Decoded [`Credential`] from a cryptographically verified JWS.
+///
 /// Note that having an instance of this type only means the JWS it was constructed from was verified.
 /// It does not imply anything about a potentially present proof property on the credential itself.
 #[non_exhaustive]

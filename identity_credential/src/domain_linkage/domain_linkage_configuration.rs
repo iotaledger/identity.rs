@@ -10,17 +10,19 @@ use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_did::CoreDID;
 use serde::Deserialize;
+use serde::Serialize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
 use crate::Error::DomainLinkageError;
 
-lazy_static! {
+lazy_static::lazy_static! {
   static ref WELL_KNOWN_CONTEXT: Context =
     Context::Url(Url::parse("https://identity.foundation/.well-known/did-configuration/v1").unwrap());
 }
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
+///
 /// It can be placed in an origin's `.well-known` directory to prove linkage between the origin and a DID.
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 ///

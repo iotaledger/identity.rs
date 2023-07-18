@@ -339,15 +339,7 @@ where
   // Add a RevocationBitmap service to the issuer.
   let bitmap: RevocationBitmap = RevocationBitmap::new();
 
-  insert_service(
-    &mut issuer_doc,
-    Service::builder(Object::new())
-      .id(service_url.clone())
-      .type_(RevocationBitmap::TYPE)
-      .service_endpoint(bitmap.to_endpoint().unwrap())
-      .build()
-      .unwrap(),
-  );
+  insert_service(&mut issuer_doc, bitmap.to_service(service_url.clone()).unwrap());
 
   // 3: un-revoked index always succeeds.
   for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
