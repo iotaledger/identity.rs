@@ -9,7 +9,7 @@ use itertools;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 /// An error associated with validating credentials and presentations.
-pub enum ValidationError {
+pub enum JwtValidationError {
   /// Indicates that the JWS representation of an issued credential or presentation could not be decoded.
   #[error("could not decode jws")]
   JwsDecodingError(#[source] identity_verification::jose::error::Error),
@@ -127,7 +127,7 @@ impl Display for SignerContext {
 #[derive(Debug)]
 pub struct CompoundCredentialValidationError {
   /// List of credential validation errors.
-  pub validation_errors: Vec<ValidationError>,
+  pub validation_errors: Vec<JwtValidationError>,
 }
 
 impl Display for CompoundCredentialValidationError {

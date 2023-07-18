@@ -13,8 +13,8 @@ use identity_credential::revocation::RevocationDocumentExt;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_credential::validator::JwtCredentialValidator;
+use identity_credential::validator::JwtValidationError;
 use identity_credential::validator::StatusCheck;
-use identity_credential::validator::ValidationError;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
@@ -75,7 +75,7 @@ where
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, &ValidationError::ExpirationDate));
+    assert!(matches!(error, &JwtValidationError::ExpirationDate));
   }
 
   // Test invalid issuance date.
@@ -98,7 +98,7 @@ where
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, &ValidationError::IssuanceDate));
+    assert!(matches!(error, &JwtValidationError::IssuanceDate));
   }
 }
 
@@ -184,7 +184,7 @@ where
     .verify_signature::<_, Object>(&jwt, &[&subject_doc], &JwsVerificationOptions::default())
     .unwrap_err();
 
-  assert!(matches!(error, ValidationError::DocumentMismatch { .. }));
+  assert!(matches!(error, JwtValidationError::DocumentMismatch { .. }));
 
   // also check that the full validation fails as expected
   let options = JwtCredentialValidationOptions::default();
@@ -200,7 +200,7 @@ where
     _ => unreachable!(),
   };
 
-  assert!(matches!(error, ValidationError::DocumentMismatch { .. }));
+  assert!(matches!(error, JwtValidationError::DocumentMismatch { .. }));
 }
 
 #[tokio::test]
@@ -243,7 +243,7 @@ where
 
   // run the validation unit
   // we expect that the kid won't resolve to a method on the issuer_doc's document.
-  assert!(matches!(err, ValidationError::Signature { .. }));
+  assert!(matches!(err, JwtValidationError::Signature { .. }));
 
   // check that full_validation also fails as expected
   let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
@@ -264,7 +264,7 @@ where
   };
 
   // we expect that the kid won't resolve to a method on the issuer_doc's document.
-  assert!(matches!(error, &ValidationError::Signature { .. }));
+  assert!(matches!(error, &JwtValidationError::Signature { .. }));
 }
 
 #[tokio::test]

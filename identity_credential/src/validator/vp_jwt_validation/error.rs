@@ -6,7 +6,7 @@ use std::error::Error;
 use std::fmt::Display;
 
 use crate::validator::vc_jwt_validation::CompoundCredentialValidationError;
-use crate::validator::vc_jwt_validation::ValidationError;
+use crate::validator::vc_jwt_validation::JwtValidationError;
 
 #[derive(Debug)]
 /// An error caused by a failure to validate a `Presentation`.
@@ -15,11 +15,11 @@ pub struct CompoundJwtPresentationValidationError {
   /// order in the presentation.
   pub credential_errors: BTreeMap<usize, CompoundCredentialValidationError>,
   /// Errors that occurred during validation of the presentation.
-  pub presentation_validation_errors: Vec<ValidationError>,
+  pub presentation_validation_errors: Vec<JwtValidationError>,
 }
 
 impl CompoundJwtPresentationValidationError {
-  pub(crate) fn one_presentation_error(error: ValidationError) -> Self {
+  pub(crate) fn one_presentation_error(error: JwtValidationError) -> Self {
     Self {
       credential_errors: BTreeMap::new(),
       presentation_validation_errors: vec![error],

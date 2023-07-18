@@ -27,11 +27,11 @@ use identity_iota::credential::FailFast;
 use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::JwtCredentialValidator;
+use identity_iota::credential::JwtValidationError;
 use identity_iota::credential::RevocationBitmap;
 use identity_iota::credential::RevocationBitmapStatus;
 use identity_iota::credential::Status;
 use identity_iota::credential::Subject;
-use identity_iota::credential::ValidationError;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
 use identity_iota::document::Service;
@@ -181,7 +181,7 @@ async fn main() -> anyhow::Result<()> {
   // We expect validation to no longer succeed because the credential was revoked.
   assert!(matches!(
     validation_result.unwrap_err().validation_errors[0],
-    ValidationError::Revoked
+    JwtValidationError::Revoked
   ));
 
   // ===========================================================================

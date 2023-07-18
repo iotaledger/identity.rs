@@ -23,8 +23,8 @@ use identity_verification::jws::JwsVerifier;
 use super::CompoundCredentialValidationError;
 use super::DecodedJwtCredential;
 use super::JwtCredentialValidationOptions;
+use super::JwtValidationError;
 use super::SignerContext;
-use super::ValidationError;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
 use crate::credential::Jwt;
@@ -36,7 +36,7 @@ use crate::validator::SubjectHolderRelationship;
 #[non_exhaustive]
 pub struct JwtCredentialValidator<V: JwsVerifier = EdDSAJwsVerifier>(V);
 
-type ValidationUnitResult<T = ()> = std::result::Result<T, ValidationError>;
+type ValidationUnitResult<T = ()> = std::result::Result<T, JwtValidationError>;
 
 impl<V> JwtCredentialValidator<V>
 where
@@ -113,7 +113,7 @@ where
     credential: &Jwt,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
-  ) -> Result<DecodedJwtCredential<T>, ValidationError>
+  ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
@@ -184,7 +184,7 @@ where
     };
 
     let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
-    let validation_errors: Vec<ValidationError> = match fail_fast {
+    let validation_errors: Vec<JwtValidationError> = match fail_fast {
       FailFast::FirstError => validation_units_error_iter.take(1).collect(),
       FailFast::AllErrors => validation_units_error_iter.collect(),
     };
@@ -202,7 +202,7 @@ where
     credential: &Jwt,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
-  ) -> Result<DecodedJwtCredential<T>, ValidationError>
+  ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
@@ -218,7 +218,7 @@ where
     let nonce: Option<&str> = options.nonce.as_deref();
     // Validate the nonce
     if decoded.nonce() != nonce {
-      return Err(ValidationError::JwsDecodingError(
+      return Err(JwtValidationError::JwsDecodingError(
         identity_verification::jose::error::Error::InvalidParam("invalid nonce value"),
       ));
     }
@@ -228,18 +228,16 @@ where
     // can also use. In that case The `SignerContext` used in the error would have to be passed as an additional
     // parameter.
     let method_id: DIDUrl = {
-      let kid: &str =
-        decoded
-          .protected_header()
-          .and_then(|header| header.kid())
-          .ok_or(ValidationError::MethodDataLookupError {
-            source: None,
-            message: "could not extract kid from protected header",
-            signer_ctx: SignerContext::Issuer,
-          })?;
+      let kid: &str = decoded.protected_header().and_then(|header| header.kid()).ok_or(
+        JwtValidationError::MethodDataLookupError {
+          source: None,
+          message: "could not extract kid from protected header",
+          signer_ctx: SignerContext::Issuer,
+        },
+      )?;
 
       // Convert kid to DIDUrl
-      DIDUrl::parse(kid).map_err(|err| ValidationError::MethodDataLookupError {
+      DIDUrl::parse(kid).map_err(|err| JwtValidationError::MethodDataLookupError {
         source: Some(err.into()),
         message: "could not parse kid as a DID Url",
         signer_ctx: SignerContext::Issuer,
@@ -251,13 +249,13 @@ where
       .iter()
       .map(AsRef::as_ref)
       .find(|issuer_doc| <CoreDocument>::id(issuer_doc) == method_id.did())
-      .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))?;
+      .ok_or(JwtValidationError::DocumentMismatch(SignerContext::Issuer))?;
 
     // Obtain the public key from the issuer's DID document
     let public_key: &Jwk = issuer
       .resolve_method(&method_id, options.method_scope)
       .and_then(|method| method.data().public_key_jwk())
-      .ok_or_else(|| ValidationError::MethodDataLookupError {
+      .ok_or_else(|| JwtValidationError::MethodDataLookupError {
         source: None,
         message: "could not extract JWK from a method identified by kid",
         signer_ctx: SignerContext::Issuer,
@@ -269,7 +267,7 @@ where
     // returning.
     let issuer_id: CoreDID = JwtCredentialValidator::extract_issuer(&credential_token.credential)?;
     if &issuer_id != method_id.did() {
-      return Err(ValidationError::IdentifierMismatch {
+      return Err(JwtValidationError::IdentifierMismatch {
         signer_ctx: SignerContext::Issuer,
       });
     };
@@ -277,12 +275,12 @@ where
   }
 
   /// Decode the credential into a [`JwsValidationItem`].
-  fn decode(credential_jws: &str) -> Result<JwsValidationItem<'_>, ValidationError> {
+  fn decode(credential_jws: &str) -> Result<JwsValidationItem<'_>, JwtValidationError> {
     let decoder: Decoder = Decoder::new();
 
     decoder
       .decode_compact_serialization(credential_jws.as_bytes(), None)
-      .map_err(ValidationError::JwsDecodingError)
+      .map_err(JwtValidationError::JwsDecodingError)
   }
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
@@ -290,7 +288,7 @@ where
     decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,
-  ) -> Result<DecodedJwtCredential<T>, ValidationError>
+  ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
   {
@@ -298,7 +296,7 @@ where
     let DecodedJws { protected, claims, .. } =
       decoded
         .verify(signature_verifier, public_key)
-        .map_err(|err| ValidationError::Signature {
+        .map_err(|err| JwtValidationError::Signature {
           source: err,
           signer_ctx: SignerContext::Issuer,
         })?;
@@ -306,13 +304,13 @@ where
     // Deserialize the raw claims
     let credential_claims: CredentialJwtClaims<'_, T> =
       CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
-        ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+        JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
 
     // Construct the credential token containing the credential and the protected header.
     let credential: Credential<T> = credential_claims
       .try_into_credential()
-      .map_err(ValidationError::CredentialStructure)?;
+      .map_err(JwtValidationError::CredentialStructure)?;
 
     Ok(DecodedJwtCredential {
       credential,
@@ -338,7 +336,7 @@ impl JwtCredentialValidator {
   pub fn check_structure<T>(credential: &Credential<T>) -> ValidationUnitResult {
     credential
       .check_structure()
-      .map_err(ValidationError::CredentialStructure)
+      .map_err(JwtValidationError::CredentialStructure)
   }
 
   /// Validate that the [`Credential`] expires on or after the specified [`Timestamp`].
@@ -346,14 +344,14 @@ impl JwtCredentialValidator {
     let expiration_date: Option<Timestamp> = credential.expiration_date;
     (expiration_date.is_none() || expiration_date >= Some(timestamp))
       .then_some(())
-      .ok_or(ValidationError::ExpirationDate)
+      .ok_or(JwtValidationError::ExpirationDate)
   }
 
   /// Validate that the [`Credential`] is issued on or before the specified [`Timestamp`].
   pub fn check_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
     (credential.issuance_date <= timestamp)
       .then_some(())
-      .ok_or(ValidationError::IssuanceDate)
+      .ok_or(JwtValidationError::IssuanceDate)
   }
 
   /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
@@ -385,7 +383,7 @@ impl JwtCredentialValidator {
         SubjectHolderRelationship::Any => true,
       })
       .map(|_| ())
-      .ok_or(ValidationError::SubjectHolderRelationship)
+      .ok_or(JwtValidationError::SubjectHolderRelationship)
   }
 
   /// Checks whether the credential status has been revoked.
@@ -409,21 +407,21 @@ impl JwtCredentialValidator {
           if status_check == crate::validator::StatusCheck::SkipUnsupported {
             return Ok(());
           }
-          return Err(ValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
+          return Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
             "unsupported type '{}'",
             status.type_
           ))));
         }
         let status: crate::credential::RevocationBitmapStatus =
           crate::credential::RevocationBitmapStatus::try_from(status.clone())
-            .map_err(ValidationError::InvalidStatus)?;
+            .map_err(JwtValidationError::InvalidStatus)?;
 
         // Check the credential index against the issuer's DID Document.
         let issuer_did: CoreDID = Self::extract_issuer(credential)?;
         trusted_issuers
           .iter()
           .find(|issuer| <CoreDocument>::id(issuer.as_ref()) == &issuer_did)
-          .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
+          .ok_or(JwtValidationError::DocumentMismatch(SignerContext::Issuer))
           .and_then(|issuer| Self::check_revocation_bitmap_status(issuer, status))
       }
     }
@@ -438,16 +436,16 @@ impl JwtCredentialValidator {
   ) -> ValidationUnitResult {
     use crate::revocation::RevocationDocumentExt;
 
-    let issuer_service_url: identity_did::DIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+    let issuer_service_url: identity_did::DIDUrl = status.id().map_err(JwtValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
     let revocation_bitmap: crate::revocation::RevocationBitmap = issuer
       .as_ref()
       .resolve_revocation_bitmap(issuer_service_url.into())
-      .map_err(|_| ValidationError::ServiceLookupError)?;
-    let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
+      .map_err(|_| JwtValidationError::ServiceLookupError)?;
+    let index: u32 = status.index().map_err(JwtValidationError::InvalidStatus)?;
     if revocation_bitmap.is_revoked(index) {
-      Err(ValidationError::Revoked)
+      Err(JwtValidationError::Revoked)
     } else {
       Ok(())
     }
@@ -458,12 +456,12 @@ impl JwtCredentialValidator {
   /// # Errors
   ///
   /// Fails if the issuer field is not a valid DID.
-  pub fn extract_issuer<D, T>(credential: &Credential<T>) -> std::result::Result<D, ValidationError>
+  pub fn extract_issuer<D, T>(credential: &Credential<T>) -> std::result::Result<D, JwtValidationError>
   where
     D: DID,
     <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
   {
-    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+    D::from_str(credential.issuer.url().as_str()).map_err(|err| JwtValidationError::SignerUrl {
       signer_ctx: SignerContext::Issuer,
       source: err.into(),
     })
@@ -474,21 +472,21 @@ impl JwtCredentialValidator {
   /// # Errors
   ///
   /// If the JWT decoding fails or the issuer field is not a valid DID.
-  pub fn extract_issuer_from_jwt<D>(credential: &Jwt) -> std::result::Result<D, ValidationError>
+  pub fn extract_issuer_from_jwt<D>(credential: &Jwt) -> std::result::Result<D, JwtValidationError>
   where
     D: DID,
     <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
   {
     let validation_item = Decoder::new()
       .decode_compact_serialization(credential.as_str().as_bytes(), None)
-      .map_err(ValidationError::JwsDecodingError)?;
+      .map_err(JwtValidationError::JwsDecodingError)?;
 
     let claims: CredentialJwtClaims<'_, Object> = CredentialJwtClaims::from_json_slice(&validation_item.claims())
       .map_err(|err| {
-        ValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+        JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
 
-    D::from_str(claims.iss.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+    D::from_str(claims.iss.url().as_str()).map_err(|err| JwtValidationError::SignerUrl {
       signer_ctx: SignerContext::Issuer,
       source: err.into(),
     })
