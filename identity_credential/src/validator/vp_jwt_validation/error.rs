@@ -4,7 +4,6 @@
 use std::error::Error;
 use std::fmt::Display;
 
-use crate::validator::vc_jwt_validation::CompoundCredentialValidationError;
 use crate::validator::vc_jwt_validation::JwtValidationError;
 
 /// Errors caused by a failure to validate a [`Presentation`](crate::presentation::Presentation).
