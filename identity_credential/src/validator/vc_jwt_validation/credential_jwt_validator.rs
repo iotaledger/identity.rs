@@ -224,9 +224,7 @@ where
     }
 
     // Parse the `kid` to a DID Url which should be the identifier of a verification method in a trusted issuer's DID
-    // document TODO: Consider factoring this section into a private method that the (future) PresentationValidator
-    // can also use. In that case The `SignerContext` used in the error would have to be passed as an additional
-    // parameter.
+    // document.
     let method_id: DIDUrl = {
       let kid: &str = decoded.protected_header().and_then(|header| header.kid()).ok_or(
         JwtValidationError::MethodDataLookupError {

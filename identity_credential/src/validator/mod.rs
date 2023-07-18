@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Verifiable Credential and Presentation validators.
+
 pub use self::options::FailFast;
 pub use self::options::StatusCheck;
 pub use self::options::SubjectHolderRelationship;

@@ -9,7 +9,7 @@ use serde::Serialize;
 
 use crate::validator::SubjectHolderRelationship;
 
-/// Options to declare validation criteria for credentials.
+/// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
 #[non_exhaustive]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

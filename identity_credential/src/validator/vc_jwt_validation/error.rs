@@ -123,7 +123,7 @@ impl Display for SignerContext {
   }
 }
 
-/// Errors caused by a failure to validate a credential.
+/// Errors caused by a failure to validate a [`Credential`](crate::credential::Credential).
 #[derive(Debug)]
 pub struct CompoundCredentialValidationError {
   /// List of credential validation errors.
