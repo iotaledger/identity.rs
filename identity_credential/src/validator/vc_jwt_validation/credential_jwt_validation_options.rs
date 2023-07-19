@@ -13,7 +13,7 @@ use crate::validator::SubjectHolderRelationship;
 #[non_exhaustive]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CredentialValidationOptions {
+pub struct JwtCredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
   /// [`Timestamp`].
   /// Uses the current datetime during validation if not set.
@@ -42,7 +42,7 @@ pub struct CredentialValidationOptions {
   pub verification_options: JwsVerificationOptions,
 }
 
-impl CredentialValidationOptions {
+impl JwtCredentialValidationOptions {
   /// Constructor that sets all options to their defaults.
   pub fn new() -> Self {
     Self::default()

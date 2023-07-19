@@ -22,16 +22,16 @@ use identity_iota::core::Url;
 use identity_iota::credential::CompoundCredentialValidationError;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-use identity_iota::credential::CredentialValidationOptions;
-use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::FailFast;
 use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::JwtCredentialValidator;
+use identity_iota::credential::JwtValidationError;
 use identity_iota::credential::RevocationBitmap;
 use identity_iota::credential::RevocationBitmapStatus;
 use identity_iota::credential::Status;
 use identity_iota::credential::Subject;
-use identity_iota::credential::ValidationError;
 use identity_iota::did::DIDUrl;
 use identity_iota::did::DID;
 use identity_iota::document::Service;
@@ -145,10 +145,10 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
   // Validate the credential's signature using the issuer's DID Document.
-  CredentialValidator::new().validate::<_, Object>(
+  JwtCredentialValidator::new().validate::<_, Object>(
     &credential_jwt,
     &issuer_document,
-    &CredentialValidationOptions::default(),
+    &JwtCredentialValidationOptions::default(),
     FailFast::FirstError,
   )?;
 
@@ -169,17 +169,17 @@ async fn main() -> anyhow::Result<()> {
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
   let validation_result: std::result::Result<DecodedJwtCredential, CompoundCredentialValidationError> =
-    CredentialValidator::new().validate(
+    JwtCredentialValidator::new().validate(
       &credential_jwt,
       &issuer_document,
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
       FailFast::FirstError,
     );
 
   // We expect validation to no longer succeed because the credential was revoked.
   assert!(matches!(
     validation_result.unwrap_err().validation_errors[0],
-    ValidationError::Revoked
+    JwtValidationError::Revoked
   ));
 
   // ===========================================================================
@@ -205,13 +205,13 @@ async fn main() -> anyhow::Result<()> {
   // We expect the verifiable credential to be revoked.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
-  let resolved_issuer_did: IotaDID = CredentialValidator::extract_issuer_from_jwt(&credential_jwt)?;
+  let resolved_issuer_did: IotaDID = JwtCredentialValidator::extract_issuer_from_jwt(&credential_jwt)?;
   let resolved_issuer_doc: IotaDocument = resolver.resolve(&resolved_issuer_did).await?;
 
-  let validation_result = CredentialValidator::new().validate::<_, Object>(
+  let validation_result = JwtCredentialValidator::new().validate::<_, Object>(
     &credential_jwt,
     &resolved_issuer_doc,
-    &CredentialValidationOptions::default(),
+    &JwtCredentialValidationOptions::default(),
     FailFast::FirstError,
   );
 

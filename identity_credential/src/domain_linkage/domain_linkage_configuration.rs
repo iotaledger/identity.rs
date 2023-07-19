@@ -3,8 +3,8 @@
 
 use crate::credential::Jwt;
 use crate::error::Result;
-use crate::validator::CredentialValidator;
-use crate::validator::ValidationError;
+use crate::validator::JwtCredentialValidator;
+use crate::validator::JwtValidationError;
 use identity_core::common::Context;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
@@ -93,12 +93,12 @@ impl DomainLinkageConfiguration {
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
-  pub fn issuers(&self) -> std::result::Result<Vec<CoreDID>, ValidationError> {
+  pub fn issuers(&self) -> std::result::Result<Vec<CoreDID>, JwtValidationError> {
     self
       .0
       .linked_dids
       .iter()
-      .map(CredentialValidator::extract_issuer_from_jwt::<CoreDID>)
+      .map(JwtCredentialValidator::extract_issuer_from_jwt::<CoreDID>)
       .collect()
   }
 

@@ -10,11 +10,11 @@ use identity_credential::credential::RevocationBitmapStatus;
 use identity_credential::credential::Status;
 use identity_credential::revocation::RevocationBitmap;
 use identity_credential::revocation::RevocationDocumentExt;
-use identity_credential::validator::CredentialValidationOptions;
-use identity_credential::validator::CredentialValidator;
 use identity_credential::validator::FailFast;
+use identity_credential::validator::JwtCredentialValidationOptions;
+use identity_credential::validator::JwtCredentialValidator;
+use identity_credential::validator::JwtValidationError;
 use identity_credential::validator::StatusCheck;
-use identity_credential::validator::ValidationError;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
@@ -60,12 +60,12 @@ where
     let issued_on_or_before = issuance_date;
     // expires_on_or_after > expiration_date
     let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
-    let options = CredentialValidationOptions::default()
+    let options = JwtCredentialValidationOptions::default()
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::new()
+    let validation_errors = JwtCredentialValidator::new()
       .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
@@ -75,7 +75,7 @@ where
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, &ValidationError::ExpirationDate));
+    assert!(matches!(error, &JwtValidationError::ExpirationDate));
   }
 
   // Test invalid issuance date.
@@ -83,12 +83,12 @@ where
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
     let expires_on_or_after = expiration_date;
-    let options = CredentialValidationOptions::default()
+    let options = JwtCredentialValidationOptions::default()
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::new()
+    let validation_errors = JwtCredentialValidator::new()
       .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
@@ -98,7 +98,7 @@ where
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, &ValidationError::IssuanceDate));
+    assert!(matches!(error, &JwtValidationError::IssuanceDate));
   }
 }
 
@@ -139,10 +139,10 @@ where
 
   let issued_on_or_before: Timestamp = issuance_date.checked_add(Duration::days(14)).unwrap();
   let expires_on_or_after: Timestamp = expiration_date.checked_sub(Duration::hours(1)).unwrap();
-  let options = CredentialValidationOptions::default()
+  let options = JwtCredentialValidationOptions::default()
     .latest_issuance_date(issued_on_or_before)
     .earliest_expiry_date(expires_on_or_after);
-  assert!(CredentialValidator::new()
+  assert!(JwtCredentialValidator::new()
     .validate::<_, Object>(&jwt, &issuer_doc, &options, FailFast::FirstError)
     .is_ok());
 }
@@ -180,17 +180,17 @@ where
 
   // the credential was not signed by this issuer
   // check that `verify_signature` returns the expected error
-  let error = CredentialValidator::new()
+  let error = JwtCredentialValidator::new()
     .verify_signature::<_, Object>(&jwt, &[&subject_doc], &JwsVerificationOptions::default())
     .unwrap_err();
 
-  assert!(matches!(error, ValidationError::DocumentMismatch { .. }));
+  assert!(matches!(error, JwtValidationError::DocumentMismatch { .. }));
 
   // also check that the full validation fails as expected
-  let options = CredentialValidationOptions::default();
+  let options = JwtCredentialValidationOptions::default();
 
   // validate and extract the nested error according to our expectations
-  let validation_errors = CredentialValidator::new()
+  let validation_errors = JwtCredentialValidator::new()
     .validate::<_, Object>(&jwt, &subject_doc, &options, FailFast::FirstError)
     .unwrap_err()
     .validation_errors;
@@ -200,7 +200,7 @@ where
     _ => unreachable!(),
   };
 
-  assert!(matches!(error, ValidationError::DocumentMismatch { .. }));
+  assert!(matches!(error, JwtValidationError::DocumentMismatch { .. }));
 }
 
 #[tokio::test]
@@ -237,23 +237,23 @@ where
     .await
     .unwrap();
 
-  let err = CredentialValidator::new()
+  let err = JwtCredentialValidator::new()
     .verify_signature::<_, Object>(&jwt, &[&issuer_doc], &JwsVerificationOptions::default())
     .unwrap_err();
 
   // run the validation unit
   // we expect that the kid won't resolve to a method on the issuer_doc's document.
-  assert!(matches!(err, ValidationError::Signature { .. }));
+  assert!(matches!(err, JwtValidationError::Signature { .. }));
 
   // check that full_validation also fails as expected
   let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
   let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
-  let options = CredentialValidationOptions::default()
+  let options = JwtCredentialValidationOptions::default()
     .latest_issuance_date(issued_on_or_before)
     .earliest_expiry_date(expires_on_or_after);
 
   // validate and extract the nested error according to our expectations
-  let validation_errors = CredentialValidator::new()
+  let validation_errors = JwtCredentialValidator::new()
     .validate::<_, Object>(&jwt, &issuer_doc, &options, FailFast::FirstError)
     .unwrap_err()
     .validation_errors;
@@ -264,7 +264,7 @@ where
   };
 
   // we expect that the kid won't resolve to a method on the issuer_doc's document.
-  assert!(matches!(error, &ValidationError::Signature { .. }));
+  assert!(matches!(error, &JwtValidationError::Signature { .. }));
 }
 
 #[tokio::test]
@@ -300,7 +300,7 @@ where
 
   // 0: missing status always succeeds.
   for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
-    assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+    assert!(JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
   }
 
   // 1: unsupported status type.
@@ -314,7 +314,7 @@ where
     (StatusCheck::SkipAll, true),
   ] {
     assert_eq!(
-      CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+      JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
       expected
     );
   }
@@ -331,7 +331,7 @@ where
     (StatusCheck::SkipAll, true),
   ] {
     assert_eq!(
-      CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+      JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
       expected
     );
   }
@@ -343,7 +343,7 @@ where
 
   // 3: un-revoked index always succeeds.
   for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
-    assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+    assert!(JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
   }
 
   // 4: revoked index.
@@ -354,7 +354,7 @@ where
     (StatusCheck::SkipAll, true),
   ] {
     assert_eq!(
-      CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+      JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
       expected
     );
   }
@@ -405,18 +405,18 @@ where
   let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
   // expires_on_or_after > expiration_date
   let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
-  let options = CredentialValidationOptions::default()
+  let options = JwtCredentialValidationOptions::default()
     .latest_issuance_date(issued_on_or_before)
     .earliest_expiry_date(expires_on_or_after);
 
-  let validation_errors = CredentialValidator::new()
+  let validation_errors = JwtCredentialValidator::new()
     .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
     .unwrap_err()
     .validation_errors;
 
   assert!(validation_errors.len() == 1);
 
-  let validation_errors = CredentialValidator::new()
+  let validation_errors = JwtCredentialValidator::new()
     .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::AllErrors)
     .unwrap_err()
     .validation_errors;

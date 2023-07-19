@@ -13,12 +13,12 @@ use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
-use identity_iota::credential::CredentialValidationOptions;
 use identity_iota::credential::DomainLinkageConfiguration;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
 use identity_iota::credential::DomainLinkageValidationError;
-use identity_iota::credential::DomainLinkageValidator;
 use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::JwtDomainLinkageValidator;
 use identity_iota::credential::LinkedDomainService;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DIDUrl;
@@ -152,11 +152,11 @@ async fn main() -> anyhow::Result<()> {
   let issuer_did_document: IotaDocument = resolver.resolve(&did).await?;
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
-  let validation_result: Result<(), DomainLinkageValidationError> = DomainLinkageValidator::new().validate_linkage(
+  let validation_result: Result<(), DomainLinkageValidationError> = JwtDomainLinkageValidator::new().validate_linkage(
     &issuer_did_document,
     &configuration_resource,
     &domain_foo,
-    &CredentialValidationOptions::default(),
+    &JwtCredentialValidationOptions::default(),
   );
   assert!(validation_result.is_ok());
 
@@ -196,11 +196,11 @@ async fn main() -> anyhow::Result<()> {
     DomainLinkageConfiguration::from_json(&configuration_resource_json)?;
 
   // Validate the linkage.
-  let validation_result: Result<(), DomainLinkageValidationError> = DomainLinkageValidator::new().validate_linkage(
+  let validation_result: Result<(), DomainLinkageValidationError> = JwtDomainLinkageValidator::new().validate_linkage(
     &did_document,
     &configuration_resource,
     &domain_foo,
-    &CredentialValidationOptions::default(),
+    &JwtCredentialValidationOptions::default(),
   );
   assert!(validation_result.is_ok());
   Ok(())

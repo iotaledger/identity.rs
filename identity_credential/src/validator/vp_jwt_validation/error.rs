@@ -4,17 +4,17 @@
 use std::error::Error;
 use std::fmt::Display;
 
-use crate::validator::vc_jwt_validation::ValidationError;
+use crate::validator::vc_jwt_validation::JwtValidationError;
 
 /// Errors caused by a failure to validate a [`Presentation`](crate::presentation::Presentation).
 #[derive(Debug)]
 pub struct CompoundJwtPresentationValidationError {
   /// Errors that occurred during validation of the presentation.
-  pub presentation_validation_errors: Vec<ValidationError>,
+  pub presentation_validation_errors: Vec<JwtValidationError>,
 }
 
 impl CompoundJwtPresentationValidationError {
-  pub(crate) fn one_presentation_error(error: ValidationError) -> Self {
+  pub(crate) fn one_presentation_error(error: JwtValidationError) -> Self {
     Self {
       presentation_validation_errors: vec![error],
     }

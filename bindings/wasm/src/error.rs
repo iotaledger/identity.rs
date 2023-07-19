@@ -100,7 +100,7 @@ impl_wasm_error_from!(
   identity_iota::did::Error,
   identity_iota::document::Error,
   identity_iota::iota::Error,
-  identity_iota::credential::ValidationError,
+  identity_iota::credential::JwtValidationError,
   identity_iota::credential::RevocationError,
   identity_iota::verification::Error,
   identity_iota::credential::DomainLinkageValidationError

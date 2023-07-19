@@ -5,7 +5,7 @@ use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
-use identity_credential::validator::CredentialValidationOptions;
+use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::JwsAlgorithm;
@@ -103,12 +103,12 @@ async fn signing_credential_with_nonce_and_scope() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::CredentialValidator::new();
+  let validator = identity_credential::validator::JwtCredentialValidator::new();
   assert!(validator
     .validate::<_, Object>(
       &jws,
       &document,
-      &CredentialValidationOptions::default().verification_options(
+      &JwtCredentialValidationOptions::default().verification_options(
         JwsVerificationOptions::default()
           .nonce(nonce.to_owned())
           .method_scope(MethodScope::assertion_method())
@@ -122,7 +122,7 @@ async fn signing_credential_with_nonce_and_scope() {
     .validate::<_, Object>(
       &jws,
       &document,
-      &CredentialValidationOptions::default().verification_options(
+      &JwtCredentialValidationOptions::default().verification_options(
         JwsVerificationOptions::default()
           .nonce("other-nonce".to_owned())
           .method_scope(MethodScope::assertion_method())
@@ -136,7 +136,7 @@ async fn signing_credential_with_nonce_and_scope() {
     .validate::<_, Object>(
       &jws,
       &document,
-      &CredentialValidationOptions::default().verification_options(
+      &JwtCredentialValidationOptions::default().verification_options(
         JwsVerificationOptions::default()
           .nonce(nonce.to_owned())
           .method_scope(MethodScope::key_agreement())
@@ -160,12 +160,12 @@ async fn signing_credential_with_b64() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::CredentialValidator::new();
+  let validator = identity_credential::validator::JwtCredentialValidator::new();
   let decoded = validator
     .validate::<_, Object>(
       &jws,
       &document,
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
       identity_credential::validator::FailFast::FirstError,
     )
     .unwrap();

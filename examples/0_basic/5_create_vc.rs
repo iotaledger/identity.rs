@@ -12,10 +12,10 @@
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
-use identity_iota::credential::CredentialValidationOptions;
-use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::JwtCredentialValidator;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwsSignatureOptions;
@@ -93,11 +93,11 @@ async fn main() -> anyhow::Result<()> {
 
   // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
-  let decoded_credential: DecodedJwtCredential<Object> = CredentialValidator::new()
+  let decoded_credential: DecodedJwtCredential<Object> = JwtCredentialValidator::new()
     .validate::<_, Object>(
       &credential_jwt,
       &issuer_document,
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
       FailFast::FirstError,
     )
     .unwrap();
