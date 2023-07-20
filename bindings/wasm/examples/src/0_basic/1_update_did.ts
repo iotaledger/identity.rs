@@ -69,12 +69,17 @@ export async function updateIdentity() {
     await document.purgeMethod(storage, originalMethod?.id());
 
     // Resolve the latest output and update it with the given document.
-    const aliasOutput: AliasOutput = await didClient.updateDidOutput(document);
+    var aliasOutput: AliasOutput = await didClient.updateDidOutput(document);
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     const rentStructure: IRent = await didClient.getRentStructure();
-    aliasOutput.amount = Utils.computeStorageDeposit(aliasOutput, rentStructure);
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
 
     // Publish the output.
     const updated: IotaDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
