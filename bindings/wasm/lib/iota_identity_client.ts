@@ -7,6 +7,7 @@ import {
     Address,
     AddressUnlockCondition,
     AliasOutput,
+    AliasOutputBuilderParams,
     Client,
     INodeInfoProtocol,
     INodeInfoWrapper,
@@ -76,7 +77,13 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      * NOTE: this does *not* publish the Alias Output.
      */
     async newDidOutput(address: Address, document: IotaDocument, rentStructure?: IRent): Promise<AliasOutput> {
-        return await IotaIdentityClientExt.newDidOutput(this, address, document, rentStructure);
+        const aliasOutputParams: AliasOutputBuilderParams = await IotaIdentityClientExt.newDidOutput(
+            this,
+            address,
+            document,
+            rentStructure,
+        );
+        return await this.client.buildAliasOutput(aliasOutputParams);
     }
 
     /** Fetches the associated Alias Output and updates it with `document` in its state metadata.
@@ -86,7 +93,8 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      * NOTE: this does *not* publish the updated Alias Output.
      */
     async updateDidOutput(document: IotaDocument): Promise<AliasOutput> {
-        return await IotaIdentityClientExt.updateDidOutput(this, document);
+        const aliasOutputParams: AliasOutputBuilderParams = await IotaIdentityClientExt.updateDidOutput(this, document);
+        return await this.client.buildAliasOutput(aliasOutputParams);
     }
 
     /** Removes the DID document from the state metadata of its Alias Output,
@@ -99,7 +107,8 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      * NOTE: this does *not* publish the updated Alias Output.
      */
     async deactivateDidOutput(did: IotaDID): Promise<AliasOutput> {
-        return await IotaIdentityClientExt.deactivateDidOutput(this, did);
+        const aliasOutputParams: AliasOutputBuilderParams = await IotaIdentityClientExt.deactivateDidOutput(this, did);
+        return await this.client.buildAliasOutput(aliasOutputParams);
     }
 
     /** Resolve a {@link IotaDocument}. Returns an empty, deactivated document if the state
@@ -111,7 +120,8 @@ export class IotaIdentityClient implements IIotaIdentityClient {
 
     /** Fetches the Alias Output associated with the given DID. */
     async resolveDidOutput(did: IotaDID): Promise<AliasOutput> {
-        return await IotaIdentityClientExt.resolveDidOutput(this, did);
+        const aliasOutputParams: AliasOutputBuilderParams = await IotaIdentityClientExt.resolveDidOutput(this, did);
+        return await this.client.buildAliasOutput(aliasOutputParams);
     }
 
     /** Publish the given `aliasOutput` with the provided `secretManager`, and returns
