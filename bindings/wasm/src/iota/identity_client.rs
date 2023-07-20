@@ -44,7 +44,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let tuple: js_sys::Array = js_sys::Array::from(&result.to_iota_core_error()?);
 
-    let mut iter: js_sys::ArrayIter = tuple.iter();
+    let mut iter: js_sys::ArrayIter<'_> = tuple.iter();
 
     let output_id: OutputId = iter
       .next()

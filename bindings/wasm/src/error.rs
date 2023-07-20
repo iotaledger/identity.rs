@@ -26,7 +26,7 @@ pub fn wasm_error<'a, E>(error: E) -> JsValue
 where
   E: Into<WasmError<'a>>,
 {
-  let wasm_err: WasmError = error.into();
+  let wasm_err: WasmError<'_> = error.into();
   JsValue::from(wasm_err)
 }
 
