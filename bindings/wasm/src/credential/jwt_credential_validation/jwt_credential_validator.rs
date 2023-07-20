@@ -28,7 +28,7 @@ use crate::verification::WasmJwsVerifier;
 
 use wasm_bindgen::prelude::*;
 
-/// A type for decoding and validating `Credentials`.
+/// A type for decoding and validating `Credential`.
 #[wasm_bindgen(js_name = JwtCredentialValidator)]
 pub struct WasmJwtCredentialValidator(JwtCredentialValidator<WasmJwsVerifier>);
 
@@ -145,7 +145,7 @@ impl WasmJwtCredentialValidator {
 
   /// Checks whether the credential status has been revoked.
   ///
-  /// Only supports `BitmapRevocation2022`.
+  /// Only supports `RevocationBitmap2022`.
   #[wasm_bindgen(js_name = checkStatus)]
   #[allow(non_snake_case)]
   pub fn check_status(

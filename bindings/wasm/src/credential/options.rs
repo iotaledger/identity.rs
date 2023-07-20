@@ -38,8 +38,7 @@ impl From<WasmStatusCheck> for StatusCheck {
   }
 }
 
-/// Declares how credential subjects must relate to the presentation holder during validation.
-/// See `PresentationValidationOptions::subject_holder_relationship`.
+/// Declares how credential subjects must relate to the presentation holder.
 ///
 /// See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 #[wasm_bindgen(js_name = SubjectHolderRelationship)]
@@ -47,8 +46,7 @@ impl From<WasmStatusCheck> for StatusCheck {
 #[repr(u8)]
 pub enum WasmSubjectHolderRelationship {
   /// The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-  /// This variant is the default used if no other variant is specified when constructing a new
-  /// `PresentationValidationOptions`.
+  /// This variant is the default.
   AlwaysSubject = 0,
   /// The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
   SubjectOnNonTransferable = 1,

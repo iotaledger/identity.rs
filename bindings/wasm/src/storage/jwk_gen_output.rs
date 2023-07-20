@@ -19,13 +19,13 @@ impl WasmJwkGenOutput {
     Self(JwkGenOutput::new(KeyId::new(key_id), jwk.clone().into()))
   }
 
-  /// Returns the generated public JWK.
+  /// Returns the generated public `Jwk`.
   #[wasm_bindgen]
   pub fn jwk(&self) -> WasmJwk {
     WasmJwk(self.0.jwk.clone())
   }
 
-  /// Returns the key id of the generated jwk.
+  /// Returns the key id of the generated `Jwk`.
   #[wasm_bindgen(js_name = keyId)]
   pub fn key_id(&self) -> String {
     self.0.key_id.clone().into()

@@ -38,9 +38,10 @@ type JsDocumentResolver = SingleThreadedResolver<JsValue>;
 /// Convenience type for resolving DID documents from different DID methods.   
 ///  
 /// Also provides methods for resolving DID Documents associated with
-/// verifiable `Credentials` and `Presentations`.
+/// verifiable `Credential`s and `Presentation`s.
 ///
 /// # Configuration
+///
 /// The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
 #[wasm_bindgen(js_name = Resolver)]
 pub struct WasmResolver(Rc<JsDocumentResolver>);

@@ -31,7 +31,7 @@ impl WasmJwtPresentationValidator {
     WasmJwtPresentationValidator(JwtPresentationValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Validates a `JwtPresentation`.
+  /// Validates a `Presentation` encoded as a `Jwt`.
   ///
   /// The following properties are validated according to `options`:
   /// - the JWT can be decoded into a semantically valid presentation.
@@ -73,7 +73,7 @@ impl WasmJwtPresentationValidator {
       .wasm_result()
   }
 
-  /// Validates the semantic structure of the `JwtPresentation`.
+  /// Validates the semantic structure of the `Presentation`.
   #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
     JwtPresentationValidator::check_structure(&presentation.0).wasm_result()?;
