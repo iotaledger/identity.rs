@@ -50,7 +50,7 @@ impl WasmMethodScope {
     Self(MethodScope::capability_invocation())
   }
 
-  /// Returns the `MethodScope` as a string.
+  /// Returns the {@link MethodScope} as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {

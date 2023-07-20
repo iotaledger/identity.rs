@@ -93,19 +93,19 @@ impl WasmCoreDID {
     self.0.method_id().to_owned()
   }
 
-  /// Construct a new `DIDUrl` by joining with a relative DID Url string.
+  /// Construct a new {@link DIDUrl} by joining with a relative DID Url string.
   #[wasm_bindgen]
   pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
     self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
-  /// Clones the {@link CoreDID} into a `DIDUrl`.
+  /// Clones the {@link CoreDID} into a {@link DIDUrl}.
   #[wasm_bindgen(js_name = toUrl)]
   pub fn to_url(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.to_url())
   }
 
-  /// Converts the {@link CoreDID} into a `DIDUrl`, consuming it.
+  /// Converts the {@link CoreDID} into a {@link DIDUrl}, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
   pub fn into_url(self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.into_url())

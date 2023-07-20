@@ -13,7 +13,7 @@ impl WasmJws {
   pub(crate) fn new(jws: Jws) -> Self {
     WasmJws(jws)
   }
-  /// Creates a new `Jws` from the given string.
+  /// Creates a new {@link Jws} from the given string.
   #[wasm_bindgen(constructor)]
   pub fn constructor(jws_string: String) -> Self {
     Self(Jws::new(jws_string))

@@ -23,7 +23,7 @@ pub struct WasmLinkedDomainService(LinkedDomainService);
 /// [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
 #[wasm_bindgen(js_class = LinkedDomainService)]
 impl WasmLinkedDomainService {
-  /// Constructs a new `LinkedDomainService` that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
+  /// Constructs a new {@link LinkedDomainService} that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
   ///
   /// Domain URLs must include the `https` scheme in order to pass the domain linkage validation.
   #[wasm_bindgen(constructor)]

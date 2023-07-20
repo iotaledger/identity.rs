@@ -11,7 +11,7 @@ pub struct WasmJwtPresentationOptions(pub(crate) JwtPresentationOptions);
 
 #[wasm_bindgen(js_class = JwtPresentationOptions)]
 impl WasmJwtPresentationOptions {
-  /// Creates a new `JwtPresentationOptions` from the given fields.
+  /// Creates a new {@link JwtPresentationOptions} from the given fields.
   ///
   /// Throws an error if any of the options are invalid.
   #[wasm_bindgen(constructor)]

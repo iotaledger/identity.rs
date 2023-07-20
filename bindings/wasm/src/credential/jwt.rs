@@ -14,7 +14,7 @@ impl WasmJwt {
     WasmJwt(jwt)
   }
 
-  /// Creates a new `Jwt` from the given string.
+  /// Creates a new {@link Jwt} from the given string.
   #[wasm_bindgen(constructor)]
   pub fn constructor(jwt_string: String) -> Self {
     Self(Jwt::new(jwt_string))

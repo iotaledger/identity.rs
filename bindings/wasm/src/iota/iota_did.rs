@@ -141,13 +141,13 @@ impl WasmIotaDID {
     self.0.method_id().to_owned()
   }
 
-  /// Construct a new `DIDUrl` by joining with a relative DID Url string.
+  /// Construct a new {@link DIDUrl} by joining with a relative DID Url string.
   #[wasm_bindgen]
   pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
     self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
-  /// Clones the `DID` into a `DIDUrl`.
+  /// Clones the `DID` into a {@link DIDUrl}.
   #[wasm_bindgen(js_name = toUrl)]
   pub fn to_url(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.to_url())
@@ -159,7 +159,7 @@ impl WasmIotaDID {
     AliasId::from(&self.0).to_string()
   }
 
-  /// Converts the `DID` into a `DIDUrl`, consuming it.
+  /// Converts the `DID` into a {@link DIDUrl}, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
   pub fn into_url(self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.into_url())

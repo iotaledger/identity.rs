@@ -36,7 +36,7 @@ impl WasmDomainLinkageValidator {
   }
 
   /// Validates the linkage between a domain and a DID.
-  /// `DomainLinkageConfiguration` is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+  /// {@link DomainLinkageConfiguration} is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
   ///
   /// Linkage is valid if no error is thrown.
   ///

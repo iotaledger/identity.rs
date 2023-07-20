@@ -28,7 +28,7 @@ use crate::verification::WasmJwsVerifier;
 
 use wasm_bindgen::prelude::*;
 
-/// A type for decoding and validating `Credential`.
+/// A type for decoding and validating {@link Credential}.
 #[wasm_bindgen(js_name = JwtCredentialValidator)]
 pub struct WasmJwtCredentialValidator(JwtCredentialValidator<WasmJwsVerifier>);
 
@@ -44,7 +44,7 @@ impl WasmJwtCredentialValidator {
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Decodes and validates a {@link Credential} issued as a JWS. A `DecodedJwtCredential` is returned upon success.
+  /// Decodes and validates a {@link Credential} issued as a JWS. A {@link DecodedJwtCredential} is returned upon success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -88,7 +88,7 @@ impl WasmJwtCredentialValidator {
   /// Decode and verify the JWS signature of a {@link Credential} issued as a JWT using the DID Document of a trusted
   /// issuer.
   ///
-  /// A `DecodedJwtCredential` is returned upon success.
+  /// A {@link DecodedJwtCredential} is returned upon success.
   ///
   /// # Warning
   /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.

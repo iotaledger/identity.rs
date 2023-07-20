@@ -12,7 +12,7 @@ pub struct WasmJwtPresentationValidationOptions(pub(crate) JwtPresentationValida
 
 #[wasm_bindgen(js_class = JwtPresentationValidationOptions)]
 impl WasmJwtPresentationValidationOptions {
-  /// Creates a new `JwtPresentationValidationOptions` from the given fields.
+  /// Creates a new {@link JwtPresentationValidationOptions} from the given fields.
   ///
   /// Throws an error if any of the options are invalid.
   #[wasm_bindgen(constructor)]
@@ -51,7 +51,7 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWT_PRESENTATION_VALIDATION_OPTIONS: &'static str = r#"
-/** Holds options to create a new `JwtPresentationValidationOptions`. */
+/** Holds options to create a new {@link JwtPresentationValidationOptions}. */
 interface IJwtPresentationValidationOptions {
     /** 
      * Options which affect the verification of the signature on the presentation. 
@@ -59,13 +59,13 @@ interface IJwtPresentationValidationOptions {
     readonly presentationVerifierOptions?: JwsVerificationOptions;
 
     /**
-     * Declare that the presentation is **not** considered valid if it expires before this `Timestamp`.
+     * Declare that the presentation is **not** considered valid if it expires before this {@link Timestamp}.
      * Uses the current datetime during validation if not set. 
      */
     readonly earliestExpiryDate?: Timestamp;
 
     /**
-     * Declare that the presentation is **not** considered valid if it was issued later than this `Timestamp`.
+     * Declare that the presentation is **not** considered valid if it was issued later than this {@link Timestamp}.
      * Uses the current datetime during validation if not set. 
      */
     readonly latestIssuanceDate?: Timestamp;

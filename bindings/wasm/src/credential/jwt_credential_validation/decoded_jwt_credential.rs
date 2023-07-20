@@ -32,7 +32,7 @@ impl WasmDecodedJwtCredential {
   ///
   /// ### Warning
   ///
-  /// This destroys the `DecodedJwtCredential` object.
+  /// This destroys the {@link DecodedJwtCredential} object.
   #[wasm_bindgen(js_name = intoCredential)]
   pub fn into_credential(self) -> WasmCredential {
     WasmCredential(self.0.credential)

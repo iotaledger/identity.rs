@@ -31,7 +31,7 @@ impl WasmJwtPresentationValidator {
     WasmJwtPresentationValidator(JwtPresentationValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Validates a `Presentation` encoded as a `Jwt`.
+  /// Validates a {@link Presentation} encoded as a {@link Jwt}.
   ///
   /// The following properties are validated according to `options`:
   /// - the JWT can be decoded into a semantically valid presentation.
@@ -43,7 +43,7 @@ impl WasmJwtPresentationValidator {
   /// # Warning
   ///
   /// * This method does NOT validate the constituent credentials and therefore also not the relationship between the
-  /// credentials' subjects and the presentation holder. This can be done with `JwtCredentialValidationOptions`.
+  /// credentials' subjects and the presentation holder. This can be done with {@link JwtCredentialValidationOptions}.
   /// * The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
   /// be trusted. This section contains more information on additional checks that should be carried out before and
   /// after calling this method.
@@ -73,7 +73,7 @@ impl WasmJwtPresentationValidator {
       .wasm_result()
   }
 
-  /// Validates the semantic structure of the `Presentation`.
+  /// Validates the semantic structure of the {@link Presentation}.
   #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
     JwtPresentationValidator::check_structure(&presentation.0).wasm_result()?;

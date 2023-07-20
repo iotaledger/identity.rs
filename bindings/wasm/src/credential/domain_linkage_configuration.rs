@@ -26,7 +26,7 @@ pub struct WasmDomainLinkageConfiguration(pub(crate) DomainLinkageConfiguration)
 
 #[wasm_bindgen(js_class = DomainLinkageConfiguration)]
 impl WasmDomainLinkageConfiguration {
-  /// Constructs a new `DomainLinkageConfiguration`.
+  /// Constructs a new {@link DomainLinkageConfiguration}.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
   pub fn new(linkedDids: &ArrayJwt) -> Result<WasmDomainLinkageConfiguration> {

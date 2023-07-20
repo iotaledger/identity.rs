@@ -38,7 +38,7 @@ type JsDocumentResolver = SingleThreadedResolver<JsValue>;
 /// Convenience type for resolving DID documents from different DID methods.   
 ///  
 /// Also provides methods for resolving DID Documents associated with
-/// verifiable `Credential`s and `Presentation`s.
+/// verifiable {@link Credential}s and {@link Presentation}s.
 ///
 /// # Configuration
 ///
@@ -48,7 +48,7 @@ pub struct WasmResolver(Rc<JsDocumentResolver>);
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
-  /// Constructs a new `Resolver`.
+  /// Constructs a new {@link Resolver}.
   ///
   /// # Errors
   /// If both a `client` is given and the `handlers` map contains the "iota" key the construction process

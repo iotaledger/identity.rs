@@ -27,7 +27,7 @@ impl WasmUnknownCredentialContainer {
     WasmUnknownCredentialContainer(inner)
   }
 
-  /// Returns a `Jwt` if the credential is of type string, `undefined` otherwise.
+  /// Returns a {@link Jwt} if the credential is of type string, `undefined` otherwise.
   #[wasm_bindgen(js_name = tryIntoJwt)]
   pub fn try_into_jwt(&self) -> Option<WasmJwt> {
     match &self.0 {
