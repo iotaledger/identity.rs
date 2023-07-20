@@ -71,10 +71,15 @@ export async function didIssuesTokens() {
     // updated version of the output. We pass in the previous document,
     // because we don't want to modify it in this update.
     var authorityDocument: IotaDocument = await didClient.resolveDid(authorityDid);
-    const authorityAliasOutput: AliasOutput = await didClient.updateDidOutput(authorityDocument);
+    var authorityAliasOutput: AliasOutput = await didClient.updateDidOutput(authorityDocument);
 
     // We will add one foundry to this Alias Output.
-    authorityAliasOutput.foundryCounter += 1;
+    authorityAliasOutput = await client.buildAliasOutput({
+        ...authorityAliasOutput,
+        foundryCounter: authorityAliasOutput.getFoundryCounter() + 1,
+        aliasId: authorityAliasOutput.getAliasId(),
+        unlockConditions: authorityAliasOutput.getUnlockConditions(),
+    });
 
     // Create a token foundry that represents carbon credits.
     // TODO: Big Int.
