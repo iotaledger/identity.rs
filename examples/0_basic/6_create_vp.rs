@@ -41,9 +41,9 @@ use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-use identity_iota::credential::CredentialValidationOptions;
-use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::FailFast;
+use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::JwtCredentialValidator;
 use identity_iota::credential::Subject;
 use identity_iota::credential::SubjectHolderRelationship;
 use identity_iota::did::DID;
@@ -119,11 +119,11 @@ async fn main() -> anyhow::Result<()> {
 
   // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
-  CredentialValidator::new()
+  JwtCredentialValidator::new()
     .validate::<_, Object>(
       &credential_jwt,
       &issuer_document,
-      &CredentialValidationOptions::default(),
+      &JwtCredentialValidationOptions::default(),
       FailFast::FirstError,
     )
     .unwrap();
@@ -203,13 +203,13 @@ async fn main() -> anyhow::Result<()> {
   let jwt_credentials: &OneOrMany<Jwt> = &presentation.presentation.verifiable_credential;
   let issuers: Vec<CoreDID> = jwt_credentials
     .iter()
-    .map(CredentialValidator::extract_issuer_from_jwt)
+    .map(JwtCredentialValidator::extract_issuer_from_jwt)
     .collect::<Result<Vec<CoreDID>, _>>()?;
   let issuers_documents: HashMap<CoreDID, IotaDocument> = resolver.resolve_multiple(&issuers).await?;
 
   // Validate the credentials in the presentation.
-  let credential_validator: CredentialValidator = CredentialValidator::new();
-  let validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
+  let credential_validator: JwtCredentialValidator = JwtCredentialValidator::new();
+  let validation_options: JwtCredentialValidationOptions = JwtCredentialValidationOptions::default()
     .subject_holder_relationship(holder_did.to_url().into(), SubjectHolderRelationship::AlwaysSubject);
 
   for (index, jwt_vc) in jwt_credentials.iter().enumerate() {

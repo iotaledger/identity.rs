@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! The core types used to create Verifiable Credentials
+//! The core types used to create Verifiable Credentials.
 
 #![allow(clippy::module_inception)]
 

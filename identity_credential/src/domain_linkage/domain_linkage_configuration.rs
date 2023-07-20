@@ -3,24 +3,26 @@
 
 use crate::credential::Jwt;
 use crate::error::Result;
-use crate::validator::CredentialValidator;
-use crate::validator::ValidationError;
+use crate::validator::JwtCredentialValidator;
+use crate::validator::JwtValidationError;
 use identity_core::common::Context;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_did::CoreDID;
 use serde::Deserialize;
+use serde::Serialize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
 use crate::Error::DomainLinkageError;
 
-lazy_static! {
+lazy_static::lazy_static! {
   static ref WELL_KNOWN_CONTEXT: Context =
     Context::Url(Url::parse("https://identity.foundation/.well-known/did-configuration/v1").unwrap());
 }
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
+///
 /// It can be placed in an origin's `.well-known` directory to prove linkage between the origin and a DID.
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 ///
@@ -91,12 +93,12 @@ impl DomainLinkageConfiguration {
   }
 
   /// List of the issuers of the Domain Linkage Credentials.
-  pub fn issuers(&self) -> std::result::Result<Vec<CoreDID>, ValidationError> {
+  pub fn issuers(&self) -> std::result::Result<Vec<CoreDID>, JwtValidationError> {
     self
       .0
       .linked_dids
       .iter()
-      .map(CredentialValidator::extract_issuer_from_jwt::<CoreDID>)
+      .map(JwtCredentialValidator::extract_issuer_from_jwt::<CoreDID>)
       .collect()
   }
 

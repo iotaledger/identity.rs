@@ -14,7 +14,7 @@ use identity_credential::presentation::PresentationBuilder;
 use identity_credential::validator::DecodedJwtPresentation;
 use identity_credential::validator::JwtPresentationValidationOptions;
 use identity_credential::validator::JwtPresentationValidator;
-use identity_credential::validator::ValidationError;
+use identity_credential::validator::JwtValidationError;
 use identity_did::CoreDID;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
@@ -210,7 +210,7 @@ where
     .await
     .unwrap();
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: ValidationError = validator
+  let validation_error: JwtValidationError = validator
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -225,7 +225,7 @@ where
 
   assert!(matches!(
     validation_error,
-    ValidationError::PresentationJwsError(identity_document::Error::JwsVerificationError(_))
+    JwtValidationError::PresentationJwsError(identity_document::Error::JwsVerificationError(_))
   ));
 }
 
@@ -267,7 +267,7 @@ where
     .unwrap();
 
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: ValidationError = validator
+  let validation_error: JwtValidationError = validator
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -281,7 +281,7 @@ where
     .unwrap();
 
   println!("{validation_error:?}");
-  assert!(matches!(validation_error, ValidationError::ExpirationDate));
+  assert!(matches!(validation_error, JwtValidationError::ExpirationDate));
 
   // Set Validation options to allow expired presentation that were valid 2 hours back.
   let mut validation_options = JwtPresentationValidationOptions::default();
@@ -332,7 +332,7 @@ where
     .unwrap();
 
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: ValidationError = validator
+  let validation_error: JwtValidationError = validator
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -345,7 +345,7 @@ where
     .next()
     .unwrap();
 
-  assert!(matches!(validation_error, ValidationError::IssuanceDate));
+  assert!(matches!(validation_error, JwtValidationError::IssuanceDate));
 
   // Set Validation options to allow presentation "issued" 2 hours in the future.
   let mut validation_options = JwtPresentationValidationOptions::default();
@@ -393,7 +393,7 @@ where
     .unwrap();
 
   let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: ValidationError = validator
+  let validation_error: JwtValidationError = validator
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -408,7 +408,7 @@ where
 
   assert!(matches!(
     validation_error,
-    ValidationError::PresentationJwsError(identity_document::Error::MethodNotFound)
+    JwtValidationError::PresentationJwsError(identity_document::Error::MethodNotFound)
   ));
 }
 

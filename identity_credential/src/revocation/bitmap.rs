@@ -7,9 +7,11 @@ use dataurl::DataUrl;
 use flate2::write::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
+use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::Base;
 use identity_core::convert::BaseEncoding;
+use identity_did::DIDUrl;
 use roaring::RoaringBitmap;
 
 use super::error::RevocationError;
@@ -60,8 +62,22 @@ impl RevocationBitmap {
     self.0.is_empty()
   }
 
+  /// Return a [`Service`] with:
+  /// - the service's id set to `service_id`,
+  /// - of type `RevocationBitmap2022`,
+  /// - and with the bitmap embedded in a data url in the service's endpoint.
+  pub fn to_service(&self, service_id: DIDUrl) -> Result<Service, RevocationError> {
+    let endpoint: ServiceEndpoint = self.to_endpoint()?;
+    Service::builder(Object::new())
+      .id(service_id)
+      .type_(RevocationBitmap::TYPE)
+      .service_endpoint(endpoint)
+      .build()
+      .map_err(|_| RevocationError::InvalidService("service builder error"))
+  }
+
   /// Return the bitmap as a data url embedded in a service endpoint.
-  pub fn to_endpoint(&self) -> Result<ServiceEndpoint, RevocationError> {
+  pub(crate) fn to_endpoint(&self) -> Result<ServiceEndpoint, RevocationError> {
     let endpoint_data: String = self.serialize_compressed_base64()?;
 
     let mut data_url: DataUrl = DataUrl::new();
@@ -74,7 +90,7 @@ impl RevocationBitmap {
   }
 
   /// Construct a `RevocationBitmap` from a data url embedded in `service_endpoint`.
-  pub fn from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
+  pub(crate) fn try_from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self, RevocationError> {
     if let ServiceEndpoint::One(url) = service_endpoint {
       let data_url: DataUrl = DataUrl::parse(url.as_str())
         .map_err(|_| RevocationError::InvalidService("invalid url - expected a data url"))?;
@@ -152,6 +168,8 @@ impl RevocationBitmap {
 impl TryFrom<&Service> for RevocationBitmap {
   type Error = RevocationError;
 
+  /// Try to construct a `RevocationBitmap` from a service
+  /// if it is a valid Revocation Bitmap Service.
   fn try_from(service: &Service) -> Result<Self, RevocationError> {
     if !service.type_().contains(Self::TYPE) {
       return Err(RevocationError::InvalidService(
@@ -159,7 +177,7 @@ impl TryFrom<&Service> for RevocationBitmap {
       ));
     }
 
-    Self::from_endpoint(service.service_endpoint())
+    Self::try_from_endpoint(service.service_endpoint())
   }
 }
 
@@ -199,9 +217,9 @@ mod tests {
   fn test_revocation_bitmap_test_vector_1() {
     const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQUFBd0FES0FCcg==";
 
-    let bitmap: RevocationBitmap = RevocationBitmap::from_endpoint(&identity_document::service::ServiceEndpoint::One(
-      Url::parse(URL).unwrap(),
-    ))
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
+      &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
+    )
     .unwrap();
 
     assert!(bitmap.is_empty());
@@ -212,9 +230,9 @@ mod tests {
     const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQmdZR0lBQVVZZ1pHQ1FBR0laSUdabDZHUGN3UW9BRXVvQjlB";
     const EXPECTED: &[u32] = &[5, 398, 67000];
 
-    let bitmap: RevocationBitmap = RevocationBitmap::from_endpoint(&identity_document::service::ServiceEndpoint::One(
-      Url::parse(URL).unwrap(),
-    ))
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
+      &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
+    )
     .unwrap();
 
     for revoked in EXPECTED {
@@ -228,9 +246,9 @@ mod tests {
   fn test_revocation_bitmap_test_vector_3() {
     const URL: &str = "data:application/octet-stream;base64,ZUp6dHhERVJBQ0FNQkxESEFWS1lXZkN2Q3E0MmFESmtyMlNrM0ROckFLQ2RBQUFBQUFBQTMzbGhHZm9q";
 
-    let bitmap: RevocationBitmap = RevocationBitmap::from_endpoint(&identity_document::service::ServiceEndpoint::One(
-      Url::parse(URL).unwrap(),
-    ))
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
+      &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
+    )
     .unwrap();
 
     for index in 0..2u32.pow(14) {

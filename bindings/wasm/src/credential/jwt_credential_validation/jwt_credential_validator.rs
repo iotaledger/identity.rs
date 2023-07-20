@@ -3,7 +3,7 @@
 
 use identity_iota::core::Object;
 use identity_iota::core::Url;
-use identity_iota::credential::CredentialValidator as JwtCredentialValidator;
+use identity_iota::credential::JwtCredentialValidator;
 use identity_iota::credential::StatusCheck;
 use identity_iota::did::CoreDID;
 
