@@ -18,7 +18,7 @@ pub struct WasmStorage(pub(crate) Rc<WasmStorageInner>);
 
 #[wasm_bindgen(js_class = Storage)]
 impl WasmStorage {
-  /// Constructs a new `Storage`.
+  /// Constructs a new {@link Storage}.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
   pub fn new(jwkStorage: WasmJwkStorage, keyIdStorage: WasmKeyIdStorage) -> WasmStorage {

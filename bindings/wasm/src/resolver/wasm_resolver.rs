@@ -23,11 +23,11 @@ use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
-use crate::resolver::constructor_input::MapResolutionHandler;
-use crate::resolver::constructor_input::ResolverConfig;
+use crate::resolver::resolver_config::MapResolutionHandler;
+use crate::resolver::resolver_config::ResolverConfig;
 use crate::resolver::PromiseArrayIToCoreDocument;
 
-use super::type_definitions::PromiseIToCoreDocument;
+use super::resolver_types::PromiseIToCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::prelude::*;

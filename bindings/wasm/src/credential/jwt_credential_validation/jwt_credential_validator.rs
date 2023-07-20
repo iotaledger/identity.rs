@@ -44,7 +44,8 @@ impl WasmJwtCredentialValidator {
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Decodes and validates a {@link Credential} issued as a JWS. A {@link DecodedJwtCredential} is returned upon success.
+  /// Decodes and validates a {@link Credential} issued as a JWS. A {@link DecodedJwtCredential} is returned upon
+  /// success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
