@@ -36,7 +36,7 @@ impl WasmUnknownCredentialContainer {
     }
   }
 
-  /// Returns a `Credential` if the credential is of said type, `undefined` otherwise.
+  /// Returns a {@link Credential} if the credential is of said type, `undefined` otherwise.
   #[wasm_bindgen(js_name = tryIntoCredential)]
   pub fn try_into_credential(&self) -> Option<WasmCredential> {
     match &self.0 {

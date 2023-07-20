@@ -21,7 +21,7 @@ pub struct WasmJwtPresentationValidator(JwtPresentationValidator<WasmJwsVerifier
 
 #[wasm_bindgen(js_class = JwtPresentationValidator)]
 impl WasmJwtPresentationValidator {
-  /// Creates a new `JwtPresentationValidator`. If a `signatureVerifier` is provided it will be used when
+  /// Creates a new {@link JwtPresentationValidator}. If a `signatureVerifier` is provided it will be used when
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]

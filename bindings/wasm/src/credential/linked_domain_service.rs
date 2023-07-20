@@ -87,7 +87,7 @@ struct ILinkedDomainServiceHelper {
   /// Service id.
   #[typescript(optional = false, type = "DIDUrl")]
   id: DIDUrl,
-  /// A unique URI that may be used to identify the `Credential`.
+  /// A unique URI that may be used to identify the {@link Credential}.
   #[typescript(optional = false, type = "string[]")]
   domains: OrderedSet<Url>,
   /// Miscellaneous properties.

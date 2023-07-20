@@ -112,44 +112,44 @@ extern "C" {
 #[serde(rename_all = "camelCase")]
 #[typescript(name = "ICredential", readonly, optional)]
 struct ICredentialHelper {
-  /// The JSON-LD context(s) applicable to the `Credential`.
+  /// The JSON-LD context(s) applicable to the {@link Credential}.
   #[typescript(type = "string | Record<string, any> | Array<string | Record<string, any>>")]
   context: Option<OneOrMany<Context>>,
-  /// A unique URI that may be used to identify the `Credential`.
+  /// A unique URI that may be used to identify the {@link Credential}.
   #[typescript(type = "string")]
   id: Option<String>,
-  /// One or more URIs defining the type of the `Credential`. Contains the base context by default.
+  /// One or more URIs defining the type of the {@link Credential}. Contains the base context by default.
   #[typescript(name = "type", type = "string | Array<string>")]
   r#type: Option<OneOrMany<String>>,
-  /// One or more objects representing the `Credential` subject(s).
+  /// One or more objects representing the {@link Credential} subject(s).
   #[typescript(optional = false, name = "credentialSubject", type = "Subject | Array<Subject>")]
   credential_subject: Option<OneOrMany<Subject>>,
-  /// A reference to the issuer of the `Credential`.
+  /// A reference to the issuer of the {@link Credential}.
   #[typescript(optional = false, type = "string | CoreDID | IotaDID | Issuer")]
   issuer: Option<Issuer>,
-  /// A timestamp of when the `Credential` becomes valid. Defaults to the current datetime.
+  /// A timestamp of when the {@link Credential} becomes valid. Defaults to the current datetime.
   #[typescript(name = "issuanceDate", type = "Timestamp")]
   issuance_date: Option<Timestamp>,
-  /// A timestamp of when the `Credential` should no longer be considered valid.
+  /// A timestamp of when the {@link Credential} should no longer be considered valid.
   #[typescript(name = "expirationDate", type = "Timestamp")]
   expiration_date: Option<Timestamp>,
-  /// Information used to determine the current status of the `Credential`.
+  /// Information used to determine the current status of the {@link Credential}.
   #[typescript(name = "credentialStatus", type = "Status")]
   credential_status: Option<Status>,
-  /// Information used to assist in the enforcement of a specific `Credential` structure.
+  /// Information used to assist in the enforcement of a specific {@link Credential} structure.
   #[typescript(name = "credentialSchema", type = "Schema | Array<Schema>")]
   credential_schema: Option<OneOrMany<Schema>>,
-  /// Service(s) used to refresh an expired `Credential`.
+  /// Service(s) used to refresh an expired {@link Credential}.
   #[typescript(name = "refreshService", type = "RefreshService | Array<RefreshService>")]
   refresh_service: Option<OneOrMany<RefreshService>>,
-  /// Terms-of-use specified by the `Credential` issuer.
+  /// Terms-of-use specified by the {@link Credential} issuer.
   #[typescript(name = "termsOfUse", type = "Policy | Array<Policy>")]
   terms_of_use: Option<OneOrMany<Policy>>,
-  /// Human-readable evidence used to support the claims within the `Credential`.
+  /// Human-readable evidence used to support the claims within the {@link Credential}.
   #[typescript(type = "Evidence | Array<Evidence>")]
   evidence: Option<OneOrMany<Evidence>>,
-  /// Indicates that the `Credential` must only be contained within a `Presentation` with a proof issued from the
-  /// `Credential` subject.
+  /// Indicates that the {@link Credential} must only be contained within a {@link Presentation} with a proof issued
+  /// from the {@link Credential} subject.
   #[typescript(name = "nonTransferable", type = "boolean")]
   non_transferable: Option<bool>,
   /// Miscellaneous properties.

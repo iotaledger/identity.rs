@@ -596,7 +596,7 @@ impl WasmIotaDocument {
   // ===========================================================================
 
   #[wasm_bindgen(js_name = clone)]
-  /// Returns a deep clone of the `IotaDocument`.
+  /// Returns a deep clone of the {@link IotaDocument}.
   pub fn deep_clone(&self) -> WasmIotaDocument {
     WasmIotaDocument(Rc::new(IotaDocumentLock::new(self.0.blocking_read().clone())))
   }
@@ -637,7 +637,7 @@ impl WasmIotaDocument {
   // ===========================================================================
   // "AsRef<CoreDocument>"
   // ===========================================================================
-  /// Transforms the `IotaDocument` to its `CoreDocument` representation.
+  /// Transforms the {@link IotaDocument} to its {@link CoreDocument} representation.
   #[wasm_bindgen(js_name = toCoreDocument)]
   pub fn as_core_document(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(

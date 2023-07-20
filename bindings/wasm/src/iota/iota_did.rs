@@ -37,7 +37,7 @@ impl WasmIotaDID {
   // Constructors
   // ===========================================================================
 
-  /// Constructs a new `IotaDID` from a byte representation of the tag and the given
+  /// Constructs a new {@link IotaDID} from a byte representation of the tag and the given
   /// network name.
   ///
   /// See also {@link IotaDID.placeholder}.
@@ -51,7 +51,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::new(tag_bytes, &network_name)))
   }
 
-  /// Constructs a new `IotaDID` from a hex representation of an Alias Id and the given
+  /// Constructs a new {@link IotaDID} from a hex representation of an Alias Id and the given
   /// network name.
   #[wasm_bindgen(js_name = fromAliasId)]
   #[allow(non_snake_case)]
@@ -60,7 +60,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::from_alias_id(aliasId.as_ref(), &network_name)))
   }
 
-  /// Creates a new placeholder `IotaDID` with the given network name.
+  /// Creates a new placeholder {@link IotaDID} with the given network name.
   ///
   /// E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
   #[wasm_bindgen]
@@ -69,7 +69,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::placeholder(&network_name)))
   }
 
-  /// Parses a `IotaDID` from the input string.
+  /// Parses a {@link IotaDID} from the input string.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmIotaDID> {
     IotaDID::parse(input).map(Self).wasm_result()
@@ -79,20 +79,20 @@ impl WasmIotaDID {
   // Properties
   // ===========================================================================
 
-  /// Returns the Tangle network name of the `IotaDID`.
+  /// Returns the Tangle network name of the {@link IotaDID}.
   #[wasm_bindgen]
   pub fn network(&self) -> String {
     self.0.network_str().to_owned()
   }
 
-  /// Returns a copy of the unique tag of the `IotaDID`.
+  /// Returns a copy of the unique tag of the {@link IotaDID}.
   #[wasm_bindgen]
   pub fn tag(&self) -> String {
     self.0.tag_str().to_owned()
   }
 
   #[wasm_bindgen(js_name = toCoreDid)]
-  /// Returns the DID represented as a `CoreDID`.
+  /// Returns the DID represented as a {@link CoreDID}.
   pub fn as_core_did(&self) -> WasmCoreDID {
     WasmCoreDID(self.0.as_ref().clone())
   }

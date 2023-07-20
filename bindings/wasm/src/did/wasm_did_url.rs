@@ -19,7 +19,7 @@ impl WasmDIDUrl {
     DIDUrl::parse(input).map(WasmDIDUrl).wasm_result()
   }
 
-  /// Return a copy of the `CoreDID` section of the `DIDUrl`.
+  /// Return a copy of the {@link CoreDID} section of the `DIDUrl`.
   #[wasm_bindgen]
   pub fn did(&self) -> WasmCoreDID {
     WasmCoreDID::from(self.0.did().clone())

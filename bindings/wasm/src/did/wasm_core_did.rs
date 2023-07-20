@@ -15,17 +15,17 @@ pub struct WasmCoreDID(pub(crate) CoreDID);
 
 #[wasm_bindgen(js_class = CoreDID)]
 impl WasmCoreDID {
-  /// Parses a `CoreDID` from the given `input`.
+  /// Parses a {@link CoreDID} from the given `input`.
   ///
   /// ### Errors
   ///
-  /// Throws an error if the input is not a valid `CoreDID`.
+  /// Throws an error if the input is not a valid {@link CoreDID}.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmCoreDID> {
     CoreDID::parse(input).wasm_result().map(Self)
   }
 
-  /// Set the method name of the `CoreDID`.
+  /// Set the method name of the {@link CoreDID}.
   #[wasm_bindgen(js_name = "setMethodName")]
   pub fn set_method_name(&mut self, value: String) -> Result<()> {
     self.0.set_method_name(&value).wasm_result()
@@ -53,7 +53,7 @@ impl WasmCoreDID {
   // DID trait
   // ===========================================================================
 
-  /// Returns the `CoreDID` scheme.
+  /// Returns the {@link CoreDID} scheme.
   ///
   /// E.g.
   /// - `"did:example:12345678" -> "did"`
@@ -63,7 +63,7 @@ impl WasmCoreDID {
     self.0.scheme().to_owned()
   }
 
-  /// Returns the `CoreDID` authority: the method name and method-id.
+  /// Returns the {@link CoreDID} authority: the method name and method-id.
   ///
   /// E.g.
   /// - `"did:example:12345678" -> "example:12345678"`
@@ -73,7 +73,7 @@ impl WasmCoreDID {
     self.0.authority().to_owned()
   }
 
-  /// Returns the `CoreDID` method name.
+  /// Returns the {@link CoreDID} method name.
   ///
   /// E.g.
   /// - `"did:example:12345678" -> "example"`
@@ -83,7 +83,7 @@ impl WasmCoreDID {
     self.0.method().to_owned()
   }
 
-  /// Returns the `CoreDID` method-specific ID.
+  /// Returns the {@link CoreDID} method-specific ID.
   ///
   /// E.g.
   /// - `"did:example:12345678" -> "12345678"`
@@ -99,19 +99,19 @@ impl WasmCoreDID {
     self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
-  /// Clones the `CoreDID` into a `DIDUrl`.
+  /// Clones the {@link CoreDID} into a `DIDUrl`.
   #[wasm_bindgen(js_name = toUrl)]
   pub fn to_url(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.to_url())
   }
 
-  /// Converts the `CoreDID` into a `DIDUrl`, consuming it.
+  /// Converts the {@link CoreDID} into a `DIDUrl`, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
   pub fn into_url(self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.into_url())
   }
 
-  /// Returns the `CoreDID` as a string.
+  /// Returns the {@link CoreDID} as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
@@ -146,9 +146,9 @@ extern "C" {
   pub type IToCoreDID;
 
   // Specially crafted JS function called internally that ensures
-  // Custom DID implementations built on `CoreDID` don't get nulled
-  // out by Rust. Also avoids double clones when passing an instance of `CoreDID`
-  // or `IotaDID`.
+  // Custom DID implementations built on {@link CoreDID} don't get nulled
+  // out by Rust. Also avoids double clones when passing an instance of {@link CoreDID}
+  // or {@link IotaDID}.
   #[wasm_bindgen(js_name = _getCoreDidCloneInternal, skip_typescript)]
   pub fn get_core_did_clone(input: &IToCoreDID) -> WasmCoreDID;
 
@@ -158,6 +158,6 @@ extern "C" {
 pub const TS_AS_REF_CORE_DID: &'static str = r#"
 interface IToCoreDID {
 
-  /** Returns a `CoreDID` representation of this DID. */
+  /** Returns a {@link CoreDID} representation of this DID. */
   toCoreDid(): CoreDID;
 }"#;

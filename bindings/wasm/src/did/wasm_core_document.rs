@@ -94,7 +94,7 @@ pub struct WasmCoreDocument(pub(crate) Rc<CoreDocumentLock>);
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
-  /// Creates a new `CoreDocument` with the given properties.
+  /// Creates a new {@link CoreDocument} with the given properties.
   #[wasm_bindgen(constructor)]
   pub fn new(values: ICoreDocument) -> Result<WasmCoreDocument> {
     let core_doc: CoreDocument = values.into_serde().wasm_result()?;
@@ -540,7 +540,7 @@ impl WasmCoreDocument {
   // Cloning
   // ===========================================================================
 
-  /// Deep clones the `CoreDocument`.
+  /// Deep clones the {@link CoreDocument}.
   #[wasm_bindgen(js_name = clone)]
   pub fn deep_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
@@ -808,6 +808,6 @@ extern "C" {
 pub const TS_AS_REF_CORE_Document: &'static str = r#"
 interface IToCoreDocument {
 
-  /** Returns a `CoreDocument` representation of this Document. */
+  /** Returns a {@link CoreDocument} representation of this Document. */
   toCoreDocument(): CoreDocument;
 }"#;
