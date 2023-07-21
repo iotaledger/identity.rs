@@ -3,7 +3,6 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
-#![allow(deprecated)]
 #![doc = include_str!("./../README.md")]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
