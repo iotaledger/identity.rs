@@ -15,8 +15,11 @@ use crate::error::Result;
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub enum MethodData {
+  /// Verification Material in multibase encoding.
   PublicKeyMultibase(String),
+  /// Verification Material in base58 encoding.
   PublicKeyBase58(String),
+  /// Verification Material in the JSON Web Key format.
   PublicKeyJwk(Jwk),
 }
 

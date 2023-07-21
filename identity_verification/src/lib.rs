@@ -8,13 +8,12 @@
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
-  // missing_docs,
+  missing_docs,
   rustdoc::missing_crate_level_docs,
   rustdoc::broken_intra_doc_links,
   rustdoc::private_intra_doc_links,
   rustdoc::private_doc_tests,
-  clippy::missing_safety_doc,
-  // clippy::missing_errors_doc
+  clippy::missing_safety_doc
 )]
 
 #[macro_use]

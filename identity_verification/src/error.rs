@@ -13,20 +13,29 @@ pub enum Error {
   /// [`VerificationMethod`](crate::VerificationMethod).
   #[error("invalid verification method property: {0}")]
   InvalidMethod(&'static str),
+  /// Caused when construction of a [`DIDUrl`](identity_did::DIDUrl) fails.
   #[error("invalid DID url")]
   DIDUrlConstructionError(#[source] identity_did::Error),
+  /// Caused when the fragment of a [`VerificationMethod`](crate::VerificationMethod) is missing.
   #[error("invalid or empty `id` fragment")]
   MissingIdFragment,
+  /// Caused when string does not match any known [`MethodScope`](crate::MethodScope).
   #[error("unknown method scope")]
   UnknownMethodScope,
+  /// Caused by key material in a [`MethodData`](crate::MethodData) that is expected to be base58 encoded.
   #[error("invalid base58 key data")]
   InvalidKeyDataBase58,
+  /// Caused by key material in a [`MethodData`](crate::MethodData) that is expected to be multibase encoded.
   #[error("invalid multibase key data")]
   InvalidKeyDataMultibase,
+  /// Caused by attempting to decode [`MethodData`](crate::MethodData) that is not in the expected encoding.
   #[error("the method data could not be transformed to the desired type")]
   InvalidMethodDataTransformation(&'static str),
+  /// Caused by building a [`VerificationMethod`](crate::VerificationMethod) from a key that includes private key
+  /// material.
   #[error("invalid verification material: private key material exposed")]
   PrivateKeyMaterialExposed,
+  /// Caused by key material that is not a JSON Web Key.
   #[error("verification material format is not publicKeyJwk")]
   NotPublicKeyJwk,
 }

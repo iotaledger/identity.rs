@@ -18,9 +18,9 @@ const JSON_WEB_KEY_METHOD_TYPE: &str = "JsonWebKey";
 pub struct MethodType(Cow<'static, str>);
 
 impl MethodType {
-  // The `Ed25519VerificationKey2018` method type.
+  /// The `Ed25519VerificationKey2018` method type.
   pub const ED25519_VERIFICATION_KEY_2018: Self = Self(Cow::Borrowed(ED25519_VERIFICATION_KEY_2018_STR));
-  // The `X25519KeyAgreementKey2019` method type.
+  /// The `X25519KeyAgreementKey2019` method type.
   pub const X25519_KEY_AGREEMENT_KEY_2019: Self = Self(Cow::Borrowed(X25519_KEY_AGREEMENT_KEY_2019_STR));
   /// A verification method for use with JWT verification as prescribed by the [`Jwk`](::identity_jose::jwk::Jwk)
   /// in the [`publicKeyJwk`](crate::MethodData::PublicKeyJwk) entry.
@@ -28,6 +28,7 @@ impl MethodType {
 }
 
 impl MethodType {
+  /// Returns the string representation of a [`MethodType`].
   pub fn as_str(&self) -> &str {
     &self.0
   }
