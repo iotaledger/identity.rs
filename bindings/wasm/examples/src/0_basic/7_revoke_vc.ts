@@ -85,10 +85,12 @@ export async function revokeVC() {
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     let rentStructure: IRent = await didClient.getRentStructure();
-    aliasOutput.amount = Utils.computeStorageDeposit(
-        aliasOutput,
-        rentStructure,
-    ).toString();
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
 
     // Publish the document.
     issuerDocument = await didClient.publishDidOutput(
@@ -149,10 +151,13 @@ export async function revokeVC() {
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = Utils.computeStorageDeposit(
-        aliasOutput,
-        rentStructure,
-    ).toString();
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
+
     const update2: IotaDocument = await didClient.publishDidOutput(
         issuerSecretManager,
         aliasOutput,
@@ -185,10 +190,13 @@ export async function revokeVC() {
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = Utils.computeStorageDeposit(
-        aliasOutput,
-        rentStructure,
-    ).toString();
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
+
     issuerDocument = await didClient.publishDidOutput(
         issuerSecretManager,
         aliasOutput,

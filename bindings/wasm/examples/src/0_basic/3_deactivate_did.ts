@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Bip39 } from "@iota/crypto.js";
 import { IotaDocument, IotaIdentityClient, JwkMemStore, KeyIdMemStore, Storage } from "@iota/identity-wasm/node";
 import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
@@ -16,7 +15,7 @@ export async function deactivateIdentity() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
@@ -39,7 +38,13 @@ export async function deactivateIdentity() {
 
     // Optional: reduce and reclaim the storage deposit, sending the tokens to the state controller.
     const rentStructure: IRent = await didClient.getRentStructure();
-    deactivatedOutput.amount = Utils.computeStorageDeposit(deactivatedOutput, rentStructure);
+
+    deactivatedOutput = await client.buildAliasOutput({
+        ...deactivatedOutput,
+        amount: Utils.computeStorageDeposit(deactivatedOutput, rentStructure),
+        aliasId: deactivatedOutput.getAliasId(),
+        unlockConditions: deactivatedOutput.getUnlockConditions(),
+    });
 
     // Publish the deactivated DID document.
     await didClient.publishDidOutput(secretManager, deactivatedOutput);
@@ -56,7 +61,13 @@ export async function deactivateIdentity() {
     let reactivatedOutput: AliasOutput = await didClient.updateDidOutput(document);
 
     // Increase the storage deposit to the minimum again, if it was reclaimed during deactivation.
-    reactivatedOutput.amount = Utils.computeStorageDeposit(reactivatedOutput, rentStructure);
+    reactivatedOutput = await client.buildAliasOutput({
+        ...reactivatedOutput,
+        amount: Utils.computeStorageDeposit(reactivatedOutput, rentStructure),
+        aliasId: reactivatedOutput.getAliasId(),
+        unlockConditions: reactivatedOutput.getUnlockConditions(),
+    });
+
     await didClient.publishDidOutput(secretManager, reactivatedOutput);
 
     // Resolve the reactivated DID document.

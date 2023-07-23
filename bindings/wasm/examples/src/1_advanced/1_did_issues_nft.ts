@@ -73,7 +73,7 @@ export async function didIssuesNft() {
 
     // Create the Alias Address of the manufacturer.
     const manufacturerAliasAddress: Address = new AliasAddress(
-        Utils.aliasIdToBech32(manufacturerDid.toAliasId(), networkName),
+        manufacturerDid.toAliasId(),
     );
 
     // Create a Digital Product Passport NFT issued by the manufacturer.
@@ -92,7 +92,12 @@ export async function didIssuesNft() {
     });
 
     // Set the appropriate storage deposit.
-    productPassportNft.amount = Utils.computeStorageDeposit(productPassportNft, rentStructure);
+    productPassportNft = await client.buildNftOutput({
+        ...productPassportNft,
+        amount: Utils.computeStorageDeposit(productPassportNft, rentStructure),
+        nftId: productPassportNft.getNftId(),
+        unlockConditions: productPassportNft.getUnlockConditions(),
+    });
 
     // Publish the NFT.
     const [blockId, block] = await client.buildAndPostBlock(secretManager, { outputs: [productPassportNft] });

@@ -74,6 +74,7 @@ export async function updateIdentity() {
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     const rentStructure: IRent = await didClient.getRentStructure();
+
     aliasOutput = await client.buildAliasOutput({
         ...aliasOutput,
         amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),

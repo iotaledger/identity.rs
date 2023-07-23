@@ -28,7 +28,6 @@ import {
     UnlockConditionType,
     Utils,
 } from "@iota/sdk-wasm/node";
-import bigInt from "big-integer";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and control a Token Foundry and its tokens.
@@ -82,11 +81,10 @@ export async function didIssuesTokens() {
     });
 
     // Create a token foundry that represents carbon credits.
-    // TODO: Big Int.
     const tokenScheme: SimpleTokenScheme = new SimpleTokenScheme(
-        "HexHelper.fromBigInt256(bigInt(500_000))",
-        "HexHelper.fromBigInt256(bigInt(0))",
-        "HexHelper.fromBigInt256(bigInt(1_000_000))",
+        BigInt(500_000),
+        BigInt(0),
+        BigInt(1_000_000),
     );
 
     // Create the identifier of the token, which is partially derived from the Alias Address.
@@ -100,19 +98,25 @@ export async function didIssuesTokens() {
         nativeTokens: [
             {
                 id: tokenId,
-                amount: HexHelper.fromBigInt256(bigInt(500_000)),
+                amount: BigInt(500_000),
             },
         ],
         // The authority is set as the immutable owner.
         unlockConditions: [
             new ImmutableAliasAddressUnlockCondition(
-                new AliasAddress(Utils.aliasIdToBech32(authorityDid.toAliasId(), networkName)),
+                new AliasAddress(authorityDid.toAliasId()),
             ),
         ],
     });
 
     // Set the appropriate storage deposit.
-    carbonCreditsFoundry.amount = Utils.computeStorageDeposit(carbonCreditsFoundry, rentStructure);
+    carbonCreditsFoundry = await client.buildFoundryOutput({
+        ...carbonCreditsFoundry,
+        amount: Utils.computeStorageDeposit(carbonCreditsFoundry, rentStructure),
+        tokenScheme,
+        serialNumber: carbonCreditsFoundry.getSerialNumber(),
+        unlockConditions: carbonCreditsFoundry.getUnlockConditions(),
+    });
 
     // Publish the foundry.
     const [blockId, block] = await client.buildAndPostBlock(secretManager, {
@@ -174,7 +178,7 @@ export async function didIssuesTokens() {
     const basicOutput: BasicOutput = await client.buildBasicOutput({
         nativeTokens: [
             {
-                amount: HexHelper.fromBigInt256(bigInt(1000)),
+                amount: BigInt(1000),
                 id: tokenId,
             },
         ],
@@ -182,19 +186,25 @@ export async function didIssuesTokens() {
         unlockConditions: [
             new AddressUnlockCondition(companyAddress),
             new ExpirationUnlockCondition(
-                new AliasAddress(Utils.aliasIdToBech32(authorityAliasId, networkName)),
+                new AliasAddress(authorityAliasId),
                 tomorrow,
             ),
         ],
     });
 
     // Reduce the carbon credits in the foundry by the amount that is sent to the company.
-    carbonCreditsFoundry.setNativeTokens([
-        {
-            amount: HexHelper.fromBigInt256(bigInt(499_000)),
-            id: tokenId,
-        },
-    ]);
+    carbonCreditsFoundry = await client.buildFoundryOutput({
+        ...carbonCreditsFoundry,
+        nativeTokens: [
+            {
+                amount: BigInt(499_000),
+                id: tokenId,
+            },
+        ],
+        tokenScheme,
+        serialNumber: carbonCreditsFoundry.getSerialNumber(),
+        unlockConditions: carbonCreditsFoundry.getUnlockConditions(),
+    });
 
     // Publish the Basic Output and the updated foundry.
     const [blockId2, block2] = await client.buildAndPostBlock(secretManager, {

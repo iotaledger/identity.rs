@@ -38,6 +38,7 @@ export async function createDid(client: Client, secretManager: SecretManagerType
             start: 0,
             end: 1,
         },
+        bech32Hrp: networkHrp,
     }))[0];
 
     console.log("Wallet address Bech32:", walletAddressBech32);

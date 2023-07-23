@@ -78,7 +78,12 @@ export async function nftOwnsDid() {
     });
 
     // Set the appropriate storage deposit.
-    carNft.amount = Utils.computeStorageDeposit(carNft, rentStructure).toString();
+    carNft = await client.buildNftOutput({
+        ...carNft,
+        amount: Utils.computeStorageDeposit(carNft, rentStructure),
+        nftId: carNft.getNftId(),
+        unlockConditions: carNft.getUnlockConditions(),
+    });
 
     // Publish the NFT.
     const [blockId, block] = await client.buildAndPostBlock(secretManager, { outputs: [carNft] });

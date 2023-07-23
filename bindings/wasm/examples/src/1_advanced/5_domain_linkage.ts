@@ -173,12 +173,17 @@ async function publishDocument(
     document: IotaDocument,
 ): Promise<IotaDocument> {
     // Resolve the latest output and update it with the given document.
-    const aliasOutput: AliasOutput = await client.updateDidOutput(document);
+    let aliasOutput: AliasOutput = await client.updateDidOutput(document);
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     const rentStructure: IRent = await client.getRentStructure();
-    aliasOutput.amount = Utils.computeStorageDeposit(aliasOutput, rentStructure);
+    aliasOutput = await client.client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
 
     // Publish the output.
     const updated: IotaDocument = await client.publishDidOutput(secretManager, aliasOutput);

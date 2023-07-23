@@ -64,7 +64,7 @@ export async function didControlsDid() {
     var subsidiaryDocument: IotaDocument = new IotaDocument(networkName);
 
     // Create the Alias Address of the company.
-    const companyAliasAddress: Address = new AliasAddress(Utils.aliasIdToBech32(companyDid.toAliasId(), networkName));
+    const companyAliasAddress: Address = new AliasAddress(companyDid.toAliasId());
 
     // Create a DID for the subsidiary that is controlled by the parent company's DID.
     // This means the subsidiary's Alias Output can only be updated or destroyed by
@@ -78,12 +78,20 @@ export async function didControlsDid() {
     // Optionally, we can mark the company as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as a resolver can
     // verify that the subsidiary DID was created by the parent company.
-    subsidiaryAlias.setImmutableFeatures([
-        new IssuerFeature(companyAliasAddress),
-    ]);
+    subsidiaryAlias = await client.buildAliasOutput({
+        ...subsidiaryAlias,
+        immutableFeatures: [new IssuerFeature(companyAliasAddress)],
+        aliasId: subsidiaryAlias.getAliasId(),
+        unlockConditions: subsidiaryAlias.getUnlockConditions(),
+    });
 
     // Adding the issuer feature means we have to recalculate the required storage deposit.
-    subsidiaryAlias.amount = Utils.computeStorageDeposit(subsidiaryAlias, rentStructure);
+    subsidiaryAlias = await client.buildAliasOutput({
+        ...subsidiaryAlias,
+        amount: Utils.computeStorageDeposit(subsidiaryAlias, rentStructure),
+        aliasId: subsidiaryAlias.getAliasId(),
+        unlockConditions: subsidiaryAlias.getUnlockConditions(),
+    });
 
     // Publish the subsidiary's DID.
     subsidiaryDocument = await didClient.publishDidOutput(secretManager, subsidiaryAlias);
@@ -104,8 +112,13 @@ export async function didControlsDid() {
 
     // Update the subsidiary's Alias Output with the updated document
     // and increase the storage deposit.
-    const subsidiaryAliasUpdate: AliasOutput = await didClient.updateDidOutput(subsidiaryDocument);
-    subsidiaryAliasUpdate.amount = Utils.computeStorageDeposit(subsidiaryAliasUpdate, rentStructure);
+    let subsidiaryAliasUpdate: AliasOutput = await didClient.updateDidOutput(subsidiaryDocument);
+    subsidiaryAliasUpdate = await client.buildAliasOutput({
+        ...subsidiaryAliasUpdate,
+        amount: Utils.computeStorageDeposit(subsidiaryAliasUpdate, rentStructure),
+        aliasId: subsidiaryAliasUpdate.getAliasId(),
+        unlockConditions: subsidiaryAliasUpdate.getUnlockConditions(),
+    });
 
     // Publish the updated subsidiary's DID.
     //
