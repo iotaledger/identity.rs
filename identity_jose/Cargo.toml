@@ -16,7 +16,7 @@ identity_core = { version = "0.7.0-alpha.6", path = "../identity_core", default-
 iota-crypto = { version = "0.23", default-features = false, features = ["std", "sha"] }
 serde.workspace = true
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
-subtle = { version = "2.4.1", default-features = false }
+subtle = { version = "2.5", default-features = false }
 thiserror.workspace = true
 zeroize = { version = "1.6", default-features = false, features = ["std", "zeroize_derive"] }
 

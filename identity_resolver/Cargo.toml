@@ -20,7 +20,7 @@ identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credenti
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
-strum = { version = "0.21", features = ["derive"] }
+strum.workspace = true
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.identity_iota_core]
