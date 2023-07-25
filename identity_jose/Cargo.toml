@@ -13,12 +13,12 @@ description = "A library for JOSE (JSON Object Signing and Encryption)"
 
 [dependencies]
 identity_core = { version = "0.7.0-alpha.6", path = "../identity_core", default-features = false }
-iota-crypto = { version = "0.18", default-features = false, features = ["std", "sha"] }
+iota-crypto = { version = "0.23", default-features = false, features = ["std", "sha"] }
 serde.workspace = true
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 subtle = { version = "2.4.1", default-features = false }
 thiserror.workspace = true
-zeroize = { version = "1.5.7", default-features = false, features = ["std", "zeroize_derive"] }
+zeroize = { version = "1.6", default-features = false, features = ["std", "zeroize_derive"] }
 
 [features]
 # Enables jws verification based on the EdDSA algorithm.
@@ -27,7 +27,7 @@ default = ["eddsa"]
 
 [dev-dependencies]
 anyhow = "1"
-iota-crypto = { version = "0.18", features = ["ed25519", "random", "hmac"] }
+iota-crypto = { version = "0.23", features = ["ed25519", "random", "hmac"] }
 p256 = { version = "0.12.0", default-features = false, features = ["std", "ecdsa", "ecdsa-core"] }
 signature = { version = "2", default-features = false }
 

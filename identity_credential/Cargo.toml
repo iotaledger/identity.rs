@@ -28,10 +28,10 @@ serde.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
 strum.workspace = true
 thiserror.workspace = true
-url = { version = "2.2", default-features = false }
+url = { version = "2.4", default-features = false }
 
 [dev-dependencies]
-iota-crypto = { version = "0.20", default-features = false, features = ["ed25519", "std", "random"] }
+iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "std", "random"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 serde_json.workspace = true
 tokio = { version = "1.17.0", default-features = false, features = ["rt-multi-thread", "macros"] }

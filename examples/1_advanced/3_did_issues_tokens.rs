@@ -21,11 +21,14 @@ use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::KeyIdMemstore;
+use iota_sdk::client::api::GetAddressesOptions;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::address::AliasAddress;
+use iota_sdk::types::block::address::ToBech32Ext;
 use iota_sdk::types::block::output::unlock_condition::ImmutableAliasAddressUnlockCondition;
 use iota_sdk::types::block::output::AliasId;
 use iota_sdk::types::block::output::AliasOutput;
@@ -62,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -83,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
   // We will add one foundry to this Alias Output.
   let authority_alias_output = AliasOutputBuilder::from(&authority_alias_output)
     .with_foundry_counter(1)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Create a token foundry that represents carbon credits.
   let token_scheme = TokenScheme::Simple(SimpleTokenScheme::new(
@@ -108,13 +111,13 @@ async fn main() -> anyhow::Result<()> {
       .add_unlock_condition(UnlockCondition::ImmutableAliasAddress(
         ImmutableAliasAddressUnlockCondition::new(AliasAddress::new(AliasId::from(&authority_did))),
       ))
-      .finish(client.get_token_supply().await?)?;
+      .finish()?;
 
   let carbon_credits_foundry_id: FoundryId = carbon_credits_foundry.id();
 
   // Publish all outputs.
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![authority_alias_output.into(), carbon_credits_foundry.into()])?
     .finish()
@@ -152,7 +155,13 @@ async fn main() -> anyhow::Result<()> {
   // =========================================================
 
   // Create a new address that represents the company.
-  let company_address: Address = client.get_addresses(&secret_manager).with_range(1..2).get_raw().await?[0];
+  let company_address: Address = *secret_manager
+    .generate_ed25519_addresses(
+      GetAddressesOptions::default()
+        .with_bech32_hrp((&network).try_into()?)
+        .with_range(1..2),
+    )
+    .await?[0];
 
   // Create the timestamp at which the basic output will expire.
   let tomorrow: u32 = Timestamp::now_utc()
@@ -171,7 +180,7 @@ async fn main() -> anyhow::Result<()> {
       Address::Alias(AliasAddress::new(*authority_alias_id)),
       tomorrow,
     )?))
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Reduce the carbon credits in the foundry by the amount that is sent to the company.
   let carbon_credits_foundry = FoundryOutputBuilder::from(&carbon_credits_foundry)
@@ -179,18 +188,21 @@ async fn main() -> anyhow::Result<()> {
       carbon_credits_foundry.token_id(),
       U256::from(499_000u32),
     )?])
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the output, transferring the carbon credits.
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![basic_output.into(), carbon_credits_foundry.into()])?
     .finish()
     .await?;
   let _ = client.retry_until_included(&block.id(), None, None).await?;
 
-  println!("Sent carbon credits to {}", company_address.to_bech32(network.as_ref()));
+  println!(
+    "Sent carbon credits to {}",
+    company_address.to_bech32((&network).try_into()?)
+  );
 
   Ok(())
 }

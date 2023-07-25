@@ -35,6 +35,7 @@ use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
 use iota_sdk::types::block::output::AliasOutputBuilder;
@@ -51,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -219,7 +220,7 @@ async fn publish_document(
   let rent_structure: RentStructure = client.get_rent_structure().await?;
   let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the updated Alias Output.
   Ok(client.publish_did_output(&secret_manager, alias_output).await?)

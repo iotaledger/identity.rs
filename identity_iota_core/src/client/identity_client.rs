@@ -74,7 +74,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         address,
       )))
-      .finish(self.get_token_supply().await?)
+      .finish()
       .map_err(Error::AliasOutputBuildError)
   }
 
@@ -99,9 +99,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(id);
     }
 
-    alias_output_builder
-      .finish(self.get_token_supply().await?)
-      .map_err(Error::AliasOutputBuildError)
+    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
   /// Removes the DID document from the state metadata of its Alias Output,
@@ -128,9 +126,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(alias_id);
     }
 
-    alias_output_builder
-      .finish(self.get_token_supply().await?)
-      .map_err(Error::AliasOutputBuildError)
+    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
   /// Resolve a [`IotaDocument`]. Returns an empty, deactivated document if the state metadata
@@ -192,7 +188,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     self
       .get_protocol_parameters()
       .await
-      .map(|parameters| parameters.bech32_hrp().to_owned())
+      .map(|parameters| parameters.bech32_hrp().to_string())
   }
 }
 
@@ -205,7 +201,7 @@ where
   let network_hrp: String = client
     .get_protocol_parameters()
     .await
-    .map(|parameters| parameters.bech32_hrp().to_owned())?;
+    .map(|parameters| parameters.bech32_hrp().to_string())?;
   if did.network_str() != network_hrp.as_str() {
     return Err(Error::NetworkMismatch {
       expected: did.network_str().to_owned(),

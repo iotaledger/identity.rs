@@ -15,6 +15,7 @@ use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::output::AliasOutput;
 use iota_sdk::types::block::output::AliasOutputBuilder;
 
@@ -30,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -51,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure = client.get_rent_structure().await?;
   let deactivated_output = AliasOutputBuilder::from(&deactivated_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the deactivated DID document.
   let _ = client.publish_did_output(&secret_manager, deactivated_output).await?;
@@ -69,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure = client.get_rent_structure().await?;
   let reactivated_output = AliasOutputBuilder::from(&reactivated_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
   client.publish_did_output(&secret_manager, reactivated_output).await?;
 
   // Resolve the reactivated DID document.

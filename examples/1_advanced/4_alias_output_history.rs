@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use anyhow::Context;
 use examples::create_did;
 use examples::random_stronghold_path;
@@ -26,17 +24,17 @@ use identity_iota::verification::MethodRelationship;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::input::Input;
-use iota_sdk::types::block::output::dto::OutputMetadataDto;
 use iota_sdk::types::block::output::AliasId;
 use iota_sdk::types::block::output::AliasOutput;
 use iota_sdk::types::block::output::AliasOutputBuilder;
 use iota_sdk::types::block::output::Output;
 use iota_sdk::types::block::output::OutputId;
+use iota_sdk::types::block::output::OutputMetadata;
 use iota_sdk::types::block::payload::transaction::TransactionEssence;
 use iota_sdk::types::block::payload::Payload;
 use iota_sdk::types::block::Block;
-use iota_sdk::types::block::BlockId;
 
 /// Demonstrates how to obtain the alias output history.
 #[tokio::main]
@@ -51,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -84,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
     let rent_structure: RentStructure = client.get_rent_structure().await?;
     let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
       .with_minimum_storage_deposit(rent_structure)
-      .finish(client.get_token_supply().await?)?;
+      .finish()?;
     client.publish_did_output(&secret_manager, alias_output).await?;
   }
 
@@ -113,9 +111,8 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn current_block(client: &Client, output_id: &OutputId) -> anyhow::Result<Block> {
-  let output_metadata: OutputMetadataDto = client.get_output_metadata(output_id).await?;
-  let block_id: BlockId = BlockId::from_str(&output_metadata.block_id)?;
-  let block: Block = client.get_block(&block_id).await?;
+  let output_metadata: OutputMetadata = client.get_output_metadata(output_id).await?;
+  let block: Block = client.get_block(output_metadata.block_id()).await?;
   Ok(block)
 }
 
