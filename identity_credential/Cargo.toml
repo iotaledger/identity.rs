@@ -20,8 +20,8 @@ identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-f
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
 indexmap = { version = "2.0", default-features = false, features = ["std", "serde"] }
-itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
-lazy_static = { version = "1.4", default-features = false }
+itertools = { version = "0.11", default-features = false, features = ["use_std"], optional = true }
+once_cell = { version = "1.18", default-features = false, features = ["std"] }
 reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
 roaring = { version = "0.9.0", default-features = false, optional = true }
 serde.workspace = true

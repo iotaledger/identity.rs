@@ -501,6 +501,7 @@ impl Default for JwtCredentialValidator {
 mod tests {
   use crate::credential::Subject;
   use identity_core::common::Duration;
+  use once_cell::sync::Lazy;
 
   // All tests here are essentially adaptations of the old JwtCredentialValidator tests.
   use super::*;
@@ -529,10 +530,9 @@ mod tests {
     }
   }"#;
 
-  lazy_static::lazy_static! {
-    // A simple credential shared by some of the tests in this module
-    static ref SIMPLE_CREDENTIAL: Credential = Credential::<Object>::from_json(SIMPLE_CREDENTIAL_JSON).unwrap();
-  }
+  /// A simple credential shared by some of the tests in this module
+  static SIMPLE_CREDENTIAL: Lazy<Credential> =
+    Lazy::new(|| Credential::<Object>::from_json(SIMPLE_CREDENTIAL_JSON).unwrap());
 
   #[test]
   fn issued_on_or_before() {

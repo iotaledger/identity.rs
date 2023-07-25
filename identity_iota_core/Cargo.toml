@@ -23,7 +23,7 @@ identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verifi
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "wallet"], optional = true }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
-once_cell = { version = "1", default-features = false, features = ["std"] }
+once_cell = { version = "1.18", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.4", default-features = false }
 ref-cast = { version = "1.0.14", default-features = false }
 serde.workspace = true

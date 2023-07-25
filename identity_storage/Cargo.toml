@@ -30,7 +30,7 @@ tokio = { version = "1.23.0", default-features = false, features = ["macros", "s
 
 [dev-dependencies]
 identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", features = ["revocation-bitmap"] }
-once_cell = { version = "1.17.1", default-features = false }
+once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
