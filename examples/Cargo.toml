@@ -11,7 +11,7 @@ identity_iota = { path = "../identity_iota", features = ["memstore", "domain-lin
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 primitive-types = "0.12.1"
 rand = "0.8.5"
-tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
+tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [lib]
 path = "utils/utils.rs"

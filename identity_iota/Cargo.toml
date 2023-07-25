@@ -25,7 +25,7 @@ identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verifi
 anyhow = "1.0.64"
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 rand = "0.8.5"
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
 default = ["revocation-bitmap", "client", "iota-client", "resolver", "eddsa"]
