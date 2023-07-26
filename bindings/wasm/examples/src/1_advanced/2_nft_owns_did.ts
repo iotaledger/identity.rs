@@ -91,7 +91,7 @@ export async function nftOwnsDid() {
 
     // Extract the identifier of the NFT from the published block.
     // Non-null assertion is safe because we published a block with a payload.
-    var carNftId: string = nft_output_id(block.payload!);
+    var carNftId: string = computeNftOutputId(block.payload!);
 
     // Create the address of the NFT.
     const nftAddress: Address = new NftAddress(Utils.nftIdToBech32(carNftId, networkName));
@@ -139,17 +139,17 @@ export async function nftOwnsDid() {
     console.log("The car's NFT is:", JSON.stringify(carNft, null, 2));
 }
 
-function nft_output_id(payload: Payload): string {
+function computeNftOutputId(payload: Payload): string {
     if (payload.getType() === PayloadType.Transaction) {
-        const txPayload: TransactionPayload = payload as TransactionPayload;
-        const txHash = Utils.hashTransactionEssence(txPayload.essence);
+        const transactionPayload: TransactionPayload = payload as TransactionPayload;
+        const transactionId = Utils.transactionId(transactionPayload);
 
-        if (txPayload.essence.getType() === TransactionEssenceType.Regular) {
-            const regularTxPayload = txPayload.essence as RegularTransactionEssence;
+        if (transactionPayload.essence.getType() === TransactionEssenceType.Regular) {
+            const regularTxPayload = transactionPayload.essence as RegularTransactionEssence;
             const outputs = regularTxPayload.outputs;
             for (const index in outputs) {
                 if (outputs[index].getType() === OutputType.Nft) {
-                    const outputId: string = Utils.computeOutputId(txHash, parseInt(index));
+                    const outputId: string = Utils.computeOutputId(transactionId, parseInt(index));
                     return Utils.computeNftId(outputId);
                 }
             }

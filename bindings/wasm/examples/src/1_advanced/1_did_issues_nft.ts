@@ -109,7 +109,7 @@ export async function didIssuesNft() {
 
     // Extract the identifier of the NFT from the published block.
     // Non-null assertion is safe because we published a block with a payload.
-    let nftId: string = nft_output_id(block.payload!);
+    let nftId: string = computeNftOutputId(block.payload!);
 
     // Fetch the NFT Output.
     const nftOutputId: string = await client.nftOutputId(nftId);
@@ -125,7 +125,6 @@ export async function didIssuesNft() {
         const issuerFeature: IssuerFeature = nftOutput.getImmutableFeatures()!.find(feature =>
             feature.getType() === FeatureType.Issuer
         ) as IssuerFeature;
-
         if (issuerFeature && issuerFeature.getIssuer().getType() === AddressType.Alias) {
             manufacturerAliasId = (issuerFeature.getIssuer() as AliasAddress).getAliasId();
         } else {
@@ -144,17 +143,17 @@ export async function didIssuesNft() {
     console.log("The issuer of the Digital Product Passport NFT is:", JSON.stringify(manufacturerDocument, null, 2));
 }
 
-function nft_output_id(payload: Payload): string {
+function computeNftOutputId(payload: Payload): string {
     if (payload.getType() === PayloadType.Transaction) {
-        const txPayload: TransactionPayload = payload as TransactionPayload;
-        const txHash = Utils.hashTransactionEssence(txPayload.essence);
+        const transactionPayload: TransactionPayload = payload as TransactionPayload;
+        const transactionId = Utils.transactionId(transactionPayload);
 
-        if (txPayload.essence.getType() === TransactionEssenceType.Regular) {
-            const regularTxPayload = txPayload.essence as RegularTransactionEssence;
+        if (transactionPayload.essence.getType() === TransactionEssenceType.Regular) {
+            const regularTxPayload = transactionPayload.essence as RegularTransactionEssence;
             const outputs = regularTxPayload.outputs;
             for (const index in outputs) {
                 if (outputs[index].getType() === OutputType.Nft) {
-                    const outputId: string = Utils.computeOutputId(txHash, parseInt(index));
+                    const outputId: string = Utils.computeOutputId(transactionId, parseInt(index));
                     return Utils.computeNftId(outputId);
                 }
             }
