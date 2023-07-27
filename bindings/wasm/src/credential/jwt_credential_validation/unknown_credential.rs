@@ -27,7 +27,7 @@ impl WasmUnknownCredentialContainer {
     WasmUnknownCredentialContainer(inner)
   }
 
-  /// Returns a `Jwt` if the credential is of type string, `undefined` otherwise.
+  /// Returns a {@link Jwt} if the credential is of type string, `undefined` otherwise.
   #[wasm_bindgen(js_name = tryIntoJwt)]
   pub fn try_into_jwt(&self) -> Option<WasmJwt> {
     match &self.0 {
@@ -36,7 +36,7 @@ impl WasmUnknownCredentialContainer {
     }
   }
 
-  /// Returns a `Credential` if the credential is of said type, `undefined` otherwise.
+  /// Returns a {@link Credential} if the credential is of said type, `undefined` otherwise.
   #[wasm_bindgen(js_name = tryIntoCredential)]
   pub fn try_into_credential(&self) -> Option<WasmCredential> {
     match &self.0 {
@@ -45,7 +45,7 @@ impl WasmUnknownCredentialContainer {
     }
   }
 
-  /// Returns the contained value as JSON, if it can be converted, `undefined` otherwise.
+  /// Returns the contained value as an Object, if it can be converted, `undefined` otherwise.
   #[wasm_bindgen(js_name = tryIntoRaw)]
   pub fn try_into_raw(&self) -> Option<RecordStringAny> {
     match &self.0 {

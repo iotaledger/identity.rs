@@ -30,36 +30,43 @@ impl From<DomainLinkageValidationError> for &str {
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum DomainLinkageValidationErrorCause {
+  /// Caused when a Domain Linkage Credential cannot be successfully validated.
   #[error("invalid credential")]
   CredentialValidationError,
+  /// Caused by an invalid JWT.
   #[error("invalid JWT")]
   InvalidJwt,
+  /// Caused by a missing expiration date.
   #[error("the expiration date is missing")]
   MissingExpirationDate,
+  /// Caused by the presence of an id property on a Domain Linkage Credential.
   #[error("id property is not allowed")]
   ImpermissibleIdProperty,
+  /// Caused by a mismatch of the issuer and subject of the Domain Linkage Credential.
   #[error("issuer DID does not match the subject")]
   IssuerSubjectMismatch,
+  /// Caused by an invalid Domain Linkage Credential subject.
   #[error("subject id is invalid")]
   InvalidSubjectId,
+  /// Caused by the presence of multiple subjects on a Domain Linkage Credential.
   #[error("credential contains multiple subjects")]
   MultipleCredentialSubjects,
+  /// Caused by an invalid issuer DID.
   #[error("invalid issuer DID")]
   InvalidIssuer,
+  /// Caused by a missing id property on the Domain Linkage Credential subject.
   #[error("subject id property is missing")]
   MissingSubjectId,
+  /// Caused by an invalid `type` property on the Domain Linkage Credential.
   #[error("credential type is invalid")]
   InvalidTypeProperty,
-  #[error("the issuer's id does not match the provided DID Document(s)")]
-  DocumentMismatch,
+  /// Caused by a mismatch between the Domain Linkage Credential subject's origin and the provided domain origin.
   #[error("the subject's origin does not match the provided domain origin")]
   OriginMismatch,
+  /// Caused by a missing or invalid Domain Linkage Credential subject's origin.
   #[error("the subject's origin property is either invalid or missing")]
   InvalidSubjectOrigin,
+  /// Caused by an invalid semantic structure of the Domain Linkage Configuration.
   #[error("invalid semantic structure of the domain linkage configuration")]
   InvalidStructure,
-  #[error("multiple domain linkage credentials reference the same DID")]
-  AmbiguousCredential,
-  #[error("a domain linkage credential referencing the provided DID is not found")]
-  CredentialNotFound,
 }

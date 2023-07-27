@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use identity_core::convert::ToJson;
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Context;
@@ -27,7 +28,7 @@ use crate::error::Result;
 
 use super::jwt_serialization::CredentialJwtClaims;
 
-lazy_static! {
+lazy_static::lazy_static! {
   static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
 }
 
@@ -153,7 +154,7 @@ impl<T> Credential<T> {
   }
 
   /// Serializes the [`Credential`] as a JWT claims set
-  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The resulting string can be used as the payload of a JWS when issuing the credential.  
   pub fn serialize_jwt(&self) -> Result<String>

@@ -1,5 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+//! This module provides a type wrapping a key and key id storage.
+
 mod error;
 mod jwk_document_ext;
 mod signature_options;
@@ -10,7 +13,7 @@ pub use error::*;
 pub use jwk_document_ext::*;
 pub use signature_options::*;
 
-/// A type wrapping a [`JwkStorage`](crate::key_storage::JwkStorage) and
+/// A type wrapping a key and key id storage, typically used with [`JwkStorage`](crate::key_storage::JwkStorage) and
 /// [`KeyIdStorage`](crate::key_id_storage::KeyIdStorage) that should always be used together when calling methods from
 /// [`JwkDocumentExt`](crate::storage::JwkDocumentExt).
 pub struct Storage<K, I> {

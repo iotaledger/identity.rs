@@ -70,11 +70,8 @@ export async function revokeVC() {
     const revocationBitmap = new RevocationBitmap();
 
     // Add the revocation bitmap to the DID Document of the issuer as a service.
-    const service: Service = new Service({
-        id: issuerDocument.id().join("#my-revocation-service"),
-        type: RevocationBitmap.type(),
-        serviceEndpoint: revocationBitmap.toEndpoint(),
-    });
+    const serviceId = issuerDocument.id().join("#my-revocation-service");
+    const service: Service = revocationBitmap.toService(serviceId);
     issuerDocument.insertService(service);
 
     // Resolve the latest output and update it with the given document.
@@ -136,7 +133,7 @@ export async function revokeVC() {
     jwtCredentialValidator.validate(
         credentialJwt,
         issuerDocument,
-        new JwtCredentialValidationOptions({}),
+        new JwtCredentialValidationOptions(),
         FailFast.FirstError,
     );
 
@@ -168,7 +165,7 @@ export async function revokeVC() {
         jwtCredentialValidator.validate(
             credentialJwt,
             issuerDocument,
-            new JwtCredentialValidationOptions({}),
+            new JwtCredentialValidationOptions(),
             FailFast.FirstError,
         );
         console.log("Revocation Failed!");
@@ -212,7 +209,7 @@ export async function revokeVC() {
         jwtCredentialValidator.validate(
             credentialJwt,
             resolvedIssuerDoc,
-            new JwtCredentialValidationOptions({}),
+            new JwtCredentialValidationOptions(),
             FailFast.FirstError,
         );
 

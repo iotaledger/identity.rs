@@ -6,7 +6,6 @@ import {
     Credential,
     DIDUrl,
     DomainLinkageConfiguration,
-    DomainLinkageValidator,
     Duration,
     IotaDID,
     IotaDocument,
@@ -14,6 +13,7 @@ import {
     JwkMemStore,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
+    JwtDomainLinkageValidator,
     KeyIdMemStore,
     LinkedDomainService,
     Storage,
@@ -123,11 +123,11 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    new DomainLinkageValidator().validateLinkage(
+    new JwtDomainLinkageValidator().validateLinkage(
         issuerDocument,
         fetchedConfigurationResource,
         domainFoo,
-        JwtCredentialValidationOptions.default(),
+        new JwtCredentialValidationOptions(),
     );
 
     // =====================================================
@@ -157,11 +157,11 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    new DomainLinkageValidator().validateLinkage(
+    new JwtDomainLinkageValidator().validateLinkage(
         didDocument,
         fetchedConfigurationResource,
         domains[0],
-        JwtCredentialValidationOptions.default(),
+        new JwtCredentialValidationOptions(),
     );
 
     console.log("Successfully validated Domain Linkage!");

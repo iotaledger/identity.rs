@@ -107,7 +107,7 @@ impl WasmIotaDocument {
   // Constructors
   // ===========================================================================
 
-  /// Constructs an empty DID Document with a {@link IotaDID.placeholder} identifier
+  /// Constructs an empty IOTA DID Document with a {@link IotaDID.placeholder} identifier
   /// for the given `network`.
   #[wasm_bindgen(constructor)]
   pub fn new(network: String) -> Result<WasmIotaDocument> {
@@ -548,10 +548,10 @@ impl WasmIotaDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.blocking_write().metadata.properties.insert(key, value);
+        self.0.blocking_write().metadata.properties_mut().insert(key, value);
       }
       None => {
-        self.0.blocking_write().metadata.properties.remove(&key);
+        self.0.blocking_write().metadata.properties_mut().remove(&key);
       }
     }
     Ok(())
@@ -561,7 +561,7 @@ impl WasmIotaDocument {
   // Revocation
   // ===========================================================================
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
@@ -576,7 +576,7 @@ impl WasmIotaDocument {
       .wasm_result()
   }
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
@@ -596,7 +596,7 @@ impl WasmIotaDocument {
   // ===========================================================================
 
   #[wasm_bindgen(js_name = clone)]
-  /// Returns a deep clone of the `IotaDocument`.
+  /// Returns a deep clone of the {@link IotaDocument}.
   pub fn deep_clone(&self) -> WasmIotaDocument {
     WasmIotaDocument(Rc::new(IotaDocumentLock::new(self.0.blocking_read().clone())))
   }
@@ -637,7 +637,7 @@ impl WasmIotaDocument {
   // ===========================================================================
   // "AsRef<CoreDocument>"
   // ===========================================================================
-  /// Transforms the `IotaDocument` to its `CoreDocument` representation.
+  /// Transforms the {@link IotaDocument} to its {@link CoreDocument} representation.
   #[wasm_bindgen(js_name = toCoreDocument)]
   pub fn as_core_document(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(
@@ -707,9 +707,6 @@ impl WasmIotaDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
-  // TODO: Should payload be of type `string`, or should we take Uint8Array to match Rust? I chose String here as they
-  // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
-  // as the payload type?
   #[wasm_bindgen(js_name = createJwt)]
   pub fn create_jws(
     &self,
@@ -735,7 +732,7 @@ impl WasmIotaDocument {
   }
 
   /// Produces a JWS where the payload is produced from the given `credential`
-  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.

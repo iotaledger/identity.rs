@@ -1,5 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 use crypto::signatures::ed25519;
 use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
@@ -25,12 +26,14 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
   // =============================
   // Generate an Ed25519 key pair
   // =============================
+
   let secret_key = SecretKey::generate()?;
   let public_key = secret_key.public_key();
 
   // ====================================
   // Create the header for the recipient
   // ====================================
+
   let mut header: JwsHeader = JwsHeader::new();
   header.set_alg(JwsAlgorithm::EdDSA);
   let kid = "did:iota:0x123#signing-key";
@@ -39,6 +42,7 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
   // ==================================
   // Create the claims we want to sign
   // ==================================
+
   let mut claims: JwtClaims<serde_json::Value> = JwtClaims::new();
   claims.set_iss("issuer");
   claims.set_iat(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?.as_secs() as i64);
@@ -47,6 +51,7 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
   // ==================
   // Encode the claims
   // ==================
+
   let claims_bytes: Vec<u8> = serde_json::to_vec(&claims)?;
   let encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new(&claims_bytes, &header)?;
   // Get the signing input from the encoder
@@ -55,9 +60,11 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
   let signature: [u8; 64] = secret_key.sign(signing_input).to_bytes();
   // hand the signature over to the encoder so we can complete the JWS creation process
   let token: String = encoder.into_jws(&signature);
-  // ============
-  // Create Public key for verification
-  // =============
+
+  // ===================================
+  // Create public key for verification
+  // ===================================
+
   let mut public_key_jwk = Jwk::new(JwkType::Okp);
   public_key_jwk.set_kid(kid);
   public_key_jwk
@@ -116,8 +123,10 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
   // ==================================
   // Assert the claims are as expected
   // ==================================
+
   let recovered_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(&token.claims)?;
   assert_eq!(claims, recovered_claims);
+
   Ok(recovered_claims)
 }
 

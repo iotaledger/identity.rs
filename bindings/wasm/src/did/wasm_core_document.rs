@@ -94,7 +94,7 @@ pub struct WasmCoreDocument(pub(crate) Rc<CoreDocumentLock>);
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
-  /// Creates a new `CoreDocument` with the given properties.
+  /// Creates a new {@link CoreDocument} with the given properties.
   #[wasm_bindgen(constructor)]
   pub fn new(values: ICoreDocument) -> Result<WasmCoreDocument> {
     let core_doc: CoreDocument = values.into_serde().wasm_result()?;
@@ -112,8 +112,8 @@ impl WasmCoreDocument {
   /// ### Warning
   ///
   /// Changing the identifier can drastically alter the results of
-  /// [`Self::resolve_method`](CoreDocument::resolve_method()),
-  /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
+  /// `resolve_method`, `resolve_service` and the related
+  /// [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmCoreDID) {
     *self.0.blocking_write().id_mut_unchecked() = id.0.clone();
@@ -506,7 +506,7 @@ impl WasmCoreDocument {
   // Revocation
   // ===========================================================================
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
@@ -521,7 +521,7 @@ impl WasmCoreDocument {
       .wasm_result()
   }
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
@@ -540,7 +540,7 @@ impl WasmCoreDocument {
   // Cloning
   // ===========================================================================
 
-  /// Deep clones the `CoreDocument`.
+  /// Deep clones the {@link CoreDocument}.
   #[wasm_bindgen(js_name = clone)]
   pub fn deep_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
@@ -641,7 +641,6 @@ impl WasmCoreDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
-  // TODO: Perhaps this should be called `signData` (and the old `signData` method would have to be updated or removed)?
   #[wasm_bindgen(js_name = createJws)]
   pub fn create_jws(
     &self,
@@ -667,7 +666,7 @@ impl WasmCoreDocument {
   }
 
   /// Produces a JWT where the payload is produced from the given `credential`
-  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -809,6 +808,6 @@ extern "C" {
 pub const TS_AS_REF_CORE_Document: &'static str = r#"
 interface IToCoreDocument {
 
-  /** Returns a `CoreDocument` representation of this Document. */
+  /** Returns a {@link CoreDocument} representation of this Document. */
   toCoreDocument(): CoreDocument;
 }"#;

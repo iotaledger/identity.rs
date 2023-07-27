@@ -35,7 +35,6 @@ pub trait IotaIdentityClient {
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
 /// provided for [`IotaIdentityClient`] implementers.
-
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait IotaIdentityClientExt: IotaIdentityClient {
@@ -46,7 +45,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// `rent_structure`, which will be fetched from the node if not provided.
   /// The returned Alias Output can be further customised before publication, if desired.
   ///
-  /// NOTE: this does *not* publish the Alias Output.
+  /// NOTE: This does *not* publish the Alias Output.
   ///
   /// # Errors
   ///
@@ -83,7 +82,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// The storage deposit on the output is left unchanged. If the size of the document increased,
   /// the amount should be increased manually.
   ///
-  /// NOTE: this does *not* publish the updated Alias Output.
+  /// NOTE: This does *not* publish the updated Alias Output.
   ///
   /// # Errors
   ///

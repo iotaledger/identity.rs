@@ -161,10 +161,10 @@ export class IotaIdentityClient implements IIotaIdentityClient {
      */
     async deleteDidOutput(secretManager: SecretManagerType, address: Address, did: IotaDID) {
         const networkHrp = await this.getNetworkHrp();
-        if (networkHrp !== did.networkStr()) {
+        if (networkHrp !== did.network()) {
             throw new Error(
                 "deleteDidOutput: DID network mismatch, client expected `" + networkHrp + "`, DID network is `"
-                    + did.networkStr() + "`",
+                    + did.network() + "`",
             );
         }
 

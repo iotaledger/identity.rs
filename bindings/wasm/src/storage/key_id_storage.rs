@@ -61,11 +61,11 @@ impl KeyIdStorage for WasmKeyIdStorage {
 #[wasm_bindgen(typescript_custom_section)]
 const JWK_STORAGE: &'static str = r#"
 /**
- * Key value Storage for key ids under [`MethodDigest`].
+ * Key value Storage for key ids under {@link MethodDigest}.
  */
 interface KeyIdStorage {
   /**
-   * Insert a key id into the `KeyIdStorage` under the given `MethodDigest`.
+   * Insert a key id into the {@link KeyIdStorage} under the given {@link MethodDigest}.
    * 
    * If an entry for `key` already exists in the storage an error must be returned
    * immediately without altering the state of the storage.
@@ -73,12 +73,12 @@ interface KeyIdStorage {
   insertKeyId: (methodDigest: MethodDigest, keyId: string) => Promise<void>;
 
   /**
-   * Obtain the key id associated with the given [`MethodDigest`].
+   * Obtain the key id associated with the given {@link MethodDigest}.
    */
   getKeyId: (methodDigest: MethodDigest) => Promise<string>;
 
   /**
-   * Delete the [`KeyId`] associated with the given [`MethodDigest`] from the [`KeyIdStorage`].
+   * Delete the `KeyId` associated with the given {@link MethodDigest} from the {@link KeyIdStorage}.
    * 
    * If `key` is not found in storage, an Error must be returned.
    */

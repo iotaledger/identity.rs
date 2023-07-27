@@ -53,8 +53,6 @@ pub trait IotaClientExt: IotaIdentityClient {
   async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &IotaDID) -> Result<()>;
 }
 
-/// An extension trait for [`Client`] that provides helper functions for publication
-/// and deletion of DID documents in Alias Outputs.
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl IotaClientExt for Client {

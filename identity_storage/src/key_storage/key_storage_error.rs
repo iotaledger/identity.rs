@@ -53,6 +53,7 @@ pub enum KeyStorageErrorKind {
 }
 
 impl KeyStorageErrorKind {
+  /// Returns the string representation of the error.
   pub const fn as_str(&self) -> &str {
     match self {
       Self::UnsupportedKeyType => "key generation failed: the provided multikey schema is not supported",
@@ -67,6 +68,7 @@ impl KeyStorageErrorKind {
     }
   }
 }
+
 impl AsRef<str> for KeyStorageErrorKind {
   fn as_ref(&self) -> &str {
     self.as_str()

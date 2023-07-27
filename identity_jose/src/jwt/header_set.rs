@@ -128,20 +128,6 @@ impl<'a> JwtHeaderSet<'a, JwsHeader> {
   impl_accessors!(@protected, b64, try_b64, bool);
 }
 
-// #[rustfmt::skip]
-// impl<'a> JwtHeaderSet<'a, JweHeader> {
-//   impl_accessors!(@unwrapped, alg, try_alg, JweAlgorithm);
-//   impl_accessors!(@unwrapped, enc, try_enc, JweEncryption);
-//   impl_accessors!(zip, try_zip, JweCompression);
-//   impl_accessors!(epk, try_epk, &Jwk);
-//   impl_accessors!(@protected, apu, try_apu, &str);
-//   impl_accessors!(@protected, apv, try_apv, &str);
-//   impl_accessors!(@protected, iv, try_iv, &str);
-//   impl_accessors!(@protected, tag, try_tag, &str);
-//   impl_accessors!(@protected, p2s, try_p2s, &str);
-//   impl_accessors!(@protected, p2c, try_p2c, u64);
-// }
-
 impl<'a, T: 'a> Default for JwtHeaderSet<'a, T> {
   fn default() -> Self {
     Self::new()

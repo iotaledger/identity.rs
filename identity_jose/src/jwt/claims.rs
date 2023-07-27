@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::OneOrMany;
 use serde_json::Map;
 use serde_json::Value;
 
@@ -21,11 +22,9 @@ pub struct JwtClaims<T = ()> {
   sub: Option<String>, // Subject
   /// Identifies the recipients that the JWT is intended for.
   ///
-  /// TODO: Handle single value
-  ///
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.1.3)
   #[serde(skip_serializing_if = "Option::is_none")]
-  aud: Option<Vec<String>>, // Audience
+  aud: Option<OneOrMany<String>>, // Audience
   /// Identifies the expiration time on or after which the JWT MUST NOT be
   /// accepted for processing.
   ///

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! JSON Web Keys ([JWK](https://tools.ietf.org/html/rfc7517))
+
 mod curve;
 mod key;
 mod key_operation;

@@ -150,8 +150,9 @@ impl<'a> JwsValidationItem<'a> {
       DecodedHeaders::Both { protected, unprotected } => (protected, Some(unprotected)),
       DecodedHeaders::Unprotected(_) => return Err(Error::MissingHeader("missing protected header")),
     };
+
     // Extract and validate alg from the protected header.
-    let alg = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
+    let alg: JwsAlgorithm = protected.alg().ok_or(Error::ProtectedHeaderWithoutAlg)?;
     public_key.check_alg(alg.name())?;
 
     // Construct verification input
@@ -213,10 +214,11 @@ impl Decoder {
     Self
   }
 
-  /// Decode a JWS encoded with the [JWS compact serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-3.1)
+  /// Decode a JWS encoded with the [JWS compact serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
   ///
   ///
   /// ### Working with detached payloads
+  ///
   /// A detached payload can be supplied in the `detached_payload` parameter.
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_compact_serialization<'b>(
@@ -243,10 +245,10 @@ impl Decoder {
     self.decode_signature(payload, signature)
   }
 
-  /// Decode a JWS encoded with the [flattened JWS JSON serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.2)
-  ///
+  /// Decode a JWS encoded with the [flattened JWS JSON serialization format](https://www.rfc-editor.org/rfc/rfc7515#section-7.2.2).
   ///
   /// ### Working with detached payloads
+  ///
   /// A detached payload can be supplied in the `detached_payload` parameter.
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
   pub fn decode_flattened_serialization<'b>(
@@ -296,7 +298,6 @@ impl Decoder {
     detached_payload: Option<&'b [u8]>,
     parsed_payload: Option<&'b (impl AsRef<[u8]> + ?Sized)>,
   ) -> Result<&'b [u8]> {
-    //TODO: Do we allow an empty detached payload? (The previous stateful version did).
     match (detached_payload, filter_non_empty_bytes(parsed_payload)) {
       (Some(payload), None) => Ok(payload),
       (None, Some(payload)) => Ok(payload),
@@ -306,9 +307,9 @@ impl Decoder {
   }
 }
 
-// ======================================================================================================================
-// General JWS Json serialization support
-// ======================================================================================================================
+// =======================================
+// General JWS JSON serialization support
+// =======================================
 
 /// An iterator over the [`JwsValidationItems`](JwsValidationItem) corresponding to the
 /// signatures in a JWS encoded with the general JWS JSON serialization format.  
@@ -317,6 +318,7 @@ pub struct JwsValidationIter<'decoder, 'payload, 'signatures> {
   signatures: std::vec::IntoIter<JwsSignature<'signatures>>,
   payload: &'payload [u8],
 }
+
 impl<'decoder, 'payload, 'signatures> Iterator for JwsValidationIter<'decoder, 'payload, 'signatures> {
   type Item = Result<JwsValidationItem<'payload>>;
 
@@ -368,8 +370,8 @@ mod tests {
   const RFC_7515_APPENDIX_EXAMPLE_CLAIMS: &str = r#"
   {
     "iss":"joe",
-  "exp":1300819380,
-  "http://example.com/is_root":true
+    "exp":1300819380,
+    "http://example.com/is_root":true
   }
   "#;
 
@@ -380,22 +382,29 @@ mod tests {
     121, 57, 108, 101, 71, 70, 116, 99, 71, 120, 108, 76, 109, 78, 118, 98, 83, 57, 112, 99, 49, 57, 121, 98, 50, 57,
     48, 73, 106, 112, 48, 99, 110, 86, 108, 102, 81,
   ];
+
   // Test https://www.rfc-editor.org/rfc/rfc7515#appendix-A.6
   #[test]
   fn rfc7515_appendix_a_6() {
     let general_jws_json_serialized: &str = r#"
     {
-      "payload":
-       "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ",
-      "signatures":[
-       {"protected":"eyJhbGciOiJSUzI1NiJ9",
-        "header": {"kid":"2010-12-29"},
-        "signature": "cC4hiUPoj9Eetdgtv3hF80EGrhuB__dzERat0XF9g2VtQgr9PJbu3XOiZj5RZmh7AAuHIm4Bh-0Qc_lF5YKt_O8W2Fp5jujGbds9uJdbF9CUAr7t1dnZcAcQjbKBYNX4BAynRFdiuB--f_nZLgrnbyTyWzO75vRK5h6xBArLIARNPvkSjtQBMHlb1L07Qe7K0GarZRmB_eSN9383LcOLn6_dO--xi12jzDwusC-eOkHWEsqtFZESc6BfI7noOPqvhJ1phCnvWh6IeYI2w9QOYEUipUTI8np6LbgGY9Fs98rqVt5AXLIhWkWywlVmtVrBp0igcN_IoypGlUPQGe77Rw"
+      "payload": "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ",
+      "signatures": [
+        {
+          "protected": "eyJhbGciOiJSUzI1NiJ9",
+          "header": {
+            "kid": "2010-12-29"
+          },
+          "signature": "cC4hiUPoj9Eetdgtv3hF80EGrhuB__dzERat0XF9g2VtQgr9PJbu3XOiZj5RZmh7AAuHIm4Bh-0Qc_lF5YKt_O8W2Fp5jujGbds9uJdbF9CUAr7t1dnZcAcQjbKBYNX4BAynRFdiuB--f_nZLgrnbyTyWzO75vRK5h6xBArLIARNPvkSjtQBMHlb1L07Qe7K0GarZRmB_eSN9383LcOLn6_dO--xi12jzDwusC-eOkHWEsqtFZESc6BfI7noOPqvhJ1phCnvWh6IeYI2w9QOYEUipUTI8np6LbgGY9Fs98rqVt5AXLIhWkWywlVmtVrBp0igcN_IoypGlUPQGe77Rw"
         },
-       {"protected":"eyJhbGciOiJFUzI1NiJ9",
-        "header": {"kid":"e9bc097a-ce51-4036-9562-d2ade882db0d"},
-        "signature":"DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
-      }]
+        {
+          "protected": "eyJhbGciOiJFUzI1NiJ9",
+          "header": {
+            "kid": "e9bc097a-ce51-4036-9562-d2ade882db0d"
+          },
+          "signature": "DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
+        }
+      ]
     }"#;
 
     let claims: JwtClaims<serde_json::Value> = serde_json::from_str(RFC_7515_APPENDIX_EXAMPLE_CLAIMS).unwrap();
@@ -411,6 +420,7 @@ mod tests {
     let first_signature_decoding = signature_iter.next().unwrap();
     let second_signature_decoding = signature_iter.next().unwrap();
     drop(signature_iter);
+
     // Check assertions for the first signature:
     assert_eq!(first_signature_decoding.alg().unwrap(), JwsAlgorithm::RS256);
     assert_eq!(
@@ -433,6 +443,7 @@ mod tests {
         .unwrap(),
       "e9bc097a-ce51-4036-9562-d2ade882db0d"
     );
+
     let decoded_claims: JwtClaims<serde_json::Value> =
       serde_json::from_slice(second_signature_decoding.claims()).unwrap();
     assert_eq!(decoded_claims, claims);
@@ -453,6 +464,7 @@ mod tests {
       "signature": "DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
      }
     "#;
+
     let claims: JwtClaims<serde_json::Value> = serde_json::from_str(RFC_7515_APPENDIX_EXAMPLE_CLAIMS).unwrap();
     let decoder = Decoder::new();
     let decoded = decoder
@@ -463,6 +475,7 @@ mod tests {
       decoded.unprotected_header().and_then(|value| value.kid()).unwrap(),
       "e9bc097a-ce51-4036-9562-d2ade882db0d"
     );
+
     assert_eq!(decoded.signing_input(), SIGNING_INPUT_ES256_RFC_7515_APPENDIX_EXAMPLE);
     let decoded_claims: JwtClaims<serde_json::Value> = serde_json::from_slice(decoded.claims()).unwrap();
     assert_eq!(decoded_claims, claims);

@@ -143,7 +143,7 @@ describe("#JwkStorageDocument", function() {
             .validate(
                 credentialJwt,
                 doc,
-                JwtCredentialValidationOptions.default(),
+                new JwtCredentialValidationOptions(),
                 FailFast.FirstError,
             )
             .credential();
@@ -155,7 +155,7 @@ describe("#JwkStorageDocument", function() {
             .validate(
                 credentialJwt,
                 doc,
-                JwtCredentialValidationOptions.default(),
+                new JwtCredentialValidationOptions(),
                 FailFast.AllErrors,
             )
             .credential();
@@ -253,7 +253,7 @@ describe("#JwkStorageDocument", function() {
             .validate(
                 credentialJwt,
                 doc,
-                JwtCredentialValidationOptions.default(),
+                new JwtCredentialValidationOptions(),
                 FailFast.FirstError,
             )
             .credential();
@@ -265,7 +265,7 @@ describe("#JwkStorageDocument", function() {
             .validate(
                 credentialJwt,
                 doc,
-                JwtCredentialValidationOptions.default(),
+                new JwtCredentialValidationOptions(),
                 FailFast.AllErrors,
             )
             .credential();
@@ -361,7 +361,7 @@ describe("#JwkStorageDocument", function() {
         let decoded: DecodedJwtPresentation = validator.validate(
             presentationJwt,
             holderDoc,
-            JwtPresentationValidationOptions.default(),
+            new JwtPresentationValidationOptions(),
         );
 
         assert.equal(

@@ -91,7 +91,6 @@ export async function ensureAddressHasFunds(client: Client, addressBech32: strin
 
 /** Returns the balance of the given Bech32-encoded address. */
 async function getAddressBalance(client: Client, addressBech32: string): Promise<number> {
-    // TODO: use the `addresses/ed25519/<addressHex>` API to get the balance?
     const outputIds: IOutputsResponse = await client.basicOutputIds([
         { address: addressBech32 },
         { hasExpiration: false },

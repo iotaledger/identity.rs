@@ -4,8 +4,10 @@
 use super::SignatureVerificationError;
 use crate::jwk::Jwk;
 use crate::jws::JwsAlgorithm;
+
 #[cfg(any(feature = "eddsa", doc))]
 pub use eddsa_verifier::*;
+
 /// Input a [`JwsVerifier`] verifies.
 pub struct VerificationInput {
   /// The `alg` parsed from the protected header.
@@ -22,19 +24,22 @@ pub struct VerificationInput {
 /// Trait for cryptographically verifying a JWS signature.
 ///
 /// Any type implementing this trait can be passed to
-/// [`JwsValidationItem::verify`](`crate::jws::JwsValidationItem::verify`) which is intended as the most convenient way
-/// to verify a decoded JWS.
+/// [`JwsValidationItem::verify`](`crate::jws::JwsValidationItem::verify`) which is intended
+/// as the most convenient way to verify a decoded JWS.
 ///
 /// [`JwsValidationItem::verify`](crate::jws::JwsValidationItem::verify)
 ///
 /// ## Implementation
-/// Implementers are expected to provide a procedure for step 8 of [RFC 7515 section 5.2](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) for
+///
+/// Implementers are expected to provide a procedure for step 8 of
+/// [RFC 7515 section 5.2](https://www.rfc-editor.org/rfc/rfc7515#section-5.2) for
 /// the JWS signature algorithms they want to support.
 ///
 /// Custom implementations can be constructed inline by converting a suitable closure into a [`JwsVerifierFn`]
 /// using the [`From`] trait.
 ///
 /// ## Default implementation
+///
 /// When the `eddsa` feature is enabled one can construct an implementor
 /// provided by the IOTA Identity library. See
 /// [`EdDSAJwsVerifier::verify`](EdDSAJwsVerifier::verify).
@@ -51,6 +56,7 @@ pub trait JwsVerifier {
 // =================================================================================================================
 // Implementation
 // ================================================================================================================
+
 /// Simple wrapper around a closure capable of verifying a JWS signature. This wrapper implements
 /// [`JwsVerifier`].
 ///
@@ -107,7 +113,6 @@ mod eddsa_verifier {
     /// prior to calling the function.
     pub fn verify_eddsa(input: VerificationInput, public_key: &Jwk) -> Result<(), SignatureVerificationError> {
       // Obtain an Ed25519 public key
-
       let params: &JwkParamsOkp = public_key
         .try_okp_params()
         .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
