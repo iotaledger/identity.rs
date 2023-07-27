@@ -55,13 +55,6 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         return await this.client.getTokenSupply();
     }
 
-    /*
-    async getProtocolResponse(): Promise<string> {
-        return await this.client.getProtocolResponse();
-    }
-
-   */
-
     async getProtocolParameters(): Promise<INodeInfoProtocol> {
         const protocolParameters: INodeInfoProtocol = await this.client.getProtocolParameters();
         return protocolParameters;
@@ -170,9 +163,7 @@ export class IotaIdentityClient implements IIotaIdentityClient {
 
         const aliasId: string = did.tag();
         const [outputId, aliasOutput] = await this.getAliasOutput(aliasId);
-        // TODO: Update with conversion function.
-        // const aliasInput: UTXOInput = TransactionHelper.inputFromOutputId(outputId);
-        const aliasInput: UTXOInput = new UTXOInput("TODO", 0);
+        const aliasInput: UTXOInput = UTXOInput.fromOutputId(outputId);
 
         // Send funds to the address.
         const basicOutput = await this.client.buildBasicOutput({

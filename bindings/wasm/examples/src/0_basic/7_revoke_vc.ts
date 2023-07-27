@@ -39,7 +39,7 @@ export async function revokeVC() {
     });
     const didClient = new IotaIdentityClient(client);
 
-    // Generate a random mnemonic for our wallet.
+    // Generate a random mnemonic for the issuer.
     const issuerSecretManager: MnemonicSecretManager = {
         mnemonic: Utils.generateMnemonic(),
     };
@@ -55,6 +55,11 @@ export async function revokeVC() {
         issuerStorage,
     );
 
+    // Generate a random mnemonic for Alice.
+    const aliceSecretManager: MnemonicSecretManager = {
+        mnemonic: Utils.generateMnemonic(),
+    };
+
     // Create an identity for the holder, in this case also the subject.
     const aliceStorage: Storage = new Storage(
         new JwkMemStore(),
@@ -62,7 +67,7 @@ export async function revokeVC() {
     );
     let { document: aliceDocument } = await createDid(
         client,
-        issuerSecretManager,
+        aliceSecretManager,
         aliceStorage,
     );
 

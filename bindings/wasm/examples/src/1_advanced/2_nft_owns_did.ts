@@ -62,6 +62,7 @@ export async function nftOwnsDid() {
             start: 0,
             end: 1,
         },
+        bech32Hrp: networkName,
     }))[0];
     const address = Utils.parseBech32Address(addressBech32);
 
@@ -94,7 +95,7 @@ export async function nftOwnsDid() {
     var carNftId: string = computeNftOutputId(block.payload!);
 
     // Create the address of the NFT.
-    const nftAddress: Address = new NftAddress(Utils.nftIdToBech32(carNftId, networkName));
+    const nftAddress: Address = new NftAddress(carNftId);
 
     // Construct a DID document for the car.
     var carDocument: IotaDocument = new IotaDocument(networkName);
