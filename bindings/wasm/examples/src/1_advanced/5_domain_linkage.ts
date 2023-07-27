@@ -129,7 +129,7 @@ export async function domainLinkage() {
         issuerDocument,
         fetchedConfigurationResource,
         domainFoo,
-        JwtCredentialValidationOptions.default(),
+        new JwtCredentialValidationOptions(),
     );
 
     // =====================================================
@@ -163,7 +163,7 @@ export async function domainLinkage() {
         didDocument,
         fetchedConfigurationResource,
         domains[0],
-        JwtCredentialValidationOptions.default(),
+        new JwtCredentialValidationOptions(),
     );
 
     console.log("Successfully validated Domain Linkage!");

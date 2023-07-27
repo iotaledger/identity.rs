@@ -39,13 +39,13 @@ impl WasmService {
       .wasm_result()
   }
 
-  /// Returns a copy of the `Service` id.
+  /// Returns a copy of the {@link Service} id.
   #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }
 
-  /// Returns a copy of the `Service` type.
+  /// Returns a copy of the {@link Service} type.
   #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> ArrayString {
     self
@@ -58,13 +58,13 @@ impl WasmService {
       .unchecked_into::<ArrayString>()
   }
 
-  /// Returns a copy of the `Service` endpoint.
+  /// Returns a copy of the {@link Service} endpoint.
   #[wasm_bindgen(js_name = serviceEndpoint)]
   pub fn service_endpoint(&self) -> UServiceEndpoint {
     UServiceEndpoint::from(self.0.service_endpoint())
   }
 
-  /// Returns a copy of the custom properties on the `Service`.
+  /// Returns a copy of the custom properties on the {@link Service}.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
     MapStringAny::try_from(self.0.properties())
@@ -142,7 +142,7 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const I_SERVICE: &'static str = r#"
 /**
- * Base `Service` properties.
+ * Base {@link Service} properties.
  */
 interface IService {
   /**

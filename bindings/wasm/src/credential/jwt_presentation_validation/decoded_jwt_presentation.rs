@@ -32,7 +32,7 @@ impl WasmDecodedJwtPresentation {
   /// Consumes the object and returns the decoded presentation.
   ///
   /// ### Warning
-  /// This destroys the `DecodedJwtPresentation` object.
+  /// This destroys the {@link DecodedJwtPresentation} object.
   #[wasm_bindgen(js_name = intoPresentation)]
   pub fn into_presentation(self) -> WasmPresentation {
     WasmPresentation(self.0.presentation)

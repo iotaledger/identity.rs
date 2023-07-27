@@ -30,10 +30,9 @@ const HANDLERS: &'static str =
 #[wasm_bindgen(typescript_custom_section)]
 const TS_RESOLVER_CONFIG: &'static str = r#"
 /**
- * Configurations for the new {@link Resolver}.
+ * Configurations for the {@link Resolver}.
  */
 export type ResolverConfig = {
-
     /**
      * Client for resolving DIDs of the iota method. 
      */

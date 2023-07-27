@@ -23,7 +23,7 @@ pub struct WasmJwtDomainLinkageValidator {
 
 #[wasm_bindgen(js_class = JwtDomainLinkageValidator)]
 impl WasmJwtDomainLinkageValidator {
-  /// Creates a new `JwtDomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
+  /// Creates a new {@link JwtDomainLinkageValidator}. If a `signatureVerifier` is provided it will be used when
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
@@ -36,15 +36,17 @@ impl WasmJwtDomainLinkageValidator {
   }
 
   /// Validates the linkage between a domain and a DID.
-  /// [`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+  /// {@link DomainLinkageConfiguration} is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
   ///
   /// Linkage is valid if no error is thrown.
   ///
   /// # Note:
   /// - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
+  ///   is supported.
   /// - Only the Credential issued by `issuer` is verified.
   ///
   /// # Errors
+  ///
   ///  - Semantic structure of `configuration` is invalid.
   ///  - `configuration` includes multiple credentials issued by `issuer`.
   ///  - Validation of the matched Domain Linkage Credential fails.
@@ -66,6 +68,7 @@ impl WasmJwtDomainLinkageValidator {
   }
 
   /// Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+  ///
   /// Error will be thrown in case the validation fails.
   #[wasm_bindgen(js_name = validateCredential)]
   #[allow(non_snake_case)]
