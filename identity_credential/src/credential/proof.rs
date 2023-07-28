@@ -8,9 +8,12 @@ use serde::Serialize;
 /// Represents a cryptographic proof that can be used to validate verifiable credentials and
 /// presentations.
 ///
-/// This representation does not inherently implement any standard by default; instead, it
+/// This representation does not inherently implement any standard; instead, it
 /// can be utilized to implement standards or user-defined proofs. The presence of the
 /// `type` field is necessary to accommodate different types of cryptographic proofs.
+///
+/// Note that this proof is not related to JWT and can be used in combination or as an alternative
+/// to it.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Proof {
   /// Type of proof.

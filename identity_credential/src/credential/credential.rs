@@ -78,7 +78,7 @@ pub struct Credential<T = Object> {
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
-  /// Proof(s) used to verify a `Credential`
+  /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Proof>,
 }
@@ -154,7 +154,9 @@ impl<T> Credential<T> {
     Ok(())
   }
 
-  /// Sets the proof of the `Credential`.
+  /// Sets the proof property of the `Credential`.
+  ///
+  /// Note that this proof is not related to JWT.
   pub fn set_proof(&mut self, proof: Option<Proof>) {
     self.proof = proof;
   }
@@ -171,11 +173,6 @@ impl<T> Credential<T> {
     jwt_representation
       .to_json()
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
-  }
-
-  /// Returns a reference to the proof.
-  pub fn proof(&self) -> Option<&Proof> {
-    self.proof.as_ref()
   }
 }
 

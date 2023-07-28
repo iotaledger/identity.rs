@@ -127,13 +127,15 @@ impl WasmPresentation {
       .map(|value| value.unchecked_into::<ArrayPolicy>())
   }
 
-  /// Optional proof that can be verified by users in addition to JWS.
+  /// Optional cryptographic proof, unrelated to JWT.
   #[wasm_bindgen]
   pub fn proof(&self) -> Option<WasmProof> {
-    self.0.proof.clone().map(|proof| WasmProof(proof))
+    self.0.proof.clone().map(WasmProof)
   }
 
-  /// Sets the proof property of the `Presentation`.
+  /// Sets the proof property of the {@link Presentation}.
+  ///
+  /// Note that this proof is not related to JWT.
   #[wasm_bindgen(js_name = "setProof")]
   pub fn set_proof(&mut self, proof: Option<WasmProof>) {
     self.0.set_proof(proof.map(|wasm_proof| wasm_proof.0))

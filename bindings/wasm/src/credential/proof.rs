@@ -9,9 +9,12 @@ use crate::error::{Result, WasmResult};
 /// Represents a cryptographic proof that can be used to validate verifiable credentials and
 /// presentations.
 ///
-/// This representation does not inherently implement any standard by default; instead, it
+/// This representation does not inherently implement any standard; instead, it
 /// can be utilized to implement standards or user-defined proofs. The presence of the
 /// `type` field is necessary to accommodate different types of cryptographic proofs.
+///
+/// Note that this proof is not related to JWT and can be used in combination or as an alternative
+/// to it.
 #[wasm_bindgen(js_name = Proof)]
 pub struct WasmProof(pub(crate) Proof);
 
@@ -20,7 +23,7 @@ impl WasmProof {
   #[wasm_bindgen(constructor)]
   pub fn constructor(_type: String, properties: JsValue) -> Result<WasmProof> {
     let properties: Object = properties.into_serde().wasm_result()?;
-    Ok(WasmProof(Proof::new(_type, properties.into())))
+    Ok(WasmProof(Proof::new(_type, properties)))
   }
 
   /// Returns the type of proof.
