@@ -53,7 +53,7 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#Jwk">Jwk</a></dt>
 <dd></dd>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
-<dd><p>The result of a key generation in <a href="JwkStorage">JwkStorage</a>.</p>
+<dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
 <dt><a href="#Jws">Jws</a></dt>
 <dd><p>A wrapper around a JSON Web Signature (JWS).</p>
@@ -71,7 +71,7 @@ and resolution of DID documents in Alias Outputs.</p>
 <dd><p>Options to declare validation criteria when validating credentials.</p>
 </dd>
 <dt><a href="#JwtCredentialValidator">JwtCredentialValidator</a></dt>
-<dd><p>A type for decoding and validating <a href="#Credential">Credential</a>.</p>
+<dd><p>A type for decoding and validating <code>Credentials</code>.</p>
 </dd>
 <dt><a href="#JwtDomainLinkageValidator">JwtDomainLinkageValidator</a></dt>
 <dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
@@ -89,7 +89,7 @@ and resolution of DID documents in Alias Outputs.</p>
 <dd><p>Supported verification method data formats.</p>
 </dd>
 <dt><a href="#MethodDigest">MethodDigest</a></dt>
-<dd><p>Unique identifier of a <a href="#VerificationMethod">VerificationMethod</a>.</p>
+<dd><p>Unique identifier of a [<code>VerificationMethod</code>].</p>
 <p>NOTE:
 This class does not have a JSON representation,
 use the methods <code>pack</code> and <code>unpack</code> instead.</p>
@@ -102,19 +102,10 @@ use the methods <code>pack</code> and <code>unpack</code> instead.</p>
 </dd>
 <dt><a href="#Presentation">Presentation</a></dt>
 <dd></dd>
-<dt><a href="#Proof">Proof</a></dt>
-<dd><p>Represents a cryptographic proof that can be used to validate verifiable credentials and
-presentations.</p>
-<p>This representation does not inherently implement any standard; instead, it
-can be utilized to implement standards or user-defined proofs. The presence of the
-<code>type</code> field is necessary to accommodate different types of cryptographic proofs.</p>
-<p>Note that this proof is not related to JWT and can be used in combination or as an alternative
-to it.</p>
-</dd>
 <dt><a href="#Resolver">Resolver</a></dt>
 <dd><p>Convenience type for resolving DID documents from different DID methods.</p>
 <p>Also provides methods for resolving DID Documents associated with
-verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Presentation</a>s.</p>
+verifiable <code>Credentials</code> and <code>Presentations</code>.</p>
 <h1 id="configuration">Configuration</h1>
 <p>The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.</p>
 </dd>
@@ -125,7 +116,7 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
 <dt><a href="#Storage">Storage</a></dt>
-<dd><p>A type wrapping a <a href="JwkStorage">JwkStorage</a> and <a href="KeyIdStorage">KeyIdStorage</a> that should always be used together when
+<dd><p>A type wrapping a <code>JwkStorage</code> and <code>KeyIdStorage</code> that should always be used together when
 working with storage backed DID documents.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
@@ -158,12 +149,14 @@ working with storage backed DID documents.</p>
 <dd><p>Skip all status checks.</p>
 </dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
-<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
+<dd><p>Declares how credential subjects must relate to the presentation holder during validation.
+See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
 </dd>
 <dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
 <dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
-This variant is the default.</p>
+This variant is the default used if no other variant is specified when constructing a new
+<code>PresentationValidationOptions</code>.</p>
 </dd>
 <dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
 <dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
@@ -189,14 +182,14 @@ This variant is the default.</p>
 ## Functions
 
 <dl>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
 <dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
 <dd><p>Encode the given bytes in url-safe base64.</p>
 </dd>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 <dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
@@ -240,7 +233,7 @@ A method-agnostic Decentralized Identifier (DID).
 <a name="CoreDID+setMethodName"></a>
 
 ### coreDID.setMethodName(value)
-Set the method name of the [CoreDID](#CoreDID).
+Set the method name of the `CoreDID`.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 
@@ -262,7 +255,7 @@ Set the method-specific-id of the `DID`.
 <a name="CoreDID+scheme"></a>
 
 ### coreDID.scheme() ⇒ <code>string</code>
-Returns the [CoreDID](#CoreDID) scheme.
+Returns the `CoreDID` scheme.
 
 E.g.
 - `"did:example:12345678" -> "did"`
@@ -272,7 +265,7 @@ E.g.
 <a name="CoreDID+authority"></a>
 
 ### coreDID.authority() ⇒ <code>string</code>
-Returns the [CoreDID](#CoreDID) authority: the method name and method-id.
+Returns the `CoreDID` authority: the method name and method-id.
 
 E.g.
 - `"did:example:12345678" -> "example:12345678"`
@@ -282,7 +275,7 @@ E.g.
 <a name="CoreDID+method"></a>
 
 ### coreDID.method() ⇒ <code>string</code>
-Returns the [CoreDID](#CoreDID) method name.
+Returns the `CoreDID` method name.
 
 E.g.
 - `"did:example:12345678" -> "example"`
@@ -292,7 +285,7 @@ E.g.
 <a name="CoreDID+methodId"></a>
 
 ### coreDID.methodId() ⇒ <code>string</code>
-Returns the [CoreDID](#CoreDID) method-specific ID.
+Returns the `CoreDID` method-specific ID.
 
 E.g.
 - `"did:example:12345678" -> "12345678"`
@@ -302,7 +295,7 @@ E.g.
 <a name="CoreDID+join"></a>
 
 ### coreDID.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Construct a new [DIDUrl](#DIDUrl) by joining with a relative DID Url string.
+Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 
@@ -313,19 +306,19 @@ Construct a new [DIDUrl](#DIDUrl) by joining with a relative DID Url string.
 <a name="CoreDID+toUrl"></a>
 
 ### coreDID.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Clones the [CoreDID](#CoreDID) into a [DIDUrl](#DIDUrl).
+Clones the `CoreDID` into a `DIDUrl`.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+intoUrl"></a>
 
 ### coreDID.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Converts the [CoreDID](#CoreDID) into a [DIDUrl](#DIDUrl), consuming it.
+Converts the `CoreDID` into a `DIDUrl`, consuming it.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+toString"></a>
 
 ### coreDID.toString() ⇒ <code>string</code>
-Returns the [CoreDID](#CoreDID) as a string.
+Returns the `CoreDID` as a string.
 
 **Kind**: instance method of [<code>CoreDID</code>](#CoreDID)  
 <a name="CoreDID+toCoreDid"></a>
@@ -347,11 +340,11 @@ Deep clones the object.
 <a name="CoreDID.parse"></a>
 
 ### CoreDID.parse(input) ⇒ [<code>CoreDID</code>](#CoreDID)
-Parses a [CoreDID](#CoreDID) from the given `input`.
+Parses a `CoreDID` from the given `input`.
 
 ### Errors
 
-Throws an error if the input is not a valid [CoreDID](#CoreDID).
+Throws an error if the input is not a valid `CoreDID`.
 
 **Kind**: static method of [<code>CoreDID</code>](#CoreDID)  
 
@@ -445,7 +438,7 @@ A method-agnostic DID Document.
 <a name="new_CoreDocument_new"></a>
 
 ### new CoreDocument(values)
-Creates a new [CoreDocument](#CoreDocument) with the given properties.
+Creates a new `CoreDocument` with the given properties.
 
 
 | Param | Type |
@@ -466,8 +459,8 @@ Sets the DID of the document.
 ### Warning
 
 Changing the identifier can drastically alter the results of
-`resolve_method`, `resolve_service` and the related
-[DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
+[`Self::resolve_method`](CoreDocument::resolve_method()),
+[`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -723,7 +716,7 @@ take place.
 <a name="CoreDocument+revokeCredentials"></a>
 
 ### coreDocument.revokeCredentials(serviceQuery, indices)
-If the document has a [RevocationBitmap](#RevocationBitmap) service identified by `serviceQuery`,
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 revoke all specified `indices`.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -736,7 +729,7 @@ revoke all specified `indices`.
 <a name="CoreDocument+unrevokeCredentials"></a>
 
 ### coreDocument.unrevokeCredentials(serviceQuery, indices)
-If the document has a [RevocationBitmap](#RevocationBitmap) service identified by `serviceQuery`,
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 unrevoke all specified `indices`.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
@@ -749,7 +742,7 @@ unrevoke all specified `indices`.
 <a name="CoreDocument+clone"></a>
 
 ### coreDocument.clone() ⇒ [<code>CoreDocument</code>](#CoreDocument)
-Deep clones the [CoreDocument](#CoreDocument).
+Deep clones the `CoreDocument`.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+_shallowCloneInternal"></a>
@@ -894,9 +887,8 @@ Deserializes an instance from a plain JS representation.
         * [.termsOfUse()](#Credential+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
         * [.evidence()](#Credential+evidence) ⇒ <code>Array.&lt;Evidence&gt;</code>
         * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
-        * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.proof()](#Credential+proof) ⇒ <code>any</code>
         * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.setProof(proof)](#Credential+setProof)
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
@@ -908,7 +900,7 @@ Deserializes an instance from a plain JS representation.
 <a name="new_Credential_new"></a>
 
 ### new Credential(values)
-Constructs a new [Credential](#Credential).
+Constructs a new `Credential`.
 
 
 | Param | Type |
@@ -918,107 +910,94 @@ Constructs a new [Credential](#Credential).
 <a name="Credential+context"></a>
 
 ### credential.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
-Returns a copy of the JSON-LD context(s) applicable to the [Credential](#Credential).
+Returns a copy of the JSON-LD context(s) applicable to the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+id"></a>
 
 ### credential.id() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the unique `URI` identifying the [Credential](#Credential) .
+Returns a copy of the unique `URI` identifying the `Credential` .
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+type"></a>
 
 ### credential.type() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a copy of the URIs defining the type of the [Credential](#Credential).
+Returns a copy of the URIs defining the type of the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+credentialSubject"></a>
 
 ### credential.credentialSubject() ⇒ <code>Array.&lt;Subject&gt;</code>
-Returns a copy of the [Credential](#Credential) subject(s).
+Returns a copy of the `Credential` subject(s).
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+issuer"></a>
 
 ### credential.issuer() ⇒ <code>string</code> \| <code>Issuer</code>
-Returns a copy of the issuer of the [Credential](#Credential).
+Returns a copy of the issuer of the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+issuanceDate"></a>
 
 ### credential.issuanceDate() ⇒ [<code>Timestamp</code>](#Timestamp)
-Returns a copy of the timestamp of when the [Credential](#Credential) becomes valid.
+Returns a copy of the timestamp of when the `Credential` becomes valid.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+expirationDate"></a>
 
 ### credential.expirationDate() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-Returns a copy of the timestamp of when the [Credential](#Credential) should no longer be considered valid.
+Returns a copy of the timestamp of when the `Credential` should no longer be considered valid.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+credentialStatus"></a>
 
 ### credential.credentialStatus() ⇒ <code>Array.&lt;Status&gt;</code>
-Returns a copy of the information used to determine the current status of the [Credential](#Credential).
+Returns a copy of the information used to determine the current status of the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+credentialSchema"></a>
 
 ### credential.credentialSchema() ⇒ <code>Array.&lt;Schema&gt;</code>
-Returns a copy of the information used to assist in the enforcement of a specific [Credential](#Credential) structure.
+Returns a copy of the information used to assist in the enforcement of a specific `Credential` structure.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+refreshService"></a>
 
 ### credential.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
-Returns a copy of the service(s) used to refresh an expired [Credential](#Credential).
+Returns a copy of the service(s) used to refresh an expired `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+termsOfUse"></a>
 
 ### credential.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
-Returns a copy of the terms-of-use specified by the [Credential](#Credential) issuer.
+Returns a copy of the terms-of-use specified by the `Credential` issuer.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+evidence"></a>
 
 ### credential.evidence() ⇒ <code>Array.&lt;Evidence&gt;</code>
-Returns a copy of the human-readable evidence used to support the claims within the [Credential](#Credential).
+Returns a copy of the human-readable evidence used to support the claims within the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+nonTransferable"></a>
 
 ### credential.nonTransferable() ⇒ <code>boolean</code> \| <code>undefined</code>
-Returns whether or not the [Credential](#Credential) must only be contained within a  [Presentation](#Presentation)
-with a proof issued from the [Credential](#Credential) subject.
+Returns whether or not the `Credential` must only be contained within a  `Presentation`
+with a proof issued from the `Credential` subject.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+proof"></a>
 
-### credential.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-Optional cryptographic proof, unrelated to JWT.
+### credential.proof() ⇒ <code>any</code>
+Returns a copy of the proof used to verify the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+properties"></a>
 
 ### credential.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the miscellaneous properties on the [Credential](#Credential).
+Returns a copy of the miscellaneous properties on the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
-<a name="Credential+setProof"></a>
-
-### credential.setProof(proof)
-Sets the proof property of the [Credential](#Credential).
-
-Note that this proof is not related to JWT.
-
-**Kind**: instance method of [<code>Credential</code>](#Credential)  
-
-| Param | Type |
-| --- | --- |
-| proof | [<code>Proof</code>](#Proof) \| <code>undefined</code> | 
-
 <a name="Credential+toJSON"></a>
 
 ### credential.toJSON() ⇒ <code>any</code>
@@ -1091,7 +1070,7 @@ A method agnostic DID Url.
 <a name="DIDUrl+did"></a>
 
 ### didUrl.did() ⇒ [<code>CoreDID</code>](#CoreDID)
-Return a copy of the [CoreDID](#CoreDID) section of the [DIDUrl](#DIDUrl).
+Return a copy of the `CoreDID` section of the `DIDUrl`.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+urlStr"></a>
@@ -1103,13 +1082,13 @@ Return a copy of the relative DID Url as a string, including only the path, quer
 <a name="DIDUrl+fragment"></a>
 
 ### didUrl.fragment() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the [DIDUrl](#DIDUrl) method fragment, if any. Excludes the leading '#'.
+Returns a copy of the `DIDUrl` method fragment, if any. Excludes the leading '#'.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+setFragment"></a>
 
 ### didUrl.setFragment(value)
-Sets the `fragment` component of the [DIDUrl](#DIDUrl).
+Sets the `fragment` component of the `DIDUrl`.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 
@@ -1120,13 +1099,13 @@ Sets the `fragment` component of the [DIDUrl](#DIDUrl).
 <a name="DIDUrl+path"></a>
 
 ### didUrl.path() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the [DIDUrl](#DIDUrl) path.
+Returns a copy of the `DIDUrl` path.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+setPath"></a>
 
 ### didUrl.setPath(value)
-Sets the `path` component of the [DIDUrl](#DIDUrl).
+Sets the `path` component of the `DIDUrl`.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 
@@ -1137,13 +1116,13 @@ Sets the `path` component of the [DIDUrl](#DIDUrl).
 <a name="DIDUrl+query"></a>
 
 ### didUrl.query() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the [DIDUrl](#DIDUrl) method query, if any. Excludes the leading '?'.
+Returns a copy of the `DIDUrl` method query, if any. Excludes the leading '?'.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+setQuery"></a>
 
 ### didUrl.setQuery(value)
-Sets the `query` component of the [DIDUrl](#DIDUrl).
+Sets the `query` component of the `DIDUrl`.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 
@@ -1154,7 +1133,7 @@ Sets the `query` component of the [DIDUrl](#DIDUrl).
 <a name="DIDUrl+join"></a>
 
 ### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment, returning a new [DIDUrl](#DIDUrl).
+Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
 
 Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
 segment and any following segments in order of path, query, then fragment.
@@ -1173,7 +1152,7 @@ I.e.
 <a name="DIDUrl+toString"></a>
 
 ### didUrl.toString() ⇒ <code>string</code>
-Returns the [DIDUrl](#DIDUrl) as a string.
+Returns the `DIDUrl` as a string.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+toJSON"></a>
@@ -1191,7 +1170,7 @@ Deep clones the object.
 <a name="DIDUrl.parse"></a>
 
 ### DIDUrl.parse(input) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Parses a [DIDUrl](#DIDUrl) from the input string.
+Parses a `DIDUrl` from the input string.
 
 **Kind**: static method of [<code>DIDUrl</code>](#DIDUrl)  
 
@@ -1294,8 +1273,7 @@ Returns a copy of the protected header parsed from the decoded JWS.
 Consumes the object and returns the decoded credential.
 
 ### Warning
-
-This destroys the [DecodedJwtCredential](#DecodedJwtCredential) object.
+This destroys the `DecodedCredential` object.
 
 **Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
 <a name="DecodedJwtPresentation"></a>
@@ -1332,7 +1310,7 @@ Returns a copy of the protected header parsed from the decoded JWS.
 Consumes the object and returns the decoded presentation.
 
 ### Warning
-This destroys the [DecodedJwtPresentation](#DecodedJwtPresentation) object.
+This destroys the `DecodedJwtPresentation` object.
 
 **Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
 <a name="DecodedJwtPresentation+expirationDate"></a>
@@ -1366,7 +1344,7 @@ Note:
 **Kind**: global class  
 
 * [DomainLinkageConfiguration](#DomainLinkageConfiguration)
-    * [new DomainLinkageConfiguration(linkedDids)](#new_DomainLinkageConfiguration_new)
+    * [new DomainLinkageConfiguration(linked_dids)](#new_DomainLinkageConfiguration_new)
     * _instance_
         * [.linkedDids()](#DomainLinkageConfiguration+linkedDids) ⇒ [<code>Array.&lt;Jwt&gt;</code>](#Jwt)
         * [.issuers()](#DomainLinkageConfiguration+issuers) ⇒ [<code>Array.&lt;CoreDID&gt;</code>](#CoreDID)
@@ -1377,13 +1355,13 @@ Note:
 
 <a name="new_DomainLinkageConfiguration_new"></a>
 
-### new DomainLinkageConfiguration(linkedDids)
-Constructs a new [DomainLinkageConfiguration](#DomainLinkageConfiguration).
+### new DomainLinkageConfiguration(linked_dids)
+Constructs a new `DomainLinkageConfiguration`.
 
 
 | Param | Type |
 | --- | --- |
-| linkedDids | [<code>Array.&lt;Jwt&gt;</code>](#Jwt) | 
+| linked_dids | [<code>Array.&lt;Jwt&gt;</code>](#Jwt) | 
 
 <a name="DomainLinkageConfiguration+linkedDids"></a>
 
@@ -1447,7 +1425,7 @@ Serializes this to a JSON object.
 <a name="Duration.seconds"></a>
 
 ### Duration.seconds(seconds) ⇒ [<code>Duration</code>](#Duration)
-Create a new [Duration](#Duration) with the given number of seconds.
+Create a new `Duration` with the given number of seconds.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1458,7 +1436,7 @@ Create a new [Duration](#Duration) with the given number of seconds.
 <a name="Duration.minutes"></a>
 
 ### Duration.minutes(minutes) ⇒ [<code>Duration</code>](#Duration)
-Create a new [Duration](#Duration) with the given number of minutes.
+Create a new `Duration` with the given number of minutes.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1469,7 +1447,7 @@ Create a new [Duration](#Duration) with the given number of minutes.
 <a name="Duration.hours"></a>
 
 ### Duration.hours(hours) ⇒ [<code>Duration</code>](#Duration)
-Create a new [Duration](#Duration) with the given number of hours.
+Create a new `Duration` with the given number of hours.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1480,7 +1458,7 @@ Create a new [Duration](#Duration) with the given number of hours.
 <a name="Duration.days"></a>
 
 ### Duration.days(days) ⇒ [<code>Duration</code>](#Duration)
-Create a new [Duration](#Duration) with the given number of days.
+Create a new `Duration` with the given number of days.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1491,7 +1469,7 @@ Create a new [Duration](#Duration) with the given number of days.
 <a name="Duration.weeks"></a>
 
 ### Duration.weeks(weeks) ⇒ [<code>Duration</code>](#Duration)
-Create a new [Duration](#Duration) with the given number of weeks.
+Create a new `Duration` with the given number of weeks.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1545,7 +1523,7 @@ A DID conforming to the IOTA DID method specification.
 <a name="new_IotaDID_new"></a>
 
 ### new IotaDID(bytes, network)
-Constructs a new [IotaDID](#IotaDID) from a byte representation of the tag and the given
+Constructs a new `IotaDID` from a byte representation of the tag and the given
 network name.
 
 See also [placeholder](#IotaDID.placeholder).
@@ -1559,19 +1537,19 @@ See also [placeholder](#IotaDID.placeholder).
 <a name="IotaDID+network"></a>
 
 ### did.network() ⇒ <code>string</code>
-Returns the Tangle network name of the [IotaDID](#IotaDID).
+Returns the Tangle network name of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+tag"></a>
 
 ### did.tag() ⇒ <code>string</code>
-Returns a copy of the unique tag of the [IotaDID](#IotaDID).
+Returns a copy of the unique tag of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+toCoreDid"></a>
 
 ### did.toCoreDid() ⇒ [<code>CoreDID</code>](#CoreDID)
-Returns the DID represented as a [CoreDID](#CoreDID).
+Returns the DID represented as a `CoreDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+scheme"></a>
@@ -1617,7 +1595,7 @@ E.g.
 <a name="IotaDID+join"></a>
 
 ### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Construct a new [DIDUrl](#DIDUrl) by joining with a relative DID Url string.
+Construct a new `DIDUrl` by joining with a relative DID Url string.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 
@@ -1628,7 +1606,7 @@ Construct a new [DIDUrl](#DIDUrl) by joining with a relative DID Url string.
 <a name="IotaDID+toUrl"></a>
 
 ### did.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Clones the `DID` into a [DIDUrl](#DIDUrl).
+Clones the `DID` into a `DIDUrl`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+toAliasId"></a>
@@ -1640,7 +1618,7 @@ Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
 <a name="IotaDID+intoUrl"></a>
 
 ### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Converts the `DID` into a [DIDUrl](#DIDUrl), consuming it.
+Converts the `DID` into a `DIDUrl`, consuming it.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
 <a name="IotaDID+toString"></a>
@@ -1676,7 +1654,7 @@ The default Tangle network (`"iota"`).
 <a name="IotaDID.fromAliasId"></a>
 
 ### IotaDID.fromAliasId(aliasId, network) ⇒ [<code>IotaDID</code>](#IotaDID)
-Constructs a new [IotaDID](#IotaDID) from a hex representation of an Alias Id and the given
+Constructs a new `IotaDID` from a hex representation of an Alias Id and the given
 network name.
 
 **Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
@@ -1689,7 +1667,7 @@ network name.
 <a name="IotaDID.placeholder"></a>
 
 ### IotaDID.placeholder(network) ⇒ [<code>IotaDID</code>](#IotaDID)
-Creates a new placeholder [IotaDID](#IotaDID) with the given network name.
+Creates a new placeholder [`IotaDID`] with the given network name.
 
 E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
 
@@ -1702,7 +1680,7 @@ E.g. `did:iota:smr:0x00000000000000000000000000000000000000000000000000000000000
 <a name="IotaDID.parse"></a>
 
 ### IotaDID.parse(input) ⇒ [<code>IotaDID</code>](#IotaDID)
-Parses a [IotaDID](#IotaDID) from the input string.
+Parses a `IotaDID` from the input string.
 
 **Kind**: static method of [<code>IotaDID</code>](#IotaDID)  
 
@@ -1779,7 +1757,7 @@ Deserializes an instance from a JSON object.
 <a name="new_IotaDocument_new"></a>
 
 ### new IotaDocument(network)
-Constructs an empty IOTA DID Document with a [placeholder](#IotaDID.placeholder) identifier
+Constructs an empty DID Document with a [placeholder](#IotaDID.placeholder) identifier
 for the given `network`.
 
 
@@ -2091,7 +2069,7 @@ If the value is set to `null`, the custom property will be removed.
 <a name="IotaDocument+revokeCredentials"></a>
 
 ### iotaDocument.revokeCredentials(serviceQuery, indices)
-If the document has a [RevocationBitmap](#RevocationBitmap) service identified by `serviceQuery`,
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 revoke all specified `indices`.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
@@ -2104,7 +2082,7 @@ revoke all specified `indices`.
 <a name="IotaDocument+unrevokeCredentials"></a>
 
 ### iotaDocument.unrevokeCredentials(serviceQuery, indices)
-If the document has a [RevocationBitmap](#RevocationBitmap) service identified by `serviceQuery`,
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 unrevoke all specified `indices`.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
@@ -2117,7 +2095,7 @@ unrevoke all specified `indices`.
 <a name="IotaDocument+clone"></a>
 
 ### iotaDocument.clone() ⇒ [<code>IotaDocument</code>](#IotaDocument)
-Returns a deep clone of the [IotaDocument](#IotaDocument).
+Returns a deep clone of the `IotaDocument`.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+_shallowCloneInternal"></a>
@@ -2143,7 +2121,7 @@ Serializes to a plain JS representation.
 <a name="IotaDocument+toCoreDocument"></a>
 
 ### iotaDocument.toCoreDocument() ⇒ [<code>CoreDocument</code>](#CoreDocument)
-Transforms the [IotaDocument](#IotaDocument) to its [CoreDocument](#CoreDocument) representation.
+Transforms the `IotaDocument` to its `CoreDocument` representation.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+generateMethod"></a>
@@ -2590,7 +2568,7 @@ If this JWK is of kty RSA, returns those parameters.
 <a name="Jwk+toPublic"></a>
 
 ### jwk.toPublic() ⇒ [<code>Jwk</code>](#Jwk) \| <code>undefined</code>
-Returns a clone of the [Jwk](#Jwk) with _all_ private key components unset.
+Returns a clone of the Jwk with _all_ private key components unset.
 Nothing is returned when `kty = oct` as this key type is not considered public by this library.
 
 **Kind**: instance method of [<code>Jwk</code>](#Jwk)  
@@ -2632,7 +2610,7 @@ Deserializes an instance from a JSON object.
 <a name="JwkGenOutput"></a>
 
 ## JwkGenOutput
-The result of a key generation in [JwkStorage](JwkStorage).
+The result of a key generation in `JwkStorage`.
 
 **Kind**: global class  
 
@@ -2658,13 +2636,13 @@ The result of a key generation in [JwkStorage](JwkStorage).
 <a name="JwkGenOutput+jwk"></a>
 
 ### jwkGenOutput.jwk() ⇒ [<code>Jwk</code>](#Jwk)
-Returns the generated public [Jwk](#Jwk).
+Returns the generated public JWK.
 
 **Kind**: instance method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
 <a name="JwkGenOutput+keyId"></a>
 
 ### jwkGenOutput.keyId() ⇒ <code>string</code>
-Returns the key id of the generated [Jwk](#Jwk).
+Returns the key id of the generated jwk.
 
 **Kind**: instance method of [<code>JwkGenOutput</code>](#JwkGenOutput)  
 <a name="JwkGenOutput+toJSON"></a>
@@ -2704,7 +2682,7 @@ A wrapper around a JSON Web Signature (JWS).
 <a name="new_Jws_new"></a>
 
 ### new Jws(jws_string)
-Creates a new [Jws](#Jws) from the given string.
+Creates a new `Jws` from the given string.
 
 
 | Param | Type |
@@ -2763,7 +2741,7 @@ Returns a clone of the JWS string.
 <a name="new_JwsHeader_new"></a>
 
 ### new JwsHeader()
-Create a new empty [JwsHeader](#JwsHeader).
+Create a new empty `JwsHeader`.
 
 <a name="JwsHeader+alg"></a>
 
@@ -3194,8 +3172,6 @@ Deserializes an instance from a JSON object.
 <a name="new_JwsVerificationOptions_new"></a>
 
 ### new JwsVerificationOptions(options)
-Creates a new [JwsVerificationOptions](#JwsVerificationOptions) from the given fields.
-
 
 | Param | Type |
 | --- | --- |
@@ -3265,7 +3241,7 @@ A wrapper around a JSON Web Token (JWK).
 <a name="new_Jwt_new"></a>
 
 ### new Jwt(jwt_string)
-Creates a new [Jwt](#Jwt) from the given string.
+Creates a new `Jwt` from the given string.
 
 
 | Param | Type |
@@ -3314,6 +3290,7 @@ Options to declare validation criteria when validating credentials.
         * [.toJSON()](#JwtCredentialValidationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwtCredentialValidationOptions+clone) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
     * _static_
+        * [.default()](#JwtCredentialValidationOptions.default) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
         * [.fromJSON(json)](#JwtCredentialValidationOptions.fromJSON) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
 
 <a name="new_JwtCredentialValidationOptions_new"></a>
@@ -3336,6 +3313,12 @@ Serializes this to a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)  
+<a name="JwtCredentialValidationOptions.default"></a>
+
+### JwtCredentialValidationOptions.default() ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
+Creates a new `JwtCredentialValidationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)  
 <a name="JwtCredentialValidationOptions.fromJSON"></a>
 
 ### JwtCredentialValidationOptions.fromJSON(json) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
@@ -3350,7 +3333,7 @@ Deserializes an instance from a JSON object.
 <a name="JwtCredentialValidator"></a>
 
 ## JwtCredentialValidator
-A type for decoding and validating [Credential](#Credential).
+A type for decoding and validating `Credentials`.
 
 **Kind**: global class  
 
@@ -3370,7 +3353,7 @@ A type for decoding and validating [Credential](#Credential).
 <a name="new_JwtCredentialValidator_new"></a>
 
 ### new JwtCredentialValidator(signatureVerifier)
-Creates a new [JwtCredentialValidator](#JwtCredentialValidator). If a `signatureVerifier` is provided it will be used when
+Creates a new `JwtCredentialValidator`. If a `signatureVerifier` is provided it will be used when
 verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
 algorithm will be used.
 
@@ -3382,8 +3365,7 @@ algorithm will be used.
 <a name="JwtCredentialValidator+validate"></a>
 
 ### jwtCredentialValidator.validate(credential_jwt, issuer, options, fail_fast) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
-Decodes and validates a [Credential](#Credential) issued as a JWS. A [DecodedJwtCredential](#DecodedJwtCredential) is returned upon
-success.
+Decodes and validates a `Credential` issued as a JWS. A `DecodedJwtCredential` is returned upon success.
 
 The following properties are validated according to `options`:
 - the issuer's signature on the JWS,
@@ -3419,17 +3401,17 @@ An error is returned whenever a validated condition is not satisfied.
 <a name="JwtCredentialValidator+verifySignature"></a>
 
 ### jwtCredentialValidator.verifySignature(credential, trustedIssuers, options) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
-Decode and verify the JWS signature of a [Credential](#Credential) issued as a JWT using the DID Document of a trusted
+Decode and verify the JWS signature of a `Credential` issued as a JWT using the DID Document of a trusted
 issuer.
 
-A [DecodedJwtCredential](#DecodedJwtCredential) is returned upon success.
+A `DecodedJwtCredential` is returned upon success.
 
 # Warning
 The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
 
 ## Proofs
- Only the JWS signature is verified. If the [Credential](#Credential) contains a `proof` property this will not be
-verified by this method.
+ Only the JWS signature is verified. If the `Credential` contains a `proof` property this will not be verified
+by this method.
 
 # Errors
 This method immediately returns an error if
@@ -3487,7 +3469,7 @@ Validate that the relationship between the `holder` and the credential subjects 
 ### JwtCredentialValidator.checkStatus(credential, trustedIssuers, statusCheck)
 Checks whether the credential status has been revoked.
 
-Only supports `RevocationBitmap2022`.
+Only supports `BitmapRevocation2022`.
 
 **Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
 
@@ -3500,7 +3482,7 @@ Only supports `RevocationBitmap2022`.
 <a name="JwtCredentialValidator.extractIssuer"></a>
 
 ### JwtCredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
-Utility for extracting the issuer field of a [Credential](#Credential) as a DID.
+Utility for extracting the issuer field of a `Credential` as a DID.
 
 ### Errors
 
@@ -3542,7 +3524,7 @@ A validator for a Domain Linkage Configuration and Credentials.
 <a name="new_JwtDomainLinkageValidator_new"></a>
 
 ### new JwtDomainLinkageValidator(signatureVerifier)
-Creates a new [JwtDomainLinkageValidator](#JwtDomainLinkageValidator). If a `signatureVerifier` is provided it will be used when
+Creates a new `JwtDomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
 verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
 algorithm will be used.
 
@@ -3555,17 +3537,15 @@ algorithm will be used.
 
 ### jwtDomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
 Validates the linkage between a domain and a DID.
-[DomainLinkageConfiguration](#DomainLinkageConfiguration) is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
 
 Linkage is valid if no error is thrown.
 
 # Note:
 - Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
-  is supported.
 - Only the Credential issued by `issuer` is verified.
 
 # Errors
-
  - Semantic structure of `configuration` is invalid.
  - `configuration` includes multiple credentials issued by `issuer`.
  - Validation of the matched Domain Linkage Credential fails.
@@ -3583,7 +3563,6 @@ Linkage is valid if no error is thrown.
 
 ### jwtDomainLinkageValidator.validateCredential(issuer, credentialJwt, domain, options)
 Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
-
 Error will be thrown in case the validation fails.
 
 **Kind**: instance method of [<code>JwtDomainLinkageValidator</code>](#JwtDomainLinkageValidator)  
@@ -3606,12 +3585,13 @@ Error will be thrown in case the validation fails.
         * [.toJSON()](#JwtPresentationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwtPresentationOptions+clone) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
     * _static_
+        * [.default()](#JwtPresentationOptions.default) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
         * [.fromJSON(json)](#JwtPresentationOptions.fromJSON) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
 
 <a name="new_JwtPresentationOptions_new"></a>
 
 ### new JwtPresentationOptions(options)
-Creates a new [JwtPresentationOptions](#JwtPresentationOptions) from the given fields.
+Creates a new `JwtPresentationOptions` from the given fields.
 
 Throws an error if any of the options are invalid.
 
@@ -3632,6 +3612,12 @@ Serializes this to a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+<a name="JwtPresentationOptions.default"></a>
+
+### JwtPresentationOptions.default() ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+Creates a new `JwtPresentationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
 <a name="JwtPresentationOptions.fromJSON"></a>
 
 ### JwtPresentationOptions.fromJSON(json) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
@@ -3656,12 +3642,13 @@ Options to declare validation criteria when validating presentation.
         * [.toJSON()](#JwtPresentationValidationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwtPresentationValidationOptions+clone) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
     * _static_
+        * [.default()](#JwtPresentationValidationOptions.default) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
         * [.fromJSON(json)](#JwtPresentationValidationOptions.fromJSON) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
 
 <a name="new_JwtPresentationValidationOptions_new"></a>
 
 ### new JwtPresentationValidationOptions(options)
-Creates a new [JwtPresentationValidationOptions](#JwtPresentationValidationOptions) from the given fields.
+Creates a new `JwtPresentationValidationOptions` from the given fields.
 
 Throws an error if any of the options are invalid.
 
@@ -3682,6 +3669,12 @@ Serializes this to a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions.default"></a>
+
+### JwtPresentationValidationOptions.default() ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Creates a new `JwtPresentationValidationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
 <a name="JwtPresentationValidationOptions.fromJSON"></a>
 
 ### JwtPresentationValidationOptions.fromJSON(json) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
@@ -3699,29 +3692,29 @@ Deserializes an instance from a JSON object.
 **Kind**: global class  
 
 * [JwtPresentationValidator](#JwtPresentationValidator)
-    * [new JwtPresentationValidator(signatureVerifier)](#new_JwtPresentationValidator_new)
+    * [new JwtPresentationValidator(signature_verifier)](#new_JwtPresentationValidator_new)
     * _instance_
-        * [.validate(presentationJwt, holder, validation_options)](#JwtPresentationValidator+validate) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+        * [.validate(presentation_jwt, holder, validation_options)](#JwtPresentationValidator+validate) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
     * _static_
         * [.checkStructure(presentation)](#JwtPresentationValidator.checkStructure)
         * [.extractHolder(presentation)](#JwtPresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="new_JwtPresentationValidator_new"></a>
 
-### new JwtPresentationValidator(signatureVerifier)
-Creates a new [JwtPresentationValidator](#JwtPresentationValidator). If a `signatureVerifier` is provided it will be used when
+### new JwtPresentationValidator(signature_verifier)
+Creates a new `JwtPresentationValidator`. If a `signature_verifier` is provided it will be used when
 verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
 algorithm will be used.
 
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+| signature_verifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
 <a name="JwtPresentationValidator+validate"></a>
 
-### jwtPresentationValidator.validate(presentationJwt, holder, validation_options) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
-Validates a [Presentation](#Presentation) encoded as a [Jwt](#Jwt).
+### jwtPresentationValidator.validate(presentation_jwt, holder, validation_options) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+Validates a [`JwtPresentation`].
 
 The following properties are validated according to `options`:
 - the JWT can be decoded into a semantically valid presentation.
@@ -3733,7 +3726,7 @@ Validation is done with respect to the properties set in `options`.
 # Warning
 
 * This method does NOT validate the constituent credentials and therefore also not the relationship between the
-credentials' subjects and the presentation holder. This can be done with [JwtCredentialValidationOptions](#JwtCredentialValidationOptions).
+credentials' subjects and the presentation holder. This can be done with `JwtCredentialValidationOptions`.
 * The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
 be trusted. This section contains more information on additional checks that should be carried out before and
 after calling this method.
@@ -3750,14 +3743,14 @@ An error is returned whenever a validated condition is not satisfied or when dec
 
 | Param | Type |
 | --- | --- |
-| presentationJwt | [<code>Jwt</code>](#Jwt) | 
+| presentation_jwt | [<code>Jwt</code>](#Jwt) | 
 | holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | validation_options | [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions) | 
 
 <a name="JwtPresentationValidator.checkStructure"></a>
 
 ### JwtPresentationValidator.checkStructure(presentation)
-Validates the semantic structure of the [Presentation](#Presentation).
+Validates the semantic structure of the `JwtPresentation`.
 
 **Kind**: static method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
 
@@ -3798,8 +3791,7 @@ Attempt to extract the holder of the presentation.
 <a name="new_LinkedDomainService_new"></a>
 
 ### new LinkedDomainService(options)
-Constructs a new [LinkedDomainService](#LinkedDomainService) that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint).
-
+Constructs a new `LinkedDomainService` that wraps a spec compliant [Linked Domain Service Endpoint](https://identity.foundation/.well-known/resources/did-configuration/#linked-domain-service-endpoint)
 Domain URLs must include the `https` scheme in order to pass the domain linkage validation.
 
 
@@ -3828,10 +3820,8 @@ Deep clones the object.
 <a name="LinkedDomainService.fromService"></a>
 
 ### LinkedDomainService.fromService(service) ⇒ [<code>LinkedDomainService</code>](#LinkedDomainService)
-Creates a new [LinkedDomainService](#LinkedDomainService) from a [Service](#Service).
-
+Creates a new @link{LinkedDomainService} from a @link{Service}.
 # Error
-
 Errors if `service` is not a valid Linked Domain Service.
 
 **Kind**: static method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
@@ -3843,7 +3833,7 @@ Errors if `service` is not a valid Linked Domain Service.
 <a name="LinkedDomainService.isValid"></a>
 
 ### LinkedDomainService.isValid(service) ⇒ <code>boolean</code>
-Returns `true` if a [Service](#Service) is a valid Linked Domain Service.
+Returns `true` if a @link{Service} is a valid Linked Domain Service.
 
 **Kind**: static method of [<code>LinkedDomainService</code>](#LinkedDomainService)  
 
@@ -3873,19 +3863,19 @@ Supported verification method data formats.
 <a name="MethodData+tryDecode"></a>
 
 ### methodData.tryDecode() ⇒ <code>Uint8Array</code>
-Returns a `Uint8Array` containing the decoded bytes of the [MethodData](#MethodData).
+Returns a `Uint8Array` containing the decoded bytes of the `MethodData`.
 
-This is generally a public key identified by a [MethodData](#MethodData) value.
+This is generally a public key identified by a `MethodData` value.
 
 ### Errors
-Decoding can fail if [MethodData](#MethodData) has invalid content or cannot be
+Decoding can fail if `MethodData` has invalid content or cannot be
 represented as a vector of bytes.
 
 **Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+tryPublicKeyJwk"></a>
 
 ### methodData.tryPublicKeyJwk() ⇒ [<code>Jwk</code>](#Jwk)
-Returns the wrapped [Jwk](#Jwk) if the format is `PublicKeyJwk`.
+Returns the wrapped `Jwk` if the format is `PublicKeyJwk`.
 
 **Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+toJSON"></a>
@@ -3903,7 +3893,7 @@ Deep clones the object.
 <a name="MethodData.newBase58"></a>
 
 ### MethodData.newBase58(data) ⇒ [<code>MethodData</code>](#MethodData)
-Creates a new [MethodData](#MethodData) variant with Base58-BTC encoded content.
+Creates a new `MethodData` variant with Base58-BTC encoded content.
 
 **Kind**: static method of [<code>MethodData</code>](#MethodData)  
 
@@ -3914,7 +3904,7 @@ Creates a new [MethodData](#MethodData) variant with Base58-BTC encoded content.
 <a name="MethodData.newMultibase"></a>
 
 ### MethodData.newMultibase(data) ⇒ [<code>MethodData</code>](#MethodData)
-Creates a new [MethodData](#MethodData) variant with Multibase-encoded content.
+Creates a new `MethodData` variant with Multibase-encoded content.
 
 **Kind**: static method of [<code>MethodData</code>](#MethodData)  
 
@@ -3925,7 +3915,7 @@ Creates a new [MethodData](#MethodData) variant with Multibase-encoded content.
 <a name="MethodData.newJwk"></a>
 
 ### MethodData.newJwk(key) ⇒ [<code>MethodData</code>](#MethodData)
-Creates a new [MethodData](#MethodData) variant consisting of the given `key`.
+Creates a new `MethodData` variant consisting of the given `key`.
 
 ### Errors
 An error is thrown if the given `key` contains any private components.
@@ -3950,7 +3940,7 @@ Deserializes an instance from a JSON object.
 <a name="MethodDigest"></a>
 
 ## MethodDigest
-Unique identifier of a [VerificationMethod](#VerificationMethod).
+Unique identifier of a [`VerificationMethod`].
 
 NOTE:
 This class does not have a JSON representation,
@@ -3977,7 +3967,7 @@ use the methods `pack` and `unpack` instead.
 <a name="MethodDigest+pack"></a>
 
 ### methodDigest.pack() ⇒ <code>Uint8Array</code>
-Packs [MethodDigest](#MethodDigest) into bytes.
+Packs `MethodDigest` into bytes.
 
 **Kind**: instance method of [<code>MethodDigest</code>](#MethodDigest)  
 <a name="MethodDigest+clone"></a>
@@ -3989,7 +3979,7 @@ Deep clones the object.
 <a name="MethodDigest.unpack"></a>
 
 ### MethodDigest.unpack(bytes) ⇒ [<code>MethodDigest</code>](#MethodDigest)
-Unpacks bytes into [MethodDigest](#MethodDigest).
+Unpacks bytes into [`MethodDigest`].
 
 **Kind**: static method of [<code>MethodDigest</code>](#MethodDigest)  
 
@@ -4021,7 +4011,7 @@ Supported verification method types.
 <a name="MethodScope+toString"></a>
 
 ### methodScope.toString() ⇒ <code>string</code>
-Returns the [MethodScope](#MethodScope) as a string.
+Returns the `MethodScope` as a string.
 
 **Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
 <a name="MethodScope+toJSON"></a>
@@ -4092,7 +4082,7 @@ Supported verification method types.
 <a name="MethodType+toString"></a>
 
 ### methodType.toString() ⇒ <code>string</code>
-Returns the [MethodType](#MethodType) as a string.
+Returns the `MethodType` as a string.
 
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+toJSON"></a>
@@ -4118,7 +4108,7 @@ Deep clones the object.
 <a name="MethodType.JsonWebKey"></a>
 
 ### MethodType.JsonWebKey() ⇒ [<code>MethodType</code>](#MethodType)
-A verification method for use with JWT verification as prescribed by the [Jwk](#Jwk)
+A verification method for use with JWT verification as prescribed by the `Jwk`
 in the `publicKeyJwk` entry.
 
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
@@ -4148,8 +4138,7 @@ Deserializes an instance from a JSON object.
         * [.holder()](#Presentation+holder) ⇒ <code>string</code>
         * [.refreshService()](#Presentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
         * [.termsOfUse()](#Presentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
-        * [.proof()](#Presentation+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.setProof(proof)](#Presentation+setProof)
+        * [.proof()](#Presentation+proof) ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
         * [.properties()](#Presentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
         * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
@@ -4212,23 +4201,10 @@ Returns a copy of the terms-of-use specified by the presentation holder
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+proof"></a>
 
-### presentation.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-Optional cryptographic proof, unrelated to JWT.
+### presentation.proof() ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
+Optional proof that can be verified by users in addition to JWS.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-<a name="Presentation+setProof"></a>
-
-### presentation.setProof(proof)
-Sets the proof property of the [Presentation](#Presentation).
-
-Note that this proof is not related to JWT.
-
-**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
-
-| Param | Type |
-| --- | --- |
-| proof | [<code>Proof</code>](#Proof) \| <code>undefined</code> | 
-
 <a name="Presentation+properties"></a>
 
 ### presentation.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
@@ -4270,85 +4246,15 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Proof"></a>
-
-## Proof
-Represents a cryptographic proof that can be used to validate verifiable credentials and
-presentations.
-
-This representation does not inherently implement any standard; instead, it
-can be utilized to implement standards or user-defined proofs. The presence of the
-`type` field is necessary to accommodate different types of cryptographic proofs.
-
-Note that this proof is not related to JWT and can be used in combination or as an alternative
-to it.
-
-**Kind**: global class  
-
-* [Proof](#Proof)
-    * [new Proof(_type, properties)](#new_Proof_new)
-    * _instance_
-        * [.type()](#Proof+type) ⇒ <code>string</code>
-        * [.properties()](#Proof+properties) ⇒ <code>any</code>
-        * [.toJSON()](#Proof+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Proof+clone) ⇒ [<code>Proof</code>](#Proof)
-    * _static_
-        * [.fromJSON(json)](#Proof.fromJSON) ⇒ [<code>Proof</code>](#Proof)
-
-<a name="new_Proof_new"></a>
-
-### new Proof(_type, properties)
-
-| Param | Type |
-| --- | --- |
-| _type | <code>string</code> | 
-| properties | <code>any</code> | 
-
-<a name="Proof+type"></a>
-
-### proof.type() ⇒ <code>string</code>
-Returns the type of proof.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+properties"></a>
-
-### proof.properties() ⇒ <code>any</code>
-Returns the properties of the proof.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+toJSON"></a>
-
-### proof.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+clone"></a>
-
-### proof.clone() ⇒ [<code>Proof</code>](#Proof)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof.fromJSON"></a>
-
-### Proof.fromJSON(json) ⇒ [<code>Proof</code>](#Proof)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>Proof</code>](#Proof)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="Resolver"></a>
 
 ## Resolver
 Convenience type for resolving DID documents from different DID methods.
 
 Also provides methods for resolving DID Documents associated with
-verifiable [Credential](#Credential)s and [Presentation](#Presentation)s.
+verifiable `Credentials` and `Presentations`.
 
 # Configuration
-
 The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
 
 **Kind**: global class  
@@ -4361,7 +4267,7 @@ The resolver will only be able to resolve DID documents for methods it has been 
 <a name="new_Resolver_new"></a>
 
 ### new Resolver(config)
-Constructs a new [Resolver](#Resolver).
+Constructs a new `Resolver`.
 
 # Errors
 If both a `client` is given and the `handlers` map contains the "iota" key the construction process
@@ -4422,15 +4328,15 @@ A compressed bitmap for managing credential revocation.
         * [.revoke(index)](#RevocationBitmap+revoke) ⇒ <code>boolean</code>
         * [.unrevoke(index)](#RevocationBitmap+unrevoke) ⇒ <code>boolean</code>
         * [.len()](#RevocationBitmap+len) ⇒ <code>number</code>
-        * [.toService(serviceId)](#RevocationBitmap+toService) ⇒ [<code>Service</code>](#Service)
+        * [.toEndpoint()](#RevocationBitmap+toEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
     * _static_
         * [.type()](#RevocationBitmap.type) ⇒ <code>string</code>
-        * [.fromEndpoint(service)](#RevocationBitmap.fromEndpoint) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+        * [.fromEndpoint(endpoint)](#RevocationBitmap.fromEndpoint) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
 
 <a name="new_RevocationBitmap_new"></a>
 
 ### new RevocationBitmap()
-Creates a new [RevocationBitmap](#RevocationBitmap) instance.
+Creates a new `RevocationBitmap` instance.
 
 <a name="RevocationBitmap+isRevoked"></a>
 
@@ -4475,20 +4381,12 @@ Returns true if the index was present in the set.
 Returns the number of revoked credentials.
 
 **Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-<a name="RevocationBitmap+toService"></a>
+<a name="RevocationBitmap+toEndpoint"></a>
 
-### revocationBitmap.toService(serviceId) ⇒ [<code>Service</code>](#Service)
-Return a `Service` with:
-- the service's id set to `serviceId`,
-- of type `RevocationBitmap2022`,
-- and with the bitmap embedded in a data url in the service's endpoint.
+### revocationBitmap.toEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Return the bitmap as a data url embedded in a service endpoint.
 
 **Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-
-| Param | Type |
-| --- | --- |
-| serviceId | [<code>DIDUrl</code>](#DIDUrl) | 
-
 <a name="RevocationBitmap.type"></a>
 
 ### RevocationBitmap.type() ⇒ <code>string</code>
@@ -4497,15 +4395,14 @@ The name of the service type.
 **Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
 <a name="RevocationBitmap.fromEndpoint"></a>
 
-### RevocationBitmap.fromEndpoint(service) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
-Try to construct a [RevocationBitmap](#RevocationBitmap) from a service
-if it is a valid Revocation Bitmap Service.
+### RevocationBitmap.fromEndpoint(endpoint) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+Construct a `RevocationBitmap` from a data `url`.
 
 **Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
 
 | Param | Type |
 | --- | --- |
-| service | [<code>Service</code>](#Service) | 
+| endpoint | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code> | 
 
 <a name="Service"></a>
 
@@ -4537,25 +4434,25 @@ A DID Document Service used to enable trusted interactions associated with a DID
 <a name="Service+id"></a>
 
 ### service.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Returns a copy of the [Service](#Service) id.
+Returns a copy of the `Service` id.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+type"></a>
 
 ### service.type() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a copy of the [Service](#Service) type.
+Returns a copy of the `Service` type.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+serviceEndpoint"></a>
 
 ### service.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-Returns a copy of the [Service](#Service) endpoint.
+Returns a copy of the `Service` endpoint.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+properties"></a>
 
 ### service.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the custom properties on the [Service](#Service).
+Returns a copy of the custom properties on the `Service`.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+toJSON"></a>
@@ -4584,7 +4481,7 @@ Deserializes an instance from a JSON object.
 <a name="Storage"></a>
 
 ## Storage
-A type wrapping a [JwkStorage](JwkStorage) and [KeyIdStorage](KeyIdStorage) that should always be used together when
+A type wrapping a `JwkStorage` and `KeyIdStorage` that should always be used together when
 working with storage backed DID documents.
 
 **Kind**: global class  
@@ -4597,7 +4494,7 @@ working with storage backed DID documents.
 <a name="new_Storage_new"></a>
 
 ### new Storage(jwkStorage, keyIdStorage)
-Constructs a new [Storage](#Storage).
+Constructs a new `Storage`.
 
 
 | Param | Type |
@@ -4608,13 +4505,13 @@ Constructs a new [Storage](#Storage).
 <a name="Storage+keyIdStorage"></a>
 
 ### storage.keyIdStorage() ⇒ <code>KeyIdStorage</code>
-Obtain the wrapped [KeyIdStorage](KeyIdStorage).
+Obtain the wrapped `KeyIdStorage`.
 
 **Kind**: instance method of [<code>Storage</code>](#Storage)  
 <a name="Storage+keyStorage"></a>
 
 ### storage.keyStorage() ⇒ <code>JwkStorage</code>
-Obtain the wrapped [JwkStorage](JwkStorage).
+Obtain the wrapped `JwkStorage`.
 
 **Kind**: instance method of [<code>Storage</code>](#Storage)  
 <a name="Timestamp"></a>
@@ -4636,7 +4533,7 @@ Obtain the wrapped [JwkStorage](JwkStorage).
 <a name="Timestamp+toRFC3339"></a>
 
 ### timestamp.toRFC3339() ⇒ <code>string</code>
-Returns the [Timestamp](#Timestamp) as an RFC 3339 `String`.
+Returns the `Timestamp` as an RFC 3339 `String`.
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp+checkedAdd"></a>
@@ -4674,7 +4571,7 @@ Serializes this to a JSON object.
 <a name="Timestamp.parse"></a>
 
 ### Timestamp.parse(input) ⇒ [<code>Timestamp</code>](#Timestamp)
-Parses a [Timestamp](#Timestamp) from the provided input string.
+Parses a `Timestamp` from the provided input string.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
 
@@ -4685,7 +4582,7 @@ Parses a [Timestamp](#Timestamp) from the provided input string.
 <a name="Timestamp.nowUTC"></a>
 
 ### Timestamp.nowUTC() ⇒ [<code>Timestamp</code>](#Timestamp)
-Creates a new [Timestamp](#Timestamp) with the current date and time.
+Creates a new `Timestamp` with the current date and time.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp.fromJSON"></a>
@@ -4717,19 +4614,19 @@ Deserializes an instance from a JSON object.
 <a name="UnknownCredential+tryIntoJwt"></a>
 
 ### unknownCredential.tryIntoJwt() ⇒ [<code>Jwt</code>](#Jwt) \| <code>undefined</code>
-Returns a [Jwt](#Jwt) if the credential is of type string, `undefined` otherwise.
+Returns a `Jwt` if the credential is of type string, `undefined` otherwise.
 
 **Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
 <a name="UnknownCredential+tryIntoCredential"></a>
 
 ### unknownCredential.tryIntoCredential() ⇒ [<code>Credential</code>](#Credential) \| <code>undefined</code>
-Returns a [Credential](#Credential) if the credential is of said type, `undefined` otherwise.
+Returns a `Credential` if the credential is of said type, `undefined` otherwise.
 
 **Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
 <a name="UnknownCredential+tryIntoRaw"></a>
 
 ### unknownCredential.tryIntoRaw() ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
-Returns the contained value as an Object, if it can be converted, `undefined` otherwise.
+Returns the contained value as JSON, if it can be converted, `undefined` otherwise.
 
 **Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
 <a name="UnknownCredential+toJSON"></a>
@@ -4783,13 +4680,13 @@ A DID Document Verification Method.
 <a name="VerificationMethod+id"></a>
 
 ### verificationMethod.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Returns a copy of the [DIDUrl](#DIDUrl) of the [VerificationMethod](#VerificationMethod)'s `id`.
+Returns a copy of the `DIDUrl` of the `VerificationMethod`'s `id`.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+setId"></a>
 
 ### verificationMethod.setId(id)
-Sets the id of the [VerificationMethod](#VerificationMethod).
+Sets the id of the `VerificationMethod`.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -4800,13 +4697,13 @@ Sets the id of the [VerificationMethod](#VerificationMethod).
 <a name="VerificationMethod+controller"></a>
 
 ### verificationMethod.controller() ⇒ [<code>CoreDID</code>](#CoreDID)
-Returns a copy of the `controller` `DID` of the [VerificationMethod](#VerificationMethod).
+Returns a copy of the `controller` `DID` of the `VerificationMethod`.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+setController"></a>
 
 ### verificationMethod.setController(did)
-Sets the `controller` `DID` of the [VerificationMethod](#VerificationMethod) object.
+Sets the `controller` `DID` of the `VerificationMethod` object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -4817,13 +4714,13 @@ Sets the `controller` `DID` of the [VerificationMethod](#VerificationMethod) obj
 <a name="VerificationMethod+type"></a>
 
 ### verificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
-Returns a copy of the [VerificationMethod](#VerificationMethod) type.
+Returns a copy of the `VerificationMethod` type.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+setType"></a>
 
 ### verificationMethod.setType(type_)
-Sets the [VerificationMethod](#VerificationMethod) type.
+Sets the `VerificationMethod` type.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -4834,13 +4731,13 @@ Sets the [VerificationMethod](#VerificationMethod) type.
 <a name="VerificationMethod+data"></a>
 
 ### verificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
-Returns a copy of the [VerificationMethod](#VerificationMethod) public key data.
+Returns a copy of the `VerificationMethod` public key data.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+setData"></a>
 
 ### verificationMethod.setData(data)
-Sets [VerificationMethod](#VerificationMethod) public key data.
+Sets `VerificationMethod` public key data.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -4886,7 +4783,7 @@ Deep clones the object.
 <a name="VerificationMethod.newFromJwk"></a>
 
 ### VerificationMethod.newFromJwk(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Creates a new [VerificationMethod](#VerificationMethod) from the given `did` and [Jwk](#Jwk). If `fragment` is not given
+Creates a new `VerificationMethod` from the given `did` and `Jwk`. If `fragment` is not given
 the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
 
 ### Recommendations
@@ -4894,7 +4791,7 @@ The following recommendations are essentially taken from the `publicKeyJwk` desc
 - It is recommended that verification methods that use `Jwks` to represent their public keys use the value of
   `kid` as their fragment identifier. This is
 done automatically if `None` is passed in as the fragment.
-- It is recommended that [Jwk](#Jwk) kid values are set to the public key fingerprint.
+- It is recommended that `Jwk` kid values are set to the public key fingerprint.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -4949,7 +4846,8 @@ Skip all status checks.
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
-Declares how credential subjects must relate to the presentation holder.
+Declares how credential subjects must relate to the presentation holder during validation.
+See `PresentationValidationOptions::subject_holder_relationship`.
 
 See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 
@@ -4958,7 +4856,8 @@ See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#
 
 ## AlwaysSubject
 The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-This variant is the default.
+This variant is the default used if no other variant is specified when constructing a new
+`PresentationValidationOptions`.
 
 **Kind**: global variable  
 <a name="SubjectOnNonTransferable"></a>
@@ -4999,6 +4898,12 @@ Return after the first error occurs.
 
 ## StateMetadataEncoding
 **Kind**: global variable  
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -5021,12 +4926,6 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
 <a name="verifyEdDSA"></a>
 
 ## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
