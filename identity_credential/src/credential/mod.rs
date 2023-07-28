@@ -14,6 +14,7 @@ mod jwt;
 mod jwt_serialization;
 mod linked_domain_service;
 mod policy;
+mod proof;
 mod refresh;
 #[cfg(feature = "revocation-bitmap")]
 mod revocation_bitmap_status;
@@ -29,6 +30,7 @@ pub use self::jws::Jws;
 pub use self::jwt::Jwt;
 pub use self::linked_domain_service::LinkedDomainService;
 pub use self::policy::Policy;
+pub use self::proof::Proof;
 pub use self::refresh::RefreshService;
 #[cfg(feature = "revocation-bitmap")]
 pub use self::revocation_bitmap_status::RevocationBitmapStatus;

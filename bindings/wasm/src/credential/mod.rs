@@ -13,6 +13,7 @@ pub use self::jwt_presentation::*;
 pub use self::jwt_presentation_validation::*;
 pub use self::options::WasmFailFast;
 pub use self::options::WasmSubjectHolderRelationship;
+pub use self::proof::WasmProof;
 pub use self::types::*;
 
 mod credential;
@@ -27,4 +28,5 @@ mod jwt_presentation;
 mod jwt_presentation_validation;
 mod linked_domain_service;
 mod options;
+mod proof;
 mod types;

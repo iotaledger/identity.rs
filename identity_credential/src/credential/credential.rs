@@ -27,6 +27,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 use super::jwt_serialization::CredentialJwtClaims;
+use super::Proof;
 
 lazy_static::lazy_static! {
   static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
@@ -79,7 +80,7 @@ pub struct Credential<T = Object> {
   pub properties: T,
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Object>,
+  pub proof: Option<Proof>,
 }
 
 impl<T> Credential<T> {
@@ -153,6 +154,11 @@ impl<T> Credential<T> {
     Ok(())
   }
 
+  /// Sets the proof of the `Credential`.
+  pub fn set_proof(&mut self, proof: Option<Proof>) {
+    self.proof = proof;
+  }
+
   /// Serializes the [`Credential`] as a JWT claims set
   /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
@@ -168,13 +174,8 @@ impl<T> Credential<T> {
   }
 
   /// Returns a reference to the proof.
-  pub fn proof(&self) -> Option<&Object> {
+  pub fn proof(&self) -> Option<&Proof> {
     self.proof.as_ref()
-  }
-
-  /// Returns a mutable reference to the proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Object> {
-    self.proof.as_mut()
   }
 }
 

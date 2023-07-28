@@ -22,6 +22,7 @@ use crate::credential::ArrayStatus;
 use crate::credential::ArraySubject;
 use crate::credential::ICredential;
 use crate::credential::UrlOrIssuer;
+use crate::credential::WasmProof;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -197,15 +198,20 @@ impl WasmCredential {
 
   /// Returns a copy of the proof used to verify the {@link Credential}.
   #[wasm_bindgen]
-  pub fn proof(&self) -> Result<JsValue> {
-    // TODO: Update with proof.
-    JsValue::from_serde(&self.0.proof).wasm_result()
+  pub fn proof(&self) -> Option<WasmProof> {
+    self.0.proof.clone().map(|proof| WasmProof(proof))
   }
 
   /// Returns a copy of the miscellaneous properties on the {@link Credential}.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
     MapStringAny::try_from(&self.0.properties)
+  }
+
+  /// Sets the proof property of the `Credential`.
+  #[wasm_bindgen(js_name = "setProof")]
+  pub fn set_proof(&mut self, proof: Option<WasmProof>) {
+    self.0.set_proof(proof.map(|wasm_proof| wasm_proof.0))
   }
 }
 

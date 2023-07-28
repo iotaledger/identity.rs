@@ -17,6 +17,7 @@ use crate::credential::Credential;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
 use crate::credential::Policy;
+use crate::credential::Proof;
 use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
@@ -334,7 +335,7 @@ where
   properties: Cow<'credential, T>,
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
-  proof: Option<Cow<'credential, Object>>,
+  proof: Option<Cow<'credential, Proof>>,
 }
 
 #[cfg(test)]

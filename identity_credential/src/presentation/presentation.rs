@@ -16,6 +16,7 @@ use identity_core::convert::ToJson;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
+use crate::credential::Proof;
 use crate::credential::RefreshService;
 use crate::error::Error;
 use crate::error::Result;
@@ -52,7 +53,7 @@ pub struct Presentation<CRED, T = Object> {
   pub properties: T,
   /// Optional proof that can be verified by users in addition to JWS.
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Object>,
+  pub proof: Option<Proof>,
 }
 
 impl<CRED, T> Presentation<CRED, T> {
@@ -130,12 +131,12 @@ impl<CRED, T> Presentation<CRED, T> {
   ///
   /// Note that this is not the JWS or JWT of the presentation but a separate field that can be used to
   /// prove additional claims or include proofs not based on digital signatures like Proof-of-Work.
-  pub fn proof(&self) -> Option<&Object> {
+  pub fn proof(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 
   /// Sets the value of the proof property.
-  pub fn set_proof(&mut self, proof: Option<Object>) {
+  pub fn set_proof(&mut self, proof: Option<Proof>) {
     self.proof = proof;
   }
 }
