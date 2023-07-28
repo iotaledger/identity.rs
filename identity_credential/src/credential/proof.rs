@@ -33,7 +33,8 @@ impl Proof {
 mod tests {
   use super::Proof;
   use crate::credential::Credential;
-  use identity_core::{common::Object, convert::FromJson};
+  use identity_core::common::Object;
+  use identity_core::convert::FromJson;
 
   #[test]
   fn test_from_json() {
