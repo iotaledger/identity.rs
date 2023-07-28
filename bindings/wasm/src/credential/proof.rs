@@ -1,10 +1,12 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::{core::Object, credential::Proof};
+use identity_iota::core::Object;
+use identity_iota::credential::Proof;
 use wasm_bindgen::prelude::*;
 
-use crate::error::{Result, WasmResult};
+use crate::error::Result;
+use crate::error::WasmResult;
 
 /// Represents a cryptographic proof that can be used to validate verifiable credentials and
 /// presentations.
