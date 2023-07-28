@@ -15,7 +15,7 @@ import {
     Timestamp,
     UnknownCredential,
 } from "../node";
-export { };
+export {};
 
 // const assert = require("assert");
 
