@@ -15,7 +15,7 @@ import {
     Timestamp,
     UnknownCredential,
 } from "../node";
-export {};
+export { };
 
 // const assert = require("assert");
 
@@ -120,7 +120,7 @@ describe("Credential", function() {
             properties.set("custom1", "asdf");
             properties.set("custom2", 1234);
             assert.deepStrictEqual(credential.properties(), properties);
-            assert.deepStrictEqual(credential.proof(), null);
+            assert.deepStrictEqual(credential.proof(), undefined);
         });
     });
 });
