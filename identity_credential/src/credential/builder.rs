@@ -161,7 +161,7 @@ impl<T> CredentialBuilder<T> {
     self
   }
 
-  /// Sets the value `proof` property.
+  /// Sets the value of the `proof` property.
   #[must_use]
   pub fn proof(mut self, value: Proof) -> Self {
     self.proof = Some(value);
