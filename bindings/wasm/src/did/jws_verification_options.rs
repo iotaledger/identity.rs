@@ -12,6 +12,7 @@ pub struct WasmJwsVerificationOptions(pub(crate) JwsVerificationOptions);
 
 #[wasm_bindgen(js_class = JwsVerificationOptions)]
 impl WasmJwsVerificationOptions {
+  /// Creates a new {@link JwsVerificationOptions} from the given fields.
   #[wasm_bindgen(constructor)]
   pub fn new(options: Option<IJwsVerificationOptions>) -> Result<WasmJwsVerificationOptions> {
     if let Some(options) = options {
@@ -38,7 +39,7 @@ impl WasmJwsVerificationOptions {
 impl_wasm_json!(WasmJwsVerificationOptions, JwsVerificationOptions);
 impl_wasm_clone!(WasmJwsVerificationOptions, JwsVerificationOptions);
 
-/// Duck-typed interface to allow creating `JwsVerificationOptions` easily.
+/// Duck-typed interface to allow creating {@link JwsVerificationOptions} easily.
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "IJwsVerificationOptions")]
@@ -47,7 +48,7 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWS_SIGNATURE_OPTIONS: &'static str = r#"
-/** Holds options to create `JwsVerificationOptions`. */
+/** Holds options to create {@link JwsVerificationOptions}. */
 interface IJwsVerificationOptions {
     /** 
     * A list of permitted extension parameters. 

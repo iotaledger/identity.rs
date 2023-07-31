@@ -69,7 +69,7 @@ impl WasmJwsSignatureOptions {
 impl_wasm_json!(WasmJwsSignatureOptions, JwsSignatureOptions);
 impl_wasm_clone!(WasmJwsSignatureOptions, JwsSignatureOptions);
 
-/// Duck-typed interface to allow creating `JwsSignatureOptions` easily.
+/// Duck-typed interface to allow creating {@link JwsSignatureOptions} easily.
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "IJwsSignatureOptions")]
@@ -78,7 +78,7 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_JWS_SIGNATURE_OPTIONS: &'static str = r#"
-/** Holds options to create `JwsSignatureOptions`. */
+/** Holds options to create {@link JwsSignatureOptions}. */
 interface IJwsSignatureOptions {
     /** Whether to attach the public key in the corresponding method
      * to the JWS header.

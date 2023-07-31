@@ -23,7 +23,7 @@ pub struct WasmJwsHeader(pub(crate) JwsHeader);
 
 #[wasm_bindgen(js_class = JwsHeader)]
 impl WasmJwsHeader {
-  /// Create a new empty `JwsHeader`.
+  /// Create a new empty {@link JwsHeader}.
   #[wasm_bindgen(constructor)]
   #[allow(clippy::new_without_default)]
   pub fn new() -> WasmJwsHeader {

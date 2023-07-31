@@ -19,7 +19,7 @@ pub struct WasmRevocationBitmap(pub(crate) RevocationBitmap);
 #[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = RevocationBitmap)]
 impl WasmRevocationBitmap {
-  /// Creates a new `RevocationBitmap` instance.
+  /// Creates a new {@link RevocationBitmap} instance.
   #[wasm_bindgen(constructor)]
   pub fn new() -> Self {
     WasmRevocationBitmap(RevocationBitmap::new())
@@ -75,7 +75,7 @@ impl WasmRevocationBitmap {
       .wasm_result()
   }
 
-  /// Try to construct a `RevocationBitmap` from a service
+  /// Try to construct a {@link RevocationBitmap} from a service
   /// if it is a valid Revocation Bitmap Service.
   #[wasm_bindgen(js_name = fromEndpoint)]
   pub fn from_service(service: &WasmService) -> Result<WasmRevocationBitmap> {

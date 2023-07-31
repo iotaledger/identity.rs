@@ -133,7 +133,7 @@ export async function revokeVC() {
     jwtCredentialValidator.validate(
         credentialJwt,
         issuerDocument,
-        new JwtCredentialValidationOptions({}),
+        new JwtCredentialValidationOptions(),
         FailFast.FirstError,
     );
 
@@ -162,7 +162,7 @@ export async function revokeVC() {
         jwtCredentialValidator.validate(
             credentialJwt,
             issuerDocument,
-            new JwtCredentialValidationOptions({}),
+            new JwtCredentialValidationOptions(),
             FailFast.FirstError,
         );
         console.log("Revocation Failed!");
@@ -203,7 +203,7 @@ export async function revokeVC() {
         jwtCredentialValidator.validate(
             credentialJwt,
             resolvedIssuerDoc,
-            new JwtCredentialValidationOptions({}),
+            new JwtCredentialValidationOptions(),
             FailFast.FirstError,
         );
 
