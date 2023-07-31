@@ -23,14 +23,14 @@ pub struct WasmProof(pub(crate) Proof);
 #[wasm_bindgen(js_class = Proof)]
 impl WasmProof {
   #[wasm_bindgen(constructor)]
-  pub fn constructor(_type: String, properties: JsValue) -> Result<WasmProof> {
+  pub fn constructor(type_: String, properties: JsValue) -> Result<WasmProof> {
     let properties: Object = properties.into_serde().wasm_result()?;
-    Ok(WasmProof(Proof::new(_type, properties)))
+    Ok(WasmProof(Proof::new(type_, properties)))
   }
 
   /// Returns the type of proof.
   #[wasm_bindgen(js_name = "type")]
-  pub fn _type(&self) -> String {
+  pub fn type_(&self) -> String {
     self.0.type_.clone()
   }
 

@@ -27,11 +27,8 @@ pub struct Proof {
 
 impl Proof {
   /// Creates a new `Proof`.
-  pub fn new(_type: String, properties: Object) -> Proof {
-    Self {
-      type_: _type,
-      properties,
-    }
+  pub fn new(type_: String, properties: Object) -> Proof {
+    Self { type_, properties }
   }
 }
 
