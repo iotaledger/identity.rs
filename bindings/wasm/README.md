@@ -72,7 +72,7 @@ const {
   MethodRelationship,
   IotaIdentityClient,
 } = require('@iota/identity-wasm/node');
-const { Client } = require('@iota/client-wasm/node');
+const { Client } = require('@iota/sdk-wasm/node');
 
 const EXAMPLE_JWK = new Jwk({
   kty: JwkType.Okp,
