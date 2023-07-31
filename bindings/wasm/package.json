@@ -76,7 +76,7 @@
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/sdk-wasm": "^1.0.0-rc.0"
+    "@iota/sdk-wasm": "^1.0.2"
   },
   "engines": {
     "node": ">=16"
