@@ -19,8 +19,7 @@ identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credenti
 identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
 identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
 identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default-features = false }
-# TODO: Remove wallet feature once client+tls compilation is fixed.
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "wallet"], optional = true }
+iota-sdk = { version = "1.0.2", default-features = false, features = ["client", "tls"], optional = true }
 num-derive = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
