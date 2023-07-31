@@ -16,6 +16,7 @@ use crate::credential::ArrayRefreshService;
 use crate::credential::ArrayUnknownCredential;
 use crate::credential::IPresentation;
 use crate::credential::UnknownCredential;
+use crate::credential::WasmProof;
 use crate::credential::WasmUnknownCredentialContainer;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -126,10 +127,18 @@ impl WasmPresentation {
       .map(|value| value.unchecked_into::<ArrayPolicy>())
   }
 
-  /// Optional proof that can be verified by users in addition to JWS.
+  /// Optional cryptographic proof, unrelated to JWT.
   #[wasm_bindgen]
-  pub fn proof(&self) -> Result<Option<MapStringAny>> {
-    self.0.proof.clone().map(MapStringAny::try_from).transpose()
+  pub fn proof(&self) -> Option<WasmProof> {
+    self.0.proof.clone().map(WasmProof)
+  }
+
+  /// Sets the proof property of the {@link Presentation}.
+  ///
+  /// Note that this proof is not related to JWT.
+  #[wasm_bindgen(js_name = "setProof")]
+  pub fn set_proof(&mut self, proof: Option<WasmProof>) {
+    self.0.set_proof(proof.map(|wasm_proof| wasm_proof.0))
   }
 
   /// Returns a copy of the miscellaneous properties on the presentation.

@@ -4,8 +4,8 @@
 use super::decoded_jwt_presentation::WasmDecodedJwtPresentation;
 use super::options::WasmJwtPresentationValidationOptions;
 use crate::common::ImportedDocumentLock;
-use crate::credential::jwt_presentation::WasmPresentation;
 use crate::credential::WasmJwt;
+use crate::credential::WasmPresentation;
 use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDID;
 use crate::error::Result;
