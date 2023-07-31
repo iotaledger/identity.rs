@@ -1,9 +1,9 @@
-import * as client from "@iota/client-wasm/web";
+import * as sdk from "@iota/sdk-wasm/web";
 import * as identity from "../../web";
 
 export const setup = async (func) => {
-    await client
-        .init("../../../node_modules/@iota/client-wasm/web/wasm/client_wasm_bg.wasm")
+    await sdk
+        .init("../../../node_modules/@iota/sdk-wasm/web/wasm/iota_sdk_wasm_bg.wasm")
         .then(async () => await identity.init("../../../web/identity_wasm_bg.wasm"))
         .then(func);
 };
