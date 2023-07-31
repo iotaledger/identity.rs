@@ -208,7 +208,7 @@ impl WasmCredential {
     MapStringAny::try_from(&self.0.properties)
   }
 
-  /// Sets the proof property of the {@link Credential}.
+  /// Sets the `proof` property of the {@link Credential}.
   ///
   /// Note that this proof is not related to JWT.
   #[wasm_bindgen(js_name = "setProof")]

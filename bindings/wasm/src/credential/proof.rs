@@ -31,7 +31,7 @@ impl WasmProof {
   /// Returns the type of proof.
   #[wasm_bindgen(js_name = "type")]
   pub fn _type(&self) -> String {
-    self.0._type.clone()
+    self.0.type_.clone()
   }
 
   /// Returns the properties of the proof.

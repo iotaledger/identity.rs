@@ -118,7 +118,7 @@ impl<T> Credential<T> {
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,
-      proof: None,
+      proof: builder.proof,
     };
 
     this.check_structure()?;

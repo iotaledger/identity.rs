@@ -18,7 +18,7 @@ use serde::Serialize;
 pub struct Proof {
   /// Type of proof.
   #[serde(rename = "type")]
-  pub _type: String,
+  pub type_: String,
 
   /// Properties of the proof, entries depend on the proof type.
   #[serde(flatten)]
@@ -28,7 +28,10 @@ pub struct Proof {
 impl Proof {
   /// Creates a new `Proof`.
   pub fn new(_type: String, properties: Object) -> Proof {
-    Self { _type, properties }
+    Self {
+      type_: _type,
+      properties,
+    }
   }
 }
 
@@ -40,7 +43,7 @@ mod tests {
   use identity_core::convert::FromJson;
 
   #[test]
-  fn test_from_json() {
+  fn test_proof_from_json() {
     let proof = r#"
     {
       "type": "test-proof",
@@ -49,7 +52,7 @@ mod tests {
     "#;
     let proof: Proof = Proof::from_json(proof).expect("proof deserialization failed");
 
-    assert_eq!(proof._type, "test-proof");
+    assert_eq!(proof.type_, "test-proof");
     let value = proof
       .properties
       .get(&"signature".to_owned())
@@ -58,7 +61,7 @@ mod tests {
   }
 
   #[test]
-  fn test_credential_from_json() {
+  fn test_credential_with_proof_from_json() {
     let credential_json = r#"
     {
       "@context": [
@@ -85,7 +88,7 @@ mod tests {
 
     let proof: Proof = Credential::<Object>::from_json(credential_json).unwrap().proof.unwrap();
 
-    assert_eq!(proof._type, "RsaSignature2018");
+    assert_eq!(proof.type_, "RsaSignature2018");
     let value = proof
       .properties
       .get(&"proofPurpose".to_owned())
