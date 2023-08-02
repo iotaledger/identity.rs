@@ -226,7 +226,7 @@ new CopyWebPlugin({
 ### Web Usage
 
 ```typescript
-import * as sdk from "@iota/sdk-wasm/web";
+import init, { Client } from "@iota/sdk-wasm/web";
 import * as identity from "@iota/identity-wasm/web";
 
 // The endpoint of the IOTA node to use.
@@ -241,7 +241,7 @@ const EXAMPLE_JWK = new identity.Jwk({
 /** Demonstrate how to create a DID Document. */
 async function createDocument() {
   // Create a new client with the given network endpoint.
-  const iotaClient = new sdk.Client({
+  const iotaClient = new Client({
     primaryNode: API_ENDPOINT,
     localPow: true,
   });
@@ -280,8 +280,7 @@ async function createDocument() {
   console.log(`Created document `, JSON.stringify(document.toJSON(), null, 2));
 }
 
-sdk
-  .init()
+init()
   .then(() => identity.init())
   .then(() => {
     await createDocument();
@@ -290,7 +289,7 @@ sdk
 // or
 
 (async () => {
-  await sdk.init();
+  await init();
   await identity.init();
 
   await createDocument();
