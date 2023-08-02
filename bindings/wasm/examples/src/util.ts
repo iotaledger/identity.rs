@@ -72,7 +72,7 @@ export async function createDid(client: Client, secretManager: SecretManagerType
 /** Request funds from the faucet API, if needed, and wait for them to show in the wallet. */
 export async function ensureAddressHasFunds(client: Client, addressBech32: string) {
     let balance = await getAddressBalance(client, addressBech32);
-    if (balance > 0) {
+    if (balance > BigInt(0)) {
         return;
     }
 
@@ -83,14 +83,14 @@ export async function ensureAddressHasFunds(client: Client, addressBech32: strin
         await new Promise(f => setTimeout(f, 5000));
 
         let balance = await getAddressBalance(client, addressBech32);
-        if (balance > 0) {
+        if (balance > BigInt(0)) {
             break;
         }
     }
 }
 
 /** Returns the balance of the given Bech32-encoded address. */
-async function getAddressBalance(client: Client, addressBech32: string): Promise<number> {
+async function getAddressBalance(client: Client, addressBech32: string): Promise<bigint> {
     const outputIds: IOutputsResponse = await client.basicOutputIds([
         { address: addressBech32 },
         { hasExpiration: false },
@@ -99,9 +99,9 @@ async function getAddressBalance(client: Client, addressBech32: string): Promise
     ]);
     const outputs = await client.getOutputs(outputIds.items);
 
-    let totalAmount = 0;
+    let totalAmount = BigInt(0);
     for (const output of outputs) {
-        totalAmount += Number(output.output.getAmount());
+        totalAmount += output.output.getAmount();
     }
 
     return totalAmount;
