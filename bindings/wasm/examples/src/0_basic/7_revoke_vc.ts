@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     Credential,
     FailFast,
@@ -19,7 +17,7 @@ import {
     Storage,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
-import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
+import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -41,9 +39,9 @@ export async function revokeVC() {
     });
     const didClient = new IotaIdentityClient(client);
 
-    // Generate a random mnemonic for our wallet.
+    // Generate a random mnemonic for the issuer.
     const issuerSecretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
@@ -57,6 +55,11 @@ export async function revokeVC() {
         issuerStorage,
     );
 
+    // Generate a random mnemonic for Alice.
+    const aliceSecretManager: MnemonicSecretManager = {
+        mnemonic: Utils.generateMnemonic(),
+    };
+
     // Create an identity for the holder, in this case also the subject.
     const aliceStorage: Storage = new Storage(
         new JwkMemStore(),
@@ -64,7 +67,7 @@ export async function revokeVC() {
     );
     let { document: aliceDocument } = await createDid(
         client,
-        issuerSecretManager,
+        aliceSecretManager,
         aliceStorage,
     );
 
@@ -77,17 +80,19 @@ export async function revokeVC() {
     issuerDocument.insertService(service);
 
     // Resolve the latest output and update it with the given document.
-    let aliasOutput: IAliasOutput = await didClient.updateDidOutput(
+    let aliasOutput: AliasOutput = await didClient.updateDidOutput(
         issuerDocument,
     );
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     let rentStructure: IRent = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(
-        aliasOutput,
-        rentStructure,
-    ).toString();
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
 
     // Publish the document.
     issuerDocument = await didClient.publishDidOutput(
@@ -148,10 +153,13 @@ export async function revokeVC() {
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(
-        aliasOutput,
-        rentStructure,
-    ).toString();
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
+
     const update2: IotaDocument = await didClient.publishDidOutput(
         issuerSecretManager,
         aliasOutput,
@@ -184,10 +192,13 @@ export async function revokeVC() {
     // Publish the changes.
     aliasOutput = await didClient.updateDidOutput(issuerDocument);
     rentStructure = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(
-        aliasOutput,
-        rentStructure,
-    ).toString();
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
+
     issuerDocument = await didClient.publishDidOutput(
         issuerSecretManager,
         aliasOutput,

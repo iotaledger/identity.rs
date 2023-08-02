@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager, SecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDID,
     IotaDocument,
@@ -13,7 +11,7 @@ import {
     MethodScope,
     Storage,
 } from "@iota/identity-wasm/node";
-import { Bech32Helper, IAliasOutput } from "@iota/iota.js";
+import { AliasOutput, Client, MnemonicSecretManager, SecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrate how to create a DID Document and publish it in a new Alias Output. */
@@ -32,16 +30,20 @@ export async function createIdentity(): Promise<{
     // Get the Bech32 human-readable part (HRP) of the network.
     const networkHrp: string = await didClient.getNetworkHrp();
 
-    // Generate a random mnemonic for our wallet.
-    const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+    const mnemonicSecretManager: MnemonicSecretManager = {
+        mnemonic: Utils.generateMnemonic(),
     };
-    const walletAddressBech32 = (await client.generateAddresses(secretManager, {
+
+    // Generate a random mnemonic for our wallet.
+    const secretManager: SecretManager = new SecretManager(mnemonicSecretManager);
+
+    const walletAddressBech32 = (await secretManager.generateEd25519Addresses({
         accountIndex: 0,
         range: {
             start: 0,
             end: 1,
         },
+        bech32Hrp: networkHrp,
     }))[0];
     console.log("Wallet address Bech32:", walletAddressBech32);
 
@@ -64,12 +66,12 @@ export async function createIdentity(): Promise<{
 
     // Construct an Alias Output containing the DID document, with the wallet address
     // set as both the state controller and governor.
-    const address = Bech32Helper.addressFromBech32(walletAddressBech32, networkHrp);
-    const aliasOutput: IAliasOutput = await didClient.newDidOutput(address, document);
+    const address = Utils.parseBech32Address(walletAddressBech32);
+    const aliasOutput: AliasOutput = await didClient.newDidOutput(address, document);
     console.log("Alias Output:", JSON.stringify(aliasOutput, null, 2));
 
     // Publish the Alias Output and get the published DID document.
-    const published = await didClient.publishDidOutput(secretManager, aliasOutput);
+    const published = await didClient.publishDidOutput(mnemonicSecretManager, aliasOutput);
     console.log("Published DID document:", JSON.stringify(published, null, 2));
 
     return {

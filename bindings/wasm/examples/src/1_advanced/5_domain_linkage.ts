@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     CoreDID,
     Credential,
@@ -21,7 +19,7 @@ import {
     Storage,
     Timestamp,
 } from "@iota/identity-wasm/node";
-import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
+import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -36,7 +34,7 @@ export async function domainLinkage() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
@@ -175,12 +173,17 @@ async function publishDocument(
     document: IotaDocument,
 ): Promise<IotaDocument> {
     // Resolve the latest output and update it with the given document.
-    const aliasOutput: IAliasOutput = await client.updateDidOutput(document);
+    let aliasOutput: AliasOutput = await client.updateDidOutput(document);
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     const rentStructure: IRent = await client.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
+    aliasOutput = await client.client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
 
     // Publish the output.
     const updated: IotaDocument = await client.publishDidOutput(secretManager, aliasOutput);

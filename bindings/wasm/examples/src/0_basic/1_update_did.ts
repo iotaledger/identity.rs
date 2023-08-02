@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDocument,
     IotaIdentityClient,
@@ -16,7 +14,7 @@ import {
     Timestamp,
     VerificationMethod,
 } from "@iota/identity-wasm/node";
-import { IAliasOutput, IRent, TransactionHelper } from "@iota/iota.js";
+import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to update a DID document in an existing Alias Output. */
@@ -29,7 +27,7 @@ export async function updateIdentity() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
@@ -71,12 +69,18 @@ export async function updateIdentity() {
     await document.purgeMethod(storage, originalMethod?.id());
 
     // Resolve the latest output and update it with the given document.
-    const aliasOutput: IAliasOutput = await didClient.updateDidOutput(document);
+    let aliasOutput: AliasOutput = await didClient.updateDidOutput(document);
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
     const rentStructure: IRent = await didClient.getRentStructure();
-    aliasOutput.amount = TransactionHelper.getStorageDeposit(aliasOutput, rentStructure).toString();
+
+    aliasOutput = await client.buildAliasOutput({
+        ...aliasOutput,
+        amount: Utils.computeStorageDeposit(aliasOutput, rentStructure),
+        aliasId: aliasOutput.getAliasId(),
+        unlockConditions: aliasOutput.getUnlockConditions(),
+    });
 
     // Publish the output.
     const updated: IotaDocument = await didClient.publishDidOutput(secretManager, aliasOutput);
