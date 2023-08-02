@@ -69,7 +69,7 @@ export async function updateIdentity() {
     await document.purgeMethod(storage, originalMethod?.id());
 
     // Resolve the latest output and update it with the given document.
-    var aliasOutput: AliasOutput = await didClient.updateDidOutput(document);
+    let aliasOutput: AliasOutput = await didClient.updateDidOutput(document);
 
     // Because the size of the DID document increased, we have to increase the allocated storage deposit.
     // This increases the deposit amount to the new minimum.
