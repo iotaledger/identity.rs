@@ -32,6 +32,7 @@ jobs:
       - name: Release to npm
         uses: './.github/actions/publish/publish-wasm'
         with:
+          dry-run: ${{ github.event.inputs.dry-run }}
           input-artifact-name: identity-wasm-bindings-build
           npm-token: ${{ secrets.NPM_TOKEN }}
           tag: ${{ github.event.inputs.tag }}
@@ -55,6 +56,7 @@ jobs:
         - name: Release to npm
           uses: './.github/actions/publish/publish-stronghold-nodejs'
           with:
-              npm-token: ${{ secrets.NPM_TOKEN }}
-              tag: ${{ github.event.inputs.tag }}
-              input-artifact-name: identity-stronghold-nodejs-bindings-build
+            dry-run: ${{ github.event.inputs.dry-run }}
+            npm-token: ${{ secrets.NPM_TOKEN }}
+            tag: ${{ github.event.inputs.tag }}
+            input-artifact-name: identity-stronghold-nodejs-bindings-build
