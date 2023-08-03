@@ -1,6 +1,6 @@
 {
   "name": "@iota/identity-stronghold-nodejs",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -52,6 +52,6 @@
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit"
   },
   "peerDependencies": {
-    "@iota/identity-wasm": "0.6.0"
+    "@iota/identity-wasm": "0.6.1"
   }
 }
