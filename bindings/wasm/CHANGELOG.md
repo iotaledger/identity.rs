@@ -1,5 +1,15 @@
 # Changelog
 
+## [wasm-v0.6.1](https://github.com/iotaledger/identity.rs/tree/wasm-v0.6.1) (2023-08-03)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.6.0...wasm-v0.6.1)
+
+This release updates Stronghold to the [latest major version](https://github.com/iotaledger/stronghold.rs/releases/tag/iota-stronghold-v2.0.0) to improve the security of the contained data.
+\n\n
+The new Stronghold release introduces an updated Snapshot format and requires old Snapshots to be migrated to the new format. You can find detailed migration instructions [here](TBD).
+
+### Patch
+
 ## [wasm-v0.6.0](https://github.com/iotaledger/identity.rs/tree/wasm-v0.6.0) (2022-06-15)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0...wasm-v0.6.0)
