@@ -77,9 +77,10 @@ impl Service {
     &self.id
   }
 
-  /// Sets the `Service` id.
+  /// Sets the `Service`'s id.
   ///
   /// # Errors
+  ///
   /// [`Error::MissingIdFragment`] if there is no fragment on the [`DIDUrl`].
   pub fn set_id(&mut self, id: DIDUrl) -> Result<()> {
     if id.fragment().unwrap_or_default().is_empty() {

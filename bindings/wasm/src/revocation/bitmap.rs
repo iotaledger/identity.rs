@@ -4,10 +4,10 @@
 use std::borrow::Cow;
 
 use identity_iota::credential::RevocationBitmap;
-use identity_iota::document::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
 
-use crate::did::UServiceEndpoint;
+use crate::did::WasmDIDUrl;
+use crate::did::WasmService;
 use crate::error::Result;
 use crate::error::WasmError;
 use crate::error::WasmResult;
@@ -19,7 +19,7 @@ pub struct WasmRevocationBitmap(pub(crate) RevocationBitmap);
 #[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = RevocationBitmap)]
 impl WasmRevocationBitmap {
-  /// Creates a new `RevocationBitmap` instance.
+  /// Creates a new {@link RevocationBitmap} instance.
   #[wasm_bindgen(constructor)]
   pub fn new() -> Self {
     WasmRevocationBitmap(RevocationBitmap::new())
@@ -61,17 +61,25 @@ impl WasmRevocationBitmap {
       .map_err(|err| WasmError::new(Cow::Borrowed("TryFromIntError"), Cow::Owned(err.to_string())).into())
   }
 
-  /// Return the bitmap as a data url embedded in a service endpoint.
-  #[wasm_bindgen(js_name = toEndpoint)]
-  pub fn to_enpdoint(&self) -> Result<UServiceEndpoint> {
-    self.0.to_endpoint().map(UServiceEndpoint::from).wasm_result()
+  /// Return a `Service` with:
+  /// - the service's id set to `serviceId`,
+  /// - of type `RevocationBitmap2022`,
+  /// - and with the bitmap embedded in a data url in the service's endpoint.
+  #[wasm_bindgen(js_name = toService)]
+  #[allow(non_snake_case)]
+  pub fn to_service(&self, serviceId: &WasmDIDUrl) -> Result<WasmService> {
+    self
+      .0
+      .to_service(serviceId.0.clone())
+      .map(WasmService::from)
+      .wasm_result()
   }
 
-  /// Construct a `RevocationBitmap` from a data `url`.
+  /// Try to construct a {@link RevocationBitmap} from a service
+  /// if it is a valid Revocation Bitmap Service.
   #[wasm_bindgen(js_name = fromEndpoint)]
-  pub fn from_endpoint(endpoint: UServiceEndpoint) -> Result<WasmRevocationBitmap> {
-    let endpoint: ServiceEndpoint = endpoint.into_serde().wasm_result()?;
-    RevocationBitmap::from_endpoint(&endpoint).map(Self).wasm_result()
+  pub fn from_service(service: &WasmService) -> Result<WasmRevocationBitmap> {
+    RevocationBitmap::try_from(&service.0).map(Self).wasm_result()
   }
 }
 

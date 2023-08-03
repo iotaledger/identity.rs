@@ -6,7 +6,6 @@ use identity_iota::iota::block::address::Address;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::RentStructure;
-use identity_iota::iota::block::output::RentStructureBuilder;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
@@ -24,20 +23,21 @@ use crate::iota::WasmIotaDocument;
 // `IAliasOutput`, `AddressTypes`, and `IRent` are external interfaces.
 // See the custom TypeScript section in `identity_client.rs` for the first import statement.
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import type { AddressTypes } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str =
+  r#"import type { AliasOutputBuilderParams, Address, IRent } from '~sdk-wasm';"#;
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<IAliasOutput>")]
-  pub type PromiseAliasOutput;
+  #[wasm_bindgen(typescript_type = "Promise<AliasOutputBuilderParams>")]
+  pub type PromiseAliasOutputBuilderParams;
 
   #[wasm_bindgen(typescript_type = "Promise<IotaDocument>")]
   pub type PromiseIotaDocument;
 
-  #[wasm_bindgen(typescript_type = "AddressTypes")]
-  pub type AddressTypes;
+  #[wasm_bindgen(typescript_type = "Address")]
+  pub type WasmAddress;
 
-  #[wasm_bindgen(typescript_type = "IAliasOutput")]
-  pub type IAliasOutput;
+  #[wasm_bindgen(typescript_type = "AliasOutputBuilderParams")]
+  pub type WasmAliasOutput;
 
   #[wasm_bindgen(typescript_type = "IRent")]
   pub type IRent;
@@ -62,12 +62,12 @@ impl WasmIotaIdentityClientExt {
   #[wasm_bindgen(js_name = newDidOutput)]
   pub fn new_did_output(
     client: WasmIotaIdentityClient,
-    address: AddressTypes,
+    address: WasmAddress,
     document: &WasmIotaDocument,
     rentStructure: Option<IRent>,
-  ) -> Result<PromiseAliasOutput> {
+  ) -> Result<PromiseAliasOutputBuilderParams> {
     let address_dto: AddressDto = address.into_serde().wasm_result()?;
-    let address: Address = Address::try_from(&address_dto)
+    let address: Address = Address::try_from(address_dto.clone())
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("newDidOutput failed to decode Address: {err}: {address_dto:?}"))
       })
@@ -76,11 +76,7 @@ impl WasmIotaIdentityClientExt {
 
     let promise: Promise = future_to_promise(async move {
       let rent_structure: Option<RentStructure> = rentStructure
-        .map(|rent| {
-          rent
-            .into_serde::<RentStructureBuilder>()
-            .map(RentStructureBuilder::finish)
-        })
+        .map(|rent| rent.into_serde::<RentStructure>())
         .transpose()
         .wasm_result()?;
 
@@ -93,7 +89,7 @@ impl WasmIotaIdentityClientExt {
     });
 
     // WARNING: this does not validate the return type. Check carefully.
-    Ok(promise.unchecked_into::<PromiseAliasOutput>())
+    Ok(promise.unchecked_into::<PromiseAliasOutputBuilderParams>())
   }
 
   /// Fetches the associated Alias Output and updates it with `document` in its state metadata.
@@ -102,7 +98,10 @@ impl WasmIotaIdentityClientExt {
   ///
   /// NOTE: this does *not* publish the updated Alias Output.
   #[wasm_bindgen(js_name = updateDidOutput)]
-  pub fn update_did_output(client: WasmIotaIdentityClient, document: &WasmIotaDocument) -> Result<PromiseAliasOutput> {
+  pub fn update_did_output(
+    client: WasmIotaIdentityClient,
+    document: &WasmIotaDocument,
+  ) -> Result<PromiseAliasOutputBuilderParams> {
     let document: IotaDocument = document.0.blocking_read().clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = IotaIdentityClientExt::update_did_output(&client, document)
@@ -114,7 +113,7 @@ impl WasmIotaIdentityClientExt {
     });
 
     // WARNING: this does not validate the return type. Check carefully.
-    Ok(promise.unchecked_into::<PromiseAliasOutput>())
+    Ok(promise.unchecked_into::<PromiseAliasOutputBuilderParams>())
   }
 
   /// Removes the DID document from the state metadata of its Alias Output,
@@ -126,7 +125,10 @@ impl WasmIotaIdentityClientExt {
   ///
   /// NOTE: this does *not* publish the updated Alias Output.
   #[wasm_bindgen(js_name = deactivateDidOutput)]
-  pub fn deactivate_did_output(client: WasmIotaIdentityClient, did: &WasmIotaDID) -> Result<PromiseAliasOutput> {
+  pub fn deactivate_did_output(
+    client: WasmIotaIdentityClient,
+    did: &WasmIotaDID,
+  ) -> Result<PromiseAliasOutputBuilderParams> {
     let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = IotaIdentityClientExt::deactivate_did_output(&client, &did)
@@ -138,7 +140,7 @@ impl WasmIotaIdentityClientExt {
     });
 
     // WARNING: this does not validate the return type. Check carefully.
-    Ok(promise.unchecked_into::<PromiseAliasOutput>())
+    Ok(promise.unchecked_into::<PromiseAliasOutputBuilderParams>())
   }
 
   /// Resolve a {@link IotaDocument}. Returns an empty, deactivated document if the state metadata
@@ -160,7 +162,10 @@ impl WasmIotaIdentityClientExt {
 
   /// Fetches the `IAliasOutput` associated with the given DID.
   #[wasm_bindgen(js_name = resolveDidOutput)]
-  pub fn resolve_did_output(client: WasmIotaIdentityClient, did: &WasmIotaDID) -> Result<PromiseAliasOutput> {
+  pub fn resolve_did_output(
+    client: WasmIotaIdentityClient,
+    did: &WasmIotaDID,
+  ) -> Result<PromiseAliasOutputBuilderParams> {
     let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = IotaIdentityClientExt::resolve_did_output(&client, &did)
@@ -172,6 +177,6 @@ impl WasmIotaIdentityClientExt {
     });
 
     // WARNING: this does not validate the return type. Check carefully.
-    Ok(promise.unchecked_into::<PromiseAliasOutput>())
+    Ok(promise.unchecked_into::<PromiseAliasOutputBuilderParams>())
   }
 }

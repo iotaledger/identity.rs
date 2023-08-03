@@ -16,19 +16,19 @@ pub struct WasmMethodData(pub(crate) MethodData);
 
 #[wasm_bindgen(js_class = MethodData)]
 impl WasmMethodData {
-  /// Creates a new `MethodData` variant with Base58-BTC encoded content.
+  /// Creates a new {@link MethodData} variant with Base58-BTC encoded content.
   #[wasm_bindgen(js_name = newBase58)]
   pub fn new_base58(data: Vec<u8>) -> Self {
     Self(MethodData::new_base58(data))
   }
 
-  /// Creates a new `MethodData` variant with Multibase-encoded content.
+  /// Creates a new {@link MethodData} variant with Multibase-encoded content.
   #[wasm_bindgen(js_name = newMultibase)]
   pub fn new_multibase(data: Vec<u8>) -> Self {
     Self(MethodData::new_multibase(data))
   }
 
-  /// Creates a new `MethodData` variant consisting of the given `key`.
+  /// Creates a new {@link MethodData} variant consisting of the given `key`.
   ///
   /// ### Errors
   /// An error is thrown if the given `key` contains any private components.
@@ -45,16 +45,22 @@ impl WasmMethodData {
     Ok(Self(MethodData::PublicKeyJwk(key.0.clone())))
   }
 
-  /// Returns a `Uint8Array` containing the decoded bytes of the `MethodData`.
+  /// Returns a `Uint8Array` containing the decoded bytes of the {@link MethodData}.
   ///
-  /// This is generally a public key identified by a `MethodData` value.
+  /// This is generally a public key identified by a {@link MethodData} value.
   ///
   /// ### Errors
-  /// Decoding can fail if `MethodData` has invalid content or cannot be
+  /// Decoding can fail if {@link MethodData} has invalid content or cannot be
   /// represented as a vector of bytes.
   #[wasm_bindgen(js_name = tryDecode)]
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     self.0.try_decode().wasm_result()
+  }
+
+  /// Returns the wrapped {@link Jwk} if the format is `PublicKeyJwk`.
+  #[wasm_bindgen(js_name = tryPublicKeyJwk)]
+  pub fn try_public_key_jwk(&self) -> Result<WasmJwk> {
+    self.0.try_public_key_jwk().cloned().map(WasmJwk::from).wasm_result()
   }
 }
 

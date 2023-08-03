@@ -5,7 +5,7 @@ use crate::error::WasmResult;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
-use identity_iota::credential::Issuer;
+use identity_iota::did::CoreDID;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 
@@ -48,16 +48,16 @@ extern "C" {
 #[serde(rename_all = "camelCase")]
 #[typescript(name = "IDomainLinkageCredential", readonly, optional)]
 struct IDomainLinkageCredentialHelper {
-  /// A reference to the issuer of the `Credential`.
-  #[typescript(optional = false, type = "string | CoreDID | IotaDID | Issuer")]
-  issuer: Option<Issuer>,
-  /// A timestamp of when the `Credential` becomes valid. Defaults to the current datetime.
+  /// A reference to the issuer of the {@link Credential}.
+  #[typescript(optional = false, type = "CoreDID | IotaDID")]
+  issuer: Option<CoreDID>,
+  /// A timestamp of when the {@link Credential} becomes valid. Defaults to the current datetime.
   #[typescript(name = "issuanceDate", type = "Timestamp")]
   issuance_date: Option<Timestamp>,
-  /// A timestamp of when the `Credential` should no longer be considered valid.
+  /// A timestamp of when the {@link Credential} should no longer be considered valid.
   #[typescript(optional = false, name = "expirationDate", type = "Timestamp")]
   expiration_date: Option<Timestamp>,
-  /// The origin, on which the `Credential` is issued.
+  /// The origin, on which the {@link Credential} is issued.
   #[typescript(optional = false, name = "origin", type = "string")]
   origin: Option<Url>,
 }

@@ -35,7 +35,6 @@ pub trait IotaIdentityClient {
 ///
 /// This trait is not intended to be implemented directly, a blanket implementation is
 /// provided for [`IotaIdentityClient`] implementers.
-
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 pub trait IotaIdentityClientExt: IotaIdentityClient {
@@ -46,7 +45,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// `rent_structure`, which will be fetched from the node if not provided.
   /// The returned Alias Output can be further customised before publication, if desired.
   ///
-  /// NOTE: this does *not* publish the Alias Output.
+  /// NOTE: This does *not* publish the Alias Output.
   ///
   /// # Errors
   ///
@@ -75,7 +74,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         address,
       )))
-      .finish(self.get_token_supply().await?)
+      .finish()
       .map_err(Error::AliasOutputBuildError)
   }
 
@@ -83,7 +82,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   /// The storage deposit on the output is left unchanged. If the size of the document increased,
   /// the amount should be increased manually.
   ///
-  /// NOTE: this does *not* publish the updated Alias Output.
+  /// NOTE: This does *not* publish the updated Alias Output.
   ///
   /// # Errors
   ///
@@ -100,9 +99,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(id);
     }
 
-    alias_output_builder
-      .finish(self.get_token_supply().await?)
-      .map_err(Error::AliasOutputBuildError)
+    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
   /// Removes the DID document from the state metadata of its Alias Output,
@@ -129,9 +126,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
       alias_output_builder = alias_output_builder.with_alias_id(alias_id);
     }
 
-    alias_output_builder
-      .finish(self.get_token_supply().await?)
-      .map_err(Error::AliasOutputBuildError)
+    alias_output_builder.finish().map_err(Error::AliasOutputBuildError)
   }
 
   /// Resolve a [`IotaDocument`]. Returns an empty, deactivated document if the state metadata
@@ -193,7 +188,7 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
     self
       .get_protocol_parameters()
       .await
-      .map(|parameters| parameters.bech32_hrp().to_owned())
+      .map(|parameters| parameters.bech32_hrp().to_string())
   }
 }
 
@@ -206,7 +201,7 @@ where
   let network_hrp: String = client
     .get_protocol_parameters()
     .await
-    .map(|parameters| parameters.bech32_hrp().to_owned())?;
+    .map(|parameters| parameters.bech32_hrp().to_string())?;
   if did.network_str() != network_hrp.as_str() {
     return Err(Error::NetworkMismatch {
       expected: did.network_str().to_owned(),

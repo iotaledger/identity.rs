@@ -11,8 +11,7 @@ use crate::error::Result;
 
 const ED25519_VERIFICATION_KEY_2018_STR: &str = "Ed25519VerificationKey2018";
 const X25519_KEY_AGREEMENT_KEY_2019_STR: &str = "X25519KeyAgreementKey2019";
-// TODO: Update this if/when the VC-JWT or Data Integrity spec defines a recommendation for use with `VC-JWT`.
-const JWK_METHOD_TYPE: &str = "JWK";
+const JSON_WEB_KEY_METHOD_TYPE: &str = "JsonWebKey";
 
 /// verification method types.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -25,7 +24,7 @@ impl MethodType {
   pub const X25519_KEY_AGREEMENT_KEY_2019: Self = Self(Cow::Borrowed(X25519_KEY_AGREEMENT_KEY_2019_STR));
   /// A verification method for use with JWT verification as prescribed by the [`Jwk`](::identity_jose::jwk::Jwk)
   /// in the [`publicKeyJwk`](crate::MethodData::PublicKeyJwk) entry.
-  pub const JWK: Self = Self(Cow::Borrowed(JWK_METHOD_TYPE));
+  pub const JSON_WEB_KEY: Self = Self(Cow::Borrowed(JSON_WEB_KEY_METHOD_TYPE));
 }
 
 impl MethodType {
@@ -53,7 +52,7 @@ impl FromStr for MethodType {
     match string {
       ED25519_VERIFICATION_KEY_2018_STR => Ok(Self::ED25519_VERIFICATION_KEY_2018),
       X25519_KEY_AGREEMENT_KEY_2019_STR => Ok(Self::X25519_KEY_AGREEMENT_KEY_2019),
-      JWK_METHOD_TYPE => Ok(Self::JWK),
+      JSON_WEB_KEY_METHOD_TYPE => Ok(Self::JSON_WEB_KEY),
       _ => Ok(Self(Cow::Owned(string.to_owned()))),
     }
   }

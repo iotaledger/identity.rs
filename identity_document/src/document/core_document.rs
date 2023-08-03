@@ -16,16 +16,8 @@ use serde::Serialize;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
-use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::Ed25519;
-use identity_core::crypto::GetSignature;
-use identity_core::crypto::JcsEd25519;
-use identity_core::crypto::PrivateKey;
-use identity_core::crypto::Proof;
-use identity_core::crypto::ProofPurpose;
-use identity_core::crypto::Verifier;
 use serde::Serializer;
 
 use crate::document::DocumentBuilder;
@@ -34,17 +26,12 @@ use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
-use crate::verifiable::DocumentSigner;
 use crate::verifiable::JwsVerificationOptions;
-use crate::verifiable::VerifierOptions;
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_verification::MethodRef;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
-use identity_verification::MethodType;
-use identity_verification::MethodUriType;
-use identity_verification::TryMethod;
 use identity_verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -450,14 +437,14 @@ impl CoreDocument {
     Ok(())
   }
 
-  /// Removes and returns the [`VerificationMethod`] from the document.
+  /// Removes and returns the [`VerificationMethod`] identified by `did_url` from the document.
   ///
   /// # Note
   ///
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
-  pub fn remove_method(&mut self, did: &DIDUrl) -> Option<VerificationMethod> {
-    self.remove_method_and_scope(did).map(|(method, _scope)| method)
+  pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
+    self.remove_method_and_scope(did_url).map(|(method, _scope)| method)
   }
 
   /// Removes and returns the [`VerificationMethod`] from the document. The [`MethodScope`] under which the method was
@@ -467,33 +454,33 @@ impl CoreDocument {
   ///
   /// All _references to the method_ found in the document will be removed.
   /// This includes cases where the reference is to a method contained in another DID document.
-  pub fn remove_method_and_scope(&mut self, did: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
+  pub fn remove_method_and_scope(&mut self, did_url: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
     for (method_ref, scope) in [
-      self.data.authentication.remove(did).map(|method_ref| {
+      self.data.authentication.remove(did_url).map(|method_ref| {
         (
           method_ref,
           MethodScope::VerificationRelationship(MethodRelationship::Authentication),
         )
       }),
-      self.data.assertion_method.remove(did).map(|method_ref| {
+      self.data.assertion_method.remove(did_url).map(|method_ref| {
         (
           method_ref,
           MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod),
         )
       }),
-      self.data.key_agreement.remove(did).map(|method_ref| {
+      self.data.key_agreement.remove(did_url).map(|method_ref| {
         (
           method_ref,
           MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement),
         )
       }),
-      self.data.capability_delegation.remove(did).map(|method_ref| {
+      self.data.capability_delegation.remove(did_url).map(|method_ref| {
         (
           method_ref,
           MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation),
         )
       }),
-      self.data.capability_invocation.remove(did).map(|method_ref| {
+      self.data.capability_invocation.remove(did_url).map(|method_ref| {
         (
           method_ref,
           MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation),
@@ -513,7 +500,7 @@ impl CoreDocument {
     self
       .data
       .verification_method
-      .remove(did)
+      .remove(did_url)
       .map(|method| (method, MethodScope::VerificationMethod))
   }
 
@@ -539,6 +526,7 @@ impl CoreDocument {
   pub fn remove_service(&mut self, id: &DIDUrl) -> Option<Service> {
     self.data.service.remove(id)
   }
+
   /// Attaches the relationship to the method resolved by `method_query`.
   ///
   /// # Errors
@@ -578,6 +566,7 @@ impl CoreDocument {
   }
 
   /// Detaches the relationship from the method resolved by `method_query`.
+  /// Returns `true` if the relationship was found and removed, `false` otherwise.
   ///
   /// # Errors
   ///
@@ -588,7 +577,6 @@ impl CoreDocument {
   ///
   /// If the method is referenced in the given scope, but the document does not contain the referenced verification
   /// method, then the reference will persist in the document (i.e. it is not removed).
-  // TODO: Is this the behaviour we want?
   pub fn detach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
@@ -694,10 +682,14 @@ impl CoreDocument {
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
-  /// provided `query` and the verification relationship specified by `scope` if present.
+  /// provided `method_query` and the verification relationship specified by `scope` if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
   // whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
+  pub fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    method_query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -706,38 +698,40 @@ impl CoreDocument {
         let resolve_ref_helper = |method_ref: &'me MethodRef| self.resolve_method_ref(method_ref);
 
         match scope {
-          MethodScope::VerificationMethod => self.data.verification_method.query(query.into()),
+          MethodScope::VerificationMethod => self.data.verification_method.query(method_query.into()),
           MethodScope::VerificationRelationship(MethodRelationship::Authentication) => self
             .data
             .authentication
-            .query(query.into())
+            .query(method_query.into())
             .and_then(resolve_ref_helper),
           MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => self
             .data
             .assertion_method
-            .query(query.into())
+            .query(method_query.into())
             .and_then(resolve_ref_helper),
-          MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
-            self.data.key_agreement.query(query.into()).and_then(resolve_ref_helper)
-          }
+          MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => self
+            .data
+            .key_agreement
+            .query(method_query.into())
+            .and_then(resolve_ref_helper),
           MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
             .data
             .capability_delegation
-            .query(query.into())
+            .query(method_query.into())
             .and_then(resolve_ref_helper),
           MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
             .data
             .capability_invocation
-            .query(query.into())
+            .query(method_query.into())
             .and_then(resolve_ref_helper),
         }
       }
-      None => self.resolve_method_inner(query.into()),
+      None => self.resolve_method_inner(method_query.into()),
     }
   }
 
   /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
-  /// matching the provided `query`.
+  /// matching the provided `method_query`.
   ///
   /// # Warning
   ///
@@ -746,7 +740,7 @@ impl CoreDocument {
   // whose ids are of the form <did different from this document's>#<fragment>.
   pub fn resolve_method_mut<'query, 'me, Q>(
     &'me mut self,
-    query: Q,
+    method_query: Q,
     scope: Option<MethodScope>,
   ) -> Option<&'me mut VerificationMethod>
   where
@@ -754,35 +748,35 @@ impl CoreDocument {
   {
     match scope {
       Some(scope) => match scope {
-        MethodScope::VerificationMethod => self.data.verification_method.query_mut(query.into()),
+        MethodScope::VerificationMethod => self.data.verification_method.query_mut(method_query.into()),
         MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
-          method_ref_mut_helper!(self, authentication, query)
+          method_ref_mut_helper!(self, authentication, method_query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
-          method_ref_mut_helper!(self, assertion_method, query)
+          method_ref_mut_helper!(self, assertion_method, method_query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
-          method_ref_mut_helper!(self, key_agreement, query)
+          method_ref_mut_helper!(self, key_agreement, method_query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => {
-          method_ref_mut_helper!(self, capability_delegation, query)
+          method_ref_mut_helper!(self, capability_delegation, method_query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => {
-          method_ref_mut_helper!(self, capability_invocation, query)
+          method_ref_mut_helper!(self, capability_invocation, method_query)
         }
       },
-      None => self.resolve_method_mut_inner(query.into()),
+      None => self.resolve_method_mut_inner(method_query.into()),
     }
   }
 
-  /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
+  /// Returns the first [`Service`] with an `id` property matching the provided `service_query`, if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
   // services whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
+  pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&Service>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.service().query(query.into())
+    self.service().query(service_query.into())
   }
 
   #[doc(hidden)]
@@ -912,93 +906,6 @@ impl CoreDocument {
   }
 }
 
-impl CoreDocument {
-  /// Verifies the signature of the provided `data` was created using a verification method
-  /// in this DID Document.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the verification operation fails.
-  pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    let signature: &Proof = data.signature().ok_or(Error::InvalidSignature("missing signature"))?;
-
-    // Retrieve the method used to create the signature and check it has the required verification
-    // method relationship (purpose takes precedence over method_scope).
-    let purpose_scope = options.purpose.map(|purpose| match purpose {
-      ProofPurpose::AssertionMethod => MethodScope::assertion_method(),
-      ProofPurpose::Authentication => MethodScope::authentication(),
-    });
-    let method: &VerificationMethod = match (purpose_scope, options.method_scope) {
-      (Some(purpose_scope), _) => self
-        .resolve_method(signature, Some(purpose_scope))
-        .ok_or(Error::InvalidSignature("method with purpose scope not found"))?,
-      (None, Some(scope)) => self
-        .resolve_method(signature, Some(scope))
-        .ok_or(Error::InvalidSignature("method with specified scope not found"))?,
-      (None, None) => self
-        .resolve_method(signature, None)
-        .ok_or(Error::InvalidSignature("method not found"))?,
-    };
-
-    // Check method type.
-    if let Some(ref method_types) = options.method_type {
-      if !method_types.is_empty() && !method_types.contains(method.type_()) {
-        return Err(Error::InvalidSignature("invalid method type"));
-      }
-    }
-
-    // Check challenge.
-    if options.challenge.is_some() && options.challenge != signature.challenge {
-      return Err(Error::InvalidSignature("invalid challenge"));
-    }
-
-    // Check domain.
-    if options.domain.is_some() && options.domain != signature.domain {
-      return Err(Error::InvalidSignature("invalid domain"));
-    }
-
-    // Check purpose.
-    if options.purpose.is_some() && options.purpose != signature.purpose {
-      return Err(Error::InvalidSignature("invalid purpose"));
-    }
-
-    // Check expired.
-    if let Some(expires) = signature.expires {
-      if !options.allow_expired.unwrap_or(false) && Timestamp::now_utc() > expires {
-        return Err(Error::InvalidSignature("expired"));
-      }
-    }
-
-    // Check signature.
-    Self::do_verify(method, data)
-  }
-
-  /// Verifies the signature of the provided data matches the public key data from the given
-  /// verification method.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the verification operation fails.
-  fn do_verify<X>(method: &VerificationMethod, data: &X) -> Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    let public_key: Vec<u8> = method.data().try_decode().map_err(Error::InvalidKeyData)?;
-
-    if method.type_() == &MethodType::ED25519_VERIFICATION_KEY_2018 {
-      JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
-      Ok(())
-    } else {
-      Err(Error::InvalidMethodType)
-    }
-  }
-}
-
 impl AsRef<CoreDocument> for CoreDocument {
   fn as_ref(&self) -> &CoreDocument {
     self
@@ -1013,22 +920,6 @@ impl TryFrom<CoreDocumentData> for CoreDocument {
       Err(err) => Err(err),
     }
   }
-}
-
-// =============================================================================
-// Signature Extensions
-// =============================================================================
-
-impl CoreDocument {
-  /// Creates a new [`DocumentSigner`] that can be used to create digital
-  /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_> {
-    DocumentSigner::new(self, private)
-  }
-}
-
-impl TryMethod for CoreDocument {
-  const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
 impl Display for CoreDocument {
@@ -1050,7 +941,6 @@ impl CoreDocument {
   /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
   //
   // NOTE: This is tested in `identity_storage` and `identity_credential`.
-  // TODO: Consider including some unit tests for this method in this crate.
   pub fn verify_jws<'jws, T: JwsVerifier>(
     &self,
     jws: &'jws str,
@@ -1079,7 +969,7 @@ impl CoreDocument {
       .ok_or(Error::MethodNotFound)?
       .data()
       .try_public_key_jwk()
-      .map_err(Error::InvalidKeyData)?;
+      .map_err(Error::InvalidKeyMaterial)?;
 
     validation_item
       .verify(signature_verifier, public_key)
@@ -1092,6 +982,7 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_did::DID;
+  use identity_verification::MethodType;
 
   use crate::service::ServiceBuilder;
   use identity_verification::MethodBuilder;

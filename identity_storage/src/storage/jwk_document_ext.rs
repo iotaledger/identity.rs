@@ -11,13 +11,15 @@ use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
 
 use super::JwkStorageDocumentError as Error;
+use super::JwsSignatureOptions;
 use super::Storage;
 
-use super::JwsSignatureOptions;
 use async_trait::async_trait;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
 use identity_credential::credential::Jwt;
+use identity_credential::presentation::JwtPresentationOptions;
+use identity_credential::presentation::Presentation;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_verification::jose::jws::CompactJwsEncoder;
@@ -30,8 +32,18 @@ use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+
+/// Alias for a `Result` with the error type [`Error`].
 pub type StorageResult<T> = Result<T, Error>;
 
+/// Extension trait for JWK-based operations on DID documents.
+///
+/// This trait is deliberately sealed and cannot be implemented by external crates.
+/// The trait only exists as an extension of existing DID documents implemented in
+/// dependent crates. Because those crates cannot also depend on this crate,
+/// the extension trait is necessary. External crates however should simply wrap the methods
+/// on the trait if they wish to reexport them on their DID document type.
+/// This also allows them to use their own error type on those methods.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkDocumentExt: private::Sealed {
@@ -40,8 +52,7 @@ pub trait JwkDocumentExt: private::Sealed {
   ///
   /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
   /// - The `key_type` must be compatible with the given `storage`. [`Storage`]s are expected to export key type
-  ///   constants
-  /// for that use case.
+  ///   constants for that use case.
   ///
   /// The fragment of the generated method is returned.
   async fn generate_method<K, I>(
@@ -56,15 +67,19 @@ pub trait JwkDocumentExt: private::Sealed {
     K: JwkStorage,
     I: KeyIdStorage;
 
-  /// Remove the method identified by the given fragment from the document and delete the corresponding key material in
+  /// Remove the method identified by the given `id` from the document and delete the corresponding key material in
   /// the given `storage`.
+  ///
+  /// ## Warning
+  ///
+  /// This will delete the key material permanently and irrecoverably.
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
   where
     K: JwkStorage,
     I: KeyIdStorage;
 
-  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
-  /// material in the verification method identified by the given `fragment.
+  /// Sign the arbitrary `payload` according to `options` with the storage backed private key corresponding to the
+  /// public key material in the verification method identified by the given `fragment.
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).   
@@ -79,8 +94,8 @@ pub trait JwkDocumentExt: private::Sealed {
     K: JwkStorage,
     I: KeyIdStorage;
 
-  /// Produces a JWS where the payload is produced from the given `credential`
-  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// Produces a JWT where the payload is produced from the given `credential`
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -95,6 +110,25 @@ pub trait JwkDocumentExt: private::Sealed {
     K: JwkStorage,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
+
+  /// Produces a JWT where the payload is produced from the given `presentation`
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+  ///
+  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  async fn sign_presentation<K, I, CRED, T>(
+    &self,
+    presentation: &Presentation<CRED, T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    signature_options: &JwsSignatureOptions,
+    presentation_options: &JwtPresentationOptions,
+  ) -> StorageResult<Jwt>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync;
 }
 
 mod private {
@@ -146,6 +180,7 @@ macro_rules! generate_method_for_document_type {
       // Extract data from method before inserting it into the DID document.
       let method_digest: MethodDigest = MethodDigest::new(&method).map_err(Error::MethodDigestConstructionError)?;
       let method_id: DIDUrl = method.id().clone();
+
       // The fragment is always set on a method, so this error will never occur.
       let fragment: String = method_id
         .fragment()
@@ -214,6 +249,7 @@ macro_rules! purge_method_for_document_type {
       let key_id_deletion_fut = <I as KeyIdStorage>::delete_key_id(&storage.key_id_storage(), &method_digest);
       let (key_deletion_result, key_id_deletion_result): (KeyStorageResult<()>, KeyIdStorageResult<()>) =
         futures::join!(key_deletion_fut, key_id_deletion_fut);
+
       // Check for any errors that may have occurred. Unfortunately this is somewhat involved.
       match (key_deletion_result, key_id_deletion_result) {
         (Ok(_), Ok(_)) => Ok(()),
@@ -305,16 +341,17 @@ impl JwkDocumentExt for CoreDocument {
     // Obtain the method corresponding to the given fragment.
     let method: &VerificationMethod = self.resolve_method(fragment, None).ok_or(Error::MethodNotFound)?;
     let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
-      return Err(Error::NotPublicKeyJwk)
+      return Err(Error::NotPublicKeyJwk);
     };
-    // Extract JwsAlgorithm
+
+    // Extract JwsAlgorithm.
     let alg: JwsAlgorithm = jwk
       .alg()
       .unwrap_or("")
       .parse()
       .map_err(|_| Error::InvalidJwsAlgorithm)?;
 
-    // create JWS header in accordance with options
+    // Create JWS header in accordance with options.
     let header: JwsHeader = {
       let mut header = JwsHeader::new();
 
@@ -369,7 +406,7 @@ impl JwkDocumentExt for CoreDocument {
       CompactJwsEncodingOptions::Detached
     };
 
-    let jws_encoder: CompactJwsEncoder = CompactJwsEncoder::new_with_options(payload, &header, encoding_options)
+    let jws_encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new_with_options(payload, &header, encoding_options)
       .map_err(|err| Error::EncodingError(err.into()))?;
     let signature = <K as JwkStorage>::sign(storage.key_storage(), &key_id, jws_encoder.signing_input(), jwk)
       .await
@@ -408,9 +445,44 @@ impl JwkDocumentExt for CoreDocument {
       .await
       .map(|jws| Jwt::new(jws.into()))
   }
+
+  async fn sign_presentation<K, I, CRED, T>(
+    &self,
+    presentation: &Presentation<CRED, T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    jws_options: &JwsSignatureOptions,
+    jwt_options: &JwtPresentationOptions,
+  ) -> StorageResult<Jwt>
+  where
+    K: JwkStorage,
+    I: KeyIdStorage,
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync,
+  {
+    if jws_options.detached_payload {
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use detached payload for presentation signing",
+      )));
+    }
+
+    if !jws_options.b64.unwrap_or(true) {
+      // JWTs should not have `b64` set per https://datatracker.ietf.org/doc/html/rfc7797#section-7.
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use `b64 = false` with JWTs",
+      )));
+    }
+    let payload = presentation
+      .serialize_jwt(jwt_options)
+      .map_err(Error::ClaimsSerializationError)?;
+    self
+      .sign_bytes(storage, fragment, payload.as_bytes(), jws_options)
+      .await
+      .map(|jws| Jwt::new(jws.into()))
+  }
 }
 
-/// Attempt to revert key generation if this succeeds the original `source_error` is returned,
+/// Attempt to revert key generation. If this succeeds the original `source_error` is returned,
 /// otherwise [`JwkStorageDocumentError::UndoOperationFailed`] is returned with the `source_error` attached as
 /// `source`.
 async fn try_undo_key_generation<K, I>(storage: &Storage<K, I>, key_id: &KeyId, source_error: Error) -> Error
@@ -438,6 +510,7 @@ mod iota_document {
   use super::*;
   use identity_credential::credential::Jwt;
   use identity_iota_core::IotaDocument;
+
   generate_method_for_document_type!(IotaDocument, generate_method_iota_document);
   purge_method_for_document_type!(IotaDocument, purge_method_iota_document);
 
@@ -499,6 +572,25 @@ mod iota_document {
       self
         .core_document()
         .sign_credential(credential, storage, fragment, options)
+        .await
+    }
+    async fn sign_presentation<K, I, CRED, T>(
+      &self,
+      presentation: &Presentation<CRED, T>,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      options: &JwsSignatureOptions,
+      jwt_options: &JwtPresentationOptions,
+    ) -> StorageResult<Jwt>
+    where
+      K: JwkStorage,
+      I: KeyIdStorage,
+      T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+      CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync,
+    {
+      self
+        .core_document()
+        .sign_presentation(presentation, storage, fragment, options, jwt_options)
         .await
     }
   }

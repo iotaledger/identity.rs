@@ -9,11 +9,6 @@
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
-<dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
-<dd><p>Options to declare validation criteria when validating credentials.</p>
-</dd>
-<dt><a href="#CredentialValidator">CredentialValidator</a></dt>
-<dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
@@ -26,24 +21,23 @@
 <p>Note that having an instance of this type only means the JWS it was constructed from was verified.
 It does not imply anything about a potentially present proof property on the credential itself.</p>
 </dd>
+<dt><a href="#DecodedJwtPresentation">DecodedJwtPresentation</a></dt>
+<dd><p>A cryptographically verified and decoded presentation.</p>
+<p>Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the presentation itself.</p>
+</dd>
 <dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
 <dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
 It can be placed in an origin&#39;s <code>.well-known</code> directory to prove linkage between the origin and a DID.
 See: <a href="https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource">https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource</a></p>
 <p>Note:</p>
 <ul>
-<li>Only <a href="https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format">Linked Data Proof Format</a>
-is supported.</li>
+<li>Only the <a href="https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format">JSON Web Token Proof Format</a></li>
 </ul>
-</dd>
-<dt><a href="#DomainLinkageValidator">DomainLinkageValidator</a></dt>
-<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
 </dd>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
-<dt><a href="#Ed25519">Ed25519</a></dt>
-<dd></dd>
 <dt><a href="#IotaDID">IotaDID</a></dt>
 <dd><p>A DID conforming to the IOTA DID method specification.</p>
 </dd>
@@ -79,7 +73,15 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#JwtCredentialValidator">JwtCredentialValidator</a></dt>
 <dd><p>A type for decoding and validating <code>Credentials</code>.</p>
 </dd>
-<dt><a href="#KeyPair">KeyPair</a></dt>
+<dt><a href="#JwtDomainLinkageValidator">JwtDomainLinkageValidator</a></dt>
+<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
+</dd>
+<dt><a href="#JwtPresentationOptions">JwtPresentationOptions</a></dt>
+<dd></dd>
+<dt><a href="#JwtPresentationValidationOptions">JwtPresentationValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating presentation.</p>
+</dd>
+<dt><a href="#JwtPresentationValidator">JwtPresentationValidator</a></dt>
 <dd></dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
 <dd></dd>
@@ -100,23 +102,6 @@ use the methods <code>pack</code> and <code>unpack</code> instead.</p>
 </dd>
 <dt><a href="#Presentation">Presentation</a></dt>
 <dd></dd>
-<dt><a href="#PresentationValidationOptions">PresentationValidationOptions</a></dt>
-<dd><p>Options to declare validation criteria when validating presentation.</p>
-</dd>
-<dt><a href="#PresentationValidator">PresentationValidator</a></dt>
-<dd></dd>
-<dt><a href="#Proof">Proof</a></dt>
-<dd><p>A digital signature.</p>
-<p>For field definitions see: <a href="https://w3c-ccg.github.io/security-vocab/">https://w3c-ccg.github.io/security-vocab/</a></p>
-</dd>
-<dt><a href="#ProofOptions">ProofOptions</a></dt>
-<dd><p>Holds additional options for creating signatures.
-See <code>IProofOptions</code>.</p>
-</dd>
-<dt><a href="#ProofPurpose">ProofPurpose</a></dt>
-<dd><p>Associates a purpose with a <a href="#Proof">Proof</a>.</p>
-<p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
-</dd>
 <dt><a href="#Resolver">Resolver</a></dt>
 <dd><p>Convenience type for resolving DID documents from different DID methods.</p>
 <p>Also provides methods for resolving DID Documents associated with
@@ -136,27 +121,16 @@ working with storage backed DID documents.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
+<dt><a href="#UnknownCredential">UnknownCredential</a></dt>
+<dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd><p>A DID Document Verification Method.</p>
-</dd>
-<dt><a href="#VerifierOptions">VerifierOptions</a></dt>
-<dd><p>Holds additional proof verification options.
-See <code>IVerifierOptions</code>.</p>
-</dd>
-<dt><a href="#X25519">X25519</a></dt>
-<dd><p>An implementation of <code>X25519</code> Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.</p>
 </dd>
 </dl>
 
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -199,6 +173,10 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -442,19 +420,18 @@ A method-agnostic DID Document.
         * [.resolveMethod(query, scope)](#CoreDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.verifyData(data, options)](#CoreDocument+verifyData) ⇒ <code>boolean</code>
         * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
-        * [.signData(data, privateKey, methodQuery, options)](#CoreDocument+signData) ⇒ <code>any</code>
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [._shallowCloneInternal()](#CoreDocument+_shallowCloneInternal) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [._strongCountInternal()](#CoreDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#CoreDocument+toJSON) ⇒ <code>any</code>
-        * [.generateMethod(storage, keyType, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+        * [.generateMethod(storage, keyType, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJws(storage, fragment, payload, options)](#CoreDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options)](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#CoreDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
 
@@ -715,18 +692,6 @@ Detaches the given relationship from the given method, if the method exists.
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
-<a name="CoreDocument+verifyData"></a>
-
-### coreDocument.verifyData(data, options) ⇒ <code>boolean</code>
-Verifies the authenticity of `data` using the target verification method.
-
-**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
 <a name="CoreDocument+verifyJws"></a>
 
 ### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
@@ -774,23 +739,6 @@ unrevoke all specified `indices`.
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
-<a name="CoreDocument+signData"></a>
-
-### coreDocument.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
-Creates a signature for the given `data` with the specified DID Document
-Verification Method.
-
-NOTE: use `signSelf` or `signDocument` for DID Documents.
-
-**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
 <a name="CoreDocument+clone"></a>
 
 ### coreDocument.clone() ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -819,7 +767,7 @@ Serializes to a plain JS representation.
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 <a name="CoreDocument+generateMethod"></a>
 
-### coreDocument.generateMethod(storage, keyType, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+### coreDocument.generateMethod(storage, keyType, alg, fragment, scope) ⇒ <code>Promise.&lt;string&gt;</code>
 Generate new key material in the given `storage` and insert a new verification method with the corresponding
 public key material into the DID document.
 
@@ -873,8 +821,8 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 <a name="CoreDocument+createCredentialJwt"></a>
 
 ### coreDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
-Produces a JWS where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+Produces a JWT where the payload is produced from the given `credential`
+in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
 
 The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
 produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -887,6 +835,25 @@ produced by the corresponding private key backed by the `storage` in accordance 
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+
+<a name="CoreDocument+createPresentationJwt"></a>
+
+### coreDocument.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+Produces a JWT where the payload is produced from the given presentation.
+in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+
+The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+
+**Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| signature_options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+| presentation_options | [<code>JwtPresentationOptions</code>](#JwtPresentationOptions) | 
 
 <a name="CoreDocument.fromJSON"></a>
 
@@ -920,7 +887,7 @@ Deserializes an instance from a plain JS representation.
         * [.termsOfUse()](#Credential+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
         * [.evidence()](#Credential+evidence) ⇒ <code>Array.&lt;Evidence&gt;</code>
         * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
-        * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.proof()](#Credential+proof) ⇒ <code>any</code>
         * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
@@ -1015,13 +982,13 @@ Returns a copy of the human-readable evidence used to support the claims within 
 <a name="Credential+nonTransferable"></a>
 
 ### credential.nonTransferable() ⇒ <code>boolean</code> \| <code>undefined</code>
-Returns whether or not the `Credential` must only be contained within a [Presentation](#Presentation)
+Returns whether or not the `Credential` must only be contained within a  `Presentation`
 with a proof issued from the `Credential` subject.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+proof"></a>
 
-### credential.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+### credential.proof() ⇒ <code>any</code>
 Returns a copy of the proof used to verify the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
@@ -1074,217 +1041,6 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
-
-<a name="CredentialValidationOptions"></a>
-
-## CredentialValidationOptions
-Options to declare validation criteria when validating credentials.
-
-**Kind**: global class  
-
-* [CredentialValidationOptions](#CredentialValidationOptions)
-    * [new CredentialValidationOptions(options)](#new_CredentialValidationOptions_new)
-    * _instance_
-        * [.toJSON()](#CredentialValidationOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#CredentialValidationOptions+clone) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-    * _static_
-        * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-        * [.fromJSON(json)](#CredentialValidationOptions.fromJSON) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-
-<a name="new_CredentialValidationOptions_new"></a>
-
-### new CredentialValidationOptions(options)
-Creates a new `CredentialValidationOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>ICredentialValidationOptions</code> | 
-
-<a name="CredentialValidationOptions+toJSON"></a>
-
-### credentialValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-<a name="CredentialValidationOptions+clone"></a>
-
-### credentialValidationOptions.clone() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-<a name="CredentialValidationOptions.default"></a>
-
-### CredentialValidationOptions.default() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Creates a new `CredentialValidationOptions` with defaults.
-
-**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-<a name="CredentialValidationOptions.fromJSON"></a>
-
-### CredentialValidationOptions.fromJSON(json) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="CredentialValidator"></a>
-
-## CredentialValidator
-**Kind**: global class  
-
-* [CredentialValidator](#CredentialValidator)
-    * [.validate(credential, issuer, options, fail_fast)](#CredentialValidator.validate)
-    * [.checkStructure(credential)](#CredentialValidator.checkStructure)
-    * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
-    * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
-    * [.verifySignature(credential, trustedIssuers, options)](#CredentialValidator.verifySignature)
-    * [.checkSubjectHolderRelationship(credential, holder, relationship)](#CredentialValidator.checkSubjectHolderRelationship)
-    * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
-    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
-
-<a name="CredentialValidator.validate"></a>
-
-### CredentialValidator.validate(credential, issuer, options, fail_fast)
-Validates a `Credential`.
-
-The following properties are validated according to `options`:
-- the issuer's signature,
-- the expiration date,
-- the issuance date,
-- the semantic structure.
-
-### Warning
-The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
-trusted. This section contains more information on additional checks that should be carried out before and after
-calling this method.
-
-#### The state of the issuer's DID Document
-The caller must ensure that `issuer` represents an up-to-date DID Document. The convenience method
-`Resolver::resolveCredentialIssuer` can help extract the latest available state of the issuer's DID Document.
-
-#### Properties that are not validated
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-These should be manually checked after validation, according to your requirements.
-
-### Errors
-An error is returned whenever a validated condition is not satisfied.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
-| fail_fast | <code>number</code> | 
-
-<a name="CredentialValidator.checkStructure"></a>
-
-### CredentialValidator.checkStructure(credential)
-Validates the semantic structure of the `Credential`.
-
-### Warning
-This does not validate against the credential's schema nor the structure of the subject claims.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-
-<a name="CredentialValidator.checkExpiresOnOrAfter"></a>
-
-### CredentialValidator.checkExpiresOnOrAfter(credential, timestamp)
-Validate that the credential expires on or after the specified timestamp.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| timestamp | [<code>Timestamp</code>](#Timestamp) | 
-
-<a name="CredentialValidator.checkIssuedOnOrBefore"></a>
-
-### CredentialValidator.checkIssuedOnOrBefore(credential, timestamp)
-Validate that the credential is issued on or before the specified timestamp.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| timestamp | [<code>Timestamp</code>](#Timestamp) | 
-
-<a name="CredentialValidator.verifySignature"></a>
-
-### CredentialValidator.verifySignature(credential, trustedIssuers, options)
-Verify the signature using the DID Document of a trusted issuer.
-
-# Warning
-The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
-### Errors
-This method immediately returns an error if
-the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
-to verify the credential's signature will be made and an error is returned upon failure.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
-<a name="CredentialValidator.checkSubjectHolderRelationship"></a>
-
-### CredentialValidator.checkSubjectHolderRelationship(credential, holder, relationship)
-Validate that the relationship between the `holder` and the credential subjects is in accordance with
-`relationship`. The `holder` parameter is expected to be the URL of the holder.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| holder | <code>string</code> | 
-| relationship | <code>number</code> | 
-
-<a name="CredentialValidator.checkStatus"></a>
-
-### CredentialValidator.checkStatus(credential, trustedIssuers, statusCheck)
-Checks whether the credential status has been revoked.
-
-Only supports `BitmapRevocation2022`.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
-| statusCheck | <code>number</code> | 
-
-<a name="CredentialValidator.extractIssuer"></a>
-
-### CredentialValidator.extractIssuer(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
-Utility for extracting the issuer field of a `Credential` as a DID.
-
-### Errors
-
-Fails if the issuer field is not a valid DID.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
 
 <a name="DIDUrl"></a>
 
@@ -1520,6 +1276,61 @@ Consumes the object and returns the decoded credential.
 This destroys the `DecodedCredential` object.
 
 **Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
+<a name="DecodedJwtPresentation"></a>
+
+## DecodedJwtPresentation
+A cryptographically verified and decoded presentation.
+
+Note that having an instance of this type only means the JWS it was constructed from was verified.
+It does not imply anything about a potentially present proof property on the presentation itself.
+
+**Kind**: global class  
+
+* [DecodedJwtPresentation](#DecodedJwtPresentation)
+    * [.presentation()](#DecodedJwtPresentation+presentation) ⇒ [<code>Presentation</code>](#Presentation)
+    * [.protectedHeader()](#DecodedJwtPresentation+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.intoPresentation()](#DecodedJwtPresentation+intoPresentation) ⇒ [<code>Presentation</code>](#Presentation)
+    * [.expirationDate()](#DecodedJwtPresentation+expirationDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+    * [.issuanceDate()](#DecodedJwtPresentation+issuanceDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+    * [.audience()](#DecodedJwtPresentation+audience) ⇒ <code>string</code> \| <code>undefined</code>
+
+<a name="DecodedJwtPresentation+presentation"></a>
+
+### decodedJwtPresentation.presentation() ⇒ [<code>Presentation</code>](#Presentation)
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+protectedHeader"></a>
+
+### decodedJwtPresentation.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
+Returns a copy of the protected header parsed from the decoded JWS.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+intoPresentation"></a>
+
+### decodedJwtPresentation.intoPresentation() ⇒ [<code>Presentation</code>](#Presentation)
+Consumes the object and returns the decoded presentation.
+
+### Warning
+This destroys the `DecodedJwtPresentation` object.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+expirationDate"></a>
+
+### decodedJwtPresentation.expirationDate() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+The expiration date parsed from the JWT claims.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+issuanceDate"></a>
+
+### decodedJwtPresentation.issuanceDate() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+The issuance date parsed from the JWT claims.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+audience"></a>
+
+### decodedJwtPresentation.audience() ⇒ <code>string</code> \| <code>undefined</code>
+The `aud` property parsed from JWT claims.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
 <a name="DomainLinkageConfiguration"></a>
 
 ## DomainLinkageConfiguration
@@ -1528,16 +1339,15 @@ It can be placed in an origin's `.well-known` directory to prove linkage between
 See: <https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource>
 
 Note:
-- Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
-  is supported.
+- Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
 
 **Kind**: global class  
 
 * [DomainLinkageConfiguration](#DomainLinkageConfiguration)
     * [new DomainLinkageConfiguration(linked_dids)](#new_DomainLinkageConfiguration_new)
     * _instance_
-        * [.linkedDids()](#DomainLinkageConfiguration+linkedDids) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-        * [.issuers()](#DomainLinkageConfiguration+issuers) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.linkedDids()](#DomainLinkageConfiguration+linkedDids) ⇒ [<code>Array.&lt;Jwt&gt;</code>](#Jwt)
+        * [.issuers()](#DomainLinkageConfiguration+issuers) ⇒ [<code>Array.&lt;CoreDID&gt;</code>](#CoreDID)
         * [.toJSON()](#DomainLinkageConfiguration+toJSON) ⇒ <code>any</code>
         * [.clone()](#DomainLinkageConfiguration+clone) ⇒ [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)
     * _static_
@@ -1551,17 +1361,17 @@ Constructs a new `DomainLinkageConfiguration`.
 
 | Param | Type |
 | --- | --- |
-| linked_dids | [<code>Array.&lt;Credential&gt;</code>](#Credential) | 
+| linked_dids | [<code>Array.&lt;Jwt&gt;</code>](#Jwt) | 
 
 <a name="DomainLinkageConfiguration+linkedDids"></a>
 
-### domainLinkageConfiguration.linkedDids() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+### domainLinkageConfiguration.linkedDids() ⇒ [<code>Array.&lt;Jwt&gt;</code>](#Jwt)
 List of the Domain Linkage Credentials.
 
 **Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
 <a name="DomainLinkageConfiguration+issuers"></a>
 
-### domainLinkageConfiguration.issuers() ⇒ <code>Array.&lt;string&gt;</code>
+### domainLinkageConfiguration.issuers() ⇒ [<code>Array.&lt;CoreDID&gt;</code>](#CoreDID)
 List of the issuers of the Domain Linkage Credentials.
 
 **Kind**: instance method of [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration)  
@@ -1587,59 +1397,6 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
-
-<a name="DomainLinkageValidator"></a>
-
-## DomainLinkageValidator
-A validator for a Domain Linkage Configuration and Credentials.
-
-**Kind**: global class  
-
-* [DomainLinkageValidator](#DomainLinkageValidator)
-    * [.validateLinkage(issuer, configuration, domain, options)](#DomainLinkageValidator.validateLinkage)
-    * [.validateCredential(issuer, credential, domain, options)](#DomainLinkageValidator.validateCredential)
-
-<a name="DomainLinkageValidator.validateLinkage"></a>
-
-### DomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
-Validates the linkage between a domain and a DID.
-[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
-
-Linkage is valid if no error is thrown.
-
-# Note:
-- Only [Linked Data Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format)
-  is supported.
-- Only the Credential issued by `issuer` is verified.
-
-# Errors
- - Semantic structure of `configuration` is invalid.
- - `configuration` includes multiple credentials issued by `issuer`.
- - Validation of the matched Domain Linkage Credential fails.
-
-**Kind**: static method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
-| domain | <code>string</code> | 
-| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
-
-<a name="DomainLinkageValidator.validateCredential"></a>
-
-### DomainLinkageValidator.validateCredential(issuer, credential, domain, options)
-Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
-Error will be thrown in case the validation fails.
-
-**Kind**: static method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| credential | [<code>Credential</code>](#Credential) | 
-| domain | <code>string</code> | 
-| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 
 <a name="Duration"></a>
 
@@ -1731,70 +1488,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Ed25519"></a>
-
-## Ed25519
-**Kind**: global class  
-
-* [Ed25519](#Ed25519)
-    * [.PRIVATE_KEY_LENGTH()](#Ed25519.PRIVATE_KEY_LENGTH) ⇒ <code>number</code>
-    * [.PUBLIC_KEY_LENGTH()](#Ed25519.PUBLIC_KEY_LENGTH) ⇒ <code>number</code>
-    * [.SIGNATURE_LENGTH()](#Ed25519.SIGNATURE_LENGTH) ⇒ <code>number</code>
-    * [.sign(message, privateKey)](#Ed25519.sign) ⇒ <code>Uint8Array</code>
-    * [.verify(message, signature, publicKey)](#Ed25519.verify)
-
-<a name="Ed25519.PRIVATE_KEY_LENGTH"></a>
-
-### Ed25519.PRIVATE\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an Ed25519 private key.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-<a name="Ed25519.PUBLIC_KEY_LENGTH"></a>
-
-### Ed25519.PUBLIC\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an Ed25519 public key.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-<a name="Ed25519.SIGNATURE_LENGTH"></a>
-
-### Ed25519.SIGNATURE\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an Ed25519 signature.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-<a name="Ed25519.sign"></a>
-
-### Ed25519.sign(message, privateKey) ⇒ <code>Uint8Array</code>
-Computes an EdDSA signature using an Ed25519 private key.
-
-NOTE: this differs from [Document.signData](#Document+signData) which uses JCS
-to canonicalize JSON messages.
-
-The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
-Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>Uint8Array</code> | 
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="Ed25519.verify"></a>
-
-### Ed25519.verify(message, signature, publicKey)
-Verifies an EdDSA signature against an Ed25519 public key.
-
-NOTE: this differs from [Document.verifyData](#Document+verifyData) which uses JCS
-to canonicalize JSON messages.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>Uint8Array</code> | 
-| signature | <code>Uint8Array</code> | 
-| publicKey | <code>Uint8Array</code> | 
-
 <a name="IotaDID"></a>
 
 ## IotaDID
@@ -1805,7 +1498,7 @@ A DID conforming to the IOTA DID method specification.
 * [IotaDID](#IotaDID)
     * [new IotaDID(bytes, network)](#new_IotaDID_new)
     * _instance_
-        * [.networkStr()](#IotaDID+networkStr) ⇒ <code>string</code>
+        * [.network()](#IotaDID+network) ⇒ <code>string</code>
         * [.tag()](#IotaDID+tag) ⇒ <code>string</code>
         * [.toCoreDid()](#IotaDID+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.scheme()](#IotaDID+scheme) ⇒ <code>string</code>
@@ -1841,9 +1534,9 @@ See also [placeholder](#IotaDID.placeholder).
 | bytes | <code>Uint8Array</code> | 
 | network | <code>string</code> | 
 
-<a name="IotaDID+networkStr"></a>
+<a name="IotaDID+network"></a>
 
-### did.networkStr() ⇒ <code>string</code>
+### did.network() ⇒ <code>string</code>
 Returns the Tangle network name of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -2030,10 +1723,6 @@ Deserializes an instance from a JSON object.
         * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.signCredential(credential, privateKey, methodQuery, options)](#IotaDocument+signCredential) ⇒ [<code>Credential</code>](#Credential)
-        * [.signPresentation(presentation, privateKey, methodQuery, options)](#IotaDocument+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
-        * [.signData(data, privateKey, methodQuery, options)](#IotaDocument+signData) ⇒ <code>any</code>
-        * [.verifyData(data, options)](#IotaDocument+verifyData) ⇒ <code>boolean</code>
         * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
@@ -2054,10 +1743,11 @@ Deserializes an instance from a JSON object.
         * [._strongCountInternal()](#IotaDocument+_strongCountInternal) ⇒ <code>number</code>
         * [.toJSON()](#IotaDocument+toJSON) ⇒ <code>any</code>
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
-        * [.generateMethod(storage, keyType, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+        * [.generateMethod(storage, keyType, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
         * [.createCredentialJwt(storage, fragment, credential, options)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
         * [.unpackFromOutput(did, aliasOutput, allowEmpty, tokenSupply)](#IotaDocument.unpackFromOutput) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2252,65 +1942,6 @@ Detaches the given relationship from the given method, if the method exists.
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
 | relationship | <code>number</code> | 
 
-<a name="IotaDocument+signCredential"></a>
-
-### iotaDocument.signCredential(credential, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
-Creates a signature for the given `Credential` with the specified DID Document
-Verification Method.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="IotaDocument+signPresentation"></a>
-
-### iotaDocument.signPresentation(presentation, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
-Creates a signature for the given `Presentation` with the specified DID Document
-Verification Method.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="IotaDocument+signData"></a>
-
-### iotaDocument.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
-Creates a signature for the given `data` with the specified DID Document
-Verification Method.
-
-NOTE: use `signSelf` or `signDocument` for DID Documents.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| privateKey | <code>Uint8Array</code> | 
-| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>ProofOptions</code>](#ProofOptions) | 
-
-<a name="IotaDocument+verifyData"></a>
-
-### iotaDocument.verifyData(data, options) ⇒ <code>boolean</code>
-Verifies the authenticity of `data` using the target verification method.
-
-**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
 <a name="IotaDocument+verifyJws"></a>
 
 ### iotaDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
@@ -2495,7 +2126,7 @@ Transforms the `IotaDocument` to its `CoreDocument` representation.
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+generateMethod"></a>
 
-### iotaDocument.generateMethod(storage, keyType, alg, fragment, scope) ⇒ <code>Promise.&lt;(string\|null)&gt;</code>
+### iotaDocument.generateMethod(storage, keyType, alg, fragment, scope) ⇒ <code>Promise.&lt;string&gt;</code>
 Generate new key material in the given `storage` and insert a new verification method with the corresponding
 public key material into the DID document.
 
@@ -2550,7 +2181,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 ### iotaDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWS where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
 
 The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
 produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -2563,6 +2194,25 @@ produced by the corresponding private key backed by the `storage` in accordance 
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+
+<a name="IotaDocument+createPresentationJwt"></a>
+
+### iotaDocument.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+Produces a JWT where the payload is produced from the given presentation.
+in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+
+The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| signature_options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+| presentation_options | [<code>JwtPresentationOptions</code>](#JwtPresentationOptions) | 
 
 <a name="IotaDocument.newWithId"></a>
 
@@ -3581,7 +3231,12 @@ A wrapper around a JSON Web Token (JWK).
 
 * [Jwt](#Jwt)
     * [new Jwt(jwt_string)](#new_Jwt_new)
-    * [.toString()](#Jwt+toString) ⇒ <code>string</code>
+    * _instance_
+        * [.toString()](#Jwt+toString) ⇒ <code>string</code>
+        * [.toJSON()](#Jwt+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Jwt+clone) ⇒ [<code>Jwt</code>](#Jwt)
+    * _static_
+        * [.fromJSON(json)](#Jwt.fromJSON) ⇒ [<code>Jwt</code>](#Jwt)
 
 <a name="new_Jwt_new"></a>
 
@@ -3599,6 +3254,29 @@ Creates a new `Jwt` from the given string.
 Returns a clone of the JWT string.
 
 **Kind**: instance method of [<code>Jwt</code>](#Jwt)  
+<a name="Jwt+toJSON"></a>
+
+### jwt.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>Jwt</code>](#Jwt)  
+<a name="Jwt+clone"></a>
+
+### jwt.clone() ⇒ [<code>Jwt</code>](#Jwt)
+Deep clones the object.
+
+**Kind**: instance method of [<code>Jwt</code>](#Jwt)  
+<a name="Jwt.fromJSON"></a>
+
+### Jwt.fromJSON(json) ⇒ [<code>Jwt</code>](#Jwt)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>Jwt</code>](#Jwt)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="JwtCredentialValidationOptions"></a>
 
 ## JwtCredentialValidationOptions
@@ -3621,7 +3299,7 @@ Options to declare validation criteria when validating credentials.
 
 | Param | Type |
 | --- | --- |
-| options | <code>IJwtCredentialValidationOptions</code> | 
+| options | <code>IJwtCredentialValidationOptions</code> \| <code>undefined</code> | 
 
 <a name="JwtCredentialValidationOptions+toJSON"></a>
 
@@ -3660,7 +3338,7 @@ A type for decoding and validating `Credentials`.
 **Kind**: global class  
 
 * [JwtCredentialValidator](#JwtCredentialValidator)
-    * [new JwtCredentialValidator(signature_verifier)](#new_JwtCredentialValidator_new)
+    * [new JwtCredentialValidator(signatureVerifier)](#new_JwtCredentialValidator_new)
     * _instance_
         * [.validate(credential_jwt, issuer, options, fail_fast)](#JwtCredentialValidator+validate) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
         * [.verifySignature(credential, trustedIssuers, options)](#JwtCredentialValidator+verifySignature) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
@@ -3670,18 +3348,19 @@ A type for decoding and validating `Credentials`.
         * [.checkSubjectHolderRelationship(credential, holder, relationship)](#JwtCredentialValidator.checkSubjectHolderRelationship)
         * [.checkStatus(credential, trustedIssuers, statusCheck)](#JwtCredentialValidator.checkStatus)
         * [.extractIssuer(credential)](#JwtCredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
+        * [.extractIssuerFromJwt(credential)](#JwtCredentialValidator.extractIssuerFromJwt) ⇒ [<code>CoreDID</code>](#CoreDID)
 
 <a name="new_JwtCredentialValidator_new"></a>
 
-### new JwtCredentialValidator(signature_verifier)
-Creates a new `JwtCredentialValidator`. If a `signature_verifier` is provided it will be used when
+### new JwtCredentialValidator(signatureVerifier)
+Creates a new `JwtCredentialValidator`. If a `signatureVerifier` is provided it will be used when
 verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
 algorithm will be used.
 
 
 | Param | Type |
 | --- | --- |
-| signature_verifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
 <a name="JwtCredentialValidator+validate"></a>
 
@@ -3815,103 +3494,284 @@ Fails if the issuer field is not a valid DID.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 
-<a name="KeyPair"></a>
+<a name="JwtCredentialValidator.extractIssuerFromJwt"></a>
 
-## KeyPair
+### JwtCredentialValidator.extractIssuerFromJwt(credential) ⇒ [<code>CoreDID</code>](#CoreDID)
+Utility for extracting the issuer field of a credential in JWT representation as DID.
+
+# Errors
+
+If the JWT decoding fails or the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Jwt</code>](#Jwt) | 
+
+<a name="JwtDomainLinkageValidator"></a>
+
+## JwtDomainLinkageValidator
+A validator for a Domain Linkage Configuration and Credentials.
+
 **Kind**: global class  
 
-* [KeyPair](#KeyPair)
-    * [new KeyPair(type_)](#new_KeyPair_new)
-    * _instance_
-        * [.type()](#KeyPair+type) ⇒ <code>number</code>
-        * [.public()](#KeyPair+public) ⇒ <code>Uint8Array</code>
-        * [.private()](#KeyPair+private) ⇒ <code>Uint8Array</code>
-        * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
-        * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
-    * _static_
-        * [.fromKeys(type_, public_key, private_key)](#KeyPair.fromKeys) ⇒ [<code>KeyPair</code>](#KeyPair)
-        * [.tryFromPrivateKeyBytes(keyType, privateKeyBytes)](#KeyPair.tryFromPrivateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
-        * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
+* [JwtDomainLinkageValidator](#JwtDomainLinkageValidator)
+    * [new JwtDomainLinkageValidator(signatureVerifier)](#new_JwtDomainLinkageValidator_new)
+    * [.validateLinkage(issuer, configuration, domain, options)](#JwtDomainLinkageValidator+validateLinkage)
+    * [.validateCredential(issuer, credentialJwt, domain, options)](#JwtDomainLinkageValidator+validateCredential)
 
-<a name="new_KeyPair_new"></a>
+<a name="new_JwtDomainLinkageValidator_new"></a>
 
-### new KeyPair(type_)
-Generates a new `KeyPair` object.
+### new JwtDomainLinkageValidator(signatureVerifier)
+Creates a new `JwtDomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
+verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
+algorithm will be used.
 
 
 | Param | Type |
 | --- | --- |
-| type_ | <code>number</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
 
-<a name="KeyPair+type"></a>
+<a name="JwtDomainLinkageValidator+validateLinkage"></a>
 
-### keyPair.type() ⇒ <code>number</code>
-Returns the `KeyType` of the `KeyPair` object.
+### jwtDomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
+Validates the linkage between a domain and a DID.
+[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
 
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+public"></a>
+Linkage is valid if no error is thrown.
 
-### keyPair.public() ⇒ <code>Uint8Array</code>
-Returns a copy of the public key as a `Uint8Array`.
+# Note:
+- Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
+- Only the Credential issued by `issuer` is verified.
 
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+private"></a>
+# Errors
+ - Semantic structure of `configuration` is invalid.
+ - `configuration` includes multiple credentials issued by `issuer`.
+ - Validation of the matched Domain Linkage Credential fails.
 
-### keyPair.private() ⇒ <code>Uint8Array</code>
-Returns a copy of the private key as a `Uint8Array`.
+**Kind**: instance method of [<code>JwtDomainLinkageValidator</code>](#JwtDomainLinkageValidator)  
 
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+toJSON"></a>
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
+| domain | <code>string</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
 
-### keyPair.toJSON() ⇒ <code>any</code>
-Serializes a `KeyPair` object as a JSON object.
+<a name="JwtDomainLinkageValidator+validateCredential"></a>
 
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+clone"></a>
+### jwtDomainLinkageValidator.validateCredential(issuer, credentialJwt, domain, options)
+Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+Error will be thrown in case the validation fails.
 
-### keyPair.clone() ⇒ [<code>KeyPair</code>](#KeyPair)
+**Kind**: instance method of [<code>JwtDomainLinkageValidator</code>](#JwtDomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| credentialJwt | [<code>Jwt</code>](#Jwt) | 
+| domain | <code>string</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
+
+<a name="JwtPresentationOptions"></a>
+
+## JwtPresentationOptions
+**Kind**: global class  
+
+* [JwtPresentationOptions](#JwtPresentationOptions)
+    * [new JwtPresentationOptions(options)](#new_JwtPresentationOptions_new)
+    * _instance_
+        * [.toJSON()](#JwtPresentationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtPresentationOptions+clone) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+    * _static_
+        * [.default()](#JwtPresentationOptions.default) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+        * [.fromJSON(json)](#JwtPresentationOptions.fromJSON) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+
+<a name="new_JwtPresentationOptions_new"></a>
+
+### new JwtPresentationOptions(options)
+Creates a new `JwtPresentationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IJwtPresentationOptions</code> \| <code>undefined</code> | 
+
+<a name="JwtPresentationOptions+toJSON"></a>
+
+### jwtPresentationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+<a name="JwtPresentationOptions+clone"></a>
+
+### jwtPresentationOptions.clone() ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
 Deep clones the object.
 
-**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair.fromKeys"></a>
+**Kind**: instance method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+<a name="JwtPresentationOptions.default"></a>
 
-### KeyPair.fromKeys(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
-Parses a `KeyPair` object from the public/private keys.
+### JwtPresentationOptions.default() ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+Creates a new `JwtPresentationOptions` with defaults.
 
-**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
+**Kind**: static method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
+<a name="JwtPresentationOptions.fromJSON"></a>
 
-| Param | Type |
-| --- | --- |
-| type_ | <code>number</code> | 
-| public_key | <code>Uint8Array</code> | 
-| private_key | <code>Uint8Array</code> | 
+### JwtPresentationOptions.fromJSON(json) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
+Deserializes an instance from a JSON object.
 
-<a name="KeyPair.tryFromPrivateKeyBytes"></a>
-
-### KeyPair.tryFromPrivateKeyBytes(keyType, privateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
-Reconstructs a `KeyPair` from the bytes of a private key.
-
-The private key for `Ed25519` must be a 32-byte seed in compliance
-with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
-Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-
-**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
-
-| Param | Type |
-| --- | --- |
-| keyType | <code>number</code> | 
-| privateKeyBytes | <code>Uint8Array</code> | 
-
-<a name="KeyPair.fromJSON"></a>
-
-### KeyPair.fromJSON(json) ⇒ [<code>KeyPair</code>](#KeyPair)
-Deserializes a `KeyPair` object from a JSON object.
-
-**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
+**Kind**: static method of [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)  
 
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="JwtPresentationValidationOptions"></a>
+
+## JwtPresentationValidationOptions
+Options to declare validation criteria when validating presentation.
+
+**Kind**: global class  
+
+* [JwtPresentationValidationOptions](#JwtPresentationValidationOptions)
+    * [new JwtPresentationValidationOptions(options)](#new_JwtPresentationValidationOptions_new)
+    * _instance_
+        * [.toJSON()](#JwtPresentationValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#JwtPresentationValidationOptions+clone) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+    * _static_
+        * [.default()](#JwtPresentationValidationOptions.default) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+        * [.fromJSON(json)](#JwtPresentationValidationOptions.fromJSON) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+
+<a name="new_JwtPresentationValidationOptions_new"></a>
+
+### new JwtPresentationValidationOptions(options)
+Creates a new `JwtPresentationValidationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IJwtPresentationValidationOptions</code> \| <code>undefined</code> | 
+
+<a name="JwtPresentationValidationOptions+toJSON"></a>
+
+### jwtPresentationValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions+clone"></a>
+
+### jwtPresentationValidationOptions.clone() ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions.default"></a>
+
+### JwtPresentationValidationOptions.default() ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Creates a new `JwtPresentationValidationOptions` with defaults.
+
+**Kind**: static method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+<a name="JwtPresentationValidationOptions.fromJSON"></a>
+
+### JwtPresentationValidationOptions.fromJSON(json) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="JwtPresentationValidator"></a>
+
+## JwtPresentationValidator
+**Kind**: global class  
+
+* [JwtPresentationValidator](#JwtPresentationValidator)
+    * [new JwtPresentationValidator(signature_verifier)](#new_JwtPresentationValidator_new)
+    * _instance_
+        * [.validate(presentation_jwt, holder, validation_options)](#JwtPresentationValidator+validate) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+    * _static_
+        * [.checkStructure(presentation)](#JwtPresentationValidator.checkStructure)
+        * [.extractHolder(presentation)](#JwtPresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
+
+<a name="new_JwtPresentationValidator_new"></a>
+
+### new JwtPresentationValidator(signature_verifier)
+Creates a new `JwtPresentationValidator`. If a `signature_verifier` is provided it will be used when
+verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
+algorithm will be used.
+
+
+| Param | Type |
+| --- | --- |
+| signature_verifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+
+<a name="JwtPresentationValidator+validate"></a>
+
+### jwtPresentationValidator.validate(presentation_jwt, holder, validation_options) ⇒ [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)
+Validates a [`JwtPresentation`].
+
+The following properties are validated according to `options`:
+- the JWT can be decoded into a semantically valid presentation.
+- the expiration and issuance date contained in the JWT claims.
+- the holder's signature.
+
+Validation is done with respect to the properties set in `options`.
+
+# Warning
+
+* This method does NOT validate the constituent credentials and therefore also not the relationship between the
+credentials' subjects and the presentation holder. This can be done with `JwtCredentialValidationOptions`.
+* The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
+be trusted. This section contains more information on additional checks that should be carried out before and
+after calling this method.
+
+## The state of the supplied DID Documents.
+
+The caller must ensure that the DID Documents in `holder` are up-to-date.
+
+# Errors
+
+An error is returned whenever a validated condition is not satisfied or when decoding fails.
+
+**Kind**: instance method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation_jwt | [<code>Jwt</code>](#Jwt) | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| validation_options | [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions) | 
+
+<a name="JwtPresentationValidator.checkStructure"></a>
+
+### JwtPresentationValidator.checkStructure(presentation)
+Validates the semantic structure of the `JwtPresentation`.
+
+**Kind**: static method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="JwtPresentationValidator.extractHolder"></a>
+
+### JwtPresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
+Attempt to extract the holder of the presentation.
+
+# Errors:
+* If deserialization/decoding of the presentation fails.
+* If the holder can't be parsed as DIDs.
+
+**Kind**: static method of [<code>JwtPresentationValidator</code>](#JwtPresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Jwt</code>](#Jwt) | 
 
 <a name="LinkedDomainService"></a>
 
@@ -3991,6 +3851,7 @@ Supported verification method data formats.
 * [MethodData](#MethodData)
     * _instance_
         * [.tryDecode()](#MethodData+tryDecode) ⇒ <code>Uint8Array</code>
+        * [.tryPublicKeyJwk()](#MethodData+tryPublicKeyJwk) ⇒ [<code>Jwk</code>](#Jwk)
         * [.toJSON()](#MethodData+toJSON) ⇒ <code>any</code>
         * [.clone()](#MethodData+clone) ⇒ [<code>MethodData</code>](#MethodData)
     * _static_
@@ -4009,6 +3870,12 @@ This is generally a public key identified by a `MethodData` value.
 ### Errors
 Decoding can fail if `MethodData` has invalid content or cannot be
 represented as a vector of bytes.
+
+**Kind**: instance method of [<code>MethodData</code>](#MethodData)  
+<a name="MethodData+tryPublicKeyJwk"></a>
+
+### methodData.tryPublicKeyJwk() ⇒ [<code>Jwk</code>](#Jwk)
+Returns the wrapped `Jwk` if the format is `PublicKeyJwk`.
 
 **Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+toJSON"></a>
@@ -4209,7 +4076,7 @@ Supported verification method types.
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.JwkMethodType()](#MethodType.JwkMethodType) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.JsonWebKey()](#MethodType.JsonWebKey) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
 <a name="MethodType+toString"></a>
@@ -4238,9 +4105,9 @@ Deep clones the object.
 
 ### MethodType.X25519KeyAgreementKey2019() ⇒ [<code>MethodType</code>](#MethodType)
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
-<a name="MethodType.JwkMethodType"></a>
+<a name="MethodType.JsonWebKey"></a>
 
-### MethodType.JwkMethodType() ⇒ [<code>MethodType</code>](#MethodType)
+### MethodType.JsonWebKey() ⇒ [<code>MethodType</code>](#MethodType)
 A verification method for use with JWT verification as prescribed by the `Jwk`
 in the `publicKeyJwk` entry.
 
@@ -4267,11 +4134,11 @@ Deserializes an instance from a JSON object.
         * [.context()](#Presentation+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
         * [.id()](#Presentation+id) ⇒ <code>string</code> \| <code>undefined</code>
         * [.type()](#Presentation+type) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-        * [.holder()](#Presentation+holder) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;UnknownCredential&gt;</code>](#UnknownCredential)
+        * [.holder()](#Presentation+holder) ⇒ <code>string</code>
         * [.refreshService()](#Presentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
         * [.termsOfUse()](#Presentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
-        * [.proof()](#Presentation+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.proof()](#Presentation+proof) ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
         * [.properties()](#Presentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
         * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
@@ -4283,7 +4150,7 @@ Deserializes an instance from a JSON object.
 <a name="new_Presentation_new"></a>
 
 ### new Presentation(values)
-Constructs a new `Presentation`.
+Constructs a new presentation.
 
 
 | Param | Type |
@@ -4293,55 +4160,55 @@ Constructs a new `Presentation`.
 <a name="Presentation+context"></a>
 
 ### presentation.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
-Returns a copy of the JSON-LD context(s) applicable to the `Presentation`.
+Returns a copy of the JSON-LD context(s) applicable to the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+id"></a>
 
 ### presentation.id() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the unique `URI` identifying the `Presentation`.
+Returns a copy of the unique `URI` identifying the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+type"></a>
 
 ### presentation.type() ⇒ <code>Array.&lt;string&gt;</code>
-Returns a copy of the URIs defining the type of the `Presentation`.
+Returns a copy of the URIs defining the type of the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+verifiableCredential"></a>
 
-### presentation.verifiableCredential() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-Returns a copy of the [Credential](#Credential)(s) expressing the claims of the `Presentation`.
+### presentation.verifiableCredential() ⇒ [<code>Array.&lt;UnknownCredential&gt;</code>](#UnknownCredential)
+Returns the JWT credentials expressing the claims of the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+holder"></a>
 
-### presentation.holder() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the URI of the entity that generated the `Presentation`.
+### presentation.holder() ⇒ <code>string</code>
+Returns a copy of the URI of the entity that generated the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+refreshService"></a>
 
 ### presentation.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
-Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in the `Presentation`.
+Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+termsOfUse"></a>
 
 ### presentation.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
-Returns a copy of the terms-of-use specified by the `Presentation` holder
+Returns a copy of the terms-of-use specified by the presentation holder
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+proof"></a>
 
-### presentation.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-Returns a copy of the proof used to verify the `Presentation`.
+### presentation.proof() ⇒ <code>Map.&lt;string, any&gt;</code> \| <code>undefined</code>
+Optional proof that can be verified by users in addition to JWS.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+properties"></a>
 
 ### presentation.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the miscellaneous properties on the `Presentation`.
+Returns a copy of the miscellaneous properties on the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+toJSON"></a>
@@ -4379,368 +4246,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="PresentationValidationOptions"></a>
-
-## PresentationValidationOptions
-Options to declare validation criteria when validating presentation.
-
-**Kind**: global class  
-
-* [PresentationValidationOptions](#PresentationValidationOptions)
-    * [new PresentationValidationOptions(options)](#new_PresentationValidationOptions_new)
-    * _instance_
-        * [.toJSON()](#PresentationValidationOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#PresentationValidationOptions+clone) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-    * _static_
-        * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-        * [.fromJSON(json)](#PresentationValidationOptions.fromJSON) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-
-<a name="new_PresentationValidationOptions_new"></a>
-
-### new PresentationValidationOptions(options)
-Creates a new `PresentationValidationOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>IPresentationValidationOptions</code> | 
-
-<a name="PresentationValidationOptions+toJSON"></a>
-
-### presentationValidationOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-<a name="PresentationValidationOptions+clone"></a>
-
-### presentationValidationOptions.clone() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-<a name="PresentationValidationOptions.default"></a>
-
-### PresentationValidationOptions.default() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Creates a new `PresentationValidationOptions` with defaults.
-
-**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-<a name="PresentationValidationOptions.fromJSON"></a>
-
-### PresentationValidationOptions.fromJSON(json) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="PresentationValidator"></a>
-
-## PresentationValidator
-**Kind**: global class  
-
-* [PresentationValidator](#PresentationValidator)
-    * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
-    * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
-    * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
-    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>CoreDID</code>](#CoreDID)
-
-<a name="PresentationValidator.validate"></a>
-
-### PresentationValidator.validate(presentation, holder, issuers, options, fail_fast)
-Validate a `Presentation`.
-
-The following properties are validated according to `options`:
-- the semantic structure of the presentation,
-- the holder's signature,
-- the relationship between the holder and the credential subjects,
-- the signatures and some properties of the constituent credentials (see
-`CredentialValidator::validate`).
-
-### Warning
-The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
-trusted. This section contains more information on additional checks that should be carried out before and after
-calling this method.
-
-#### The state of the supplied DID Documents.
-The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
-`Resolver::resolve_presentation_holder` and `Resolver::resolve_presentation_issuers`
-can help extract the latest available states of these DID Documents.
-
-#### Properties that are not validated
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-These should be manually checked after validation, according to your requirements.
-
-### Errors
-An error is returned whenever a validated condition is not satisfied.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
-| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
-| fail_fast | <code>number</code> | 
-
-<a name="PresentationValidator.verifyPresentationSignature"></a>
-
-### PresentationValidator.verifyPresentationSignature(presentation, holder, options)
-Verify the presentation's signature using the resolved document of the holder.
-
-### Warning
-The caller must ensure that the DID Document of the holder is up-to-date.
-
-### Errors
-Fails if the `holder` does not match the `presentation`'s holder property.
-Fails if signature verification against the holder document fails.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
-<a name="PresentationValidator.checkStructure"></a>
-
-### PresentationValidator.checkStructure(presentation)
-Validates the semantic structure of the `Presentation`.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="PresentationValidator.extractHolder"></a>
-
-### PresentationValidator.extractHolder(presentation) ⇒ [<code>CoreDID</code>](#CoreDID)
-Utility for extracting the holder field of a `Presentation` as a DID.
-
-### Errors
-
-Fails if the holder field is missing or not a valid DID.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="Proof"></a>
-
-## Proof
-A digital signature.
-
-For field definitions see: https://w3c-ccg.github.io/security-vocab/
-
-**Kind**: global class  
-
-* [Proof](#Proof)
-    * _instance_
-        * [.type()](#Proof+type) ⇒ <code>string</code>
-        * [.value()](#Proof+value) ⇒ <code>string</code>
-        * [.verificationMethod()](#Proof+verificationMethod) ⇒ <code>string</code>
-        * [.created()](#Proof+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-        * [.expires()](#Proof+expires) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-        * [.challenge()](#Proof+challenge) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.domain()](#Proof+domain) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.purpose()](#Proof+purpose) ⇒ [<code>ProofPurpose</code>](#ProofPurpose) \| <code>undefined</code>
-        * [.toJSON()](#Proof+toJSON) ⇒ <code>any</code>
-        * [.clone()](#Proof+clone) ⇒ [<code>Proof</code>](#Proof)
-    * _static_
-        * [.fromJSON(json)](#Proof.fromJSON) ⇒ [<code>Proof</code>](#Proof)
-
-<a name="Proof+type"></a>
-
-### proof.type() ⇒ <code>string</code>
-Returns a copy of the proof type.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+value"></a>
-
-### proof.value() ⇒ <code>string</code>
-Returns a copy of the proof value string.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+verificationMethod"></a>
-
-### proof.verificationMethod() ⇒ <code>string</code>
-Returns a copy of the identifier of the DID method used to create this proof.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+created"></a>
-
-### proof.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-When the proof was generated.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+expires"></a>
-
-### proof.expires() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
-When the proof expires.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+challenge"></a>
-
-### proof.challenge() ⇒ <code>string</code> \| <code>undefined</code>
-Challenge from a proof requester to mitigate replay attacks.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+domain"></a>
-
-### proof.domain() ⇒ <code>string</code> \| <code>undefined</code>
-Domain for which a proof is valid to mitigate replay attacks.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+purpose"></a>
-
-### proof.purpose() ⇒ [<code>ProofPurpose</code>](#ProofPurpose) \| <code>undefined</code>
-Purpose for which the proof was generated.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+toJSON"></a>
-
-### proof.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof+clone"></a>
-
-### proof.clone() ⇒ [<code>Proof</code>](#Proof)
-Deep clones the object.
-
-**Kind**: instance method of [<code>Proof</code>](#Proof)  
-<a name="Proof.fromJSON"></a>
-
-### Proof.fromJSON(json) ⇒ [<code>Proof</code>](#Proof)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>Proof</code>](#Proof)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="ProofOptions"></a>
-
-## ProofOptions
-Holds additional options for creating signatures.
-See `IProofOptions`.
-
-**Kind**: global class  
-
-* [ProofOptions](#ProofOptions)
-    * [new ProofOptions(options)](#new_ProofOptions_new)
-    * _instance_
-        * [.toJSON()](#ProofOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#ProofOptions+clone) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-    * _static_
-        * [.default()](#ProofOptions.default) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-        * [.fromJSON(json)](#ProofOptions.fromJSON) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-
-<a name="new_ProofOptions_new"></a>
-
-### new ProofOptions(options)
-Creates a new `ProofOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>IProofOptions</code> | 
-
-<a name="ProofOptions+toJSON"></a>
-
-### proofOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>ProofOptions</code>](#ProofOptions)  
-<a name="ProofOptions+clone"></a>
-
-### proofOptions.clone() ⇒ [<code>ProofOptions</code>](#ProofOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>ProofOptions</code>](#ProofOptions)  
-<a name="ProofOptions.default"></a>
-
-### ProofOptions.default() ⇒ [<code>ProofOptions</code>](#ProofOptions)
-Creates a new `ProofOptions` with default options.
-
-**Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
-<a name="ProofOptions.fromJSON"></a>
-
-### ProofOptions.fromJSON(json) ⇒ [<code>ProofOptions</code>](#ProofOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="ProofPurpose"></a>
-
-## ProofPurpose
-Associates a purpose with a [Proof](#Proof).
-
-See https://w3c-ccg.github.io/security-vocab/#proofPurpose
-
-**Kind**: global class  
-
-* [ProofPurpose](#ProofPurpose)
-    * _instance_
-        * [.toJSON()](#ProofPurpose+toJSON) ⇒ <code>any</code>
-        * [.clone()](#ProofPurpose+clone) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-    * _static_
-        * [.assertionMethod()](#ProofPurpose.assertionMethod) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-        * [.authentication()](#ProofPurpose.authentication) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-        * [.fromJSON(json)](#ProofPurpose.fromJSON) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-
-<a name="ProofPurpose+toJSON"></a>
-
-### proofPurpose.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose+clone"></a>
-
-### proofPurpose.clone() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Deep clones the object.
-
-**Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose.assertionMethod"></a>
-
-### ProofPurpose.assertionMethod() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Purpose is to assert a claim.
-See https://www.w3.org/TR/did-core/#assertion
-
-**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose.authentication"></a>
-
-### ProofPurpose.authentication() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Purpose is to authenticate the signer.
-See https://www.w3.org/TR/did-core/#authentication
-
-**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
-<a name="ProofPurpose.fromJSON"></a>
-
-### ProofPurpose.fromJSON(json) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="Resolver"></a>
 
 ## Resolver
@@ -4756,10 +4261,8 @@ The resolver will only be able to resolve DID documents for methods it has been 
 
 * [Resolver](#Resolver)
     * [new Resolver(config)](#new_Resolver_new)
-    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
-    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
-    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.resolve(did)](#Resolver+resolve) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
+    * [.resolveMultiple(dids)](#Resolver+resolveMultiple) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -4774,67 +4277,6 @@ will throw an error because the handler for the "iota" method then becomes ambig
 | Param | Type |
 | --- | --- |
 | config | <code>ResolverConfig</code> | 
-
-<a name="Resolver+resolvePresentationIssuers"></a>
-
-### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
-Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
-Issuer documents are returned in arbitrary order.
-
-# Errors
-Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
-resolution fails.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="Resolver+resolvePresentationHolder"></a>
-
-### resolver.resolvePresentationHolder(presentation) ⇒ <code>Promise.&lt;(CoreDocument\|IToCoreDocument)&gt;</code>
-Fetches the DID Document of the holder of a `Presentation`.
-
-# Errors
-Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
-DID resolution fails.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="Resolver+verifyPresentation"></a>
-
-### resolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
-Verifies a `Presentation`.
-
-### Important
-See `PresentationValidator::validate` for information about which properties get
-validated and what is expected of the optional arguments `holder` and `issuer`.
-
-### Resolution
-The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
-If you already have up-to-date versions of these DID Documents, you may want
-to use `PresentationValidator::validate`.
-See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
-
-### Errors
-Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
-Otherwise, errors from validating the presentation and its credentials will be returned
-according to the `fail_fast` parameter.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
-| fail_fast | <code>number</code> | 
-| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> \| <code>undefined</code> | 
-| issuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="Resolver+resolve"></a>
 
@@ -4851,6 +4293,26 @@ corresponding to the given DID or the resolution process itself fails.
 | Param | Type |
 | --- | --- |
 | did | <code>string</code> | 
+
+<a name="Resolver+resolveMultiple"></a>
+
+### resolver.resolveMultiple(dids) ⇒ <code>Promise.&lt;Array.&lt;(CoreDocument\|IToCoreDocument)&gt;&gt;</code>
+Concurrently fetches the DID Documents of the multiple given DIDs.
+
+# Errors
+* If the resolver has not been configured to handle the method of any of the given DIDs.
+* If the resolution process of any DID fails.
+
+## Note
+* The order of the documents in the returned array matches that in `dids`.
+* If `dids` contains duplicates, these will be resolved only once and the resolved document
+is copied into the returned array to match the order of `dids`.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| dids | <code>Array.&lt;string&gt;</code> | 
 
 <a name="RevocationBitmap"></a>
 
@@ -5134,6 +4596,62 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="UnknownCredential"></a>
+
+## UnknownCredential
+**Kind**: global class  
+
+* [UnknownCredential](#UnknownCredential)
+    * _instance_
+        * [.tryIntoJwt()](#UnknownCredential+tryIntoJwt) ⇒ [<code>Jwt</code>](#Jwt) \| <code>undefined</code>
+        * [.tryIntoCredential()](#UnknownCredential+tryIntoCredential) ⇒ [<code>Credential</code>](#Credential) \| <code>undefined</code>
+        * [.tryIntoRaw()](#UnknownCredential+tryIntoRaw) ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
+        * [.toJSON()](#UnknownCredential+toJSON) ⇒ <code>any</code>
+        * [.clone()](#UnknownCredential+clone) ⇒ [<code>UnknownCredential</code>](#UnknownCredential)
+    * _static_
+        * [.fromJSON(json)](#UnknownCredential.fromJSON) ⇒ [<code>UnknownCredential</code>](#UnknownCredential)
+
+<a name="UnknownCredential+tryIntoJwt"></a>
+
+### unknownCredential.tryIntoJwt() ⇒ [<code>Jwt</code>](#Jwt) \| <code>undefined</code>
+Returns a `Jwt` if the credential is of type string, `undefined` otherwise.
+
+**Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
+<a name="UnknownCredential+tryIntoCredential"></a>
+
+### unknownCredential.tryIntoCredential() ⇒ [<code>Credential</code>](#Credential) \| <code>undefined</code>
+Returns a `Credential` if the credential is of said type, `undefined` otherwise.
+
+**Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
+<a name="UnknownCredential+tryIntoRaw"></a>
+
+### unknownCredential.tryIntoRaw() ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
+Returns the contained value as JSON, if it can be converted, `undefined` otherwise.
+
+**Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
+<a name="UnknownCredential+toJSON"></a>
+
+### unknownCredential.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
+<a name="UnknownCredential+clone"></a>
+
+### unknownCredential.clone() ⇒ [<code>UnknownCredential</code>](#UnknownCredential)
+Deep clones the object.
+
+**Kind**: instance method of [<code>UnknownCredential</code>](#UnknownCredential)  
+<a name="UnknownCredential.fromJSON"></a>
+
+### UnknownCredential.fromJSON(json) ⇒ [<code>UnknownCredential</code>](#UnknownCredential)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>UnknownCredential</code>](#UnknownCredential)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod
@@ -5142,7 +4660,6 @@ A DID Document Verification Method.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(did, keyType, publicKey, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.setId(id)](#VerificationMethod+setId)
@@ -5159,19 +4676,6 @@ A DID Document Verification Method.
     * _static_
         * [.newFromJwk(did, key, fragment)](#VerificationMethod.newFromJwk) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-
-<a name="new_VerificationMethod_new"></a>
-
-### new VerificationMethod(did, keyType, publicKey, fragment)
-Creates a new `VerificationMethod` from the given `did` and public key.
-
-
-| Param | Type |
-| --- | --- |
-| did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
-| keyType | <code>number</code> | 
-| publicKey | <code>Uint8Array</code> | 
-| fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
 
@@ -5308,141 +4812,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="VerifierOptions"></a>
-
-## VerifierOptions
-Holds additional proof verification options.
-See `IVerifierOptions`.
-
-**Kind**: global class  
-
-* [VerifierOptions](#VerifierOptions)
-    * [new VerifierOptions(options)](#new_VerifierOptions_new)
-    * _instance_
-        * [.toJSON()](#VerifierOptions+toJSON) ⇒ <code>any</code>
-        * [.clone()](#VerifierOptions+clone) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-    * _static_
-        * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-        * [.fromJSON(json)](#VerifierOptions.fromJSON) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-
-<a name="new_VerifierOptions_new"></a>
-
-### new VerifierOptions(options)
-Creates a new `VerifierOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>IVerifierOptions</code> | 
-
-<a name="VerifierOptions+toJSON"></a>
-
-### verifierOptions.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="VerifierOptions+clone"></a>
-
-### verifierOptions.clone() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="VerifierOptions.default"></a>
-
-### VerifierOptions.default() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Creates a new `VerifierOptions` with default options.
-
-**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="VerifierOptions.fromJSON"></a>
-
-### VerifierOptions.fromJSON(json) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="X25519"></a>
-
-## X25519
-An implementation of `X25519` Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
-
-**Kind**: global class  
-
-* [X25519](#X25519)
-    * [.PRIVATE_KEY_LENGTH()](#X25519.PRIVATE_KEY_LENGTH) ⇒ <code>number</code>
-    * [.PUBLIC_KEY_LENGTH()](#X25519.PUBLIC_KEY_LENGTH) ⇒ <code>number</code>
-    * [.keyExchange(privateKey, publicKey)](#X25519.keyExchange) ⇒ <code>Uint8Array</code>
-    * [.Ed25519toX25519Private(privateKey)](#X25519.Ed25519toX25519Private) ⇒ <code>Uint8Array</code>
-    * [.Ed25519toX25519Public(publicKey)](#X25519.Ed25519toX25519Public) ⇒ <code>Uint8Array</code>
-
-<a name="X25519.PRIVATE_KEY_LENGTH"></a>
-
-### X25519.PRIVATE\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an X25519 private key.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-<a name="X25519.PUBLIC_KEY_LENGTH"></a>
-
-### X25519.PUBLIC\_KEY\_LENGTH() ⇒ <code>number</code>
-Length in bytes of an X25519 public key.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-<a name="X25519.keyExchange"></a>
-
-### X25519.keyExchange(privateKey, publicKey) ⇒ <code>Uint8Array</code>
-Performs Diffie-Hellman key exchange using the private key of the first party with the
-public key of the second party, resulting in a shared secret.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-| publicKey | <code>Uint8Array</code> | 
-
-<a name="X25519.Ed25519toX25519Private"></a>
-
-### X25519.Ed25519toX25519Private(privateKey) ⇒ <code>Uint8Array</code>
-Transforms an `Ed25519` private key to an `X25519` private key.
-
-This is possible because Ed25519 is birationally equivalent to Curve25519 used by X25519.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="X25519.Ed25519toX25519Public"></a>
-
-### X25519.Ed25519toX25519Public(publicKey) ⇒ <code>Uint8Array</code>
-Transforms an `Ed25519` public key to an `X25519` public key.
-
-This is possible because Ed25519 is birationally equivalent to Curve25519 used by X25519.
-
-**Kind**: static method of [<code>X25519</code>](#X25519)  
-
-| Param | Type |
-| --- | --- |
-| publicKey | <code>Uint8Array</code> | 
-
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5520,6 +4889,14 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

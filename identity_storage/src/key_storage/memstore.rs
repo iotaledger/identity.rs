@@ -17,7 +17,7 @@ use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
-use super::key_gen::JwkGenOutput;
+use super::jwk_gen_output::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
 use super::KeyStorageErrorKind;
@@ -70,6 +70,7 @@ impl JwkStorage for JwkMemStore {
 
     let mut jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
     jwk.set_alg(alg.name());
+    // Unwrapping is OK because the None variant only occurs for kty = oct.
     let mut public_jwk: Jwk = jwk.to_public().unwrap();
     public_jwk.set_kid(kid.clone());
 
@@ -181,7 +182,6 @@ impl JwkStorage for JwkMemStore {
 pub(crate) mod ed25519 {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::SecretKey;
-  use crypto::signatures::ed25519::{self};
   use identity_verification::jose::jwk::EdCurve;
   use identity_verification::jose::jwk::Jwk;
   use identity_verification::jose::jwk::JwkParamsOkp;
@@ -205,7 +205,7 @@ pub(crate) mod ed25519 {
       );
     }
 
-    let sk: [u8; ed25519::SECRET_KEY_LENGTH] = params
+    let sk: [u8; SecretKey::LENGTH] = params
       .d
       .as_deref()
       .map(jwu::decode_b64)
@@ -221,10 +221,10 @@ pub(crate) mod ed25519 {
       .try_into()
       .map_err(|_| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("expected key of length {}", ed25519::SECRET_KEY_LENGTH))
+          .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH))
       })?;
 
-    Ok(SecretKey::from_bytes(sk))
+    Ok(SecretKey::from_bytes(&sk))
   }
 
   pub(crate) fn encode_jwk(private_key: &SecretKey, public_key: &PublicKey) -> Jwk {
@@ -238,20 +238,19 @@ pub(crate) mod ed25519 {
   }
 }
 
-const ED25519_KEY_TYPE_STR: &str = "Ed25519";
-pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(ED25519_KEY_TYPE_STR);
-
 #[derive(Debug, Copy, Clone)]
 enum MemStoreKeyType {
   Ed25519,
 }
 
 impl JwkMemStore {
-  pub const ED25519_KEY_TYPE: KeyType = ED25519_KEY_TYPE;
+  const ED25519_KEY_TYPE_STR: &str = "Ed25519";
+  /// The Ed25519 key type.
+  pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
 }
 
 impl MemStoreKeyType {
-  pub const fn name(&self) -> &'static str {
+  const fn name(&self) -> &'static str {
     match self {
       MemStoreKeyType::Ed25519 => "Ed25519",
     }
@@ -269,7 +268,7 @@ impl TryFrom<&KeyType> for MemStoreKeyType {
 
   fn try_from(value: &KeyType) -> Result<Self, Self::Error> {
     match value.as_str() {
-      ED25519_KEY_TYPE_STR => Ok(MemStoreKeyType::Ed25519),
+      JwkMemStore::ED25519_KEY_TYPE_STR => Ok(MemStoreKeyType::Ed25519),
       _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
     }
   }
@@ -336,18 +335,18 @@ pub(crate) mod shared {
   use tokio::sync::RwLockWriteGuard;
 
   #[derive(Default)]
-  pub struct Shared<T>(RwLock<T>);
+  pub(crate) struct Shared<T>(RwLock<T>);
 
   impl<T> Shared<T> {
-    pub fn new(data: T) -> Self {
+    pub(crate) fn new(data: T) -> Self {
       Self(RwLock::new(data))
     }
 
-    pub async fn read(&self) -> RwLockReadGuard<'_, T> {
+    pub(crate) async fn read(&self) -> RwLockReadGuard<'_, T> {
       self.0.read().await
     }
 
-    pub async fn write(&self) -> RwLockWriteGuard<'_, T> {
+    pub(crate) async fn write(&self) -> RwLockWriteGuard<'_, T> {
       self.0.write().await
     }
   }
@@ -363,7 +362,6 @@ pub(crate) mod shared {
 mod tests {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::Signature;
-  use crypto::signatures::ed25519::{self};
   use identity_verification::jose::jwk::EcCurve;
   use identity_verification::jose::jwk::JwkParamsEc;
   use identity_verification::jose::jwk::JwkParamsOkp;
@@ -376,7 +374,10 @@ mod tests {
     let test_msg: &[u8] = b"test";
     let store: JwkMemStore = JwkMemStore::new();
 
-    let JwkGenOutput { key_id, jwk } = store.generate(ED25519_KEY_TYPE, JwsAlgorithm::EdDSA).await.unwrap();
+    let JwkGenOutput { key_id, jwk } = store
+      .generate(JwkMemStore::ED25519_KEY_TYPE, JwsAlgorithm::EdDSA)
+      .await
+      .unwrap();
 
     let signature = store.sign(&key_id, test_msg, &jwk.to_public().unwrap()).await.unwrap();
 
@@ -425,7 +426,7 @@ mod tests {
     ec_params.d = Some("".to_owned());
     let jwk_ec = Jwk::from_params(ec_params);
 
-    let err: _ = store.insert(jwk_ec).await.unwrap_err();
+    let err = store.insert(jwk_ec).await.unwrap_err();
     assert!(matches!(err.kind(), KeyStorageErrorKind::UnsupportedKeyType));
   }
 
@@ -449,7 +450,7 @@ mod tests {
       panic!("expected an ed25519 jwk");
     }
 
-    let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
+    let pk: [u8; PublicKey::LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
 
     PublicKey::try_from(pk).unwrap()
   }

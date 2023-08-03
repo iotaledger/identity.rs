@@ -9,10 +9,14 @@ use itertools;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 /// An error associated with validating credentials and presentations.
-pub enum ValidationError {
+pub enum JwtValidationError {
   /// Indicates that the JWS representation of an issued credential or presentation could not be decoded.
   #[error("could not decode jws")]
   JwsDecodingError(#[source] identity_verification::jose::error::Error),
+
+  /// Indicates error while verifying the JWS of a presentation.
+  #[error("could not verify jws")]
+  PresentationJwsError(#[source] identity_document::error::Error),
 
   /// Indicates that a verification method that both matches the DID Url specified by
   /// the `kid` value and contains a public key in the JWK format could not be found.
@@ -36,10 +40,10 @@ pub enum ValidationError {
     signer_ctx: SignerContext,
   },
 
-  /// Indicates that the expiration date of the credential is not considered valid.
+  /// Indicates that the expiration date of the credential or presentation is not considered valid.
   #[error("the expiration date is in the past or earlier than required")]
   ExpirationDate,
-  /// Indicates that the issuance date of the credential is not considered valid.
+  /// Indicates that the issuance date of the credential or presentation is not considered valid.
   #[error("issuance date is in the future or later than required")]
   IssuanceDate,
   /// Indicates that the credential's (resp. presentation's) signature could not be verified using
@@ -119,11 +123,11 @@ impl Display for SignerContext {
   }
 }
 
-/// Errors caused by a failure to validate a credential.
+/// Errors caused by a failure to validate a [`Credential`](crate::credential::Credential).
 #[derive(Debug)]
 pub struct CompoundCredentialValidationError {
   /// List of credential validation errors.
-  pub validation_errors: Vec<ValidationError>,
+  pub validation_errors: Vec<JwtValidationError>,
 }
 
 impl Display for CompoundCredentialValidationError {

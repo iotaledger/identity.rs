@@ -1,9 +1,10 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did_document;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
 use examples::FAUCET_ENDPOINT;
 use identity_iota::iota::block::address::NftAddress;
@@ -12,9 +13,12 @@ use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::unlock_condition::AddressUnlockCondition;
 use iota_sdk::types::block::output::NftId;
@@ -48,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -61,11 +65,11 @@ async fn main() -> anyhow::Result<()> {
   // Create the car NFT with an Ed25519 address as the unlock condition.
   let car_nft: NftOutput = NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the NFT output.
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![car_nft.into()])?
     .finish()
@@ -81,7 +85,8 @@ async fn main() -> anyhow::Result<()> {
   let network: NetworkName = client.network_name().await?;
 
   // Construct a DID document for the car.
-  let (car_document, _): (IotaDocument, _) = create_did_document(&network)?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (car_document, _): (IotaDocument, _) = create_did_document(&network, &storage).await?;
 
   // Create a new DID for the car that is owned by the car NFT.
   let car_did_output: AliasOutput = client

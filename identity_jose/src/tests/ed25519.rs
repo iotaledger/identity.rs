@@ -5,7 +5,7 @@ use std::ops::Deref;
 
 use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
-use crypto::signatures::ed25519::{self};
+use crypto::signatures::ed25519::Signature;
 
 use crate::jwk::EdCurve;
 use crate::jwk::Jwk;
@@ -23,7 +23,7 @@ pub(crate) fn expand_secret_jwk(jwk: &Jwk) -> SecretKey {
     panic!("expected an ed25519 jwk");
   }
 
-  let sk: [u8; ed25519::SECRET_KEY_LENGTH] = params
+  let sk: [u8; SecretKey::LENGTH] = params
     .d
     .as_deref()
     .map(jwu::decode_b64)
@@ -32,7 +32,7 @@ pub(crate) fn expand_secret_jwk(jwk: &Jwk) -> SecretKey {
     .try_into()
     .unwrap();
 
-  SecretKey::from_bytes(sk)
+  SecretKey::from_bytes(&sk)
 }
 
 pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {
@@ -42,7 +42,7 @@ pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {
     panic!("expected an ed25519 jwk");
   }
 
-  let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
+  let pk: [u8; PublicKey::LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
 
   PublicKey::try_from(pk).unwrap()
 }
@@ -55,12 +55,11 @@ pub(crate) fn sign(message: &[u8], private_key: &Jwk) -> impl AsRef<[u8]> {
 pub(crate) fn verify(verification_input: VerificationInput, jwk: &Jwk) -> Result<(), SignatureVerificationError> {
   let public_key = expand_public_jwk(jwk);
 
-  let signature_arr =
-    <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature.deref())
-      .map_err(|err| err.to_string())
-      .unwrap();
+  let signature_arr = <[u8; Signature::LENGTH]>::try_from(verification_input.decoded_signature.deref())
+    .map_err(|err| err.to_string())
+    .unwrap();
 
-  let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);
+  let signature = Signature::from_bytes(signature_arr);
   if public_key.verify(&signature, &verification_input.signing_input) {
     Ok(())
   } else {

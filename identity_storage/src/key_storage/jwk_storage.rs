@@ -1,16 +1,14 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use crate::key_storage::KeyStorageError;
-pub use crate::key_storage::KeyStorageErrorKind;
-
 use crate::key_storage::KeyId;
+use crate::key_storage::KeyStorageError;
 use crate::key_storage::KeyType;
 use async_trait::async_trait;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
 
-use super::key_gen::JwkGenOutput;
+use super::jwk_gen_output::JwkGenOutput;
 
 /// Result of key storage operations.
 pub type KeyStorageResult<T> = Result<T, KeyStorageError>;
@@ -33,7 +31,7 @@ mod storage_sub_trait {
 pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// Generate a new key represented as a JSON Web Key.
   ///
-  /// It's recommend that the implementer exposes constants for the supported [`KeyType`].
+  /// It is recommended that the implementer exposes constants for the supported [`KeyType`].
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
   /// Insert an existing JSON Web Key into the storage.
@@ -45,6 +43,7 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   /// the corresponding `public_key` (see [`Jwk::alg`](Jwk::alg()) etc.).
   ///
   /// # Note
+  ///
   /// High level methods from this library calling this method are designed to always pass a `public_key` that
   /// corresponds to `key_id` and additional checks for this in the `sign` implementation are normally not required.
   /// This is however based on the expectation that the key material associated with a given [`KeyId`] is immutable.  

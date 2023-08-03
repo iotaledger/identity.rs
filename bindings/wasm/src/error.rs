@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::credential::CompoundJwtPresentationValidationError;
 use identity_iota::resolver;
 use identity_iota::storage::key_id_storage::KeyIdStorageError;
 use identity_iota::storage::key_id_storage::KeyIdStorageErrorKind;
@@ -25,7 +26,7 @@ pub fn wasm_error<'a, E>(error: E) -> JsValue
 where
   E: Into<WasmError<'a>>,
 {
-  let wasm_err: WasmError = error.into();
+  let wasm_err: WasmError<'_> = error.into();
   JsValue::from(wasm_err)
 }
 
@@ -99,8 +100,7 @@ impl_wasm_error_from!(
   identity_iota::did::Error,
   identity_iota::document::Error,
   identity_iota::iota::Error,
-  identity_iota::credential::ValidationError,
-  identity_iota::credential::vc_jwt_validation::ValidationError,
+  identity_iota::credential::JwtValidationError,
   identity_iota::credential::RevocationError,
   identity_iota::verification::Error,
   identity_iota::credential::DomainLinkageValidationError
@@ -171,7 +171,7 @@ impl From<serde_json::Error> for WasmError<'_> {
 impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {
-      name: Cow::Borrowed("iota_types::block::Error"),
+      name: Cow::Borrowed("iota_sdk::types::block::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }
@@ -181,15 +181,6 @@ impl From<identity_iota::credential::CompoundCredentialValidationError> for Wasm
   fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundCredentialValidationError"),
-      message: Cow::Owned(ErrorMessage(&error).to_string()),
-    }
-  }
-}
-
-impl From<identity_iota::credential::CompoundPresentationValidationError> for WasmError<'_> {
-  fn from(error: identity_iota::credential::CompoundPresentationValidationError) -> Self {
-    Self {
-      name: Cow::Borrowed("CompoundPresentationValidationError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
@@ -249,11 +240,10 @@ impl From<identity_iota::verification::jose::error::Error> for WasmError<'_> {
   }
 }
 
-// TODO: This should replace the old `CompoundCredentialValidationError`, or the previous error should be updated.
-impl From<identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError> for WasmError<'_> {
-  fn from(error: identity_iota::credential::vc_jwt_validation::CompoundCredentialValidationError) -> Self {
+impl From<CompoundJwtPresentationValidationError> for WasmError<'_> {
+  fn from(error: CompoundJwtPresentationValidationError) -> Self {
     Self {
-      name: Cow::Borrowed("CompoundCredentialValidationError"),
+      name: Cow::Borrowed("CompoundJwtPresentationValidationError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

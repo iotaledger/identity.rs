@@ -20,19 +20,11 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::GetSignature;
-use identity_core::crypto::PrivateKey;
-use identity_core::crypto::ProofOptions;
-use identity_core::crypto::SetSignature;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
-use identity_document::verifiable::DocumentSigner;
-use identity_document::verifiable::VerifierOptions;
 use identity_verification::MethodRelationship;
 use identity_verification::MethodScope;
-use identity_verification::MethodUriType;
-use identity_verification::TryMethod;
 use identity_verification::VerificationMethod;
 
 use crate::error::Result;
@@ -43,8 +35,8 @@ use crate::NetworkName;
 use crate::StateMetadataDocument;
 use crate::StateMetadataEncoding;
 
-#[derive(Debug, Deserialize)]
 /// Struct used internally when deserializing [`IotaDocument`].
+#[derive(Debug, Deserialize)]
 struct ProvisionalIotaDocument {
   #[serde(rename = "doc")]
   document: CoreDocument,
@@ -63,6 +55,7 @@ impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
         None,
       )
     })?;
+
     for controller_id in document
       .controller()
       .map(|controller_set| controller_set.iter())
@@ -76,17 +69,21 @@ impl TryFrom<ProvisionalIotaDocument> for IotaDocument {
         )
       })?;
     }
+
     Ok(IotaDocument { document, metadata })
   }
 }
+
 /// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This extends [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "ProvisionalIotaDocument")]
 pub struct IotaDocument {
+  /// The DID document.
   #[serde(rename = "doc")]
   pub(crate) document: CoreDocument,
+  /// The metadata of an IOTA DID document.
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
 }
@@ -99,7 +96,6 @@ impl IotaDocument {
   /// Constructs an empty DID Document with a [`IotaDID::placeholder`] identifier
   /// for the given `network`.
   // TODO: always take Option<NetworkName> or `new_with_options` for a particular network?
-  // TODO: store the network in the serialized state metadata? Currently it's lost during packing.
   pub fn new(network: &NetworkName) -> Self {
     Self::new_with_id(IotaDID::placeholder(network))
   }
@@ -216,7 +212,7 @@ impl IotaDocument {
 
   /// Returns a `Vec` of verification method references whose verification relationship matches `scope`.
   ///
-  /// If `scope` is `None`, an iterator over all **embedded** methods is returned.
+  /// If `scope` is `None`, all **embedded** methods are returned.
   pub fn methods(&self, scope: Option<MethodScope>) -> Vec<&VerificationMethod> {
     self.document.methods(scope)
   }
@@ -233,130 +229,119 @@ impl IotaDocument {
       .map_err(Error::InvalidDoc)
   }
 
-  /// Removes all references to the specified [`VerificationMethod`].
+  /// Removes and returns the [`VerificationMethod`] identified by `did_url` from the document.
   ///
-  /// # Errors
+  /// # Note
   ///
-  /// Returns None if the method does not exist.
+  /// All _references to the method_ found in the document will be removed.
+  /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method(&mut self, did_url: &DIDUrl) -> Option<VerificationMethod> {
     self.core_document_mut().remove_method(did_url)
   }
 
-  /// Similar to [`Self::remove_method`](Self::remove_method()), but appends the scope where the method was found
-  /// to the second position of the returned tuple.  
+  /// Removes and returns the [`VerificationMethod`] from the document. The [`MethodScope`] under which the method was
+  /// found is appended to the second position of the returned tuple.
+  ///
+  /// # Note
+  ///
+  /// All _references to the method_ found in the document will be removed.
+  /// This includes cases where the reference is to a method contained in another DID document.
   pub fn remove_method_and_scope(&mut self, did_url: &DIDUrl) -> Option<(VerificationMethod, MethodScope)> {
     self.core_document_mut().remove_method_and_scope(did_url)
   }
 
-  /// Attaches the relationship to the given method, if the method exists.
+  /// Attaches the relationship to the method resolved by `method_query`.
   ///
-  /// Note: The method needs to be in the set of verification methods,
-  /// so it cannot be an embedded one.
-  pub fn attach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist or if it is embedded.
+  /// To convert an embedded method into a generic verification method, remove it first
+  /// and insert it with [`MethodScope::VerificationMethod`].
+  pub fn attach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
     self
       .core_document_mut()
-      .attach_method_relationship(did_url, relationship)
+      .attach_method_relationship(method_query, relationship)
       .map_err(Error::InvalidDoc)
   }
 
-  /// Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: &DIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  /// Detaches the `relationship` from the method identified by `did_url`.
+  /// Returns `true` if the relationship was found and removed, `false` otherwise.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist or is embedded.
+  /// To remove an embedded method, use [`Self::remove_method`].
+  ///
+  /// # Note
+  ///
+  /// If the method is referenced in the given scope, but the document does not contain the referenced verification
+  /// method, then the reference will persist in the document (i.e. it is not removed).
+  pub fn detach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
     self
       .core_document_mut()
-      .detach_method_relationship(did_url, relationship)
+      .detach_method_relationship(method_query, relationship)
       .map_err(Error::InvalidDoc)
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
-  /// provided `query` and the verification relationship specified by `scope` if present.
+  /// provided `method_query` and the verification relationship specified by `scope` if present.
   ///
   /// # Warning
   ///
   /// Incorrect use of this method can lead to distinct document resources being identified by the same DID URL.
   pub fn resolve_method_mut<'query, Q>(
     &mut self,
-    query: Q,
+    method_query: Q,
     scope: Option<MethodScope>,
   ) -> Option<&mut VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.document.resolve_method_mut(query, scope)
+    self.document.resolve_method_mut(method_query, scope)
   }
 
-  /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
+  /// Returns the first [`Service`] with an `id` property matching the provided `service_query`, if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains
   // services whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service>
+  pub fn resolve_service<'query, 'me, Q>(&'me self, service_query: Q) -> Option<&Service>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.document.resolve_service(query)
+    self.document.resolve_service(service_query)
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
-  /// provided `query` and the verification relationship specified by `scope` if present.
+  /// provided `method_query` and the verification relationship specified by `scope` if present.
   // NOTE: This method demonstrates unexpected behaviour in the edge cases where the document contains methods
   // whose ids are of the form <did different from this document's>#<fragment>.
-  pub fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod>
+  pub fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    method_query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.document.resolve_method(query, scope)
+    self.document.resolve_method(method_query, scope)
   }
 
   // ===========================================================================
   // Signatures
   // ===========================================================================
-
-  /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
-  /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_> {
-    self.document.signer(private_key)
-  }
-
-  /// Signs the provided `data` with the verification method specified by `method_query`.
-  /// See [`IotaDocument::signer`] for creating signatures with a builder pattern.
-  ///
-  /// NOTE: does not validate whether `private_key` corresponds to the verification method.
-  /// See [`IotaDocument::verify_data`].
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the signature operation fails.
-  pub fn sign_data<'query, 'this: 'query, X, Q>(
-    &'this self,
-    data: &mut X,
-    private_key: &'this PrivateKey,
-    method_query: Q,
-    options: ProofOptions,
-  ) -> Result<()>
-  where
-    X: Serialize + SetSignature + TryMethod,
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self
-      .signer(private_key)
-      .method(method_query)
-      .options(options)
-      .sign(data)
-      .map_err(|err| Error::SigningError(err.into()))
-  }
-
-  /// Verifies the signature of the provided `data` was created using a verification method
-  /// in this DID Document.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, data
-  /// serialization fails, or the verification operation fails.
-  pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_document::Result<()>
-  where
-    X: Serialize + GetSignature + ?Sized,
-  {
-    self.document.verify_data(data, options)
-  }
 
   /// Decodes and verifies the provided JWS according to the passed [`JwsVerificationOptions`] and
   /// [`JwsVerifier`].
@@ -396,6 +381,9 @@ impl IotaDocument {
 
 #[cfg(feature = "client")]
 mod client_document {
+  use iota_sdk::types::block::address::Hrp;
+  use iota_sdk::types::block::address::ToBech32Ext;
+
   use crate::block::address::Address;
   use crate::block::output::AliasId;
   use crate::block::output::AliasOutput;
@@ -434,20 +422,29 @@ mod client_document {
         StateMetadataDocument::unpack(alias_output.state_metadata()).and_then(|doc| doc.into_iota_document(did))?
       };
 
-      document.set_controller_and_governor_addresses(alias_output, &did.network_str().to_owned().try_into()?);
+      document.set_controller_and_governor_addresses(alias_output, &did.network_str().to_owned().try_into()?)?;
+
       Ok(document)
     }
 
-    fn set_controller_and_governor_addresses(&mut self, alias_output: &AliasOutput, network_name: &NetworkName) {
-      self.metadata.governor_address = Some(alias_output.governor_address().to_bech32(network_name));
-      self.metadata.state_controller_address = Some(alias_output.state_controller_address().to_bech32(network_name));
+    fn set_controller_and_governor_addresses(
+      &mut self,
+      alias_output: &AliasOutput,
+      network_name: &NetworkName,
+    ) -> Result<()> {
+      let hrp: Hrp = network_name.try_into()?;
+      self.metadata.governor_address = Some(alias_output.governor_address().to_bech32(hrp).to_string());
+      self.metadata.state_controller_address = Some(alias_output.state_controller_address().to_bech32(hrp).to_string());
 
       // Overwrite the DID Document controller.
       let controller_did: Option<IotaDID> = match alias_output.state_controller_address() {
         Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
         _ => None,
       };
+
       *self.core_document_mut().controller_mut() = controller_did.map(CoreDID::from).map(OneOrSet::new_one);
+
+      Ok(())
     }
 
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
@@ -559,22 +556,12 @@ impl Display for IotaDocument {
   }
 }
 
-impl TryMethod for IotaDocument {
-  const TYPE: MethodUriType = MethodUriType::Absolute;
-}
-
 #[cfg(test)]
 mod tests {
   use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
   use identity_did::DID;
-  use identity_document::verifiable::VerifiableProperties;
-  use identity_verification::MethodData;
-  use identity_verification::MethodType;
-  use iota_sdk::types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;
   use crate::block::address::AliasAddress;
@@ -586,20 +573,11 @@ mod tests {
   use crate::block::output::UnlockCondition;
 
   use super::*;
+  use crate::test_utils::generate_method;
 
   fn valid_did() -> IotaDID {
     "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
       .parse()
-      .unwrap()
-  }
-
-  fn generate_method(controller: &IotaDID, fragment: &str) -> VerificationMethod {
-    VerificationMethod::builder(Default::default())
-      .id(controller.to_url().join(fragment).unwrap())
-      .controller(controller.clone().into())
-      .type_(MethodType::ED25519_VERIFICATION_KEY_2018)
-      .data(MethodData::new_multibase(fragment.as_bytes()))
-      .build()
       .unwrap()
   }
 
@@ -629,7 +607,7 @@ mod tests {
     let placeholder: IotaDID = IotaDID::placeholder(&network);
     let doc1: IotaDocument = IotaDocument::new(&network);
     assert_eq!(doc1.id().network_str(), network.as_ref());
-    assert_eq!(doc1.id().tag(), placeholder.tag());
+    assert_eq!(doc1.id().tag_str(), placeholder.tag_str());
     assert_eq!(doc1.id(), &placeholder);
     assert_eq!(doc1.methods(None).len(), 0);
     assert!(doc1.service().is_empty());
@@ -646,88 +624,14 @@ mod tests {
   fn test_methods() {
     let controller: IotaDID = valid_did();
     let document: IotaDocument = generate_document(&controller);
-    let expected: Vec<VerificationMethod> = vec![
-      generate_method(&controller, "#key-1"),
-      generate_method(&controller, "#key-2"),
-      generate_method(&controller, "#key-3"),
-      generate_method(&controller, "#auth-key"),
-    ];
+    let expected: [&'static str; 4] = ["key-1", "key-2", "key-3", "auth-key"];
 
     let mut methods = document.methods(None).into_iter();
-    assert_eq!(methods.next(), Some(&expected[0]));
-    assert_eq!(methods.next(), Some(&expected[1]));
-    assert_eq!(methods.next(), Some(&expected[2]));
-    assert_eq!(methods.next(), Some(&expected[3]));
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[0]);
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[1]);
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[2]);
+    assert_eq!(methods.next().unwrap().id().fragment().unwrap(), expected[3]);
     assert_eq!(methods.next(), None);
-  }
-
-  #[test]
-  fn test_verify_data_with_scope() {
-    fn generate_data() -> VerifiableProperties {
-      use identity_core::json;
-      let mut properties: VerifiableProperties = VerifiableProperties::default();
-      properties.properties.insert("int_key".to_owned(), json!(1));
-      properties.properties.insert("str".to_owned(), json!("some value"));
-      properties
-        .properties
-        .insert("object".to_owned(), json!({ "inner": 42 }));
-      properties
-    }
-
-    let mut document: IotaDocument = IotaDocument::new_with_id(valid_did());
-
-    // Try sign using each type of verification relationship.
-    for scope in [
-      MethodScope::assertion_method(),
-      MethodScope::authentication(),
-      MethodScope::capability_delegation(),
-      MethodScope::capability_invocation(),
-      MethodScope::key_agreement(),
-      MethodScope::VerificationMethod,
-    ] {
-      // Add a new method.
-      let key_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-      let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
-      let method_new: VerificationMethod = VerificationMethod::new(
-        document.id().clone(),
-        key_new.type_(),
-        key_new.public(),
-        method_fragment.as_str(),
-      )
-      .unwrap();
-      document.insert_method(method_new, scope).unwrap();
-
-      // Sign and verify data.
-      let mut data = generate_data();
-      document
-        .sign_data(
-          &mut data,
-          key_new.private(),
-          method_fragment.as_str(),
-          ProofOptions::default(),
-        )
-        .unwrap();
-      // Signature should still be valid for every scope.
-      assert!(document.verify_data(&data, &VerifierOptions::default()).is_ok());
-
-      // Ensure only the correct scope is valid.
-      for scope_check in [
-        MethodScope::assertion_method(),
-        MethodScope::authentication(),
-        MethodScope::capability_delegation(),
-        MethodScope::capability_invocation(),
-        MethodScope::key_agreement(),
-        MethodScope::VerificationMethod,
-      ] {
-        let result = document.verify_data(&data, &VerifierOptions::new().method_scope(scope_check));
-        // Any other scope should fail validation.
-        if scope_check == scope {
-          assert!(result.is_ok());
-        } else {
-          assert!(result.is_err());
-        }
-      }
-    }
   }
 
   #[test]
@@ -797,23 +701,14 @@ mod tests {
   #[test]
   fn test_document_equality() {
     let mut original_doc: IotaDocument = IotaDocument::new_with_id(valid_did());
-    let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method1: VerificationMethod = VerificationMethod::new(
-      original_doc.id().to_owned(),
-      keypair1.type_(),
-      keypair1.public(),
-      "test-0",
-    )
-    .unwrap();
+    let method1: VerificationMethod = generate_method(original_doc.id(), "test-0");
     original_doc
       .insert_method(method1, MethodScope::capability_invocation())
       .unwrap();
 
     // Update the key material of the existing verification method #test-0.
     let mut doc1 = original_doc.clone();
-    let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method2: VerificationMethod =
-      VerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
+    let method2: VerificationMethod = generate_method(original_doc.id(), "test-0");
 
     doc1
       .remove_method(&doc1.id().to_url().join("#test-0").unwrap())
@@ -827,9 +722,7 @@ mod tests {
     assert_ne!(original_doc, doc1);
 
     let mut doc2 = doc1.clone();
-    let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method3: VerificationMethod =
-      VerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
+    let method3: VerificationMethod = generate_method(original_doc.id(), "test-0");
 
     let insertion_result = doc2.insert_method(method3, MethodScope::capability_invocation());
 
@@ -840,7 +733,6 @@ mod tests {
 
   #[test]
   fn test_unpack_empty() {
-    let mock_token_supply: u64 = ProtocolParameters::default().token_supply();
     let controller_did: IotaDID = valid_did();
 
     // VALID: unpack empty, deactivated document.
@@ -854,7 +746,7 @@ mod tests {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         Address::Alias(AliasAddress::new(AliasId::from(&controller_did))),
       )))
-      .finish(mock_token_supply)
+      .finish()
       .unwrap();
     let document: IotaDocument = IotaDocument::unpack_from_output(&did, &alias_output, true).unwrap();
     assert_eq!(document.id(), &did);

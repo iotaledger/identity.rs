@@ -1,18 +1,21 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
-use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::output::feature::MetadataFeature;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::address::AliasAddress;
 use iota_sdk::types::block::output::feature::IssuerFeature;
@@ -50,13 +53,14 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
   // Create a new DID for the manufacturer.
-  let (_, manufacturer_document, _): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager).await?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, manufacturer_document, _): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager, &storage).await?;
   let manufacturer_did = manufacturer_document.id().clone();
 
   // Get the current byte cost.
@@ -77,11 +81,11 @@ async fn main() -> anyhow::Result<()> {
       .add_immutable_feature(Feature::Metadata(MetadataFeature::new(
         b"Digital Product Passport Metadata".to_vec(),
       )?))
-      .finish(client.get_token_supply().await?)?;
+      .finish()?;
 
   // Publish the NFT.
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![product_passport_nft.into()])?
     .finish()

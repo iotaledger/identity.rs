@@ -61,7 +61,7 @@ impl JwkSet {
     self.keys.push(key.into());
   }
 
-  /// Removes the key at position `index`, returning true if the key was
+  /// Removes the key at position `index`, returning `true` if the key was
   /// removed.
   pub fn del(&mut self, index: usize) -> bool {
     if index < self.keys.len() {

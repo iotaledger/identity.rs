@@ -14,11 +14,13 @@ use serde::Serialize;
 /// Additional attributes related to a [`IotaDocument`][crate::IotaDocument].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct IotaDocumentMetadata {
-  // TODO: store created in the immutable metadata, if possible?
+  /// The timestamp of document creation.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub created: Option<Timestamp>,
+  /// The timestamp of the last update to the document.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub updated: Option<Timestamp>,
+  /// Signals whether the document is deactivated.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub deactivated: Option<bool>,
   /// Bech32-encoded address of the governor unlock condition.
@@ -28,7 +30,7 @@ pub struct IotaDocumentMetadata {
   #[serde(rename = "stateControllerAddress", skip_serializing_if = "Option::is_none")]
   pub state_controller_address: Option<String>,
   #[serde(flatten)]
-  pub properties: Object,
+  properties: Object,
 }
 
 impl IotaDocumentMetadata {
@@ -44,6 +46,16 @@ impl IotaDocumentMetadata {
       state_controller_address: None,
       properties: Object::default(),
     }
+  }
+
+  /// Returns a reference to the custom metadata properties.
+  pub fn properties(&self) -> &Object {
+    &self.properties
+  }
+
+  /// Returns a mutable reference to the custom metadata properties.
+  pub fn properties_mut(&mut self) -> &mut Object {
+    &mut self.properties
   }
 }
 

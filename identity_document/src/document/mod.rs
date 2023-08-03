@@ -8,7 +8,5 @@
 pub use self::builder::DocumentBuilder;
 pub use self::core_document::CoreDocument;
 
-#[cfg(feature = "diff")]
-pub(crate) use core_document::CoreDocumentData;
 mod builder;
 mod core_document;

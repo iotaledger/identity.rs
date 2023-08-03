@@ -2,18 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
-use futures::TryFutureExt;
-use identity_credential::credential::Credential;
-use identity_credential::presentation::Presentation;
-use identity_credential::validator::CredentialValidator;
-use identity_credential::validator::FailFast;
-use identity_credential::validator::PresentationValidationOptions;
-use identity_credential::validator::PresentationValidator;
-use identity_did::CoreDID;
+use futures::stream::FuturesUnordered;
+use futures::TryStreamExt;
 use identity_did::DID;
+use std::collections::HashSet;
 
 use identity_document::document::CoreDocument;
-use serde::Serialize;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
@@ -26,11 +20,9 @@ use super::commands::SendSyncCommand;
 use super::commands::SingleThreadedCommand;
 
 /// Convenience type for resolving DID documents from different DID methods.   
-///  
-/// Also provides methods for resolving DID Documents associated with
-/// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
 ///
 /// # Configuration
+///
 /// The resolver will only be able to resolve DID documents for methods it has been configured for. This is done by
 /// attaching method specific handlers with [`Self::attach_handler`](Self::attach_handler()).
 pub struct Resolver<DOC = CoreDocument, CMD = SendSyncCommand<DOC>>
@@ -48,6 +40,7 @@ where
   /// Constructs a new [`Resolver`].
   ///
   /// # Example
+  ///
   /// Construct a `Resolver` that resolves DID documents of type
   /// [`CoreDocument`](::identity_document::document::CoreDocument).
   ///  ```
@@ -67,10 +60,12 @@ where
   /// Fetches the DID Document of the given DID.
   ///
   /// # Errors
+  ///
   /// Errors if the resolver has not been configured to handle the method corresponding to the given DID or the
   /// resolution process itself fails.
   ///
   /// ## Example
+  ///
   /// ```
   /// # use identity_resolver::Resolver;
   /// # use identity_did::CoreDID;
@@ -95,8 +90,8 @@ where
   /// }
   /// ```
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
-    let method = did.method();
-    let delegate = self
+    let method: &str = did.method();
+    let delegate: &M = self
       .command_map
       .get(method)
       .ok_or_else(|| ErrorCause::UnsupportedMethodError {
@@ -107,143 +102,29 @@ where
     delegate.apply(did.as_str()).await
   }
 
-  /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
-  /// Issuer documents are returned in arbitrary order.
+  /// Concurrently fetches the DID Documents of the multiple given DIDs.
   ///
   /// # Errors
+  /// * If the resolver has not been configured to handle the method of any of the given DIDs.
+  /// * If the resolution process of any DID fails.
   ///
-  /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
-  /// resolution fails.
-  pub async fn resolve_presentation_issuers<U, V>(&self, presentation: &Presentation<U, V>) -> Result<Vec<DOC>> {
-    // Extract unique issuers, but keep the position of one credential issued by said DID for each unique issuer.
-    // The credential positions help us provide better errors.
-    let issuers: HashMap<CoreDID, usize> = presentation
-      .verifiable_credential
-      .iter()
-      .enumerate()
-      .map(|(idx, credential)| {
-        CredentialValidator::extract_issuer::<CoreDID, V>(credential)
-          .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
-          .map_err(Error::new)
-          .map_err(|error| {
-            Error::resolution_action(
-              error,
-              crate::error::ResolutionAction::PresentationIssuersResolution(idx),
-            )
-          })
-          .map(|did| (did, idx))
-      })
-      .collect::<Result<_>>()?;
+  /// ## Note
+  /// * If `dids` contains duplicates, these will be resolved only once.
+  pub async fn resolve_multiple<D: DID>(&self, dids: &[D]) -> Result<HashMap<D, DOC>> {
+    let futures = FuturesUnordered::new();
 
-    // Resolve issuers concurrently.
-    futures::future::try_join_all(
-      issuers
-        .iter()
-        .map(|(issuer, cred_idx)| {
-          self.resolve(issuer).map_err(|error| {
-            Error::resolution_action(
-              error,
-              crate::error::ResolutionAction::PresentationIssuersResolution(*cred_idx),
-            )
-          })
-        })
-        .collect::<Vec<_>>(),
-    )
-    .await
-  }
-
-  /// Fetches the DID Document of the holder of a [`Presentation`].
-  ///
-  /// # Errors
-  ///
-  /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
-  /// DID resolution fails.
-  pub async fn resolve_presentation_holder<U, V>(&self, presentation: &Presentation<U, V>) -> Result<DOC> {
-    let holder: CoreDID = PresentationValidator::extract_holder(presentation)
-      .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
-      .map_err(Error::new)
-      .map_err(|error| Error::resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution))?;
-    self
-      .resolve(&holder)
-      .await
-      .map_err(|error| Error::resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution))
-  }
-
-  /// Fetches the DID Document of the issuer of a [`Credential`].
-  ///
-  /// # Errors
-  ///
-  /// Errors if the issuer URL cannot be parsed to a DID whose associated method is supported by the resolver, or
-  /// resolution fails.
-  pub async fn resolve_credential_issuer<U: Serialize>(&self, credential: &Credential<U>) -> Result<DOC> {
-    let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
-      .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
-      .map_err(Error::new)?;
-    self.resolve(&issuer_did).await
-  }
-
-  /// Verifies a [`Presentation`].
-  ///
-  /// # Important
-  /// See [`PresentationValidator::validate`](PresentationValidator::validate()) for information about which properties
-  /// get validated and what is expected of the optional arguments `holder` and `issuer`.
-  ///
-  /// # Resolution
-  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
-  /// If you already have up-to-date versions of these DID Documents, you may want
-  /// to use [`PresentationValidator::validate`].
-  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`]. Note that
-  /// DID Documents of a certain method can only be resolved if the resolver has been configured handle this method.
-  /// See [`Self::attach_handler`].
-  ///
-  /// # Errors
-  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
-  /// Otherwise, errors from validating the presentation and its credentials will be returned
-  /// according to the `fail_fast` parameter.
-  pub async fn verify_presentation<U, V>(
-    &self,
-    presentation: &Presentation<U, V>,
-    options: &PresentationValidationOptions,
-    fail_fast: FailFast,
-    holder: Option<&DOC>,
-    issuers: Option<&[DOC]>,
-  ) -> Result<()>
-  where
-    U: Serialize,
-    V: Serialize,
-    DOC: AsRef<CoreDocument>,
-  {
-    match (holder, issuers) {
-      (Some(holder), Some(issuers)) => {
-        PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
-      (Some(holder), None) => {
-        let issuers: Vec<DOC> = self.resolve_presentation_issuers(presentation).await?;
-        PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
-      (None, Some(issuers)) => {
-        let holder = self.resolve_presentation_holder(presentation).await?;
-        PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
-      (None, None) => {
-        let (holder, issuers): (DOC, Vec<DOC>) = futures::future::try_join(
-          self.resolve_presentation_holder(presentation),
-          self.resolve_presentation_issuers(presentation),
-        )
-        .await?;
-
-        PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
+    // Create set to remove duplicates to avoid unnecessary resolution.
+    let dids_set: HashSet<D> = dids.iter().cloned().collect();
+    for did in dids_set {
+      futures.push(async move {
+        let doc = self.resolve(&did).await;
+        doc.map(|doc| (did, doc))
+      });
     }
-    .map_err(Into::into)
+
+    let documents: HashMap<D, DOC> = futures.try_collect().await?;
+
+    Ok(documents)
   }
 }
 

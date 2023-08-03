@@ -4,12 +4,10 @@
 use super::WasmMethodData;
 use super::WasmMethodType;
 use crate::common::MapStringAny;
-use crate::crypto::WasmKeyType;
 use crate::did::WasmCoreDID;
 use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity_iota::crypto::PublicKey;
 use identity_iota::did::CoreDID;
 use identity_iota::verification::VerificationMethod;
 use wasm_bindgen::prelude::*;
@@ -23,22 +21,7 @@ pub struct WasmVerificationMethod(pub(crate) VerificationMethod);
 
 #[wasm_bindgen(js_class = VerificationMethod)]
 impl WasmVerificationMethod {
-  /// Creates a new `VerificationMethod` from the given `did` and public key.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(constructor)]
-  pub fn new(
-    did: &IToCoreDID,
-    keyType: WasmKeyType,
-    publicKey: Vec<u8>,
-    fragment: String,
-  ) -> Result<WasmVerificationMethod> {
-    let public_key: PublicKey = PublicKey::from(publicKey);
-    VerificationMethod::new(CoreDID::from(did), keyType.into(), &public_key, &fragment)
-      .map(Self)
-      .wasm_result()
-  }
-
-  /// Creates a new `VerificationMethod` from the given `did` and `Jwk`. If `fragment` is not given
+  /// Creates a new {@link VerificationMethod} from the given `did` and {@link Jwk}. If `fragment` is not given
   /// the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
   ///
   /// ### Recommendations
@@ -46,7 +29,7 @@ impl WasmVerificationMethod {
   /// - It is recommended that verification methods that use `Jwks` to represent their public keys use the value of
   ///   `kid` as their fragment identifier. This is
   /// done automatically if `None` is passed in as the fragment.
-  /// - It is recommended that `Jwk` kid values are set to the public key fingerprint.
+  /// - It is recommended that {@link Jwk} kid values are set to the public key fingerprint.
   #[wasm_bindgen(js_name = newFromJwk)]
   pub fn new_from_jwk(did: &IToCoreDID, key: &WasmJwk, fragment: Option<String>) -> Result<WasmVerificationMethod> {
     VerificationMethod::new_from_jwk(CoreDID::from(did), key.0.clone(), fragment.as_deref())
@@ -54,50 +37,50 @@ impl WasmVerificationMethod {
       .wasm_result()
   }
 
-  /// Returns a copy of the `DIDUrl` of the `VerificationMethod`'s `id`.
+  /// Returns a copy of the {@link DIDUrl} of the {@link VerificationMethod}'s `id`.
   #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }
 
-  /// Sets the id of the `VerificationMethod`.
+  /// Sets the id of the {@link VerificationMethod}.
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmDIDUrl) -> Result<()> {
     self.0.set_id(id.0.clone()).wasm_result()?;
     Ok(())
   }
 
-  /// Returns a copy of the `controller` `DID` of the `VerificationMethod`.
+  /// Returns a copy of the `controller` `DID` of the {@link VerificationMethod}.
   #[wasm_bindgen]
   pub fn controller(&self) -> WasmCoreDID {
     WasmCoreDID::from(self.0.controller().clone())
   }
 
-  /// Sets the `controller` `DID` of the `VerificationMethod` object.
+  /// Sets the `controller` `DID` of the {@link VerificationMethod} object.
   #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, did: &WasmCoreDID) {
     *self.0.controller_mut() = did.0.clone();
   }
 
-  /// Returns a copy of the `VerificationMethod` type.
+  /// Returns a copy of the {@link VerificationMethod} type.
   #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> WasmMethodType {
     WasmMethodType::from(self.0.type_().clone())
   }
 
-  /// Sets the `VerificationMethod` type.
+  /// Sets the {@link VerificationMethod} type.
   #[wasm_bindgen(js_name = setType)]
   pub fn set_type(&mut self, type_: &WasmMethodType) {
     *self.0.type_mut() = type_.0.clone();
   }
 
-  /// Returns a copy of the `VerificationMethod` public key data.
+  /// Returns a copy of the {@link VerificationMethod} public key data.
   #[wasm_bindgen]
   pub fn data(&self) -> WasmMethodData {
     WasmMethodData::from(self.0.data().clone())
   }
 
-  /// Sets `VerificationMethod` public key data.
+  /// Sets {@link VerificationMethod} public key data.
   #[wasm_bindgen(js_name = setData)]
   pub fn set_data(&mut self, data: &WasmMethodData) {
     *self.0.data_mut() = data.0.clone();

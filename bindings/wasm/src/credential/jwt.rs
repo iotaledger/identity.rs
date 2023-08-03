@@ -13,7 +13,8 @@ impl WasmJwt {
   pub(crate) fn new(jwt: Jwt) -> Self {
     WasmJwt(jwt)
   }
-  /// Creates a new `Jwt` from the given string.
+
+  /// Creates a new {@link Jwt} from the given string.
   #[wasm_bindgen(constructor)]
   pub fn constructor(jwt_string: String) -> Self {
     Self(Jwt::new(jwt_string))
@@ -23,5 +24,20 @@ impl WasmJwt {
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string_clone(&self) -> String {
     self.0.as_str().to_owned()
+  }
+}
+
+impl_wasm_json!(WasmJwt, Jwt);
+impl_wasm_clone!(WasmJwt, Jwt);
+
+impl From<Jwt> for WasmJwt {
+  fn from(value: Jwt) -> Self {
+    WasmJwt(value)
+  }
+}
+
+impl From<WasmJwt> for Jwt {
+  fn from(value: WasmJwt) -> Self {
+    value.0
   }
 }

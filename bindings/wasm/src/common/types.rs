@@ -30,6 +30,9 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
 
+  #[wasm_bindgen(typescript_type = "Record<string, any>")]
+  pub type RecordStringAny;
+
   #[wasm_bindgen(typescript_type = "number | number[]")]
   pub type UOneOrManyNumber;
 

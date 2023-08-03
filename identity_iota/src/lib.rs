@@ -24,21 +24,9 @@ pub mod core {
   pub use identity_core::common::*;
   pub use identity_core::convert::*;
   pub use identity_core::error::*;
-  pub use identity_core::utils::*;
-
-  #[cfg(feature = "diff")]
-  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-  #[doc(inline)]
-  pub use identity_core::diff;
 
   #[doc(inline)]
   pub use identity_core::json;
-}
-
-pub mod crypto {
-  //! Cryptographic Utilities
-
-  pub use identity_core::crypto::*;
 }
 
 pub mod credential {
@@ -47,6 +35,8 @@ pub mod credential {
   //! [Specification](https://www.w3.org/TR/vc-data-model/)
 
   pub use identity_credential::credential::*;
+  #[cfg(feature = "domain-linkage")]
+  pub use identity_credential::domain_linkage::*;
   pub use identity_credential::error::*;
   pub use identity_credential::presentation::*;
   #[cfg(feature = "revocation-bitmap")]
@@ -107,9 +97,6 @@ pub mod prelude {
   #[cfg(feature = "client")]
   #[cfg_attr(docsrs, doc(cfg(feature = "client")))]
   pub use identity_iota_core::IotaIdentityClientExt;
-
-  pub use identity_core::crypto::KeyPair;
-  pub use identity_core::crypto::KeyType;
 
   #[cfg(feature = "resolver")]
   #[cfg_attr(docsrs, doc(cfg(feature = "resolver")))]

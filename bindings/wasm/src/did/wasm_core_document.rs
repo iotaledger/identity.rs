@@ -11,22 +11,24 @@ use crate::common::ArrayString;
 use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
-use crate::common::PromiseOptionString;
+use crate::common::PromiseString;
 use crate::common::PromiseVoid;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
+use crate::credential::ArrayCoreDID;
+use crate::credential::UnknownCredential;
 use crate::credential::WasmCredential;
 use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
-use crate::crypto::WasmProofOptions;
+use crate::credential::WasmPresentation;
 use crate::did::service::WasmService;
 use crate::did::wasm_did_url::WasmDIDUrl;
-use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::jose::WasmDecodedJws;
 use crate::jose::WasmJwsAlgorithm;
 use crate::storage::WasmJwsSignatureOptions;
+use crate::storage::WasmJwtPresentationOptions;
 use crate::storage::WasmStorage;
 use crate::storage::WasmStorageInner;
 use crate::verification::IJwsVerifier;
@@ -41,12 +43,11 @@ use identity_iota::core::OneOrSet;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
+use identity_iota::credential::JwtPresentationOptions;
+use identity_iota::credential::Presentation;
 use identity_iota::credential::RevocationDocumentExt;
-use identity_iota::crypto::PrivateKey;
-use identity_iota::crypto::ProofOptions;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DIDUrl;
-use identity_iota::document::verifiable::VerifiableProperties;
 use identity_iota::document::CoreDocument;
 use identity_iota::document::Service;
 use identity_iota::storage::key_storage::KeyType;
@@ -93,7 +94,7 @@ pub struct WasmCoreDocument(pub(crate) Rc<CoreDocumentLock>);
 
 #[wasm_bindgen(js_class = CoreDocument)]
 impl WasmCoreDocument {
-  /// Creates a new `CoreDocument` with the given properties.
+  /// Creates a new {@link CoreDocument} with the given properties.
   #[wasm_bindgen(constructor)]
   pub fn new(values: ICoreDocument) -> Result<WasmCoreDocument> {
     let core_doc: CoreDocument = values.into_serde().wasm_result()?;
@@ -111,8 +112,8 @@ impl WasmCoreDocument {
   /// ### Warning
   ///
   /// Changing the identifier can drastically alter the results of
-  /// [`Self::resolve_method`](CoreDocument::resolve_method()),
-  /// [`Self::resolve_service`](CoreDocument::resolve_service()) and the related [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
+  /// `resolve_method`, `resolve_service` and the related
+  /// [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
   #[wasm_bindgen(js_name = setId)]
   pub fn set_id(&mut self, id: &WasmCoreDID) {
     *self.0.blocking_write().id_mut_unchecked() = id.0.clone();
@@ -470,13 +471,6 @@ impl WasmCoreDocument {
   // Verification
   // ===========================================================================
 
-  /// Verifies the authenticity of `data` using the target verification method.
-  #[wasm_bindgen(js_name = verifyData)]
-  pub fn verify_data(&self, data: &JsValue, options: &WasmVerifierOptions) -> Result<bool> {
-    let data: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.0.blocking_read().verify_data(&data, &options.0).is_ok())
-  }
-
   /// Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
   ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
   /// verifying EdDSA signatures.
@@ -512,7 +506,7 @@ impl WasmCoreDocument {
   // Revocation
   // ===========================================================================
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
@@ -527,7 +521,7 @@ impl WasmCoreDocument {
       .wasm_result()
   }
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
@@ -543,40 +537,10 @@ impl WasmCoreDocument {
   }
 
   // ===========================================================================
-  // Signatures
-  // ===========================================================================
-
-  /// Creates a signature for the given `data` with the specified DID Document
-  /// Verification Method.
-  ///
-  /// NOTE: use `signSelf` or `signDocument` for DID Documents.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(
-    &self,
-    data: &JsValue,
-    privateKey: Vec<u8>,
-    methodQuery: &UDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<JsValue> {
-    let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
-
-    let guard = self.0.blocking_read();
-    let signer = guard.signer(&private_key);
-    let signer = signer.options(options);
-    let signer = signer.method(&method_query);
-    signer.sign(&mut data).wasm_result()?;
-    JsValue::from_serde(&data).wasm_result()
-  }
-
-  // ===========================================================================
   // Cloning
   // ===========================================================================
 
-  /// Deep clones the `CoreDocument`.
+  /// Deep clones the {@link CoreDocument}.
   #[wasm_bindgen(js_name = clone)]
   pub fn deep_clone(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
@@ -636,7 +600,7 @@ impl WasmCoreDocument {
     alg: WasmJwsAlgorithm,
     fragment: Option<String>,
     scope: WasmMethodScope,
-  ) -> Result<PromiseOptionString> {
+  ) -> Result<PromiseString> {
     let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
     let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
@@ -677,7 +641,6 @@ impl WasmCoreDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
-  // TODO: Perhaps this should be called `signData` (and the old `signData` method would have to be updated or removed)?
   #[wasm_bindgen(js_name = createJws)]
   pub fn create_jws(
     &self,
@@ -702,13 +665,11 @@ impl WasmCoreDocument {
     Ok(promise.unchecked_into())
   }
 
-  /// Produces a JWS where the payload is produced from the given `credential`
-  /// in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// Produces a JWT where the payload is produced from the given `credential`
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
-  // TODO: Perhaps this should be called `signCredential` (and the old `signCredential` method would have to be updated
-  // or removed)?
   #[wasm_bindgen(js_name = createCredentialJwt)]
   pub fn create_credential_jwt(
     &self,
@@ -733,6 +694,44 @@ impl WasmCoreDocument {
     });
     Ok(promise.unchecked_into())
   }
+
+  /// Produces a JWT where the payload is produced from the given presentation.
+  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+  ///
+  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
+  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  #[wasm_bindgen(js_name = createPresentationJwt)]
+  pub fn create_presentation_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    presentation: &WasmPresentation,
+    signature_options: &WasmJwsSignatureOptions,
+    presentation_options: &WasmJwtPresentationOptions,
+  ) -> Result<PromiseJwt> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = signature_options.0.clone();
+    let document_lock_clone: Rc<CoreDocumentLock> = self.0.clone();
+    let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
+    let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .sign_presentation(
+          &presentation_clone,
+          &storage_clone,
+          &fragment,
+          &options_clone,
+          &presentation_options_clone,
+        )
+        .await
+        .wasm_result()
+        .map(WasmJwt::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
 }
 
 #[wasm_bindgen]
@@ -740,12 +739,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "ICoreDocument")]
   pub type ICoreDocument;
 
-  #[wasm_bindgen(typescript_type = "CoreDID[]")]
-  pub type ArrayCoreDID;
-
   #[wasm_bindgen(typescript_type = "CoreDID | CoreDID[] | null")]
   pub type OptionOneOrManyCoreDID;
-
 }
 
 #[derive(Deserialize)]
@@ -813,6 +808,6 @@ extern "C" {
 pub const TS_AS_REF_CORE_Document: &'static str = r#"
 interface IToCoreDocument {
 
-  /** Returns a `CoreDocument` representation of this Document. */
+  /** Returns a {@link CoreDocument} representation of this Document. */
   toCoreDocument(): CoreDocument;
 }"#;

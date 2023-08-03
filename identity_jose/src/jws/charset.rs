@@ -36,7 +36,6 @@ impl CharSet {
     }
 
     if !self.__validate(payload) {
-      // TODO: Improve this error
       return Err(Error::InvalidContent("invalid character(s)"));
     }
 

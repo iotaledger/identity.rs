@@ -1,28 +1,37 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
-import { IotaDID, IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
 import {
-    ADDRESS_UNLOCK_CONDITION_TYPE,
-    AddressTypes,
-    ALIAS_ADDRESS_TYPE,
-    IIssuerFeature,
-    INftOutput,
-    IOutputResponse,
+    IotaDID,
+    IotaDocument,
+    IotaIdentityClient,
+    JwkMemStore,
+    KeyIdMemStore,
+    Storage,
+} from "@iota/identity-wasm/node";
+import {
+    Address,
+    AddressType,
+    AddressUnlockCondition,
+    AliasAddress,
+    Client,
+    FeatureType,
     IRent,
-    ISSUER_FEATURE_TYPE,
-    ITransactionPayload,
-    METADATA_FEATURE_TYPE,
-    NFT_OUTPUT_TYPE,
-    OutputTypes,
-    PayloadTypes,
-    TRANSACTION_ESSENCE_TYPE,
-    TRANSACTION_PAYLOAD_TYPE,
-    TransactionHelper,
-} from "@iota/iota.js";
-import { Converter } from "@iota/util.js";
+    IssuerFeature,
+    MetadataFeature,
+    MnemonicSecretManager,
+    NftOutput,
+    Output,
+    OutputResponse,
+    OutputType,
+    Payload,
+    PayloadType,
+    RegularTransactionEssence,
+    TransactionEssenceType,
+    TransactionPayload,
+    utf8ToHex,
+    Utils,
+} from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can issue and own NFTs,
@@ -44,11 +53,16 @@ export async function didIssuesNft() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Create a new DID for the manufacturer. (see "0_create_did" example).
-    var { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDid(
+        client,
+        secretManager,
+        storage,
+    );
     let manufacturerDid = document.id();
 
     // Get the current byte costs.
@@ -58,37 +72,32 @@ export async function didIssuesNft() {
     const networkName: string = await didClient.getNetworkHrp();
 
     // Create the Alias Address of the manufacturer.
-    var manufacturerAliasAddress: AddressTypes = {
-        type: ALIAS_ADDRESS_TYPE,
-        aliasId: manufacturerDid.toAliasId(),
-    };
+    const manufacturerAliasAddress: Address = new AliasAddress(
+        manufacturerDid.toAliasId(),
+    );
 
     // Create a Digital Product Passport NFT issued by the manufacturer.
-    let productPassportNft: INftOutput = await client.buildNftOutput({
+    let productPassportNft: NftOutput = await client.buildNftOutput({
         nftId: "0x0000000000000000000000000000000000000000000000000000000000000000",
         immutableFeatures: [
-            {
-                // Set the manufacturer as the immutable issuer.
-                type: ISSUER_FEATURE_TYPE,
-                address: manufacturerAliasAddress,
-            },
-            {
-                // A proper DPP would hold its metadata here.
-                type: METADATA_FEATURE_TYPE,
-                data: Converter.utf8ToHex("Digital Product Passport Metadata", true),
-            },
+            // Set the manufacturer as the immutable issuer.
+            new IssuerFeature(manufacturerAliasAddress),
+            // A proper DPP would hold its metadata here.
+            new MetadataFeature(utf8ToHex("Digital Product Passport Metadata")),
         ],
         unlockConditions: [
-            {
-                // The NFT will initially be owned by the manufacturer.
-                type: ADDRESS_UNLOCK_CONDITION_TYPE,
-                address: manufacturerAliasAddress,
-            },
+            // The NFT will initially be owned by the manufacturer.
+            new AddressUnlockCondition(manufacturerAliasAddress),
         ],
     });
 
     // Set the appropriate storage deposit.
-    productPassportNft.amount = TransactionHelper.getStorageDeposit(productPassportNft, rentStructure).toString();
+    productPassportNft = await client.buildNftOutput({
+        ...productPassportNft,
+        amount: Utils.computeStorageDeposit(productPassportNft, rentStructure),
+        nftId: productPassportNft.getNftId(),
+        unlockConditions: productPassportNft.getUnlockConditions(),
+    });
 
     // Publish the NFT.
     const [blockId, block] = await client.buildAndPostBlock(secretManager, { outputs: [productPassportNft] });
@@ -100,22 +109,24 @@ export async function didIssuesNft() {
 
     // Extract the identifier of the NFT from the published block.
     // Non-null assertion is safe because we published a block with a payload.
-    let nftId: string = nft_output_id(block.payload!);
+    let nftId: string = computeNftOutputId(block.payload!);
 
     // Fetch the NFT Output.
     const nftOutputId: string = await client.nftOutputId(nftId);
-    const outputResponse: IOutputResponse = await client.getOutput(nftOutputId);
-    const output: OutputTypes = outputResponse.output;
+    const outputResponse: OutputResponse = await client.getOutput(nftOutputId);
+    const output: Output = outputResponse.output;
 
     // Extract the issuer of the NFT.
     let manufacturerAliasId: string;
-    if (output.type === NFT_OUTPUT_TYPE && output.immutableFeatures) {
-        const issuerFeature: IIssuerFeature = output.immutableFeatures.find(feature =>
-            feature.type === ISSUER_FEATURE_TYPE
-        ) as IIssuerFeature;
-
-        if (issuerFeature && issuerFeature.address.type === ALIAS_ADDRESS_TYPE) {
-            manufacturerAliasId = issuerFeature.address.aliasId;
+    if (output.getType() === OutputType.Nft && (output as NftOutput).getImmutableFeatures()) {
+        // Cast is fine as we checked the type.
+        const nftOutput: NftOutput = output as NftOutput;
+        // Non-null assertion is fine as we checked the immutable features are present.
+        const issuerFeature: IssuerFeature = nftOutput.getImmutableFeatures()!.find(feature =>
+            feature.getType() === FeatureType.Issuer
+        ) as IssuerFeature;
+        if (issuerFeature && issuerFeature.getIssuer().getType() === AddressType.Alias) {
+            manufacturerAliasId = (issuerFeature.getIssuer() as AliasAddress).getAliasId();
         } else {
             throw new Error("expected to find issuer feature with an alias address");
         }
@@ -132,17 +143,18 @@ export async function didIssuesNft() {
     console.log("The issuer of the Digital Product Passport NFT is:", JSON.stringify(manufacturerDocument, null, 2));
 }
 
-function nft_output_id(payload: PayloadTypes): string {
-    if (payload.type === TRANSACTION_PAYLOAD_TYPE) {
-        const txPayload: ITransactionPayload = payload;
-        const txHash = Converter.bytesToHex(TransactionHelper.getTransactionPayloadHash(txPayload), true);
+function computeNftOutputId(payload: Payload): string {
+    if (payload.getType() === PayloadType.Transaction) {
+        const transactionPayload: TransactionPayload = payload as TransactionPayload;
+        const transactionId = Utils.transactionId(transactionPayload);
 
-        if (txPayload.essence.type === TRANSACTION_ESSENCE_TYPE) {
-            const outputs = txPayload.essence.outputs;
-            for (let index in txPayload.essence.outputs) {
-                if (outputs[index].type === NFT_OUTPUT_TYPE) {
-                    const outputId: string = TransactionHelper.outputIdFromTransactionData(txHash, parseInt(index));
-                    return TransactionHelper.resolveIdFromOutputId(outputId);
+        if (transactionPayload.essence.getType() === TransactionEssenceType.Regular) {
+            const regularTxPayload = transactionPayload.essence as RegularTransactionEssence;
+            const outputs = regularTxPayload.outputs;
+            for (const index in outputs) {
+                if (outputs[index].getType() === OutputType.Nft) {
+                    const outputId: string = Utils.computeOutputId(transactionId, parseInt(index));
+                    return Utils.computeNftId(outputId);
                 }
             }
             throw new Error("no NFT output in transaction essence");

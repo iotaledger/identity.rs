@@ -1,23 +1,30 @@
 export {};
 
 const assert = require("assert");
-const {
+import {
     Duration,
-    KeyType,
-    MethodScope,
-    MethodType,
-    MethodRelationship,
+    EdCurve,
     IotaDID,
     IotaDocument,
+    Jwk,
+    JwkType,
+    MethodRelationship,
+    MethodScope,
+    MethodType,
     Service,
-    VerificationMethod,
     Timestamp,
-} = require("../node");
+    VerificationMethod,
+} from "../node";
 
 const aliasIdBytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
     24, 25, 26, 27, 28, 29, 30, 31, 32]);
 const aliasIdHex = "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
 const networkName = "smr";
+const JWK = new Jwk({
+    "kty": JwkType.Okp,
+    "crv": EdCurve.Ed25519,
+    "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+});
 
 describe("IotaDID", function() {
     describe("#constructor", function() {
@@ -26,7 +33,7 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.tag(), aliasIdHex);
             assert.deepStrictEqual(did.method(), IotaDID.METHOD);
-            assert.deepStrictEqual(did.networkStr(), networkName);
+            assert.deepStrictEqual(did.network(), networkName);
             assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.scheme(), "did");
@@ -48,7 +55,7 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.tag(), aliasIdHex);
             assert.deepStrictEqual(did.method(), IotaDID.METHOD);
-            assert.deepStrictEqual(did.networkStr(), networkName);
+            assert.deepStrictEqual(did.network(), networkName);
             assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + aliasIdHex);
             assert.deepStrictEqual(did.scheme(), "did");
@@ -61,7 +68,7 @@ describe("IotaDID", function() {
             assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.tag(), expectedTag);
             assert.deepStrictEqual(did.method(), IotaDID.METHOD);
-            assert.deepStrictEqual(did.networkStr(), networkName);
+            assert.deepStrictEqual(did.network(), networkName);
             assert.deepStrictEqual(did.authority(), IotaDID.METHOD + ":" + networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.methodId(), networkName + ":" + expectedTag);
             assert.deepStrictEqual(did.scheme(), "did");
@@ -87,15 +94,15 @@ describe("IotaDocument", function() {
             const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
             const scope = MethodScope.AssertionMethod();
-            const method = new VerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = VerificationMethod.newFromJwk(doc.id(), JWK, fragment);
             // Add.
             doc.insertMethod(method, scope);
             // Resolve.
-            const resolved = doc.resolveMethod(fragment, scope);
+            const resolved = doc.resolveMethod(fragment, scope)!;
             assert.deepStrictEqual(resolved.id().fragment(), fragment);
-            assert.deepStrictEqual(resolved.type().toString(), MethodType.Ed25519VerificationKey2018().toString());
+            assert.deepStrictEqual(resolved.type().toString(), MethodType.JsonWebKey().toString());
             assert.deepStrictEqual(resolved.controller().toString(), doc.id().toString());
-            assert.deepStrictEqual(resolved.data().tryDecode(), aliasIdBytes);
+            assert.deepStrictEqual(resolved.data().tryPublicKeyJwk().toJSON(), JWK.toJSON());
             assert.deepStrictEqual(resolved.toJSON(), method.toJSON());
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.VerificationMethod()), undefined);
             // List.
@@ -114,20 +121,24 @@ describe("IotaDocument", function() {
         it("should work", async () => {
             const doc = new IotaDocument(networkName);
             const fragment = "new-method-1";
-            const method = new VerificationMethod(doc.id(), KeyType.Ed25519, aliasIdBytes, fragment);
+            const method = VerificationMethod.newFromJwk(doc.id(), JWK, fragment);
+
             doc.insertMethod(method, MethodScope.VerificationMethod());
             assert.deepStrictEqual(
-                doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
+                doc.resolveMethod(fragment, MethodScope.VerificationMethod())!.toJSON(),
                 method.toJSON(),
             );
 
             // Attach.
             doc.attachMethodRelationship(method.id(), MethodRelationship.Authentication);
             assert.deepStrictEqual(
-                doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
+                doc.resolveMethod(fragment, MethodScope.VerificationMethod())!.toJSON(),
                 method.toJSON(),
             );
-            assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.Authentication()).toJSON(), method.toJSON());
+            assert.deepStrictEqual(
+                doc.resolveMethod(fragment, MethodScope.Authentication())!.toJSON(),
+                method.toJSON(),
+            );
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.AssertionMethod()), undefined);
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.CapabilityInvocation()), undefined);
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.CapabilityDelegation()), undefined);
@@ -136,7 +147,7 @@ describe("IotaDocument", function() {
             // Detach.
             doc.detachMethodRelationship(method.id(), MethodRelationship.Authentication);
             assert.deepStrictEqual(
-                doc.resolveMethod(fragment, MethodScope.VerificationMethod()).toJSON(),
+                doc.resolveMethod(fragment, MethodScope.VerificationMethod())!.toJSON(),
                 method.toJSON(),
             );
             assert.deepStrictEqual(doc.resolveMethod(fragment, MethodScope.Authentication()), undefined);
@@ -159,7 +170,7 @@ describe("IotaDocument", function() {
             });
             doc.insertService(service);
             // Resolve.
-            const resolved = doc.resolveService(fragment1);
+            const resolved = doc.resolveService(fragment1)!;
             assert.deepStrictEqual(resolved.id().fragment(), fragment1);
             assert.deepStrictEqual(resolved.type(), ["LinkedDomains", "ExampleType"]);
             assert.deepStrictEqual(resolved.serviceEndpoint(), ["https://example.com/", "https://iota.org/"]);
@@ -169,7 +180,7 @@ describe("IotaDocument", function() {
             assert.deepStrictEqual(list.length, 1);
             assert.deepStrictEqual(list[0].toJSON(), resolved.toJSON());
             // Remove
-            const removed = doc.removeService(resolved.id());
+            const removed = doc.removeService(resolved.id())!;
             assert.deepStrictEqual(removed.toJSON(), resolved.toJSON());
             assert.deepStrictEqual(doc.resolveService(fragment1), undefined);
             assert.deepStrictEqual(doc.service().length, 0);
@@ -178,23 +189,23 @@ describe("IotaDocument", function() {
     describe("#metadata", function() {
         it("should work", () => {
             const doc = new IotaDocument(networkName);
-            const previousCreated = doc.metadataCreated();
-            const previousUpdated = doc.metadataUpdated();
+            const previousCreated = doc.metadataCreated()!;
+            const previousUpdated = doc.metadataUpdated()!;
 
             // Created.
-            const created = Timestamp.nowUTC().checkedAdd(Duration.seconds(1));
+            const created = Timestamp.nowUTC().checkedAdd(Duration.seconds(1))!;
             doc.setMetadataCreated(created);
-            assert.deepStrictEqual(doc.metadataCreated().toRFC3339(), created.toRFC3339());
-            assert.deepStrictEqual(doc.metadata().created().toRFC3339(), created.toRFC3339());
-            assert.notDeepStrictEqual(doc.metadataCreated().toRFC3339(), previousCreated.toRFC3339());
-            assert.deepStrictEqual(doc.metadataUpdated().toRFC3339(), previousUpdated.toRFC3339());
+            assert.deepStrictEqual(doc.metadataCreated()!.toRFC3339(), created.toRFC3339());
+            assert.deepStrictEqual(doc.metadata().created()!.toRFC3339(), created.toRFC3339());
+            assert.notDeepStrictEqual(doc.metadataCreated()!.toRFC3339(), previousCreated.toRFC3339());
+            assert.deepStrictEqual(doc.metadataUpdated()!.toRFC3339(), previousUpdated.toRFC3339());
             // Updated.
-            const updated = Timestamp.nowUTC().checkedAdd(Duration.seconds(42));
+            const updated = Timestamp.nowUTC().checkedAdd(Duration.seconds(42))!;
             doc.setMetadataUpdated(updated);
-            assert.deepStrictEqual(doc.metadataUpdated().toRFC3339(), updated.toRFC3339());
-            assert.deepStrictEqual(doc.metadata().updated().toRFC3339(), updated.toRFC3339());
-            assert.notDeepStrictEqual(doc.metadataUpdated().toRFC3339(), previousUpdated.toRFC3339());
-            assert.deepStrictEqual(doc.metadataCreated().toRFC3339(), created.toRFC3339());
+            assert.deepStrictEqual(doc.metadataUpdated()!.toRFC3339(), updated.toRFC3339());
+            assert.deepStrictEqual(doc.metadata().updated()!.toRFC3339(), updated.toRFC3339());
+            assert.notDeepStrictEqual(doc.metadataUpdated()!.toRFC3339(), previousUpdated.toRFC3339());
+            assert.deepStrictEqual(doc.metadataCreated()!.toRFC3339(), created.toRFC3339());
             // Deactivated.
             assert.deepStrictEqual(doc.metadataDeactivated(), undefined);
             doc.setMetadataDeactivated(true);
@@ -229,7 +240,7 @@ describe("IotaDocument", function() {
     describe("#callingToCoreDid from Rust does not null out IotaDID", function() {
         it("should work", () => {
             const did = new IotaDID(aliasIdBytes, networkName);
-            const method = new VerificationMethod(did, KeyType.Ed25519, aliasIdBytes, "key-0");
+            const method = VerificationMethod.newFromJwk(did, JWK, "#key-0");
             assert.deepStrictEqual(did.toString(), "did:" + IotaDID.METHOD + ":" + networkName + ":" + aliasIdHex);
         });
     });

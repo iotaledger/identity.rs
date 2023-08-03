@@ -3,8 +3,6 @@
 
 use std::borrow::Cow;
 
-use identity_core::crypto::Proof;
-
 use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_did::RelativeDIDUrl;
@@ -91,14 +89,7 @@ impl<'query> From<DIDUrl> for DIDUrlQuery<'query> {
 
 impl<'query> From<&'query RelativeDIDUrl> for DIDUrlQuery<'query> {
   fn from(other: &'query RelativeDIDUrl) -> Self {
-    // TODO: improve RelativeDIDUrl performance - internal string segments representation
     Self(Cow::Owned(other.to_string()))
-  }
-}
-
-impl<'query> From<&'query Proof> for DIDUrlQuery<'query> {
-  fn from(other: &'query Proof) -> Self {
-    Self(Cow::Borrowed(other.verification_method()))
   }
 }
 

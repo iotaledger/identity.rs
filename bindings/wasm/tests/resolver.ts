@@ -1,30 +1,47 @@
 export {};
 
-import {
-    CoreDID,
-    CoreDocument,
-    FailFast,
-    IotaDID,
-    IotaDocument,
-    IToCoreDocument,
-    Presentation,
-    PresentationValidationOptions,
-    Resolver,
-} from "../node";
+import { CoreDID, CoreDocument, IotaDID, IotaDocument, IToCoreDocument, Resolver } from "../node";
 import assert = require("assert");
 
-const presentationJSON = require("../../../identity_credential/tests/fixtures/signed_presentation/presentation.json");
-const issuerIotaDocJSON = require(
-    "../../../identity_credential/tests/fixtures/signed_presentation/issuer_iota_doc.json",
-);
-const issuerBarDocJSON = require("../../../identity_credential/tests/fixtures/signed_presentation/issuer_bar_doc.json");
-const holderFooDocJSON = require(
-    "../../../identity_credential/tests/fixtures/signed_presentation/subject_foo_doc.json",
-);
-const presentation = Presentation.fromJSON(presentationJSON);
-const holderFooDoc = CoreDocument.fromJSON(holderFooDocJSON);
-const issuerIotaDoc: IotaDocument = IotaDocument.fromJSON(issuerIotaDocJSON);
-const issuerBarDoc: CoreDocument = CoreDocument.fromJSON(issuerBarDocJSON);
+const fooDoc = CoreDocument.fromJSON({
+    "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+    "verificationMethod": [
+        {
+            "id": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5#root",
+            "controller": "did:foo:586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+            "type": "Ed25519VerificationKey2018",
+            "publicKeyMultibase": "z586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5",
+        },
+    ],
+});
+const iotaDoc: IotaDocument = IotaDocument.fromJSON({
+    "doc": {
+        "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "verificationMethod": [
+            {
+                "id": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#issuerKey",
+                "controller": "did:iota:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "type": "Ed25519VerificationKey2018",
+                "publicKeyMultibase": "zFVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z",
+            },
+        ],
+    },
+    "meta": {
+        "created": "2022-08-31T09:33:31Z",
+        "updated": "2022-08-31T09:33:31Z",
+    },
+});
+const barDoc: CoreDocument = CoreDocument.fromJSON({
+    "id": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
+    "verificationMethod": [
+        {
+            "id": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr#root",
+            "controller": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
+            "type": "Ed25519VerificationKey2018",
+            "publicKeyMultibase": "zHyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
+        },
+    ],
+});
 
 class MockFooDocument {
     inner: CoreDocument;
@@ -38,13 +55,13 @@ class MockFooDocument {
 }
 
 describe("Resolver", function() {
-    describe("#verifyPresentation", function() {
-        it("should accept a correct presentation when configured correctly", async () => {
+    describe("#resolving", function() {
+        it("should resolve successfully configured correctly", async () => {
             // mock method handlers
             const resolveDidIota = async function(did_input: string) {
                 const parsedDid: IotaDID = IotaDID.parse(did_input);
-                if (issuerIotaDoc.id().toString() == parsedDid.toString()) {
-                    return issuerIotaDoc;
+                if (iotaDoc.id().toString() == parsedDid.toString()) {
+                    return iotaDoc;
                 } else {
                     throw new Error(`could not resolve did ${did_input}`);
                 }
@@ -52,8 +69,8 @@ describe("Resolver", function() {
 
             const resolveDidFoo = async function(did_input: string) {
                 const parsedDid: CoreDID = CoreDID.parse(did_input);
-                if (holderFooDoc.id().toString() == parsedDid.toString()) {
-                    let doc = new MockFooDocument(holderFooDoc);
+                if (fooDoc.id().toString() == parsedDid.toString()) {
+                    let doc = new MockFooDocument(fooDoc);
                     return doc;
                 } else {
                     throw new Error(`could not resolve did ${did_input}`);
@@ -62,8 +79,8 @@ describe("Resolver", function() {
 
             const resolveDidBar = async function(did_input: string) {
                 const parsedDid: CoreDID = CoreDID.parse(did_input);
-                if (issuerBarDoc.id().toString() == parsedDid.toString()) {
-                    return issuerBarDoc;
+                if (barDoc.id().toString() == parsedDid.toString()) {
+                    return barDoc;
                 } else {
                     throw new Error(`could not resolve did ${did_input}`);
                 }
@@ -78,111 +95,39 @@ describe("Resolver", function() {
                 handlers: handlerMap,
             });
 
-            const resolvedHolderDoc = await resolver.resolvePresentationHolder(presentation);
-            assert(resolvedHolderDoc instanceof MockFooDocument);
-            assert(!(resolvedHolderDoc instanceof CoreDocument));
-            // Check that we are not leaking memory.
-            assert.deepStrictEqual(resolvedHolderDoc.inner._strongCountInternal() as number, 1);
+            const [resolvedBarDoc, resolvedIotaDoc, resolvedFooDoc] = await Promise.all([
+                resolver.resolve(barDoc.id().toString()),
+                resolver.resolve(iotaDoc.id().toString()),
+                resolver.resolve(fooDoc.id().toString()),
+            ]);
 
-            // Also check with Promise.any and Promise.all
-            let promise0 = resolver.resolvePresentationHolder(presentation);
-            let promise1 = resolver.resolvePresentationHolder(presentation);
-            let holderDocFromPromiseAny = await Promise.any([promise0, promise1]);
-            assert.deepStrictEqual(holderDocFromPromiseAny.inner._strongCountInternal() as number, 1);
+            assert.deepStrictEqual(barDoc.toJSON(), (resolvedBarDoc as CoreDocument).toJSON());
+            assert.deepStrictEqual(iotaDoc.toJSON(), (resolvedIotaDoc as IotaDocument).toJSON());
+            assert.deepStrictEqual(fooDoc.toJSON(), (resolvedFooDoc as MockFooDocument).toCoreDocument().toJSON());
 
-            let promise2 = resolver.resolvePresentationHolder(presentation);
-            let promise3 = resolver.resolvePresentationHolder(presentation);
-            let [out2, out3] = await Promise.all([promise2, promise3]);
-            assert.deepStrictEqual(out2.inner._strongCountInternal() as number, 1);
-            assert.deepStrictEqual(out3.inner._strongCountInternal() as number, 1);
+            let dids = [barDoc.id().toString(), iotaDoc.id().toString(), fooDoc.id().toString(),
+                iotaDoc.id().toString()];
+            let documents = await resolver.resolveMultiple(dids);
 
-            const resolvedIssuerDocuments = await resolver.resolvePresentationIssuers(presentation);
-
-            assert(resolvedIssuerDocuments instanceof Array);
-            // Check that we are not leaking memory
-            for (let document of resolvedIssuerDocuments) {
-                assert.deepStrictEqual(document._strongCountInternal() as number, 1);
-            }
-
-            let verificationResultPassingHolderDoc = await resolver.verifyPresentation(
-                presentation,
-                PresentationValidationOptions.default(),
-                FailFast.FirstError,
-                resolvedHolderDoc,
-                undefined,
-            );
-            assert.equal(verificationResultPassingHolderDoc, undefined);
-
-            let verificationResultPassingHolderAndIssuerDocuments = await resolver.verifyPresentation(
-                presentation,
-                PresentationValidationOptions.default(),
-                FailFast.FirstError,
-                resolvedHolderDoc,
-                resolvedIssuerDocuments,
-            );
-
-            // Check that we are not leaking memory when calling verifyPresentation.
-            assert.deepStrictEqual(
-                resolvedHolderDoc.inner._strongCountInternal() as number,
-                1,
-            );
-
-            for (let doc of resolvedIssuerDocuments) {
-                assert.deepStrictEqual(
-                    doc._strongCountInternal() as number,
-                    1,
-                );
-            }
-
-            assert.equal(verificationResultPassingHolderAndIssuerDocuments, undefined);
-
-            let verificationResultPassingIssuerDocuments = await resolver.verifyPresentation(
-                presentation,
-                PresentationValidationOptions.default(),
-                FailFast.FirstError,
-                undefined,
-                resolvedIssuerDocuments,
-            );
-            assert.equal(verificationResultPassingIssuerDocuments, undefined);
-
-            let verificationResultPassingNoDocuments = await resolver.verifyPresentation(
-                presentation,
-                PresentationValidationOptions.default(),
-                FailFast.FirstError,
-                undefined,
-                undefined,
-            );
-            assert.equal(verificationResultPassingNoDocuments, undefined);
-
-            // passing the wrong document should throw an error
-            assert.notEqual(resolvedHolderDoc, resolvedIssuerDocuments[0]);
-
-            try {
-                let result = await resolver.verifyPresentation(
-                    presentation,
-                    PresentationValidationOptions.default(),
-                    FailFast.FirstError,
-                    resolvedIssuerDocuments[0],
-                    undefined,
-                );
-            } catch (e) {
-                return;
-            }
-            throw new Error("no error thrown when passing incorrect holder");
+            assert.equal(documents.length, 4);
+            assert.deepStrictEqual(barDoc.toJSON(), (documents[0] as CoreDocument).toJSON());
+            assert.deepStrictEqual(iotaDoc.toJSON(), (documents[1] as IotaDocument).toJSON());
+            assert.deepStrictEqual(fooDoc.toJSON(), (documents[2] as MockFooDocument).toCoreDocument().toJSON());
+            assert.deepStrictEqual(iotaDoc.toJSON(), (documents[3] as IotaDocument).toJSON());
         });
 
-        it("should fail presentation validation when configured incorrectly", async () => {
+        it("should fail resolution when configured incorrectly", async () => {
             // setup mock handlers returning DID documents from other methods
             const resolveDidIotaMisconfigured = async function(_did_input: string) {
-                return holderFooDoc;
+                return fooDoc;
             };
 
             const resolveDidFooMisconfigured = async function(_did_input: string) {
-                return issuerBarDoc;
+                return barDoc;
             };
 
             const resolveDidBarMisconfigured = async function(did_input: string) {
-                return issuerIotaDoc;
+                return iotaDoc;
             };
 
             let handlerMap: Map<string, (did: string) => Promise<IotaDocument | CoreDocument>> = new Map();
@@ -194,24 +139,26 @@ describe("Resolver", function() {
                 handlers: handlerMap,
             });
 
-            try {
-                await resolver.verifyPresentation(
-                    presentation,
-                    PresentationValidationOptions.default(),
-                    FailFast.FirstError,
-                    undefined,
-                    undefined,
-                );
-            } catch (e) {
-                if (e instanceof Error) {
-                    assert.equal("CompoundPresentationValidationError", e.name);
-                    return;
+            const promises = [
+                resolver.resolve(iotaDoc.id().toString()),
+                resolver.resolve(fooDoc.id().toString()),
+                resolver.resolve(barDoc.id().toString()),
+            ];
+
+            for (const promise in promises) {
+                try {
+                    await promise;
+                } catch (e) {
+                    if (e instanceof Error) {
+                        assert.equal("HandlerError", e.name);
+                        return;
+                    } else {
+                        throw new Error(
+                            "the incorrectly configured resolver did not throw the expected error when resolving",
+                        );
+                    }
                 }
             }
-
-            throw new Error(
-                "the incorrectly configured resolver did not throw the expected error when validating the presentation",
-            );
         });
     });
 });

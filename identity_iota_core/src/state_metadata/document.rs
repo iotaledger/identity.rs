@@ -39,18 +39,19 @@ impl StateMetadataDocument {
   /// Transforms the document into a [`IotaDocument`] by replacing all placeholders with `original_did`.
   pub fn into_iota_document(self, original_did: &IotaDID) -> Result<IotaDocument> {
     let Self { document, metadata } = self;
+
     // Transform identifiers: Replace placeholder identifiers, and ensure that `id` and `controller` adhere to the
     // specification.
     let replace_placeholder_with_method_check = |did: CoreDID| -> Result<CoreDID> {
       if did == PLACEHOLDER_DID.as_ref() {
         Ok(CoreDID::from(original_did.clone()))
       } else {
-        // TODO: Consider introducing better error variant
         IotaDID::check_validity(&did).map_err(Error::DIDSyntaxError)?;
         Ok(did)
       }
     };
     let [id_update, controller_update] = [replace_placeholder_with_method_check; 2];
+
     // Methods and services are not required to be IOTA UTXO DIDs, but we still want to replace placeholders
     let replace_placeholder = |did: CoreDID| -> Result<CoreDID> {
       if did == PLACEHOLDER_DID.as_ref() {
@@ -213,21 +214,19 @@ mod tests {
   use identity_core::common::Object;
   use identity_core::common::OneOrSet;
   use identity_core::common::Url;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
   use identity_did::CoreDID;
   use identity_did::DID;
   use identity_verification::MethodScope;
 
   use crate::state_metadata::document::DID_MARKER;
   use crate::state_metadata::PLACEHOLDER_DID;
+  use crate::test_utils::generate_method;
   use crate::IotaDID;
   use crate::IotaDocument;
   use crate::StateMetadataDocument;
   use crate::StateMetadataEncoding;
   use crate::StateMetadataVersion;
   use identity_document::service::Service;
-  use identity_verification::VerificationMethod;
 
   struct TestSetup {
     document: IotaDocument,
@@ -242,24 +241,13 @@ mod tests {
       IotaDID::parse("did:iota:0x71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
 
     let mut document: IotaDocument = IotaDocument::new_with_id(did_self.clone());
-    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
-      .insert_method(
-        VerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "did-self").unwrap(),
-        MethodScope::VerificationMethod,
-      )
+      .insert_method(generate_method(&did_self, "did-self"), MethodScope::VerificationMethod)
       .unwrap();
 
-    let keypair_foreign: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .insert_method(
-        VerificationMethod::new(
-          did_foreign.clone(),
-          keypair_foreign.type_(),
-          keypair_foreign.public(),
-          "did-foreign",
-        )
-        .unwrap(),
+        generate_method(&did_foreign, "did-foreign"),
         MethodScope::authentication(),
       )
       .unwrap();

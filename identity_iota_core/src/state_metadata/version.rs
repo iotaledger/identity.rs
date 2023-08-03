@@ -12,7 +12,7 @@ pub(crate) enum StateMetadataVersion {
 }
 
 impl StateMetadataVersion {
-  pub const CURRENT: Self = Self::V1;
+  pub(crate) const CURRENT: Self = Self::V1;
 }
 
 impl TryFrom<u8> for StateMetadataVersion {

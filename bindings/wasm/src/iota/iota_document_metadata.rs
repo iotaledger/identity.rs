@@ -49,7 +49,7 @@ impl WasmIotaDocumentMetadata {
   /// Returns a copy of the custom metadata properties.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    MapStringAny::try_from(&self.0.properties)
+    MapStringAny::try_from(self.0.properties())
   }
 }
 

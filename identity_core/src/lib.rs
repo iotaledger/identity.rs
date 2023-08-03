@@ -20,16 +20,9 @@
 #[doc(inline)]
 pub use serde_json::json;
 
-#[cfg(feature = "diff")]
-#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-#[doc(inline)]
-pub use identity_diff as diff;
-
 pub mod common;
 pub mod convert;
-pub mod crypto;
 pub mod error;
-pub mod utils;
 
 pub use self::error::Error;
 pub use self::error::Result;

@@ -4,7 +4,6 @@
 //! Definitions of common types (`Url`, `Timestamp`, JSON types, etc).
 
 pub use self::context::Context;
-pub use self::fragment::Fragment;
 pub use self::key_comparable::KeyComparable;
 pub use self::object::Object;
 pub use self::object::Value;
@@ -17,7 +16,6 @@ pub use self::timestamp::Timestamp;
 pub use self::url::Url;
 
 mod context;
-mod fragment;
 mod key_comparable;
 mod object;
 mod one_or_many;

@@ -1,8 +1,11 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Deserialize;
+use serde::Serialize;
+
 /// A wrapper around a JSON Web Token (JWK).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct Jwt(String);
 
 impl Jwt {
@@ -22,6 +25,7 @@ impl From<String> for Jwt {
     Self::new(jwt)
   }
 }
+
 impl From<Jwt> for String {
   fn from(jwt: Jwt) -> Self {
     jwt.0

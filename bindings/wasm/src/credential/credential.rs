@@ -22,7 +22,7 @@ use crate::credential::ArrayStatus;
 use crate::credential::ArraySubject;
 use crate::credential::ICredential;
 use crate::credential::UrlOrIssuer;
-use crate::crypto::WasmProof;
+use crate::credential::WasmProof;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -46,7 +46,7 @@ impl WasmCredential {
     Credential::<Object>::base_type().to_owned()
   }
 
-  /// Constructs a new `Credential`.
+  /// Constructs a new {@link Credential}.
   #[wasm_bindgen(constructor)]
   pub fn new(values: ICredential) -> Result<WasmCredential> {
     let builder: CredentialBuilder = CredentialBuilder::try_from(values)?;
@@ -59,7 +59,7 @@ impl WasmCredential {
     builder.build().map(Self).wasm_result()
   }
 
-  /// Returns a copy of the JSON-LD context(s) applicable to the `Credential`.
+  /// Returns a copy of the JSON-LD context(s) applicable to the {@link Credential}.
   #[wasm_bindgen]
   pub fn context(&self) -> Result<ArrayContext> {
     self
@@ -72,13 +72,13 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayContext>())
   }
 
-  /// Returns a copy of the unique `URI` identifying the `Credential` .
+  /// Returns a copy of the unique `URI` identifying the {@link Credential} .
   #[wasm_bindgen]
   pub fn id(&self) -> Option<String> {
     self.0.id.as_ref().map(|url| url.to_string())
   }
 
-  /// Returns a copy of the URIs defining the type of the `Credential`.
+  /// Returns a copy of the URIs defining the type of the {@link Credential}.
   #[wasm_bindgen(js_name = "type")]
   pub fn types(&self) -> ArrayString {
     self
@@ -91,7 +91,7 @@ impl WasmCredential {
       .unchecked_into::<ArrayString>()
   }
 
-  /// Returns a copy of the `Credential` subject(s).
+  /// Returns a copy of the {@link Credential} subject(s).
   #[wasm_bindgen(js_name = credentialSubject)]
   pub fn credential_subject(&self) -> Result<ArraySubject> {
     self
@@ -104,7 +104,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArraySubject>())
   }
 
-  /// Returns a copy of the issuer of the `Credential`.
+  /// Returns a copy of the issuer of the {@link Credential}.
   #[wasm_bindgen]
   pub fn issuer(&self) -> Result<UrlOrIssuer> {
     JsValue::from_serde(&self.0.issuer)
@@ -112,19 +112,19 @@ impl WasmCredential {
       .wasm_result()
   }
 
-  /// Returns a copy of the timestamp of when the `Credential` becomes valid.
+  /// Returns a copy of the timestamp of when the {@link Credential} becomes valid.
   #[wasm_bindgen(js_name = "issuanceDate")]
   pub fn issuance_date(&self) -> WasmTimestamp {
     WasmTimestamp::from(self.0.issuance_date)
   }
 
-  /// Returns a copy of the timestamp of when the `Credential` should no longer be considered valid.
+  /// Returns a copy of the timestamp of when the {@link Credential} should no longer be considered valid.
   #[wasm_bindgen(js_name = "expirationDate")]
   pub fn expiration_date(&self) -> Option<WasmTimestamp> {
     self.0.expiration_date.map(WasmTimestamp::from)
   }
 
-  /// Returns a copy of the information used to determine the current status of the `Credential`.
+  /// Returns a copy of the information used to determine the current status of the {@link Credential}.
   #[wasm_bindgen(js_name = "credentialStatus")]
   pub fn credential_status(&self) -> Result<ArrayStatus> {
     self
@@ -137,7 +137,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayStatus>())
   }
 
-  /// Returns a copy of the information used to assist in the enforcement of a specific `Credential` structure.
+  /// Returns a copy of the information used to assist in the enforcement of a specific {@link Credential} structure.
   #[wasm_bindgen(js_name = "credentialSchema")]
   pub fn credential_schema(&self) -> Result<ArraySchema> {
     self
@@ -150,7 +150,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArraySchema>())
   }
 
-  /// Returns a copy of the service(s) used to refresh an expired `Credential`.
+  /// Returns a copy of the service(s) used to refresh an expired {@link Credential}.
   #[wasm_bindgen(js_name = "refreshService")]
   pub fn refresh_service(&self) -> Result<ArrayRefreshService> {
     self
@@ -163,7 +163,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayRefreshService>())
   }
 
-  /// Returns a copy of the terms-of-use specified by the `Credential` issuer.
+  /// Returns a copy of the terms-of-use specified by the {@link Credential} issuer.
   #[wasm_bindgen(js_name = "termsOfUse")]
   pub fn terms_of_use(&self) -> Result<ArrayPolicy> {
     self
@@ -176,7 +176,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayPolicy>())
   }
 
-  /// Returns a copy of the human-readable evidence used to support the claims within the `Credential`.
+  /// Returns a copy of the human-readable evidence used to support the claims within the {@link Credential}.
   #[wasm_bindgen]
   pub fn evidence(&self) -> Result<ArrayEvidence> {
     self
@@ -189,23 +189,31 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayEvidence>())
   }
 
-  /// Returns whether or not the `Credential` must only be contained within a {@link Presentation}
-  /// with a proof issued from the `Credential` subject.
+  /// Returns whether or not the {@link Credential} must only be contained within a  {@link Presentation}
+  /// with a proof issued from the {@link Credential} subject.
   #[wasm_bindgen(js_name = "nonTransferable")]
   pub fn non_transferable(&self) -> Option<bool> {
     self.0.non_transferable
   }
 
-  /// Returns a copy of the proof used to verify the `Credential`.
+  /// Optional cryptographic proof, unrelated to JWT.
   #[wasm_bindgen]
   pub fn proof(&self) -> Option<WasmProof> {
     self.0.proof.clone().map(WasmProof)
   }
 
-  /// Returns a copy of the miscellaneous properties on the `Credential`.
+  /// Returns a copy of the miscellaneous properties on the {@link Credential}.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
     MapStringAny::try_from(&self.0.properties)
+  }
+
+  /// Sets the `proof` property of the {@link Credential}.
+  ///
+  /// Note that this proof is not related to JWT.
+  #[wasm_bindgen(js_name = "setProof")]
+  pub fn set_proof(&mut self, proof: Option<WasmProof>) {
+    self.0.set_proof(proof.map(|wasm_proof| wasm_proof.0))
   }
 }
 

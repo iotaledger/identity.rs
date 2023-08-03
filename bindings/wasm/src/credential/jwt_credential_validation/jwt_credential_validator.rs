@@ -3,7 +3,7 @@
 
 use identity_iota::core::Object;
 use identity_iota::core::Url;
-use identity_iota::credential::vc_jwt_validation::CredentialValidator as JwtCredentialValidator;
+use identity_iota::credential::JwtCredentialValidator;
 use identity_iota::credential::StatusCheck;
 use identity_iota::did::CoreDID;
 
@@ -11,7 +11,7 @@ use super::options::WasmJwtCredentialValidationOptions;
 use crate::common::ImportedDocumentLock;
 use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
-use crate::credential::validation_options::WasmStatusCheck;
+use crate::credential::options::WasmStatusCheck;
 use crate::credential::WasmCredential;
 use crate::credential::WasmDecodedJwtCredential;
 use crate::credential::WasmFailFast;
@@ -28,24 +28,24 @@ use crate::verification::WasmJwsVerifier;
 
 use wasm_bindgen::prelude::*;
 
-/// A type for decoding and validating `Credentials`.
-// NOTE: The methods that take `&Credential` have been copied over from the old `CredentialValidator`. The old
-// `CredentialValidator` either needs to be updated or removed.
+/// A type for decoding and validating {@link Credential}.
 #[wasm_bindgen(js_name = JwtCredentialValidator)]
 pub struct WasmJwtCredentialValidator(JwtCredentialValidator<WasmJwsVerifier>);
 
 #[wasm_bindgen(js_class = JwtCredentialValidator)]
 impl WasmJwtCredentialValidator {
-  /// Creates a new `JwtCredentialValidator`. If a `signature_verifier` is provided it will be used when
+  /// Creates a new {@link JwtCredentialValidator}. If a `signatureVerifier` is provided it will be used when
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
-  pub fn new(signature_verifier: Option<IJwsVerifier>) -> WasmJwtCredentialValidator {
-    let signature_verifier = WasmJwsVerifier::new(signature_verifier);
+  #[allow(non_snake_case)]
+  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtCredentialValidator {
+    let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Decodes and validates a `Credential` issued as a JWS. A `DecodedJwtCredential` is returned upon success.
+  /// Decodes and validates a {@link Credential} issued as a JWS. A {@link DecodedJwtCredential} is returned upon
+  /// success.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -86,17 +86,17 @@ impl WasmJwtCredentialValidator {
       .map(WasmDecodedJwtCredential)
   }
 
-  /// Decode and verify the JWS signature of a `Credential` issued as a JWT using the DID Document of a trusted
+  /// Decode and verify the JWS signature of a {@link Credential} issued as a JWT using the DID Document of a trusted
   /// issuer.
   ///
-  /// A `DecodedJwtCredential` is returned upon success.
+  /// A {@link DecodedJwtCredential} is returned upon success.
   ///
   /// # Warning
   /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
   ///
   /// ## Proofs
-  ///  Only the JWS signature is verified. If the `Credential` contains a `proof` property this will not be verified
-  /// by this method.
+  ///  Only the JWS signature is verified. If the {@link Credential} contains a `proof` property this will not be
+  /// verified by this method.
   ///
   /// # Errors
   /// This method immediately returns an error if
@@ -146,7 +146,7 @@ impl WasmJwtCredentialValidator {
 
   /// Checks whether the credential status has been revoked.
   ///
-  /// Only supports `BitmapRevocation2022`.
+  /// Only supports `RevocationBitmap2022`.
   #[wasm_bindgen(js_name = checkStatus)]
   #[allow(non_snake_case)]
   pub fn check_status(
@@ -161,7 +161,7 @@ impl WasmJwtCredentialValidator {
     JwtCredentialValidator::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
   }
 
-  /// Utility for extracting the issuer field of a `Credential` as a DID.
+  /// Utility for extracting the issuer field of a {@link Credential} as a DID.
   ///
   /// ### Errors
   ///
@@ -169,6 +169,18 @@ impl WasmJwtCredentialValidator {
   #[wasm_bindgen(js_name = extractIssuer)]
   pub fn extract_issuer(credential: &WasmCredential) -> Result<WasmCoreDID> {
     JwtCredentialValidator::extract_issuer::<CoreDID, Object>(&credential.0)
+      .map(WasmCoreDID::from)
+      .wasm_result()
+  }
+
+  /// Utility for extracting the issuer field of a credential in JWT representation as DID.
+  ///
+  /// # Errors
+  ///
+  /// If the JWT decoding fails or the issuer field is not a valid DID.
+  #[wasm_bindgen(js_name = extractIssuerFromJwt)]
+  pub fn extract_issuer_from_jwt(credential: &WasmJwt) -> Result<WasmCoreDID> {
+    JwtCredentialValidator::extract_issuer_from_jwt::<CoreDID>(&credential.0)
       .map(WasmCoreDID::from)
       .wasm_result()
   }

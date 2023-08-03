@@ -164,7 +164,7 @@ impl WasmJwk {
     }
   }
 
-  /// Returns a clone of the Jwk with _all_ private key components unset.
+  /// Returns a clone of the {@link Jwk} with _all_ private key components unset.
   /// Nothing is returned when `kty = oct` as this key type is not considered public by this library.
   #[wasm_bindgen(js_name = toPublic)]
   pub fn to_public(&self) -> Option<WasmJwk> {

@@ -77,9 +77,7 @@ impl JwsHeader {
     self.b64 = Some(value.into());
   }
 
-  // ===========================================================================
-  // ===========================================================================
-
+  /// Returns `true` if the header contains the given `claim`, `false` otherwise.
   pub fn has(&self, claim: &str) -> bool {
     match claim {
       "alg" => self.alg().is_some(),

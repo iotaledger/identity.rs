@@ -15,10 +15,14 @@ pub type MethodDigestConstructionError = identity_core::common::SingleStructErro
 /// Characterization of the underlying cause of a [`MethodDigestConstructionError`].
 #[derive(Debug)]
 pub enum MethodDigestConstructionErrorKind {
-  // Todo: Do we need this variant? It should be impossible to construct a VerificationMethod without a fragment.
+  /// Caused by a missing id on a verification method.
+  ///
+  /// This error should be impossible but exists for safety reasons.
   MissingIdFragment,
+  /// Caused by a failure to decode a method's [key material](identity_verification::MethodData).
   DataDecodingFailure,
 }
+
 impl Display for MethodDigestConstructionErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("method digest construction failure: ")?;
@@ -41,7 +45,7 @@ pub struct MethodDigest {
 impl MethodDigest {
   /// Creates a new [`MethodDigest`].
   pub fn new(verification_method: &VerificationMethod) -> Result<Self, MethodDigestConstructionError> {
-    // Method digest version 0 formula:  SeaHash(<fragment><JWK thumbprint if JWK else decoded public key>)
+    // Method digest version 0 formula: SeaHash(<fragment><JWK thumbprint if JWK else decoded public key>)
     use MethodDigestConstructionErrorKind::*;
     let mut hasher: SeaHasher = SeaHasher::new();
     let fragment: &str = verification_method.id().fragment().ok_or(MissingIdFragment)?;
@@ -59,6 +63,7 @@ impl MethodDigest {
     };
 
     let key_hash: u64 = hasher.finish();
+
     Ok(Self {
       version: 0,
       value: key_hash,
@@ -94,18 +99,14 @@ mod test {
   use crate::key_id_storage::KeyIdStorageError;
   use crate::key_id_storage::KeyIdStorageErrorKind;
   use identity_core::convert::FromJson;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
   use identity_core::json;
-  use identity_core::utils::BaseEncoding;
-  use identity_did::CoreDID;
   use identity_verification::VerificationMethod;
   use serde_json::Value;
 
   use super::MethodDigest;
 
   #[test]
-  pub fn hash() {
+  fn hash() {
     // These values should be tested in the bindings too.
     let a: Value = json!(
       {
@@ -129,8 +130,8 @@ mod test {
   }
 
   #[test]
-  pub fn pack() {
-    let verification_method: VerificationMethod = create_verification_method();
+  fn pack() {
+    let verification_method: VerificationMethod = crate::storage::tests::test_utils::create_verification_method();
     let method_digest: MethodDigest = MethodDigest::new(&verification_method).unwrap();
     let packed: Vec<u8> = method_digest.pack();
     let method_digest_unpacked: MethodDigest = MethodDigest::unpack(packed).unwrap();
@@ -138,7 +139,7 @@ mod test {
   }
 
   #[test]
-  pub fn unpack() {
+  fn unpack() {
     let packed: Vec<u8> = vec![0, 255, 212, 82, 63, 57, 19, 134, 193];
     let method_digest_unpacked: MethodDigest = MethodDigest::unpack(packed).unwrap();
     let method_digest_expected: MethodDigest = MethodDigest {
@@ -149,7 +150,7 @@ mod test {
   }
 
   #[test]
-  pub fn invalid_unpack() {
+  fn invalid_unpack() {
     let packed: Vec<u8> = vec![1, 255, 212, 82, 63, 57, 19, 134, 193];
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
     let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);
@@ -172,12 +173,5 @@ mod test {
     let method_digest_unpacked = MethodDigest::unpack(packed).unwrap_err();
     let _expected_error = KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError);
     assert!(matches!(method_digest_unpacked, _expected_error));
-  }
-
-  fn create_verification_method() -> VerificationMethod {
-    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let did: CoreDID =
-      CoreDID::parse(format!("did:example:{}", BaseEncoding::encode_base58(keypair.public()))).unwrap();
-    VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "frag_1").unwrap()
   }
 }

@@ -4,7 +4,7 @@
 use crate::jose::jwk::Jwk;
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use identity_core::utils::BaseEncoding;
+use identity_core::convert::BaseEncoding;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -19,9 +19,6 @@ pub enum MethodData {
   PublicKeyBase58(String),
   PublicKeyJwk(Jwk),
 }
-
-// TODO: Do we need checks that the Jwk does not contain private key components?
-// Perhaps this can be done at the DID document level?
 
 impl MethodData {
   /// Creates a new `MethodData` variant with base58-encoded content.

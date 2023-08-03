@@ -72,3 +72,44 @@ impl KeyIdStorage for KeyIdMemstore {
     Ok(())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use crate::key_id_storage::key_id_storage::KeyIdStorage;
+  use crate::key_id_storage::memstore::KeyIdMemstore;
+  use crate::key_id_storage::method_digest::MethodDigest;
+  use crate::key_id_storage::KeyIdStorageError;
+  use crate::key_id_storage::KeyIdStorageErrorKind;
+  use crate::key_storage::KeyId;
+  use identity_verification::VerificationMethod;
+
+  #[tokio::test]
+  async fn memstore_operations() {
+    let verification_method: VerificationMethod = crate::storage::tests::test_utils::create_verification_method();
+
+    // Test insertion.
+    let memstore: KeyIdMemstore = KeyIdMemstore::new();
+    let key_id_1 = KeyId::new("keyid");
+    let method_digest: MethodDigest = MethodDigest::new(&verification_method).unwrap();
+    memstore
+      .insert_key_id(method_digest.clone(), key_id_1.clone())
+      .await
+      .expect("inserting into memstore failed");
+
+    // Double insertion.
+    let insertion_result = memstore.insert_key_id(method_digest.clone(), key_id_1.clone()).await;
+    let _expected_error: KeyIdStorageError = KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdAlreadyExists);
+    assert!(matches!(insertion_result.unwrap_err(), _expected_error));
+
+    // Test retrieving.
+    let key_id: KeyId = memstore.get_key_id(&method_digest).await.unwrap();
+    assert_eq!(key_id_1, key_id);
+
+    // Test deletion.
+    memstore.delete_key_id(&method_digest).await.expect("deletion failed");
+
+    let repeat_deletion_result: Result<(), KeyIdStorageError> = memstore.delete_key_id(&method_digest).await;
+    let _expected_error: KeyIdStorageError = KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdNotFound);
+    assert!(matches!(repeat_deletion_result.unwrap_err(), _expected_error));
+  }
+}

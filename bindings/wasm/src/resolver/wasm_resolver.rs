@@ -4,43 +4,32 @@
 use std::borrow::Cow;
 use std::rc::Rc;
 
-use identity_iota::credential::Presentation;
-use identity_iota::credential::PresentationValidationOptions;
-use identity_iota::credential::PresentationValidator;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::resolver::SingleThreadedResolver;
+use js_sys::Array;
 use js_sys::Function;
+use js_sys::JsString;
 use js_sys::Map;
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 
-use crate::common::ImportedDocumentLock;
-use crate::common::ImportedDocumentReadGuard;
-use crate::common::PromiseVoid;
-use crate::credential::WasmFailFast;
-use crate::credential::WasmPresentation;
-use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayIToCoreDocument;
+use crate::common::ArrayString;
 use crate::error::JsValueResult;
 use crate::error::WasmError;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
-use crate::resolver::constructor_input::MapResolutionHandler;
-use crate::resolver::constructor_input::ResolverConfig;
-use crate::resolver::type_definitions::OptionArrayIToCoreDocument;
-use crate::resolver::type_definitions::OptionIToCoreDocument;
+use crate::resolver::resolver_config::MapResolutionHandler;
+use crate::resolver::resolver_config::ResolverConfig;
+use crate::resolver::PromiseArrayIToCoreDocument;
 
-use super::type_definitions::PromiseArrayIToCoreDocument;
-use super::type_definitions::PromiseIToCoreDocument;
+use super::resolver_types::PromiseIToCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use futures::stream::StreamExt;
-use futures::stream::{self};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
@@ -49,16 +38,17 @@ type JsDocumentResolver = SingleThreadedResolver<JsValue>;
 /// Convenience type for resolving DID documents from different DID methods.   
 ///  
 /// Also provides methods for resolving DID Documents associated with
-/// verifiable `Credentials` and `Presentations`.
+/// verifiable {@link Credential}s and {@link Presentation}s.
 ///
 /// # Configuration
+///
 /// The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
 #[wasm_bindgen(js_name = Resolver)]
 pub struct WasmResolver(Rc<JsDocumentResolver>);
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
-  /// Constructs a new `Resolver`.
+  /// Constructs a new {@link Resolver}.
   ///
   /// # Errors
   /// If both a `client` is given and the `handlers` map contains the "iota" key the construction process
@@ -168,126 +158,6 @@ impl WasmResolver {
     resolver.attach_handler(method, fun);
   }
 
-  /// Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
-  /// Issuer documents are returned in arbitrary order.
-  ///
-  /// # Errors
-  /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
-  /// resolution fails.
-  #[wasm_bindgen(js_name = resolvePresentationIssuers)]
-  pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArrayIToCoreDocument> {
-    let resolver: Rc<JsDocumentResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
-
-    let promise: Promise = future_to_promise(async move {
-      let issuer_documents: Vec<JsValue> = resolver
-        .resolve_presentation_issuers(&presentation)
-        .await
-        .wasm_result()?;
-      Ok(issuer_documents.into_iter().collect::<js_sys::Array>().into())
-    });
-
-    Ok(promise.unchecked_into::<PromiseArrayIToCoreDocument>())
-  }
-
-  /// Fetches the DID Document of the holder of a `Presentation`.
-  ///
-  /// # Errors
-  /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
-  /// DID resolution fails.
-  #[wasm_bindgen(js_name = resolvePresentationHolder)]
-  pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseIToCoreDocument> {
-    let resolver: Rc<JsDocumentResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
-
-    let promise: Promise = future_to_promise(async move {
-      resolver
-        .resolve_presentation_holder(&presentation)
-        .await
-        .wasm_result()
-        .map(JsValue::from)
-    });
-    Ok(promise.unchecked_into::<PromiseIToCoreDocument>())
-  }
-
-  /// Verifies a `Presentation`.
-  ///
-  /// ### Important
-  /// See `PresentationValidator::validate` for information about which properties get
-  /// validated and what is expected of the optional arguments `holder` and `issuer`.
-  ///
-  /// ### Resolution
-  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
-  /// If you already have up-to-date versions of these DID Documents, you may want
-  /// to use `PresentationValidator::validate`.
-  /// See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
-  ///
-  /// ### Errors
-  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
-  /// Otherwise, errors from validating the presentation and its credentials will be returned
-  /// according to the `fail_fast` parameter.
-  #[wasm_bindgen(js_name = verifyPresentation)]
-  pub fn verify_presentation(
-    &self,
-    presentation: &WasmPresentation,
-    options: &WasmPresentationValidationOptions,
-    fail_fast: WasmFailFast,
-    holder: &OptionIToCoreDocument,
-    issuers: &OptionArrayIToCoreDocument,
-  ) -> Result<PromiseVoid> {
-    let resolver: Rc<JsDocumentResolver> = self.0.clone();
-    let presentation: Presentation = presentation.0.clone();
-    let options: PresentationValidationOptions = options.0.clone();
-
-    let holder_clone: JsValue = JsValue::from(holder);
-    let issuers_clone: JsValue = JsValue::from(issuers);
-
-    let promise: Promise = future_to_promise(async move {
-      let holder_handler = || async {
-        if holder_clone.is_null() || holder_clone.is_undefined() {
-          resolver
-            .resolve_presentation_holder(&presentation)
-            .await
-            .map(|value| ImportedDocumentLock::from_js_value_unchecked(&value))
-        } else {
-          Ok(ImportedDocumentLock::from_js_value_unchecked(&holder_clone))
-        }
-      };
-
-      let issuers_handler = || async {
-        if issuers_clone.is_null() || issuers_clone.is_undefined() {
-          resolver.resolve_presentation_issuers(&presentation).await.map(|value| {
-            value
-              .into_iter()
-              .map(|entry| ImportedDocumentLock::from_js_value_unchecked(&entry))
-              .collect::<Vec<ImportedDocumentLock>>()
-          })
-        } else {
-          Ok(Vec::<ImportedDocumentLock>::from(
-            issuers_clone.unchecked_ref::<ArrayIToCoreDocument>(),
-          ))
-        }
-      };
-
-      let (holder_result, issuers_result) = futures::join!(holder_handler(), issuers_handler());
-
-      let holder = holder_result.wasm_result()?;
-      let issuers = issuers_result.wasm_result()?;
-
-      let holder_guard = holder.read().await;
-      let issuers_guard: Vec<ImportedDocumentReadGuard<'_>> = stream::iter(issuers.iter())
-        .then(ImportedDocumentLock::read)
-        .collect()
-        .await;
-
-      PresentationValidator::validate(&presentation, &holder_guard, &issuers_guard, &options, fail_fast.into())
-        .wasm_result()
-        .map(|_| JsValue::UNDEFINED)
-    });
-
-    Ok(promise.unchecked_into::<PromiseVoid>())
-  }
-
   /// Fetches the DID Document of the given DID.
   ///
   /// ### Errors
@@ -309,5 +179,56 @@ impl WasmResolver {
     });
 
     Ok(promise.unchecked_into::<PromiseIToCoreDocument>())
+  }
+
+  /// Concurrently fetches the DID Documents of the multiple given DIDs.
+  ///
+  /// # Errors
+  /// * If the resolver has not been configured to handle the method of any of the given DIDs.
+  /// * If the resolution process of any DID fails.
+  ///
+  /// ## Note
+  /// * The order of the documents in the returned array matches that in `dids`.
+  /// * If `dids` contains duplicates, these will be resolved only once and the resolved document
+  /// is copied into the returned array to match the order of `dids`.
+  #[wasm_bindgen(js_name=resolveMultiple)]
+  pub fn resolve_multiple(&self, dids: ArrayString) -> Result<PromiseArrayIToCoreDocument> {
+    let dids: Vec<String> = dids
+      .dyn_into::<Array>()?
+      .iter()
+      .map(|item| item.dyn_into::<JsString>().map(String::from))
+      .collect::<Result<Vec<String>>>()?;
+    let core_dids: Vec<CoreDID> = dids
+      .iter()
+      .map(CoreDID::parse)
+      .collect::<std::result::Result<Vec<CoreDID>, identity_iota::did::Error>>()
+      .wasm_result()?;
+
+    let resolver: Rc<JsDocumentResolver> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      resolver
+        .resolve_multiple(&core_dids)
+        .await
+        .map_err(WasmError::from)
+        .map_err(JsValue::from)
+        .map(|documents| {
+          let mut ordered_documents: Vec<JsValue> = Vec::with_capacity(core_dids.len());
+          // Reconstructs the order of `dids`.
+          for did in core_dids {
+            let doc: JsValue = documents.get(&did).cloned().unwrap();
+            ordered_documents.push(doc);
+          }
+          ordered_documents
+        })
+        .map(|documents| {
+          documents
+            .into_iter()
+            .map(JsValue::from)
+            .collect::<js_sys::Array>()
+            .unchecked_into::<JsValue>()
+        })
+    });
+
+    Ok(promise.unchecked_into::<PromiseArrayIToCoreDocument>())
   }
 }

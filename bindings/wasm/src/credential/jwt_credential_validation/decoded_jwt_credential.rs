@@ -1,7 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::credential::vc_jwt_validation::DecodedJwtCredential;
+use identity_iota::credential::DecodedJwtCredential;
 use wasm_bindgen::prelude::*;
 
 use crate::credential::WasmCredential;
@@ -31,9 +31,16 @@ impl WasmDecodedJwtCredential {
   /// Consumes the object and returns the decoded credential.
   ///
   /// ### Warning
-  /// This destroys the `DecodedCredential` object.
+  ///
+  /// This destroys the {@link DecodedJwtCredential} object.
   #[wasm_bindgen(js_name = intoCredential)]
   pub fn into_credential(self) -> WasmCredential {
     WasmCredential(self.0.credential)
+  }
+}
+
+impl From<DecodedJwtCredential> for WasmDecodedJwtCredential {
+  fn from(credential: DecodedJwtCredential) -> Self {
+    Self(credential)
   }
 }

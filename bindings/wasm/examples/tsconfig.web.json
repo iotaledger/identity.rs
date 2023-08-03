@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "paths": {
       "@iota/identity-wasm/node": ["../web"],
-      "@iota/client-wasm/node": ["@iota/client-wasm/web"]
+      "@iota/sdk-wasm/node": ["@iota/sdk-wasm/web"]
     }
   },
   "exclude": ["tests"]

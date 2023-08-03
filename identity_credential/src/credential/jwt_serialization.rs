@@ -11,13 +11,13 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::Proof;
 use serde::de::DeserializeOwned;
 
 use crate::credential::Credential;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
 use crate::credential::Policy;
+use crate::credential::Proof;
 use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
@@ -41,7 +41,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   exp: Option<i64>,
   /// Represents the issuer.
-  iss: Cow<'credential, Issuer>,
+  pub(crate) iss: Cow<'credential, Issuer>,
 
   /// Represents the issuanceDate encoded as a UNIX timestamp.
   #[serde(flatten)]
@@ -64,24 +64,25 @@ where
 {
   pub(super) fn new(credential: &'credential Credential<T>) -> Result<Self> {
     let Credential {
-        context,
-        id,
-        types,
-        credential_subject: OneOrMany::One(subject),
-        issuer,
-        issuance_date,
-        expiration_date,
-        credential_status,
-        credential_schema,
-        refresh_service,
-        terms_of_use,
-        evidence,
-        non_transferable,
-        properties,
-        proof
-        } = credential else {
-            return Err(Error::MoreThanOneSubjectInJwt)
-        };
+      context,
+      id,
+      types,
+      credential_subject: OneOrMany::One(subject),
+      issuer,
+      issuance_date,
+      expiration_date,
+      credential_status,
+      credential_schema,
+      refresh_service,
+      terms_of_use,
+      evidence,
+      non_transferable,
+      properties,
+      proof,
+    } = credential
+    else {
+      return Err(Error::MoreThanOneSubjectInJwt);
+    };
 
     Ok(Self {
       exp: expiration_date.map(|value| Timestamp::to_unix(&value)),
@@ -231,15 +232,15 @@ where
 /// but `iat` is also used in the ecosystem. This type aims to take care of this discrepancy on
 /// a best effort basis.
 #[derive(Serialize, Deserialize, Clone, Copy)]
-struct IssuanceDateClaims {
+pub(crate) struct IssuanceDateClaims {
   #[serde(skip_serializing_if = "Option::is_none")]
-  iat: Option<i64>,
+  pub(crate) iat: Option<i64>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  nbf: Option<i64>,
+  pub(crate) nbf: Option<i64>,
 }
 
 impl IssuanceDateClaims {
-  fn new(issuance_date: Timestamp) -> Self {
+  pub(crate) fn new(issuance_date: Timestamp) -> Self {
     Self {
       iat: None,
       nbf: Some(issuance_date.to_unix()),
@@ -248,7 +249,7 @@ impl IssuanceDateClaims {
   /// Produces the `issuanceDate` value from `nbf` if it is set,
   /// otherwise falls back to `iat`. If none of these values are set an error is returned.
   #[cfg(feature = "validator")]
-  fn to_issuance_date(self) -> Result<Timestamp> {
+  pub(crate) fn to_issuance_date(self) -> Result<Timestamp> {
     if let Some(timestamp) = self
       .nbf
       .map(Timestamp::from_unix)

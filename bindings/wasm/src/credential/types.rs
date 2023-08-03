@@ -31,6 +31,18 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<Credential>")]
   pub type ArrayCredential;
+
+  #[wasm_bindgen(typescript_type = "Array<DecodedJwtCredential>")]
+  pub type ArrayDecodedJwtCredential;
+
+  #[wasm_bindgen(typescript_type = "Array<Jwt>")]
+  pub type ArrayJwt;
+
+  #[wasm_bindgen(typescript_type = "Array<UnknownCredential>")]
+  pub type ArrayUnknownCredential;
+
+  #[wasm_bindgen(typescript_type = "Array<CoreDID>")]
+  pub type ArrayCoreDID;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -42,7 +54,7 @@ interface Evidence {
   /** A URL that allows retrieval of information about the evidence. */
   readonly id?: string;
   /** The type(s) of the credential evidence. */
-  readonly types: string | Array<string>;
+  readonly type: string | Array<string>;
   /** Additional properties of the credential evidence. */
   readonly [properties: string]: unknown;
 }"#;
@@ -68,7 +80,7 @@ interface Policy {
   /** A URL identifying the credential terms-of-use. */
   readonly id?: string;
   /** The type(s) of the credential terms-of-use. */
-  readonly types: string | Array<string>;
+  readonly type: string | Array<string>;
   /** Additional properties of the credential terms-of-use. */
   readonly [properties: string]: unknown;
 }"#;
@@ -82,7 +94,7 @@ interface RefreshService {
   /** The URL of the credential refresh service. */
   readonly id: string;
   /** The type(s) of the credential refresh service. */
-  readonly types: string | Array<string>;
+  readonly type: string | Array<string>;
   /** Additional properties of the credential refresh service. */
   readonly [properties: string]: unknown;
 }"#;
@@ -96,7 +108,7 @@ interface Schema {
   /** A URL identifying the credential schema file. */
   readonly id: string;
   /** The type(s) of the credential schema. */
-  readonly types: string | Array<string>;
+  readonly type: string | Array<string>;
   /** Additional properties of the credential schema. */
   readonly [properties: string]: unknown;
 }"#;

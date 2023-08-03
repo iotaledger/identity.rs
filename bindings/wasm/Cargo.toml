@@ -25,7 +25,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
 # Want to use the nice API of tokio::sync::RwLock for now even though we can't use threads.
-tokio = { version = "1.25", default-features = false, features = ["sync"] }
+tokio = { version = "1.29", default-features = false, features = ["sync"] }
 wasm-bindgen = { version = "0.2.85", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
@@ -33,7 +33,7 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 version = "0.7.0-alpha.6"
 path = "../../identity_iota"
 default-features = false
-features = ["client", "revocation-bitmap", "resolver", "eddsa"]
+features = ["client", "revocation-bitmap", "resolver", "eddsa", "domain-linkage"]
 
 [dev-dependencies]
 rand = "0.8.5"

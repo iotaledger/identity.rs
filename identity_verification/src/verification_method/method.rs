@@ -13,8 +13,6 @@ use serde::Serialize;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::KeyType;
-use identity_core::crypto::PublicKey;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -72,6 +70,12 @@ impl VerificationMethod {
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidMethod("empty id fragment"));
     }
+
+    if let Some(MethodData::PublicKeyJwk(ref jwk)) = builder.data {
+      if !jwk.is_public() {
+        return Err(crate::error::Error::PrivateKeyMaterialExposed);
+      }
+    };
 
     Ok(VerificationMethod {
       id,
@@ -184,32 +188,6 @@ impl VerificationMethod {
   // Constructors
   // ===========================================================================
 
-  /// Creates a new [`VerificationMethod`] from the given `did` and public key.
-  pub fn new<D: DID>(did: D, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
-    let method_fragment: String = if !fragment.starts_with('#') {
-      format!("#{fragment}")
-    } else {
-      fragment.to_owned()
-    };
-    let id: DIDUrl = did
-      .to_url()
-      .join(method_fragment)
-      .map_err(Error::DIDUrlConstructionError)?;
-
-    let mut builder: MethodBuilder = MethodBuilder::default().id(id).controller(did.into());
-    match key_type {
-      KeyType::Ed25519 => {
-        builder = builder.type_(MethodType::ED25519_VERIFICATION_KEY_2018);
-        builder = builder.data(MethodData::new_multibase(public_key));
-      }
-      KeyType::X25519 => {
-        builder = builder.type_(MethodType::X25519_KEY_AGREEMENT_KEY_2019);
-        builder = builder.data(MethodData::new_multibase(public_key));
-      }
-    }
-    builder.build()
-  }
-
   /// Creates a new [`VerificationMethod`] from the given `did` and [`Jwk`]. If `fragment` is not given
   /// the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
   ///
@@ -221,10 +199,6 @@ impl VerificationMethod {
   /// - It is recommended that [`Jwk`] kid values are set to the public key fingerprint. See
   ///   [`Jwk::thumbprint_sha256_b64`](Jwk::thumbprint_sha256_b64).
   pub fn new_from_jwk<D: DID>(did: D, key: Jwk, fragment: Option<&str>) -> Result<Self> {
-    if !key.is_public() {
-      return Err(crate::error::Error::PrivateKeyMaterialExposed);
-    };
-
     // If a fragment is given use that, otherwise use the JWK's `kid` if it is set.
     let fragment: Cow<'_, str> = {
       let given_fragment: &str = fragment
@@ -245,7 +219,7 @@ impl VerificationMethod {
     MethodBuilder::default()
       .id(id)
       .controller(did.into())
-      .type_(MethodType::JWK)
+      .type_(MethodType::JSON_WEB_KEY)
       .data(MethodData::PublicKeyJwk(key))
       .build()
   }
