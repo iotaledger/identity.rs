@@ -118,15 +118,6 @@ jobs:
           echo OPTIONAL_ARG=$OPTIONAL_ARG
           echo OPTIONAL_ARG=$OPTIONAL_ARG >> $GITHUB_ENV
 
-      - name: Run Changelog Generator
-        uses: './.github/actions/release/changelog-generator'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          changelog-path: ${{ inputs.changelog-path }}
-          changelog-config-path: ${{ inputs.changelog-config-path }}
-          future-release: ${{ env.HOTFIX_TAG }} 
-          optional-arg: ${{env.OPTIONAL_ARG}}
-
       - name: Import GPG key
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@cb4264d3319acaa2bea23d51ef67f80b4f775013
