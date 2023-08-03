@@ -48,9 +48,9 @@ async function main() {
             return await nftOwnsDid();
         case "3_did_issues_tokens":
             return await didIssuesTokens();
-        case "5_custom_resolution":
+        case "4_custom_resolution":
             return await customResolution();
-        case "6_domain_linkage":
+        case "5_domain_linkage":
             return await domainLinkage();
         default:
             throw "Unknown example name: '" + argument + "'";

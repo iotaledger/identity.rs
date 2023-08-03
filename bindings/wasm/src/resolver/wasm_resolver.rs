@@ -23,11 +23,11 @@ use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocument;
 use crate::iota::WasmIotaIdentityClient;
-use crate::resolver::constructor_input::MapResolutionHandler;
-use crate::resolver::constructor_input::ResolverConfig;
+use crate::resolver::resolver_config::MapResolutionHandler;
+use crate::resolver::resolver_config::ResolverConfig;
 use crate::resolver::PromiseArrayIToCoreDocument;
 
-use super::type_definitions::PromiseIToCoreDocument;
+use super::resolver_types::PromiseIToCoreDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::prelude::*;
@@ -38,16 +38,17 @@ type JsDocumentResolver = SingleThreadedResolver<JsValue>;
 /// Convenience type for resolving DID documents from different DID methods.   
 ///  
 /// Also provides methods for resolving DID Documents associated with
-/// verifiable `Credentials` and `Presentations`.
+/// verifiable {@link Credential}s and {@link Presentation}s.
 ///
 /// # Configuration
+///
 /// The resolver will only be able to resolve DID documents for methods it has been configured for in the constructor.
 #[wasm_bindgen(js_name = Resolver)]
 pub struct WasmResolver(Rc<JsDocumentResolver>);
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
-  /// Constructs a new `Resolver`.
+  /// Constructs a new {@link Resolver}.
   ///
   /// # Errors
   /// If both a `client` is given and the `handlers` map contains the "iota" key the construction process

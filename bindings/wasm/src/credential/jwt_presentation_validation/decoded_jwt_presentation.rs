@@ -5,8 +5,8 @@ use identity_iota::credential::DecodedJwtPresentation;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
-use crate::credential::jwt_presentation::WasmPresentation;
 use crate::credential::UnknownCredential;
+use crate::credential::WasmPresentation;
 use crate::jose::WasmJwsHeader;
 
 /// A cryptographically verified and decoded presentation.
@@ -32,7 +32,7 @@ impl WasmDecodedJwtPresentation {
   /// Consumes the object and returns the decoded presentation.
   ///
   /// ### Warning
-  /// This destroys the `DecodedJwtPresentation` object.
+  /// This destroys the {@link DecodedJwtPresentation} object.
   #[wasm_bindgen(js_name = intoPresentation)]
   pub fn into_presentation(self) -> WasmPresentation {
     WasmPresentation(self.0.presentation)

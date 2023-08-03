@@ -1,5 +1,3 @@
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     CoreDocument,
     IotaDocument,
@@ -9,6 +7,7 @@ import {
     Resolver,
     Storage,
 } from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 // Use this external package to avoid implementing the entire did:key method in this example.
@@ -49,7 +48,7 @@ export async function customResolution() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Creates a new wallet and identity for us to resolve (see "0_create_did" example).

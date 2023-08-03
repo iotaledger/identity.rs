@@ -73,7 +73,7 @@ interface Issuer {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_POLICY: &'static str = r#"
-/** Information used to express obligations, prohibitions, and permissions about a `Credential` or `Presentation`.
+/** Information used to express obligations, prohibitions, and permissions about a {@link Credential} or {@link Presentation}.
 
 [More Info](https://www.w3.org/TR/vc-data-model/#terms-of-use) */
 interface Policy {

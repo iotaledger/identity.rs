@@ -11,7 +11,7 @@ pub struct WasmJwtPresentationOptions(pub(crate) JwtPresentationOptions);
 
 #[wasm_bindgen(js_class = JwtPresentationOptions)]
 impl WasmJwtPresentationOptions {
-  /// Creates a new `JwtPresentationOptions` from the given fields.
+  /// Creates a new {@link JwtPresentationOptions} from the given fields.
   ///
   /// Throws an error if any of the options are invalid.
   #[wasm_bindgen(constructor)]
@@ -22,13 +22,6 @@ impl WasmJwtPresentationOptions {
     } else {
       Ok(WasmJwtPresentationOptions::from(JwtPresentationOptions::default()))
     }
-  }
-
-  /// Creates a new `JwtPresentationOptions` with defaults.
-  #[allow(clippy::should_implement_trait)]
-  #[wasm_bindgen]
-  pub fn default() -> WasmJwtPresentationOptions {
-    WasmJwtPresentationOptions::from(JwtPresentationOptions::default())
   }
 }
 

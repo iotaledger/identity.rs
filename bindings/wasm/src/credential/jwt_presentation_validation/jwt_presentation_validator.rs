@@ -4,8 +4,8 @@
 use super::decoded_jwt_presentation::WasmDecodedJwtPresentation;
 use super::options::WasmJwtPresentationValidationOptions;
 use crate::common::ImportedDocumentLock;
-use crate::credential::jwt_presentation::WasmPresentation;
 use crate::credential::WasmJwt;
+use crate::credential::WasmPresentation;
 use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDID;
 use crate::error::Result;
@@ -21,16 +21,17 @@ pub struct WasmJwtPresentationValidator(JwtPresentationValidator<WasmJwsVerifier
 
 #[wasm_bindgen(js_class = JwtPresentationValidator)]
 impl WasmJwtPresentationValidator {
-  /// Creates a new `JwtPresentationValidator`. If a `signature_verifier` is provided it will be used when
+  /// Creates a new {@link JwtPresentationValidator}. If a `signatureVerifier` is provided it will be used when
   /// verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
-  pub fn new(signature_verifier: Option<IJwsVerifier>) -> WasmJwtPresentationValidator {
-    let signature_verifier = WasmJwsVerifier::new(signature_verifier);
+  #[allow(non_snake_case)]
+  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtPresentationValidator {
+    let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtPresentationValidator(JwtPresentationValidator::with_signature_verifier(signature_verifier))
   }
 
-  /// Validates a [`JwtPresentation`].
+  /// Validates a {@link Presentation} encoded as a {@link Jwt}.
   ///
   /// The following properties are validated according to `options`:
   /// - the JWT can be decoded into a semantically valid presentation.
@@ -42,7 +43,7 @@ impl WasmJwtPresentationValidator {
   /// # Warning
   ///
   /// * This method does NOT validate the constituent credentials and therefore also not the relationship between the
-  /// credentials' subjects and the presentation holder. This can be done with `JwtCredentialValidationOptions`.
+  /// credentials' subjects and the presentation holder. This can be done with {@link JwtCredentialValidationOptions}.
   /// * The lack of an error returned from this method is in of itself not enough to conclude that the presentation can
   /// be trusted. This section contains more information on additional checks that should be carried out before and
   /// after calling this method.
@@ -55,9 +56,10 @@ impl WasmJwtPresentationValidator {
   ///
   /// An error is returned whenever a validated condition is not satisfied or when decoding fails.
   #[wasm_bindgen]
+  #[allow(non_snake_case)]
   pub fn validate(
     &self,
-    presentation_jwt: &WasmJwt,
+    presentationJwt: &WasmJwt,
     holder: &IToCoreDocument,
     validation_options: &WasmJwtPresentationValidationOptions,
   ) -> Result<WasmDecodedJwtPresentation> {
@@ -66,12 +68,12 @@ impl WasmJwtPresentationValidator {
 
     self
       .0
-      .validate(&presentation_jwt.0, &holder_guard, &validation_options.0)
+      .validate(&presentationJwt.0, &holder_guard, &validation_options.0)
       .map(WasmDecodedJwtPresentation::from)
       .wasm_result()
   }
 
-  /// Validates the semantic structure of the `JwtPresentation`.
+  /// Validates the semantic structure of the {@link Presentation}.
   #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
     JwtPresentationValidator::check_structure(&presentation.0).wasm_result()?;

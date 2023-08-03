@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import {
     Credential,
     FailFast,
@@ -13,6 +11,7 @@ import {
     KeyIdMemStore,
     Storage,
 } from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /**
@@ -29,7 +28,7 @@ export async function createVC() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Create an identity for the issuer with one verification method `key-1`.
@@ -83,7 +82,7 @@ export async function createVC() {
     const decoded_credential = new JwtCredentialValidator().validate(
         credentialJwt,
         issuerDocument,
-        new JwtCredentialValidationOptions({}),
+        new JwtCredentialValidationOptions(),
         FailFast.FirstError,
     );
 

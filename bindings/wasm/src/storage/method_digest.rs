@@ -9,7 +9,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use crate::verification::WasmVerificationMethod;
 
-/// Unique identifier of a [`VerificationMethod`].
+/// Unique identifier of a {@link VerificationMethod}.
 ///
 /// NOTE:
 /// This class does not have a JSON representation,
@@ -24,14 +24,14 @@ impl WasmMethodDigest {
     Ok(Self(MethodDigest::new(&verification_method.0).wasm_result()?))
   }
 
-  /// Packs `MethodDigest` into bytes.
+  /// Packs {@link MethodDigest} into bytes.
   #[wasm_bindgen]
   pub fn pack(&self) -> Uint8Array {
     let bytes: &[u8] = &self.0.pack();
     bytes.into()
   }
 
-  /// Unpacks bytes into [`MethodDigest`].
+  /// Unpacks bytes into {@link MethodDigest}.
   #[wasm_bindgen]
   pub fn unpack(bytes: &Uint8Array) -> Result<WasmMethodDigest> {
     let bytes: Vec<u8> = bytes.to_vec();

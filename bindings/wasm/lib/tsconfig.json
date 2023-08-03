@@ -4,7 +4,7 @@
     "baseUrl": "./",
     "paths": {
       "~identity_wasm": ["../node/identity_wasm", "./identity_wasm.js"],
-      "~client-wasm": ["../node_modules/@iota/client-wasm/node", "@iota/client-wasm/node"],
+      "~sdk-wasm": ["../node_modules/@iota/sdk-wasm/node", "@iota/sdk-wasm/node"],
       "../lib": ["."]
     },
     "outDir": "../node",

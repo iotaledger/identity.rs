@@ -55,7 +55,7 @@ use crate::did::WasmJwsVerificationOptions;
 use crate::did::WasmService;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::iota::identity_client_ext::IAliasOutput;
+use crate::iota::identity_client_ext::WasmAliasOutput;
 use crate::iota::WasmIotaDID;
 use crate::iota::WasmIotaDocumentMetadata;
 use crate::iota::WasmStateMetadataEncoding;
@@ -107,7 +107,7 @@ impl WasmIotaDocument {
   // Constructors
   // ===========================================================================
 
-  /// Constructs an empty DID Document with a {@link IotaDID.placeholder} identifier
+  /// Constructs an empty IOTA DID Document with a {@link IotaDID.placeholder} identifier
   /// for the given `network`.
   #[wasm_bindgen(constructor)]
   pub fn new(network: String) -> Result<WasmIotaDocument> {
@@ -413,7 +413,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = unpackFromOutput)]
   pub fn unpack_from_output(
     did: &WasmIotaDID,
-    aliasOutput: IAliasOutput,
+    aliasOutput: WasmAliasOutput,
     allowEmpty: bool,
     tokenSupply: u64,
   ) -> Result<WasmIotaDocument> {
@@ -438,7 +438,7 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = unpackFromBlock)]
   pub fn unpack_from_block(
     network: String,
-    block: &IBlock,
+    block: &WasmBlock,
     protocol_parameters: &INodeInfoProtocol,
   ) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
@@ -561,7 +561,7 @@ impl WasmIotaDocument {
   // Revocation
   // ===========================================================================
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
@@ -576,7 +576,7 @@ impl WasmIotaDocument {
       .wasm_result()
   }
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
@@ -596,7 +596,7 @@ impl WasmIotaDocument {
   // ===========================================================================
 
   #[wasm_bindgen(js_name = clone)]
-  /// Returns a deep clone of the `IotaDocument`.
+  /// Returns a deep clone of the {@link IotaDocument}.
   pub fn deep_clone(&self) -> WasmIotaDocument {
     WasmIotaDocument(Rc::new(IotaDocumentLock::new(self.0.blocking_read().clone())))
   }
@@ -637,7 +637,7 @@ impl WasmIotaDocument {
   // ===========================================================================
   // "AsRef<CoreDocument>"
   // ===========================================================================
-  /// Transforms the `IotaDocument` to its `CoreDocument` representation.
+  /// Transforms the {@link IotaDocument} to its {@link CoreDocument} representation.
   #[wasm_bindgen(js_name = toCoreDocument)]
   pub fn as_core_document(&self) -> WasmCoreDocument {
     WasmCoreDocument(Rc::new(CoreDocumentLock::new(
@@ -707,9 +707,6 @@ impl WasmIotaDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
-  // TODO: Should payload be of type `string`, or should we take Uint8Array to match Rust? I chose String here as they
-  // are much easier to obtain in JS. Perhaps we need both and possibly also a third convenience method for using JSON
-  // as the payload type?
   #[wasm_bindgen(js_name = createJwt)]
   pub fn create_jws(
     &self,
@@ -817,14 +814,14 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IotaDocument[]")]
   pub type ArrayIotaDocument;
 
-  // External interface from `@iota/types`, must be deserialized via BlockDto.
-  #[wasm_bindgen(typescript_type = "IBlock")]
-  pub type IBlock;
+  // External interface from `@iota/sdk-wasm`, must be deserialized via BlockDto.
+  #[wasm_bindgen(typescript_type = "Block")]
+  pub type WasmBlock;
 
-  // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
+  // External interface from `@iota/sdk-wasm`, must be deserialized via ProtocolParameters.
   #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
   pub type INodeInfoProtocol;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import type { IBlock, INodeInfoProtocol } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { Block, INodeInfoProtocol } from '~sdk-wasm';"#;

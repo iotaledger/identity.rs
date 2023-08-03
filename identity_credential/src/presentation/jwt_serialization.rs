@@ -15,6 +15,7 @@ use serde::de::DeserializeOwned;
 use crate::credential::IssuanceDateClaims;
 use crate::credential::Jwt;
 use crate::credential::Policy;
+use crate::credential::Proof;
 use crate::credential::RefreshService;
 use crate::presentation::Presentation;
 #[cfg(feature = "validator")]
@@ -123,7 +124,7 @@ where
   properties: Cow<'presentation, T>,
   /// Proof(s) used to verify a `Presentation`
   #[serde(skip_serializing_if = "Option::is_none")]
-  proof: Option<Cow<'presentation, Object>>,
+  proof: Option<Cow<'presentation, Proof>>,
 }
 
 #[cfg(feature = "validator")]
