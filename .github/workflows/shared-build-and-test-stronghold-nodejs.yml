@@ -25,6 +25,10 @@ on:
         description: "Name used for the output build artifact. Must be set if `upload-binaries-as-artifacts` is true"
         required: false
         type: string
+      ref:
+        description: "ref to checkout"
+        required: true
+        type: string
 jobs:
   build-stronghold-nodejs:
       defaults:
@@ -95,7 +99,8 @@ jobs:
       container: ${{ matrix.settings.container }}
       steps:
         - uses: actions/checkout@v2
-
+          with:
+            ref: ${{ inputs.ref }}
         - name: Setup node
           uses: actions/setup-node@v2
           with:

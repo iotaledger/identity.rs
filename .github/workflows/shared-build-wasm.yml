@@ -15,6 +15,10 @@ on:
         description: "Name used for the output build artifact"
         required: true
         type: string
+      ref:
+        description: "ref to checkout"
+        required: true
+        type: string
 jobs:  
   build-wasm:
     defaults:
@@ -35,7 +39,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
+        with:
+          ref: ${{ inputs.ref }}
       - name: Setup Rust and cache
         uses: './.github/actions/rust/rust-setup'
         with:
