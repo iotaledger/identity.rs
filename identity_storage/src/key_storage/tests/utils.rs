@@ -51,7 +51,7 @@ pub(crate) async fn test_incompatible_key_type(store: impl JwkStorage) {
   ec_params.d = Some("".to_owned());
   let jwk_ec = Jwk::from_params(ec_params);
 
-  let err: _ = store.insert(jwk_ec).await.unwrap_err();
+  let err = store.insert(jwk_ec).await.unwrap_err();
   assert!(matches!(err.kind(), KeyStorageErrorKind::UnsupportedKeyType));
 }
 pub(crate) async fn test_generate_and_sign(store: impl JwkStorage) {

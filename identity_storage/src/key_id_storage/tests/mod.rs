@@ -2,5 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod memstore;
+#[cfg(feature = "stronghold")]
 mod stronghold;
 mod utils;

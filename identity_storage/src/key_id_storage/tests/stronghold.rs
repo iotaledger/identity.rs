@@ -7,7 +7,7 @@ use crate::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::KeyIdStorageErrorKind;
 use crate::key_storage::KeyId;
 use crate::storage::tests::test_utils::create_verification_method;
-use crate::test_utils::test_utils::create_temp_file;
+use crate::test_utils::stronghold_test_utils::create_temp_file;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::Password;
 use std::path::PathBuf;

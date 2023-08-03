@@ -10,8 +10,8 @@ use iota_sdk::client::Password;
 use crate::key_storage::tests::utils::generate_ed25519;
 use crate::key_storage::JwkStorage;
 use crate::key_storage::KeyType;
-use crate::test_utils::test_utils::create_stronghold_secret_manager;
-use crate::test_utils::test_utils::create_temp_file;
+use crate::test_utils::stronghold_test_utils::create_stronghold_secret_manager;
+use crate::test_utils::stronghold_test_utils::create_temp_file;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 
 use super::utils::test_generate_and_sign;
