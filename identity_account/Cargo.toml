@@ -1,6 +1,6 @@
 [package]
 name = "identity_account"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -11,12 +11,12 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "High-level interface for managing IOTA DID Documents."
 
 [dependencies]
-identity_account_storage = { version = "=0.6.2", path = "../identity_account_storage", default-features = false }
-identity_core = { version = "=0.6.2", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.6.2", path = "../identity_credential", default-features = false }
-identity_did = { version = "=0.6.2", path = "../identity_did", default-features = false }
-identity_iota_client = { version = "=0.6.2", path = "../identity_iota_client", default-features = false }
-identity_iota_core = { version = "=0.6.2", path = "../identity_iota_core", default-features = false }
+identity_account_storage = { version = "=0.6.3", path = "../identity_account_storage", default-features = false }
+identity_core = { version = "=0.6.3", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.6.3", path = "../identity_credential", default-features = false }
+identity_did = { version = "=0.6.3", path = "../identity_did", default-features = false }
+identity_iota_client = { version = "=0.6.3", path = "../identity_iota_client", default-features = false }
+identity_iota_core = { version = "=0.6.3", path = "../identity_iota_core", default-features = false }
 log = { version = "0.4", default-features = false }
 paste = { version = "1.0" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
