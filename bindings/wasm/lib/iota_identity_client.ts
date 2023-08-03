@@ -134,9 +134,8 @@ export class IotaIdentityClient implements IIotaIdentityClient {
         });
         await this.client.retryUntilIncluded(blockId);
 
-        const protocolParams = await this.client.getProtocolParameters();
         // Extract document with computed AliasId.
-        const documents = IotaDocument.unpackFromBlock(networkHrp, block, protocolParams);
+        const documents = IotaDocument.unpackFromBlock(networkHrp, block);
         if (documents.length < 1) {
             throw new Error("publishDidOutput: no DID document in transaction payload");
         }

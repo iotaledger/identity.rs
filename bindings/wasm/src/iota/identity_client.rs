@@ -8,10 +8,9 @@ use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::OutputId;
-use identity_iota::iota::block::protocol::dto::ProtocolParametersDto;
 use identity_iota::iota::block::protocol::ProtocolParameters;
+use identity_iota::iota::block::TryFromDto;
 use identity_iota::iota::IotaIdentityClient;
-use identity_iota::iota::IotaIdentityClientExt;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
@@ -61,11 +60,7 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
         identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize AliasOutputDto: {err}"))
       })?;
 
-    let alias_output = AliasOutput::try_from_dto(
-      &alias_dto,
-      <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
-    )
-    .map_err(|err| {
+    let alias_output = AliasOutput::try_from_dto(alias_dto).map_err(|err| {
       identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
     })?;
     Ok((output_id, alias_output))
@@ -74,13 +69,13 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_protocol_parameters(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| {
+    let protocol_parameters: ProtocolParameters = result.to_iota_core_error().and_then(|parameters| {
       parameters
         .into_serde()
         .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {err}")))
     })?;
-    ProtocolParameters::try_from(protocol_parameters)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {err}")))
+
+    Ok(protocol_parameters)
   }
 }
 
