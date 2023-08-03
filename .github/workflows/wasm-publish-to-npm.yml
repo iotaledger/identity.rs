@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - name: Release to npm
         uses: './.github/actions/publish/publish-wasm'
         with:
@@ -55,6 +57,8 @@ jobs:
       steps:
         - name: Checkout
           uses: actions/checkout@v2
+          with:
+            ref: ${{ github.event.inputs.branch }}
         - name: Release to npm
           uses: './.github/actions/publish/publish-stronghold-nodejs'
           with:
