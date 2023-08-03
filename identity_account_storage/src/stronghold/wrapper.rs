@@ -10,15 +10,12 @@ use iota_stronghold::KeyProvider;
 use iota_stronghold::SnapshotPath;
 use iota_stronghold::Stronghold as IotaStronghold;
 use tokio::sync::RwLock;
-use zeroize::Zeroize;
 
 use crate::stronghold::error::ClientOperation;
 use crate::stronghold::error::SnapshotOperation;
 use crate::stronghold::error::StrongholdError;
 use crate::stronghold::ClientPath;
 use crate::stronghold::StrongholdResult;
-use crate::utils::derive_encryption_key;
-use crate::utils::EncryptionKey;
 use crate::Result;
 
 /// The implementation of the `Storage` interface using `Stronghold`.
@@ -44,17 +41,14 @@ impl Stronghold {
   /// * `password`: password for the Stronghold snapshot file. If this is cloned from a reference,
   /// zeroization of that reference is strongly recommended.
   /// * `dropsave`: persist all changes when the instance is dropped. Default: true.
-  pub async fn new<T>(path: &T, mut password: String, dropsave: Option<bool>) -> Result<Self>
+  pub async fn new<T>(path: &T, password: String, dropsave: Option<bool>) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
   {
     let stronghold: IotaStronghold = IotaStronghold::default();
 
-    let mut key: EncryptionKey = derive_encryption_key(&password);
-    password.zeroize();
-
-    let key_provider = KeyProvider::try_from(key.to_vec()).map_err(StrongholdError::Memory)?;
-    key.zeroize();
+    let key_provider =
+      KeyProvider::with_passphrase_hashed_blake2b(password).map_err(|err| StrongholdError::Key(err))?;
 
     // If the snapshot file exists, we load it.
     // If it doesn't we write data into the in memory `Stronghold` and only persist to disk on first write.
