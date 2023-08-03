@@ -10,6 +10,7 @@ use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::Evidence;
 use identity_iota::credential::Issuer;
 use identity_iota::credential::Policy;
+use identity_iota::credential::Proof;
 use identity_iota::credential::RefreshService;
 use identity_iota::credential::Schema;
 use identity_iota::credential::Status;
@@ -38,6 +39,7 @@ impl TryFrom<ICredential> for CredentialBuilder {
       terms_of_use,
       evidence,
       non_transferable,
+      proof,
       properties,
     } = values.into_serde::<ICredentialHelper>().wasm_result()?;
 
@@ -96,6 +98,9 @@ impl TryFrom<ICredential> for CredentialBuilder {
     if let Some(non_transferable) = non_transferable {
       builder = builder.non_transferable(non_transferable);
     }
+    if let Some(proof) = proof {
+      builder = builder.proof(proof);
+    }
 
     Ok(builder)
   }
@@ -152,6 +157,9 @@ struct ICredentialHelper {
   /// from the {@link Credential} subject.
   #[typescript(name = "nonTransferable", type = "boolean")]
   non_transferable: Option<bool>,
+  // The `proof` property of the {@link Credential}.
+  #[typescript(type = "Proof")]
+  proof: Option<Proof>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   #[typescript(optional = false, name = "[properties: string]", type = "unknown")]

@@ -28,6 +28,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 use super::jwt_serialization::CredentialJwtClaims;
+use super::Proof;
 
 static BASE_CONTEXT: Lazy<Context> =
   Lazy::new(|| Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap()));
@@ -77,9 +78,9 @@ pub struct Credential<T = Object> {
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
-  /// Proof(s) used to verify a `Credential`
+  /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Object>,
+  pub proof: Option<Proof>,
 }
 
 impl<T> Credential<T> {
@@ -117,7 +118,7 @@ impl<T> Credential<T> {
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,
-      proof: None,
+      proof: builder.proof,
     };
 
     this.check_structure()?;
@@ -153,6 +154,13 @@ impl<T> Credential<T> {
     Ok(())
   }
 
+  /// Sets the proof property of the `Credential`.
+  ///
+  /// Note that this proof is not related to JWT.
+  pub fn set_proof(&mut self, proof: Option<Proof>) {
+    self.proof = proof;
+  }
+
   /// Serializes the [`Credential`] as a JWT claims set
   /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
   ///
@@ -165,16 +173,6 @@ impl<T> Credential<T> {
     jwt_representation
       .to_json()
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
-  }
-
-  /// Returns a reference to the proof.
-  pub fn proof(&self) -> Option<&Object> {
-    self.proof.as_ref()
-  }
-
-  /// Returns a mutable reference to the proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Object> {
-    self.proof.as_mut()
   }
 }
 

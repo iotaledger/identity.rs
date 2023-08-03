@@ -1,9 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, MnemonicSecretManager } from "@iota/client-wasm/node";
-import { Bip39 } from "@iota/crypto.js";
 import { IotaIdentityClient, JwkMemStore, KeyIdMemStore, Storage } from "@iota/identity-wasm/node";
+import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how to delete a DID in an Alias Output, reclaiming the storage deposit. */
@@ -16,7 +15,7 @@ export async function deleteIdentity() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
