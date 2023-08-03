@@ -120,10 +120,5 @@ async fn main() -> anyhow::Result<()> {
 
   assert_eq!(String::from_utf8_lossy(decoded_jws.claims.as_ref()), "test_data");
 
-  println!(
-    "Published DID document: {}",
-    String::from_utf8_lossy(decoded_jws.claims.as_ref())
-  );
-
   Ok(())
 }
