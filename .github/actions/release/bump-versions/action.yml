@@ -31,6 +31,19 @@ runs:
         command: install
         args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
 
+    - name: Bump Rust crate versions
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      run: |
+        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+
+    - name: Bump Wasm bindings crate version
+      shell: bash
+      if: ${{inputs.release-target == 'wasm'}}
+      working-directory: bindings/wasm
+      run: |
+        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y -a
+ 
     - name: Replace identity_iota version in Wasm bindings
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
@@ -46,19 +59,6 @@ runs:
         cargo add identity_core --path=../../identity_core
         cargo add identity_iota_core --path=../../identity_iota_core
         cargo add identity_account_storage --path=../../identity_account_storage
-
-    - name: Bump Rust crate versions
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      run: |
-        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
-
-    - name: Bump Wasm bindings crate version
-      shell: bash
-      if: ${{inputs.release-target == 'wasm'}}
-      working-directory: bindings/wasm
-      run: |
-        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y -a
 
     - name: Bump stronghold nodejs bindings crate version
       shell: bash
