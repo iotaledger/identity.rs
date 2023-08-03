@@ -17,7 +17,8 @@
 pub mod key_id_storage;
 pub mod key_storage;
 pub mod storage;
-pub mod utils;
+#[cfg(test)]
+mod test_utils;
 
 pub use key_id_storage::*;
 pub use key_storage::*;

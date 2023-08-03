@@ -8,7 +8,7 @@ use super::KeyStorageError;
 use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
-use crate::JwkStorage;
+use crate::key_storage::JwkStorage;
 use async_trait::async_trait;
 use identity_verification::jwk::EdCurve;
 use identity_verification::jwk::Jwk;
@@ -16,9 +16,7 @@ use identity_verification::jwk::JwkParamsOkp;
 use identity_verification::jwk::JwkType;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::jwu;
-// use iota_client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
-// use iota_sdk::client::Client;
 use iota_stronghold::procedures::Ed25519Sign;
 use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::procedures::KeyType as ProceduresKeyType;
@@ -132,7 +130,7 @@ impl JwkStorage for StrongholdSecretManager {
     let client = get_client(&stronghold)?;
     client
       .vault(IDENTITY_VAULT_PATH.as_bytes())
-      .write_secret(location, secret_key.to_bytes().to_vec())
+      .write_secret(location, zeroize::Zeroizing::from(secret_key.to_bytes().to_vec()))
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
           .with_custom_message("stronghold client error")
@@ -249,7 +247,7 @@ fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: JwsAlgorithm) -
   }
 }
 
-pub fn get_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
+fn get_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
   let client = stronghold.get_client(IDENTITY_CLIENT_PATH);
   match client {
     Ok(client) => Ok(client),
@@ -295,7 +293,7 @@ enum StrongholdKeyType {
 
 impl StrongholdKeyType {
   /// String representation of the key type.
-  pub const fn name(&self) -> &'static str {
+  const fn name(&self) -> &'static str {
     match self {
       StrongholdKeyType::Ed25519 => "Ed25519",
     }

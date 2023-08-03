@@ -6,7 +6,7 @@ use crate::key_id_storage::memstore::KeyIdMemstore;
 use crate::key_id_storage::tests::utils::test_storage_operations;
 
 #[tokio::test]
-pub async fn test_memstore() {
+async fn test_memstore() {
   let memstore: KeyIdMemstore = KeyIdMemstore::new();
   test_storage_operations(memstore).await;
 }

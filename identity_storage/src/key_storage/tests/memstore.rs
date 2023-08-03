@@ -6,7 +6,7 @@ use super::utils::test_incompatible_key_alg;
 use super::utils::test_incompatible_key_type;
 use super::utils::test_insertion;
 use super::utils::test_key_exists;
-use crate::JwkMemStore;
+use crate::key_storage::JwkMemStore;
 
 #[tokio::test]
 async fn insert() {

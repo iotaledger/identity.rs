@@ -5,13 +5,14 @@ use std::path::PathBuf;
 
 use identity_verification::jwk::Jwk;
 use identity_verification::jws::JwsAlgorithm;
-use iota_client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::Password;
 
-use crate::key_storage::ed25519::generate_ed25519;
-use crate::utils::test_utils::create_stronghold_secret_manager;
-use crate::utils::test_utils::create_temp_file;
-use crate::JwkStorage;
-use crate::KeyType;
+use crate::key_storage::tests::utils::generate_ed25519;
+use crate::key_storage::JwkStorage;
+use crate::key_storage::KeyType;
+use crate::test_utils::test_utils::create_stronghold_secret_manager;
+use crate::test_utils::test_utils::create_temp_file;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 
 use super::utils::test_generate_and_sign;
 use super::utils::test_incompatible_key_alg;
@@ -55,7 +56,7 @@ async fn write_to_disk() {
   const PASS: &str = "secure_password";
   let file: PathBuf = create_temp_file();
   let secret_manager = StrongholdSecretManager::builder()
-    .password(PASS)
+    .password(Password::from(PASS.to_owned()))
     .build(file.clone())
     .unwrap();
 
@@ -67,14 +68,20 @@ async fn write_to_disk() {
 
   drop(secret_manager);
 
-  let secret_manager = StrongholdSecretManager::builder().password(PASS).build(&file).unwrap();
+  let secret_manager = StrongholdSecretManager::builder()
+    .password(Password::from(PASS.to_owned()))
+    .build(&file)
+    .unwrap();
   let exists = secret_manager.exists(key_id).await.unwrap();
   assert!(exists);
   secret_manager.delete(key_id).await.unwrap();
 
   drop(secret_manager);
 
-  let secret_manager = StrongholdSecretManager::builder().password(PASS).build(&file).unwrap();
+  let secret_manager = StrongholdSecretManager::builder()
+    .password(Password::from(PASS.to_owned()))
+    .build(&file)
+    .unwrap();
   let exists = secret_manager.exists(key_id).await.unwrap();
   assert!(!exists);
 
@@ -85,7 +92,10 @@ async fn write_to_disk() {
 
   drop(secret_manager);
 
-  let secret_manager = StrongholdSecretManager::builder().password(PASS).build(&file).unwrap();
+  let secret_manager = StrongholdSecretManager::builder()
+    .password(Password::from(PASS.to_owned()))
+    .build(&file)
+    .unwrap();
   let exists = secret_manager.exists(&key_id).await.unwrap();
   assert!(exists);
 }

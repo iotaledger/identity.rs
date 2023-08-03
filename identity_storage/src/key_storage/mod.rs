@@ -6,6 +6,7 @@
 //! This module provides the [`JwkStorage`] trait that
 //! abstracts over storages that store JSON Web Keys.
 
+mod ed25519;
 mod jwk_gen_output;
 mod jwk_storage;
 mod key_id;
@@ -17,7 +18,7 @@ mod memstore;
 mod stronghold;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 pub use jwk_gen_output::*;
 pub use jwk_storage::*;

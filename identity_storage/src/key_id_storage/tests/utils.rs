@@ -2,24 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::key_id_storage::key_id_storage::KeyIdStorage;
-use crate::KeyIdStorageResult;
+use crate::key_id_storage::KeyIdStorageResult;
 
 use crate::key_id_storage::method_digest::MethodDigest;
 use crate::key_id_storage::KeyIdStorageError;
 use crate::key_id_storage::KeyIdStorageErrorKind;
 use crate::key_storage::KeyId;
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::KeyType;
-use identity_core::utils::BaseEncoding;
-use identity_did::CoreDID;
-use identity_verification::VerificationMethod;
+use crate::storage::tests::test_utils::create_verification_method;
 
 pub(crate) async fn test_storage_operations(storage: impl KeyIdStorage) {
   // Create a Verification Method.
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let did: CoreDID = CoreDID::parse(format!("did:example:{}", BaseEncoding::encode_base58(keypair.public()))).unwrap();
-  let verification_method: VerificationMethod =
-    VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "frag_1").unwrap();
+  let verification_method = create_verification_method();
 
   // Test insertion.
   let key_id_1 = KeyId::new("keyid");

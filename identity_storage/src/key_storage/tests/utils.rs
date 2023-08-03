@@ -1,16 +1,18 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::key_storage::ed25519::expand_public_jwk;
-use crate::key_storage::ed25519::generate_ed25519;
-use crate::JwkStorage;
-use crate::KeyId;
-use crate::KeyStorageErrorKind;
-use crate::KeyType;
+use crate::key_storage::JwkStorage;
+use crate::key_storage::KeyId;
+use crate::key_storage::KeyStorageErrorKind;
+use crate::key_storage::KeyType;
 use crypto::signatures::ed25519::PublicKey;
+use crypto::signatures::ed25519::SecretKey;
 use crypto::signatures::ed25519::Signature;
+use identity_verification::jose::jwk::EdCurve;
+use identity_verification::jose::jwk::Jwk;
+use identity_verification::jose::jwk::JwkParamsOkp;
+use identity_verification::jose::jwu;
 use identity_verification::jwk::EcCurve;
-use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParamsEc;
 use identity_verification::jws::JwsAlgorithm;
 
@@ -73,4 +75,22 @@ pub(crate) async fn test_generate_and_sign(store: impl JwkStorage) {
 
 pub(crate) async fn test_key_exists(store: impl JwkStorage) {
   assert!(!store.exists(&KeyId::new("non-existent-id")).await.unwrap());
+}
+
+pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {
+  let params: &JwkParamsOkp = jwk.try_okp_params().unwrap();
+
+  if params.try_ed_curve().unwrap() != EdCurve::Ed25519 {
+    panic!("expected an ed25519 jwk");
+  }
+
+  let pk: [u8; PublicKey::LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
+
+  PublicKey::try_from(pk).unwrap()
+}
+
+pub(crate) fn generate_ed25519() -> (SecretKey, PublicKey) {
+  let private_key = SecretKey::generate().unwrap();
+  let public_key = private_key.public_key();
+  (private_key, public_key)
 }

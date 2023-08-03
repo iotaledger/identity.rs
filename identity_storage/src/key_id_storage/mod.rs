@@ -26,5 +26,3 @@ pub use key_id_storage_error::*;
 #[cfg(feature = "memstore")]
 pub use memstore::*;
 pub use method_digest::*;
-#[cfg(feature = "stronghold")]
-pub use stronghold::*;

@@ -1,13 +1,13 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::KeyId;
-use crate::KeyIdStorage;
-use crate::KeyIdStorageError;
-use crate::KeyIdStorageErrorKind;
-use crate::KeyIdStorageResult;
-use crate::MethodDigest;
-use crate::IDENTITY_CLIENT_PATH;
+use super::KeyIdStorageError;
+use super::KeyIdStorageErrorKind;
+use crate::key_id_storage::KeyIdStorage;
+use crate::key_id_storage::KeyIdStorageResult;
+use crate::key_id_storage::MethodDigest;
+use crate::key_storage::KeyId;
+use crate::key_storage::IDENTITY_CLIENT_PATH;
 use async_trait::async_trait;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_stronghold::Client;
@@ -25,7 +25,7 @@ impl KeyIdStorage for StrongholdSecretManager {
     let method_digest_pack = method_digest.pack();
     let key_exists = store
       .contains_key(method_digest_pack.as_ref())
-      .map_err(|err| KeyIdStorageError::new(crate::KeyIdStorageErrorKind::Unspecified).with_source(err))?;
+      .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err))?;
 
     if key_exists {
       return Err(KeyIdStorageError::new(KeyIdStorageErrorKind::KeyIdAlreadyExists));
@@ -34,7 +34,7 @@ impl KeyIdStorage for StrongholdSecretManager {
     client
       .store()
       .insert(method_digest_pack, key_id.into(), None)
-      .map_err(|err| KeyIdStorageError::new(crate::KeyIdStorageErrorKind::Unspecified).with_source(err))?;
+      .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err))?;
     persist_changes(self, stronghold).await?;
     Ok(())
   }
@@ -70,10 +70,7 @@ impl KeyIdStorage for StrongholdSecretManager {
   }
 }
 
-pub fn get_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
-  if let Ok(client) = stronghold.get_client(IDENTITY_CLIENT_PATH) {
-    return Ok(client);
-  }
+fn get_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
   let client = stronghold.get_client(IDENTITY_CLIENT_PATH);
   match client {
     Ok(client) => Ok(client),
@@ -81,6 +78,7 @@ pub fn get_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
     Err(err) => Err(KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err)),
   }
 }
+
 fn load_or_create_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> {
   match stronghold.load_client(IDENTITY_CLIENT_PATH) {
     Ok(client) => Ok(client),
