@@ -1,6 +1,6 @@
 [package]
 name = "identity-stronghold-nodejs"
-version = "0.6.1-rc.1"
+version = "0.6.1"
 edition = "2021"
 publish = false
 [lib]
