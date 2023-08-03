@@ -61,6 +61,9 @@ eddsa = ["identity_verification/eddsa"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["identity_storage/memstore"]
 
+# Exposes secure implementations of the storage traits using stronghold.
+stronghold = ["identity_storage/stronghold"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
