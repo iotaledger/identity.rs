@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.3](https://github.com/iotaledger/identity.rs/tree/v0.6.3) (2023-08-03)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.2...v0.6.3)
+
+This release updates Stronghold to the [latest major version](https://github.com/iotaledger/stronghold.rs/releases/tag/iota-stronghold-v2.0.0) to improve the security of the contained data.
+\n\n
+The new Stronghold release introduces an updated Snapshot format and requires old Snapshots to be migrated to the new format. You can find detailed migration instructions [here](TBD).
+
+### Patch
+
 ## [v0.6.2](https://github.com/iotaledger/identity.rs/tree/v0.6.2) (2023-03-08)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.1...v0.6.2)
