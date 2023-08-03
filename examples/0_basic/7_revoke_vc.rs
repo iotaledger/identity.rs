@@ -47,6 +47,7 @@ use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
 use iota_sdk::types::block::output::AliasOutputBuilder;
@@ -66,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
 
   let mut secret_manager_issuer: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password_1")
+      .password(Password::from("secure_password_1".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -78,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
   // Create an identity for the holder, in this case also the subject.
   let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password_2")
+      .password(Password::from("secure_password_2".to_owned()))
       .build(random_stronghold_path())?,
   );
   let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
@@ -102,7 +103,7 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure: RentStructure = client.get_rent_structure().await?;
   let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the updated Alias Output.
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
@@ -165,7 +166,7 @@ async fn main() -> anyhow::Result<()> {
   let rent_structure: RentStructure = client.get_rent_structure().await?;
   let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
   let validation_result: std::result::Result<DecodedJwtCredential, CompoundCredentialValidationError> =
@@ -199,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the changes.
   let alias_output: AliasOutput = client.update_did_output(issuer_document.clone()).await?;
-  let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output).finish(client.get_token_supply().await?)?;
+  let alias_output: AliasOutput = AliasOutputBuilder::from(&alias_output).finish()?;
   client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
   // We expect the verifiable credential to be revoked.

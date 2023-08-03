@@ -23,6 +23,7 @@ use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 
 use examples::random_stronghold_path;
@@ -48,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
   // Create an identity for the issuer with one verification method `key-1`.
   let mut secret_manager_issuer: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password_1")
+      .password(Password::from("secure_password_1".to_owned()))
       .build(random_stronghold_path())?,
   );
   let issuer_storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
@@ -58,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
   // Create an identity for the holder, in this case also the subject.
   let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password_2")
+      .password(Password::from("secure_password_2".to_owned()))
       .build(random_stronghold_path())?,
   );
   let alice_storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());

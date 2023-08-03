@@ -182,7 +182,6 @@ impl JwkStorage for JwkMemStore {
 pub(crate) mod ed25519 {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::SecretKey;
-  use crypto::signatures::ed25519::{self};
   use identity_verification::jose::jwk::EdCurve;
   use identity_verification::jose::jwk::Jwk;
   use identity_verification::jose::jwk::JwkParamsOkp;
@@ -206,7 +205,7 @@ pub(crate) mod ed25519 {
       );
     }
 
-    let sk: [u8; ed25519::SECRET_KEY_LENGTH] = params
+    let sk: [u8; SecretKey::LENGTH] = params
       .d
       .as_deref()
       .map(jwu::decode_b64)
@@ -222,10 +221,10 @@ pub(crate) mod ed25519 {
       .try_into()
       .map_err(|_| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("expected key of length {}", ed25519::SECRET_KEY_LENGTH))
+          .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH))
       })?;
 
-    Ok(SecretKey::from_bytes(sk))
+    Ok(SecretKey::from_bytes(&sk))
   }
 
   pub(crate) fn encode_jwk(private_key: &SecretKey, public_key: &PublicKey) -> Jwk {
@@ -363,7 +362,6 @@ pub(crate) mod shared {
 mod tests {
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::Signature;
-  use crypto::signatures::ed25519::{self};
   use identity_verification::jose::jwk::EcCurve;
   use identity_verification::jose::jwk::JwkParamsEc;
   use identity_verification::jose::jwk::JwkParamsOkp;
@@ -452,7 +450,7 @@ mod tests {
       panic!("expected an ed25519 jwk");
     }
 
-    let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
+    let pk: [u8; PublicKey::LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
 
     PublicKey::try_from(pk).unwrap()
   }

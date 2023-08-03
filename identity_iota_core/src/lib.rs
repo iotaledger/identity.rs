@@ -14,12 +14,14 @@
 )]
 #![allow(clippy::upper_case_acronyms)]
 
-#[cfg(feature = "iota-client")]
-pub use iota_sdk::types::block;
-
 // Re-export the `iota_types::block` module for implementer convenience.
-#[cfg(all(feature = "client", not(feature = "iota-client")))]
-pub use iota_sdk::types::block;
+#[cfg(any(feature = "client", feature = "iota-client"))]
+pub mod block {
+  //! See [iota_sdk::types::block].
+
+  pub use iota_sdk::types::block::*;
+  pub use iota_sdk::types::TryFromDto;
+}
 
 #[cfg(feature = "client")]
 pub use client::*;

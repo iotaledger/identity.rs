@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use identity_core::convert::ToJson;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -29,9 +30,8 @@ use crate::error::Result;
 use super::jwt_serialization::CredentialJwtClaims;
 use super::Proof;
 
-lazy_static::lazy_static! {
-  static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
-}
+static BASE_CONTEXT: Lazy<Context> =
+  Lazy::new(|| Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap()));
 
 /// Represents a set of claims describing an entity.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]

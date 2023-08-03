@@ -7,6 +7,7 @@
   <a href="https://github.com/iotaledger/identity.rs/blob/HEAD/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/github/license/iotaledger/identity.rs.svg" alt="Apache 2.0 license"></a>
   <img src="https://deps.rs/repo/github/iotaledger/identity.rs/status.svg" alt="Dependencies">
   <a href='https://coveralls.io/github/iotaledger/identity.rs?branch=main'><img src='https://coveralls.io/repos/github/iotaledger/identity.rs/badge.svg?branch=main' alt='Coverage Status' /></a>
+
 </p>
 
 <p align="center">
@@ -99,12 +100,14 @@ use identity_iota::storage::KeyIdMemstore;
 use identity_iota::storage::Storage;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
+use iota_sdk::client::api::GetAddressesOptions;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::crypto::keys::bip39;
-use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::address::Bech32Address;
 use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::dto::AliasOutputDto;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
@@ -121,7 +124,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a new Stronghold.
   let stronghold = StrongholdSecretManager::builder()
-    .password("secure_password")
+    .password("secure_password".to_owned())
     .build("./example-strong.hodl")?;
 
   // Generate a mnemonic and store it in the Stronghold.
@@ -133,14 +136,20 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by the Stronghold.
   let secret_manager: SecretManager = SecretManager::Stronghold(stronghold);
 
-  // Get an address from the secret manager.
-  let address: Address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
 
-  println!("Your wallet address is: {}", address.to_bech32(network_name.as_ref()));
-  println!("Please request funds from http://127.0.0.1:8091/, then press Enter.");
+  // Get an address from the secret manager.
+  let address: Bech32Address = secret_manager
+  .generate_ed25519_addresses(
+    GetAddressesOptions::default()
+      .with_range(0..1)
+      .with_bech32_hrp((&network_name).try_into()?),
+  )
+  .await?[0];
+
+  println!("Your wallet address is: {}", address);
+  println!("Please request funds from http://127.0.0.1:8091/, wait for a couple of seconds and then press Enter.");
   tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.
@@ -161,8 +170,8 @@ async fn main() -> anyhow::Result<()> {
 
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.
-  let alias_output: AliasOutput = client.new_did_output(address, document, None).await?;
-  println!("Alias Output: {}", alias_output.to_json()?);
+  let alias_output: AliasOutput = client.new_did_output(address.into(), document, None).await?;
+  println!("Alias Output: {}", AliasOutputDto::from(&alias_output).to_json_pretty()?);
 
   // Publish the Alias Output and get the published DID document.
   let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;

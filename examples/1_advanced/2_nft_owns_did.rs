@@ -18,6 +18,7 @@ use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::unlock_condition::AddressUnlockCondition;
 use iota_sdk::types::block::output::NftId;
@@ -51,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -64,11 +65,11 @@ async fn main() -> anyhow::Result<()> {
   // Create the car NFT with an Ed25519 address as the unlock condition.
   let car_nft: NftOutput = NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())
     .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the NFT output.
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![car_nft.into()])?
     .finish()

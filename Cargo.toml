@@ -21,7 +21,7 @@ exclude = [
 [workspace.dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false }
 
 [workspace.package]
