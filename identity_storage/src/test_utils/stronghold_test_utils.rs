@@ -3,7 +3,8 @@
 
 use std::path::PathBuf;
 
-use iota_sdk::client::{secret::stronghold::StrongholdSecretManager, Password};
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::Password;
 use rand::distributions::DistString;
 
 pub(crate) fn create_stronghold_secret_manager() -> StrongholdSecretManager {
