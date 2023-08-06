@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use super::KeyIdStorageError;
 use super::KeyIdStorageErrorKind;
 use crate::key_id_storage::KeyIdStorage;
@@ -8,8 +10,8 @@ use crate::key_id_storage::KeyIdStorageResult;
 use crate::key_id_storage::MethodDigest;
 use crate::key_storage::KeyId;
 use crate::key_storage::IDENTITY_CLIENT_PATH;
+use crate::SecretManagerWrapper;
 use async_trait::async_trait;
-use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_stronghold::Client;
 use iota_stronghold::ClientError;
 use iota_stronghold::Stronghold;
@@ -17,9 +19,9 @@ use tokio::sync::MutexGuard;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl KeyIdStorage for StrongholdSecretManager {
+impl KeyIdStorage for SecretManagerWrapper {
   async fn insert_key_id(&self, method_digest: MethodDigest, key_id: KeyId) -> KeyIdStorageResult<()> {
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     let store = client.store();
     let method_digest_pack = method_digest.pack();
@@ -40,7 +42,7 @@ impl KeyIdStorage for StrongholdSecretManager {
   }
 
   async fn get_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<KeyId> {
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
     let store = get_client(&stronghold)?.store();
     let method_digest_pack: Vec<u8> = method_digest.pack();
     let key_id_bytes: Vec<u8> = store
@@ -56,7 +58,7 @@ impl KeyIdStorage for StrongholdSecretManager {
   }
 
   async fn delete_key_id(&self, method_digest: &MethodDigest) -> KeyIdStorageResult<()> {
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
     let store = get_client(&stronghold)?.store();
     let key: Vec<u8> = method_digest.pack();
 
@@ -90,7 +92,7 @@ fn load_or_create_client(stronghold: &Stronghold) -> KeyIdStorageResult<Client> 
 }
 
 async fn persist_changes(
-  secret_manager: &StrongholdSecretManager,
+  secret_manager: &SecretManagerWrapper,
   stronghold: MutexGuard<'_, Stronghold>,
 ) -> KeyIdStorageResult<()> {
   stronghold.write_client(IDENTITY_CLIENT_PATH).map_err(|err| {
@@ -100,10 +102,24 @@ async fn persist_changes(
   })?;
   // Must be dropped since `write_stronghold_snapshot` requires the stronghold instance.
   drop(stronghold);
-  secret_manager.write_stronghold_snapshot(None).await.map_err(|err| {
-    KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
-      .with_custom_message("writing to stronghold snapshot failed")
-      .with_source(err)
-  })?;
+  match secret_manager.inner().await.deref() {
+    iota_sdk::client::secret::SecretManager::Stronghold(stronghold_manager) => {
+      stronghold_manager
+        .write_stronghold_snapshot(None)
+        .await
+        .map_err(|err| {
+          KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
+            .with_custom_message("writing to stronghold snapshot failed")
+            .with_source(err)
+        })?;
+    }
+    _ => {
+      return Err(
+        KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified)
+          .with_custom_message("secret manager is not of type stronghold"),
+      )
+    }
+  };
+
   Ok(())
 }

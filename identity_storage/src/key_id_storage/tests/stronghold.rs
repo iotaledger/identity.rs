@@ -8,6 +8,7 @@ use crate::key_id_storage::KeyIdStorageErrorKind;
 use crate::key_storage::KeyId;
 use crate::storage::tests::test_utils::create_verification_method;
 use crate::test_utils::stronghold_test_utils::create_temp_file;
+use crate::SecretManagerWrapper;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::Password;
 use std::path::PathBuf;
@@ -21,7 +22,8 @@ async fn test_stronghold() {
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  test_storage_operations(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  test_storage_operations(secret_manager_wrapper).await;
 }
 
 #[tokio::test]
@@ -36,33 +38,36 @@ async fn write_to_disk() {
 
   let key_id_1 = KeyId::new("keyid");
   let method_digest: MethodDigest = MethodDigest::new(&verification_method).unwrap();
-  secret_manager
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  secret_manager_wrapper
     .insert_key_id(method_digest.clone(), key_id_1.clone())
     .await
     .expect("inserting into memstore failed");
 
-  drop(secret_manager);
+  drop(secret_manager_wrapper);
 
   let secret_manager = StrongholdSecretManager::builder()
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
 
-  let key_id: KeyId = secret_manager.get_key_id(&method_digest).await.unwrap();
+  let key_id: KeyId = secret_manager_wrapper.get_key_id(&method_digest).await.unwrap();
   assert_eq!(key_id_1, key_id);
 
-  secret_manager
+  secret_manager_wrapper
     .delete_key_id(&method_digest)
     .await
     .expect("deletion failed");
 
-  drop(secret_manager);
+  drop(secret_manager_wrapper);
 
   let secret_manager = StrongholdSecretManager::builder()
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let error_kind: KeyIdStorageErrorKind = secret_manager
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let error_kind: KeyIdStorageErrorKind = secret_manager_wrapper
     .get_key_id(&method_digest)
     .await
     .unwrap_err()

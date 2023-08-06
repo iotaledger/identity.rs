@@ -16,10 +16,13 @@
 
 pub mod key_id_storage;
 pub mod key_storage;
+/// Wrapper around `SecretManager` that implements the storage interfaces.
+pub mod secret_manager_wrapper;
 pub mod storage;
 #[cfg(test)]
 mod test_utils;
 
 pub use key_id_storage::*;
 pub use key_storage::*;
+pub use secret_manager_wrapper::*;
 pub use storage::*;

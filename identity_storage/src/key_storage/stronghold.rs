@@ -9,6 +9,7 @@ use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
 use crate::key_storage::JwkStorage;
+use crate::SecretManagerWrapper;
 use async_trait::async_trait;
 use identity_verification::jwk::EdCurve;
 use identity_verification::jwk::Jwk;
@@ -16,7 +17,6 @@ use identity_verification::jwk::JwkParamsOkp;
 use identity_verification::jwk::JwkType;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::jwu;
-use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_stronghold::procedures::Ed25519Sign;
 use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::procedures::KeyType as ProceduresKeyType;
@@ -27,6 +27,7 @@ use iota_stronghold::Location;
 use iota_stronghold::Stronghold;
 use rand::distributions::DistString;
 use std::fmt::Display;
+use std::ops::Deref;
 use std::str::FromStr;
 use tokio::sync::MutexGuard;
 
@@ -40,9 +41,9 @@ pub const ED25519_KEY_TYPE: &KeyType = &KeyType::from_static_str(ED25519_KEY_TYP
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl JwkStorage for StrongholdSecretManager {
+impl JwkStorage for SecretManagerWrapper {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
 
     let client = get_client(&stronghold)?;
     let key_type = StrongholdKeyType::try_from(&key_type)?;
@@ -126,7 +127,7 @@ impl JwkStorage for StrongholdSecretManager {
       IDENTITY_VAULT_PATH.as_bytes().to_vec(),
       key_id.to_string().as_bytes().to_vec(),
     );
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     client
       .vault(IDENTITY_VAULT_PATH.as_bytes())
@@ -184,7 +185,7 @@ impl JwkStorage for StrongholdSecretManager {
       msg: data.to_vec(),
     };
 
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
 
     let signature: [u8; 64] = client.execute_procedure(procedure).map_err(|err| {
@@ -197,7 +198,7 @@ impl JwkStorage for StrongholdSecretManager {
   }
 
   async fn delete(&self, key_id: &KeyId) -> KeyStorageResult<()> {
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     let deleted = client
       .vault(IDENTITY_VAULT_PATH.as_bytes())
@@ -217,7 +218,7 @@ impl JwkStorage for StrongholdSecretManager {
   }
 
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
-    let stronghold = self.inner().await;
+    let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
     let location = Location::generic(
       IDENTITY_VAULT_PATH.as_bytes().to_vec(),
@@ -267,7 +268,7 @@ fn load_or_create_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
 }
 
 async fn persist_changes(
-  secret_manager: &StrongholdSecretManager,
+  secret_manager: &SecretManagerWrapper,
   stronghold: MutexGuard<'_, Stronghold>,
 ) -> KeyStorageResult<()> {
   stronghold.write_client(IDENTITY_CLIENT_PATH).map_err(|err| {
@@ -277,11 +278,26 @@ async fn persist_changes(
   })?;
   // Must be dropped since `write_stronghold_snapshot` needs to acquire the stronghold lock.
   drop(stronghold);
-  secret_manager.write_stronghold_snapshot(None).await.map_err(|err| {
-    KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-      .with_custom_message("writing to stronghold snapshot failed")
-      .with_source(err)
-  })?;
+
+  match secret_manager.inner().await.deref() {
+    iota_sdk::client::secret::SecretManager::Stronghold(stronghold_manager) => {
+      stronghold_manager
+        .write_stronghold_snapshot(None)
+        .await
+        .map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message("writing to stronghold snapshot failed")
+            .with_source(err)
+        })?;
+    }
+    _ => {
+      return Err(
+        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message("secret manager is not of type stronghold"),
+      )
+    }
+  };
+  // .unwrap()
   Ok(())
 }
 
