@@ -92,7 +92,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the Alias Output and get the published DID document.
   let document: IotaDocument = client
-    .publish_did_output(&secret_manager_wrapper.inner().await.deref(), alias_output)
+    .publish_did_output(secret_manager_wrapper.inner().await.deref(), alias_output)
     .await?;
 
   // Resolve the published DID Document.

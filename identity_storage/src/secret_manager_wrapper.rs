@@ -3,9 +3,11 @@
 
 use std::sync::Arc;
 
-use iota_sdk::client::secret::{stronghold::StrongholdSecretManager, SecretManager};
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
 use iota_stronghold::Stronghold;
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::Mutex;
+use tokio::sync::MutexGuard;
 
 /// Wrapper around `SecretManager` that implements the storage interfaces.
 #[derive(Clone)]
