@@ -17,7 +17,7 @@ on:
         type: string
       ref:
         description: "ref to checkout"
-        required: true
+        required: false
         type: string
 jobs:  
   build-wasm:
