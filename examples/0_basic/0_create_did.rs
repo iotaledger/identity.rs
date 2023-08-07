@@ -42,14 +42,14 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
   // Create a new secret manager backed by a Stronghold.
-  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+  let secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
   // Get an address with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager, faucet_endpoint).await?;
+  let address: Address = get_address_with_funds(&client, &secret_manager, faucet_endpoint).await?;
 
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;

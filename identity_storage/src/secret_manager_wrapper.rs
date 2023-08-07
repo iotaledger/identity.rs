@@ -1,11 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_stronghold::Stronghold;
+use std::sync::Arc;
 use tokio::sync::MutexGuard;
 
 /// Wrapper around `SecretManager` that implements the storage interfaces.

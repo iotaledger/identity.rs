@@ -1,9 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-use std::ops::DerefMut;
-
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use identity_iota::credential::Jws;
@@ -27,6 +24,7 @@ use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
+use std::ops::Deref;
 
 /// Demonstrates how to use stronghold for secure storage.
 #[tokio::main]
