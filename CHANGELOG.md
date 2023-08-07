@@ -10,6 +10,8 @@ The new Stronghold release introduces an updated Snapshot format and requires ol
 
 ### Patch
 
+- Update identity 0.6 to Stronghold 2.0 [\#1174](https://github.com/iotaledger/identity.rs/pull/1174)
+
 ## [v0.6.2](https://github.com/iotaledger/identity.rs/tree/v0.6.2) (2023-03-08)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.1...v0.6.2)
