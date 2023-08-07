@@ -11,6 +11,10 @@ on:
         required: false
         type: boolean
         default: true
+      ref:
+        description: "ref to checkout"
+        required: false
+        type: string
       output-artifact-name:
         description: "Name used for the output build artifact"
         required: true
@@ -35,7 +39,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
+        with:
+          ref: ${{ inputs.ref }}
       - name: Setup Rust and cache
         uses: './.github/actions/rust/rust-setup'
         with:
