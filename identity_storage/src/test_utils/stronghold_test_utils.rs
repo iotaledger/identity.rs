@@ -8,6 +8,7 @@ use iota_sdk::client::Password;
 use rand::distributions::DistString;
 
 pub(crate) fn create_stronghold_secret_manager() -> StrongholdSecretManager {
+  iota_stronghold::engine::snapshot::try_set_encrypt_work_factor(0).unwrap();
   let mut file = std::env::temp_dir();
   file.push("test_strongholds");
   file.push(rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32));

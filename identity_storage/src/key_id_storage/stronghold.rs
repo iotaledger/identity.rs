@@ -102,7 +102,7 @@ async fn persist_changes(
   })?;
   // Must be dropped since `write_stronghold_snapshot` requires the stronghold instance.
   drop(stronghold);
-  match secret_manager.inner().await.deref() {
+  match secret_manager.inner().deref() {
     iota_sdk::client::secret::SecretManager::Stronghold(stronghold_manager) => {
       stronghold_manager
         .write_stronghold_snapshot(None)

@@ -24,35 +24,35 @@ use super::utils::test_key_exists;
 #[tokio::test]
 async fn insert() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager);
   test_insertion(secret_manager_wrapper).await;
 }
 
 #[tokio::test]
 async fn incompatible_key_alg() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager);
   test_incompatible_key_alg(secret_manager_wrapper).await;
 }
 
 #[tokio::test]
 async fn incompatible_key_types() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager);
   test_incompatible_key_type(secret_manager_wrapper).await;
 }
 
 #[tokio::test]
 async fn generate_and_sign() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager);
   test_generate_and_sign(secret_manager_wrapper).await;
 }
 
 #[tokio::test]
 async fn key_exists() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold_secret_manager);
   test_key_exists(secret_manager_wrapper).await;
 }
 
@@ -65,7 +65,7 @@ async fn write_to_disk() {
     .password(Password::from(PASS.to_owned()))
     .build(file.clone())
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
 
   let generate = secret_manager_wrapper
     .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
@@ -79,7 +79,7 @@ async fn write_to_disk() {
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
   let exists = secret_manager_wrapper.exists(key_id).await.unwrap();
   assert!(exists);
   secret_manager_wrapper.delete(key_id).await.unwrap();
@@ -90,7 +90,7 @@ async fn write_to_disk() {
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
   let exists = secret_manager_wrapper.exists(key_id).await.unwrap();
   assert!(!exists);
 
@@ -105,7 +105,7 @@ async fn write_to_disk() {
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
   let exists = secret_manager_wrapper.exists(&key_id).await.unwrap();
   assert!(exists);
 }

@@ -56,15 +56,10 @@ async fn main() -> anyhow::Result<()> {
   // Create a wrapper around `SecretManager`.
   // Using this wrapper is important because it implements the storage traits
   // needed to create `Storage` which will be done later.
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold);
 
   // Create a DID document.
-  let address: Address = get_address_with_funds(
-    &client,
-    secret_manager_wrapper.inner().await.deref_mut(),
-    faucet_endpoint,
-  )
-  .await?;
+  let address: Address = get_address_with_funds(&client, &secret_manager_wrapper.inner(), faucet_endpoint).await?;
   let network_name: NetworkName = client.network_name().await?;
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
@@ -92,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the Alias Output and get the published DID document.
   let document: IotaDocument = client
-    .publish_did_output(secret_manager_wrapper.inner().await.deref(), alias_output)
+    .publish_did_output(secret_manager_wrapper.inner().deref(), alias_output)
     .await?;
 
   // Resolve the published DID Document.
@@ -106,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
   let stronghold = StrongholdSecretManager::builder()
     .password(password.clone())
     .build(path.clone())?;
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold);
   let storage = Storage::new(secret_manager_wrapper.clone(), secret_manager_wrapper.clone());
 
   // Sign data with the created verification method.

@@ -17,17 +17,19 @@ const PASS: &str = "secure_password";
 
 #[tokio::test]
 async fn test_stronghold() {
+  iota_stronghold::engine::snapshot::try_set_encrypt_work_factor(0).unwrap();
   let file: PathBuf = create_temp_file();
   let secret_manager = StrongholdSecretManager::builder()
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
   test_storage_operations(secret_manager_wrapper).await;
 }
 
 #[tokio::test]
 async fn write_to_disk() {
+  iota_stronghold::engine::snapshot::try_set_encrypt_work_factor(0).unwrap();
   let file: PathBuf = create_temp_file();
   let secret_manager = StrongholdSecretManager::builder()
     .password(Password::from(PASS.to_owned()))
@@ -38,7 +40,7 @@ async fn write_to_disk() {
 
   let key_id_1 = KeyId::new("keyid");
   let method_digest: MethodDigest = MethodDigest::new(&verification_method).unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
   secret_manager_wrapper
     .insert_key_id(method_digest.clone(), key_id_1.clone())
     .await
@@ -50,7 +52,7 @@ async fn write_to_disk() {
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
 
   let key_id: KeyId = secret_manager_wrapper.get_key_id(&method_digest).await.unwrap();
   assert_eq!(key_id_1, key_id);
@@ -66,7 +68,7 @@ async fn write_to_disk() {
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager).await;
+  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
   let error_kind: KeyIdStorageErrorKind = secret_manager_wrapper
     .get_key_id(&method_digest)
     .await
