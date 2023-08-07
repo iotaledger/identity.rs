@@ -1,6 +1,6 @@
 [package]
 name = "identity_credential"
-version = "0.6.4"
+version = "0.6.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -11,8 +11,8 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
-identity_core = { version = "=0.6.4", path = "../identity_core", default-features = false }
-identity_did = { version = "=0.6.4", path = "../identity_did", default-features = false }
+identity_core = { version = "=0.6.3", path = "../identity_core", default-features = false }
+identity_did = { version = "=0.6.3", path = "../identity_did", default-features = false }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = [
   "std",
