@@ -8,7 +8,7 @@ use crate::key_id_storage::KeyIdStorageErrorKind;
 use crate::key_storage::KeyId;
 use crate::storage::tests::test_utils::create_verification_method;
 use crate::test_utils::stronghold_test_utils::create_temp_file;
-use crate::SecretManagerWrapper;
+use crate::StrongholdStorage;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::Password;
 use std::path::PathBuf;
@@ -23,8 +23,8 @@ async fn test_stronghold() {
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
-  test_storage_operations(secret_manager_wrapper).await;
+  let stronghold_storage = StrongholdStorage::new(secret_manager);
+  test_storage_operations(stronghold_storage).await;
 }
 
 #[tokio::test]
@@ -40,36 +40,36 @@ async fn write_to_disk() {
 
   let key_id_1 = KeyId::new("keyid");
   let method_digest: MethodDigest = MethodDigest::new(&verification_method).unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
-  secret_manager_wrapper
+  let stronghold_storage = StrongholdStorage::new(secret_manager);
+  stronghold_storage
     .insert_key_id(method_digest.clone(), key_id_1.clone())
     .await
     .expect("inserting into memstore failed");
 
-  drop(secret_manager_wrapper);
+  drop(stronghold_storage);
 
   let secret_manager = StrongholdSecretManager::builder()
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
+  let stronghold_storage = StrongholdStorage::new(secret_manager);
 
-  let key_id: KeyId = secret_manager_wrapper.get_key_id(&method_digest).await.unwrap();
+  let key_id: KeyId = stronghold_storage.get_key_id(&method_digest).await.unwrap();
   assert_eq!(key_id_1, key_id);
 
-  secret_manager_wrapper
+  stronghold_storage
     .delete_key_id(&method_digest)
     .await
     .expect("deletion failed");
 
-  drop(secret_manager_wrapper);
+  drop(stronghold_storage);
 
   let secret_manager = StrongholdSecretManager::builder()
     .password(Password::from(PASS.to_owned()))
     .build(&file)
     .unwrap();
-  let secret_manager_wrapper = SecretManagerWrapper::new(secret_manager);
-  let error_kind: KeyIdStorageErrorKind = secret_manager_wrapper
+  let stronghold_storage = StrongholdStorage::new(secret_manager);
+  let error_kind: KeyIdStorageErrorKind = stronghold_storage
     .get_key_id(&method_digest)
     .await
     .unwrap_err()

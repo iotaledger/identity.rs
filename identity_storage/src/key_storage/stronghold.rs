@@ -9,7 +9,7 @@ use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
 use crate::key_storage::JwkStorage;
-use crate::SecretManagerWrapper;
+use crate::StrongholdStorage;
 use async_trait::async_trait;
 use identity_verification::jwk::EdCurve;
 use identity_verification::jwk::Jwk;
@@ -36,12 +36,11 @@ static IDENTITY_VAULT_PATH: &str = "iota_identity_vault";
 pub(crate) static IDENTITY_CLIENT_PATH: &[u8] = b"iota_identity_client";
 
 /// The Ed25519 key type.
-#[allow(dead_code)]
 pub const ED25519_KEY_TYPE: &KeyType = &KeyType::from_static_str(ED25519_KEY_TYPE_STR);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-impl JwkStorage for SecretManagerWrapper {
+impl JwkStorage for StrongholdStorage {
   async fn generate(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let stronghold = self.get_stronghold().await;
 
@@ -49,10 +48,9 @@ impl JwkStorage for SecretManagerWrapper {
     let key_type = StrongholdKeyType::try_from(&key_type)?;
     check_key_alg_compatibility(key_type, alg)?;
 
-    let keytype: ProceduresKeyType = match key_type.to_string().to_lowercase().as_str() {
-      "ed25519" => Ok(ProceduresKeyType::Ed25519),
-      _ => Err(KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)),
-    }?;
+    let keytype: ProceduresKeyType = match key_type {
+      StrongholdKeyType::Ed25519 => ProceduresKeyType::Ed25519,
+    };
 
     let key_id: KeyId = random_key_id();
     let location = Location::generic(
@@ -134,7 +132,7 @@ impl JwkStorage for SecretManagerWrapper {
       .write_secret(location, zeroize::Zeroizing::from(secret_key.to_bytes().to_vec()))
       .map_err(|err| {
         KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("stronghold client error")
+          .with_custom_message("stronghold write secret failed")
           .with_source(err)
       })?;
     persist_changes(self, stronghold).await?;
@@ -243,7 +241,7 @@ fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: JwsAlgorithm) -
     (StrongholdKeyType::Ed25519, JwsAlgorithm::EdDSA) => Ok(()),
     (key_type, alg) => Err(
       KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::KeyAlgorithmMismatch)
-        .with_custom_message(format!("`cannot use key type `{key_type}` with algorithm `{alg}`")),
+        .with_custom_message(format!("cannot use key type `{key_type}` with algorithm `{alg}`")),
     ),
   }
 }
@@ -268,7 +266,7 @@ fn load_or_create_client(stronghold: &Stronghold) -> KeyStorageResult<Client> {
 }
 
 async fn persist_changes(
-  secret_manager: &SecretManagerWrapper,
+  secret_manager: &StrongholdStorage,
   stronghold: MutexGuard<'_, Stronghold>,
 ) -> KeyStorageResult<()> {
   stronghold.write_client(IDENTITY_CLIENT_PATH).map_err(|err| {
@@ -279,7 +277,7 @@ async fn persist_changes(
   // Must be dropped since `write_stronghold_snapshot` needs to acquire the stronghold lock.
   drop(stronghold);
 
-  match secret_manager.inner().deref() {
+  match secret_manager.as_secret_manager().deref() {
     iota_sdk::client::secret::SecretManager::Stronghold(stronghold_manager) => {
       stronghold_manager
         .write_stronghold_snapshot(None)
@@ -297,7 +295,6 @@ async fn persist_changes(
       )
     }
   };
-  // .unwrap()
   Ok(())
 }
 

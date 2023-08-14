@@ -13,8 +13,8 @@ use identity_iota::resolver::Resolver;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwsSignatureOptions;
-use identity_iota::storage::SecretManagerWrapper;
 use identity_iota::storage::Storage;
+use identity_iota::storage::StrongholdStorage;
 use identity_iota::verification::jws::DecodedJws;
 use identity_iota::verification::jws::EdDSAJwsVerifier;
 use identity_iota::verification::jws::JwsAlgorithm;
@@ -51,13 +51,14 @@ async fn main() -> anyhow::Result<()> {
     .password(password.clone())
     .build(path.clone())?;
 
-  // Create a wrapper around `SecretManager`.
-  // Using this wrapper is important because it implements the storage traits
-  // needed to create `Storage` which will be done later.
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold);
+  // Create a `StrongholdStorage`.
+  // `StrongholdStorage` creates internally a `SecretManager` that can be
+  // referenced to avoid creating multiple instances around the same stronghold snapshot.
+  let stronghold_storage = StrongholdStorage::new(stronghold);
 
   // Create a DID document.
-  let address: Address = get_address_with_funds(&client, &secret_manager_wrapper.inner(), faucet_endpoint).await?;
+  let address: Address =
+    get_address_with_funds(&client, &stronghold_storage.as_secret_manager(), faucet_endpoint).await?;
   let network_name: NetworkName = client.network_name().await?;
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
@@ -65,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
   //
   // In this example, the same stronghold file that is used to store
   // key-ids as well as the JWKs.
-  let storage = Storage::new(secret_manager_wrapper.clone(), secret_manager_wrapper.clone());
+  let storage = Storage::new(stronghold_storage.clone(), stronghold_storage.clone());
 
   // Generates a verification method. This will store the key-id as well as the private key
   // in the stronghold file.
@@ -85,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the Alias Output and get the published DID document.
   let document: IotaDocument = client
-    .publish_did_output(secret_manager_wrapper.inner().deref(), alias_output)
+    .publish_did_output(stronghold_storage.as_secret_manager().deref(), alias_output)
     .await?;
 
   // Resolve the published DID Document.
@@ -93,14 +94,14 @@ async fn main() -> anyhow::Result<()> {
   resolver.attach_iota_handler(client.clone());
   let resolved_document: IotaDocument = resolver.resolve(document.id()).await.unwrap();
 
-  drop(secret_manager_wrapper);
+  drop(stronghold_storage);
 
   // Create the storage again to demonstrate that data are read from the stronghold file.
   let stronghold = StrongholdSecretManager::builder()
     .password(password.clone())
     .build(path.clone())?;
-  let secret_manager_wrapper = SecretManagerWrapper::new(stronghold);
-  let storage = Storage::new(secret_manager_wrapper.clone(), secret_manager_wrapper.clone());
+  let stronghold_storage = StrongholdStorage::new(stronghold);
+  let storage = Storage::new(stronghold_storage.clone(), stronghold_storage.clone());
 
   // Sign data with the created verification method.
   let data = b"test_data";

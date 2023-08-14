@@ -7,23 +7,24 @@ use iota_stronghold::Stronghold;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
 
-/// Wrapper around `SecretManager` that implements the storage interfaces.
-#[derive(Clone)]
-pub struct SecretManagerWrapper(Arc<SecretManager>);
+/// Wrapper around `StrongholdSecretManager` that implements the [`KeyIdStorage`](crate::KeyIdStorage)
+/// and [`JwkStorage`](crate::JwkStorage) interfaces.
+#[derive(Clone, Debug)]
+pub struct StrongholdStorage(Arc<SecretManager>);
 
-impl SecretManagerWrapper {
-  /// Creates a new [`SecretManagerWrapper`].
+impl StrongholdStorage {
+  /// Creates a new [`StrongholdStorage`].
   pub fn new(stronghold_secret_manager: StrongholdSecretManager) -> Self {
     Self(Arc::new(SecretManager::Stronghold(stronghold_secret_manager)))
   }
 
   /// Shared reference to the inner [`SecretManager`].
-  pub fn inner(&self) -> Arc<SecretManager> {
+  pub fn as_secret_manager(&self) -> Arc<SecretManager> {
     self.0.clone()
   }
 
-  ///Acquire lock of the inner [`Stronghold`].
-  pub async fn get_stronghold(&self) -> MutexGuard<'_, Stronghold> {
+  /// Acquire lock of the inner [`Stronghold`].
+  pub(crate) async fn get_stronghold(&self) -> MutexGuard<'_, Stronghold> {
     match *self.0 {
       SecretManager::Stronghold(ref stronghold) => stronghold.inner().await,
       _ => unreachable!("secret manager can be only constrcuted from stronghold"),
