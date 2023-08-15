@@ -1,5 +1,11 @@
 # Changelog
 
+## [wasm-v0.7.0-alpha.6](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.6) (2023-08-15)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.5...wasm-v0.7.0-alpha.6)
+
+### Changed 
+
 ## [wasm-v0.7.0-alpha.5](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.5) (2023-01-24)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.4...wasm-v0.7.0-alpha.5)
