@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.7.0-alpha.7](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.7) (2023-08-15)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.6...v0.7.0-alpha.7)
+
+### Added 
+
+### Patch
+
 ## [v0.7.0-alpha.6](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.6) (2023-03-03)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.5...v0.7.0-alpha.6)
