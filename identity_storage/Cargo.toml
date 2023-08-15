@@ -44,5 +44,5 @@ memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "identity_verification/e
 send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument
 # Exposes the stronghold implementations for the storage traits.
-stronghold = ["dep:iota-sdk", "dep:iota_stronghold", "dep:zeroize", "dep:rand", "dep:iota-crypto"]
+stronghold = ["dep:tokio", "dep:iota-sdk", "dep:iota_stronghold", "dep:zeroize", "dep:rand", "dep:iota-crypto"]
 iota-document = ["dep:identity_iota_core"]

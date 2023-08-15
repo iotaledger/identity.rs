@@ -1,13 +1,15 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Wrapper around [`StrongholdSecretManager`](StrongholdSecretManager).
+
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_stronghold::Stronghold;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
 
-/// Wrapper around `StrongholdSecretManager` that implements the [`KeyIdStorage`](crate::KeyIdStorage)
+/// Wrapper around a [`StrongholdSecretManager`] that implements the [`KeyIdStorage`](crate::KeyIdStorage)
 /// and [`JwkStorage`](crate::JwkStorage) interfaces.
 #[derive(Clone, Debug)]
 pub struct StrongholdStorage(Arc<SecretManager>);
