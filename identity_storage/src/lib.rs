@@ -17,7 +17,6 @@
 pub mod key_id_storage;
 pub mod key_storage;
 pub mod storage;
-/// Wrapper around `SecretManager` that implements the storage interfaces.
 #[cfg(feature = "stronghold")]
 pub mod stronghold_storage;
 #[cfg(test)]
