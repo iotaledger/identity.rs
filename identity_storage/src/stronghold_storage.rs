@@ -21,8 +21,8 @@ impl StrongholdStorage {
   }
 
   /// Shared reference to the inner [`SecretManager`].
-  pub fn as_secret_manager(&self) -> Arc<SecretManager> {
-    self.0.clone()
+  pub fn as_secret_manager(&self) -> &SecretManager {
+    self.0.as_ref()
   }
 
   /// Acquire lock of the inner [`Stronghold`].

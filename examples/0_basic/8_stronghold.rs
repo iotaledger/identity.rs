@@ -24,7 +24,6 @@ use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
-use std::ops::Deref;
 
 /// Demonstrates how to use stronghold for secure storage.
 #[tokio::main]
@@ -58,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a DID document.
   let address: Address =
-    get_address_with_funds(&client, &stronghold_storage.as_secret_manager(), faucet_endpoint).await?;
+    get_address_with_funds(&client, stronghold_storage.as_secret_manager(), faucet_endpoint).await?;
   let network_name: NetworkName = client.network_name().await?;
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
@@ -86,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the Alias Output and get the published DID document.
   let document: IotaDocument = client
-    .publish_did_output(stronghold_storage.as_secret_manager().deref(), alias_output)
+    .publish_did_output(stronghold_storage.as_secret_manager(), alias_output)
     .await?;
 
   // Resolve the published DID Document.
