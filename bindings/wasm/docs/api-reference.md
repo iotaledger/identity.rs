@@ -35,6 +35,9 @@ See: <a href="https://identity.foundation/.well-known/resources/did-configuratio
 <li>Only the <a href="https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format">JSON Web Token Proof Format</a></li>
 </ul>
 </dd>
+<dt><a href="#DomainLinkageValidator">DomainLinkageValidator</a></dt>
+<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
+</dd>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
@@ -72,9 +75,6 @@ and resolution of DID documents in Alias Outputs.</p>
 </dd>
 <dt><a href="#JwtCredentialValidator">JwtCredentialValidator</a></dt>
 <dd><p>A type for decoding and validating <code>Credentials</code>.</p>
-</dd>
-<dt><a href="#JwtDomainLinkageValidator">JwtDomainLinkageValidator</a></dt>
-<dd><p>A validator for a Domain Linkage Configuration and Credentials.</p>
 </dd>
 <dt><a href="#JwtPresentationOptions">JwtPresentationOptions</a></dt>
 <dd></dd>
@@ -131,6 +131,10 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -173,10 +177,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -822,7 +822,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 ### coreDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWT where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
 
 The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
 produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -1398,6 +1398,71 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="DomainLinkageValidator"></a>
+
+## DomainLinkageValidator
+A validator for a Domain Linkage Configuration and Credentials.
+
+**Kind**: global class  
+
+* [DomainLinkageValidator](#DomainLinkageValidator)
+    * [new DomainLinkageValidator(signatureVerifier)](#new_DomainLinkageValidator_new)
+    * [.validateLinkage(issuer, configuration, domain, options)](#DomainLinkageValidator+validateLinkage)
+    * [.validateCredential(issuer, credentialJwt, domain, options)](#DomainLinkageValidator+validateCredential)
+
+<a name="new_DomainLinkageValidator_new"></a>
+
+### new DomainLinkageValidator(signatureVerifier)
+Creates a new `DomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
+verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
+algorithm will be used.
+
+
+| Param | Type |
+| --- | --- |
+| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+
+<a name="DomainLinkageValidator+validateLinkage"></a>
+
+### domainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
+Validates the linkage between a domain and a DID.
+[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
+
+Linkage is valid if no error is thrown.
+
+# Note:
+- Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
+- Only the Credential issued by `issuer` is verified.
+
+# Errors
+ - Semantic structure of `configuration` is invalid.
+ - `configuration` includes multiple credentials issued by `issuer`.
+ - Validation of the matched Domain Linkage Credential fails.
+
+**Kind**: instance method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
+| domain | <code>string</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
+
+<a name="DomainLinkageValidator+validateCredential"></a>
+
+### domainLinkageValidator.validateCredential(issuer, credentialJwt, domain, options)
+Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
+Error will be thrown in case the validation fails.
+
+**Kind**: instance method of [<code>DomainLinkageValidator</code>](#DomainLinkageValidator)  
+
+| Param | Type |
+| --- | --- |
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| credentialJwt | [<code>Jwt</code>](#Jwt) | 
+| domain | <code>string</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
+
 <a name="Duration"></a>
 
 ## Duration
@@ -1498,7 +1563,7 @@ A DID conforming to the IOTA DID method specification.
 * [IotaDID](#IotaDID)
     * [new IotaDID(bytes, network)](#new_IotaDID_new)
     * _instance_
-        * [.network()](#IotaDID+network) ⇒ <code>string</code>
+        * [.networkStr()](#IotaDID+networkStr) ⇒ <code>string</code>
         * [.tag()](#IotaDID+tag) ⇒ <code>string</code>
         * [.toCoreDid()](#IotaDID+toCoreDid) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.scheme()](#IotaDID+scheme) ⇒ <code>string</code>
@@ -1534,9 +1599,9 @@ See also [placeholder](#IotaDID.placeholder).
 | bytes | <code>Uint8Array</code> | 
 | network | <code>string</code> | 
 
-<a name="IotaDID+network"></a>
+<a name="IotaDID+networkStr"></a>
 
-### did.network() ⇒ <code>string</code>
+### did.networkStr() ⇒ <code>string</code>
 Returns the Tangle network name of the `IotaDID`.
 
 **Kind**: instance method of [<code>IotaDID</code>](#IotaDID)  
@@ -2181,7 +2246,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 ### iotaDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWS where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC-JWT version 1.1.](https://w3c.github.io/vc-jwt/#version-1.1).
 
 The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
 produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
@@ -2244,7 +2309,7 @@ encoded in the `AliasId` alone.
 | Param | Type |
 | --- | --- |
 | did | [<code>IotaDID</code>](#IotaDID) | 
-| aliasOutput | <code>IAliasOutput</code> | 
+| aliasOutput | <code>AliasOutputBuilderParams</code> | 
 | allowEmpty | <code>boolean</code> | 
 | tokenSupply | <code>bigint</code> | 
 
@@ -2263,7 +2328,7 @@ Errors if any Alias Output does not contain a valid or empty DID Document.
 | Param | Type |
 | --- | --- |
 | network | <code>string</code> | 
-| block | <code>IBlock</code> | 
+| block | <code>Block</code> | 
 | protocol_parameters | <code>INodeInfoProtocol</code> | 
 
 <a name="IotaDocument.fromJSON"></a>
@@ -2365,15 +2430,15 @@ and resolution of DID documents in Alias Outputs.
 **Kind**: global class  
 
 * [IotaIdentityClientExt](#IotaIdentityClientExt)
-    * [.newDidOutput(client, address, document, rentStructure)](#IotaIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
-    * [.updateDidOutput(client, document)](#IotaIdentityClientExt.updateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
-    * [.deactivateDidOutput(client, did)](#IotaIdentityClientExt.deactivateDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.newDidOutput(client, address, document, rentStructure)](#IotaIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
+    * [.updateDidOutput(client, document)](#IotaIdentityClientExt.updateDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
+    * [.deactivateDidOutput(client, did)](#IotaIdentityClientExt.deactivateDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
     * [.resolveDid(client, did)](#IotaIdentityClientExt.resolveDid) ⇒ [<code>Promise.&lt;IotaDocument&gt;</code>](#IotaDocument)
-    * [.resolveDidOutput(client, did)](#IotaIdentityClientExt.resolveDidOutput) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+    * [.resolveDidOutput(client, did)](#IotaIdentityClientExt.resolveDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
 
 <a name="IotaIdentityClientExt.newDidOutput"></a>
 
-### IotaIdentityClientExt.newDidOutput(client, address, document, rentStructure) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+### IotaIdentityClientExt.newDidOutput(client, address, document, rentStructure) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
 Create a DID with a new Alias Output containing the given `document`.
 
 The `address` will be set as the state controller and governor unlock conditions.
@@ -2388,13 +2453,13 @@ NOTE: this does *not* publish the Alias Output.
 | Param | Type |
 | --- | --- |
 | client | <code>IIotaIdentityClient</code> | 
-| address | <code>AddressTypes</code> | 
+| address | <code>Address</code> | 
 | document | [<code>IotaDocument</code>](#IotaDocument) | 
 | rentStructure | <code>IRent</code> \| <code>undefined</code> | 
 
 <a name="IotaIdentityClientExt.updateDidOutput"></a>
 
-### IotaIdentityClientExt.updateDidOutput(client, document) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+### IotaIdentityClientExt.updateDidOutput(client, document) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
 Fetches the associated Alias Output and updates it with `document` in its state metadata.
 The storage deposit on the output is left unchanged. If the size of the document increased,
 the amount should be increased manually.
@@ -2410,7 +2475,7 @@ NOTE: this does *not* publish the updated Alias Output.
 
 <a name="IotaIdentityClientExt.deactivateDidOutput"></a>
 
-### IotaIdentityClientExt.deactivateDidOutput(client, did) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+### IotaIdentityClientExt.deactivateDidOutput(client, did) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
 Removes the DID document from the state metadata of its Alias Output,
 effectively deactivating it. The storage deposit on the output is left unchanged,
 and should be reallocated manually.
@@ -2442,7 +2507,7 @@ of the Alias Output is empty.
 
 <a name="IotaIdentityClientExt.resolveDidOutput"></a>
 
-### IotaIdentityClientExt.resolveDidOutput(client, did) ⇒ <code>Promise.&lt;IAliasOutput&gt;</code>
+### IotaIdentityClientExt.resolveDidOutput(client, did) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
 Fetches the `IAliasOutput` associated with the given DID.
 
 **Kind**: static method of [<code>IotaIdentityClientExt</code>](#IotaIdentityClientExt)  
@@ -3508,71 +3573,6 @@ If the JWT decoding fails or the issuer field is not a valid DID.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Jwt</code>](#Jwt) | 
-
-<a name="JwtDomainLinkageValidator"></a>
-
-## JwtDomainLinkageValidator
-A validator for a Domain Linkage Configuration and Credentials.
-
-**Kind**: global class  
-
-* [JwtDomainLinkageValidator](#JwtDomainLinkageValidator)
-    * [new JwtDomainLinkageValidator(signatureVerifier)](#new_JwtDomainLinkageValidator_new)
-    * [.validateLinkage(issuer, configuration, domain, options)](#JwtDomainLinkageValidator+validateLinkage)
-    * [.validateCredential(issuer, credentialJwt, domain, options)](#JwtDomainLinkageValidator+validateCredential)
-
-<a name="new_JwtDomainLinkageValidator_new"></a>
-
-### new JwtDomainLinkageValidator(signatureVerifier)
-Creates a new `JwtDomainLinkageValidator`. If a `signatureVerifier` is provided it will be used when
-verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
-algorithm will be used.
-
-
-| Param | Type |
-| --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
-
-<a name="JwtDomainLinkageValidator+validateLinkage"></a>
-
-### jwtDomainLinkageValidator.validateLinkage(issuer, configuration, domain, options)
-Validates the linkage between a domain and a DID.
-[`DomainLinkageConfiguration`] is validated according to [DID Configuration Resource Verification](https://identity.foundation/.well-known/resources/did-configuration/#did-configuration-resource-verification).
-
-Linkage is valid if no error is thrown.
-
-# Note:
-- Only the [JSON Web Token Proof Format](https://identity.foundation/.well-known/resources/did-configuration/#json-web-token-proof-format)
-- Only the Credential issued by `issuer` is verified.
-
-# Errors
- - Semantic structure of `configuration` is invalid.
- - `configuration` includes multiple credentials issued by `issuer`.
- - Validation of the matched Domain Linkage Credential fails.
-
-**Kind**: instance method of [<code>JwtDomainLinkageValidator</code>](#JwtDomainLinkageValidator)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| configuration | [<code>DomainLinkageConfiguration</code>](#DomainLinkageConfiguration) | 
-| domain | <code>string</code> | 
-| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
-
-<a name="JwtDomainLinkageValidator+validateCredential"></a>
-
-### jwtDomainLinkageValidator.validateCredential(issuer, credentialJwt, domain, options)
-Validates a [Domain Linkage Credential](https://identity.foundation/.well-known/resources/did-configuration/#domain-linkage-credential).
-Error will be thrown in case the validation fails.
-
-**Kind**: instance method of [<code>JwtDomainLinkageValidator</code>](#JwtDomainLinkageValidator)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
-| credentialJwt | [<code>Jwt</code>](#Jwt) | 
-| domain | <code>string</code> | 
-| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
 
 <a name="JwtPresentationOptions"></a>
 
@@ -4812,6 +4812,14 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4889,14 +4897,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
