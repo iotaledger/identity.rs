@@ -14,9 +14,7 @@ members = [
   "examples",
 ]
 
-exclude = [
-  "bindings/wasm",
-]
+exclude = ["bindings/wasm"]
 
 [workspace.dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }

@@ -82,7 +82,7 @@ pub async fn create_did_document(
 /// Generates an address from the given [`SecretManager`] and adds funds from the faucet.
 pub async fn get_address_with_funds(
   client: &Client,
-  stronghold: &mut SecretManager,
+  stronghold: &SecretManager,
   faucet_endpoint: &str,
 ) -> anyhow::Result<Address> {
   let address: Bech32Address = get_address(client, stronghold).await?;
@@ -96,12 +96,12 @@ pub async fn get_address_with_funds(
 
 /// Initializes the [`SecretManager`] with a new mnemonic, if necessary,
 /// and generates an address from the given [`SecretManager`].
-pub async fn get_address(client: &Client, secret_manager: &mut SecretManager) -> anyhow::Result<Bech32Address> {
+pub async fn get_address(client: &Client, secret_manager: &SecretManager) -> anyhow::Result<Bech32Address> {
   let random: [u8; 32] = rand::random();
   let mnemonic = bip39::wordlist::encode(random.as_ref(), &bip39::wordlist::ENGLISH)
     .map_err(|err| anyhow::anyhow!(format!("{err:?}")))?;
 
-  if let SecretManager::Stronghold(ref mut stronghold) = secret_manager {
+  if let SecretManager::Stronghold(ref stronghold) = secret_manager {
     match stronghold.store_mnemonic(mnemonic).await {
       Ok(()) => (),
       Err(iota_sdk::client::stronghold::Error::MnemonicAlreadyStored) => (),

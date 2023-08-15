@@ -19,16 +19,14 @@ use identity_did::CoreDID;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_verification::jws::JwsAlgorithm;
-
 use identity_verification::MethodScope;
 
+use crate::key_storage::JwkMemStore;
 use crate::storage::tests::test_utils::generate_credential;
 use crate::storage::tests::test_utils::setup_coredocument;
 use crate::storage::tests::test_utils::setup_iotadocument;
 use crate::storage::tests::test_utils::Setup;
 use crate::JwkDocumentExt;
-use crate::JwkMemStore;
-
 use crate::JwsSignatureOptions;
 
 use super::test_utils::CredentialSetup;

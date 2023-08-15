@@ -22,9 +22,9 @@ use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
 use serde_json::json;
 
+use crate::key_id_storage::KeyIdMemstore;
+use crate::key_storage::JwkMemStore;
 use crate::JwkDocumentExt;
-use crate::JwkMemStore;
-use crate::KeyIdMemstore;
 use crate::Storage;
 
 type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
