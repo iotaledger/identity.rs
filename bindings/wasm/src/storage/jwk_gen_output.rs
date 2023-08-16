@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::jose::WasmJwk;
 
-/// The result of a key generation in {@link JwkStorage}.
+/// The result of a key generation in `JwkStorage`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[wasm_bindgen(js_name = JwkGenOutput, inspectable)]
 pub struct WasmJwkGenOutput(pub(crate) JwkGenOutput);
