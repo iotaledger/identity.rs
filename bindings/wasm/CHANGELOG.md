@@ -37,10 +37,6 @@
 - Fix clippy's issue `uninlined-format-args` [#1109](https://github.com/iotaledger/identity.rs/pull/1109)
 - Update iota.js peer dependency [#1107](https://github.com/iotaledger/identity.rs/pull/1107)
 
-# Reference Entry
-
-- More identifier checks in `CoreDocument` [#1067](https://github.com/iotaledger/identity.rs/pull/1067)
-
 ## [wasm-v0.7.0-alpha.5](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.5) (2023-01-24)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.4...wasm-v0.7.0-alpha.5)
