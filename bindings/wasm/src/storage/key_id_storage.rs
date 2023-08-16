@@ -65,7 +65,7 @@ const JWK_STORAGE: &'static str = r#"
  */
 interface KeyIdStorage {
   /**
-   * Insert a key id into the {@link KeyIdStorage} under the given {@link MethodDigest}.
+   * Insert a key id into the `KeyIdStorage` under the given {@link MethodDigest}.
    * 
    * If an entry for `key` already exists in the storage an error must be returned
    * immediately without altering the state of the storage.
