@@ -1,6 +1,6 @@
 [package]
 name = "identity_jose"
-version = "0.7.0-alpha.6"
+version = "0.7.0-alpha.7"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,7 +12,7 @@ rust-version.workspace = true
 description = "A library for JOSE (JSON Object Signing and Encryption)"
 
 [dependencies]
-identity_core = { version = "0.7.0-alpha.6", path = "../identity_core", default-features = false }
+identity_core = { version = "=0.7.0-alpha.7", path = "../identity_core", default-features = false }
 iota-crypto = { version = "0.23", default-features = false, features = ["std", "sha"] }
 serde.workspace = true
 serde_json = { version = "1.0", default-features = false, features = ["std"] }

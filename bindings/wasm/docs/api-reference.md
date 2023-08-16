@@ -53,7 +53,7 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#Jwk">Jwk</a></dt>
 <dd></dd>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
-<dd><p>The result of a key generation in <a href="JwkStorage">JwkStorage</a>.</p>
+<dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
 <dt><a href="#Jws">Jws</a></dt>
 <dd><p>A wrapper around a JSON Web Signature (JWS).</p>
@@ -125,7 +125,7 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
 <dt><a href="#Storage">Storage</a></dt>
-<dd><p>A type wrapping a <a href="JwkStorage">JwkStorage</a> and <a href="KeyIdStorage">KeyIdStorage</a> that should always be used together when
+<dd><p>A type wrapping a <code>JwkStorage</code> and <code>KeyIdStorage</code> that should always be used together when
 working with storage backed DID documents.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
@@ -2628,7 +2628,7 @@ Deserializes an instance from a JSON object.
 <a name="JwkGenOutput"></a>
 
 ## JwkGenOutput
-The result of a key generation in [JwkStorage](JwkStorage).
+The result of a key generation in `JwkStorage`.
 
 **Kind**: global class  
 
@@ -4580,7 +4580,7 @@ Deserializes an instance from a JSON object.
 <a name="Storage"></a>
 
 ## Storage
-A type wrapping a [JwkStorage](JwkStorage) and [KeyIdStorage](KeyIdStorage) that should always be used together when
+A type wrapping a `JwkStorage` and `KeyIdStorage` that should always be used together when
 working with storage backed DID documents.
 
 **Kind**: global class  
@@ -4593,7 +4593,7 @@ working with storage backed DID documents.
 <a name="new_Storage_new"></a>
 
 ### new Storage(jwkStorage, keyIdStorage)
-Constructs a new [Storage](#Storage).
+Constructs a new `Storage`.
 
 
 | Param | Type |
@@ -4604,13 +4604,13 @@ Constructs a new [Storage](#Storage).
 <a name="Storage+keyIdStorage"></a>
 
 ### storage.keyIdStorage() ⇒ <code>KeyIdStorage</code>
-Obtain the wrapped [KeyIdStorage](KeyIdStorage).
+Obtain the wrapped `KeyIdStorage`.
 
 **Kind**: instance method of [<code>Storage</code>](#Storage)  
 <a name="Storage+keyStorage"></a>
 
 ### storage.keyStorage() ⇒ <code>JwkStorage</code>
-Obtain the wrapped [JwkStorage](JwkStorage).
+Obtain the wrapped `JwkStorage`.
 
 **Kind**: instance method of [<code>Storage</code>](#Storage)  
 <a name="Timestamp"></a>
