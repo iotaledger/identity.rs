@@ -53,7 +53,7 @@ and resolution of DID documents in Alias Outputs.</p>
 <dt><a href="#Jwk">Jwk</a></dt>
 <dd></dd>
 <dt><a href="#JwkGenOutput">JwkGenOutput</a></dt>
-<dd><p>The result of a key generation in <a href="JwkStorage">JwkStorage</a>.</p>
+<dd><p>The result of a key generation in <code>JwkStorage</code>.</p>
 </dd>
 <dt><a href="#Jws">Jws</a></dt>
 <dd><p>A wrapper around a JSON Web Signature (JWS).</p>
@@ -2628,7 +2628,7 @@ Deserializes an instance from a JSON object.
 <a name="JwkGenOutput"></a>
 
 ## JwkGenOutput
-The result of a key generation in [JwkStorage](JwkStorage).
+The result of a key generation in `JwkStorage`.
 
 **Kind**: global class  
 
