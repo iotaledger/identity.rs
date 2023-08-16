@@ -1,5 +1,42 @@
 # Changelog
 
+## [wasm-v0.7.0-alpha.6](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.6) (2023-08-15)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.5...wasm-v0.7.0-alpha.6)
+
+### Added
+
+- Improve `Proof` [#1209](https://github.com/iotaledger/identity.rs/pull/1209)
+- Add `resolve_multiple` to Resolver [#1189](https://github.com/iotaledger/identity.rs/pull/1189)
+- Move jwk_storage and key_id_storage to Wasm lib [#1181](https://github.com/iotaledger/identity.rs/pull/1181)
+- Wasm Bindings for JWT Presentations [#1179](https://github.com/iotaledger/identity.rs/pull/1179)
+- Polish JWK thumbprint and document extension API [#1173](https://github.com/iotaledger/identity.rs/pull/1173)
+- Wasm bindings for `KeyIdStorage` [#1147](https://github.com/iotaledger/identity.rs/pull/1147)
+- Introduce `IToCoreDocument` and document locks in the bindings [#1120](https://github.com/iotaledger/identity.rs/pull/1120)
+- Add Wasm Bindings for Domain Linkage [#1115](https://github.com/iotaledger/identity.rs/pull/1115)
+
+### Changed 
+
+- Polish Wasm bindings [#1206](https://github.com/iotaledger/identity.rs/pull/1206)
+- Polish `identity_credential` [#1205](https://github.com/iotaledger/identity.rs/pull/1205)
+- Polish `identity_iota_core` [#1203](https://github.com/iotaledger/identity.rs/pull/1203)
+- Upgrade `client-wasm` to `sdk-wasm` [#1202](https://github.com/iotaledger/identity.rs/pull/1202)
+- Rename `JwtPresentation` to `Presentation` [#1200](https://github.com/iotaledger/identity.rs/pull/1200)
+- Remove legacy signing and verification APIs [#1194](https://github.com/iotaledger/identity.rs/pull/1194)
+- Remove old `Presentation` type [#1190](https://github.com/iotaledger/identity.rs/pull/1190)
+- Remove reexported `Resolver` validation APIs [#1183](https://github.com/iotaledger/identity.rs/pull/1183)
+- Use JWT credentials for Domain Linkage [#1180](https://github.com/iotaledger/identity.rs/pull/1180)
+- Remove stronghold nodejs bindings [#1178](https://github.com/iotaledger/identity.rs/pull/1178)
+- JwkStorageDocument & JwtCredential validation [#1152](https://github.com/iotaledger/identity.rs/pull/1152)
+- Add initial PublicKeyJwk support [#1143](https://github.com/iotaledger/identity.rs/pull/1143)
+- Refactor `MethodType` to make it extensible [#1112](https://github.com/iotaledger/identity.rs/pull/1112)
+- Remove generics in `CoreDocument`, `VerificationMethod`, `Service`, `DIDUrl` and `LinkedDomainService` [#1110](https://github.com/iotaledger/identity.rs/pull/1110)
+
+### Patch
+
+- Fix clippy's issue `uninlined-format-args` [#1109](https://github.com/iotaledger/identity.rs/pull/1109)
+- Update iota.js peer dependency [#1107](https://github.com/iotaledger/identity.rs/pull/1107)
+
 ## [wasm-v0.7.0-alpha.5](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.5) (2023-01-24)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.4...wasm-v0.7.0-alpha.5)

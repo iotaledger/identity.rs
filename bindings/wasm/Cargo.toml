@@ -1,6 +1,6 @@
 [package]
 name = "identity_wasm"
-version = "0.7.0-alpha.5"
+version = "0.7.0-alpha.6"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
