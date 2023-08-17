@@ -1029,7 +1029,7 @@ dependencies = [
 
 [[package]]
 name = "identity-diff"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "serde",
  "serde_json",
@@ -1053,7 +1053,7 @@ dependencies = [
 
 [[package]]
 name = "identity_account_storage"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "async-trait",
  "futures",
@@ -1076,7 +1076,7 @@ dependencies = [
 
 [[package]]
 name = "identity_core"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "identity-diff",
  "iota-crypto 0.9.1",
@@ -1094,7 +1094,7 @@ dependencies = [
 
 [[package]]
 name = "identity_did"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "did_url",
  "form_urlencoded",
@@ -1107,7 +1107,7 @@ dependencies = [
 
 [[package]]
 name = "identity_iota_core"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "bee-message",
  "identity_core",

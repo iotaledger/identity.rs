@@ -1,6 +1,6 @@
 [package]
 name = "identity-diff-derive"
-version = "0.6.3-rc.1"
+version = "0.6.3"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
