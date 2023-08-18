@@ -1,6 +1,6 @@
 [package]
 name = "identity_storage"
-version = "0.7.0-alpha.6"
+version = "0.7.0-alpha.7"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -14,24 +14,27 @@ description = "Abstractions over storage for cryptographic keys used in DID Docu
 [dependencies]
 async-trait = { version = "0.1.64", default-features = false }
 futures = { version = "0.3.27", default-features = false, features = ["async-await"] }
-identity_core = { version = "=0.7.0-alpha.6", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", default-features = false, features = ["credential", "presentation"] }
-identity_did = { version = "=0.7.0-alpha.6", path = "../identity_did", default-features = false }
-identity_document = { version = "=0.7.0-alpha.6", path = "../identity_document", default-features = false }
-identity_iota_core = { version = "=0.7.0-alpha.6", path = "../identity_iota_core", default-features = false, optional = true }
-identity_verification = { version = "=0.7.0-alpha.6", path = "../identity_verification", default_features = false }
-iota-crypto = { version = "0.18", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }
+identity_core = { version = "=0.7.0-alpha.7", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.7.0-alpha.7", path = "../identity_credential", default-features = false, features = ["credential", "presentation"] }
+identity_did = { version = "=0.7.0-alpha.7", path = "../identity_did", default-features = false }
+identity_document = { version = "=0.7.0-alpha.7", path = "../identity_document", default-features = false }
+identity_iota_core = { version = "=0.7.0-alpha.7", path = "../identity_iota_core", default-features = false, optional = true }
+identity_verification = { version = "=0.7.0-alpha.7", path = "../identity_verification", default_features = false }
+iota-crypto = { version = "0.23", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }
+iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"], optional = true }
+iota_stronghold = { version = "2.0", optional = true, default-features = false }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default_features = false }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync"], optional = true }
+tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
+zeroize = { version = "1.6.0", default_features = false, optional = true }
 
 [dev-dependencies]
-identity_credential = { version = "=0.7.0-alpha.6", path = "../identity_credential", features = ["revocation-bitmap"] }
-once_cell = { version = "1.17.1", default-features = false }
-tokio = { version = "1.23.0", default-features = false, features = ["macros", "sync", "rt"] }
+identity_credential = { version = "=0.7.0-alpha.7", path = "../identity_credential", features = ["revocation-bitmap"] }
+once_cell = { version = "1.18", default-features = false }
+tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
 default = ["iota-document", "memstore"]
@@ -40,4 +43,6 @@ memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "identity_verification/e
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument
+# Exposes the stronghold implementations for the storage traits.
+stronghold = ["dep:tokio", "dep:iota-sdk", "dep:iota_stronghold", "dep:zeroize", "dep:rand", "dep:iota-crypto"]
 iota-document = ["dep:identity_iota_core"]

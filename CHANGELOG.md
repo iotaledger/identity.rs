@@ -1,5 +1,49 @@
 # Changelog
 
+## [v0.7.0-alpha.7](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.7) (2023-08-15)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.6...v0.7.0-alpha.7)
+
+### Added
+
+- Improve `Proof` [#1209](https://github.com/iotaledger/identity.rs/pull/1209)
+- Polish `identity_jose` [#1201](https://github.com/iotaledger/identity.rs/pull/1201)
+- Add `resolve_multiple` to Resolver [#1189](https://github.com/iotaledger/identity.rs/pull/1189)
+- Make JWT presentations generic [#1186](https://github.com/iotaledger/identity.rs/pull/1186)
+- Support JWT presentations [#1175](https://github.com/iotaledger/identity.rs/pull/1175)
+- Polish JWK thumbprint and document extension API [#1173](https://github.com/iotaledger/identity.rs/pull/1173)
+- Stronghold Storage Implementation [#1157](https://github.com/iotaledger/identity.rs/pull/1157)
+- Implement `KeyIdStorage` in Rust [#1134](https://github.com/iotaledger/identity.rs/pull/1134)
+
+### Changed
+
+- Bump `iota-sdk` and other dependencies [#1208](https://github.com/iotaledger/identity.rs/pull/1208)
+- Polish `identity_credential` [#1205](https://github.com/iotaledger/identity.rs/pull/1205)
+- Polish `identity_resolver` and`identity_storage` [#1204](https://github.com/iotaledger/identity.rs/pull/1204)
+- Polish `identity_iota_core` [#1203](https://github.com/iotaledger/identity.rs/pull/1203)
+- Rename `JwtPresentation` to `Presentation` [#1200](https://github.com/iotaledger/identity.rs/pull/1200)
+- Polish `identity_document` [#1198](https://github.com/iotaledger/identity.rs/pull/1198)
+- Polish `identity_did` & `identity_verification` [#1197](https://github.com/iotaledger/identity.rs/pull/1197)
+- Polish `identity_core` [#1196](https://github.com/iotaledger/identity.rs/pull/1196)
+- Remove identity-diff remains [#1195](https://github.com/iotaledger/identity.rs/pull/1195)
+- Remove legacy signing and verification APIs [#1194](https://github.com/iotaledger/identity.rs/pull/1194)
+- Remove old `Presentation` type [#1190](https://github.com/iotaledger/identity.rs/pull/1190)
+- Remove reexported `Resolver` validation APIs [#1183](https://github.com/iotaledger/identity.rs/pull/1183)
+- Use JWT credentials for Domain Linkage [#1180](https://github.com/iotaledger/identity.rs/pull/1180)
+- Remove `identity_agent` & `identity_comm` [#1168](https://github.com/iotaledger/identity.rs/pull/1168)
+- Remove `identity-diff` crate [#1167](https://github.com/iotaledger/identity.rs/pull/1167)
+- JwkStorageDocument & JwtCredential validation [#1152](https://github.com/iotaledger/identity.rs/pull/1152)
+- Adapt StorageError to be more generic [#1144](https://github.com/iotaledger/identity.rs/pull/1144)
+- Add initial PublicKeyJwk support [#1143](https://github.com/iotaledger/identity.rs/pull/1143)
+- Split JWS `Decoder` functionality [#1133](https://github.com/iotaledger/identity.rs/pull/1133)
+
+### Patch
+
+- Feature-gate Domain Linkage [#1184](https://github.com/iotaledger/identity.rs/pull/1184)
+- Update method spec and JWK method type [#1176](https://github.com/iotaledger/identity.rs/pull/1176)
+- Replace `iota-client` with `iota-sdk` [#1161](https://github.com/iotaledger/identity.rs/pull/1161)
+- Pin `form_urlencoded` to `1.1.0` [#1136](https://github.com/iotaledger/identity.rs/pull/1136)
+
 ## [v0.7.0-alpha.6](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.6) (2023-03-03)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.5...v0.7.0-alpha.6)

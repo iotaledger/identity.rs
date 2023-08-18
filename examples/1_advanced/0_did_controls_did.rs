@@ -22,6 +22,7 @@ use identity_iota::verification::MethodScope;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::address::AliasAddress;
 use iota_sdk::types::block::output::feature::IssuerFeature;
@@ -47,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -79,12 +80,10 @@ async fn main() -> anyhow::Result<()> {
     // Optionally, we can mark the company as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as a resolver can
     // verify that the subsidiary DID was created by the parent company.
-    .add_immutable_feature(IssuerFeature::new(
-      AliasAddress::new(AliasId::from(&company_did)).into(),
-    ))
+    .add_immutable_feature(IssuerFeature::new(AliasAddress::new(AliasId::from(&company_did))))
     // Adding the issuer feature means we have to recalculate the required storage deposit.
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the subsidiary's DID.
   let mut subsidiary_document: IotaDocument = client.publish_did_output(&secret_manager, subsidiary_alias).await?;
@@ -112,7 +111,7 @@ async fn main() -> anyhow::Result<()> {
   let subsidiary_alias: AliasOutput = client.update_did_output(subsidiary_document).await?;
   let subsidiary_alias: AliasOutput = AliasOutputBuilder::from(&subsidiary_alias)
     .with_minimum_storage_deposit(rent_structure)
-    .finish(client.get_token_supply().await?)?;
+    .finish()?;
 
   // Publish the updated subsidiary's DID.
   //

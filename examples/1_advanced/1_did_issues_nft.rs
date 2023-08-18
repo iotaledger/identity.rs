@@ -15,6 +15,7 @@ use identity_iota::storage::KeyIdMemstore;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
+use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::address::AliasAddress;
 use iota_sdk::types::block::output::feature::IssuerFeature;
@@ -52,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
@@ -80,11 +81,11 @@ async fn main() -> anyhow::Result<()> {
       .add_immutable_feature(Feature::Metadata(MetadataFeature::new(
         b"Digital Product Passport Metadata".to_vec(),
       )?))
-      .finish(client.get_token_supply().await?)?;
+      .finish()?;
 
   // Publish the NFT.
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![product_passport_nft.into()])?
     .finish()

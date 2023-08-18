@@ -1,21 +1,17 @@
 [package]
 name = "examples"
-version = "0.7.0-alpha.6"
+version = "0.7.0-alpha.7"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-identity_iota = { path = "../identity_iota", features = ["memstore", "domain-linkage"] }
+identity_iota = { path = "../identity_iota", features = ["memstore", "domain-linkage", "stronghold"] }
+iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 primitive-types = "0.12.1"
 rand = "0.8.5"
-tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
-
-[dependencies.iota-sdk]
-git = "https://github.com/iotaledger/iota-sdk"
-rev = "6e939cfdc9d6075d024ccb43506a50da1cc4afcc"
-features = ["tls", "client", "stronghold"]
+tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [lib]
 path = "utils/utils.rs"
@@ -51,6 +47,10 @@ name = "6_create_vp"
 [[example]]
 path = "0_basic/7_revoke_vc.rs"
 name = "7_revoke_vc"
+
+[[example]]
+path = "0_basic/8_stronghold.rs"
+name = "8_stronghold"
 
 [[example]]
 path = "1_advanced/0_did_controls_did.rs"

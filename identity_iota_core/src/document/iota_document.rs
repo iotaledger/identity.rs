@@ -381,6 +381,9 @@ impl IotaDocument {
 
 #[cfg(feature = "client")]
 mod client_document {
+  use iota_sdk::types::block::address::Hrp;
+  use iota_sdk::types::block::address::ToBech32Ext;
+
   use crate::block::address::Address;
   use crate::block::output::AliasId;
   use crate::block::output::AliasOutput;
@@ -419,20 +422,29 @@ mod client_document {
         StateMetadataDocument::unpack(alias_output.state_metadata()).and_then(|doc| doc.into_iota_document(did))?
       };
 
-      document.set_controller_and_governor_addresses(alias_output, &did.network_str().to_owned().try_into()?);
+      document.set_controller_and_governor_addresses(alias_output, &did.network_str().to_owned().try_into()?)?;
+
       Ok(document)
     }
 
-    fn set_controller_and_governor_addresses(&mut self, alias_output: &AliasOutput, network_name: &NetworkName) {
-      self.metadata.governor_address = Some(alias_output.governor_address().to_bech32(network_name));
-      self.metadata.state_controller_address = Some(alias_output.state_controller_address().to_bech32(network_name));
+    fn set_controller_and_governor_addresses(
+      &mut self,
+      alias_output: &AliasOutput,
+      network_name: &NetworkName,
+    ) -> Result<()> {
+      let hrp: Hrp = network_name.try_into()?;
+      self.metadata.governor_address = Some(alias_output.governor_address().to_bech32(hrp).to_string());
+      self.metadata.state_controller_address = Some(alias_output.state_controller_address().to_bech32(hrp).to_string());
 
       // Overwrite the DID Document controller.
       let controller_did: Option<IotaDID> = match alias_output.state_controller_address() {
         Address::Alias(alias_address) => Some(IotaDID::new(alias_address.alias_id(), network_name)),
         _ => None,
       };
+
       *self.core_document_mut().controller_mut() = controller_did.map(CoreDID::from).map(OneOrSet::new_one);
+
+      Ok(())
     }
 
     /// Returns all DID documents of the Alias Outputs contained in the block's transaction payload
@@ -550,7 +562,6 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_did::DID;
-  use iota_sdk::types::block::protocol::ProtocolParameters;
 
   use crate::block::address::Address;
   use crate::block::address::AliasAddress;
@@ -722,7 +733,6 @@ mod tests {
 
   #[test]
   fn test_unpack_empty() {
-    let mock_token_supply: u64 = ProtocolParameters::default().token_supply();
     let controller_did: IotaDID = valid_did();
 
     // VALID: unpack empty, deactivated document.
@@ -736,7 +746,7 @@ mod tests {
       .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
         Address::Alias(AliasAddress::new(AliasId::from(&controller_did))),
       )))
-      .finish(mock_token_supply)
+      .finish()
       .unwrap();
     let document: IotaDocument = IotaDocument::unpack_from_output(&did, &alias_output, true).unwrap();
     assert_eq!(document.id(), &did);

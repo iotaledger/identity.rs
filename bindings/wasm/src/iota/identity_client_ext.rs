@@ -6,7 +6,6 @@ use identity_iota::iota::block::address::Address;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::RentStructure;
-use identity_iota::iota::block::output::RentStructureBuilder;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
@@ -68,7 +67,7 @@ impl WasmIotaIdentityClientExt {
     rentStructure: Option<IRent>,
   ) -> Result<PromiseAliasOutputBuilderParams> {
     let address_dto: AddressDto = address.into_serde().wasm_result()?;
-    let address: Address = Address::try_from(&address_dto)
+    let address: Address = Address::try_from(address_dto.clone())
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("newDidOutput failed to decode Address: {err}: {address_dto:?}"))
       })
@@ -77,11 +76,7 @@ impl WasmIotaIdentityClientExt {
 
     let promise: Promise = future_to_promise(async move {
       let rent_structure: Option<RentStructure> = rentStructure
-        .map(|rent| {
-          rent
-            .into_serde::<RentStructureBuilder>()
-            .map(RentStructureBuilder::finish)
-        })
+        .map(|rent| rent.into_serde::<RentStructure>())
         .transpose()
         .wasm_result()?;
 

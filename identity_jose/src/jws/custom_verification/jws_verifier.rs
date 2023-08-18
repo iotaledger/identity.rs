@@ -126,7 +126,7 @@ mod eddsa_verifier {
         return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
       }
 
-      let pk: [u8; crypto::signatures::ed25519::PUBLIC_KEY_LENGTH] = crate::jwu::decode_b64(params.x.as_str())
+      let pk: [u8; crypto::signatures::ed25519::PublicKey::LENGTH] = crate::jwu::decode_b64(params.x.as_str())
         .map_err(|_| {
           SignatureVerificationError::new(SignatureVerificationErrorKind::KeyDecodingFailure)
             .with_custom_message("could not decode x parameter from jwk")
@@ -143,7 +143,7 @@ mod eddsa_verifier {
       })?;
 
       let signature_arr =
-        <[u8; crypto::signatures::ed25519::SIGNATURE_LENGTH]>::try_from(input.decoded_signature.deref())
+        <[u8; crypto::signatures::ed25519::Signature::LENGTH]>::try_from(input.decoded_signature.deref())
           .map_err(|_| SignatureVerificationErrorKind::InvalidSignature)?;
 
       let signature = crypto::signatures::ed25519::Signature::from_bytes(signature_arr);

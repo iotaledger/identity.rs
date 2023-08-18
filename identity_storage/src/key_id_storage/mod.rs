@@ -12,9 +12,14 @@
 mod key_id_storage;
 mod key_id_storage_error;
 mod method_digest;
+#[cfg(feature = "stronghold")]
+mod stronghold;
 
 #[cfg(feature = "memstore")]
 mod memstore;
+
+#[cfg(test)]
+mod tests;
 
 pub use key_id_storage::*;
 pub use key_id_storage_error::*;

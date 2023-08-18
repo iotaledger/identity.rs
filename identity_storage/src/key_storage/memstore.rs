@@ -17,6 +17,8 @@ use shared::Shared;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
+use super::ed25519::encode_jwk;
+use super::ed25519::expand_secret_jwk;
 use super::jwk_gen_output::JwkGenOutput;
 use super::KeyId;
 use super::KeyStorageError;
@@ -68,7 +70,7 @@ impl JwkStorage for JwkMemStore {
 
     let kid: KeyId = random_key_id();
 
-    let mut jwk: Jwk = ed25519::encode_jwk(&private_key, &public_key);
+    let mut jwk: Jwk = encode_jwk(&private_key, &public_key);
     jwk.set_alg(alg.name());
     // Unwrapping is OK because the None variant only occurs for kty = oct.
     let mut public_jwk: Jwk = jwk.to_public().unwrap();
@@ -160,7 +162,7 @@ impl JwkStorage for JwkMemStore {
     let jwk: &Jwk = jwk_store
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
-    let secret_key = ed25519::expand_secret_jwk(jwk)?;
+    let secret_key = expand_secret_jwk(jwk)?;
     Ok(secret_key.sign(data).to_bytes().to_vec())
   }
 
@@ -176,66 +178,6 @@ impl JwkStorage for JwkMemStore {
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
     Ok(jwk_store.contains_key(key_id))
-  }
-}
-
-pub(crate) mod ed25519 {
-  use crypto::signatures::ed25519::PublicKey;
-  use crypto::signatures::ed25519::SecretKey;
-  use crypto::signatures::ed25519::{self};
-  use identity_verification::jose::jwk::EdCurve;
-  use identity_verification::jose::jwk::Jwk;
-  use identity_verification::jose::jwk::JwkParamsOkp;
-  use identity_verification::jose::jwu;
-
-  use crate::key_storage::KeyStorageError;
-  use crate::key_storage::KeyStorageErrorKind;
-  use crate::key_storage::KeyStorageResult;
-
-  pub(crate) fn expand_secret_jwk(jwk: &Jwk) -> KeyStorageResult<SecretKey> {
-    let params: &JwkParamsOkp = jwk.try_okp_params().unwrap();
-
-    if params
-      .try_ed_curve()
-      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType).with_source(err))?
-      != EdCurve::Ed25519
-    {
-      return Err(
-        KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
-          .with_custom_message(format!("expected an {} key", EdCurve::Ed25519.name())),
-      );
-    }
-
-    let sk: [u8; ed25519::SECRET_KEY_LENGTH] = params
-      .d
-      .as_deref()
-      .map(jwu::decode_b64)
-      .ok_or_else(|| {
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("expected Jwk `d` param to be present")
-      })?
-      .map_err(|err| {
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message("unable to decode `d` param")
-          .with_source(err)
-      })?
-      .try_into()
-      .map_err(|_| {
-        KeyStorageError::new(KeyStorageErrorKind::Unspecified)
-          .with_custom_message(format!("expected key of length {}", ed25519::SECRET_KEY_LENGTH))
-      })?;
-
-    Ok(SecretKey::from_bytes(sk))
-  }
-
-  pub(crate) fn encode_jwk(private_key: &SecretKey, public_key: &PublicKey) -> Jwk {
-    let x = jwu::encode_b64(public_key.as_ref());
-    let d = jwu::encode_b64(private_key.to_bytes().as_ref());
-    let mut params = JwkParamsOkp::new();
-    params.x = x;
-    params.d = Some(d);
-    params.crv = EdCurve::Ed25519.name().to_owned();
-    Jwk::from_params(params)
   }
 }
 
@@ -361,13 +303,12 @@ pub(crate) mod shared {
 
 #[cfg(test)]
 mod tests {
+  use crate::key_storage::tests::utils::expand_public_jwk;
+  use crate::key_storage::tests::utils::generate_ed25519;
   use crypto::signatures::ed25519::PublicKey;
   use crypto::signatures::ed25519::Signature;
-  use crypto::signatures::ed25519::{self};
   use identity_verification::jose::jwk::EcCurve;
   use identity_verification::jose::jwk::JwkParamsEc;
-  use identity_verification::jose::jwk::JwkParamsOkp;
-  use identity_verification::jose::jwu;
 
   use super::*;
 
@@ -443,23 +384,5 @@ mod tests {
     // INVALID: Inserting an Ed25519 key with the ES256 alg is not compatible.
     let err = store.insert(jwk.clone()).await.unwrap_err();
     assert!(matches!(err.kind(), KeyStorageErrorKind::KeyAlgorithmMismatch));
-  }
-
-  pub(crate) fn expand_public_jwk(jwk: &Jwk) -> PublicKey {
-    let params: &JwkParamsOkp = jwk.try_okp_params().unwrap();
-
-    if params.try_ed_curve().unwrap() != EdCurve::Ed25519 {
-      panic!("expected an ed25519 jwk");
-    }
-
-    let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
-
-    PublicKey::try_from(pk).unwrap()
-  }
-
-  fn generate_ed25519() -> (SecretKey, PublicKey) {
-    let private_key = SecretKey::generate().unwrap();
-    let public_key = private_key.public_key();
-    (private_key, public_key)
   }
 }

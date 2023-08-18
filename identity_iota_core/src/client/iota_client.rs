@@ -88,7 +88,7 @@ impl IotaClientExt for Client {
       .map_err(Error::BasicOutputBuildError)?;
 
     let block: Block = self
-      .block()
+      .build_block()
       .with_secret_manager(secret_manager)
       .with_input(output_id.into())
       .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block input", Some(Box::new(err))))?
@@ -147,7 +147,7 @@ async fn publish_output(
   alias_output: AliasOutput,
 ) -> iota_sdk::client::error::Result<Block> {
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(secret_manager)
     .with_outputs(vec![alias_output.into()])?
     .finish()

@@ -51,6 +51,9 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
 
   /// Deletes the key identified by `key_id`.
   ///
+  /// If the corresponding key does not exist in storage, a [`KeyStorageError`] with kind
+  /// [`KeyNotFound`](KeyStorageErrorKind::KeyNotFound) must be returned.
+  ///
   /// # Warning
   ///
   /// This operation cannot be undone. The keys are purged permanently.

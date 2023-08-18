@@ -13,8 +13,7 @@ use identity_iota::credential::Presentation;
 use identity_iota::did::DIDUrl;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
-use identity_iota::iota::block::protocol::dto::ProtocolParametersDto;
-use identity_iota::iota::block::protocol::ProtocolParameters;
+use identity_iota::iota::block::TryFromDto;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::NetworkName;
@@ -415,10 +414,9 @@ impl WasmIotaDocument {
     did: &WasmIotaDID,
     aliasOutput: WasmAliasOutput,
     allowEmpty: bool,
-    tokenSupply: u64,
   ) -> Result<WasmIotaDocument> {
     let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
-    let alias_output: AliasOutput = AliasOutput::try_from_dto(&alias_dto, tokenSupply)
+    let alias_output: AliasOutput = AliasOutput::try_from_dto(alias_dto)
       .map_err(|err| {
         identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
       })
@@ -432,15 +430,9 @@ impl WasmIotaDocument {
   /// outputs, if any.
   ///
   /// Errors if any Alias Output does not contain a valid or empty DID Document.
-  ///
-  /// `protocolResponseJson` can be obtained from a `Client`.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = unpackFromBlock)]
-  pub fn unpack_from_block(
-    network: String,
-    block: &WasmBlock,
-    protocol_parameters: &INodeInfoProtocol,
-  ) -> Result<ArrayIotaDocument> {
+  pub fn unpack_from_block(network: String, block: &WasmBlock) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
     let block_dto: identity_iota::iota::block::BlockDto = block
       .into_serde()
@@ -449,21 +441,9 @@ impl WasmIotaDocument {
       })
       .wasm_result()?;
 
-    let protocol_parameters_dto: ProtocolParametersDto = protocol_parameters
-      .into_serde()
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {err}")))
+    let block: identity_iota::iota::block::Block = identity_iota::iota::block::Block::try_from_dto(block_dto)
+      .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
       .wasm_result()?;
-
-    let protocol_parameters: ProtocolParameters = ProtocolParameters::try_from(protocol_parameters_dto)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {err}")))
-      .wasm_result()?;
-
-    let block: identity_iota::iota::block::Block =
-      identity_iota::iota::block::Block::try_from_dto(&block_dto, &protocol_parameters)
-        .map_err(|err| {
-          identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}"))
-        })
-        .wasm_result()?;
 
     Ok(
       IotaDocument::unpack_from_block(&network_name, &block)

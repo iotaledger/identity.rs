@@ -9,6 +9,7 @@ use identity_core::common::Context;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_did::CoreDID;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fmt::Display;
@@ -16,10 +17,8 @@ use std::fmt::Formatter;
 
 use crate::Error::DomainLinkageError;
 
-lazy_static::lazy_static! {
-  static ref WELL_KNOWN_CONTEXT: Context =
-    Context::Url(Url::parse("https://identity.foundation/.well-known/did-configuration/v1").unwrap());
-}
+static WELL_KNOWN_CONTEXT: Lazy<Context> =
+  Lazy::new(|| Context::Url(Url::parse("https://identity.foundation/.well-known/did-configuration/v1").unwrap()));
 
 /// DID Configuration Resource which contains Domain Linkage Credentials.
 ///

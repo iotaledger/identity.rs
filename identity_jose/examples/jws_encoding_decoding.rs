@@ -4,6 +4,7 @@
 use crypto::signatures::ed25519;
 use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
+use crypto::signatures::ed25519::Signature;
 use identity_jose::jwk::EdCurve;
 use identity_jose::jwk::Jwk;
 use identity_jose::jwk::JwkParamsOkp;
@@ -95,11 +96,11 @@ fn encode_then_decode() -> Result<JwtClaims<serde_json::Value>, Box<dyn std::err
         return Err(SignatureVerificationErrorKind::UnsupportedKeyParams.into());
       }
 
-      let pk: [u8; ed25519::PUBLIC_KEY_LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
+      let pk: [u8; PublicKey::LENGTH] = jwu::decode_b64(params.x.as_str()).unwrap().try_into().unwrap();
 
       let public_key = PublicKey::try_from(pk).map_err(|_| SignatureVerificationErrorKind::KeyDecodingFailure)?;
-      let signature_arr = <[u8; ed25519::SIGNATURE_LENGTH]>::try_from(verification_input.decoded_signature.deref())
-        .map_err(|err| {
+      let signature_arr =
+        <[u8; Signature::LENGTH]>::try_from(verification_input.decoded_signature.deref()).map_err(|err| {
           SignatureVerificationError::new(SignatureVerificationErrorKind::InvalidSignature).with_source(err)
         })?;
       let signature = ed25519::Signature::from_bytes(signature_arr);

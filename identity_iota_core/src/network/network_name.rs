@@ -94,6 +94,24 @@ impl Display for NetworkName {
   }
 }
 
+#[cfg(feature = "client")]
+mod try_from_network_name {
+  use iota_sdk::types::block::address::Hrp;
+
+  use crate::Error;
+  use crate::NetworkName;
+  use std::str::FromStr;
+
+  impl TryFrom<&NetworkName> for Hrp {
+    type Error = Error;
+
+    fn try_from(network_name: &NetworkName) -> std::result::Result<Self, Self::Error> {
+      Hrp::from_str(network_name.as_ref())
+        .map_err(|err| Error::InvalidNetworkName(format!("could not convert network name to HRP: {err}")))
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
