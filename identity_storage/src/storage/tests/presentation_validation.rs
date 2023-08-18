@@ -57,7 +57,7 @@ where
 
   let presentation_jwt = setup
     .subject_doc
-    .sign_presentation(
+    .create_presentation_jwt(
       &presentation,
       &setup.subject_storage,
       &setup.subject_method_fragment,
@@ -115,7 +115,7 @@ where
 
   let presentation_jwt = setup
     .subject_doc
-    .sign_presentation(
+    .create_presentation_jwt(
       &presentation,
       &setup.subject_storage,
       &setup.subject_method_fragment,
@@ -172,7 +172,7 @@ where
 
   let presentation_jwt = setup
     .subject_doc
-    .sign_presentation(
+    .create_presentation_jwt(
       &presentation,
       &setup.subject_storage,
       &setup.subject_method_fragment,
@@ -254,7 +254,7 @@ where
 
   let presentation_jwt = setup
     .subject_doc
-    .sign_presentation(
+    .create_presentation_jwt(
       &presentation,
       &setup.subject_storage,
       &setup.subject_method_fragment,
@@ -319,7 +319,7 @@ where
 
   let presentation_jwt = setup
     .subject_doc
-    .sign_presentation(
+    .create_presentation_jwt(
       &presentation,
       &setup.subject_storage,
       &setup.subject_method_fragment,
@@ -380,7 +380,7 @@ where
 
   let presentation_jwt = setup
     .issuer_doc
-    .sign_presentation(
+    .create_presentation_jwt(
       &presentation,
       &setup.issuer_storage,
       &setup.issuer_method_fragment,
@@ -416,7 +416,7 @@ where
 {
   setup
     .issuer_doc
-    .sign_credential(
+    .create_credential_jwt(
       credential,
       &setup.issuer_storage,
       &setup.issuer_method_fragment,

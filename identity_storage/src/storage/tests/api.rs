@@ -114,7 +114,7 @@ async fn sign_bytes() {
   let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
 
   let jws: Jws = document
-    .sign_bytes(&storage, &fragment, payload, &signature_options)
+    .create_jws(&storage, &fragment, payload, &signature_options)
     .await
     .unwrap();
 
@@ -133,7 +133,7 @@ async fn sign_bytes_with_nonce() {
   let verification_options: JwsVerificationOptions = JwsVerificationOptions::new().nonce(nonce);
 
   let jws: Jws = document
-    .sign_bytes(&storage, &fragment, payload, &signature_options)
+    .create_jws(&storage, &fragment, payload, &signature_options)
     .await
     .unwrap();
 
@@ -178,7 +178,7 @@ async fn sign_bytes_with_header_copy_options() {
   let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
 
   let jws: Jws = document
-    .sign_bytes(&storage, &fragment, payload, &signature_options)
+    .create_jws(&storage, &fragment, payload, &signature_options)
     .await
     .unwrap();
 
@@ -212,7 +212,7 @@ async fn sign_bytes_detached() {
   let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
 
   let jws: Jws = document
-    .sign_bytes(&storage, fragment.as_ref(), payload, &signature_options)
+    .create_jws(&storage, fragment.as_ref(), payload, &signature_options)
     .await
     .unwrap();
 
@@ -232,7 +232,7 @@ async fn sign_bytes_detached() {
   let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().b64(true).detached_payload(true);
 
   let jws: Jws = document
-    .sign_bytes(&storage, fragment.as_ref(), payload, &signature_options)
+    .create_jws(&storage, fragment.as_ref(), payload, &signature_options)
     .await
     .unwrap();
   let payload_b64: String = encode_b64(payload);
@@ -284,7 +284,7 @@ async fn signing_credential() {
 
   let credential: Credential = Credential::from_json(credential_json).unwrap();
   let jws = document
-    .sign_credential(&credential, &storage, &method_fragment, &JwsSignatureOptions::default())
+    .create_credential_jwt(&credential, &storage, &method_fragment, &JwsSignatureOptions::default())
     .await
     .unwrap();
   // Verify the credential
@@ -366,7 +366,7 @@ mod iota_document_tests {
 
     // Sign the test string
     let jws = iota_document
-      .sign_bytes(&storage, fragment, b"test", &JwsSignatureOptions::new())
+      .create_jws(&storage, fragment, b"test", &JwsSignatureOptions::new())
       .await
       .unwrap();
 

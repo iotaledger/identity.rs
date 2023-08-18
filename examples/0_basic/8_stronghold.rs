@@ -105,7 +105,7 @@ async fn main() -> anyhow::Result<()> {
   // Sign data with the created verification method.
   let data = b"test_data";
   let jws: Jws = resolved_document
-    .sign_bytes(&storage, &fragment, data, &JwsSignatureOptions::default())
+    .create_jws(&storage, &fragment, data, &JwsSignatureOptions::default())
     .await?;
 
   // Verify Signature.

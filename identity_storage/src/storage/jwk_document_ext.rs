@@ -82,8 +82,8 @@ pub trait JwkDocumentExt: private::Sealed {
   /// public key material in the verification method identified by the given `fragment.
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
-  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).   
-  async fn sign_bytes<K, I>(
+  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+  async fn create_jws<K, I>(
     &self,
     storage: &Storage<K, I>,
     fragment: &str,
@@ -99,7 +99,7 @@ pub trait JwkDocumentExt: private::Sealed {
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
-  async fn sign_credential<K, I, T>(
+  async fn create_credential_jwt<K, I, T>(
     &self,
     credential: &Credential<T>,
     storage: &Storage<K, I>,
@@ -116,7 +116,7 @@ pub trait JwkDocumentExt: private::Sealed {
   ///
   /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
   /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
-  async fn sign_presentation<K, I, CRED, T>(
+  async fn create_presentation_jwt<K, I, CRED, T>(
     &self,
     presentation: &Presentation<CRED, T>,
     storage: &Storage<K, I>,
@@ -327,7 +327,7 @@ impl JwkDocumentExt for CoreDocument {
     purge_method_core_document(self, storage, id).await
   }
 
-  async fn sign_bytes<K, I>(
+  async fn create_jws<K, I>(
     &self,
     storage: &Storage<K, I>,
     fragment: &str,
@@ -414,7 +414,7 @@ impl JwkDocumentExt for CoreDocument {
     Ok(Jws::new(jws_encoder.into_jws(&signature)))
   }
 
-  async fn sign_credential<K, I, T>(
+  async fn create_credential_jwt<K, I, T>(
     &self,
     credential: &Credential<T>,
     storage: &Storage<K, I>,
@@ -441,12 +441,12 @@ impl JwkDocumentExt for CoreDocument {
 
     let payload = credential.serialize_jwt().map_err(Error::ClaimsSerializationError)?;
     self
-      .sign_bytes(storage, fragment, payload.as_bytes(), options)
+      .create_jws(storage, fragment, payload.as_bytes(), options)
       .await
       .map(|jws| Jwt::new(jws.into()))
   }
 
-  async fn sign_presentation<K, I, CRED, T>(
+  async fn create_presentation_jwt<K, I, CRED, T>(
     &self,
     presentation: &Presentation<CRED, T>,
     storage: &Storage<K, I>,
@@ -476,7 +476,7 @@ impl JwkDocumentExt for CoreDocument {
       .serialize_jwt(jwt_options)
       .map_err(Error::ClaimsSerializationError)?;
     self
-      .sign_bytes(storage, fragment, payload.as_bytes(), jws_options)
+      .create_jws(storage, fragment, payload.as_bytes(), jws_options)
       .await
       .map(|jws| Jwt::new(jws.into()))
   }
@@ -540,7 +540,7 @@ mod iota_document {
       purge_method_iota_document(self, storage, id).await
     }
 
-    async fn sign_bytes<K, I>(
+    async fn create_jws<K, I>(
       &self,
       storage: &Storage<K, I>,
       fragment: &str,
@@ -553,11 +553,11 @@ mod iota_document {
     {
       self
         .core_document()
-        .sign_bytes(storage, fragment, payload, options)
+        .create_jws(storage, fragment, payload, options)
         .await
     }
 
-    async fn sign_credential<K, I, T>(
+    async fn create_credential_jwt<K, I, T>(
       &self,
       credential: &Credential<T>,
       storage: &Storage<K, I>,
@@ -571,10 +571,10 @@ mod iota_document {
     {
       self
         .core_document()
-        .sign_credential(credential, storage, fragment, options)
+        .create_credential_jwt(credential, storage, fragment, options)
         .await
     }
-    async fn sign_presentation<K, I, CRED, T>(
+    async fn create_presentation_jwt<K, I, CRED, T>(
       &self,
       presentation: &Presentation<CRED, T>,
       storage: &Storage<K, I>,
@@ -590,7 +590,7 @@ mod iota_document {
     {
       self
         .core_document()
-        .sign_presentation(presentation, storage, fragment, options, jwt_options)
+        .create_presentation_jwt(presentation, storage, fragment, options, jwt_options)
         .await
     }
   }

@@ -106,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
     .build()?;
 
   let jwt: Jwt = updated_did_document
-    .sign_credential(
+    .create_credential_jwt(
       &domain_linkage_credential,
       &storage,
       &fragment,

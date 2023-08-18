@@ -137,7 +137,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Credential JSON > {credential:#}");
 
   let credential_jwt: Jwt = issuer_document
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage_issuer,
       &fragment_issuer,

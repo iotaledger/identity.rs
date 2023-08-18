@@ -46,7 +46,7 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       method_fragment.as_ref(),
@@ -128,7 +128,7 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       method_fragment.as_ref(),
@@ -169,7 +169,7 @@ where
   let CredentialSetup { credential, .. } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jwt: Jwt = issuer_doc
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       method_fragment.as_ref(),
@@ -233,7 +233,7 @@ where
 
   // Sign the credential with the *other* issuer.
   let jwt: Jwt = other_issuer_doc
-    .sign_credential(&credential, &other_storage, fragment, &JwsSignatureOptions::default())
+    .create_credential_jwt(&credential, &other_storage, fragment, &JwsSignatureOptions::default())
     .await
     .unwrap();
 
@@ -392,7 +392,7 @@ where
   } = test_utils::generate_credential(&issuer_doc, &[&subject_doc], None, None);
 
   let jws = issuer_doc
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       method_fragment.as_ref(),
