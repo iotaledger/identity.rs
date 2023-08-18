@@ -5,8 +5,6 @@
 
 mod claims;
 mod header;
-mod header_set;
 
 pub use self::claims::*;
 pub use self::header::*;
-pub use self::header_set::*;

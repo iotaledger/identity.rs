@@ -17,6 +17,7 @@ pub enum EdCurve {
 }
 
 impl EdCurve {
+  /// Returns the name of the curve as a string slice.
   pub const fn name(self) -> &'static str {
     match self {
       Self::Ed25519 => "Ed25519",

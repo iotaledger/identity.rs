@@ -22,6 +22,7 @@ impl<'a> Default for Recipient<'a> {
 }
 
 impl<'a> Recipient<'a> {
+  /// Creates a new recipient with no header set.
   pub fn new() -> Self {
     Self {
       protected: None,

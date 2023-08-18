@@ -17,6 +17,7 @@ pub enum EcxCurve {
 }
 
 impl EcxCurve {
+  /// Returns the name of the curve as a string slice.
   pub const fn name(self) -> &'static str {
     match self {
       Self::X25519 => "X25519",
