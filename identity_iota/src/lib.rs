@@ -3,7 +3,6 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
-#![allow(deprecated)]
 #![doc = include_str!("./../README.md")]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
@@ -69,18 +68,6 @@ pub mod iota {
 
   pub use identity_iota_core::*;
 }
-
-// #[cfg(feature = "comm")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
-// pub mod comm {
-//   //! DID Communications Message Specification
-//   //!
-//   //! [Specification](https://github.com/iotaledger/identity.rs/tree/main/docs/DID%20Communications%20Research%20and%20Specification)
-
-//   pub use identity_comm::envelope::*;
-//   pub use identity_comm::error::*;
-//   pub use identity_comm::message::*;
-// }
 
 pub mod prelude {
   //! Prelude of commonly used types

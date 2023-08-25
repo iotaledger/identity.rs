@@ -48,6 +48,7 @@ pub enum JwsAlgorithm {
 }
 
 impl JwsAlgorithm {
+  /// A slice of all supported [`JwsAlgorithm`]s.
   pub const ALL: &'static [Self] = &[
     Self::HS256,
     Self::HS384,

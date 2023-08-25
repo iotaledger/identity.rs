@@ -14,7 +14,9 @@ use identity_did::DIDUrl;
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum MethodRef {
+  /// A [`VerificationMethod`] embedded in a verification relationship.
   Embed(VerificationMethod),
+  /// A reference to a [`VerificationMethod`] in a verification relationship.
   Refer(DIDUrl),
 }
 

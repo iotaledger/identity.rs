@@ -6,6 +6,9 @@ use core::str::from_utf8;
 use crate::error::Error;
 use crate::error::Result;
 
+/// The requirements towards the character set when encoding a JWS.
+///
+/// See the individual variants for more details.
 #[derive(Clone, Copy, Debug)]
 pub enum CharSet {
   /// The ASCII space character and all printable ASCII characters other

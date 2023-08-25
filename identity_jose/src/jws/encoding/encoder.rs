@@ -33,7 +33,12 @@ pub struct CompactJwsEncoder<'a> {
 /// Options determining whether the payload is detached and if not
 /// which additional requirements the payload must satisfy.
 pub enum CompactJwsEncodingOptions {
-  NonDetached { charset_requirements: CharSet },
+  /// Includes the payload in the JWS, i.e. non-detached mode.
+  NonDetached {
+    /// The requirements towards the character set when encoding a JWS.
+    charset_requirements: CharSet,
+  },
+  /// Does not include the payload in the JWS, i.e. detached mode.
   Detached,
 }
 
@@ -63,7 +68,7 @@ impl<'payload> CompactJwsEncoder<'payload> {
   ) -> Result<Self> {
     Self::validate_header(protected_header)?;
     let encoded_protected_header: String = jwu::encode_b64_json(protected_header)?;
-    let maybe_encoded: MaybeEncodedPayload = MaybeEncodedPayload::encode_if_b64(payload, Some(protected_header));
+    let maybe_encoded: MaybeEncodedPayload<'_> = MaybeEncodedPayload::encode_if_b64(payload, Some(protected_header));
     let signing_input: Box<[u8]> =
       jwu::create_message(encoded_protected_header.as_bytes(), maybe_encoded.as_bytes()).into();
 
@@ -128,7 +133,7 @@ impl<'payload, 'unprotected> FlattenedJwsEncoder<'payload, 'unprotected> {
   /// [`Self::into_jws`](CompactJwsEncoder::into_jws()) for information on how to proceed.
   pub fn new(payload: &'payload [u8], recipient: Recipient<'unprotected>, detached: bool) -> Result<Self> {
     utils::validate_headers_json_serialization(recipient)?;
-    let maybe_encoded: MaybeEncodedPayload = MaybeEncodedPayload::encode_if_b64(payload, recipient.protected);
+    let maybe_encoded: MaybeEncodedPayload<'_> = MaybeEncodedPayload::encode_if_b64(payload, recipient.protected);
     let signing_data: SigningData = SigningData::new(maybe_encoded.as_bytes(), recipient.protected)?;
     let processed_payload: Option<Cow<'payload, str>> = if !detached {
       // The only additional validation required when processing the payload to be used with the flattened JWS Json
@@ -266,7 +271,7 @@ impl<'payload, 'unprotected> GeneralJwsEncoder<'payload, 'unprotected> {
       detached,
       ..
     } = self;
-    let general: General = {
+    let general: General<'_, '_> = {
       if detached {
         General {
           payload: None,

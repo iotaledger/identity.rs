@@ -11,14 +11,20 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::verification_method::MethodRelationship;
 
-/// Verification method group used to refine the scope of a method query.
+/// The scope of a [`VerificationMethod`](crate::VerificationMethod).
+///
+/// Can either refer to a generic method embedded in the verification method field,
+/// or to a verification relationship.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum MethodScope {
+  /// The scope of generic verification methods.
   VerificationMethod,
+  /// The scope of a specific [`MethodRelationship`].
   VerificationRelationship(MethodRelationship),
 }
 
 impl MethodScope {
+  /// Returns the string representation of the scope.
   pub fn as_str(&self) -> &'static str {
     match self {
       Self::VerificationMethod => "VerificationMethod",
@@ -26,22 +32,27 @@ impl MethodScope {
     }
   }
 
+  /// The verification relationship scope of [`MethodRelationship::Authentication`].
   pub const fn authentication() -> Self {
     Self::VerificationRelationship(MethodRelationship::Authentication)
   }
 
+  /// The verification relationship scope of [`MethodRelationship::CapabilityDelegation`].
   pub const fn capability_delegation() -> Self {
     Self::VerificationRelationship(MethodRelationship::CapabilityDelegation)
   }
 
+  /// The verification relationship scope of [`MethodRelationship::CapabilityInvocation`].
   pub const fn capability_invocation() -> Self {
     Self::VerificationRelationship(MethodRelationship::CapabilityInvocation)
   }
 
+  /// The verification relationship scope of [`MethodRelationship::AssertionMethod`].
   pub const fn assertion_method() -> Self {
     Self::VerificationRelationship(MethodRelationship::AssertionMethod)
   }
 
+  /// The verification relationship scope of [`MethodRelationship::KeyAgreement`].
   pub const fn key_agreement() -> Self {
     Self::VerificationRelationship(MethodRelationship::KeyAgreement)
   }

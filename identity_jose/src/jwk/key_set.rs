@@ -43,6 +43,7 @@ impl JwkSet {
     &self.keys
   }
 
+  /// Returns an iterator over the contained [`Jwk`]s.
   pub fn iter(&self) -> Iter<'_, Jwk> {
     self.keys.iter()
   }

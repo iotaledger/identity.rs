@@ -20,11 +20,11 @@ const PREDEFINED: &[&str] = &[
 // The extension parameters supported by this library.
 const PERMITTED_CRITS: &[&str] = &["b64"];
 
-pub fn parse_utf8(slice: &(impl AsRef<[u8]> + ?Sized)) -> Result<&str> {
+pub(crate) fn parse_utf8(slice: &(impl AsRef<[u8]> + ?Sized)) -> Result<&str> {
   str::from_utf8(slice.as_ref()).map_err(Error::InvalidUtf8)
 }
 
-pub fn filter_non_empty_bytes<'a, T, U: 'a>(value: T) -> Option<&'a [u8]>
+pub(crate) fn filter_non_empty_bytes<'a, T, U: 'a>(value: T) -> Option<&'a [u8]>
 where
   T: Into<Option<&'a U>>,
   U: AsRef<[u8]> + ?Sized,
@@ -32,7 +32,7 @@ where
   value.into().map(AsRef::as_ref).filter(|value| !value.is_empty())
 }
 
-pub fn create_message(header: &[u8], claims: &[u8]) -> Vec<u8> {
+pub(crate) fn create_message(header: &[u8], claims: &[u8]) -> Vec<u8> {
   let capacity: usize = header.len() + 1 + claims.len();
   let mut message: Vec<u8> = Vec::with_capacity(capacity);
 
@@ -42,11 +42,11 @@ pub fn create_message(header: &[u8], claims: &[u8]) -> Vec<u8> {
   message
 }
 
-pub fn extract_b64(header: Option<&JwsHeader>) -> bool {
+pub(crate) fn extract_b64(header: Option<&JwsHeader>) -> bool {
   header.and_then(JwsHeader::b64).unwrap_or(DEFAULT_B64)
 }
 
-pub fn validate_jws_headers(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
+pub(crate) fn validate_jws_headers(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
   validate_disjoint(protected, unprotected)?;
   validate_crit(protected, unprotected)?;
   validate_b64(protected, unprotected)?;
@@ -63,7 +63,7 @@ pub fn validate_jws_headers(protected: Option<&JwsHeader>, unprotected: Option<&
 /// 5. All values in "crit" are present in at least one of the `protected` or `unprotected` headers.
 ///
 /// See (<https://www.rfc-editor.org/rfc/rfc7515#section-4.1.11>)
-pub fn validate_crit<T>(protected: Option<&T>, unprotected: Option<&T>) -> Result<()>
+pub(crate) fn validate_crit<T>(protected: Option<&T>, unprotected: Option<&T>) -> Result<()>
 where
   T: JoseHeader,
 {
@@ -107,7 +107,7 @@ where
 }
 
 /// Checks that the provided headers satisfy the requirements of (<https://www.rfc-editor.org/rfc/rfc7797#section-3>).
-pub fn validate_b64(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
+pub(crate) fn validate_b64(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
   // The "b64" parameter MUST be integrity protected
   if unprotected.and_then(JwsHeader::b64).is_some() {
     return Err(Error::InvalidParam("unprotected `b64` parameter"));
@@ -126,7 +126,7 @@ pub fn validate_b64(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeade
   }
 }
 
-pub fn validate_disjoint(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
+pub(crate) fn validate_disjoint(protected: Option<&JwsHeader>, unprotected: Option<&JwsHeader>) -> Result<()> {
   let is_disjoint: bool = match (protected, unprotected) {
     (Some(protected), Some(unprotected)) => protected.is_disjoint(unprotected),
     _ => true,

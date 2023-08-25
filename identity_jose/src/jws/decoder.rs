@@ -25,8 +25,11 @@ use super::VerificationInput;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct DecodedJws<'a> {
+  /// The decoded protected header.
   pub protected: JwsHeader,
+  /// The decoded unprotected header.
   pub unprotected: Option<Box<JwsHeader>>,
+  /// The decoded raw claims.
   pub claims: Cow<'a, [u8]>,
 }
 

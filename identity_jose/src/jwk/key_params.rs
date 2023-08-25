@@ -18,9 +18,13 @@ use crate::jwk::JwkType;
 #[derive(Zeroize)]
 #[zeroize(drop)]
 pub enum JwkParams {
+  /// Elliptic Curve parameters.
   Ec(JwkParamsEc),
+  /// RSA parameters.
   Rsa(JwkParamsRsa),
+  /// Octet Sequence parameters used to represent symmetric keys.
   Oct(JwkParamsOct),
+  /// Octet Key Pairs parameters.
   Okp(JwkParamsOkp),
 }
 
