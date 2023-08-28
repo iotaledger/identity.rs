@@ -107,7 +107,7 @@ async fn main() -> anyhow::Result<()> {
     .build()?;
 
   let credential_jwt: Jwt = issuer_document
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage_issuer,
       &fragment_issuer,
@@ -160,7 +160,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a JWT verifiable presentation using the holder's verification method
   // and include the requested challenge and expiry timestamp.
   let presentation_jwt: Jwt = alice_document
-    .sign_presentation(
+    .create_presentation_jwt(
       &presentation,
       &storage_alice,
       &fragment_alice,

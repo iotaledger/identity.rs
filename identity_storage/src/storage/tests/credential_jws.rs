@@ -78,7 +78,7 @@ async fn signing_credential_with_detached_option_fails() {
   let (document, storage, kid, credential) = setup().await;
 
   assert!(document
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       kid.as_ref(),
@@ -94,7 +94,7 @@ async fn signing_credential_with_nonce_and_scope() {
   let nonce: &str = "0xaabbccddeeff";
 
   let jws = document
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       kid.as_ref(),
@@ -151,7 +151,7 @@ async fn signing_credential_with_b64() {
   let (document, storage, kid, credential) = setup().await;
 
   let jws = document
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       kid.as_ref(),
@@ -177,7 +177,7 @@ async fn signing_credential_with_b64() {
 
   // JWTs should not have `b64` set per https://datatracker.ietf.org/doc/html/rfc7797#section-7.
   assert!(document
-    .sign_credential(
+    .create_credential_jwt(
       &credential,
       &storage,
       kid.as_ref(),

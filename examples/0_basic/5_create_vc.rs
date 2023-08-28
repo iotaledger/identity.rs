@@ -86,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
     .build()?;
 
   let credential_jwt: Jwt = issuer_document
-    .sign_credential(&credential, &issuer_storage, &fragment, &JwsSignatureOptions::default())
+    .create_credential_jwt(&credential, &issuer_storage, &fragment, &JwsSignatureOptions::default())
     .await?;
 
   // Before sending this credential to the holder the issuer wants to validate that some properties

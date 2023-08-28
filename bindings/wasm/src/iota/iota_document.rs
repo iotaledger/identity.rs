@@ -702,7 +702,7 @@ impl WasmIotaDocument {
       document_lock_clone
         .read()
         .await
-        .sign_bytes(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .create_jws(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
         .await
         .wasm_result()
         .map(WasmJws::new)
@@ -732,7 +732,7 @@ impl WasmIotaDocument {
       document_lock_clone
         .read()
         .await
-        .sign_credential(&credential_clone, &storage_clone, &fragment, &options_clone)
+        .create_credential_jwt(&credential_clone, &storage_clone, &fragment, &options_clone)
         .await
         .wasm_result()
         .map(WasmJwt::new)
@@ -764,7 +764,7 @@ impl WasmIotaDocument {
       document_lock_clone
         .read()
         .await
-        .sign_presentation(
+        .create_presentation_jwt(
           &presentation_clone,
           &storage_clone,
           &fragment,
