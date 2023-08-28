@@ -28,15 +28,9 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-> ⚠️ **WARNING** ⚠️
->
-> This library is currently in its **beta stage** and **under development** and might undergo large changes!
-> Until a formal third-party security audit has taken place, the [IOTA Foundation](https://www.iota.org/) makes no guarantees to the fitness of this library. As such, it is to be seen as **experimental** and not ready for real-world applications.
-> Nevertheless, we are very interested in feedback about user experience, design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
-
 ## Bindings
 
-[Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
+[Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages:
 
 - [Web Assembly](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm/) (JavaScript/TypeScript)
 
@@ -45,7 +39,6 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 - [API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
 - [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
-- [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website for a collaborative effort to provide help, guidance and spotlight to the IOTA Identity Community through offering feedback and introducing consistent workflows around IOTA Identity.
 
 ## Prerequisites
 
@@ -58,7 +51,7 @@ If you want to include IOTA Identity in your project, simply add it as a depende
 
 ```toml
 [dependencies]
-identity_iota = { version = "0.7.0-alpha" }
+identity_iota = { version = "1.0-rc" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
@@ -81,7 +74,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "0.7.0-alpha" }
+identity_iota = { version = "1.0-rc" }
 iota-sdk = { version = "0.3.0", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 ```
@@ -208,28 +201,6 @@ _Example output_
 For detailed development progress, see the IOTA Identity development [kanban board](https://github.com/orgs/iotaledger/projects/8/views/5).
 
 IOTA Identity is in heavy development, and will naturally change as it matures and people use it. The chart below isn't meant to be exhaustive, but rather helps to give an idea for some of the areas of development and their relative completion:
-
-#### Basic Framework
-
-|                                       Feature                                       | Not started | In Research | In Development | Done |          Notes           |
-| :---------------------------------------------------------------------------------: | :---------: | :---------: | :------------: | :--: | :----------------------: |
-| [IOTA DID Method](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec) |             |             |                |  ✔️  | Finished implementation. |
-|           [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)            |             |             |                |  ✔️  | Finished implementation. |
-|                                       Account                                       |             |             |                |  ✔️  | Finished implementation. |
-|                                Selective Disclosure                                 |             |     🔶      |                |      |                          |
-|                                Zero Knowledge Proofs                                |             |     🔶      |                |      |                          |
-|                                Support Embedded Rust                                |             |     🔶      |                |      |                          |
-| [WASM Bindings](https://github.com/iotaledger/identity.rs/blob/HEAD/bindings/wasm)  |             |             |                |  ✔️  | Finished implementation. |
-|    [Code Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples)    |             |             |                |  ✔️  |                          |
-|       [Documentation Portal](https://wiki.iota.org/identity.rs/introduction)        |             |             |       🔶       |      |                          |
-
-#### Next Milestones
-
-At the current state, the framework is in beta. As the framework matures we expect to support more and more types of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
-
-The next milestone is the release of version 1.0, which will stabilize the APIs, support backwards compatibility and versioned identities. This makes updating to future versions much easier. In addition it will provide full documentation coverage and the release will be audited.
-
-Afterwards, we are already planning a future update containing privacy enhancing features such as Selective Disclosure and Zero Knowledge Proofs.
 
 ## Contributing
 
