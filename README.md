@@ -1,4 +1,4 @@
-![banner](https://github.com/iotaledger/identity.rs/raw/HEAD/documentation/static/img/Banner/banner_identity.svg)
+![banner](https://github.com/iotaledger/identity.rs/raw/HEAD/.github/banner_identity.svg)
 
 <p align="center">
   <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>
@@ -37,7 +37,7 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 ## Documentation and Resources
 
 - [API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
-- [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
+- [Identity Documentation Pages](https://wiki.iota.org/shimmer/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
 
 ## Prerequisites
@@ -57,8 +57,8 @@ identity_iota = { version = "1.0-rc" }
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Build the repository with `cargo build`
-3. Run your first example using `cargo run --example getting_started`
+2. Start a private Tangle as described in the [next section](#example-creating-an-identity)
+3. Run the example to create a DID using `cargo run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
@@ -177,21 +177,29 @@ async fn main() -> anyhow::Result<()> {
 _Example output_
 
 ```json
-{
+Published DID document: {
   "doc": {
-    "id": "did:iota:rms:0x4113f08e360a3c1725bb1f93d94f6e807a1ef88f091d45f93513c3e88dac3248",
+    "id": "did:iota:tst:0xa947df036e78c2eada8b16e019d517c9e38d4b19cb0c1fa066e752c3074b715d",
     "verificationMethod": [
       {
-        "id": "did:iota:rms:0x4113f08e360a3c1725bb1f93d94f6e807a1ef88f091d45f93513c3e88dac3248#key-1",
-        "controller": "did:iota:rms:0x4113f08e360a3c1725bb1f93d94f6e807a1ef88f091d45f93513c3e88dac3248",
-        "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "z7BoQerJn9NxwcA4KHGK9CP5FJRRZJBmsxrGPvWiyuFGG"
+        "id": "did:iota:tst:0xa947df036e78c2eada8b16e019d517c9e38d4b19cb0c1fa066e752c3074b715d#9KdQCWcvR8kmGPLFOYnTzypsDWsoUIvR",
+        "controller": "did:iota:tst:0xa947df036e78c2eada8b16e019d517c9e38d4b19cb0c1fa066e752c3074b715d",
+        "type": "JsonWebKey",
+        "publicKeyJwk": {
+          "kty": "OKP",
+          "alg": "EdDSA",
+          "kid": "9KdQCWcvR8kmGPLFOYnTzypsDWsoUIvR",
+          "crv": "Ed25519",
+          "x": "JJoYoeFWU7jWvdQmOKDvM4nZJ2cUbP9yhWZzFgd044I"
+        }
       }
     ]
   },
   "meta": {
-    "created": "2022-09-06T12:12:11Z",
-    "updated": "2022-09-06T12:12:11Z"
+    "created": "2023-08-29T14:47:26Z",
+    "updated": "2023-08-29T14:47:26Z",
+    "governorAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv",
+    "stateControllerAddress": "tst1qqd7kyu8xadzx9vutznu72336npqpj92jtp27uyu2tj2sa5hx6n3k0vrzwv"
   }
 }
 ```
@@ -200,13 +208,11 @@ _Example output_
 
 For detailed development progress, see the IOTA Identity development [kanban board](https://github.com/orgs/iotaledger/projects/8/views/5).
 
-IOTA Identity is in heavy development, and will naturally change as it matures and people use it. The chart below isn't meant to be exhaustive, but rather helps to give an idea for some of the areas of development and their relative completion:
-
 ## Contributing
 
 We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
 
-Please review the [contribution](https://wiki.iota.org/identity.rs/contribute) and [workflow](https://wiki.iota.org/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
+Please review the [contribution](https://wiki.iota.org/shimmer/identity.rs/contribute) and [workflow](https://wiki.iota.org/shimmer/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
 
 To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
 
