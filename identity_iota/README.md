@@ -75,7 +75,7 @@ edition = "2021"
 
 [dependencies]
 identity_iota = { version = "1.0-rc" }
-iota-sdk = { version = "0.3.0", default-features = true, features = ["tls", "client", "stronghold"] }
+iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 ```
 
