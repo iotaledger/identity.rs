@@ -6,9 +6,9 @@ use std::fmt::Display;
 
 use itertools;
 
+/// An error associated with validating credentials and presentations.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
-/// An error associated with validating credentials and presentations.
 pub enum JwtValidationError {
   /// Indicates that the JWS representation of an issued credential or presentation could not be decoded.
   #[error("could not decode jws")]

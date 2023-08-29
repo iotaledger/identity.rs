@@ -6,6 +6,7 @@ pub type RevocationResult<T> = std::result::Result<T, RevocationError>;
 
 /// Errors occurring when creating or extracting a Service of type `RevocationBitmap2022`
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+#[non_exhaustive]
 pub enum RevocationError {
   #[error("revocation bitmap could not be deserialized or decompressed")]
   /// Indicates that the bitmap could not be reconstructed.

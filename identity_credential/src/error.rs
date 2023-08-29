@@ -8,6 +8,7 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 /// This type represents errors that can occur when constructing credentials and presentations or their serializations.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+#[non_exhaustive]
 pub enum Error {
   /// Caused when constructing a credential or presentation without a valid base context.
   #[error("missing base context")]

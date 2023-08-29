@@ -5,8 +5,8 @@ use std::error::Error;
 
 pub(crate) type DomainLinkageValidationResult = Result<(), DomainLinkageValidationError>;
 
-#[derive(Debug, thiserror::Error)]
 /// An error caused by a failure to verify a Domain Linkage configuration or credential.
+#[derive(Debug, thiserror::Error)]
 pub struct DomainLinkageValidationError {
   /// Cause of the error.
   pub cause: DomainLinkageValidationErrorCause,
@@ -27,8 +27,8 @@ impl From<DomainLinkageValidationError> for &str {
 }
 
 /// The causes for why domain linkage validation can fail.
-#[non_exhaustive]
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+#[non_exhaustive]
 pub enum DomainLinkageValidationErrorCause {
   /// Caused when a Domain Linkage Credential cannot be successfully validated.
   #[error("invalid credential")]
