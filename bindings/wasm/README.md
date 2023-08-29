@@ -1,6 +1,6 @@
 # IOTA Identity WASM
 
-> This is the RC version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
+> This is the 1.0 release candidate (rc) version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
