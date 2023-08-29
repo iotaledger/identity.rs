@@ -167,7 +167,7 @@ where
       OneOrSetInner::One(inner) if inner.key() == item.key() => false,
       OneOrSetInner::One(_) => match replace(&mut self.0, OneOrSetInner::Set(OrderedSet::new())) {
         OneOrSetInner::One(inner) => {
-          self.0 = OneOrSetInner::Set(OrderedSet::from_iter([inner, item].into_iter()));
+          self.0 = OneOrSetInner::Set(OrderedSet::from_iter([inner, item]));
           true
         }
         OneOrSetInner::Set(_) => unreachable!(),
@@ -348,7 +348,7 @@ mod tests {
   #[test]
   fn test_new_set() {
     // VALID: non-empty set.
-    let ordered_set: OrderedSet<MockKeyU8> = OrderedSet::from_iter([1, 2, 3].map(MockKeyU8).into_iter());
+    let ordered_set: OrderedSet<MockKeyU8> = OrderedSet::from_iter([1, 2, 3].map(MockKeyU8));
     let new_set: OneOrSet<MockKeyU8> = OneOrSet::new_set(ordered_set.clone()).unwrap();
     let try_from_set: OneOrSet<MockKeyU8> = OneOrSet::try_from(ordered_set.clone()).unwrap();
     assert_eq!(new_set, try_from_set);
