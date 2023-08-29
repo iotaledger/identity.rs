@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::signatures::ed25519::PublicKey;
 use crypto::signatures::ed25519::SecretKey;
 use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
@@ -47,7 +46,8 @@ pub(crate) fn expand_secret_jwk(jwk: &Jwk) -> KeyStorageResult<SecretKey> {
   Ok(SecretKey::from_bytes(&sk))
 }
 
-pub(crate) fn encode_jwk(private_key: &SecretKey, public_key: &PublicKey) -> Jwk {
+#[cfg(any(test, feature = "memstore"))]
+pub(crate) fn encode_jwk(private_key: &SecretKey, public_key: &crypto::signatures::ed25519::PublicKey) -> Jwk {
   let x = jwu::encode_b64(public_key.as_ref());
   let d = jwu::encode_b64(private_key.to_bytes().as_ref());
   let mut params = JwkParamsOkp::new();
