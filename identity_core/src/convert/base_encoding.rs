@@ -263,7 +263,7 @@ mod tests {
   #[test]
   fn test_multibase() {
     // Encode.
-    let data: &str = r#"Multibase is awesome! \o/"#;
+    let data: &str = r"Multibase is awesome! \o/";
     for (base, expected) in [
       (Base::Base16Upper, "F4D756C74696261736520697320617765736F6D6521205C6F2F"),
       (Base::Base32Upper, "BJV2WY5DJMJQXGZJANFZSAYLXMVZW63LFEEQFY3ZP"),

@@ -8,6 +8,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// All possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum Error {
   /// Caused by invalid json serialization or deserialization.
   #[error("invalid json")]

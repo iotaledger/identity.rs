@@ -8,6 +8,7 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 /// This type represents all possible errors that can occur in the crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+#[non_exhaustive]
 pub enum Error {
   /// Caused by invalid or missing properties when constructing a
   /// [`VerificationMethod`](crate::VerificationMethod).
