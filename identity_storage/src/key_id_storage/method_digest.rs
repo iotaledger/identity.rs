@@ -14,6 +14,7 @@ pub type MethodDigestConstructionError = identity_core::common::SingleStructErro
 
 /// Characterization of the underlying cause of a [`MethodDigestConstructionError`].
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum MethodDigestConstructionErrorKind {
   /// Caused by a missing id on a verification method.
   ///

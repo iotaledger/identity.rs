@@ -7,6 +7,7 @@ use crate::Error;
 
 /// Indicates the encoding of a DID document in state metadata.
 #[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq, num_derive::FromPrimitive)]
+#[non_exhaustive]
 pub enum StateMetadataEncoding {
   /// State Metadata encoded as JSON.
   #[default]
