@@ -177,7 +177,7 @@ async fn main() -> anyhow::Result<()> {
 _Example output_
 
 ```json
-Published DID document: {
+{
   "doc": {
     "id": "did:iota:tst:0xa947df036e78c2eada8b16e019d517c9e38d4b19cb0c1fa066e752c3074b715d",
     "verificationMethod": [
