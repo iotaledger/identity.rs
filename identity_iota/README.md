@@ -34,7 +34,9 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 ## Documentation and Resources
 
-- [API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
+- API References:
+  - [Rust API Reference](https://docs.rs/identity_iota/latest/identity_iota/): Package documentation (cargo docs).
+  - [Wasm API Reference](https://wiki.iota.org/shimmer/identity.rs/libraries/wasm/api_reference/): Wasm Package documentation.
 - [Identity Documentation Pages](https://wiki.iota.org/shimmer/identity.rs/introduction): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples): Practical code snippets to get you started with the library.
 
