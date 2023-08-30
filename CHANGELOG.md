@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0-rc.1](https://github.com/iotaledger/identity.rs/tree/v1.0.0-rc.1) (2023-08-28)
+## [1.0.0-rc.1](https://github.com/iotaledger/identity.rs/tree/v1.0.0-rc.1) (2023-08-30)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.3...v1.0.0-rc.1)
 
