@@ -38,7 +38,7 @@ pub struct Presentation<CRED, T = Object> {
   #[serde(rename = "type")]
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
-  #[serde(default = "Default::default", rename = "verifiableCredential")]
+  #[serde(default, rename = "verifiableCredential", skip_serializing_if = "Vec::is_empty")]
   pub verifiable_credential: Vec<CRED>,
   /// The entity that generated the `Presentation`.
   pub holder: Url,
@@ -141,5 +141,71 @@ where
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use crate::presentation::Presentation;
+  use identity_core::common::Object;
+  use serde_json::json;
+
+  #[test]
+  fn test_presentation_deserialization() {
+    // Example verifiable presentation taken from:
+    // https://www.w3.org/TR/vc-data-model/#example-a-simple-example-of-a-verifiable-presentation
+    // with some minor adjustments (adding the `holder` property and shortening the 'jws' values).
+    assert!(serde_json::from_value::<Presentation<Object>>(json!({
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "holder": "did:test:abc1",
+      "type": "VerifiablePresentation",
+      "verifiableCredential": [{
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "http://example.edu/credentials/1872",
+        "type": ["VerifiableCredential", "AlumniCredential"],
+        "issuer": "https://example.edu/issuers/565049",
+        "issuanceDate": "2010-01-01T19:23:24Z",
+        "credentialSubject": {
+          "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+          "alumniOf": {
+            "id": "did:example:c276e12ec21ebfeb1f712ebc6f1",
+            "name": [{
+              "value": "Example University",
+              "lang": "en"
+            }, {
+              "value": "Exemple d'Université",
+              "lang": "fr"
+            }]
+          }
+        },
+        "proof": {
+          "type": "RsaSignature2018",
+          "created": "2017-06-18T21:19:10Z",
+          "proofPurpose": "assertionMethod",
+          "verificationMethod": "https://example.edu/issuers/565049#key-1",
+          "jws": "eyJhb...dBBPM"
+        }
+      }],
+    }))
+    .is_ok());
+  }
+
+  #[test]
+  fn test_presentation_deserialization_without_credentials() {
+    assert!(serde_json::from_value::<Presentation<()>>(json!({
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "holder": "did:test:abc1",
+      "type": "VerifiablePresentation"
+    }))
+    .is_ok());
   }
 }
