@@ -38,6 +38,7 @@ pub struct Presentation<CRED, T = Object> {
   #[serde(rename = "type")]
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
+  #[rustfmt::skip]
   #[serde(default = "Default::default", rename = "verifiableCredential", skip_serializing_if = "Vec::is_empty")]
   pub verifiable_credential: Vec<CRED>,
   /// The entity that generated the `Presentation`.
