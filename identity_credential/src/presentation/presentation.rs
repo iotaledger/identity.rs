@@ -39,7 +39,7 @@ pub struct Presentation<CRED, T = Object> {
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
-  pub verifiable_credential: OneOrMany<CRED>,
+  pub verifiable_credential: Vec<CRED>,
   /// The entity that generated the `Presentation`.
   pub holder: Url,
   /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.

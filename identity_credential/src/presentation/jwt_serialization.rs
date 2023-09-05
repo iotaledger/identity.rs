@@ -112,7 +112,7 @@ where
   types: Cow<'presentation, OneOrMany<String>>,
   /// Credential(s) expressing the claims of the `Presentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
-  pub(crate) verifiable_credential: Cow<'presentation, OneOrMany<CRED>>,
+  pub(crate) verifiable_credential: Cow<'presentation, Vec<CRED>>,
   /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   refresh_service: Cow<'presentation, OneOrMany<RefreshService>>,
