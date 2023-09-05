@@ -80,7 +80,7 @@ impl<CRED, T> Presentation<CRED, T> {
       context: builder.context.into(),
       id: builder.id,
       types: builder.types.into(),
-      verifiable_credential: builder.credentials.into(),
+      verifiable_credential: builder.credentials,
       holder: builder.holder,
       refresh_service: builder.refresh_service.into(),
       terms_of_use: builder.terms_of_use.into(),
