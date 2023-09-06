@@ -66,7 +66,7 @@ where
   let verifiable_credentials = Vec::<T>::deserialize(deserializer)?;
 
   (!verifiable_credentials.is_empty())
-    .then(|| verifiable_credentials)
+    .then_some(verifiable_credentials)
     .ok_or_else(|| de::Error::custom(Error::EmptyVerifiableCredentialsArray))
 }
 
