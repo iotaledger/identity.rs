@@ -4,6 +4,7 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -39,7 +40,7 @@ pub struct Presentation<CRED, T = Object> {
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
   #[rustfmt::skip]
-  #[serde(default = "Default::default", rename = "verifiableCredential", skip_serializing_if = "Vec::is_empty")]
+  #[serde(default = "Default::default", rename = "verifiableCredential", skip_serializing_if = "Vec::is_empty", deserialize_with = "deserialize_verifiable_credential", bound(deserialize = "CRED: serde::de::DeserializeOwned"))]
   pub verifiable_credential: Vec<CRED>,
   /// The entity that generated the `Presentation`.
   pub holder: Url,
@@ -55,6 +56,18 @@ pub struct Presentation<CRED, T = Object> {
   /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Proof>,
+}
+
+/// Deserializes a `Vec<T>` while ensuring that it is not empty.
+fn deserialize_verifiable_credential<'de, T: Deserialize<'de>, D>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+  D: de::Deserializer<'de>,
+{
+  let verifiable_credentials = Vec::<T>::deserialize(deserializer)?;
+
+  (!verifiable_credentials.is_empty())
+    .then(|| verifiable_credentials)
+    .ok_or_else(|| de::Error::custom(Error::EmptyVerifiableCredentialsArray))
 }
 
 impl<CRED, T> Presentation<CRED, T> {
@@ -147,16 +160,19 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::presentation::Presentation;
-  use identity_core::common::Object;
   use serde_json::json;
+
+  use identity_core::common::Object;
+  use identity_core::convert::FromJson;
+
+  use crate::presentation::Presentation;
 
   #[test]
   fn test_presentation_deserialization() {
     // Example verifiable presentation taken from:
     // https://www.w3.org/TR/vc-data-model/#example-a-simple-example-of-a-verifiable-presentation
     // with some minor adjustments (adding the `holder` property and shortening the 'jws' values).
-    assert!(serde_json::from_value::<Presentation<Object>>(json!({
+    assert!(Presentation::<Object>::from_json_value(json!({
       "@context": [
         "https://www.w3.org/2018/credentials/v1",
         "https://www.w3.org/2018/credentials/examples/v1"
@@ -199,7 +215,8 @@ mod tests {
 
   #[test]
   fn test_presentation_deserialization_without_credentials() {
-    assert!(serde_json::from_value::<Presentation<()>>(json!({
+    // Deserializing a Presentation without `verifiableCredential' property is allowed.
+    assert!(Presentation::<()>::from_json_value(json!({
       "@context": [
         "https://www.w3.org/2018/credentials/v1",
         "https://www.w3.org/2018/credentials/examples/v1"
@@ -208,5 +225,20 @@ mod tests {
       "type": "VerifiablePresentation"
     }))
     .is_ok());
+  }
+
+  #[test]
+  fn test_presentation_deserialization_with_empty_credentials_array() {
+    // Deserializing a Presentation with an empty `verifiableCredential' property is not allowed.
+    assert!(Presentation::<()>::from_json_value(json!({
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "holder": "did:test:abc1",
+      "type": "VerifiablePresentation",
+      "verifiableCredential": []
+    }))
+    .is_err());
   }
 }
