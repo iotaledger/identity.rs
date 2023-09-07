@@ -47,8 +47,8 @@ pub enum Error {
 
   /// Caused when deserializing a Presentation with an empty array for the
   /// `verifiableCredential` property.
-  #[error("empty verifiableCredential array")]
-  EmptyVerifiableCredentialsArray,
+  #[error("empty verifiableCredential array in presentation")]
+  EmptyVerifiableCredentialArray,
 
   /// Caused when attempting to convert a JWT to a `Presentation` that has conflicting values
   /// between the registered claims and those in the `vp` object.

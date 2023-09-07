@@ -67,7 +67,7 @@ where
 
   (!verifiable_credentials.is_empty())
     .then_some(verifiable_credentials)
-    .ok_or_else(|| de::Error::custom(Error::EmptyVerifiableCredentialsArray))
+    .ok_or_else(|| de::Error::custom(Error::EmptyVerifiableCredentialArray))
 }
 
 impl<CRED, T> Presentation<CRED, T> {
