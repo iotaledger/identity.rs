@@ -244,7 +244,7 @@ mod tests {
       .source()
       .unwrap()
       .to_string(),
-      "empty verifiableCredential array in presentation"
+      crate::error::Error::EmptyVerifiableCredentialArray.to_string()
     );
   }
 }
