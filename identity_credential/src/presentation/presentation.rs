@@ -161,6 +161,7 @@ where
 #[cfg(test)]
 mod tests {
   use serde_json::json;
+  use std::error::Error;
 
   use identity_core::common::Object;
   use identity_core::convert::FromJson;
@@ -228,17 +229,22 @@ mod tests {
   }
 
   #[test]
-  fn test_presentation_deserialization_with_empty_credentials_array() {
-    // Deserializing a Presentation with an empty `verifiableCredential' property is not allowed.
-    assert!(Presentation::<()>::from_json_value(json!({
-      "@context": [
-        "https://www.w3.org/2018/credentials/v1",
-        "https://www.w3.org/2018/credentials/examples/v1"
-      ],
-      "holder": "did:test:abc1",
-      "type": "VerifiablePresentation",
-      "verifiableCredential": []
-    }))
-    .is_err());
+  fn test_presentation_deserialization_with_empty_credential_array() {
+    assert_eq!(
+      Presentation::<()>::from_json_value(json!({
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "holder": "did:test:abc1",
+        "type": "VerifiablePresentation",
+        "verifiableCredential": []
+      }))
+      .unwrap_err()
+      .source()
+      .unwrap()
+      .to_string(),
+      "empty verifiableCredential array in presentation"
+    );
   }
 }
