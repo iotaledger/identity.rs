@@ -174,4 +174,22 @@ mod tests {
     assert_eq!(presentation.types.get(1).unwrap(), "ExamplePresentation");
     assert_eq!(presentation.verifiable_credential.len(), 1);
   }
+
+  #[test]
+  fn test_presentation_builder_valid_without_credentials() {
+    let presentation: Presentation<Jwt> = PresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
+      .type_("ExamplePresentation")
+      .build()
+      .unwrap();
+
+    assert_eq!(presentation.context.len(), 1);
+    assert_eq!(
+      presentation.context.get(0).unwrap(),
+      Presentation::<Object>::base_context()
+    );
+    assert_eq!(presentation.types.len(), 2);
+    assert_eq!(presentation.types.get(0).unwrap(), Presentation::<Object>::base_type());
+    assert_eq!(presentation.types.get(1).unwrap(), "ExamplePresentation");
+    assert_eq!(presentation.verifiable_credential.len(), 0);
+  }
 }

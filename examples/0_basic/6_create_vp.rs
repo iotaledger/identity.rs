@@ -12,7 +12,6 @@ use std::collections::HashMap;
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
-use identity_iota::core::OneOrMany;
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
@@ -201,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
     JwtPresentationValidator::new().validate(&presentation_jwt, &holder, &presentation_validation_options)?;
 
   // Concurrently resolve the issuers' documents.
-  let jwt_credentials: &OneOrMany<Jwt> = &presentation.presentation.verifiable_credential;
+  let jwt_credentials: &Vec<Jwt> = &presentation.presentation.verifiable_credential;
   let issuers: Vec<CoreDID> = jwt_credentials
     .iter()
     .map(JwtCredentialValidator::extract_issuer_from_jwt)

@@ -4,6 +4,7 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -38,8 +39,9 @@ pub struct Presentation<CRED, T = Object> {
   #[serde(rename = "type")]
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
-  #[serde(default = "Default::default", rename = "verifiableCredential")]
-  pub verifiable_credential: OneOrMany<CRED>,
+  #[rustfmt::skip]
+  #[serde(default = "Default::default", rename = "verifiableCredential", skip_serializing_if = "Vec::is_empty", deserialize_with = "deserialize_verifiable_credential", bound(deserialize = "CRED: serde::de::DeserializeOwned"))]
+  pub verifiable_credential: Vec<CRED>,
   /// The entity that generated the `Presentation`.
   pub holder: Url,
   /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
@@ -54,6 +56,18 @@ pub struct Presentation<CRED, T = Object> {
   /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Proof>,
+}
+
+/// Deserializes a `Vec<T>` while ensuring that it is not empty.
+fn deserialize_verifiable_credential<'de, T: Deserialize<'de>, D>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+  D: de::Deserializer<'de>,
+{
+  let verifiable_credentials = Vec::<T>::deserialize(deserializer)?;
+
+  (!verifiable_credentials.is_empty())
+    .then_some(verifiable_credentials)
+    .ok_or_else(|| de::Error::custom(Error::EmptyVerifiableCredentialArray))
 }
 
 impl<CRED, T> Presentation<CRED, T> {
@@ -80,7 +94,7 @@ impl<CRED, T> Presentation<CRED, T> {
       context: builder.context.into(),
       id: builder.id,
       types: builder.types.into(),
-      verifiable_credential: builder.credentials.into(),
+      verifiable_credential: builder.credentials,
       holder: builder.holder,
       refresh_service: builder.refresh_service.into(),
       terms_of_use: builder.terms_of_use.into(),
@@ -141,5 +155,96 @@ where
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use serde_json::json;
+  use std::error::Error;
+
+  use identity_core::common::Object;
+  use identity_core::convert::FromJson;
+
+  use crate::presentation::Presentation;
+
+  #[test]
+  fn test_presentation_deserialization() {
+    // Example verifiable presentation taken from:
+    // https://www.w3.org/TR/vc-data-model/#example-a-simple-example-of-a-verifiable-presentation
+    // with some minor adjustments (adding the `holder` property and shortening the 'jws' values).
+    assert!(Presentation::<Object>::from_json_value(json!({
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "holder": "did:test:abc1",
+      "type": "VerifiablePresentation",
+      "verifiableCredential": [{
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "http://example.edu/credentials/1872",
+        "type": ["VerifiableCredential", "AlumniCredential"],
+        "issuer": "https://example.edu/issuers/565049",
+        "issuanceDate": "2010-01-01T19:23:24Z",
+        "credentialSubject": {
+          "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+          "alumniOf": {
+            "id": "did:example:c276e12ec21ebfeb1f712ebc6f1",
+            "name": [{
+              "value": "Example University",
+              "lang": "en"
+            }, {
+              "value": "Exemple d'Université",
+              "lang": "fr"
+            }]
+          }
+        },
+        "proof": {
+          "type": "RsaSignature2018",
+          "created": "2017-06-18T21:19:10Z",
+          "proofPurpose": "assertionMethod",
+          "verificationMethod": "https://example.edu/issuers/565049#key-1",
+          "jws": "eyJhb...dBBPM"
+        }
+      }],
+    }))
+    .is_ok());
+  }
+
+  #[test]
+  fn test_presentation_deserialization_without_credentials() {
+    // Deserializing a Presentation without `verifiableCredential' property is allowed.
+    assert!(Presentation::<()>::from_json_value(json!({
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "holder": "did:test:abc1",
+      "type": "VerifiablePresentation"
+    }))
+    .is_ok());
+  }
+
+  #[test]
+  fn test_presentation_deserialization_with_empty_credential_array() {
+    assert_eq!(
+      Presentation::<()>::from_json_value(json!({
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "holder": "did:test:abc1",
+        "type": "VerifiablePresentation",
+        "verifiableCredential": []
+      }))
+      .unwrap_err()
+      .source()
+      .unwrap()
+      .to_string(),
+      crate::error::Error::EmptyVerifiableCredentialArray.to_string()
+    );
   }
 }
