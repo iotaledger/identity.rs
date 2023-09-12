@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::OneOrMany;
-use serde_json::Map;
-use serde_json::Value;
 
 /// JSON Web Token Claims
 ///
@@ -47,16 +45,6 @@ pub struct JwtClaims<T = ()> {
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.1.7)
   #[serde(skip_serializing_if = "Option::is_none")]
   jti: Option<String>, // JWT ID
-  /// Contains the properties of a Verifiable Credential
-  ///
-  /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  vc: Option<Map<String, Value>>, // Verifiable Credential
-  /// Contains the properties of a Verifiable Presentation
-  ///
-  /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  vp: Option<Map<String, Value>>, // Verifiable Presentation
   /// Public/Private Claim Names
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.2)
@@ -75,8 +63,6 @@ impl<T> JwtClaims<T> {
       nbf: None,
       iat: None,
       jti: None,
-      vc: None,
-      vp: None,
       custom: None,
     }
   }
@@ -149,26 +135,6 @@ impl<T> JwtClaims<T> {
   /// Sets a value for the JWT ID claim (jti).
   pub fn set_jti(&mut self, value: impl Into<String>) {
     self.jti = Some(value.into());
-  }
-
-  /// Returns the value for the JWT verifiable credential claim (vc).
-  pub fn vc(&self) -> Option<&Map<String, Value>> {
-    self.vc.as_ref()
-  }
-
-  /// Sets a value for the JWT verifiable credential claim (vc).
-  pub fn set_vc(&mut self, value: impl Into<Map<String, Value>>) {
-    self.vc = Some(value.into());
-  }
-
-  /// Returns the value for the JWT verifiable presentation claim (vp).
-  pub fn vp(&self) -> Option<&Map<String, Value>> {
-    self.vp.as_ref()
-  }
-
-  /// Sets a value for the JWT verifiable presentation claim (vp).
-  pub fn set_vp(&mut self, value: impl Into<Map<String, Value>>) {
-    self.vp = Some(value.into());
   }
 
   /// Returns a reference to the custom JWT claims.
