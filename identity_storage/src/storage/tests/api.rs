@@ -117,8 +117,9 @@ async fn create_jws() {
     .await
     .unwrap();
 
-  let decoded_jws = document.verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options);
-  assert!(decoded_jws.is_ok());
+  assert!(document
+    .verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options)
+    .is_ok());
 }
 
 #[tokio::test]
