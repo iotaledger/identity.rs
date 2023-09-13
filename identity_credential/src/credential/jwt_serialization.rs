@@ -449,7 +449,7 @@ mod tests {
       }
     }"#;
 
-    // `sub`, `jti`, `iss`, `nbf` are duplicated in `vc`.
+    // `sub`, `exp`, `jti`, `iss`, `nbf` are duplicated in `vc`.
     let claims_json: &str = r#"
     {
       "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
@@ -670,41 +670,4 @@ mod tests {
       Error::InconsistentCredentialJwtClaims("inconsistent credential expirationDate")
     ));
   }
-  // #[test]
-  // fn inconsistent_id() {
-  //   // issuer is inconsistent (15 instead of 14).
-  //   let claims_json: &str = r#"
-  //   {
-  //     "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-  //     "jti": "http://example.edu/credentials/3732",
-  //     "iss": "https://example.edu/issuers/14",
-  //     "nbf":  1262373804,
-  //     "vc": {
-  //       "@context": [
-  //         "https://www.w3.org/2018/credentials/v1",
-  //         "https://www.w3.org/2018/credentials/examples/v1"
-  //       ],
-  //       "id": "http://example.edu/credentials/3732",
-  //       "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-  //       "issuer": "https://example.edu/issuers/14",
-  //       "issuanceDate": "2010-01-01T19:23:24Z",
-  //       "credentialSubject": {
-  //         "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-  //         "degree": {
-  //           "type": "BachelorDegree",
-  //           "name": "Bachelor of Science in Mechanical Engineering"
-  //         }
-  //       }
-  //     }
-  //   }"#;
-  //
-  //   let credential_from_claims_result: Result<Credential, _> =
-  //     CredentialJwtClaims::<'_, Object>::from_json(&claims_json)
-  //       .unwrap()
-  //       .try_into_credential();
-  //   assert!(matches!(
-  //     credential_from_claims_result.unwrap_err(),
-  //     Error::InconsistentCredentialJwtClaims("inconsistent credential id")
-  //   ));
-  // }
 }
