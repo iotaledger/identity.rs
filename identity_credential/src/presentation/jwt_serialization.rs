@@ -204,15 +204,14 @@ where
 #[cfg(test)]
 mod test {
   use super::PresentationJwtClaims;
-  use crate::{
-    credential::Jwt,
-    presentation::{JwtPresentationOptions, Presentation},
-    Error,
-  };
-  use identity_core::{
-    common::{Object, Timestamp},
-    convert::{FromJson, ToJson},
-  };
+  use crate::credential::Jwt;
+  use crate::presentation::JwtPresentationOptions;
+  use crate::presentation::Presentation;
+  use crate::Error;
+  use identity_core::common::Object;
+  use identity_core::common::Timestamp;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   #[test]
   fn roundtrip() {
