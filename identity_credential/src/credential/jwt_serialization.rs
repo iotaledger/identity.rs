@@ -317,6 +317,7 @@ where
   #[serde(rename = "type")]
   types: Cow<'credential, OneOrMany<String>>,
   /// The issuer of the `Credential`.
+  #[serde(skip_serializing_if = "Option::is_none")]
   issuer: Option<Issuer>,
   /// One or more `Object`s representing the `Credential` subject(s).
   #[serde(rename = "credentialSubject")]
