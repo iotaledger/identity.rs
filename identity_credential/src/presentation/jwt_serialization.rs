@@ -86,6 +86,7 @@ where
         terms_of_use: Cow::Borrowed(terms_of_use),
         properties: Cow::Borrowed(properties),
         proof: proof.as_ref().map(Cow::Borrowed),
+        holder: None,
       },
       exp: options.expiration_date.map(|expiration_date| expiration_date.to_unix()),
       issuance_date: options.issuance_date.map(IssuanceDateClaims::new),
@@ -113,6 +114,9 @@ where
   /// Credential(s) expressing the claims of the `Presentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
   pub(crate) verifiable_credential: Cow<'presentation, Vec<CRED>>,
+  /// The entity that generated the `Presentation`.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  holder: Option<Url>,
   /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   refresh_service: Cow<'presentation, OneOrMany<RefreshService>>,
@@ -152,6 +156,7 @@ where
       terms_of_use,
       properties,
       proof,
+      holder: _,
     } = vp;
 
     let presentation = Presentation {
@@ -179,6 +184,182 @@ where
     {
       return Err(Error::InconsistentPresentationJwtClaims("inconsistent presentation id"));
     };
+
+    if !self
+      .vp
+      .holder
+      .as_ref()
+      .map(|value| self.iss.as_ref() == value)
+      .unwrap_or(true)
+    {
+      return Err(Error::InconsistentPresentationJwtClaims(
+        "inconsistent presentation holder",
+      ));
+    };
+
     Ok(())
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use super::PresentationJwtClaims;
+  use crate::{
+    credential::Jwt,
+    presentation::{JwtPresentationOptions, Presentation},
+    Error,
+  };
+  use identity_core::{
+    common::{Object, Timestamp},
+    convert::{FromJson, ToJson},
+  };
+
+  #[test]
+  fn roundtrip() {
+    let presentation_json: &str = r#"
+    {
+      "id": "http://example.edu/presentations/3732",
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "type": "VerifiablePresentation",
+      "verifiableCredential": [
+        "eyJraWQiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjI3NzQkJ6dGpDekhzanRac2xXZmJadWszeGJQOHQwU2JTIiwiYWxnIjoiRWREU0EifQ.eyJpc3MiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjIiwibmJmIjoxNjk0Njk1MTM1LCJqdGkiOiJodHRwczovL2V4YW1wbGUuZWR1L2NyZWRlbnRpYWxzLzM3MzIiLCJzdWIiOiJkaWQ6aW90YTp0c3Q6MHg2YTU4YWExMmFmY2ZhNjk4YTViZjU5OTE4MzY5YzBhYTM5OTU1ZjFhZTVhN2U1MTZiYzZiZDRkYzI3MTJkNmM3IiwidmMiOnsiQGNvbnRleHQiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJHUEEiOiI0LjAiLCJkZWdyZWUiOnsibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgYW5kIEFydHMiLCJ0eXBlIjoiQmFjaGVsb3JEZWdyZWUifSwibmFtZSI6IkFsaWNlIn19fQ.ADYZEltOt2S5j2z_lnfo1GK69zUI8ndgS4CWORZT_IUuNZ9PZPzhVXaXvJ07X8iYHa7I63urKXWZnzrmMQ7UBA"
+      ],
+      "holder": "did:iota:tst:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7"
+    }
+    "#;
+    let claims_json: &str = r#"
+    {
+      "jti": "http://example.edu/presentations/3732",
+      "exp": 1694699551,
+      "iss": "did:iota:tst:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7",
+      "nbf": 1694698951,
+      "vp": {
+        "@context": "https://www.w3.org/2018/credentials/v1",
+        "type": "VerifiablePresentation",
+        "verifiableCredential": [
+          "eyJraWQiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjI3NzQkJ6dGpDekhzanRac2xXZmJadWszeGJQOHQwU2JTIiwiYWxnIjoiRWREU0EifQ.eyJpc3MiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjIiwibmJmIjoxNjk0Njk1MTM1LCJqdGkiOiJodHRwczovL2V4YW1wbGUuZWR1L2NyZWRlbnRpYWxzLzM3MzIiLCJzdWIiOiJkaWQ6aW90YTp0c3Q6MHg2YTU4YWExMmFmY2ZhNjk4YTViZjU5OTE4MzY5YzBhYTM5OTU1ZjFhZTVhN2U1MTZiYzZiZDRkYzI3MTJkNmM3IiwidmMiOnsiQGNvbnRleHQiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJHUEEiOiI0LjAiLCJkZWdyZWUiOnsibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgYW5kIEFydHMiLCJ0eXBlIjoiQmFjaGVsb3JEZWdyZWUifSwibmFtZSI6IkFsaWNlIn19fQ.ADYZEltOt2S5j2z_lnfo1GK69zUI8ndgS4CWORZT_IUuNZ9PZPzhVXaXvJ07X8iYHa7I63urKXWZnzrmMQ7UBA"
+        ]
+      }
+    }
+    "#;
+
+    let presentation: Presentation<Jwt> = Presentation::from_json(presentation_json).unwrap();
+    let options = JwtPresentationOptions {
+      expiration_date: Some(Timestamp::from_unix(1694699551).unwrap()),
+      issuance_date: Some(Timestamp::from_unix(1694698951).unwrap()),
+      audience: None,
+    };
+    let claims: PresentationJwtClaims<'_, Jwt> =
+      PresentationJwtClaims::<'_, Jwt>::new(&presentation, &options).unwrap();
+    let claims_serialized: String = claims.to_json().unwrap();
+    assert_eq!(
+      Object::from_json(&claims_serialized).unwrap(),
+      Object::from_json(claims_json).unwrap()
+    );
+    let retrieved_presentaiton: Presentation<Jwt> = PresentationJwtClaims::<'_, Jwt>::from_json(&claims_serialized)
+      .unwrap()
+      .try_into_presentation()
+      .unwrap();
+
+    assert_eq!(presentation, retrieved_presentaiton);
+  }
+
+  #[test]
+  fn claim_duplication() {
+    let presentation_json: &str = r#"
+    {
+      "id": "http://example.edu/presentations/3732",
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "type": "VerifiablePresentation",
+      "verifiableCredential": [
+        "eyJraWQiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjI3NzQkJ6dGpDekhzanRac2xXZmJadWszeGJQOHQwU2JTIiwiYWxnIjoiRWREU0EifQ.eyJpc3MiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjIiwibmJmIjoxNjk0Njk1MTM1LCJqdGkiOiJodHRwczovL2V4YW1wbGUuZWR1L2NyZWRlbnRpYWxzLzM3MzIiLCJzdWIiOiJkaWQ6aW90YTp0c3Q6MHg2YTU4YWExMmFmY2ZhNjk4YTViZjU5OTE4MzY5YzBhYTM5OTU1ZjFhZTVhN2U1MTZiYzZiZDRkYzI3MTJkNmM3IiwidmMiOnsiQGNvbnRleHQiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJHUEEiOiI0LjAiLCJkZWdyZWUiOnsibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgYW5kIEFydHMiLCJ0eXBlIjoiQmFjaGVsb3JEZWdyZWUifSwibmFtZSI6IkFsaWNlIn19fQ.ADYZEltOt2S5j2z_lnfo1GK69zUI8ndgS4CWORZT_IUuNZ9PZPzhVXaXvJ07X8iYHa7I63urKXWZnzrmMQ7UBA"
+      ],
+      "holder": "did:iota:tst:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7"
+    }
+    "#;
+    let claims_json: &str = r#"
+    {
+      "jti": "http://example.edu/presentations/3732",
+      "exp": 1694699551,
+      "iss": "did:iota:tst:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7",
+      "nbf": 1694698951,
+      "vp": {
+        "id": "http://example.edu/presentations/3732",
+        "holder": "did:iota:tst:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7",
+        "@context": "https://www.w3.org/2018/credentials/v1",
+        "type": "VerifiablePresentation",
+        "verifiableCredential": [
+          "eyJraWQiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjI3NzQkJ6dGpDekhzanRac2xXZmJadWszeGJQOHQwU2JTIiwiYWxnIjoiRWREU0EifQ.eyJpc3MiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjIiwibmJmIjoxNjk0Njk1MTM1LCJqdGkiOiJodHRwczovL2V4YW1wbGUuZWR1L2NyZWRlbnRpYWxzLzM3MzIiLCJzdWIiOiJkaWQ6aW90YTp0c3Q6MHg2YTU4YWExMmFmY2ZhNjk4YTViZjU5OTE4MzY5YzBhYTM5OTU1ZjFhZTVhN2U1MTZiYzZiZDRkYzI3MTJkNmM3IiwidmMiOnsiQGNvbnRleHQiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJHUEEiOiI0LjAiLCJkZWdyZWUiOnsibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgYW5kIEFydHMiLCJ0eXBlIjoiQmFjaGVsb3JEZWdyZWUifSwibmFtZSI6IkFsaWNlIn19fQ.ADYZEltOt2S5j2z_lnfo1GK69zUI8ndgS4CWORZT_IUuNZ9PZPzhVXaXvJ07X8iYHa7I63urKXWZnzrmMQ7UBA"
+        ]
+      }
+    }
+    "#;
+
+    let presentation: Presentation<Jwt> = Presentation::from_json(presentation_json).unwrap();
+    let retrieved_presentaiton: Presentation<Jwt> = PresentationJwtClaims::<'_, Jwt>::from_json(&claims_json)
+      .unwrap()
+      .try_into_presentation()
+      .unwrap();
+
+    assert_eq!(presentation, retrieved_presentaiton);
+  }
+
+  #[test]
+  fn inconsistent_holder() {
+    let claims_json: &str = r#"
+    {
+      "jti": "http://example.edu/presentations/3732",
+      "exp": 1694699551,
+      "iss": "did:iota:tst:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7",
+      "nbf": 1694698951,
+      "vp": {
+        "id": "http://example.edu/presentations/3732",
+        "@context": "https://www.w3.org/2018/credentials/v1",
+        "holder": "did:iota:tst2:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7",
+        "type": "VerifiablePresentation",
+        "verifiableCredential": [
+          "eyJraWQiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjI3NzQkJ6dGpDekhzanRac2xXZmJadWszeGJQOHQwU2JTIiwiYWxnIjoiRWREU0EifQ.eyJpc3MiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjIiwibmJmIjoxNjk0Njk1MTM1LCJqdGkiOiJodHRwczovL2V4YW1wbGUuZWR1L2NyZWRlbnRpYWxzLzM3MzIiLCJzdWIiOiJkaWQ6aW90YTp0c3Q6MHg2YTU4YWExMmFmY2ZhNjk4YTViZjU5OTE4MzY5YzBhYTM5OTU1ZjFhZTVhN2U1MTZiYzZiZDRkYzI3MTJkNmM3IiwidmMiOnsiQGNvbnRleHQiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJHUEEiOiI0LjAiLCJkZWdyZWUiOnsibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgYW5kIEFydHMiLCJ0eXBlIjoiQmFjaGVsb3JEZWdyZWUifSwibmFtZSI6IkFsaWNlIn19fQ.ADYZEltOt2S5j2z_lnfo1GK69zUI8ndgS4CWORZT_IUuNZ9PZPzhVXaXvJ07X8iYHa7I63urKXWZnzrmMQ7UBA"
+        ]
+      }
+    }
+    "#;
+
+    let presentation_from_claims_result: Result<Presentation<Jwt>, _> =
+      PresentationJwtClaims::<'_, Jwt>::from_json(claims_json)
+        .unwrap()
+        .try_into_presentation();
+    assert!(matches!(
+      presentation_from_claims_result.unwrap_err(),
+      Error::InconsistentPresentationJwtClaims("inconsistent presentation holder")
+    ));
+  }
+
+  #[test]
+  fn inconsistent_id() {
+    let claims_json: &str = r#"
+    {
+      "jti": "http://example.edu/presentations/3732",
+      "exp": 1694699551,
+      "iss": "did:iota:tst:0x6a58aa12afcfa698a5bf59918369c0aa39955f1ae5a7e516bc6bd4dc2712d6c7",
+      "nbf": 1694698951,
+      "vp": {
+        "id": "http://example.edu/presentations/1111",
+        "@context": "https://www.w3.org/2018/credentials/v1",
+        "type": "VerifiablePresentation",
+        "verifiableCredential": [
+          "eyJraWQiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjI3NzQkJ6dGpDekhzanRac2xXZmJadWszeGJQOHQwU2JTIiwiYWxnIjoiRWREU0EifQ.eyJpc3MiOiJkaWQ6aW90YTp0c3Q6MHgxOTg0NjdmNWUzNGQwYjNkMTA3MjRhYjY3NDNhZDQxNTdjNjdjYjJiYjNhNjU2ODYzYmY2YzBjMGFmMmM3ODJjIiwibmJmIjoxNjk0Njk1MTM1LCJqdGkiOiJodHRwczovL2V4YW1wbGUuZWR1L2NyZWRlbnRpYWxzLzM3MzIiLCJzdWIiOiJkaWQ6aW90YTp0c3Q6MHg2YTU4YWExMmFmY2ZhNjk4YTViZjU5OTE4MzY5YzBhYTM5OTU1ZjFhZTVhN2U1MTZiYzZiZDRkYzI3MTJkNmM3IiwidmMiOnsiQGNvbnRleHQiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJVbml2ZXJzaXR5RGVncmVlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJHUEEiOiI0LjAiLCJkZWdyZWUiOnsibmFtZSI6IkJhY2hlbG9yIG9mIFNjaWVuY2UgYW5kIEFydHMiLCJ0eXBlIjoiQmFjaGVsb3JEZWdyZWUifSwibmFtZSI6IkFsaWNlIn19fQ.ADYZEltOt2S5j2z_lnfo1GK69zUI8ndgS4CWORZT_IUuNZ9PZPzhVXaXvJ07X8iYHa7I63urKXWZnzrmMQ7UBA"
+        ]
+      }
+    }
+    "#;
+
+    let presentation_from_claims_result: Result<Presentation<Jwt>, _> =
+      PresentationJwtClaims::<'_, Jwt>::from_json(claims_json)
+        .unwrap()
+        .try_into_presentation();
+    assert!(matches!(
+      presentation_from_claims_result.unwrap_err(),
+      Error::InconsistentPresentationJwtClaims("inconsistent presentation id")
+    ));
   }
 }
