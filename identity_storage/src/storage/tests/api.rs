@@ -5,7 +5,6 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
-
 use identity_credential::credential::Jws;
 use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_did::DIDUrl;
@@ -106,7 +105,7 @@ async fn generation() {
 }
 
 #[tokio::test]
-async fn sign_bytes() {
+async fn create_jws() {
   let (document, storage, fragment) = setup_with_method().await;
 
   let payload: &[u8] = b"test";
@@ -124,7 +123,35 @@ async fn sign_bytes() {
 }
 
 #[tokio::test]
-async fn sign_bytes_with_nonce() {
+async fn create_jws_typ() {
+  // Default `typ` is "JWT".
+  let (document, storage, fragment) = setup_with_method().await;
+  let payload: &[u8] = b"test";
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new();
+  let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
+
+  let jws: Jws = document
+    .create_jws(&storage, &fragment, payload, &signature_options)
+    .await
+    .unwrap();
+
+  let decoded_jws = document.verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options);
+  assert_eq!(decoded_jws.unwrap().protected.typ().unwrap(), "JWT");
+
+  // Custom `typ`.
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().typ("test-typ");
+
+  let jws: Jws = document
+    .create_jws(&storage, &fragment, payload, &signature_options)
+    .await
+    .unwrap();
+
+  let decoded_jws = document.verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options);
+  assert_eq!(decoded_jws.unwrap().protected.typ().unwrap(), "test-typ");
+}
+
+#[tokio::test]
+async fn create_jws_with_nonce() {
   let (document, storage, fragment) = setup_with_method().await;
 
   let payload: &[u8] = b"test";
@@ -161,7 +188,7 @@ async fn sign_bytes_with_nonce() {
 }
 
 #[tokio::test]
-async fn sign_bytes_with_header_copy_options() {
+async fn create_jws_with_header_copy_options() {
   let (document, storage, fragment) = setup_with_method().await;
 
   let payload: &[u8] = b"test";
@@ -200,7 +227,7 @@ async fn sign_bytes_with_header_copy_options() {
 }
 
 #[tokio::test]
-async fn sign_bytes_detached() {
+async fn create_jws_detached() {
   let (document, storage, fragment) = setup_with_method().await;
 
   // =====================

@@ -25,7 +25,7 @@ use crate::credential::Subject;
 use crate::Error;
 use crate::Result;
 
-/// Implementation of JWT Encoding/Decoding according to https://w3c.github.io/vc-jwt/#version-1.1.
+/// Implementation of JWT Encoding/Decoding according to [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 ///
 /// This type is opinionated in the following ways:
 /// 1. Serialization tries to duplicate as little as possible between the required registered claims and the `vc` entry.
@@ -228,9 +228,9 @@ where
   }
 }
 
-/// The VC-JWT spec states that issuanceDate corresponds to the registered `nbf` claim,
-/// but `iat` is also used in the ecosystem. This type aims to take care of this discrepancy on
-/// a best effort basis.
+/// The [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token) states that issuanceDate
+/// corresponds to the registered `nbf` claim, but `iat` is also used in the ecosystem.
+/// This type aims to take care of this discrepancy on a best effort basis.
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub(crate) struct IssuanceDateClaims {
   #[serde(skip_serializing_if = "Option::is_none")]
