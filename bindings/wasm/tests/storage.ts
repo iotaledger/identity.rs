@@ -135,7 +135,7 @@ describe("#JwkStorageDocument", function() {
             fragment,
             credential,
             new JwsSignatureOptions(),
-            { testkey: "test-value" }
+            { testkey: "test-value" },
         );
 
         // Check that the credentialJwt can be decoded and verified
@@ -148,7 +148,7 @@ describe("#JwkStorageDocument", function() {
                 new JwtCredentialValidationOptions(),
                 FailFast.FirstError,
             );
-        assert.deepStrictEqual(decoded.customClaims(), { testkey: "test-value" })
+        assert.deepStrictEqual(decoded.customClaims(), { testkey: "test-value" });
         assert.deepStrictEqual(decoded.credential().toJSON(), credential.toJSON());
 
         // Also check using our custom verifier
@@ -247,7 +247,7 @@ describe("#JwkStorageDocument", function() {
             fragment,
             credential,
             new JwsSignatureOptions(),
-            { "test-key": "test-value" }
+            { "test-key": "test-value" },
         );
 
         // Check that the credentialJwt can be decoded and verified
