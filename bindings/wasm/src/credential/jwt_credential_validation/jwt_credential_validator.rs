@@ -10,7 +10,6 @@ use identity_iota::did::CoreDID;
 use super::options::WasmJwtCredentialValidationOptions;
 use crate::common::ImportedDocumentLock;
 use crate::common::ImportedDocumentReadGuard;
-use crate::common::OptionRecordStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::options::WasmStatusCheck;
 use crate::credential::WasmCredential;

@@ -4,7 +4,7 @@
 use identity_iota::credential::DecodedJwtCredential;
 use wasm_bindgen::prelude::*;
 
-use crate::common::{OptionRecordStringAny, RecordStringAny};
+use crate::common::RecordStringAny;
 use crate::credential::WasmCredential;
 use crate::jose::WasmJwsHeader;
 
