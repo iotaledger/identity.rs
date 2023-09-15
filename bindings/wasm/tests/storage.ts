@@ -135,19 +135,21 @@ describe("#JwkStorageDocument", function() {
             fragment,
             credential,
             new JwsSignatureOptions(),
+            { testkey: "test-value" }
         );
 
         // Check that the credentialJwt can be decoded and verified
         let credentialValidator = new JwtCredentialValidator();
-        const credentialRetrieved = credentialValidator
+
+        const decoded = credentialValidator
             .validate(
                 credentialJwt,
                 doc,
                 new JwtCredentialValidationOptions(),
                 FailFast.FirstError,
-            )
-            .credential();
-        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+            );
+        assert.deepStrictEqual(decoded.customClaims(), { testkey: "test-value" })
+        assert.deepStrictEqual(decoded.credential().toJSON(), credential.toJSON());
 
         // Also check using our custom verifier
         let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
@@ -245,19 +247,20 @@ describe("#JwkStorageDocument", function() {
             fragment,
             credential,
             new JwsSignatureOptions(),
+            { "test-key": "test-value" }
         );
 
         // Check that the credentialJwt can be decoded and verified
         let credentialValidator = new JwtCredentialValidator();
-        const credentialRetrieved = credentialValidator
+        const decoded = credentialValidator
             .validate(
                 credentialJwt,
                 doc,
                 new JwtCredentialValidationOptions(),
                 FailFast.FirstError,
-            )
-            .credential();
-        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+            );
+        assert.deepStrictEqual(decoded.customClaims(), { "test-key": "test-value" });
+        assert.deepStrictEqual(decoded.credential().toJSON(), credential.toJSON());
 
         // Also check using our custom verifier
         let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);

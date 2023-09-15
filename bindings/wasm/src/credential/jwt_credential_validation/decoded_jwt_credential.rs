@@ -4,6 +4,7 @@
 use identity_iota::credential::DecodedJwtCredential;
 use wasm_bindgen::prelude::*;
 
+use crate::common::{OptionRecordStringAny, RecordStringAny};
 use crate::credential::WasmCredential;
 use crate::jose::WasmJwsHeader;
 
@@ -26,6 +27,18 @@ impl WasmDecodedJwtCredential {
   #[wasm_bindgen(js_name = protectedHeader)]
   pub fn protected_header(&self) -> WasmJwsHeader {
     WasmJwsHeader(self.0.header.as_ref().clone())
+  }
+
+  /// The custom claims parsed from the JWT.
+  #[wasm_bindgen(js_name = customClaims)]
+  pub fn custom_claims(&self) -> Option<RecordStringAny> {
+    match &self.0.custom_claims {
+      Some(claims) => JsValue::from_serde(&claims.clone())
+        .map(|js_val| js_val.unchecked_into::<RecordStringAny>())
+        .ok(),
+
+      None => None,
+    }
   }
 
   /// Consumes the object and returns the decoded credential.

@@ -12,6 +12,7 @@
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
+use identity_iota::core::Value;
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtCredentialValidationOptions;
@@ -86,7 +87,13 @@ async fn main() -> anyhow::Result<()> {
     .build()?;
 
   let credential_jwt: Jwt = issuer_document
-    .create_credential_jwt(&credential, &issuer_storage, &fragment, &JwsSignatureOptions::default())
+    .create_credential_jwt(
+      &credential,
+      &issuer_storage,
+      &fragment,
+      &JwsSignatureOptions::default(),
+      None,
+    )
     .await?;
 
   // Before sending this credential to the holder the issuer wants to validate that some properties

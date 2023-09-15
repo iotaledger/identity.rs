@@ -15,6 +15,7 @@ use super::JwsSignatureOptions;
 use super::Storage;
 
 use async_trait::async_trait;
+use identity_core::common::Object;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
 use identity_credential::credential::Jwt;
@@ -105,6 +106,7 @@ pub trait JwkDocumentExt: private::Sealed {
     storage: &Storage<K, I>,
     fragment: &str,
     options: &JwsSignatureOptions,
+    custom_claims: Option<Object>,
   ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
@@ -423,6 +425,7 @@ impl JwkDocumentExt for CoreDocument {
     storage: &Storage<K, I>,
     fragment: &str,
     options: &JwsSignatureOptions,
+    custom_claims: Option<Object>,
   ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
@@ -442,7 +445,9 @@ impl JwkDocumentExt for CoreDocument {
       )));
     }
 
-    let payload = credential.serialize_jwt().map_err(Error::ClaimsSerializationError)?;
+    let payload = credential
+      .serialize_jwt(custom_claims)
+      .map_err(Error::ClaimsSerializationError)?;
     self
       .create_jws(storage, fragment, payload.as_bytes(), options)
       .await
@@ -566,6 +571,7 @@ mod iota_document {
       storage: &Storage<K, I>,
       fragment: &str,
       options: &JwsSignatureOptions,
+      custom_claims: Option<Object>,
     ) -> StorageResult<Jwt>
     where
       K: JwkStorage,
@@ -574,7 +580,7 @@ mod iota_document {
     {
       self
         .core_document()
-        .create_credential_jwt(credential, storage, fragment, options)
+        .create_credential_jwt(credential, storage, fragment, options, custom_claims)
         .await
     }
     async fn create_presentation_jwt<K, I, CRED, T>(
