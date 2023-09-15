@@ -12,7 +12,7 @@
 use examples::create_did;
 use examples::MemStorage;
 use identity_iota::core::Object;
-use identity_iota::core::Value;
+
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtCredentialValidationOptions;

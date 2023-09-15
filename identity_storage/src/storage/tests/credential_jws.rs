@@ -10,7 +10,6 @@ use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::MethodScope;
-use serde_json::Value;
 
 use crate::key_id_storage::KeyIdMemstore;
 use crate::key_storage::JwkMemStore;
