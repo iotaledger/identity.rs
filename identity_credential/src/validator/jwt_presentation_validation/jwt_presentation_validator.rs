@@ -13,8 +13,8 @@ use std::str::FromStr;
 use crate::credential::Jwt;
 use crate::presentation::Presentation;
 use crate::presentation::PresentationJwtClaims;
-use crate::validator::vc_jwt_validation::JwtValidationError;
-use crate::validator::vc_jwt_validation::SignerContext;
+use crate::validator::jwt_credential_validation::JwtValidationError;
+use crate::validator::jwt_credential_validation::SignerContext;
 
 use super::CompoundJwtPresentationValidationError;
 use super::DecodedJwtPresentation;
