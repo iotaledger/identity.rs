@@ -24,7 +24,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDid, EdDSAJwsVerifier } from "../util";
 
 /**
  * This example shows how to create a Verifiable Presentation and validate it.
@@ -97,7 +97,7 @@ export async function createVP() {
         new JwsSignatureOptions(),
     );
 
-    const res = new JwtCredentialValidator().validate(
+    const res = new JwtCredentialValidator(new EdDSAJwsVerifier()).validate(
         credentialJwt,
         issuerDocument,
         new JwtCredentialValidationOptions(),
@@ -178,14 +178,14 @@ export async function createVP() {
     );
 
     // Validate presentation. Note that this doesn't validate the included credentials.
-    let decodedPresentation = new JwtPresentationValidator().validate(
+    let decodedPresentation = new JwtPresentationValidator(new EdDSAJwsVerifier()).validate(
         presentationJwt,
         resolvedHolder,
         jwtPresentationValidationOptions,
     );
 
     // Validate the credentials in the presentation.
-    let credentialValidator = new JwtCredentialValidator();
+    let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
     let validationOptions = new JwtCredentialValidationOptions({
         subjectHolderRelationship: [
             presentationHolderDID.toString(),

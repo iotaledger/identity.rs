@@ -1,10 +1,13 @@
 import {
+    IJwsVerifier,
     IotaDocument,
     IotaIdentityClient,
+    Jwk,
     JwkMemStore,
     JwsAlgorithm,
     MethodScope,
     Storage,
+    verifyEdDSA,
 } from "@iota/identity-wasm/node";
 import {
     type Address,
@@ -18,6 +21,18 @@ import {
 
 export const API_ENDPOINT = "http://localhost:14265";
 export const FAUCET_ENDPOINT = "http://localhost:8091/api/enqueue";
+
+// A JWS Verifier capabale of verifying EdDSA signatures with curve Ed25519.
+export class EdDSAJwsVerifier implements IJwsVerifier {
+    verify(alg: JwsAlgorithm, signingInput: Uint8Array, decodedSignature: Uint8Array, publicKey: Jwk) {
+        switch (alg) {
+            case JwsAlgorithm.EdDSA:
+                return verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
+            default:
+                throw new Error(`unsupported jws algorithm ${alg}`);
+        }
+    }
+}
 
 /** Creates a DID Document and publishes it in a new Alias Output.
 

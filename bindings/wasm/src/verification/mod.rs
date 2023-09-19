@@ -3,6 +3,7 @@
 
 mod custom_verification;
 
+mod jws_verifier;
 mod wasm_method_data;
 mod wasm_method_relationship;
 mod wasm_method_scope;

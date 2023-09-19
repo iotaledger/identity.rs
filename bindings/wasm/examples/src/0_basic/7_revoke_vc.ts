@@ -18,7 +18,7 @@ import {
     VerificationMethod,
 } from "@iota/identity-wasm/node";
 import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDid, EdDSAJwsVerifier } from "../util";
 
 /**
  * This example shows how to revoke a verifiable credential.
@@ -134,7 +134,7 @@ export async function revokeVC() {
     console.log(`Credential JWT > ${credentialJwt.toString()}`);
 
     // Validate the credential using the issuer's DID Document.
-    let jwtCredentialValidator = new JwtCredentialValidator();
+    let jwtCredentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
     jwtCredentialValidator.validate(
         credentialJwt,
         issuerDocument,

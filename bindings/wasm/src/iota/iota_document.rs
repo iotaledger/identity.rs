@@ -359,7 +359,7 @@ impl WasmIotaDocument {
     &self,
     jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: Option<IJwsVerifier>,
+    signatureVerifier: IJwsVerifier,
     detachedPayload: Option<String>,
   ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsVerifier::new(signatureVerifier);

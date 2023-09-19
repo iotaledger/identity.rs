@@ -20,7 +20,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDid, EdDSAJwsVerifier } from "../util";
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.
@@ -123,7 +123,7 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    new JwtDomainLinkageValidator().validateLinkage(
+    new JwtDomainLinkageValidator(new EdDSAJwsVerifier()).validateLinkage(
         issuerDocument,
         fetchedConfigurationResource,
         domainFoo,
@@ -157,7 +157,7 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    new JwtDomainLinkageValidator().validateLinkage(
+    new JwtDomainLinkageValidator(new EdDSAJwsVerifier()).validateLinkage(
         didDocument,
         fetchedConfigurationResource,
         domains[0],

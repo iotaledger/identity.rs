@@ -13,6 +13,7 @@ use crate::error::WasmResult;
 use crate::verification::IJwsVerifier;
 use crate::verification::WasmJwsVerifier;
 use identity_iota::credential::JwtPresentationValidator;
+use identity_iota::credential::JwtPresentationValidatorUtils;
 use identity_iota::did::CoreDID;
 use wasm_bindgen::prelude::*;
 
@@ -26,7 +27,7 @@ impl WasmJwtPresentationValidator {
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtPresentationValidator {
+  pub fn new(signatureVerifier: IJwsVerifier) -> WasmJwtPresentationValidator {
     let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtPresentationValidator(JwtPresentationValidator::with_signature_verifier(signature_verifier))
   }
@@ -76,7 +77,7 @@ impl WasmJwtPresentationValidator {
   /// Validates the semantic structure of the {@link Presentation}.
   #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
-    JwtPresentationValidator::check_structure(&presentation.0).wasm_result()?;
+    JwtPresentationValidatorUtils::check_structure(&presentation.0).wasm_result()?;
     Ok(())
   }
 
@@ -87,7 +88,7 @@ impl WasmJwtPresentationValidator {
   /// * If the holder can't be parsed as DIDs.
   #[wasm_bindgen(js_name = extractHolder)]
   pub fn extract_holder(presentation: &WasmJwt) -> Result<WasmCoreDID> {
-    let holder = JwtPresentationValidator::extract_holder::<CoreDID>(&presentation.0).wasm_result()?;
+    let holder = JwtPresentationValidatorUtils::extract_holder::<CoreDID>(&presentation.0).wasm_result()?;
     Ok(WasmCoreDID(holder))
   }
 }

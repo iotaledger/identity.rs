@@ -12,7 +12,7 @@ import {
     Storage,
 } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid } from "../util";
+import { API_ENDPOINT, createDid, EdDSAJwsVerifier } from "../util";
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.
@@ -79,7 +79,7 @@ export async function createVC() {
     // Validate the credential's signature, the credential's semantic structure,
     // check that the issuance date is not in the future and that the expiration date is not in the past.
     // Note that the validation returns an object containing the decoded credential.
-    const decoded_credential = new JwtCredentialValidator().validate(
+    const decoded_credential = new JwtCredentialValidator(new EdDSAJwsVerifier()).validate(
         credentialJwt,
         issuerDocument,
         new JwtCredentialValidationOptions(),
