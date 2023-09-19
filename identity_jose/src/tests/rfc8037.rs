@@ -4,8 +4,6 @@
 use crate::jwk::Jwk;
 use crate::jws::CompactJwsEncoder;
 use crate::jws::Decoder;
-#[cfg(feature = "eddsa")]
-use crate::jws::EdDSAJwsVerifier;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsHeader;
 use crate::jws::JwsVerifierFn;
@@ -54,10 +52,15 @@ fn test_rfc8037_ed25519() {
 
     #[cfg(feature = "eddsa")]
     {
+      let jws_signature_verifier = JwsVerifierFn::from(|input: VerificationInput, key: &Jwk| match input.alg {
+        JwsAlgorithm::EdDSA => ed25519::verify(input, key),
+        other => unimplemented!("{other}"),
+      });
+
       let decoder = Decoder::new();
       let token_with_default = decoder
         .decode_compact_serialization(jws.as_bytes(), None)
-        .and_then(|decoded| decoded.verify(&EdDSAJwsVerifier::default(), &public))
+        .and_then(|decoded| decoded.verify(&jws_signature_verifier, &public))
         .unwrap();
       assert_eq!(token, token_with_default);
     }

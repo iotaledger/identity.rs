@@ -28,7 +28,7 @@ rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "resolver", "eddsa"]
+default = ["revocation-bitmap", "client", "iota-client", "resolver"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
@@ -56,7 +56,7 @@ domain-linkage = ["identity_credential/domain-linkage"]
 domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
 
 # Enables JWS verification with the EdDSA algorithm
-eddsa = ["identity_verification/eddsa"]
+# eddsa = ["identity_verification/eddsa"]
 
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["identity_storage/memstore"]

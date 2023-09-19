@@ -39,7 +39,7 @@ tokio = { version = "1.29.0", default-features = false, features = ["macros", "s
 [features]
 default = ["iota-document", "memstore"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
-memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "identity_verification/eddsa"]
+memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument

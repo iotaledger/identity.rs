@@ -18,6 +18,7 @@ use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::JwtPresentationValidationOptions;
 use identity_iota::credential::JwtPresentationValidator;
+use identity_iota::credential::JwtPresentationValidatorUtils;
 use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationBuilder;
 use identity_iota::did::CoreDID;
@@ -190,7 +191,7 @@ async fn main() -> anyhow::Result<()> {
   resolver.attach_iota_handler(client);
 
   // Resolve the holder's document.
-  let holder_did: CoreDID = JwtPresentationValidator::extract_holder(&presentation_jwt)?;
+  let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;
   let holder: IotaDocument = resolver.resolve(&holder_did).await?;
 
   // Validate presentation. Note that this doesn't validate the included credentials.
