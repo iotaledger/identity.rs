@@ -55,14 +55,8 @@ domain-linkage = ["identity_credential/domain-linkage"]
 # Enables fetching domain linkage configuration files.
 domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
 
-# Enables JWS verification with the EdDSA algorithm
-# eddsa = ["identity_verification/eddsa"]
-
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["identity_storage/memstore"]
-
-# Exposes secure implementations of the storage traits using stronghold.
-stronghold = ["identity_storage/stronghold"]
 
 [package.metadata.docs.rs]
 # To build locally:

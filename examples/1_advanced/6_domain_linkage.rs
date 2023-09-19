@@ -5,6 +5,7 @@ use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Duration;
 use identity_iota::core::FromJson;
 use identity_iota::core::Object;
@@ -153,12 +154,13 @@ async fn main() -> anyhow::Result<()> {
   let issuer_did_document: IotaDocument = resolver.resolve(&did).await?;
 
   // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
-  let validation_result: Result<(), DomainLinkageValidationError> = JwtDomainLinkageValidator::new().validate_linkage(
-    &issuer_did_document,
-    &configuration_resource,
-    &domain_foo,
-    &JwtCredentialValidationOptions::default(),
-  );
+  let validation_result: Result<(), DomainLinkageValidationError> =
+    JwtDomainLinkageValidator::with_signature_verifier(EdDSAJwsVerifier::default()).validate_linkage(
+      &issuer_did_document,
+      &configuration_resource,
+      &domain_foo,
+      &JwtCredentialValidationOptions::default(),
+    );
   assert!(validation_result.is_ok());
 
   // =====================================================
@@ -197,12 +199,13 @@ async fn main() -> anyhow::Result<()> {
     DomainLinkageConfiguration::from_json(&configuration_resource_json)?;
 
   // Validate the linkage.
-  let validation_result: Result<(), DomainLinkageValidationError> = JwtDomainLinkageValidator::new().validate_linkage(
-    &did_document,
-    &configuration_resource,
-    &domain_foo,
-    &JwtCredentialValidationOptions::default(),
-  );
+  let validation_result: Result<(), DomainLinkageValidationError> =
+    JwtDomainLinkageValidator::with_signature_verifier(EdDSAJwsVerifier::default()).validate_linkage(
+      &did_document,
+      &configuration_resource,
+      &domain_foo,
+      &JwtCredentialValidationOptions::default(),
+    );
   assert!(validation_result.is_ok());
   Ok(())
 }

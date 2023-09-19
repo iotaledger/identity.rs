@@ -289,7 +289,7 @@ where
   validation_options =
     validation_options.earliest_expiry_date(Timestamp::now_utc().checked_sub(Duration::days(2)).unwrap());
 
-    JWT_PRESENTATION_VALIDATOR_ED25519
+  JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(&presentation_jwt, &setup.subject_doc, &validation_options)
     .unwrap();
 }

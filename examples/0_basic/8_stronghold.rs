@@ -3,6 +3,7 @@
 
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::credential::Jws;
 use identity_iota::document::verifiable::JwsVerificationOptions;
 use identity_iota::iota::IotaClientExt;
@@ -16,7 +17,6 @@ use identity_iota::storage::JwsSignatureOptions;
 use identity_iota::storage::Storage;
 use identity_iota::storage::StrongholdStorage;
 use identity_iota::verification::jws::DecodedJws;
-use identity_iota::verification::jws::EdDSAJwsVerifier;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;

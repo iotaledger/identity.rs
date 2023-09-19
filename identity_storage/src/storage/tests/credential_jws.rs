@@ -104,7 +104,8 @@ async fn signing_credential_with_nonce_and_scope() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   assert!(validator
     .validate::<_, Object>(
       &jws,
@@ -161,7 +162,8 @@ async fn signing_credential_with_b64() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   let decoded = validator
     .validate::<_, Object>(
       &jws,
