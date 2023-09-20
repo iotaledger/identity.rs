@@ -938,7 +938,8 @@ impl CoreDocument {
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
   /// - The JWS must be encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  /// or set explicitly in the `options`.
   //
   // NOTE: This is tested in `identity_storage` and `identity_credential`.
   pub fn verify_jws<'jws, T: JwsVerifier>(
