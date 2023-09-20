@@ -558,7 +558,6 @@ mod tests {
 
   #[test]
   fn inconsistent_subject() {
-    // issuer is inconsistent (15 instead of 14).
     let claims_json: &str = r#"
     {
       "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
