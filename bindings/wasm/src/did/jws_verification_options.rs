@@ -7,6 +7,8 @@ use crate::verification::WasmMethodScope;
 use identity_iota::document::verifiable::JwsVerificationOptions;
 use wasm_bindgen::prelude::*;
 
+use super::WasmDIDUrl;
+
 #[wasm_bindgen(js_name = JwsVerificationOptions, inspectable)]
 pub struct WasmJwsVerificationOptions(pub(crate) JwsVerificationOptions);
 
@@ -30,9 +32,15 @@ impl WasmJwsVerificationOptions {
   }
 
   /// Set the scope of the verification methods that may be used to verify the given JWS.
-  #[wasm_bindgen(js_name = setScope)]
-  pub fn set_scope(&mut self, value: &WasmMethodScope) {
+  #[wasm_bindgen(js_name = setMethodScope)]
+  pub fn set_method_scope(&mut self, value: &WasmMethodScope) {
     self.0.method_scope = Some(value.0);
+  }
+
+  /// Set the DID URl of the method, whose JWK should be used to verify the JWS.
+  #[wasm_bindgen(js_name = setMethodId)]
+  pub fn set_method_id(&mut self, value: &WasmDIDUrl) {
+    self.0.method_id = Some(value.0.clone());
   }
 }
 
@@ -50,13 +58,6 @@ extern "C" {
 const I_JWS_SIGNATURE_OPTIONS: &'static str = r#"
 /** Holds options to create {@link JwsVerificationOptions}. */
 interface IJwsVerificationOptions {
-    /** 
-    * A list of permitted extension parameters. 
-    *
-    * [More info](https://www.rfc-editor.org/rfc/rfc7515#section-4.1.11)
-    */
-    readonly crits?: [string];
-
     /** Verify that the `nonce` set in the protected header matches this.
      * 
      * [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
@@ -65,4 +66,9 @@ interface IJwsVerificationOptions {
 
     /** Verify the signing verification method relationship matches this.*/
     readonly methodScope?: MethodScope;
+
+    /** The DID URl of the method, whose JWK should be used to verify the JWS.
+     * If unset, the `kid` of the JWS is used as the DID Url.
+     */
+    readonly methodId?: string;
 }"#;

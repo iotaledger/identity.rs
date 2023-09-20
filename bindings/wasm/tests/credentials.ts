@@ -15,9 +15,6 @@ import {
     Timestamp,
     UnknownCredential,
 } from "../node";
-export {};
-
-// const assert = require("assert");
 
 const credentialFields = {
     context: "https://www.w3.org/2018/credentials/examples/v1",
