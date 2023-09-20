@@ -26,7 +26,6 @@ import {
     Storage,
     Timestamp,
     VerificationMethod,
-    verifyEdDSA,
 } from "../node";
 import { createVerificationMethod } from "./key_id_storage";
 
@@ -417,7 +416,7 @@ describe("#JwkStorageDocument", function() {
             decodedSignature: Uint8Array,
             publicKey: Jwk,
         ): void {
-            verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
+            new EdDSAJwsVerifier().verify(alg, signingInput, decodedSignature, publicKey);
             this._verifications += 1;
             return;
         }
