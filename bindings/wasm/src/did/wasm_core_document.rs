@@ -673,6 +673,8 @@ impl WasmCoreDocument {
   /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
   /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
   /// private key backed by the `storage` in accordance with the passed `options`.
+  ///
+  /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   #[wasm_bindgen(js_name = createCredentialJwt)]
   pub fn create_credential_jwt(
     &self,
