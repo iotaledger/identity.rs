@@ -72,9 +72,8 @@ impl JwkStorage for JwkMemStore {
 
     let mut jwk: Jwk = encode_jwk(&private_key, &public_key);
     jwk.set_alg(alg.name());
-    // Unwrapping is OK because the None variant only occurs for kty = oct.
-    let mut public_jwk: Jwk = jwk.to_public().unwrap();
-    public_jwk.set_kid(kid.clone());
+    jwk.set_kid(jwk.thumbprint_sha256_b64());
+    let mut public_jwk: Jwk = jwk.to_public().expect("should only panic if kty == oct");
 
     let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
     jwk_store.insert(kid.clone(), jwk);
