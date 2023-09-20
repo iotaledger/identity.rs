@@ -56,13 +56,16 @@ where
   sub: Option<Cow<'credential, Url>>,
 
   vc: InnerCredential<'credential, T>,
+
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub(crate) custom: Option<Object>,
 }
 
 impl<'credential, T> CredentialJwtClaims<'credential, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
-  pub(super) fn new(credential: &'credential Credential<T>) -> Result<Self> {
+  pub(super) fn new(credential: &'credential Credential<T>, custom: Option<Object>) -> Result<Self> {
     let Credential {
       context,
       id,
@@ -107,6 +110,7 @@ where
         properties: Cow::Borrowed(properties),
         proof: proof.as_ref().map(Cow::Borrowed),
       },
+      custom,
     })
   }
 }
@@ -194,6 +198,7 @@ where
       jti,
       sub,
       vc,
+      custom: _,
     } = self;
 
     let InnerCredential {
@@ -409,7 +414,7 @@ mod tests {
     }"#;
 
     let credential: Credential = Credential::from_json(credential_json).unwrap();
-    let jwt_credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::new(&credential).unwrap();
+    let jwt_credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::new(&credential, None).unwrap();
     let jwt_credential_claims_serialized: String = jwt_credential_claims.to_json().unwrap();
     // Compare JSON representations
     assert_eq!(

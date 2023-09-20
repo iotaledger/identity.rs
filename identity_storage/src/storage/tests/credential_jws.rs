@@ -83,6 +83,7 @@ async fn signing_credential_with_detached_option_fails() {
       &storage,
       kid.as_ref(),
       &JwsSignatureOptions::default().detached_payload(true),
+      None
     )
     .await
     .is_err());
@@ -99,6 +100,7 @@ async fn signing_credential_with_nonce_and_scope() {
       &storage,
       kid.as_ref(),
       &JwsSignatureOptions::default().nonce(nonce.to_owned()),
+      None,
     )
     .await
     .unwrap();
@@ -156,6 +158,7 @@ async fn signing_credential_with_b64() {
       &storage,
       kid.as_ref(),
       &JwsSignatureOptions::default().b64(true),
+      None,
     )
     .await
     .unwrap();
@@ -182,7 +185,40 @@ async fn signing_credential_with_b64() {
       &storage,
       kid.as_ref(),
       &JwsSignatureOptions::default().b64(false),
+      None
     )
     .await
     .is_err());
+}
+
+#[tokio::test]
+async fn custom_claims() {
+  let (document, storage, kid, credential) = setup().await;
+
+  let mut custom_claims = Object::new();
+  custom_claims.insert(
+    "test-key".to_owned(),
+    serde_json::Value::String("test-value".to_owned()),
+  );
+  let jws = document
+    .create_credential_jwt(
+      &credential,
+      &storage,
+      kid.as_ref(),
+      &JwsSignatureOptions::default().b64(true),
+      Some(custom_claims.clone()),
+    )
+    .await
+    .unwrap();
+
+  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let decoded = validator
+    .validate::<_, Object>(
+      &jws,
+      &document,
+      &JwtCredentialValidationOptions::default(),
+      identity_credential::validator::FailFast::FirstError,
+    )
+    .unwrap();
+  assert_eq!(decoded.custom_claims.unwrap(), custom_claims);
 }

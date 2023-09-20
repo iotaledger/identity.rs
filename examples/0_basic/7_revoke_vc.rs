@@ -142,6 +142,7 @@ async fn main() -> anyhow::Result<()> {
       &storage_issuer,
       &fragment_issuer,
       &JwsSignatureOptions::default(),
+      None,
     )
     .await?;
 
