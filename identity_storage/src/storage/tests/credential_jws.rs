@@ -214,7 +214,8 @@ async fn custom_claims() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   let decoded = validator
     .validate::<_, Object>(
       &jws,
