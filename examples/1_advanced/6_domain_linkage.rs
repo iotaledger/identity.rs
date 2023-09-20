@@ -111,6 +111,7 @@ async fn main() -> anyhow::Result<()> {
       &storage,
       &fragment,
       &JwsSignatureOptions::default(),
+      None,
     )
     .await?;
 

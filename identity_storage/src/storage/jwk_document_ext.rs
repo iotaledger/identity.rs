@@ -15,6 +15,7 @@ use super::JwsSignatureOptions;
 use super::Storage;
 
 use async_trait::async_trait;
+use identity_core::common::Object;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
 use identity_credential::credential::Jwt;
@@ -100,12 +101,15 @@ pub trait JwkDocumentExt: private::Sealed {
   /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
   /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
   /// private key backed by the `storage` in accordance with the passed `options`.
+  /// 
+  /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   async fn create_credential_jwt<K, I, T>(
     &self,
     credential: &Credential<T>,
     storage: &Storage<K, I>,
     fragment: &str,
     options: &JwsSignatureOptions,
+    custom_claims: Option<Object>,
   ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
@@ -429,6 +433,7 @@ impl JwkDocumentExt for CoreDocument {
     storage: &Storage<K, I>,
     fragment: &str,
     options: &JwsSignatureOptions,
+    custom_claims: Option<Object>,
   ) -> StorageResult<Jwt>
   where
     K: JwkStorage,
@@ -448,7 +453,9 @@ impl JwkDocumentExt for CoreDocument {
       )));
     }
 
-    let payload = credential.serialize_jwt().map_err(Error::ClaimsSerializationError)?;
+    let payload = credential
+      .serialize_jwt(custom_claims)
+      .map_err(Error::ClaimsSerializationError)?;
     self
       .create_jws(storage, fragment, payload.as_bytes(), options)
       .await
@@ -572,6 +579,7 @@ mod iota_document {
       storage: &Storage<K, I>,
       fragment: &str,
       options: &JwsSignatureOptions,
+      custom_claims: Option<Object>,
     ) -> StorageResult<Jwt>
     where
       K: JwkStorage,
@@ -580,7 +588,7 @@ mod iota_document {
     {
       self
         .core_document()
-        .create_credential_jwt(credential, storage, fragment, options)
+        .create_credential_jwt(credential, storage, fragment, options, custom_claims)
         .await
     }
     async fn create_presentation_jwt<K, I, CRED, T>(
