@@ -3,6 +3,7 @@
 
 import {
     Credential,
+    EdDSAJwsVerifier,
     FailFast,
     JwkMemStore,
     JwsSignatureOptions,
@@ -12,7 +13,7 @@ import {
     Storage,
 } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid, EdDSAJwsVerifier } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * This example shows how to create a Verifiable Credential and validate it.

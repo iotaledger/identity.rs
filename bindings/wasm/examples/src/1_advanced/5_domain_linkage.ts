@@ -7,6 +7,7 @@ import {
     DIDUrl,
     DomainLinkageConfiguration,
     Duration,
+    EdDSAJwsVerifier,
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
@@ -20,7 +21,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid, EdDSAJwsVerifier } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * Demonstrates how to link a domain and a DID and verify the linkage.

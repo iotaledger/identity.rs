@@ -4,6 +4,7 @@ import {
     Credential,
     DecodedJwtPresentation,
     Duration,
+    EdDSAJwsVerifier,
     FailFast,
     IJwsVerifier,
     IotaDocument,
@@ -95,7 +96,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
 
         // Check that we can also verify it using a custom verifier
@@ -138,7 +139,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
         const credentialRetrieved = credentialValidator
             .validate(
                 credentialJwt,
@@ -206,7 +207,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
 
         // Check that we can also verify it using a custom verifier
@@ -248,7 +249,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
         const credentialRetrieved = credentialValidator
             .validate(
                 credentialJwt,

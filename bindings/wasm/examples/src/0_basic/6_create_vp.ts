@@ -5,6 +5,7 @@ import {
     CoreDID,
     Credential,
     Duration,
+    EdDSAJwsVerifier,
     FailFast,
     IotaIdentityClient,
     JwkMemStore,
@@ -24,7 +25,7 @@ import {
     Timestamp,
 } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
-import { API_ENDPOINT, createDid, EdDSAJwsVerifier } from "../util";
+import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * This example shows how to create a Verifiable Presentation and validate it.
