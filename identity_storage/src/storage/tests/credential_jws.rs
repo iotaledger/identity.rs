@@ -6,6 +6,7 @@ use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
 use identity_credential::validator::JwtCredentialValidationOptions;
+use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::JwsAlgorithm;
@@ -185,4 +186,34 @@ async fn signing_credential_with_b64() {
     )
     .await
     .is_err());
+}
+
+#[tokio::test]
+async fn signing_credential_with_custom_kid() {
+  let (document, storage, fragment, credential) = setup().await;
+
+  let my_kid = "my-kid";
+  let jws = document
+    .create_credential_jwt(
+      &credential,
+      &storage,
+      fragment.as_ref(),
+      &JwsSignatureOptions::default().kid(my_kid),
+    )
+    .await
+    .unwrap();
+
+  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let method_id = document.id().clone().join(format!("#{fragment}")).unwrap();
+  let decoded = validator
+    .validate::<_, Object>(
+      &jws,
+      &document,
+      &JwtCredentialValidationOptions::default()
+        .verification_options(JwsVerificationOptions::new().method_id(method_id)),
+      identity_credential::validator::FailFast::FirstError,
+    )
+    .unwrap();
+
+  assert_eq!(decoded.header.kid().unwrap(), my_kid);
 }

@@ -97,8 +97,9 @@ pub trait JwkDocumentExt: private::Sealed {
   /// Produces a JWT where the payload is produced from the given `credential`
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
   async fn create_credential_jwt<K, I, T>(
     &self,
     credential: &Credential<T>,
@@ -357,7 +358,11 @@ impl JwkDocumentExt for CoreDocument {
 
       header.set_alg(alg);
 
-      header.set_kid(method.id().to_string());
+      if let Some(ref kid) = options.kid {
+        header.set_kid(kid.clone());
+      } else {
+        header.set_kid(method.id().to_string());
+      }
 
       if options.attach_jwk {
         header.set_jwk(jwk.clone())
