@@ -422,6 +422,7 @@ where
       &setup.issuer_storage,
       &setup.issuer_method_fragment,
       &JwsSignatureOptions::default(),
+      None,
     )
     .await
     .unwrap()

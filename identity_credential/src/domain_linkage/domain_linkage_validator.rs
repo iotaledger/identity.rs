@@ -537,7 +537,7 @@ mod tests {
     fragment: &str,
     secret_key: &SecretKey,
   ) -> Jwt {
-    let payload: String = credential.serialize_jwt().unwrap();
+    let payload: String = credential.serialize_jwt(None).unwrap();
     Jwt::new(sign_bytes(document, fragment, payload.as_ref(), secret_key).into())
   }
 

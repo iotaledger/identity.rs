@@ -156,7 +156,7 @@ mod tests {
       .build()
       .unwrap();
 
-    let credential_jwt = Jwt::new(credential.serialize_jwt().unwrap());
+    let credential_jwt = Jwt::new(credential.serialize_jwt(None).unwrap());
 
     let presentation: Presentation<Jwt> = PresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
       .type_("ExamplePresentation")

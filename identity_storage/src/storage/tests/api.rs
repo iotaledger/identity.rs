@@ -311,7 +311,13 @@ async fn signing_credential() {
 
   let credential: Credential = Credential::from_json(credential_json).unwrap();
   let jws = document
-    .create_credential_jwt(&credential, &storage, &method_fragment, &JwsSignatureOptions::default())
+    .create_credential_jwt(
+      &credential,
+      &storage,
+      &method_fragment,
+      &JwsSignatureOptions::default(),
+      None,
+    )
     .await
     .unwrap();
   // Verify the credential

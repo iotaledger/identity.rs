@@ -57,6 +57,7 @@ where
       &storage,
       method_fragment.as_ref(),
       &JwsSignatureOptions::default(),
+      None,
     )
     .await
     .unwrap();
@@ -139,6 +140,7 @@ where
       &storage,
       method_fragment.as_ref(),
       &JwsSignatureOptions::default(),
+      None,
     )
     .await
     .unwrap();
@@ -180,6 +182,7 @@ where
       &storage,
       method_fragment.as_ref(),
       &JwsSignatureOptions::default(),
+      None,
     )
     .await
     .unwrap();
@@ -239,7 +242,13 @@ where
 
   // Sign the credential with the *other* issuer.
   let jwt: Jwt = other_issuer_doc
-    .create_credential_jwt(&credential, &other_storage, fragment, &JwsSignatureOptions::default())
+    .create_credential_jwt(
+      &credential,
+      &other_storage,
+      fragment,
+      &JwsSignatureOptions::default(),
+      None,
+    )
     .await
     .unwrap();
 
@@ -403,6 +412,7 @@ where
       &storage,
       method_fragment.as_ref(),
       &JwsSignatureOptions::default(),
+      None,
     )
     .await
     .unwrap();

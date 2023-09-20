@@ -293,6 +293,8 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
         JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
 
+    let custom_claims = credential_claims.custom.clone();
+
     // Construct the credential token containing the credential and the protected header.
     let credential: Credential<T> = credential_claims
       .try_into_credential()
@@ -301,6 +303,7 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
     Ok(DecodedJwtCredential {
       credential,
       header: Box::new(protected),
+      custom_claims,
     })
   }
 }
