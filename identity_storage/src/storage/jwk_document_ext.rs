@@ -101,7 +101,7 @@ pub trait JwkDocumentExt: private::Sealed {
   /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
   /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
   /// private key backed by the `storage` in accordance with the passed `options`.
-  /// 
+  ///
   /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   async fn create_credential_jwt<K, I, T>(
     &self,

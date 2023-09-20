@@ -223,7 +223,6 @@ async fn signing_credential_with_custom_kid() {
   assert_eq!(decoded.header.kid().unwrap(), my_kid);
 }
 
-
 #[tokio::test]
 async fn custom_claims() {
   let (document, storage, kid, credential) = setup().await;
