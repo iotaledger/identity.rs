@@ -100,7 +100,7 @@ cd ../..
 mkdir tmp/src
 cat > tmp/src/main.rs 
 cd tmp
-timeout 900 cargo build || (echo "Process timed out after 900 seconds" && exit 1)
+timeout 360 cargo build || (echo "Process timed out after 360 seconds" && exit 1)
 -->
 <!-- !test check Rust Example -->
 
