@@ -67,7 +67,7 @@ interface IJwsVerificationOptions {
     /** Verify the signing verification method relationship matches this.*/
     readonly methodScope?: MethodScope;
 
-    /** The DID URl of the method, whose JWK should be used to verify the JWS.
+    /** The DID URL of the method, whose JWK should be used to verify the JWS.
      * If unset, the `kid` of the JWS is used as the DID Url.
      */
     readonly methodId?: DIDUrl;
