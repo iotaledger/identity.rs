@@ -139,6 +139,14 @@ jobs:
           parallel -k -j 4 --retries 3 --joblog report.log ./target/release/examples/{}
           cat report.log
 
+      - name: Run Rust Readme examples
+        # run examples only on ubuntu for now
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd bindings/wasm
+          npm ci
+          npm run test:readme:rust
+
       - name: Tear down private tangle
         if: matrix.os == 'ubuntu-latest' && always()
         uses: './.github/actions/private-tangle/tear-down'

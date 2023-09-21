@@ -67,6 +67,17 @@ See the [instructions](https://wiki.iota.org/hornet/develop/how_tos/private_tang
 
 _Cargo.toml_
 
+<!--
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+!test program
+cd ../..
+mkdir tmp
+cat | sed -e 's#identity_iota = .*#identity_iota = { path = "../identity_iota" }#' > tmp/Cargo.toml
+echo '[workspace]' >>tmp/Cargo.toml
+-->
+<!-- !test check Cargo Example -->
+
 ```toml
 [package]
 name = "iota_identity_example"
@@ -74,12 +85,25 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.0-rc" }
+identity_iota = { version = "1.0.0-rc" }
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 ```
 
 _main._<span></span>_rs_
+
+<!--
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+!test program
+cd ../..
+mkdir tmp/src
+cat > tmp/src/main.rs 
+cd tmp
+timeout 900 cargo build || (echo "Process timed out after 900 seconds" && exit 1)
+-->
+<!-- !test check Rust Example -->
+
 
 ```rust,no_run
 use identity_iota::core::ToJson;
