@@ -5,6 +5,7 @@ import {
     JwkMemStore,
     JwsAlgorithm,
     JwsSignatureOptions,
+    JwsVerificationOptions,
     JwtPresentationOptions,
     JwtPresentationValidationOptions,
     JwtPresentationValidator,
@@ -237,22 +238,31 @@ describe("Presentation", function() {
                 verifiableCredential: [credentialJwt, unsignedVc, otherCredential],
             });
 
+            const myKid = "my-kid";
             const presentationJwt = await doc.createPresentationJwt(
                 storage,
                 fragment,
                 unsignedVp,
-                new JwsSignatureOptions(),
+                new JwsSignatureOptions({
+                    kid: myKid,
+                }),
                 new JwtPresentationOptions(),
             );
 
             let issuer = JwtPresentationValidator.extractHolder(presentationJwt);
             assert.deepStrictEqual(issuer.toString(), doc.id().toString());
 
+            const methodId = doc.id().join(fragment);
             const decodedPresentation = new JwtPresentationValidator().validate(
                 presentationJwt,
                 doc,
-                new JwtPresentationValidationOptions(),
+                new JwtPresentationValidationOptions({
+                    presentationVerifierOptions: new JwsVerificationOptions({
+                        methodId: methodId,
+                    }),
+                }),
             );
+            assert.deepStrictEqual(decodedPresentation.protectedHeader().kid(), myKid);
 
             const credentials: UnknownCredential[] = decodedPresentation
                 .presentation()

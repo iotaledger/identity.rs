@@ -961,12 +961,18 @@ impl CoreDocument {
       ));
     }
 
-    let kid = validation_item.kid().ok_or(Error::JwsVerificationError(
-      identity_verification::jose::error::Error::InvalidParam("missing kid value"),
-    ))?;
+    let method_url_query: DIDUrlQuery<'_> = match &options.method_id {
+      Some(method_id) => method_id.into(),
+      None => validation_item
+        .kid()
+        .ok_or(Error::JwsVerificationError(
+          identity_verification::jose::error::Error::InvalidParam("missing kid value"),
+        ))?
+        .into(),
+    };
 
     let public_key: &Jwk = self
-      .resolve_method(kid, options.method_scope)
+      .resolve_method(method_url_query, options.method_scope)
       .ok_or(Error::MethodNotFound)?
       .data()
       .try_public_key_jwk()

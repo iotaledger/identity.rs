@@ -70,5 +70,5 @@ interface IJwsVerificationOptions {
     /** The DID URl of the method, whose JWK should be used to verify the JWS.
      * If unset, the `kid` of the JWS is used as the DID Url.
      */
-    readonly methodId?: string;
+    readonly methodId?: DIDUrl;
 }"#;
