@@ -8,6 +8,7 @@ use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
 use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_did::DIDUrl;
+use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jose::jws::EdDSAJwsVerifier;
@@ -272,6 +273,28 @@ async fn create_jws_detached() {
       &verification_options,
     )
     .is_ok());
+}
+
+#[tokio::test]
+async fn create_jws_with_custom_kid() {
+  let (document, storage, fragment) = setup_with_method().await;
+
+  let payload: &[u8] = b"test";
+  let key_id: &str = "my-key-id";
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().kid(key_id);
+  let verification_options: JwsVerificationOptions =
+    JwsVerificationOptions::new().method_id(document.id().clone().join(format!("#{fragment}")).unwrap());
+
+  let jws: Jws = document
+    .create_jws(&storage, &fragment, payload, &signature_options)
+    .await
+    .unwrap();
+
+  let decoded = document
+    .verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options)
+    .unwrap();
+
+  assert_eq!(decoded.protected.kid().unwrap(), key_id);
 }
 
 #[tokio::test]
