@@ -211,7 +211,8 @@ async fn signing_credential_with_custom_kid() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   let method_id = document.id().clone().join(format!("#{fragment}")).unwrap();
   let decoded = validator
     .validate::<_, Object>(
