@@ -91,7 +91,7 @@ impl JwkStorage for StrongholdStorage {
     params.crv = EdCurve::Ed25519.name().to_owned();
     let mut jwk: Jwk = Jwk::from_params(params);
     jwk.set_alg(alg.name());
-    jwk.set_kid(key_id.clone());
+    jwk.set_kid(jwk.thumbprint_sha256_b64());
 
     Ok(JwkGenOutput { key_id, jwk })
   }

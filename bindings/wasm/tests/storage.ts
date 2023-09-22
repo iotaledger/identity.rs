@@ -23,7 +23,9 @@ import {
     MethodDigest,
     MethodScope,
     Presentation,
+    StatusCheck,
     Storage,
+    SubjectHolderRelationship,
     Timestamp,
     VerificationMethod,
 } from "../node";
@@ -423,4 +425,38 @@ describe("#JwkStorageDocument", function() {
             return;
         }
     }
+});
+
+describe("#OptionParsing", function() {
+    it("JwsSignatureOptions can be parsed", () => {
+        new JwsSignatureOptions({
+            nonce: "nonce",
+            attachJwk: true,
+            b64: true,
+            cty: "type",
+            detachedPayload: false,
+            kid: "kid",
+            typ: "typ",
+            url: "https://www.example.com",
+        });
+    }),
+        it("JwsVerificationOptions can be parsed", () => {
+            new JwsVerificationOptions({
+                nonce: "nonce",
+                methodId: "did:iota:0x123",
+                methodScope: MethodScope.AssertionMethod(),
+            });
+        }),
+        it("JwtCredentialValidationOptions can be parsed", () => {
+            new JwtCredentialValidationOptions({
+                // These are equivalent ways of creating a timestamp.
+                earliestExpiryDate: new Timestamp(),
+                latestIssuanceDate: Timestamp.nowUTC(),
+                status: StatusCheck.SkipAll,
+                subjectHolderRelationship: ["did:iota:0x123", SubjectHolderRelationship.SubjectOnNonTransferable],
+                verifierOptions: new JwsVerificationOptions({
+                    nonce: "nonce",
+                }),
+            });
+        });
 });

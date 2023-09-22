@@ -211,24 +211,27 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
       ));
     }
 
-    // Parse the `kid` to a DID Url which should be the identifier of a verification method in a trusted issuer's DID
-    // document.
-    let method_id: DIDUrl = {
-      let kid: &str = decoded.protected_header().and_then(|header| header.kid()).ok_or(
-        JwtValidationError::MethodDataLookupError {
-          source: None,
-          message: "could not extract kid from protected header",
-          signer_ctx: SignerContext::Issuer,
-        },
-      )?;
+    // If no method_url is set, parse the `kid` to a DID Url which should be the identifier
+    // of a verification method in a trusted issuer's DID document.
+    let method_id: DIDUrl = match &options.method_id {
+      Some(method_id) => method_id.clone(),
+      None => {
+        let kid: &str = decoded.protected_header().and_then(|header| header.kid()).ok_or(
+          JwtValidationError::MethodDataLookupError {
+            source: None,
+            message: "could not extract kid from protected header",
+            signer_ctx: SignerContext::Issuer,
+          },
+        )?;
 
-      // Convert kid to DIDUrl
-      DIDUrl::parse(kid).map_err(|err| JwtValidationError::MethodDataLookupError {
-        source: Some(err.into()),
-        message: "could not parse kid as a DID Url",
-        signer_ctx: SignerContext::Issuer,
-      })
-    }?;
+        // Convert kid to DIDUrl
+        DIDUrl::parse(kid).map_err(|err| JwtValidationError::MethodDataLookupError {
+          source: Some(err.into()),
+          message: "could not parse kid as a DID Url",
+          signer_ctx: SignerContext::Issuer,
+        })?
+      }
+    };
 
     // locate the corresponding issuer
     let issuer: &CoreDocument = trusted_issuers

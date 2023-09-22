@@ -59,6 +59,12 @@ impl WasmJwsSignatureOptions {
     self.0.nonce = Some(value);
   }
 
+  /// Replace the value of the `kid` field.
+  #[wasm_bindgen(js_name = setKid)]
+  pub fn set_kid(&mut self, value: String) {
+    self.0.kid = Some(value);
+  }
+
   /// Replace the value of the `detached_payload` field.
   #[wasm_bindgen(js_name = setDetachedPayload)]
   pub fn set_detached_payload(&mut self, value: bool) {
@@ -116,6 +122,13 @@ interface IJwsSignatureOptions {
      * [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
      */
     readonly nonce?: string;
+
+    /** The kid to set in the protected header.
+     * If unset, the kid of the JWK with which the JWS is produced is used.
+     * 
+     * [More Info](https://www.rfc-editor.org/rfc/rfc7515#section-4.1.4)
+     */
+    readonly kid?: string;
 
     /**   /// Whether the payload should be detached from the JWS.
      * 

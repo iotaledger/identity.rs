@@ -18,7 +18,14 @@ extern "C" {
 pub struct WasmTimestamp(pub(crate) Timestamp);
 
 #[wasm_bindgen(js_class = Timestamp)]
+#[allow(clippy::new_without_default)]
 impl WasmTimestamp {
+  /// Creates a new {@link Timestamp} with the current date and time.
+  #[wasm_bindgen(constructor)]
+  pub fn new() -> Self {
+    Self::now_utc()
+  }
+
   /// Parses a {@link Timestamp} from the provided input string.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmTimestamp> {
