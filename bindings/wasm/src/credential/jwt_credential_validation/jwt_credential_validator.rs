@@ -4,6 +4,7 @@
 use identity_iota::core::Object;
 use identity_iota::core::Url;
 use identity_iota::credential::JwtCredentialValidator;
+use identity_iota::credential::JwtCredentialValidatorUtils;
 use identity_iota::credential::StatusCheck;
 use identity_iota::did::CoreDID;
 
@@ -39,7 +40,7 @@ impl WasmJwtCredentialValidator {
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtCredentialValidator {
+  pub fn new(signatureVerifier: IJwsVerifier) -> WasmJwtCredentialValidator {
     let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtCredentialValidator(JwtCredentialValidator::with_signature_verifier(signature_verifier))
   }
@@ -123,13 +124,13 @@ impl WasmJwtCredentialValidator {
   /// Validate that the credential expires on or after the specified timestamp.
   #[wasm_bindgen(js_name = checkExpiresOnOrAfter)]
   pub fn check_expires_on_or_after(credential: &WasmCredential, timestamp: &WasmTimestamp) -> Result<()> {
-    JwtCredentialValidator::check_expires_on_or_after(&credential.0, timestamp.0).wasm_result()
+    JwtCredentialValidatorUtils::check_expires_on_or_after(&credential.0, timestamp.0).wasm_result()
   }
 
   /// Validate that the credential is issued on or before the specified timestamp.
   #[wasm_bindgen(js_name = checkIssuedOnOrBefore)]
   pub fn check_issued_on_or_before(credential: &WasmCredential, timestamp: &WasmTimestamp) -> Result<()> {
-    JwtCredentialValidator::check_issued_on_or_before(&credential.0, timestamp.0).wasm_result()
+    JwtCredentialValidatorUtils::check_issued_on_or_before(&credential.0, timestamp.0).wasm_result()
   }
 
   /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
@@ -141,7 +142,8 @@ impl WasmJwtCredentialValidator {
     relationship: WasmSubjectHolderRelationship,
   ) -> Result<()> {
     let holder: Url = Url::parse(holder).wasm_result()?;
-    JwtCredentialValidator::check_subject_holder_relationship(&credential.0, &holder, relationship.into()).wasm_result()
+    JwtCredentialValidatorUtils::check_subject_holder_relationship(&credential.0, &holder, relationship.into())
+      .wasm_result()
   }
 
   /// Checks whether the credential status has been revoked.
@@ -158,7 +160,7 @@ impl WasmJwtCredentialValidator {
     let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
       issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
     let status_check: StatusCheck = statusCheck.into();
-    JwtCredentialValidator::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
+    JwtCredentialValidatorUtils::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
   }
 
   /// Utility for extracting the issuer field of a {@link Credential} as a DID.
@@ -168,7 +170,7 @@ impl WasmJwtCredentialValidator {
   /// Fails if the issuer field is not a valid DID.
   #[wasm_bindgen(js_name = extractIssuer)]
   pub fn extract_issuer(credential: &WasmCredential) -> Result<WasmCoreDID> {
-    JwtCredentialValidator::extract_issuer::<CoreDID, Object>(&credential.0)
+    JwtCredentialValidatorUtils::extract_issuer::<CoreDID, Object>(&credential.0)
       .map(WasmCoreDID::from)
       .wasm_result()
   }
@@ -180,7 +182,7 @@ impl WasmJwtCredentialValidator {
   /// If the JWT decoding fails or the issuer field is not a valid DID.
   #[wasm_bindgen(js_name = extractIssuerFromJwt)]
   pub fn extract_issuer_from_jwt(credential: &WasmJwt) -> Result<WasmCoreDID> {
-    JwtCredentialValidator::extract_issuer_from_jwt::<CoreDID>(&credential.0)
+    JwtCredentialValidatorUtils::extract_issuer_from_jwt::<CoreDID>(&credential.0)
       .map(WasmCoreDID::from)
       .wasm_result()
   }

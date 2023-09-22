@@ -10,7 +10,7 @@ use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
-use identity_verification::jose::jws::EdDSAJwsVerifier;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jwk::Jwk;
 use identity_verification::jws::DecodedJws;
@@ -321,7 +321,8 @@ async fn signing_credential() {
     .await
     .unwrap();
   // Verify the credential
-  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   assert!(validator
     .validate::<_, Object>(
       &jws,

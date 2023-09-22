@@ -3,7 +3,7 @@
 
 use crate::credential::Jwt;
 use crate::error::Result;
-use crate::validator::JwtCredentialValidator;
+use crate::validator::JwtCredentialValidatorUtils;
 use crate::validator::JwtValidationError;
 use identity_core::common::Context;
 use identity_core::common::Url;
@@ -97,7 +97,7 @@ impl DomainLinkageConfiguration {
       .0
       .linked_dids
       .iter()
-      .map(JwtCredentialValidator::extract_issuer_from_jwt::<CoreDID>)
+      .map(JwtCredentialValidatorUtils::extract_issuer_from_jwt::<CoreDID>)
       .collect()
   }
 

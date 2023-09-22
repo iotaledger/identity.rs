@@ -15,6 +15,7 @@ use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Object;
@@ -27,6 +28,7 @@ use identity_iota::credential::FailFast;
 use identity_iota::credential::Jwt;
 use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::JwtCredentialValidator;
+use identity_iota::credential::JwtCredentialValidatorUtils;
 use identity_iota::credential::JwtValidationError;
 use identity_iota::credential::RevocationBitmap;
 use identity_iota::credential::RevocationBitmapStatus;
@@ -146,8 +148,10 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
+  let validator: JwtCredentialValidator<EdDSAJwsVerifier> =
+    JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   // Validate the credential's signature using the issuer's DID Document.
-  JwtCredentialValidator::new().validate::<_, Object>(
+  validator.validate::<_, Object>(
     &credential_jwt,
     &issuer_document,
     &JwtCredentialValidationOptions::default(),
@@ -170,8 +174,8 @@ async fn main() -> anyhow::Result<()> {
     .finish()?;
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
-  let validation_result: std::result::Result<DecodedJwtCredential, CompoundCredentialValidationError> =
-    JwtCredentialValidator::new().validate(
+  let validation_result: std::result::Result<DecodedJwtCredential, CompoundCredentialValidationError> = validator
+    .validate(
       &credential_jwt,
       &issuer_document,
       &JwtCredentialValidationOptions::default(),
@@ -207,10 +211,10 @@ async fn main() -> anyhow::Result<()> {
   // We expect the verifiable credential to be revoked.
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
-  let resolved_issuer_did: IotaDID = JwtCredentialValidator::extract_issuer_from_jwt(&credential_jwt)?;
+  let resolved_issuer_did: IotaDID = JwtCredentialValidatorUtils::extract_issuer_from_jwt(&credential_jwt)?;
   let resolved_issuer_doc: IotaDocument = resolver.resolve(&resolved_issuer_did).await?;
 
-  let validation_result = JwtCredentialValidator::new().validate::<_, Object>(
+  let validation_result = validator.validate::<_, Object>(
     &credential_jwt,
     &resolved_issuer_doc,
     &JwtCredentialValidationOptions::default(),

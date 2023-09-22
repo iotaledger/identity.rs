@@ -11,6 +11,7 @@
 
 use examples::create_did;
 use examples::MemStorage;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Object;
 
 use identity_iota::credential::DecodedJwtCredential;
@@ -101,14 +102,15 @@ async fn main() -> anyhow::Result<()> {
 
   // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
-  let decoded_credential: DecodedJwtCredential<Object> = JwtCredentialValidator::new()
-    .validate::<_, Object>(
-      &credential_jwt,
-      &issuer_document,
-      &JwtCredentialValidationOptions::default(),
-      FailFast::FirstError,
-    )
-    .unwrap();
+  let decoded_credential: DecodedJwtCredential<Object> =
+    JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default())
+      .validate::<_, Object>(
+        &credential_jwt,
+        &issuer_document,
+        &JwtCredentialValidationOptions::default(),
+        FailFast::FirstError,
+      )
+      .unwrap();
 
   println!("VC successfully validated");
 
