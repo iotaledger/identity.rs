@@ -479,7 +479,8 @@ impl WasmCoreDocument {
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
   /// - The JWS must be encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  /// or set explicitly in the `options`.
   #[wasm_bindgen(js_name = verifyJws)]
   #[allow(non_snake_case)]
   pub fn verify_jws(
@@ -669,8 +670,11 @@ impl WasmCoreDocument {
   /// Produces a JWT where the payload is produced from the given `credential`
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  ///
+  /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   #[wasm_bindgen(js_name = createCredentialJwt)]
   pub fn create_credential_jwt(
     &self,
@@ -703,8 +707,9 @@ impl WasmCoreDocument {
   /// Produces a JWT where the payload is produced from the given presentation.
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
   #[wasm_bindgen(js_name = createPresentationJwt)]
   pub fn create_presentation_jwt(
     &self,
