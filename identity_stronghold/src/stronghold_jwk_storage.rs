@@ -261,6 +261,7 @@ impl JwkStorage for StrongholdStorage {
   }
 }
 
+/// Generate a random alphanumeric string of len 32.
 fn random_key_id() -> KeyId {
   KeyId::new(rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32))
 }
