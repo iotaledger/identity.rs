@@ -7,6 +7,7 @@ import {
     DIDUrl,
     DomainLinkageConfiguration,
     Duration,
+    EdDSAJwsVerifier,
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
@@ -123,7 +124,7 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    new JwtDomainLinkageValidator().validateLinkage(
+    new JwtDomainLinkageValidator(new EdDSAJwsVerifier()).validateLinkage(
         issuerDocument,
         fetchedConfigurationResource,
         domainFoo,
@@ -157,7 +158,7 @@ export async function domainLinkage() {
 
     // Validate the linkage between the Domain Linkage Credential in the configuration and the provided issuer DID.
     // Validation succeeds when no error is thrown.
-    new JwtDomainLinkageValidator().validateLinkage(
+    new JwtDomainLinkageValidator(new EdDSAJwsVerifier()).validateLinkage(
         didDocument,
         fetchedConfigurationResource,
         domains[0],

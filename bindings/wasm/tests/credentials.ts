@@ -2,6 +2,7 @@ import * as assert from "assert";
 import {
     CoreDocument,
     Credential,
+    EdDSAJwsVerifier,
     JwkMemStore,
     JwsAlgorithm,
     JwsSignatureOptions,
@@ -253,7 +254,7 @@ describe("Presentation", function() {
             assert.deepStrictEqual(issuer.toString(), doc.id().toString());
 
             const methodId = doc.id().join(fragment);
-            const decodedPresentation = new JwtPresentationValidator().validate(
+            const decodedPresentation = new JwtPresentationValidator(new EdDSAJwsVerifier()).validate(
                 presentationJwt,
                 doc,
                 new JwtPresentationValidationOptions({

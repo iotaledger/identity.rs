@@ -4,6 +4,7 @@ import {
     Credential,
     DecodedJwtPresentation,
     Duration,
+    EdDSAJwsVerifier,
     FailFast,
     IJwsVerifier,
     IotaDocument,
@@ -27,7 +28,6 @@ import {
     SubjectHolderRelationship,
     Timestamp,
     VerificationMethod,
-    verifyEdDSA,
 } from "../node";
 import { createVerificationMethod } from "./key_id_storage";
 
@@ -97,7 +97,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
 
         // Check that we can also verify it using a custom verifier
@@ -141,8 +141,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
-
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
         const decoded = credentialValidator
             .validate(
                 credentialJwt,
@@ -210,7 +209,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
 
         // Check that we can also verify it using a custom verifier
@@ -253,7 +252,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
         const decoded = credentialValidator
             .validate(
                 credentialJwt,
@@ -421,7 +420,7 @@ describe("#JwkStorageDocument", function() {
             decodedSignature: Uint8Array,
             publicKey: Jwk,
         ): void {
-            verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
+            new EdDSAJwsVerifier().verify(alg, signingInput, decodedSignature, publicKey);
             this._verifications += 1;
             return;
         }

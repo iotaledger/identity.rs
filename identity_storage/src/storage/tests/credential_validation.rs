@@ -13,18 +13,24 @@ use identity_credential::revocation::RevocationDocumentExt;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_credential::validator::JwtCredentialValidator;
+use identity_credential::validator::JwtCredentialValidatorUtils;
 use identity_credential::validator::JwtValidationError;
 use identity_credential::validator::StatusCheck;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::service::Service;
 use identity_document::verifiable::JwsVerificationOptions;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
+use once_cell::sync::Lazy;
 
 use crate::storage::tests::test_utils;
 use crate::storage::tests::test_utils::CredentialSetup;
 use crate::storage::tests::test_utils::Setup;
 use crate::storage::JwkDocumentExt;
 use crate::storage::JwsSignatureOptions;
+
+static JWT_CREDENTIAL_VALIDATOR_ED25519: Lazy<JwtCredentialValidator<EdDSAJwsVerifier>> =
+  Lazy::new(|| JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default()));
 
 async fn invalid_expiration_or_issuance_date_impl<T>(setup: Setup<T, T>)
 where
@@ -66,7 +72,7 @@ where
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = JwtCredentialValidator::new()
+    let validation_errors = JWT_CREDENTIAL_VALIDATOR_ED25519
       .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
@@ -89,7 +95,7 @@ where
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = JwtCredentialValidator::new()
+    let validation_errors = JWT_CREDENTIAL_VALIDATOR_ED25519
       .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
@@ -144,7 +150,7 @@ where
   let options = JwtCredentialValidationOptions::default()
     .latest_issuance_date(issued_on_or_before)
     .earliest_expiry_date(expires_on_or_after);
-  assert!(JwtCredentialValidator::new()
+  assert!(JWT_CREDENTIAL_VALIDATOR_ED25519
     .validate::<_, Object>(&jwt, &issuer_doc, &options, FailFast::FirstError)
     .is_ok());
 }
@@ -183,7 +189,7 @@ where
 
   // the credential was not signed by this issuer
   // check that `verify_signature` returns the expected error
-  let error = JwtCredentialValidator::new()
+  let error = JWT_CREDENTIAL_VALIDATOR_ED25519
     .verify_signature::<_, Object>(&jwt, &[&subject_doc], &JwsVerificationOptions::default())
     .unwrap_err();
 
@@ -193,7 +199,7 @@ where
   let options = JwtCredentialValidationOptions::default();
 
   // validate and extract the nested error according to our expectations
-  let validation_errors = JwtCredentialValidator::new()
+  let validation_errors = JWT_CREDENTIAL_VALIDATOR_ED25519
     .validate::<_, Object>(&jwt, &subject_doc, &options, FailFast::FirstError)
     .unwrap_err()
     .validation_errors;
@@ -246,7 +252,7 @@ where
     .await
     .unwrap();
 
-  let err = JwtCredentialValidator::new()
+  let err = JWT_CREDENTIAL_VALIDATOR_ED25519
     .verify_signature::<_, Object>(&jwt, &[&issuer_doc], &JwsVerificationOptions::default())
     .unwrap_err();
 
@@ -262,7 +268,7 @@ where
     .earliest_expiry_date(expires_on_or_after);
 
   // validate and extract the nested error according to our expectations
-  let validation_errors = JwtCredentialValidator::new()
+  let validation_errors = JWT_CREDENTIAL_VALIDATOR_ED25519
     .validate::<_, Object>(&jwt, &issuer_doc, &options, FailFast::FirstError)
     .unwrap_err()
     .validation_errors;
@@ -309,7 +315,7 @@ where
 
   // 0: missing status always succeeds.
   for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
-    assert!(JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+    assert!(JwtCredentialValidatorUtils::check_status(&credential, &[&issuer_doc], status_check).is_ok());
   }
 
   // 1: unsupported status type.
@@ -323,7 +329,7 @@ where
     (StatusCheck::SkipAll, true),
   ] {
     assert_eq!(
-      JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+      JwtCredentialValidatorUtils::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
       expected
     );
   }
@@ -340,7 +346,7 @@ where
     (StatusCheck::SkipAll, true),
   ] {
     assert_eq!(
-      JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+      JwtCredentialValidatorUtils::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
       expected
     );
   }
@@ -352,7 +358,7 @@ where
 
   // 3: un-revoked index always succeeds.
   for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
-    assert!(JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+    assert!(JwtCredentialValidatorUtils::check_status(&credential, &[&issuer_doc], status_check).is_ok());
   }
 
   // 4: revoked index.
@@ -363,7 +369,7 @@ where
     (StatusCheck::SkipAll, true),
   ] {
     assert_eq!(
-      JwtCredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+      JwtCredentialValidatorUtils::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
       expected
     );
   }
@@ -419,14 +425,14 @@ where
     .latest_issuance_date(issued_on_or_before)
     .earliest_expiry_date(expires_on_or_after);
 
-  let validation_errors = JwtCredentialValidator::new()
+  let validation_errors = JWT_CREDENTIAL_VALIDATOR_ED25519
     .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::FirstError)
     .unwrap_err()
     .validation_errors;
 
   assert!(validation_errors.len() == 1);
 
-  let validation_errors = JwtCredentialValidator::new()
+  let validation_errors = JWT_CREDENTIAL_VALIDATOR_ED25519
     .validate::<_, Object>(&jws, &issuer_doc, &options, FailFast::AllErrors)
     .unwrap_err()
     .validation_errors;

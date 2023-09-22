@@ -33,13 +33,14 @@ zeroize = { version = "1.6.0", default_features = false, optional = true }
 
 [dev-dependencies]
 identity_credential = { version = "=0.7.0-alpha.7", path = "../identity_credential", features = ["revocation-bitmap"] }
+identity_eddsa_verifier = { version = "=0.7.0-alpha.7", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 once_cell = { version = "1.18", default-features = false }
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync", "rt"] }
 
 [features]
 default = ["iota-document", "memstore"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
-memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "identity_verification/eddsa"]
+memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument
