@@ -10,6 +10,7 @@ members = [
   "identity_iota_core",
   "identity_resolver",
   "identity_verification",
+  "identity_stronghold",
   "identity_jose",
   "identity_eddsa_verifier",
   "examples",

@@ -1,22 +1,24 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ed25519;
-use super::JwkGenOutput;
-use super::KeyId;
-use super::KeyStorageError;
-use super::KeyStorageErrorKind;
-use super::KeyStorageResult;
-use super::KeyType;
-use crate::key_storage::JwkStorage;
-use crate::StrongholdStorage;
+//! Wrapper around [`StrongholdSecretManager`](StrongholdSecretManager).
+
 use async_trait::async_trait;
+use identity_storage::key_storage::JwkStorage;
+use identity_storage::JwkGenOutput;
+use identity_storage::KeyId;
+use identity_storage::KeyStorageError;
+use identity_storage::KeyStorageErrorKind;
+use identity_storage::KeyStorageResult;
+use identity_storage::KeyType;
 use identity_verification::jwk::EdCurve;
 use identity_verification::jwk::Jwk;
 use identity_verification::jwk::JwkParamsOkp;
 use identity_verification::jwk::JwkType;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::jwu;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
 use iota_stronghold::procedures::Ed25519Sign;
 use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::procedures::KeyType as ProceduresKeyType;
@@ -29,7 +31,10 @@ use rand::distributions::DistString;
 use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
+use std::sync::Arc;
 use tokio::sync::MutexGuard;
+
+use crate::ed25519;
 
 const ED25519_KEY_TYPE_STR: &str = "Ed25519";
 static IDENTITY_VAULT_PATH: &str = "iota_identity_vault";
@@ -37,6 +42,31 @@ pub(crate) static IDENTITY_CLIENT_PATH: &[u8] = b"iota_identity_client";
 
 /// The Ed25519 key type.
 pub const ED25519_KEY_TYPE: &KeyType = &KeyType::from_static_str(ED25519_KEY_TYPE_STR);
+
+/// Wrapper around a [`StrongholdSecretManager`] that implements the [`KeyIdStorage`](crate::KeyIdStorage)
+/// and [`JwkStorage`](crate::JwkStorage) interfaces.
+#[derive(Clone, Debug)]
+pub struct StrongholdStorage(Arc<SecretManager>);
+
+impl StrongholdStorage {
+  /// Creates a new [`StrongholdStorage`].
+  pub fn new(stronghold_secret_manager: StrongholdSecretManager) -> Self {
+    Self(Arc::new(SecretManager::Stronghold(stronghold_secret_manager)))
+  }
+
+  /// Shared reference to the inner [`SecretManager`].
+  pub fn as_secret_manager(&self) -> &SecretManager {
+    self.0.as_ref()
+  }
+
+  /// Acquire lock of the inner [`Stronghold`].
+  pub(crate) async fn get_stronghold(&self) -> MutexGuard<'_, Stronghold> {
+    match *self.0 {
+      SecretManager::Stronghold(ref stronghold) => stronghold.inner().await,
+      _ => unreachable!("secret manager can be only constrcuted from stronghold"),
+    }
+  }
+}
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -93,7 +123,7 @@ impl JwkStorage for StrongholdStorage {
     jwk.set_alg(alg.name());
     jwk.set_kid(key_id.clone());
 
-    Ok(JwkGenOutput { key_id, jwk })
+    Ok(JwkGenOutput::new(key_id, jwk))
   }
 
   async fn insert(&self, jwk: Jwk) -> KeyStorageResult<KeyId> {
@@ -240,7 +270,7 @@ fn check_key_alg_compatibility(key_type: StrongholdKeyType, alg: JwsAlgorithm) -
   match (key_type, alg) {
     (StrongholdKeyType::Ed25519, JwsAlgorithm::EdDSA) => Ok(()),
     (key_type, alg) => Err(
-      KeyStorageError::new(crate::key_storage::KeyStorageErrorKind::KeyAlgorithmMismatch)
+      KeyStorageError::new(identity_storage::KeyStorageErrorKind::KeyAlgorithmMismatch)
         .with_custom_message(format!("cannot use key type `{key_type}` with algorithm `{alg}`")),
     ),
   }
