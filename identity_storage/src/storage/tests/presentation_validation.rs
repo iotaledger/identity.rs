@@ -55,10 +55,17 @@ where
       .build()
       .unwrap();
 
+  let mut custom_claims = Object::new();
+  custom_claims.insert(
+    "test-key".to_owned(),
+    serde_json::Value::String("test-value".to_owned()),
+  );
+
   let presentation_options = JwtPresentationOptions {
     expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
     issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
     audience: Some(Url::parse("did:test:123").unwrap()),
+    custom_claims: Some(custom_claims),
   };
 
   let presentation_jwt = setup
@@ -87,6 +94,7 @@ where
   );
   assert_eq!(decoded_presentation.issuance_date, presentation_options.issuance_date);
   assert_eq!(decoded_presentation.aud, presentation_options.audience);
+  assert_eq!(decoded_presentation.custom_claims, presentation_options.custom_claims);
 }
 
 #[tokio::test]
@@ -116,6 +124,7 @@ where
     expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
     issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
     audience: Some(Url::parse("did:test:123").unwrap()),
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
@@ -172,6 +181,7 @@ where
     expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
     issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
     audience: Some(Url::parse("did:test:123").unwrap()),
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
@@ -254,6 +264,7 @@ where
     issuance_date: None,
     expiration_date: Some(Timestamp::now_utc().checked_sub(Duration::days(1)).unwrap()),
     audience: None,
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
@@ -318,6 +329,7 @@ where
     issuance_date: Some(Timestamp::now_utc().checked_add(Duration::hours(1)).unwrap()),
     expiration_date: None,
     audience: None,
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
