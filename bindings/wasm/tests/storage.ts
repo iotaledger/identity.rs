@@ -359,8 +359,8 @@ describe("#JwkStorageDocument", function() {
                 issuanceDate: Timestamp.nowUTC(),
                 audience,
                 customClaims: {
-                    testKey: "testValue"
-                }
+                    testKey: "testValue",
+                },
             }),
         );
 
