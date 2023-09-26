@@ -21,7 +21,7 @@ pub struct JwtPresentationOptions {
   /// Sets the audience for presentation (`aud` property in JWT claims).
   /// Default: `None`.
   pub audience: Option<Url>,
-  /// Custom claims that be used to set additional claims on the resulting JWT.
+  /// Custom claims that can be used to set additional claims on the resulting JWT.
   pub custom_claims: Option<Object>,
 }
 

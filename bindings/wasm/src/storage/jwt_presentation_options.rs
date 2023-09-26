@@ -73,7 +73,7 @@ interface IJwtPresentationOptions {
     readonly audience?: string;
 
     /**
-     * Custom claims that be used to set additional claims on the resulting JWT.
+     * Custom claims that can be used to set additional claims on the resulting JWT.
      */
     readonly customClaims?: Record<string, any>;
 }"#;
