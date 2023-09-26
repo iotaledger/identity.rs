@@ -51,6 +51,9 @@ where
   pub(crate) aud: Option<Url>,
 
   pub(crate) vp: InnerPresentation<'presentation, CRED, T>,
+
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub(crate) custom: Option<Object>,
 }
 
 impl<'presentation, CRED, T> PresentationJwtClaims<'presentation, CRED, T>
@@ -91,6 +94,7 @@ where
       exp: options.expiration_date.map(|expiration_date| expiration_date.to_unix()),
       issuance_date: options.issuance_date.map(IssuanceDateClaims::new),
       aud: options.audience.clone(),
+      custom: options.custom_claims.clone(),
     })
   }
 }
@@ -146,6 +150,7 @@ where
       jti,
       aud: _,
       vp,
+      custom: _,
     } = self;
     let InnerPresentation {
       context,
@@ -247,6 +252,7 @@ mod test {
       expiration_date: Some(Timestamp::from_unix(1694699551).unwrap()),
       issuance_date: Some(Timestamp::from_unix(1694698951).unwrap()),
       audience: None,
+      custom_claims: None,
     };
     let claims: PresentationJwtClaims<'_, Jwt> =
       PresentationJwtClaims::<'_, Jwt>::new(&presentation, &options).unwrap();

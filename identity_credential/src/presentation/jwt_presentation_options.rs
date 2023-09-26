@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -20,6 +21,8 @@ pub struct JwtPresentationOptions {
   /// Sets the audience for presentation (`aud` property in JWT claims).
   /// Default: `None`.
   pub audience: Option<Url>,
+  /// Custom claims that be used to set additional claims on the resulting JWT.
+  pub custom_claims: Option<Object>,
 }
 
 impl JwtPresentationOptions {
@@ -48,6 +51,7 @@ impl Default for JwtPresentationOptions {
       expiration_date: None,
       issuance_date: Some(Timestamp::now_utc()),
       audience: None,
+      custom_claims: None,
     }
   }
 }

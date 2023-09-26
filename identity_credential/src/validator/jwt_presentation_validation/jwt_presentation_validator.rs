@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
@@ -145,6 +146,7 @@ where
       ))?;
 
     let aud: Option<Url> = claims.aud.clone();
+    let custom_claims: Option<Object> = claims.custom.clone();
 
     let presentation: Presentation<CRED, T> = claims.try_into_presentation().map_err(|err| {
       CompoundJwtPresentationValidationError::one_presentation_error(JwtValidationError::PresentationStructure(err))
@@ -156,6 +158,7 @@ where
       expiration_date,
       issuance_date,
       aud,
+      custom_claims,
     };
 
     Ok(decoded_jwt_presentation)

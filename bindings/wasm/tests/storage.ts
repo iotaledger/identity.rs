@@ -358,6 +358,9 @@ describe("#JwkStorageDocument", function() {
                 expirationDate,
                 issuanceDate: Timestamp.nowUTC(),
                 audience,
+                customClaims: {
+                    testKey: "testValue"
+                }
             }),
         );
 
@@ -377,6 +380,7 @@ describe("#JwkStorageDocument", function() {
             presentation.toJSON(),
         );
         assert.equal(decoded.audience(), audience);
+        assert.deepStrictEqual(decoded.customClaims(), { testKey: "testValue" });
 
         // check issuance date validation.
         let options = new JwtPresentationValidationOptions({
