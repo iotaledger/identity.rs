@@ -7,9 +7,7 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
-use identity_did::CoreDID;
 use identity_did::DID;
-use identity_document::document::CoreDocument;
 use identity_verification::jws::Decoder;
 
 use super::JwtValidationError;
@@ -88,11 +86,14 @@ impl JwtCredentialValidatorUtils {
   ///
   /// Only supports `RevocationBitmap2022`.
   #[cfg(feature = "revocation-bitmap")]
-  pub fn check_status<DOC: AsRef<CoreDocument>, T>(
+  pub fn check_status<DOC: AsRef<identity_document::document::CoreDocument>, T>(
     credential: &Credential<T>,
     trusted_issuers: &[DOC],
     status_check: crate::validator::StatusCheck,
   ) -> ValidationUnitResult {
+    use identity_did::CoreDID;
+    use identity_document::document::CoreDocument;
+
     if status_check == crate::validator::StatusCheck::SkipAll {
       return Ok(());
     }
@@ -128,7 +129,7 @@ impl JwtCredentialValidatorUtils {
   /// Check the given `status` against the matching [`RevocationBitmap`] service in the
   /// issuer's DID Document.
   #[cfg(feature = "revocation-bitmap")]
-  fn check_revocation_bitmap_status<DOC: AsRef<CoreDocument> + ?Sized>(
+  fn check_revocation_bitmap_status<DOC: AsRef<identity_document::document::CoreDocument> + ?Sized>(
     issuer: &DOC,
     status: crate::credential::RevocationBitmapStatus,
   ) -> ValidationUnitResult {

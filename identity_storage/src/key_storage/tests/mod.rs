@@ -3,8 +3,5 @@
 
 mod memstore;
 
-#[cfg(feature = "stronghold")]
-mod stronghold;
-
 #[cfg(test)]
 pub(crate) mod utils;

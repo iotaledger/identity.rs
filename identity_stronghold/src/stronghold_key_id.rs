@@ -3,15 +3,15 @@
 
 use std::ops::Deref;
 
-use super::KeyIdStorageError;
-use super::KeyIdStorageErrorKind;
-use crate::key_id_storage::KeyIdStorage;
-use crate::key_id_storage::KeyIdStorageResult;
-use crate::key_id_storage::MethodDigest;
-use crate::key_storage::KeyId;
-use crate::key_storage::IDENTITY_CLIENT_PATH;
+use crate::stronghold_jwk_storage::IDENTITY_CLIENT_PATH;
 use crate::StrongholdStorage;
 use async_trait::async_trait;
+use identity_storage::key_id_storage::KeyIdStorage;
+use identity_storage::key_id_storage::KeyIdStorageResult;
+use identity_storage::key_id_storage::MethodDigest;
+use identity_storage::key_storage::KeyId;
+use identity_storage::KeyIdStorageError;
+use identity_storage::KeyIdStorageErrorKind;
 use iota_stronghold::Client;
 use iota_stronghold::ClientError;
 use iota_stronghold::Stronghold;
