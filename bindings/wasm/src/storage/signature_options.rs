@@ -72,7 +72,7 @@ impl WasmJwsSignatureOptions {
     self.0.detached_payload = value;
   }
 
-  /// Replace the value of the `detached_payload` field.
+  /// Add additional header parameters.
   #[wasm_bindgen(js_name = setCustomHeaderParameters)]
   pub fn set_custom_header_parameters(&mut self, value: RecordStringAny) -> Result<()> {
     self.0.custom_header_parameters = Some(value.into_serde().wasm_result()?);
