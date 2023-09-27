@@ -91,14 +91,14 @@ describe("#JwkStorageDocument", function() {
         let testString = "test";
         let options = new JwsSignatureOptions({
             customHeaderParameters: {
-                testKey: "testValue"
-            }
+                testKey: "testValue",
+            },
         });
         const jws = await doc.createJws(
             storage,
             fragment,
             testString,
-            options
+            options,
         );
 
         // Verify the signature and obtain a decoded token.
@@ -106,7 +106,7 @@ describe("#JwkStorageDocument", function() {
         assert.deepStrictEqual(testString, token.claims());
 
         // Verify custom header parameters.
-        assert.deepStrictEqual(token.protectedHeader().custom(), { testKey: "testValue" })
+        assert.deepStrictEqual(token.protectedHeader().custom(), { testKey: "testValue" });
 
         // Check that we can also verify it using a custom verifier
         let customVerifier = new CustomVerifier();
