@@ -3,6 +3,9 @@
 
 use core::ops::Deref;
 use core::ops::DerefMut;
+use std::collections::BTreeMap;
+
+use serde_json::Value;
 
 use crate::jose::JoseHeader;
 use crate::jws::JwsAlgorithm;
@@ -45,6 +48,10 @@ pub struct JwsHeader {
   /// +-------+-----------------------------------------------------------+
   #[serde(skip_serializing_if = "Option::is_none")]
   b64: Option<bool>,
+
+  /// Additional header parameters.
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  custom: Option<BTreeMap<String, Value>>,
 }
 
 impl JwsHeader {
@@ -54,6 +61,7 @@ impl JwsHeader {
       common: JwtHeader::new(),
       alg: None,
       b64: None,
+      custom: None,
     }
   }
 
@@ -77,12 +85,29 @@ impl JwsHeader {
     self.b64 = Some(value.into());
   }
 
+  /// Returns the additional parameters in the header.
+  pub fn custom(&self) -> Option<&BTreeMap<String, Value>> {
+    self.custom.as_ref()
+  }
+
+  /// Sets additional parameters in the header.
+  pub fn set_custom(&mut self, value: BTreeMap<String, Value>) {
+    self.custom = Some(value)
+  }
+
   /// Returns `true` if the header contains the given `claim`, `false` otherwise.
   pub fn has(&self, claim: &str) -> bool {
     match claim {
       "alg" => self.alg().is_some(),
       "b64" => self.b64().is_some(),
-      _ => self.common.has(claim),
+      _ => {
+        self.common.has(claim)
+          || self
+            .custom
+            .as_ref()
+            .map(|custom| custom.get(claim).is_some())
+            .unwrap_or(false)
+      }
     }
   }
 
@@ -90,7 +115,24 @@ impl JwsHeader {
   pub fn is_disjoint(&self, other: &JwsHeader) -> bool {
     let has_duplicate: bool = self.alg().is_some() && other.alg.is_some() || self.b64.is_some() && other.b64.is_some();
 
-    !has_duplicate && self.common.is_disjoint(other.common())
+    !has_duplicate && self.common.is_disjoint(other.common()) && self.is_custom_disjoint(other)
+  }
+
+  fn is_custom_disjoint(&self, other: &JwsHeader) -> bool {
+    if let Some(custom) = self.custom() {
+      for key in custom.keys() {
+        if let Some(custom) = other.custom() {
+          if custom.contains_key(key) {
+            return false;
+          }
+        } else {
+          return true;
+        }
+      }
+    } else {
+      return true;
+    }
+    true
   }
 }
 
@@ -129,6 +171,29 @@ mod tests {
   use super::*;
 
   #[test]
+  fn test_custom() {
+    let header1: JwsHeader = serde_json::from_value(serde_json::json!({
+      "alg": "ES256",
+      "b64": false,
+      "test": "tst-value",
+      "test-bool": false
+    }))
+    .unwrap();
+
+    assert_eq!(
+      header1.custom().unwrap().get("test").unwrap().as_str().unwrap(),
+      "tst-value".to_owned()
+    );
+
+    assert_eq!(
+      header1.custom().unwrap().get("test-bool").unwrap().as_bool().unwrap(),
+      false
+    );
+    assert!(header1.has("test"));
+    assert!(!header1.has("invalid"));
+  }
+
+  #[test]
   fn test_header_disjoint() {
     let header1: JwsHeader = serde_json::from_value(serde_json::json!({
       "alg": "ES256",
@@ -142,7 +207,12 @@ mod tests {
     .unwrap();
     let header3: JwsHeader = serde_json::from_value(serde_json::json!({
       "kid": "kid value",
-      "cty": "mediatype"
+      "cty": "mediatype",
+      "custom": "test value",
+    }))
+    .unwrap();
+    let header4: JwsHeader = serde_json::from_value(serde_json::json!({
+      "custom": "test value",
     }))
     .unwrap();
 
@@ -150,5 +220,7 @@ mod tests {
     assert!(header1.is_disjoint(&header3));
     assert!(header2.is_disjoint(&header3));
     assert!(header1.is_disjoint(&JwsHeader::new()));
+    assert!(!header4.is_disjoint(&header3));
+    assert!(header4.is_disjoint(&header2));
   }
 }

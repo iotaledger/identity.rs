@@ -259,3 +259,43 @@ async fn custom_claims() {
     .unwrap();
   assert_eq!(decoded.custom_claims.unwrap(), custom_claims);
 }
+
+#[tokio::test]
+async fn custom_header_parameters() {
+  let (document, storage, kid, credential) = setup().await;
+
+  let mut custom = Object::new();
+  custom.insert(
+    "test-key".to_owned(),
+    serde_json::Value::String("test-value".to_owned()),
+  );
+  let jws = document
+    .create_credential_jwt(
+      &credential,
+      &storage,
+      kid.as_ref(),
+      &JwsSignatureOptions::default()
+        .b64(true)
+        .custom_header_parameters(custom),
+      None,
+    )
+    .await
+    .unwrap();
+
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  let decoded = validator
+    .validate::<_, Object>(
+      &jws,
+      &document,
+      &JwtCredentialValidationOptions::default(),
+      identity_credential::validator::FailFast::FirstError,
+    )
+    .unwrap();
+  let custom_from_decoded = decoded.header.as_ref().custom().unwrap();
+  assert_eq!(custom_from_decoded.len(), 1);
+  assert_eq!(
+    custom_from_decoded.get("test-key").unwrap().as_str().unwrap(),
+    "test-value".to_owned()
+  );
+}

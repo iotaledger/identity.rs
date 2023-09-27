@@ -362,6 +362,9 @@ impl JwkDocumentExt for CoreDocument {
       let mut header = JwsHeader::new();
 
       header.set_alg(alg);
+      if let Some(custom) = &options.custom_header_parameters {
+        header.set_custom(custom.clone())
+      }
 
       if let Some(ref kid) = options.kid {
         header.set_kid(kid.clone());
@@ -399,6 +402,7 @@ impl JwkDocumentExt for CoreDocument {
       if let Some(nonce) = &options.nonce {
         header.set_nonce(nonce.clone())
       };
+
       header
     };
 
