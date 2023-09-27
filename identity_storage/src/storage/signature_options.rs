@@ -58,6 +58,7 @@ pub struct JwsSignatureOptions {
   pub detached_payload: bool,
 
   /// Additional header parameters.
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub custom_header_parameters: Option<Object>,
 }
 
