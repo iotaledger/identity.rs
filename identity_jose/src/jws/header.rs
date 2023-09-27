@@ -185,10 +185,7 @@ mod tests {
       "tst-value".to_owned()
     );
 
-    assert_eq!(
-      header1.custom().unwrap().get("test-bool").unwrap().as_bool().unwrap(),
-      false
-    );
+    assert!(!header1.custom().unwrap().get("test-bool").unwrap().as_bool().unwrap());
     assert!(header1.has("test"));
     assert!(!header1.has("invalid"));
   }

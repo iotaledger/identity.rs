@@ -1,7 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::{Object, Url};
+use identity_core::common::Object;
+use identity_core::common::Url;
 
 /// Options for creating a JSON Web Signature.
 #[non_exhaustive]
