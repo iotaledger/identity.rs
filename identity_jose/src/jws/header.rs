@@ -118,21 +118,20 @@ impl JwsHeader {
     !has_duplicate && self.common.is_disjoint(other.common()) && self.is_custom_disjoint(other)
   }
 
+  /// Returns `true` if none of the fields are set in both `self.custom` and `other.custom`.
   fn is_custom_disjoint(&self, other: &JwsHeader) -> bool {
-    if let Some(custom) = self.custom() {
-      for key in custom.keys() {
-        if let Some(custom) = other.custom() {
-          if custom.contains_key(key) {
+    match (&self.custom, &other.custom) {
+      (Some(self_custom), Some(other_custom)) => {
+        for self_key in self_custom.keys() {
+          if other_custom.contains_key(self_key) {
             return false;
           }
-        } else {
-          return true;
         }
+        true
       }
-    } else {
-      return true;
+      _ => true,
     }
-    true
+  }
   }
 }
 
