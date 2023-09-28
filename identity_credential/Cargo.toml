@@ -31,7 +31,7 @@ thiserror.workspace = true
 url = { version = "2.4", default-features = false }
 
 [dev-dependencies]
-identity_eddsa_verifier = { version = "=0.7.0-alpha.8", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
+identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "std", "random"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 serde_json.workspace = true
