@@ -132,7 +132,6 @@ impl JwsHeader {
       _ => true,
     }
   }
-  }
 }
 
 impl Deref for JwsHeader {
