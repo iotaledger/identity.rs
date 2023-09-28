@@ -1,5 +1,28 @@
 # Changelog
 
+## [wasm-v0.7.0-alpha.7](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.7) (2023-09-28)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.6...wasm-v0.7.0-alpha.7)
+
+
+
+
+### Changed
+- Use `VC Data Model v1.1` JWT encoding instead of `VC-JWT` [#1234](https://github.com/iotaledger/identity.rs/pull/1234)
+- Change `verifiable_credential` to type `Vec<CRED>` in `Presentation` [#1231](https://github.com/iotaledger/identity.rs/pull/1231)
+
+
+### Added
+- Allow arbitrary JWS header parameters [#1245](https://github.com/iotaledger/identity.rs/pull/1245)
+- Allow custom JWT claims for presentations [#1244](https://github.com/iotaledger/identity.rs/pull/1244)
+- Allow custom `kid` to be set in JWS [#1239](https://github.com/iotaledger/identity.rs/pull/1239)
+- Allow custom JWT claims for credentials [#1237](https://github.com/iotaledger/identity.rs/pull/1237)
+
+
+### Patch
+- Fix holder claim check in VP [#1236](https://github.com/iotaledger/identity.rs/pull/1236)
+- Fix issuer claim check in VC [#1235](https://github.com/iotaledger/identity.rs/pull/1235)
+
 ## [wasm-v0.7.0-alpha.6](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.6) (2023-08-15)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.5...wasm-v0.7.0-alpha.6)
