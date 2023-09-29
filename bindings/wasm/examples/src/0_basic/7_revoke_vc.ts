@@ -3,10 +3,14 @@
 
 import {
     Credential,
+    EdCurve,
     FailFast,
+    IJwsVerifier,
     IotaDocument,
     IotaIdentityClient,
+    Jwk,
     JwkMemStore,
+    JwsAlgorithm,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
@@ -16,6 +20,7 @@ import {
     Service,
     Storage,
     VerificationMethod,
+    verifyEd25519,
 } from "@iota/identity-wasm/node";
 import { AliasOutput, Client, IRent, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
@@ -134,7 +139,7 @@ export async function revokeVC() {
     console.log(`Credential JWT > ${credentialJwt.toString()}`);
 
     // Validate the credential using the issuer's DID Document.
-    let jwtCredentialValidator = new JwtCredentialValidator();
+    let jwtCredentialValidator = new JwtCredentialValidator(new Ed25519JwsVerifier());
     jwtCredentialValidator.validate(
         credentialJwt,
         issuerDocument,
@@ -223,5 +228,18 @@ export async function revokeVC() {
     } catch (e) {
         console.log(`Error during validation: ${e}`);
         console.log(`Credential successfully revoked!`);
+    }
+}
+
+// A custom JWS Verifier capabale of verifying EdDSA signatures with curve Ed25519.
+class Ed25519JwsVerifier implements IJwsVerifier {
+    verify(alg: JwsAlgorithm, signingInput: Uint8Array, decodedSignature: Uint8Array, publicKey: Jwk) {
+        switch (alg) {
+            case JwsAlgorithm.EdDSA:
+                // This verifies that the curve is Ed25519 so we don't need to check ourselves.
+                return verifyEd25519(alg, signingInput, decodedSignature, publicKey);
+            default:
+                throw new Error(`unsupported jws algorithm ${alg}`);
+        }
     }
 }

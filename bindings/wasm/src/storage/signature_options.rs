@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::common::RecordStringAny;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::core::Url;
@@ -59,10 +60,23 @@ impl WasmJwsSignatureOptions {
     self.0.nonce = Some(value);
   }
 
+  /// Replace the value of the `kid` field.
+  #[wasm_bindgen(js_name = setKid)]
+  pub fn set_kid(&mut self, value: String) {
+    self.0.kid = Some(value);
+  }
+
   /// Replace the value of the `detached_payload` field.
   #[wasm_bindgen(js_name = setDetachedPayload)]
   pub fn set_detached_payload(&mut self, value: bool) {
     self.0.detached_payload = value;
+  }
+
+  /// Add additional header parameters.
+  #[wasm_bindgen(js_name = setCustomHeaderParameters)]
+  pub fn set_custom_header_parameters(&mut self, value: RecordStringAny) -> Result<()> {
+    self.0.custom_header_parameters = Some(value.into_serde().wasm_result()?);
+    Ok(())
   }
 }
 
@@ -88,15 +102,15 @@ interface IJwsSignatureOptions {
     readonly attachJwk?: boolean;
 
     /** Whether to Base64url encode the payload or not.
-    *
-    * [More Info](https://tools.ietf.org/html/rfc7797#section-3)
-    */
+     *
+     * [More Info](https://tools.ietf.org/html/rfc7797#section-3)
+     */
     readonly b64?: boolean;
 
     /** The Type value to be placed in the protected header.
      * 
      * [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.9)
-    */
+     */
     readonly typ?: string;
 
     /** Content Type to be placed in the protected header.
@@ -117,9 +131,21 @@ interface IJwsSignatureOptions {
      */
     readonly nonce?: string;
 
+    /** The kid to set in the protected header.
+     * If unset, the kid of the JWK with which the JWS is produced is used.
+     * 
+     * [More Info](https://www.rfc-editor.org/rfc/rfc7515#section-4.1.4)
+     */
+    readonly kid?: string;
+
     /**   /// Whether the payload should be detached from the JWS.
      * 
      * [More Info](https://www.rfc-editor.org/rfc/rfc7515#appendix-F).
      */
     readonly detachedPayload?: boolean
+
+    /**
+     * Additional header parameters.
+     */
+    readonly customHeaderParameters?: Record<string, any>;
 }"#;

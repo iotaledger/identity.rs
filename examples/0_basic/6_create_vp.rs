@@ -11,14 +11,16 @@ use std::collections::HashMap;
 
 use examples::create_did;
 use examples::MemStorage;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Object;
-use identity_iota::core::OneOrMany;
 use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidatorUtils;
 use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::JwtPresentationValidationOptions;
 use identity_iota::credential::JwtPresentationValidator;
+use identity_iota::credential::JwtPresentationValidatorUtils;
 use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationBuilder;
 use identity_iota::did::CoreDID;
@@ -112,6 +114,7 @@ async fn main() -> anyhow::Result<()> {
       &storage_issuer,
       &fragment_issuer,
       &JwsSignatureOptions::default(),
+      None,
     )
     .await?;
 
@@ -120,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
-  JwtCredentialValidator::new()
+  JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default())
     .validate::<_, Object>(
       &credential_jwt,
       &issuer_document,
@@ -191,25 +194,28 @@ async fn main() -> anyhow::Result<()> {
   resolver.attach_iota_handler(client);
 
   // Resolve the holder's document.
-  let holder_did: CoreDID = JwtPresentationValidator::extract_holder(&presentation_jwt)?;
+  let holder_did: CoreDID = JwtPresentationValidatorUtils::extract_holder(&presentation_jwt)?;
   let holder: IotaDocument = resolver.resolve(&holder_did).await?;
 
   // Validate presentation. Note that this doesn't validate the included credentials.
   let presentation_validation_options =
     JwtPresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
-  let presentation: DecodedJwtPresentation<Jwt> =
-    JwtPresentationValidator::new().validate(&presentation_jwt, &holder, &presentation_validation_options)?;
+  let presentation: DecodedJwtPresentation<Jwt> = JwtPresentationValidator::with_signature_verifier(
+    EdDSAJwsVerifier::default(),
+  )
+  .validate(&presentation_jwt, &holder, &presentation_validation_options)?;
 
   // Concurrently resolve the issuers' documents.
-  let jwt_credentials: &OneOrMany<Jwt> = &presentation.presentation.verifiable_credential;
+  let jwt_credentials: &Vec<Jwt> = &presentation.presentation.verifiable_credential;
   let issuers: Vec<CoreDID> = jwt_credentials
     .iter()
-    .map(JwtCredentialValidator::extract_issuer_from_jwt)
+    .map(JwtCredentialValidatorUtils::extract_issuer_from_jwt)
     .collect::<Result<Vec<CoreDID>, _>>()?;
   let issuers_documents: HashMap<CoreDID, IotaDocument> = resolver.resolve_multiple(&issuers).await?;
 
   // Validate the credentials in the presentation.
-  let credential_validator: JwtCredentialValidator = JwtCredentialValidator::new();
+  let credential_validator: JwtCredentialValidator<EdDSAJwsVerifier> =
+    JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   let validation_options: JwtCredentialValidationOptions = JwtCredentialValidationOptions::default()
     .subject_holder_relationship(holder_did.to_url().into(), SubjectHolderRelationship::AlwaysSubject);
 

@@ -4,6 +4,7 @@
 use identity_iota::credential::DecodedJwtPresentation;
 use wasm_bindgen::prelude::*;
 
+use crate::common::RecordStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::UnknownCredential;
 use crate::credential::WasmPresentation;
@@ -54,6 +55,18 @@ impl WasmDecodedJwtPresentation {
   #[wasm_bindgen]
   pub fn audience(&self) -> Option<String> {
     self.0.aud.clone().map(|aud| aud.to_string())
+  }
+
+  /// The custom claims parsed from the JWT.
+  #[wasm_bindgen(js_name = customClaims)]
+  pub fn custom_claims(&self) -> Option<RecordStringAny> {
+    match &self.0.custom_claims {
+      Some(claims) => JsValue::from_serde(&claims.clone())
+        .map(|js_val| js_val.unchecked_into::<RecordStringAny>())
+        .ok(),
+
+      None => None,
+    }
   }
 }
 

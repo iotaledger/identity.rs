@@ -162,14 +162,14 @@ impl<T> Credential<T> {
   }
 
   /// Serializes the [`Credential`] as a JWT claims set
-  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
   /// The resulting string can be used as the payload of a JWS when issuing the credential.  
-  pub fn serialize_jwt(&self) -> Result<String>
+  pub fn serialize_jwt(&self, custom_claims: Option<Object>) -> Result<String>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
   {
-    let jwt_representation: CredentialJwtClaims<'_, T> = CredentialJwtClaims::new(self)?;
+    let jwt_representation: CredentialJwtClaims<'_, T> = CredentialJwtClaims::new(self, custom_claims)?;
     jwt_representation
       .to_json()
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))

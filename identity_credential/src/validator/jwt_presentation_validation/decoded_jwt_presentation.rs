@@ -25,4 +25,6 @@ pub struct DecodedJwtPresentation<CRED, T = Object> {
   pub issuance_date: Option<Timestamp>,
   /// The `aud` property parsed from the JWT claims.
   pub aud: Option<Url>,
+  /// The custom claims parsed from the JWT.
+  pub custom_claims: Option<Object>,
 }

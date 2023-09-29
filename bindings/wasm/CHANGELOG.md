@@ -11,6 +11,8 @@ Note: Identities and credentials created with the earlier versions cannot be res
 
 ### Changed 
 
+- Use `VC Data Model v1.1` JWT encoding instead of `VC-JWT` [#1234](https://github.com/iotaledger/identity.rs/pull/1234)
+- Change `verifiable_credential` to type `Vec<CRED>` in `Presentation` [#1231](https://github.com/iotaledger/identity.rs/pull/1231)
 - Polish Wasm bindings [#1206](https://github.com/iotaledger/identity.rs/pull/1206)
 - Polish `identity_credential` [#1205](https://github.com/iotaledger/identity.rs/pull/1205)
 - Polish `identity_iota_core` [#1203](https://github.com/iotaledger/identity.rs/pull/1203)
@@ -44,6 +46,10 @@ Note: Identities and credentials created with the earlier versions cannot be res
 
 ### Added
 
+- Allow arbitrary JWS header parameters [#1245](https://github.com/iotaledger/identity.rs/pull/1245)
+- Allow custom JWT claims for presentations [#1244](https://github.com/iotaledger/identity.rs/pull/1244)
+- Allow custom `kid` to be set in JWS [#1239](https://github.com/iotaledger/identity.rs/pull/1239)
+- Allow custom JWT claims for credentials [#1237](https://github.com/iotaledger/identity.rs/pull/1237)
 - Improve `Proof` [#1209](https://github.com/iotaledger/identity.rs/pull/1209)
 - Add `resolve_multiple` to Resolver [#1189](https://github.com/iotaledger/identity.rs/pull/1189)
 - Move jwk_storage and key_id_storage to Wasm lib [#1181](https://github.com/iotaledger/identity.rs/pull/1181)
@@ -61,6 +67,8 @@ Note: Identities and credentials created with the earlier versions cannot be res
 
 ### Patch
 
+- Fix holder claim check in VP [#1236](https://github.com/iotaledger/identity.rs/pull/1236)
+- Fix issuer claim check in VC [#1235](https://github.com/iotaledger/identity.rs/pull/1235)
 - Fix clippy's issue `uninlined-format-args` [#1109](https://github.com/iotaledger/identity.rs/pull/1109)
 - Update iota.js peer dependency [#1107](https://github.com/iotaledger/identity.rs/pull/1107)
 - Fix unresolved import in TS artifacts [\#1066](https://github.com/iotaledger/identity.rs/pull/1066)
@@ -68,6 +76,26 @@ Note: Identities and credentials created with the earlier versions cannot be res
 - Support case insensitive serialization of `RentStructure` [\#1012](https://github.com/iotaledger/identity.rs/pull/1012)
 - Fix broken wasm bindings compilation [\#995](https://github.com/iotaledger/identity.rs/pull/995)
 - Fix DID TypeScript references [\#977](https://github.com/iotaledger/identity.rs/pull/977)
+
+## [wasm-v0.7.0-alpha.7](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.7) (2023-09-28)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.7.0-alpha.6...wasm-v0.7.0-alpha.7)
+
+### Changed
+- Use `VC Data Model v1.1` JWT encoding instead of `VC-JWT` [#1234](https://github.com/iotaledger/identity.rs/pull/1234)
+- Change `verifiable_credential` to type `Vec<CRED>` in `Presentation` [#1231](https://github.com/iotaledger/identity.rs/pull/1231)
+
+
+### Added
+- Allow arbitrary JWS header parameters [#1245](https://github.com/iotaledger/identity.rs/pull/1245)
+- Allow custom JWT claims for presentations [#1244](https://github.com/iotaledger/identity.rs/pull/1244)
+- Allow custom `kid` to be set in JWS [#1239](https://github.com/iotaledger/identity.rs/pull/1239)
+- Allow custom JWT claims for credentials [#1237](https://github.com/iotaledger/identity.rs/pull/1237)
+
+
+### Patch
+- Fix holder claim check in VP [#1236](https://github.com/iotaledger/identity.rs/pull/1236)
+- Fix issuer claim check in VC [#1235](https://github.com/iotaledger/identity.rs/pull/1235)
 
 ## [wasm-v0.7.0-alpha.6](https://github.com/iotaledger/identity.rs/tree/wasm-v0.7.0-alpha.6) (2023-08-15)
 

@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::common::Url;
 
 /// Options for creating a JSON Web Signature.
@@ -43,10 +44,22 @@ pub struct JwsSignatureOptions {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub nonce: Option<String>,
 
+  /// The kid to set in the protected header.
+  ///
+  /// If unset, the kid of the JWK with which the JWS is produced is used.
+  ///
+  /// [More Info](https://www.rfc-editor.org/rfc/rfc7515#section-4.1.4)
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub kid: Option<String>,
+
   /// Whether the payload should be detached from the JWS.
   ///
   /// [More Info](https://www.rfc-editor.org/rfc/rfc7515#appendix-F).
   pub detached_payload: bool,
+
+  /// Additional header parameters.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub custom_header_parameters: Option<Object>,
 }
 
 impl JwsSignatureOptions {
@@ -91,9 +104,21 @@ impl JwsSignatureOptions {
     self
   }
 
+  /// Replace the value of the `kid` field.
+  pub fn kid(mut self, value: impl Into<String>) -> Self {
+    self.kid = Some(value.into());
+    self
+  }
+
   /// Replace the value of the `detached_payload` field.
   pub fn detached_payload(mut self, value: bool) -> Self {
     self.detached_payload = value;
+    self
+  }
+
+  /// Adds additional header parameters.
+  pub fn custom_header_parameters(mut self, value: Object) -> Self {
+    self.custom_header_parameters = Some(value);
     self
   }
 }

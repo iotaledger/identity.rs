@@ -16,4 +16,6 @@ pub struct DecodedJwtCredential<T = Object> {
   pub credential: Credential<T>,
   /// The protected header parsed from the JWS.
   pub header: Box<JwsHeader>,
+  /// The custom claims parsed from the JWT.
+  pub custom_claims: Option<Object>,
 }

@@ -2,9 +2,11 @@ import * as assert from "assert";
 import {
     CoreDocument,
     Credential,
+    EdDSAJwsVerifier,
     JwkMemStore,
     JwsAlgorithm,
     JwsSignatureOptions,
+    JwsVerificationOptions,
     JwtPresentationOptions,
     JwtPresentationValidationOptions,
     JwtPresentationValidator,
@@ -15,9 +17,6 @@ import {
     Timestamp,
     UnknownCredential,
 } from "../node";
-export {};
-
-// const assert = require("assert");
 
 const credentialFields = {
     context: "https://www.w3.org/2018/credentials/examples/v1",
@@ -240,22 +239,31 @@ describe("Presentation", function() {
                 verifiableCredential: [credentialJwt, unsignedVc, otherCredential],
             });
 
+            const myKid = "my-kid";
             const presentationJwt = await doc.createPresentationJwt(
                 storage,
                 fragment,
                 unsignedVp,
-                new JwsSignatureOptions(),
+                new JwsSignatureOptions({
+                    kid: myKid,
+                }),
                 new JwtPresentationOptions(),
             );
 
             let issuer = JwtPresentationValidator.extractHolder(presentationJwt);
             assert.deepStrictEqual(issuer.toString(), doc.id().toString());
 
-            const decodedPresentation = new JwtPresentationValidator().validate(
+            const methodId = doc.id().join(fragment);
+            const decodedPresentation = new JwtPresentationValidator(new EdDSAJwsVerifier()).validate(
                 presentationJwt,
                 doc,
-                new JwtPresentationValidationOptions(),
+                new JwtPresentationValidationOptions({
+                    presentationVerifierOptions: new JwsVerificationOptions({
+                        methodId: methodId,
+                    }),
+                }),
             );
+            assert.deepStrictEqual(decodedPresentation.protectedHeader().kid(), myKid);
 
             const credentials: UnknownCredential[] = decodedPresentation
                 .presentation()
