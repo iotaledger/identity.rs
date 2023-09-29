@@ -4,6 +4,7 @@ import {
     Credential,
     DecodedJwtPresentation,
     Duration,
+    EdDSAJwsVerifier,
     FailFast,
     IJwsVerifier,
     IotaDocument,
@@ -22,10 +23,11 @@ import {
     MethodDigest,
     MethodScope,
     Presentation,
+    StatusCheck,
     Storage,
+    SubjectHolderRelationship,
     Timestamp,
     VerificationMethod,
-    verifyEdDSA,
 } from "../node";
 import { createVerificationMethod } from "./key_id_storage";
 
@@ -87,16 +89,24 @@ describe("#JwkStorageDocument", function() {
 
         // Check that signing works
         let testString = "test";
+        let options = new JwsSignatureOptions({
+            customHeaderParameters: {
+                testKey: "testValue",
+            },
+        });
         const jws = await doc.createJws(
             storage,
             fragment,
             testString,
-            new JwsSignatureOptions(),
+            options,
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
+
+        // Verify custom header parameters.
+        assert.deepStrictEqual(token.protectedHeader().custom(), { testKey: "testValue" });
 
         // Check that we can also verify it using a custom verifier
         let customVerifier = new CustomVerifier();
@@ -135,19 +145,20 @@ describe("#JwkStorageDocument", function() {
             fragment,
             credential,
             new JwsSignatureOptions(),
+            { testkey: "test-value" },
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
-        const credentialRetrieved = credentialValidator
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
+        const decoded = credentialValidator
             .validate(
                 credentialJwt,
                 doc,
                 new JwtCredentialValidationOptions(),
                 FailFast.FirstError,
-            )
-            .credential();
-        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+            );
+        assert.deepStrictEqual(decoded.customClaims(), { testkey: "test-value" });
+        assert.deepStrictEqual(decoded.credential().toJSON(), credential.toJSON());
 
         // Also check using our custom verifier
         let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
@@ -206,7 +217,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
 
         // Check that we can also verify it using a custom verifier
@@ -245,19 +256,20 @@ describe("#JwkStorageDocument", function() {
             fragment,
             credential,
             new JwsSignatureOptions(),
+            { "test-key": "test-value" },
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
-        const credentialRetrieved = credentialValidator
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
+        const decoded = credentialValidator
             .validate(
                 credentialJwt,
                 doc,
                 new JwtCredentialValidationOptions(),
                 FailFast.FirstError,
-            )
-            .credential();
-        assert.deepStrictEqual(credentialRetrieved.toJSON(), credential.toJSON());
+            );
+        assert.deepStrictEqual(decoded.customClaims(), { "test-key": "test-value" });
+        assert.deepStrictEqual(decoded.credential().toJSON(), credential.toJSON());
 
         // Also check using our custom verifier
         let credentialValidatorCustom = new JwtCredentialValidator(customVerifier);
@@ -354,6 +366,9 @@ describe("#JwkStorageDocument", function() {
                 expirationDate,
                 issuanceDate: Timestamp.nowUTC(),
                 audience,
+                customClaims: {
+                    testKey: "testValue",
+                },
             }),
         );
 
@@ -373,6 +388,7 @@ describe("#JwkStorageDocument", function() {
             presentation.toJSON(),
         );
         assert.equal(decoded.audience(), audience);
+        assert.deepStrictEqual(decoded.customClaims(), { testKey: "testValue" });
 
         // check issuance date validation.
         let options = new JwtPresentationValidationOptions({
@@ -416,9 +432,43 @@ describe("#JwkStorageDocument", function() {
             decodedSignature: Uint8Array,
             publicKey: Jwk,
         ): void {
-            verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
+            new EdDSAJwsVerifier().verify(alg, signingInput, decodedSignature, publicKey);
             this._verifications += 1;
             return;
         }
     }
+});
+
+describe("#OptionParsing", function() {
+    it("JwsSignatureOptions can be parsed", () => {
+        new JwsSignatureOptions({
+            nonce: "nonce",
+            attachJwk: true,
+            b64: true,
+            cty: "type",
+            detachedPayload: false,
+            kid: "kid",
+            typ: "typ",
+            url: "https://www.example.com",
+        });
+    }),
+        it("JwsVerificationOptions can be parsed", () => {
+            new JwsVerificationOptions({
+                nonce: "nonce",
+                methodId: "did:iota:0x123",
+                methodScope: MethodScope.AssertionMethod(),
+            });
+        }),
+        it("JwtCredentialValidationOptions can be parsed", () => {
+            new JwtCredentialValidationOptions({
+                // These are equivalent ways of creating a timestamp.
+                earliestExpiryDate: new Timestamp(),
+                latestIssuanceDate: Timestamp.nowUTC(),
+                status: StatusCheck.SkipAll,
+                subjectHolderRelationship: ["did:iota:0x123", SubjectHolderRelationship.SubjectOnNonTransferable],
+                verifierOptions: new JwsVerificationOptions({
+                    nonce: "nonce",
+                }),
+            });
+        });
 });

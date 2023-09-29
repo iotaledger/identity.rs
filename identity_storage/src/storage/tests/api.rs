@@ -5,13 +5,13 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
-
 use identity_credential::credential::Jws;
 use identity_credential::validator::JwtCredentialValidationOptions;
 use identity_did::DIDUrl;
+use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
-use identity_verification::jose::jws::EdDSAJwsVerifier;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jwk::Jwk;
 use identity_verification::jws::DecodedJws;
@@ -106,7 +106,7 @@ async fn generation() {
 }
 
 #[tokio::test]
-async fn sign_bytes() {
+async fn create_jws() {
   let (document, storage, fragment) = setup_with_method().await;
 
   let payload: &[u8] = b"test";
@@ -124,7 +124,35 @@ async fn sign_bytes() {
 }
 
 #[tokio::test]
-async fn sign_bytes_with_nonce() {
+async fn create_jws_typ() {
+  // Default `typ` is "JWT".
+  let (document, storage, fragment) = setup_with_method().await;
+  let payload: &[u8] = b"test";
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new();
+  let verification_options: JwsVerificationOptions = JwsVerificationOptions::new();
+
+  let jws: Jws = document
+    .create_jws(&storage, &fragment, payload, &signature_options)
+    .await
+    .unwrap();
+
+  let decoded_jws = document.verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options);
+  assert_eq!(decoded_jws.unwrap().protected.typ().unwrap(), "JWT");
+
+  // Custom `typ`.
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().typ("test-typ");
+
+  let jws: Jws = document
+    .create_jws(&storage, &fragment, payload, &signature_options)
+    .await
+    .unwrap();
+
+  let decoded_jws = document.verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options);
+  assert_eq!(decoded_jws.unwrap().protected.typ().unwrap(), "test-typ");
+}
+
+#[tokio::test]
+async fn create_jws_with_nonce() {
   let (document, storage, fragment) = setup_with_method().await;
 
   let payload: &[u8] = b"test";
@@ -161,7 +189,7 @@ async fn sign_bytes_with_nonce() {
 }
 
 #[tokio::test]
-async fn sign_bytes_with_header_copy_options() {
+async fn create_jws_with_header_copy_options() {
   let (document, storage, fragment) = setup_with_method().await;
 
   let payload: &[u8] = b"test";
@@ -200,7 +228,7 @@ async fn sign_bytes_with_header_copy_options() {
 }
 
 #[tokio::test]
-async fn sign_bytes_detached() {
+async fn create_jws_detached() {
   let (document, storage, fragment) = setup_with_method().await;
 
   // =====================
@@ -248,6 +276,28 @@ async fn sign_bytes_detached() {
 }
 
 #[tokio::test]
+async fn create_jws_with_custom_kid() {
+  let (document, storage, fragment) = setup_with_method().await;
+
+  let payload: &[u8] = b"test";
+  let key_id: &str = "my-key-id";
+  let signature_options: JwsSignatureOptions = JwsSignatureOptions::new().kid(key_id);
+  let verification_options: JwsVerificationOptions =
+    JwsVerificationOptions::new().method_id(document.id().clone().join(format!("#{fragment}")).unwrap());
+
+  let jws: Jws = document
+    .create_jws(&storage, &fragment, payload, &signature_options)
+    .await
+    .unwrap();
+
+  let decoded = document
+    .verify_jws(jws.as_str(), None, &EdDSAJwsVerifier::default(), &verification_options)
+    .unwrap();
+
+  assert_eq!(decoded.protected.kid().unwrap(), key_id);
+}
+
+#[tokio::test]
 async fn signing_credential() {
   let (mut document, storage) = setup();
 
@@ -284,11 +334,18 @@ async fn signing_credential() {
 
   let credential: Credential = Credential::from_json(credential_json).unwrap();
   let jws = document
-    .create_credential_jwt(&credential, &storage, &method_fragment, &JwsSignatureOptions::default())
+    .create_credential_jwt(
+      &credential,
+      &storage,
+      &method_fragment,
+      &JwsSignatureOptions::default(),
+      None,
+    )
     .await
     .unwrap();
   // Verify the credential
-  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   assert!(validator
     .validate::<_, Object>(
       &jws,

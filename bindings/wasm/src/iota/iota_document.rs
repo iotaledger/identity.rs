@@ -3,6 +3,7 @@
 
 use std::rc::Rc;
 
+use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
@@ -37,6 +38,7 @@ use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
 use crate::common::PromiseString;
 use crate::common::PromiseVoid;
+use crate::common::RecordStringAny;
 use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
@@ -359,7 +361,7 @@ impl WasmIotaDocument {
     &self,
     jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: Option<IJwsVerifier>,
+    signatureVerifier: IJwsVerifier,
     detachedPayload: Option<String>,
   ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
@@ -712,10 +714,13 @@ impl WasmIotaDocument {
   }
 
   /// Produces a JWS where the payload is produced from the given `credential`
-  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  ///
+  /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   #[wasm_bindgen(js_name = createCredentialJwt)]
   pub fn create_credential_jwt(
     &self,
@@ -723,16 +728,20 @@ impl WasmIotaDocument {
     fragment: String,
     credential: &WasmCredential,
     options: &WasmJwsSignatureOptions,
+    custom_claims: Option<RecordStringAny>,
   ) -> Result<PromiseJwt> {
     let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
     let options_clone: JwsSignatureOptions = options.0.clone();
     let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
     let credential_clone: Credential = credential.0.clone();
+    let custom: Option<Object> = custom_claims
+      .map(|claims| claims.into_serde().wasm_result())
+      .transpose()?;
     let promise: Promise = future_to_promise(async move {
       document_lock_clone
         .read()
         .await
-        .create_credential_jwt(&credential_clone, &storage_clone, &fragment, &options_clone)
+        .create_credential_jwt(&credential_clone, &storage_clone, &fragment, &options_clone, custom)
         .await
         .wasm_result()
         .map(WasmJwt::new)
@@ -742,10 +751,11 @@ impl WasmIotaDocument {
   }
 
   /// Produces a JWT where the payload is produced from the given presentation.
-  /// in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
   #[wasm_bindgen(js_name = createPresentationJwt)]
   pub fn create_presentation_jwt(
     &self,

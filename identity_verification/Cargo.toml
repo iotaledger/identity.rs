@@ -16,9 +16,5 @@ serde.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 
-[features]
-# Enables jws verification based on the EdDSA algorithm.
-eddsa = ["identity_jose/eddsa"]
-
 [dev-dependencies]
 serde_json.workspace = true

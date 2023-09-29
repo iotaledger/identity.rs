@@ -28,7 +28,7 @@ impl WasmJwtDomainLinkageValidator {
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtDomainLinkageValidator {
+  pub fn new(signatureVerifier: IJwsVerifier) -> WasmJwtDomainLinkageValidator {
     let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtDomainLinkageValidator {
       validator: JwtDomainLinkageValidator::with_signature_verifier(signature_verifier),

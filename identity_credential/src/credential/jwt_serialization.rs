@@ -25,7 +25,7 @@ use crate::credential::Subject;
 use crate::Error;
 use crate::Result;
 
-/// Implementation of JWT Encoding/Decoding according to https://w3c.github.io/vc-jwt/#version-1.1.
+/// Implementation of JWT Encoding/Decoding according to [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 ///
 /// This type is opinionated in the following ways:
 /// 1. Serialization tries to duplicate as little as possible between the required registered claims and the `vc` entry.
@@ -56,13 +56,16 @@ where
   sub: Option<Cow<'credential, Url>>,
 
   vc: InnerCredential<'credential, T>,
+
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub(crate) custom: Option<Object>,
 }
 
 impl<'credential, T> CredentialJwtClaims<'credential, T>
 where
   T: ToOwned<Owned = T> + Serialize + DeserializeOwned,
 {
-  pub(super) fn new(credential: &'credential Credential<T>) -> Result<Self> {
+  pub(super) fn new(credential: &'credential Credential<T>, custom: Option<Object>) -> Result<Self> {
     let Credential {
       context,
       id,
@@ -97,6 +100,7 @@ where
         credential_subject: InnerCredentialSubject::new(subject),
         issuance_date: None,
         expiration_date: None,
+        issuer: None,
         credential_schema: Cow::Borrowed(credential_schema),
         credential_status: credential_status.as_ref().map(Cow::Borrowed),
         refresh_service: Cow::Borrowed(refresh_service),
@@ -106,6 +110,7 @@ where
         properties: Cow::Borrowed(properties),
         proof: proof.as_ref().map(Cow::Borrowed),
       },
+      custom,
     })
   }
 }
@@ -118,6 +123,18 @@ where
   /// Checks whether the fields that are set in the `vc` object are consistent with the corresponding values
   /// set for the registered claims.
   fn check_consistency(&self) -> Result<()> {
+    // Check consistency of issuer.
+    let issuer_from_claims: &Issuer = self.iss.as_ref();
+    if !self
+      .vc
+      .issuer
+      .as_ref()
+      .map(|value| value == issuer_from_claims)
+      .unwrap_or(true)
+    {
+      return Err(Error::InconsistentCredentialJwtClaims("inconsistent issuer"));
+    };
+
     // Check consistency of issuanceDate
     let issuance_date_from_claims = self.issuance_date.to_issuance_date()?;
     if !self
@@ -181,6 +198,7 @@ where
       jti,
       sub,
       vc,
+      custom: _,
     } = self;
 
     let InnerCredential {
@@ -197,6 +215,7 @@ where
       properties,
       proof,
       issuance_date: _,
+      issuer: _,
       expiration_date: _,
     } = vc;
 
@@ -228,9 +247,9 @@ where
   }
 }
 
-/// The VC-JWT spec states that issuanceDate corresponds to the registered `nbf` claim,
-/// but `iat` is also used in the ecosystem. This type aims to take care of this discrepancy on
-/// a best effort basis.
+/// The [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token) states that issuanceDate
+/// corresponds to the registered `nbf` claim, but `iat` is also used in the ecosystem.
+/// This type aims to take care of this discrepancy on a best effort basis.
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub(crate) struct IssuanceDateClaims {
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -302,6 +321,9 @@ where
   /// One or more URIs defining the type of the `Credential`.
   #[serde(rename = "type")]
   types: Cow<'credential, OneOrMany<String>>,
+  /// The issuer of the `Credential`.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  issuer: Option<Issuer>,
   /// One or more `Object`s representing the `Credential` subject(s).
   #[serde(rename = "credentialSubject")]
   credential_subject: InnerCredentialSubject<'credential>,
@@ -345,6 +367,7 @@ mod tests {
   use identity_core::convert::ToJson;
 
   use crate::credential::Credential;
+  use crate::Error;
 
   use super::CredentialJwtClaims;
 
@@ -391,7 +414,7 @@ mod tests {
     }"#;
 
     let credential: Credential = Credential::from_json(credential_json).unwrap();
-    let jwt_credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::new(&credential).unwrap();
+    let jwt_credential_claims: CredentialJwtClaims<'_> = CredentialJwtClaims::new(&credential, None).unwrap();
     let jwt_credential_claims_serialized: String = jwt_credential_claims.to_json().unwrap();
     // Compare JSON representations
     assert_eq!(
@@ -408,5 +431,248 @@ mod tests {
     };
 
     assert_eq!(credential, retrieved_credential);
+  }
+
+  #[test]
+  fn claims_duplication() {
+    let credential_json: &str = r#"
+    {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "id": "http://example.edu/credentials/3732",
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+      "issuer": "https://example.edu/issuers/14",
+      "issuanceDate": "2010-01-01T19:23:24Z",
+      "expirationDate": "2025-09-13T15:56:23Z",
+      "credentialSubject": {
+        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "degree": {
+          "type": "BachelorDegree",
+          "name": "Bachelor of Science in Mechanical Engineering"
+        }
+      }
+    }"#;
+
+    // `sub`, `exp`, `jti`, `iss`, `nbf` are duplicated in `vc`.
+    let claims_json: &str = r#"
+    {
+      "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "jti": "http://example.edu/credentials/3732",
+      "iss": "https://example.edu/issuers/14",
+      "nbf":  1262373804,
+      "exp": 1757778983,
+      "vc": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "http://example.edu/credentials/3732",
+        "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+        "issuer": "https://example.edu/issuers/14",
+        "issuanceDate": "2010-01-01T19:23:24Z",
+        "expirationDate": "2025-09-13T15:56:23Z",
+        "credentialSubject": {
+          "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+          "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science in Mechanical Engineering"
+          }
+        }
+      }
+    }"#;
+
+    let credential: Credential = Credential::from_json(credential_json).unwrap();
+    let credential_from_claims: Credential = CredentialJwtClaims::<'_, Object>::from_json(&claims_json)
+      .unwrap()
+      .try_into_credential()
+      .unwrap();
+
+    assert_eq!(credential, credential_from_claims);
+  }
+
+  #[test]
+  fn inconsistent_issuer() {
+    // issuer is inconsistent (15 instead of 14).
+    let claims_json: &str = r#"
+    {
+      "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "jti": "http://example.edu/credentials/3732",
+      "iss": "https://example.edu/issuers/14",
+      "nbf":  1262373804,
+      "vc": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+        "issuer": "https://example.edu/issuers/15",
+        "credentialSubject": {
+          "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science in Mechanical Engineering"
+          }
+        }
+      }
+    }"#;
+
+    let credential_from_claims_result: Result<Credential, _> =
+      CredentialJwtClaims::<'_, Object>::from_json(&claims_json)
+        .unwrap()
+        .try_into_credential();
+    assert!(matches!(
+      credential_from_claims_result.unwrap_err(),
+      Error::InconsistentCredentialJwtClaims("inconsistent issuer")
+    ));
+  }
+
+  #[test]
+  fn inconsistent_id() {
+    let claims_json: &str = r#"
+    {
+      "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "jti": "http://example.edu/credentials/3732",
+      "iss": "https://example.edu/issuers/14",
+      "nbf":  1262373804,
+      "vc": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+        "id": "http://example.edu/credentials/1111",
+        "credentialSubject": {
+          "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science in Mechanical Engineering"
+          }
+        }
+      }
+    }"#;
+
+    let credential_from_claims_result: Result<Credential, _> =
+      CredentialJwtClaims::<'_, Object>::from_json(&claims_json)
+        .unwrap()
+        .try_into_credential();
+    assert!(matches!(
+      credential_from_claims_result.unwrap_err(),
+      Error::InconsistentCredentialJwtClaims("inconsistent credential id")
+    ));
+  }
+
+  #[test]
+  fn inconsistent_subject() {
+    let claims_json: &str = r#"
+    {
+      "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "jti": "http://example.edu/credentials/3732",
+      "iss": "https://example.edu/issuers/14",
+      "nbf":  1262373804,
+      "vc": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "http://example.edu/credentials/3732",
+        "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+        "issuer": "https://example.edu/issuers/14",
+        "issuanceDate": "2010-01-01T19:23:24Z",
+        "credentialSubject": {
+          "id": "did:example:1111111111111111111111111",
+          "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science in Mechanical Engineering"
+          }
+        }
+      }
+    }"#;
+
+    let credential_from_claims_result: Result<Credential, _> =
+      CredentialJwtClaims::<'_, Object>::from_json(&claims_json)
+        .unwrap()
+        .try_into_credential();
+    assert!(matches!(
+      credential_from_claims_result.unwrap_err(),
+      Error::InconsistentCredentialJwtClaims("inconsistent credentialSubject: identifiers do not match")
+    ));
+  }
+
+  #[test]
+  fn inconsistent_issuance_date() {
+    // issuer is inconsistent (15 instead of 14).
+    let claims_json: &str = r#"
+    {
+      "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "jti": "http://example.edu/credentials/3732",
+      "iss": "https://example.edu/issuers/14",
+      "nbf":  1262373804,
+      "vc": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "http://example.edu/credentials/3732",
+        "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+        "issuer": "https://example.edu/issuers/14",
+        "issuanceDate": "2020-01-01T19:23:24Z",
+        "credentialSubject": {
+          "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+          "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science in Mechanical Engineering"
+          }
+        }
+      }
+    }"#;
+
+    let credential_from_claims_result: Result<Credential, _> =
+      CredentialJwtClaims::<'_, Object>::from_json(&claims_json)
+        .unwrap()
+        .try_into_credential();
+    assert!(matches!(
+      credential_from_claims_result.unwrap_err(),
+      Error::InconsistentCredentialJwtClaims("inconsistent issuanceDate")
+    ));
+  }
+
+  #[test]
+  fn inconsistent_expiration_date() {
+    // issuer is inconsistent (15 instead of 14).
+    let claims_json: &str = r#"
+    {
+      "sub": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "jti": "http://example.edu/credentials/3732",
+      "iss": "https://example.edu/issuers/14",
+      "nbf":  1262373804,
+      "exp": 1757778983,
+      "vc": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "http://example.edu/credentials/3732",
+        "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+        "issuer": "https://example.edu/issuers/14",
+        "issuanceDate": "2010-01-01T19:23:24Z",
+        "expirationDate": "2026-09-13T15:56:23Z",
+        "credentialSubject": {
+          "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+          "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science in Mechanical Engineering"
+          }
+        }
+      }
+    }"#;
+
+    let credential_from_claims_result: Result<Credential, _> =
+      CredentialJwtClaims::<'_, Object>::from_json(&claims_json)
+        .unwrap()
+        .try_into_credential();
+    assert!(matches!(
+      credential_from_claims_result.unwrap_err(),
+      Error::InconsistentCredentialJwtClaims("inconsistent credential expirationDate")
+    ));
   }
 }

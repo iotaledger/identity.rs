@@ -13,7 +13,6 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_did::CoreDID;
 use identity_document::document::CoreDocument;
-use identity_verification::jws::EdDSAJwsVerifier;
 use identity_verification::jws::JwsVerifier;
 
 use crate::validator::DecodedJwtCredential;
@@ -22,31 +21,13 @@ use super::DomainLinkageValidationResult;
 
 /// A validator for a Domain Linkage Configuration and Credentials.
 
-#[derive(Debug, Clone)]
-pub struct JwtDomainLinkageValidator<V: JwsVerifier = EdDSAJwsVerifier> {
+pub struct JwtDomainLinkageValidator<V: JwsVerifier> {
   validator: JwtCredentialValidator<V>,
 }
 
-impl JwtDomainLinkageValidator {
-  /// Creates a new [`JwtDomainLinkageValidator`] capable of verifying a Domain Linkage Credential issued as a JWS
-  /// using the [`EdDSA`](::identity_verification::jose::jws::JwsAlgorithm::EdDSA) algorithm.
-  ///
-  /// See [`JwtDomainLinkageValidator::with_signature_verifier`](JwtDomainLinkageValidator::with_signature_verifier)
-  /// which enables you to supply a custom signature verifier if other JWS algorithms are of interest.
-  pub fn new() -> Self {
-    Self {
-      validator: JwtCredentialValidator::new(),
-    }
-  }
-}
-
-impl<V> JwtDomainLinkageValidator<V>
-where
-  V: JwsVerifier,
-{
+impl<V: JwsVerifier> JwtDomainLinkageValidator<V> {
   /// Create a new [`JwtDomainLinkageValidator`] that delegates cryptographic signature verification to the given
-  /// `signature_verifier`. If you are only interested in `EdDSA` signatures (with `Ed25519`) then the default
-  /// constructor can be used. See [`JwtDomainLinkageValidator::new`](JwtDomainLinkageValidator::new).
+  /// `signature_verifier`.
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
     Self {
       validator: JwtCredentialValidator::with_signature_verifier(signature_verifier),
@@ -220,12 +201,6 @@ where
   }
 }
 
-impl Default for JwtDomainLinkageValidator {
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use crate::credential::Credential;
@@ -248,6 +223,7 @@ mod tests {
   use identity_core::common::Url;
   use identity_did::CoreDID;
   use identity_document::document::CoreDocument;
+  use identity_eddsa_verifier::EdDSAJwsVerifier;
   use identity_verification::jws::CharSet;
   use identity_verification::jws::CompactJwsEncoder;
   use identity_verification::jws::CompactJwsEncodingOptions;
@@ -255,6 +231,10 @@ mod tests {
   use identity_verification::jws::JwsHeader;
   use identity_verification::MethodData;
   use identity_verification::VerificationMethod;
+  use once_cell::sync::Lazy;
+
+  static JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519: Lazy<JwtDomainLinkageValidator<EdDSAJwsVerifier>> =
+    Lazy::new(|| JwtDomainLinkageValidator::with_signature_verifier(EdDSAJwsVerifier::default()));
 
   #[test]
   pub(crate) fn test_valid_credential() {
@@ -262,7 +242,7 @@ mod tests {
     let credential: Credential = create_domain_linkage_credential(document.id());
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -280,7 +260,7 @@ mod tests {
     // Sign with `other_secret_key` to produce an invalid signature.
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &other_secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -299,7 +279,7 @@ mod tests {
     credential.id = Some(Url::parse("http://random.credential.id").unwrap());
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -319,7 +299,7 @@ mod tests {
     credential.types = OneOrMany::One(Credential::<Object>::base_type().to_owned());
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -343,7 +323,7 @@ mod tests {
     ]);
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -365,7 +345,7 @@ mod tests {
     }
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -389,7 +369,7 @@ mod tests {
     }
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -414,7 +394,7 @@ mod tests {
     }
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -434,7 +414,7 @@ mod tests {
     }
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -458,7 +438,7 @@ mod tests {
 
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -481,7 +461,7 @@ mod tests {
     }
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_credential(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_credential(
       &document,
       &jwt,
       &url_foo(),
@@ -502,7 +482,7 @@ mod tests {
 
     let configuration: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt.clone(), jwt]);
 
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_linkage(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_linkage(
       &document,
       &configuration,
       &url_foo(),
@@ -521,7 +501,7 @@ mod tests {
     let jwt: Jwt = sign_credential_jwt(&credential, &document, &fragment, &secret_key);
 
     let configuration: DomainLinkageConfiguration = DomainLinkageConfiguration::new(vec![jwt]);
-    let validation_result: DomainLinkageValidationResult = JwtDomainLinkageValidator::new().validate_linkage(
+    let validation_result: DomainLinkageValidationResult = JWT_DOMAIN_LINKAGE_VALIDATOR_ED25519.validate_linkage(
       &document,
       &configuration,
       &url_foo(),
@@ -557,7 +537,7 @@ mod tests {
     fragment: &str,
     secret_key: &SecretKey,
   ) -> Jwt {
-    let payload: String = credential.serialize_jwt().unwrap();
+    let payload: String = credential.serialize_jwt(None).unwrap();
     Jwt::new(sign_bytes(document, fragment, payload.as_ref(), secret_key).into())
   }
 

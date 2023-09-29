@@ -23,12 +23,12 @@ identity_verification = { version = "=1.0.0-rc.1", path = "../identity_verificat
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
+iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client"] }
 rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "resolver", "eddsa"]
+default = ["revocation-bitmap", "client", "iota-client", "resolver"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
@@ -55,14 +55,8 @@ domain-linkage = ["identity_credential/domain-linkage"]
 # Enables fetching domain linkage configuration files.
 domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
 
-# Enables JWS verification with the EdDSA algorithm
-eddsa = ["identity_verification/eddsa"]
-
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["identity_storage/memstore"]
-
-# Exposes secure implementations of the storage traits using stronghold.
-stronghold = ["identity_storage/stronghold"]
 
 [package.metadata.docs.rs]
 # To build locally:

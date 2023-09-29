@@ -4,7 +4,7 @@ version = "1.0.0-rc.1"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
-keywords = ["iota", "storage", "identity", "kms", "stronghold"]
+keywords = ["iota", "storage", "identity", "kms"]
 license.workspace = true
 readme = "./README.md"
 repository.workspace = true
@@ -29,7 +29,6 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
-zeroize = { version = "1.6.0", default_features = false, optional = true }
 
 [dev-dependencies]
 identity_credential = { version = "=1.0.0-rc.1", path = "../identity_credential", features = ["revocation-bitmap"] }
@@ -39,10 +38,8 @@ tokio = { version = "1.29.0", default-features = false, features = ["macros", "s
 [features]
 default = ["iota-document", "memstore"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
-memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto", "identity_verification/eddsa"]
+memstore = ["dep:tokio", "dep:rand", "dep:iota-crypto"]
 # Enables `Send` + `Sync` bounds for the storage traits.
 send-sync-storage = []
 # Implements the JwkStorageDocumentExt trait for IotaDocument
-# Exposes the stronghold implementations for the storage traits.
-stronghold = ["dep:tokio", "dep:iota-sdk", "dep:iota_stronghold", "dep:zeroize", "dep:rand", "dep:iota-crypto"]
 iota-document = ["dep:identity_iota_core"]

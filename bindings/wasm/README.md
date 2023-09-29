@@ -56,7 +56,7 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 
 Replace imports with local paths for txm:
 !test program
-cat | sed -e "s#require('@iota/identity-wasm/node')#require('./node')#" | node
+cat | sed -e "s#require('@iota/identity-wasm/node')#require('./node')#" | timeout 30 node || (echo "Process timed out after 30 seconds" && exit 1)
 -->
 <!-- !test check Nodejs Example -->
 

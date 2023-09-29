@@ -938,7 +938,8 @@ impl CoreDocument {
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
   /// - The JWS must be encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  /// or set explicitly in the `options`.
   //
   // NOTE: This is tested in `identity_storage` and `identity_credential`.
   pub fn verify_jws<'jws, T: JwsVerifier>(
@@ -960,12 +961,18 @@ impl CoreDocument {
       ));
     }
 
-    let kid = validation_item.kid().ok_or(Error::JwsVerificationError(
-      identity_verification::jose::error::Error::InvalidParam("missing kid value"),
-    ))?;
+    let method_url_query: DIDUrlQuery<'_> = match &options.method_id {
+      Some(method_id) => method_id.into(),
+      None => validation_item
+        .kid()
+        .ok_or(Error::JwsVerificationError(
+          identity_verification::jose::error::Error::InvalidParam("missing kid value"),
+        ))?
+        .into(),
+    };
 
     let public_key: &Jwk = self
-      .resolve_method(kid, options.method_scope)
+      .resolve_method(method_url_query, options.method_scope)
       .ok_or(Error::MethodNotFound)?
       .data()
       .try_public_key_jwk()
