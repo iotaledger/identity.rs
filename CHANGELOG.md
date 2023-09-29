@@ -4,10 +4,11 @@
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.3...v1.0.0-rc.1)
 
-This version introduces a new DID method targeting the IOTA UTXO ledger. This method works fundamentally differently from the previous method and introduces new capabilities to interact with Layer 1 entities like native tokens, NFTs and smart contracts. 
-Additionally this version changes the credential and presentation format to JWT VC.
+This version introduces a new DID method targeting the IOTA UTXO ledger. This method works fundamentally differently from the previous method and introduces new capabilities to interact with Layer 1 assets like Native Tokens, NFTs and various Output types.
 
-Note: Identities and credentials created with the earlier versions cannot be resolved with this version of the library. 
+This version changes the credential and presentation format to JWT, as specified by the [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+
+Note: Identities and credentials created with the earlier versions cannot be resolved with this version of the library.
 
 ### Changed
 
