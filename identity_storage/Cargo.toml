@@ -20,7 +20,7 @@ identity_did = { version = "=1.0.0-rc.1", path = "../identity_did", default-feat
 identity_document = { version = "=1.0.0-rc.1", path = "../identity_document", default-features = false }
 identity_iota_core = { version = "=1.0.0-rc.1", path = "../identity_iota_core", default-features = false, optional = true }
 identity_verification = { version = "=1.0.0-rc.1", path = "../identity_verification", default_features = false }
-iota-crypto = { version = "0.23", default-features = false, features = ["blake2b", "ed25519", "random"], optional = true }
+iota-crypto = { version = "0.23", default-features = false, features = ["ed25519"], optional = true }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default_features = false }
 serde.workspace = true
