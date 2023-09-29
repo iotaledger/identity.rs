@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0-rc.1](https://github.com/iotaledger/identity.rs/tree/v1.0.0-rc.1) (2023-08-30)
+## [1.0.0-rc.1](https://github.com/iotaledger/identity.rs/tree/v1.0.0-rc.1) (2023-09-29)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.3...v1.0.0-rc.1)
 
@@ -11,6 +11,14 @@ Note: Identities and credentials created with the earlier versions cannot be res
 
 ### Changed
 
+- Add dedicated stronghold crate [#1243](https://github.com/iotaledger/identity.rs/pull/1243)
+- Add dedicated EdDSA verifier crate [#1238](https://github.com/iotaledger/identity.rs/pull/1238)
+- Use `VC Data Model v1.1` JWT encoding instead of `VC-JWT` [#1234](https://github.com/iotaledger/identity.rs/pull/1234)
+- Remove `vp` and `vc` from JWT claims in JOSE [#1233](https://github.com/iotaledger/identity.rs/pull/1233)
+- Mark error enums as non-exhaustive [#1227](https://github.com/iotaledger/identity.rs/pull/1227)
+- Change `verifiable_credential` to type `Vec<CRED>` in `Presentation` [#1231](https://github.com/iotaledger/identity.rs/pull/1231)
+- Bring JwkDocumentExt names in line with Wasm [#1233](https://github.com/iotaledger/identity.rs/pull/1223)
+- Add lints for all crates [#1222](https://github.com/iotaledger/identity.rs/pull/1222)
 - Bump `iota-sdk` and other dependencies [#1208](https://github.com/iotaledger/identity.rs/pull/1208)
 - Polish `identity_credential` [#1205](https://github.com/iotaledger/identity.rs/pull/1205)
 - Polish `identity_resolver` and`identity_storage` [#1204](https://github.com/iotaledger/identity.rs/pull/1204)
@@ -58,6 +66,10 @@ Note: Identities and credentials created with the earlier versions cannot be res
 
 ### Added
 
+- Allow arbitrary JWS header parameters [#1245](https://github.com/iotaledger/identity.rs/pull/1245)
+- Allow custom JWT claims for presentations [#1244](https://github.com/iotaledger/identity.rs/pull/1244)
+- Allow custom `kid` to be set in JWS [#1239](https://github.com/iotaledger/identity.rs/pull/1239)
+- Allow custom JWT claims for credentials [#1237](https://github.com/iotaledger/identity.rs/pull/1237)
 - Improve `Proof` [#1209](https://github.com/iotaledger/identity.rs/pull/1209)
 - Polish `identity_jose` [#1201](https://github.com/iotaledger/identity.rs/pull/1201)
 - Add `resolve_multiple` to Resolver [#1189](https://github.com/iotaledger/identity.rs/pull/1189)
@@ -84,6 +96,8 @@ Note: Identities and credentials created with the earlier versions cannot be res
 
 ### Patch
 
+- Fix holder claim check in VP [#1236](https://github.com/iotaledger/identity.rs/pull/1236)
+- Fix issuer claim check in VC [#1235](https://github.com/iotaledger/identity.rs/pull/1235)
 - Feature-gate Domain Linkage [#1184](https://github.com/iotaledger/identity.rs/pull/1184)
 - Update method spec and JWK method type [#1176](https://github.com/iotaledger/identity.rs/pull/1176)
 - Replace `iota-client` with `iota-sdk` [#1161](https://github.com/iotaledger/identity.rs/pull/1161)
@@ -93,6 +107,31 @@ Note: Identities and credentials created with the earlier versions cannot be res
 - Pin agent dev-dependencies to crates versions [\#1029](https://github.com/iotaledger/identity.rs/pull/1029)
 - Support case insensitive serialization of `RentStructure` [\#1012](https://github.com/iotaledger/identity.rs/pull/1012)
 - Update stronghold to 0.6.4 [\#928](https://github.com/iotaledger/identity.rs/pull/928)
+
+## [0.7.0-alpha.8](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.8) (2023-09-28)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.7.0-alpha.7...v0.7.0-alpha.8)
+
+
+### Changed
+- Add dedicated stronghold crate [#1243](https://github.com/iotaledger/identity.rs/pull/1243)
+- Add dedicated EdDSA verifier crate [#1238](https://github.com/iotaledger/identity.rs/pull/1238)
+- Use `VC Data Model v1.1` JWT encoding instead of `VC-JWT` [#1234](https://github.com/iotaledger/identity.rs/pull/1234)
+- Remove `vp` and `vc` from JWT claims in JOSE [#1233](https://github.com/iotaledger/identity.rs/pull/1233)
+- Mark error enums as non-exhaustive [#1227](https://github.com/iotaledger/identity.rs/pull/1227)
+- Change `verifiable_credential` to type `Vec<CRED>` in `Presentation` [#1231](https://github.com/iotaledger/identity.rs/pull/1231)
+- Bring JwkDocumentExt names in line with Wasm [#1233](https://github.com/iotaledger/identity.rs/pull/1223)
+- Add lints for all crates [#1222](https://github.com/iotaledger/identity.rs/pull/1222)
+
+### Added
+- Allow arbitrary JWS header parameters [#1245](https://github.com/iotaledger/identity.rs/pull/1245)
+- Allow custom JWT claims for presentations [#1244](https://github.com/iotaledger/identity.rs/pull/1244)
+- Allow custom `kid` to be set in JWS [#1239](https://github.com/iotaledger/identity.rs/pull/1239)
+- Allow custom JWT claims for credentials [#1237](https://github.com/iotaledger/identity.rs/pull/1237)
+
+### Patch
+- Fix holder claim check in VP [#1236](https://github.com/iotaledger/identity.rs/pull/1236)
+- Fix issuer claim check in VC [#1235](https://github.com/iotaledger/identity.rs/pull/1235)
 
 ## [v0.7.0-alpha.7](https://github.com/iotaledger/identity.rs/tree/v0.7.0-alpha.7) (2023-08-15)
 
