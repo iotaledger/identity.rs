@@ -12,6 +12,7 @@ Note: Identities and credentials created with the earlier versions cannot be res
 
 ### Changed 
 
+Add dedicated EdDSA verifier crate [#1238](https://github.com/iotaledger/identity.rs/pull/1238)
 - Use `VC Data Model v1.1` JWT encoding instead of `VC-JWT` [#1234](https://github.com/iotaledger/identity.rs/pull/1234)
 - Change `verifiable_credential` to type `Vec<CRED>` in `Presentation` [#1231](https://github.com/iotaledger/identity.rs/pull/1231)
 - Polish Wasm bindings [#1206](https://github.com/iotaledger/identity.rs/pull/1206)
