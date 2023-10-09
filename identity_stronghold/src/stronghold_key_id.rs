@@ -1,8 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-
 use crate::stronghold_jwk_storage::IDENTITY_CLIENT_PATH;
 use crate::StrongholdStorage;
 use async_trait::async_trait;
@@ -102,7 +100,7 @@ async fn persist_changes(
   })?;
   // Must be dropped since `write_stronghold_snapshot` requires the stronghold instance.
   drop(stronghold);
-  match secret_manager.as_secret_manager().deref() {
+  match secret_manager.as_secret_manager() {
     iota_sdk::client::secret::SecretManager::Stronghold(stronghold_manager) => {
       stronghold_manager
         .write_stronghold_snapshot(None)
