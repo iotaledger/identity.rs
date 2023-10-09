@@ -227,6 +227,12 @@ impl Eq for RelativeDIDUrl {}
 
 impl PartialOrd for RelativeDIDUrl {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
+}
+
+impl Ord for RelativeDIDUrl {
+  fn cmp(&self, other: &Self) -> Ordering {
     // Compare path, query, then fragment in that order
     let path_cmp = self
       .path
@@ -242,27 +248,17 @@ impl PartialOrd for RelativeDIDUrl {
         .cmp(other.query.as_deref().unwrap_or_default());
 
       if query_cmp == Ordering::Equal {
-        return Some(
-          self
-            .fragment
-            .as_deref()
-            .unwrap_or_default()
-            .cmp(other.fragment.as_deref().unwrap_or_default()),
-        );
+        return self
+          .fragment
+          .as_deref()
+          .unwrap_or_default()
+          .cmp(other.fragment.as_deref().unwrap_or_default());
       }
 
-      return Some(query_cmp);
+      return query_cmp;
     }
 
-    Some(path_cmp)
-  }
-}
-
-impl Ord for RelativeDIDUrl {
-  fn cmp(&self, other: &Self) -> Ordering {
-    self
-      .partial_cmp(other)
-      .expect("RelativeDIDUrl partial_cmp should always be Some")
+    path_cmp
   }
 }
 
@@ -479,11 +475,7 @@ impl Eq for DIDUrl {}
 impl PartialOrd for DIDUrl {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    match self.did().partial_cmp(other.did()) {
-      None => None,
-      Some(Ordering::Equal) => self.url().partial_cmp(other.url()),
-      Some(ord) => Some(ord),
-    }
+    Some(self.cmp(other))
   }
 }
 
