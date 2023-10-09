@@ -14,7 +14,7 @@ use crate::jose::WasmJwsAlgorithm;
 
 /// Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
 ///
-/// This function is useful when one is composing a {@link IJwsVerifier} that delegates
+/// This function is useful when one is composing a `IJwsVerifier` that delegates
 /// `EdDSA` verification with curve `Ed25519` to this function.
 ///
 /// # Warning
@@ -38,7 +38,7 @@ pub fn verify_ed25519(
   Ed25519Verifier::verify(input, &publicKey.0).wasm_result()
 }
 
-/// An implementor of {@link IJwsVerifier} that can handle the
+/// An implementor of `IJwsVerifier` that can handle the
 /// `EdDSA` algorithm.
 #[wasm_bindgen(js_name = EdDSAJwsVerifier)]
 pub struct WasmEdDSAJwsVerifier();
