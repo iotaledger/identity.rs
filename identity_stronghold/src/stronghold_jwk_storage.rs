@@ -29,7 +29,6 @@ use iota_stronghold::Location;
 use iota_stronghold::Stronghold;
 use rand::distributions::DistString;
 use std::fmt::Display;
-use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
@@ -308,7 +307,7 @@ async fn persist_changes(
   // Must be dropped since `write_stronghold_snapshot` needs to acquire the stronghold lock.
   drop(stronghold);
 
-  match secret_manager.as_secret_manager().deref() {
+  match secret_manager.as_secret_manager() {
     iota_sdk::client::secret::SecretManager::Stronghold(stronghold_manager) => {
       stronghold_manager
         .write_stronghold_snapshot(None)
