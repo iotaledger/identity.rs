@@ -1,23 +1,29 @@
+use crypto::utils::rand::fill;
 use identity_verification::jwu::{decode_b64_json, encode_b64};
+use rand::distributions::DistString;
 use serde_json::Value;
 
 ///
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Disclosure {
+  ///
   pub salt: String,
+  ///
   pub claim_name: Option<String>,
-  pub claim_value: String,
+  ///
+  pub claim_value: Value,
+  ///
   pub disclosure: String,
 }
 
 impl Disclosure {
   ///
-  pub fn new(salt: Option<String>, claim_name: Option<String>, claim_value: String) -> Self {
-    let salt = salt.unwrap_or("default salt".to_owned()); //todo
+  pub fn new(salt: Option<String>, claim_name: Option<String>, claim_value: impl Into<Value>) -> Self {
+    let claim_value: Value = claim_value.into();
+    let salt = salt.unwrap_or(Self::gen_rand());
     let result = match claim_name {
       Some(name) => {
-        // let input: [&str; 3] = [&salt, &name, &claim_value];
-        let input: String = format!("[\"{}\", \"{}\", {}]", &salt, &name, &claim_value);
+        let input: String = format!("[\"{}\", \"{}\", {}]", &salt, &name, &claim_value.to_string());
         let encoded = encode_b64(&input);
         Self {
           salt,
@@ -27,7 +33,7 @@ impl Disclosure {
         }
       }
       None => {
-        let input: String = format!("[\"{}\", {}]", &salt, &claim_value);
+        let input: String = format!("[\"{}\", {}]", &salt, &claim_value.to_string());
         let encoded = encode_b64(&input);
         Self {
           salt,
@@ -48,15 +54,14 @@ impl Disclosure {
       Self {
         salt: decoded.get(0).unwrap().as_str().unwrap().to_owned(),
         claim_name: None,
-        claim_value: serde_json::to_string(decoded.get(1).unwrap()).unwrap(),
+        claim_value: decoded.get(1).unwrap().clone(),
         disclosure,
       }
     } else if decoded.len() == 3 {
-      let value = serde_json::to_string(decoded.get(2).unwrap()).unwrap();
       Self {
         salt: decoded.get(0).unwrap().as_str().unwrap().to_owned(),
         claim_name: Some(decoded.get(1).unwrap().as_str().unwrap().to_owned()),
-        claim_value: value,
+        claim_value: decoded.get(2).unwrap().clone(),
         disclosure,
       }
     } else {
@@ -78,10 +83,17 @@ impl Disclosure {
   pub fn into_string(self) -> String {
     self.disclosure
   }
+
+  fn gen_rand() -> String {
+    rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 128)
+  }
 }
 
 #[cfg(test)]
 mod test {
+  use crypto::utils::rand::{fill, gen};
+  use rand::distributions::DistString;
+
   use super::Disclosure;
   use crate::sd_jwt::{Hasher, ShaHasher};
 
@@ -125,5 +137,17 @@ mod test {
       "WyJlbHVWNU9nM2dTTklJOEVZbnN4QV9BIiwgImdpdmVuX25hbWUiLCAiXHU1OTJhXHU5MGNlIl0".to_owned(),
       disclosure.to_string()
     );
+  }
+
+  #[test]
+  fn test_3() {
+    // let mut salt = [0_u8; 128];
+    // fill(&mut salt).unwrap();
+    // println!("{:?}", &salt);
+    // let s = String::from_str(&salt);
+    let s = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 128);
+    println!("{}", s);
+
+    // println!("{:?}", "hello".to_owned().as_bytes());
   }
 }

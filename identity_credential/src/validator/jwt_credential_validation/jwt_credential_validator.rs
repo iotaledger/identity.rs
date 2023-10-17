@@ -11,6 +11,7 @@ use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::JwsValidationItem;
 use identity_verification::jws::JwsVerifier;
+use serde_json::Value;
 
 use super::CompoundCredentialValidationError;
 use super::DecodedJwtCredential;
@@ -21,17 +22,20 @@ use super::SignerContext;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
 use crate::credential::Jwt;
+use crate::sd_jwt::Hasher;
+use crate::sd_jwt::SdPayloadDecoder;
+use crate::sd_jwt::ShaHasher;
 use crate::validator::FailFast;
 
 /// A type for decoding and validating [`Credential`]s.
 #[non_exhaustive]
-pub struct JwtCredentialValidator<V: JwsVerifier>(V);
+pub struct JwtCredentialValidator<V: JwsVerifier>(V, Option<SdPayloadDecoder>);
 
 impl<V: JwsVerifier> JwtCredentialValidator<V> {
   /// Create a new [`JwtCredentialValidator`] that delegates cryptographic signature verification to the given
   /// `signature_verifier`.
   pub fn with_signature_verifier(signature_verifier: V) -> Self {
-    Self(signature_verifier)
+    Self(signature_verifier, None)
   }
 
   /// Decodes and validates a [`Credential`] issued as a JWT. A [`DecodedJwtCredential`] is returned upon success.
@@ -68,12 +72,14 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
-    Self::validate_extended::<CoreDocument, _, T>(
+    Self::validate_extended::<CoreDocument, _, T, _>(
       &self.0,
       credential_jwt,
       std::slice::from_ref(issuer.as_ref()),
       options,
       fail_fast,
+      None::<&SdPayloadDecoder<ShaHasher>>,
+      None,
     )
   }
 
@@ -103,18 +109,27 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
-    Self::verify_signature_with_verifier(&self.0, credential, trusted_issuers, options)
+    Self::verify_signature_with_verifier(
+      &self.0,
+      credential,
+      trusted_issuers,
+      options,
+      None::<&SdPayloadDecoder<ShaHasher>>,
+      None,
+    )
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relationship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<DOC, S, T>(
+  pub(crate) fn validate_extended<DOC, S, T, H: Hasher>(
     signature_verifier: &S,
     credential: &Jwt,
     issuers: &[DOC],
     options: &JwtCredentialValidationOptions,
     fail_fast: FailFast,
+    sd_decoder: Option<&SdPayloadDecoder<H>>,
+    disclosures: Option<&Vec<String>>,
   ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
@@ -124,11 +139,17 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
     // First verify the JWS signature and decode the result into a credential token, then apply all other validations.
     // If this errors we have to return early regardless of the `fail_fast` flag as all other validations require a
     // `&Credential`.
-    let credential_token =
-      Self::verify_signature_with_verifier(signature_verifier, credential, issuers, &options.verification_options)
-        .map_err(|err| CompoundCredentialValidationError {
-          validation_errors: [err].into(),
-        })?;
+    let credential_token = Self::verify_signature_with_verifier(
+      signature_verifier,
+      credential,
+      issuers,
+      &options.verification_options,
+      sd_decoder,
+      disclosures,
+    )
+    .map_err(|err| CompoundCredentialValidationError {
+      validation_errors: [err].into(),
+    })?;
 
     let credential: &Credential<T> = &credential_token.credential;
     // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
@@ -185,11 +206,13 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
   }
 
   /// Stateless version of [`Self::verify_signature`]
-  fn verify_signature_with_verifier<DOC, S, T>(
+  fn verify_signature_with_verifier<DOC, S, T, H: Hasher>(
     signature_verifier: &S,
     credential: &Jwt,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
+    sd_decoder: Option<&SdPayloadDecoder<H>>,
+    disclosures: Option<&Vec<String>>,
   ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
@@ -250,7 +273,8 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
         signer_ctx: SignerContext::Issuer,
       })?;
 
-    let credential_token = Self::verify_decoded_signature(decoded, public_key, signature_verifier)?;
+    let credential_token =
+      Self::verify_decoded_signature(decoded, public_key, signature_verifier, sd_decoder, disclosures)?;
 
     // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
     // returning.
@@ -273,10 +297,12 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
   }
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
-  fn verify_decoded_signature<S: JwsVerifier, T>(
+  fn verify_decoded_signature<S: JwsVerifier, T, H: Hasher>(
     decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,
+    sd_decoder: Option<&SdPayloadDecoder<H>>,
+    disclosures: Option<&Vec<String>>,
   ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
@@ -290,11 +316,22 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
           signer_ctx: SignerContext::Issuer,
         })?;
 
-    // Deserialize the raw claims
     let credential_claims: CredentialJwtClaims<'_, T> =
-      CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
-        JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-      })?;
+      if let (Some(sd_decoder), Some(disclosures)) = (sd_decoder, disclosures) {
+        let value: Value = serde_json::from_slice(&claims).unwrap();
+        let decoded: String = Value::Object(sd_decoder.decode(&value.as_object().unwrap(), disclosures)).to_string();
+        CredentialJwtClaims::from_json(&decoded).unwrap()
+      } else {
+        CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
+          JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+        })?
+      };
+
+    // // Deserialize the raw claims
+    // let credential_claims: CredentialJwtClaims<'_, T> =
+    //   CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
+    //     JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+    //   })?;
 
     let custom_claims = credential_claims.custom.clone();
 

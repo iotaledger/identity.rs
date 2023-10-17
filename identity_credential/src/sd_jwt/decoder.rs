@@ -5,7 +5,7 @@ use serde_json::{Map, Value};
 use super::{Disclosure, Hasher, ShaHasher};
 
 ///
-pub struct SdDecoder<H = ShaHasher>
+pub struct SdPayloadDecoder<H = ShaHasher>
 where
   H: Hasher,
 {
@@ -13,16 +13,26 @@ where
   hasher: H,
 }
 
-impl<H> SdDecoder<H>
+impl SdPayloadDecoder {
+  ///
+  pub fn new() -> Self {
+    Self {
+      hasher: ShaHasher::new(),
+    }
+  }
+}
+
+impl<H> SdPayloadDecoder<H>
 where
   H: Hasher,
 {
   ///
-  pub fn new(hasher: H) -> Self {
+  pub fn with_custom_hasher(hasher: H) -> Self {
     Self { hasher }
   }
 
-  pub fn decode(&self, payload: &Map<String, Value>, disclosures: &Vec<&str>) -> Map<String, Value> {
+  ///
+  pub fn decode(&self, payload: &Map<String, Value>, disclosures: &Vec<String>) -> Map<String, Value> {
     let disclosures: BTreeMap<String, Disclosure> = disclosures
       .iter()
       .map(|disclosure| {
@@ -37,6 +47,7 @@ where
   }
 
   ///
+  /// todo:  If any digests were found more than once in the previous step, the SD-JWT MUST be rejected.
   pub fn decode_object(
     &self,
     payload: &Map<String, Value>,
@@ -49,10 +60,13 @@ where
         for sd_entry in sd_array {
           let hash_in_sd = sd_entry.as_str().unwrap().to_string();
           if let Some(disclosure) = disclosures.get(&hash_in_sd) {
-            println!("<<<<<<<<<<<>>>>>>>>>>{}", disclosure.claim_name.clone().unwrap());
+            // if output.contains_key(&disclosure.claim_name.expect("claim name must be present for object")) {
+            //   panic!("claim already exist");
+            // }
+
             output.insert(
               disclosure.claim_name.clone().unwrap(),
-              serde_json::from_str(&disclosure.claim_value).unwrap(), // Value::from_str(&disclosure.claim_value).unwrap(),
+              disclosure.claim_value.clone(), // Value::from_str(&disclosure.claim_value).unwrap(),
             );
           }
         }
@@ -93,7 +107,10 @@ where
             }
             let hash_in_array = value.as_str().unwrap().to_string();
             if let Some(disclosure) = disclosures.get(&hash_in_array) {
-              output.push(serde_json::from_str(&disclosure.claim_value).unwrap());
+              if disclosure.claim_name.is_some() {
+                panic!("array length must be 2");
+              }
+              output.push(disclosure.claim_value.clone());
             }
           } else {
             output.push(Value::Object(self.decode_object(object, disclosures)));
@@ -113,7 +130,7 @@ mod test {
 
   use crate::sd_jwt::ShaHasher;
 
-  use super::SdDecoder;
+  use super::SdPayloadDecoder;
 
   #[test]
   fn test_vc() {
@@ -141,8 +158,7 @@ mod test {
       "sub": "user_42"
     });
 
-    let hasher = ShaHasher::new();
-    let mut decoder = SdDecoder::new(hasher);
+    let mut decoder = SdPayloadDecoder::new();
     let disclosures = vec![
       "WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgImdpdmVuX25hbWUiLCAiSm9obiJd",
       "WyJsa2x4RjVqTVlsR1RQVW92TU5JdkNBIiwgIlVTIl0",
@@ -157,12 +173,12 @@ mod test {
       "WyJsa2x4RjVqTVlsR1RQVW92TU5JdkNBIiwgIlVTIl0",
       "WyJuUHVvUW5rUkZxM0JJZUFtN0FuWEZBIiwgIkRFIl0"
     ];
-    let decoded = decoder.decode(&json.as_object().unwrap(), &disclosures);
-    println!(
-      ">>>>>>>>>>> \n {} >>>>>>>>>> \n {:?}",
-      serde_json::to_string_pretty(&Value::Object(decoded.clone())).unwrap(),
-      decoded
-    );
+    // let decoded = decoder.decode(&json.as_object().unwrap(), &disclosures);
+    // println!(
+    //   ">>>>>>>>>>> \n {} >>>>>>>>>> \n {:?}",
+    //   serde_json::to_string_pretty(&Value::Object(decoded.clone())).unwrap(),
+    //   decoded
+    // );
   }
 
   #[test]

@@ -6,7 +6,7 @@ pub trait Hasher {
   ///
   fn digest(&self, input: &str) -> String;
   ///
-  fn alg_name() -> &'static str;
+  fn alg_name(&self) -> &'static str;
 }
 
 ///
@@ -26,7 +26,8 @@ impl Hasher for ShaHasher {
     BaseEncoding::encode(digest.as_ref(), Base::Base64Url)
   }
 
-  fn alg_name() -> &'static str {
+  fn alg_name(&self) -> &'static str {
+    //todo
     "sha"
   }
 }

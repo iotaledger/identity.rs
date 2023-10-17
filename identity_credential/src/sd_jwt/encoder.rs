@@ -2,21 +2,26 @@ use super::{Disclosure, Hasher, ShaHasher};
 use serde_json::{json, Map, Value};
 
 ///
-pub struct SdEncoder<H = ShaHasher>
-where
-  H: Hasher,
-{
+pub struct SdPayloadEncoder<H: Hasher = ShaHasher> {
   ///
   pub json: Map<String, Value>,
   hasher: H,
 }
 
-impl<H> SdEncoder<H>
-where
-  H: Hasher,
-{
+impl SdPayloadEncoder {
   ///
-  pub fn new(hasher: H, json: &str) -> Self {
+  pub fn new(json: &str) -> SdPayloadEncoder<ShaHasher> {
+    // let hasher = Box::new(hasher.unwrap_or(ShaHasher::new()));
+    SdPayloadEncoder {
+      json: serde_json::from_str(json).unwrap(),
+      hasher: ShaHasher::new(),
+    }
+  }
+}
+
+impl<H: Hasher> SdPayloadEncoder<H> {
+  ///
+  pub fn with_custom_hasher(json: &str, hasher: H) -> Self {
     Self {
       json: serde_json::from_str(json).unwrap(),
       hasher,
@@ -45,7 +50,7 @@ where
     let disclosure = Disclosure::new(
       salt,
       Some(target_property.to_owned()),
-      parent_value.remove(target_property).unwrap().to_string().to_owned(),
+      parent_value.remove(target_property).unwrap(),
     );
 
     let hash = self.hasher.digest(disclosure.as_str());
@@ -87,7 +92,7 @@ where
     //todo check array length.
 
     if let Some(element_value) = array.get_mut(element_index) {
-      let disclosure = Disclosure::new(salt, None, element_value.to_string());
+      let disclosure = Disclosure::new(salt, None, element_value.clone());
       let hash = self.hasher.digest(disclosure.as_str());
       let tripledot = json!({"...": hash});
       *element_value = tripledot;
@@ -97,9 +102,17 @@ where
     }
   }
 
+  pub fn to_string(&self) -> String {
+    serde_json::to_string(&self.json).unwrap()
+  }
+
   ///
   pub fn add_decoy(path: &[&str], value: Option<String>) {
     todo!();
+  }
+
+  pub fn add_sd_alg() {
+    todo!(); //https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-hash-function-claim
   }
 
   ///
@@ -110,7 +123,7 @@ where
 
 #[cfg(test)]
 mod test {
-  use super::SdEncoder;
+  use super::SdPayloadEncoder;
   use crate::sd_jwt::ShaHasher;
   use serde_json::{json, Value};
 
@@ -124,8 +137,9 @@ mod test {
     });
     let hasher = ShaHasher::new();
     let stringi = json.to_string();
-    let mut encoder = SdEncoder::new(hasher, &stringi);
+    let mut encoder = SdPayloadEncoder::<ShaHasher>::new(&stringi);
     encoder.conceal(&["something", "abc"], Some("salttt".to_owned()));
+    println!("{:?}", encoder.json);
   }
 
   #[test]
@@ -152,9 +166,8 @@ mod test {
         "DE"
       ]
     });
-    let hasher = ShaHasher::new();
     let stringi = json.to_string();
-    let mut encoder = SdEncoder::new(hasher, &stringi);
+    let mut encoder = SdPayloadEncoder::new(&stringi);
     let disclosure = encoder.conceal(&["given_name"], Some("2GLC42sKQveCfGfryNRN9w".to_owned()));
     println!("{}", disclosure.to_string());
 

@@ -40,6 +40,7 @@ pub mod credential {
   pub use identity_credential::presentation::*;
   #[cfg(feature = "revocation-bitmap")]
   pub use identity_credential::revocation::*;
+  pub use identity_credential::sd_jwt::*;
   pub use identity_credential::validator::*;
 }
 
