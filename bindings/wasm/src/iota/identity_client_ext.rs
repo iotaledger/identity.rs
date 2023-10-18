@@ -72,7 +72,7 @@ impl WasmIotaIdentityClientExt {
         identity_iota::iota::Error::JsError(format!("newDidOutput failed to decode Address: {err}: {address_dto:?}"))
       })
       .wasm_result()?;
-    let doc: IotaDocument = document.0.blocking_read().clone();
+    let doc: IotaDocument = document.0.try_read()?.clone();
 
     let promise: Promise = future_to_promise(async move {
       let rent_structure: Option<RentStructure> = rentStructure
@@ -102,7 +102,7 @@ impl WasmIotaIdentityClientExt {
     client: WasmIotaIdentityClient,
     document: &WasmIotaDocument,
   ) -> Result<PromiseAliasOutputBuilderParams> {
-    let document: IotaDocument = document.0.blocking_read().clone();
+    let document: IotaDocument = document.0.try_read()?.clone();
     let promise: Promise = future_to_promise(async move {
       let output: AliasOutput = IotaIdentityClientExt::update_did_output(&client, document)
         .await

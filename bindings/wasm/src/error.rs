@@ -13,6 +13,7 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 use std::fmt::Display;
 use std::result::Result as StdResult;
+use tokio::sync::TryLockError;
 use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
@@ -244,6 +245,15 @@ impl From<CompoundJwtPresentationValidationError> for WasmError<'_> {
   fn from(error: CompoundJwtPresentationValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundJwtPresentationValidationError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<TryLockError> for WasmError<'_> {
+  fn from(error: TryLockError) -> Self {
+    Self {
+      name: Cow::Borrowed("TryLockError"),
       message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }

@@ -6,6 +6,8 @@
 </dd>
 <dt><a href="#CoreDocument">CoreDocument</a></dt>
 <dd><p>A method-agnostic DID Document.</p>
+<p>Note: All methods that involve reading from this class may potentially raise an error
+if the object is being concurrently modified.</p>
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
@@ -38,11 +40,18 @@ See: <a href="https://identity.foundation/.well-known/resources/did-configuratio
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
+<dt><a href="#EdDSAJwsVerifier">EdDSAJwsVerifier</a></dt>
+<dd><p>An implementor of <code>IJwsVerifier</code> that can handle the
+<code>EdDSA</code> algorithm.</p>
+</dd>
 <dt><a href="#IotaDID">IotaDID</a></dt>
 <dd><p>A DID conforming to the IOTA DID method specification.</p>
 </dd>
 <dt><a href="#IotaDocument">IotaDocument</a></dt>
-<dd></dd>
+<dd><p>A DID Document adhering to the IOTA DID method specification.</p>
+<p>Note: All methods that involve reading from this class may potentially raise an error
+if the object is being concurrently modified.</p>
+</dd>
 <dt><a href="#IotaDocumentMetadata">IotaDocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
@@ -140,10 +149,6 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -184,28 +189,31 @@ This variant is the default.</p>
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
 <dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
 <dd><p>Encode the given bytes in url-safe base64.</p>
 </dd>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
-<dt><a href="#verifyEdDSA">verifyEdDSA(alg, signingInput, decodedSignature, publicKey)</a></dt>
-<dd><p>Verify a JWS signature secured with the <code>JwsAlgorithm::EdDSA</code> algorithm.
-Only the <code>EdCurve::Ed25519</code> variant is supported for now.</p>
-<p>This function is useful when one is building an <code>IJwsVerifier</code> that extends the default provided by
-the IOTA Identity Framework.</p>
+<dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
+<dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
+<p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
+<code>EdDSA</code> verification with curve <code>Ed25519</code> to this function.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
+</dd>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -397,6 +405,9 @@ Deserializes an instance from a JSON object.
 ## CoreDocument
 A method-agnostic DID Document.
 
+Note: All methods that involve reading from this class may potentially raise an error
+if the object is being concurrently modified.
+
 **Kind**: global class  
 
 * [CoreDocument](#CoreDocument)
@@ -437,7 +448,7 @@ A method-agnostic DID Document.
         * [.generateMethod(storage, keyType, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJws(storage, fragment, payload, options)](#CoreDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
-        * [.createCredentialJwt(storage, fragment, credential, options)](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createCredentialJwt(storage, fragment, credential, options, custom_claims)](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#CoreDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -709,7 +720,8 @@ verifying EdDSA signatures.
 Regardless of which options are passed the following conditions must be met in order for a verification attempt to
 take place.
 - The JWS must be encoded according to the JWS compact serialization.
-- The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+- The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+or set explicitly in the `options`.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -717,7 +729,7 @@ take place.
 | --- | --- |
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> | 
 | detachedPayload | <code>string</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+revokeCredentials"></a>
@@ -827,12 +839,15 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 <a name="CoreDocument+createCredentialJwt"></a>
 
-### coreDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+### coreDocument.createCredentialJwt(storage, fragment, credential, options, custom_claims) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWT where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 
-The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+private key backed by the `storage` in accordance with the passed `options`.
+
+The `custom_claims` can be used to set additional claims on the resulting JWT.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -842,15 +857,17 @@ produced by the corresponding private key backed by the `storage` in accordance 
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+| custom_claims | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+createPresentationJwt"></a>
 
 ### coreDocument.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWT where the payload is produced from the given presentation.
-in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 
-The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+private key backed by the `storage` in accordance with the passed `options`.
 
 **Kind**: instance method of [<code>CoreDocument</code>](#CoreDocument)  
 
@@ -1274,6 +1291,7 @@ It does not imply anything about a potentially present proof property on the cre
 * [DecodedJwtCredential](#DecodedJwtCredential)
     * [.credential()](#DecodedJwtCredential+credential) ⇒ [<code>Credential</code>](#Credential)
     * [.protectedHeader()](#DecodedJwtCredential+protectedHeader) ⇒ [<code>JwsHeader</code>](#JwsHeader)
+    * [.customClaims()](#DecodedJwtCredential+customClaims) ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
     * [.intoCredential()](#DecodedJwtCredential+intoCredential) ⇒ [<code>Credential</code>](#Credential)
 
 <a name="DecodedJwtCredential+credential"></a>
@@ -1286,6 +1304,12 @@ Returns a copy of the credential parsed to the [Verifiable Credentials Data mode
 
 ### decodedJwtCredential.protectedHeader() ⇒ [<code>JwsHeader</code>](#JwsHeader)
 Returns a copy of the protected header parsed from the decoded JWS.
+
+**Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
+<a name="DecodedJwtCredential+customClaims"></a>
+
+### decodedJwtCredential.customClaims() ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
+The custom claims parsed from the JWT.
 
 **Kind**: instance method of [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)  
 <a name="DecodedJwtCredential+intoCredential"></a>
@@ -1315,6 +1339,7 @@ It does not imply anything about a potentially present proof property on the pre
     * [.expirationDate()](#DecodedJwtPresentation+expirationDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
     * [.issuanceDate()](#DecodedJwtPresentation+issuanceDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
     * [.audience()](#DecodedJwtPresentation+audience) ⇒ <code>string</code> \| <code>undefined</code>
+    * [.customClaims()](#DecodedJwtPresentation+customClaims) ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
 
 <a name="DecodedJwtPresentation+presentation"></a>
 
@@ -1351,6 +1376,12 @@ The issuance date parsed from the JWT claims.
 
 ### decodedJwtPresentation.audience() ⇒ <code>string</code> \| <code>undefined</code>
 The `aud` property parsed from JWT claims.
+
+**Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="DecodedJwtPresentation+customClaims"></a>
+
+### decodedJwtPresentation.customClaims() ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
+The custom claims parsed from the JWT.
 
 **Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
 <a name="DomainLinkageConfiguration"></a>
@@ -1509,6 +1540,46 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="EdDSAJwsVerifier"></a>
+
+## EdDSAJwsVerifier
+An implementor of `IJwsVerifier` that can handle the
+`EdDSA` algorithm.
+
+**Kind**: global class  
+
+* [EdDSAJwsVerifier](#EdDSAJwsVerifier)
+    * [new EdDSAJwsVerifier()](#new_EdDSAJwsVerifier_new)
+    * [.verify(alg, signingInput, decodedSignature, publicKey)](#EdDSAJwsVerifier+verify)
+
+<a name="new_EdDSAJwsVerifier_new"></a>
+
+### new EdDSAJwsVerifier()
+Constructs an EdDSAJwsVerifier.
+
+<a name="EdDSAJwsVerifier+verify"></a>
+
+### edDSAJwsVerifier.verify(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EdDSA` algorithm.
+Only the `Ed25519` curve is supported for now.
+
+This function is useful when one is building an `IJwsVerifier` that extends the default provided by
+the IOTA Identity Framework.
+
+# Warning
+
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: instance method of [<code>EdDSAJwsVerifier</code>](#EdDSAJwsVerifier)  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
 
 <a name="IotaDID"></a>
 
@@ -1724,6 +1795,11 @@ Deserializes an instance from a JSON object.
 <a name="IotaDocument"></a>
 
 ## IotaDocument
+A DID Document adhering to the IOTA DID method specification.
+
+Note: All methods that involve reading from this class may potentially raise an error
+if the object is being concurrently modified.
+
 **Kind**: global class  
 
 * [IotaDocument](#IotaDocument)
@@ -1768,7 +1844,7 @@ Deserializes an instance from a JSON object.
         * [.generateMethod(storage, keyType, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
-        * [.createCredentialJwt(storage, fragment, credential, options)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createCredentialJwt(storage, fragment, credential, options, custom_claims)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -1982,7 +2058,7 @@ take place.
 | --- | --- |
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> | 
 | detachedPayload | <code>string</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+pack"></a>
@@ -2201,12 +2277,15 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 <a name="IotaDocument+createCredentialJwt"></a>
 
-### iotaDocument.createCredentialJwt(storage, fragment, credential, options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+### iotaDocument.createCredentialJwt(storage, fragment, credential, options, custom_claims) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWS where the payload is produced from the given `credential`
-in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 
-The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+private key backed by the `storage` in accordance with the passed `options`.
+
+The `custom_claims` can be used to set additional claims on the resulting JWT.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
@@ -2216,15 +2295,17 @@ produced by the corresponding private key backed by the `storage` in accordance 
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+| custom_claims | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+createPresentationJwt"></a>
 
 ### iotaDocument.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWT where the payload is produced from the given presentation.
-in accordance with [VC-JWT version 1.1](https://w3c.github.io/vc-jwt/#version-1.1).
+in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 
-The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+private key backed by the `storage` in accordance with the passed `options`.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
@@ -2725,6 +2806,7 @@ Returns a clone of the JWS string.
         * [.setAlg(value)](#JwsHeader+setAlg)
         * [.b64()](#JwsHeader+b64) ⇒ <code>boolean</code> \| <code>undefined</code>
         * [.setB64(value)](#JwsHeader+setB64)
+        * [.custom()](#JwsHeader+custom) ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
         * [.has(claim)](#JwsHeader+has) ⇒ <code>boolean</code>
         * [.isDisjoint(other)](#JwsHeader+isDisjoint) ⇒ <code>boolean</code>
         * [.jku()](#JwsHeader+jku) ⇒ <code>string</code> \| <code>undefined</code>
@@ -2795,6 +2877,12 @@ Sets a value for the base64url-encode payload claim (b64).
 | --- | --- |
 | value | <code>boolean</code> | 
 
+<a name="JwsHeader+custom"></a>
+
+### jwsHeader.custom() ⇒ <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code>
+Additional header parameters.
+
+**Kind**: instance method of [<code>JwsHeader</code>](#JwsHeader)  
 <a name="JwsHeader+has"></a>
 
 ### jwsHeader.has(claim) ⇒ <code>boolean</code>
@@ -3058,7 +3146,9 @@ Deserializes an instance from a JSON object.
         * [.setCty(value)](#JwsSignatureOptions+setCty)
         * [.serUrl(value)](#JwsSignatureOptions+serUrl)
         * [.setNonce(value)](#JwsSignatureOptions+setNonce)
+        * [.setKid(value)](#JwsSignatureOptions+setKid)
         * [.setDetachedPayload(value)](#JwsSignatureOptions+setDetachedPayload)
+        * [.setCustomHeaderParameters(value)](#JwsSignatureOptions+setCustomHeaderParameters)
         * [.toJSON()](#JwsSignatureOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwsSignatureOptions+clone) ⇒ [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)
     * _static_
@@ -3138,6 +3228,17 @@ Replace the value of the `nonce` field.
 | --- | --- |
 | value | <code>string</code> | 
 
+<a name="JwsSignatureOptions+setKid"></a>
+
+### jwsSignatureOptions.setKid(value)
+Replace the value of the `kid` field.
+
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
 <a name="JwsSignatureOptions+setDetachedPayload"></a>
 
 ### jwsSignatureOptions.setDetachedPayload(value)
@@ -3148,6 +3249,17 @@ Replace the value of the `detached_payload` field.
 | Param | Type |
 | --- | --- |
 | value | <code>boolean</code> | 
+
+<a name="JwsSignatureOptions+setCustomHeaderParameters"></a>
+
+### jwsSignatureOptions.setCustomHeaderParameters(value)
+Add additional header parameters.
+
+**Kind**: instance method of [<code>JwsSignatureOptions</code>](#JwsSignatureOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>Record.&lt;string, any&gt;</code> | 
 
 <a name="JwsSignatureOptions+toJSON"></a>
 
@@ -3181,7 +3293,8 @@ Deserializes an instance from a JSON object.
     * [new JwsVerificationOptions(options)](#new_JwsVerificationOptions_new)
     * _instance_
         * [.setNonce(value)](#JwsVerificationOptions+setNonce)
-        * [.setScope(value)](#JwsVerificationOptions+setScope)
+        * [.setMethodScope(value)](#JwsVerificationOptions+setMethodScope)
+        * [.setMethodId(value)](#JwsVerificationOptions+setMethodId)
         * [.toJSON()](#JwsVerificationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwsVerificationOptions+clone) ⇒ [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)
     * _static_
@@ -3208,9 +3321,9 @@ Set the expected value for the `nonce` parameter of the protected header.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="JwsVerificationOptions+setScope"></a>
+<a name="JwsVerificationOptions+setMethodScope"></a>
 
-### jwsVerificationOptions.setScope(value)
+### jwsVerificationOptions.setMethodScope(value)
 Set the scope of the verification methods that may be used to verify the given JWS.
 
 **Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
@@ -3218,6 +3331,17 @@ Set the scope of the verification methods that may be used to verify the given J
 | Param | Type |
 | --- | --- |
 | value | [<code>MethodScope</code>](#MethodScope) | 
+
+<a name="JwsVerificationOptions+setMethodId"></a>
+
+### jwsVerificationOptions.setMethodId(value)
+Set the DID URl of the method, whose JWK should be used to verify the JWS.
+
+**Kind**: instance method of [<code>JwsVerificationOptions</code>](#JwsVerificationOptions)  
+
+| Param | Type |
+| --- | --- |
+| value | [<code>DIDUrl</code>](#DIDUrl) | 
 
 <a name="JwsVerificationOptions+toJSON"></a>
 
@@ -3373,7 +3497,7 @@ algorithm will be used.
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> | 
 
 <a name="JwtCredentialValidator+validate"></a>
 
@@ -3545,7 +3669,7 @@ algorithm will be used.
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> | 
 
 <a name="JwtDomainLinkageValidator+validateLinkage"></a>
 
@@ -3712,7 +3836,7 @@ algorithm will be used.
 
 | Param | Type |
 | --- | --- |
-| signatureVerifier | <code>IJwsVerifier</code> \| <code>undefined</code> | 
+| signatureVerifier | <code>IJwsVerifier</code> | 
 
 <a name="JwtPresentationValidator+validate"></a>
 
@@ -4619,6 +4743,7 @@ Obtain the wrapped `JwkStorage`.
 **Kind**: global class  
 
 * [Timestamp](#Timestamp)
+    * [new Timestamp()](#new_Timestamp_new)
     * _instance_
         * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
         * [.checkedAdd(duration)](#Timestamp+checkedAdd) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
@@ -4628,6 +4753,11 @@ Obtain the wrapped `JwkStorage`.
         * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.fromJSON(json)](#Timestamp.fromJSON) ⇒ [<code>Timestamp</code>](#Timestamp)
+
+<a name="new_Timestamp_new"></a>
+
+### new Timestamp()
+Creates a new [Timestamp](#Timestamp) with the current date and time.
 
 <a name="Timestamp+toRFC3339"></a>
 
@@ -4911,14 +5041,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -4995,12 +5117,14 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="start"></a>
+<a name="StateMetadataEncoding"></a>
 
-## start()
-Initializes the console error panic hook for better error messages
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
 
-**Kind**: global function  
+## MethodRelationship
+**Kind**: global variable  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -5023,16 +5147,16 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
-<a name="verifyEdDSA"></a>
+<a name="verifyEd25519"></a>
 
-## verifyEdDSA(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `JwsAlgorithm::EdDSA` algorithm.
-Only the `EdCurve::Ed25519` variant is supported for now.
+## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
 
-This function is useful when one is building an `IJwsVerifier` that extends the default provided by
-the IOTA Identity Framework.
+This function is useful when one is composing a `IJwsVerifier` that delegates
+`EdDSA` verification with curve `Ed25519` to this function.
 
 # Warning
+
 This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
 prior to calling the function.
 
@@ -5045,3 +5169,9 @@ prior to calling the function.
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
 
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
