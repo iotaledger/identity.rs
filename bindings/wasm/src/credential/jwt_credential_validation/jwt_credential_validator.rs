@@ -115,7 +115,8 @@ impl WasmJwtCredentialValidator {
     let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> = issuer_locks
       .iter()
       .map(ImportedDocumentLock::try_read)
-      .collect::<Result<Vec<ImportedDocumentReadGuard<'_>>>>()?;
+      .collect::<Result<Vec<ImportedDocumentReadGuard<'_>>>>(
+    )?;
 
     self
       .0
