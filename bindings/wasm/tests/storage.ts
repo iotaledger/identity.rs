@@ -472,3 +472,61 @@ describe("#OptionParsing", function() {
             });
         });
 });
+
+describe("#documents throw error on concurrent access", async function() {
+    const wait: any = (ms: any) => new Promise(r => setTimeout(r, ms));
+
+    class MyJwkStore extends JwkMemStore {
+        constructor() {
+            super();
+        }
+
+        async generate(keyType: string, algorithm: JwsAlgorithm) {
+            await wait(10000);
+            return await super.generate(keyType, algorithm);
+        }
+    }
+    it("CoreDocument", async () => {
+        const document = new CoreDocument({ id: "did:example:123" });
+        const storage = new Storage(new MyJwkStore(), new KeyIdMemStore());
+        const insertPromise = document.generateMethod(
+            storage,
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+            "#key-1",
+            MethodScope.VerificationMethod(),
+        );
+
+        const idPromise = wait(10).then((_value: any) => {
+            return document.id();
+        });
+
+        try {
+            await Promise.all([insertPromise, idPromise]);
+        } catch (e: any) {
+            assert.equal(e.name, "TryLockError");
+        }
+    });
+
+    it("IotaDocument", async () => {
+        const document = new IotaDocument("rms");
+        const storage = new Storage(new MyJwkStore(), new KeyIdMemStore());
+        const insertPromise = document.generateMethod(
+            storage,
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+            "#key-1",
+            MethodScope.VerificationMethod(),
+        );
+
+        const idPromise = wait(10).then((_value: any) => {
+            return document.id();
+        });
+
+        try {
+            await Promise.all([insertPromise, idPromise]);
+        } catch (e: any) {
+            assert.equal(e.name, "TryLockError");
+        }
+    });
+});
