@@ -473,7 +473,7 @@ describe("#OptionParsing", function() {
         });
 });
 
-describe("#documents throw error on concurrent access", async function() {
+describe("#Documents throw error on concurrent synchronous access", async function() {
     const wait: any = (ms: any) => new Promise(r => setTimeout(r, ms));
 
     class MyJwkStore extends JwkMemStore {
@@ -501,11 +501,14 @@ describe("#documents throw error on concurrent access", async function() {
             return document.id();
         });
 
+        let resolvedToError = false;
         try {
             await Promise.all([insertPromise, idPromise]);
         } catch (e: any) {
+            resolvedToError = true;
             assert.equal(e.name, "TryLockError");
         }
+        assert.ok(resolvedToError, "Promise.all did not throw an error");
     });
 
     it("IotaDocument", async () => {
@@ -522,11 +525,13 @@ describe("#documents throw error on concurrent access", async function() {
         const idPromise = wait(10).then((_value: any) => {
             return document.id();
         });
-
+        let resolvedToError = false;
         try {
             await Promise.all([insertPromise, idPromise]);
         } catch (e: any) {
+            resolvedToError = true;
             assert.equal(e.name, "TryLockError");
         }
+        assert.ok(resolvedToError, "Promise.all did not throw an error");
     });
 });
