@@ -78,7 +78,7 @@ impl WasmJwtCredentialValidator {
     fail_fast: WasmFailFast,
   ) -> Result<WasmDecodedJwtCredential> {
     let issuer_lock = ImportedDocumentLock::from(issuer);
-    let issuer_guard = issuer_lock.blocking_read();
+    let issuer_guard = issuer_lock.try_read()?;
 
     self
       .0
@@ -112,8 +112,12 @@ impl WasmJwtCredentialValidator {
     options: &WasmJwsVerificationOptions,
   ) -> Result<WasmDecodedJwtCredential> {
     let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
-    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
-      issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
+    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> = issuer_locks
+      .iter()
+      .map(ImportedDocumentLock::try_read)
+      .collect::<Result<Vec<ImportedDocumentReadGuard<'_>>>>(
+    )?;
+
     self
       .0
       .verify_signature(&credential.0, &trusted_issuers, &options.0)
@@ -157,8 +161,11 @@ impl WasmJwtCredentialValidator {
     statusCheck: WasmStatusCheck,
   ) -> Result<()> {
     let issuer_locks: Vec<ImportedDocumentLock> = trustedIssuers.into();
-    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> =
-      issuer_locks.iter().map(ImportedDocumentLock::blocking_read).collect();
+    let trusted_issuers: Vec<ImportedDocumentReadGuard<'_>> = issuer_locks
+      .iter()
+      .map(ImportedDocumentLock::try_read)
+      .collect::<Result<Vec<ImportedDocumentReadGuard<'_>>>>(
+    )?;
     let status_check: StatusCheck = statusCheck.into();
     JwtCredentialValidatorUtils::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
   }

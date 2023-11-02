@@ -65,7 +65,7 @@ impl WasmJwtPresentationValidator {
     validation_options: &WasmJwtPresentationValidationOptions,
   ) -> Result<WasmDecodedJwtPresentation> {
     let holder_lock = ImportedDocumentLock::from(holder);
-    let holder_guard = holder_lock.blocking_read();
+    let holder_guard = holder_lock.try_read()?;
 
     self
       .0
