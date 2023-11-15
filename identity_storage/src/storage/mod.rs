@@ -5,12 +5,14 @@
 
 mod error;
 mod jwk_document_ext;
+mod jwp_document_ext;
 mod signature_options;
 #[cfg(all(test, feature = "memstore"))]
 pub(crate) mod tests;
 
 pub use error::*;
 pub use jwk_document_ext::*;
+pub use jwp_document_ext::*;
 pub use signature_options::*;
 
 /// A type wrapping a key and key id storage, typically used with [`JwkStorage`](crate::key_storage::JwkStorage) and

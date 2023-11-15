@@ -7,6 +7,7 @@ use crate::key_storage::KeyType;
 use async_trait::async_trait;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
 use super::jwk_gen_output::JwkGenOutput;
 
@@ -61,4 +62,14 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
 
   /// Returns `true` if the key with the given `key_id` exists in storage, `false` otherwise.
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool>;
+}
+
+
+
+///TODO: Extension to the JwkStorage to handle BBS+ keys
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+pub trait JwkStorageExt : JwkStorage {
+  /// Generates a JWK representing a BBS+ signature 
+  async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 }

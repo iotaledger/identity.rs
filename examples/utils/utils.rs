@@ -27,8 +27,8 @@ use iota_sdk::types::block::address::Bech32Address;
 use iota_sdk::types::block::address::Hrp;
 use rand::distributions::DistString;
 
-pub static API_ENDPOINT: &str = "http://localhost:14265";
-pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
+pub static API_ENDPOINT: &str = "https://api.testnet.shimmer.network";
+pub static FAUCET_ENDPOINT: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 

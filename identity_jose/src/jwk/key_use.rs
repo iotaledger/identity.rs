@@ -16,6 +16,9 @@ pub enum JwkUse {
   /// Encryption.
   #[serde(rename = "enc")]
   Encryption,
+
+  //TODO: add Proof
+  Proof
 }
 
 impl JwkUse {
@@ -24,6 +27,7 @@ impl JwkUse {
     match self {
       Self::Signature => "sig",
       Self::Encryption => "enc",
+      Self::Proof => "proof"
     }
   }
 }

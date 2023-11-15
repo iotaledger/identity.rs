@@ -1,5 +1,3 @@
-// Copyright 2020-2023 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
 
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
@@ -9,7 +7,7 @@ use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
-use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwpDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwkStorage;
 use identity_iota::storage::KeyIdMemstore;
@@ -24,6 +22,7 @@ use iota_sdk::client::Password;
 use iota_sdk::types::api::core::response::WhiteFlagResponse;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
@@ -65,15 +64,26 @@ async fn main() -> anyhow::Result<()> {
 
   // Insert a new Ed25519 verification method in the DID document.
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
-  document
-    .generate_method(
-      &storage,
-      JwkMemStore::ED25519_KEY_TYPE,
-      JwsAlgorithm::EdDSA,
-      None,
-      MethodScope::VerificationMethod,
-    )
-    .await?;
+//   document
+//     .generate_method(
+//       &storage,
+//       JwkMemStore::ED25519_KEY_TYPE,
+//       JwsAlgorithm::EdDSA,
+//       None,
+//       MethodScope::VerificationMethod,
+//     )
+//     .await?;
+
+    document
+        .generate_method(
+        &storage,
+        JwkMemStore::BLS12381SHA256_KEY_TYPE,
+        ProofAlgorithm::BLS12381_SHA256,
+        None,
+        MethodScope::VerificationMethod,
+        )
+        .await?;
+
 
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.

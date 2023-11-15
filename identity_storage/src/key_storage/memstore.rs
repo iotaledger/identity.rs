@@ -12,6 +12,10 @@ use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use jsonprooftoken::jwk::key;
+use jsonprooftoken::jwk::key::Jwk as JwkExt;
+use jsonprooftoken::jwk::types::KeyPairSubtype;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -25,6 +29,8 @@ use super::KeyStorageError;
 use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
+use super::key_type;
+use crate::JwkStorageExt;
 use crate::key_storage::JwkStorage;
 
 /// The map from key ids to JWKs.
@@ -189,6 +195,9 @@ impl JwkMemStore {
   const ED25519_KEY_TYPE_STR: &str = "Ed25519";
   /// The Ed25519 key type.
   pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
+
+  const BLS12381SHA256_KEY_TYPE_STR: &str = "Bls12381Sha256";
+  pub const BLS12381SHA256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHA256_KEY_TYPE_STR);
 }
 
 impl MemStoreKeyType {
@@ -268,6 +277,31 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
     ),
   }
 }
+
+
+//TODO: implementation of JwkStorageExt for JwkMemStore
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+impl JwkStorageExt for JwkMemStore {
+  async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
+    let keysubtype = KeyPairSubtype::from_str(key_type.as_str()).map_err(|_| KeyStorageErrorKind::UnsupportedKeyType)?;
+    let mut jwk = Jwk::try_from(JwkExt::generate(keysubtype).map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?)
+    .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?;
+    
+    let kid: KeyId = random_key_id();
+
+    jwk.set_alg(alg.to_string());
+    jwk.set_kid(jwk.thumbprint_sha256_b64());
+    let public_jwk: Jwk = jwk.to_public().expect("should only panic if kty == oct");
+
+    let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
+    jwk_store.insert(kid.clone(), jwk);
+
+    Ok(JwkGenOutput::new(kid, public_jwk))
+  }
+}
+
+
 
 pub(crate) mod shared {
   use core::fmt::Debug;

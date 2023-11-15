@@ -505,7 +505,7 @@ impl JwkDocumentExt for CoreDocument {
 /// Attempt to revert key generation. If this succeeds the original `source_error` is returned,
 /// otherwise [`JwkStorageDocumentError::UndoOperationFailed`] is returned with the `source_error` attached as
 /// `source`.
-async fn try_undo_key_generation<K, I>(storage: &Storage<K, I>, key_id: &KeyId, source_error: Error) -> Error
+pub(crate) async fn try_undo_key_generation<K, I>(storage: &Storage<K, I>, key_id: &KeyId, source_error: Error) -> Error
 where
   K: JwkStorage,
   I: KeyIdStorage,

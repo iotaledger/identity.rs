@@ -27,6 +27,8 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
+jsonprooftoken.workspace = true
+
 
 [dev-dependencies]
 identity_credential = { version = "=1.0.0", path = "../identity_credential", features = ["revocation-bitmap"] }
