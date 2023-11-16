@@ -3,7 +3,9 @@
 use std::str::FromStr;
 
 use identity_core::common::Url;
-use jsonprooftoken::jwk::{key::{Jwk as JwkExt, KeyOps, PKUse}, alg_parameters::{JwkAlgorithmParameters, JwkOctetKeyPairParameters}};
+use jsonprooftoken::{jwk::{key::{Jwk as JwkExt, KeyOps, PKUse}, alg_parameters::{JwkAlgorithmParameters, JwkOctetKeyPairParameters}}, jpa::algs::ProofAlgorithm};
+
+use crate::jws::JwsAlgorithm;
 
 use super::{Jwk, JwkOperation, JwkUse, JwkParams, JwkParamsOkp, JwkType};
 
@@ -83,4 +85,11 @@ impl TryFrom<JwkExt> for Jwk {
             params: params
         })
     }
+}
+
+
+//Supported Algorithm for JSON Web Signatures and JSON Web Proofs
+pub enum Algorithm {
+    JWS(JwsAlgorithm),
+    JWP(ProofAlgorithm)
 }
