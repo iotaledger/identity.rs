@@ -63,7 +63,7 @@ To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/ex
 ## Example: Creating an Identity
 
 The following code creates and publishes a new IOTA DID Document to a locally running private network.
-See the [instructions](https://wiki.iota.org/hornet/develop/how_tos/private_tangle) on running your own private network.
+See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private network.
 
 _Cargo.toml_
 

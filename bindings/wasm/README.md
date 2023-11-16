@@ -49,7 +49,7 @@ The minimum supported version for node is: `v16`
 ## NodeJS Usage
 
 The following code creates a new IOTA DID Document suitable for publishing to a locally running private network.
-See the [instructions](https://wiki.iota.org/hornet/develop/how_tos/private_tangle) on running your own private network.
+See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private network.
 
 <!--
 Test this example using https://github.com/anko/txm: `txm README.md`
