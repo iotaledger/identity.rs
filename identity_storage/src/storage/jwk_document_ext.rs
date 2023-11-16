@@ -1,7 +1,6 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::JwkStorageExt;
 use crate::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::KeyIdStorageResult;
 use crate::key_id_storage::MethodDigest;
@@ -28,12 +27,10 @@ use identity_verification::jose::jws::CompactJwsEncoder;
 use identity_verification::jose::jws::CompactJwsEncodingOptions;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jose::jws::JwsHeader;
-use identity_verification::jwk::Algorithm;
 use identity_verification::jws::CharSet;
 use identity_verification::MethodData;
 use identity_verification::MethodScope;
 use identity_verification::VerificationMethod;
-use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -69,21 +66,6 @@ pub trait JwkDocumentExt: private::Sealed {
   ) -> StorageResult<String>
   where
     K: JwkStorage,
-    I: KeyIdStorage;
-
-
-    //TODO: new method that handle both JWS and JWP algorithm
-  /// Add new method to DID Document (handling JWS and JWP algorithms)
-  async fn generate_method_extended<K, I>(
-    &mut self,
-    storage: &Storage<K, I>,
-    key_type: KeyType,
-    alg: Algorithm,
-    fragment: Option<&str>,
-    scope: MethodScope,
-  ) -> StorageResult<String>
-  where
-    K: JwkStorage + JwkStorageExt, //TODO: to mantain
     I: KeyIdStorage;
 
   /// Remove the method identified by the given `id` from the document and delete the corresponding key material in
@@ -170,7 +152,7 @@ mod private {
 // be implemented in terms of &mut CoreDocument for IotaDocument. To work around this limitation we use macros to avoid
 // copious amounts of repetition.
 // NOTE: If such use of macros becomes very common it is probably better to use the duplicate crate: https://docs.rs/duplicate/latest/duplicate/
-macro_rules! generate_method_for_document_type {
+macro_rules! generate_method_for_document_type {   //TODO: changed macro to handle both JwkDocumentExt and JwpDocumentExt traits
   ($t:ty, $a:ty, $k:path, $f:path, $name:ident) => {
     async fn $name<K, I>(
       document: &mut $t,
@@ -323,7 +305,6 @@ macro_rules! purge_method_for_document_type {
 // ====================================================================================================================
 
 generate_method_for_document_type!(CoreDocument, JwsAlgorithm, JwkStorage, JwkStorage::generate, generate_method_core_document);
-generate_method_for_document_type!(CoreDocument, ProofAlgorithm, JwkStorageExt, JwkStorageExt::generate_bbs_key, generate_method_core_document_ext);
 purge_method_for_document_type!(CoreDocument, purge_method_core_document);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -342,26 +323,6 @@ impl JwkDocumentExt for CoreDocument {
     I: KeyIdStorage,
   {
     generate_method_core_document(self, storage, key_type, alg, fragment, scope).await
-    
-  }
-
-
-  async fn generate_method_extended<K, I>(
-    &mut self,
-    storage: &Storage<K, I>,
-    key_type: KeyType,
-    alg: Algorithm, //TODO: changed to generic Algorithm 
-    fragment: Option<&str>,
-    scope: MethodScope,
-  ) -> StorageResult<String>
-  where
-    K: JwkStorage + JwkStorageExt,
-    I: KeyIdStorage,
-  {
-    match alg {
-      Algorithm::JWS(a) => generate_method_core_document(self, storage, key_type, a, fragment, scope).await,
-      Algorithm::JWP(a) => generate_method_core_document_ext(self, storage, key_type, a, fragment, scope).await,
-    }
     
   }
 
@@ -570,14 +531,9 @@ mod iota_document {
   use super::*;
   use identity_credential::credential::Jwt;
   use identity_iota_core::IotaDocument;
-use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
 
-  //TODO: change macro to handle both traits
   generate_method_for_document_type!(IotaDocument, JwsAlgorithm, JwkStorage, JwkStorage::generate, generate_method_iota_document);
-  generate_method_for_document_type!(IotaDocument, ProofAlgorithm, JwkStorageExt, JwkStorageExt::generate_bbs_key, generate_method_iota_document_ext);
-  
-
   purge_method_for_document_type!(IotaDocument, purge_method_iota_document);
 
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -596,26 +552,6 @@ use jsonprooftoken::jpa::algs::ProofAlgorithm;
       I: KeyIdStorage,
     {
       generate_method_iota_document(self, storage, key_type, alg, fragment, scope).await
-    }
-
-    //TODO: generate_method_extended implementation for IotaDocument
-    async fn generate_method_extended<K, I>(
-      &mut self,
-      storage: &Storage<K, I>,
-      key_type: KeyType,
-      alg: Algorithm,
-      fragment: Option<&str>,
-      scope: MethodScope,
-    ) -> StorageResult<String>
-    where
-      K: JwkStorage + JwkStorageExt,
-      I: KeyIdStorage,
-    {
-      match alg {
-        Algorithm::JWS(a) => generate_method_iota_document(self, storage, key_type, a, fragment, scope).await,
-        Algorithm::JWP(a) => generate_method_iota_document_ext(self, storage, key_type, a, fragment, scope).await,
-      }
-          
     }
 
     async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>

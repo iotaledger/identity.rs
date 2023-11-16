@@ -87,9 +87,3 @@ impl TryFrom<JwkExt> for Jwk {
     }
 }
 
-
-//Supported Algorithm for JSON Web Signatures and JSON Web Proofs
-pub enum Algorithm {
-    JWS(JwsAlgorithm),
-    JWP(ProofAlgorithm)
-}

@@ -8,12 +8,12 @@ use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwpDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwkStorage;
 use identity_iota::storage::KeyIdMemstore;
 use identity_iota::storage::KeyIdStorage;
 use identity_iota::storage::Storage;
-use identity_iota::verification::jwk::Algorithm;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
@@ -67,24 +67,15 @@ async fn main() -> anyhow::Result<()> {
   let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
 
-  document
-    .generate_method_extended(
-    &storage,
-    JwkMemStore::BLS12381SHA256_KEY_TYPE,
-    Algorithm::JWP(ProofAlgorithm::BLS12381_SHA256),
-    None,
-    MethodScope::VerificationMethod,
-    )
+
+  // It's ok like this or it is better to have different names so you can call the two function like this:
+  // document.generate_method(...)
+  // document.generate_method_ext(...)
+
+  JwpDocumentExt::generate_method(&mut document, &storage, JwkMemStore::BLS12381SHA256_KEY_TYPE, ProofAlgorithm::BLS12381_SHA256, None, MethodScope::VerificationMethod)
     .await?;
 
-  document
-    .generate_method_extended(
-      &storage,
-      JwkMemStore::ED25519_KEY_TYPE,
-      Algorithm::JWS(JwsAlgorithm::EdDSA),
-      None,
-      MethodScope::VerificationMethod,
-    )
+  JwkDocumentExt::generate_method(&mut document, &storage, JwkMemStore::ED25519_KEY_TYPE, JwsAlgorithm::EdDSA, None, MethodScope::VerificationMethod)
     .await?;
 
   // Construct an Alias Output containing the DID document, with the wallet address

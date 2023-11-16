@@ -4,6 +4,7 @@
 //! This module provides a type wrapping a key and key id storage.
 
 mod error;
+#[macro_use] //TODO: to be able to call the macro from jwp_document_ext.rs
 mod jwk_document_ext;
 mod jwp_document_ext;
 mod signature_options;
@@ -11,6 +12,7 @@ mod signature_options;
 pub(crate) mod tests;
 
 pub use error::*;
+
 pub use jwk_document_ext::*;
 pub use jwp_document_ext::*;
 pub use signature_options::*;
