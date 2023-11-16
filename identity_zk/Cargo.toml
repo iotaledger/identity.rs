@@ -15,6 +15,6 @@ rust-version.workspace = true
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
-jsonprooftoken.workspace = true
+json-proof-token.workspace = true
 hex = "0.4.3"
 identity_verification = { version = "=1.0.0", path = "../identity_verification", default_features = false }
