@@ -1,15 +1,20 @@
-use anyhow::Result;
-use tonic::transport::Server;
+use identity_grpc::server::GRpcServer;
+use iota_sdk::client::Client;
 
-use identity_grpc::services;
+const API_ENDPOINT: &str = "http://127.0.0.1:14265";
 
 #[tokio::main]
-async fn main() -> Result<()> {
-  let addr = "[::1]:50051".parse()?;
+async fn main() -> anyhow::Result<()> {
+    let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
+  let addr = "127.0.0.1:50051".parse()?;
   println!("gRPC server listening on {}", addr);
-
-  Server::builder().add_routes(services::routes()).serve(addr).await?;
+  GRpcServer::new(client)
+    .serve(addr)
+    .await?;
 
   Ok(())
 }
