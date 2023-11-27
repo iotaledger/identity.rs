@@ -23,7 +23,6 @@ pub mod error;
 pub mod presentation;
 #[cfg(feature = "revocation-bitmap")]
 pub mod revocation;
-pub mod sd_jwt;
 #[cfg(feature = "validator")]
 pub mod validator;
 

@@ -14,4 +14,3 @@ pub use error::*;
 pub use jwt_credential_validation_options::*;
 pub use jwt_credential_validator::*;
 pub use jwt_credential_validator_utils::*;
-pub use sd_jwt_credential_validator::*;

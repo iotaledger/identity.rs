@@ -14,6 +14,7 @@ iota-sdk = { version = "1.0", default-features = false, features = ["tls", "clie
 primitive-types = "0.12.1"
 rand = "0.8.5"
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
+sd-jwt = {git = "ssh://git@github.com/iotaledger/sd-jwt.git", branch = "develop"}
 
 [lib]
 path = "utils/utils.rs"
@@ -81,3 +82,7 @@ name = "5_custom_resolution"
 [[example]]
 path = "1_advanced/6_domain_linkage.rs"
 name = "6_domain_linkage"
+
+[[example]]
+path = "1_advanced/7_sd_jwt.rs"
+name = "7_sd_jwt"

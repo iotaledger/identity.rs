@@ -11,6 +11,7 @@ use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::JwsValidationItem;
 use identity_verification::jws::JwsVerifier;
+use sd_jwt::SdObjectDecoder;
 use serde_json::Value;
 
 use super::CompoundCredentialValidationError;
@@ -22,14 +23,11 @@ use super::SignerContext;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
 use crate::credential::Jwt;
-use crate::sd_jwt::Hasher;
-use crate::sd_jwt::SdPayloadDecoder;
-use crate::sd_jwt::ShaHasher;
 use crate::validator::FailFast;
 
 /// A type for decoding and validating [`Credential`]s.
 #[non_exhaustive]
-pub struct JwtCredentialValidator<V: JwsVerifier>(V, Option<SdPayloadDecoder>);
+pub struct JwtCredentialValidator<V: JwsVerifier>(V, Option<SdObjectDecoder>);
 
 impl<V: JwsVerifier> JwtCredentialValidator<V> {
   /// Create a new [`JwtCredentialValidator`] that delegates cryptographic signature verification to the given
@@ -72,13 +70,13 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
-    Self::validate_extended::<CoreDocument, _, T, _>(
+    Self::validate_extended::<CoreDocument, _, T>(
       &self.0,
       credential_jwt,
       std::slice::from_ref(issuer.as_ref()),
       options,
       fail_fast,
-      None::<&SdPayloadDecoder<ShaHasher>>,
+      None::<&SdObjectDecoder>,
       None,
     )
   }
@@ -114,7 +112,7 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
       credential,
       trusted_issuers,
       options,
-      None::<&SdPayloadDecoder<ShaHasher>>,
+      None::<&SdObjectDecoder>,
       None,
     )
   }
@@ -122,13 +120,13 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relationship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<DOC, S, T, H: Hasher>(
+  pub(crate) fn validate_extended<DOC, S, T>(
     signature_verifier: &S,
     credential: &Jwt,
     issuers: &[DOC],
     options: &JwtCredentialValidationOptions,
     fail_fast: FailFast,
-    sd_decoder: Option<&SdPayloadDecoder<H>>,
+    sd_decoder: Option<&SdObjectDecoder>,
     disclosures: Option<&Vec<String>>,
   ) -> Result<DecodedJwtCredential<T>, CompoundCredentialValidationError>
   where
@@ -206,12 +204,12 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
   }
 
   /// Stateless version of [`Self::verify_signature`]
-  fn verify_signature_with_verifier<DOC, S, T, H: Hasher>(
+  fn verify_signature_with_verifier<DOC, S, T>(
     signature_verifier: &S,
     credential: &Jwt,
     trusted_issuers: &[DOC],
     options: &JwsVerificationOptions,
-    sd_decoder: Option<&SdPayloadDecoder<H>>,
+    sd_decoder: Option<&SdObjectDecoder>,
     disclosures: Option<&Vec<String>>,
   ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
@@ -297,11 +295,11 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
   }
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
-  fn verify_decoded_signature<S: JwsVerifier, T, H: Hasher>(
+  fn verify_decoded_signature<S: JwsVerifier, T>(
     decoded: JwsValidationItem<'_>,
     public_key: &Jwk,
     signature_verifier: &S,
-    sd_decoder: Option<&SdPayloadDecoder<H>>,
+    sd_decoder: Option<&SdObjectDecoder>,
     disclosures: Option<&Vec<String>>,
   ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
   where
@@ -319,19 +317,14 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
     let credential_claims: CredentialJwtClaims<'_, T> =
       if let (Some(sd_decoder), Some(disclosures)) = (sd_decoder, disclosures) {
         let value: Value = serde_json::from_slice(&claims).unwrap();
-        let decoded: String = Value::Object(sd_decoder.decode(&value.as_object().unwrap(), disclosures)).to_string();
+        let decoded: String =
+          Value::Object(sd_decoder.decode(&value.as_object().unwrap(), disclosures).unwrap()).to_string();
         CredentialJwtClaims::from_json(&decoded).unwrap()
       } else {
         CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
           JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
         })?
       };
-
-    // // Deserialize the raw claims
-    // let credential_claims: CredentialJwtClaims<'_, T> =
-    //   CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
-    //     JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    //   })?;
 
     let custom_claims = credential_claims.custom.clone();
 
