@@ -78,7 +78,14 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     )
   }
 
-  ///
+  /// Validates a Key Binding JWT (KB-JWT) according to `https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-06.html#name-key-binding-jwt`.
+  /// The Validation process includes:
+  ///   * Signature validation using public key materials defined in the `holder` document.
+  ///   * `_sd_hash` claim value in the KB-JWT claim.
+  ///   * `nonce` validation.
+  ///   * Optional `aud` validation.
+  ///   * Optional issuance date validation to ensure the freshness of the KB-JWT. An Error will be thrown
+  ///   if the KB-JWT's `iat` (issued-at) is earlier than the `earliest_issuance_date`.
   pub fn validate_key_binding_jwt<DOC>(
     &self,
     sd_jwt: &SdJwt,
@@ -86,7 +93,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     nonce: String,
     aud: Option<String>,
     options: &JwsVerificationOptions,
-    latest_issuance_date: Option<Timestamp>,
+    earliest_issuance_date: Option<Timestamp>,
   ) -> Result<KeyBindingJwtClaims, KeyBindingJwtError>
   where
     DOC: AsRef<CoreDocument>,
@@ -171,9 +178,9 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
       }
     }
 
-    if let Some(latest_issuance_date) = latest_issuance_date {
+    if let Some(latest_issuance_date) = earliest_issuance_date {
       let issuance_date = Timestamp::from_unix(kb_jwt_claims.iat).unwrap();
-      if issuance_date > latest_issuance_date {
+      if issuance_date < latest_issuance_date {
         return Err(KeyBindingJwtError::IssuanceDate);
       }
     }

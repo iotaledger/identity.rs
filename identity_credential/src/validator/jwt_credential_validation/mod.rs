@@ -7,7 +7,6 @@ mod error;
 mod jwt_credential_validation_options;
 mod jwt_credential_validator;
 mod jwt_credential_validator_utils;
-mod sd_jwt_credential_validator;
 
 pub use decoded_jwt_credential::*;
 pub use error::*;
