@@ -1,6 +1,6 @@
 use credentials::{credential_revocation_client::CredentialRevocationClient, RevocationStatus};
 use identity_iota::{
-  credential::{self, RevocationBitmap, RevocationBitmapStatus, StatusCheck},
+  credential::{self, RevocationBitmap, RevocationBitmapStatus},
   did::DID,
 };
 
@@ -14,7 +14,7 @@ mod credentials {
 }
 
 #[tokio::test]
-async fn checking_status_of_valid_credential_works() -> anyhow::Result<()> {
+async fn checking_status_of_credential_works() -> anyhow::Result<()> {
   let server = TestServer::new().await;
   let client = server.client();
   let mut issuer = Entity::new();
@@ -52,9 +52,19 @@ async fn checking_status_of_valid_credential_works() -> anyhow::Result<()> {
       .collect(),
   };
   dbg!(&req);
-  let res = grpc_client.check(tonic::Request::new(req)).await?.into_inner();
+  let res = grpc_client.check(tonic::Request::new(req.clone())).await?.into_inner();
 
   assert_eq!(res.status(), RevocationStatus::Valid);
+
+  // Revoke credential
+  issuer
+    .update_document(&client, |mut doc| {
+      doc.revoke_credentials("my-revocation-service", &[3]).ok().map(|_| doc)
+    })
+    .await?;
+
+  let res = grpc_client.check(tonic::Request::new(req)).await?.into_inner();
+  assert_eq!(res.status(), RevocationStatus::Revoked);
 
   Ok(())
 }
