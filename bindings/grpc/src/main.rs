@@ -1,12 +1,14 @@
+use anyhow::Context;
 use identity_grpc::server::GRpcServer;
 use iota_sdk::client::Client;
 
-const API_ENDPOINT: &str = "http://127.0.0.1:14265";
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+  let api_endpoint = std::env::var("API_ENDPOINT")
+    .context("Missing environmental variable API_ENDPOINT")?;
+
   let client: Client = Client::builder()
-    .with_primary_node(API_ENDPOINT, None)?
+    .with_primary_node(&api_endpoint, None)?
     .finish()
     .await?;
 

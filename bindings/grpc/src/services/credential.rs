@@ -50,6 +50,7 @@ mod credential_verification {
 
 #[derive(Debug, Error, Serialize, Deserialize)]
 #[serde(tag = "error_type", content = "reason")]
+#[serde(rename_all = "snake_case")]
 pub enum RevocationCheckError {
   #[error("Unknown revocation type {0}")]
   UnknownRevocationType(String),
