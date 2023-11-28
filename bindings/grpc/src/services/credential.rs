@@ -7,6 +7,8 @@ use identity_iota::{
   prelude::{IotaDocument, Resolver},
 };
 use iota_sdk::client::Client;
+use prost::bytes::Bytes;
+use serde::{Deserialize, Serialize};
 
 use thiserror::Error;
 use tonic::{self, Request, Response};
@@ -46,7 +48,8 @@ mod credential_verification {
   }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Serialize, Deserialize)]
+#[serde(tag = "error_type", content = "reason")]
 pub enum RevocationCheckError {
   #[error("Unknown revocation type {0}")]
   UnknownRevocationType(String),
@@ -54,12 +57,12 @@ pub enum RevocationCheckError {
   InvalidRevocationUrl(String),
   #[error("Properties isn't a valid JSON object")]
   MalformedPropertiesObject,
-  #[error("Invalid credential status")]
-  InvalidCredentialStatus(#[source] credential::Error),
-  #[error("Issuer's DID resolution error")]
-  ResolutionError(#[source] identity_iota::resolver::Error),
+  #[error("Invalid credential status: {0}")]
+  InvalidCredentialStatus(String),
+  #[error("Issuer's DID resolution error: {0}")]
+  ResolutionError(String),
   #[error("Revocation map not found")]
-  RevocationMapNotFound(#[source] credential::JwtValidationError),
+  RevocationMapNotFound,
 }
 
 impl From<RevocationCheckError> for tonic::Status {
@@ -67,14 +70,22 @@ impl From<RevocationCheckError> for tonic::Status {
     let message = e.to_string();
     let code = match &e {
       RevocationCheckError::InvalidCredentialStatus(_)
-        | RevocationCheckError::MalformedPropertiesObject
-        | RevocationCheckError::UnknownRevocationType(_)
-        | RevocationCheckError::InvalidRevocationUrl(_) => tonic::Code::InvalidArgument,
+      | RevocationCheckError::MalformedPropertiesObject
+      | RevocationCheckError::UnknownRevocationType(_)
+      | RevocationCheckError::InvalidRevocationUrl(_) => tonic::Code::InvalidArgument,
       RevocationCheckError::ResolutionError(_) => tonic::Code::Internal,
-      RevocationCheckError::RevocationMapNotFound(_) => tonic::Code::NotFound,
+      RevocationCheckError::RevocationMapNotFound => tonic::Code::NotFound,
     };
+    let error_json = serde_json::to_vec(&e).unwrap_or_default();
 
-    tonic::Status::new(code, message)
+    tonic::Status::with_details(code, message, Bytes::from(error_json))
+  }
+}
+
+impl TryFrom<tonic::Status> for RevocationCheckError {
+  type Error = ();
+  fn try_from(value: tonic::Status) -> Result<Self, Self::Error> {
+    serde_json::from_slice(value.details()).map_err(|_| ())
   }
 }
 
@@ -99,14 +110,15 @@ impl CredentialRevocation for CredentialVerifier {
   ) -> Result<Response<RevocationCheckResponse>, tonic::Status> {
     let credential_revocation_status = {
       let revocation_status = credential::Status::try_from(req.into_inner())?;
-      RevocationBitmapStatus::try_from(revocation_status).map_err(RevocationCheckError::InvalidCredentialStatus)?
+      RevocationBitmapStatus::try_from(revocation_status)
+        .map_err(|e| RevocationCheckError::InvalidCredentialStatus(e.to_string()))?
     };
     let issuer_did = credential_revocation_status.id().unwrap(); // Safety: already parsed as a valid URL
     let issuer_doc = self
       .resolver
       .resolve(issuer_did.did())
       .await
-      .map_err(RevocationCheckError::ResolutionError)?;
+      .map_err(|e| RevocationCheckError::ResolutionError(e.to_string()))?;
 
     if let Err(e) =
       JwtCredentialValidatorUtils::check_revocation_bitmap_status(&issuer_doc, credential_revocation_status)
@@ -115,7 +127,7 @@ impl CredentialRevocation for CredentialVerifier {
         JwtValidationError::Revoked => Ok(Response::new(RevocationCheckResponse {
           status: RevocationStatus::Revoked.into(),
         })),
-        _ => Err(RevocationCheckError::RevocationMapNotFound(e).into()),
+        _ => Err(RevocationCheckError::RevocationMapNotFound.into()),
       }
     } else {
       Ok(Response::new(RevocationCheckResponse {

@@ -3,6 +3,7 @@ use identity_iota::{
   credential::{self, RevocationBitmap, RevocationBitmapStatus},
   did::DID,
 };
+use serde_json::json;
 
 use crate::{
   credential_revocation_check::credentials::RevocationCheckRequest,
@@ -51,7 +52,6 @@ async fn checking_status_of_credential_works() -> anyhow::Result<()> {
       .map(|(k, v)| (k, v.to_string().trim_matches('"').to_owned()))
       .collect(),
   };
-  dbg!(&req);
   let res = grpc_client.check(tonic::Request::new(req.clone())).await?.into_inner();
 
   assert_eq!(res.status(), RevocationStatus::Valid);
@@ -65,6 +65,32 @@ async fn checking_status_of_credential_works() -> anyhow::Result<()> {
 
   let res = grpc_client.check(tonic::Request::new(req)).await?.into_inner();
   assert_eq!(res.status(), RevocationStatus::Revoked);
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn checking_status_of_valid_but_unresolvable_url_fails() -> anyhow::Result<()> {
+  use identity_grpc::services::credential::RevocationCheckError;
+  let server = TestServer::new().await;
+
+  let mut grpc_client = CredentialRevocationClient::connect(server.endpoint()).await?;
+  let properties = json!({
+      "revocationBitmapIndex": "3"
+  });
+  let req = RevocationCheckRequest {
+    r#type: RevocationBitmap::TYPE.to_owned(),
+    url: "did:example:1234567890#my-revocation-service".to_owned(),
+    properties: properties
+      .as_object()
+      .unwrap()
+      .into_iter()
+      .map(|(k, v)| (k.clone(), v.to_string().trim_matches('"').to_owned()))
+      .collect(),
+  };
+  let res_error = grpc_client.check(tonic::Request::new(req.clone())).await;
+
+  assert!(res_error.is_err_and(|e| matches!(e.try_into().unwrap(), RevocationCheckError::ResolutionError(_))));
 
   Ok(())
 }

@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
-use tonic::transport::server::{Router, Server};
 use iota_sdk::client::Client;
+use tonic::transport::server::{Router, Server};
 
 use crate::services;
 
@@ -13,9 +13,7 @@ pub struct GRpcServer {
 impl GRpcServer {
   pub fn new(client: Client) -> Self {
     let router = Server::builder().add_routes(services::routes(client));
-    Self {
-      router,
-    }
+    Self { router }
   }
   pub async fn serve(self, addr: SocketAddr) -> Result<(), tonic::transport::Error> {
     self.router.serve(addr).await

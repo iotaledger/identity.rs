@@ -1,5 +1,5 @@
-mod health_check;
-mod credential;
+pub mod credential;
+pub mod health_check;
 
 use iota_sdk::client::Client;
 use tonic::transport::server::{Routes, RoutesBuilder};
