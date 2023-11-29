@@ -109,6 +109,7 @@ impl DomainLinkageConfiguration {
 
 #[cfg(feature = "domain-linkage-fetch")]
 mod __fetch_configuration {
+  use crate::domain_linkage::utils::url_only_includes_origin;
   use crate::domain_linkage::DomainLinkageConfiguration;
   use crate::error::Result;
   use crate::Error::DomainLinkageError;
@@ -128,8 +129,10 @@ mod __fetch_configuration {
       if domain.scheme() != "https" {
         return Err(DomainLinkageError("domain` does not use `https` protocol".into()));
       }
-      if domain.path() != "/" || domain.query().is_some() || domain.fragment().is_some() {
-        return Err(DomainLinkageError("domain mut not include any path, query of fragment".into()));
+      if !url_only_includes_origin(&domain) {
+        return Err(DomainLinkageError(
+          "domain must not include any path, query or fragment".into(),
+        ));
       }
       domain.set_path(".well-known/did-configuration.json");
 

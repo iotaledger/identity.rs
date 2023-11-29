@@ -17,6 +17,7 @@ use identity_verification::jws::JwsVerifier;
 
 use crate::validator::DecodedJwtCredential;
 
+use super::utils::url_only_includes_origin;
 use super::DomainLinkageValidationResult;
 
 /// A validator for a Domain Linkage Configuration and Credentials.
@@ -190,7 +191,7 @@ impl<V: JwsVerifier> JwtDomainLinkageValidator<V> {
           source: Some(Box::new(other_error)),
         }),
       }?;
-      if origin_url.path() != "/" || origin_url.query().is_some() || origin_url.fragment().is_some() {
+      if !url_only_includes_origin(&origin_url) {
         return Err(DomainLinkageValidationError {
           cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
           source: None,
