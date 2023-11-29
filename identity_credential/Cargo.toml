@@ -29,6 +29,7 @@ serde_repr = { version = "0.1", default-features = false, optional = true }
 strum.workspace = true
 thiserror.workspace = true
 url = { version = "2.4", default-features = false }
+json-proof-token.workspace = true
 
 [dev-dependencies]
 identity_eddsa_verifier = { version = "=1.0.0", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }

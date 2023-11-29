@@ -3,6 +3,7 @@
 
 use std::borrow::Cow;
 
+use jsonprooftoken::jpt::claims::JptClaims;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -674,5 +675,59 @@ mod tests {
       credential_from_claims_result.unwrap_err(),
       Error::InconsistentCredentialJwtClaims("inconsistent credential expirationDate")
     ));
+  }
+}
+
+
+//TODO: convert to JptClaims structure which basically contains the same claim names
+impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
+where
+    T: ToOwned + Serialize,
+    <T as ToOwned>::Owned: DeserializeOwned,
+{
+    fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
+
+    let CredentialJwtClaims {
+      exp, 
+      iss,
+      issuance_date,
+      jti,
+      sub,
+      vc, 
+      custom
+    } = item;
+
+    
+    let mut claims = JptClaims::new();
+    
+    exp.map(|v| {
+      claims.set_exp(v);
+    });
+
+    claims.set_iss(iss.url().to_string());
+
+    issuance_date.iat.map(|v| {
+      claims.set_iat(v);
+    });
+
+    issuance_date.nbf.map(|v| {
+      claims.set_nbf(v);
+    });
+
+    jti.map(|v| {
+      claims.set_jti(v.to_string());
+    });
+
+    sub.map(|v| {
+      claims.set_sub(v.to_string());
+    });
+
+    claims.add_claim("vp", vc, true);
+
+    custom.map(|v| {
+      claims.add_claim("", v, true);
+    });
+
+    claims
   }
 }

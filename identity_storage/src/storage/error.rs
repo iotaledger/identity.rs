@@ -27,6 +27,11 @@ pub enum JwkStorageDocumentError {
   /// Caused by an invalid JWS algorithm.
   #[error("invalid JWS algorithm")]
   InvalidJwsAlgorithm,
+
+  /// Caused by an invalid JWP algorithm. //TODO: new error
+  #[error("invalid JWP algorithm")]
+  InvalidJwpAlgorithm,
+
   /// Caused by a failure to construct a verification method.
   #[error("method generation failed: unable to create a valid verification method")]
   VerificationMethodConstructionError(#[source] identity_verification::Error),

@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use identity_core::convert::ToJson;
+use jsonprooftoken::jpt::claims::JptClaims;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
@@ -173,6 +174,16 @@ impl<T> Credential<T> {
     jwt_representation
       .to_json()
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
+  }
+
+  //TODO: new method serialization for credential
+  ///Serializes the [`Credential`] as a JPT claims set
+  pub fn serialize_jpt(&self, custom_claims: Option<Object>) -> Result<JptClaims> 
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+  {
+    let jwt_representation: CredentialJwtClaims<'_, T> = CredentialJwtClaims::new(self, custom_claims)?;
+    Ok(jwt_representation.into())
   }
 }
 
