@@ -74,6 +74,11 @@ impl DomainLinkageCredentialBuilder {
         "origin must be a domain with http(s) scheme".into(),
       ));
     }
+    if origin.path() != "/" || origin.query().is_some() || origin.fragment().is_some() {
+      return Err(Error::DomainLinkageError(
+        "origin must not contain any path, query or fragment".into()
+      ))
+    }
 
     let mut properties: Object = Object::new();
     properties.insert("origin".into(), origin.into_string().into());
@@ -135,6 +140,18 @@ mod tests {
       .expiration_date(Timestamp::now_utc())
       .issuer(issuer)
       .origin(Url::parse("did:example:origin").unwrap())
+      .build()
+      .unwrap_err();
+    assert!(matches!(err, Error::DomainLinkageError(_)));
+  }
+  #[test]
+  fn test_builder_origin_is_a_url() {
+    let issuer: CoreDID = "did:example:issuer".parse().unwrap();
+    let err: Error = DomainLinkageCredentialBuilder::new()
+      .issuance_date(Timestamp::now_utc())
+      .expiration_date(Timestamp::now_utc())
+      .issuer(issuer)
+      .origin(Url::parse("https://example.com/foo?bar=420#baz").unwrap())
       .build()
       .unwrap_err();
     assert!(matches!(err, Error::DomainLinkageError(_)));

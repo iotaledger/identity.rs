@@ -128,6 +128,9 @@ mod __fetch_configuration {
       if domain.scheme() != "https" {
         return Err(DomainLinkageError("domain` does not use `https` protocol".into()));
       }
+      if domain.path() != "/" || domain.query().is_some() || domain.fragment().is_some() {
+        return Err(DomainLinkageError("domain mut not include any path, query of fragment".into()));
+      }
       domain.set_path(".well-known/did-configuration.json");
 
       let client: Client = reqwest::ClientBuilder::new()

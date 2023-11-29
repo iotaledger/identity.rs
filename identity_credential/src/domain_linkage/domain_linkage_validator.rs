@@ -190,6 +190,12 @@ impl<V: JwsVerifier> JwtDomainLinkageValidator<V> {
           source: Some(Box::new(other_error)),
         }),
       }?;
+      if origin_url.path() != "/" || origin_url.query().is_some() || origin_url.fragment().is_some() {
+        return Err(DomainLinkageValidationError {
+          cause: DomainLinkageValidationErrorCause::InvalidSubjectOrigin,
+          source: None,
+        });
+      }
       if origin_url.origin() != domain.origin() {
         return Err(DomainLinkageValidationError {
           cause: DomainLinkageValidationErrorCause::OriginMismatch,
