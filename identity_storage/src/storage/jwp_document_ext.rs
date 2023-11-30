@@ -154,7 +154,7 @@ impl JwpDocumentExt for CoreDocument {
       typ.clone()
     } else {
       // https://www.w3.org/TR/vc-data-model/#jwt-encoding
-      "JWT".to_string()
+      "JPT".to_string()
     };
 
     let kid = if let Some(ref kid) = options.kid {
