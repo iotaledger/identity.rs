@@ -109,9 +109,9 @@ impl DomainLinkageConfiguration {
 
 #[cfg(feature = "domain-linkage-fetch")]
 mod __fetch_configuration {
-  use crate::domain_linkage::utils::url_only_includes_origin;
   use crate::domain_linkage::DomainLinkageConfiguration;
   use crate::error::Result;
+  use crate::utils::url_only_includes_origin;
   use crate::Error::DomainLinkageError;
   use futures::StreamExt;
   use identity_core::common::Url;

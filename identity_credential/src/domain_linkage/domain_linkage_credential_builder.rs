@@ -14,7 +14,7 @@ use identity_core::common::Url;
 use identity_did::CoreDID;
 use identity_did::DID;
 
-use super::utils::url_only_includes_origin;
+use crate::utils::url_only_includes_origin;
 
 /// Convenient builder to create a spec compliant Domain Linkage Credential.
 ///

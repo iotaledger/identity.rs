@@ -10,8 +10,8 @@ use identity_document::service::ServiceBuilder;
 use identity_document::service::ServiceEndpoint;
 use indexmap::map::IndexMap;
 
-use crate::domain_linkage::utils::url_only_includes_origin;
 use crate::error::Result;
+use crate::utils::url_only_includes_origin;
 use crate::Error;
 use crate::Error::DomainLinkageError;
 

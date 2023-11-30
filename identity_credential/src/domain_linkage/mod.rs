@@ -7,7 +7,6 @@ mod domain_linkage_configuration;
 mod domain_linkage_credential_builder;
 mod domain_linkage_validator;
 mod error;
-pub(crate) mod utils;
 
 pub use self::domain_linkage_configuration::*;
 pub use self::domain_linkage_credential_builder::*;

@@ -17,8 +17,8 @@ use identity_verification::jws::JwsVerifier;
 
 use crate::validator::DecodedJwtCredential;
 
-use super::utils::url_only_includes_origin;
 use super::DomainLinkageValidationResult;
+use crate::utils::url_only_includes_origin;
 
 /// A validator for a Domain Linkage Configuration and Credentials.
 
