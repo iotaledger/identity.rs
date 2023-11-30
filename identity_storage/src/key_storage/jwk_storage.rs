@@ -8,6 +8,10 @@ use async_trait::async_trait;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use jsonprooftoken::jpt::payloads;
+use jsonprooftoken::jpt::payloads::Payloads;
+use jsonprooftoken::jwp::header::IssuerProtectedHeader;
+use jsonprooftoken::jwp::issued::JwpIssued;
 
 use super::jwk_gen_output::JwkGenOutput;
 
@@ -72,4 +76,6 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
 pub trait JwkStorageExt : JwkStorage {
   /// Generates a JWK representing a BBS+ signature 
   async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
+
+  async fn generate_issuer_proof(&self, key_id: &KeyId, jwp_issued: JwpIssued, public_key: &Jwk) -> KeyStorageResult<String>;
 }

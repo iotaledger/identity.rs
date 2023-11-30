@@ -23,6 +23,8 @@ pub enum KeyStorageErrorKind {
   /// Indicates an attempt to parse a signature algorithm that is not recognized by the key storage implementation.
   UnsupportedSignatureAlgorithm,
 
+  UnsupportedProofAlgorithm, //TODO: new error
+
   /// Indicates that the key storage implementation is not able to find the requested key.
   KeyNotFound,
 
@@ -59,6 +61,7 @@ impl KeyStorageErrorKind {
       Self::UnsupportedKeyType => "key generation failed: the provided multikey schema is not supported",
       Self::KeyAlgorithmMismatch => "the key type cannot be used with the algorithm",
       Self::UnsupportedSignatureAlgorithm => "signing algorithm parsing failed",
+      Self::UnsupportedProofAlgorithm => "proof algorithm parsing failed",
       Self::KeyNotFound => "key not found in storage",
       Self::Unavailable => "key storage unavailable",
       Self::Unauthenticated => "authentication with the key storage failed",

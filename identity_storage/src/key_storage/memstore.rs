@@ -12,10 +12,13 @@ use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
+use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use jsonprooftoken::jwk::curves::EllipticCurveTypes;
 use jsonprooftoken::jwk::key;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwk::types::KeyPairSubtype;
+use jsonprooftoken::jwp::issued::JwpIssued;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -285,6 +288,7 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
 impl JwkStorageExt for JwkMemStore {
   async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
     let keysubtype = KeyPairSubtype::from_str(key_type.as_str()).map_err(|_| KeyStorageErrorKind::UnsupportedKeyType)?;
+
     let mut jwk = Jwk::try_from(JwkExt::generate(keysubtype).map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?)
     .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?;
     
@@ -298,6 +302,56 @@ impl JwkStorageExt for JwkMemStore {
     jwk_store.insert(kid.clone(), jwk);
 
     Ok(JwkGenOutput::new(kid, public_jwk))
+  }
+
+  async fn generate_issuer_proof(&self, key_id: &KeyId, jwp_issued: JwpIssued, public_key: &Jwk) -> KeyStorageResult<String> {
+    let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
+
+    // Extract the required alg from the given public key
+    let alg = public_key
+      .alg()
+      .ok_or(KeyStorageErrorKind::UnsupportedProofAlgorithm)
+      .and_then(|alg_str| {
+        ProofAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedProofAlgorithm)
+    })?;
+
+    match alg {
+      ProofAlgorithm::BLS12381_SHA256 | ProofAlgorithm::BLS12381_SHAKE256 => {
+        let okp_params = public_key.try_okp_params().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("expected a Jwk with Okp params in order to sign with {alg}"))
+            .with_source(err)
+        })?;
+        if okp_params.crv != EllipticCurveTypes::Bls12381G2.to_string() {
+          return Err(
+            KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message(format!(
+              "expected Jwk with Okp {} crv in order to generate the proof with {alg}",
+              EllipticCurveTypes::Bls12381G2
+            )),
+          );
+        }
+      }
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedProofAlgorithm)
+            .with_custom_message(format!("{other} is not supported")),
+        );
+      }
+    }
+
+    // Obtain the corresponding private key and sign `data`.
+    let jwk: &Jwk = jwk_store
+      .get(key_id)
+      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
+
+    // Serialize Jwk to JSON
+    let jwk_json = serde_json::to_string(&jwk).map_err(|_| KeyStorageErrorKind::SerializationError)?;
+    // Deserialize JSON to JwkExt
+    let jwk_ext: JwkExt = serde_json::from_str(&jwk_json).map_err(|_| KeyStorageErrorKind::SerializationError)?;
+
+    let jwp = jwp_issued.encode(SerializationType::COMPACT, &jwk_ext).map_err(|_| KeyStorageErrorKind::Unspecified)?;
+
+    Ok(jwp)
   }
 }
 

@@ -163,7 +163,7 @@ impl JwpDocumentExt for CoreDocument {
       method.id().to_string()
     };
 
-    let issued_header = IssuerProtectedHeader{ 
+    let issuer_header = IssuerProtectedHeader{ 
       typ: Some(typ), 
       alg, 
       kid: Some(kid), 
@@ -171,7 +171,18 @@ impl JwpDocumentExt for CoreDocument {
       claims: Some(claims)
     };
 
-    todo!()
+    // Get the key identifier corresponding to the given method from the KeyId storage.
+    let method_digest: MethodDigest = MethodDigest::new(method).map_err(Error::MethodDigestConstructionError)?;
+    let key_id = <I as KeyIdStorage>::get_key_id(storage.key_id_storage(), &method_digest)
+      .await
+      .map_err(Error::KeyIdStorageError)?;
+
+    let issued_jwp = JwpIssued::new(issuer_header, payloads);
+
+    let jwp = <K as JwkStorageExt>::generate_issuer_proof(storage.key_storage(), &key_id, issued_jwp, jwk)
+      .await
+      .map_err(Error::KeyStorageError)?;
+    Ok(jwp)
 
   }
 

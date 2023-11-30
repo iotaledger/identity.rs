@@ -87,6 +87,7 @@ pub async fn get_address_with_funds(
 ) -> anyhow::Result<Address> {
   let address: Bech32Address = get_address(client, stronghold).await?;
 
+
   request_faucet_funds(client, address, faucet_endpoint)
     .await
     .context("failed to request faucet funds")?;
