@@ -10,6 +10,7 @@ use identity_document::service::ServiceBuilder;
 use identity_document::service::ServiceEndpoint;
 use indexmap::map::IndexMap;
 
+use crate::domain_linkage::utils::url_only_includes_origin;
 use crate::error::Result;
 use crate::Error;
 use crate::Error::DomainLinkageError;
@@ -97,6 +98,11 @@ impl LinkedDomainService {
         if endpoint.scheme() != "https" {
           Err(DomainLinkageError("domain does not include `https` scheme".into()))?;
         }
+        if !url_only_includes_origin(endpoint) {
+          Err(DomainLinkageError(
+            "domain must not contain any path, query or fragment".into(),
+          ))?;
+        }
         Ok(())
       }
       ServiceEndpoint::Set(_) => Err(DomainLinkageError(
@@ -113,6 +119,11 @@ impl LinkedDomainService {
         for origin in origins.iter() {
           if origin.scheme() != "https" {
             return Err(DomainLinkageError("domain does not include `https` scheme".into()));
+          }
+          if !url_only_includes_origin(origin) {
+            Err(DomainLinkageError(
+              "domain must not contain any path, query or fragment".into(),
+            ))?;
           }
         }
         Ok(())
