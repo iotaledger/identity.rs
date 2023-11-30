@@ -316,10 +316,21 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
 
     let credential_claims: CredentialJwtClaims<'_, T> =
       if let (Some(sd_decoder), Some(disclosures)) = (sd_decoder, disclosures) {
-        let value: Value = serde_json::from_slice(&claims).unwrap();
-        let decoded: String =
-          Value::Object(sd_decoder.decode(&value.as_object().unwrap(), disclosures).unwrap()).to_string();
-        CredentialJwtClaims::from_json(&decoded).unwrap()
+        let value: Value = serde_json::from_slice(&claims).map_err(|err| {
+          JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+        })?;
+        let obj = value.as_object().ok_or(JwtValidationError::JwsDecodingError(
+          identity_verification::jose::error::Error::InvalidClaim("sd-jwt claims could not be deserialized"),
+        ))?;
+        let decoded: String = Value::Object(sd_decoder.decode(&obj, disclosures).map_err(|_| {
+          JwtValidationError::JwsDecodingError(identity_verification::jose::error::Error::InvalidClaim(
+            "sd-jwt claims decoding failed",
+          ))
+        })?)
+        .to_string();
+        CredentialJwtClaims::from_json(&decoded).map_err(|err| {
+          JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+        })?
       } else {
         CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
           JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))

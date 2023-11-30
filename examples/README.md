@@ -13,7 +13,7 @@ cargo run --example <example_name>
 For instance, to run the example `0_create_did`, use:
 
 ```rust
-cargo run --example 0_create_did
+cargo run --release --example 0_create_did
 ```
 
 ## Basic Examples

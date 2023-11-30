@@ -1,13 +1,9 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! This example shows how to create a Verifiable Credential and validate it.
-//! In this example, alice takes the role of the subject, while we also have an issuer.
-//! The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
-//! This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with
-//! whomever they please.
+//! This example shows how to create an SD-JWT Verifiable Credential and validate it.
 //!
-//! cargo run --example 5_create_vc
+//! cargo run --release --example 7_sd_jwt
 
 use examples::create_did;
 use examples::MemStorage;
@@ -109,15 +105,13 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  let sd_jwt_obj = SdJwt::new(jwt.as_str().to_owned(), vec![disclosure.to_string()], None);
-
-  let ts = Timestamp::now_utc();
   let binding_claims = KeyBindingJwtClaims::new(
-    sd_jwt_obj,
-    ts.to_unix(),
+    &Sha256Hasher::new(),
+    jwt.as_str().to_owned(),
+    vec![disclosure.to_string()],
     "abc.efd".to_string(),
     "abc123".to_string(),
-    &Sha256Hasher::new(),
+    None,
   )
   .to_json()?;
   let kb_claims_bytes = binding_claims.as_bytes();
@@ -126,35 +120,32 @@ async fn main() -> anyhow::Result<()> {
     .create_jws(&alice_storage, &alice_fragment, kb_claims_bytes, &options)
     .await?;
 
-  // println!(">>>>{}", jws.as_str());
-
-  // let sd_received = SdJwt::parse(&sd_jwt)?;
   let sd_jwt_obj = SdJwt::new(
     jwt.as_str().to_owned(),
     vec![disclosure.to_string()],
     Some(jws.as_str().to_owned()),
   );
 
-  let decoder = SdObjectDecoder::new_with_sha256_hasher();
+  let decoder = SdObjectDecoder::new();
   let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
-  let validation = validator.validate_credential::<_, Object>(
+  let _validation = validator.validate_credential::<_, Object>(
     &sd_jwt_obj,
     &issuer_document,
     &JwtCredentialValidationOptions::default(),
     FailFast::FirstError,
   )?;
-
   println!("VC successfully validated");
-  // println!("{}", validation.credential.to_string());
 
-  let kb_validation = validator.validate_key_binding_jwt(
+  let _kb_validation = validator.validate_key_binding_jwt(
     &sd_jwt_obj,
     &alice_document,
     "abc123".to_string(),
     Some("abc.efd".to_string()),
     &JwsVerificationOptions::default(),
     None,
-  );
+  )?;
+
+  println!("Key Binding JWT successfully validated");
 
   Ok(())
 }
