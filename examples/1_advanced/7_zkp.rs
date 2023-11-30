@@ -100,8 +100,8 @@ async fn main() -> anyhow::Result<()> {
 
 
   let mut secret_manager_issuer = SecretManager::Stronghold(StrongholdSecretManager::builder()
-  .password("issuer".to_owned())
-  .build("./issuer.stronghold")?);
+  .password(Password::from("secure_password_1".to_owned()))
+  .build(random_stronghold_path())?);
 
   // Insert a new Ed25519 verification method in the DID document.
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
@@ -111,8 +111,8 @@ async fn main() -> anyhow::Result<()> {
 
 
   let mut secret_manager_alice = SecretManager::Stronghold(StrongholdSecretManager::builder()
-  .password("alice".to_owned())
-  .build("./alice.stronghold")?);
+  .password(Password::from("secure_password_2".to_owned()))
+  .build(random_stronghold_path())?);
 
   // Insert a new Ed25519 verification method in the DID document.
   let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
