@@ -1,3 +1,6 @@
+// Copyright 2020-2023 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_core::common::Url;
 
 pub(crate) fn url_only_includes_origin(url: &Url) -> bool {
