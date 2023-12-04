@@ -111,6 +111,7 @@ impl DomainLinkageConfiguration {
 mod __fetch_configuration {
   use crate::domain_linkage::DomainLinkageConfiguration;
   use crate::error::Result;
+  use crate::utils::url_only_includes_origin;
   use crate::Error::DomainLinkageError;
   use futures::StreamExt;
   use identity_core::common::Url;
@@ -127,6 +128,11 @@ mod __fetch_configuration {
     pub async fn fetch_configuration(mut domain: Url) -> Result<DomainLinkageConfiguration> {
       if domain.scheme() != "https" {
         return Err(DomainLinkageError("domain` does not use `https` protocol".into()));
+      }
+      if !url_only_includes_origin(&domain) {
+        return Err(DomainLinkageError(
+          "domain must not include any path, query or fragment".into(),
+        ));
       }
       domain.set_path(".well-known/did-configuration.json");
 
