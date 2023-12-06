@@ -117,10 +117,10 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
       .ok_or(KeyBindingJwtError::DeserializationError(
         "failed to deserialize sd-jwt claims".to_string(),
       ))?;
-    let hasher = self.1.determin_hasher(sd_jwt_claims_object)?;
+    let hasher = self.1.determine_hasher(sd_jwt_claims_object)?;
     let disclosures = sd_jwt.disclosures.iter().join("~");
     let hash_payload = format!("{}~{}~", sd_jwt.jwt, disclosures);
-    let digest = sd_jwt::Utils::digest_b64_url_only_ascii(hasher, &hash_payload);
+    let digest = hasher.encoded_digest(&hash_payload);
 
     // Verify the signature of the KB-JWT and extract claims.
     let kb_decoded: JwsValidationItem<'_> = jws_decoder
@@ -145,6 +145,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
         })?
       }
     };
+
     // Obtain the public key from the holder's DID document
     let public_key: &Jwk = holder
       .as_ref()
@@ -186,5 +187,13 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     }
 
     Ok(kb_jwt_claims)
+  }
+}
+
+#[cfg(test)]
+mod test {
+  #[test]
+  fn kb() {
+    unimplemented!();
   }
 }

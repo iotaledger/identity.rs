@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::JwkStorageDocumentError as Error;
+use super::JwsSignatureOptions;
+use super::Storage;
+
 use crate::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::KeyIdStorageResult;
 use crate::key_id_storage::MethodDigest;
@@ -10,13 +14,8 @@ use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
 
-use super::JwkStorageDocumentError as Error;
-use super::JwsSignatureOptions;
-use super::Storage;
-
 use async_trait::async_trait;
 use identity_core::common::Object;
-use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Jws;
 use identity_credential::credential::Jwt;
@@ -136,19 +135,6 @@ pub trait JwkDocumentExt: private::Sealed {
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
     CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync;
-
-  // async fn create_key_binding_jwt<K, I, CRED, T>(
-  //   &self,
-  //   storage: &Storage<K, I>,
-  //   fragment: &str,
-  //   sd_hash: String,
-  //   issuance_date: Option<Timestamp>,
-  //   audiance: String,
-  //   nonce: String,
-  // ) -> StorageResult<Jwt>
-  // where
-  //   K: JwkStorage,
-  //   I: KeyIdStorage;
 }
 
 mod private {
@@ -514,55 +500,6 @@ impl JwkDocumentExt for CoreDocument {
       .await
       .map(|jws| Jwt::new(jws.into()))
   }
-
-  // async fn create_key_binding_jwt<K, I, CRED, T>(
-  //   &self,
-  //   storage: &Storage<K, I>,
-  //   fragment: &str,
-  //   sd_hash: String,
-  //   issuance_date: Option<Timestamp>,
-  //   audiance: String,
-  //   nonce: String,
-  // ) -> StorageResult<Jwt>
-  // where
-  //   K: JwkStorage,
-  //   I: KeyIdStorage,
-  // {
-  //   const KB_TYP: &'static str = "kb+jwt";
-  //   // Obtain the method corresponding to the given fragment.
-  //   let method: &VerificationMethod = self.resolve_method(fragment, None).ok_or(Error::MethodNotFound)?;
-  //   let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
-  //     return Err(Error::NotPublicKeyJwk);
-  //   };
-  //
-  //   // Extract JwsAlgorithm.
-  //   let alg: JwsAlgorithm = jwk
-  //     .alg()
-  //     .unwrap_or("")
-  //     .parse()
-  //     .map_err(|_| Error::InvalidJwsAlgorithm)?;
-  //
-  //   // Get the key identifier corresponding to the given method from the KeyId storage.
-  //   let method_digest: MethodDigest = MethodDigest::new(method).map_err(Error::MethodDigestConstructionError)?;
-  //   let key_id = <I as KeyIdStorage>::get_key_id(storage.key_id_storage(), &method_digest)
-  //     .await
-  //     .map_err(Error::KeyIdStorageError)?;
-  //
-  //   // Create JWS header in accordance with options.
-  //   let mut header = JwsHeader::new();
-  //   header.set_alg(alg);
-  //   header.set_typ(KB_TYP);
-  //   header.set_kid(method.id().to_string());
-  //
-  //   // let jws_encoder: CompactJwsEncoder<'_> = CompactJwsEncoder::new_with_options(payload, &header, encoding_options)
-  //   //   .map_err(|err| Error::EncodingError(err.into()))?;
-  //   // let signature = <K as JwkStorage>::sign(storage.key_storage(), &key_id, jws_encoder.signing_input(), jwk)
-  //   //   .await
-  //   //   .map_err(Error::KeyStorageError)?;
-  //   // Ok(Jws::new(jws_encoder.into_jws(&signature)))
-  //
-  //   Ok(())
-  // }
 }
 
 /// Attempt to revert key generation. If this succeeds the original `source_error` is returned,

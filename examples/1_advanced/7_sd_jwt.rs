@@ -1,21 +1,31 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! This example shows how to create an SD-JWT Verifiable Credential and validate it.
+//! This example shows how to create a selective disclosure verifiable credential and validate it
+//! using the standard [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-06.html).
 //!
 //! cargo run --release --example 7_sd_jwt
 
 use examples::create_did;
+use examples::random_stronghold_path;
 use examples::MemStorage;
+use examples::API_ENDPOINT;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
 use identity_iota::core::Object;
-
-use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::FailFast;
 use identity_iota::credential::Jws;
 use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::SdJwtValidator;
+use identity_iota::credential::Subject;
+use identity_iota::did::DID;
 use identity_iota::document::verifiable::JwsVerificationOptions;
+use identity_iota::iota::IotaDocument;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwsSignatureOptions;
@@ -25,18 +35,6 @@ use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
-
-use examples::random_stronghold_path;
-use examples::API_ENDPOINT;
-use identity_iota::core::json;
-use identity_iota::core::FromJson;
-use identity_iota::core::Url;
-use identity_iota::credential::Credential;
-use identity_iota::credential::CredentialBuilder;
-use identity_iota::credential::FailFast;
-use identity_iota::credential::Subject;
-use identity_iota::did::DID;
-use identity_iota::iota::IotaDocument;
 use sd_jwt::KeyBindingJwtClaims;
 use sd_jwt::SdJwt;
 use sd_jwt::SdObjectDecoder;
