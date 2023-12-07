@@ -201,6 +201,7 @@ async fn main() -> anyhow::Result<()> {
   // - JWT verification of the credential.
   // - The presentation holder must always be the subject.
   // - The issuance date must not be in the future.
+  //
 
   let decoder = SdObjectDecoder::new();
   let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
