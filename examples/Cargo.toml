@@ -15,6 +15,7 @@ primitive-types = "0.12.1"
 rand = "0.8.5"
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 sd-jwt = {git = "ssh://git@github.com/iotaledger/sd-jwt.git", branch = "main"}
+serde_json = { version = "1.0", default-features = false }
 
 [lib]
 path = "utils/utils.rs"
