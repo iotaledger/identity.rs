@@ -12,6 +12,7 @@ rust-version.workspace = true
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
+bitvec = "1.0.1"
 dataurl = { version = "0.1.2", default-features = false, optional = true }
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
