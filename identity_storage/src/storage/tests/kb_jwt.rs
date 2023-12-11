@@ -1,17 +1,29 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::test_utils::{setup_iotadocument, Setup};
-use crate::{JwkDocumentExt, JwsSignatureOptions};
-use identity_core::{
-  common::{Duration, Object, Timestamp, Url},
-  convert::{FromJson, ToJson},
-};
-use identity_credential::{
-  credential::{Credential, CredentialBuilder, Jws, Subject},
-  sd_jwt_payload::{KeyBindingJwtClaims, SdJwt, SdObjectDecoder, SdObjectEncoder, Sha256Hasher},
-  validator::{FailFast, JwtCredentialValidationOptions, KeyBindingJwtError, SdJwtValidator},
-};
+use super::test_utils::setup_iotadocument;
+use super::test_utils::Setup;
+use crate::JwkDocumentExt;
+use crate::JwsSignatureOptions;
+use identity_core::common::Duration;
+use identity_core::common::Object;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
+use identity_credential::credential::Credential;
+use identity_credential::credential::CredentialBuilder;
+use identity_credential::credential::Jws;
+use identity_credential::credential::Subject;
+use identity_credential::sd_jwt_payload::KeyBindingJwtClaims;
+use identity_credential::sd_jwt_payload::SdJwt;
+use identity_credential::sd_jwt_payload::SdObjectDecoder;
+use identity_credential::sd_jwt_payload::SdObjectEncoder;
+use identity_credential::sd_jwt_payload::Sha256Hasher;
+use identity_credential::validator::FailFast;
+use identity_credential::validator::JwtCredentialValidationOptions;
+use identity_credential::validator::KeyBindingJwtError;
+use identity_credential::validator::SdJwtValidator;
 use identity_document::verifiable::JwsVerificationOptions;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota_core::IotaDocument;

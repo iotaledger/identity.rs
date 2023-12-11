@@ -1,20 +1,26 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-Lecense-Identifier: Apache-2.0
 
-use crate::validator::{
-  CompoundCredentialValidationError, DecodedJwtCredential, JwtCredentialValidationOptions, JwtCredentialValidator,
-  JwtValidationError, SignerContext,
-};
-use crate::{credential::Jwt, validator::FailFast};
+use crate::credential::Jwt;
+use crate::validator::CompoundCredentialValidationError;
+use crate::validator::DecodedJwtCredential;
+use crate::validator::FailFast;
+use crate::validator::JwtCredentialValidationOptions;
+use crate::validator::JwtCredentialValidator;
+use crate::validator::JwtValidationError;
+use crate::validator::SignerContext;
 use identity_core::common::Timestamp;
 use identity_did::DIDUrl;
-use identity_document::{document::CoreDocument, verifiable::JwsVerificationOptions};
-use identity_verification::{
-  jwk::Jwk,
-  jws::{Decoder, JwsValidationItem, JwsVerifier},
-};
+use identity_document::document::CoreDocument;
+use identity_document::verifiable::JwsVerificationOptions;
+use identity_verification::jwk::Jwk;
+use identity_verification::jws::Decoder;
+use identity_verification::jws::JwsValidationItem;
+use identity_verification::jws::JwsVerifier;
 use itertools::Itertools;
-use sd_jwt_payload::{KeyBindingJwtClaims, SdJwt, SdObjectDecoder};
+use sd_jwt_payload::KeyBindingJwtClaims;
+use sd_jwt_payload::SdJwt;
+use sd_jwt_payload::SdObjectDecoder;
 use serde_json::Value;
 
 use super::KeyBindingJwtError;
