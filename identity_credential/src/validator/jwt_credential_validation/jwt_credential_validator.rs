@@ -322,8 +322,8 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
         let obj = value.as_object().ok_or(JwtValidationError::JwsDecodingError(
           identity_verification::jose::error::Error::InvalidClaim("sd-jwt claims could not be deserialized"),
         ))?;
-        let decoded: String = Value::Object(sd_decoder.decode(&obj, disclosures).map_err(|e| {
-          let err_str = format!("sd-jwt claims decoding failed, {}", e.to_string());
+        let decoded: String = Value::Object(sd_decoder.decode(obj, disclosures).map_err(|e| {
+          let err_str = format!("sd-jwt claims decoding failed, {}", e);
           let err: &'static str = Box::leak(err_str.into_boxed_str());
           JwtValidationError::JwsDecodingError(identity_verification::jose::error::Error::InvalidClaim(err))
         })?)

@@ -120,7 +120,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     let decoded: JwsValidationItem<'_> = jws_decoder
       .decode_compact_serialization(sd_jwt.jwt.as_bytes(), None)
       .map_err(|err| KeyBindingJwtError::JwtValidationError(JwtValidationError::JwsDecodingError(err)))?;
-    let sd_jwt_claims: Value = serde_json::from_slice(&decoded.claims())
+    let sd_jwt_claims: Value = serde_json::from_slice(decoded.claims())
       .map_err(|_| KeyBindingJwtError::DeserializationError("failed to deserialize sd-jwt claims".to_string()))?;
     let sd_jwt_claims_object = sd_jwt_claims
       .as_object()
@@ -215,10 +215,8 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
           "value is later than `latest_issuance_date`".to_string(),
         ));
       }
-    } else {
-      if issuance_date > Timestamp::now_utc() {
-        return Err(KeyBindingJwtError::IssuanceDate("value is in the future".to_string()));
-      }
+    } else if issuance_date > Timestamp::now_utc() {
+      return Err(KeyBindingJwtError::IssuanceDate("value is in the future".to_string()));
     }
 
     Ok(kb_jwt_claims)

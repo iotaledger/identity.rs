@@ -29,8 +29,8 @@ use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota_core::IotaDocument;
 use serde_json::json;
 
-const NONCE: &'static str = "nonce-test";
-const VERIFIER_ID: &'static str = "did:test:verifier";
+const NONCE: &str = "nonce-test";
+const VERIFIER_ID: &str = "did:test:verifier";
 
 async fn setup_test() -> (Setup<IotaDocument, IotaDocument>, Credential, SdJwt) {
   let setup: Setup<IotaDocument, IotaDocument> = setup_iotadocument(None, None).await;
@@ -226,7 +226,7 @@ async fn kb_in_the_future() {
     )
     .await
     .unwrap();
-  let sd_jwt = SdJwt::new(sd_jwt.jwt.into(), sd_jwt.disclosures.clone(), Some(kb_jwt.into()));
+  let sd_jwt = SdJwt::new(sd_jwt.jwt, sd_jwt.disclosures.clone(), Some(kb_jwt.into()));
 
   let decoder = SdObjectDecoder::new_with_sha256();
   let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
