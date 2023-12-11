@@ -11,6 +11,7 @@ use crate::did::ArrayIToCoreDocument;
 use crate::did::CoreDocumentLock;
 use crate::did::IToCoreDocument;
 use crate::did::WasmCoreDocument;
+use crate::error::Result;
 use crate::iota::IotaDocumentLock;
 use crate::iota::WasmIotaDocument;
 
@@ -27,13 +28,13 @@ pub(crate) enum ImportedDocumentLock {
 
 impl ImportedDocumentLock {
   /// Obtain a read guard which implements `AsRef<CoreDocument>`.
-  pub(crate) fn blocking_read(&self) -> ImportedDocumentReadGuard<'_> {
+  pub(crate) fn try_read(&self) -> Result<ImportedDocumentReadGuard<'_>> {
     match self {
-      Self::Iota(lock) => ImportedDocumentReadGuard(tokio::sync::RwLockReadGuard::map(
-        lock.blocking_read(),
+      Self::Iota(lock) => Ok(ImportedDocumentReadGuard(tokio::sync::RwLockReadGuard::map(
+        lock.try_read()?,
         IotaDocument::core_document,
-      )),
-      Self::Core(lock) => ImportedDocumentReadGuard(lock.blocking_read()),
+      ))),
+      Self::Core(lock) => Ok(ImportedDocumentReadGuard(lock.try_read()?)),
     }
   }
   /// Must only be called on values implementing `IToCoreDocument`.
