@@ -17,7 +17,7 @@ pub enum KeyBindingJwtError {
 
   ///
   #[error("SdJwt Error {0}")]
-  SdJwtError(#[from] sd_jwt::Error),
+  SdJwtError(#[from] sd_jwt_payload::Error),
 
   ///
   #[error("the `_sd_hash` value of the KB-JWT does not match the derived value from the provided SD-JWT")]
@@ -32,8 +32,8 @@ pub enum KeyBindingJwtError {
   AudianceMismatch,
 
   ///
-  #[error("KB-JWT `iat` value is in the fututre or earlier than the provided `latest_issuance_date`")]
-  IssuanceDate,
+  #[error("KB-JWT `iat` value is invalid, {0}")]
+  IssuanceDate(String),
 
   ///
   #[error("the provided SD-JWT does not include a KB-JWT")]

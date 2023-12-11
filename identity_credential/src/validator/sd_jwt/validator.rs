@@ -14,7 +14,7 @@ use identity_verification::{
   jws::{Decoder, JwsValidationItem, JwsVerifier},
 };
 use itertools::Itertools;
-use sd_jwt::{KeyBindingJwtClaims, SdJwt, SdObjectDecoder};
+use sd_jwt_payload::{KeyBindingJwtClaims, SdJwt, SdObjectDecoder};
 use serde_json::Value;
 
 use super::KeyBindingJwtError;
@@ -85,8 +85,10 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
   ///   * `_sd_hash` claim value in the KB-JWT claim.
   ///   * `nonce` validation.
   ///   * Optional `aud` validation.
-  ///   * Optional issuance date validation to ensure the freshness of the KB-JWT. An Error will be thrown
-  ///   if the KB-JWT's `iat` (issued-at) is earlier than the `earliest_issuance_date`.
+  ///   * Issuance date validation to ensure the freshness of the KB-JWT.
+  ///     - An error will be returned if `iat` (issued-at) is earlier than the `earliest_issuance_date`.
+  ///     - An error will be returned if `iat` is later than the `latest_issuance_date`.
+  ///     - If `latest_issuance_date` is set to `None`, an error will be returned if `iat` is in the future.
   pub fn validate_key_binding_jwt<DOC>(
     &self,
     sd_jwt: &SdJwt,
@@ -95,6 +97,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     aud: Option<String>,
     options: &JwsVerificationOptions,
     earliest_issuance_date: Option<Timestamp>,
+    latest_issuance_date: Option<Timestamp>,
   ) -> Result<KeyBindingJwtClaims, KeyBindingJwtError>
   where
     DOC: AsRef<CoreDocument>,
@@ -189,24 +192,29 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
       }
     }
 
-    if let Some(latest_issuance_date) = earliest_issuance_date {
-      let issuance_date = Timestamp::from_unix(kb_jwt_claims.iat).unwrap();
-      if issuance_date < latest_issuance_date {
-        return Err(KeyBindingJwtError::IssuanceDate);
+    let issuance_date = Timestamp::from_unix(kb_jwt_claims.iat)
+      .map_err(|_| KeyBindingJwtError::IssuanceDate("deserialization of `iat` failed".to_string()))?;
+
+    if let Some(earliest_issuance_date) = earliest_issuance_date {
+      if issuance_date < earliest_issuance_date {
+        return Err(KeyBindingJwtError::IssuanceDate(
+          "value is earlier than `earliest_issuance_date`".to_string(),
+        ));
       }
+    }
+
+    if let Some(latest_issuance_date) = latest_issuance_date {
+      if issuance_date > latest_issuance_date {
+        return Err(KeyBindingJwtError::IssuanceDate(
+          "value is later than `latest_issuance_date`".to_string(),
+        ));
+      }
+    } else {
       if issuance_date > Timestamp::now_utc() {
-        return Err(KeyBindingJwtError::IssuanceDate);
+        return Err(KeyBindingJwtError::IssuanceDate("value is in the future".to_string()));
       }
     }
 
     Ok(kb_jwt_claims)
-  }
-}
-
-#[cfg(test)]
-mod test {
-  #[test]
-  fn kb() {
-    unimplemented!();
   }
 }

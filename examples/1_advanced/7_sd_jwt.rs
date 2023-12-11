@@ -36,11 +36,11 @@ use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
-use sd_jwt::KeyBindingJwtClaims;
-use sd_jwt::SdJwt;
-use sd_jwt::SdObjectDecoder;
-use sd_jwt::SdObjectEncoder;
-use sd_jwt::Sha256Hasher;
+use sd_jwt_payload::KeyBindingJwtClaims;
+use sd_jwt_payload::SdJwt;
+use sd_jwt_payload::SdObjectDecoder;
+use sd_jwt_payload::SdObjectEncoder;
+use sd_jwt_payload::Sha256Hasher;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -207,6 +207,7 @@ async fn main() -> anyhow::Result<()> {
       FailFast::FirstError,
     )
     .unwrap();
+
   println!("JWT successfully validated");
   pretty_print_json("Decoded Credential", &validation.credential.to_string());
 
@@ -218,8 +219,10 @@ async fn main() -> anyhow::Result<()> {
     Some(VERIFIER_DID.to_string()),
     &JwsVerificationOptions::default(),
     None,
+    None,
   )?;
 
   println!("Key Binding JWT successfully validated");
+
   Ok(())
 }

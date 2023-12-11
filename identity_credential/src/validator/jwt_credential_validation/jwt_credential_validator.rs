@@ -11,7 +11,7 @@ use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::JwsValidationItem;
 use identity_verification::jws::JwsVerifier;
-use sd_jwt::SdObjectDecoder;
+use sd_jwt_payload::SdObjectDecoder;
 use serde_json::Value;
 
 use super::CompoundCredentialValidationError;

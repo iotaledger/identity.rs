@@ -14,7 +14,7 @@ iota-sdk = { version = "1.0", default-features = false, features = ["tls", "clie
 primitive-types = "0.12.1"
 rand = "0.8.5"
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
-sd-jwt = {git = "http://github.com/iotaledger/sd-jwt.git", branch = "main"}
+sd-jwt-payload = { version = "0.1.0" }
 serde_json = { version = "1.0", default-features = false }
 
 [lib]

@@ -1,45 +1,28 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::test_utils::{setup_iotadocument, Setup};
+use crate::{JwkDocumentExt, JwsSignatureOptions};
 use identity_core::{
-  common::{Object, Url},
+  common::{Duration, Object, Timestamp, Url},
   convert::{FromJson, ToJson},
 };
 use identity_credential::{
   credential::{Credential, CredentialBuilder, Jws, Subject},
-  sd_jwt::{KeyBindingJwtClaims, SdJwt, SdObjectDecoder, SdObjectEncoder, Sha256Hasher},
-  validator::{FailFast, JwtCredentialValidationOptions, SdJwtValidator},
+  sd_jwt_payload::{KeyBindingJwtClaims, SdJwt, SdObjectDecoder, SdObjectEncoder, Sha256Hasher},
+  validator::{FailFast, JwtCredentialValidationOptions, KeyBindingJwtError, SdJwtValidator},
 };
+use identity_document::verifiable::JwsVerificationOptions;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota_core::IotaDocument;
 use serde_json::json;
 
-use crate::{JwkDocumentExt, JwsSignatureOptions};
+const NONCE: &'static str = "nonce-test";
+const VERIFIER_ID: &'static str = "did:test:verifier";
 
-use super::test_utils::{setup_iotadocument, Setup};
-
-#[tokio::test]
-async fn name() {
+async fn setup_test() -> (Setup<IotaDocument, IotaDocument>, Credential, SdJwt) {
   let setup: Setup<IotaDocument, IotaDocument> = setup_iotadocument(None, None).await;
 
-  let credential_json: &str = r#"
-    {
-      "@context": [
-        "https://www.w3.org/2018/credentials/v1",
-        "https://www.w3.org/2018/credentials/examples/v1"
-      ],
-      "id": "http://example.edu/credentials/3732",
-      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-      "issuer": "did:bar:Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr",
-      "issuanceDate": "2010-01-01T19:23:24Z",
-      "credentialSubject": {
-        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-        "degree": {
-          "type": "BachelorDegree",
-          "name": "Bachelor of Science in Mechanical Engineering"
-        }
-      }
-    }"#;
   let subject: Subject = Subject::from_json_value(json!({
     "id": setup.subject_doc.id().to_string(),
     "degree": {
@@ -91,14 +74,13 @@ async fn name() {
     .into_iter()
     .map(|disclosure| disclosure.to_string())
     .collect();
-  let nonce = "nonce-test";
-  let verifier_id = "did:test:verifier";
+
   let binding_claims = KeyBindingJwtClaims::new(
     &Sha256Hasher::new(),
     jwt.as_str().to_string(),
     disclosures.clone(),
-    nonce.to_string(),
-    verifier_id.to_string(),
+    NONCE.to_string(),
+    VERIFIER_ID.to_string(),
     None,
   )
   .to_json()
@@ -119,14 +101,171 @@ async fn name() {
     .await
     .unwrap();
   let sd_jwt_obj = SdJwt::new(jwt.into(), disclosures.clone(), Some(kb_jwt.into()));
+  (setup, credential, sd_jwt_obj)
+}
+
+#[tokio::test]
+async fn sd_jwt_validation() {
+  let (setup, credential, sd_jwt) = setup_test().await;
   let decoder = SdObjectDecoder::new_with_sha256();
   let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
   let validation = validator
     .validate_credential::<_, Object>(
-      &sd_jwt_obj,
+      &sd_jwt,
       &setup.issuer_doc,
       &JwtCredentialValidationOptions::default(),
       FailFast::FirstError,
     )
     .unwrap();
+  assert_eq!(validation.credential, credential);
+}
+
+#[tokio::test]
+async fn kb_validation() {
+  let (setup, _credential, sd_jwt) = setup_test().await;
+  let decoder = SdObjectDecoder::new_with_sha256();
+  let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
+  let _kb_validation = validator
+    .validate_key_binding_jwt(
+      &sd_jwt,
+      &setup.subject_doc,
+      NONCE.to_string(),
+      Some(VERIFIER_ID.to_string()),
+      &JwsVerificationOptions::default(),
+      None,
+      None,
+    )
+    .expect("KB validation failed!");
+}
+
+#[tokio::test]
+async fn kb_too_early() {
+  let (setup, _credential, sd_jwt) = setup_test().await;
+  let decoder = SdObjectDecoder::new_with_sha256();
+  let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
+  let timestamp = Timestamp::now_utc().checked_add(Duration::seconds(1)).unwrap();
+  let kb_validation = validator.validate_key_binding_jwt(
+    &sd_jwt,
+    &setup.subject_doc,
+    NONCE.to_string(),
+    Some(VERIFIER_ID.to_string()),
+    &JwsVerificationOptions::default(),
+    Some(timestamp),
+    None,
+  );
+  // let err =
+  assert!(matches!(
+    kb_validation.err().unwrap(),
+    KeyBindingJwtError::IssuanceDate(_)
+  ));
+}
+
+#[tokio::test]
+async fn kb_too_late() {
+  let (setup, _credential, sd_jwt) = setup_test().await;
+  let decoder = SdObjectDecoder::new_with_sha256();
+  let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
+  let timestamp = Timestamp::now_utc().checked_sub(Duration::seconds(20)).unwrap();
+  let kb_validation = validator.validate_key_binding_jwt(
+    &sd_jwt,
+    &setup.subject_doc,
+    NONCE.to_string(),
+    Some(VERIFIER_ID.to_string()),
+    &JwsVerificationOptions::default(),
+    None,
+    Some(timestamp),
+  );
+  assert!(matches!(
+    kb_validation.err().unwrap(),
+    KeyBindingJwtError::IssuanceDate(_)
+  ));
+}
+
+#[tokio::test]
+async fn kb_in_the_future() {
+  let (setup, _credential, sd_jwt) = setup_test().await;
+  let binding_claims = KeyBindingJwtClaims::new(
+    &Sha256Hasher::new(),
+    sd_jwt.jwt.as_str().to_string(),
+    sd_jwt.disclosures.clone(),
+    NONCE.to_string(),
+    VERIFIER_ID.to_string(),
+    Some(
+      Timestamp::now_utc()
+        .checked_add(Duration::seconds(30))
+        .unwrap()
+        .to_unix(),
+    ),
+  )
+  .to_json()
+  .unwrap();
+
+  // Setting the `typ` in the header is required.
+  let options = JwsSignatureOptions::new().typ(KeyBindingJwtClaims::KB_JWT_HEADER_TYP);
+
+  // Create the KB-JWT.
+  let kb_jwt: Jws = setup
+    .subject_doc
+    .create_jws(
+      &setup.subject_storage,
+      &setup.subject_method_fragment,
+      binding_claims.as_bytes(),
+      &options,
+    )
+    .await
+    .unwrap();
+  let sd_jwt = SdJwt::new(sd_jwt.jwt.into(), sd_jwt.disclosures.clone(), Some(kb_jwt.into()));
+
+  let decoder = SdObjectDecoder::new_with_sha256();
+  let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
+  let kb_validation = validator.validate_key_binding_jwt(
+    &sd_jwt,
+    &setup.subject_doc,
+    NONCE.to_string(),
+    Some(VERIFIER_ID.to_string()),
+    &JwsVerificationOptions::default(),
+    None,
+    None,
+  );
+  assert!(matches!(
+    kb_validation.err().unwrap(),
+    KeyBindingJwtError::IssuanceDate(_)
+  ));
+}
+
+#[tokio::test]
+async fn kb_aud() {
+  let (setup, _credential, sd_jwt) = setup_test().await;
+  let decoder = SdObjectDecoder::new_with_sha256();
+  let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
+  let kb_validation = validator.validate_key_binding_jwt(
+    &sd_jwt,
+    &setup.subject_doc,
+    NONCE.to_string(),
+    Some("wrong verifier".to_string()),
+    &JwsVerificationOptions::default(),
+    None,
+    None,
+  );
+  assert!(matches!(
+    kb_validation.err().unwrap(),
+    KeyBindingJwtError::AudianceMismatch
+  ));
+}
+
+#[tokio::test]
+async fn kb_nonce() {
+  let (setup, _credential, sd_jwt) = setup_test().await;
+  let decoder = SdObjectDecoder::new_with_sha256();
+  let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
+  let kb_validation = validator.validate_key_binding_jwt(
+    &sd_jwt,
+    &setup.subject_doc,
+    "wrong nonce".to_string(),
+    Some(VERIFIER_ID.to_string()),
+    &JwsVerificationOptions::default(),
+    None,
+    None,
+  );
+  assert!(matches!(kb_validation.err().unwrap(), KeyBindingJwtError::InvalidNonce));
 }
