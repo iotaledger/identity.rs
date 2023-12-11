@@ -32,10 +32,14 @@ pub enum KeyBindingJwtError {
   AudianceMismatch,
 
   ///
-  #[error("KB-JWT is issued after the provided `latest_issuance_date`")]
+  #[error("KB-JWT `iat` value is in the fututre or earlier than the provided `latest_issuance_date`")]
   IssuanceDate,
 
   ///
   #[error("the provided SD-JWT does not include a KB-JWT")]
   MissingKeyBindingJwt,
+
+  ///
+  #[error("header `typ` value is missing or not equal to `kb+jwt`")]
+  InvalidHeaderTypValue,
 }

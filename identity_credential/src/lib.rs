@@ -28,3 +28,6 @@ pub mod validator;
 
 pub use error::Error;
 pub use error::Result;
+
+#[cfg(feature = "sd-jwt")]
+pub use sd_jwt;

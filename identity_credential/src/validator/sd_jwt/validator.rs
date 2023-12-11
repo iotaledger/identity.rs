@@ -1,5 +1,5 @@
 // Copyright 2020-2023 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-Lecense-Identifier: Apache-2.0
 
 use crate::validator::{
   CompoundCredentialValidationError, DecodedJwtCredential, JwtCredentialValidationOptions, JwtCredentialValidator,
@@ -19,7 +19,7 @@ use serde_json::Value;
 
 use super::KeyBindingJwtError;
 
-///
+/// A type for decoding and validating [`SdJwt`]s.
 #[non_exhaustive]
 pub struct SdJwtValidator<V: JwsVerifier>(V, SdObjectDecoder);
 
@@ -81,6 +81,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
   /// Validates a Key Binding JWT (KB-JWT) according to `https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-06.html#name-key-binding-jwt`.
   /// The Validation process includes:
   ///   * Signature validation using public key materials defined in the `holder` document.
+  ///   * `typ` value in KB-JWT header.
   ///   * `_sd_hash` claim value in the KB-JWT claim.
   ///   * `nonce` validation.
   ///   * Optional `aud` validation.
@@ -126,6 +127,15 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     let kb_decoded: JwsValidationItem<'_> = jws_decoder
       .decode_compact_serialization(kb_jwt.as_bytes(), None)
       .map_err(JwtValidationError::JwsDecodingError)?;
+    let typ: &str = kb_decoded
+      .protected_header()
+      .ok_or(KeyBindingJwtError::InvalidHeaderTypValue)?
+      .typ()
+      .ok_or(KeyBindingJwtError::InvalidHeaderTypValue)?;
+
+    if typ != KeyBindingJwtClaims::KB_JWT_HEADER_TYP {
+      return Err(KeyBindingJwtError::InvalidHeaderTypValue);
+    }
     let method_id: DIDUrl = match &options.method_id {
       Some(method_id) => method_id.clone(),
       None => {
@@ -182,6 +192,9 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     if let Some(latest_issuance_date) = earliest_issuance_date {
       let issuance_date = Timestamp::from_unix(kb_jwt_claims.iat).unwrap();
       if issuance_date < latest_issuance_date {
+        return Err(KeyBindingJwtError::IssuanceDate);
+      }
+      if issuance_date > Timestamp::now_utc() {
         return Err(KeyBindingJwtError::IssuanceDate);
       }
     }
