@@ -109,10 +109,11 @@ async fn main() -> anyhow::Result<()> {
   let mut encoder = SdObjectEncoder::new(&payload)?;
   // Make "locality", "postal_code" and "street_address" selectively disclosable while keeping
   // other properties in plain text.
-  let mut disclosures = vec![];
-  disclosures.push(encoder.conceal(&["vc", "credentialSubject", "address", "locality"], None)?);
-  disclosures.push(encoder.conceal(&["vc", "credentialSubject", "address", "postal_code"], None)?);
-  disclosures.push(encoder.conceal(&["vc", "credentialSubject", "address", "street_address"], None)?);
+  let disclosures = vec![
+    encoder.conceal(&["vc", "credentialSubject", "address", "locality"], None)?,
+    encoder.conceal(&["vc", "credentialSubject", "address", "postal_code"], None)?,
+    encoder.conceal(&["vc", "credentialSubject", "address", "street_address"], None)?,
+  ];
   encoder.add_sd_alg_property();
   let encoded_payload = encoder.try_to_string()?;
 
