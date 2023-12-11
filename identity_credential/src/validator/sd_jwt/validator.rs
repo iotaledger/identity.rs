@@ -12,7 +12,6 @@ use crate::validator::SignerContext;
 use identity_core::common::Timestamp;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
-use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jwk::Jwk;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::JwsValidationItem;
@@ -23,6 +22,7 @@ use sd_jwt_payload::SdJwt;
 use sd_jwt_payload::SdObjectDecoder;
 use serde_json::Value;
 
+use super::KeyBindingJWTValidationOptions;
 use super::KeyBindingJwtError;
 
 /// A type for decoding and validating [`SdJwt`]s.
@@ -99,11 +99,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     &self,
     sd_jwt: &SdJwt,
     holder: &DOC,
-    nonce: String,
-    aud: Option<String>,
-    options: &JwsVerificationOptions,
-    earliest_issuance_date: Option<Timestamp>,
-    latest_issuance_date: Option<Timestamp>,
+    options: &KeyBindingJWTValidationOptions,
   ) -> Result<KeyBindingJwtClaims, KeyBindingJwtError>
   where
     DOC: AsRef<CoreDocument>,
@@ -145,7 +141,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     if typ != KeyBindingJwtClaims::KB_JWT_HEADER_TYP {
       return Err(KeyBindingJwtError::InvalidHeaderTypValue);
     }
-    let method_id: DIDUrl = match &options.method_id {
+    let method_id: DIDUrl = match &options.jws_options.method_id {
       Some(method_id) => method_id.clone(),
       None => {
         let kid: &str = kb_decoded.protected_header().and_then(|header| header.kid()).ok_or(
@@ -168,7 +164,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     // Obtain the public key from the holder's DID document
     let public_key: &Jwk = holder
       .as_ref()
-      .resolve_method(&method_id, options.method_scope)
+      .resolve_method(&method_id, options.jws_options.method_scope)
       .and_then(|method| method.data().public_key_jwk())
       .ok_or_else(|| JwtValidationError::MethodDataLookupError {
         source: None,
@@ -188,12 +184,14 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
       return Err(KeyBindingJwtError::InvalidDigest);
     }
 
-    if nonce != kb_jwt_claims.nonce {
-      return Err(KeyBindingJwtError::InvalidNonce);
+    if let Some(nonce) = &options.nonce {
+      if *nonce != kb_jwt_claims.nonce {
+        return Err(KeyBindingJwtError::InvalidNonce);
+      }
     }
 
-    if let Some(aud) = aud {
-      if aud != kb_jwt_claims.aud {
+    if let Some(aud) = &options.aud {
+      if *aud != kb_jwt_claims.aud {
         return Err(KeyBindingJwtError::AudianceMismatch);
       }
     }
@@ -201,7 +199,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     let issuance_date = Timestamp::from_unix(kb_jwt_claims.iat)
       .map_err(|_| KeyBindingJwtError::IssuanceDate("deserialization of `iat` failed".to_string()))?;
 
-    if let Some(earliest_issuance_date) = earliest_issuance_date {
+    if let Some(earliest_issuance_date) = options.earliest_issuance_date {
       if issuance_date < earliest_issuance_date {
         return Err(KeyBindingJwtError::IssuanceDate(
           "value is earlier than `earliest_issuance_date`".to_string(),
@@ -209,7 +207,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
       }
     }
 
-    if let Some(latest_issuance_date) = latest_issuance_date {
+    if let Some(latest_issuance_date) = options.latest_issuance_date {
       if issuance_date > latest_issuance_date {
         return Err(KeyBindingJwtError::IssuanceDate(
           "value is later than `latest_issuance_date`".to_string(),

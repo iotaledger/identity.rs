@@ -22,10 +22,10 @@ use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::FailFast;
 use identity_iota::credential::Jws;
 use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::KeyBindingJWTValidationOptions;
 use identity_iota::credential::SdJwtValidator;
 use identity_iota::credential::Subject;
 use identity_iota::did::DID;
-use identity_iota::document::verifiable::JwsVerificationOptions;
 use identity_iota::iota::IotaDocument;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
@@ -212,15 +212,8 @@ async fn main() -> anyhow::Result<()> {
   pretty_print_json("Decoded Credential", &validation.credential.to_string());
 
   // Verify the Key Binding JWT.
-  let _kb_validation = validator.validate_key_binding_jwt(
-    &sd_jwt_obj,
-    &alice_document,
-    nonce.to_string(),
-    Some(VERIFIER_DID.to_string()),
-    &JwsVerificationOptions::default(),
-    None,
-    None,
-  )?;
+  let options = KeyBindingJWTValidationOptions::new().nonce(nonce).aud("wrong verifier");
+  let _kb_validation = validator.validate_key_binding_jwt(&sd_jwt_obj, &alice_document, &options)?;
 
   println!("Key Binding JWT successfully validated");
 
