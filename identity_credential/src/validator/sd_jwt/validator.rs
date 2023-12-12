@@ -89,12 +89,7 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
   ///   * Signature validation using public key materials defined in the `holder` document.
   ///   * `typ` value in KB-JWT header.
   ///   * `_sd_hash` claim value in the KB-JWT claim.
-  ///   * `nonce` validation.
-  ///   * Optional `aud` validation.
-  ///   * Issuance date validation to ensure the freshness of the KB-JWT.
-  ///     - An error will be returned if `iat` (issued-at) is earlier than the `earliest_issuance_date`.
-  ///     - An error will be returned if `iat` is later than the `latest_issuance_date`.
-  ///     - If `latest_issuance_date` is set to `None`, an error will be returned if `iat` is in the future.
+  ///   * Optional `nonce`, `aud` and issuance date validation.
   pub fn validate_key_binding_jwt<DOC>(
     &self,
     sd_jwt: &SdJwt,

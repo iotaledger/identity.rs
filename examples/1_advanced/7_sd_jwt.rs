@@ -213,7 +213,7 @@ async fn main() -> anyhow::Result<()> {
   pretty_print_json("Decoded Credential", &validation.credential.to_string());
 
   // Verify the Key Binding JWT.
-  let options = KeyBindingJWTValidationOptions::new().nonce(nonce).aud("wrong verifier");
+  let options = KeyBindingJWTValidationOptions::new().nonce(nonce).aud(VERIFIER_DID);
   let _kb_validation = validator.validate_key_binding_jwt(&sd_jwt_obj, &alice_document, &options)?;
 
   println!("Key Binding JWT successfully validated");
