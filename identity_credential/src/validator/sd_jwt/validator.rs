@@ -1,5 +1,5 @@
 // Copyright 2020-2023 IOTA Stiftung
-// SPDX-Lecense-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
 
 use crate::credential::Jwt;
 use crate::validator::CompoundCredentialValidationError;
