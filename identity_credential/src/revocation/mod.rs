@@ -4,7 +4,7 @@
 //! Contains an implementation of RevocationBitmap2022 for managing credential revocation.
 
 mod bitmap;
-mod bitstring_status_list;
+pub mod bitstring_status_list;
 mod document_ext;
 mod error;
 
