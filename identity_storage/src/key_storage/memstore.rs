@@ -198,7 +198,7 @@ enum MemStoreKeyType {
 }
 
 impl JwkMemStore {
-  const ED25519_KEY_TYPE_STR: &str = "Ed25519";
+  const ED25519_KEY_TYPE_STR: &'static str = "Ed25519";
   /// The Ed25519 key type.
   pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
 

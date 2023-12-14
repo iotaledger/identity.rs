@@ -32,7 +32,7 @@ use iota_sdk::types::block::output::AliasOutput;
 /// to run on any IOTA node by setting the network and faucet endpoints.
 ///
 /// See the following instructions on running your own private network
-/// https://wiki.iota.org/hornet/develop/how_tos/private_tangle
+/// https://github.com/iotaledger/hornet/tree/develop/private_tangle
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // The API endpoint of an IOTA node, e.g. Hornet.
