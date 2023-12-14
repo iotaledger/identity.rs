@@ -5,13 +5,16 @@ use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageError;
 use crate::key_storage::KeyType;
 use async_trait::async_trait;
+use identity_credential::credential::Issuer;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jpt::payloads;
 use jsonprooftoken::jpt::payloads::Payloads;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 use jsonprooftoken::jwp::issued::JwpIssued;
+use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 
 use super::jwk_gen_output::JwkGenOutput;
 
@@ -77,5 +80,6 @@ pub trait JwkStorageExt : JwkStorage {
   /// Generates a JWK representing a BBS+ signature 
   async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
-  async fn generate_issuer_proof(&self, key_id: &KeyId, jwp_issued: JwpIssued, public_key: &Jwk) -> KeyStorageResult<String>;
+  /// Generate the JPT representing a JWP in the Issuer form
+  async fn generate_issuer_proof(&self, key_id: &KeyId, header: IssuerProtectedHeader, claims: JptClaims, public_key: &Jwk) -> KeyStorageResult<String>;
 }

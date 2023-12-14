@@ -14,11 +14,14 @@ use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
 use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::curves::EllipticCurveTypes;
 use jsonprooftoken::jwk::key;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwk::types::KeyPairSubtype;
+use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 use jsonprooftoken::jwp::issued::JwpIssued;
+use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -304,7 +307,7 @@ impl JwkStorageExt for JwkMemStore {
     Ok(JwkGenOutput::new(kid, public_jwk))
   }
 
-  async fn generate_issuer_proof(&self, key_id: &KeyId, jwp_issued: JwpIssued, public_key: &Jwk) -> KeyStorageResult<String> {
+  async fn generate_issuer_proof(&self, key_id: &KeyId, header: IssuerProtectedHeader, claims: JptClaims, public_key: &Jwk) -> KeyStorageResult<String> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
     // Extract the required alg from the given public key
@@ -349,7 +352,11 @@ impl JwkStorageExt for JwkMemStore {
     // Deserialize JSON to JwkExt
     let jwk_ext: JwkExt = serde_json::from_str(&jwk_json).map_err(|_| KeyStorageErrorKind::SerializationError)?;
 
-    let jwp = jwp_issued.encode(SerializationType::COMPACT, &jwk_ext).map_err(|_| KeyStorageErrorKind::Unspecified)?;
+    let jwp = JwpIssuedBuilder::new()
+      .issuer_protected_header(header)
+      .jpt_claims(claims)
+      .build(&jwk_ext).map_err(|_| KeyStorageErrorKind::Unspecified)?
+      .encode(SerializationType::COMPACT).map_err(|_| KeyStorageErrorKind::Unspecified)?;
 
     Ok(jwp)
   }

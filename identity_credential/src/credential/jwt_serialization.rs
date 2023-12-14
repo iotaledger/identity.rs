@@ -722,10 +722,10 @@ where
       claims.set_sub(v.to_string());
     });
 
-    claims.add_claim("vp", vc, true);
+    claims.set_claim(Some("vc"), vc, true);
 
     custom.map(|v| {
-      claims.add_claim("", v, true);
+      claims.set_claim(None, v, true);
     });
 
     claims

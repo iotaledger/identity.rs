@@ -101,6 +101,16 @@ pub enum JwtValidationError {
   /// Indicates that the credential has been revoked.
   #[error("credential has been revoked")]
   Revoked,
+
+
+  //TODO: new errors for jwp
+  /// Indicates that the JWS representation of an issued credential or presentation could not be decoded.
+  #[error("could not decode jwp")]
+  JwpDecodingError(#[source] jsonprooftoken::errors::CustomError),
+
+  #[error("could not verify jwp")]
+  JwpProofVerifiationError(#[source] jsonprooftoken::errors::CustomError),
+  
 }
 
 /// Specifies whether an error is related to a credential issuer or the presentation holder.

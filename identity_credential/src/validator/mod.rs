@@ -5,10 +5,12 @@
 
 pub use self::jwt_credential_validation::*;
 pub use self::jwt_presentation_validation::*;
+pub use self::jpt_credential_validation::*;
 pub use self::options::FailFast;
 pub use self::options::StatusCheck;
 pub use self::options::SubjectHolderRelationship;
 
+mod jpt_credential_validation;
 mod jwt_credential_validation;
 mod jwt_presentation_validation;
 mod options;

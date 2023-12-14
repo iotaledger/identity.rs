@@ -10,6 +10,7 @@ use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jpt::payloads::Payloads;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 use jsonprooftoken::jwp::issued::JwpIssued;
+use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 use jsonprooftoken::jwp::presented::JwpPresented;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -77,7 +78,7 @@ pub trait JwpDocumentExt {
 
   /// Produces a JWP where the payload is produced from the given `credential`.
   /// TODO: add references to Drafts
-  async fn create_credential_jwp<K, I, T>(
+  async fn create_credential_jpt<K, I, T>(
     &self,
     credential: &Credential<T>,
     storage: &Storage<K, I>,
@@ -139,9 +140,6 @@ impl JwpDocumentExt for CoreDocument {
       return Err(Error::NotPublicKeyJwk);
     };
 
-    //Extract claims and payloads separated
-    let (claims, payloads) = jpt_claims.get_claims_and_payloads();
-
     // Extract JwsAlgorithm.
     let alg: ProofAlgorithm = jwk
       .alg()
@@ -163,13 +161,10 @@ impl JwpDocumentExt for CoreDocument {
       method.id().to_string()
     };
 
-    let issuer_header = IssuerProtectedHeader{ 
-      typ: Some(typ), 
-      alg, 
-      kid: Some(kid), 
-      cid: None, 
-      claims: Some(claims)
-    };
+    let mut issuer_header = IssuerProtectedHeader::new(alg);
+    issuer_header.set_typ(Some(typ));
+    issuer_header.set_kid(Some(kid));
+
 
     // Get the key identifier corresponding to the given method from the KeyId storage.
     let method_digest: MethodDigest = MethodDigest::new(method).map_err(Error::MethodDigestConstructionError)?;
@@ -177,11 +172,11 @@ impl JwpDocumentExt for CoreDocument {
       .await
       .map_err(Error::KeyIdStorageError)?;
 
-    let issued_jwp = JwpIssued::new(issuer_header, payloads);
 
-    let jwp = <K as JwkStorageExt>::generate_issuer_proof(storage.key_storage(), &key_id, issued_jwp, jwk)
+    let jwp = <K as JwkStorageExt>::generate_issuer_proof(storage.key_storage(), &key_id, issuer_header, jpt_claims.clone(), jwk)
       .await
       .map_err(Error::KeyStorageError)?;
+
     Ok(jwp)
 
   }
@@ -203,7 +198,7 @@ impl JwpDocumentExt for CoreDocument {
 
   /// Produces a JWP where the payload is produced from the given `credential`.
   /// TODO: add references to Drafts
-  async fn create_credential_jwp<K, I, T>(
+  async fn create_credential_jpt<K, I, T>(
     &self,
     credential: &Credential<T>,
     storage: &Storage<K, I>,
@@ -298,7 +293,7 @@ mod iota_document {
   
     /// Produces a JWP where the payload is produced from the given `credential`.
     /// TODO: add references to Drafts
-    async fn create_credential_jwp<K, I, T>(
+    async fn create_credential_jpt<K, I, T>(
       &self,
       credential: &Credential<T>,
       storage: &Storage<K, I>,
@@ -313,7 +308,7 @@ mod iota_document {
     {
       self
         .core_document()
-        .create_credential_jwp(credential, storage, fragment, options, custom_claims)
+        .create_credential_jpt(credential, storage, fragment, options, custom_claims)
         .await
     }
 

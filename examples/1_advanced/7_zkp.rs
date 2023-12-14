@@ -3,11 +3,15 @@ use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use identity_iota::core::FromJson;
+use identity_iota::core::Object;
 use identity_iota::core::Url;
 use identity_iota::core::json;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::FailFast;
 use identity_iota::credential::Jpt;
+use identity_iota::credential::JptCredentialValidator;
+use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::Subject;
 use identity_iota::did::DID;
 use identity_iota::did::DIDUrl;
@@ -33,6 +37,7 @@ use iota_sdk::client::Password;
 use iota_sdk::types::api::core::response::WhiteFlagResponse;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::TokenId;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 
 // The API endpoint of an IOTA node, e.g. Hornet.
@@ -103,7 +108,7 @@ async fn main() -> anyhow::Result<()> {
   .password(Password::from("secure_password_1".to_owned()))
   .build(random_stronghold_path())?);
 
-  // Insert a new Ed25519 verification method in the DID document.
+  
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) = 
@@ -114,7 +119,7 @@ async fn main() -> anyhow::Result<()> {
   .password(Password::from("secure_password_2".to_owned()))
   .build(random_stronghold_path())?);
 
-  // Insert a new Ed25519 verification method in the DID document.
+  
   let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   let (_, alice_document, fragment_alice): (Address, IotaDocument, String) = 
@@ -145,7 +150,7 @@ async fn main() -> anyhow::Result<()> {
     .build()?;
 
   let credential_jpt: Jpt = issuer_document
-    .create_credential_jwp(
+    .create_credential_jpt(
       &credential,
       &storage_issuer,
       &fragment_issuer,
@@ -155,10 +160,26 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
 
+  // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
+  // that the issuance date is not in the future and that the expiration date is not in the past:
+  let decoded_jpt = JptCredentialValidator::validate::<_, Object>(
+      &credential_jpt,
+      &issuer_document,
+      &JwtCredentialValidationOptions::default(),
+      FailFast::FirstError,
+    )
+    .unwrap();
+
+  assert_eq!(credential, decoded_jpt.credential);
+
+
   // ===========================================================================
   // Step 3: Issuer sends the Verifiable Credential to the holder.
   // ===========================================================================
   println!("Sending credential (as JPT) to the holder: {}", credential_jpt.as_str());
+
+
+  
 
   Ok(())
 }
