@@ -6,6 +6,7 @@
 mod bitmap;
 mod document_ext;
 mod error;
+pub mod status_list_2021;
 
 pub use self::bitmap::RevocationBitmap;
 pub use self::document_ext::RevocationDocumentExt;
