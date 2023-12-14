@@ -1,5 +1,8 @@
-mod bitstring_status_list;
+//! Implementation of [BitstringStatusList](w3.org/TR/vc-bitstring-status-list/)
+
+mod status_list;
+/// `BitstringStatusListCredential` definition
 pub mod credential;
 mod utils;
 
-pub use bitstring_status_list::*;
+pub use status_list::*;

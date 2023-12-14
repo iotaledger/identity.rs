@@ -8,23 +8,31 @@ use serde::Deserialize;
 use serde::Deserializer;
 use thiserror::Error;
 
-pub const BITSTRING_STATUS_LIST_DEFAULT_SIZE: usize = 16 * 1024;
+const BITSTRING_STATUS_LIST_DEFAULT_SIZE: usize = 16 * 1024;
 
+/// [`BitstringStatusList`]'s `Result` type
 pub type Result<'a, T> = std::result::Result<T, BitstringStatusListError<'a>>;
 
 #[derive(Error, Debug, Clone, PartialEq, Eq, Hash)]
+/// [`std::error::Error`] type representing the errors that could happen while working with a [`BitstringStatusList`]
 pub enum BitstringStatusListError<'a> {
   #[error("Status {0} is not a valid status")]
+  /// The provided [`Status`] doesn't match any of the [`BitstringStatusList`]'s statuses
   InvalidStatus(Status<'a>),
   #[error("Index out of bound")]
+  /// The given index is past the last entry's index
   IndexOutOfBound,
   #[error("Failed to decode {0} into a BitstringStatusList")]
+  /// The given string cannot be decoded to a valid [`BitstringStatusList`]
   DecodingError(&'a str),
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A [`BitstringStatusList`]'s status
 pub enum Status<'a> {
+  /// A `set`/`unset` status used with single bit entries
   Flag(bool),
+  /// A custom status taken from `status_messages`
   Custom(Cow<'a, str>),
 }
 
@@ -57,6 +65,7 @@ impl From<String> for Status<'_> {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Deserialize)]
+/// A [`BitstringStatusList`]'s status definition
 pub struct StatusMessage {
   #[serde(deserialize_with = "deserialize_hex_repr_string")]
   status: u64,
@@ -110,6 +119,7 @@ impl Serialize for StatusMessage {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// Implementation of [W3C's `BitstringStatusList`](https://www.w3.org/TR/vc-bitstring-status-list/)
 pub struct BitstringStatusList {
   pub(crate) data: Box<[u8]>,
   pub(crate) statuses: Box<[StatusMessage]>,
@@ -126,6 +136,8 @@ impl Default for BitstringStatusList {
 }
 
 impl BitstringStatusList {
+  /// Creates a new empty [`BitstringStatusList`], with length of `size`
+  /// bytes with entries that can be picked from `statuses`
   pub fn new(size: usize, statuses: Vec<StatusMessage>) -> Self {
     let data = vec![0; size].into_boxed_slice();
     Self {
@@ -133,9 +145,11 @@ impl BitstringStatusList {
       statuses: statuses.into_boxed_slice(),
     }
   }
-  pub fn len(&self) -> usize {
+  /// Number of entries that can fit in this [`BitstringStatusList`]
+  pub fn size(&self) -> usize {
     self.data.len() * 8 / self.entry_len()
   }
+  /// Sets the value of the `index`-th entry to `status`
   pub fn set<'s>(&mut self, index: usize, status: Status<'s>) -> Result<'s, ()> {
     if !self.statuses.is_empty() {
       self.set_with_statuses(index, status)
@@ -173,16 +187,17 @@ impl BitstringStatusList {
 
     Ok(())
   }
-  pub fn get<'a>(&'a self, index: usize) -> Option<Status<'a>> {
+  /// Gets the status of the `index`-th entry, if it exists
+  pub fn get(&self, index: usize) -> Option<Status<'_>> {
     if !self.statuses.is_empty() {
       self.get_with_statuses(index)
     } else {
       self.data.view_bits::<Lsb0>().get(index).map(|bit| Status::Flag(*bit))
     }
   }
-  fn get_with_statuses<'a>(&'a self, index: usize) -> Option<Status<'a>> {
+  fn get_with_statuses(&self, index: usize) -> Option<Status<'_>> {
     let i = index * self.entry_len();
-    if i > self.len() {
+    if i > self.size() {
       return None;
     }
     let mut status_id_bytes = [0; 8];
@@ -196,6 +211,8 @@ impl BitstringStatusList {
       .find_map(|StatusMessage { status, message }| (*status as usize == status_id).then_some(message.as_str()))
       .map(|name| Status::Custom(name.into()))
   }
+  /// Compresses and encodes this [`BitstringStatusList`] to a base64 string as
+  /// defined in [bitstring generation algorithm](https://www.w3.org/TR/vc-bitstring-status-list/#bitstring-generation-algorithm)
   pub fn as_encoded_str(&self) -> std::io::Result<String> {
     use flate2::write::GzEncoder;
     use flate2::Compression;
@@ -208,7 +225,9 @@ impl BitstringStatusList {
     let compressed = compressor.finish()?;
     Ok(BaseEncoding::encode(&compressed, Base::Base64Url))
   }
-  pub fn try_from_encoded_str<'s>(s: &'s str, statuses: Vec<StatusMessage>) -> Result<'s, Self> {
+  /// Constructs a [`BitstringStatusList`] from a base64 encoded string as defined in
+  /// (bistring expansion algorithm)[https://www.w3.org/TR/vc-bitstring-status-list/#bitstring-generation-algorithm]
+  pub fn try_from_encoded_str(s: &str, statuses: Vec<StatusMessage>) -> Result<'_, Self> {
     use flate2::read::GzDecoder;
     use identity_core::convert::Base;
     use identity_core::convert::BaseEncoding;

@@ -22,15 +22,20 @@ use crate::credential::Subject;
 use super::BitstringStatusList;
 use super::StatusMessage;
 
-const CREDENTIAL_TYPE: &'static str = "BitstringStatusListCredential";
-const CREDENTIAL_SUBJECT_TYPE: &'static str = "BitstringStatusList";
+const CREDENTIAL_TYPE: &str = "BitstringStatusListCredential";
+const CREDENTIAL_SUBJECT_TYPE: &str = "BitstringStatusList";
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-enum StatusPurpose {
+/// [`BitstringStatusList`]'s status purpose
+pub enum StatusPurpose {
   #[default]
+  /// This [`BitstringStatusList`] is comprised of binary entries, where the `set` states represents a suspended credential
   Suspension,
+  /// This [`BitstringStatusList`] is comprised of binary entries, where the `set` states represents a revoked credential
   Revocation,
+  /// This [`BitstringStatusList`] uses custom statuses
   Status,
+  /// Arbitrary purpose
   Other(String),
 }
 
@@ -119,9 +124,11 @@ impl From<BitstringStatusListCredentialSubject> for Subject {
 
 #[derive(Debug, Error)]
 #[error("{0} is not a valid BitstringStatusListCredential")]
+/// The [`std::error::Error`] created when an invalid credential is presented as a [`BitstringStatusListCredential`]
 pub struct InvalidCredentialError(Credential);
 
 #[derive(Debug)]
+/// Implementation of [BitstringStatusListCredential](https://www.w3.org/TR/vc-bitstring-status-list/#bitstring-generation-algorithm)
 pub struct BitstringStatusListCredential {
   credential: Credential,
   parsed_credential_subject: BitstringStatusListCredentialSubject,
@@ -150,7 +157,7 @@ impl TryFrom<Credential> for BitstringStatusListCredential {
         return Err(InvalidCredentialError(value));
       };
       let subject_id = &subject.id;
-      let subject = serde_json::Value::Object(serde_json::Map::from_iter(subject.properties.clone().into_iter()));
+      let subject = serde_json::Value::Object(serde_json::Map::from_iter(subject.properties.clone()));
       let mut bitstring_subject = serde_json::from_value::<BitstringStatusListCredentialSubject>(subject)
         .map_err(|e| {dbg!(e); InvalidCredentialError(value.clone())})?;
       bitstring_subject.id = subject_id.clone();
@@ -183,9 +190,11 @@ impl TryFrom<Credential> for BitstringStatusListCredential {
 }
 
 impl BitstringStatusListCredential {
+  /// Downcasts this [`BitstringStatusListCredential`] to a simple [`Credential`]
   pub fn into_inner(self) -> Credential {
     self.credential
   }
+  /// Extracts the [`BitstringStatusList`] encoded in this credential
   pub fn as_bitstring_status_list(&self) -> super::Result<'_, BitstringStatusList> {
     let encoded_list = self.parsed_credential_subject.encoded_list.as_str();
     let statuses = self.parsed_credential_subject.status_messages.clone();
@@ -194,12 +203,14 @@ impl BitstringStatusListCredential {
 }
 
 #[derive(Debug)]
+/// Builder for a [`BitstringStatusListCredential`]
 pub struct BitstringStatusListCredentialBuilder {
   inner_builder: CredentialBuilder,
   subject: BitstringStatusListCredentialSubject,
 }
 
 impl BitstringStatusListCredentialBuilder {
+  /// Seed this builder with [`BitstringStatusList`] `status_list`
   pub fn new(status_list: BitstringStatusList) -> Self {
     use std::collections::BTreeMap;
 
@@ -210,6 +221,7 @@ impl BitstringStatusListCredentialBuilder {
 
     Self { inner_builder, subject }
   }
+  /// Adds a value to the `Credential` context set.
   pub fn context(mut self, value: impl Into<Context>) -> Self {
     self.inner_builder.context.push(value.into());
     self
@@ -220,6 +232,7 @@ impl BitstringStatusListCredentialBuilder {
     self.inner_builder.id = Some(value);
     self
   }
+  /// Sets the value of the `Credential` `issuer`.
   pub fn issuer(mut self, value: impl Into<Issuer>) -> Self {
     self.inner_builder.issuer = Some(value.into());
     self
@@ -235,16 +248,19 @@ impl BitstringStatusListCredentialBuilder {
     self
   }
 
+  /// Sets the value of the `Credential`'s `credentialSubject.id`
   pub fn subject_id(mut self, id: impl Into<Url>) -> Self {
     self.subject.id = Some(id.into());
     self
   }
 
+  /// Sets the value of the `Credential`'s `credentialSubject.ttl`
   pub fn subject_ttl(mut self, ttl: u64) -> Self {
     self.subject.ttl = Some(ttl);
     self
   }
 
+  /// Sets the value of the `Credential`'s `credentialSubject.statusPurpose`
   pub fn subject_status_purpose(mut self, purpose: StatusPurpose) -> Option<Self> {
     if self.subject.status_messages.is_some()
       && matches!(&purpose, StatusPurpose::Revocation | StatusPurpose::Suspension)
@@ -257,6 +273,7 @@ impl BitstringStatusListCredentialBuilder {
     Some(self)
   }
 
+  /// Attempts to build a new [`BitstringStatusListCredential`] based on the provided configuration.
   pub fn build(mut self) -> Result<BitstringStatusListCredential, crate::Error> {
     let subject = self.subject.clone().into();
     self.inner_builder.subject.push(subject);
@@ -277,8 +294,8 @@ mod tests {
   const VALID_BITSTRING_STRATUS_LIST_CREDENTIAL: &'static str = r#"
 {
   "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://www.w3.org/ns/credentials/examples/v2"
+    "https://www.w3.org/ns/credentials/v1",
+    "https://www.w3.org/ns/credentials/examples/v1"
   ],
   "id": "https://example.com/credentials/status/3",
   "type": ["VerifiableCredential", "BitstringStatusListCredential"],
