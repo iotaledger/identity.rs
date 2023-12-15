@@ -160,7 +160,7 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
 
-  // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
+  // Validate the credential's proof using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
   let decoded_jpt = JptCredentialValidator::validate::<_, Object>(
       &credential_jpt,

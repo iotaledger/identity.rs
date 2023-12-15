@@ -347,10 +347,9 @@ impl JwkStorageExt for JwkMemStore {
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-    // Serialize Jwk to JSON
-    let jwk_json = serde_json::to_string(&jwk).map_err(|_| KeyStorageErrorKind::SerializationError)?;
+   
     // Deserialize JSON to JwkExt
-    let jwk_ext: JwkExt = serde_json::from_str(&jwk_json).map_err(|_| KeyStorageErrorKind::SerializationError)?;
+    let jwk_ext: JwkExt = jwk.try_into().map_err(|_| KeyStorageErrorKind::SerializationError)?;
 
     let jwp = JwpIssuedBuilder::new()
       .issuer_protected_header(header)
