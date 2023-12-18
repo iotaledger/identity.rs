@@ -6,16 +6,16 @@ const DEFAULT_LIST_SIZE: usize = 16 * 1024;
 
 #[derive(Debug, Error, Eq, PartialEq)]
 /// [`std::error::Error`] type representing an invalidly encoded [`StatusList2021`]
-pub struct InvalidEncodedStatusList<'s>(&'s str);
+pub struct InvalidEncodedStatusList(String);
 
-impl<'a> Display for InvalidEncodedStatusList<'a> {
+impl Display for InvalidEncodedStatusList {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}", self.0)
   }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-/// StatusList2021 data structure as described in (W3C's VC status list 2021)[https://www.w3.org/TR/2023/WD-vc-status-list-20230427/]
+/// StatusList2021 data structure as described in [W3C's VC status list 2021](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/)
 pub struct StatusList2021(Box<[u8]>);
 
 impl Default for StatusList2021 {
@@ -68,12 +68,13 @@ impl StatusList2021 {
   }
   /// Attempts to parse a [`StatusList2021`] from a string, following the
   /// [StatusList2021 expansion algorithm](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#bitstring-expansion-algorithm)
-  pub fn try_from_encoded_str(s: &str) -> Result<Self, InvalidEncodedStatusList<'_>> {
+  pub fn try_from_encoded_str(s: &str) -> Result<Self, InvalidEncodedStatusList> {
     use flate2::read::GzDecoder;
     use identity_core::convert::Base;
     use identity_core::convert::BaseEncoding;
 
-    let compressed_status_list = BaseEncoding::decode(s, Base::Base64Url).or(Err(InvalidEncodedStatusList(s)))?;
+    let compressed_status_list =
+      BaseEncoding::decode(s, Base::Base64Url).or(Err(InvalidEncodedStatusList(s.to_owned())))?;
     let status_list = {
       use std::io::Read;
 
@@ -81,7 +82,7 @@ impl StatusList2021 {
       let mut status_list = vec![];
       decompressor
         .read_to_end(&mut status_list)
-        .or(Err(InvalidEncodedStatusList(s)))?;
+        .or(Err(InvalidEncodedStatusList(s.to_owned())))?;
 
       StatusList2021(status_list.into_boxed_slice())
     };
