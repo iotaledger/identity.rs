@@ -91,6 +91,7 @@ impl JwtCredentialValidatorUtils {
     trusted_issuers: &[DOC],
     status_check: crate::validator::StatusCheck,
   ) -> ValidationUnitResult {
+    use crate::credential::CredentialStatus;
     use identity_did::CoreDID;
     use identity_document::document::CoreDocument;
 
@@ -102,13 +103,13 @@ impl JwtCredentialValidatorUtils {
       None => Ok(()),
       Some(status) => {
         // Check status is supported.
-        if status.type_ != crate::revocation::RevocationBitmap::TYPE {
+        if status.r#type() != crate::revocation::RevocationBitmap::TYPE {
           if status_check == crate::validator::StatusCheck::SkipUnsupported {
             return Ok(());
           }
           return Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
             "unsupported type '{}'",
-            status.type_
+            status.r#type()
           ))));
         }
         let status: crate::credential::RevocationBitmapStatus =

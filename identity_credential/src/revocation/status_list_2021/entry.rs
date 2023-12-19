@@ -3,6 +3,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use super::credential::StatusPurpose;
+use crate::credential::CredentialStatus;
 
 const CREDENTIAL_STATUS_TYPE: &str = "StatusList2021Entry";
 
@@ -55,6 +56,15 @@ pub struct StatusList2021Entry {
   #[serde(deserialize_with = "serde_aux::prelude::deserialize_number_from_string")]
   status_list_index: usize,
   status_list_credential: Url,
+}
+
+impl CredentialStatus for StatusList2021Entry {
+  fn id(&self) -> &Url {
+    &self.id
+  }
+  fn r#type(&self) -> &str {
+    self.r#type.0
+  }
 }
 
 impl StatusList2021Entry {

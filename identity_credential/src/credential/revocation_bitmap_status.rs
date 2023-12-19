@@ -12,10 +12,12 @@ use crate::credential::Status;
 use crate::error::Error;
 use crate::error::Result;
 
+use super::CustomStatus;
+
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential]
 /// using the `RevocationBitmap2022` specification.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct RevocationBitmapStatus(Status);
+pub struct RevocationBitmapStatus(CustomStatus);
 
 impl RevocationBitmapStatus {
   const INDEX_PROPERTY: &'static str = "revocationBitmapIndex";
@@ -46,7 +48,7 @@ impl RevocationBitmapStatus {
 
     let mut object = Object::new();
     object.insert(Self::INDEX_PROPERTY.to_owned(), Value::String(index.to_string()));
-    RevocationBitmapStatus(Status::new_with_properties(
+    RevocationBitmapStatus(CustomStatus::new_with_properties(
       Url::from(id),
       Self::TYPE.to_owned(),
       object,
@@ -77,6 +79,23 @@ impl TryFrom<Status> for RevocationBitmapStatus {
   type Error = Error;
 
   fn try_from(status: Status) -> Result<Self> {
+    use crate::credential::CredentialStatus;
+
+    match status {
+      Status::StatusList2021(s) => Err(Self::Error::InvalidStatus(format!(
+        "expected type '{}', got '{}'",
+        Self::TYPE,
+        s.r#type()
+      ))),
+      Status::Other(s) => s.try_into(),
+    }
+  }
+}
+
+impl TryFrom<CustomStatus> for RevocationBitmapStatus {
+  type Error = Error;
+
+  fn try_from(status: CustomStatus) -> Result<Self> {
     if status.type_ != Self::TYPE {
       return Err(Error::InvalidStatus(format!(
         "expected type '{}', got '{}'",
@@ -124,7 +143,13 @@ impl TryFrom<Status> for RevocationBitmapStatus {
 
 impl From<RevocationBitmapStatus> for Status {
   fn from(status: RevocationBitmapStatus) -> Self {
-    status.0
+    Status::Other(status.0)
+  }
+}
+
+impl From<RevocationBitmapStatus> for CustomStatus {
+  fn from(value: RevocationBitmapStatus) -> Self {
+    value.0
   }
 }
 
@@ -145,6 +170,7 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_did::DIDUrl;
 
+  use crate::credential::CustomStatus;
   use crate::Error;
 
   use super::RevocationBitmapStatus;
@@ -162,15 +188,15 @@ mod tests {
       RevocationBitmapStatus::INDEX_PROPERTY.to_owned(),
       Value::String(revocation_list_index.to_string()),
     )]);
-    let status: Status =
-      Status::new_with_properties(url.clone(), RevocationBitmapStatus::TYPE.to_owned(), object.clone());
+    let status: CustomStatus =
+      CustomStatus::new_with_properties(url.clone(), RevocationBitmapStatus::TYPE.to_owned(), object.clone());
     assert_eq!(embedded_revocation_status, status.try_into().unwrap());
 
-    let status_missing_property: Status =
-      Status::new_with_properties(url.clone(), RevocationBitmapStatus::TYPE.to_owned(), Object::new());
+    let status_missing_property: CustomStatus =
+      CustomStatus::new_with_properties(url.clone(), RevocationBitmapStatus::TYPE.to_owned(), Object::new());
     assert!(RevocationBitmapStatus::try_from(status_missing_property).is_err());
 
-    let status_wrong_type: Status = Status::new_with_properties(url, "DifferentType".to_owned(), object);
+    let status_wrong_type: CustomStatus = CustomStatus::new_with_properties(url, "DifferentType".to_owned(), object);
     assert!(RevocationBitmapStatus::try_from(status_wrong_type).is_err());
   }
 
