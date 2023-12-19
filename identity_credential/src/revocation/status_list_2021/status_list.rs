@@ -35,6 +35,7 @@ impl StatusList2021 {
     StatusList2021(store.into_boxed_slice())
   }
   /// Returns the number of entries
+  #[allow(clippy::len_without_is_empty)]
   pub const fn len(&self) -> usize {
     self.0.len() * 8
   }

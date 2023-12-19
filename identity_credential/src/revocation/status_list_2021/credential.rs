@@ -1,11 +1,18 @@
-use std::{borrow::Cow, fmt::Display, ops::Deref, str::FromStr};
+use std::borrow::Cow;
+use std::fmt::Display;
+use std::ops::Deref;
+use std::str::FromStr;
 
-use identity_core::common::{Context, OneOrMany, Timestamp, Url};
-use serde::{Deserialize, Serialize};
+use identity_core::common::Context;
+use identity_core::common::OneOrMany;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use serde::Deserialize;
+use serde::Serialize;
 use thiserror::Error;
 
-const CREDENTIAL_TYPE: &'static str = "StatusList2021Credential";
-const CREDENTIAL_SUBJECT_TYPE: &'static str = "StatusList2021";
+const CREDENTIAL_TYPE: &str = "StatusList2021Credential";
+const CREDENTIAL_SUBJECT_TYPE: &str = "StatusList2021";
 
 #[derive(Clone, Debug, Error)]
 /// [Error](std::error::Error) type that represents the possible errors that can be
@@ -19,12 +26,17 @@ pub enum StatusList2021CredentialError {
   InvalidProperty(String),
 }
 
-use crate::credential::{Credential, CredentialBuilder, Issuer, Proof};
+use crate::credential::Credential;
+use crate::credential::CredentialBuilder;
+use crate::credential::Issuer;
+use crate::credential::Proof;
 
-use super::{status_list::InvalidEncodedStatusList, StatusList2021};
+use super::status_list::InvalidEncodedStatusList;
+use super::StatusList2021;
 
 #[derive(Debug, Eq, PartialEq, Serialize)]
 #[repr(transparent)]
+#[serde(transparent)]
 /// A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential)
 pub struct StatusList2021Credential(Credential);
 
@@ -85,7 +97,7 @@ impl StatusList2021Credential {
 }
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[serde(untagged, rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 /// [`StatusList2021Credential`]'s purpose
 pub enum StatusPurpose {
   #[default]
@@ -249,5 +261,25 @@ impl StatusList2021CredentialBuilder {
       .subject(subject)
       .build()
       .map(StatusList2021Credential)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn status_purpose_serialization_works() {
+    assert_eq!(
+      serde_json::to_string(&StatusPurpose::Revocation).ok(),
+      Some(format!("\"{}\"", StatusPurpose::Revocation))
+    );
+  }
+  #[test]
+  fn status_purpose_deserialization_works() {
+    assert_eq!(
+      serde_json::from_str::<StatusPurpose>("\"suspension\"").ok(),
+      Some(StatusPurpose::Suspension),
+    )
   }
 }
