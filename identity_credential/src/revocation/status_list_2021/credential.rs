@@ -34,11 +34,17 @@ use crate::credential::Proof;
 use super::status_list::InvalidEncodedStatusList;
 use super::StatusList2021;
 
-#[derive(Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[repr(transparent)]
-#[serde(transparent)]
+#[serde(try_from = "Credential", into = "Credential")]
 /// A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential)
 pub struct StatusList2021Credential(Credential);
+
+impl From<StatusList2021Credential> for Credential {
+  fn from(value: StatusList2021Credential) -> Self {
+    value.into_inner()
+  }
+}
 
 impl Deref for StatusList2021Credential {
   type Target = Credential;
@@ -268,6 +274,25 @@ impl StatusList2021CredentialBuilder {
 mod tests {
   use super::*;
 
+  const STATUS_LIST_2021_CREDENTIAL_SAMPLE: &str = r#"
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://w3id.org/vc/status-list/2021/v1"
+  ],
+  "id": "https://example.com/credentials/status/3",
+  "type": ["VerifiableCredential", "StatusList2021Credential"],
+  "issuer": "did:example:12345",
+  "issuanceDate": "2021-04-05T14:27:40Z",
+  "credentialSubject": {
+    "id": "https://example.com/status/3#list",
+    "type": "StatusList2021",
+    "statusPurpose": "revocation",
+    "encodedList": "H4sIAAAAAAAAA-3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAIC3AYbSVKsAQAAA"
+  }
+}
+  "#;
+
   #[test]
   fn status_purpose_serialization_works() {
     assert_eq!(
@@ -281,5 +306,11 @@ mod tests {
       serde_json::from_str::<StatusPurpose>("\"suspension\"").ok(),
       Some(StatusPurpose::Suspension),
     )
+  }
+  #[test]
+  fn status_list_2021_credential_deserialization_works() {
+    let credential = serde_json::from_str::<StatusList2021Credential>(STATUS_LIST_2021_CREDENTIAL_SAMPLE)
+      .expect("Failed to deserialize");
+    assert_eq!(credential.purpose(), StatusPurpose::Revocation);
   }
 }

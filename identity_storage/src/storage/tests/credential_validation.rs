@@ -8,7 +8,6 @@ use identity_core::common::Url;
 use identity_credential::credential::CustomStatus;
 use identity_credential::credential::Jwt;
 use identity_credential::credential::RevocationBitmapStatus;
-use identity_credential::credential::Status;
 use identity_credential::revocation::RevocationBitmap;
 use identity_credential::revocation::RevocationDocumentExt;
 use identity_credential::validator::FailFast;
