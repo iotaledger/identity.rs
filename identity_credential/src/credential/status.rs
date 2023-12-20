@@ -29,6 +29,18 @@ pub enum Status<T = Object> {
   Other(CustomStatus<T>),
 }
 
+impl<T> From<CustomStatus<T>> for Status<T> {
+  fn from(value: CustomStatus<T>) -> Self {
+    Status::Other(value)
+  }
+}
+
+impl<T> From<StatusList2021Entry> for Status<T> {
+  fn from(value: StatusList2021Entry) -> Self {
+    Status::StatusList2021(value)
+  }
+}
+
 impl CredentialStatus for Status {
   fn id(&self) -> &Url {
     match self {

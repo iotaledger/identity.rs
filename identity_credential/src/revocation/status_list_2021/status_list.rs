@@ -26,9 +26,10 @@ impl Default for StatusList2021 {
 
 impl StatusList2021 {
   /// Returns a new empty [`StatusList2021`] of `num_entries` entries
-  /// ## Note
-  /// The actual length of the list might be slightly bigger
+  /// ## Notes:
+  /// - The actual length of the list might be slightly bigger
   /// depending on the number of bytes the list will use.
+  /// - The specification suggests a list size of at least 16KBs
   pub fn new(num_entries: usize) -> Self {
     let size = num_entries / 8 + (num_entries % 8 != 0) as usize;
     let store = vec![0; size];
