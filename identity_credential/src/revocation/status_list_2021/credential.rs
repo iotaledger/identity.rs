@@ -11,7 +11,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use thiserror::Error;
 
-const CREDENTIAL_TYPE: &str = "StatusList2021Credential";
+/// The type of a `StatusList2021Credential`
+pub const CREDENTIAL_TYPE: &str = "StatusList2021Credential";
 const CREDENTIAL_SUBJECT_TYPE: &str = "StatusList2021";
 
 #[derive(Clone, Debug, Error)]
@@ -77,6 +78,10 @@ impl StatusList2021Credential {
     let subject = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap(); // Safety: `Self` has already been validated as a valid StatusList2021Credential
     subject.status_purpose
   }
+  fn status_list(&self) -> Result<StatusList2021, InvalidEncodedStatusList> {
+    let status_list_credential = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap();
+    StatusList2021::try_from_encoded_str(&status_list_credential.encoded_list)
+  }
   /// Updates the [`StatusList2021`] stored in this credential, applying `f` to it
   pub fn update_status_list<F>(&mut self, f: F) -> Result<(), InvalidEncodedStatusList>
   where
@@ -85,8 +90,7 @@ impl StatusList2021Credential {
     use identity_core::common::Value;
 
     let new_encoded_status_list = {
-      let status_list_credential = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap();
-      let mut status_list = StatusList2021::try_from_encoded_str(&status_list_credential.encoded_list)?;
+      let mut status_list = self.status_list()?;
       f(&mut status_list);
       status_list.into_encoded_str()
     };
@@ -99,6 +103,11 @@ impl StatusList2021Credential {
       .and_modify(|value| *value = Value::String(new_encoded_status_list));
 
     Ok(())
+  }
+  /// Returns the status of the `index-th` entry
+  pub fn entry(&self, index: usize) -> Result<Option<bool>, InvalidEncodedStatusList> {
+    let status_list = self.status_list()?;
+    Ok(status_list.get(index))
   }
 }
 
@@ -212,11 +221,6 @@ impl StatusList2021CredentialBuilder {
     self.id = Some(id);
     self
   }
-  /// Sets `issuanceDate`
-  pub const fn issuance_date(mut self, time: Timestamp) -> Self {
-    self.inner_builder.issuance_date = Some(time);
-    self
-  }
   /// Sets `expirationDate`
   pub const fn expiration_date(mut self, time: Timestamp) -> Self {
     self.inner_builder.expiration_date = Some(time);
@@ -243,7 +247,7 @@ impl StatusList2021CredentialBuilder {
     self
   }
   /// Consumes this [`StatusList2021CredentialBuilder`] into a [`StatusList2021Credential`]
-  pub fn build(self) -> Result<StatusList2021Credential, crate::Error> {
+  pub fn build(mut self) -> Result<StatusList2021Credential, crate::Error> {
     let subject = {
       use crate::credential::Subject;
       use identity_core::common::Value;
@@ -256,7 +260,14 @@ impl StatusList2021CredentialBuilder {
       .into_iter()
       .collect();
       if self.id.is_some() {
-        Subject::with_id_and_properties(self.id.unwrap(), properties)
+        let id = self.id.unwrap();
+        let id_without_fragment = {
+          let mut id = id.clone();
+          id.set_fragment(None);
+          id
+        };
+        self.inner_builder.id = Some(id_without_fragment);
+        Subject::with_id_and_properties(id, properties)
       } else {
         Subject::with_properties(properties)
       }
@@ -265,6 +276,7 @@ impl StatusList2021CredentialBuilder {
       .inner_builder
       .type_(CREDENTIAL_TYPE)
       .subject(subject)
+      .issuance_date(Timestamp::now_utc())
       .build()
       .map(StatusList2021Credential)
   }

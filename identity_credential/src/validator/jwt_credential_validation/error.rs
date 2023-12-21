@@ -101,6 +101,9 @@ pub enum JwtValidationError {
   /// Indicates that the credential has been revoked.
   #[error("credential has been revoked")]
   Revoked,
+  /// Indicates that the credential has been suspended.
+  #[error("credential has been suspended")]
+  Suspended,
 }
 
 /// Specifies whether an error is related to a credential issuer or the presentation holder.
