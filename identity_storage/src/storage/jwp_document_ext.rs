@@ -2,6 +2,7 @@
 
 use identity_core::common::Object;
 use identity_credential::credential::Credential;
+use identity_credential::presentation::SelectiveDiscosurePresentation;
 use identity_document::document::CoreDocument;
 use identity_verification::MethodData;
 use jsonprooftoken::jpt::claims;
@@ -76,7 +77,7 @@ pub trait JwpDocumentExt {
     K: JwkStorageExt,
     I: KeyIdStorage;
 
-  /// Produces a JWP where the payload is produced from the given `credential`.
+  /// Produces a JPT where the payload is produced from the given `credential`.
   /// TODO: add references to Drafts
   async fn create_credential_jpt<K, I, T>(
     &self,
@@ -90,6 +91,16 @@ pub trait JwpDocumentExt {
     K: JwkStorageExt,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
+
+
+  
+  /// Produces a JPT in the pre where the payload is produced from the given `credential`.
+  /// TODO: add references to Drafts
+  async fn create_presentation_jpt(
+    &self,
+    presentation: &SelectiveDiscosurePresentation,
+    options: &JwpOptions,
+  ) -> StorageResult<Jpt>;
 
 
  
@@ -196,7 +207,7 @@ impl JwpDocumentExt for CoreDocument {
     todo!()
   }
 
-  /// Produces a JWP where the payload is produced from the given `credential`.
+  /// Produces a JPT where the payload is produced from the given `credential`.
   /// TODO: add references to Drafts
   async fn create_credential_jpt<K, I, T>(
     &self,
@@ -219,6 +230,15 @@ impl JwpDocumentExt for CoreDocument {
       .create_issued_jwp(storage, fragment, &jpt_claims, options)
       .await
       .map(|jwp| Jpt::new(jwp))
+  }
+
+
+  async fn create_presentation_jpt(
+    &self,
+    presentation: &SelectiveDiscosurePresentation,
+    options: &JwpOptions,
+  ) -> StorageResult<Jpt> {
+    todo!()
   }
 
 }
@@ -312,5 +332,16 @@ mod iota_document {
         .await
     }
 
+
+    async fn create_presentation_jpt(
+      &self,
+      presentation: &SelectiveDiscosurePresentation,
+      options: &JwpOptions,
+    ) -> StorageResult<Jpt> {
+      self
+        .core_document()
+        .create_presentation_jpt(presentation, options)
+        .await
+    }
 }
 }

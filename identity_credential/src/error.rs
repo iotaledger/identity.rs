@@ -76,4 +76,7 @@ pub enum Error {
   #[error("could not deserialize JWT claims set")]
   JptClaimsSetDeserializationError(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 
+  /// Cause by an invalid attribute path
+  #[error("Attribute Not found")]
+  SelectiveDiscosureError
 }

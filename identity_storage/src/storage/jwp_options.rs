@@ -4,7 +4,7 @@ use identity_core::common::Url;
 
 //TODO: have to choose which options makes sense in the context of jwp
 
-/// Options for creating a JSON Web Signature.
+/// Options for creating a JSON Web Proof.
 #[non_exhaustive]
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -12,22 +12,16 @@ use identity_core::common::Url;
 pub struct JwpOptions {
 
   /// The Type value to be placed in the protected header.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.9)
   #[serde(skip_serializing_if = "Option::is_none")]
   pub typ: Option<String>,
 
-  /// The nonce to be placed in the protected header.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
+  /// The nonce to be placed in the Presentation Protected Header.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub nonce: Option<String>,
 
-  /// The kid to set in the protected header.
+  /// The kid to set in the Issuer Protected Header.
   ///
-  /// If unset, the kid of the JWK with which the JWS is produced is used.
-  ///
-  /// [More Info](https://www.rfc-editor.org/rfc/rfc7515#section-4.1.4)
+  /// If unset, the kid of the JWK with which the JWP is produced is used.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub kid: Option<String>
 }

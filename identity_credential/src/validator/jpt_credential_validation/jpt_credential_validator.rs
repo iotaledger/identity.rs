@@ -3,7 +3,7 @@ use identity_did::{DIDUrl, CoreDID};
 use identity_document::{document::CoreDocument, verifiable::JwsVerificationOptions};
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
-use jsonprooftoken::jwp::issued::JwpIssuedVerifier;
+use jsonprooftoken::jwp::issued::JwpIssuedDecoder;
 use jsonprooftoken::{jwp::issued::JwpIssued, encoding::SerializationType};
 
 use crate::credential::CredentialJwtClaims;
@@ -137,7 +137,7 @@ fn verify_proof<DOC, T>(
     DOC: AsRef<CoreDocument>,
   {
 
-    let decoded = JwpIssuedVerifier::decode(credential.as_str(), SerializationType::COMPACT).map_err(|err| JwtValidationError::JwpDecodingError(err))?;
+    let decoded = JwpIssuedDecoder::decode(credential.as_str(), SerializationType::COMPACT).map_err(|err| JwtValidationError::JwpDecodingError(err))?;
 
     // If no method_url is set, parse the `kid` to a DID Url which should be the identifier
     // of a verification method in a trusted issuer's DID document.
@@ -196,7 +196,7 @@ fn verify_proof<DOC, T>(
 
   /// Verify the signature using the given `public_key` and `signature_verifier`.
   fn verify_decoded_jwp<T>(
-    decoded: JwpIssuedVerifier,
+    decoded: JwpIssuedDecoder,
     public_key: &JwkExt,
   ) -> Result<DecodedJptCredential<T>, JwtValidationError>
   where

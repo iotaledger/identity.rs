@@ -9,10 +9,12 @@ mod jwt_presentation_options;
 mod jwt_serialization;
 mod presentation;
 mod presentation_builder;
+mod jwp_presentation_builder;
 
 pub use self::jwt_presentation_options::JwtPresentationOptions;
 pub use self::presentation::Presentation;
 pub use self::presentation_builder::PresentationBuilder;
+pub use self::jwp_presentation_builder::SelectiveDiscosurePresentation;
 
 #[cfg(feature = "validator")]
 pub(crate) use self::jwt_serialization::PresentationJwtClaims;
