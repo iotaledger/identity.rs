@@ -1,3 +1,6 @@
+use identity_verification::jwk::Jwk;
+use jsonprooftoken::jwp::header::PresentationProtectedHeader;
+use jsonprooftoken::jwp::presented::JwpPresented;
 use jsonprooftoken::jwp::{presented::JwpPresentedBuilder, issued::JwpIssued};
 use crate::error::Error;
 use crate::error::Result;
@@ -76,6 +79,18 @@ impl SelectiveDiscosurePresentation {
     pub fn set_undisclosed(&mut self, path: &str) -> Result<()>{
         let _ = self.jwp_builder.set_undisclosed(path).map_err(|_| Error::SelectiveDiscosureError);
         Ok(())
+    }
+
+
+    /// Set Presenation Protected Header
+    pub fn set_presentation_header(&mut self, ph: PresentationProtectedHeader) {
+        self.jwp_builder.presentation_protected_header(ph);
+    }
+
+
+    /// Get the builder
+    pub fn builder(&self) -> &JwpPresentedBuilder {
+        &self.jwp_builder
     }
 
 }

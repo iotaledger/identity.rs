@@ -31,6 +31,9 @@ pub enum JwkStorageDocumentError {
   /// Caused by an invalid JWP algorithm. //TODO: new error
   #[error("invalid JWP algorithm")]
   InvalidJwpAlgorithm,
+  /// Cannot cunstruct a valid Jwp (issued or presented form)
+  #[error("Not able to construct a valid Jwp")]
+  JwpBuildingError,
 
   /// Caused by a failure to construct a verification method.
   #[error("method generation failed: unable to create a valid verification method")]

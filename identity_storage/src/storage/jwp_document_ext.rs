@@ -2,16 +2,22 @@
 
 use identity_core::common::Object;
 use identity_credential::credential::Credential;
+use identity_credential::presentation;
 use identity_credential::presentation::SelectiveDiscosurePresentation;
 use identity_document::document::CoreDocument;
 use identity_verification::MethodData;
+use jsonprooftoken::encoding::SerializationType;
+use jsonprooftoken::jpa::algs::PresentationProofAlgorithm;
 use jsonprooftoken::jpt::claims;
 use jsonprooftoken::jpt::claims::Claims;
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jpt::payloads::Payloads;
+use jsonprooftoken::jwk::key::Jwk;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
+use jsonprooftoken::jwp::header::PresentationProtectedHeader;
 use jsonprooftoken::jwp::issued::JwpIssued;
 use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
+use jsonprooftoken::jwp::presented;
 use jsonprooftoken::jwp::presented::JwpPresented;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -26,6 +32,7 @@ use crate::KeyIdStorage;
 use crate::JwkGenOutput;
 use crate::key_id_storage::MethodDigest;
 use super::JwkStorageDocumentError as Error;
+use super::jwp_options;
 use async_trait::async_trait;
 use identity_did::DIDUrl;
 use identity_verification::VerificationMethod;
@@ -66,16 +73,12 @@ pub trait JwpDocumentExt {
     I: KeyIdStorage;
 
 
-  async fn create_presented_jwp<K, I>(
+  async fn create_presented_jwp(
     &self,
-    storage: &Storage<K, I>,
-    fragment: &str,
-    payload: &[u8],
+    presentation: &mut SelectiveDiscosurePresentation,
+    method_id: &str,
     options: &JwpOptions,
-  ) -> StorageResult<String>
-  where
-    K: JwkStorageExt,
-    I: KeyIdStorage;
+  ) -> StorageResult<String>;
 
   /// Produces a JPT where the payload is produced from the given `credential`.
   /// TODO: add references to Drafts
@@ -98,7 +101,8 @@ pub trait JwpDocumentExt {
   /// TODO: add references to Drafts
   async fn create_presentation_jpt(
     &self,
-    presentation: &SelectiveDiscosurePresentation,
+    presentation: &mut SelectiveDiscosurePresentation,
+    method_id: &str,
     options: &JwpOptions,
   ) -> StorageResult<Jpt>;
 
@@ -193,18 +197,51 @@ impl JwpDocumentExt for CoreDocument {
   }
 
 
-  async fn create_presented_jwp<K, I>(
+  async fn create_presented_jwp(
     &self,
-    storage: &Storage<K, I>,
-    fragment: &str,
-    payload: &[u8],
+    presentation: &mut SelectiveDiscosurePresentation,
+    method_id: &str,
     options: &JwpOptions,
   ) -> StorageResult<String>
-  where
-    K: JwkStorageExt,
-    I: KeyIdStorage
   {
-    todo!()
+    // Obtain the method corresponding to the given fragment.
+    let method: &VerificationMethod = self.resolve_method(method_id, None).ok_or(Error::MethodNotFound)?;
+    let MethodData::PublicKeyJwk(ref jwk) = method.data() else {
+      return Err(Error::NotPublicKeyJwk);
+    };
+
+    // Extract JwsAlgorithm.
+    let alg: ProofAlgorithm = jwk
+      .alg()
+      .unwrap_or("")
+      .parse()
+      .map_err(|_| Error::InvalidJwpAlgorithm)?;
+
+    let public_key: Jwk = jwk.try_into().map_err(|_| Error::NotPublicKeyJwk)?;
+
+
+
+    let kid = if let Some(ref kid) = options.kid {
+      kid.clone()
+    } else {
+      method.id().to_string()
+    };
+
+
+    let mut presentation_header = PresentationProtectedHeader::new(alg.into());
+    presentation_header.set_kid(Some(kid));
+    presentation_header.set_nonce(options.nonce.clone());
+
+
+    presentation.set_presentation_header(presentation_header);
+
+    let jwp_builder = presentation.builder();
+
+    let presented_jwp = jwp_builder.build(&public_key).map_err(|_| Error::JwpBuildingError)?;
+
+    Ok(presented_jwp.encode(SerializationType::COMPACT).map_err(|e| Error::EncodingError(Box::new(e)))?)
+  
+
   }
 
   /// Produces a JPT where the payload is produced from the given `credential`.
@@ -235,12 +272,19 @@ impl JwpDocumentExt for CoreDocument {
 
   async fn create_presentation_jpt(
     &self,
-    presentation: &SelectiveDiscosurePresentation,
+    presentation: &mut SelectiveDiscosurePresentation,
+    method_id: &str,
     options: &JwpOptions,
   ) -> StorageResult<Jpt> {
-    todo!()
+    
+    self
+      .create_presented_jwp(presentation, method_id, options)
+      .await
+      .map(|jwp| Jpt::new(jwp))
+
   }
 
+  
 }
 
 
@@ -294,20 +338,16 @@ mod iota_document {
     }
   
   
-    async fn create_presented_jwp<K, I>(
+    async fn create_presented_jwp(
       &self,
-      storage: &Storage<K, I>,
-      fragment: &str,
-      payload: &[u8],
+      presentation: &mut SelectiveDiscosurePresentation,
+      method_id: &str,
       options: &JwpOptions,
     ) -> StorageResult<String>
-    where
-      K: JwkStorageExt,
-      I: KeyIdStorage
     {
       self
         .core_document()
-        .create_presented_jwp(storage, fragment, payload, options)
+        .create_presented_jwp(presentation, method_id, options)
         .await
     }
   
@@ -335,12 +375,13 @@ mod iota_document {
 
     async fn create_presentation_jpt(
       &self,
-      presentation: &SelectiveDiscosurePresentation,
+      presentation: &mut SelectiveDiscosurePresentation,
+      method_id: &str,
       options: &JwpOptions,
     ) -> StorageResult<Jpt> {
       self
         .core_document()
-        .create_presentation_jpt(presentation, options)
+        .create_presentation_jpt(presentation, method_id, options)
         .await
     }
 }
