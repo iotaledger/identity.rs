@@ -16,11 +16,9 @@ use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::curves::EllipticCurveTypes;
-use jsonprooftoken::jwk::key;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwk::types::KeyPairSubtype;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
-use jsonprooftoken::jwp::issued::JwpIssued;
 use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 use rand::distributions::DistString;
 use shared::Shared;
@@ -35,7 +33,6 @@ use super::KeyStorageError;
 use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
-use super::key_type;
 use crate::JwkStorageExt;
 use crate::key_storage::JwkStorage;
 
@@ -203,7 +200,12 @@ impl JwkMemStore {
   pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
 
   const BLS12381SHA256_KEY_TYPE_STR: &str = "Bls12381Sha256";
+  /// The BLS12381-SHA256 key type
   pub const BLS12381SHA256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHA256_KEY_TYPE_STR);
+
+  const BLS12381SHAKE256_KEY_TYPE_STR: &str = "Bls12381Shake256";
+  /// The BLS12381-SHAKE256 key type
+  pub const BLS12381SHAKE256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHAKE256_KEY_TYPE_STR);
 }
 
 impl MemStoreKeyType {

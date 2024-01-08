@@ -1,6 +1,4 @@
-use identity_verification::jwk::Jwk;
 use jsonprooftoken::jwp::header::PresentationProtectedHeader;
-use jsonprooftoken::jwp::presented::JwpPresented;
 use jsonprooftoken::jwp::{presented::JwpPresentedBuilder, issued::JwpIssued};
 use crate::error::Error;
 use crate::error::Result;

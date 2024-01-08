@@ -3,24 +3,15 @@
 use identity_core::common::Object;
 use identity_credential::credential::Credential;
 use identity_credential::credential::JwpCredentialOptions;
-use identity_credential::presentation;
 use identity_credential::presentation::JwpPresentationOptions;
 use identity_credential::presentation::SelectiveDisclosurePresentation;
 use identity_document::document::CoreDocument;
 use identity_verification::MethodData;
 use jsonprooftoken::encoding::SerializationType;
-use jsonprooftoken::jpa::algs::PresentationProofAlgorithm;
-use jsonprooftoken::jpt::claims;
-use jsonprooftoken::jpt::claims::Claims;
 use jsonprooftoken::jpt::claims::JptClaims;
-use jsonprooftoken::jpt::payloads::Payloads;
 use jsonprooftoken::jwk::key::Jwk;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 use jsonprooftoken::jwp::header::PresentationProtectedHeader;
-use jsonprooftoken::jwp::issued::JwpIssued;
-use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
-use jsonprooftoken::jwp::presented;
-use jsonprooftoken::jwp::presented::JwpPresented;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use crate::Storage;
@@ -61,6 +52,7 @@ pub trait JwpDocumentExt {
     I: KeyIdStorage;
 
 
+  /// Compute a JWP in the Issued form representing the Verifiable Credential
   async fn create_issued_jwp<K, I>(
     &self,
     storage: &Storage<K, I>,
@@ -73,6 +65,7 @@ pub trait JwpDocumentExt {
     I: KeyIdStorage;
 
 
+  /// Compute a JWP in the Presented form representing the presented Verifiable Credential after the Selective Disclosure of attributes
   async fn create_presented_jwp(
     &self,
     presentation: &mut SelectiveDisclosurePresentation,

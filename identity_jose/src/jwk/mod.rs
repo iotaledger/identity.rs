@@ -19,4 +19,3 @@ pub use self::key_params::*;
 pub use self::key_set::*;
 pub use self::key_type::*;
 pub use self::key_use::*;
-pub use self::jwk_ext::*;

@@ -28,8 +28,10 @@ pub enum JwkOperation {
   /// Derive bits not to be used as a key.
   DeriveBits,
 
-  //TODO: add ProofGeneration/ProofVerification
+  //TODO: added ProofGeneration/ProofVerification
+  /// Compute proof
   ProofGeneration,
+  /// Verify proof
   ProofVerification
 }
 

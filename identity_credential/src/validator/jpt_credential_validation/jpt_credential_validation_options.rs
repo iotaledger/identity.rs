@@ -1,12 +1,8 @@
 
 use identity_core::common::Timestamp;
-use identity_core::common::Url;
 use identity_document::verifiable::JwpVerificationOptions;
-use identity_document::verifiable::JwsVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
-
-use crate::validator::SubjectHolderRelationship;
 
 /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
 #[non_exhaustive]

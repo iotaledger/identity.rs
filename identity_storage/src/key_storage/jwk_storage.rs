@@ -5,16 +5,11 @@ use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageError;
 use crate::key_storage::KeyType;
 use async_trait::async_trait;
-use identity_credential::credential::Issuer;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jpt::claims::JptClaims;
-use jsonprooftoken::jpt::payloads;
-use jsonprooftoken::jpt::payloads::Payloads;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
-use jsonprooftoken::jwp::issued::JwpIssued;
-use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
 
 use super::jwk_gen_output::JwkGenOutput;
 
