@@ -28,7 +28,7 @@ impl JptCredentialValidator {
     /// - the issuance date,
     /// - the semantic structure.
     pub fn validate<DOC, T>(
-        credential_jpt: &Jpt, //TODO: the validation process could be handled both for JWT and JPT by the same function, the function could recognise if the token in input is a JWT or JPT based on the typ field
+        credential_jpt: &Jpt,
         issuer: &DOC,
         options: &JptCredentialValidationOptions,
         fail_fast: FailFast,
@@ -41,7 +41,7 @@ impl JptCredentialValidator {
 
         // First verify the JWP proof and decode the result into a credential token, then apply all other validations.
         let credential_token =
-        Self::verify_proof(credential_jpt, std::slice::from_ref(issuer.as_ref()), &options.verification_options)
+        Self::verify_proof(credential_jpt, issuer, &options.verification_options)
           .map_err(|err| CompoundCredentialValidationError {
             validation_errors: [err].into(),
           })?;
@@ -118,7 +118,7 @@ impl JptCredentialValidator {
 /// Proof verification function
 fn verify_proof<DOC, T>(
     credential: &Jpt,
-    trusted_issuers: &[DOC],
+    issuer: &DOC,
     options: &JwpVerificationOptions,
   ) -> Result<DecodedJptCredential<T>, JwtValidationError>
   where
@@ -151,12 +151,12 @@ fn verify_proof<DOC, T>(
       }
     };
 
-    // locate the corresponding issuer
-    let issuer: &CoreDocument = trusted_issuers
-      .iter()
-      .map(AsRef::as_ref)
-      .find(|issuer_doc| <CoreDocument>::id(issuer_doc) == method_id.did())
-      .ok_or(JwtValidationError::DocumentMismatch(SignerContext::Issuer))?;
+    // check issuer
+    let issuer: &CoreDocument = issuer.as_ref();
+
+    if issuer.id() != method_id.did() {
+        return Err(JwtValidationError::DocumentMismatch(SignerContext::Issuer));
+    }
 
     // Obtain the public key from the issuer's DID document
     let public_key: JwkExt = issuer

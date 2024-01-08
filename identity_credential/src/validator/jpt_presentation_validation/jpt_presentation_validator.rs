@@ -37,7 +37,7 @@ impl JptPresentationValidator {
 
         // First verify the JWP proof and decode the result into a presented credential token, then apply all other validations.
         let presented_credential_token =
-        Self::verify_proof(presentation_jpt, std::slice::from_ref(issuer.as_ref()), &options)
+        Self::verify_proof(presentation_jpt, issuer, &options)
           .map_err(|err| CompoundCredentialValidationError {
             validation_errors: [err].into(),
           })?;
@@ -58,7 +58,7 @@ impl JptPresentationValidator {
     /// Proof verification function
     fn verify_proof<DOC, T>(
         presentation_jpt: &Jpt,
-        trusted_issuers: &[DOC],
+        issuer: &DOC,
         options: &JptPresentationValidationOptions,
     ) -> Result<DecodedJptPresentation<T>, JwtValidationError>
     where
@@ -98,12 +98,12 @@ impl JptPresentationValidator {
         }
         };
 
-        // locate the corresponding issuer
-        let issuer: &CoreDocument = trusted_issuers
-        .iter()
-        .map(AsRef::as_ref)
-        .find(|issuer_doc| <CoreDocument>::id(issuer_doc) == method_id.did())
-        .ok_or(JwtValidationError::DocumentMismatch(SignerContext::Issuer))?;
+        // check issuer
+        let issuer: &CoreDocument = issuer.as_ref();
+
+        if issuer.id() != method_id.did() {
+            return Err(JwtValidationError::DocumentMismatch(SignerContext::Issuer));
+        }
 
         // Obtain the public key from the issuer's DID document
         let public_key: JwkExt = issuer
