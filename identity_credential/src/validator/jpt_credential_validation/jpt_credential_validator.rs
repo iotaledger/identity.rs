@@ -1,5 +1,6 @@
 use identity_core::convert::{FromJson, ToJson};
 use identity_did::{DIDUrl, CoreDID};
+use identity_document::verifiable::JwpVerificationOptions;
 use identity_document::{document::CoreDocument, verifiable::JwsVerificationOptions};
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
@@ -7,12 +8,12 @@ use jsonprooftoken::jwp::issued::JwpIssuedDecoder;
 use jsonprooftoken::{jwp::issued::JwpIssued, encoding::SerializationType};
 
 use crate::credential::CredentialJwtClaims;
-use crate::validator::{JwtCredentialValidatorUtils, JwtCredentialValidationOptions, CompoundCredentialValidationError};
+use crate::validator::{JwtCredentialValidatorUtils, JptCredentialValidationOptions, CompoundCredentialValidationError};
 use crate::{credential::{Jpt, Credential}, validator::{FailFast, JwtValidationError, jwt_credential_validation::SignerContext}};
 
 use super::DecodedJptCredential;
 
-/// A type for decoding and validating [`Credential`]s in JPT format. //TODO: validator
+/// A type for decoding and validating [`Credential`]s in JPT format representing a JWP in Issued form.. //TODO: validator
 #[non_exhaustive]
 pub struct JptCredentialValidator;
 
@@ -29,7 +30,7 @@ impl JptCredentialValidator {
     pub fn validate<DOC, T>(
         credential_jpt: &Jpt, //TODO: the validation process could be handled both for JWT and JPT by the same function, the function could recognise if the token in input is a JWT or JPT based on the typ field
         issuer: &DOC,
-        options: &JwtCredentialValidationOptions,
+        options: &JptCredentialValidationOptions,
         fail_fast: FailFast,
       ) -> Result<DecodedJptCredential<T>, CompoundCredentialValidationError>
       where
@@ -53,7 +54,7 @@ impl JptCredentialValidator {
   pub(crate) fn validate_extended<DOC, T>(
     credential: &Jpt,
     issuers: &[DOC],
-    options: &JwtCredentialValidationOptions,
+    options: &JptCredentialValidationOptions,
     fail_fast: FailFast,
   ) -> Result<DecodedJptCredential<T>, CompoundCredentialValidationError>
   where
@@ -89,27 +90,20 @@ impl JptCredentialValidator {
 
     let structure_validation = std::iter::once_with(|| JwtCredentialValidatorUtils::check_structure(credential));
 
-    let subject_holder_validation = std::iter::once_with(|| {
-      options
-        .subject_holder_relationship
-        .as_ref()
-        .map(|(holder, relationship)| {
-          JwtCredentialValidatorUtils::check_subject_holder_relationship(credential, holder, *relationship)
-        })
-        .unwrap_or(Ok(()))
-    });
 
     let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
-      .chain(structure_validation)
-      .chain(subject_holder_validation);
+      .chain(structure_validation);
 
-    #[cfg(feature = "revocation-bitmap")]
-    let validation_units_iter = {
-      let revocation_validation =
-        std::iter::once_with(|| JwtCredentialValidatorUtils::check_status(credential, issuers, options.status));
-      validation_units_iter.chain(revocation_validation)
-    };
+
+    //TODO: check revocation when implemented
+
+    // #[cfg(feature = "revocation-bitmap")]
+    // let validation_units_iter = {
+    //   let revocation_validation =
+    //     std::iter::once_with(|| JwtCredentialValidatorUtils::check_status(credential, issuers, options.status));
+    //   validation_units_iter.chain(revocation_validation)
+    // };
 
     let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
     let validation_errors: Vec<JwtValidationError> = match fail_fast {
@@ -126,11 +120,11 @@ impl JptCredentialValidator {
 
 
 
-/// Stateless version of [`Self::verify_signature`]
+/// Proof verification function
 fn verify_proof<DOC, T>(
     credential: &Jpt,
     trusted_issuers: &[DOC],
-    options: &JwsVerificationOptions,
+    options: &JwpVerificationOptions,
   ) -> Result<DecodedJptCredential<T>, JwtValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,

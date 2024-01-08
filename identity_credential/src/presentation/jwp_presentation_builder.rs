@@ -19,11 +19,12 @@ use crate::error::Result;
 /// - refreshService MUST NOT be blinded (will be used for Timeslot Revocation mechanism)
 /// - termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
 /// - evidence (User have to choose which attribute must be blinded)
-pub struct SelectiveDiscosurePresentation {
+/// TODO: change this(JwpPresentedBuilder should be constructed inside create_presentation_jwp())
+pub struct SelectiveDisclosurePresentation {
     jwp_builder: JwpPresentedBuilder
 }
 
-impl SelectiveDiscosurePresentation {
+impl SelectiveDisclosurePresentation {
 
     /// Inizialize a presentation starting from an Issued JWP
     pub fn new(issued_jwp: &JwpIssued) -> Self {

@@ -1,8 +1,6 @@
-use jsonprooftoken::jpt::claims::JptClaims;
 use serde::Deserialize;
 use serde::Serialize;
 
-use super::CredentialJwtClaims;
 
 ///TODO: JPT
 /// This JSON Proof Token could represent a JWP both in the Issued and Presented forms 

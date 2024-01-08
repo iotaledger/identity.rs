@@ -22,6 +22,7 @@ mod revocation_bitmap_status;
 mod schema;
 mod status;
 mod subject;
+mod jwp_credential_options;
 
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
@@ -39,6 +40,7 @@ pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
+pub use self::jwp_credential_options::JwpCredentialOptions;
 
 #[cfg(feature = "validator")]
 pub(crate) use self::jwt_serialization::CredentialJwtClaims;

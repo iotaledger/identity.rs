@@ -14,8 +14,10 @@ use identity_iota::credential::FailFast;
 use identity_iota::credential::Jpt;
 use identity_iota::credential::JptCredentialValidator;
 use identity_iota::credential::JptCredentialValidatorUtils;
-use identity_iota::credential::JwtCredentialValidationOptions;
-use identity_iota::credential::SelectiveDiscosurePresentation;
+use identity_iota::credential::JptCredentialValidationOptions;
+use identity_iota::credential::JwpCredentialOptions;
+use identity_iota::credential::JwpPresentationOptions;
+use identity_iota::credential::SelectiveDisclosurePresentation;
 use identity_iota::credential::Subject;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
@@ -29,11 +31,11 @@ use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwpDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwkStorage;
-use identity_iota::storage::JwpOptions;
 use identity_iota::storage::KeyIdMemstore;
 use identity_iota::storage::KeyIdStorage;
 use identity_iota::storage::KeyType;
 use identity_iota::storage::Storage;
+use identity_iota::verification::MethodRelationship;
 use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
@@ -151,7 +153,7 @@ async fn main() -> anyhow::Result<()> {
       &credential,
       &storage_issuer,
       &fragment_issuer,
-      &JwpOptions::default(),
+      &JwpCredentialOptions::default(),
       None,
     )
     .await?;
@@ -162,7 +164,7 @@ async fn main() -> anyhow::Result<()> {
   let decoded_jpt = JptCredentialValidator::validate::<_, Object>(
       &credential_jpt,
       &issuer_document,
-      &JwtCredentialValidationOptions::default(),
+      &JptCredentialValidationOptions::default(),
       FailFast::FirstError,
     )
     .unwrap();
@@ -187,14 +189,14 @@ async fn main() -> anyhow::Result<()> {
   let decoded_credential = JptCredentialValidator::validate::<_, Object>(
     &credential_jpt,
     &issuer_document,
-    &JwtCredentialValidationOptions::default(),
+    &JptCredentialValidationOptions::default(),
     FailFast::FirstError,
   )
   .unwrap();
 
   let method_id = decoded_credential.decoded_jwp.get_issuer_protected_header().kid().unwrap();
 
-  let mut selective_disclosure_presentation = SelectiveDiscosurePresentation::new(&decoded_credential.decoded_jwp);
+  let mut selective_disclosure_presentation = SelectiveDisclosurePresentation::new(&decoded_credential.decoded_jwp);
   selective_disclosure_presentation.undisclose_subject("mainCourses[1]").unwrap();
   selective_disclosure_presentation.undisclose_subject("degree.name").unwrap();
 
@@ -207,7 +209,7 @@ async fn main() -> anyhow::Result<()> {
     .create_presentation_jpt(
       &mut selective_disclosure_presentation,
       method_id,
-      &JwpOptions::default().nonce(challenge)
+      &JwpPresentationOptions::default().nonce(challenge)
     )
     .await?;
 

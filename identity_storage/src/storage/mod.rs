@@ -7,7 +7,6 @@ mod error;
 #[macro_use] //TODO: to be able to call the macro from jwp_document_ext.rs
 mod jwk_document_ext;
 mod jwp_document_ext;
-mod jwp_options;
 mod signature_options;
 
 #[cfg(all(test, feature = "memstore"))]
@@ -17,7 +16,6 @@ pub use error::*;
 
 pub use jwk_document_ext::*;
 pub use jwp_document_ext::*;
-pub use jwp_options::*;
 pub use signature_options::*;
 
 /// A type wrapping a key and key id storage, typically used with [`JwkStorage`](crate::key_storage::JwkStorage) and

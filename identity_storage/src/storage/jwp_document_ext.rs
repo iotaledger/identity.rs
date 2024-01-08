@@ -2,8 +2,10 @@
 
 use identity_core::common::Object;
 use identity_credential::credential::Credential;
+use identity_credential::credential::JwpCredentialOptions;
 use identity_credential::presentation;
-use identity_credential::presentation::SelectiveDiscosurePresentation;
+use identity_credential::presentation::JwpPresentationOptions;
+use identity_credential::presentation::SelectiveDisclosurePresentation;
 use identity_document::document::CoreDocument;
 use identity_verification::MethodData;
 use jsonprooftoken::encoding::SerializationType;
@@ -21,7 +23,6 @@ use jsonprooftoken::jwp::presented;
 use jsonprooftoken::jwp::presented::JwpPresented;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-use crate::JwpOptions;
 use crate::Storage;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use crate::KeyType;
@@ -32,7 +33,6 @@ use crate::KeyIdStorage;
 use crate::JwkGenOutput;
 use crate::key_id_storage::MethodDigest;
 use super::JwkStorageDocumentError as Error;
-use super::jwp_options;
 use async_trait::async_trait;
 use identity_did::DIDUrl;
 use identity_verification::VerificationMethod;
@@ -66,7 +66,7 @@ pub trait JwpDocumentExt {
     storage: &Storage<K, I>,
     fragment: &str,
     jpt_claims: &JptClaims,
-    options: &JwpOptions,
+    options: &JwpCredentialOptions,
   ) -> StorageResult<String>
   where
     K: JwkStorageExt,
@@ -75,9 +75,9 @@ pub trait JwpDocumentExt {
 
   async fn create_presented_jwp(
     &self,
-    presentation: &mut SelectiveDiscosurePresentation,
+    presentation: &mut SelectiveDisclosurePresentation,
     method_id: &str,
-    options: &JwpOptions,
+    options: &JwpPresentationOptions,
   ) -> StorageResult<String>;
 
   /// Produces a JPT where the payload is produced from the given `credential`.
@@ -87,7 +87,7 @@ pub trait JwpDocumentExt {
     credential: &Credential<T>,
     storage: &Storage<K, I>,
     fragment: &str,
-    options: &JwpOptions,
+    options: &JwpCredentialOptions,
     custom_claims: Option<Object>,
   ) -> StorageResult<Jpt>
   where
@@ -101,9 +101,9 @@ pub trait JwpDocumentExt {
   /// TODO: add references to Drafts
   async fn create_presentation_jpt(
     &self,
-    presentation: &mut SelectiveDiscosurePresentation,
+    presentation: &mut SelectiveDisclosurePresentation,
     method_id: &str,
-    options: &JwpOptions,
+    options: &JwpPresentationOptions,
   ) -> StorageResult<Jpt>;
 
 
@@ -143,7 +143,7 @@ impl JwpDocumentExt for CoreDocument {
     storage: &Storage<K, I>,
     fragment: &str,
     jpt_claims: &JptClaims,
-    options: &JwpOptions,
+    options: &JwpCredentialOptions,
   ) -> StorageResult<String>
   where
     K: JwkStorageExt,
@@ -163,12 +163,9 @@ impl JwpDocumentExt for CoreDocument {
       .map_err(|_| Error::InvalidJwpAlgorithm)?;
 
 
-    let typ = if let Some(typ) = &options.typ {
-      typ.clone()
-    } else {
-      // https://www.w3.org/TR/vc-data-model/#jwt-encoding
-      "JPT".to_string()
-    };
+    // https://www.w3.org/TR/vc-data-model/#jwt-encoding
+    let typ = "JPT".to_string();
+      
 
     let kid = if let Some(ref kid) = options.kid {
       kid.clone()
@@ -199,9 +196,9 @@ impl JwpDocumentExt for CoreDocument {
 
   async fn create_presented_jwp(
     &self,
-    presentation: &mut SelectiveDiscosurePresentation,
+    presentation: &mut SelectiveDisclosurePresentation,
     method_id: &str,
-    options: &JwpOptions,
+    options: &JwpPresentationOptions,
   ) -> StorageResult<String>
   {
     // Obtain the method corresponding to the given fragment.
@@ -220,18 +217,9 @@ impl JwpDocumentExt for CoreDocument {
     let public_key: Jwk = jwk.try_into().map_err(|_| Error::NotPublicKeyJwk)?;
 
 
-
-    let kid = if let Some(ref kid) = options.kid {
-      kid.clone()
-    } else {
-      method.id().to_string()
-    };
-
-
     let mut presentation_header = PresentationProtectedHeader::new(alg.into());
-    presentation_header.set_kid(Some(kid));
     presentation_header.set_nonce(options.nonce.clone());
-
+    presentation_header.set_aud(options.audience.as_ref().and_then(|u| Some(u.to_string())));
 
     presentation.set_presentation_header(presentation_header);
 
@@ -251,7 +239,7 @@ impl JwpDocumentExt for CoreDocument {
     credential: &Credential<T>,
     storage: &Storage<K, I>,
     fragment: &str,
-    options: &JwpOptions,
+    options: &JwpCredentialOptions,
     custom_claims: Option<Object>,
   ) -> StorageResult<Jpt>
   where
@@ -272,9 +260,9 @@ impl JwpDocumentExt for CoreDocument {
 
   async fn create_presentation_jpt(
     &self,
-    presentation: &mut SelectiveDiscosurePresentation,
+    presentation: &mut SelectiveDisclosurePresentation,
     method_id: &str,
-    options: &JwpOptions,
+    options: &JwpPresentationOptions,
   ) -> StorageResult<Jpt> {
     
     self
@@ -325,7 +313,7 @@ mod iota_document {
       storage: &Storage<K, I>,
       fragment: &str,
       jpt_claims: &JptClaims,
-      options: &JwpOptions,
+      options: &JwpCredentialOptions,
     ) -> StorageResult<String>
     where
       K: JwkStorageExt,
@@ -340,9 +328,9 @@ mod iota_document {
   
     async fn create_presented_jwp(
       &self,
-      presentation: &mut SelectiveDiscosurePresentation,
+      presentation: &mut SelectiveDisclosurePresentation,
       method_id: &str,
-      options: &JwpOptions,
+      options: &JwpPresentationOptions,
     ) -> StorageResult<String>
     {
       self
@@ -358,7 +346,7 @@ mod iota_document {
       credential: &Credential<T>,
       storage: &Storage<K, I>,
       fragment: &str,
-      options: &JwpOptions,
+      options: &JwpCredentialOptions,
       custom_claims: Option<Object>,
     ) -> StorageResult<Jpt>
     where
@@ -375,9 +363,9 @@ mod iota_document {
 
     async fn create_presentation_jpt(
       &self,
-      presentation: &mut SelectiveDiscosurePresentation,
+      presentation: &mut SelectiveDisclosurePresentation,
       method_id: &str,
-      options: &JwpOptions,
+      options: &JwpPresentationOptions,
     ) -> StorageResult<Jpt> {
       self
         .core_document()
