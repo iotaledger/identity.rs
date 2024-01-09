@@ -17,6 +17,7 @@ use identity_iota::credential::JptCredentialValidatorUtils;
 use identity_iota::credential::JptCredentialValidationOptions;
 use identity_iota::credential::JptPresentationValidationOptions;
 use identity_iota::credential::JptPresentationValidator;
+use identity_iota::credential::JptPresentationValidatorUtils;
 use identity_iota::credential::JwpCredentialOptions;
 use identity_iota::credential::JwpPresentationOptions;
 use identity_iota::credential::SelectiveDisclosurePresentation;
@@ -182,8 +183,8 @@ async fn main() -> anyhow::Result<()> {
   let mut resolver: Resolver<IotaDocument> = Resolver::new();
   resolver.attach_iota_handler(client);
 
-  // Resolve Issuer DID
-  let issuer: CoreDID = JptCredentialValidatorUtils::extract_issuer_from_jpt(&credential_jpt).unwrap();
+  // Holder resolve Issuer DID
+  let issuer: CoreDID = JptCredentialValidatorUtils::extract_issuer_from_issued_jpt(&credential_jpt).unwrap();
   let issuer_document: IotaDocument = resolver.resolve(&issuer).await?;
 
 
@@ -221,9 +222,13 @@ async fn main() -> anyhow::Result<()> {
   // Step 4: Holder sends a verifiable presentation to the verifier.
   // ===========================================================================
   println!("Sending presentation (as JPT) to the verifier: {}\n", presentation_jpt.as_str());
+
+  // Verifier resolve Issuer DID
+  let issuer: CoreDID = JptPresentationValidatorUtils::extract_issuer_from_presented_jpt(&presentation_jpt).unwrap();
+  let issuer_document: IotaDocument = resolver.resolve(&issuer).await?;
   
   let presentation_validation_options = 
-    JptPresentationValidationOptions::default().nonce(challenge.to_owned());
+    JptPresentationValidationOptions::default().nonce(challenge);
 
   // Verifier validate the Presented Credential and retrieve the JwpPresented
   let decoded_presented_credential = JptPresentationValidator::validate::<_, Object>(

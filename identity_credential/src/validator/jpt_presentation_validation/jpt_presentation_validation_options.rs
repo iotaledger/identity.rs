@@ -32,8 +32,8 @@ impl JptPresentationValidationOptions {
 
   /// Declare that the presentation is **not** considered valid if it expires before this [`Timestamp`].
   /// Uses the current datetime during validation if not set.
-  pub fn nonce(mut self, nonce: String) -> Self {
-    self.nonce = Some(nonce);
+  pub fn nonce(mut self, nonce: impl Into<String>) -> Self {
+    self.nonce = Some(nonce.into());
     self
   }
 
