@@ -1,28 +1,19 @@
-use std::error::Error;
 use std::str::FromStr;
 
-use identity_core::common::Context;
-use identity_core::common::Timestamp;
-use identity_core::common::Url;
-use identity_credential::credential::Credential;
-use identity_credential::credential::Issuer;
-use identity_credential::revocation::status_list_2021::StatusList2021;
-use identity_credential::revocation::status_list_2021::StatusList2021CredentialBuilder;
-use identity_credential::revocation::status_list_2021::StatusList2021Entry;
-use identity_credential::validator::JwtCredentialValidatorUtils;
-use identity_credential::validator::JwtValidationError;
-use identity_credential::validator::StatusCheck;
+use identity_iota::{credential::{status_list_2021::{StatusList2021, StatusList2021CredentialBuilder, StatusList2021Entry}, Issuer, Credential, JwtCredentialValidatorUtils, StatusCheck, JwtValidationError}, core::{Url, Context, Timestamp}};
 
-#[test]
-fn status_list_2021_workflow() -> Result<(), Box<dyn Error>> {
-  // Create a new revocation list
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+  // Create a new status list to be stored off-chain, for the sake of this example
+  // its going to stay in memory.
   let mut status_list_credential = StatusList2021CredentialBuilder::new(StatusList2021::default())
     .context(Context::Url(Url::from_str("https://www.w3.org/2018/credentials/v1")?))
     .issuer(Issuer::Url(Url::from_str("did:example:1234")?))
     .subject_id(Url::from_str("https://example.com/credentials/status")?)
     .build()?;
 
-  // Create a credential
+  // Let's revoke a credential using this status list.
+  // First we create a credential.
   let mut credential = serde_json::from_value::<Credential>(serde_json::json!({
       "@context": "https://www.w3.org/2018/credentials/v1",
       "id": "https://example.com/credentials/12345678",
@@ -35,8 +26,9 @@ fn status_list_2021_workflow() -> Result<(), Box<dyn Error>> {
           "gpa": "4.0",
       }
   }))?;
-  // use entry 420 to revoke the credential
-  status_list_credential.update_status_list(|status_list| status_list.set(420, true))?;
+
+  // We add to this credential a status which references the 420th entry
+  // in the status list we previously created.
   let revocation_entry = serde_json::from_value::<StatusList2021Entry>(serde_json::json!({
     "id": "https://example.com/credentials/status#420",
     "type": "StatusList2021Entry",
@@ -46,6 +38,10 @@ fn status_list_2021_workflow() -> Result<(), Box<dyn Error>> {
   }))?;
   credential.credential_status = Some(revocation_entry.into());
 
+  // To revoke this credential we set the status of the 420th entry
+  status_list_credential.update_status_list(|status_list| status_list.set(420, true))?;
+
+  // The credential has now been revoked, verifying this credential will now fail
   let validation = JwtCredentialValidatorUtils::check_status_with_status_list_2021(
     &credential,
     &status_list_credential,

@@ -8,11 +8,12 @@ publish = false
 [dependencies]
 anyhow = "1.0.62"
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
-identity_iota = { path = "../identity_iota", default-features = false, features = ["memstore", "domain-linkage"] }
+identity_iota = { path = "../identity_iota", default-features = false, features = ["memstore", "domain-linkage", "revocation-bitmap"] }
 identity_stronghold = { path = "../identity_stronghold", default-features = false }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 primitive-types = "0.12.1"
 rand = "0.8.5"
+serde_json.workspace = true
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [lib]
@@ -81,3 +82,7 @@ name = "5_custom_resolution"
 [[example]]
 path = "1_advanced/6_domain_linkage.rs"
 name = "6_domain_linkage"
+
+[[example]]
+path = "1_advanced/7_status_list_2021.rs"
+name = "7_status_list_2021"
