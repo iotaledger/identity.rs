@@ -28,6 +28,8 @@ It does not imply anything about a potentially present proof property on the cre
 <p>Note that having an instance of this type only means the JWS it was constructed from was verified.
 It does not imply anything about a potentially present proof property on the presentation itself.</p>
 </dd>
+<dt><a href="#Disclosure">Disclosure</a></dt>
+<dd></dd>
 <dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
 <dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
 It can be placed in an origin&#39;s <code>.well-known</code> directory to prove linkage between the origin and a DID.
@@ -130,6 +132,10 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
 <dd><p>A compressed bitmap for managing credential revocation.</p>
 </dd>
+<dt><a href="#SdObjectDecoder">SdObjectDecoder</a></dt>
+<dd></dd>
+<dt><a href="#SdObjectEncoder">SdObjectEncoder</a></dt>
+<dd></dd>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
@@ -149,10 +155,6 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -193,6 +195,10 @@ This variant is the default.</p>
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -1384,6 +1390,65 @@ The `aud` property parsed from JWT claims.
 The custom claims parsed from the JWT.
 
 **Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="Disclosure"></a>
+
+## Disclosure
+**Kind**: global class  
+
+* [Disclosure](#Disclosure)
+    * [new Disclosure(salt, claim_name, claim_value)](#new_Disclosure_new)
+    * _instance_
+        * [.disclosure()](#Disclosure+disclosure) ⇒ <code>string</code>
+        * [.salt()](#Disclosure+salt) ⇒ <code>string</code>
+        * [.claimName()](#Disclosure+claimName) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.claimValue()](#Disclosure+claimValue) ⇒ <code>any</code>
+        * [.toJSON()](#Disclosure+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#Disclosure.fromJSON) ⇒ [<code>Disclosure</code>](#Disclosure)
+
+<a name="new_Disclosure_new"></a>
+
+### new Disclosure(salt, claim_name, claim_value)
+
+| Param | Type |
+| --- | --- |
+| salt | <code>string</code> | 
+| claim_name | <code>string</code> \| <code>undefined</code> | 
+| claim_value | <code>any</code> | 
+
+<a name="Disclosure+disclosure"></a>
+
+### disclosure.disclosure() ⇒ <code>string</code>
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+salt"></a>
+
+### disclosure.salt() ⇒ <code>string</code>
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+claimName"></a>
+
+### disclosure.claimName() ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+claimValue"></a>
+
+### disclosure.claimValue() ⇒ <code>any</code>
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+toJSON"></a>
+
+### disclosure.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure.fromJSON"></a>
+
+### Disclosure.fromJSON(json) ⇒ [<code>Disclosure</code>](#Disclosure)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>Disclosure</code>](#Disclosure)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="DomainLinkageConfiguration"></a>
 
 ## DomainLinkageConfiguration
@@ -4627,6 +4692,90 @@ if it is a valid Revocation Bitmap Service.
 | --- | --- |
 | service | [<code>Service</code>](#Service) | 
 
+<a name="SdObjectDecoder"></a>
+
+## SdObjectDecoder
+**Kind**: global class  
+<a name="SdObjectDecoder+decode"></a>
+
+### sdObjectDecoder.decode(object, disclosures) ⇒ <code>Record.&lt;string, any&gt;</code>
+**Kind**: instance method of [<code>SdObjectDecoder</code>](#SdObjectDecoder)  
+
+| Param | Type |
+| --- | --- |
+| object | <code>Record.&lt;string, any&gt;</code> | 
+| disclosures | <code>Array.&lt;string&gt;</code> | 
+
+<a name="SdObjectEncoder"></a>
+
+## SdObjectEncoder
+**Kind**: global class  
+
+* [SdObjectEncoder](#SdObjectEncoder)
+    * [new SdObjectEncoder(object)](#new_SdObjectEncoder_new)
+    * [.conceal(path, salt)](#SdObjectEncoder+conceal) ⇒ [<code>Disclosure</code>](#Disclosure)
+    * [.concealArrayEntry(path, element_index, salt)](#SdObjectEncoder+concealArrayEntry) ⇒ [<code>Disclosure</code>](#Disclosure)
+    * [.addSdAlgProperty()](#SdObjectEncoder+addSdAlgProperty)
+    * [.toString()](#SdObjectEncoder+toString) ⇒ <code>string</code>
+    * [.encoded_object()](#SdObjectEncoder+encoded_object) ⇒ <code>Record.&lt;string, any&gt;</code>
+    * [.toJSON()](#SdObjectEncoder+toJSON) ⇒ <code>any</code>
+    * [.addDecoys(path, number_of_decoys)](#SdObjectEncoder+addDecoys)
+
+<a name="new_SdObjectEncoder_new"></a>
+
+### new SdObjectEncoder(object)
+
+| Param | Type |
+| --- | --- |
+| object | <code>any</code> | 
+
+<a name="SdObjectEncoder+conceal"></a>
+
+### sdObjectEncoder.conceal(path, salt) ⇒ [<code>Disclosure</code>](#Disclosure)
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | 
+| salt | <code>string</code> \| <code>undefined</code> | 
+
+<a name="SdObjectEncoder+concealArrayEntry"></a>
+
+### sdObjectEncoder.concealArrayEntry(path, element_index, salt) ⇒ [<code>Disclosure</code>](#Disclosure)
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | 
+| element_index | <code>number</code> | 
+| salt | <code>string</code> \| <code>undefined</code> | 
+
+<a name="SdObjectEncoder+addSdAlgProperty"></a>
+
+### sdObjectEncoder.addSdAlgProperty()
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+toString"></a>
+
+### sdObjectEncoder.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+encoded_object"></a>
+
+### sdObjectEncoder.encoded\_object() ⇒ <code>Record.&lt;string, any&gt;</code>
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+toJSON"></a>
+
+### sdObjectEncoder.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+addDecoys"></a>
+
+### sdObjectEncoder.addDecoys(path, number_of_decoys)
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | 
+| number_of_decoys | <code>number</code> | 
+
 <a name="Service"></a>
 
 ## Service
@@ -5041,14 +5190,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -5124,6 +5265,14 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 
