@@ -6,3 +6,9 @@ mod disclosure;
 mod encoder;
 mod key_binding_jwt_claims;
 mod sd_jwt;
+
+pub use decoder::*;
+pub use disclosure::*;
+pub use encoder::*;
+pub use key_binding_jwt_claims::*;
+pub use sd_jwt::*;

@@ -23,7 +23,7 @@ use identity_iota::credential::FailFast;
 use identity_iota::credential::Jws;
 use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::KeyBindingJWTValidationOptions;
-use identity_iota::credential::SdJwtValidator;
+use identity_iota::credential::SdJwtCredentialValidator;
 use identity_iota::credential::Subject;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDocument;
@@ -199,7 +199,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Verify the JWT.
   let decoder = SdObjectDecoder::new_with_sha256();
-  let validator = SdJwtValidator::new(EdDSAJwsVerifier::default(), decoder);
+  let validator = SdJwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default(), decoder);
   let validation = validator
     .validate_credential::<_, Object>(
       &sd_jwt,

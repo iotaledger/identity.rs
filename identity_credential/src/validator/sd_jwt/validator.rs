@@ -32,17 +32,18 @@ use super::KeyBindingJwtError;
 
 /// A type for decoding and validating [`SdJwt`]s.
 #[non_exhaustive]
-pub struct SdJwtValidator<V: JwsVerifier>(V, SdObjectDecoder);
+pub struct SdJwtCredentialValidator<V: JwsVerifier>(V, SdObjectDecoder);
 
-impl<V: JwsVerifier> SdJwtValidator<V> {
-  /// Creates a new [`SdJwtValidator`].
-  pub fn new(signature_verifier: V, sd_decoder: SdObjectDecoder) -> Self {
+impl<V: JwsVerifier> SdJwtCredentialValidator<V> {
+  /// Creates a new [`SdJwtValidator`]that delegates cryptographic signature verification to the given
+  /// `signature_verifier`.
+  pub fn with_signature_verifier(signature_verifier: V, sd_decoder: SdObjectDecoder) -> Self {
     Self(signature_verifier, sd_decoder)
   }
 
   /// Decodes and validates a [`Credential`] issued as an SD-JWT. A [`DecodedJwtCredential`] is returned upon success.
   /// The credential is constructed by replacing disclosures following the
-  /// [`Selective Disclosure for JWTs (SD-JWT)`](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-06.html) standard.
+  /// [`Selective Disclosure for JWTs (SD-JWT)`](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html) standard.
   ///
   /// The following properties are validated according to `options`:
   /// - the issuer's signature on the JWS,
@@ -88,7 +89,23 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     JwtCredentialValidator::<V>::validate_decoded_credential(credential, issuers, options, fail_fast)
   }
 
-  fn verify_signature<DOC, T>(
+  /// Decode and verify the JWS signature of a [`Credential`] issued as an SD-JWT using the DID Document of a trusted
+  /// issuer and replaces the disclosures.
+  ///
+  /// A [`DecodedJwtCredential`] is returned upon success.
+  ///
+  /// # Warning
+  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
+  ///
+  /// ## Proofs
+  ///  Only the JWS signature is verified. If the [`Credential`] contains a `proof` property this will not be verified
+  /// by this method.
+  ///
+  /// # Errors
+  /// * If the issuer' URL cannot be parsed.
+  /// * If Signature verification fails.
+  /// * If SD decoding fails.
+  pub fn verify_signature<DOC, T>(
     &self,
     credential: &SdJwt,
     trusted_issuers: &[DOC],

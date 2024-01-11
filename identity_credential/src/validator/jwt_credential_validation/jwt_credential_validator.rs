@@ -128,21 +128,6 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
-    // First verify the JWS signature and decode the result into a credential token, then apply all other validations.
-    // If this errors we have to return early regardless of the `fail_fast` flag as all other validations require a
-    // `&Credential`.
-    // let credential_token = Self::verify_signature_with_verifier(
-    //   signature_verifier,
-    //   credential,
-    //   issuers,
-    //   &options.verification_options,
-    //   sd_decoder,
-    //   disclosures,
-    // )
-    // .map_err(|err| CompoundCredentialValidationError {
-    //   validation_errors: [err].into(),
-    // })?;
-
     let credential: &Credential<T> = &credential_token.credential;
     // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
 
@@ -327,29 +312,6 @@ impl<V: JwsVerifier> JwtCredentialValidator<V> {
       CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
         JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
-
-    // let credential_claims: CredentialJwtClaims<'_, T> =
-    //   if let (Some(sd_decoder), Some(disclosures)) = (sd_decoder, disclosures) {
-    //     let value: Value = serde_json::from_slice(&claims).map_err(|err| {
-    //       JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    //     })?;
-    //     let obj = value.as_object().ok_or(JwtValidationError::JwsDecodingError(
-    //       identity_verification::jose::error::Error::InvalidClaim("sd-jwt claims could not be deserialized"),
-    //     ))?;
-    //     let decoded: String = Value::Object(sd_decoder.decode(obj, disclosures).map_err(|e| {
-    //       let err_str = format!("sd-jwt claims decoding failed, {}", e);
-    //       let err: &'static str = Box::leak(err_str.into_boxed_str());
-    //       JwtValidationError::JwsDecodingError(identity_verification::jose::error::Error::InvalidClaim(err))
-    //     })?)
-    //     .to_string();
-    //     CredentialJwtClaims::from_json(&decoded).map_err(|err| {
-    //       JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    //     })?
-    //   } else {
-    //     CredentialJwtClaims::from_json_slice(&claims).map_err(|err| {
-    //       JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
-    //     })?
-    //   };
 
     let custom_claims = credential_claims.custom.clone();
 
