@@ -17,7 +17,6 @@ use crate::error::Result;
 /// - refreshService MUST NOT be blinded (will be used for Timeslot Revocation mechanism)
 /// - termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
 /// - evidence (User have to choose which attribute must be blinded)
-/// TODO: change this(JwpPresentedBuilder should be constructed inside create_presentation_jwp())
 pub struct SelectiveDisclosurePresentation {
     jwp_builder: JwpPresentedBuilder
 }
@@ -28,15 +27,15 @@ impl SelectiveDisclosurePresentation {
     pub fn new(issued_jwp: &JwpIssued) -> Self {
         let mut jwp_builder = JwpPresentedBuilder::new(issued_jwp);
 
-        jwp_builder.set_undisclosed("id").ok();
+        jwp_builder.set_undisclosed("id").ok(); // Provides linkability
        
-        jwp_builder.set_undisclosed("issuanceDate").ok();
+        jwp_builder.set_undisclosed("issuanceDate").ok(); // Depending on the revocation method used it will be necessary or not
         
-        jwp_builder.set_undisclosed("expirationDate").ok();
+        jwp_builder.set_undisclosed("expirationDate").ok(); // Depending on the revocation method used it will be necessary or not
         
-        jwp_builder.set_undisclosed("credentialStatus").ok();
+        jwp_builder.set_undisclosed("credentialStatus").ok(); // Provides linkability so, there is NO reason to use it in ZK VC
         
-        jwp_builder.set_undisclosed("termsOfUse").ok();
+        jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC,
 
         Self{jwp_builder}
     }

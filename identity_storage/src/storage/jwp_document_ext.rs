@@ -53,6 +53,7 @@ pub trait JwpDocumentExt {
 
 
   /// Compute a JWP in the Issued form representing the Verifiable Credential
+  /// See [JSON Web Proof draft section 4.1](https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-proof#name-issued-form)
   async fn create_issued_jwp<K, I>(
     &self,
     storage: &Storage<K, I>,
@@ -66,6 +67,7 @@ pub trait JwpDocumentExt {
 
 
   /// Compute a JWP in the Presented form representing the presented Verifiable Credential after the Selective Disclosure of attributes
+  /// See [JSON Web Proof draft section 4.2](https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-proof#name-presented-form)
   async fn create_presented_jwp(
     &self,
     presentation: &mut SelectiveDisclosurePresentation,
@@ -74,7 +76,6 @@ pub trait JwpDocumentExt {
   ) -> StorageResult<String>;
 
   /// Produces a JPT where the payload is produced from the given `credential`.
-  /// TODO: add references to Drafts
   async fn create_credential_jpt<K, I, T>(
     &self,
     credential: &Credential<T>,
@@ -90,8 +91,7 @@ pub trait JwpDocumentExt {
 
 
   
-  /// Produces a JPT in the pre where the payload is produced from the given `credential`.
-  /// TODO: add references to Drafts
+  /// Produces a JPT where the payload contains the Selective Disclosed attributes of a `credential`.
   async fn create_presentation_jpt(
     &self,
     presentation: &mut SelectiveDisclosurePresentation,
@@ -225,8 +225,7 @@ impl JwpDocumentExt for CoreDocument {
 
   }
 
-  /// Produces a JPT where the payload is produced from the given `credential`.
-  /// TODO: add references to Drafts
+
   async fn create_credential_jpt<K, I, T>(
     &self,
     credential: &Credential<T>,
@@ -332,8 +331,7 @@ mod iota_document {
         .await
     }
   
-    /// Produces a JWP where the payload is produced from the given `credential`.
-    /// TODO: add references to Drafts
+
     async fn create_credential_jpt<K, I, T>(
       &self,
       credential: &Credential<T>,
