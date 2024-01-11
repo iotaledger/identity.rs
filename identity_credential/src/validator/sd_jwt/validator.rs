@@ -1,18 +1,23 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::credential::Jwt;
+use crate::credential::CredentialJwtClaims;
 use crate::validator::CompoundCredentialValidationError;
 use crate::validator::DecodedJwtCredential;
 use crate::validator::FailFast;
 use crate::validator::JwtCredentialValidationOptions;
 use crate::validator::JwtCredentialValidator;
+use crate::validator::JwtCredentialValidatorUtils;
 use crate::validator::JwtValidationError;
 use crate::validator::SignerContext;
 use identity_core::common::Timestamp;
+use identity_core::convert::FromJson;
+use identity_did::CoreDID;
 use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
+use identity_document::verifiable::JwsVerificationOptions;
 use identity_verification::jwk::Jwk;
+use identity_verification::jws::DecodedJws;
 use identity_verification::jws::Decoder;
 use identity_verification::jws::JwsValidationItem;
 use identity_verification::jws::JwsVerifier;
@@ -73,15 +78,70 @@ impl<V: JwsVerifier> SdJwtValidator<V> {
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
-    JwtCredentialValidator::<V>::validate_extended::<CoreDocument, _, T>(
-      &self.0,
-      &Jwt::new(sd_jwt.jwt.to_string()),
-      std::slice::from_ref(issuer.as_ref()),
-      options,
-      fail_fast,
-      Some(&self.1),
-      Some(&sd_jwt.disclosures),
-    )
+    let issuers = std::slice::from_ref(issuer.as_ref());
+    let credential = self
+      .verify_signature(sd_jwt, issuers, &options.verification_options)
+      .map_err(|err| CompoundCredentialValidationError {
+        validation_errors: [err].into(),
+      })?;
+
+    JwtCredentialValidator::<V>::validate_decoded_credential(credential, issuers, options, fail_fast)
+  }
+
+  fn verify_signature<DOC, T>(
+    &self,
+    credential: &SdJwt,
+    trusted_issuers: &[DOC],
+    options: &JwsVerificationOptions,
+  ) -> Result<DecodedJwtCredential<T>, JwtValidationError>
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+    DOC: AsRef<CoreDocument>,
+  {
+    let SdJwt { jwt, disclosures, .. } = credential;
+    let signature = JwtCredentialValidator::<V>::decode(jwt.as_str())?;
+    let (public_key, method_id) = JwtCredentialValidator::<V>::parse_jwk(&signature, trusted_issuers, options)?;
+
+    let DecodedJws { protected, claims, .. } =
+      JwtCredentialValidator::<V>::verify_signature_raw(signature, public_key, &self.0)?;
+
+    let value: Value = serde_json::from_slice(&claims).map_err(|err| {
+      JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+    })?;
+    let obj = value.as_object().ok_or(JwtValidationError::JwsDecodingError(
+      identity_verification::jose::error::Error::InvalidClaim("sd-jwt claims could not be deserialized"),
+    ))?;
+    let decoded: String = Value::Object(self.1.decode(obj, disclosures).map_err(|e| {
+      let err_str = format!("sd-jwt claims decoding failed, {}", e);
+      let err: &'static str = Box::leak(err_str.into_boxed_str());
+      JwtValidationError::JwsDecodingError(identity_verification::jose::error::Error::InvalidClaim(err))
+    })?)
+    .to_string();
+
+    let claims = CredentialJwtClaims::from_json(&decoded).map_err(|err| {
+      JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
+    })?;
+    let custom_claims = claims.custom.clone();
+    let credential = claims
+      .try_into_credential()
+      .map_err(JwtValidationError::CredentialStructure)?;
+
+    let decoded_credential = DecodedJwtCredential {
+      credential,
+      header: Box::new(protected),
+      custom_claims,
+    };
+
+    // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
+    // returning.
+    let issuer_id = JwtCredentialValidatorUtils::extract_issuer::<CoreDID, _>(&decoded_credential.credential)?;
+    if &issuer_id != method_id.did() {
+      return Err(JwtValidationError::IdentifierMismatch {
+        signer_ctx: SignerContext::Issuer,
+      });
+    };
+
+    Ok(decoded_credential)
   }
 
   /// Validates a Key Binding JWT (KB-JWT) according to `https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-06.html#name-key-binding-jwt`.
