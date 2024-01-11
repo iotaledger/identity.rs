@@ -1,6 +1,17 @@
 use std::str::FromStr;
 
-use identity_iota::{credential::{status_list_2021::{StatusList2021, StatusList2021CredentialBuilder, StatusList2021Entry}, Issuer, Credential, JwtCredentialValidatorUtils, StatusCheck, JwtValidationError}, core::{Url, Context, Timestamp}};
+use identity_iota::core::Context;
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::status_list_2021::StatusList2021;
+use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
+use identity_iota::credential::status_list_2021::StatusList2021Entry;
+use identity_iota::credential::status_list_2021::StatusPurpose;
+use identity_iota::credential::Credential;
+use identity_iota::credential::Issuer;
+use identity_iota::credential::JwtCredentialValidatorUtils;
+use identity_iota::credential::JwtValidationError;
+use identity_iota::credential::StatusCheck;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -28,14 +39,19 @@ async fn main() -> anyhow::Result<()> {
   }))?;
 
   // We add to this credential a status which references the 420th entry
-  // in the status list we previously created.
-  let revocation_entry = serde_json::from_value::<StatusList2021Entry>(serde_json::json!({
-    "id": "https://example.com/credentials/status#420",
-    "type": "StatusList2021Entry",
-    "statusPurpose": "revocation",
-    "statusListIndex": "420",
-    "statusListCredential": "https://example.com/credentials/status"
-  }))?;
+  // in the status list we previously created. Its JSON representation would look like this:
+  // {
+  //   "id": "https://example.com/credentials/status#420",
+  //   "type": "StatusList2021Entry",
+  //   "statusPurpose": "revocation",
+  //   "statusListIndex": "420",
+  //   "statusListCredential": "https://example.com/credentials/status"
+  // }
+  let revocation_entry = StatusList2021Entry::new(
+    status_list_credential.id.clone().unwrap(),
+    StatusPurpose::Revocation,
+    420,
+  );
   credential.credential_status = Some(revocation_entry.into());
 
   // To revoke this credential we set the status of the 420th entry
