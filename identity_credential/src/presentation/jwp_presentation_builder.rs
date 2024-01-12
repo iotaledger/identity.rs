@@ -9,12 +9,12 @@ use crate::error::Result;
 /// - id MUST be blinded
 /// - type MUST NOT be blinded
 /// - issuer MUST NOT be blinded
-/// - issuanceDate MUST be blinded (only if Timeslot Revocation mechanism is used)
-/// - expirationDate MUST be blinded (only if Timeslot Revocation mechanism is used)
+/// - issuanceDate MUST be blinded (if Timeslot Revocation mechanism is used)
+/// - expirationDate MUST be blinded (if Timeslot Revocation mechanism is used)
 /// - credentialSubject (User have to choose which attribute must be blinded)
 /// - credentialSchema MUST NOT be blinded
-/// - credentialStatus NO reason to use it in ZK VC (will be in any case blinded)
-/// - refreshService MUST NOT be blinded (will be used for Timeslot Revocation mechanism)
+/// - credentialStatus NO reason to use it in ZK VC (will be blinded in any case)
+/// - refreshService MUST NOT be blinded (probably will be used for Timeslot Revocation mechanism)
 /// - termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
 /// - evidence (User have to choose which attribute must be blinded)
 pub struct SelectiveDisclosurePresentation {
@@ -27,7 +27,7 @@ impl SelectiveDisclosurePresentation {
     pub fn new(issued_jwp: &JwpIssued) -> Self {
         let mut jwp_builder = JwpPresentedBuilder::new(issued_jwp);
 
-        jwp_builder.set_undisclosed("id").ok(); // Provides linkability
+        jwp_builder.set_undisclosed("jti").ok(); // contains the credential's id, provides linkability
        
         jwp_builder.set_undisclosed("issuanceDate").ok(); // Depending on the revocation method used it will be necessary or not
         
