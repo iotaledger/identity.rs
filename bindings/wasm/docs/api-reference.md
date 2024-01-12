@@ -133,6 +133,14 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
+<dt><a href="#StatusList2021">StatusList2021</a></dt>
+<dd></dd>
+<dt><a href="#StatusList2021Credential">StatusList2021Credential</a></dt>
+<dd></dd>
+<dt><a href="#StatusList2021CredentialBuilder">StatusList2021CredentialBuilder</a></dt>
+<dd></dd>
+<dt><a href="#StatusList2021Entry">StatusList2021Entry</a></dt>
+<dd></dd>
 <dt><a href="#Storage">Storage</a></dt>
 <dd><p>A type wrapping a <code>JwkStorage</code> and <code>KeyIdStorage</code> that should always be used together when
 working with storage backed DID documents.</p>
@@ -149,9 +157,9 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
@@ -170,6 +178,17 @@ working with storage backed DID documents.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -184,28 +203,19 @@ This variant is the default.</p>
 <dt><a href="#Any">Any</a></dt>
 <dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
 </dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
 <dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
 <dd><p>Encode the given bytes in url-safe base64.</p>
 </dd>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+</dd>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
@@ -431,14 +441,14 @@ if the object is being concurrently modified.
         * [.insertService(service)](#CoreDocument+insertService)
         * [.removeService(didUrl)](#CoreDocument+removeService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
         * [.resolveService(query)](#CoreDocument+resolveService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
-        * [.methods(scope)](#CoreDocument+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+        * [.methods([scope])](#CoreDocument+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.verificationRelationships()](#CoreDocument+verificationRelationships) ⇒ <code>Array.&lt;(DIDUrl\|VerificationMethod)&gt;</code>
         * [.insertMethod(method, scope)](#CoreDocument+insertMethod)
         * [.removeMethod(did)](#CoreDocument+removeMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
-        * [.resolveMethod(query, scope)](#CoreDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
+        * [.resolveMethod(query, [scope])](#CoreDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#CoreDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#CoreDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+        * [.verifyJws(jws, options, signatureVerifier, [detachedPayload])](#CoreDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.revokeCredentials(serviceQuery, indices)](#CoreDocument+revokeCredentials)
         * [.unrevokeCredentials(serviceQuery, indices)](#CoreDocument+unrevokeCredentials)
         * [.clone()](#CoreDocument+clone) ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -448,7 +458,7 @@ if the object is being concurrently modified.
         * [.generateMethod(storage, keyType, alg, fragment, scope)](#CoreDocument+generateMethod) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.purgeMethod(storage, id)](#CoreDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJws(storage, fragment, payload, options)](#CoreDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
-        * [.createCredentialJwt(storage, fragment, credential, options, custom_claims)](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createCredentialJwt(storage, fragment, credential, options, [custom_claims])](#CoreDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#CoreDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.fromJSON(json)](#CoreDocument.fromJSON) ⇒ [<code>CoreDocument</code>](#CoreDocument)
@@ -628,7 +638,7 @@ if present.
 
 <a name="CoreDocument+methods"></a>
 
-### coreDocument.methods(scope) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+### coreDocument.methods([scope]) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
 Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Document,
 whose verification relationship matches `scope`.
 
@@ -638,7 +648,7 @@ If `scope` is not set, a list over the **embedded** methods is returned.
 
 | Param | Type |
 | --- | --- |
-| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+| [scope] | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
 <a name="CoreDocument+verificationRelationships"></a>
 
@@ -671,7 +681,7 @@ Removes all references to the specified Verification Method.
 
 <a name="CoreDocument+resolveMethod"></a>
 
-### coreDocument.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
+### coreDocument.resolveMethod(query, [scope]) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
 Returns a copy of the first verification method with an `id` property
 matching the provided `query` and the verification relationship
 specified by `scope`, if present.
@@ -681,7 +691,7 @@ specified by `scope`, if present.
 | Param | Type |
 | --- | --- |
 | query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+| [scope] | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
 <a name="CoreDocument+attachMethodRelationship"></a>
 
@@ -696,7 +706,7 @@ so it cannot be an embedded one.
 | Param | Type |
 | --- | --- |
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | <code>number</code> | 
+| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="CoreDocument+detachMethodRelationship"></a>
 
@@ -708,11 +718,11 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | <code>number</code> | 
+| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="CoreDocument+verifyJws"></a>
 
-### coreDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+### coreDocument.verifyJws(jws, options, signatureVerifier, [detachedPayload]) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -730,7 +740,7 @@ or set explicitly in the `options`.
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
 | signatureVerifier | <code>IJwsVerifier</code> | 
-| detachedPayload | <code>string</code> \| <code>undefined</code> | 
+| [detachedPayload] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+revokeCredentials"></a>
 
@@ -839,7 +849,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 <a name="CoreDocument+createCredentialJwt"></a>
 
-### coreDocument.createCredentialJwt(storage, fragment, credential, options, custom_claims) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+### coreDocument.createCredentialJwt(storage, fragment, credential, options, [custom_claims]) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWT where the payload is produced from the given `credential`
 in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 
@@ -857,7 +867,7 @@ The `custom_claims` can be used to set additional claims on the resulting JWT.
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
-| custom_claims | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
+| [custom_claims] | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
 
 <a name="CoreDocument+createPresentationJwt"></a>
 
@@ -913,7 +923,7 @@ Deserializes an instance from a plain JS representation.
         * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
         * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
         * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.setProof(proof)](#Credential+setProof)
+        * [.setProof([proof])](#Credential+setProof)
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
@@ -1025,7 +1035,7 @@ Returns a copy of the miscellaneous properties on the [Credential](#Credential).
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+setProof"></a>
 
-### credential.setProof(proof)
+### credential.setProof([proof])
 Sets the `proof` property of the [Credential](#Credential).
 
 Note that this proof is not related to JWT.
@@ -1034,7 +1044,7 @@ Note that this proof is not related to JWT.
 
 | Param | Type |
 | --- | --- |
-| proof | [<code>Proof</code>](#Proof) \| <code>undefined</code> | 
+| [proof] | [<code>Proof</code>](#Proof) \| <code>undefined</code> | 
 
 <a name="Credential+toJSON"></a>
 
@@ -1092,11 +1102,11 @@ A method agnostic DID Url.
         * [.did()](#DIDUrl+did) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.urlStr()](#DIDUrl+urlStr) ⇒ <code>string</code>
         * [.fragment()](#DIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setFragment(value)](#DIDUrl+setFragment)
+        * [.setFragment([value])](#DIDUrl+setFragment)
         * [.path()](#DIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setPath(value)](#DIDUrl+setPath)
+        * [.setPath([value])](#DIDUrl+setPath)
         * [.query()](#DIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.setQuery(value)](#DIDUrl+setQuery)
+        * [.setQuery([value])](#DIDUrl+setQuery)
         * [.join(segment)](#DIDUrl+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#DIDUrl+toString) ⇒ <code>string</code>
         * [.toJSON()](#DIDUrl+toJSON) ⇒ <code>any</code>
@@ -1125,14 +1135,14 @@ Returns a copy of the [DIDUrl](#DIDUrl) method fragment, if any. Excludes the le
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+setFragment"></a>
 
-### didUrl.setFragment(value)
+### didUrl.setFragment([value])
 Sets the `fragment` component of the [DIDUrl](#DIDUrl).
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
+| [value] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DIDUrl+path"></a>
 
@@ -1142,14 +1152,14 @@ Returns a copy of the [DIDUrl](#DIDUrl) path.
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+setPath"></a>
 
-### didUrl.setPath(value)
+### didUrl.setPath([value])
 Sets the `path` component of the [DIDUrl](#DIDUrl).
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
+| [value] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DIDUrl+query"></a>
 
@@ -1159,14 +1169,14 @@ Returns a copy of the [DIDUrl](#DIDUrl) method query, if any. Excludes the leadi
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl+setQuery"></a>
 
-### didUrl.setQuery(value)
+### didUrl.setQuery([value])
 Sets the `query` component of the [DIDUrl](#DIDUrl).
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> \| <code>undefined</code> | 
+| [value] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DIDUrl+join"></a>
 
@@ -1815,13 +1825,13 @@ if the object is being concurrently modified.
         * [.insertService(service)](#IotaDocument+insertService)
         * [.removeService(did)](#IotaDocument+removeService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
         * [.resolveService(query)](#IotaDocument+resolveService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
-        * [.methods(scope)](#IotaDocument+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+        * [.methods([scope])](#IotaDocument+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#IotaDocument+insertMethod)
         * [.removeMethod(did)](#IotaDocument+removeMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
-        * [.resolveMethod(query, scope)](#IotaDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
+        * [.resolveMethod(query, [scope])](#IotaDocument+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.attachMethodRelationship(didUrl, relationship)](#IotaDocument+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(didUrl, relationship)](#IotaDocument+detachMethodRelationship) ⇒ <code>boolean</code>
-        * [.verifyJws(jws, options, signatureVerifier, detachedPayload)](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+        * [.verifyJws(jws, options, signatureVerifier, [detachedPayload])](#IotaDocument+verifyJws) ⇒ [<code>DecodedJws</code>](#DecodedJws)
         * [.pack()](#IotaDocument+pack) ⇒ <code>Uint8Array</code>
         * [.packWithEncoding(encoding)](#IotaDocument+packWithEncoding) ⇒ <code>Uint8Array</code>
         * [.metadata()](#IotaDocument+metadata) ⇒ [<code>IotaDocumentMetadata</code>](#IotaDocumentMetadata)
@@ -1830,7 +1840,7 @@ if the object is being concurrently modified.
         * [.metadataUpdated()](#IotaDocument+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.setMetadataUpdated(timestamp)](#IotaDocument+setMetadataUpdated)
         * [.metadataDeactivated()](#IotaDocument+metadataDeactivated) ⇒ <code>boolean</code> \| <code>undefined</code>
-        * [.setMetadataDeactivated(deactivated)](#IotaDocument+setMetadataDeactivated)
+        * [.setMetadataDeactivated([deactivated])](#IotaDocument+setMetadataDeactivated)
         * [.metadataStateControllerAddress()](#IotaDocument+metadataStateControllerAddress) ⇒ <code>string</code> \| <code>undefined</code>
         * [.metadataGovernorAddress()](#IotaDocument+metadataGovernorAddress) ⇒ <code>string</code> \| <code>undefined</code>
         * [.setMetadataPropertyUnchecked(key, value)](#IotaDocument+setMetadataPropertyUnchecked)
@@ -1844,7 +1854,7 @@ if the object is being concurrently modified.
         * [.generateMethod(storage, keyType, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
-        * [.createCredentialJwt(storage, fragment, credential, options, custom_claims)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createCredentialJwt(storage, fragment, credential, options, [custom_claims])](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -1964,7 +1974,7 @@ if present.
 
 <a name="IotaDocument+methods"></a>
 
-### iotaDocument.methods(scope) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+### iotaDocument.methods([scope]) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
 Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Document,
 whose verification relationship matches `scope`.
 
@@ -1974,7 +1984,7 @@ If `scope` is not set, a list over the **embedded** methods is returned.
 
 | Param | Type |
 | --- | --- |
-| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+| [scope] | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
 <a name="IotaDocument+insertMethod"></a>
 
@@ -2001,7 +2011,7 @@ Removes all references to the specified Verification Method.
 
 <a name="IotaDocument+resolveMethod"></a>
 
-### iotaDocument.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
+### iotaDocument.resolveMethod(query, [scope]) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
 Returns a copy of the first verification method with an `id` property
 matching the provided `query` and the verification relationship
 specified by `scope`, if present.
@@ -2011,7 +2021,7 @@ specified by `scope`, if present.
 | Param | Type |
 | --- | --- |
 | query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+| [scope] | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
 
 <a name="IotaDocument+attachMethodRelationship"></a>
 
@@ -2026,7 +2036,7 @@ so it cannot be an embedded one.
 | Param | Type |
 | --- | --- |
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | <code>number</code> | 
+| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="IotaDocument+detachMethodRelationship"></a>
 
@@ -2038,11 +2048,11 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | didUrl | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | <code>number</code> | 
+| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="IotaDocument+verifyJws"></a>
 
-### iotaDocument.verifyJws(jws, options, signatureVerifier, detachedPayload) ⇒ [<code>DecodedJws</code>](#DecodedJws)
+### iotaDocument.verifyJws(jws, options, signatureVerifier, [detachedPayload]) ⇒ [<code>DecodedJws</code>](#DecodedJws)
 Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
 verifying EdDSA signatures.
@@ -2059,7 +2069,7 @@ take place.
 | jws | [<code>Jws</code>](#Jws) | 
 | options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
 | signatureVerifier | <code>IJwsVerifier</code> | 
-| detachedPayload | <code>string</code> \| <code>undefined</code> | 
+| [detachedPayload] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+pack"></a>
 
@@ -2077,7 +2087,7 @@ Serializes the document for inclusion in an Alias Output's state metadata.
 
 | Param | Type |
 | --- | --- |
-| encoding | <code>number</code> | 
+| encoding | [<code>StateMetadataEncoding</code>](#StateMetadataEncoding) | 
 
 <a name="IotaDocument+metadata"></a>
 
@@ -2130,14 +2140,14 @@ Returns a copy of the deactivated status of the DID document.
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 <a name="IotaDocument+setMetadataDeactivated"></a>
 
-### iotaDocument.setMetadataDeactivated(deactivated)
+### iotaDocument.setMetadataDeactivated([deactivated])
 Sets the deactivated status of the DID document.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
 
 | Param | Type |
 | --- | --- |
-| deactivated | <code>boolean</code> \| <code>undefined</code> | 
+| [deactivated] | <code>boolean</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+metadataStateControllerAddress"></a>
 
@@ -2277,7 +2287,7 @@ See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
 
 <a name="IotaDocument+createCredentialJwt"></a>
 
-### iotaDocument.createCredentialJwt(storage, fragment, credential, options, custom_claims) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+### iotaDocument.createCredentialJwt(storage, fragment, credential, options, [custom_claims]) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
 Produces a JWS where the payload is produced from the given `credential`
 in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 
@@ -2295,7 +2305,7 @@ The `custom_claims` can be used to set additional claims on the resulting JWT.
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
-| custom_claims | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
+| [custom_claims] | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
 
 <a name="IotaDocument+createPresentationJwt"></a>
 
@@ -2464,7 +2474,7 @@ and resolution of DID documents in Alias Outputs.
 **Kind**: global class  
 
 * [IotaIdentityClientExt](#IotaIdentityClientExt)
-    * [.newDidOutput(client, address, document, rentStructure)](#IotaIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
+    * [.newDidOutput(client, address, document, [rentStructure])](#IotaIdentityClientExt.newDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
     * [.updateDidOutput(client, document)](#IotaIdentityClientExt.updateDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
     * [.deactivateDidOutput(client, did)](#IotaIdentityClientExt.deactivateDidOutput) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
     * [.resolveDid(client, did)](#IotaIdentityClientExt.resolveDid) ⇒ [<code>Promise.&lt;IotaDocument&gt;</code>](#IotaDocument)
@@ -2472,7 +2482,7 @@ and resolution of DID documents in Alias Outputs.
 
 <a name="IotaIdentityClientExt.newDidOutput"></a>
 
-### IotaIdentityClientExt.newDidOutput(client, address, document, rentStructure) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
+### IotaIdentityClientExt.newDidOutput(client, address, document, [rentStructure]) ⇒ <code>Promise.&lt;AliasOutputBuilderParams&gt;</code>
 Create a DID with a new Alias Output containing the given `document`.
 
 The `address` will be set as the state controller and governor unlock conditions.
@@ -2489,7 +2499,7 @@ NOTE: this does *not* publish the Alias Output.
 | client | <code>IIotaIdentityClient</code> | 
 | address | <code>Address</code> | 
 | document | [<code>IotaDocument</code>](#IotaDocument) | 
-| rentStructure | <code>IRent</code> \| <code>undefined</code> | 
+| [rentStructure] | <code>IRent</code> \| <code>undefined</code> | 
 
 <a name="IotaIdentityClientExt.updateDidOutput"></a>
 
@@ -3138,7 +3148,7 @@ Deserializes an instance from a JSON object.
 **Kind**: global class  
 
 * [JwsSignatureOptions](#JwsSignatureOptions)
-    * [new JwsSignatureOptions(options)](#new_JwsSignatureOptions_new)
+    * [new JwsSignatureOptions([options])](#new_JwsSignatureOptions_new)
     * _instance_
         * [.setAttachJwk(value)](#JwsSignatureOptions+setAttachJwk)
         * [.setB64(value)](#JwsSignatureOptions+setB64)
@@ -3156,11 +3166,11 @@ Deserializes an instance from a JSON object.
 
 <a name="new_JwsSignatureOptions_new"></a>
 
-### new JwsSignatureOptions(options)
+### new JwsSignatureOptions([options])
 
 | Param | Type |
 | --- | --- |
-| options | <code>IJwsSignatureOptions</code> \| <code>undefined</code> | 
+| [options] | <code>IJwsSignatureOptions</code> \| <code>undefined</code> | 
 
 <a name="JwsSignatureOptions+setAttachJwk"></a>
 
@@ -3290,7 +3300,7 @@ Deserializes an instance from a JSON object.
 **Kind**: global class  
 
 * [JwsVerificationOptions](#JwsVerificationOptions)
-    * [new JwsVerificationOptions(options)](#new_JwsVerificationOptions_new)
+    * [new JwsVerificationOptions([options])](#new_JwsVerificationOptions_new)
     * _instance_
         * [.setNonce(value)](#JwsVerificationOptions+setNonce)
         * [.setMethodScope(value)](#JwsVerificationOptions+setMethodScope)
@@ -3302,13 +3312,13 @@ Deserializes an instance from a JSON object.
 
 <a name="new_JwsVerificationOptions_new"></a>
 
-### new JwsVerificationOptions(options)
+### new JwsVerificationOptions([options])
 Creates a new [JwsVerificationOptions](#JwsVerificationOptions) from the given fields.
 
 
 | Param | Type |
 | --- | --- |
-| options | <code>IJwsVerificationOptions</code> \| <code>undefined</code> | 
+| [options] | <code>IJwsVerificationOptions</code> \| <code>undefined</code> | 
 
 <a name="JwsVerificationOptions+setNonce"></a>
 
@@ -3429,7 +3439,7 @@ Options to declare validation criteria when validating credentials.
 **Kind**: global class  
 
 * [JwtCredentialValidationOptions](#JwtCredentialValidationOptions)
-    * [new JwtCredentialValidationOptions(options)](#new_JwtCredentialValidationOptions_new)
+    * [new JwtCredentialValidationOptions([options])](#new_JwtCredentialValidationOptions_new)
     * _instance_
         * [.toJSON()](#JwtCredentialValidationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwtCredentialValidationOptions+clone) ⇒ [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions)
@@ -3438,11 +3448,11 @@ Options to declare validation criteria when validating credentials.
 
 <a name="new_JwtCredentialValidationOptions_new"></a>
 
-### new JwtCredentialValidationOptions(options)
+### new JwtCredentialValidationOptions([options])
 
 | Param | Type |
 | --- | --- |
-| options | <code>IJwtCredentialValidationOptions</code> \| <code>undefined</code> | 
+| [options] | <code>IJwtCredentialValidationOptions</code> \| <code>undefined</code> | 
 
 <a name="JwtCredentialValidationOptions+toJSON"></a>
 
@@ -3484,6 +3494,7 @@ A type for decoding and validating [Credential](#Credential).
         * [.checkIssuedOnOrBefore(credential, timestamp)](#JwtCredentialValidator.checkIssuedOnOrBefore)
         * [.checkSubjectHolderRelationship(credential, holder, relationship)](#JwtCredentialValidator.checkSubjectHolderRelationship)
         * [.checkStatus(credential, trustedIssuers, statusCheck)](#JwtCredentialValidator.checkStatus)
+        * [.checkStatusWithStatusList2021(credential, status_list, status_check)](#JwtCredentialValidator.checkStatusWithStatusList2021)
         * [.extractIssuer(credential)](#JwtCredentialValidator.extractIssuer) ⇒ [<code>CoreDID</code>](#CoreDID)
         * [.extractIssuerFromJwt(credential)](#JwtCredentialValidator.extractIssuerFromJwt) ⇒ [<code>CoreDID</code>](#CoreDID)
 
@@ -3534,7 +3545,7 @@ An error is returned whenever a validated condition is not satisfied.
 | credential_jwt | [<code>Jwt</code>](#Jwt) | 
 | issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
-| fail_fast | <code>number</code> | 
+| fail_fast | [<code>FailFast</code>](#FailFast) | 
 
 <a name="JwtCredentialValidator+verifySignature"></a>
 
@@ -3600,7 +3611,7 @@ Validate that the relationship between the `holder` and the credential subjects 
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 | holder | <code>string</code> | 
-| relationship | <code>number</code> | 
+| relationship | [<code>SubjectHolderRelationship</code>](#SubjectHolderRelationship) | 
 
 <a name="JwtCredentialValidator.checkStatus"></a>
 
@@ -3615,7 +3626,20 @@ Only supports `RevocationBitmap2022`.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 | trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
-| statusCheck | <code>number</code> | 
+| statusCheck | [<code>StatusCheck</code>](#StatusCheck) | 
+
+<a name="JwtCredentialValidator.checkStatusWithStatusList2021"></a>
+
+### JwtCredentialValidator.checkStatusWithStatusList2021(credential, status_list, status_check)
+Checks wheter the credential status has been revoked using `StatusList2021`
+
+**Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| status_list | [<code>StatusList2021Credential</code>](#StatusList2021Credential) | 
+| status_check | [<code>StatusCheck</code>](#StatusCheck) | 
 
 <a name="JwtCredentialValidator.extractIssuer"></a>
 
@@ -3721,7 +3745,7 @@ Error will be thrown in case the validation fails.
 **Kind**: global class  
 
 * [JwtPresentationOptions](#JwtPresentationOptions)
-    * [new JwtPresentationOptions(options)](#new_JwtPresentationOptions_new)
+    * [new JwtPresentationOptions([options])](#new_JwtPresentationOptions_new)
     * _instance_
         * [.toJSON()](#JwtPresentationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwtPresentationOptions+clone) ⇒ [<code>JwtPresentationOptions</code>](#JwtPresentationOptions)
@@ -3730,7 +3754,7 @@ Error will be thrown in case the validation fails.
 
 <a name="new_JwtPresentationOptions_new"></a>
 
-### new JwtPresentationOptions(options)
+### new JwtPresentationOptions([options])
 Creates a new [JwtPresentationOptions](#JwtPresentationOptions) from the given fields.
 
 Throws an error if any of the options are invalid.
@@ -3738,7 +3762,7 @@ Throws an error if any of the options are invalid.
 
 | Param | Type |
 | --- | --- |
-| options | <code>IJwtPresentationOptions</code> \| <code>undefined</code> | 
+| [options] | <code>IJwtPresentationOptions</code> \| <code>undefined</code> | 
 
 <a name="JwtPresentationOptions+toJSON"></a>
 
@@ -3771,7 +3795,7 @@ Options to declare validation criteria when validating presentation.
 **Kind**: global class  
 
 * [JwtPresentationValidationOptions](#JwtPresentationValidationOptions)
-    * [new JwtPresentationValidationOptions(options)](#new_JwtPresentationValidationOptions_new)
+    * [new JwtPresentationValidationOptions([options])](#new_JwtPresentationValidationOptions_new)
     * _instance_
         * [.toJSON()](#JwtPresentationValidationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#JwtPresentationValidationOptions+clone) ⇒ [<code>JwtPresentationValidationOptions</code>](#JwtPresentationValidationOptions)
@@ -3780,7 +3804,7 @@ Options to declare validation criteria when validating presentation.
 
 <a name="new_JwtPresentationValidationOptions_new"></a>
 
-### new JwtPresentationValidationOptions(options)
+### new JwtPresentationValidationOptions([options])
 Creates a new [JwtPresentationValidationOptions](#JwtPresentationValidationOptions) from the given fields.
 
 Throws an error if any of the options are invalid.
@@ -3788,7 +3812,7 @@ Throws an error if any of the options are invalid.
 
 | Param | Type |
 | --- | --- |
-| options | <code>IJwtPresentationValidationOptions</code> \| <code>undefined</code> | 
+| [options] | <code>IJwtPresentationValidationOptions</code> \| <code>undefined</code> | 
 
 <a name="JwtPresentationValidationOptions+toJSON"></a>
 
@@ -4269,7 +4293,7 @@ Deserializes an instance from a JSON object.
         * [.refreshService()](#Presentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
         * [.termsOfUse()](#Presentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
         * [.proof()](#Presentation+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.setProof(proof)](#Presentation+setProof)
+        * [.setProof([proof])](#Presentation+setProof)
         * [.properties()](#Presentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
         * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
@@ -4338,7 +4362,7 @@ Optional cryptographic proof, unrelated to JWT.
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+setProof"></a>
 
-### presentation.setProof(proof)
+### presentation.setProof([proof])
 Sets the proof property of the [Presentation](#Presentation).
 
 Note that this proof is not related to JWT.
@@ -4347,7 +4371,7 @@ Note that this proof is not related to JWT.
 
 | Param | Type |
 | --- | --- |
-| proof | [<code>Proof</code>](#Proof) \| <code>undefined</code> | 
+| [proof] | [<code>Proof</code>](#Proof) \| <code>undefined</code> | 
 
 <a name="Presentation+properties"></a>
 
@@ -4701,6 +4725,342 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StatusList2021"></a>
+
+## StatusList2021
+**Kind**: global class  
+
+* [StatusList2021](#StatusList2021)
+    * [new StatusList2021([size])](#new_StatusList2021_new)
+    * _instance_
+        * [.clone()](#StatusList2021+clone) ⇒ [<code>StatusList2021</code>](#StatusList2021)
+        * [.len()](#StatusList2021+len) ⇒ <code>number</code>
+        * [.get(index)](#StatusList2021+get) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.set(index, value)](#StatusList2021+set)
+        * [.intoEncodedStr()](#StatusList2021+intoEncodedStr) ⇒ <code>string</code>
+    * _static_
+        * [.fromEncodedStr(s)](#StatusList2021.fromEncodedStr) ⇒ [<code>StatusList2021</code>](#StatusList2021)
+
+<a name="new_StatusList2021_new"></a>
+
+### new StatusList2021([size])
+Creates a new [StatusList2021](#StatusList2021) of `size` entries
+
+
+| Param | Type |
+| --- | --- |
+| [size] | <code>number</code> \| <code>undefined</code> | 
+
+<a name="StatusList2021+clone"></a>
+
+### statusList2021.clone() ⇒ [<code>StatusList2021</code>](#StatusList2021)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
+<a name="StatusList2021+len"></a>
+
+### statusList2021.len() ⇒ <code>number</code>
+Returns the number of entries in this [StatusList2021](#StatusList2021)
+
+**Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
+<a name="StatusList2021+get"></a>
+
+### statusList2021.get(index) ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns whether the entry at `index` is set
+
+**Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="StatusList2021+set"></a>
+
+### statusList2021.set(index, value)
+Sets the value of the `index`-th entry
+
+**Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+| value | <code>boolean</code> | 
+
+<a name="StatusList2021+intoEncodedStr"></a>
+
+### statusList2021.intoEncodedStr() ⇒ <code>string</code>
+Encodes this [StatusList2021](#StatusList2021) into its compressed
+base64 string representation
+
+**Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
+<a name="StatusList2021.fromEncodedStr"></a>
+
+### StatusList2021.fromEncodedStr(s) ⇒ [<code>StatusList2021</code>](#StatusList2021)
+**Kind**: static method of [<code>StatusList2021</code>](#StatusList2021)  
+
+| Param | Type |
+| --- | --- |
+| s | <code>string</code> | 
+
+<a name="StatusList2021Credential"></a>
+
+## StatusList2021Credential
+**Kind**: global class  
+
+* [StatusList2021Credential](#StatusList2021Credential)
+    * [new StatusList2021Credential(credential)](#new_StatusList2021Credential_new)
+    * _instance_
+        * [.id()](#StatusList2021Credential+id) ⇒ <code>string</code>
+        * [.setCredentialStatus(credential, index, flag)](#StatusList2021Credential+setCredentialStatus) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+        * [.purpose()](#StatusList2021Credential+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
+        * [.entry(index)](#StatusList2021Credential+entry) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.setEntry(index, state)](#StatusList2021Credential+setEntry)
+        * [.clone()](#StatusList2021Credential+clone) ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
+        * [.toJSON()](#StatusList2021Credential+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#StatusList2021Credential.fromJSON) ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
+
+<a name="new_StatusList2021Credential_new"></a>
+
+### new StatusList2021Credential(credential)
+Creates a new [StatusList2021Credential](#StatusList2021Credential)
+
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+
+<a name="StatusList2021Credential+id"></a>
+
+### statusList2021Credential.id() ⇒ <code>string</code>
+**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+<a name="StatusList2021Credential+setCredentialStatus"></a>
+
+### statusList2021Credential.setCredentialStatus(credential, index, flag) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+Sets the given credential's status using the `index`-th entry of this status list.
+Returns the created `credentialStatus`.
+
+**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| index | <code>number</code> | 
+| flag | <code>boolean</code> | 
+
+<a name="StatusList2021Credential+purpose"></a>
+
+### statusList2021Credential.purpose() ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
+Returns the [StatusPurpose](#StatusPurpose) of this [StatusList2021Credential](#StatusList2021Credential)
+
+**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+<a name="StatusList2021Credential+entry"></a>
+
+### statusList2021Credential.entry(index) ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns the state of the `index`-th entry, if any
+
+**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="StatusList2021Credential+setEntry"></a>
+
+### statusList2021Credential.setEntry(index, state)
+Sets the `index`-th entry to `state`
+
+**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+| state | <code>boolean</code> | 
+
+<a name="StatusList2021Credential+clone"></a>
+
+### statusList2021Credential.clone() ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
+**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+<a name="StatusList2021Credential+toJSON"></a>
+
+### statusList2021Credential.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+<a name="StatusList2021Credential.fromJSON"></a>
+
+### StatusList2021Credential.fromJSON(json) ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
+**Kind**: static method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="StatusList2021CredentialBuilder"></a>
+
+## StatusList2021CredentialBuilder
+**Kind**: global class  
+
+* [StatusList2021CredentialBuilder](#StatusList2021CredentialBuilder)
+    * [new StatusList2021CredentialBuilder([status_list])](#new_StatusList2021CredentialBuilder_new)
+    * [.purpose(purpose)](#StatusList2021CredentialBuilder+purpose) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+    * [.subjectId(id)](#StatusList2021CredentialBuilder+subjectId) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+    * [.expirationDate(time)](#StatusList2021CredentialBuilder+expirationDate) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+    * [.issuer(issuer)](#StatusList2021CredentialBuilder+issuer) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+    * [.context(context)](#StatusList2021CredentialBuilder+context) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+    * [.type(t)](#StatusList2021CredentialBuilder+type) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+    * [.proof(proof)](#StatusList2021CredentialBuilder+proof) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+    * [.build()](#StatusList2021CredentialBuilder+build) ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
+
+<a name="new_StatusList2021CredentialBuilder_new"></a>
+
+### new StatusList2021CredentialBuilder([status_list])
+
+| Param | Type |
+| --- | --- |
+| [status_list] | [<code>StatusList2021</code>](#StatusList2021) \| <code>undefined</code> | 
+
+<a name="StatusList2021CredentialBuilder+purpose"></a>
+
+### statusList2021CredentialBuilder.purpose(purpose) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+
+| Param | Type |
+| --- | --- |
+| purpose | [<code>StatusPurpose</code>](#StatusPurpose) | 
+
+<a name="StatusList2021CredentialBuilder+subjectId"></a>
+
+### statusList2021CredentialBuilder.subjectId(id) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+
+| Param | Type |
+| --- | --- |
+| id | <code>string</code> | 
+
+<a name="StatusList2021CredentialBuilder+expirationDate"></a>
+
+### statusList2021CredentialBuilder.expirationDate(time) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+
+| Param | Type |
+| --- | --- |
+| time | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="StatusList2021CredentialBuilder+issuer"></a>
+
+### statusList2021CredentialBuilder.issuer(issuer) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+
+| Param | Type |
+| --- | --- |
+| issuer | <code>string</code> | 
+
+<a name="StatusList2021CredentialBuilder+context"></a>
+
+### statusList2021CredentialBuilder.context(context) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+
+| Param | Type |
+| --- | --- |
+| context | <code>string</code> | 
+
+<a name="StatusList2021CredentialBuilder+type"></a>
+
+### statusList2021CredentialBuilder.type(t) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+
+| Param | Type |
+| --- | --- |
+| t | <code>string</code> | 
+
+<a name="StatusList2021CredentialBuilder+proof"></a>
+
+### statusList2021CredentialBuilder.proof(proof) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+
+| Param | Type |
+| --- | --- |
+| proof | [<code>Proof</code>](#Proof) | 
+
+<a name="StatusList2021CredentialBuilder+build"></a>
+
+### statusList2021CredentialBuilder.build() ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
+**Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
+<a name="StatusList2021Entry"></a>
+
+## StatusList2021Entry
+**Kind**: global class  
+
+* [StatusList2021Entry](#StatusList2021Entry)
+    * [new StatusList2021Entry(status_list, purpose, index)](#new_StatusList2021Entry_new)
+    * _instance_
+        * [.id()](#StatusList2021Entry+id) ⇒ <code>string</code>
+        * [.purpose()](#StatusList2021Entry+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
+        * [.index()](#StatusList2021Entry+index) ⇒ <code>number</code>
+        * [.credential()](#StatusList2021Entry+credential) ⇒ <code>string</code>
+        * [.clone()](#StatusList2021Entry+clone) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+        * [.toJSON()](#StatusList2021Entry+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#StatusList2021Entry.fromJSON) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+
+<a name="new_StatusList2021Entry_new"></a>
+
+### new StatusList2021Entry(status_list, purpose, index)
+Creates a new [StatusList2021Entry](#StatusList2021Entry)
+
+
+| Param | Type |
+| --- | --- |
+| status_list | <code>string</code> | 
+| purpose | [<code>StatusPurpose</code>](#StatusPurpose) | 
+| index | <code>number</code> | 
+
+<a name="StatusList2021Entry+id"></a>
+
+### statusList2021Entry.id() ⇒ <code>string</code>
+Returns this `credentialStatus`'s `id`
+
+**Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+<a name="StatusList2021Entry+purpose"></a>
+
+### statusList2021Entry.purpose() ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
+Returns the purpose of this entry
+
+**Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+<a name="StatusList2021Entry+index"></a>
+
+### statusList2021Entry.index() ⇒ <code>number</code>
+Returns the index of this entry
+
+**Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+<a name="StatusList2021Entry+credential"></a>
+
+### statusList2021Entry.credential() ⇒ <code>string</code>
+Returns the referenced [StatusList2021Credential](#StatusList2021Credential)'s url
+
+**Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+<a name="StatusList2021Entry+clone"></a>
+
+### statusList2021Entry.clone() ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+Deep clones the object.
+
+**Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+<a name="StatusList2021Entry+toJSON"></a>
+
+### statusList2021Entry.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+<a name="StatusList2021Entry.fromJSON"></a>
+
+### StatusList2021Entry.fromJSON(json) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Storage"></a>
 
 ## Storage
@@ -4903,7 +5263,7 @@ A DID Document Verification Method.
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
         * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
     * _static_
-        * [.newFromJwk(did, key, fragment)](#VerificationMethod.newFromJwk) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.newFromJwk(did, key, [fragment])](#VerificationMethod.newFromJwk) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="VerificationMethod+id"></a>
@@ -5011,7 +5371,7 @@ Deep clones the object.
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod.newFromJwk"></a>
 
-### VerificationMethod.newFromJwk(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### VerificationMethod.newFromJwk(did, key, [fragment]) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Creates a new [VerificationMethod](#VerificationMethod) from the given `did` and [Jwk](#Jwk). If `fragment` is not given
 the `kid` value of the given `key` will be used, if present, otherwise an error is returned.
 
@@ -5028,7 +5388,7 @@ done automatically if `None` is passed in as the fragment.
 | --- | --- |
 | did | [<code>CoreDID</code>](#CoreDID) \| <code>IToCoreDID</code> | 
 | key | [<code>Jwk</code>](#Jwk) | 
-| fragment | <code>string</code> \| <code>undefined</code> | 
+| [fragment] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="VerificationMethod.fromJSON"></a>
 
@@ -5041,13 +5401,13 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+**Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -5080,6 +5440,28 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -5107,30 +5489,6 @@ The holder must match the subject only for credentials where the [`nonTransferab
 The holder is not required to have any kind of relationship to any credential subject.
 
 **Kind**: global variable  
-<a name="FailFast"></a>
-
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -5153,6 +5511,12 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
 <a name="verifyEd25519"></a>
 
 ## verifyEd25519(alg, signingInput, decodedSignature, publicKey)

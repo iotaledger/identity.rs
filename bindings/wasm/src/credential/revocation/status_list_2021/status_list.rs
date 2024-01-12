@@ -3,6 +3,7 @@ use identity_iota::credential::status_list_2021::StatusList2021;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = StatusList2021, inspectable)]
+#[derive(Default, Debug)]
 pub struct WasmStatusList2021(pub(crate) StatusList2021);
 
 impl_wasm_clone!(WasmStatusList2021, StatusList2021);
@@ -11,8 +12,11 @@ impl_wasm_clone!(WasmStatusList2021, StatusList2021);
 impl WasmStatusList2021 {
   /// Creates a new {@link StatusList2021} of `size` entries
   #[wasm_bindgen(constructor)]
-  pub fn new(size: usize) -> Self {
-    Self(StatusList2021::new(size))
+  pub fn new(size: Option<usize>) -> Self {
+    Self(match size {
+      Some(size) => StatusList2021::new(size),
+      None => StatusList2021::default(),
+    })
   }
 
   /// Returns the number of entries in this {@link StatusList2021}
