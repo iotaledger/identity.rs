@@ -179,11 +179,13 @@ async fn main() -> anyhow::Result<()> {
   assert_eq!(linked_domain_services.len(), 1);
 
   // Get the domains included in the Linked Domain Service.
-  let domains: &[Url] = linked_domain_services.first()
+  let domains: &[Url] = linked_domain_services
+    .first()
     .ok_or_else(|| anyhow::anyhow!("expected a domain"))?
     .domains();
 
-  let domain_foo: Url = domains.first()
+  let domain_foo: Url = domains
+    .first()
     .ok_or_else(|| anyhow::anyhow!("expected a domain"))?
     .clone();
   assert_eq!(domain_foo, domain_1);
