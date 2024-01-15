@@ -14,6 +14,8 @@ use identity_core::common::Url;
 use identity_did::CoreDID;
 use identity_did::DID;
 
+use crate::utils::url_only_includes_origin;
+
 /// Convenient builder to create a spec compliant Domain Linkage Credential.
 ///
 /// See: <https://identity.foundation/.well-known/resources/did-configuration/#linked-data-proof-format>
@@ -72,6 +74,11 @@ impl DomainLinkageCredentialBuilder {
     if origin.domain().is_none() {
       return Err(Error::DomainLinkageError(
         "origin must be a domain with http(s) scheme".into(),
+      ));
+    }
+    if !url_only_includes_origin(&origin) {
+      return Err(Error::DomainLinkageError(
+        "origin must not contain any path, query or fragment".into(),
       ));
     }
 
@@ -138,6 +145,26 @@ mod tests {
       .build()
       .unwrap_err();
     assert!(matches!(err, Error::DomainLinkageError(_)));
+  }
+  #[test]
+  fn test_builder_origin_is_a_url() {
+    let urls = [
+      "https://example.com/foo?bar=420#baz",
+      "https://example.com/?bar=420",
+      "https://example.com/#baz",
+      "https://example.com/?bar=420#baz",
+    ];
+    let issuer: CoreDID = "did:example:issuer".parse().unwrap();
+    for url in urls {
+      let err: Error = DomainLinkageCredentialBuilder::new()
+        .issuance_date(Timestamp::now_utc())
+        .expiration_date(Timestamp::now_utc())
+        .issuer(issuer.clone())
+        .origin(Url::parse(url).unwrap())
+        .build()
+        .unwrap_err();
+      assert!(matches!(err, Error::DomainLinkageError(_)));
+    }
   }
 
   #[test]

@@ -23,6 +23,7 @@ pub mod error;
 pub mod presentation;
 #[cfg(feature = "revocation-bitmap")]
 pub mod revocation;
+mod utils;
 #[cfg(feature = "validator")]
 pub mod validator;
 
