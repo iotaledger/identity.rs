@@ -105,7 +105,8 @@ impl_wasm_error_from!(
   identity_iota::credential::RevocationError,
   identity_iota::verification::Error,
   identity_iota::credential::DomainLinkageValidationError,
-  identity_iota::sd_jwt_payload::Error
+  identity_iota::sd_jwt_payload::Error,
+  identity_iota::credential::KeyBindingJwtError
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str

@@ -42,8 +42,8 @@ impl WasmDisclosure {
   }
 
   /// Returns a copy of the base64url-encoded string.
-  #[wasm_bindgen(js_name = toString)]
-  pub fn to_string(&self) -> String {
+  #[wasm_bindgen(js_name = toEncodedString)]
+  pub fn to_encoded_string(&self) -> String {
     self.0.disclosure.clone()
   }
 

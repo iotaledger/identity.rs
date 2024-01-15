@@ -110,5 +110,6 @@ pub mod storage {
 
 #[cfg(feature = "sd-jwt")]
 pub mod sd_jwt_payload {
+  //! Expose the selective disclosure crate.
   pub use identity_credential::sd_jwt_payload::*;
 }

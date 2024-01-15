@@ -6,6 +6,7 @@ use crate::common::RecordStringAny;
 use crate::common::WasmTimestamp;
 use crate::error::Result;
 use crate::error::WasmResult;
+use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
 use identity_iota::sd_jwt_payload::KeyBindingJwtClaims;
 use identity_iota::sd_jwt_payload::Sha256Hasher;
@@ -46,7 +47,9 @@ impl WasmKeyBindingJwtClaims {
       disclosures,
       nonce,
       aud,
-      issued_at.map(|value| value.0.to_unix()),
+      issued_at
+        .map(|value| value.0.to_unix())
+        .unwrap_or(Timestamp::now_utc().to_unix()),
     );
     if let Some(custom_properties) = custom_properties {
       let custom_properties: BTreeMap<String, Value> = custom_properties.into_serde().wasm_result()?;
@@ -93,6 +96,13 @@ impl WasmKeyBindingJwtClaims {
         .wasm_result()?
         .unchecked_into::<RecordStringAny>(),
     )
+  }
+
+  /// Returns the value of the `typ` property of the JWT header according to
+  /// https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-key-binding-jwt
+  #[wasm_bindgen(js_name = keyBindingJwtHeaderTyp)]
+  pub fn header_type() -> String {
+    KeyBindingJwtClaims::KB_JWT_HEADER_TYP.to_string()
   }
 }
 

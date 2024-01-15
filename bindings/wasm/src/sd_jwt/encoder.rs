@@ -84,14 +84,20 @@ impl WasmSdObjectEncoder {
   }
 
   /// Returns the modified object as a string.
+  #[wasm_bindgen(js_name = encodeToString)]
+  pub fn encoded_to_string(&self) -> Result<String> {
+    self.0.try_to_string().wasm_result()
+  }
+
+  /// Returns the modified object as a string.
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> Result<String> {
     self.0.try_to_string().wasm_result()
   }
 
   /// Returns the modified object.
-  #[wasm_bindgen(js_name = encodedObject)]
-  pub fn encoded_object(&self) -> Result<RecordStringAny> {
+  #[wasm_bindgen(js_name = encodeToObject)]
+  pub fn encode_to_object(&self) -> Result<RecordStringAny> {
     Ok(
       JsValue::from_serde(&self.0.object())
         .wasm_result()?

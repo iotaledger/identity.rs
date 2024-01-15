@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! This example shows how to create a selective disclosure verifiable credential and validate it
-//! using the standard [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-06.html).
+//! using the standard [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html).
 //!
 //! cargo run --release --example 7_sd_jwt
 
@@ -15,6 +15,7 @@ use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Object;
+use identity_iota::core::Timestamp;
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
@@ -78,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
   // Step 2: Issuer creates and signs a selectively disclosable JWT verifiable credential.
   // ===========================================================================
 
-  // Create a credential subject indicating the degree earned by Alice.
+  // Create an address credential subject.
   let subject: Subject = Subject::from_json_value(json!({
     "id": alice_document.id().as_str(),
     "name": "Alice",
@@ -92,7 +93,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Build credential using subject above and issuer.
   let credential: Credential = CredentialBuilder::default()
-    .id(Url::parse("https://example.edu/credentials/3732")?)
+    .id(Url::parse("https://example.com/credentials/3732")?)
     .issuer(Url::parse(issuer_document.id().as_str())?)
     .type_("AddressCredential")
     .subject(subject)
@@ -105,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Using the crate `sd-jwt` properties of the claims can be made selectively disclosable.
   // The default sha-256 hasher will be used to create the digests.
-  // Read more in https://github.com/iotaledger/sd-jwt .
+  // Read more in https://github.com/iotaledger/sd-jwt-payload .
   let mut encoder = SdObjectEncoder::new(&payload)?;
   // Make "locality", "postal_code" and "street_address" selectively disclosable while keeping
   // other properties in plain text.
@@ -170,7 +171,7 @@ async fn main() -> anyhow::Result<()> {
     disclosures.clone(),
     nonce.to_string(),
     VERIFIER_DID.to_string(),
-    None,
+    Timestamp::now_utc().to_unix(),
   )
   .to_json()?;
 

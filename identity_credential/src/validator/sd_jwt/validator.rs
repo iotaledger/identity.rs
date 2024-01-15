@@ -161,11 +161,11 @@ impl<V: JwsVerifier> SdJwtCredentialValidator<V> {
     Ok(decoded_credential)
   }
 
-  /// Validates a Key Binding JWT (KB-JWT) according to `https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-06.html#name-key-binding-jwt`.
+  /// Validates a Key Binding JWT (KB-JWT) according to `https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-key-binding-jwt`.
   /// The Validation process includes:
   ///   * Signature validation using public key materials defined in the `holder` document.
   ///   * `typ` value in KB-JWT header.
-  ///   * `_sd_hash` claim value in the KB-JWT claim.
+  ///   * `sd_hash` claim value in the KB-JWT claim.
   ///   * Optional `nonce`, `aud` and issuance date validation.
   pub fn validate_key_binding_jwt<DOC>(
     &self,

@@ -90,7 +90,7 @@ async fn setup_test() -> (Setup<IotaDocument, IotaDocument>, Credential, SdJwt) 
     disclosures.clone(),
     NONCE.to_string(),
     VERIFIER_ID.to_string(),
-    None,
+    Timestamp::now_utc().to_unix(),
   )
   .to_json()
   .unwrap();
@@ -184,12 +184,10 @@ async fn kb_in_the_future() {
     sd_jwt.disclosures.clone(),
     NONCE.to_string(),
     VERIFIER_ID.to_string(),
-    Some(
-      Timestamp::now_utc()
-        .checked_add(Duration::seconds(30))
-        .unwrap()
-        .to_unix(),
-    ),
+    Timestamp::now_utc()
+      .checked_add(Duration::seconds(30))
+      .unwrap()
+      .to_unix(),
   )
   .to_json()
   .unwrap();

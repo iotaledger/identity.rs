@@ -1,32 +1,24 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::core::Object;
-use identity_iota::core::Url;
-use identity_iota::credential::SdJwtCredentialValidator;
-use identity_iota::credential::StatusCheck;
-use identity_iota::did::CoreDID;
-use identity_iota::sd_jwt_payload::SdObjectDecoder;
-
 use super::options::WasmJwtCredentialValidationOptions;
+use super::WasmKeyBindingJWTValidationOptions;
 use crate::common::ImportedDocumentLock;
 use crate::common::ImportedDocumentReadGuard;
-use crate::common::WasmTimestamp;
-use crate::credential::options::WasmStatusCheck;
-use crate::credential::WasmCredential;
 use crate::credential::WasmDecodedJwtCredential;
 use crate::credential::WasmFailFast;
-use crate::credential::WasmJwt;
-use crate::credential::WasmSubjectHolderRelationship;
 use crate::did::ArrayIToCoreDocument;
 use crate::did::IToCoreDocument;
-use crate::did::WasmCoreDID;
 use crate::did::WasmJwsVerificationOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::sd_jwt::WasmKeyBindingJwtClaims;
 use crate::sd_jwt::WasmSdJwt;
 use crate::verification::IJwsVerifier;
 use crate::verification::WasmJwsVerifier;
+use identity_iota::credential::SdJwtCredentialValidator;
+use identity_iota::sd_jwt_payload::KeyBindingJwtClaims;
+use identity_iota::sd_jwt_payload::SdObjectDecoder;
 
 use wasm_bindgen::prelude::*;
 
@@ -130,5 +122,28 @@ impl WasmSdJwtCredentialValidator {
       .verify_signature(&credential.0, &trusted_issuers, &options.0)
       .wasm_result()
       .map(WasmDecodedJwtCredential)
+  }
+
+  /// Validates a Key Binding JWT (KB-JWT) according to `https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-key-binding-jwt`.
+  /// The Validation process includes:
+  ///   * Signature validation using public key materials defined in the `holder` document.
+  ///   * `typ` value in KB-JWT header.
+  ///   * `sd_hash` claim value in the KB-JWT claim.
+  ///   * Optional `nonce`, `aud` and issuance date validation.
+  #[wasm_bindgen(js_name = validateKeyBindingJwt)]
+  #[allow(non_snake_case)]
+  pub fn validate_key_binding_jwt(
+    &self,
+    sdJwt: &WasmSdJwt,
+    holder: &IToCoreDocument,
+    options: &WasmKeyBindingJWTValidationOptions,
+  ) -> Result<WasmKeyBindingJwtClaims> {
+    let holder_lock = ImportedDocumentLock::from(holder);
+    let holder_guard = holder_lock.try_read()?;
+    let claims: KeyBindingJwtClaims = self
+      .0
+      .validate_key_binding_jwt(&sdJwt.0, &holder_guard, &options.0)
+      .wasm_result()?;
+    Ok(WasmKeyBindingJwtClaims(claims))
   }
 }
