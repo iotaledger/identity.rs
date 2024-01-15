@@ -12,17 +12,21 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct KeyBindingJWTValidationOptions {
   /// Validates the nonce value of the KB-JWT claims.
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub nonce: Option<String>,
   /// Validates the `aud` properties in the KB-JWT claims.
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub aud: Option<String>,
   /// Options which affect the verification of the signature on the KB-JWT.
   pub jws_options: JwsVerificationOptions,
   /// Declares that the KB-JWT is considered invalid if the `iat` value in the claims is
   /// earlier than this timestamp.
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub earliest_issuance_date: Option<Timestamp>,
   /// Declares that the KB-JWT is considered invalid if the `iat` value in the claims is
   /// later than this timestamp.
   /// Uses the current timestamp during validation if not set.
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub latest_issuance_date: Option<Timestamp>,
 }
 
