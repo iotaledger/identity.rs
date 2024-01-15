@@ -24,7 +24,7 @@ itertools = { version = "0.11", default-features = false, features = ["use_std"]
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
 roaring = { version = "0.10", default-features = false, optional = true }
-sd-jwt-payload = { version = "0.1.2", default-features = false, features = ["sha"] }
+sd-jwt-payload = { version = "0.1.2", default-features = false, features = ["sha"], optional = true }
 serde.workspace = true
 serde_json.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
@@ -52,4 +52,4 @@ revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
 validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
-sd-jwt = ["credential", "validator"]
+sd-jwt = ["credential", "validator", "sd-jwt-payload"]
