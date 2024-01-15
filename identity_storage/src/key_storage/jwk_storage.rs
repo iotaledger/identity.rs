@@ -68,7 +68,8 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
 
 
 
-///TODO: Extension to the JwkStorage to handle BBS+ keys
+//TODO: ZKP - JwkStorageExt
+/// Extension to the JwkStorage to handle BBS+ keys
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkStorageExt : JwkStorage {

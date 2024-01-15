@@ -17,7 +17,7 @@ pub enum JwkUse {
   #[serde(rename = "enc")]
   Encryption,
 
-  //TODO: added Proof
+  //TODO: ZKP - added Proof
   /// Proof
   Proof
 }

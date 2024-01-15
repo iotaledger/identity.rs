@@ -13,7 +13,7 @@ use crate::{credential::{Jpt, Credential}, validator::{FailFast, JwtValidationEr
 
 use super::DecodedJptCredential;
 
-/// A type for decoding and validating [`Credential`]s in JPT format. //TODO: validator
+/// A type for decoding and validating [`Credential`]s in JPT format. //TODO: ZKP - validator
 #[non_exhaustive]
 pub struct JptCredentialValidator;
 
@@ -76,12 +76,15 @@ impl JptCredentialValidator {
       )
     });
 
+
     let issuance_date_validation = std::iter::once_with(|| {
       JwtCredentialValidatorUtils::check_issued_on_or_before(
         credential,
         options.latest_issuance_date.unwrap_or_default(),
       )
     });
+
+    
 
     let structure_validation = std::iter::once_with(|| JwtCredentialValidatorUtils::check_structure(credential));
 
@@ -91,7 +94,7 @@ impl JptCredentialValidator {
       .chain(structure_validation);
 
 
-    //TODO: check revocation when implemented
+    //TODO: ZKP - check revocation when implemented
 
     // #[cfg(feature = "revocation-bitmap")]
     // let validation_units_iter = {

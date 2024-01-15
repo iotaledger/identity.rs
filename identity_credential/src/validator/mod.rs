@@ -11,6 +11,8 @@ pub use self::options::FailFast;
 pub use self::options::StatusCheck;
 pub use self::options::SubjectHolderRelationship;
 
+//TODO: ZKP - new modules
+
 mod jpt_credential_validation;
 mod jpt_presentation_validation;
 mod jwt_credential_validation;

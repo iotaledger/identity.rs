@@ -3,7 +3,7 @@ use jsonprooftoken::jwp::{presented::JwpPresentedBuilder, issued::JwpIssued};
 use crate::error::Error;
 use crate::error::Result;
 
-//TODO: Used for Selective Disclosure
+//TODO: ZKP - Used for Selective Disclosure
 /// Used to construct a JwpPresentedBuilder and handle the selective disclosure of attributes
 /// - @context MUST NOT be blinded
 /// - id MUST be blinded
@@ -28,6 +28,8 @@ impl SelectiveDisclosurePresentation {
         let mut jwp_builder = JwpPresentedBuilder::new(issued_jwp);
 
         jwp_builder.set_undisclosed("jti").ok(); // contains the credential's id, provides linkability
+        
+        jwp_builder.set_undisclosed("nbf").ok(); // 
        
         jwp_builder.set_undisclosed("issuanceDate").ok(); // Depending on the revocation method used it will be necessary or not
         

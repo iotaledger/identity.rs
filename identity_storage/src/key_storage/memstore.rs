@@ -287,7 +287,8 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
 }
 
 
-//TODO: implementation of JwkStorageExt for JwkMemStore
+//TODO: ZKP - impl JwkStorageExt for JwkMemStore
+/// JwkStorageExt implementation for JwkMemStore
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl JwkStorageExt for JwkMemStore {

@@ -9,7 +9,7 @@ use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{Fail
 
 use super::{JptPresentationValidationOptions, DecodedJptPresentation};
 
-/// A type for decoding and validating Presented [`Credential`]s in JPT format. //TODO: validator
+/// A type for decoding and validating Presented [`Credential`]s in JPT format. //TODO: ZKP - validator
 #[non_exhaustive]
 pub struct JptPresentationValidator;
 
@@ -24,7 +24,7 @@ impl JptPresentationValidator {
     /// - the issuance date,
     /// - the semantic structure.
     pub fn validate<DOC, T>(
-        presentation_jpt: &Jpt, //TODO: the validation process could be handled both for JWT and JPT by the same function, the function could recognise if the token in input is a JWT or JPT based on the typ field
+        presentation_jpt: &Jpt,
         issuer: &DOC,
         options: &JptPresentationValidationOptions,
         fail_fast: FailFast,
@@ -145,9 +145,14 @@ impl JptPresentationValidator {
 
         let claims = decoded_jwp.get_claims().ok_or("Claims not present").map_err(|err| JwtValidationError::CredentialStructure(crate::Error::JptClaimsSetDeserializationError(err.into())))?;
         let payloads = decoded_jwp.get_payloads();
-        let jpt_claims = JptClaims::from_claims_and_payloads(&claims, payloads);
+        let mut jpt_claims = JptClaims::from_claims_and_payloads(&claims, payloads);
+        // if not set the deserializatioon will throw an error since even the iat is not set, so we set this to 0
+        jpt_claims.nbf.map_or_else(|| {
+          jpt_claims.set_nbf(0);
+        }, |_| ());
+ 
         let jpt_claims_json = jpt_claims.to_json_vec().map_err(|err| JwtValidationError::CredentialStructure(crate::Error::JptClaimsSetDeserializationError(err.into())))?;
-        
+
 
         // Deserialize the raw claims
         let credential_claims: CredentialJwtClaims<'_, T> =

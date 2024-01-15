@@ -28,7 +28,7 @@ pub enum JwkStorageDocumentError {
   #[error("invalid JWS algorithm")]
   InvalidJwsAlgorithm,
 
-  /// Caused by an invalid JWP algorithm. //TODO: new error
+  /// Caused by an invalid JWP algorithm. //TODO: ZKP - new error
   #[error("invalid JWP algorithm")]
   InvalidJwpAlgorithm,
   /// Cannot cunstruct a valid Jwp (issued or presented form)

@@ -1,4 +1,4 @@
-//TODO:: JwpDocumentExt
+//TODO: ZKP - JwpDocumentExt
 
 use identity_core::common::Object;
 use identity_credential::credential::Credential;

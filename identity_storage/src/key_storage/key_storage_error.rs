@@ -24,7 +24,7 @@ pub enum KeyStorageErrorKind {
   UnsupportedSignatureAlgorithm,
 
   /// Indicates an attempt to parse a proof algorithm that is not recognized by the key storage implementation.
-  UnsupportedProofAlgorithm, //TODO: new error
+  UnsupportedProofAlgorithm, //TODO: ZKP - new error
 
   /// Indicates that the key storage implementation is not able to find the requested key.
   KeyNotFound,

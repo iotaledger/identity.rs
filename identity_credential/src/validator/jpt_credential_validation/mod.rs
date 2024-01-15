@@ -8,4 +8,4 @@ pub use decoded_jpt_credential::*;
 pub use jpt_credential_validator_utils::*;
 pub use jpt_credential_validation_options::*;
 
-// TODO: new module for JPT credential validation
+// TODO: ZKP - new module for JPT credential validation

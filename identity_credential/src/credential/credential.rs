@@ -176,7 +176,7 @@ impl<T> Credential<T> {
       .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
   }
 
-  //TODO: new method serialization for credential. The CredentialJwtClaims can be reused
+  //TODO: ZKP - new method serialization for credential. The CredentialJwtClaims can be reused
   ///Serializes the [`Credential`] as a JPT claims set
   pub fn serialize_jpt(&self, custom_claims: Option<Object>) -> Result<JptClaims> 
   where

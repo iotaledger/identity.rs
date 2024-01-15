@@ -1,5 +1,5 @@
 
-//TODO: JwpCredentialOptions -> have to choose which options makes sense in the context of jwp
+//TODO: ZKP - JwpCredentialOptions
 
 /// Options for creating a JSON Web Proof.
 #[non_exhaustive]

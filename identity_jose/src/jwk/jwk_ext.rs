@@ -1,4 +1,4 @@
-//TODO: JwkExt
+//TODO: ZKP - JwkExt
 
 use std::str::FromStr;
 use identity_core::common::Url;

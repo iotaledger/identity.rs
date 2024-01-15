@@ -1,6 +1,7 @@
 use identity_core::common::Url;
 use serde::{Serialize, Deserialize};
 
+//TODO: ZKP - JwpPresentationOptions
 
 /// Options to be set in the JWT claims of a verifiable presentation.
 #[derive(Clone, Debug, Serialize, Deserialize)]

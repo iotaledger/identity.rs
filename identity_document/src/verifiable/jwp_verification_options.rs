@@ -2,7 +2,7 @@
 use identity_did::DIDUrl;
 use identity_verification::MethodScope;
 
-//TODO: JwpVerificationOptions
+//TODO: ZKP - JwpVerificationOptions
 
 /// Holds additional options for verifying a JWP
 #[non_exhaustive]

@@ -103,7 +103,7 @@ pub enum JwtValidationError {
   Revoked,
 
 
-  //TODO: new errors for jwp
+  //TODO: ZKP - new errors for jwp
   /// Indicates that the JWP representation of an issued credential or presentation could not be decoded.
   #[error("could not decode jwp")]
   JwpDecodingError(#[source] jsonprooftoken::errors::CustomError),
