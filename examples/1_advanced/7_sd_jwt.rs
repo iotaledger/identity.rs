@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! This example shows how to create a selective disclosure verifiable credential and validate it
