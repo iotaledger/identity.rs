@@ -47,6 +47,12 @@ impl WasmDisclosure {
     self.0.disclosure.clone()
   }
 
+  /// Returns a copy of the base64url-encoded string.
+  #[wasm_bindgen(js_name = toString)]
+  pub fn to_string(&self) -> String {
+    self.0.disclosure.clone()
+  }
+
   /// Returns a copy of the salt value.
   #[wasm_bindgen(js_name = salt)]
   pub fn salt(&self) -> String {

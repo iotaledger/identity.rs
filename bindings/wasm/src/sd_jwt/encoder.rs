@@ -13,6 +13,8 @@ use wasm_bindgen::prelude::*;
 
 /// Transforms a JSON object into an SD-JWT object by substituting selected values
 /// with their corresponding disclosure digests.
+///
+/// Note: digests are created using the sha-256 algorithm.
 #[wasm_bindgen(js_name = SdObjectEncoder, inspectable)]
 pub struct WasmSdObjectEncoder(pub(crate) SdObjectEncoder<Sha256Hasher>);
 
@@ -76,8 +78,8 @@ impl WasmSdObjectEncoder {
     Ok(WasmDisclosure(disclosure))
   }
 
-  /// Adds the `_sd_alg` property to the top level of the object.
-  /// The value is taken from the [`crate::Hasher::alg_name`] implementation.
+  /// Adds the `_sd_alg` property to the top level of the object, with
+  /// its value set to "sha-256".
   #[wasm_bindgen(js_name = addSdAlgProperty)]
   pub fn add_sd_alg_property(&mut self) {
     self.0.add_sd_alg_property();

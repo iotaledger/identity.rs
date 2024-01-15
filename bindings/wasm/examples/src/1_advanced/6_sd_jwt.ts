@@ -72,12 +72,13 @@ export async function sdJwt() {
   const subject = {
     id: aliceDocument.id(),
     name: "Alice",
+    nationalities: ["DE", "US"],
     address: {
       locality: "Maxstadt",
       postal_code: "12344",
       country: "DE",
       street_address: "Weidenstraße 22"
-    }
+    },
   };
 
   // Build credential using subject above and issuer.
@@ -93,9 +94,7 @@ export async function sdJwt() {
   // claims set must be created first.
   let payload = credential.toJwtClaims();
 
-  // Using the crate `sd-jwt` properties of the claims can be made selectively disclosable.
-  // The default sha-256 hasher will be used to create the digests.
-  // Read more in https://github.com/iotaledger/sd-jwt-payload .
+  // The issuer can make all or subset of the claims selectively disclosable.
   let encoder = new SdObjectEncoder(payload);
 
   // Make "locality", "postal_code" and "street_address" selectively disclosable while keeping
@@ -104,11 +103,22 @@ export async function sdJwt() {
     encoder.conceal(["vc", "credentialSubject", "address", "locality"]),
     encoder.conceal(["vc", "credentialSubject", "address", "postal_code"]),
     encoder.conceal(["vc", "credentialSubject", "address", "street_address"]),
+    encoder.concealArrayEntry(["vc", "credentialSubject", "nationalities"], 1)
   ];
+
+  // Add decoys in the credential top level, nationalities array and address object.
+  encoder.addDecoys(["vc", "credentialSubject", "nationalities"], 3);
+  encoder.addDecoys(["vc"], 4);
+  encoder.addDecoys(["vc", "credentialSubject", "address"], 2);
+
+  // Add the `_sd_alg` property.
   encoder.addSdAlgProperty();
-  const encodedPayload = encoder.encodeToString();
+
+  console.log("Claims set with disclosure digests: ");
+  console.log(JSON.stringify(encoder.encodeToObject(), null, 2), "\n");
 
   // Create the signed JWT.
+  const encodedPayload = encoder.encodeToString();
   let jws = await issuerDocument.createJws(issuerStorage, issuerFragment, encodedPayload, new JwsSignatureOptions());
 
   // ===========================================================================
@@ -120,8 +130,6 @@ export async function sdJwt() {
   const strDisclosures = disclosures.map(disclosure => disclosure.toEncodedString());
 
   let sdJwt = new SdJwt(jws.toString(), strDisclosures, undefined).presentation();
-
-  console.log(sdJwt)
 
   // ===========================================================================
   // Step 4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
@@ -184,7 +192,7 @@ export async function sdJwt() {
   );
 
   console.log("JWT successfully validated")
-  console.log("credentialjwt validation", decodedCredential.credential());
+  console.log("Decoded credential: \n", decodedCredential.credential());
 
   // Verify the Key Binding JWT.
   let kbValidationOptions = new KeyBindingJWTValidationOptions(

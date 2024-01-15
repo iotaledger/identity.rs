@@ -34,13 +34,13 @@ describe("sd-jwt-payload", function() {
       assert.deepStrictEqual(emailDisclosure.disclosure(), "WyJ0c3RzYWx0IiwgImVtYWlsIiwgImpvaG5kb2VAZXhhbXBsZS5jb20iXQ");
 
       let disclosures = [
-        emailDisclosure.toString(),
-        encoder.conceal(["address", "street_address"]).toString(),
-        encoder.concealArrayEntry(["nationalities"], 0).toString()
+        emailDisclosure.toEncodedString(),
+        encoder.conceal(["address", "street_address"]).toEncodedString(),
+        encoder.concealArrayEntry(["nationalities"], 0).toEncodedString()
       ];
       encoder.addSdAlgProperty();
       encoder.addDecoys([], 3);
-      let encoded = encoder.encodedObject();
+      let encoded = encoder.encodeToObject();
       assert.equal(encoded._sd.length, 4);
 
 

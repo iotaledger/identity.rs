@@ -108,6 +108,7 @@ async fn main() -> anyhow::Result<()> {
   // The default sha-256 hasher will be used to create the digests.
   // Read more in https://github.com/iotaledger/sd-jwt-payload .
   let mut encoder = SdObjectEncoder::new(&payload)?;
+
   // Make "locality", "postal_code" and "street_address" selectively disclosable while keeping
   // other properties in plain text.
   let disclosures = vec![
@@ -115,7 +116,10 @@ async fn main() -> anyhow::Result<()> {
     encoder.conceal(&["vc", "credentialSubject", "address", "postal_code"], None)?,
     encoder.conceal(&["vc", "credentialSubject", "address", "street_address"], None)?,
   ];
+
+  // Add the `_sd_alg` property.
   encoder.add_sd_alg_property();
+
   let encoded_payload = encoder.try_to_string()?;
 
   pretty_print_json("Claims set with disclosure digests", &encoded_payload);
