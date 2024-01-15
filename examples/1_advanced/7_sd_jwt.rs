@@ -162,7 +162,7 @@ async fn main() -> anyhow::Result<()> {
 
   // The holder only wants to present "locality" and "postal_code" but not "street_address".
   let disclosures = vec![
-    sd_jwt.disclosures.get(0).unwrap().clone(),
+    sd_jwt.disclosures.first().unwrap().clone(),
     sd_jwt.disclosures.get(1).unwrap().clone(),
   ];
 
