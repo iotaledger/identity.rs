@@ -67,7 +67,7 @@ impl WasmKeyBindingJwtClaims {
   /// Returns a copy of the issued at `iat` property.
   #[wasm_bindgen]
   pub fn iat(&self) -> i64 {
-    self.0.iat.clone()
+    self.0.iat
   }
 
   /// Returns a copy of the audience `aud` property.

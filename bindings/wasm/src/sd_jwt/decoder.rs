@@ -1,12 +1,13 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-  common::{ArrayString, RecordStringAny},
-  error::{Result, WasmResult},
-};
+use crate::common::ArrayString;
+use crate::common::RecordStringAny;
+use crate::error::Result;
+use crate::error::WasmResult;
 use identity_iota::sd_jwt_payload::SdObjectDecoder;
-use serde_json::{Map, Value};
+use serde_json::Map;
+use serde_json::Value;
 use wasm_bindgen::prelude::*;
 
 /// Substitutes digests in an SD-JWT object by their corresponding plaintext values provided by disclosures.
@@ -14,6 +15,7 @@ use wasm_bindgen::prelude::*;
 pub struct WasmSdObjectDecoder(pub(crate) SdObjectDecoder);
 
 #[wasm_bindgen(js_class = SdObjectDecoder)]
+#[allow(clippy::new_without_default)]
 impl WasmSdObjectDecoder {
   /// Creates a new `SdObjectDecoder` with `sha-256` hasher.
   #[wasm_bindgen(constructor)]

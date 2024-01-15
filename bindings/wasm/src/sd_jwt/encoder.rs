@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::disclosure::WasmDisclosure;
-use crate::{
-  common::{ArrayString, RecordStringAny},
-  error::{Result, WasmResult},
-};
-use identity_iota::sd_jwt_payload::{SdObjectEncoder, Sha256Hasher};
-use js_sys::{Array, JsString};
+use crate::common::ArrayString;
+use crate::common::RecordStringAny;
+use crate::error::Result;
+use crate::error::WasmResult;
+use identity_iota::sd_jwt_payload::SdObjectEncoder;
+use identity_iota::sd_jwt_payload::Sha256Hasher;
+use js_sys::Array;
+use js_sys::JsString;
 use serde_json::Value;
 use wasm_bindgen::prelude::*;
 

@@ -1,10 +1,12 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::common::ArrayString;
 use crate::error::Result;
-use crate::{common::ArrayString, error::WasmResult};
+use crate::error::WasmResult;
 use identity_iota::sd_jwt_payload::SdJwt;
-use js_sys::{Array, JsString};
+use js_sys::Array;
+use js_sys::JsString;
 use wasm_bindgen::prelude::*;
 
 /// Representation of an SD-JWT of the format
@@ -44,7 +46,7 @@ impl WasmSdJwt {
 
   /// Serializes the components into the final SD-JWT.
   #[wasm_bindgen(js_name = toString)]
-  pub fn to_string(&self) -> String {
+  pub fn to_string_clone(&self) -> String {
     self.0.presentation()
   }
 

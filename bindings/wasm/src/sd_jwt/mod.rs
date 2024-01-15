@@ -5,10 +5,10 @@ mod decoder;
 mod disclosure;
 mod encoder;
 mod key_binding_jwt_claims;
-mod sd_jwt;
+mod wasm_sd_jwt;
 
 pub use decoder::*;
 pub use disclosure::*;
 pub use encoder::*;
 pub use key_binding_jwt_claims::*;
-pub use sd_jwt::*;
+pub use wasm_sd_jwt::*;
