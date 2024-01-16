@@ -7,6 +7,7 @@ use serde::Serialize;
 use identity_core::common::Object;
 use identity_core::common::Url;
 
+#[cfg(feature = "revocation-bitmap")]
 use crate::revocation::status_list_2021::StatusList2021Entry;
 
 /// Credential status interface
@@ -24,6 +25,7 @@ pub trait CredentialStatus {
 #[serde(untagged)]
 pub enum Status<T = Object> {
   /// CredentialStatus using [`StatusList2021Entry`]
+  #[cfg(feature = "revocation-bitmap")]
   StatusList2021(StatusList2021Entry),
   /// Any other status
   Other(CustomStatus<T>),
@@ -35,6 +37,7 @@ impl<T> From<CustomStatus<T>> for Status<T> {
   }
 }
 
+#[cfg(feature = "revocation-bitmap")]
 impl<T> From<StatusList2021Entry> for Status<T> {
   fn from(value: StatusList2021Entry) -> Self {
     Status::StatusList2021(value)
@@ -44,12 +47,14 @@ impl<T> From<StatusList2021Entry> for Status<T> {
 impl CredentialStatus for Status {
   fn id(&self) -> &Url {
     match self {
+      #[cfg(feature = "revocation-bitmap")]
       Self::StatusList2021(s) => s.id(),
       Self::Other(s) => s.id(),
     }
   }
   fn r#type(&self) -> &str {
     match self {
+      #[cfg(feature = "revocation-bitmap")]
       Self::StatusList2021(s) => s.r#type(),
       Self::Other(s) => s.r#type(),
     }
