@@ -21,6 +21,7 @@ use crate::error::WasmResult;
 use super::WasmStatusList2021;
 use super::WasmStatusList2021Entry;
 
+/// Purpose of a {@link StatusList2021}
 #[wasm_bindgen(js_name = StatusPurpose)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum WasmStatusPurpose {
@@ -46,6 +47,7 @@ impl From<WasmStatusPurpose> for StatusPurpose {
   }
 }
 
+/// A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential)
 #[wasm_bindgen(js_name = "StatusList2021Credential", inspectable)]
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(from = "StatusList2021Credential", into = "StatusList2021Credential")]
@@ -144,20 +146,24 @@ impl WasmStatusList2021Credential {
   }
 }
 
+/// Builder type to construct valid {@link StatusList2021Credential} istances
 #[wasm_bindgen(js_name = StatusList2021CredentialBuilder)]
 pub struct WasmStatusList2021CredentialBuilder(StatusList2021CredentialBuilder);
 
 #[wasm_bindgen(js_class = StatusList2021CredentialBuilder)]
 impl WasmStatusList2021CredentialBuilder {
+  /// Creates a new {@link StatusList2021CredentialBuilder}
   #[wasm_bindgen(constructor)]
   pub fn new(status_list: Option<WasmStatusList2021>) -> WasmStatusList2021CredentialBuilder {
     Self(StatusList2021CredentialBuilder::new(status_list.unwrap_or_default().0))
   }
+  /// Sets the purpose of the {@link StatusList2021Credential} that is being created
   #[wasm_bindgen]
   pub fn purpose(mut self, purpose: WasmStatusPurpose) -> WasmStatusList2021CredentialBuilder {
     self.0 = self.0.purpose(purpose.into());
     self
   }
+  /// Sets `credentialSubject.id`
   #[wasm_bindgen(js_name = "subjectId")]
   pub fn subject_id(mut self, id: String) -> Result<WasmStatusList2021CredentialBuilder> {
     let id = Url::parse(id).wasm_result()?;
@@ -165,11 +171,13 @@ impl WasmStatusList2021CredentialBuilder {
 
     Ok(self)
   }
+  /// Sets the expiration date of the credential
   #[wasm_bindgen(js_name = "expirationDate")]
   pub fn expiration_date(mut self, time: WasmTimestamp) -> WasmStatusList2021CredentialBuilder {
     self.0 = self.0.expiration_date(time.0);
     self
   }
+  /// Sets the issuer of the credential
   #[wasm_bindgen]
   pub fn issuer(mut self, issuer: String) -> Result<WasmStatusList2021CredentialBuilder> {
     let issuer = Url::parse(issuer).wasm_result()?;
@@ -177,6 +185,7 @@ impl WasmStatusList2021CredentialBuilder {
 
     Ok(self)
   }
+  /// Sets the context of the credential
   #[wasm_bindgen]
   pub fn context(mut self, context: String) -> Result<WasmStatusList2021CredentialBuilder> {
     let ctx = Context::Url(Url::parse(context).wasm_result()?);
@@ -184,16 +193,19 @@ impl WasmStatusList2021CredentialBuilder {
 
     Ok(self)
   }
+  /// Adds a credential type
   #[wasm_bindgen(js_name = "type")]
   pub fn r#type(mut self, t: String) -> WasmStatusList2021CredentialBuilder {
     self.0 = self.0.add_type(t);
     self
   }
+  /// Adds a credential's proof
   #[wasm_bindgen]
   pub fn proof(mut self, proof: WasmProof) -> WasmStatusList2021CredentialBuilder {
     self.0 = self.0.proof(proof.0);
     self
   }
+  /// Attempts to build a valid {@link StatusList2021Credential} with the previously provided data
   #[wasm_bindgen]
   pub fn build(self) -> Result<WasmStatusList2021Credential> {
     let credential = self.0.build().wasm_result()?;

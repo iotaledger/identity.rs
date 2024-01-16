@@ -5,6 +5,7 @@ use crate::error::Result;
 use identity_iota::credential::status_list_2021::StatusList2021;
 use wasm_bindgen::prelude::*;
 
+/// StatusList2021 data structure as described in [W3C's VC status list 2021](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/)
 #[wasm_bindgen(js_name = StatusList2021, inspectable)]
 #[derive(Default, Debug)]
 pub struct WasmStatusList2021(pub(crate) StatusList2021);

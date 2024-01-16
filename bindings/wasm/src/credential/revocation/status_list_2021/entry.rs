@@ -7,6 +7,7 @@ use identity_iota::core::Url;
 use identity_iota::credential::status_list_2021::StatusList2021Entry;
 use wasm_bindgen::prelude::*;
 
+/// [StatusList2021Entry](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry) implementation
 #[wasm_bindgen(js_name = StatusList2021Entry, inspectable)]
 pub struct WasmStatusList2021Entry(pub(crate) StatusList2021Entry);
 
