@@ -1,7 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Contains the implementations for all the credential revocation methods that can be used with IOTA's Identity framework.
+//! Contains the implementations for all the credential revocation methods that can be used with IOTA's Identity
+//! framework.
 
 mod bitmap;
 mod document_ext;
