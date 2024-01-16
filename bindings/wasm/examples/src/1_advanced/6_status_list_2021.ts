@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    StatusList2021CredentialBuilder,
     Credential,
     JwtCredentialValidator,
     StatusCheck,
+    StatusList2021CredentialBuilder,
     Timestamp,
 } from "@iota/identity-wasm/node";
 
@@ -16,7 +16,7 @@ export function statusList2021() {
         .subjectId("https://example.com/credentials/status")
         .issuer("did:example:1234")
         .build();
-    
+
     // Let's revoke a credential using this status list.
     // First we create a credential.
     const credential = new Credential({
@@ -27,7 +27,7 @@ export function statusList2021() {
             id: "did:example:4321",
             type: "UniversityDegree",
             gpa: "4.0",
-        }
+        },
     });
 
     // We add to this credential a status which references the 420th entry
@@ -43,7 +43,7 @@ export function statusList2021() {
 
     // The credential is now revoked and won't be successfully validated
     try {
-        JwtCredentialValidator.checkStatusWithStatusList2021(credential, statusListCredential, StatusCheck.Strict)
+        JwtCredentialValidator.checkStatusWithStatusList2021(credential, statusListCredential, StatusCheck.Strict);
     } catch (e) {
         console.log((e as Error).message);
     }
