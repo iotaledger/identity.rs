@@ -1164,7 +1164,7 @@ mod tests {
     // VerificationMethod
     let verification_methods: Vec<&VerificationMethod> = document.methods(Some(MethodScope::VerificationMethod));
     assert_eq!(
-      verification_methods.get(0).unwrap().id().to_string(),
+      verification_methods.first().unwrap().id().to_string(),
       "did:example:1234#key-1"
     );
     assert_eq!(
