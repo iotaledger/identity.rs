@@ -106,7 +106,7 @@ impl StatusList2021Entry {
 mod tests {
   use super::*;
 
-  const STATUS_LIST_ENTRY_SAMPLE: &'static str = r#"
+  const STATUS_LIST_ENTRY_SAMPLE: &str = r#"
 {
     "id": "https://example.com/credentials/status/3#94567",
     "type": "StatusList2021Entry",
