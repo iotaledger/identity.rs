@@ -32,12 +32,12 @@ thiserror.workspace = true
 url = { version = "2.4", default-features = false }
 
 [dev-dependencies]
+anyhow = "1.0.62"
 identity_eddsa_verifier = { version = "=1.0.0", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "std", "random"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 serde_json.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
-anyhow = "1.0.62"
 
 [package.metadata.docs.rs]
 # To build locally:
