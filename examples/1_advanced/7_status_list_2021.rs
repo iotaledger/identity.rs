@@ -8,8 +8,6 @@ use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
 use identity_iota::credential::status_list_2021::StatusList2021;
 use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
-use identity_iota::credential::status_list_2021::StatusList2021Entry;
-use identity_iota::credential::status_list_2021::StatusPurpose;
 use identity_iota::credential::Credential;
 use identity_iota::credential::Issuer;
 use identity_iota::credential::JwtCredentialValidatorUtils;
@@ -50,15 +48,7 @@ async fn main() -> anyhow::Result<()> {
   //   "statusListIndex": "420",
   //   "statusListCredential": "https://example.com/credentials/status"
   // }
-  let revocation_entry = StatusList2021Entry::new(
-    status_list_credential.id.clone().unwrap(),
-    StatusPurpose::Revocation,
-    420,
-  );
-  credential.credential_status = Some(revocation_entry.into());
-
-  // To revoke this credential we set the status of the 420th entry
-  status_list_credential.update_status_list(|status_list| status_list.set(420, true))?;
+  status_list_credential.set_credential_status(&mut credential, 420, true)?;
 
   // The credential has now been revoked, verifying this credential will now fail
   let validation = JwtCredentialValidatorUtils::check_status_with_status_list_2021(

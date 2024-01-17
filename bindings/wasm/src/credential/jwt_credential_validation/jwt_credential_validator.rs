@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::core::Object;
@@ -170,7 +170,8 @@ impl WasmJwtCredentialValidator {
     let status_check: StatusCheck = statusCheck.into();
     JwtCredentialValidatorUtils::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
   }
-  /// Checks wheter the credential status has been revoked using `StatusList2021`
+
+  /// Checks wheter the credential status has been revoked using `StatusList2021`.
   #[wasm_bindgen(js_name = checkStatusWithStatusList2021)]
   pub fn check_status_with_status_list_2021(
     credential: &WasmCredential,

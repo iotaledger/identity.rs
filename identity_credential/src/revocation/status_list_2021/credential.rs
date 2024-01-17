@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
@@ -14,19 +14,19 @@ use serde::Deserialize;
 use serde::Serialize;
 use thiserror::Error;
 
-/// The type of a `StatusList2021Credential`
+/// The type of a `StatusList2021Credential`.
 pub const CREDENTIAL_TYPE: &str = "StatusList2021Credential";
 const CREDENTIAL_SUBJECT_TYPE: &str = "StatusList2021";
 
-#[derive(Clone, Debug, Error)]
 /// [Error](std::error::Error) type that represents the possible errors that can be
-/// encountered when dealing with [`StatusList2021Credential`]s
+/// encountered when dealing with [`StatusList2021Credential`]s.
+#[derive(Clone, Debug, Error)]
 pub enum StatusList2021CredentialError {
+  /// The provided [`Credential`] has more than one `credentialSubject`.
   #[error("A StatusList2021Credential may only have one credentialSubject")]
-  /// The provided [`Credential`] has more than one `credentialSubject`
   MultipleCredentialSubject,
+  /// The provided [`Credential`] has an invalid property.
   #[error("Invalid property {0}")]
-  /// The provided [`Credential`] has an invalid property
   InvalidProperty(String),
 }
 
@@ -34,14 +34,16 @@ use crate::credential::Credential;
 use crate::credential::CredentialBuilder;
 use crate::credential::Issuer;
 use crate::credential::Proof;
+use crate::credential::Status;
 
-use super::status_list::InvalidEncodedStatusList;
+use super::status_list::StatusListError;
 use super::StatusList2021;
+use super::StatusList2021Entry;
 
+/// A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential).
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[repr(transparent)]
 #[serde(try_from = "Credential", into = "Credential")]
-/// A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential)
 pub struct StatusList2021Credential(Credential);
 
 impl From<StatusList2021Credential> for Credential {
@@ -72,51 +74,53 @@ impl TryFrom<Credential> for StatusList2021Credential {
 }
 
 impl StatusList2021Credential {
-  /// Returns the inner "raw" [`Credential`]
+  /// Returns the inner "raw" [`Credential`].
   pub fn into_inner(self) -> Credential {
     self.0
   }
-  /// Returns the purpose of this status list
+
+  /// Returns the purpose of this status list.
   pub fn purpose(&self) -> StatusPurpose {
     let subject = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap(); // Safety: `Self` has already been validated as a valid StatusList2021Credential
     subject.status_purpose
   }
-  fn status_list(&self) -> Result<StatusList2021, InvalidEncodedStatusList> {
+
+  fn status_list(&self) -> Result<StatusList2021, StatusListError> {
     let status_list_credential = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap();
     StatusList2021::try_from_encoded_str(&status_list_credential.encoded_list)
   }
-  /// Updates the [`StatusList2021`] stored in this credential, applying `f` to it
-  pub fn update_status_list<F>(&mut self, f: F) -> Result<(), InvalidEncodedStatusList>
-  where
-    F: FnOnce(&mut StatusList2021),
-  {
-    use identity_core::common::Value;
 
-    let new_encoded_status_list = {
-      let mut status_list = self.status_list()?;
-      f(&mut status_list);
-      status_list.into_encoded_str()
-    };
-    let OneOrMany::One(subject) = &mut self.0.credential_subject else {
-      unreachable!("already validated");
-    };
-    subject
-      .properties
-      .entry("encodedList".to_owned())
-      .and_modify(|value| *value = Value::String(new_encoded_status_list));
+  /// Sets the credential status of a given [`Credential`],
+  /// mapping it to the `index`-th entry of this [`StatusList2021Credential`].
+  pub fn set_credential_status<'c>(
+    &mut self,
+    credential: &'c mut Credential,
+    index: usize,
+    value: bool,
+  ) -> Result<&'c StatusList2021Entry, StatusListError> {
+    let mut status_list = self.status_list()?;
+    let entry = StatusList2021Entry::new(self.id.clone().unwrap(), self.purpose(), index);
 
-    Ok(())
+    status_list.set(index, value)?;
+    credential.credential_status = Some(entry.into());
+
+    let entry_ref = match credential.credential_status.as_ref().unwrap() {
+      Status::StatusList2021(ref entry) => entry,
+      _ => unreachable!(),
+    };
+    Ok(entry_ref)
   }
-  /// Returns the status of the `index-th` entry
-  pub fn entry(&self, index: usize) -> Result<Option<bool>, InvalidEncodedStatusList> {
+
+  /// Returns the status of the `index-th` entry.
+  pub fn entry(&self, index: usize) -> Result<bool, StatusListError> {
     let status_list = self.status_list()?;
-    Ok(status_list.get(index))
+    status_list.get(index)
   }
 }
 
+/// [`StatusList2021Credential`]'s purpose.
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-/// [`StatusList2021Credential`]'s purpose
 pub enum StatusPurpose {
   #[default]
   /// Used for revocation
@@ -197,8 +201,8 @@ impl<'c> StatusList2021CredentialSubject<'c> {
   }
 }
 
+/// Builder type for [`StatusList2021Credential`].
 #[derive(Debug, Default)]
-/// Builder type for [`StatusList2021Credential`]
 pub struct StatusList2021CredentialBuilder {
   inner_builder: CredentialBuilder,
   id: Option<Url>,
@@ -207,49 +211,57 @@ pub struct StatusList2021CredentialBuilder {
 }
 
 impl StatusList2021CredentialBuilder {
-  /// Creates a new [`StatusList2021CredentialBuilder`] from a [`StatusList2021`]
+  /// Creates a new [`StatusList2021CredentialBuilder`] from a [`StatusList2021`].
   pub fn new(status_list: StatusList2021) -> Self {
     Self {
       encoded_list: status_list.into_encoded_str(),
       ..Default::default()
     }
   }
-  /// Sets `credentialSubject.statusPurpose`
+
+  /// Sets `credentialSubject.statusPurpose`.
   pub const fn purpose(mut self, purpose: StatusPurpose) -> Self {
     self.purpose = purpose;
     self
   }
-  /// Sets `credentialSubject.id`
+
+  /// Sets `credentialSubject.id`.
   pub fn subject_id(mut self, id: Url) -> Self {
     self.id = Some(id);
     self
   }
-  /// Sets `expirationDate`
+
+  /// Sets `expirationDate`.
   pub const fn expiration_date(mut self, time: Timestamp) -> Self {
     self.inner_builder.expiration_date = Some(time);
     self
   }
-  /// Sets `issuer`
+
+  /// Sets `issuer`.
   pub fn issuer(mut self, issuer: Issuer) -> Self {
     self.inner_builder.issuer = Some(issuer);
     self
   }
-  /// Sets `@context`
+
+  /// Adds a `@context` entry.
   pub fn context(mut self, ctx: Context) -> Self {
     self.inner_builder.context.push(ctx);
     self
   }
-  /// Adds a `type` entry
-  pub fn add_type(mut self, r#type: String) -> Self {
-    self.inner_builder.types.push(r#type);
+
+  /// Adds a `type` entry.
+  pub fn add_type(mut self, type_: String) -> Self {
+    self.inner_builder.types.push(type_);
     self
   }
-  /// Adds a credential proof
+
+  /// Adds a credential proof.
   pub fn proof(mut self, proof: Proof) -> Self {
     self.inner_builder.proof = Some(proof);
     self
   }
-  /// Consumes this [`StatusList2021CredentialBuilder`] into a [`StatusList2021Credential`]
+
+  /// Consumes this [`StatusList2021CredentialBuilder`] into a [`StatusList2021Credential`].
   pub fn build(mut self) -> Result<StatusList2021Credential, crate::Error> {
     let subject = {
       use crate::credential::Subject;
@@ -262,8 +274,7 @@ impl StatusList2021CredentialBuilder {
       ]
       .into_iter()
       .collect();
-      if self.id.is_some() {
-        let id = self.id.unwrap();
+      if let Some(id) = self.id {
         let id_without_fragment = {
           let mut id = id.clone();
           id.set_fragment(None);

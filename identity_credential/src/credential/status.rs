@@ -13,7 +13,7 @@ use crate::revocation::status_list_2021::StatusList2021Entry;
 /// Credential status interface
 pub trait CredentialStatus {
   /// `credentialStatus.type` field
-  fn r#type(&self) -> &str;
+  fn type_(&self) -> &str;
   /// `credentialStatus.id` field
   fn id(&self) -> &Url;
 }
@@ -52,11 +52,11 @@ impl CredentialStatus for Status {
       Self::Other(s) => s.id(),
     }
   }
-  fn r#type(&self) -> &str {
+  fn type_(&self) -> &str {
     match self {
       #[cfg(feature = "revocation-bitmap")]
-      Self::StatusList2021(s) => s.r#type(),
-      Self::Other(s) => s.r#type(),
+      Self::StatusList2021(s) => s.type_(),
+      Self::Other(s) => s.type_(),
     }
   }
 }
@@ -78,7 +78,7 @@ impl<T> CredentialStatus for CustomStatus<T> {
   fn id(&self) -> &Url {
     &self.id
   }
-  fn r#type(&self) -> &str {
+  fn type_(&self) -> &str {
     &self.type_
   }
 }
@@ -109,6 +109,6 @@ mod tests {
   fn test_from_json() {
     let status = Status::from_json(JSON).unwrap();
     assert_eq!(status.id().as_str(), "https://example.edu/status/24");
-    assert_eq!(status.r#type(), "CredentialStatusList2017");
+    assert_eq!(status.type_(), "CredentialStatusList2017");
   }
 }

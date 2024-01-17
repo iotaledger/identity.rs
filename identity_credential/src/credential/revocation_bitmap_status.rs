@@ -85,7 +85,7 @@ impl TryFrom<Status> for RevocationBitmapStatus {
       Status::StatusList2021(s) => Err(Self::Error::InvalidStatus(format!(
         "expected type '{}', got '{}'",
         Self::TYPE,
-        s.r#type()
+        s.type_()
       ))),
       Status::Other(s) => s.try_into(),
     }

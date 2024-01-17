@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
@@ -48,13 +48,13 @@ impl<'de> Deserialize<'de> for EntryType {
   }
 }
 
+/// [StatusList2021Entry](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry) implementation.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
-/// [StatusList2021Entry](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry) implementation
 pub struct StatusList2021Entry {
   id: Url,
   #[serde(rename = "type")]
-  r#type: EntryType,
+  type_: EntryType,
   status_purpose: StatusPurpose,
   #[serde(deserialize_with = "serde_aux::prelude::deserialize_number_from_string")]
   status_list_index: usize,
@@ -65,38 +65,42 @@ impl CredentialStatus for StatusList2021Entry {
   fn id(&self) -> &Url {
     &self.id
   }
-  fn r#type(&self) -> &str {
-    self.r#type.0
+  fn type_(&self) -> &str {
+    self.type_.0
   }
 }
 
 impl StatusList2021Entry {
-  /// Creates a new [`StatusList2021Entry`]
+  /// Creates a new [`StatusList2021Entry`].
   pub fn new(status_list: Url, purpose: StatusPurpose, index: usize) -> Self {
     let mut id = status_list.clone();
     id.set_fragment(Some(format!("{index}").as_str()));
 
     Self {
       id,
-      r#type: EntryType::default(),
+      type_: EntryType::default(),
       status_purpose: purpose,
       status_list_credential: status_list,
       status_list_index: index,
     }
   }
-  /// Returns this `credentialStatus`'s `id`
+
+  /// Returns this `credentialStatus`'s `id`.
   pub const fn id(&self) -> &Url {
     &self.id
   }
-  /// Returns the purpose of this entry
+
+  /// Returns the purpose of this entry.
   pub const fn purpose(&self) -> StatusPurpose {
     self.status_purpose
   }
-  /// Returns the index of this entry
+
+  /// Returns the index of this entry.
   pub const fn index(&self) -> usize {
     self.status_list_index
   }
-  /// Returns the referenced [`StatusList2021Credential`]'s [`Url`]
+
+  /// Returns the referenced [`StatusList2021Credential`]'s [`Url`].
   pub const fn credential(&self) -> &Url {
     &self.status_list_credential
   }

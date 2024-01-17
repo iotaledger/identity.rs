@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use std::str::FromStr;
 
@@ -85,9 +85,10 @@ impl JwtCredentialValidatorUtils {
       .map(|_| ())
       .ok_or(JwtValidationError::SubjectHolderRelationship)
   }
-  /// Checks whether the status specified in `credentialStatus` has been set by the issuer
+
+  /// Checks whether the status specified in `credentialStatus` has been set by the issuer.
   ///
-  /// Only supports `StatusList2021`
+  /// Only supports `StatusList2021`.
   #[cfg(feature = "revocation-bitmap")]
   pub fn check_status_with_status_list_2021<T>(
     credential: &Credential<T>,
@@ -109,10 +110,7 @@ impl JwtCredentialValidatorUtils {
         {
           let entry_status = status_list_credential
             .entry(status.index())
-            .map_err(|e| JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(e.to_string())))?
-            .ok_or(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(
-              "Entry not found".to_owned(),
-            )))?;
+            .map_err(|e| JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(e.to_string())))?;
           if entry_status {
             return match status.purpose() {
               StatusPurpose::Revocation => Err(JwtValidationError::Revoked),
@@ -132,7 +130,7 @@ impl JwtCredentialValidatorUtils {
         } else {
           Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
             "unsupported type '{}'",
-            status.r#type()
+            status.type_()
           ))))
         }
       }
@@ -159,13 +157,13 @@ impl JwtCredentialValidatorUtils {
       None => Ok(()),
       Some(status) => {
         // Check status is supported.
-        if status.r#type() != crate::revocation::RevocationBitmap::TYPE {
+        if status.type_() != crate::revocation::RevocationBitmap::TYPE {
           if status_check == crate::validator::StatusCheck::SkipUnsupported {
             return Ok(());
           }
           return Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
             "unsupported type '{}'",
-            status.r#type()
+            status.type_()
           ))));
         }
         let status: crate::credential::RevocationBitmapStatus =
