@@ -232,14 +232,14 @@ This variant is the default.</p>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
 </dd>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
 <dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
 <dd><p>Encode the given bytes in url-safe base64.</p>
 </dd>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -5829,6 +5829,12 @@ prior to calling the function.
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
 
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -5851,9 +5857,3 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  

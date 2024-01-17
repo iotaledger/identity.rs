@@ -24,7 +24,7 @@ import { API_ENDPOINT, createDid } from "../util";
 
 /**
  * Demonstrates how to create a selective disclosure verifiable credential and validate it
- * using the standard [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html).
+ * using the [Selective Disclosure for JWTs (SD-JWT)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html) specification.
  */
 export async function sdJwt() {
     // ===========================================================================
@@ -128,7 +128,7 @@ export async function sdJwt() {
     // disclosures.
     const strDisclosures = disclosures.map(disclosure => disclosure.toEncodedString());
 
-    let sdJwt = new SdJwt(jws.toString(), strDisclosures, undefined).presentation();
+    let sdJwt = new SdJwt(jws.toString(), strDisclosures).presentation();
 
     // ===========================================================================
     // Step 4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
@@ -145,9 +145,10 @@ export async function sdJwt() {
     const sdJwtReceived = SdJwt.parse(sdJwt);
 
     // The holder only wants to present "locality" and "postal_code" but not "street_address" or the "US" nationality.
+    const receivedDisclosures = sdJwtReceived.disclosures();
     const toBeDisclosed = [
-        strDisclosures[0],
-        strDisclosures[1],
+        receivedDisclosures[0],
+        receivedDisclosures[1]
     ];
 
     // Optionally, the holder can add a Key Binding JWT (KB-JWT). This is dependent on the verifier's policy.
@@ -168,13 +169,13 @@ export async function sdJwt() {
     const kbJwt = await aliceDocument.createJws(aliceStorage, aliceFragment, bindingClaims.toString(), options);
 
     // Create the final SD-JWT.
-    let finalSdJwt = new SdJwt(sdJwtReceived.jwt().toString(), toBeDisclosed, kbJwt.toString());
+    let sdJwtWithKb = new SdJwt(sdJwtReceived.jwt().toString(), toBeDisclosed, kbJwt.toString());
 
     // ===========================================================================
     // Step 6: Holder presents the SD-JWT to the verifier.
     // ===========================================================================
 
-    let sdJwtPresentation = finalSdJwt.presentation();
+    let sdJwtPresentation = sdJwtWithKb.presentation();
 
     // ===========================================================================
     // Step 7: Verifier receives the SD-JWT and verifies it.
