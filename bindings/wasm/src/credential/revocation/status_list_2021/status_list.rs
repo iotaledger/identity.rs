@@ -32,14 +32,17 @@ impl WasmStatusList2021 {
 
   /// Returns whether the entry at `index` is set.
   #[wasm_bindgen]
-  pub fn get(&self, index: usize) -> Option<bool> {
-    self.0.get(index)
+  pub fn get(&self, index: usize) -> Result<bool> {
+    self.0.get(index).map_err(|e| JsError::new(&e.to_string()).into())
   }
 
   /// Sets the value of the `index`-th entry.
   #[wasm_bindgen]
-  pub fn set(&mut self, index: usize, value: bool) {
-    self.0.set(index, value)
+  pub fn set(&mut self, index: usize, value: bool) -> Result<()> {
+    self
+      .0
+      .set(index, value)
+      .map_err(|e| JsError::new(&e.to_string()).into())
   }
 
   /// Encodes this {@link StatusList2021} into its compressed

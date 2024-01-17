@@ -7,7 +7,6 @@ use identity_iota::core::Context;
 use identity_iota::core::Url;
 use identity_iota::credential::status_list_2021::StatusList2021Credential;
 use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
-use identity_iota::credential::status_list_2021::StatusList2021Entry;
 use identity_iota::credential::status_list_2021::StatusPurpose;
 use identity_iota::credential::Issuer;
 use wasm_bindgen::prelude::*;
@@ -102,9 +101,12 @@ impl WasmStatusList2021Credential {
     index: usize,
     flag: bool,
   ) -> Result<WasmStatusList2021Entry> {
-    let entry = StatusList2021Entry::new(self.inner.id.clone().unwrap(), self.inner.purpose(), index);
-    self.set_entry(index, flag)?;
-    credential.0.credential_status = Some(entry.clone().into());
+    let entry = self
+      .inner
+      .set_credential_status(&mut credential.0, index, flag)
+      .map_err(|e| JsValue::from(JsError::new(&e.to_string())))?
+      .clone();
+    self.wasm_credential = WasmCredential(self.inner.clone().into_inner());
 
     Ok(WasmStatusList2021Entry(entry))
   }
@@ -117,23 +119,11 @@ impl WasmStatusList2021Credential {
 
   /// Returns the state of the `index`-th entry, if any.
   #[wasm_bindgen]
-  pub fn entry(&self, index: usize) -> Result<Option<bool>> {
+  pub fn entry(&self, index: usize) -> Result<bool> {
     self
       .inner
       .entry(index)
       .map_err(|e| JsValue::from(JsError::new(&e.to_string())))
-  }
-
-  /// Sets the `index`-th entry to `state`.
-  #[wasm_bindgen(js_name = "setEntry")]
-  pub fn set_entry(&mut self, index: usize, state: bool) -> Result<()> {
-    self
-      .inner
-      .update_status_list(|list| list.set(index, state))
-      .map_err(|e| JsValue::from(JsError::new(&e.to_string())))?;
-
-    self.wasm_credential = WasmCredential(self.inner.clone().into_inner());
-    Ok(())
   }
 
   #[wasm_bindgen(js_name = "clone")]
@@ -206,7 +196,7 @@ impl WasmStatusList2021CredentialBuilder {
 
     Ok(self)
   }
-  
+
   /// Adds a credential type.
   #[wasm_bindgen(js_name = "type")]
   pub fn r#type(mut self, t: String) -> WasmStatusList2021CredentialBuilder {
