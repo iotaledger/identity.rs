@@ -148,7 +148,7 @@ export async function sdJwt() {
     const receivedDisclosures = sdJwtReceived.disclosures();
     const toBeDisclosed = [
         receivedDisclosures[0],
-        receivedDisclosures[1]
+        receivedDisclosures[1],
     ];
 
     // Optionally, the holder can add a Key Binding JWT (KB-JWT). This is dependent on the verifier's policy.
