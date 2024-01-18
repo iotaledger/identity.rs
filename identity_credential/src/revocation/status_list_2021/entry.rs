@@ -5,8 +5,9 @@ use identity_core::common::Url;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::credential::Status;
+
 use super::credential::StatusPurpose;
-use crate::credential::CredentialStatus;
 
 const CREDENTIAL_STATUS_TYPE: &str = "StatusList2021Entry";
 
@@ -61,12 +62,18 @@ pub struct StatusList2021Entry {
   status_list_credential: Url,
 }
 
-impl CredentialStatus for StatusList2021Entry {
-  fn id(&self) -> &Url {
-    &self.id
+impl TryFrom<&Status> for StatusList2021Entry {
+  type Error = serde_json::Error;
+  fn try_from(status: &Status) -> Result<Self, Self::Error> {
+    let json_status = serde_json::to_value(status).unwrap();
+    serde_json::from_value(json_status)
   }
-  fn type_(&self) -> &str {
-    self.type_.0
+}
+
+impl From<StatusList2021Entry> for Status {
+  fn from(entry: StatusList2021Entry) -> Self {
+    let json_status = serde_json::to_value(entry).unwrap(); // Safety: shouldn't go out of memory
+    serde_json::from_value(json_status).unwrap() // Safety: `StatusList2021Entry` is a credential status
   }
 }
 

@@ -35,8 +35,6 @@ pub use self::refresh::RefreshService;
 #[cfg(feature = "revocation-bitmap")]
 pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
-pub use self::status::CredentialStatus;
-pub use self::status::CustomStatus;
 pub use self::status::Status;
 pub use self::subject::Subject;
 

@@ -34,7 +34,6 @@ use crate::credential::Credential;
 use crate::credential::CredentialBuilder;
 use crate::credential::Issuer;
 use crate::credential::Proof;
-use crate::credential::Status;
 
 use super::status_list::StatusListError;
 use super::StatusList2021;
@@ -92,23 +91,19 @@ impl StatusList2021Credential {
 
   /// Sets the credential status of a given [`Credential`],
   /// mapping it to the `index`-th entry of this [`StatusList2021Credential`].
-  pub fn set_credential_status<'c>(
+  pub fn set_credential_status(
     &mut self,
-    credential: &'c mut Credential,
+    credential: &mut Credential,
     index: usize,
     value: bool,
-  ) -> Result<&'c StatusList2021Entry, StatusListError> {
+  ) -> Result<StatusList2021Entry, StatusListError> {
     let mut status_list = self.status_list()?;
     let entry = StatusList2021Entry::new(self.id.clone().unwrap(), self.purpose(), index);
 
     status_list.set(index, value)?;
-    credential.credential_status = Some(entry.into());
+    credential.credential_status = Some(entry.clone().into());
 
-    let entry_ref = match credential.credential_status.as_ref().unwrap() {
-      Status::StatusList2021(ref entry) => entry,
-      _ => unreachable!(),
-    };
-    Ok(entry_ref)
+    Ok(entry)
   }
 
   /// Returns the status of the `index-th` entry.
