@@ -21,7 +21,7 @@ runs:
 
     - name: Install cargo-release
       shell: bash
-      run: cargo install --version =0.24 cargo-release
+      run: cargo install --version =0.25 cargo-release
 
     - name: Publish library to crates.io
       shell: bash
