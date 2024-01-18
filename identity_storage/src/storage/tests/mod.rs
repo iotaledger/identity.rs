@@ -4,5 +4,6 @@
 mod api;
 mod credential_jws;
 mod credential_validation;
+mod kb_jwt;
 mod presentation_validation;
 pub(crate) mod test_utils;
