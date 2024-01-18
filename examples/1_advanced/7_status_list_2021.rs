@@ -1,62 +1,169 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
+use examples::create_did;
+use examples::random_stronghold_path;
+use examples::MemStorage;
+use examples::API_ENDPOINT;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 
-use identity_iota::core::Context;
-use identity_iota::core::Timestamp;
+use identity_iota::core::FromJson;
+use identity_iota::core::Object;
+
 use identity_iota::core::Url;
 use identity_iota::credential::status_list_2021::StatusList2021;
 use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
+use identity_iota::credential::status_list_2021::StatusList2021Entry;
+use identity_iota::credential::status_list_2021::StatusPurpose;
+
 use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
+
+use identity_iota::credential::FailFast;
 use identity_iota::credential::Issuer;
+use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::JwtCredentialValidator;
 use identity_iota::credential::JwtCredentialValidatorUtils;
 use identity_iota::credential::JwtValidationError;
+use identity_iota::credential::Status;
 use identity_iota::credential::StatusCheck;
+use identity_iota::credential::Subject;
+use identity_iota::did::DID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::JwsSignatureOptions;
+use identity_iota::storage::KeyIdMemstore;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::client::Password;
+use iota_sdk::types::block::address::Address;
+use serde_json::json;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // Create a new status list to be stored off-chain, for the sake of this example
-  // its going to stay in memory.
-  let mut status_list_credential = StatusList2021CredentialBuilder::new(StatusList2021::default())
-    .context(Context::Url(Url::from_str("https://www.w3.org/2018/credentials/v1")?))
-    .issuer(Issuer::Url(Url::from_str("did:example:1234")?))
-    .subject_id(Url::from_str("https://example.com/credentials/status")?)
+  // ===========================================================================
+  // Create a Verifiable Credential.
+  // ===========================================================================
+
+  // Create a new client to interact with the IOTA ledger.
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
+
+  let mut secret_manager_issuer: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password(Password::from("secure_password_1".to_owned()))
+      .build(random_stronghold_path())?,
+  );
+
+  // Create an identity for the issuer with one verification method `key-1`.
+  let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager_issuer, &storage_issuer).await?;
+
+  // Create an identity for the holder, in this case also the subject.
+  let mut secret_manager_alice: SecretManager = SecretManager::Stronghold(
+    StrongholdSecretManager::builder()
+      .password(Password::from("secure_password_2".to_owned()))
+      .build(random_stronghold_path())?,
+  );
+  let storage_alice: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, alice_document, _): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager_alice, &storage_alice).await?;
+
+  // Create a new empty status list. No credential is revoked yet.
+  let status_list: StatusList2021 = StatusList2021::default();
+
+  // Create a status list credential so that the status list can be stored anywhere.
+  // In this example the credential will fictitiously be made available at `http://example.com/credential/status`
+  // (actually it will stay in memory).
+  let mut status_list_credential = StatusList2021CredentialBuilder::new(status_list)
+    .purpose(StatusPurpose::Revocation)
+    .subject_id(Url::parse("http://example.com/credential/status")?)
+    .issuer(Issuer::Url(issuer_document.id().to_url().into()))
     .build()?;
 
-  // Let's revoke a credential using this status list.
-  // First we create a credential.
-  let mut credential = serde_json::from_value::<Credential>(serde_json::json!({
-      "@context": "https://www.w3.org/2018/credentials/v1",
-      "id": "https://example.com/credentials/12345678",
-      "type": ["VerifiableCredential"],
-      "issuer": "did:example:1234",
-      "issuanceDate": format!("{}", Timestamp::now_utc()),
-      "credentialSubject": {
-          "id": "did:example:4321",
-          "type": "UniversityDegree",
-          "gpa": "4.0",
-      }
+  // Create a credential subject indicating the degree earned by Alice.
+  let subject: Subject = Subject::from_json_value(json!({
+    "id": alice_document.id().as_str(),
+    "name": "Alice",
+    "degree": {
+      "type": "BachelorDegree",
+      "name": "Bachelor of Science and Arts",
+    },
+    "GPA": "4.0",
   }))?;
 
-  // We add to this credential a status which references the 420th entry
-  // in the status list we previously created. Its JSON representation would look like this:
-  // {
-  //   "id": "https://example.com/credentials/status#420",
-  //   "type": "StatusList2021Entry",
-  //   "statusPurpose": "revocation",
-  //   "statusListIndex": "420",
-  //   "statusListCredential": "https://example.com/credentials/status"
-  // }
-  status_list_credential.set_credential_status(&mut credential, 420, true)?;
+  // Create an unsigned `UniversityDegree` credential for Alice.
+  // The issuer also chooses a unique `StatusList2021` index to be able to revoke it later.
+  let credential_index: usize = 420;
+  let status: Status = StatusList2021Entry::new(
+    status_list_credential.id().clone(),
+    status_list_credential.purpose(),
+    credential_index,
+  )
+  .into();
 
-  // The credential has now been revoked, verifying this credential will now fail
-  let validation = JwtCredentialValidatorUtils::check_status_with_status_list_2021(
+  // Build credential using subject above, status, and issuer.
+  let mut credential: Credential = CredentialBuilder::default()
+    .id(Url::parse("https://example.edu/credentials/3732")?)
+    .issuer(Url::parse(issuer_document.id().as_str())?)
+    .type_("UniversityDegreeCredential")
+    .status(status)
+    .subject(subject)
+    .build()?;
+
+  println!("Credential JSON > {credential:#}");
+
+  let credential_jwt: Jwt = issuer_document
+    .create_credential_jwt(
+      &credential,
+      &storage_issuer,
+      &fragment_issuer,
+      &JwsSignatureOptions::default(),
+      None,
+    )
+    .await?;
+
+  let validator: JwtCredentialValidator<EdDSAJwsVerifier> =
+    JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  // The validator has no way of retriving the status list to check for the
+  // revocation of the credential. Let's skip that pass.
+  let mut validation_options = JwtCredentialValidationOptions::default();
+  validation_options.status = StatusCheck::SkipUnsupported;
+  // Validate the credential's signature using the issuer's DID Document.
+  validator.validate::<_, Object>(
+    &credential_jwt,
+    &issuer_document,
+    &validation_options,
+    FailFast::FirstError,
+  )?;
+
+  // ===========================================================================
+  // Revocation of the Verifiable Credential.
+  // ===========================================================================
+
+  // Set the value of the chosen index entry to true to revoke the credential
+  status_list_credential.set_credential_status(&mut credential, credential_index, true)?;
+
+  // validate the credential and check for revocation
+  let _ = validator.validate::<_, Object>(
+    &credential_jwt,
+    &issuer_document,
+    &validation_options,
+    FailFast::FirstError,
+  )?;
+  let revocation_result = JwtCredentialValidatorUtils::check_status_with_status_list_2021(
     &credential,
     &status_list_credential,
     StatusCheck::Strict,
   );
-  assert!(validation.is_err_and(|e| matches!(e, JwtValidationError::Revoked)));
+
+  assert!(revocation_result.is_err_and(|e| matches!(e, JwtValidationError::Revoked)));
 
   Ok(())
 }

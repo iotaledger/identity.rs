@@ -78,6 +78,11 @@ impl StatusList2021Credential {
     self.0
   }
 
+  /// Returns the id needed to fetch this credential.
+  pub fn id(&self) -> &Url {
+    self.0.id.as_ref().unwrap()
+  }
+
   /// Returns the purpose of this status list.
   pub fn purpose(&self) -> StatusPurpose {
     let subject = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap(); // Safety: `Self` has already been validated as a valid StatusList2021Credential
@@ -97,13 +102,27 @@ impl StatusList2021Credential {
     index: usize,
     value: bool,
   ) -> Result<StatusList2021Entry, StatusListError> {
-    let mut status_list = self.status_list()?;
-    let entry = StatusList2021Entry::new(self.id.clone().unwrap(), self.purpose(), index);
+    let entry = StatusList2021Entry::new(self.id().clone(), self.purpose(), index);
 
-    status_list.set(index, value)?;
+    self.set_entry(index, value)?;
     credential.credential_status = Some(entry.clone().into());
 
     Ok(entry)
+  }
+
+  /// Sets the `index`-th entry to `value`
+  pub(crate) fn set_entry(&mut self, index: usize, value: bool) -> Result<(), StatusListError> {
+    let mut status_list = self.status_list()?;
+    status_list.set(index, value)?;
+    let OneOrMany::One(subject) = &mut self.0.credential_subject else {
+      unreachable!(); // Safety: already parsed as a valid `StatusList2021Credential`
+    };
+    let _ = subject.properties.insert(
+      "encodedList".to_owned(),
+      serde_json::Value::String(status_list.into_encoded_str()),
+    );
+
+    Ok(())
   }
 
   /// Returns the status of the `index-th` entry.
