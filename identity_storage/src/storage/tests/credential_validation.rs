@@ -319,13 +319,10 @@ where
   }
 
   // 1: unsupported status type.
-  credential.credential_status = Some(
-    Status::new(
-      Url::parse("https://example.com/").unwrap(),
-      "UnsupportedStatus2023".to_owned(),
-    )
-    .into(),
-  );
+  credential.credential_status = Some(Status::new(
+    Url::parse("https://example.com/").unwrap(),
+    "UnsupportedStatus2023".to_owned(),
+  ));
   for (status_check, expected) in [
     (StatusCheck::Strict, false),
     (StatusCheck::SkipUnsupported, true),
