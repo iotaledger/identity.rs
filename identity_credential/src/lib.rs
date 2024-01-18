@@ -23,8 +23,12 @@ pub mod error;
 pub mod presentation;
 #[cfg(feature = "revocation-bitmap")]
 pub mod revocation;
+mod utils;
 #[cfg(feature = "validator")]
 pub mod validator;
 
 pub use error::Error;
 pub use error::Result;
+
+#[cfg(feature = "sd-jwt")]
+pub use sd_jwt_payload;

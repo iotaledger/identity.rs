@@ -5,7 +5,7 @@
 //!  A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared.
 //!  It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 //!
-//! cargo run --example 6_create_vp
+//! cargo run --release --example 6_create_vp
 
 use std::collections::HashMap;
 

@@ -26,6 +26,7 @@ pub mod iota;
 pub mod jose;
 pub mod resolver;
 pub mod revocation;
+pub mod sd_jwt;
 pub mod storage;
 pub mod verification;
 

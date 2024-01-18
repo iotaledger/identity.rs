@@ -13,8 +13,11 @@ cargo run --example <example_name>
 For instance, to run the example `0_create_did`, use:
 
 ```rust
-cargo run --example 0_create_did
+cargo run --release --example 0_create_did
 ```
+
+### Note: Running the examples with the release flag will be significantly faster due to stronghold performance issues in debug mode.
+
 
 ## Basic Examples
 
@@ -44,3 +47,4 @@ The following advanced examples are available:
 | [4_alias_output_history](./1_advanced/4_alias_output_history.rs) | Demonstrates fetching the history of an Alias Output.                                                    |
 | [5_custom_resolution](./1_advanced/5_custom_resolution.rs)       | Demonstrates how to set up a resolver using custom handlers.                                             |
 | [6_domain_linkage](./1_advanced/6_domain_linkage)                | Demonstrates how to link a domain and a DID and verify the linkage.                                      |
+| [7_sd_jwt](./1_advanced/7_sd_jwt)                                | Demonstrates how to create and verify selective disclosure verifiable credentials.                        |
