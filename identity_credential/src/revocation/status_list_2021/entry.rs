@@ -53,7 +53,7 @@ impl<'de> Deserialize<'de> for EntryType {
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct StatusList2021Entry {
-  id: Url,
+  id: Option<Url>,
   #[serde(rename = "type")]
   type_: EntryType,
   status_purpose: StatusPurpose,
@@ -79,10 +79,7 @@ impl From<StatusList2021Entry> for Status {
 
 impl StatusList2021Entry {
   /// Creates a new [`StatusList2021Entry`].
-  pub fn new(status_list: Url, purpose: StatusPurpose, index: usize) -> Self {
-    let mut id = status_list.clone();
-    id.set_fragment(Some(format!("{index}").as_str()));
-
+  pub fn new(status_list: Url, purpose: StatusPurpose, index: usize, id: Option<Url>) -> Self {
     Self {
       id,
       type_: EntryType::default(),
@@ -93,8 +90,8 @@ impl StatusList2021Entry {
   }
 
   /// Returns this `credentialStatus`'s `id`.
-  pub const fn id(&self) -> &Url {
-    &self.id
+  pub const fn id(&self) -> Option<&Url> {
+    self.id.as_ref()
   }
 
   /// Returns the purpose of this entry.

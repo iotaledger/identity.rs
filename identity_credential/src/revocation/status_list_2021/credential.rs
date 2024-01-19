@@ -1,7 +1,6 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Cow;
 use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -12,6 +11,7 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use serde::Deserialize;
 use serde::Serialize;
+use serde_json::Value;
 use thiserror::Error;
 
 /// The type of a `StatusList2021Credential`.
@@ -26,14 +26,24 @@ pub enum StatusList2021CredentialError {
   #[error("A StatusList2021Credential may only have one credentialSubject")]
   MultipleCredentialSubject,
   /// The provided [`Credential`] has an invalid property.
-  #[error("Invalid property {0}")]
-  InvalidProperty(String),
+  #[error("Invalid property \"{0}\"")]
+  InvalidProperty(&'static str),
+  /// The provided [`Credential`] doesn't have a mandatory property.
+  #[error("Missing property \"{0}\"")]
+  MissingProperty(&'static str),
+  /// Inner status list failures.
+  #[error(transparent)]
+  StatusListError(#[from] StatusListError),
+  /// Missing status list id
+  #[error("Cannot set the status of a credential without a \"credentialSubject.id\".")]
+  Unreferenceable,
 }
 
 use crate::credential::Credential;
 use crate::credential::CredentialBuilder;
 use crate::credential::Issuer;
 use crate::credential::Proof;
+use crate::credential::Subject;
 
 use super::status_list::StatusListError;
 use super::StatusList2021;
@@ -41,9 +51,11 @@ use super::StatusList2021Entry;
 
 /// A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential).
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[repr(transparent)]
 #[serde(try_from = "Credential", into = "Credential")]
-pub struct StatusList2021Credential(Credential);
+pub struct StatusList2021Credential {
+  inner: Credential,
+  subject: StatusList2021CredentialSubject,
+}
 
 impl From<StatusList2021Credential> for Credential {
   fn from(value: StatusList2021Credential) -> Self {
@@ -54,20 +66,23 @@ impl From<StatusList2021Credential> for Credential {
 impl Deref for StatusList2021Credential {
   type Target = Credential;
   fn deref(&self) -> &Self::Target {
-    &self.0
+    &self.inner
   }
 }
 
 impl TryFrom<Credential> for StatusList2021Credential {
   type Error = StatusList2021CredentialError;
-  fn try_from(credential: Credential) -> Result<Self, Self::Error> {
+  fn try_from(mut credential: Credential) -> Result<Self, Self::Error> {
     let has_right_credential_type = credential.types.contains(&CREDENTIAL_TYPE.to_owned());
-    let _subject = StatusList2021CredentialSubject::try_from_credential(&credential)?;
+    let subject = StatusList2021CredentialSubject::try_from_credential(&mut credential)?;
 
     if has_right_credential_type {
-      Ok(Self(credential))
+      Ok(Self {
+        inner: credential,
+        subject,
+      })
     } else {
-      Err(StatusList2021CredentialError::InvalidProperty("type".to_owned()))
+      Err(StatusList2021CredentialError::InvalidProperty("type"))
     }
   }
 }
@@ -75,23 +90,23 @@ impl TryFrom<Credential> for StatusList2021Credential {
 impl StatusList2021Credential {
   /// Returns the inner "raw" [`Credential`].
   pub fn into_inner(self) -> Credential {
-    self.0
+    let Self { mut inner, subject } = self;
+    inner.credential_subject = OneOrMany::One(subject.into());
+    inner
   }
 
-  /// Returns the id needed to fetch this credential.
-  pub fn id(&self) -> &Url {
-    self.0.id.as_ref().unwrap()
+  /// Returns the id of this credential.
+  pub fn id(&self) -> Option<&Url> {
+    self.subject.id.as_ref()
   }
 
   /// Returns the purpose of this status list.
   pub fn purpose(&self) -> StatusPurpose {
-    let subject = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap(); // Safety: `Self` has already been validated as a valid StatusList2021Credential
-    subject.status_purpose
+    self.subject.status_purpose
   }
 
   fn status_list(&self) -> Result<StatusList2021, StatusListError> {
-    let status_list_credential = StatusList2021CredentialSubject::try_from_credential(&self.0).unwrap();
-    StatusList2021::try_from_encoded_str(&status_list_credential.encoded_list)
+    StatusList2021::try_from_encoded_str(&self.subject.encoded_list)
   }
 
   /// Sets the credential status of a given [`Credential`],
@@ -101,8 +116,12 @@ impl StatusList2021Credential {
     credential: &mut Credential,
     index: usize,
     value: bool,
-  ) -> Result<StatusList2021Entry, StatusListError> {
-    let entry = StatusList2021Entry::new(self.id().clone(), self.purpose(), index);
+  ) -> Result<StatusList2021Entry, StatusList2021CredentialError> {
+    let id = self
+      .id()
+      .cloned()
+      .ok_or(StatusList2021CredentialError::Unreferenceable)?;
+    let entry = StatusList2021Entry::new(id, self.purpose(), index, None);
 
     self.set_entry(index, value)?;
     credential.credential_status = Some(entry.clone().into());
@@ -111,25 +130,34 @@ impl StatusList2021Credential {
   }
 
   /// Sets the `index`-th entry to `value`
-  pub(crate) fn set_entry(&mut self, index: usize, value: bool) -> Result<(), StatusListError> {
+  pub(crate) fn set_entry(&mut self, index: usize, value: bool) -> Result<(), StatusList2021CredentialError> {
     let mut status_list = self.status_list()?;
     status_list.set(index, value)?;
-    let OneOrMany::One(subject) = &mut self.0.credential_subject else {
-      unreachable!(); // Safety: already parsed as a valid `StatusList2021Credential`
-    };
-    let _ = subject.properties.insert(
-      "encodedList".to_owned(),
-      serde_json::Value::String(status_list.into_encoded_str()),
-    );
+    self.subject.encoded_list = status_list.into_encoded_str();
 
     Ok(())
   }
 
   /// Returns the status of the `index-th` entry.
-  pub fn entry(&self, index: usize) -> Result<bool, StatusListError> {
+  pub fn entry(&self, index: usize) -> Result<CredentialStatus, StatusList2021CredentialError> {
     let status_list = self.status_list()?;
-    status_list.get(index)
+    Ok(match (self.purpose(), status_list.get(index)?) {
+      (StatusPurpose::Revocation, true) => CredentialStatus::Revoked,
+      (StatusPurpose::Suspension, true) => CredentialStatus::Suspended,
+      _ => CredentialStatus::Valid,
+    })
   }
+}
+
+/// The status of a credential referenced inside a [`StatusList2021Credential`]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum CredentialStatus {
+  /// A revoked credential
+  Revoked,
+  /// A suspended credential
+  Suspended,
+  /// A valid credential
+  Valid,
 }
 
 /// [`StatusList2021Credential`]'s purpose.
@@ -164,53 +192,82 @@ impl FromStr for StatusPurpose {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct StatusList2021CredentialSubject<'a> {
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+struct StatusList2021CredentialSubject {
   status_purpose: StatusPurpose,
-  encoded_list: Cow<'a, str>,
-  id: Option<Cow<'a, Url>>,
+  encoded_list: String,
+  id: Option<Url>,
 }
 
-impl<'c> StatusList2021CredentialSubject<'c> {
-  fn try_from_credential(credential: &'c Credential) -> Result<Self, StatusList2021CredentialError> {
-    let OneOrMany::One(subject) = &credential.credential_subject else {
+impl From<StatusList2021CredentialSubject> for Subject {
+  fn from(value: StatusList2021CredentialSubject) -> Self {
+    let properties = [
+      (
+        "statusPurpose".to_owned(),
+        Value::String(value.status_purpose.to_string()),
+      ),
+      ("type".to_owned(), Value::String(CREDENTIAL_SUBJECT_TYPE.to_owned())),
+      ("encodedList".to_owned(), Value::String(value.encoded_list)),
+    ]
+    .into_iter()
+    .collect();
+
+    if let Some(id) = value.id {
+      Subject::with_id_and_properties(id, properties)
+    } else {
+      Subject::with_properties(properties)
+    }
+  }
+}
+
+impl StatusList2021CredentialSubject {
+  /// Parse a StatusListCredentialSubject out of a credential, without copying.
+  fn try_from_credential(credential: &mut Credential) -> Result<Self, StatusList2021CredentialError> {
+    let OneOrMany::One(subject) = &mut credential.credential_subject else {
       return Err(StatusList2021CredentialError::MultipleCredentialSubject);
     };
-    if !subject
-      .properties
-      .get("type")
-      .is_some_and(|value| value.as_str().is_some_and(|t| t == CREDENTIAL_SUBJECT_TYPE))
-    {
-      return Err(StatusList2021CredentialError::InvalidProperty(
-        "credentialSubject.type".to_owned(),
-      ));
-    };
-    let id = subject.id.as_ref().map(Cow::Borrowed);
-    let Some(status_purpose) = subject
+    if let Some(subject_type) = subject.properties.get("type") {
+      if !subject_type.as_str().is_some_and(|t| t == CREDENTIAL_SUBJECT_TYPE) {
+        return Err(StatusList2021CredentialError::InvalidProperty("credentialSubject.type"));
+      }
+    } else {
+      return Err(StatusList2021CredentialError::MissingProperty("credentialSubject.type"));
+    }
+    let status_purpose = subject
       .properties
       .get("statusPurpose")
-      .and_then(|value| value.as_str())
-      .and_then(|purpose| StatusPurpose::from_str(purpose).ok())
-    else {
-      return Err(StatusList2021CredentialError::InvalidProperty(
-        "credentialSubject.statusPurpose".to_owned(),
-      ));
-    };
-    let Some(encoded_list) = subject
+      .ok_or(StatusList2021CredentialError::MissingProperty(
+        "credentialSubject.statusPurpose",
+      ))
+      .and_then(|value| {
+        value
+          .as_str()
+          .and_then(|purpose| StatusPurpose::from_str(purpose).ok())
+          .ok_or(StatusList2021CredentialError::InvalidProperty(
+            "credentialSubject.statusPurpose",
+          ))
+      })?;
+    let encoded_list = subject
       .properties
-      .get("encodedList")
-      .and_then(|value| value.as_str())
-      .map(Cow::Borrowed)
-    else {
-      return Err(StatusList2021CredentialError::InvalidProperty(
-        "credentialSubject.encodedList".to_owned(),
-      ));
-    };
+      .get_mut("encodedList")
+      .ok_or(StatusList2021CredentialError::MissingProperty(
+        "credentialSubject.encodedList",
+      ))
+      .and_then(|value| {
+        if let Value::String(ref mut s) = value {
+          Ok(s)
+        } else {
+          Err(StatusList2021CredentialError::InvalidProperty(
+            "credentialSubject.encodedList",
+          ))
+        }
+      })
+      .map(std::mem::take)?;
+
     Ok(StatusList2021CredentialSubject {
-      status_purpose,
+      id: std::mem::take(&mut subject.id),
       encoded_list,
-      id,
+      status_purpose,
     })
   }
 }
@@ -219,29 +276,31 @@ impl<'c> StatusList2021CredentialSubject<'c> {
 #[derive(Debug, Default)]
 pub struct StatusList2021CredentialBuilder {
   inner_builder: CredentialBuilder,
-  id: Option<Url>,
-  purpose: StatusPurpose,
-  encoded_list: String,
+  credential_subject: StatusList2021CredentialSubject,
 }
 
 impl StatusList2021CredentialBuilder {
   /// Creates a new [`StatusList2021CredentialBuilder`] from a [`StatusList2021`].
   pub fn new(status_list: StatusList2021) -> Self {
-    Self {
+    let credential_subject = StatusList2021CredentialSubject {
       encoded_list: status_list.into_encoded_str(),
+      ..Default::default()
+    };
+    Self {
+      credential_subject,
       ..Default::default()
     }
   }
 
   /// Sets `credentialSubject.statusPurpose`.
   pub const fn purpose(mut self, purpose: StatusPurpose) -> Self {
-    self.purpose = purpose;
+    self.credential_subject.status_purpose = purpose;
     self
   }
 
   /// Sets `credentialSubject.id`.
   pub fn subject_id(mut self, id: Url) -> Self {
-    self.id = Some(id);
+    self.credential_subject.id = Some(id);
     self
   }
 
@@ -277,36 +336,20 @@ impl StatusList2021CredentialBuilder {
 
   /// Consumes this [`StatusList2021CredentialBuilder`] into a [`StatusList2021Credential`].
   pub fn build(mut self) -> Result<StatusList2021Credential, crate::Error> {
-    let subject = {
-      use crate::credential::Subject;
-      use identity_core::common::Value;
-
-      let properties = [
-        ("statusPurpose".to_owned(), Value::String(self.purpose.to_string())),
-        ("type".to_owned(), Value::String(CREDENTIAL_SUBJECT_TYPE.to_owned())),
-        ("encodedList".to_owned(), Value::String(self.encoded_list)),
-      ]
-      .into_iter()
-      .collect();
-      if let Some(id) = self.id {
-        let id_without_fragment = {
-          let mut id = id.clone();
-          id.set_fragment(None);
-          id
-        };
-        self.inner_builder.id = Some(id_without_fragment);
-        Subject::with_id_and_properties(id, properties)
-      } else {
-        Subject::with_properties(properties)
-      }
-    };
+    let id = self.credential_subject.id.clone().map(|mut url| {
+      url.set_fragment(None);
+      url
+    });
+    self.inner_builder.id = id;
     self
       .inner_builder
       .type_(CREDENTIAL_TYPE)
-      .subject(subject)
       .issuance_date(Timestamp::now_utc())
       .build()
-      .map(StatusList2021Credential)
+      .map(|credential| StatusList2021Credential {
+        subject: self.credential_subject,
+        inner: credential,
+      })
   }
 }
 

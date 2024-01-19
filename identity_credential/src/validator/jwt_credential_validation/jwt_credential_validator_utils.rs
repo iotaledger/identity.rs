@@ -17,8 +17,6 @@ use crate::credential::CredentialJwtClaims;
 use crate::credential::Jwt;
 #[cfg(feature = "revocation-bitmap")]
 use crate::revocation::status_list_2021::StatusList2021Credential;
-#[cfg(feature = "revocation-bitmap")]
-use crate::revocation::status_list_2021::StatusPurpose;
 use crate::validator::SubjectHolderRelationship;
 
 /// Utility functions for verifying JWT credentials.
@@ -95,6 +93,7 @@ impl JwtCredentialValidatorUtils {
     status_list_credential: &StatusList2021Credential,
     status_check: crate::validator::StatusCheck,
   ) -> ValidationUnitResult {
+    use crate::revocation::status_list_2021::CredentialStatus;
     use crate::revocation::status_list_2021::StatusList2021Entry;
 
     if status_check == crate::validator::StatusCheck::SkipAll {
@@ -112,13 +111,11 @@ impl JwtCredentialValidatorUtils {
           let entry_status = status_list_credential
             .entry(status.index())
             .map_err(|e| JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(e.to_string())))?;
-          if entry_status {
-            return match status.purpose() {
-              StatusPurpose::Revocation => Err(JwtValidationError::Revoked),
-              StatusPurpose::Suspension => Err(JwtValidationError::Suspended),
-            };
+          match entry_status {
+            CredentialStatus::Revoked => Err(JwtValidationError::Revoked),
+            CredentialStatus::Suspended => Err(JwtValidationError::Suspended),
+            CredentialStatus::Valid => Ok(()),
           }
-          Ok(())
         } else {
           Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(
             "The given statusListCredential doesn't match the credential's status".to_owned(),
