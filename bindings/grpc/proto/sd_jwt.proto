@@ -1,0 +1,14 @@
+syntax = "proto3";
+package sd_jwt;
+
+message VerificationRequest {
+    string jwt = 1;
+}
+
+message VerificationResponse {
+    string credential = 1;
+}
+
+service Verification {
+    rpc verify(VerificationRequest) returns (VerificationResponse);
+}

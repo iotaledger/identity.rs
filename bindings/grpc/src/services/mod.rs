@@ -1,5 +1,6 @@
 pub mod credential;
 pub mod health_check;
+pub mod sd_jwt;
 
 use iota_sdk::client::Client;
 use tonic::transport::server::{Routes, RoutesBuilder};
