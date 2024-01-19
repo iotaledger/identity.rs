@@ -1,12 +1,18 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use flate2::read::GzDecoder;
+use flate2::write::GzEncoder;
+use flate2::Compression;
+use identity_core::convert::Base;
+use identity_core::convert::BaseEncoding;
+use std::io::Write;
 use thiserror::Error;
 
-const DEFAULT_LIST_SIZE: usize = 16 * 1024;
+const MINIMUM_LIST_SIZE: usize = 16 * 1024 * 8;
 
 /// [`std::error::Error`] type for [`StatusList2021`]'s operations.
-#[derive(Debug, Error, Eq, PartialEq)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum StatusListError {
   /// Requested entry is not in the list.
   #[error("The requested entry is not in the list.")]
@@ -14,6 +20,9 @@ pub enum StatusListError {
   /// Improperly encoded status list.
   #[error("\"{0}\" is not a valid encoded status list.")]
   InvalidEncoding(String),
+  /// Invalid list size
+  #[error("A StatusList2021 must have at least {MINIMUM_LIST_SIZE} entries.")]
+  InvalidListSize,
 }
 
 /// StatusList2021 data structure as described in [W3C's VC status list 2021](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/).
@@ -22,20 +31,25 @@ pub struct StatusList2021(Box<[u8]>);
 
 impl Default for StatusList2021 {
   fn default() -> Self {
-    StatusList2021::new(DEFAULT_LIST_SIZE)
+    StatusList2021::new(MINIMUM_LIST_SIZE).unwrap()
   }
 }
 
 impl StatusList2021 {
-  /// Returns a new empty [`StatusList2021`] of `num_entries` entries.
+  /// Returns a new zero-filled [`StatusList2021`] that can hold `num_entries` credential statuses.
+  ///
   /// ## Notes:
-  /// - The actual length of the list might be slightly bigger
-  /// depending on the number of bytes the list will use.
-  /// - The specification suggests a list size of at least 16KBs.
-  pub fn new(num_entries: usize) -> Self {
+  /// - The actual length of the list will be rounded up to the closest multiple of 8 to accomodate for byte sizes.
+  /// - `num_entries` must be at least 131,072 which corresponds to a size of 16KB.
+  pub fn new(num_entries: usize) -> Result<Self, StatusListError> {
+    if num_entries < MINIMUM_LIST_SIZE {
+      return Err(StatusListError::InvalidListSize);
+    }
+
     let size = num_entries / 8 + (num_entries % 8 != 0) as usize;
     let store = vec![0; size];
-    StatusList2021(store.into_boxed_slice())
+
+    Ok(StatusList2021(store.into_boxed_slice()))
   }
 
   /// Returns the number of entries.
@@ -53,6 +67,7 @@ impl StatusList2021 {
   }
 
   /// Sets the status of the `index`-th entry to `value`.
+  ///
   /// ## Panic:
   /// * if `index` is greater than or equal to `self.len()`.
   fn set_unchecked(&mut self, index: usize, value: bool) {
@@ -71,7 +86,7 @@ impl StatusList2021 {
       .ok_or(StatusListError::IndexOutOfBounds)
   }
 
-  /// Sets the status fo the `index`-th entry to `value`.
+  /// Sets the status of the `index`-th entry to `value`.
   pub fn set(&mut self, index: usize, value: bool) -> Result<(), StatusListError> {
     if index < self.len() {
       self.set_unchecked(index, value);
@@ -84,12 +99,8 @@ impl StatusList2021 {
   /// Attempts to parse a [`StatusList2021`] from a string, following the
   /// [StatusList2021 expansion algorithm](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#bitstring-expansion-algorithm).
   pub fn try_from_encoded_str(s: &str) -> Result<Self, StatusListError> {
-    use flate2::read::GzDecoder;
-    use identity_core::convert::Base;
-    use identity_core::convert::BaseEncoding;
-
     let compressed_status_list =
-      BaseEncoding::decode(s, Base::Base64Url).or(Err(StatusListError::InvalidEncoding(s.to_owned())))?;
+      BaseEncoding::decode(s, Base::Base64).or(Err(StatusListError::InvalidEncoding(s.to_owned())))?;
     let status_list = {
       use std::io::Read;
 
@@ -108,22 +119,16 @@ impl StatusList2021 {
   /// Encode this [`StatusList2021`] into its string representation following
   /// [StatusList2021 generation algorithm](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#bitstring-generation-algorithm).
   pub fn into_encoded_str(self) -> String {
-    use flate2::write::GzEncoder;
-    use flate2::Compression;
-    use identity_core::convert::Base;
-    use identity_core::convert::BaseEncoding;
-
     let compressed_status_list = {
-      use std::io::Write;
-
       let mut compressor = GzEncoder::new(vec![], Compression::best());
-      compressor.write_all(&self.0).expect("Out of memory");
+      compressor.write_all(&self.0).unwrap();
       compressor.finish().unwrap()
     };
 
-    BaseEncoding::encode(&compressed_status_list[..], Base::Base64Url)
+    BaseEncoding::encode(&compressed_status_list[..], Base::Base64)
   }
 
+  /// Returns the byte location and the bit location within it.
   const fn entry_index_to_store_index(index: usize) -> (usize, usize) {
     (index / 8, index % 8)
   }
@@ -134,27 +139,36 @@ mod tests {
   use super::*;
 
   #[test]
-  fn status_list_entry_access() -> anyhow::Result<()> {
-    let mut status_list = StatusList2021::new(128);
-    status_list.set(42, true)?;
-    assert_eq!(status_list.get(42), Ok(true));
-
-    status_list.set(42, false)?;
-    assert_eq!(status_list, StatusList2021::new(128));
-
-    Ok(())
+  fn default_status_list() {
+    let mut status_list = StatusList2021::default();
+    status_list.set(131071, true).unwrap();
+    assert_eq!(status_list.get(131071).unwrap(), true);
+    assert_eq!(status_list.set(131072, true), Err(StatusListError::IndexOutOfBounds));
   }
 
   #[test]
-  fn status_list_encode_decode() -> anyhow::Result<()> {
-    let mut status_list = StatusList2021::default();
-    status_list.set(42, true)?;
-    status_list.set(420, true)?;
-    status_list.set(4200, true)?;
-    let encoded = status_list.clone().into_encoded_str();
-    let decoded = StatusList2021::try_from_encoded_str(&encoded);
-    assert_eq!(decoded, Ok(status_list));
+  fn status_list_too_short_fails() {
+    assert_eq!(StatusList2021::new(100), Err(StatusListError::InvalidListSize));
+  }
 
-    Ok(())
+  #[test]
+  fn status_list_entry_access() {
+    let mut status_list = StatusList2021::default();
+    status_list.set(42, true).unwrap();
+    assert_eq!(status_list.get(42).unwrap(), true);
+
+    status_list.set(42, false).unwrap();
+    assert_eq!(status_list, StatusList2021::default());
+  }
+
+  #[test]
+  fn status_list_encode_decode() {
+    let mut status_list = StatusList2021::default();
+    status_list.set(42, true).unwrap();
+    status_list.set(420, true).unwrap();
+    status_list.set(4200, true).unwrap();
+    let encoded = status_list.clone().into_encoded_str();
+    let decoded = StatusList2021::try_from_encoded_str(&encoded).unwrap();
+    assert_eq!(decoded, status_list);
   }
 }
