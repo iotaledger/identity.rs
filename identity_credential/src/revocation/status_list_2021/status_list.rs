@@ -142,7 +142,7 @@ mod tests {
   fn default_status_list() {
     let mut status_list = StatusList2021::default();
     status_list.set(131071, true).unwrap();
-    assert_eq!(status_list.get(131071).unwrap(), true);
+    assert!(status_list.get(131071).unwrap());
     assert_eq!(status_list.set(131072, true), Err(StatusListError::IndexOutOfBounds));
   }
 
@@ -155,7 +155,7 @@ mod tests {
   fn status_list_entry_access() {
     let mut status_list = StatusList2021::default();
     status_list.set(42, true).unwrap();
-    assert_eq!(status_list.get(42).unwrap(), true);
+    assert!(status_list.get(42).unwrap());
 
     status_list.set(42, false).unwrap();
     assert_eq!(status_list, StatusList2021::default());
