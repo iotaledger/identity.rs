@@ -15,7 +15,7 @@ use super::SignerContext;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
 use crate::credential::Jwt;
-#[cfg(feature = "revocation-bitmap")]
+#[cfg(feature = "status-list-2021")]
 use crate::revocation::status_list_2021::StatusList2021Credential;
 use crate::validator::SubjectHolderRelationship;
 
@@ -87,7 +87,7 @@ impl JwtCredentialValidatorUtils {
   /// Checks whether the status specified in `credentialStatus` has been set by the issuer.
   ///
   /// Only supports `StatusList2021`.
-  #[cfg(feature = "revocation-bitmap")]
+  #[cfg(feature = "status-list-2021")]
   pub fn check_status_with_status_list_2021<T>(
     credential: &Credential<T>,
     status_list_credential: &StatusList2021Credential,
@@ -105,7 +105,7 @@ impl JwtCredentialValidatorUtils {
       Some(status) => {
         let status = StatusList2021Entry::try_from(status)
           .map_err(|e| JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(e.to_string())))?;
-        if Some(status.credential()) == status_list_credential.id.as_ref()
+        if Some(status.status_list_credential()) == status_list_credential.id.as_ref()
           && status.purpose() == status_list_credential.purpose()
         {
           let entry_status = status_list_credential

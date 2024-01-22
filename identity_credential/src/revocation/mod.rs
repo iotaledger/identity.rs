@@ -4,12 +4,11 @@
 //! Contains the implementations for all the credential revocation methods that can be used with IOTA's Identity
 //! framework.
 
-mod bitmap;
-mod document_ext;
 mod error;
+mod revocation_bitmap_2022;
+#[cfg(feature = "status-list-2021")]
 pub mod status_list_2021;
 
-pub use self::bitmap::RevocationBitmap;
-pub use self::document_ext::RevocationDocumentExt;
 pub use self::error::RevocationError;
 pub use self::error::RevocationResult;
+pub use revocation_bitmap_2022::*;

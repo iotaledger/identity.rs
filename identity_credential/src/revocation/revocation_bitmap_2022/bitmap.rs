@@ -14,7 +14,7 @@ use identity_core::convert::BaseEncoding;
 use identity_did::DIDUrl;
 use roaring::RoaringBitmap;
 
-use super::error::RevocationError;
+use crate::revocation::error::RevocationError;
 use identity_document::service::Service;
 use identity_document::service::ServiceEndpoint;
 
