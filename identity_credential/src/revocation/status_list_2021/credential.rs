@@ -345,6 +345,7 @@ impl StatusList2021CredentialBuilder {
       .inner_builder
       .type_(CREDENTIAL_TYPE)
       .issuance_date(Timestamp::now_utc())
+      .subject(self.credential_subject.clone().into())
       .build()
       .map(|credential| StatusList2021Credential {
         subject: self.credential_subject,

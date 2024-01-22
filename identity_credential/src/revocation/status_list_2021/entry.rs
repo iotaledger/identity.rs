@@ -41,7 +41,7 @@ where
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct StatusList2021Entry {
-  id: Option<Url>,
+  id: Url,
   #[serde(rename = "type", deserialize_with = "deserialize_status_entry_type")]
   type_: String,
   status_purpose: StatusPurpose,
@@ -68,6 +68,12 @@ impl From<StatusList2021Entry> for Status {
 impl StatusList2021Entry {
   /// Creates a new [`StatusList2021Entry`].
   pub fn new(status_list: Url, purpose: StatusPurpose, index: usize, id: Option<Url>) -> Self {
+    let id = id.unwrap_or_else(|| {
+      let mut id = status_list.clone();
+      id.set_fragment(None);
+      id
+    });
+
     Self {
       id,
       type_: CREDENTIAL_STATUS_TYPE.to_owned(),
@@ -78,8 +84,8 @@ impl StatusList2021Entry {
   }
 
   /// Returns this `credentialStatus`'s `id`.
-  pub const fn id(&self) -> Option<&Url> {
-    self.id.as_ref()
+  pub const fn id(&self) -> &Url {
+    &self.id
   }
 
   /// Returns the purpose of this entry.

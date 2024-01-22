@@ -187,6 +187,17 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -204,6 +215,10 @@ working with storage backed DID documents.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -218,54 +233,14 @@ This variant is the default.</p>
 <dt><a href="#Any">Any</a></dt>
 <dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
 </dd>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
 <dt><a href="#StatusPurpose">StatusPurpose</a></dt>
 <dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
 </dd>
-<dt><a href="#StatusCheck">StatusCheck</a></dt>
-<dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
-</dd>
-<dt><a href="#Strict">Strict</a></dt>
-<dd><p>Validate the status if supported, reject any unsupported
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
-<p>Only <code>RevocationBitmap2022</code> is currently supported.</p>
-<p>This is the default.</p>
-</dd>
-<dt><a href="#SkipUnsupported">SkipUnsupported</a></dt>
-<dd><p>Validate the status if supported, skip any unsupported
-<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
-</dd>
-<dt><a href="#SkipAll">SkipAll</a></dt>
-<dd><p>Skip all status checks.</p>
-</dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
-<dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
-<p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
-<code>EdDSA</code> verification with curve <code>Ed25519</code> to this function.</p>
-<h1 id="warning">Warning</h1>
-<p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
-prior to calling the function.</p>
-</dd>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
@@ -274,6 +249,14 @@ prior to calling the function.</p>
 </dd>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+</dd>
+<dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
+<dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
+<p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
+<code>EdDSA</code> verification with curve <code>Ed25519</code> to this function.</p>
+<h1 id="warning">Warning</h1>
+<p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
+prior to calling the function.</p>
 </dd>
 </dl>
 
@@ -973,8 +956,8 @@ Deserializes an instance from a plain JS representation.
         * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
         * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
         * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.setProof(proof)](#Credential+setProof)
-        * [.toJwtClaims(custom_claims)](#Credential+toJwtClaims) ⇒ <code>Record.&lt;string, any&gt;</code>
+        * [.setProof([proof])](#Credential+setProof)
+        * [.toJwtClaims([custom_claims])](#Credential+toJwtClaims) ⇒ <code>Record.&lt;string, any&gt;</code>
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
@@ -1099,7 +1082,7 @@ Note that this proof is not related to JWT.
 
 <a name="Credential+toJwtClaims"></a>
 
-### credential.toJwtClaims(custom_claims) ⇒ <code>Record.&lt;string, any&gt;</code>
+### credential.toJwtClaims([custom_claims]) ⇒ <code>Record.&lt;string, any&gt;</code>
 Serializes the `Credential` as a JWT claims set
 in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
 
@@ -1109,7 +1092,7 @@ The resulting object can be used as the payload of a JWS when issuing the creden
 
 | Param | Type |
 | --- | --- |
-| custom_claims | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
+| [custom_claims] | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
 
 <a name="Credential+toJSON"></a>
 
@@ -2022,7 +2005,7 @@ if the object is being concurrently modified.
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
         * ~~[.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)~~
         * [.createJws(storage, fragment, payload, options)](#IotaDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
-        * [.createCredentialJwt(storage, fragment, credential, options, custom_claims)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * [.createCredentialJwt(storage, fragment, credential, options, [custom_claims])](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -4120,7 +4103,7 @@ Options to declare validation criteria when validating credentials.
 **Kind**: global class  
 
 * [KeyBindingJWTValidationOptions](#KeyBindingJWTValidationOptions)
-    * [new KeyBindingJWTValidationOptions(options)](#new_KeyBindingJWTValidationOptions_new)
+    * [new KeyBindingJWTValidationOptions([options])](#new_KeyBindingJWTValidationOptions_new)
     * _instance_
         * [.toJSON()](#KeyBindingJWTValidationOptions+toJSON) ⇒ <code>any</code>
         * [.clone()](#KeyBindingJWTValidationOptions+clone) ⇒ [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)
@@ -4129,11 +4112,11 @@ Options to declare validation criteria when validating credentials.
 
 <a name="new_KeyBindingJWTValidationOptions_new"></a>
 
-### new KeyBindingJWTValidationOptions(options)
+### new KeyBindingJWTValidationOptions([options])
 
 | Param | Type |
 | --- | --- |
-| options | <code>IKeyBindingJWTValidationOptions</code> \| <code>undefined</code> | 
+| [options] | <code>IKeyBindingJWTValidationOptions</code> \| <code>undefined</code> | 
 
 <a name="KeyBindingJWTValidationOptions+toJSON"></a>
 
@@ -4166,7 +4149,7 @@ Claims set for key binding JWT.
 **Kind**: global class  
 
 * [KeyBindingJwtClaims](#KeyBindingJwtClaims)
-    * [new KeyBindingJwtClaims(jwt, disclosures, nonce, aud, issued_at, custom_properties)](#new_KeyBindingJwtClaims_new)
+    * [new KeyBindingJwtClaims(jwt, disclosures, nonce, aud, [issued_at], [custom_properties])](#new_KeyBindingJwtClaims_new)
     * _instance_
         * [.toString()](#KeyBindingJwtClaims+toString) ⇒ <code>string</code>
         * [.iat()](#KeyBindingJwtClaims+iat) ⇒ <code>bigint</code>
@@ -4182,7 +4165,7 @@ Claims set for key binding JWT.
 
 <a name="new_KeyBindingJwtClaims_new"></a>
 
-### new KeyBindingJwtClaims(jwt, disclosures, nonce, aud, issued_at, custom_properties)
+### new KeyBindingJwtClaims(jwt, disclosures, nonce, aud, [issued_at], [custom_properties])
 Creates a new [`KeyBindingJwtClaims`].
 When `issued_at` is left as None, it will automatically default to the current time.
 
@@ -4196,8 +4179,8 @@ When `issued_at` is set to `None` and the system returns time earlier than `Syst
 | disclosures | <code>Array.&lt;string&gt;</code> | 
 | nonce | <code>string</code> | 
 | aud | <code>string</code> | 
-| issued_at | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
-| custom_properties | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
+| [issued_at] | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+| [custom_properties] | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
 
 <a name="KeyBindingJwtClaims+toString"></a>
 
@@ -5001,7 +4984,7 @@ Representation of an SD-JWT of the format
 **Kind**: global class  
 
 * [SdJwt](#SdJwt)
-    * [new SdJwt(jwt, disclosures, key_binding_jwt)](#new_SdJwt_new)
+    * [new SdJwt(jwt, disclosures, [key_binding_jwt])](#new_SdJwt_new)
     * _instance_
         * [.presentation()](#SdJwt+presentation) ⇒ <code>string</code>
         * [.toString()](#SdJwt+toString) ⇒ <code>string</code>
@@ -5016,7 +4999,7 @@ Representation of an SD-JWT of the format
 
 <a name="new_SdJwt_new"></a>
 
-### new SdJwt(jwt, disclosures, key_binding_jwt)
+### new SdJwt(jwt, disclosures, [key_binding_jwt])
 Creates a new `SdJwt` from its components.
 
 
@@ -5024,7 +5007,7 @@ Creates a new `SdJwt` from its components.
 | --- | --- |
 | jwt | <code>string</code> | 
 | disclosures | <code>Array.&lt;string&gt;</code> | 
-| key_binding_jwt | <code>string</code> \| <code>undefined</code> | 
+| [key_binding_jwt] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="SdJwt+presentation"></a>
 
@@ -5156,7 +5139,7 @@ An error is returned whenever a validated condition is not satisfied.
 | sd_jwt | [<code>SdJwt</code>](#SdJwt) | 
 | issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
 | options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
-| fail_fast | <code>number</code> | 
+| fail_fast | [<code>FailFast</code>](#FailFast) | 
 
 <a name="SdJwtCredentialValidator+verifySignature"></a>
 
@@ -5249,8 +5232,8 @@ Note: digests are created using the sha-256 algorithm.
 
 * [SdObjectEncoder](#SdObjectEncoder)
     * [new SdObjectEncoder(object)](#new_SdObjectEncoder_new)
-    * [.conceal(path, salt)](#SdObjectEncoder+conceal) ⇒ [<code>Disclosure</code>](#Disclosure)
-    * [.concealArrayEntry(path, element_index, salt)](#SdObjectEncoder+concealArrayEntry) ⇒ [<code>Disclosure</code>](#Disclosure)
+    * [.conceal(path, [salt])](#SdObjectEncoder+conceal) ⇒ [<code>Disclosure</code>](#Disclosure)
+    * [.concealArrayEntry(path, element_index, [salt])](#SdObjectEncoder+concealArrayEntry) ⇒ [<code>Disclosure</code>](#Disclosure)
     * [.addSdAlgProperty()](#SdObjectEncoder+addSdAlgProperty)
     * [.encodeToString()](#SdObjectEncoder+encodeToString) ⇒ <code>string</code>
     * [.toString()](#SdObjectEncoder+toString) ⇒ <code>string</code>
@@ -5270,7 +5253,7 @@ Creates a new `SdObjectEncoder` with `sha-256` hash function.
 
 <a name="SdObjectEncoder+conceal"></a>
 
-### sdObjectEncoder.conceal(path, salt) ⇒ [<code>Disclosure</code>](#Disclosure)
+### sdObjectEncoder.conceal(path, [salt]) ⇒ [<code>Disclosure</code>](#Disclosure)
 Substitutes a value with the digest of its disclosure.
 If no salt is provided, the disclosure will be created with a random salt value.
 
@@ -5289,11 +5272,11 @@ Use `concealArrayEntry` for values in arrays.
 | Param | Type |
 | --- | --- |
 | path | <code>Array.&lt;string&gt;</code> | 
-| salt | <code>string</code> \| <code>undefined</code> | 
+| [salt] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="SdObjectEncoder+concealArrayEntry"></a>
 
-### sdObjectEncoder.concealArrayEntry(path, element_index, salt) ⇒ [<code>Disclosure</code>](#Disclosure)
+### sdObjectEncoder.concealArrayEntry(path, element_index, [salt]) ⇒ [<code>Disclosure</code>](#Disclosure)
 Substitutes a value within an array with the digest of its disclosure.
 If no salt is provided, the disclosure will be created with random salt value.
 
@@ -5311,7 +5294,7 @@ the index of the element to be concealed (index start at 0).
 | --- | --- |
 | path | <code>Array.&lt;string&gt;</code> | 
 | element_index | <code>number</code> | 
-| salt | <code>string</code> \| <code>undefined</code> | 
+| [salt] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="SdObjectEncoder+addSdAlgProperty"></a>
 
@@ -5714,7 +5697,7 @@ Attempts to build a valid [StatusList2021Credential](#StatusList2021Credential) 
 * [StatusList2021Entry](#StatusList2021Entry)
     * [new StatusList2021Entry(status_list, purpose, index, [id])](#new_StatusList2021Entry_new)
     * _instance_
-        * [.id()](#StatusList2021Entry+id) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.id()](#StatusList2021Entry+id) ⇒ <code>string</code>
         * [.purpose()](#StatusList2021Entry+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
         * [.index()](#StatusList2021Entry+index) ⇒ <code>number</code>
         * [.credential()](#StatusList2021Entry+credential) ⇒ <code>string</code>
@@ -5739,7 +5722,7 @@ Creates a new [StatusList2021Entry](#StatusList2021Entry).
 
 <a name="StatusList2021Entry+id"></a>
 
-### statusList2021Entry.id() ⇒ <code>string</code> \| <code>undefined</code>
+### statusList2021Entry.id() ⇒ <code>string</code>
 Returns this `credentialStatus`'s `id`.
 
 **Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
@@ -6130,6 +6113,28 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -6160,6 +6165,14 @@ Validate the status if supported, skip any unsupported
 ## SkipAll
 Skip all status checks.
 
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
@@ -6188,41 +6201,40 @@ The holder must match the subject only for credentials where the [`nonTransferab
 The holder is not required to have any kind of relationship to any credential subject.
 
 **Kind**: global variable  
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="FailFast"></a>
-
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
 <a name="StatusPurpose"></a>
-<a name="StateMetadataEncoding"></a>
 
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
 
-## MethodRelationship
 **Kind**: global variable  
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
+<a name="encodeB64"></a>
+
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="decodeB64"></a>
+
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
 <a name="verifyEd25519"></a>
 
 ## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
@@ -6245,65 +6257,3 @@ prior to calling the function.
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
 
-<a name="start"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
-**Kind**: global variable  
-<a name="StatusCheck"></a>
-
-## StatusCheck
-Controls validation behaviour when checking whether or not a credential has been revoked by its
-[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
-
-**Kind**: global variable  
-<a name="Strict"></a>
-
-## Strict
-Validate the status if supported, reject any unsupported
-[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
-
-Only `RevocationBitmap2022` is currently supported.
-
-This is the default.
-
-**Kind**: global variable  
-<a name="SkipUnsupported"></a>
-
-## SkipUnsupported
-Validate the status if supported, skip any unsupported
-[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
-
-**Kind**: global variable  
-<a name="SkipAll"></a>
-
-## SkipAll
-Skip all status checks.
-
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
-<a name="encodeB64"></a>
-
-## encodeB64(data) ⇒ <code>string</code>
-Encode the given bytes in url-safe base64.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
-
-<a name="decodeB64"></a>
-
-## decodeB64(data) ⇒ <code>Uint8Array</code>
-Decode the given url-safe base64-encoded slice into its raw bytes.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Uint8Array</code> | 
