@@ -128,11 +128,11 @@ impl WasmStatusList2021Credential {
     &mut self,
     credential: &mut WasmCredential,
     index: usize,
-    flag: bool,
+    value: bool,
   ) -> Result<WasmStatusList2021Entry> {
     let entry = self
       .inner
-      .set_credential_status(&mut credential.0, index, flag)
+      .set_credential_status(&mut credential.0, index, value)
       .map_err(|e| JsValue::from(JsError::new(&e.to_string())))?
       .clone();
     self.wasm_credential = WasmCredential(self.inner.clone().into_inner());

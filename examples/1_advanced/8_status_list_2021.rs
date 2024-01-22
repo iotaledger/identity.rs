@@ -10,8 +10,10 @@ use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::FromJson;
 use identity_iota::core::Object;
 
+use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::status_list_2021::StatusList2021;
+use identity_iota::credential::status_list_2021::StatusList2021Credential;
 use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
 use identity_iota::credential::status_list_2021::StatusList2021Entry;
 use identity_iota::credential::status_list_2021::StatusPurpose;
@@ -81,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
   // Create a status list credential so that the status list can be stored anywhere.
   // In this example the credential will fictitiously be made available at `http://example.com/credential/status`
   // (actually it will stay in memory).
-  let mut status_list_credential = StatusList2021CredentialBuilder::new(status_list)
+  let status_list_credential = StatusList2021CredentialBuilder::new(status_list)
     .purpose(StatusPurpose::Revocation)
     .subject_id(Url::parse("http://example.com/credential/status")?)
     .issuer(Issuer::Url(issuer_document.id().to_url().into()))
@@ -133,7 +135,7 @@ async fn main() -> anyhow::Result<()> {
   let validator: JwtCredentialValidator<EdDSAJwsVerifier> =
     JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   // The validator has no way of retriving the status list to check for the
-  // revocation of the credential. Let's skip that pass.
+  // revocation of the credential. Let's skip that pass and perform the operation manually.
   let mut validation_options = JwtCredentialValidationOptions::default();
   validation_options.status = StatusCheck::SkipUnsupported;
   // Validate the credential's signature using the issuer's DID Document.
@@ -144,9 +146,15 @@ async fn main() -> anyhow::Result<()> {
     FailFast::FirstError,
   )?;
 
+  let status_list_credential_json = status_list_credential.to_json().unwrap();
+
   // ===========================================================================
   // Revocation of the Verifiable Credential.
   // ===========================================================================
+
+  // The issuer retrieves the status list credential.
+  let mut status_list_credential =
+    serde_json::from_str::<StatusList2021Credential>(status_list_credential_json.as_str()).unwrap();
 
   // Set the value of the chosen index entry to true to revoke the credential
   status_list_credential.set_credential_status(&mut credential, credential_index, true)?;

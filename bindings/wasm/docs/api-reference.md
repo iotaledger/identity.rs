@@ -187,8 +187,6 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#FailFast">FailFast</a></dt>
 <dd><p>Declares when validation should return if an error occurs.</p>
 </dd>
@@ -219,6 +217,11 @@ working with storage backed DID documents.</p>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
+</dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -232,9 +235,6 @@ This variant is the default.</p>
 </dd>
 <dt><a href="#Any">Any</a></dt>
 <dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
-</dd>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
 </dd>
 </dl>
 
@@ -5506,7 +5506,7 @@ A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list
     * [new StatusList2021Credential(credential)](#new_StatusList2021Credential_new)
     * _instance_
         * [.id()](#StatusList2021Credential+id) ⇒ <code>string</code>
-        * [.setCredentialStatus(credential, index, flag)](#StatusList2021Credential+setCredentialStatus) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+        * [.setCredentialStatus(credential, index, value)](#StatusList2021Credential+setCredentialStatus) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
         * [.purpose()](#StatusList2021Credential+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
         * [.entry(index)](#StatusList2021Credential+entry) ⇒ [<code>CredentialStatus</code>](#CredentialStatus)
         * [.clone()](#StatusList2021Credential+clone) ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
@@ -5530,7 +5530,7 @@ Creates a new [StatusList2021Credential](#StatusList2021Credential).
 **Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
 <a name="StatusList2021Credential+setCredentialStatus"></a>
 
-### statusList2021Credential.setCredentialStatus(credential, index, flag) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+### statusList2021Credential.setCredentialStatus(credential, index, value) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
 Sets the given credential's status using the `index`-th entry of this status list.
 Returns the created `credentialStatus`.
 
@@ -5540,7 +5540,7 @@ Returns the created `credentialStatus`.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 | index | <code>number</code> | 
-| flag | <code>boolean</code> | 
+| value | <code>boolean</code> | 
 
 <a name="StatusList2021Credential+purpose"></a>
 
@@ -6113,10 +6113,6 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
-**Kind**: global variable  
 <a name="FailFast"></a>
 
 ## FailFast
@@ -6174,6 +6170,16 @@ Skip all status checks.
 
 ## MethodRelationship
 **Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -6199,12 +6205,6 @@ The holder must match the subject only for credentials where the [`nonTransferab
 
 ## Any
 The holder is not required to have any kind of relationship to any credential subject.
-
-**Kind**: global variable  
-<a name="StatusPurpose"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
 
 **Kind**: global variable  
 <a name="start"></a>

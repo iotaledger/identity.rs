@@ -15,6 +15,7 @@ import {
     KeyIdMemStore,
     StatusCheck,
     StatusList2021,
+    StatusList2021Credential,
     StatusList2021CredentialBuilder,
     StatusList2021Entry,
     StatusPurpose,
@@ -33,7 +34,6 @@ export async function statusList2021() {
         primaryNode: API_ENDPOINT,
         localPow: true,
     });
-    const didClient = new IotaIdentityClient(client);
 
     // Generate a random mnemonic for the issuer.
     const issuerSecretManager: MnemonicSecretManager = {
@@ -78,6 +78,7 @@ export async function statusList2021() {
         .subjectId("http://example.com/credential/status")
         .issuer(issuerDocument.id().toString())
         .build();
+    const statusListCredentialJSON = statusListCredential.toJSON();
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -112,6 +113,8 @@ export async function statusList2021() {
 
     // Validate the credential using the issuer's DID Document.
     const validationOptions = new JwtCredentialValidationOptions({ status: StatusCheck.SkipUnsupported });
+    // The validator has no way of retrieving the status list to check for the
+    // revocation of the credential. Let's skip that pass and perform the operation manually.
     let jwtCredentialValidator = new JwtCredentialValidator(new Ed25519JwsVerifier());
     jwtCredentialValidator.validate(
         credentialJwt,
@@ -124,9 +127,12 @@ export async function statusList2021() {
     // Revocation of the Verifiable Credential.
     // ===========================================================================
 
+    // The issuer retrieves the status list credential.
+    const refetchedStatusListCredential = new StatusList2021Credential(new Credential(statusListCredentialJSON as any));
+
     // Update the status list credential.
     // This revokes the credential's unique index.
-    statusListCredential.setCredentialStatus(credential, CREDENTIAL_INDEX, true);
+    refetchedStatusListCredential.setCredentialStatus(credential, CREDENTIAL_INDEX, true);
 
     // Credential verification now fails.
     try {
@@ -136,9 +142,15 @@ export async function statusList2021() {
             validationOptions,
             FailFast.FirstError,
         );
-        JwtCredentialValidator.checkStatusWithStatusList2021(credential, statusListCredential, StatusCheck.Strict);
+        /// Since the credential has been revoked, this validation step will throw an error.
+        JwtCredentialValidator.checkStatusWithStatusList2021(
+            credential,
+            refetchedStatusListCredential,
+            StatusCheck.Strict,
+        );
         console.log("Revocation Failed!");
     } catch (e) {
+        /// The credential has been revoked.
         console.log(`Error during validation: ${e}`);
     }
 }
