@@ -134,16 +134,16 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
 <dt><a href="#StatusList2021">StatusList2021</a></dt>
-<dd><p>StatusList2021 data structure as described in <a href="https://www.w3.org/TR/2023/WD-vc-status-list-20230427/">W3C&#39;s VC status list 2021</a></p>
+<dd><p>StatusList2021 data structure as described in <a href="https://www.w3.org/TR/2023/WD-vc-status-list-20230427/">W3C&#39;s VC status list 2021</a>.</p>
 </dd>
 <dt><a href="#StatusList2021Credential">StatusList2021Credential</a></dt>
-<dd><p>A parsed <a href="https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential">StatusList2021Credential</a></p>
+<dd><p>A parsed <a href="https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential">StatusList2021Credential</a>.</p>
 </dd>
 <dt><a href="#StatusList2021CredentialBuilder">StatusList2021CredentialBuilder</a></dt>
-<dd><p>Builder type to construct valid <a href="#StatusList2021Credential">StatusList2021Credential</a> istances</p>
+<dd><p>Builder type to construct valid <a href="#StatusList2021Credential">StatusList2021Credential</a> istances.</p>
 </dd>
 <dt><a href="#StatusList2021Entry">StatusList2021Entry</a></dt>
-<dd><p><a href="https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry">StatusList2021Entry</a> implementation</p>
+<dd><p><a href="https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry">StatusList2021Entry</a> implementation.</p>
 </dd>
 <dt><a href="#Storage">Storage</a></dt>
 <dd><p>A type wrapping a <code>JwkStorage</code> and <code>KeyIdStorage</code> that should always be used together when
@@ -161,11 +161,36 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a></p>
+<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
+<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
+<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
 </dd>
+<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
+<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
+This variant is the default.</p>
+</dd>
+<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
+<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
+</dd>
+<dt><a href="#Any">Any</a></dt>
+<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
+</dd>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
+</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -183,29 +208,6 @@ working with storage backed DID documents.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
-<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
-<dd><p>Declares how credential subjects must relate to the presentation holder.</p>
-<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
-</dd>
-<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
-<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
-This variant is the default.</p>
-</dd>
-<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
-<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
-</dd>
-<dt><a href="#Any">Any</a></dt>
-<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
-</dd>
-<dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return if an error occurs.</p>
-</dd>
-<dt><a href="#AllErrors">AllErrors</a></dt>
-<dd><p>Return all errors that occur during validation.</p>
-</dd>
-<dt><a href="#FirstError">FirstError</a></dt>
-<dd><p>Return after the first error occurs.</p>
-</dd>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -219,9 +221,6 @@ This variant is the default.</p>
 <dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
 <dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
 <p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
@@ -229,6 +228,9 @@ This variant is the default.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
+</dd>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -3636,7 +3638,7 @@ Only supports `RevocationBitmap2022`.
 <a name="JwtCredentialValidator.checkStatusWithStatusList2021"></a>
 
 ### JwtCredentialValidator.checkStatusWithStatusList2021(credential, status_list, status_check)
-Checks wheter the credential status has been revoked using `StatusList2021`
+Checks wheter the credential status has been revoked using `StatusList2021`.
 
 **Kind**: static method of [<code>JwtCredentialValidator</code>](#JwtCredentialValidator)  
 
@@ -4733,7 +4735,7 @@ Deserializes an instance from a JSON object.
 <a name="StatusList2021"></a>
 
 ## StatusList2021
-StatusList2021 data structure as described in [W3C's VC status list 2021](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/)
+StatusList2021 data structure as described in [W3C's VC status list 2021](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/).
 
 **Kind**: global class  
 
@@ -4742,7 +4744,7 @@ StatusList2021 data structure as described in [W3C's VC status list 2021](https:
     * _instance_
         * [.clone()](#StatusList2021+clone) ⇒ [<code>StatusList2021</code>](#StatusList2021)
         * [.len()](#StatusList2021+len) ⇒ <code>number</code>
-        * [.get(index)](#StatusList2021+get) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.get(index)](#StatusList2021+get) ⇒ <code>boolean</code>
         * [.set(index, value)](#StatusList2021+set)
         * [.intoEncodedStr()](#StatusList2021+intoEncodedStr) ⇒ <code>string</code>
     * _static_
@@ -4751,7 +4753,7 @@ StatusList2021 data structure as described in [W3C's VC status list 2021](https:
 <a name="new_StatusList2021_new"></a>
 
 ### new StatusList2021([size])
-Creates a new [StatusList2021](#StatusList2021) of `size` entries
+Creates a new [StatusList2021](#StatusList2021) of `size` entries.
 
 
 | Param | Type |
@@ -4767,13 +4769,13 @@ Deep clones the object.
 <a name="StatusList2021+len"></a>
 
 ### statusList2021.len() ⇒ <code>number</code>
-Returns the number of entries in this [StatusList2021](#StatusList2021)
+Returns the number of entries in this [StatusList2021](#StatusList2021).
 
 **Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
 <a name="StatusList2021+get"></a>
 
-### statusList2021.get(index) ⇒ <code>boolean</code> \| <code>undefined</code>
-Returns whether the entry at `index` is set
+### statusList2021.get(index) ⇒ <code>boolean</code>
+Returns whether the entry at `index` is set.
 
 **Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
 
@@ -4784,7 +4786,7 @@ Returns whether the entry at `index` is set
 <a name="StatusList2021+set"></a>
 
 ### statusList2021.set(index, value)
-Sets the value of the `index`-th entry
+Sets the value of the `index`-th entry.
 
 **Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
 
@@ -4797,12 +4799,14 @@ Sets the value of the `index`-th entry
 
 ### statusList2021.intoEncodedStr() ⇒ <code>string</code>
 Encodes this [StatusList2021](#StatusList2021) into its compressed
-base64 string representation
+base64 string representation.
 
 **Kind**: instance method of [<code>StatusList2021</code>](#StatusList2021)  
 <a name="StatusList2021.fromEncodedStr"></a>
 
 ### StatusList2021.fromEncodedStr(s) ⇒ [<code>StatusList2021</code>](#StatusList2021)
+Attempts to decode a [StatusList2021](#StatusList2021) from a string.
+
 **Kind**: static method of [<code>StatusList2021</code>](#StatusList2021)  
 
 | Param | Type |
@@ -4812,7 +4816,7 @@ base64 string representation
 <a name="StatusList2021Credential"></a>
 
 ## StatusList2021Credential
-A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential)
+A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021credential).
 
 **Kind**: global class  
 
@@ -4822,8 +4826,7 @@ A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list
         * [.id()](#StatusList2021Credential+id) ⇒ <code>string</code>
         * [.setCredentialStatus(credential, index, flag)](#StatusList2021Credential+setCredentialStatus) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
         * [.purpose()](#StatusList2021Credential+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
-        * [.entry(index)](#StatusList2021Credential+entry) ⇒ <code>boolean</code> \| <code>undefined</code>
-        * [.setEntry(index, state)](#StatusList2021Credential+setEntry)
+        * [.entry(index)](#StatusList2021Credential+entry) ⇒ [<code>CredentialStatus</code>](#CredentialStatus)
         * [.clone()](#StatusList2021Credential+clone) ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
         * [.toJSON()](#StatusList2021Credential+toJSON) ⇒ <code>any</code>
     * _static_
@@ -4832,7 +4835,7 @@ A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list
 <a name="new_StatusList2021Credential_new"></a>
 
 ### new StatusList2021Credential(credential)
-Creates a new [StatusList2021Credential](#StatusList2021Credential)
+Creates a new [StatusList2021Credential](#StatusList2021Credential).
 
 
 | Param | Type |
@@ -4860,31 +4863,19 @@ Returns the created `credentialStatus`.
 <a name="StatusList2021Credential+purpose"></a>
 
 ### statusList2021Credential.purpose() ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
-Returns the [StatusPurpose](#StatusPurpose) of this [StatusList2021Credential](#StatusList2021Credential)
+Returns the [StatusPurpose](#StatusPurpose) of this [StatusList2021Credential](#StatusList2021Credential).
 
 **Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
 <a name="StatusList2021Credential+entry"></a>
 
-### statusList2021Credential.entry(index) ⇒ <code>boolean</code> \| <code>undefined</code>
-Returns the state of the `index`-th entry, if any
+### statusList2021Credential.entry(index) ⇒ [<code>CredentialStatus</code>](#CredentialStatus)
+Returns the state of the `index`-th entry, if any.
 
 **Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
 
 | Param | Type |
 | --- | --- |
 | index | <code>number</code> | 
-
-<a name="StatusList2021Credential+setEntry"></a>
-
-### statusList2021Credential.setEntry(index, state)
-Sets the `index`-th entry to `state`
-
-**Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-| state | <code>boolean</code> | 
 
 <a name="StatusList2021Credential+clone"></a>
 
@@ -4906,7 +4897,7 @@ Sets the `index`-th entry to `state`
 <a name="StatusList2021CredentialBuilder"></a>
 
 ## StatusList2021CredentialBuilder
-Builder type to construct valid [StatusList2021Credential](#StatusList2021Credential) istances
+Builder type to construct valid [StatusList2021Credential](#StatusList2021Credential) istances.
 
 **Kind**: global class  
 
@@ -4924,7 +4915,7 @@ Builder type to construct valid [StatusList2021Credential](#StatusList2021Creden
 <a name="new_StatusList2021CredentialBuilder_new"></a>
 
 ### new StatusList2021CredentialBuilder([status_list])
-Creates a new [StatusList2021CredentialBuilder](#StatusList2021CredentialBuilder)
+Creates a new [StatusList2021CredentialBuilder](#StatusList2021CredentialBuilder).
 
 
 | Param | Type |
@@ -4934,7 +4925,7 @@ Creates a new [StatusList2021CredentialBuilder](#StatusList2021CredentialBuilder
 <a name="StatusList2021CredentialBuilder+purpose"></a>
 
 ### statusList2021CredentialBuilder.purpose(purpose) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
-Sets the purpose of the [StatusList2021Credential](#StatusList2021Credential) that is being created
+Sets the purpose of the [StatusList2021Credential](#StatusList2021Credential) that is being created.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 
@@ -4945,7 +4936,7 @@ Sets the purpose of the [StatusList2021Credential](#StatusList2021Credential) th
 <a name="StatusList2021CredentialBuilder+subjectId"></a>
 
 ### statusList2021CredentialBuilder.subjectId(id) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
-Sets `credentialSubject.id`
+Sets `credentialSubject.id`.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 
@@ -4956,7 +4947,7 @@ Sets `credentialSubject.id`
 <a name="StatusList2021CredentialBuilder+expirationDate"></a>
 
 ### statusList2021CredentialBuilder.expirationDate(time) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
-Sets the expiration date of the credential
+Sets the expiration date of the credential.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 
@@ -4967,7 +4958,7 @@ Sets the expiration date of the credential
 <a name="StatusList2021CredentialBuilder+issuer"></a>
 
 ### statusList2021CredentialBuilder.issuer(issuer) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
-Sets the issuer of the credential
+Sets the issuer of the credential.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 
@@ -4978,7 +4969,7 @@ Sets the issuer of the credential
 <a name="StatusList2021CredentialBuilder+context"></a>
 
 ### statusList2021CredentialBuilder.context(context) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
-Sets the context of the credential
+Sets the context of the credential.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 
@@ -4989,7 +4980,7 @@ Sets the context of the credential
 <a name="StatusList2021CredentialBuilder+type"></a>
 
 ### statusList2021CredentialBuilder.type(t) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
-Adds a credential type
+Adds a credential type.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 
@@ -5000,7 +4991,7 @@ Adds a credential type
 <a name="StatusList2021CredentialBuilder+proof"></a>
 
 ### statusList2021CredentialBuilder.proof(proof) ⇒ [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)
-Adds a credential's proof
+Adds a credential's proof.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 
@@ -5011,23 +5002,24 @@ Adds a credential's proof
 <a name="StatusList2021CredentialBuilder+build"></a>
 
 ### statusList2021CredentialBuilder.build() ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
-Attempts to build a valid [StatusList2021Credential](#StatusList2021Credential) with the previously provided data
+Attempts to build a valid [StatusList2021Credential](#StatusList2021Credential) with the previously provided data.
 
 **Kind**: instance method of [<code>StatusList2021CredentialBuilder</code>](#StatusList2021CredentialBuilder)  
 <a name="StatusList2021Entry"></a>
 
 ## StatusList2021Entry
-[StatusList2021Entry](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry) implementation
+[StatusList2021Entry](https://www.w3.org/TR/2023/WD-vc-status-list-20230427/#statuslist2021entry) implementation.
 
 **Kind**: global class  
 
 * [StatusList2021Entry](#StatusList2021Entry)
-    * [new StatusList2021Entry(status_list, purpose, index)](#new_StatusList2021Entry_new)
+    * [new StatusList2021Entry(status_list, purpose, index, [id])](#new_StatusList2021Entry_new)
     * _instance_
-        * [.id()](#StatusList2021Entry+id) ⇒ <code>string</code>
+        * [.id()](#StatusList2021Entry+id) ⇒ <code>string</code> \| <code>undefined</code>
         * [.purpose()](#StatusList2021Entry+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
         * [.index()](#StatusList2021Entry+index) ⇒ <code>number</code>
         * [.credential()](#StatusList2021Entry+credential) ⇒ <code>string</code>
+        * [.toStatus()](#StatusList2021Entry+toStatus) ⇒ <code>any</code>
         * [.clone()](#StatusList2021Entry+clone) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
         * [.toJSON()](#StatusList2021Entry+toJSON) ⇒ <code>any</code>
     * _static_
@@ -5035,8 +5027,8 @@ Attempts to build a valid [StatusList2021Credential](#StatusList2021Credential) 
 
 <a name="new_StatusList2021Entry_new"></a>
 
-### new StatusList2021Entry(status_list, purpose, index)
-Creates a new [StatusList2021Entry](#StatusList2021Entry)
+### new StatusList2021Entry(status_list, purpose, index, [id])
+Creates a new [StatusList2021Entry](#StatusList2021Entry).
 
 
 | Param | Type |
@@ -5044,29 +5036,36 @@ Creates a new [StatusList2021Entry](#StatusList2021Entry)
 | status_list | <code>string</code> | 
 | purpose | [<code>StatusPurpose</code>](#StatusPurpose) | 
 | index | <code>number</code> | 
+| [id] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="StatusList2021Entry+id"></a>
 
-### statusList2021Entry.id() ⇒ <code>string</code>
-Returns this `credentialStatus`'s `id`
+### statusList2021Entry.id() ⇒ <code>string</code> \| <code>undefined</code>
+Returns this `credentialStatus`'s `id`.
 
 **Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
 <a name="StatusList2021Entry+purpose"></a>
 
 ### statusList2021Entry.purpose() ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
-Returns the purpose of this entry
+Returns the purpose of this entry.
 
 **Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
 <a name="StatusList2021Entry+index"></a>
 
 ### statusList2021Entry.index() ⇒ <code>number</code>
-Returns the index of this entry
+Returns the index of this entry.
 
 **Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
 <a name="StatusList2021Entry+credential"></a>
 
 ### statusList2021Entry.credential() ⇒ <code>string</code>
-Returns the referenced [StatusList2021Credential](#StatusList2021Credential)'s url
+Returns the referenced [StatusList2021Credential](#StatusList2021Credential)'s url.
+
+**Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
+<a name="StatusList2021Entry+toStatus"></a>
+
+### statusList2021Entry.toStatus() ⇒ <code>any</code>
+Downcasts [this](this) to [Status](Status)
 
 **Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
 <a name="StatusList2021Entry+clone"></a>
@@ -5432,15 +5431,64 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="StatusPurpose"></a>
+<a name="SubjectHolderRelationship"></a>
 
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021)
+## SubjectHolderRelationship
+Declares how credential subjects must relate to the presentation holder.
 
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
+
+**Kind**: global variable  
+<a name="AlwaysSubject"></a>
+
+## AlwaysSubject
+The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+This variant is the default.
+
+**Kind**: global variable  
+<a name="SubjectOnNonTransferable"></a>
+
+## SubjectOnNonTransferable
+The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
+
+**Kind**: global variable  
+<a name="Any"></a>
+
+## Any
+The holder is not required to have any kind of relationship to any credential subject.
+
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
 **Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
 **Kind**: global variable  
 <a name="StatusCheck"></a>
 
@@ -5473,51 +5521,6 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
-<a name="SubjectHolderRelationship"></a>
-
-## SubjectHolderRelationship
-Declares how credential subjects must relate to the presentation holder.
-
-See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
-
-**Kind**: global variable  
-<a name="AlwaysSubject"></a>
-
-## AlwaysSubject
-The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
-This variant is the default.
-
-**Kind**: global variable  
-<a name="SubjectOnNonTransferable"></a>
-
-## SubjectOnNonTransferable
-The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
-
-**Kind**: global variable  
-<a name="Any"></a>
-
-## Any
-The holder is not required to have any kind of relationship to any credential subject.
-
-**Kind**: global variable  
-<a name="FailFast"></a>
-
-## FailFast
-Declares when validation should return if an error occurs.
-
-**Kind**: global variable  
-<a name="AllErrors"></a>
-
-## AllErrors
-Return all errors that occur during validation.
-
-**Kind**: global variable  
-<a name="FirstError"></a>
-
-## FirstError
-Return after the first error occurs.
-
-**Kind**: global variable  
 <a name="StateMetadataEncoding"></a>
 
 ## StateMetadataEncoding
@@ -5544,12 +5547,6 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
 <a name="verifyEd25519"></a>
 
 ## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
@@ -5572,3 +5569,9 @@ prior to calling the function.
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
 
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  

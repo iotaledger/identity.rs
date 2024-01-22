@@ -16,11 +16,11 @@ impl_wasm_clone!(WasmStatusList2021, StatusList2021);
 impl WasmStatusList2021 {
   /// Creates a new {@link StatusList2021} of `size` entries.
   #[wasm_bindgen(constructor)]
-  pub fn new(size: Option<usize>) -> Self {
-    Self(match size {
-      Some(size) => StatusList2021::new(size),
+  pub fn new(size: Option<usize>) -> Result<WasmStatusList2021> {
+    Ok(Self(match size {
+      Some(size) => StatusList2021::new(size).map_err(|e| JsError::new(&e.to_string()))?,
       None => StatusList2021::default(),
-    })
+    }))
   }
 
   /// Returns the number of entries in this {@link StatusList2021}.

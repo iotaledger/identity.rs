@@ -5,6 +5,7 @@ use std::ops::Deref;
 
 use identity_iota::core::Context;
 use identity_iota::core::Url;
+use identity_iota::credential::status_list_2021::CredentialStatus;
 use identity_iota::credential::status_list_2021::StatusList2021Credential;
 use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
 use identity_iota::credential::status_list_2021::StatusPurpose;
@@ -19,6 +20,34 @@ use crate::error::WasmResult;
 
 use super::WasmStatusList2021;
 use super::WasmStatusList2021Entry;
+
+#[wasm_bindgen(js_name = CredentialStatus)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub enum WasmCredentialStatus {
+  Revoked = 0,
+  Suspended = 1,
+  Valid = 2,
+}
+
+impl From<CredentialStatus> for WasmCredentialStatus {
+  fn from(value: CredentialStatus) -> Self {
+    match value {
+      CredentialStatus::Revoked => Self::Revoked,
+      CredentialStatus::Suspended => Self::Suspended,
+      CredentialStatus::Valid => Self::Valid,
+    }
+  }
+}
+
+impl From<WasmCredentialStatus> for CredentialStatus {
+  fn from(value: WasmCredentialStatus) -> Self {
+    match value {
+      WasmCredentialStatus::Revoked => Self::Revoked,
+      WasmCredentialStatus::Suspended => Self::Suspended,
+      WasmCredentialStatus::Valid => Self::Valid,
+    }
+  }
+}
 
 /// Purpose of a {@link StatusList2021}.
 #[wasm_bindgen(js_name = StatusPurpose)]
@@ -119,11 +148,12 @@ impl WasmStatusList2021Credential {
 
   /// Returns the state of the `index`-th entry, if any.
   #[wasm_bindgen]
-  pub fn entry(&self, index: usize) -> Result<bool> {
+  pub fn entry(&self, index: usize) -> Result<WasmCredentialStatus> {
     self
       .inner
       .entry(index)
-      .map_err(|e| JsValue::from(JsError::new(&e.to_string())))
+      .map(WasmCredentialStatus::from)
+      .map_err(|e| JsError::new(&e.to_string()).into())
   }
 
   #[wasm_bindgen(js_name = "clone")]
