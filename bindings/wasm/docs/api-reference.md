@@ -28,6 +28,11 @@ It does not imply anything about a potentially present proof property on the cre
 <p>Note that having an instance of this type only means the JWS it was constructed from was verified.
 It does not imply anything about a potentially present proof property on the presentation itself.</p>
 </dd>
+<dt><a href="#Disclosure">Disclosure</a></dt>
+<dd><p>Represents an elements constructing a disclosure.
+Object properties and array elements disclosures are supported.</p>
+<p>See: <a href="https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-disclosures">https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-disclosures</a></p>
+</dd>
 <dt><a href="#DomainLinkageConfiguration">DomainLinkageConfiguration</a></dt>
 <dd><p>DID Configuration Resource which contains Domain Linkage Credentials.
 It can be placed in an origin&#39;s <code>.well-known</code> directory to prove linkage between the origin and a DID.
@@ -92,6 +97,12 @@ and resolution of DID documents in Alias Outputs.</p>
 </dd>
 <dt><a href="#JwtPresentationValidator">JwtPresentationValidator</a></dt>
 <dd></dd>
+<dt><a href="#KeyBindingJWTValidationOptions">KeyBindingJWTValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating credentials.</p>
+</dd>
+<dt><a href="#KeyBindingJwtClaims">KeyBindingJwtClaims</a></dt>
+<dd><p>Claims set for key binding JWT.</p>
+</dd>
 <dt><a href="#LinkedDomainService">LinkedDomainService</a></dt>
 <dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
@@ -130,6 +141,21 @@ verifiable <a href="#Credential">Credential</a>s and <a href="#Presentation">Pre
 <dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
 <dd><p>A compressed bitmap for managing credential revocation.</p>
 </dd>
+<dt><a href="#SdJwt">SdJwt</a></dt>
+<dd><p>Representation of an SD-JWT of the format
+<code>&lt;Issuer-signed JWT&gt;~&lt;Disclosure 1&gt;~&lt;Disclosure 2&gt;~...~&lt;Disclosure N&gt;~&lt;optional KB-JWT&gt;</code>.</p>
+</dd>
+<dt><a href="#SdJwtCredentialValidator">SdJwtCredentialValidator</a></dt>
+<dd><p>A type for decoding and validating <a href="#Credential">Credential</a>.</p>
+</dd>
+<dt><a href="#SdObjectDecoder">SdObjectDecoder</a></dt>
+<dd><p>Substitutes digests in an SD-JWT object by their corresponding plaintext values provided by disclosures.</p>
+</dd>
+<dt><a href="#SdObjectEncoder">SdObjectEncoder</a></dt>
+<dd><p>Transforms a JSON object into an SD-JWT object by substituting selected values
+with their corresponding disclosure digests.</p>
+<p>Note: digests are created using the sha-256 algorithm.</p>
+</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated with a DID subject.</p>
 </dd>
@@ -161,6 +187,23 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
+<dt><a href="#StatusCheck">StatusCheck</a></dt>
+<dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
+</dd>
+<dt><a href="#Strict">Strict</a></dt>
+<dd><p>Validate the status if supported, reject any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+<p>Only <code>RevocationBitmap2022</code> is currently supported.</p>
+<p>This is the default.</p>
+</dd>
+<dt><a href="#SkipUnsupported">SkipUnsupported</a></dt>
+<dd><p>Validate the status if supported, skip any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+</dd>
+<dt><a href="#SkipAll">SkipAll</a></dt>
+<dd><p>Skip all status checks.</p>
+</dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -215,12 +258,6 @@ This variant is the default.</p>
 ## Functions
 
 <dl>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
-</dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
 <p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
@@ -231,6 +268,12 @@ prior to calling the function.</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 </dl>
 
@@ -930,7 +973,8 @@ Deserializes an instance from a plain JS representation.
         * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
         * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
         * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
-        * [.setProof([proof])](#Credential+setProof)
+        * [.setProof(proof)](#Credential+setProof)
+        * [.toJwtClaims(custom_claims)](#Credential+toJwtClaims) ⇒ <code>Record.&lt;string, any&gt;</code>
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
@@ -1052,6 +1096,20 @@ Note that this proof is not related to JWT.
 | Param | Type |
 | --- | --- |
 | [proof] | [<code>Proof</code>](#Proof) \| <code>undefined</code> | 
+
+<a name="Credential+toJwtClaims"></a>
+
+### credential.toJwtClaims(custom_claims) ⇒ <code>Record.&lt;string, any&gt;</code>
+Serializes the `Credential` as a JWT claims set
+in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+
+The resulting object can be used as the payload of a JWS when issuing the credential.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+
+| Param | Type |
+| --- | --- |
+| custom_claims | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
 
 <a name="Credential+toJSON"></a>
 
@@ -1401,6 +1459,108 @@ The `aud` property parsed from JWT claims.
 The custom claims parsed from the JWT.
 
 **Kind**: instance method of [<code>DecodedJwtPresentation</code>](#DecodedJwtPresentation)  
+<a name="Disclosure"></a>
+
+## Disclosure
+Represents an elements constructing a disclosure.
+Object properties and array elements disclosures are supported.
+
+See: https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-disclosures
+
+**Kind**: global class  
+
+* [Disclosure](#Disclosure)
+    * [new Disclosure(salt, claim_name, claim_value)](#new_Disclosure_new)
+    * _instance_
+        * [.disclosure()](#Disclosure+disclosure) ⇒ <code>string</code>
+        * [.toEncodedString()](#Disclosure+toEncodedString) ⇒ <code>string</code>
+        * [.toString()](#Disclosure+toString) ⇒ <code>string</code>
+        * [.salt()](#Disclosure+salt) ⇒ <code>string</code>
+        * [.claimName()](#Disclosure+claimName) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.claimValue()](#Disclosure+claimValue) ⇒ <code>any</code>
+        * [.toJSON()](#Disclosure+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.parse(disclosure)](#Disclosure.parse) ⇒ [<code>Disclosure</code>](#Disclosure)
+        * [.fromJSON(json)](#Disclosure.fromJSON) ⇒ [<code>Disclosure</code>](#Disclosure)
+
+<a name="new_Disclosure_new"></a>
+
+### new Disclosure(salt, claim_name, claim_value)
+
+| Param | Type |
+| --- | --- |
+| salt | <code>string</code> | 
+| claim_name | <code>string</code> \| <code>undefined</code> | 
+| claim_value | <code>any</code> | 
+
+<a name="Disclosure+disclosure"></a>
+
+### disclosure.disclosure() ⇒ <code>string</code>
+Returns a copy of the base64url-encoded string.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+toEncodedString"></a>
+
+### disclosure.toEncodedString() ⇒ <code>string</code>
+Returns a copy of the base64url-encoded string.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+toString"></a>
+
+### disclosure.toString() ⇒ <code>string</code>
+Returns a copy of the base64url-encoded string.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+salt"></a>
+
+### disclosure.salt() ⇒ <code>string</code>
+Returns a copy of the salt value.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+claimName"></a>
+
+### disclosure.claimName() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the claim name, optional for array elements.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+claimValue"></a>
+
+### disclosure.claimValue() ⇒ <code>any</code>
+Returns a copy of the claim Value which can be of any type.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure+toJSON"></a>
+
+### disclosure.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>Disclosure</code>](#Disclosure)  
+<a name="Disclosure.parse"></a>
+
+### Disclosure.parse(disclosure) ⇒ [<code>Disclosure</code>](#Disclosure)
+Parses a Base64 encoded disclosure into a `Disclosure`.
+
+## Error
+
+Returns an `InvalidDisclosure` if input is not a valid disclosure.
+
+**Kind**: static method of [<code>Disclosure</code>](#Disclosure)  
+
+| Param | Type |
+| --- | --- |
+| disclosure | <code>string</code> | 
+
+<a name="Disclosure.fromJSON"></a>
+
+### Disclosure.fromJSON(json) ⇒ [<code>Disclosure</code>](#Disclosure)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>Disclosure</code>](#Disclosure)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="DomainLinkageConfiguration"></a>
 
 ## DomainLinkageConfiguration
@@ -1860,8 +2020,9 @@ if the object is being concurrently modified.
         * [.toCoreDocument()](#IotaDocument+toCoreDocument) ⇒ [<code>CoreDocument</code>](#CoreDocument)
         * [.generateMethod(storage, keyType, alg, fragment, scope)](#IotaDocument+generateMethod) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.purgeMethod(storage, id)](#IotaDocument+purgeMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-        * [.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
-        * [.createCredentialJwt(storage, fragment, credential, options, [custom_claims])](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
+        * ~~[.createJwt(storage, fragment, payload, options)](#IotaDocument+createJwt) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)~~
+        * [.createJws(storage, fragment, payload, options)](#IotaDocument+createJws) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
+        * [.createCredentialJwt(storage, fragment, credential, options, custom_claims)](#IotaDocument+createCredentialJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
         * [.createPresentationJwt(storage, fragment, presentation, signature_options, presentation_options)](#IotaDocument+createPresentationJwt) ⇒ [<code>Promise.&lt;Jwt&gt;</code>](#Jwt)
     * _static_
         * [.newWithId(id)](#IotaDocument.newWithId) ⇒ [<code>IotaDocument</code>](#IotaDocument)
@@ -2276,7 +2437,27 @@ the given `storage`.
 
 <a name="IotaDocument+createJwt"></a>
 
-### iotaDocument.createJwt(storage, fragment, payload, options) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
+### ~~iotaDocument.createJwt(storage, fragment, payload, options) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)~~
+***Deprecated***
+
+Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+material in the verification method identified by the given `fragment.
+
+Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| storage | [<code>Storage</code>](#Storage) | 
+| fragment | <code>string</code> | 
+| payload | <code>string</code> | 
+| options | [<code>JwsSignatureOptions</code>](#JwsSignatureOptions) | 
+
+<a name="IotaDocument+createJws"></a>
+
+### iotaDocument.createJws(storage, fragment, payload, options) ⇒ [<code>Promise.&lt;Jws&gt;</code>](#Jws)
 Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
 material in the verification method identified by the given `fragment.
 
@@ -3931,6 +4112,159 @@ Attempt to extract the holder of the presentation.
 | --- | --- |
 | presentation | [<code>Jwt</code>](#Jwt) | 
 
+<a name="KeyBindingJWTValidationOptions"></a>
+
+## KeyBindingJWTValidationOptions
+Options to declare validation criteria when validating credentials.
+
+**Kind**: global class  
+
+* [KeyBindingJWTValidationOptions](#KeyBindingJWTValidationOptions)
+    * [new KeyBindingJWTValidationOptions(options)](#new_KeyBindingJWTValidationOptions_new)
+    * _instance_
+        * [.toJSON()](#KeyBindingJWTValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#KeyBindingJWTValidationOptions+clone) ⇒ [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)
+    * _static_
+        * [.fromJSON(json)](#KeyBindingJWTValidationOptions.fromJSON) ⇒ [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)
+
+<a name="new_KeyBindingJWTValidationOptions_new"></a>
+
+### new KeyBindingJWTValidationOptions(options)
+
+| Param | Type |
+| --- | --- |
+| options | <code>IKeyBindingJWTValidationOptions</code> \| <code>undefined</code> | 
+
+<a name="KeyBindingJWTValidationOptions+toJSON"></a>
+
+### keyBindingJWTValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)  
+<a name="KeyBindingJWTValidationOptions+clone"></a>
+
+### keyBindingJWTValidationOptions.clone() ⇒ [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)  
+<a name="KeyBindingJWTValidationOptions.fromJSON"></a>
+
+### KeyBindingJWTValidationOptions.fromJSON(json) ⇒ [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="KeyBindingJwtClaims"></a>
+
+## KeyBindingJwtClaims
+Claims set for key binding JWT.
+
+**Kind**: global class  
+
+* [KeyBindingJwtClaims](#KeyBindingJwtClaims)
+    * [new KeyBindingJwtClaims(jwt, disclosures, nonce, aud, issued_at, custom_properties)](#new_KeyBindingJwtClaims_new)
+    * _instance_
+        * [.toString()](#KeyBindingJwtClaims+toString) ⇒ <code>string</code>
+        * [.iat()](#KeyBindingJwtClaims+iat) ⇒ <code>bigint</code>
+        * [.aud()](#KeyBindingJwtClaims+aud) ⇒ <code>string</code>
+        * [.nonce()](#KeyBindingJwtClaims+nonce) ⇒ <code>string</code>
+        * [.sdHash()](#KeyBindingJwtClaims+sdHash) ⇒ <code>string</code>
+        * [.customProperties()](#KeyBindingJwtClaims+customProperties) ⇒ <code>Record.&lt;string, any&gt;</code>
+        * [.toJSON()](#KeyBindingJwtClaims+toJSON) ⇒ <code>any</code>
+        * [.clone()](#KeyBindingJwtClaims+clone) ⇒ [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)
+    * _static_
+        * [.keyBindingJwtHeaderTyp()](#KeyBindingJwtClaims.keyBindingJwtHeaderTyp) ⇒ <code>string</code>
+        * [.fromJSON(json)](#KeyBindingJwtClaims.fromJSON) ⇒ [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)
+
+<a name="new_KeyBindingJwtClaims_new"></a>
+
+### new KeyBindingJwtClaims(jwt, disclosures, nonce, aud, issued_at, custom_properties)
+Creates a new [`KeyBindingJwtClaims`].
+When `issued_at` is left as None, it will automatically default to the current time.
+
+# Error
+When `issued_at` is set to `None` and the system returns time earlier than `SystemTime::UNIX_EPOCH`.
+
+
+| Param | Type |
+| --- | --- |
+| jwt | <code>string</code> | 
+| disclosures | <code>Array.&lt;string&gt;</code> | 
+| nonce | <code>string</code> | 
+| aud | <code>string</code> | 
+| issued_at | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
+| custom_properties | <code>Record.&lt;string, any&gt;</code> \| <code>undefined</code> | 
+
+<a name="KeyBindingJwtClaims+toString"></a>
+
+### keyBindingJwtClaims.toString() ⇒ <code>string</code>
+Returns a string representation of the claims.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims+iat"></a>
+
+### keyBindingJwtClaims.iat() ⇒ <code>bigint</code>
+Returns a copy of the issued at `iat` property.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims+aud"></a>
+
+### keyBindingJwtClaims.aud() ⇒ <code>string</code>
+Returns a copy of the audience `aud` property.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims+nonce"></a>
+
+### keyBindingJwtClaims.nonce() ⇒ <code>string</code>
+Returns a copy of the `nonce` property.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims+sdHash"></a>
+
+### keyBindingJwtClaims.sdHash() ⇒ <code>string</code>
+Returns a copy of the `sd_hash` property.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims+customProperties"></a>
+
+### keyBindingJwtClaims.customProperties() ⇒ <code>Record.&lt;string, any&gt;</code>
+Returns a copy of the custom properties.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims+toJSON"></a>
+
+### keyBindingJwtClaims.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims+clone"></a>
+
+### keyBindingJwtClaims.clone() ⇒ [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)
+Deep clones the object.
+
+**Kind**: instance method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims.keyBindingJwtHeaderTyp"></a>
+
+### KeyBindingJwtClaims.keyBindingJwtHeaderTyp() ⇒ <code>string</code>
+Returns the value of the `typ` property of the JWT header according to
+https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-key-binding-jwt
+
+**Kind**: static method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+<a name="KeyBindingJwtClaims.fromJSON"></a>
+
+### KeyBindingJwtClaims.fromJSON(json) ⇒ [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="LinkedDomainService"></a>
 
 ## LinkedDomainService
@@ -4657,6 +4991,371 @@ if it is a valid Revocation Bitmap Service.
 | Param | Type |
 | --- | --- |
 | service | [<code>Service</code>](#Service) | 
+
+<a name="SdJwt"></a>
+
+## SdJwt
+Representation of an SD-JWT of the format
+`<Issuer-signed JWT>~<Disclosure 1>~<Disclosure 2>~...~<Disclosure N>~<optional KB-JWT>`.
+
+**Kind**: global class  
+
+* [SdJwt](#SdJwt)
+    * [new SdJwt(jwt, disclosures, key_binding_jwt)](#new_SdJwt_new)
+    * _instance_
+        * [.presentation()](#SdJwt+presentation) ⇒ <code>string</code>
+        * [.toString()](#SdJwt+toString) ⇒ <code>string</code>
+        * [.jwt()](#SdJwt+jwt) ⇒ <code>string</code>
+        * [.disclosures()](#SdJwt+disclosures) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.keyBindingJwt()](#SdJwt+keyBindingJwt) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.toJSON()](#SdJwt+toJSON) ⇒ <code>any</code>
+        * [.clone()](#SdJwt+clone) ⇒ [<code>SdJwt</code>](#SdJwt)
+    * _static_
+        * [.parse(sd_jwt)](#SdJwt.parse) ⇒ [<code>SdJwt</code>](#SdJwt)
+        * [.fromJSON(json)](#SdJwt.fromJSON) ⇒ [<code>SdJwt</code>](#SdJwt)
+
+<a name="new_SdJwt_new"></a>
+
+### new SdJwt(jwt, disclosures, key_binding_jwt)
+Creates a new `SdJwt` from its components.
+
+
+| Param | Type |
+| --- | --- |
+| jwt | <code>string</code> | 
+| disclosures | <code>Array.&lt;string&gt;</code> | 
+| key_binding_jwt | <code>string</code> \| <code>undefined</code> | 
+
+<a name="SdJwt+presentation"></a>
+
+### sdJwt.presentation() ⇒ <code>string</code>
+Serializes the components into the final SD-JWT.
+
+**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
+<a name="SdJwt+toString"></a>
+
+### sdJwt.toString() ⇒ <code>string</code>
+Serializes the components into the final SD-JWT.
+
+**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
+<a name="SdJwt+jwt"></a>
+
+### sdJwt.jwt() ⇒ <code>string</code>
+The JWT part.
+
+**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
+<a name="SdJwt+disclosures"></a>
+
+### sdJwt.disclosures() ⇒ <code>Array.&lt;string&gt;</code>
+The disclosures part.
+
+**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
+<a name="SdJwt+keyBindingJwt"></a>
+
+### sdJwt.keyBindingJwt() ⇒ <code>string</code> \| <code>undefined</code>
+The optional key binding JWT.
+
+**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
+<a name="SdJwt+toJSON"></a>
+
+### sdJwt.toJSON() ⇒ <code>any</code>
+Serializes this to a JSON object.
+
+**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
+<a name="SdJwt+clone"></a>
+
+### sdJwt.clone() ⇒ [<code>SdJwt</code>](#SdJwt)
+Deep clones the object.
+
+**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
+<a name="SdJwt.parse"></a>
+
+### SdJwt.parse(sd_jwt) ⇒ [<code>SdJwt</code>](#SdJwt)
+Parses an SD-JWT into its components as [`SdJwt`].
+
+## Error
+Returns `DeserializationError` if parsing fails.
+
+**Kind**: static method of [<code>SdJwt</code>](#SdJwt)  
+
+| Param | Type |
+| --- | --- |
+| sd_jwt | <code>string</code> | 
+
+<a name="SdJwt.fromJSON"></a>
+
+### SdJwt.fromJSON(json) ⇒ [<code>SdJwt</code>](#SdJwt)
+Deserializes an instance from a JSON object.
+
+**Kind**: static method of [<code>SdJwt</code>](#SdJwt)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="SdJwtCredentialValidator"></a>
+
+## SdJwtCredentialValidator
+A type for decoding and validating [Credential](#Credential).
+
+**Kind**: global class  
+
+* [SdJwtCredentialValidator](#SdJwtCredentialValidator)
+    * [new SdJwtCredentialValidator(signatureVerifier)](#new_SdJwtCredentialValidator_new)
+    * [.validateCredential(sd_jwt, issuer, options, fail_fast)](#SdJwtCredentialValidator+validateCredential) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+    * [.verifySignature(credential, trustedIssuers, options)](#SdJwtCredentialValidator+verifySignature) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+    * [.validateKeyBindingJwt(sdJwt, holder, options)](#SdJwtCredentialValidator+validateKeyBindingJwt) ⇒ [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)
+
+<a name="new_SdJwtCredentialValidator_new"></a>
+
+### new SdJwtCredentialValidator(signatureVerifier)
+Creates a new `SdJwtCredentialValidator`. If a `signatureVerifier` is provided it will be used when
+verifying decoded JWS signatures, otherwise the default which is only capable of handling the `EdDSA`
+algorithm will be used.
+
+
+| Param | Type |
+| --- | --- |
+| signatureVerifier | <code>IJwsVerifier</code> | 
+
+<a name="SdJwtCredentialValidator+validateCredential"></a>
+
+### sdJwtCredentialValidator.validateCredential(sd_jwt, issuer, options, fail_fast) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+Decodes and validates a `Credential` issued as an SD-JWT. A `DecodedJwtCredential` is returned upon success.
+The credential is constructed by replacing disclosures following the
+[`Selective Disclosure for JWTs (SD-JWT)`](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html) standard.
+
+The following properties are validated according to `options`:
+- the issuer's signature on the JWS,
+- the expiration date,
+- the issuance date,
+- the semantic structure.
+
+# Warning
+* The key binding JWT is not validated. If needed, it must be validated separately using
+`SdJwtValidator::validate_key_binding_jwt`.
+* The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
+trusted. This section contains more information on additional checks that should be carried out before and after
+calling this method.
+
+## The state of the issuer's DID Document
+The caller must ensure that `issuer` represents an up-to-date DID Document.
+
+## Properties that are not validated
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`proof`, `credentialStatus`, `type`, `credentialSchema`, `refreshService` **and more**.
+These should be manually checked after validation, according to your requirements.
+
+# Errors
+An error is returned whenever a validated condition is not satisfied.
+
+**Kind**: instance method of [<code>SdJwtCredentialValidator</code>](#SdJwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| sd_jwt | [<code>SdJwt</code>](#SdJwt) | 
+| issuer | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| options | [<code>JwtCredentialValidationOptions</code>](#JwtCredentialValidationOptions) | 
+| fail_fast | <code>number</code> | 
+
+<a name="SdJwtCredentialValidator+verifySignature"></a>
+
+### sdJwtCredentialValidator.verifySignature(credential, trustedIssuers, options) ⇒ [<code>DecodedJwtCredential</code>](#DecodedJwtCredential)
+Decode and verify the JWS signature of a `Credential` issued as an SD-JWT using the DID Document of a trusted
+issuer and replaces the disclosures.
+
+A `DecodedJwtCredential` is returned upon success.
+
+# Warning
+The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
+
+## Proofs
+ Only the JWS signature is verified. If the `Credential` contains a `proof` property this will not be verified
+by this method.
+
+# Errors
+* If the issuer' URL cannot be parsed.
+* If Signature verification fails.
+* If SD decoding fails.
+
+**Kind**: instance method of [<code>SdJwtCredentialValidator</code>](#SdJwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>SdJwt</code>](#SdJwt) | 
+| trustedIssuers | <code>Array.&lt;(CoreDocument\|IToCoreDocument)&gt;</code> | 
+| options | [<code>JwsVerificationOptions</code>](#JwsVerificationOptions) | 
+
+<a name="SdJwtCredentialValidator+validateKeyBindingJwt"></a>
+
+### sdJwtCredentialValidator.validateKeyBindingJwt(sdJwt, holder, options) ⇒ [<code>KeyBindingJwtClaims</code>](#KeyBindingJwtClaims)
+Validates a Key Binding JWT (KB-JWT) according to `https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-07.html#name-key-binding-jwt`.
+The Validation process includes:
+  * Signature validation using public key materials defined in the `holder` document.
+  * `typ` value in KB-JWT header.
+  * `sd_hash` claim value in the KB-JWT claim.
+  * Optional `nonce`, `aud` and issuance date validation.
+
+**Kind**: instance method of [<code>SdJwtCredentialValidator</code>](#SdJwtCredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| sdJwt | [<code>SdJwt</code>](#SdJwt) | 
+| holder | [<code>CoreDocument</code>](#CoreDocument) \| <code>IToCoreDocument</code> | 
+| options | [<code>KeyBindingJWTValidationOptions</code>](#KeyBindingJWTValidationOptions) | 
+
+<a name="SdObjectDecoder"></a>
+
+## SdObjectDecoder
+Substitutes digests in an SD-JWT object by their corresponding plaintext values provided by disclosures.
+
+**Kind**: global class  
+
+* [SdObjectDecoder](#SdObjectDecoder)
+    * [new SdObjectDecoder()](#new_SdObjectDecoder_new)
+    * [.decode(object, disclosures)](#SdObjectDecoder+decode) ⇒ <code>Record.&lt;string, any&gt;</code>
+
+<a name="new_SdObjectDecoder_new"></a>
+
+### new SdObjectDecoder()
+Creates a new `SdObjectDecoder` with `sha-256` hasher.
+
+<a name="SdObjectDecoder+decode"></a>
+
+### sdObjectDecoder.decode(object, disclosures) ⇒ <code>Record.&lt;string, any&gt;</code>
+Decodes an SD-JWT `object` containing by Substituting the digests with their corresponding
+plaintext values provided by `disclosures`.
+
+## Notes
+* Claims like `exp` or `iat` are not validated in the process of decoding.
+* `_sd_alg` property will be removed if present.
+
+**Kind**: instance method of [<code>SdObjectDecoder</code>](#SdObjectDecoder)  
+
+| Param | Type |
+| --- | --- |
+| object | <code>Record.&lt;string, any&gt;</code> | 
+| disclosures | <code>Array.&lt;string&gt;</code> | 
+
+<a name="SdObjectEncoder"></a>
+
+## SdObjectEncoder
+Transforms a JSON object into an SD-JWT object by substituting selected values
+with their corresponding disclosure digests.
+
+Note: digests are created using the sha-256 algorithm.
+
+**Kind**: global class  
+
+* [SdObjectEncoder](#SdObjectEncoder)
+    * [new SdObjectEncoder(object)](#new_SdObjectEncoder_new)
+    * [.conceal(path, salt)](#SdObjectEncoder+conceal) ⇒ [<code>Disclosure</code>](#Disclosure)
+    * [.concealArrayEntry(path, element_index, salt)](#SdObjectEncoder+concealArrayEntry) ⇒ [<code>Disclosure</code>](#Disclosure)
+    * [.addSdAlgProperty()](#SdObjectEncoder+addSdAlgProperty)
+    * [.encodeToString()](#SdObjectEncoder+encodeToString) ⇒ <code>string</code>
+    * [.toString()](#SdObjectEncoder+toString) ⇒ <code>string</code>
+    * [.encodeToObject()](#SdObjectEncoder+encodeToObject) ⇒ <code>Record.&lt;string, any&gt;</code>
+    * [.toJSON()](#SdObjectEncoder+toJSON) ⇒ <code>any</code>
+    * [.addDecoys(path, number_of_decoys)](#SdObjectEncoder+addDecoys)
+
+<a name="new_SdObjectEncoder_new"></a>
+
+### new SdObjectEncoder(object)
+Creates a new `SdObjectEncoder` with `sha-256` hash function.
+
+
+| Param | Type |
+| --- | --- |
+| object | <code>any</code> | 
+
+<a name="SdObjectEncoder+conceal"></a>
+
+### sdObjectEncoder.conceal(path, salt) ⇒ [<code>Disclosure</code>](#Disclosure)
+Substitutes a value with the digest of its disclosure.
+If no salt is provided, the disclosure will be created with a random salt value.
+
+The value of the key specified in `path` will be concealed. E.g. for path
+`["claim", "subclaim"]` the value of `claim.subclaim` will be concealed.
+
+## Error
+`InvalidPath` if path is invalid or the path slice is empty.
+`DataTypeMismatch` if existing SD format is invalid.
+
+## Note
+Use `concealArrayEntry` for values in arrays.
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | 
+| salt | <code>string</code> \| <code>undefined</code> | 
+
+<a name="SdObjectEncoder+concealArrayEntry"></a>
+
+### sdObjectEncoder.concealArrayEntry(path, element_index, salt) ⇒ [<code>Disclosure</code>](#Disclosure)
+Substitutes a value within an array with the digest of its disclosure.
+If no salt is provided, the disclosure will be created with random salt value.
+
+`path` is used to specify the array in the object, while `element_index` specifies
+the index of the element to be concealed (index start at 0).
+
+## Error
+`InvalidPath` if path is invalid or the path slice is empty.
+`DataTypeMismatch` if existing SD format is invalid.
+`IndexOutofBounds` if `element_index` is out of bounds.
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | 
+| element_index | <code>number</code> | 
+| salt | <code>string</code> \| <code>undefined</code> | 
+
+<a name="SdObjectEncoder+addSdAlgProperty"></a>
+
+### sdObjectEncoder.addSdAlgProperty()
+Adds the `_sd_alg` property to the top level of the object, with
+its value set to "sha-256".
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+encodeToString"></a>
+
+### sdObjectEncoder.encodeToString() ⇒ <code>string</code>
+Returns the modified object as a string.
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+toString"></a>
+
+### sdObjectEncoder.toString() ⇒ <code>string</code>
+Returns the modified object as a string.
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+encodeToObject"></a>
+
+### sdObjectEncoder.encodeToObject() ⇒ <code>Record.&lt;string, any&gt;</code>
+Returns the modified object.
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+toJSON"></a>
+
+### sdObjectEncoder.toJSON() ⇒ <code>any</code>
+Returns the modified object.
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+<a name="SdObjectEncoder+addDecoys"></a>
+
+### sdObjectEncoder.addDecoys(path, number_of_decoys)
+Adds a decoy digest to the specified path.
+If path is an empty slice, decoys will be added to the top level.
+
+**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+
+| Param | Type |
+| --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | 
+| number_of_decoys | <code>number</code> | 
 
 <a name="Service"></a>
 
@@ -5431,6 +6130,37 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="StatusCheck"></a>
+
+## StatusCheck
+Controls validation behaviour when checking whether or not a credential has been revoked by its
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+
+**Kind**: global variable  
+<a name="Strict"></a>
+
+## Strict
+Validate the status if supported, reject any unsupported
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+
+Only `RevocationBitmap2022` is currently supported.
+
+This is the default.
+
+**Kind**: global variable  
+<a name="SkipUnsupported"></a>
+
+## SkipUnsupported
+Validate the status if supported, skip any unsupported
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+
+**Kind**: global variable  
+<a name="SkipAll"></a>
+
+## SkipAll
+Skip all status checks.
+
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -5485,6 +6215,37 @@ Return after the first error occurs.
 
 **Kind**: global variable  
 <a name="StatusPurpose"></a>
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="verifyEd25519"></a>
+
+## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
+
+This function is useful when one is composing a `IJwsVerifier` that delegates
+`EdDSA` verification with curve `Ed25519` to this function.
+
+# Warning
+
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
+
+<a name="start"></a>
 
 ## StatusPurpose
 Purpose of a [StatusList2021](#StatusList2021).
@@ -5546,32 +6307,3 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | Param | Type |
 | --- | --- |
 | data | <code>Uint8Array</code> | 
-
-<a name="verifyEd25519"></a>
-
-## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
-
-This function is useful when one is composing a `IJwsVerifier` that delegates
-`EdDSA` verification with curve `Ed25519` to this function.
-
-# Warning
-
-This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-prior to calling the function.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| alg | <code>JwsAlgorithm</code> | 
-| signingInput | <code>Uint8Array</code> | 
-| decodedSignature | <code>Uint8Array</code> | 
-| publicKey | [<code>Jwk</code>](#Jwk) | 
-
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  

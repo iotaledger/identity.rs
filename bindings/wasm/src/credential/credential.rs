@@ -6,11 +6,14 @@ use identity_iota::core::Object;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::DomainLinkageCredentialBuilder;
+use serde_json::Value;
+use std::collections::BTreeMap;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::common::ArrayString;
 use crate::common::MapStringAny;
+use crate::common::RecordStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::domain_linkage_credential_builder::IDomainLinkageCredential;
 use crate::credential::ArrayContext;
@@ -215,6 +218,26 @@ impl WasmCredential {
   #[wasm_bindgen(js_name = "setProof")]
   pub fn set_proof(&mut self, proof: Option<WasmProof>) {
     self.0.set_proof(proof.map(|wasm_proof| wasm_proof.0))
+  }
+
+  /// Serializes the `Credential` as a JWT claims set
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+  ///
+  /// The resulting object can be used as the payload of a JWS when issuing the credential.  
+  #[wasm_bindgen(js_name = "toJwtClaims")]
+  pub fn to_jwt_claims(&self, custom_claims: Option<RecordStringAny>) -> Result<RecordStringAny> {
+    let serialized: String = if let Some(object) = custom_claims {
+      let object: BTreeMap<String, Value> = object.into_serde().wasm_result()?;
+      self.0.serialize_jwt(Some(object)).wasm_result()?
+    } else {
+      self.0.serialize_jwt(None).wasm_result()?
+    };
+    let serialized: BTreeMap<String, Value> = serde_json::from_str(&serialized).wasm_result()?;
+    Ok(
+      JsValue::from_serde(&serialized)
+        .wasm_result()?
+        .unchecked_into::<RecordStringAny>(),
+    )
   }
 }
 

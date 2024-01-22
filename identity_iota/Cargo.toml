@@ -61,6 +61,9 @@ domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["identity_storage/memstore"]
 
+# Enables selective disclosure features.
+sd-jwt = ["identity_credential/sd-jwt"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open

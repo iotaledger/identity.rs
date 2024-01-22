@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::JwkStorageDocumentError as Error;
+use super::JwsSignatureOptions;
+use super::Storage;
+
 use crate::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::KeyIdStorageResult;
 use crate::key_id_storage::MethodDigest;
@@ -9,10 +13,6 @@ use crate::key_storage::JwkStorage;
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
-
-use super::JwkStorageDocumentError as Error;
-use super::JwsSignatureOptions;
-use super::Storage;
 
 use async_trait::async_trait;
 use identity_core::common::Object;
