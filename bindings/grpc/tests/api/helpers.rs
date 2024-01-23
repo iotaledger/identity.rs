@@ -226,8 +226,16 @@ impl Entity {
     Ok(())
   }
 
+  pub fn storage(&self) -> &MemStorage {
+    &self.storage
+  }
+
   pub fn document(&self) -> Option<&IotaDocument> {
     self.did.as_ref().map(|(_, doc, _)| doc)
+  }
+
+  pub fn fragment(&self) -> Option<&str> {
+    self.did.as_ref().map(|(_, _, frag)| frag.as_ref())
   }
 
   pub async fn update_document<F>(&mut self, client: &Client, f: F) -> anyhow::Result<()>

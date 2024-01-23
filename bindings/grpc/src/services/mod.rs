@@ -10,6 +10,7 @@ pub fn routes(client: Client) -> Routes {
   let mut routes = RoutesBuilder::default();
   routes.add_service(health_check::service());
   routes.add_service(credential::service(&client));
+  routes.add_service(sd_jwt::service(&client));
 
   routes.routes()
 }

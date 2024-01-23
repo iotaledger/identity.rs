@@ -6,6 +6,7 @@ use tonic::Request;
 use tonic::Response;
 use tonic::Status;
 
+#[allow(clippy::module_inception)]
 mod health_check {
   tonic::include_proto!("health_check");
 }
