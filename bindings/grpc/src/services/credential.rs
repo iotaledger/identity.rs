@@ -1,28 +1,36 @@
-use credential_verification::{
-  credential_revocation_server::{CredentialRevocation, CredentialRevocationServer},
-  RevocationCheckRequest, RevocationCheckResponse, RevocationStatus,
-};
-use identity_iota::{
-  credential::{self, JwtCredentialValidatorUtils, JwtValidationError, RevocationBitmapStatus},
-  prelude::{IotaDocument, Resolver},
-};
+use credential_verification::credential_revocation_server::CredentialRevocation;
+use credential_verification::credential_revocation_server::CredentialRevocationServer;
+use credential_verification::RevocationCheckRequest;
+use credential_verification::RevocationCheckResponse;
+use credential_verification::RevocationStatus;
+use identity_iota::credential::JwtCredentialValidatorUtils;
+use identity_iota::credential::JwtValidationError;
+use identity_iota::credential::RevocationBitmapStatus;
+use identity_iota::credential::{self};
+use identity_iota::prelude::IotaDocument;
+use identity_iota::prelude::Resolver;
 use iota_sdk::client::Client;
 use prost::bytes::Bytes;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 use thiserror::Error;
-use tonic::{self, Request, Response};
+use tonic::Request;
+use tonic::Response;
+use tonic::{self};
 
 mod credential_verification {
   use super::RevocationCheckError;
-  use identity_iota::credential::{RevocationBitmapStatus, Status};
+  use identity_iota::credential::RevocationBitmapStatus;
+  use identity_iota::credential::Status;
 
   tonic::include_proto!("credentials");
 
   impl TryFrom<RevocationCheckRequest> for Status {
     type Error = RevocationCheckError;
     fn try_from(req: RevocationCheckRequest) -> Result<Self, Self::Error> {
-      use identity_iota::core::{Object, Url};
+      use identity_iota::core::Object;
+      use identity_iota::core::Url;
 
       if req.r#type.as_str() != RevocationBitmapStatus::TYPE {
         Err(Self::Error::UnknownRevocationType(req.r#type))

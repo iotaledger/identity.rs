@@ -1,7 +1,8 @@
 use std::net::SocketAddr;
 
 use iota_sdk::client::Client;
-use tonic::transport::server::{Router, Server};
+use tonic::transport::server::Router;
+use tonic::transport::server::Server;
 
 use crate::services;
 

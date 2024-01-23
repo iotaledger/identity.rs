@@ -1,8 +1,10 @@
-use health_check::{
-  health_check_server::{HealthCheck, HealthCheckServer},
-  HealthCheckRequest, HealthCheckResponse,
-};
-use tonic::{Request, Response, Status};
+use health_check::health_check_server::HealthCheck;
+use health_check::health_check_server::HealthCheckServer;
+use health_check::HealthCheckRequest;
+use health_check::HealthCheckResponse;
+use tonic::Request;
+use tonic::Response;
+use tonic::Status;
 
 mod health_check {
   tonic::include_proto!("health_check");

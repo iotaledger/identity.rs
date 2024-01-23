@@ -1,4 +1,6 @@
-use health_check::{health_check_client::HealthCheckClient, HealthCheckRequest, HealthCheckResponse};
+use health_check::health_check_client::HealthCheckClient;
+use health_check::HealthCheckRequest;
+use health_check::HealthCheckResponse;
 
 use crate::helpers::TestServer;
 

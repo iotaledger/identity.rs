@@ -1,21 +1,47 @@
-use _sd_jwt::{
-  verification_server::{Verification, VerificationServer},
-  VerificationRequest, VerificationResponse,
-};
+use _sd_jwt::verification_server::Verification;
+use _sd_jwt::verification_server::VerificationServer;
+use _sd_jwt::VerificationRequest;
+use _sd_jwt::VerificationResponse;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-use identity_iota::{
-  core::{Object, ToJson},
-  credential::{FailFast, Jwt, JwtCredentialValidationOptions, JwtCredentialValidatorUtils, SdJwtCredentialValidator},
-  iota::{IotaDID, IotaDocument},
-  resolver::Resolver,
-  sd_jwt_payload::{Error as SdJwtError, SdJwt, SdObjectDecoder},
-};
+use identity_iota::core::Object;
+use identity_iota::core::Timestamp;
+use identity_iota::core::ToJson;
+use identity_iota::credential::FailFast;
+use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::JwtCredentialValidatorUtils;
+use identity_iota::credential::KeyBindingJWTValidationOptions;
+use identity_iota::credential::SdJwtCredentialValidator;
+use identity_iota::iota::IotaDID;
+use identity_iota::iota::IotaDocument;
+use identity_iota::resolver::Resolver;
+use identity_iota::sd_jwt_payload::SdJwt;
+use identity_iota::sd_jwt_payload::SdObjectDecoder;
 use iota_sdk::client::Client;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use thiserror::Error;
+
+use self::_sd_jwt::KeyBindingOptions;
 
 mod _sd_jwt {
   tonic::include_proto!("sd_jwt");
+}
+
+impl From<KeyBindingOptions> for KeyBindingJWTValidationOptions {
+  fn from(value: KeyBindingOptions) -> Self {
+    let mut kb_options = Self::default();
+    kb_options.nonce = value.nonce;
+    kb_options.aud = value.aud;
+    kb_options.earliest_issuance_date = value
+      .earliest_issuance_date
+      .and_then(|t| Timestamp::parse(t.as_str()).ok());
+    kb_options.latest_issuance_date = value
+      .latest_issuance_date
+      .and_then(|t| Timestamp::parse(t.as_str()).ok());
+
+    kb_options
+  }
 }
 
 #[derive(Debug, Error, Serialize, Deserialize)]
@@ -30,15 +56,12 @@ enum SdJwtVerificationError {
   VerificationError(String),
   #[error("Failed to resolve DID Document: {0}")]
   DidResolutionError(String),
-}
-
-impl From<SdJwtError> for SdJwtVerificationError {
-  fn from(value: SdJwtError) -> Self {
-    match value {
-      SdJwtError::DeserializationError(e) => Self::DeserializationError(e),
-      _ => unreachable!(),
-    }
-  }
+  #[error("Missing \"kb_options\".")]
+  MissingKbOptions,
+  #[error("{0}")]
+  KeyBindingJwtError(String),
+  #[error("Provided an invalid holder's id.")]
+  InvalidHolderDid,
 }
 
 impl From<SdJwtVerificationError> for tonic::Status {
@@ -48,6 +71,9 @@ impl From<SdJwtVerificationError> for tonic::Status {
       SdJwtVerificationError::JwtError(_) => tonic::Code::InvalidArgument,
       SdJwtVerificationError::VerificationError(_) => tonic::Code::InvalidArgument,
       SdJwtVerificationError::DidResolutionError(_) => tonic::Code::NotFound,
+      SdJwtVerificationError::MissingKbOptions => tonic::Code::InvalidArgument,
+      SdJwtVerificationError::KeyBindingJwtError(_) => tonic::Code::Internal,
+      SdJwtVerificationError::InvalidHolderDid => tonic::Code::InvalidArgument,
     };
     let message = value.to_string();
     let error_json = serde_json::to_vec(&value).expect("plenty of memory!");
@@ -75,8 +101,8 @@ impl Verification for SdJwtService {
     &self,
     request: tonic::Request<VerificationRequest>,
   ) -> Result<tonic::Response<VerificationResponse>, tonic::Status> {
-    let VerificationRequest { jwt } = request.into_inner();
-    let mut sd_jwt = SdJwt::parse(&jwt).map_err(SdJwtVerificationError::from)?;
+    let VerificationRequest { jwt, kb_options } = request.into_inner();
+    let mut sd_jwt = SdJwt::parse(&jwt).map_err(|e| SdJwtVerificationError::DeserializationError(e.to_string()))?;
     let jwt = Jwt::new(sd_jwt.jwt);
 
     let issuer_did = JwtCredentialValidatorUtils::extract_issuer_from_jwt::<IotaDID>(&jwt)
@@ -99,8 +125,22 @@ impl Verification for SdJwtService {
       )
       .map_err(|e| SdJwtVerificationError::VerificationError(e.to_string()))?;
 
-    if let Some(kb_jwt) = sd_jwt.key_binding_jwt {
-      todo!();
+    if sd_jwt.key_binding_jwt.is_some() {
+      let Some(kb_options) = kb_options else {
+        return Err(SdJwtVerificationError::MissingKbOptions.into());
+      };
+      let holder = {
+        let did =
+          IotaDID::parse(kb_options.holder_did.as_str()).map_err(|_| SdJwtVerificationError::InvalidHolderDid)?;
+        self
+          .resolver
+          .resolve(&did)
+          .await
+          .map_err(|e| SdJwtVerificationError::DidResolutionError(e.to_string()))?
+      };
+      let _ = validator
+        .validate_key_binding_jwt(&sd_jwt, &holder, &kb_options.into())
+        .map_err(|e| SdJwtVerificationError::KeyBindingJwtError(e.to_string()))?;
     }
 
     Ok(tonic::Response::new(VerificationResponse {

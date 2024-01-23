@@ -1,28 +1,32 @@
 use anyhow::Context;
-use identity_iota::{
-  iota::{IotaClientExt, IotaDocument, IotaIdentityClientExt, NetworkName},
-  verification::{jws::JwsAlgorithm, MethodScope},
-};
-use identity_storage::{key_id_storage::KeyIdMemstore, key_storage::JwkMemStore, JwkDocumentExt, Storage};
-use iota_sdk::{
-  client::{
-    api::GetAddressesOptions,
-    node_api::indexer::query_parameters::QueryParameter,
-    secret::{stronghold::StrongholdSecretManager, SecretManager},
-    Client, Password,
-  },
-  crypto::keys::bip39,
-  types::block::{
-    address::{Address, Bech32Address, Hrp},
-    output::AliasOutputBuilder,
-  },
-};
-use rand::{
-  distributions::{Alphanumeric, DistString},
-  thread_rng,
-};
-use std::{net::SocketAddr, path::PathBuf};
-use tokio::{net::TcpListener, task::JoinHandle};
+use identity_iota::iota::IotaClientExt;
+use identity_iota::iota::IotaDocument;
+use identity_iota::iota::IotaIdentityClientExt;
+use identity_iota::iota::NetworkName;
+use identity_iota::verification::jws::JwsAlgorithm;
+use identity_iota::verification::MethodScope;
+use identity_storage::key_id_storage::KeyIdMemstore;
+use identity_storage::key_storage::JwkMemStore;
+use identity_storage::JwkDocumentExt;
+use identity_storage::Storage;
+use iota_sdk::client::api::GetAddressesOptions;
+use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::client::Password;
+use iota_sdk::crypto::keys::bip39;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::address::Bech32Address;
+use iota_sdk::types::block::address::Hrp;
+use iota_sdk::types::block::output::AliasOutputBuilder;
+use rand::distributions::Alphanumeric;
+use rand::distributions::DistString;
+use rand::thread_rng;
+use std::net::SocketAddr;
+use std::path::PathBuf;
+use tokio::net::TcpListener;
+use tokio::task::JoinHandle;
 use tonic::transport::Uri;
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;

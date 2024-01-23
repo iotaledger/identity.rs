@@ -1,14 +1,14 @@
-use credentials::{credential_revocation_client::CredentialRevocationClient, RevocationStatus};
-use identity_iota::{
-  credential::{self, RevocationBitmap, RevocationBitmapStatus},
-  did::DID,
-};
+use credentials::credential_revocation_client::CredentialRevocationClient;
+use credentials::RevocationStatus;
+use identity_iota::credential::RevocationBitmap;
+use identity_iota::credential::RevocationBitmapStatus;
+use identity_iota::credential::{self};
+use identity_iota::did::DID;
 use serde_json::json;
 
-use crate::{
-  credential_revocation_check::credentials::RevocationCheckRequest,
-  helpers::{Entity, TestServer},
-};
+use crate::credential_revocation_check::credentials::RevocationCheckRequest;
+use crate::helpers::Entity;
+use crate::helpers::TestServer;
 
 mod credentials {
   tonic::include_proto!("credentials");
