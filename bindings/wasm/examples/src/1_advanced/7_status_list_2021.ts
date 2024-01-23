@@ -3,12 +3,9 @@
 
 import {
     Credential,
+    EdDSAJwsVerifier,
     FailFast,
-    IJwsVerifier,
-    IotaIdentityClient,
-    Jwk,
     JwkMemStore,
-    JwsAlgorithm,
     JwsSignatureOptions,
     JwtCredentialValidationOptions,
     JwtCredentialValidator,
@@ -20,7 +17,6 @@ import {
     StatusList2021Entry,
     StatusPurpose,
     Storage,
-    verifyEd25519,
 } from "@iota/identity-wasm/node";
 import { Client, MnemonicSecretManager, Utils } from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
@@ -115,7 +111,7 @@ export async function statusList2021() {
     const validationOptions = new JwtCredentialValidationOptions({ status: StatusCheck.SkipUnsupported });
     // The validator has no way of retrieving the status list to check for the
     // revocation of the credential. Let's skip that pass and perform the operation manually.
-    let jwtCredentialValidator = new JwtCredentialValidator(new Ed25519JwsVerifier());
+    let jwtCredentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
     jwtCredentialValidator.validate(
         credentialJwt,
         issuerDocument,
@@ -152,18 +148,5 @@ export async function statusList2021() {
     } catch (e) {
         /// The credential has been revoked.
         console.log(`Error during validation: ${e}`);
-    }
-}
-
-// A custom JWS Verifier capabale of verifying EdDSA signatures with curve Ed25519.
-class Ed25519JwsVerifier implements IJwsVerifier {
-    verify(alg: JwsAlgorithm, signingInput: Uint8Array, decodedSignature: Uint8Array, publicKey: Jwk) {
-        switch (alg) {
-            case JwsAlgorithm.EdDSA:
-                // This verifies that the curve is Ed25519 so we don't need to check ourselves.
-                return verifyEd25519(alg, signingInput, decodedSignature, publicKey);
-            default:
-                throw new Error(`unsupported jws algorithm ${alg}`);
-        }
     }
 }
