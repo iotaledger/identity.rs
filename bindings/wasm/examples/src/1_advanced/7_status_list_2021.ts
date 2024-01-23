@@ -144,6 +144,7 @@ export async function statusList2021() {
             refetchedStatusListCredential,
             StatusCheck.Strict,
         );
+        // In case the revocation failed for some reason we will hit this point
         console.log("Revocation Failed!");
     } catch (e) {
         /// The credential has been revoked.
