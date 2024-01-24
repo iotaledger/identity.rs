@@ -113,6 +113,13 @@ impl CredentialVerifier {
 
 #[tonic::async_trait]
 impl CredentialRevocation for CredentialVerifier {
+  #[tracing::instrument(
+    name = "credential_check",
+    skip_all,
+    fields(request = ?req.get_ref())
+    ret,
+    err,
+  )]
   async fn check(
     &self,
     req: Request<RevocationCheckRequest>,

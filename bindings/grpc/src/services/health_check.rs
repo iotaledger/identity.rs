@@ -16,6 +16,13 @@ pub struct HealthChecker {}
 
 #[tonic::async_trait]
 impl HealthCheck for HealthChecker {
+  #[tracing::instrument(
+    name = "health_check",
+    skip_all,
+    fields(request = ?_req.get_ref())
+    ret,
+    err,
+  )]
   async fn check(&self, _req: Request<HealthCheckRequest>) -> Result<Response<HealthCheckResponse>, Status> {
     Ok(Response::new(HealthCheckResponse { status: "OK".into() }))
   }

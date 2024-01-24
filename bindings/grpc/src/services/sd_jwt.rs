@@ -97,6 +97,13 @@ impl SdJwtService {
 
 #[tonic::async_trait]
 impl Verification for SdJwtService {
+  #[tracing::instrument(
+    name = "sd_jwt_verification",
+    skip_all,
+    fields(request = ?request.get_ref())
+    ret,
+    err,
+  )]
   async fn verify(
     &self,
     request: tonic::Request<VerificationRequest>,

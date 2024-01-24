@@ -43,6 +43,8 @@ pub struct TestServer {
 
 impl TestServer {
   pub async fn new() -> Self {
+    let _ = tracing::subscriber::set_global_default(tracing_subscriber::fmt().compact().finish());
+
     let listener = TcpListener::bind("127.0.0.1:0")
       .await
       .expect("Failed to bind to random OS's port");

@@ -29,6 +29,8 @@ serde_json = { version = "1.0.108", features = ["alloc"] }
 thiserror = "1.0.50"
 rand = "0.8.5"
 serde = { version = "1.0.193", features = ["derive", "alloc"] }
+tracing = { version = "0.1.40", features = ["async-await"] }
+tracing-subscriber = "0.3.18"
 
 [dev-dependencies]
 identity_storage = { path = "../../identity_storage", features = ["memstore"] }
