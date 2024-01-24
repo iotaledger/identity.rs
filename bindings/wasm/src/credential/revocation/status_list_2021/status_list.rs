@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::Result;
+use crate::error::WasmResult;
 use identity_iota::credential::status_list_2021::StatusList2021;
 use wasm_bindgen::prelude::*;
 
@@ -33,16 +34,13 @@ impl WasmStatusList2021 {
   /// Returns whether the entry at `index` is set.
   #[wasm_bindgen]
   pub fn get(&self, index: usize) -> Result<bool> {
-    self.0.get(index).map_err(|e| JsError::new(&e.to_string()).into())
+    self.0.get(index).wasm_result()
   }
 
   /// Sets the value of the `index`-th entry.
   #[wasm_bindgen]
   pub fn set(&mut self, index: usize, value: bool) -> Result<()> {
-    self
-      .0
-      .set(index, value)
-      .map_err(|e| JsError::new(&e.to_string()).into())
+    self.0.set(index, value).wasm_result()
   }
 
   /// Encodes this {@link StatusList2021} into its compressed
@@ -55,8 +53,6 @@ impl WasmStatusList2021 {
   #[wasm_bindgen(js_name = "fromEncodedStr")]
   /// Attempts to decode a {@link StatusList2021} from a string.
   pub fn from_encoded_str(s: &str) -> Result<WasmStatusList2021> {
-    StatusList2021::try_from_encoded_str(s)
-      .map(Self)
-      .map_err(|e| JsError::new(&e.to_string()).into())
+    StatusList2021::try_from_encoded_str(s).map(Self).wasm_result()
   }
 }

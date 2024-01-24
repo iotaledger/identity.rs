@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did;
@@ -77,17 +77,19 @@ async fn main() -> anyhow::Result<()> {
   let (_, alice_document, _): (Address, IotaDocument, String) =
     create_did(&client, &mut secret_manager_alice, &storage_alice).await?;
 
-  // Create a new empty status list. No credential is revoked yet.
+  // Create a new empty status list. No credentials have been revoked yet.
   let status_list: StatusList2021 = StatusList2021::default();
 
   // Create a status list credential so that the status list can be stored anywhere.
-  // In this example the credential will fictitiously be made available at `http://example.com/credential/status`
-  // (actually it will stay in memory).
-  let status_list_credential = StatusList2021CredentialBuilder::new(status_list)
+  // The issuer makes this credential available on `http://example.com/credential/status`.
+  // For the purposes of this example, the credential will be used directly without fetching.
+  let status_list_credential: StatusList2021Credential = StatusList2021CredentialBuilder::new(status_list)
     .purpose(StatusPurpose::Revocation)
     .subject_id(Url::parse("http://example.com/credential/status")?)
     .issuer(Issuer::Url(issuer_document.id().to_url().into()))
     .build()?;
+
+  println!("Status list credential > {status_list_credential:#}");
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
@@ -134,6 +136,7 @@ async fn main() -> anyhow::Result<()> {
 
   let validator: JwtCredentialValidator<EdDSAJwsVerifier> =
     JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+
   // The validator has no way of retriving the status list to check for the
   // revocation of the credential. Let's skip that pass and perform the operation manually.
   let mut validation_options = JwtCredentialValidationOptions::default();
@@ -145,12 +148,22 @@ async fn main() -> anyhow::Result<()> {
     &validation_options,
     FailFast::FirstError,
   )?;
+  // Check manually for revocation
+  let _ = JwtCredentialValidatorUtils::check_status_with_status_list_2021(
+    &credential,
+    &status_list_credential,
+    StatusCheck::Strict,
+  )?;
+  println!("Credential is valid.");
 
   let status_list_credential_json = status_list_credential.to_json().unwrap();
 
   // ===========================================================================
   // Revocation of the Verifiable Credential.
   // ===========================================================================
+
+  // At a later time, the issuer university found out that Alice cheated in her final exam.
+  // The issuer will revoke Alice's credential.
 
   // The issuer retrieves the status list credential.
   let mut status_list_credential =
@@ -173,6 +186,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   assert!(revocation_result.is_err_and(|e| matches!(e, JwtValidationError::Revoked)));
+  println!("The credential has been successfully revocated.");
 
   Ok(())
 }

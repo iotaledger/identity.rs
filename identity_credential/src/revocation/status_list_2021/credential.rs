@@ -20,7 +20,7 @@ const CREDENTIAL_SUBJECT_TYPE: &str = "StatusList2021";
 
 /// [Error](std::error::Error) type that represents the possible errors that can be
 /// encountered when dealing with [`StatusList2021Credential`]s.
-#[derive(Clone, Debug, Error)]
+#[derive(Clone, Debug, Error, strum::IntoStaticStr)]
 pub enum StatusList2021CredentialError {
   /// The provided [`Credential`] has more than one `credentialSubject`.
   #[error("A StatusList2021Credential may only have one credentialSubject")]
@@ -55,6 +55,12 @@ use super::StatusList2021Entry;
 pub struct StatusList2021Credential {
   inner: Credential,
   subject: StatusList2021CredentialSubject,
+}
+
+impl Display for StatusList2021Credential {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", &self.inner)
+  }
 }
 
 impl From<StatusList2021Credential> for Credential {
@@ -164,10 +170,10 @@ pub enum CredentialStatus {
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum StatusPurpose {
+  /// Used for revocation.
   #[default]
-  /// Used for revocation
   Revocation,
-  /// Used for suspension
+  /// Used for suspension.
   Suspension,
 }
 

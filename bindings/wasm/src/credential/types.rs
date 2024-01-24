@@ -43,6 +43,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<CoreDID>")]
   pub type ArrayCoreDID;
+
+  #[wasm_bindgen(typescript_type = "Status")]
+  pub type WasmStatus;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

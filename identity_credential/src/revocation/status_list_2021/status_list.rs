@@ -12,7 +12,7 @@ use thiserror::Error;
 const MINIMUM_LIST_SIZE: usize = 16 * 1024 * 8;
 
 /// [`std::error::Error`] type for [`StatusList2021`]'s operations.
-#[derive(Debug, Error, PartialEq, Eq, Clone)]
+#[derive(Debug, Error, PartialEq, Eq, Clone, strum::IntoStaticStr)]
 pub enum StatusListError {
   /// Requested entry is not in the list.
   #[error("The requested entry is not in the list.")]

@@ -10,4 +10,4 @@ mod status_list;
 
 pub use credential::*;
 pub use entry::*;
-pub use status_list::StatusList2021;
+pub use status_list::*;

@@ -113,7 +113,7 @@ impl WasmStatusList2021Credential {
   pub fn new(credential: WasmCredential) -> Result<WasmStatusList2021Credential> {
     StatusList2021Credential::try_from(credential.0)
       .map(Into::into)
-      .map_err(|e| JsValue::from(JsError::new(&e.to_string())))
+      .wasm_result()
   }
 
   #[wasm_bindgen]
@@ -133,8 +133,7 @@ impl WasmStatusList2021Credential {
     let entry = self
       .inner
       .set_credential_status(&mut credential.0, index, value)
-      .map_err(|e| JsValue::from(JsError::new(&e.to_string())))?
-      .clone();
+      .wasm_result()?;
     self.wasm_credential = WasmCredential(self.inner.clone().into_inner());
 
     Ok(WasmStatusList2021Entry(entry))
@@ -149,11 +148,7 @@ impl WasmStatusList2021Credential {
   /// Returns the state of the `index`-th entry, if any.
   #[wasm_bindgen]
   pub fn entry(&self, index: usize) -> Result<WasmCredentialStatus> {
-    self
-      .inner
-      .entry(index)
-      .map(WasmCredentialStatus::from)
-      .map_err(|e| JsError::new(&e.to_string()).into())
+    self.inner.entry(index).map(WasmCredentialStatus::from).wasm_result()
   }
 
   #[wasm_bindgen(js_name = "clone")]
@@ -163,13 +158,11 @@ impl WasmStatusList2021Credential {
 
   #[wasm_bindgen(js_name = "fromJSON")]
   pub fn from_json(json: JsValue) -> Result<WasmStatusList2021Credential> {
-    use crate::error::WasmResult;
     json.into_serde::<WasmStatusList2021Credential>().wasm_result()
   }
 
   #[wasm_bindgen(js_name = "toJSON")]
   pub fn to_json(&self) -> Result<JsValue> {
-    use crate::error::WasmResult;
     JsValue::from_serde(self).wasm_result()
   }
 }

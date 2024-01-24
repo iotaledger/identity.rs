@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::WasmStatusPurpose;
+use crate::credential::types::WasmStatus;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity_iota::core::Url;
@@ -52,14 +53,18 @@ impl WasmStatusList2021Entry {
 
   /// Returns the referenced {@link StatusList2021Credential}'s url.
   #[wasm_bindgen]
-  pub fn credential(&self) -> String {
+  pub fn status_list_credential(&self) -> String {
     self.0.status_list_credential().to_string()
   }
 
   /// Downcasts {@link this} to {@link Status}
   #[wasm_bindgen(js_name = "toStatus")]
-  pub fn to_status(self) -> Result<JsValue> {
-    JsValue::from_serde(&Status::from(self.0)).wasm_result()
+  pub fn to_status(self) -> Result<WasmStatus> {
+    Ok(
+      JsValue::from_serde(&Status::from(self.0))
+        .wasm_result()?
+        .unchecked_into(),
+    )
   }
 }
 
