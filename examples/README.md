@@ -47,4 +47,5 @@ The following advanced examples are available:
 | [4_alias_output_history](./1_advanced/4_alias_output_history.rs) | Demonstrates fetching the history of an Alias Output.                                                    |
 | [5_custom_resolution](./1_advanced/5_custom_resolution.rs)       | Demonstrates how to set up a resolver using custom handlers.                                             |
 | [6_domain_linkage](./1_advanced/6_domain_linkage)                | Demonstrates how to link a domain and a DID and verify the linkage.                                      |
-| [7_sd_jwt](./1_advanced/7_sd_jwt)                                | Demonstrates how to create and verify selective disclosure verifiable credentials.                        |
+| [7_sd_jwt](./1_advanced/7_sd_jwt)                                | Demonstrates how to create and verify selective disclosure verifiable credentials.                       |
+| [8_status_list_2021](./1_advanced/8_status_list_2021.rs)                | Demonstrates how to revoke a credential using `StatusList2021`.                                   |

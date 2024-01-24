@@ -26,6 +26,7 @@ reqwest = { version = "0.11", default-features = false, features = ["default-tls
 roaring = { version = "0.10", default-features = false, optional = true }
 sd-jwt-payload = { version = "0.1.2", default-features = false, features = ["sha"], optional = true }
 serde.workspace = true
+serde-aux = { version = "4.3.1", default-features = false, optional = true }
 serde_json.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
 strum.workspace = true
@@ -33,6 +34,7 @@ thiserror.workspace = true
 url = { version = "2.5", default-features = false }
 
 [dev-dependencies]
+anyhow = "1.0.62"
 identity_eddsa_verifier = { version = "=1.0.0", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "std", "random"] }
 proptest = { version = "1.4.0", default-features = false, features = ["std"] }
@@ -49,6 +51,7 @@ default = ["revocation-bitmap", "validator", "credential", "presentation", "doma
 credential = []
 presentation = ["credential"]
 revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
+status-list-2021 = ["revocation-bitmap", "dep:serde-aux"]
 validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
