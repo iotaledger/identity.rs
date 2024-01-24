@@ -186,7 +186,7 @@ async fn main() -> anyhow::Result<()> {
   );
 
   assert!(revocation_result.is_err_and(|e| matches!(e, JwtValidationError::Revoked)));
-  println!("The credential has been successfully revocated.");
+  println!("The credential has been successfully revoked.");
 
   Ok(())
 }

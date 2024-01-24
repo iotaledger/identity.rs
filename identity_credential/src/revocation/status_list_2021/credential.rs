@@ -121,7 +121,7 @@ impl StatusList2021Credential {
     &mut self,
     credential: &mut Credential,
     index: usize,
-    value: bool,
+    revoked_or_suspended: bool,
   ) -> Result<StatusList2021Entry, StatusList2021CredentialError> {
     let id = self
       .id()
@@ -129,7 +129,7 @@ impl StatusList2021Credential {
       .ok_or(StatusList2021CredentialError::Unreferenceable)?;
     let entry = StatusList2021Entry::new(id, self.purpose(), index, None);
 
-    self.set_entry(index, value)?;
+    self.set_entry(index, revoked_or_suspended)?;
     credential.credential_status = Some(entry.clone().into());
 
     Ok(entry)

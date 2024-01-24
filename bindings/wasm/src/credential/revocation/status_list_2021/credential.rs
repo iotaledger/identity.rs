@@ -128,11 +128,11 @@ impl WasmStatusList2021Credential {
     &mut self,
     credential: &mut WasmCredential,
     index: usize,
-    value: bool,
+    revoked_or_suspended: bool,
   ) -> Result<WasmStatusList2021Entry> {
     let entry = self
       .inner
-      .set_credential_status(&mut credential.0, index, value)
+      .set_credential_status(&mut credential.0, index, revoked_or_suspended)
       .wasm_result()?;
     self.wasm_credential = WasmCredential(self.inner.clone().into_inner());
 

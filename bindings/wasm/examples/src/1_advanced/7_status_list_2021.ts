@@ -63,18 +63,19 @@ export async function statusList2021() {
         aliceStorage,
     );
 
-    // Create a new empty status list. No credential is revoked yet.
+    // Create a new empty status list. No credentials have been revoked yet.
     const statusList = new StatusList2021();
 
     // Create a status list credential so that the status list can be stored anywhere.
-    // In this example the credential will fictitiously be made available at `http://example.com/credential/status`
-    // (actually it will stay in memory).
+    // The issuer makes this credential available on `http://example.com/credential/status`.
+    // For the purposes of this example, the credential will be used directly without fetching.
     const statusListCredential = new StatusList2021CredentialBuilder(statusList)
         .purpose(StatusPurpose.Revocation)
         .subjectId("http://example.com/credential/status")
         .issuer(issuerDocument.id().toString())
         .build();
     const statusListCredentialJSON = statusListCredential.toJSON();
+    console.log("Status list credential > " + statusListCredential);
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -112,16 +113,31 @@ export async function statusList2021() {
     // The validator has no way of retrieving the status list to check for the
     // revocation of the credential. Let's skip that pass and perform the operation manually.
     let jwtCredentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
-    jwtCredentialValidator.validate(
-        credentialJwt,
-        issuerDocument,
-        validationOptions,
-        FailFast.FirstError,
-    );
+
+    try {
+        jwtCredentialValidator.validate(
+            credentialJwt,
+            issuerDocument,
+            validationOptions,
+            FailFast.FirstError,
+        );
+        // Check manually for revocation
+        JwtCredentialValidator.checkStatusWithStatusList2021(
+            credential,
+            statusListCredential,
+            StatusCheck.Strict,
+        );
+    } catch (e) {
+        // This line shouldn't be called as the credential is valid and unrevoked
+        console.log("Something went wrong: " + e);
+    }
 
     // ===========================================================================
     // Revocation of the Verifiable Credential.
     // ===========================================================================
+
+    // At a later time, the issuer university found out that Alice cheated in her final exam.
+    // The issuer will revoke Alice's credential.
 
     // The issuer retrieves the status list credential.
     const refetchedStatusListCredential = new StatusList2021Credential(new Credential(statusListCredentialJSON as any));
@@ -148,6 +164,6 @@ export async function statusList2021() {
         console.log("Revocation Failed!");
     } catch (e) {
         /// The credential has been revoked.
-        console.log(`Error during validation: ${e}`);
+        console.log("The credential has been successfully revoked.");
     }
 }

@@ -52,7 +52,7 @@ impl WasmStatusList2021Entry {
   }
 
   /// Returns the referenced {@link StatusList2021Credential}'s url.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = "statusListCredential")]
   pub fn status_list_credential(&self) -> String {
     self.0.status_list_credential().to_string()
   }
