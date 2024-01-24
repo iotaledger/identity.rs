@@ -29,4 +29,5 @@ runs:
         echo "dry-run: '${{ inputs.dry-run }}'"
         echo "version: '${{ inputs.version }}'"
         cargo login ${{ inputs.crates-token }}
-        cargo release --workspace --isolated --no-push --no-tag --verbose $(if [ "${{ inputs.dry-run }}" = "false" ]; then echo --execute --no-confirm; fi) ${{ inputs.version }}
+        cargo release version --verbose --execute --no-confirm ${{ inputs.version }}
+        cargo release publish --verbose $(if [ "${{ inputs.dry-run }}" = "false" ]; then echo --execute --no-confirm; fi)
