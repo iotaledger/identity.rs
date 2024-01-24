@@ -149,7 +149,7 @@ async fn main() -> anyhow::Result<()> {
     FailFast::FirstError,
   )?;
   // Check manually for revocation
-  let _ = JwtCredentialValidatorUtils::check_status_with_status_list_2021(
+  JwtCredentialValidatorUtils::check_status_with_status_list_2021(
     &credential,
     &status_list_credential,
     StatusCheck::Strict,
@@ -173,7 +173,7 @@ async fn main() -> anyhow::Result<()> {
   status_list_credential.set_credential_status(&mut credential, credential_index, true)?;
 
   // validate the credential and check for revocation
-  let _ = validator.validate::<_, Object>(
+  validator.validate::<_, Object>(
     &credential_jwt,
     &issuer_document,
     &validation_options,
