@@ -1,0 +1,9 @@
+# Identity.rs gRPC Bindings
+This project provides the functionalities of [Identity.rs](https://github.com/iotaledger/identity.rs) in a language-agnostic way through a [gRPC](https://grpc.io) server.
+
+The server can easily be run with docker using [this dockerfile](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/Dockerfile).
+
+### Available services
+| Service description            | Service Id                               | Proto File |
+| Credential Revocation Checking | `credentials/CredentialRevocation.check` | [credentials.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/credentials.proto)
+| SD-JWT Validation              | `sd_jwt/Verification.verify` | [sd_jwt.proto](https://github.com/iotaledger/identity.rs/blob/grpc-bindings/bindings/grpc/proto/sd_jwt.proto)
