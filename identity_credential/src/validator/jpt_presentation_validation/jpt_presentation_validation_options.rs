@@ -1,3 +1,4 @@
+use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
 use crate::validator::JptCredentialValidationOptions;
@@ -12,9 +13,15 @@ pub struct JptPresentationValidationOptions {
     #[serde(default)]
     pub nonce: Option<String>,
 
-    /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
+    /// Validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+    ///
+    /// Default: [`StatusCheck::Strict`](crate::validator::StatusCheck::Strict).
     #[serde(default)]
-    pub credential_validation_options: JptCredentialValidationOptions,
+    pub status: crate::validator::StatusCheck,
+
+    /// Options which affect the verification of the proof on the credential.
+    #[serde(default)]
+    pub verification_options: JwpVerificationOptions,
 
 }
 
@@ -24,12 +31,6 @@ impl JptPresentationValidationOptions {
     Self::default()
   }
 
-  /// Set options which affect the verification of the signature on the presentation.
-  pub fn credential_validation_options(mut self, options: JptCredentialValidationOptions) -> Self {
-    self.credential_validation_options = options;
-    self
-  }
-
   /// Declare that the presentation is **not** considered valid if it expires before this [`Timestamp`].
   /// Uses the current datetime during validation if not set.
   pub fn nonce(mut self, nonce: impl Into<String>) -> Self {
@@ -37,5 +38,17 @@ impl JptPresentationValidationOptions {
     self
   }
 
+
+  /// Sets the validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+  pub fn status_check(mut self, status_check: crate::validator::StatusCheck) -> Self {
+    self.status = status_check;
+    self
+  }
+
+  /// Set options which affect the verification of the JWP proof.
+  pub fn verification_options(mut self, options: JwpVerificationOptions) -> Self {
+    self.verification_options = options;
+    self
+  }
 
 }

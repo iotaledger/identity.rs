@@ -23,6 +23,7 @@ mod schema;
 mod status;
 mod subject;
 mod jwp_credential_options;
+mod revocation_timeframe_status;
 
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
@@ -41,6 +42,7 @@ pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
 pub use self::jwp_credential_options::JwpCredentialOptions;
+pub use self::revocation_timeframe_status::{RevocationTimeframeStatus, ValidityTimeframeGranularity};
 
 #[cfg(feature = "validator")]
 pub(crate) use self::jwt_serialization::CredentialJwtClaims;

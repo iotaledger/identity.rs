@@ -5,7 +5,7 @@ use identity_did::{DIDUrl, CoreDID};
 use identity_document::document::CoreDocument;
 use jsonprooftoken::{jwp::presented::JwpPresentedDecoder, encoding::SerializationType, jwk::key::Jwk as JwkExt, jpt::claims::JptClaims};
 
-use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{FailFast, JwtValidationError, SignerContext, JwtCredentialValidatorUtils, CompoundCredentialValidationError, JptCredentialValidator}};
+use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{CompoundCredentialValidationError, FailFast, JptCredentialValidationOptions, JptCredentialValidator, JptCredentialValidatorUtils, JwtCredentialValidatorUtils, JwtValidationError, SignerContext}};
 
 use super::{JptPresentationValidationOptions, DecodedJptPresentation};
 
@@ -24,34 +24,70 @@ impl JptPresentationValidator {
     /// - the issuance date,
     /// - the semantic structure.
     pub fn validate<DOC, T>(
-        presentation_jpt: &Jpt,
-        issuer: &DOC,
-        options: &JptPresentationValidationOptions,
-        fail_fast: FailFast,
-      ) -> Result<DecodedJptPresentation<T>, CompoundCredentialValidationError>
-      where
-        T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-        DOC: AsRef<CoreDocument>,
-      {
+      presentation_jpt: &Jpt,
+      issuer: &DOC,
+      options: &JptPresentationValidationOptions,
+      fail_fast: FailFast,
+    ) -> Result<DecodedJptPresentation<T>, CompoundCredentialValidationError>
+    where
+      T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+      DOC: AsRef<CoreDocument>,
+    {
 
 
-        // First verify the JWP proof and decode the result into a presented credential token, then apply all other validations.
-        let presented_credential_token =
-        Self::verify_proof(presentation_jpt, issuer, &options)
-          .map_err(|err| CompoundCredentialValidationError {
-            validation_errors: [err].into(),
-          })?;
+      // First verify the JWP proof and decode the result into a presented credential token, then apply all other validations.
+      let presented_credential_token =
+      Self::verify_proof(presentation_jpt, issuer, &options)
+        .map_err(|err| CompoundCredentialValidationError {
+          validation_errors: [err].into(),
+        })?;
 
-        let credential: &Credential<T> = &presented_credential_token.credential;
+      let credential: &Credential<T> = &presented_credential_token.credential;
 
-        JptCredentialValidator::validate_credential::<CoreDocument, T>(
-          credential,
-          &options.credential_validation_options,
-          fail_fast,
-        )?;
+      Self::validate_presented_credential::<CoreDocument, T>(
+        credential,
+        &options,
+        fail_fast,
+      )?;
 
-        Ok(presented_credential_token)
+      Ok(presented_credential_token)
+    }
+
+
+    pub(crate) fn validate_presented_credential<DOC, T>(
+      credential: &Credential<T>,
+      options: &JptPresentationValidationOptions,
+      fail_fast: FailFast,
+    ) -> Result<(), CompoundCredentialValidationError>
+    where
+      T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+      DOC: AsRef<CoreDocument>,
+    {
+  
+      let structure_validation = std::iter::once_with(|| JwtCredentialValidatorUtils::check_structure(credential));
+  
+      let validation_units_iter = structure_validation;
+  
+      //TODO: ZKP - check revocation when implemented
+  
+      let validation_units_iter = {
+        let revocation_validation =
+          std::iter::once_with(|| JptCredentialValidatorUtils::check_status(credential, options.status));
+        validation_units_iter.chain(revocation_validation)
+      };
+  
+      let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
+      let validation_errors: Vec<JwtValidationError> = match fail_fast {
+        FailFast::FirstError => validation_units_error_iter.take(1).collect(),
+        FailFast::AllErrors => validation_units_error_iter.collect(),
+      };
+  
+      if validation_errors.is_empty() {
+        Ok(())
+      } else {
+        Err(CompoundCredentialValidationError { validation_errors })
       }
+    }
 
 
         
@@ -78,7 +114,7 @@ impl JptPresentationValidator {
 
         // If no method_url is set, parse the `kid` to a DID Url which should be the identifier
         // of a verification method in a trusted issuer's DID document.
-        let method_id: DIDUrl = match &options.credential_validation_options.verification_options.method_id {
+        let method_id: DIDUrl = match &options.verification_options.method_id {
         Some(method_id) => method_id.clone(),
         None => {
             let kid: &str = decoded.get_issuer_header().kid().ok_or(
@@ -107,7 +143,7 @@ impl JptPresentationValidator {
 
         // Obtain the public key from the issuer's DID document
         let public_key: JwkExt = issuer
-        .resolve_method(&method_id, options.credential_validation_options.verification_options.method_scope)
+        .resolve_method(&method_id, options.verification_options.method_scope)
         .and_then(|method| method.data().public_key_jwk())
         .and_then(|k| k.try_into().ok()) //Conversio into jsonprooftoken::Jwk type
         .ok_or_else(|| JwtValidationError::MethodDataLookupError {

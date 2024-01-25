@@ -112,6 +112,17 @@ impl Timestamp {
       .checked_sub(duration.0)
       .and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()).ok())
   }
+
+  //TODO: ZKP - validity_timeframe Timestamp 
+  /// Truncate to minutes
+  pub fn to_minute(&self) -> Self {
+    Self(truncate_fractional_minutes(self.0))
+  }
+
+  /// Truncate to hours
+  pub fn to_hour(&self) -> Self {
+    Self(truncate_fractional_hours(self.0))
+  }
 }
 
 impl Default for Timestamp {
@@ -179,6 +190,16 @@ impl FromStr for Timestamp {
 /// Truncates an `OffsetDateTime` to the second.
 fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTime {
   offset_date_time - time::Duration::nanoseconds(offset_date_time.nanosecond() as i64)
+}
+
+/// Truncates an `OffsetDateTime` to the minute.
+fn truncate_fractional_minutes(offset_date_time: OffsetDateTime) -> OffsetDateTime {
+  offset_date_time - time::Duration::seconds(offset_date_time.second() as i64) - time::Duration::nanoseconds(offset_date_time.nanosecond() as i64)
+}
+
+/// Truncates an `OffsetDateTime` to the hour.
+fn truncate_fractional_hours(offset_date_time: OffsetDateTime) -> OffsetDateTime {
+  offset_date_time - time::Duration::minutes(offset_date_time.minute() as i64) - time::Duration::seconds(offset_date_time.second() as i64) - time::Duration::nanoseconds(offset_date_time.nanosecond() as i64)
 }
 
 /// A span of time.

@@ -86,3 +86,7 @@ name = "6_domain_linkage"
 [[example]]
 path = "1_advanced/7_zkp.rs"
 name = "7_zkp"
+
+[[example]]
+path = "1_advanced/8_zkp_revocation.rs"
+name = "8_zkp_revocation"

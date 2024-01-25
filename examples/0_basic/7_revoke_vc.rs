@@ -110,6 +110,8 @@ async fn main() -> anyhow::Result<()> {
   // Publish the updated Alias Output.
   issuer_document = client.publish_did_output(&secret_manager_issuer, alias_output).await?;
 
+  println!("DID Document > {issuer_document:#}");
+
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
     "id": alice_document.id().as_str(),

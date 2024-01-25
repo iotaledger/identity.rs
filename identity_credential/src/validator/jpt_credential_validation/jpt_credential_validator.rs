@@ -11,7 +11,7 @@ use crate::credential::CredentialJwtClaims;
 use crate::validator::{JwtCredentialValidatorUtils, JptCredentialValidationOptions, CompoundCredentialValidationError};
 use crate::{credential::{Jpt, Credential}, validator::{FailFast, JwtValidationError, jwt_credential_validation::SignerContext}};
 
-use super::DecodedJptCredential;
+use super::{DecodedJptCredential, JptCredentialValidatorUtils};
 
 /// A type for decoding and validating [`Credential`]s in JPT format. //TODO: ZKP - validator
 #[non_exhaustive]
@@ -96,12 +96,11 @@ impl JptCredentialValidator {
 
     //TODO: ZKP - check revocation when implemented
 
-    // #[cfg(feature = "revocation-bitmap")]
-    // let validation_units_iter = {
-    //   let revocation_validation =
-    //     std::iter::once_with(|| JwtCredentialValidatorUtils::check_status(credential, issuers, options.status));
-    //   validation_units_iter.chain(revocation_validation)
-    // };
+    let validation_units_iter = {
+      let revocation_validation =
+        std::iter::once_with(|| JptCredentialValidatorUtils::check_status(credential, options.status));
+      validation_units_iter.chain(revocation_validation)
+    };
 
     let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
     let validation_errors: Vec<JwtValidationError> = match fail_fast {

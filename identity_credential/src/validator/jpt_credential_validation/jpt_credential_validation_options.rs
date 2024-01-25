@@ -1,8 +1,11 @@
 
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
+
+use crate::validator::SubjectHolderRelationship;
 
 /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
 #[non_exhaustive]
@@ -20,6 +23,12 @@ pub struct JptCredentialValidationOptions {
   /// Uses the current datetime during validation if not set.
   #[serde(default)]
   pub latest_issuance_date: Option<Timestamp>,
+
+  /// Validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+  ///
+  /// Default: [`StatusCheck::Strict`](crate::validator::StatusCheck::Strict).
+  #[serde(default)]
+  pub status: crate::validator::StatusCheck,
 
   /// Options which affect the verification of the proof on the credential.
   #[serde(default)]
@@ -46,7 +55,13 @@ impl JptCredentialValidationOptions {
     self
   }
 
-  /// Set options which affect the verification of the JWS signature.
+  /// Sets the validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+  pub fn status_check(mut self, status_check: crate::validator::StatusCheck) -> Self {
+    self.status = status_check;
+    self
+  }
+
+  /// Set options which affect the verification of the JWP proof.
   pub fn verification_options(mut self, options: JwpVerificationOptions) -> Self {
     self.verification_options = options;
     self

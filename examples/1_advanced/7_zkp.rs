@@ -1,5 +1,7 @@
 
 use std::str::FromStr;
+use std::thread;
+use std::time::Duration;
 
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
@@ -20,8 +22,11 @@ use identity_iota::credential::JptPresentationValidator;
 use identity_iota::credential::JptPresentationValidatorUtils;
 use identity_iota::credential::JwpCredentialOptions;
 use identity_iota::credential::JwpPresentationOptions;
+use identity_iota::credential::RevocationTimeframeStatus;
 use identity_iota::credential::SelectiveDisclosurePresentation;
+use identity_iota::credential::Status;
 use identity_iota::credential::Subject;
+use identity_iota::credential::ValidityTimeframeGranularity;
 use identity_iota::did::CoreDID;
 use identity_iota::did::DID;
 use identity_iota::did::DIDUrl;
@@ -48,6 +53,8 @@ use iota_sdk::client::Password;
 use iota_sdk::types::api::core::response::WhiteFlagResponse;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
+use iota_sdk::types::block::output::AliasOutputBuilder;
+use iota_sdk::types::block::output::RentStructure;
 use iota_sdk::types::block::output::TokenId;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jwp::header::PresentationProtectedHeader;
@@ -129,7 +136,6 @@ async fn main() -> anyhow::Result<()> {
   let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) = 
   create_did(&client, &mut secret_manager_issuer, &storage_issuer, JwkMemStore::BLS12381SHA256_KEY_TYPE, ProofAlgorithm::BLS12381_SHA256).await?;
 
-
   // ===========================================================================
   // Step 2: Issuer creates and signs a Verifiable Credential with BBS algorithm.
   // ===========================================================================
@@ -144,7 +150,6 @@ async fn main() -> anyhow::Result<()> {
     },
     "GPA": "4.0",
   }))?;
-
 
   // Build credential using subject above and issuer.
   let credential: Credential = CredentialBuilder::default()
@@ -240,7 +245,6 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-
   // ===========================================================================
   // Step 8: Holder sends a Presentation JPT to the Verifier.
   // ===========================================================================
@@ -268,7 +272,7 @@ async fn main() -> anyhow::Result<()> {
   .unwrap();
 
   // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
-  println!("Presented Credential successfully validated: {:#?}", decoded_presented_credential.credential);
+  println!("Presented Credential successfully validated: {:#}", decoded_presented_credential.credential);
 
   Ok(())
 }
