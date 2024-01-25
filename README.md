@@ -88,6 +88,8 @@ edition = "2021"
 identity_iota = {version = "1.0.0", features = ["memstore"]}
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.62"
+rand = "0.8.5"
 ```
 
 _main._<span></span>_rs_
