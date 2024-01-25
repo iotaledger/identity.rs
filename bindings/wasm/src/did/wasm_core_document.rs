@@ -72,12 +72,12 @@ impl CoreDocumentLock {
     Self(tokio::sync::RwLock::new(input))
   }
 
-  pub(crate) fn blocking_read(&self) -> tokio::sync::RwLockReadGuard<'_, CoreDocument> {
-    self.0.blocking_read()
+  pub(crate) fn try_read(&self) -> Result<tokio::sync::RwLockReadGuard<'_, CoreDocument>> {
+    self.0.try_read().wasm_result()
   }
 
-  pub(crate) fn blocking_write(&self) -> tokio::sync::RwLockWriteGuard<'_, CoreDocument> {
-    self.0.blocking_write()
+  pub(crate) fn try_write(&self) -> Result<tokio::sync::RwLockWriteGuard<'_, CoreDocument>> {
+    self.0.try_write().wasm_result()
   }
 
   pub(crate) async fn read(&self) -> tokio::sync::RwLockReadGuard<'_, CoreDocument> {
@@ -90,6 +90,9 @@ impl CoreDocumentLock {
 }
 
 /// A method-agnostic DID Document.
+///
+/// Note: All methods that involve reading from this class may potentially raise an error
+/// if the object is being concurrently modified.
 #[wasm_bindgen(js_name = CoreDocument, inspectable)]
 pub struct WasmCoreDocument(pub(crate) Rc<CoreDocumentLock>);
 
@@ -104,8 +107,8 @@ impl WasmCoreDocument {
 
   /// Returns a copy of the DID Document `id`.
   #[wasm_bindgen]
-  pub fn id(&self) -> WasmCoreDID {
-    WasmCoreDID::from(self.0.blocking_read().id().clone())
+  pub fn id(&self) -> Result<WasmCoreDID> {
+    Ok(WasmCoreDID::from(self.0.try_read()?.id().clone()))
   }
 
   /// Sets the DID of the document.
@@ -116,14 +119,15 @@ impl WasmCoreDocument {
   /// `resolve_method`, `resolve_service` and the related
   /// [DID URL dereferencing](https://w3c-ccg.github.io/did-resolution/#dereferencing) algorithm.
   #[wasm_bindgen(js_name = setId)]
-  pub fn set_id(&mut self, id: &WasmCoreDID) {
-    *self.0.blocking_write().id_mut_unchecked() = id.0.clone();
+  pub fn set_id(&mut self, id: &WasmCoreDID) -> Result<()> {
+    *self.0.try_write()?.id_mut_unchecked() = id.0.clone();
+    Ok(())
   }
 
   /// Returns a copy of the document controllers.
   #[wasm_bindgen]
-  pub fn controller(&self) -> ArrayCoreDID {
-    match self.0.blocking_read().controller() {
+  pub fn controller(&self) -> Result<ArrayCoreDID> {
+    let controller = match self.0.try_read()?.controller() {
       Some(controllers) => controllers
         .iter()
         .cloned()
@@ -132,7 +136,8 @@ impl WasmCoreDocument {
         .collect::<js_sys::Array>()
         .unchecked_into::<ArrayCoreDID>(),
       None => js_sys::Array::new().unchecked_into::<ArrayCoreDID>(),
-    }
+    };
+    Ok(controller)
   }
 
   /// Sets the controllers of the DID Document.
@@ -151,22 +156,24 @@ impl WasmCoreDocument {
     } else {
       None
     };
-    *self.0.blocking_write().controller_mut() = controller_set;
+    *self.0.try_write()?.controller_mut() = controller_set;
     Ok(())
   }
 
   /// Returns a copy of the document's `alsoKnownAs` set.
   #[wasm_bindgen(js_name = alsoKnownAs)]
-  pub fn also_known_as(&self) -> ArrayString {
-    self
-      .0
-      .blocking_read()
-      .also_known_as()
-      .iter()
-      .map(|url| url.to_string())
-      .map(JsValue::from)
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayString>()
+  pub fn also_known_as(&self) -> Result<ArrayString> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .also_known_as()
+        .iter()
+        .map(|url| url.to_string())
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayString>(),
+    )
   }
 
   /// Sets the `alsoKnownAs` property in the DID document.
@@ -179,114 +186,126 @@ impl WasmCoreDocument {
         urls_set.append(Url::parse(url).wasm_result()?);
       }
     }
-    *self.0.blocking_write().also_known_as_mut() = urls_set;
+    *self.0.try_write()?.also_known_as_mut() = urls_set;
     Ok(())
   }
 
   /// Returns a copy of the document's `verificationMethod` set.
   #[wasm_bindgen(js_name = verificationMethod)]
-  pub fn verification_method(&self) -> ArrayVerificationMethod {
-    self
-      .0
-      .blocking_read()
-      .verification_method()
-      .iter()
-      .cloned()
-      .map(WasmVerificationMethod::from)
-      .map(JsValue::from)
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayVerificationMethod>()
+  pub fn verification_method(&self) -> Result<ArrayVerificationMethod> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .verification_method()
+        .iter()
+        .cloned()
+        .map(WasmVerificationMethod::from)
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayVerificationMethod>(),
+    )
   }
 
   /// Returns a copy of the document's `authentication` set.
   #[wasm_bindgen]
-  pub fn authentication(&self) -> ArrayCoreMethodRef {
-    self
-      .0
-      .blocking_read()
-      .authentication()
-      .iter()
-      .cloned()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
-      })
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreMethodRef>()
+  pub fn authentication(&self) -> Result<ArrayCoreMethodRef> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .authentication()
+        .iter()
+        .cloned()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+          MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
+        })
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayCoreMethodRef>(),
+    )
   }
 
   /// Returns a copy of the document's `assertionMethod` set.
   #[wasm_bindgen(js_name = assertionMethod)]
-  pub fn assertion_method(&self) -> ArrayCoreMethodRef {
-    self
-      .0
-      .blocking_read()
-      .assertion_method()
-      .iter()
-      .cloned()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
-      })
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreMethodRef>()
+  pub fn assertion_method(&self) -> Result<ArrayCoreMethodRef> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .assertion_method()
+        .iter()
+        .cloned()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+          MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
+        })
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayCoreMethodRef>(),
+    )
   }
 
   /// Returns a copy of the document's `keyAgreement` set.
   #[wasm_bindgen(js_name = keyAgreement)]
-  pub fn key_agreement(&self) -> ArrayCoreMethodRef {
-    self
-      .0
-      .blocking_read()
-      .key_agreement()
-      .iter()
-      .cloned()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
-      })
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreMethodRef>()
+  pub fn key_agreement(&self) -> Result<ArrayCoreMethodRef> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .key_agreement()
+        .iter()
+        .cloned()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+          MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
+        })
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayCoreMethodRef>(),
+    )
   }
 
   /// Returns a copy of the document's `capabilityDelegation` set.
   #[wasm_bindgen(js_name = capabilityDelegation)]
-  pub fn capability_delegation(&self) -> ArrayCoreMethodRef {
-    self
-      .0
-      .blocking_read()
-      .capability_delegation()
-      .iter()
-      .cloned()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
-      })
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreMethodRef>()
+  pub fn capability_delegation(&self) -> Result<ArrayCoreMethodRef> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .capability_delegation()
+        .iter()
+        .cloned()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+          MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
+        })
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayCoreMethodRef>(),
+    )
   }
 
   /// Returns a copy of the document's `capabilityInvocation` set.
   #[wasm_bindgen(js_name = capabilityInvocation)]
-  pub fn capability_invocation(&self) -> ArrayCoreMethodRef {
-    self
-      .0
-      .blocking_read()
-      .capability_invocation()
-      .iter()
-      .cloned()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
-      })
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreMethodRef>()
+  pub fn capability_invocation(&self) -> Result<ArrayCoreMethodRef> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .capability_invocation()
+        .iter()
+        .cloned()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+          MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
+        })
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayCoreMethodRef>(),
+    )
   }
 
   /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    MapStringAny::try_from(self.0.blocking_read().properties())
+    MapStringAny::try_from(self.0.try_read()?.properties())
   }
 
   /// Sets a custom property in the DID Document.
@@ -300,10 +319,10 @@ impl WasmCoreDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.blocking_write().properties_mut_unchecked().insert(key, value);
+        self.0.try_write()?.properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.blocking_write().properties_mut_unchecked().remove(&key);
+        self.0.try_write()?.properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -315,17 +334,19 @@ impl WasmCoreDocument {
 
   /// Returns a set of all {@link Service} in the document.
   #[wasm_bindgen]
-  pub fn service(&self) -> ArrayService {
-    self
-      .0
-      .blocking_read()
-      .service()
-      .iter()
-      .cloned()
-      .map(WasmService)
-      .map(JsValue::from)
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayService>()
+  pub fn service(&self) -> Result<ArrayService> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .service()
+        .iter()
+        .cloned()
+        .map(WasmService)
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayService>(),
+    )
   }
 
   /// Add a new {@link Service} to the document.
@@ -333,7 +354,7 @@ impl WasmCoreDocument {
   /// Errors if there already exists a service or verification method with the same id.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &WasmService) -> Result<()> {
-    self.0.blocking_write().insert_service(service.0.clone()).wasm_result()
+    self.0.try_write()?.insert_service(service.0.clone()).wasm_result()
   }
 
   /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
@@ -341,25 +362,23 @@ impl WasmCoreDocument {
   /// Returns `true` if the service was removed.
   #[wasm_bindgen(js_name = removeService)]
   #[allow(non_snake_case)]
-  pub fn remove_service(&mut self, didUrl: &WasmDIDUrl) -> Option<WasmService> {
-    self
-      .0
-      .blocking_write()
-      .remove_service(&didUrl.0.clone())
-      .map(Into::into)
+  pub fn remove_service(&mut self, didUrl: &WasmDIDUrl) -> Result<Option<WasmService>> {
+    Ok(self.0.try_write()?.remove_service(&didUrl.0.clone()).map(Into::into))
   }
 
   /// Returns the first {@link Service} with an `id` property matching the provided `query`,
   /// if present.
   #[wasm_bindgen(js_name = resolveService)]
-  pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
-    let service_query: String = query.into_serde().ok()?;
-    self
-      .0
-      .blocking_read()
-      .resolve_service(&service_query)
-      .cloned()
-      .map(WasmService::from)
+  pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Result<Option<WasmService>> {
+    let service_query: String = query.into_serde().wasm_result()?;
+    Ok(
+      self
+        .0
+        .try_read()?
+        .resolve_service(&service_query)
+        .cloned()
+        .map(WasmService::from),
+    )
   }
 
   // ===========================================================================
@@ -375,7 +394,7 @@ impl WasmCoreDocument {
     let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
     let methods = self
       .0
-      .blocking_read()
+      .try_read()?
       .methods(scope)
       .into_iter()
       .cloned()
@@ -388,18 +407,20 @@ impl WasmCoreDocument {
 
   /// Returns an array of all verification relationships.
   #[wasm_bindgen(js_name = verificationRelationships)]
-  pub fn verification_relationships(&self) -> ArrayCoreMethodRef {
-    self
-      .0
-      .blocking_read()
-      .verification_relationships()
-      .cloned()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
-        MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
-      })
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayCoreMethodRef>()
+  pub fn verification_relationships(&self) -> Result<ArrayCoreMethodRef> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .verification_relationships()
+        .cloned()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(verification_method) => JsValue::from(WasmVerificationMethod(verification_method)),
+          MethodRef::Refer(did_url) => JsValue::from(WasmDIDUrl(did_url)),
+        })
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayCoreMethodRef>(),
+    )
   }
 
   /// Adds a new `method` to the document in the given `scope`.
@@ -407,15 +428,15 @@ impl WasmCoreDocument {
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
     self
       .0
-      .blocking_write()
+      .try_write()?
       .insert_method(method.0.clone(), scope.0)
       .wasm_result()
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Option<WasmVerificationMethod> {
-    self.0.blocking_write().remove_method(&did.0).map(Into::into)
+  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Result<Option<WasmVerificationMethod>> {
+    Ok(self.0.try_write()?.remove_method(&did.0).map(Into::into))
   }
 
   /// Returns a copy of the first verification method with an `id` property
@@ -430,7 +451,7 @@ impl WasmCoreDocument {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let guard = self.0.blocking_read();
+    let guard = self.0.try_read()?;
     let method: Option<&VerificationMethod> = guard.resolve_method(&method_query, method_scope);
     Ok(method.cloned().map(WasmVerificationMethod))
   }
@@ -448,7 +469,7 @@ impl WasmCoreDocument {
   ) -> Result<bool> {
     self
       .0
-      .blocking_write()
+      .try_write()?
       .attach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
@@ -463,7 +484,7 @@ impl WasmCoreDocument {
   ) -> Result<bool> {
     self
       .0
-      .blocking_write()
+      .try_write()?
       .detach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
@@ -479,20 +500,21 @@ impl WasmCoreDocument {
   /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
   /// take place.
   /// - The JWS must be encoded according to the JWS compact serialization.
-  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document,
+  /// or set explicitly in the `options`.
   #[wasm_bindgen(js_name = verifyJws)]
   #[allow(non_snake_case)]
   pub fn verify_jws(
     &self,
     jws: &WasmJws,
     options: &WasmJwsVerificationOptions,
-    signatureVerifier: Option<IJwsVerifier>,
+    signatureVerifier: IJwsVerifier,
     detachedPayload: Option<String>,
   ) -> Result<WasmDecodedJws> {
     let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
     self
       .0
-      .blocking_read()
+      .try_read()?
       .verify_jws(
         jws.0.as_str(),
         detachedPayload.as_deref().map(|detached| detached.as_bytes()),
@@ -517,7 +539,7 @@ impl WasmCoreDocument {
 
     self
       .0
-      .blocking_write()
+      .try_write()?
       .revoke_credentials(&query, indices.as_slice())
       .wasm_result()
   }
@@ -532,7 +554,7 @@ impl WasmCoreDocument {
 
     self
       .0
-      .blocking_write()
+      .try_write()?
       .unrevoke_credentials(&query, indices.as_slice())
       .wasm_result()
   }
@@ -543,8 +565,10 @@ impl WasmCoreDocument {
 
   /// Deep clones the {@link CoreDocument}.
   #[wasm_bindgen(js_name = clone)]
-  pub fn deep_clone(&self) -> WasmCoreDocument {
-    WasmCoreDocument(Rc::new(CoreDocumentLock::new(self.0.blocking_read().clone())))
+  pub fn deep_clone(&self) -> Result<WasmCoreDocument> {
+    Ok(WasmCoreDocument(Rc::new(CoreDocumentLock::new(
+      self.0.try_read()?.clone(),
+    ))))
   }
 
   /// ### Warning
@@ -568,7 +592,7 @@ impl WasmCoreDocument {
   /// Serializes to a plain JS representation.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0.blocking_read().as_ref()).wasm_result()
+    JsValue::from_serde(&self.0.try_read()?.as_ref()).wasm_result()
   }
 
   /// Deserializes an instance from a plain JS representation.
@@ -669,8 +693,11 @@ impl WasmCoreDocument {
   /// Produces a JWT where the payload is produced from the given `credential`
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  ///
+  /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   #[wasm_bindgen(js_name = createCredentialJwt)]
   pub fn create_credential_jwt(
     &self,
@@ -703,8 +730,9 @@ impl WasmCoreDocument {
   /// Produces a JWT where the payload is produced from the given presentation.
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
   #[wasm_bindgen(js_name = createPresentationJwt)]
   pub fn create_presentation_jwt(
     &self,

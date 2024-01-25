@@ -4,6 +4,7 @@ import {
     Credential,
     DecodedJwtPresentation,
     Duration,
+    EdDSAJwsVerifier,
     FailFast,
     IJwsVerifier,
     IotaDocument,
@@ -22,10 +23,11 @@ import {
     MethodDigest,
     MethodScope,
     Presentation,
+    StatusCheck,
     Storage,
+    SubjectHolderRelationship,
     Timestamp,
     VerificationMethod,
-    verifyEdDSA,
 } from "../node";
 import { createVerificationMethod } from "./key_id_storage";
 
@@ -87,16 +89,24 @@ describe("#JwkStorageDocument", function() {
 
         // Check that signing works
         let testString = "test";
+        let options = new JwsSignatureOptions({
+            customHeaderParameters: {
+                testKey: "testValue",
+            },
+        });
         const jws = await doc.createJws(
             storage,
             fragment,
             testString,
-            new JwsSignatureOptions(),
+            options,
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
+
+        // Verify custom header parameters.
+        assert.deepStrictEqual(token.protectedHeader().custom(), { testKey: "testValue" });
 
         // Check that we can also verify it using a custom verifier
         let customVerifier = new CustomVerifier();
@@ -139,8 +149,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
-
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
         const decoded = credentialValidator
             .validate(
                 credentialJwt,
@@ -208,7 +217,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Verify the signature and obtain a decoded token.
-        const token = doc.verifyJws(jws, new JwsVerificationOptions());
+        const token = doc.verifyJws(jws, new JwsVerificationOptions(), new EdDSAJwsVerifier());
         assert.deepStrictEqual(testString, token.claims());
 
         // Check that we can also verify it using a custom verifier
@@ -251,7 +260,7 @@ describe("#JwkStorageDocument", function() {
         );
 
         // Check that the credentialJwt can be decoded and verified
-        let credentialValidator = new JwtCredentialValidator();
+        let credentialValidator = new JwtCredentialValidator(new EdDSAJwsVerifier());
         const decoded = credentialValidator
             .validate(
                 credentialJwt,
@@ -357,6 +366,9 @@ describe("#JwkStorageDocument", function() {
                 expirationDate,
                 issuanceDate: Timestamp.nowUTC(),
                 audience,
+                customClaims: {
+                    testKey: "testValue",
+                },
             }),
         );
 
@@ -376,6 +388,7 @@ describe("#JwkStorageDocument", function() {
             presentation.toJSON(),
         );
         assert.equal(decoded.audience(), audience);
+        assert.deepStrictEqual(decoded.customClaims(), { testKey: "testValue" });
 
         // check issuance date validation.
         let options = new JwtPresentationValidationOptions({
@@ -419,9 +432,106 @@ describe("#JwkStorageDocument", function() {
             decodedSignature: Uint8Array,
             publicKey: Jwk,
         ): void {
-            verifyEdDSA(alg, signingInput, decodedSignature, publicKey);
+            new EdDSAJwsVerifier().verify(alg, signingInput, decodedSignature, publicKey);
             this._verifications += 1;
             return;
         }
     }
+});
+
+describe("#OptionParsing", function() {
+    it("JwsSignatureOptions can be parsed", () => {
+        new JwsSignatureOptions({
+            nonce: "nonce",
+            attachJwk: true,
+            b64: true,
+            cty: "type",
+            detachedPayload: false,
+            kid: "kid",
+            typ: "typ",
+            url: "https://www.example.com",
+        });
+    }),
+        it("JwsVerificationOptions can be parsed", () => {
+            new JwsVerificationOptions({
+                nonce: "nonce",
+                methodId: "did:iota:0x123",
+                methodScope: MethodScope.AssertionMethod(),
+            });
+        }),
+        it("JwtCredentialValidationOptions can be parsed", () => {
+            new JwtCredentialValidationOptions({
+                // These are equivalent ways of creating a timestamp.
+                earliestExpiryDate: new Timestamp(),
+                latestIssuanceDate: Timestamp.nowUTC(),
+                status: StatusCheck.SkipAll,
+                subjectHolderRelationship: ["did:iota:0x123", SubjectHolderRelationship.SubjectOnNonTransferable],
+                verifierOptions: new JwsVerificationOptions({
+                    nonce: "nonce",
+                }),
+            });
+        });
+});
+
+describe("#Documents throw error on concurrent synchronous access", async function() {
+    const wait: any = (ms: any) => new Promise(r => setTimeout(r, ms));
+
+    class MyJwkStore extends JwkMemStore {
+        constructor() {
+            super();
+        }
+
+        async generate(keyType: string, algorithm: JwsAlgorithm) {
+            await wait(10000);
+            return await super.generate(keyType, algorithm);
+        }
+    }
+    it("CoreDocument", async () => {
+        const document = new CoreDocument({ id: "did:example:123" });
+        const storage = new Storage(new MyJwkStore(), new KeyIdMemStore());
+        const insertPromise = document.generateMethod(
+            storage,
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+            "#key-1",
+            MethodScope.VerificationMethod(),
+        );
+
+        const idPromise = wait(10).then((_value: any) => {
+            return document.id();
+        });
+
+        let resolvedToError = false;
+        try {
+            await Promise.all([insertPromise, idPromise]);
+        } catch (e: any) {
+            resolvedToError = true;
+            assert.equal(e.name, "TryLockError");
+        }
+        assert.ok(resolvedToError, "Promise.all did not throw an error");
+    });
+
+    it("IotaDocument", async () => {
+        const document = new IotaDocument("rms");
+        const storage = new Storage(new MyJwkStore(), new KeyIdMemStore());
+        const insertPromise = document.generateMethod(
+            storage,
+            JwkMemStore.ed25519KeyType(),
+            JwsAlgorithm.EdDSA,
+            "#key-1",
+            MethodScope.VerificationMethod(),
+        );
+
+        const idPromise = wait(10).then((_value: any) => {
+            return document.id();
+        });
+        let resolvedToError = false;
+        try {
+            await Promise.all([insertPromise, idPromise]);
+        } catch (e: any) {
+            resolvedToError = true;
+            assert.equal(e.name, "TryLockError");
+        }
+        assert.ok(resolvedToError, "Promise.all did not throw an error");
+    });
 });

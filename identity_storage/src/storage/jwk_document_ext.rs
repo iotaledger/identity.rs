@@ -1,6 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::JwkStorageDocumentError as Error;
+use super::JwsSignatureOptions;
+use super::Storage;
+
 use crate::key_id_storage::KeyIdStorage;
 use crate::key_id_storage::KeyIdStorageResult;
 use crate::key_id_storage::MethodDigest;
@@ -9,10 +13,6 @@ use crate::key_storage::JwkStorage;
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageResult;
 use crate::key_storage::KeyType;
-
-use super::JwkStorageDocumentError as Error;
-use super::JwsSignatureOptions;
-use super::Storage;
 
 use async_trait::async_trait;
 use identity_core::common::Object;
@@ -98,8 +98,10 @@ pub trait JwkDocumentExt: private::Sealed {
   /// Produces a JWT where the payload is produced from the given `credential`
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  ///
   /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   async fn create_credential_jwt<K, I, T>(
     &self,
@@ -117,8 +119,9 @@ pub trait JwkDocumentExt: private::Sealed {
   /// Produces a JWT where the payload is produced from the given `presentation`
   /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
   ///
-  /// The `kid` in the protected header is the `id` of the method identified by `fragment` and the JWS signature will be
-  /// produced by the corresponding private key backed by the `storage` in accordance with the passed `options`.
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
   async fn create_presentation_jwt<K, I, CRED, T>(
     &self,
     presentation: &Presentation<CRED, T>,
@@ -359,8 +362,15 @@ impl JwkDocumentExt for CoreDocument {
       let mut header = JwsHeader::new();
 
       header.set_alg(alg);
+      if let Some(custom) = &options.custom_header_parameters {
+        header.set_custom(custom.clone())
+      }
 
-      header.set_kid(method.id().to_string());
+      if let Some(ref kid) = options.kid {
+        header.set_kid(kid.clone());
+      } else {
+        header.set_kid(method.id().to_string());
+      }
 
       if options.attach_jwk {
         header.set_jwk(jwk.clone())
@@ -392,6 +402,7 @@ impl JwkDocumentExt for CoreDocument {
       if let Some(nonce) = &options.nonce {
         header.set_nonce(nonce.clone())
       };
+
       header
     };
 

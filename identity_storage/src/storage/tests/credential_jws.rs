@@ -6,8 +6,10 @@ use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 
 use identity_credential::validator::JwtCredentialValidationOptions;
+use identity_did::DID;
 use identity_document::document::CoreDocument;
 use identity_document::verifiable::JwsVerificationOptions;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::MethodScope;
 
@@ -105,7 +107,8 @@ async fn signing_credential_with_nonce_and_scope() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   assert!(validator
     .validate::<_, Object>(
       &jws,
@@ -163,7 +166,8 @@ async fn signing_credential_with_b64() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   let decoded = validator
     .validate::<_, Object>(
       &jws,
@@ -192,6 +196,38 @@ async fn signing_credential_with_b64() {
 }
 
 #[tokio::test]
+async fn signing_credential_with_custom_kid() {
+  let (document, storage, fragment, credential) = setup().await;
+
+  let my_kid = "my-kid";
+  let jws = document
+    .create_credential_jwt(
+      &credential,
+      &storage,
+      fragment.as_ref(),
+      &JwsSignatureOptions::default().kid(my_kid),
+      None,
+    )
+    .await
+    .unwrap();
+
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  let method_id = document.id().clone().join(format!("#{fragment}")).unwrap();
+  let decoded = validator
+    .validate::<_, Object>(
+      &jws,
+      &document,
+      &JwtCredentialValidationOptions::default()
+        .verification_options(JwsVerificationOptions::new().method_id(method_id)),
+      identity_credential::validator::FailFast::FirstError,
+    )
+    .unwrap();
+
+  assert_eq!(decoded.header.kid().unwrap(), my_kid);
+}
+
+#[tokio::test]
 async fn custom_claims() {
   let (document, storage, kid, credential) = setup().await;
 
@@ -211,7 +247,8 @@ async fn custom_claims() {
     .await
     .unwrap();
 
-  let validator = identity_credential::validator::JwtCredentialValidator::new();
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
   let decoded = validator
     .validate::<_, Object>(
       &jws,
@@ -221,4 +258,44 @@ async fn custom_claims() {
     )
     .unwrap();
   assert_eq!(decoded.custom_claims.unwrap(), custom_claims);
+}
+
+#[tokio::test]
+async fn custom_header_parameters() {
+  let (document, storage, kid, credential) = setup().await;
+
+  let mut custom = Object::new();
+  custom.insert(
+    "test-key".to_owned(),
+    serde_json::Value::String("test-value".to_owned()),
+  );
+  let jws = document
+    .create_credential_jwt(
+      &credential,
+      &storage,
+      kid.as_ref(),
+      &JwsSignatureOptions::default()
+        .b64(true)
+        .custom_header_parameters(custom),
+      None,
+    )
+    .await
+    .unwrap();
+
+  let validator =
+    identity_credential::validator::JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  let decoded = validator
+    .validate::<_, Object>(
+      &jws,
+      &document,
+      &JwtCredentialValidationOptions::default(),
+      identity_credential::validator::FailFast::FirstError,
+    )
+    .unwrap();
+  let custom_from_decoded = decoded.header.as_ref().custom().unwrap();
+  assert_eq!(custom_from_decoded.len(), 1);
+  assert_eq!(
+    custom_from_decoded.get("test-key").unwrap().as_str().unwrap(),
+    "test-value".to_owned()
+  );
 }

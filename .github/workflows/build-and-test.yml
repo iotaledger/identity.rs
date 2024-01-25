@@ -17,6 +17,7 @@ on:
       - '**.toml'
       - 'bindings/**'
       - '!bindings/**.md'
+      - 'bindings/wasm/README.md' # the Readme contain txm tests
 
 env:
   RUST_BACKTRACE: full

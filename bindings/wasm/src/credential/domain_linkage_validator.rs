@@ -28,7 +28,7 @@ impl WasmJwtDomainLinkageValidator {
   /// algorithm will be used.
   #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
-  pub fn new(signatureVerifier: Option<IJwsVerifier>) -> WasmJwtDomainLinkageValidator {
+  pub fn new(signatureVerifier: IJwsVerifier) -> WasmJwtDomainLinkageValidator {
     let signature_verifier = WasmJwsVerifier::new(signatureVerifier);
     WasmJwtDomainLinkageValidator {
       validator: JwtDomainLinkageValidator::with_signature_verifier(signature_verifier),
@@ -60,7 +60,7 @@ impl WasmJwtDomainLinkageValidator {
   ) -> Result<()> {
     let domain = Url::parse(domain).wasm_result()?;
     let doc = ImportedDocumentLock::from(issuer);
-    let doc_guard = doc.blocking_read();
+    let doc_guard = doc.try_read()?;
     self
       .validator
       .validate_linkage(&doc_guard, &configuration.0, &domain, &options.0)
@@ -81,7 +81,7 @@ impl WasmJwtDomainLinkageValidator {
   ) -> Result<()> {
     let domain = Url::parse(domain).wasm_result()?;
     let doc = ImportedDocumentLock::from(issuer);
-    let doc_guard = doc.blocking_read();
+    let doc_guard = doc.try_read()?;
     self
       .validator
       .validate_credential(&doc_guard, &credentialJwt.0, &domain, &options.0)

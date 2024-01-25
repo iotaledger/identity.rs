@@ -1,6 +1,6 @@
 # IOTA Identity WASM
 
-> This is the 1.0 release candidate (rc) version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
+> This is the 1.0 version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 
@@ -11,7 +11,7 @@
 Latest Release: this version matches the `main` branch of this repository.
 
 ```bash
-npm install @iota/identity-wasm@rc
+npm install @iota/identity-wasm
 ```
 
 ## Build
@@ -49,14 +49,14 @@ The minimum supported version for node is: `v16`
 ## NodeJS Usage
 
 The following code creates a new IOTA DID Document suitable for publishing to a locally running private network.
-See the [instructions](https://wiki.iota.org/hornet/develop/how_tos/private_tangle) on running your own private network.
+See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private network.
 
 <!--
 Test this example using https://github.com/anko/txm: `txm README.md`
 
 Replace imports with local paths for txm:
 !test program
-cat | sed -e "s#require('@iota/identity-wasm/node')#require('./node')#" | node
+cat | sed -e "s#require('@iota/identity-wasm/node')#require('./node')#" | timeout 30 node || (echo "Process timed out after 30 seconds" && exit 1)
 -->
 <!-- !test check Nodejs Example -->
 

@@ -12,6 +12,7 @@ use js_sys::JsString;
 use wasm_bindgen::prelude::*;
 
 use crate::common::ArrayString;
+use crate::common::RecordStringAny;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::jose::WasmJwk;
@@ -57,6 +58,17 @@ impl WasmJwsHeader {
   #[wasm_bindgen(js_name = setB64)]
   pub fn set_b64(&mut self, value: bool) {
     self.0.set_b64(value);
+  }
+
+  /// Additional header parameters.
+  #[wasm_bindgen(js_name = custom)]
+  pub fn custom(&self) -> Option<RecordStringAny> {
+    match self.0.custom() {
+      Some(claims) => JsValue::from_serde(claims)
+        .map(|js_val| js_val.unchecked_into::<RecordStringAny>())
+        .ok(),
+      None => None,
+    }
   }
 
   // ===========================================================================

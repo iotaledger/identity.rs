@@ -10,6 +10,7 @@ on:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
       - ".github/workflows/audit.yml"
+      - ".cargo/audit.toml"
   pull_request:
     branches:
       - main
@@ -17,6 +18,7 @@ on:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
       - ".github/workflows/audit.yml"
+      - ".cargo/audit.toml"
 
 jobs:
   audit:

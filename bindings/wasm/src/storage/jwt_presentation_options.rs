@@ -71,4 +71,9 @@ interface IJwtPresentationOptions {
      * Default: `undefined`.
      */
     readonly audience?: string;
+
+    /**
+     * Custom claims that can be used to set additional claims on the resulting JWT.
+     */
+    readonly customClaims?: Record<string, any>;
 }"#;

@@ -1,6 +1,6 @@
 [package]
 name = "identity_iota"
-version = "0.7.0-alpha.7"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,23 +12,23 @@ rust-version.workspace = true
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
-identity_core = { version = "=0.7.0-alpha.7", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.7.0-alpha.7", path = "../identity_credential", features = ["validator"], default-features = false }
-identity_did = { version = "=0.7.0-alpha.7", path = "../identity_did", default-features = false }
-identity_document = { version = "=0.7.0-alpha.7", path = "../identity_document", default-features = false }
-identity_iota_core = { version = "=0.7.0-alpha.7", path = "../identity_iota_core", default-features = false }
-identity_resolver = { version = "=0.7.0-alpha.7", path = "../identity_resolver", default-features = false, optional = true }
-identity_storage = { version = "=0.7.0-alpha.7", path = "../identity_storage", default-features = false, features = ["iota-document"] }
-identity_verification = { version = "=0.7.0-alpha.7", path = "../identity_verification", default-features = false }
+identity_core = { version = "=1.0.0", path = "../identity_core", default-features = false }
+identity_credential = { version = "=1.0.0", path = "../identity_credential", features = ["validator"], default-features = false }
+identity_did = { version = "=1.0.0", path = "../identity_did", default-features = false }
+identity_document = { version = "=1.0.0", path = "../identity_document", default-features = false }
+identity_iota_core = { version = "=1.0.0", path = "../identity_iota_core", default-features = false }
+identity_resolver = { version = "=1.0.0", path = "../identity_resolver", default-features = false, optional = true }
+identity_storage = { version = "=1.0.0", path = "../identity_storage", default-features = false, features = ["iota-document"] }
+identity_verification = { version = "=1.0.0", path = "../identity_verification", default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.64"
-iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
+iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client"] }
 rand = "0.8.5"
 tokio = { version = "1.29.0", features = ["full"] }
 
 [features]
-default = ["revocation-bitmap", "client", "iota-client", "resolver", "eddsa"]
+default = ["revocation-bitmap", "client", "iota-client", "resolver"]
 
 # Exposes the `IotaIdentityClient` and `IotaIdentityClientExt` traits.
 client = ["identity_iota_core/client"]
@@ -43,6 +43,9 @@ revocation-bitmap = [
   "identity_resolver?/revocation-bitmap",
 ]
 
+# Enables revocation with `StatusList2021`.
+status-list-2021 = ["revocation-bitmap", "identity_credential/status-list-2021"]
+
 # Enables support for the `Resolver`.
 resolver = ["dep:identity_resolver"]
 
@@ -55,14 +58,11 @@ domain-linkage = ["identity_credential/domain-linkage"]
 # Enables fetching domain linkage configuration files.
 domain-linkage-fetch = ["identity_credential/domain-linkage-fetch"]
 
-# Enables JWS verification with the EdDSA algorithm
-eddsa = ["identity_verification/eddsa"]
-
 # Exposes in-memory implementations of the storage traits intended exclusively for testing.
 memstore = ["identity_storage/memstore"]
 
-# Exposes secure implementations of the storage traits using stronghold.
-stronghold = ["identity_storage/stronghold"]
+# Enables selective disclosure features.
+sd-jwt = ["identity_credential/sd-jwt"]
 
 [package.metadata.docs.rs]
 # To build locally:

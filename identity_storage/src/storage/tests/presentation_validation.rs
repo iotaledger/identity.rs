@@ -14,12 +14,15 @@ use identity_credential::presentation::PresentationBuilder;
 use identity_credential::validator::DecodedJwtPresentation;
 use identity_credential::validator::JwtPresentationValidationOptions;
 use identity_credential::validator::JwtPresentationValidator;
+use identity_credential::validator::JwtPresentationValidatorUtils;
 use identity_credential::validator::JwtValidationError;
 use identity_did::CoreDID;
 use identity_did::DID;
 use identity_document::document::CoreDocument;
+use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_verification::jws::JwsAlgorithm;
 use identity_verification::MethodScope;
+use once_cell::sync::Lazy;
 
 use crate::key_storage::JwkMemStore;
 use crate::storage::tests::test_utils::generate_credential;
@@ -30,6 +33,9 @@ use crate::JwkDocumentExt;
 use crate::JwsSignatureOptions;
 
 use super::test_utils::CredentialSetup;
+
+static JWT_PRESENTATION_VALIDATOR_ED25519: Lazy<JwtPresentationValidator<EdDSAJwsVerifier>> =
+  Lazy::new(|| JwtPresentationValidator::with_signature_verifier(EdDSAJwsVerifier::default()));
 
 #[tokio::test]
 async fn test_valid_presentation() {
@@ -49,10 +55,17 @@ where
       .build()
       .unwrap();
 
+  let mut custom_claims = Object::new();
+  custom_claims.insert(
+    "test-key".to_owned(),
+    serde_json::Value::String("test-value".to_owned()),
+  );
+
   let presentation_options = JwtPresentationOptions {
     expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
     issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
     audience: Some(Url::parse("did:test:123").unwrap()),
+    custom_claims: Some(custom_claims),
   };
 
   let presentation_jwt = setup
@@ -67,8 +80,7 @@ where
     .await
     .unwrap();
 
-  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let decoded_presentation: DecodedJwtPresentation<Jwt> = validator
+  let decoded_presentation: DecodedJwtPresentation<Jwt> = JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -82,6 +94,7 @@ where
   );
   assert_eq!(decoded_presentation.issuance_date, presentation_options.issuance_date);
   assert_eq!(decoded_presentation.aud, presentation_options.audience);
+  assert_eq!(decoded_presentation.custom_claims, presentation_options.custom_claims);
 }
 
 #[tokio::test]
@@ -111,6 +124,7 @@ where
     expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
     issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
     audience: Some(Url::parse("did:test:123").unwrap()),
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
@@ -125,11 +139,10 @@ where
     .await
     .unwrap();
 
-  let holder = JwtPresentationValidator::extract_holder::<CoreDID>(&presentation_jwt).unwrap();
+  let holder = JwtPresentationValidatorUtils::extract_holder::<CoreDID>(&presentation_jwt).unwrap();
   assert_eq!(holder.to_url(), setup.subject_doc.as_ref().id().to_url());
 
-  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let decoded_presentation: DecodedJwtPresentation<Jwt> = validator
+  let decoded_presentation: DecodedJwtPresentation<Jwt> = JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, _, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -168,6 +181,7 @@ where
     expiration_date: Some(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap()),
     issuance_date: Some(Timestamp::now_utc().checked_sub(Duration::hours(10)).unwrap()),
     audience: Some(Url::parse("did:test:123").unwrap()),
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
@@ -207,8 +221,8 @@ where
     )
     .await
     .unwrap();
-  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: JwtValidationError = validator
+
+  let validation_error: JwtValidationError = JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -250,6 +264,7 @@ where
     issuance_date: None,
     expiration_date: Some(Timestamp::now_utc().checked_sub(Duration::days(1)).unwrap()),
     audience: None,
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
@@ -264,8 +279,7 @@ where
     .await
     .unwrap();
 
-  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: JwtValidationError = validator
+  let validation_error: JwtValidationError = JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -286,7 +300,7 @@ where
   validation_options =
     validation_options.earliest_expiry_date(Timestamp::now_utc().checked_sub(Duration::days(2)).unwrap());
 
-  validator
+  JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(&presentation_jwt, &setup.subject_doc, &validation_options)
     .unwrap();
 }
@@ -315,6 +329,7 @@ where
     issuance_date: Some(Timestamp::now_utc().checked_add(Duration::hours(1)).unwrap()),
     expiration_date: None,
     audience: None,
+    custom_claims: None,
   };
 
   let presentation_jwt = setup
@@ -329,8 +344,7 @@ where
     .await
     .unwrap();
 
-  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: JwtValidationError = validator
+  let validation_error: JwtValidationError = JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,
@@ -350,7 +364,7 @@ where
   validation_options =
     validation_options.latest_issuance_date(Timestamp::now_utc().checked_add(Duration::hours(2)).unwrap());
 
-  let validation_ok: bool = validator
+  let validation_ok: bool = JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(&presentation_jwt, &setup.subject_doc, &validation_options)
     .is_ok();
   assert!(validation_ok);
@@ -390,8 +404,7 @@ where
     .await
     .unwrap();
 
-  let validator: JwtPresentationValidator = JwtPresentationValidator::new();
-  let validation_error: JwtValidationError = validator
+  let validation_error: JwtValidationError = JWT_PRESENTATION_VALIDATOR_ED25519
     .validate::<_, Jwt, Object>(
       &presentation_jwt,
       &setup.subject_doc,

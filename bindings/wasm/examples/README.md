@@ -59,6 +59,8 @@ The following advanced examples are available:
 | [3_did_issues_tokens](src/1_advanced/3_did_issues_tokens.ts) | Demonstrates how an identity can issue and control a Token Foundry and its tokens.                       |
 | [4_custom_resolution](src/1_advanced/4_custom_resolution.ts) | Demonstrates how to set up a resolver using custom handlers.                                             |
 | [5_domain_linkage](src/1_advanced/5_domain_linkage.ts)       | Demonstrates how to link a domain and a DID and verify the linkage.                                      |
+| [6_sd_jwt](src/1_advanced/6_sd_jwt.ts)                       | Demonstrates how to create a selective disclosure verifiable credential                                  |
+| [7_domain_linkage](src/1_advanced/7_status_list_2021.ts)     | Demonstrates how to revoke a credential using `StatusList2021`.                                          |
 
 ## Browser
 

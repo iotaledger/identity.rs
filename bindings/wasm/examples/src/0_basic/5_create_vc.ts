@@ -3,6 +3,7 @@
 
 import {
     Credential,
+    EdDSAJwsVerifier,
     FailFast,
     JwkMemStore,
     JwsSignatureOptions,
@@ -79,7 +80,7 @@ export async function createVC() {
     // Validate the credential's signature, the credential's semantic structure,
     // check that the issuance date is not in the future and that the expiration date is not in the past.
     // Note that the validation returns an object containing the decoded credential.
-    const decoded_credential = new JwtCredentialValidator().validate(
+    const decoded_credential = new JwtCredentialValidator(new EdDSAJwsVerifier()).validate(
         credentialJwt,
         issuerDocument,
         new JwtCredentialValidationOptions(),

@@ -1,6 +1,6 @@
 [package]
 name = "identity_jose"
-version = "0.7.0-alpha.7"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -12,18 +12,13 @@ rust-version.workspace = true
 description = "A library for JOSE (JSON Object Signing and Encryption)"
 
 [dependencies]
-identity_core = { version = "=0.7.0-alpha.7", path = "../identity_core", default-features = false }
+identity_core = { version = "=1.0.0", path = "../identity_core", default-features = false }
 iota-crypto = { version = "0.23", default-features = false, features = ["std", "sha"] }
 serde.workspace = true
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 subtle = { version = "2.5", default-features = false }
 thiserror.workspace = true
 zeroize = { version = "1.6", default-features = false, features = ["std", "zeroize_derive"] }
-
-[features]
-# Enables jws verification based on the EdDSA algorithm.
-eddsa = ["iota-crypto/ed25519"]
-default = ["eddsa"]
 
 [dev-dependencies]
 anyhow = "1"
