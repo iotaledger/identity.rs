@@ -73,7 +73,7 @@ Test this example using https://github.com/anko/txm: `txm README.md`
 !test program
 cd ../..
 mkdir tmp
-cat | sed -e 's#identity_iota = .*#identity_iota = { path = "../identity_iota" }#' > tmp/Cargo.toml
+cat | sed -e 's#identity_iota = { version = "[^"]*"#identity_iota = { path = "../identity_iota"#' > tmp/Cargo.toml
 echo '[workspace]' >>tmp/Cargo.toml
 -->
 <!-- !test check Cargo Example -->
