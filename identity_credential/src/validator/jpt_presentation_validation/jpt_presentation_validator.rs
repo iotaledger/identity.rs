@@ -5,7 +5,7 @@ use identity_did::{DIDUrl, CoreDID};
 use identity_document::document::CoreDocument;
 use jsonprooftoken::{jwp::presented::JwpPresentedDecoder, encoding::SerializationType, jwk::key::Jwk as JwkExt, jpt::claims::JptClaims};
 
-use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{CompoundCredentialValidationError, FailFast, JptCredentialValidationOptions, JptCredentialValidator, JptCredentialValidatorUtils, JwtCredentialValidatorUtils, JwtValidationError, SignerContext}};
+use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{CompoundCredentialValidationError, FailFast, JptCredentialValidatorUtils, JwtCredentialValidatorUtils, JwtValidationError, SignerContext}};
 
 use super::{JptPresentationValidationOptions, DecodedJptPresentation};
 

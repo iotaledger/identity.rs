@@ -1,7 +1,5 @@
 use std::str::FromStr;
-
 use identity_core::common::{Object, Url, Timestamp};
-use identity_core::convert::{ToJson, FromJson};
 use identity_did::DIDUrl;
 use identity_core::common::Value;
 use serde::Deserialize;
@@ -143,10 +141,10 @@ impl TryFrom<Status> for RevocationTimeframeStatus {
         )));
       };
 
-    let revocation_timeframe: Timestamp = if let Value::String(timeframe) = revocation_timeframe {
+    if let Value::String(timeframe) = revocation_timeframe {
 
       Timestamp::from_str(&timeframe).map_err(|_| Self::Error::InvalidStatus(format!(
-        "property '{}' is not a string",
+        "property '{}' is not a valid Timestamp",
         Self::TIMEFRAME_PROPERTY
       )))?
     
@@ -158,9 +156,9 @@ impl TryFrom<Status> for RevocationTimeframeStatus {
     };
 
 
-    let revocation_timeframe_epoch: &Value =
-      if let Some(revocation_timeframe_epoch) = status.properties.get(Self::GRANULARITY) {
-        revocation_timeframe_epoch
+    let revocation_timeframe_granularity: &Value =
+      if let Some(revocation_timeframe_granularity) = status.properties.get(Self::GRANULARITY) {
+        revocation_timeframe_granularity
       } else {
         return Err(Self::Error::InvalidStatus(format!(
           "missing required property '{}'",
@@ -168,13 +166,12 @@ impl TryFrom<Status> for RevocationTimeframeStatus {
         )));
       };
 
-    let revocation_timeframe_epoch: ValidityTimeframeGranularity = if let Value::String(epoch) = revocation_timeframe_epoch {
+    if let Value::String(granularity) = revocation_timeframe_granularity {
 
-      ValidityTimeframeGranularity::from_str(&epoch).map_err(|_| Self::Error::InvalidStatus(format!(
-        "property '{}' is not a string",
+      ValidityTimeframeGranularity::from_str(&granularity).map_err(|_| Self::Error::InvalidStatus(format!(
+        "property '{}' is not a compatible ValidityTimeframeGranularity",
         Self::GRANULARITY
       )))?
-    
     } else {
       return Err(Self::Error::InvalidStatus(format!(
         "property '{}' is not a string",

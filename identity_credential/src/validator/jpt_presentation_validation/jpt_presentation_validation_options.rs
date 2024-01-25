@@ -1,7 +1,6 @@
 use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
-use crate::validator::JptCredentialValidationOptions;
 
 /// Criteria for validating a [`Presentation`](crate::presentation::Presentation).
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
