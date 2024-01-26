@@ -7,7 +7,7 @@
 //! This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with
 //! whomever they please.
 //!
-//! cargo run --example 5_create_vc
+//! cargo run --release --example 5_create_vc
 
 use examples::create_did;
 use examples::MemStorage;

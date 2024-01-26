@@ -26,6 +26,7 @@ use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::address::Bech32Address;
 use iota_sdk::types::block::address::Hrp;
 use rand::distributions::DistString;
+use serde_json::Value;
 
 pub static API_ENDPOINT: &str = "https://api.testnet.shimmer.network";
 pub static FAUCET_ENDPOINT: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
@@ -175,4 +176,13 @@ pub fn random_stronghold_path() -> PathBuf {
   file.push(rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 32));
   file.set_extension("stronghold");
   file.to_owned()
+}
+
+pub fn pretty_print_json(label: &str, value: &str) {
+  let data: Value = serde_json::from_str(value).unwrap();
+  let pretty_json = serde_json::to_string_pretty(&data).unwrap();
+  println!("--------------------------------------");
+  println!("{}:", label);
+  println!("--------------------------------------");
+  println!("{} \n", pretty_json);
 }

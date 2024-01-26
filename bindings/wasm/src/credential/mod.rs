@@ -14,6 +14,7 @@ pub use self::options::WasmFailFast;
 pub use self::options::WasmSubjectHolderRelationship;
 pub use self::presentation::*;
 pub use self::proof::WasmProof;
+pub use self::revocation::*;
 pub use self::types::*;
 
 mod credential;
@@ -29,4 +30,5 @@ mod linked_domain_service;
 mod options;
 mod presentation;
 mod proof;
+mod revocation;
 mod types;

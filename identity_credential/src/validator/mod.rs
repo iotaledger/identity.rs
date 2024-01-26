@@ -10,6 +10,8 @@ pub use self::jpt_presentation_validation::*;
 pub use self::options::FailFast;
 pub use self::options::StatusCheck;
 pub use self::options::SubjectHolderRelationship;
+#[cfg(feature = "sd-jwt")]
+pub use self::sd_jwt::*;
 
 //TODO: ZKP - new modules
 
@@ -18,5 +20,7 @@ mod jpt_presentation_validation;
 mod jwt_credential_validation;
 mod jwt_presentation_validation;
 mod options;
+#[cfg(feature = "sd-jwt")]
+mod sd_jwt;
 #[cfg(test)]
 pub(crate) mod test_utils;
