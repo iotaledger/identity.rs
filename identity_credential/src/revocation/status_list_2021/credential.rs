@@ -122,8 +122,9 @@ impl StatusList2021Credential {
   /// mapping it to the `index`-th entry of this [`StatusList2021Credential`].
   ///
   /// ## Note:
-  /// A revoked credential cannot ever be unrevoked and will lead to a
+  /// - A revoked credential cannot ever be unrevoked and will lead to a
   /// [`StatusList2021CredentialError::UnrevocableCredential`].
+  /// - Trying to unrevoke an already valid credential won't do anything.
   pub fn set_credential_status(
     &mut self,
     credential: &mut Credential,
@@ -144,10 +145,11 @@ impl StatusList2021Credential {
 
   /// Sets the `index`-th entry to `value`
   pub(crate) fn set_entry(&mut self, index: usize, value: bool) -> Result<(), StatusList2021CredentialError> {
-    if self.purpose() == StatusPurpose::Revocation && !value {
+    let mut status_list = self.status_list()?;
+    let entry_status = status_list.get(index)?;
+    if self.purpose() == StatusPurpose::Revocation && !value && entry_status {
       return Err(StatusList2021CredentialError::UnrevocableCredential);
     }
-    let mut status_list = self.status_list()?;
     status_list.set(index, value)?;
     self.subject.encoded_list = status_list.into_encoded_str();
 
@@ -423,6 +425,8 @@ mod tests {
       .build()
       .unwrap();
 
+    assert!(status_list_credential.set_entry(420, false).is_ok());
+    status_list_credential.set_entry(420, true).unwrap();
     assert_eq!(
       status_list_credential.set_entry(420, false),
       Err(StatusList2021CredentialError::UnrevocableCredential)
