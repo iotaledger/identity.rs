@@ -4,7 +4,7 @@ use jsonprooftoken::jwp::issued::JwpIssued;
 use crate::credential::Credential;
 
 /// Decoded [`Credential`] from a cryptographically verified JWP.
-/// #[non_exhaustive]
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct DecodedJptCredential<T = Object> {
     /// The decoded credential parsed to the [Verifiable Credentials Data model](https://www.w3.org/TR/vc-data-model/).
