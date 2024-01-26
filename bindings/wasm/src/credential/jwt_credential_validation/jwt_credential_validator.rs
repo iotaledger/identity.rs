@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::core::Object;
@@ -13,6 +13,7 @@ use crate::common::ImportedDocumentLock;
 use crate::common::ImportedDocumentReadGuard;
 use crate::common::WasmTimestamp;
 use crate::credential::options::WasmStatusCheck;
+use crate::credential::revocation::status_list_2021::WasmStatusList2021Credential;
 use crate::credential::WasmCredential;
 use crate::credential::WasmDecodedJwtCredential;
 use crate::credential::WasmFailFast;
@@ -168,6 +169,21 @@ impl WasmJwtCredentialValidator {
     )?;
     let status_check: StatusCheck = statusCheck.into();
     JwtCredentialValidatorUtils::check_status(&credential.0, &trusted_issuers, status_check).wasm_result()
+  }
+
+  /// Checks wheter the credential status has been revoked using `StatusList2021`.
+  #[wasm_bindgen(js_name = checkStatusWithStatusList2021)]
+  pub fn check_status_with_status_list_2021(
+    credential: &WasmCredential,
+    status_list: &WasmStatusList2021Credential,
+    status_check: WasmStatusCheck,
+  ) -> Result<()> {
+    JwtCredentialValidatorUtils::check_status_with_status_list_2021(
+      &credential.0,
+      &status_list.inner,
+      status_check.into(),
+    )
+    .wasm_result()
   }
 
   /// Utility for extracting the issuer field of a {@link Credential} as a DID.

@@ -1,6 +1,6 @@
 [package]
 name = "identity_credential"
-version = "1.0.0"
+version = "1.1.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage.workspace = true
@@ -13,30 +13,33 @@ description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
 dataurl = { version = "0.1.2", default-features = false, optional = true }
-flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }
+flate2 = { version = "1.0.28", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
-identity_core = { version = "=1.0.0", path = "../identity_core", default-features = false }
-identity_did = { version = "=1.0.0", path = "../identity_did", default-features = false }
-identity_document = { version = "=1.0.0", path = "../identity_document", default-features = false }
-identity_verification = { version = "=1.0.0", path = "../identity_verification", default-features = false }
+identity_core = { version = "=1.1.0-alpha.1", path = "../identity_core", default-features = false }
+identity_did = { version = "=1.1.0-alpha.1", path = "../identity_did", default-features = false }
+identity_document = { version = "=1.1.0-alpha.1", path = "../identity_document", default-features = false }
+identity_verification = { version = "=1.1.0-alpha.1", path = "../identity_verification", default-features = false }
 indexmap = { version = "2.0", default-features = false, features = ["std", "serde"] }
 itertools = { version = "0.11", default-features = false, features = ["use_std"], optional = true }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
 roaring = { version = "0.10", default-features = false, optional = true }
+sd-jwt-payload = { version = "0.1.2", default-features = false, features = ["sha"], optional = true }
 serde.workspace = true
+serde-aux = { version = "4.3.1", default-features = false, optional = true }
+serde_json.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
 strum.workspace = true
 thiserror.workspace = true
-url = { version = "2.4", default-features = false }
+url = { version = "2.5", default-features = false }
 json-proof-token.workspace = true
 
 [dev-dependencies]
-identity_eddsa_verifier = { version = "=1.0.0", path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
+anyhow = "1.0.62"
+identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
 iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "std", "random"] }
-proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-serde_json.workspace = true
-tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
+proptest = { version = "1.4.0", default-features = false, features = ["std"] }
+tokio = { version = "1.35.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -45,10 +48,12 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap", "validator", "credential", "presentation", "domain-linkage-fetch"]
+default = ["revocation-bitmap", "validator", "credential", "presentation", "domain-linkage-fetch", "sd-jwt"]
 credential = []
 presentation = ["credential"]
 revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
+status-list-2021 = ["revocation-bitmap", "dep:serde-aux"]
 validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
 domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
+sd-jwt = ["credential", "validator", "sd-jwt-payload"]

@@ -8,7 +8,7 @@
 //!
 //! Note: make sure `API_ENDPOINT` and `FAUCET_ENDPOINT` are set to the correct network endpoints.
 //!
-//! cargo run --example 7_revoke_vc
+//! cargo run --release --example 7_revoke_vc
 
 use anyhow::anyhow;
 use examples::create_did;

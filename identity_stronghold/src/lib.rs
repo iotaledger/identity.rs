@@ -8,4 +8,3 @@ mod stronghold_key_id;
 mod tests;
 
 pub use stronghold_jwk_storage::*;
-pub use stronghold_key_id::*;

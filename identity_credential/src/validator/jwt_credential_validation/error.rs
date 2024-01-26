@@ -112,6 +112,9 @@ pub enum JwtValidationError {
   #[error("could not verify jwp")]
   JwpProofVerificationError(#[source] jsonprooftoken::errors::CustomError),
   
+  /// Indicates that the credential has been suspended.
+  #[error("credential has been suspended")]
+  Suspended,
 }
 
 /// Specifies whether an error is related to a credential issuer or the presentation holder.

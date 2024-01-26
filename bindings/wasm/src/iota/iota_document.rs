@@ -704,7 +704,39 @@ impl WasmIotaDocument {
   ///
   /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
   /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+  ///
+  /// @deprecated Use `createJws()` instead.
+  #[deprecated]
   #[wasm_bindgen(js_name = createJwt)]
+  pub fn create_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseJws> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_jws(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(WasmJws::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+  /// material in the verification method identified by the given `fragment.
+  ///
+  /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+  #[wasm_bindgen(js_name = createJws)]
   pub fn create_jws(
     &self,
     storage: &WasmStorage,
