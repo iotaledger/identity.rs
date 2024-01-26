@@ -39,7 +39,7 @@ pub enum StatusList2021CredentialError {
   Unreferenceable,
   /// Credentials cannot be unrevoked.
   #[error("A previously revoked credential cannot be unrevoked.")]
-  UnrevocableCredential,
+  UnreversibleRevocation,
 }
 
 use crate::credential::Credential;
@@ -148,7 +148,7 @@ impl StatusList2021Credential {
     let mut status_list = self.status_list()?;
     let entry_status = status_list.get(index)?;
     if self.purpose() == StatusPurpose::Revocation && !value && entry_status {
-      return Err(StatusList2021CredentialError::UnrevocableCredential);
+      return Err(StatusList2021CredentialError::UnreversibleRevocation);
     }
     status_list.set(index, value)?;
     self.subject.encoded_list = status_list.into_encoded_str();
@@ -429,7 +429,7 @@ mod tests {
     status_list_credential.set_entry(420, true).unwrap();
     assert_eq!(
       status_list_credential.set_entry(420, false),
-      Err(StatusList2021CredentialError::UnrevocableCredential)
+      Err(StatusList2021CredentialError::UnreversibleRevocation)
     );
   }
   #[test]
@@ -442,6 +442,8 @@ mod tests {
       .build()
       .unwrap();
 
+    assert!(status_list_credential.set_entry(420, false).is_ok());
+    status_list_credential.set_entry(420, true).unwrap();
     assert!(status_list_credential.set_entry(420, false).is_ok());
   }
 }
