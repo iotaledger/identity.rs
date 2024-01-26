@@ -428,4 +428,16 @@ mod tests {
       Err(StatusList2021CredentialError::UnrevocableCredential)
     );
   }
+  #[test]
+  fn suspended_credential_can_be_unsuspended() {
+    let url = Url::parse("http://example.com").unwrap();
+    let mut status_list_credential = StatusList2021CredentialBuilder::new(StatusList2021::default())
+      .issuer(Issuer::Url(url.clone()))
+      .purpose(StatusPurpose::Suspension)
+      .subject_id(url)
+      .build()
+      .unwrap();
+
+      assert!(status_list_credential.set_entry(420, false).is_ok());
+  }
 }
