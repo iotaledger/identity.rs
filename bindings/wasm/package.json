@@ -25,6 +25,7 @@
     "test:browser:parallel": "npm run build:examples:web && cypress-parallel -s test:browser -t 4 -d cypress/e2e -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
+    "test:readme:rust": "mocha ./tests/txm_readme_rust.js --retries 3 --timeout 360000 --exit",
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open",
     "fmt": "dprint fmt"

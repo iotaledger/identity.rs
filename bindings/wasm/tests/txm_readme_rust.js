@@ -3,7 +3,7 @@ const spawn = require("child_process").spawn;
 
 describe("Test TXM", () => {
     before((done) => {
-        let process = spawn("txm", ["README.md"]);
+        let process = spawn("txm", ["../../README.md"]);
         process.stdout.on("data", function(data) {
             console.log(data.toString());
         });
