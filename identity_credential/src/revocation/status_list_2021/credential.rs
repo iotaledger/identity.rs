@@ -438,6 +438,6 @@ mod tests {
       .build()
       .unwrap();
 
-      assert!(status_list_credential.set_entry(420, false).is_ok());
+    assert!(status_list_credential.set_entry(420, false).is_ok());
   }
 }
