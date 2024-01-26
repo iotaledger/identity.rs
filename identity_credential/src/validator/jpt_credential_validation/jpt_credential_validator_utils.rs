@@ -112,7 +112,6 @@ impl JptCredentialValidatorUtils {
     let check = status.validity_timeframe().is_ok_and(|t| {
       status.granularity().is_ok_and(|e| {{
         match e {
-            crate::credential::ValidityTimeframeGranularity::SECOND => now == t,
             crate::credential::ValidityTimeframeGranularity::MINUTE => now.to_minute() == t,
             crate::credential::ValidityTimeframeGranularity::HOUR => now.to_hour() == t,
         }

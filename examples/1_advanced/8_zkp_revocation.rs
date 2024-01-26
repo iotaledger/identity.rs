@@ -68,6 +68,7 @@ async fn create_did(client: &Client, secret_manager: &SecretManager, storage: &M
   // The DID will be derived from the Alias Id of the Alias Output after publishing.
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
+  // New Verification Method containing a BBS+ key
   let fragment = document.generate_method_jwp(
     &storage, 
     key_type, 

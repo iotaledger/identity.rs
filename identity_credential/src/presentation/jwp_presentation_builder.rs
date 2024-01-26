@@ -13,7 +13,7 @@ use crate::error::Result;
 /// - expirationDate MUST be blinded (if Timeslot Revocation mechanism is used)
 /// - credentialSubject (User have to choose which attribute must be blinded)
 /// - credentialSchema MUST NOT be blinded
-/// - credentialStatus NO reason to use it in ZK VC (will be blinded in any case)
+/// - credentialStatus MUST NOT be blinded
 /// - refreshService MUST NOT be blinded (probably will be used for Timeslot Revocation mechanism)
 /// - termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
 /// - evidence (User have to choose which attribute must be blinded)
@@ -29,15 +29,12 @@ impl SelectiveDisclosurePresentation {
 
         jwp_builder.set_undisclosed("jti").ok(); // contains the credential's id, provides linkability
         
-        jwp_builder.set_undisclosed("nbf").ok(); // 
-       
         jwp_builder.set_undisclosed("issuanceDate").ok(); // Depending on the revocation method used it will be necessary or not
-        
+        jwp_builder.set_undisclosed("nbf").ok();
+
         jwp_builder.set_undisclosed("expirationDate").ok(); // Depending on the revocation method used it will be necessary or not
         jwp_builder.set_undisclosed("exp").ok();
 
-        jwp_builder.set_undisclosed("credentialStatus").ok(); // Provides linkability so, there is NO reason to use it in ZK VC
-        
         jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC,
 
         Self{jwp_builder}

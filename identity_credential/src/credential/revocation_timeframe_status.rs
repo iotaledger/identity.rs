@@ -15,18 +15,19 @@ use super::Status;
 /// Validity Timeframe granularity
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ValidityTimeframeGranularity {
-    /// Seconds
-    SECOND,
-    /// Minutes
+    /// # Example: 
+    /// `Timestamp::now_utc() = 2024-01-25T16:45:15Z` --> `validityTimeframe = 2024-01-25T16:45:00Z` \
+    /// * It will be valid until `2024-01-25T16:46:00Z`
     MINUTE,
-    /// Hours
+    /// # Example: 
+    /// `Timestamp::now_utc() = 2024-01-25T16:45:15Z` --> `validityTimeframe = 2024-01-25T16:00:00Z` \
+    /// * It will be valid until `2024-01-25T17:00:00Z`
     HOUR
 }
 
 impl ToString for ValidityTimeframeGranularity {
   fn to_string(&self) -> String {
       match self {
-          ValidityTimeframeGranularity::SECOND => String::from("SECOND"),
           ValidityTimeframeGranularity::MINUTE => String::from("MINUTE"),
           ValidityTimeframeGranularity::HOUR => String::from("HOUR"),
       }
@@ -38,7 +39,6 @@ impl FromStr for ValidityTimeframeGranularity {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
       match s {
-          "SECOND" => Ok(ValidityTimeframeGranularity::SECOND),
           "MINUTE" => Ok(ValidityTimeframeGranularity::MINUTE),
           "HOUR" => Ok(ValidityTimeframeGranularity::HOUR),
           _ => Err("Invalid string representation for ValidityTimeframeEpoch"),
@@ -59,13 +59,9 @@ impl RevocationTimeframeStatus {
 
   /// Creates a new `RevocationTimeframeStatus`.
   pub fn new(epoch: ValidityTimeframeGranularity) -> Self {
-    let did_url: DIDUrl = DIDUrl::parse("did:method:0xffff#revocation-1").unwrap();
     let mut object = Object::new();
 
-    
-
     let validity_timeframe = match epoch {
-        ValidityTimeframeGranularity::SECOND => Timestamp::now_utc(),
         ValidityTimeframeGranularity::MINUTE => Timestamp::now_utc().to_minute(),
         ValidityTimeframeGranularity::HOUR => Timestamp::now_utc().to_hour(),
     };
@@ -73,7 +69,7 @@ impl RevocationTimeframeStatus {
     object.insert(Self::TIMEFRAME_PROPERTY.to_owned(), Value::String(validity_timeframe.to_rfc3339()));
     object.insert(Self::GRANULARITY.to_owned(), Value::String(epoch.to_string()));
     Self(Status::new_with_properties(
-      Url::from(did_url), // Here maybe i could put the id of the service of the issuer document containing the revocationbitmap if we choose to use it and add also an index here
+      Url::parse("http://example.com/").unwrap(), // Here maybe i could put the id of the service of the issuer document containing the revocationbitmap if we choose to use it and add also an index here
       // if we use a database though this field is useless
       Self::TYPE.to_owned(),
       object,
