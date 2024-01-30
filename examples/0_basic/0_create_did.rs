@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
   // The API endpoint of an IOTA node, e.g. Hornet.
   let api_endpoint: &str = "http://127.0.0.1:14265";
   // The faucet endpoint allows requesting funds for testing purposes.
-  let faucet_endpoint: &str = "127.0.0.1:8091/api/enqueue";
+  let faucet_endpoint: &str = "http://127.0.0.1:8091/api/enqueue";
 
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder()
