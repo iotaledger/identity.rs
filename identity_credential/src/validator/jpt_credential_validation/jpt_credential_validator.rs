@@ -13,7 +13,7 @@ use crate::{credential::{Jpt, Credential}, validator::{FailFast, JwtValidationEr
 
 use super::DecodedJptCredential;
 
-/// A type for decoding and validating [`Credential`]s in JPT format. //TODO: ZKP - validator
+/// A type for decoding and validating [`Credential`]s in JPT format.
 #[non_exhaustive]
 pub struct JptCredentialValidator;
 

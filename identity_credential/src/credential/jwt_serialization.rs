@@ -679,7 +679,6 @@ mod tests {
 }
 
 
-//TODO: ZKP - convert to JptClaims structure which basically contains the same claim names
 impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
 where
     T: ToOwned + Serialize,

@@ -27,8 +27,6 @@ pub enum JwkOperation {
   DeriveKey,
   /// Derive bits not to be used as a key.
   DeriveBits,
-
-  //TODO: ZKP - added ProofGeneration/ProofVerification
   /// Compute proof
   ProofGeneration,
   /// Verify proof

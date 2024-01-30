@@ -1,5 +1,3 @@
-//TODO: ZKP - JwkExt
-
 use std::str::FromStr;
 use identity_core::common::Url;
 use jsonprooftoken::{jwk::{key::{Jwk as JwkExt, KeyOps, PKUse}, alg_parameters::{JwkAlgorithmParameters, JwkOctetKeyPairParameters, Algorithm}, types::KeyType, curves::EllipticCurveTypes}, jpa::algs::ProofAlgorithm};

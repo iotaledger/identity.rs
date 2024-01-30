@@ -28,8 +28,8 @@ use iota_sdk::types::block::address::Hrp;
 use rand::distributions::DistString;
 use serde_json::Value;
 
-pub static API_ENDPOINT: &str = "https://api.testnet.shimmer.network";
-pub static FAUCET_ENDPOINT: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
+pub static API_ENDPOINT: &str = "http://localhost:14265";
+pub static FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
 
 pub type MemStorage = Storage<JwkMemStore, KeyIdMemstore>;
 
@@ -87,7 +87,6 @@ pub async fn get_address_with_funds(
   faucet_endpoint: &str,
 ) -> anyhow::Result<Address> {
   let address: Bech32Address = get_address(client, stronghold).await?;
-
 
   request_faucet_funds(client, address, faucet_endpoint)
     .await

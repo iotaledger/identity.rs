@@ -152,7 +152,7 @@ mod private {
 // be implemented in terms of &mut CoreDocument for IotaDocument. To work around this limitation we use macros to avoid
 // copious amounts of repetition.
 // NOTE: If such use of macros becomes very common it is probably better to use the duplicate crate: https://docs.rs/duplicate/latest/duplicate/
-macro_rules! generate_method_for_document_type {   //TODO: ZKP - changed macro to handle both JwkDocumentExt and JwpDocumentExt traits
+macro_rules! generate_method_for_document_type {
   ($t:ty, $a:ty, $k:path, $f:path, $name:ident) => {
     async fn $name<K, I>(
       document: &mut $t,

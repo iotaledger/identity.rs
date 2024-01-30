@@ -199,11 +199,11 @@ impl JwkMemStore {
   /// The Ed25519 key type.
   pub const ED25519_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ED25519_KEY_TYPE_STR);
 
-  const BLS12381SHA256_KEY_TYPE_STR: &str = "Bls12381Sha256";
+  const BLS12381SHA256_KEY_TYPE_STR: &'static str = "Bls12381Sha256";
   /// The BLS12381-SHA256 key type
   pub const BLS12381SHA256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHA256_KEY_TYPE_STR);
 
-  const BLS12381SHAKE256_KEY_TYPE_STR: &str = "Bls12381Shake256";
+  const BLS12381SHAKE256_KEY_TYPE_STR: &'static str = "Bls12381Shake256";
   /// The BLS12381-SHAKE256 key type
   pub const BLS12381SHAKE256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHAKE256_KEY_TYPE_STR);
 }
@@ -287,7 +287,6 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
 }
 
 
-//TODO: ZKP - impl JwkStorageExt for JwkMemStore
 /// JwkStorageExt implementation for JwkMemStore
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]

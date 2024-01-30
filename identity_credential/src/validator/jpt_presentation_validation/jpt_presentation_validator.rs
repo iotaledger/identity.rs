@@ -9,7 +9,7 @@ use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{Fail
 
 use super::{JptPresentationValidationOptions, DecodedJptPresentation};
 
-/// A type for decoding and validating Presented [`Credential`]s in JPT format. //TODO: ZKP - validator
+/// A type for decoding and validating Presented [`Credential`]s in JPT format.
 #[non_exhaustive]
 pub struct JptPresentationValidator;
 

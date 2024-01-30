@@ -1,6 +1,4 @@
 
-//TODO: ZKP - JwpCredentialOptions
-
 /// Options for creating a JSON Web Proof.
 #[non_exhaustive]
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Eq, PartialEq, Clone)]

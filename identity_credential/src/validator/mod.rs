@@ -13,8 +13,6 @@ pub use self::options::SubjectHolderRelationship;
 #[cfg(feature = "sd-jwt")]
 pub use self::sd_jwt::*;
 
-//TODO: ZKP - new modules
-
 mod jpt_credential_validation;
 mod jpt_presentation_validation;
 mod jwt_credential_validation;

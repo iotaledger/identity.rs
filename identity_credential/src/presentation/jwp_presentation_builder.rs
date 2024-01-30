@@ -3,18 +3,20 @@ use jsonprooftoken::jwp::{presented::JwpPresentedBuilder, issued::JwpIssued};
 use crate::error::Error;
 use crate::error::Result;
 
-//TODO: ZKP - Used for Selective Disclosure
+
+//TODO: ZKP - This could be subject to changes with the introduction of the revocation mechanism.
+
 /// Used to construct a JwpPresentedBuilder and handle the selective disclosure of attributes
 /// - @context MUST NOT be blinded
 /// - id MUST be blinded
 /// - type MUST NOT be blinded
 /// - issuer MUST NOT be blinded
-/// - issuanceDate MUST be blinded (if Timeslot Revocation mechanism is used)
-/// - expirationDate MUST be blinded (if Timeslot Revocation mechanism is used)
+/// - issuanceDate MUST be blinded (if Timeframe Revocation mechanism is used)
+/// - expirationDate MUST be blinded (if Timeframe Revocation mechanism is used)
 /// - credentialSubject (User have to choose which attribute must be blinded)
 /// - credentialSchema MUST NOT be blinded
-/// - credentialStatus NO reason to use it in ZK VC (will be blinded in any case)
-/// - refreshService MUST NOT be blinded (probably will be used for Timeslot Revocation mechanism)
+/// - credentialStatus Will be used for Revocation mechanism, some fields could be blinded
+/// - refreshService MUST NOT be blinded (perhaps will be used for Timeframe Revocation mechanism)
 /// - termsOfUse NO reason to use it in ZK VC (will be in any case blinded)
 /// - evidence (User have to choose which attribute must be blinded)
 pub struct SelectiveDisclosurePresentation {
@@ -29,15 +31,12 @@ impl SelectiveDisclosurePresentation {
 
         jwp_builder.set_undisclosed("jti").ok(); // contains the credential's id, provides linkability
         
-        jwp_builder.set_undisclosed("nbf").ok(); // 
-       
-        jwp_builder.set_undisclosed("issuanceDate").ok(); // Depending on the revocation method used it will be necessary or not
-        
-        jwp_builder.set_undisclosed("expirationDate").ok(); // Depending on the revocation method used it will be necessary or not
-        
-        jwp_builder.set_undisclosed("credentialStatus").ok(); // Provides linkability so, there is NO reason to use it in ZK VC
-        
-        jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC,
+        jwp_builder.set_undisclosed("nbf").ok();
+        jwp_builder.set_undisclosed("issuanceDate").ok(); // Undisclosed using Timeframe Revocation mechanism
+
+        jwp_builder.set_undisclosed("expirationDate").ok(); // Undisclosed using Timeframe Revocation mechanism
+
+        jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC
 
         Self{jwp_builder}
     }
@@ -58,8 +57,8 @@ impl SelectiveDisclosurePresentation {
     /// ```
     /// If you want to undisclose for example the Mathematics course and the name of the degree:
     /// ```
-    /// subject("mainCourses[1]");
-    /// subject("degree.name");
+    /// undisclose_subject("mainCourses[1]");
+    /// undisclose_subject("degree.name");
     /// ```
     pub fn undisclose_subject(&mut self, path: &str) -> Result<(), Error>{
         let _ = self.jwp_builder.set_undisclosed(&("vc.credentialSubject.".to_owned() + path)).map_err(|_| Error::SelectiveDiscosureError);
