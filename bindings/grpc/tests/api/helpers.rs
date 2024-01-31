@@ -8,11 +8,15 @@ use identity_iota::verification::MethodScope;
 use identity_storage::key_id_storage::KeyIdMemstore;
 use identity_storage::key_storage::JwkMemStore;
 use identity_storage::JwkDocumentExt;
+use identity_storage::JwkStorage;
+use identity_storage::KeyIdStorage;
 use identity_storage::Storage;
+use identity_stronghold::StrongholdStorage;
 use iota_sdk::client::api::GetAddressesOptions;
 use iota_sdk::client::node_api::indexer::query_parameters::QueryParameter;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::stronghold::StrongholdAdapter;
 use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::crypto::keys::bip39;
@@ -43,6 +47,16 @@ pub struct TestServer {
 
 impl TestServer {
   pub async fn new() -> Self {
+    let stronghold = StrongholdSecretManager::builder()
+      .password(random_password(18))
+      .build(random_stronghold_path())
+      .map(StrongholdStorage::new)
+      .expect("Failed to create temporary stronghold");
+
+    Self::new_with_stronghold(stronghold).await
+  }
+
+  pub async fn new_with_stronghold(stronghold: StrongholdStorage) -> Self {
     let _ = tracing::subscriber::set_global_default(tracing_subscriber::fmt().compact().finish());
 
     let listener = TcpListener::bind("127.0.0.1:0")
@@ -57,7 +71,7 @@ impl TestServer {
       .await
       .expect("Failed to connect to API's endpoint");
 
-    let server = identity_grpc::server::GRpcServer::new(client.clone())
+    let server = identity_grpc::server::GRpcServer::new(client.clone(), stronghold)
       .into_router()
       .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener));
     TestServer {
@@ -78,11 +92,15 @@ impl TestServer {
   }
 }
 
-pub async fn create_did(
+pub async fn create_did<K, I>(
   client: &Client,
   secret_manager: &mut SecretManager,
-  storage: &MemStorage,
-) -> anyhow::Result<(Address, IotaDocument, String)> {
+  storage: &Storage<K, I>,
+) -> anyhow::Result<(Address, IotaDocument, String)>
+where
+  K: JwkStorage,
+  I: KeyIdStorage,
+{
   let address: Address = get_address_with_funds(client, secret_manager, FAUCET_ENDPOINT)
     .await
     .context("failed to get address with funds")?;
@@ -100,10 +118,14 @@ pub async fn create_did(
 ///
 /// Its functionality is equivalent to the "create DID" example
 /// and exists for convenient calling from the other examples.
-pub async fn create_did_document(
+pub async fn create_did_document<K, I>(
   network_name: &NetworkName,
-  storage: &MemStorage,
-) -> anyhow::Result<(IotaDocument, String)> {
+  storage: &Storage<K, I>,
+) -> anyhow::Result<(IotaDocument, String)>
+where
+  I: KeyIdStorage,
+  K: JwkStorage,
+{
   let mut document: IotaDocument = IotaDocument::new(network_name);
 
   let fragment: String = document
@@ -186,9 +208,9 @@ async fn request_faucet_funds(client: &Client, address: Bech32Address, faucet_en
   Ok(())
 }
 
-pub struct Entity {
+pub struct Entity<K, I> {
   secret_manager: SecretManager,
-  storage: MemStorage,
+  storage: Storage<K, I>,
   did: Option<(Address, IotaDocument, String)>,
 }
 
@@ -205,14 +227,9 @@ pub fn random_stronghold_path() -> PathBuf {
   file.to_owned()
 }
 
-impl Entity {
-  pub fn new() -> Self {
-    let secret_manager = SecretManager::Stronghold(
-      StrongholdSecretManager::builder()
-        .password(random_password(18))
-        .build(random_stronghold_path())
-        .expect("Failed to create temporary stronghold"),
-    );
+impl Default for Entity<JwkMemStore, KeyIdMemstore> {
+  fn default() -> Self {
+    let secret_manager = SecretManager::Stronghold(make_stronghold());
     let storage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
     Self {
@@ -221,14 +238,40 @@ impl Entity {
       did: None,
     }
   }
+}
 
+impl Entity<JwkMemStore, KeyIdMemstore> {
+  pub fn new() -> Self {
+    Self::default()
+  }
+}
+
+impl Entity<StrongholdStorage, StrongholdStorage> {
+  pub fn new_with_stronghold(s: StrongholdStorage) -> Self {
+    let secret_manager = SecretManager::Stronghold(make_stronghold());
+    let storage = Storage::new(s.clone(), s);
+
+    Self {
+      secret_manager,
+      storage,
+      did: None,
+    }
+  }
+}
+
+impl<K: JwkStorage, I: KeyIdStorage> Entity<K, I> {
   pub async fn create_did(&mut self, client: &Client) -> anyhow::Result<()> {
-    self.did = Some(create_did(client, &mut self.secret_manager, &self.storage).await?);
+    let Entity {
+      secret_manager,
+      storage,
+      did,
+    } = self;
+    *did = Some(create_did(client, secret_manager, storage).await?);
 
     Ok(())
   }
 
-  pub fn storage(&self) -> &MemStorage {
+  pub fn storage(&self) -> &Storage<K, I> {
     &self.storage
   }
 
@@ -280,4 +323,11 @@ async fn get_address_balance(client: &Client, address: &Bech32Address) -> anyhow
   }
 
   Ok(total_amount)
+}
+
+pub fn make_stronghold() -> StrongholdAdapter {
+  StrongholdAdapter::builder()
+    .password(random_password(18))
+    .build(random_stronghold_path())
+    .expect("Failed to create temporary stronghold")
 }

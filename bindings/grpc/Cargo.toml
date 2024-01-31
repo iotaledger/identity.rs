@@ -24,6 +24,7 @@ anyhow = "1.0.75"
 tokio-stream = { version = "0.1.14", features = ["net"] }
 identity_iota = { path = "../../identity_iota", features = ["resolver", "sd-jwt"] }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier" }
+identity_stronghold = { path = "../../identity_stronghold", features = ["send-sync-storage"] }
 iota-sdk = { version = "1.1.2", features = ["stronghold"] }
 serde_json = { version = "1.0.108", features = ["alloc"] }
 thiserror = "1.0.50"

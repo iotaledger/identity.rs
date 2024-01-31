@@ -71,7 +71,7 @@ async fn checking_status_of_credential_works() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn checking_status_of_valid_but_unresolvable_url_fails() -> anyhow::Result<()> {
-  use identity_grpc::services::credential::RevocationCheckError;
+  use identity_grpc::services::credential::revocation::RevocationCheckError;
   let server = TestServer::new().await;
 
   let mut grpc_client = CredentialRevocationClient::connect(server.endpoint()).await?;
