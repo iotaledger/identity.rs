@@ -1,5 +1,19 @@
 # Changelog
 
+## [v1.1.0](https://github.com/iotaledger/identity.rs/tree/v1.1.0) (2024-02-01)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.0.0...v1.1.0)
+
+### Added
+
+- Support Selective Disclosure SD-JWT [\#1268](https://github.com/iotaledger/identity.rs/pull/1268)
+- Add support for StatusList2021 [\#1273](https://github.com/iotaledger/identity.rs/pull/1273)
+
+
+### Patch
+
+- Validate domain-linkage URL making sure they only include an origin [\#1267](https://github.com/iotaledger/identity.rs/pull/1267)
+
 ## [v1.0.0](https://github.com/iotaledger/identity.rs/tree/v1.0.0) (2023-11-02)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.0...v1.0.0)
