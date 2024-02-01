@@ -35,7 +35,9 @@ impl SelectiveDisclosurePresentation {
         jwp_builder.set_undisclosed("expirationDate").ok(); // Depending on the revocation method used it will be necessary or not
         jwp_builder.set_undisclosed("exp").ok();
 
-        jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC,
+        jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC
+
+        jwp_builder.set_undisclosed("vc.credentialStatus.revocationBitmapIndex").ok();
 
         Self{jwp_builder}
     }
