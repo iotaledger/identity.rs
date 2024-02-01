@@ -7,7 +7,7 @@ use jsonprooftoken::{jwp::presented::JwpPresentedDecoder, encoding::Serializatio
 
 use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{CompoundCredentialValidationError, FailFast, JptCredentialValidatorUtils, JwtCredentialValidatorUtils, JwtValidationError, SignerContext}};
 
-use super::{JptPresentationValidationOptions, DecodedJptPresentation};
+use super::{DecodedJptPresentation, JptPresentationValidationOptions, JptPresentationValidatorUtils};
 
 /// A type for decoding and validating Presented [`Credential`]s in JPT format. //TODO: ZKP - validator
 #[non_exhaustive]
@@ -72,7 +72,7 @@ impl JptPresentationValidator {
   
       let validation_units_iter = {
         let revocation_validation =
-          std::iter::once_with(|| JptCredentialValidatorUtils::check_status(credential, options.status));
+          std::iter::once_with(|| JptPresentationValidatorUtils::check_status(credential, options.status));
         validation_units_iter.chain(revocation_validation)
       };
   

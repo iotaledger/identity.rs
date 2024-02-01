@@ -4,12 +4,14 @@ use identity_core::{convert::{ToJson, FromJson}, common::Object};
 use identity_did::DID;
 use jsonprooftoken::{jwp::presented::JwpPresentedDecoder, jpt::claims::JptClaims, encoding::SerializationType};
 
-use crate::{validator::{JwtValidationError, SignerContext}, credential::{Jpt, CredentialJwtClaims}};
+use crate::{credential::{Credential, CredentialJwtClaims, Jpt}, revocation::{RevocationTimeframeStatus, VerifierRevocationTimeframeStatus}, validator::{JptCredentialValidatorUtils, JwtValidationError, SignerContext}};
 
 /// Utility functions for verifying JPT credentials.
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct JptPresentationValidatorUtils;
+
+type ValidationUnitResult<T = ()> = std::result::Result<T, JwtValidationError>;
 
 impl JptPresentationValidatorUtils {
 
@@ -41,5 +43,40 @@ impl JptPresentationValidatorUtils {
         signer_ctx: SignerContext::Issuer,
         source: err.into(),
         })
+    }
+
+
+    /// Checks whether the credential status has been revoked.
+    pub fn check_status<T>(
+        credential: &Credential<T>,
+        status_check: crate::validator::StatusCheck,
+    ) -> ValidationUnitResult {
+
+
+        if status_check == crate::validator::StatusCheck::SkipAll {
+        return Ok(());
+        }
+
+        match &credential.credential_status {
+        None => Ok(()),
+        Some(status) => {
+            if status.type_ == RevocationTimeframeStatus::TYPE {
+            let status: VerifierRevocationTimeframeStatus = VerifierRevocationTimeframeStatus::try_from(status.clone())
+                .map_err(JwtValidationError::InvalidStatus)?;
+
+            JptCredentialValidatorUtils::check_validity_timeframe_status(status.0)
+
+            } else {
+            if status_check == crate::validator::StatusCheck::SkipUnsupported {
+                return Ok(());
+            }
+            return Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
+                "unsupported type '{}'",
+                status.type_
+            ))));
+            }
+            
+        }
+        }
     }
 }

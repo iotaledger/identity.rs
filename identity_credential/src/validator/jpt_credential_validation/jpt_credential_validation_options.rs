@@ -4,6 +4,8 @@ use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::credential::Status;
+
 /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
 #[non_exhaustive]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
