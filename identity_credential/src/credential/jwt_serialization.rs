@@ -678,54 +678,51 @@ mod tests {
   }
 }
 
-
 impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
 where
-    T: ToOwned + Serialize,
-    <T as ToOwned>::Owned: DeserializeOwned,
+  T: ToOwned + Serialize,
+  <T as ToOwned>::Owned: DeserializeOwned,
 {
-    fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
-
+  fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
     let CredentialJwtClaims {
-      exp, 
+      exp,
       iss,
       issuance_date,
       jti,
       sub,
-      vc, 
-      custom
+      vc,
+      custom,
     } = item;
 
-    
     let mut claims = JptClaims::new();
-    
-    exp.map(|v| {
-      claims.set_exp(v);
-    });
+
+    if let Some(exp) = exp {
+      claims.set_exp(exp);
+    }
 
     claims.set_iss(iss.url().to_string());
 
-    issuance_date.iat.map(|v| {
-      claims.set_iat(v);
-    });
+    if let Some(iat) = issuance_date.iat {
+      claims.set_iat(iat);
+    }
 
-    issuance_date.nbf.map(|v| {
-      claims.set_nbf(v);
-    });
+    if let Some(nbf) = issuance_date.nbf {
+      claims.set_nbf(nbf);
+    }
 
-    jti.map(|v| {
-      claims.set_jti(v.to_string());
-    });
+    if let Some(jti) = jti {
+      claims.set_jti(jti.to_string());
+    }
 
-    sub.map(|v| {
-      claims.set_sub(v.to_string());
-    });
+    if let Some(sub) = sub {
+      claims.set_sub(sub.to_string());
+    }
 
     claims.set_claim(Some("vc"), vc, true);
 
-    custom.map(|v| {
-      claims.set_claim(None, v, true);
-    });
+    if let Some(custom) = custom {
+      claims.set_claim(None, custom, true);
+    }
 
     claims
   }

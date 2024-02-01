@@ -1,13 +1,14 @@
 use identity_core::common::Url;
-use serde::{Serialize, Deserialize};
-
+use serde::Deserialize;
+use serde::Serialize;
 
 /// Options to be set in the JWT claims of a verifiable presentation.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub struct JwpPresentationOptions {
   /// Sets the audience for presentation (`aud` property in JWP Presentation Header).
   /// Default: `None`.
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub audience: Option<Url>,
 
   /// The nonce to be placed in the Presentation Protected Header.
@@ -16,7 +17,6 @@ pub struct JwpPresentationOptions {
 }
 
 impl JwpPresentationOptions {
-
   /// Sets the audience for presentation (`aud` property in JWT claims).
   pub fn audience(mut self, audience: Url) -> Self {
     self.audience = Some(audience);
@@ -30,11 +30,4 @@ impl JwpPresentationOptions {
   }
 }
 
-impl Default for JwpPresentationOptions {
-  fn default() -> Self {
-    Self {
-      audience: None,
-      nonce: None
-    }
-  }
-}
+

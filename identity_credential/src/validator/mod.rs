@@ -3,10 +3,10 @@
 
 //! Verifiable Credential and Presentation validators.
 
-pub use self::jwt_credential_validation::*;
-pub use self::jwt_presentation_validation::*;
 pub use self::jpt_credential_validation::*;
 pub use self::jpt_presentation_validation::*;
+pub use self::jwt_credential_validation::*;
+pub use self::jwt_presentation_validation::*;
 pub use self::options::FailFast;
 pub use self::options::StatusCheck;
 pub use self::options::SubjectHolderRelationship;

@@ -4,13 +4,13 @@
 //! JSON Web Keys ([JWK](https://tools.ietf.org/html/rfc7517))
 
 mod curve;
+mod jwk_ext;
 mod key;
 mod key_operation;
 mod key_params;
 mod key_set;
 mod key_type;
 mod key_use;
-mod jwk_ext;
 
 pub use self::curve::*;
 pub use self::key::*;

@@ -304,7 +304,13 @@ macro_rules! purge_method_for_document_type {
 // CoreDocument
 // ====================================================================================================================
 
-generate_method_for_document_type!(CoreDocument, JwsAlgorithm, JwkStorage, JwkStorage::generate, generate_method_core_document);
+generate_method_for_document_type!(
+  CoreDocument,
+  JwsAlgorithm,
+  JwkStorage,
+  JwkStorage::generate,
+  generate_method_core_document
+);
 purge_method_for_document_type!(CoreDocument, purge_method_core_document);
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -323,7 +329,6 @@ impl JwkDocumentExt for CoreDocument {
     I: KeyIdStorage,
   {
     generate_method_core_document(self, storage, key_type, alg, fragment, scope).await
-    
   }
 
   async fn purge_method<K, I>(&mut self, storage: &Storage<K, I>, id: &DIDUrl) -> StorageResult<()>
@@ -532,8 +537,13 @@ mod iota_document {
   use identity_credential::credential::Jwt;
   use identity_iota_core::IotaDocument;
 
-
-  generate_method_for_document_type!(IotaDocument, JwsAlgorithm, JwkStorage, JwkStorage::generate, generate_method_iota_document);
+  generate_method_for_document_type!(
+    IotaDocument,
+    JwsAlgorithm,
+    JwkStorage,
+    JwkStorage::generate,
+    generate_method_iota_document
+  );
   purge_method_for_document_type!(IotaDocument, purge_method_iota_document);
 
   #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]

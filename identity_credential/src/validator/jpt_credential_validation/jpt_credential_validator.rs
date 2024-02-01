@@ -1,15 +1,23 @@
-use identity_core::convert::{FromJson, ToJson};
-use identity_did::{DIDUrl, CoreDID};
-use identity_document::verifiable::JwpVerificationOptions;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
+use identity_did::CoreDID;
+use identity_did::DIDUrl;
 use identity_document::document::CoreDocument;
+use identity_document::verifiable::JwpVerificationOptions;
+use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwp::issued::JwpIssuedDecoder;
-use jsonprooftoken::encoding::SerializationType;
 
+use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
-use crate::validator::{JwtCredentialValidatorUtils, JptCredentialValidationOptions, CompoundCredentialValidationError};
-use crate::{credential::{Jpt, Credential}, validator::{FailFast, JwtValidationError, jwt_credential_validation::SignerContext}};
+use crate::credential::Jpt;
+use crate::validator::jwt_credential_validation::SignerContext;
+use crate::validator::CompoundCredentialValidationError;
+use crate::validator::FailFast;
+use crate::validator::JptCredentialValidationOptions;
+use crate::validator::JwtCredentialValidatorUtils;
+use crate::validator::JwtValidationError;
 
 use super::DecodedJptCredential;
 
@@ -18,45 +26,38 @@ use super::DecodedJptCredential;
 pub struct JptCredentialValidator;
 
 impl JptCredentialValidator {
+  /// Decodes and validates a [`Credential`] issued as a JPT (JWP Issued Form). A [`DecodedJptCredential`] is returned
+  /// upon success.
+  ///
+  /// The following properties are validated according to `options`:
+  /// - the issuer's proof on the JWP,
+  /// - the expiration date,
+  /// - the issuance date,
+  /// - the semantic structure.
+  pub fn validate<DOC, T>(
+    credential_jpt: &Jpt,
+    issuer: &DOC,
+    options: &JptCredentialValidationOptions,
+    fail_fast: FailFast,
+  ) -> Result<DecodedJptCredential<T>, CompoundCredentialValidationError>
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+    DOC: AsRef<CoreDocument>,
+  {
+    // First verify the JWP proof and decode the result into a credential token, then apply all other validations.
+    let credential_token =
+      Self::verify_proof(credential_jpt, issuer, &options.verification_options).map_err(|err| {
+        CompoundCredentialValidationError {
+          validation_errors: [err].into(),
+        }
+      })?;
 
+    let credential: &Credential<T> = &credential_token.credential;
 
-    /// Decodes and validates a [`Credential`] issued as a JPT (JWP Issued Form). A [`DecodedJptCredential`] is returned upon success.
-    ///
-    /// The following properties are validated according to `options`:
-    /// - the issuer's proof on the JWP,
-    /// - the expiration date,
-    /// - the issuance date,
-    /// - the semantic structure.
-    pub fn validate<DOC, T>(
-        credential_jpt: &Jpt,
-        issuer: &DOC,
-        options: &JptCredentialValidationOptions,
-        fail_fast: FailFast,
-      ) -> Result<DecodedJptCredential<T>, CompoundCredentialValidationError>
-      where
-        T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-        DOC: AsRef<CoreDocument>,
-      {
+    Self::validate_credential::<CoreDocument, T>(credential, options, fail_fast)?;
 
-
-        // First verify the JWP proof and decode the result into a credential token, then apply all other validations.
-        let credential_token =
-        Self::verify_proof(credential_jpt, issuer, &options.verification_options)
-          .map_err(|err| CompoundCredentialValidationError {
-            validation_errors: [err].into(),
-          })?;
-
-        let credential: &Credential<T> = &credential_token.credential;
-
-        Self::validate_credential::<CoreDocument, T>(
-          &credential,
-          options,
-          fail_fast,
-        )?;
-
-        Ok(credential_token)
-      }
-
+    Ok(credential_token)
+  }
 
   pub(crate) fn validate_credential<DOC, T>(
     credential: &Credential<T>,
@@ -67,7 +68,6 @@ impl JptCredentialValidator {
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
-
     // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
     let expiry_date_validation = std::iter::once_with(|| {
       JwtCredentialValidatorUtils::check_expires_on_or_after(
@@ -76,7 +76,6 @@ impl JptCredentialValidator {
       )
     });
 
-
     let issuance_date_validation = std::iter::once_with(|| {
       JwtCredentialValidatorUtils::check_issued_on_or_before(
         credential,
@@ -84,15 +83,11 @@ impl JptCredentialValidator {
       )
     });
 
-    
-
     let structure_validation = std::iter::once_with(|| JwtCredentialValidatorUtils::check_structure(credential));
-
 
     let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation);
-
 
     //TODO: ZKP - check revocation when implemented
 
@@ -116,10 +111,8 @@ impl JptCredentialValidator {
     }
   }
 
-
-
-/// Proof verification function
-fn verify_proof<DOC, T>(
+  /// Proof verification function
+  fn verify_proof<DOC, T>(
     credential: &Jpt,
     issuer: &DOC,
     options: &JwpVerificationOptions,
@@ -128,22 +121,22 @@ fn verify_proof<DOC, T>(
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
     DOC: AsRef<CoreDocument>,
   {
+    let decoded = JwpIssuedDecoder::decode(credential.as_str(), SerializationType::COMPACT)
+      .map_err(JwtValidationError::JwpDecodingError)?;
 
-    let decoded = JwpIssuedDecoder::decode(credential.as_str(), SerializationType::COMPACT).map_err(|err| JwtValidationError::JwpDecodingError(err))?;
-    
-    
     // If no method_url is set, parse the `kid` to a DID Url which should be the identifier
     // of a verification method in a trusted issuer's DID document.
     let method_id: DIDUrl = match &options.method_id {
       Some(method_id) => method_id.clone(),
       None => {
-        let kid: &str = decoded.get_header().kid().ok_or(
-          JwtValidationError::MethodDataLookupError {
+        let kid: &str = decoded
+          .get_header()
+          .kid()
+          .ok_or(JwtValidationError::MethodDataLookupError {
             source: None,
             message: "could not extract kid from protected header",
             signer_ctx: SignerContext::Issuer,
-          },
-        )?;
+          })?;
 
         // Convert kid to DIDUrl
         DIDUrl::parse(kid).map_err(|err| JwtValidationError::MethodDataLookupError {
@@ -158,7 +151,7 @@ fn verify_proof<DOC, T>(
     let issuer: &CoreDocument = issuer.as_ref();
 
     if issuer.id() != method_id.did() {
-        return Err(JwtValidationError::DocumentMismatch(SignerContext::Issuer));
+      return Err(JwtValidationError::DocumentMismatch(SignerContext::Issuer));
     }
 
     // Obtain the public key from the issuer's DID document
@@ -172,7 +165,6 @@ fn verify_proof<DOC, T>(
         signer_ctx: SignerContext::Issuer,
       })?;
 
-        
     let credential_token = Self::verify_decoded_jwp(decoded, &public_key)?;
 
     // Check that the DID component of the parsed `kid` does indeed correspond to the issuer in the credential before
@@ -186,7 +178,6 @@ fn verify_proof<DOC, T>(
     Ok(credential_token)
   }
 
-
   /// Verify the decoded issued JWP proof using the given `public_key`.
   fn verify_decoded_jwp<T>(
     decoded: JwpIssuedDecoder,
@@ -195,19 +186,23 @@ fn verify_proof<DOC, T>(
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
   {
-
     // Verify Jwp proof
-    let decoded_jwp = decoded.verify(&public_key).map_err(|err| JwtValidationError::JwpProofVerificationError(err))?;
+    let decoded_jwp = decoded
+      .verify(public_key)
+      .map_err(JwtValidationError::JwpProofVerificationError)?;
 
-    let claims = decoded_jwp.get_claims().ok_or("Claims not present").map_err(|err| JwtValidationError::CredentialStructure(crate::Error::JptClaimsSetDeserializationError(err.into())))?;
+    let claims = decoded_jwp.get_claims().ok_or("Claims not present").map_err(|err| {
+      JwtValidationError::CredentialStructure(crate::Error::JptClaimsSetDeserializationError(err.into()))
+    })?;
     let payloads = decoded_jwp.get_payloads();
-    let jpt_claims = JptClaims::from_claims_and_payloads(&claims, payloads);
-    let jpt_claims_json = jpt_claims.to_json_vec().map_err(|err| JwtValidationError::CredentialStructure(crate::Error::JptClaimsSetDeserializationError(err.into())))?;
-    
+    let jpt_claims = JptClaims::from_claims_and_payloads(claims, payloads);
+    let jpt_claims_json = jpt_claims.to_json_vec().map_err(|err| {
+      JwtValidationError::CredentialStructure(crate::Error::JptClaimsSetDeserializationError(err.into()))
+    })?;
 
     // Deserialize the raw claims
-    let credential_claims: CredentialJwtClaims<'_, T> =
-      CredentialJwtClaims::from_json_slice(&jpt_claims_json).map_err(|err| {
+    let credential_claims: CredentialJwtClaims<'_, T> = CredentialJwtClaims::from_json_slice(&jpt_claims_json)
+      .map_err(|err| {
         JwtValidationError::CredentialStructure(crate::Error::JwtClaimsSetDeserializationError(err.into()))
       })?;
 
@@ -217,12 +212,11 @@ fn verify_proof<DOC, T>(
     let credential: Credential<T> = credential_claims
       .try_into_credential()
       .map_err(JwtValidationError::CredentialStructure)?;
-      
+
     Ok(DecodedJptCredential {
       credential,
       custom_claims,
-      decoded_jwp
+      decoded_jwp,
     })
   }
-
 }

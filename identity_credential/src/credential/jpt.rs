@@ -1,8 +1,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-
-/// This JSON Proof Token could represent a JWP both in the Issued and Presented forms 
+/// This JSON Proof Token could represent a JWP both in the Issued and Presented forms.
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct Jpt(String);
 

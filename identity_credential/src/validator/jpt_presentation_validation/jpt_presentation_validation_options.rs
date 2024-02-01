@@ -1,21 +1,19 @@
+use crate::validator::JptCredentialValidationOptions;
 use serde::Deserialize;
 use serde::Serialize;
-use crate::validator::JptCredentialValidationOptions;
 
 /// Criteria for validating a [`Presentation`](crate::presentation::Presentation).
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
 #[serde(rename_all = "camelCase")]
 pub struct JptPresentationValidationOptions {
+  /// The nonce to be placed in the Presentation Protected Header.
+  #[serde(default)]
+  pub nonce: Option<String>,
 
-    /// The nonce to be placed in the Presentation Protected Header.
-    #[serde(default)]
-    pub nonce: Option<String>,
-
-    /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
-    #[serde(default)]
-    pub credential_validation_options: JptCredentialValidationOptions,
-
+  /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
+  #[serde(default)]
+  pub credential_validation_options: JptCredentialValidationOptions,
 }
 
 impl JptPresentationValidationOptions {
@@ -36,6 +34,4 @@ impl JptPresentationValidationOptions {
     self.nonce = Some(nonce.into());
     self
   }
-
-
 }

@@ -30,7 +30,7 @@ pub enum JwkOperation {
   /// Compute proof
   ProofGeneration,
   /// Verify proof
-  ProofVerification
+  ProofVerification,
 }
 
 impl JwkOperation {
@@ -62,7 +62,7 @@ impl JwkOperation {
       Self::DeriveKey => Self::DeriveKey,
       Self::DeriveBits => Self::DeriveBits,
       Self::ProofGeneration => Self::ProofVerification,
-      Self::ProofVerification => Self::ProofGeneration
+      Self::ProofVerification => Self::ProofGeneration,
     }
   }
 }

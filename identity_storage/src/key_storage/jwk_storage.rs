@@ -66,15 +66,19 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool>;
 }
 
-
-
 /// Extension to the JwkStorage to handle BBS+ keys
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
-pub trait JwkStorageExt : JwkStorage {
-  /// Generates a JWK representing a BBS+ signature 
+pub trait JwkStorageExt: JwkStorage {
+  /// Generates a JWK representing a BBS+ signature
   async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
   /// Generate the JPT representing a JWP in the Issuer form
-  async fn generate_issuer_proof(&self, key_id: &KeyId, header: IssuerProtectedHeader, claims: JptClaims, public_key: &Jwk) -> KeyStorageResult<String>;
+  async fn generate_issuer_proof(
+    &self,
+    key_id: &KeyId,
+    header: IssuerProtectedHeader,
+    claims: JptClaims,
+    public_key: &Jwk,
+  ) -> KeyStorageResult<String>;
 }

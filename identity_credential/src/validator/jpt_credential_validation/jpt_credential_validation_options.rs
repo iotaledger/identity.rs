@@ -1,4 +1,3 @@
-
 use identity_core::common::Timestamp;
 use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;

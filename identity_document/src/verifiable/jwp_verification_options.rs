@@ -1,4 +1,3 @@
-
 use identity_did::DIDUrl;
 use identity_verification::MethodScope;
 
@@ -15,18 +14,18 @@ pub struct JwpVerificationOptions {
 }
 
 impl JwpVerificationOptions {
-  /// Creates a new [`JwsVerificationOptions`].
+  /// Creates a new [`JwpVerificationOptions`].
   pub fn new() -> Self {
     Self::default()
   }
 
-  /// Set the scope of the verification methods that may be used to verify the given JWS.
+  /// Set the scope of the verification methods that may be used to verify the given JWP.
   pub fn method_scope(mut self, value: MethodScope) -> Self {
     self.method_scope = Some(value);
     self
   }
 
-  /// The DID URl of the method, whose JWK should be used to verify the JWS.
+  /// The DID URl of the method, whose JWK should be used to verify the JWP.
   pub fn method_id(mut self, value: DIDUrl) -> Self {
     self.method_id = Some(value);
     self

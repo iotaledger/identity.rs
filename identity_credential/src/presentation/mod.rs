@@ -5,17 +5,17 @@
 
 #![allow(clippy::module_inception)]
 
+mod jwp_presentation_builder;
+mod jwp_presentation_options;
 mod jwt_presentation_options;
 mod jwt_serialization;
 mod presentation;
 mod presentation_builder;
-mod jwp_presentation_builder;
-mod jwp_presentation_options;
 
+pub use self::jwp_presentation_builder::SelectiveDisclosurePresentation;
 pub use self::jwt_presentation_options::JwtPresentationOptions;
 pub use self::presentation::Presentation;
 pub use self::presentation_builder::PresentationBuilder;
-pub use self::jwp_presentation_builder::SelectiveDisclosurePresentation;
 pub use jwp_presentation_options::JwpPresentationOptions;
 
 #[cfg(feature = "validator")]

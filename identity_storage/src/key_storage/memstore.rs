@@ -33,8 +33,8 @@ use super::KeyStorageError;
 use super::KeyStorageErrorKind;
 use super::KeyStorageResult;
 use super::KeyType;
-use crate::JwkStorageExt;
 use crate::key_storage::JwkStorage;
+use crate::JwkStorageExt;
 
 /// The map from key ids to JWKs.
 type JwkKeyStore = HashMap<KeyId, Jwk>;
@@ -286,17 +286,20 @@ fn check_key_alg_compatibility(key_type: MemStoreKeyType, alg: JwsAlgorithm) -> 
   }
 }
 
-
 /// JwkStorageExt implementation for JwkMemStore
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl JwkStorageExt for JwkMemStore {
   async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput> {
-    let keysubtype = KeyPairSubtype::from_str(key_type.as_str()).map_err(|_| KeyStorageErrorKind::UnsupportedKeyType)?;
+    let keysubtype =
+      KeyPairSubtype::from_str(key_type.as_str()).map_err(|_| KeyStorageErrorKind::UnsupportedKeyType)?;
 
-    let mut jwk = Jwk::try_from(JwkExt::generate(keysubtype).map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?)
+    let mut jwk = Jwk::try_from(
+      JwkExt::generate(keysubtype)
+        .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?,
+    )
     .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::RetryableIOFailure).with_source(err))?;
-    
+
     let kid: KeyId = random_key_id();
 
     jwk.set_alg(alg.to_string());
@@ -309,7 +312,13 @@ impl JwkStorageExt for JwkMemStore {
     Ok(JwkGenOutput::new(kid, public_jwk))
   }
 
-  async fn generate_issuer_proof(&self, key_id: &KeyId, header: IssuerProtectedHeader, claims: JptClaims, public_key: &Jwk) -> KeyStorageResult<String> {
+  async fn generate_issuer_proof(
+    &self,
+    key_id: &KeyId,
+    header: IssuerProtectedHeader,
+    claims: JptClaims,
+    public_key: &Jwk,
+  ) -> KeyStorageResult<String> {
     let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
 
     // Extract the required alg from the given public key
@@ -318,7 +327,7 @@ impl JwkStorageExt for JwkMemStore {
       .ok_or(KeyStorageErrorKind::UnsupportedProofAlgorithm)
       .and_then(|alg_str| {
         ProofAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedProofAlgorithm)
-    })?;
+      })?;
 
     match alg {
       ProofAlgorithm::BLS12381_SHA256 | ProofAlgorithm::BLS12381_SHAKE256 => {
@@ -349,21 +358,20 @@ impl JwkStorageExt for JwkMemStore {
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-   
     // Deserialize JSON to JwkExt
     let jwk_ext: JwkExt = jwk.try_into().map_err(|_| KeyStorageErrorKind::SerializationError)?;
 
     let jwp = JwpIssuedBuilder::new()
       .issuer_protected_header(header)
       .jpt_claims(claims)
-      .build(&jwk_ext).map_err(|_| KeyStorageErrorKind::Unspecified)?
-      .encode(SerializationType::COMPACT).map_err(|_| KeyStorageErrorKind::Unspecified)?;
+      .build(&jwk_ext)
+      .map_err(|_| KeyStorageErrorKind::Unspecified)?
+      .encode(SerializationType::COMPACT)
+      .map_err(|_| KeyStorageErrorKind::Unspecified)?;
 
     Ok(jwp)
   }
 }
-
-
 
 pub(crate) mod shared {
   use core::fmt::Debug;
