@@ -33,6 +33,8 @@ strum.workspace = true
 thiserror.workspace = true
 url = { version = "2.5", default-features = false }
 json-proof-token.workspace = true
+zkryptium.workspace = true
+async-trait = { version = "0.1.64", default-features = false }
 
 [dev-dependencies]
 anyhow = "1.0.62"

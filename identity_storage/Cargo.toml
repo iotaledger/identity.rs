@@ -28,6 +28,7 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
 json-proof-token.workspace = true
+zkryptium.workspace = true
 
 
 [dev-dependencies]

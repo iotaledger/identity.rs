@@ -23,7 +23,8 @@ serde = { version = "1.0", default-features = false, features = ["alloc", "deriv
 thiserror = { version = "1.0", default-features = false }
 strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0", default-features = false }
-json-proof-token = {version = "0.3.2"}
+json-proof-token = {git = "https://github.com/Cybersecurity-LINKS/json-proof-token.git"}
+zkryptium = { git = "https://github.com/Cybersecurity-LINKS/zkryptium.git", default-features = false, features = ["bbsplus"] }
 
 [workspace.package]
 authors = ["IOTA Stiftung"]
