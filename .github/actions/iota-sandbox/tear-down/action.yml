@@ -8,5 +8,5 @@ runs:
       run: |
         cd iota-sandbox/sandbox
         docker-compose down
-        cd ..
+        cd ../..
         sudo rm -rf iota-sandbox

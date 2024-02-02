@@ -230,7 +230,7 @@ import init, { Client } from "@iota/sdk-wasm/web";
 import * as identity from "@iota/identity-wasm/web";
 
 // The endpoint of the IOTA node to use.
-const API_ENDPOINT = "http://127.0.0.1:14265";
+const API_ENDPOINT = "http://localhost";
 
 const EXAMPLE_JWK = new identity.Jwk({
   kty: identity.JwkType.Okp,

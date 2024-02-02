@@ -57,13 +57,13 @@ identity_iota = { version = "1.0.0" }
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Start a private Tangle as described in the [next section](#example-creating-an-identity)
+2. Start IOTA Sandbox as described in the [next section](#example-creating-an-identity)
 3. Run the example to create a DID using `cargo run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
 The following code creates and publishes a new IOTA DID Document to a locally running private network.
-See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private network.
+See the [instructions](https://github.com/iotaledger/iota-sandbox) on running your own private network for development.
 
 _Cargo.toml_
 
@@ -74,9 +74,11 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = { version = "1.0.0" }
+identity_iota = {version = "1.0.0", features = ["memstore"]}
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.62"
+rand = "0.8.5"
 ```
 
 _main._<span></span>_rs_
@@ -104,7 +106,7 @@ use iota_sdk::types::block::output::dto::AliasOutputDto;
 use tokio::io::AsyncReadExt;
 
 // The endpoint of the IOTA node to use.
-static API_ENDPOINT: &str = "http://127.0.0.1:14265";
+static API_ENDPOINT: &str = "http://localhost";
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 #[tokio::main]

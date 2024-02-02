@@ -57,13 +57,13 @@ identity_iota = { version = "1.0.0" }
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
 
 1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs`
-2. Start a private Tangle as described in the [next section](#example-creating-an-identity)
+2. Start IOTA Sandbox as described in the [next section](#example-creating-an-identity)
 3. Run the example to create a DID using `cargo run --release --example 0_create_did`
 
 ## Example: Creating an Identity
 
 The following code creates and publishes a new IOTA DID Document to a locally running private network.
-See the [instructions](https://github.com/iotaledger/hornet/tree/develop/private_tangle) on running your own private network.
+See the [instructions](https://github.com/iotaledger/iota-sandbox) on running your own private network for development.
 
 _Cargo.toml_
 

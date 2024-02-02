@@ -13,7 +13,7 @@ runs:
         cd sandbox
         # Use the output of https://api.github.com/repos/iotaledger/iota-sandbox/releases/latest
         DOWNLOAD_URL=$(curl "https://api.github.com/repos/iotaledger/iota-sandbox/releases" | jq -r '.[0].assets[] | select(.name | contains("iota_sandbox")) | .browser_download_url')
-        echo "Downloading private tangle from $DOWNLOAD_URL"
+        echo "Downloading sandbox from $DOWNLOAD_URL"
         curl -L -o iota_sandbox.tar.gz $DOWNLOAD_URL
         tar -xf iota_sandbox.tar.gz
 
