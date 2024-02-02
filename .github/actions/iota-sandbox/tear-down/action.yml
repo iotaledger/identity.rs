@@ -1,0 +1,12 @@
+name: 'iota-sandbox-tear-down'
+description: 'tear-down a iota sandbox'
+runs:
+  using: "composite"
+  steps:
+    - name: Tear down iota sandbox
+      shell: bash
+      run: |
+        cd iota-sandbox/sandbox
+        docker-compose down
+        cd ../..
+        sudo rm -rf iota-sandbox
