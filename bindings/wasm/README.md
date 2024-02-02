@@ -81,7 +81,7 @@ const EXAMPLE_JWK = new Jwk({
 });
 
 // The endpoint of the IOTA node to use.
-const API_ENDPOINT = "http://127.0.0.1:14265";
+const API_ENDPOINT = "http://localhost";
 
 /** Demonstrate how to create a DID Document. */
 async function main() {

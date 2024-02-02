@@ -1,16 +1,16 @@
-name: 'private-tangle-tear-down'
-description: 'tear-down a private tangle'
+name: 'iota-sandbox-tear-down'
+description: 'tear-down a iota sandbox'
 runs:
   using: "composite"
   steps:
-    - name: Tear down private tangle
+    - name: Tear down iota sandbox
       shell: bash
       run: |
         # TODO: use next line when a working hornet release is published
         #cd private_tangle
         
         # TODO: remove next line when a working hornet release is published
-        cd hornet/private_tangle
+        cd iota-sandbox/sandbox
         docker-compose down
         cd ..
-        sudo rm -rf private_tangle
+        sudo rm -rf iota-sandbox
