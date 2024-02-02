@@ -6,10 +6,6 @@ runs:
     - name: Tear down iota sandbox
       shell: bash
       run: |
-        # TODO: use next line when a working hornet release is published
-        #cd private_tangle
-        
-        # TODO: remove next line when a working hornet release is published
         cd iota-sandbox/sandbox
         docker-compose down
         cd ..

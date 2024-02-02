@@ -142,7 +142,7 @@ async fn main() -> anyhow::Result<()> {
   .await?[0];
 
   println!("Your wallet address is: {}", address);
-  println!("Please request funds from http://127.0.0.1:8091/, wait for a couple of seconds and then press Enter.");
+  println!("Please request funds from http://localhost/faucet/, wait for a couple of seconds and then press Enter.");
   tokio::io::stdin().read_u8().await?;
 
   // Create a new DID document with a placeholder DID.
