@@ -43,7 +43,7 @@ impl WasmSdObjectEncoder {
   ///   "claim2": ["val_1", "val_2"]
   /// }
   /// ```
-  ///
+  /// 
   /// Path "/id" conceals `"id": "did:value"`
   /// Path "/claim1/abc" conceals `"abc": true`
   /// Path "/claim2/0" conceals `val_1`
@@ -52,7 +52,6 @@ impl WasmSdObjectEncoder {
   /// ## Errors
   /// * `InvalidPath` if pointer is invalid.
   /// * `DataTypeMismatch` if existing SD format is invalid.
-  ///
   #[wasm_bindgen(js_name = conceal)]
   pub fn conceal(&mut self, path: String, salt: Option<String>) -> Result<WasmDisclosure> {
     let disclosure = self.0.conceal(&path, salt).wasm_result()?;
