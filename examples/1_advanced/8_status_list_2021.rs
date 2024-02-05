@@ -6,10 +6,8 @@ use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-
 use identity_iota::core::FromJson;
 use identity_iota::core::Object;
-
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::status_list_2021::StatusList2021;
@@ -17,10 +15,8 @@ use identity_iota::credential::status_list_2021::StatusList2021Credential;
 use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
 use identity_iota::credential::status_list_2021::StatusList2021Entry;
 use identity_iota::credential::status_list_2021::StatusPurpose;
-
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-
 use identity_iota::credential::FailFast;
 use identity_iota::credential::Issuer;
 use identity_iota::credential::Jwt;

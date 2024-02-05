@@ -112,9 +112,9 @@ async fn main() -> anyhow::Result<()> {
   // Make "locality", "postal_code" and "street_address" selectively disclosable while keeping
   // other properties in plain text.
   let disclosures = vec![
-    encoder.conceal(&["vc", "credentialSubject", "address", "locality"], None)?,
-    encoder.conceal(&["vc", "credentialSubject", "address", "postal_code"], None)?,
-    encoder.conceal(&["vc", "credentialSubject", "address", "street_address"], None)?,
+    encoder.conceal("/vc/credentialSubject/address/locality", None)?,
+    encoder.conceal("/vc/credentialSubject/address/postal_code", None)?,
+    encoder.conceal("/vc/credentialSubject/address/street_address", None)?,
   ];
 
   // Add the `_sd_alg` property.
