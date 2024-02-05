@@ -189,9 +189,10 @@ working with storage backed DID documents.</p>
 <dl>
 <dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
 <dd></dd>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
-</dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder.</p>
 <p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
@@ -215,6 +216,9 @@ This variant is the default.</p>
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
+</dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -232,15 +236,17 @@ This variant is the default.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
+<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
+<dd><p>Encode the given bytes in url-safe base64.</p>
+</dd>
+<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
+<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
+</dd>
 <dt><a href="#verifyEd25519">verifyEd25519(alg, signingInput, decodedSignature, publicKey)</a></dt>
 <dd><p>Verify a JWS signature secured with the <code>EdDSA</code> algorithm and curve <code>Ed25519</code>.</p>
 <p>This function is useful when one is composing a <code>IJwsVerifier</code> that delegates
@@ -248,12 +254,6 @@ This variant is the default.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
-</dd>
-<dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
-<dd><p>Encode the given bytes in url-safe base64.</p>
-</dd>
-<dt><a href="#decodeB64">decodeB64(data)</a> ⇒ <code>Uint8Array</code></dt>
-<dd><p>Decode the given url-safe base64-encoded slice into its raw bytes.</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
@@ -5233,7 +5233,6 @@ Note: digests are created using the sha-256 algorithm.
 * [SdObjectEncoder](#SdObjectEncoder)
     * [new SdObjectEncoder(object)](#new_SdObjectEncoder_new)
     * [.conceal(path, [salt])](#SdObjectEncoder+conceal) ⇒ [<code>Disclosure</code>](#Disclosure)
-    * [.concealArrayEntry(path, element_index, [salt])](#SdObjectEncoder+concealArrayEntry) ⇒ [<code>Disclosure</code>](#Disclosure)
     * [.addSdAlgProperty()](#SdObjectEncoder+addSdAlgProperty)
     * [.encodeToString()](#SdObjectEncoder+encodeToString) ⇒ <code>string</code>
     * [.toString()](#SdObjectEncoder+toString) ⇒ <code>string</code>
@@ -5257,43 +5256,35 @@ Creates a new `SdObjectEncoder` with `sha-256` hash function.
 Substitutes a value with the digest of its disclosure.
 If no salt is provided, the disclosure will be created with a random salt value.
 
-The value of the key specified in `path` will be concealed. E.g. for path
-`["claim", "subclaim"]` the value of `claim.subclaim` will be concealed.
+`path` indicates the pointer to the value that will be concealed using the syntax of
+[JSON pointer](https://datatracker.ietf.org/doc/html/rfc6901).
 
-## Error
-`InvalidPath` if path is invalid or the path slice is empty.
-`DataTypeMismatch` if existing SD format is invalid.
+For the following object:
 
-## Note
-Use `concealArrayEntry` for values in arrays.
+ ```
+{
+  "id": "did:value",
+  "claim1": {
+     "abc": true
+  },
+  "claim2": ["val_1", "val_2"]
+}
+```
 
-**Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
+Path "/id" conceals `"id": "did:value"`
+Path "/claim1/abc" conceals `"abc": true`
+Path "/claim2/0" conceals `val_1`
+```
 
-| Param | Type |
-| --- | --- |
-| path | <code>Array.&lt;string&gt;</code> | 
-| [salt] | <code>string</code> \| <code>undefined</code> | 
-
-<a name="SdObjectEncoder+concealArrayEntry"></a>
-
-### sdObjectEncoder.concealArrayEntry(path, element_index, [salt]) ⇒ [<code>Disclosure</code>](#Disclosure)
-Substitutes a value within an array with the digest of its disclosure.
-If no salt is provided, the disclosure will be created with random salt value.
-
-`path` is used to specify the array in the object, while `element_index` specifies
-the index of the element to be concealed (index start at 0).
-
-## Error
-`InvalidPath` if path is invalid or the path slice is empty.
-`DataTypeMismatch` if existing SD format is invalid.
-`IndexOutofBounds` if `element_index` is out of bounds.
+## Errors
+* `InvalidPath` if pointer is invalid.
+* `DataTypeMismatch` if existing SD format is invalid.
 
 **Kind**: instance method of [<code>SdObjectEncoder</code>](#SdObjectEncoder)  
 
 | Param | Type |
 | --- | --- |
-| path | <code>Array.&lt;string&gt;</code> | 
-| element_index | <code>number</code> | 
+| path | <code>string</code> | 
 | [salt] | <code>string</code> \| <code>undefined</code> | 
 
 <a name="SdObjectEncoder+addSdAlgProperty"></a>
@@ -5337,7 +5328,7 @@ If path is an empty slice, decoys will be added to the top level.
 
 | Param | Type |
 | --- | --- |
-| path | <code>Array.&lt;string&gt;</code> | 
+| path | <code>string</code> | 
 | number_of_decoys | <code>number</code> | 
 
 <a name="Service"></a>
@@ -5506,7 +5497,7 @@ A parsed [StatusList2021Credential](https://www.w3.org/TR/2023/WD-vc-status-list
     * [new StatusList2021Credential(credential)](#new_StatusList2021Credential_new)
     * _instance_
         * [.id()](#StatusList2021Credential+id) ⇒ <code>string</code>
-        * [.setCredentialStatus(credential, index, value)](#StatusList2021Credential+setCredentialStatus) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+        * [.setCredentialStatus(credential, index, revoked_or_suspended)](#StatusList2021Credential+setCredentialStatus) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
         * [.purpose()](#StatusList2021Credential+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
         * [.entry(index)](#StatusList2021Credential+entry) ⇒ [<code>CredentialStatus</code>](#CredentialStatus)
         * [.clone()](#StatusList2021Credential+clone) ⇒ [<code>StatusList2021Credential</code>](#StatusList2021Credential)
@@ -5530,7 +5521,7 @@ Creates a new [StatusList2021Credential](#StatusList2021Credential).
 **Kind**: instance method of [<code>StatusList2021Credential</code>](#StatusList2021Credential)  
 <a name="StatusList2021Credential+setCredentialStatus"></a>
 
-### statusList2021Credential.setCredentialStatus(credential, index, value) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
+### statusList2021Credential.setCredentialStatus(credential, index, revoked_or_suspended) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
 Sets the given credential's status using the `index`-th entry of this status list.
 Returns the created `credentialStatus`.
 
@@ -5540,7 +5531,7 @@ Returns the created `credentialStatus`.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 | index | <code>number</code> | 
-| value | <code>boolean</code> | 
+| revoked_or_suspended | <code>boolean</code> | 
 
 <a name="StatusList2021Credential+purpose"></a>
 
@@ -5700,7 +5691,7 @@ Attempts to build a valid [StatusList2021Credential](#StatusList2021Credential) 
         * [.id()](#StatusList2021Entry+id) ⇒ <code>string</code>
         * [.purpose()](#StatusList2021Entry+purpose) ⇒ [<code>StatusPurpose</code>](#StatusPurpose)
         * [.index()](#StatusList2021Entry+index) ⇒ <code>number</code>
-        * [.status_list_credential()](#StatusList2021Entry+status_list_credential) ⇒ <code>string</code>
+        * [.statusListCredential()](#StatusList2021Entry+statusListCredential) ⇒ <code>string</code>
         * [.toStatus()](#StatusList2021Entry+toStatus) ⇒ <code>Status</code>
         * [.clone()](#StatusList2021Entry+clone) ⇒ [<code>StatusList2021Entry</code>](#StatusList2021Entry)
         * [.toJSON()](#StatusList2021Entry+toJSON) ⇒ <code>any</code>
@@ -5738,9 +5729,9 @@ Returns the purpose of this entry.
 Returns the index of this entry.
 
 **Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
-<a name="StatusList2021Entry+status_list_credential"></a>
+<a name="StatusList2021Entry+statusListCredential"></a>
 
-### statusList2021Entry.status\_list\_credential() ⇒ <code>string</code>
+### statusList2021Entry.statusListCredential() ⇒ <code>string</code>
 Returns the referenced [StatusList2021Credential](#StatusList2021Credential)'s url.
 
 **Kind**: instance method of [<code>StatusList2021Entry</code>](#StatusList2021Entry)  
@@ -6117,11 +6108,13 @@ Deserializes an instance from a JSON object.
 
 ## StateMetadataEncoding
 **Kind**: global variable  
-<a name="StatusPurpose"></a>
+<a name="MethodRelationship"></a>
 
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
+## MethodRelationship
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
 
+## CredentialStatus
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
@@ -6168,6 +6161,12 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -6199,36 +6198,6 @@ Validate the status if supported, skip any unsupported
 Skip all status checks.
 
 **Kind**: global variable  
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="verifyEd25519"></a>
-
-## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
-Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
-
-This function is useful when one is composing a `IJwsVerifier` that delegates
-`EdDSA` verification with curve `Ed25519` to this function.
-
-# Warning
-
-This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
-prior to calling the function.
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| alg | <code>JwsAlgorithm</code> | 
-| signingInput | <code>Uint8Array</code> | 
-| decodedSignature | <code>Uint8Array</code> | 
-| publicKey | [<code>Jwk</code>](#Jwk) | 
-
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -6250,6 +6219,28 @@ Decode the given url-safe base64-encoded slice into its raw bytes.
 | Param | Type |
 | --- | --- |
 | data | <code>Uint8Array</code> | 
+
+<a name="verifyEd25519"></a>
+
+## verifyEd25519(alg, signingInput, decodedSignature, publicKey)
+Verify a JWS signature secured with the `EdDSA` algorithm and curve `Ed25519`.
+
+This function is useful when one is composing a `IJwsVerifier` that delegates
+`EdDSA` verification with curve `Ed25519` to this function.
+
+# Warning
+
+This function does not check whether `alg = EdDSA` in the protected header. Callers are expected to assert this
+prior to calling the function.
+
+**Kind**: global function  
+
+| Param | Type |
+| --- | --- |
+| alg | <code>JwsAlgorithm</code> | 
+| signingInput | <code>Uint8Array</code> | 
+| decodedSignature | <code>Uint8Array</code> | 
+| publicKey | [<code>Jwk</code>](#Jwk) | 
 
 <a name="start"></a>
 
