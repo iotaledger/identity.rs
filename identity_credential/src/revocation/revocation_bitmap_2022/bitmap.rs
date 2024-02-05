@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
 use std::io::Write;
 
 use flate2::write::ZlibDecoder;
@@ -107,7 +108,22 @@ impl RevocationBitmap {
   where
     T: AsRef<str> + ?Sized,
   {
-    let decoded_data: Vec<u8> = BaseEncoding::decode(data, Base::Base64Url)
+    // Fixes issue #1291.
+    // Before this fix, revocation bitmaps had been encoded twice, like so:
+    // Base64Url(Base64(compressed_bitmap)).
+    // This fix checks if the encoded string it receives as input has undergone such process
+    // and undo the inner Base64 encoding before processing the input further.
+    let mut data = Cow::Borrowed(data.as_ref());
+    if !data.starts_with("eJy") {
+      // Base64 encoded zlib default compression header
+      let decoded = BaseEncoding::decode(&data, Base::Base64)
+        .map_err(|e| RevocationError::Base64DecodingError(data.into_owned(), e))?;
+      data = Cow::Owned(
+        String::from_utf8(decoded)
+          .map_err(|_| RevocationError::InvalidService("invalid data url - expected valid utf-8"))?,
+      );
+    }
+    let decoded_data: Vec<u8> = BaseEncoding::decode(&data, Base::Base64Url)
       .map_err(|e| RevocationError::Base64DecodingError(data.as_ref().to_owned(), e))?;
     let decompressed_data: Vec<u8> = Self::decompress_zlib(decoded_data)?;
     Self::deserialize_slice(&decompressed_data)
@@ -245,5 +261,22 @@ mod tests {
     for &index in EXPECTED {
       assert!(bitmap.is_revoked(index));
     }
+  }
+
+  #[test]
+  fn test_revocation_bitmap_pre_1291_fix() {
+    const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQmdZR0lBQVVZZ1pHQ1FBR0laSUdabDZHUGN3UW9BRXVvQjlB";
+    const EXPECTED: &[u32] = &[5, 398, 67000];
+
+    let bitmap: RevocationBitmap = RevocationBitmap::try_from_endpoint(
+      &identity_document::service::ServiceEndpoint::One(Url::parse(URL).unwrap()),
+    )
+    .unwrap();
+
+    for revoked in EXPECTED {
+      assert!(bitmap.is_revoked(*revoked));
+    }
+
+    assert_eq!(bitmap.len(), 3);
   }
 }
