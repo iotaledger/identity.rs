@@ -3,7 +3,7 @@ description: 'Setup IOTA Sandbox'
 runs:
   using: "composite"
   steps:
-    - name: Setup iota sandbox
+    - name: Download iota sandbox
       shell: bash
       run: |
         # Use next lines for using the GitHub release
@@ -21,6 +21,15 @@ runs:
         # git clone https://github.com/iotaledger/iota-sandbox
         # cd iota-sandbox/sandbox
 
+    - name: Cache Docker images
+      uses: ScribeMD/docker-cache@70723b070f0541d281d40017fd2e874d677357aa #0.2.6
+      with:
+        key: docker-sandbox-${{ hashFiles('sandbox/*.yml') }}
+    
+    - name: Setup iota sandbox
+      shell: bash
+      run: |
+        cd 
         # Start Tangle
         sudo ./bootstrap.sh
         docker compose up -d
