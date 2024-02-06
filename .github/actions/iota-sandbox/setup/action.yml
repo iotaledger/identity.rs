@@ -22,7 +22,7 @@ runs:
         # cd iota-sandbox/sandbox
 
     - name: Cache Docker images
-      uses: ScribeMD/docker-cache@70723b070f0541d281d40017fd2e874d677357aa #0.2.6
+      uses: ScribeMD/docker-cache@e481e638abdb45e2fa30845305c387a544cc617f #0.3.7
       with:
         key: docker-sandbox-${{ hashFiles('sandbox/*.yml') }}
     
