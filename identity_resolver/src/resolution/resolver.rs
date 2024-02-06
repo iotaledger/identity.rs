@@ -1,27 +1,18 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
+use futures::stream::FuturesUnordered;
+use futures::TryStreamExt;
+use identity_did::DID;
+use std::collections::HashSet;
+
+use identity_document::document::CoreDocument;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-use futures::TryFutureExt;
-use identity_credential::credential::Credential;
-use identity_credential::presentation::Presentation;
-use identity_credential::validator::AbstractThreadSafeValidatorDocument;
-use identity_credential::validator::CredentialValidator;
-use identity_credential::validator::FailFast;
-use identity_credential::validator::PresentationValidationOptions;
-use identity_credential::validator::PresentationValidator;
-use identity_credential::validator::ValidatorDocument;
-use identity_did::did::CoreDID;
-use identity_did::did::DID;
-
-use serde::Serialize;
-
 use crate::Error;
 use crate::ErrorCause;
-
 use crate::Result;
 
 use super::commands::Command;
@@ -29,17 +20,14 @@ use super::commands::SendSyncCommand;
 use super::commands::SingleThreadedCommand;
 
 /// Convenience type for resolving DID documents from different DID methods.   
-///  
-/// Also provides methods for resolving DID Documents associated with
-/// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
 ///
 /// # Configuration
+///
 /// The resolver will only be able to resolve DID documents for methods it has been configured for. This is done by
 /// attaching method specific handlers with [`Self::attach_handler`](Self::attach_handler()).
-pub struct Resolver<DOC = AbstractThreadSafeValidatorDocument, CMD = SendSyncCommand<DOC>>
+pub struct Resolver<DOC = CoreDocument, CMD = SendSyncCommand<DOC>>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
 {
   command_map: HashMap<String, CMD>,
   _required: PhantomData<DOC>,
@@ -48,35 +36,20 @@ where
 impl<M, DOC> Resolver<DOC, M>
 where
   M: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
 {
   /// Constructs a new [`Resolver`].
   ///
   /// # Example
+  ///
   /// Construct a `Resolver` that resolves DID documents of type
-  /// [`CoreDocument`](::identity_did::document::CoreDocument).
+  /// [`CoreDocument`](::identity_document::document::CoreDocument).
   ///  ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_document::document::CoreDocument;
   ///
   /// let mut resolver = Resolver::<CoreDocument>::new();
   /// // Now attach some handlers whose output can be converted to a `CoreDocument`.
   /// ```
-  /// 
-  /// # Example
-  /// Construct a `Resolver` that is agnostic about DID Document types.
-  /// ```
-  /// # use identity_resolver::Resolver;
-  /// let mut resolver: Resolver = Resolver::new();
-  /// // Now attach some handlers whose output type implements the `Document` trait.
-  /// ```
-  /// 
-  /// # Tradeoffs
-  /// The default type agnostic [`Resolver`] is more convenient when working with document types whose implementations of the [`Document`](::identity_did::document::Document)
-  /// trait do not map well to a single representation (such as for instance [`CoreDocument`](::identity_did::document::CoreDocument)).
-  /// This is typically the case whenever custom cryptography is applied in implementations of the [`Document::verify_data`](::identity_did::document::Document::verify_data()) method.
-  /// The extra flexibility offered by the type agnostic resolver comes at the cost of less type information, hence specifying a concrete type in the constructor
-  /// is recommended whenever a single representation is a good fit.  
   pub fn new() -> Self {
     Self {
       command_map: HashMap::new(),
@@ -87,36 +60,23 @@ where
   /// Fetches the DID Document of the given DID.
   ///
   /// # Errors
+  ///
   /// Errors if the resolver has not been configured to handle the method corresponding to the given DID or the
   /// resolution process itself fails.
   ///
-  /// # When the return type is abstract
-  /// If the resolver has been constructed without specifying the return type (in [`Self::new`](Self::new()))
-  /// one can call [`into_any`](AbstractThreadSafeValidatorDocument::into_any()) on the resolved output to obtain a
-  /// [`Box<dyn Any>`] which one may then attempt to downcast to a concrete type. The downcast will succeed if the
-  /// specified type matches the return type of the attached handler responsible for resolving the given DID.
-  ///
   /// ## Example
+  ///
   /// ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::did::CoreDID;
-  /// # use identity_did::did::DID;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_did::CoreDID;
+  /// # use identity_document::document::CoreDocument;
   ///
-  /// async fn resolve_and_cast(
+  /// async fn configure_and_resolve(
   ///   did: CoreDID,
-  /// ) -> std::result::Result<Option<CoreDocument>, Box<dyn std::error::Error>> {
+  /// ) -> std::result::Result<CoreDocument, Box<dyn std::error::Error>> {
   ///   let resolver: Resolver = configure_resolver(Resolver::new());
-  ///   let abstract_doc = resolver.resolve(&did).await?;
-  ///   let document: Option<CoreDocument> = abstract_doc
-  ///     .into_any()
-  ///     .downcast::<CoreDocument>()
-  ///     .ok()
-  ///     .map(|boxed| *boxed);
-  ///   if did.method() == "foo" {
-  ///     assert!(document.is_some());
-  ///   }
-  ///   return Ok(document);
+  ///   let resolved_doc: CoreDocument = resolver.resolve(&did).await?;
+  ///   Ok(resolved_doc)
   /// }
   ///
   /// fn configure_resolver(mut resolver: Resolver) -> Resolver {
@@ -130,8 +90,8 @@ where
   /// }
   /// ```
   pub async fn resolve<D: DID>(&self, did: &D) -> Result<DOC> {
-    let method = did.method();
-    let delegate = self
+    let method: &str = did.method();
+    let delegate: &M = self
       .command_map
       .get(method)
       .ok_or_else(|| ErrorCause::UnsupportedMethodError {
@@ -142,146 +102,33 @@ where
     delegate.apply(did.as_str()).await
   }
 
-  /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
-  /// Issuer documents are returned in arbitrary order.
+  /// Concurrently fetches the DID Documents of the multiple given DIDs.
   ///
   /// # Errors
+  /// * If the resolver has not been configured to handle the method of any of the given DIDs.
+  /// * If the resolution process of any DID fails.
   ///
-  /// Errors if any issuer URL cannot be parsed to a DID whose associated method is supported by this Resolver, or
-  /// resolution fails.
-  pub async fn resolve_presentation_issuers<U, V>(&self, presentation: &Presentation<U, V>) -> Result<Vec<DOC>> {
-    // Extract unique issuers, but keep the position of one credential issued by said DID for each unique issuer.
-    // The credential positions help us provide better errors.
-    let issuers: HashMap<CoreDID, usize> = presentation
-      .verifiable_credential
-      .iter()
-      .enumerate()
-      .map(|(idx, credential)| {
-        CredentialValidator::extract_issuer::<CoreDID, V>(credential)
-          .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
-          .map_err(Error::new)
-          .map_err(|error| {
-            Error::resolution_action(
-              error,
-              crate::error::ResolutionAction::PresentationIssuersResolution(idx),
-            )
-          })
-          .map(|did| (did, idx))
-      })
-      .collect::<Result<_>>()?;
+  /// ## Note
+  /// * If `dids` contains duplicates, these will be resolved only once.
+  pub async fn resolve_multiple<D: DID>(&self, dids: &[D]) -> Result<HashMap<D, DOC>> {
+    let futures = FuturesUnordered::new();
 
-    // Resolve issuers concurrently.
-    futures::future::try_join_all(
-      issuers
-        .iter()
-        .map(|(issuer, cred_idx)| {
-          self.resolve(issuer).map_err(|error| {
-            Error::resolution_action(
-              error,
-              crate::error::ResolutionAction::PresentationIssuersResolution(*cred_idx),
-            )
-          })
-        })
-        .collect::<Vec<_>>(),
-    )
-    .await
-  }
-
-  /// Fetches the DID Document of the holder of a [`Presentation`].
-  ///
-  /// # Errors
-  ///
-  /// Errors if the holder URL is missing, cannot be parsed to a valid DID whose method is supported by the resolver, or
-  /// DID resolution fails.
-  pub async fn resolve_presentation_holder<U, V>(&self, presentation: &Presentation<U, V>) -> Result<DOC> {
-    let holder: CoreDID = PresentationValidator::extract_holder(presentation)
-      .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
-      .map_err(Error::new)
-      .map_err(|error| Error::resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution))?;
-    self
-      .resolve(&holder)
-      .await
-      .map_err(|error| Error::resolution_action(error, crate::error::ResolutionAction::PresentationHolderResolution))
-  }
-
-  /// Fetches the DID Document of the issuer of a [`Credential`].
-  ///
-  /// # Errors
-  ///
-  /// Errors if the issuer URL cannot be parsed to a DID whose associated method is supported by the resolver, or
-  /// resolution fails.
-  pub async fn resolve_credential_issuer<U: Serialize>(&self, credential: &Credential<U>) -> Result<DOC> {
-    let issuer_did: CoreDID = CredentialValidator::extract_issuer(credential)
-      .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
-      .map_err(Error::new)?;
-    self.resolve(&issuer_did).await
-  }
-
-  /// Verifies a [`Presentation`].
-  ///
-  /// # Important
-  /// See [`PresentationValidator::validate`](PresentationValidator::validate()) for information about which properties
-  /// get validated and what is expected of the optional arguments `holder` and `issuer`.
-  ///
-  /// # Resolution
-  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
-  /// If you already have up-to-date versions of these DID Documents, you may want
-  /// to use [`PresentationValidator::validate`].
-  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`]. Note that
-  /// DID Documents of a certain method can only be resolved if the resolver has been configured handle this method.
-  /// See [`Self::attach_handler`].
-  ///
-  /// # Errors
-  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
-  /// Otherwise, errors from validating the presentation and its credentials will be returned
-  /// according to the `fail_fast` parameter.
-  pub async fn verify_presentation<U, V>(
-    &self,
-    presentation: &Presentation<U, V>,
-    options: &PresentationValidationOptions,
-    fail_fast: FailFast,
-    holder: Option<&DOC>,
-    issuers: Option<&[DOC]>,
-  ) -> Result<()>
-  where
-    U: Serialize,
-    V: Serialize,
-  {
-    match (holder, issuers) {
-      (Some(holder), Some(issuers)) => {
-        PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
-      (Some(holder), None) => {
-        let issuers: Vec<DOC> = self.resolve_presentation_issuers(presentation).await?;
-        PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
-      (None, Some(issuers)) => {
-        let holder = self.resolve_presentation_holder(presentation).await?;
-        PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
-      (None, None) => {
-        let (holder, issuers): (DOC, Vec<DOC>) = futures::future::try_join(
-          self.resolve_presentation_holder(presentation),
-          self.resolve_presentation_issuers(presentation),
-        )
-        .await?;
-
-        PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
-          .map_err(|error| ErrorCause::PresentationValidationError { source: error })
-          .map_err(Error::new)
-      }
+    // Create set to remove duplicates to avoid unnecessary resolution.
+    let dids_set: HashSet<D> = dids.iter().cloned().collect();
+    for did in dids_set {
+      futures.push(async move {
+        let doc = self.resolve(&did).await;
+        doc.map(|doc| (did, doc))
+      });
     }
-    .map_err(Into::into)
+
+    let documents: HashMap<D, DOC> = futures.try_collect().await?;
+
+    Ok(documents)
   }
 }
 
-impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
+impl<DOC: 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -297,8 +144,8 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   /// # Example
   /// ```
   /// # use identity_resolver::Resolver;
-  /// # use identity_did::did::CoreDID;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_did::CoreDID;
+  /// # use identity_document::document::CoreDocument;
   ///
   ///    // A client that can resolve DIDs of our invented "foo" method.
   ///    struct Client;
@@ -341,7 +188,7 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SendSyncCommand<DOC>> {
   }
 }
 
-impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
+impl<DOC: 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
   /// Attach a new handler responsible for resolving DIDs of the given DID method.
   ///
   /// The `handler` is expected to be a closure taking an owned DID and asynchronously returning a DID Document
@@ -356,8 +203,8 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
   /// # Example
   /// ```
   /// # use identity_resolver::SingleThreadedResolver;
-  /// # use identity_did::did::CoreDID;
-  /// # use identity_did::document::CoreDocument;
+  /// # use identity_did::CoreDID;
+  /// # use identity_document::document::CoreDocument;
   ///
   ///    // A client that can resolve DIDs of our invented "foo" method.
   ///    struct Client;
@@ -403,7 +250,7 @@ impl<DOC: ValidatorDocument + 'static> Resolver<DOC, SingleThreadedCommand<DOC>>
 #[cfg(feature = "iota")]
 mod iota_handler {
   use super::Resolver;
-  use identity_credential::validator::ValidatorDocument;
+  use identity_document::document::CoreDocument;
   use identity_iota_core::IotaClientExt;
   use identity_iota_core::IotaDID;
   use identity_iota_core::IotaDocument;
@@ -412,7 +259,7 @@ mod iota_handler {
 
   impl<DOC> Resolver<DOC>
   where
-    DOC: From<IotaDocument> + ValidatorDocument + 'static,
+    DOC: From<IotaDocument> + AsRef<CoreDocument> + 'static,
   {
     /// Convenience method for attaching a new handler responsible for resolving IOTA DIDs.
     ///
@@ -436,7 +283,7 @@ mod iota_handler {
 impl<CMD, DOC> Default for Resolver<DOC, CMD>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
+  DOC: AsRef<CoreDocument>,
 {
   fn default() -> Self {
     Self::new()
@@ -446,7 +293,7 @@ where
 impl<CMD, DOC> std::fmt::Debug for Resolver<DOC, CMD>
 where
   CMD: for<'r> Command<'r, Result<DOC>>,
-  DOC: ValidatorDocument,
+  DOC: AsRef<CoreDocument>,
 {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("Resolver")

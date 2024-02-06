@@ -11,10 +11,8 @@
   ],
   "excludes": [
     "documentation",
-    "bindings/wasm/cypress/**/*.{js,ts}",
     "**/{node_modules,target}",
-    "bindings/wasm/{cypress,node,web}/**/*.{js,ts}",
-    "bindings/stronghold-nodejs/{napi-dist,dist}/**/*.{js,ts}"
+    "bindings/wasm/{node,web}/**/*.{js,ts}"
   ],
   "plugins": [
     "https://plugins.dprint.dev/toml-0.5.1.wasm",

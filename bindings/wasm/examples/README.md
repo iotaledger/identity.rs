@@ -57,8 +57,10 @@ The following advanced examples are available:
 | [1_did_issues_nft](src/1_advanced/1_did_issues_nft.ts)       | Demonstrates how an identity can issue and own NFTs, and how observers can verify the issuer of the NFT. |
 | [2_nft_owns_did](src/1_advanced/2_nft_owns_did.ts)           | Demonstrates how an identity can be owned by NFTs, and how observers can verify that relationship.       |
 | [3_did_issues_tokens](src/1_advanced/3_did_issues_tokens.ts) | Demonstrates how an identity can issue and control a Token Foundry and its tokens.                       |
-| [4_key_exchange](src/1_advanced/4_key_exchange.ts)           | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.         |
-| [5_custom_resolution](src/1_advanced/5_custom_resolution.ts) | Demonstrates how to set up a resolver using custom handlers. |
+| [4_custom_resolution](src/1_advanced/4_custom_resolution.ts) | Demonstrates how to set up a resolver using custom handlers.                                             |
+| [5_domain_linkage](src/1_advanced/5_domain_linkage.ts)       | Demonstrates how to link a domain and a DID and verify the linkage.                                      |
+| [6_sd_jwt](src/1_advanced/6_sd_jwt.ts)                       | Demonstrates how to create a selective disclosure verifiable credential                                  |
+| [7_domain_linkage](src/1_advanced/7_status_list_2021.ts)     | Demonstrates how to revoke a credential using `StatusList2021`.                                          |
 
 ## Browser
 

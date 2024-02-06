@@ -7,12 +7,13 @@ use crate::Error;
 
 /// Indicates the version of a DID document in state metadata.
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, num_derive::FromPrimitive)]
+#[non_exhaustive]
 pub(crate) enum StateMetadataVersion {
   V1 = 1,
 }
 
 impl StateMetadataVersion {
-  pub const CURRENT: Self = Self::V1;
+  pub(crate) const CURRENT: Self = Self::V1;
 }
 
 impl TryFrom<u8> for StateMetadataVersion {

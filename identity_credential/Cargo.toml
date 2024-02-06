@@ -1,30 +1,43 @@
 [package]
 name = "identity_credential"
-version = "0.7.0-alpha.4"
+version = "1.1.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
-homepage = "https://www.iota.org"
+homepage.workspace = true
 keywords = ["iota", "tangle", "identity"]
-license = "Apache-2.0"
+license.workspace = true
 readme = "./README.md"
-repository = "https://github.com/iotaledger/identity.rs"
-rust-version = "1.62"
+repository.workspace = true
+rust-version.workspace = true
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
-erased-serde = { version = "0.3.21", default-features = false, features = ["std"], optional = true }
-identity_core = { version = "=0.7.0-alpha.4", path = "../identity_core", default-features = false }
-identity_did = { version = "=0.7.0-alpha.4", path = "../identity_did", default-features = false }
-itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
-lazy_static = { version = "1.4", default-features = false }
-serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+flate2 = { version = "1.0.28", default-features = false, features = ["rust_backend"], optional = true }
+futures = { version = "0.3", default-features = false, optional = true }
+identity_core = { version = "=1.1.0-alpha.1", path = "../identity_core", default-features = false }
+identity_did = { version = "=1.1.0-alpha.1", path = "../identity_did", default-features = false }
+identity_document = { version = "=1.1.0-alpha.1", path = "../identity_document", default-features = false }
+identity_verification = { version = "=1.1.0-alpha.1", path = "../identity_verification", default-features = false }
+indexmap = { version = "2.0", default-features = false, features = ["std", "serde"] }
+itertools = { version = "0.11", default-features = false, features = ["use_std"], optional = true }
+once_cell = { version = "1.18", default-features = false, features = ["std"] }
+reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
+roaring = { version = "0.10", default-features = false, optional = true }
+sd-jwt-payload = { version = "0.2.0", default-features = false, features = ["sha"], optional = true }
+serde.workspace = true
+serde-aux = { version = "4.3.1", default-features = false, optional = true }
+serde_json.workspace = true
 serde_repr = { version = "0.1", default-features = false, optional = true }
-strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
-thiserror = { version = "1.0", default-features = false }
+strum.workspace = true
+thiserror.workspace = true
+url = { version = "2.5", default-features = false }
 
 [dev-dependencies]
-proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-serde_json = { version = "1.0", default-features = false }
+anyhow = "1.0.62"
+identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false, features = ["ed25519"] }
+iota-crypto = { version = "0.23", default-features = false, features = ["ed25519", "std", "random"] }
+proptest = { version = "1.4.0", default-features = false, features = ["std"] }
+tokio = { version = "1.35.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [package.metadata.docs.rs]
 # To build locally:
@@ -33,6 +46,12 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap", "validator"]
-revocation-bitmap = ["identity_did/revocation-bitmap"]
-validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr"]
+default = ["revocation-bitmap", "validator", "credential", "presentation", "domain-linkage-fetch", "sd-jwt"]
+credential = []
+presentation = ["credential"]
+revocation-bitmap = ["dep:flate2", "dep:roaring"]
+status-list-2021 = ["revocation-bitmap", "dep:serde-aux"]
+validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
+domain-linkage = ["validator"]
+domain-linkage-fetch = ["domain-linkage", "dep:reqwest", "dep:futures"]
+sd-jwt = ["credential", "validator", "sd-jwt-payload"]

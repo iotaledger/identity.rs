@@ -1,21 +1,24 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
-use identity_iota::crypto::KeyPair;
-use identity_iota::crypto::KeyType;
-use identity_iota::did::MethodScope;
+use examples::MemStorage;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
-use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
-use iota_client::block::address::Address;
-use iota_client::block::output::AliasOutput;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use identity_iota::storage::JwkDocumentExt;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
+use identity_iota::verification::jws::JwsAlgorithm;
+use identity_iota::verification::MethodScope;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::client::Password;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::output::AliasOutput;
 
 /// Demonstrates how to create a DID Document and publish it in a new Alias Output.
 ///
@@ -23,27 +26,30 @@ use iota_client::Client;
 /// to run on any IOTA node by setting the network and faucet endpoints.
 ///
 /// See the following instructions on running your own private network
-/// https://wiki.iota.org/hornet/develop/how_tos/private_tangle
+/// https://github.com/iotaledger/hornet/tree/develop/private_tangle
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   // The API endpoint of an IOTA node, e.g. Hornet.
-  let api_endpoint: &str = "http://127.0.0.1:14265";
+  let api_endpoint: &str = "http://localhost";
 
   // The faucet endpoint allows requesting funds for testing purposes.
-  let faucet_endpoint: &str = "http://127.0.0.1:8091/api/enqueue";
+  let faucet_endpoint: &str = "http://localhost/faucet/api/enqueue";
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(api_endpoint, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(api_endpoint, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
-  let mut secret_manager: SecretManager = SecretManager::Stronghold(
+  let secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
   // Get an address with funds for testing.
-  let address: Address = get_address_with_funds(&client, &mut secret_manager, faucet_endpoint).await?;
+  let address: Address = get_address_with_funds(&client, &secret_manager, faucet_endpoint).await?;
 
   // Get the Bech32 human-readable part (HRP) of the network.
   let network_name: NetworkName = client.network_name().await?;
@@ -53,10 +59,16 @@ async fn main() -> anyhow::Result<()> {
   let mut document: IotaDocument = IotaDocument::new(&network_name);
 
   // Insert a new Ed25519 verification method in the DID document.
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(document.id().clone(), keypair.type_(), keypair.public(), "#key-1")?;
-  document.insert_method(method, MethodScope::VerificationMethod)?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  document
+    .generate_method(
+      &storage,
+      JwkMemStore::ED25519_KEY_TYPE,
+      JwsAlgorithm::EdDSA,
+      None,
+      MethodScope::VerificationMethod,
+    )
+    .await?;
 
   // Construct an Alias Output containing the DID document, with the wallet address
   // set as both the state controller and governor.
@@ -64,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Publish the Alias Output and get the published DID document.
   let document: IotaDocument = client.publish_did_output(&secret_manager, alias_output).await?;
-  println!("Published DID document: {:#}", document);
+  println!("Published DID document: {document:#}");
 
   Ok(())
 }

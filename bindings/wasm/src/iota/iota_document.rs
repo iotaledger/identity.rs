@@ -1,57 +1,110 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::rc::Rc;
+
+use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
+use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::Presentation;
-use identity_iota::crypto::PrivateKey;
-use identity_iota::crypto::ProofOptions;
-use identity_iota::did::verifiable::VerifiableProperties;
-use identity_iota::did::Document;
-use identity_iota::did::MethodScope;
+use identity_iota::did::DIDUrl;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
+use identity_iota::iota::block::TryFromDto;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
-use identity_iota::iota::IotaVerificationMethod;
 use identity_iota::iota::NetworkName;
 use identity_iota::iota::StateMetadataEncoding;
-use iota_types::block::protocol::dto::ProtocolParametersDto;
-use iota_types::block::protocol::ProtocolParameters;
+use identity_iota::storage::key_storage::KeyType;
+use identity_iota::storage::storage::JwkDocumentExt;
+use identity_iota::storage::storage::JwsSignatureOptions;
+use identity_iota::verification::jose::jws::JwsAlgorithm;
+use identity_iota::verification::MethodScope;
+use identity_iota::verification::VerificationMethod;
+use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
 
+use crate::common::ArrayService;
 use crate::common::ArrayString;
+use crate::common::ArrayVerificationMethod;
 use crate::common::MapStringAny;
 use crate::common::OptionOneOrManyString;
 use crate::common::OptionTimestamp;
+use crate::common::PromiseString;
+use crate::common::PromiseVoid;
+use crate::common::RecordStringAny;
+use crate::common::UDIDUrlQuery;
 use crate::common::UOneOrManyNumber;
 use crate::common::WasmTimestamp;
+use crate::credential::UnknownCredential;
 use crate::credential::WasmCredential;
+use crate::credential::WasmJws;
+use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
-use crate::crypto::WasmProofOptions;
-use crate::did::RefMethodScope;
-use crate::did::WasmMethodRelationship;
-use crate::did::WasmMethodScope;
-use crate::did::WasmVerifierOptions;
+use crate::did::CoreDocumentLock;
+use crate::did::PromiseJws;
+use crate::did::PromiseJwt;
+use crate::did::WasmCoreDocument;
+use crate::did::WasmDIDUrl;
+use crate::did::WasmJwsVerificationOptions;
+use crate::did::WasmService;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::iota::identity_client_ext::IAliasOutput;
+use crate::iota::identity_client_ext::WasmAliasOutput;
 use crate::iota::WasmIotaDID;
-use crate::iota::WasmIotaDIDUrl;
 use crate::iota::WasmIotaDocumentMetadata;
-use crate::iota::WasmIotaService;
-use crate::iota::WasmIotaVerificationMethod;
 use crate::iota::WasmStateMetadataEncoding;
+use crate::jose::WasmDecodedJws;
+use crate::jose::WasmJwsAlgorithm;
+use crate::storage::WasmJwsSignatureOptions;
+use crate::storage::WasmJwtPresentationOptions;
+use crate::storage::WasmStorage;
+use crate::storage::WasmStorageInner;
+use crate::verification::IJwsVerifier;
+use crate::verification::RefMethodScope;
+use crate::verification::WasmJwsVerifier;
+use crate::verification::WasmMethodRelationship;
+use crate::verification::WasmMethodScope;
+use crate::verification::WasmVerificationMethod;
 
+pub(crate) struct IotaDocumentLock(tokio::sync::RwLock<IotaDocument>);
+
+impl IotaDocumentLock {
+  pub(crate) fn new(value: IotaDocument) -> Self {
+    Self(tokio::sync::RwLock::new(value))
+  }
+
+  pub(crate) fn try_read(&self) -> Result<tokio::sync::RwLockReadGuard<'_, IotaDocument>> {
+    self.0.try_read().wasm_result()
+  }
+
+  pub(crate) fn try_write(&self) -> Result<tokio::sync::RwLockWriteGuard<'_, IotaDocument>> {
+    self.0.try_write().wasm_result()
+  }
+
+  pub(crate) async fn read(&self) -> tokio::sync::RwLockReadGuard<'_, IotaDocument> {
+    self.0.read().await
+  }
+
+  pub(crate) async fn write(&self) -> tokio::sync::RwLockWriteGuard<'_, IotaDocument> {
+    self.0.write().await
+  }
+}
 // =============================================================================
 // =============================================================================
 
+/// A DID Document adhering to the IOTA DID method specification.
+///
+/// Note: All methods that involve reading from this class may potentially raise an error
+/// if the object is being concurrently modified.
 #[wasm_bindgen(js_name = IotaDocument, inspectable)]
-pub struct WasmIotaDocument(pub(crate) IotaDocument);
+pub struct WasmIotaDocument(pub(crate) Rc<IotaDocumentLock>);
 
 #[wasm_bindgen(js_class = IotaDocument)]
 impl WasmIotaDocument {
@@ -59,7 +112,7 @@ impl WasmIotaDocument {
   // Constructors
   // ===========================================================================
 
-  /// Constructs an empty DID Document with a {@link IotaDID.placeholder} identifier
+  /// Constructs an empty IOTA DID Document with a {@link IotaDID.placeholder} identifier
   /// for the given `network`.
   #[wasm_bindgen(constructor)]
   pub fn new(network: String) -> Result<WasmIotaDocument> {
@@ -80,8 +133,8 @@ impl WasmIotaDocument {
 
   /// Returns a copy of the DID Document `id`.
   #[wasm_bindgen]
-  pub fn id(&self) -> WasmIotaDID {
-    WasmIotaDID::from(self.0.id().clone())
+  pub fn id(&self) -> Result<WasmIotaDID> {
+    Ok(WasmIotaDID::from(self.0.try_read()?.id().clone()))
   }
 
   /// Returns a copy of the list of document controllers.
@@ -89,30 +142,34 @@ impl WasmIotaDocument {
   /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
   /// during resolution and are omitted when publishing.
   #[wasm_bindgen]
-  pub fn controller(&self) -> ArrayIotaDID {
-    match self.0.controller() {
-      Some(controllers) => controllers
-        .iter()
+  pub fn controller(&self) -> Result<ArrayIotaDID> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .controller()
         .cloned()
         .map(WasmIotaDID::from)
         .map(JsValue::from)
         .collect::<js_sys::Array>()
         .unchecked_into::<ArrayIotaDID>(),
-      None => js_sys::Array::new().unchecked_into::<ArrayIotaDID>(),
-    }
+    )
   }
 
   /// Returns a copy of the document's `alsoKnownAs` set.
   #[wasm_bindgen(js_name = alsoKnownAs)]
-  pub fn also_known_as(&self) -> ArrayString {
-    self
-      .0
-      .also_known_as()
-      .iter()
-      .map(|url| url.to_string())
-      .map(JsValue::from)
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayString>()
+  pub fn also_known_as(&self) -> Result<ArrayString> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .also_known_as()
+        .iter()
+        .map(|url| url.to_string())
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayString>(),
+    )
   }
 
   /// Sets the `alsoKnownAs` property in the DID document.
@@ -125,14 +182,14 @@ impl WasmIotaDocument {
         urls_set.append(Url::parse(url).wasm_result()?);
       }
     }
-    *self.0.also_known_as_mut() = urls_set;
+    *self.0.try_write()?.also_known_as_mut() = urls_set;
     Ok(())
   }
 
   /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    MapStringAny::try_from(self.0.properties())
+    MapStringAny::try_from(self.0.try_read()?.properties())
   }
 
   /// Sets a custom property in the DID Document.
@@ -146,10 +203,10 @@ impl WasmIotaDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut_unchecked().insert(key, value);
+        self.0.try_write()?.properties_mut_unchecked().insert(key, value);
       }
       None => {
-        self.0.properties_mut_unchecked().remove(&key);
+        self.0.try_write()?.properties_mut_unchecked().remove(&key);
       }
     }
     Ok(())
@@ -159,82 +216,93 @@ impl WasmIotaDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all {@link IotaService} in the document.
+  /// Return a set of all {@link Service} in the document.
   #[wasm_bindgen]
-  pub fn service(&self) -> ArrayIotaService {
-    self
-      .0
-      .service()
-      .iter()
-      .cloned()
-      .map(WasmIotaService)
-      .map(JsValue::from)
-      .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayIotaService>()
+  pub fn service(&self) -> Result<ArrayService> {
+    Ok(
+      self
+        .0
+        .try_read()?
+        .service()
+        .iter()
+        .cloned()
+        .map(WasmService)
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayService>(),
+    )
   }
 
-  /// Add a new {@link IotaService} to the document.
+  /// Add a new {@link Service} to the document.
   ///
   /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmIotaService) -> Result<()> {
-    self.0.insert_service(service.0.clone()).wasm_result()
+  pub fn insert_service(&mut self, service: &WasmService) -> Result<()> {
+    self.0.try_write()?.insert_service(service.0.clone()).wasm_result()
   }
 
-  /// Remove a {@link IotaService} identified by the given {@link IotaDIDUrl} from the document.
+  /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
   ///
   /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaService> {
-    self.0.remove_service(&did.0).map(Into::into)
+  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<Option<WasmService>> {
+    Ok(self.0.try_write()?.remove_service(&did.0).map(Into::into))
   }
 
-  /// Returns the first {@link IotaService} with an `id` property matching the provided `query`,
+  /// Returns the first {@link Service} with an `id` property matching the provided `query`,
   /// if present.
   #[wasm_bindgen(js_name = resolveService)]
-  pub fn resolve_service(&self, query: &UIotaDIDUrlQuery) -> Option<WasmIotaService> {
-    let service_query: String = query.into_serde().ok()?;
-    self
-      .0
-      .resolve_service(&service_query)
-      .cloned()
-      .map(WasmIotaService::from)
+  pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Result<Option<WasmService>> {
+    let service_query: String = query.into_serde().wasm_result()?;
+    Ok(
+      self
+        .0
+        .try_read()?
+        .resolve_service(&service_query)
+        .cloned()
+        .map(WasmService::from),
+    )
   }
 
   // ===========================================================================
   // Verification Methods
   // ===========================================================================
 
-  /// Returns a list of all {@link IotaVerificationMethod} in the DID Document,
+  /// Returns a list of all {@link VerificationMethod} in the DID Document,
   /// whose verification relationship matches `scope`.
   ///
   /// If `scope` is not set, a list over the **embedded** methods is returned.
   #[wasm_bindgen]
-  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayIotaVerificationMethods> {
+  pub fn methods(&self, scope: Option<RefMethodScope>) -> Result<ArrayVerificationMethod> {
     let scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
     let methods = self
       .0
+      .try_read()?
       .methods(scope)
       .into_iter()
       .cloned()
-      .map(WasmIotaVerificationMethod::from)
+      .map(WasmVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayIotaVerificationMethods>();
+      .unchecked_into::<ArrayVerificationMethod>();
     Ok(methods)
   }
 
   /// Adds a new `method` to the document in the given `scope`.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmIotaVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
-    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
+    self
+      .0
+      .try_write()?
+      .insert_method(method.0.clone(), scope.0)
+      .wasm_result()?;
     Ok(())
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmIotaDIDUrl) -> Option<WasmIotaVerificationMethod> {
-    self.0.remove_method(&did.0).map(Into::into)
+  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Result<Option<WasmVerificationMethod>> {
+    Ok(self.0.try_write()?.remove_method(&did.0).map(Into::into))
   }
 
   /// Returns a copy of the first verification method with an `id` property
@@ -243,14 +311,15 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = resolveMethod)]
   pub fn resolve_method(
     &self,
-    query: &UIotaDIDUrlQuery,
+    query: &UDIDUrlQuery,
     scope: Option<RefMethodScope>,
-  ) -> Result<Option<WasmIotaVerificationMethod>> {
+  ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
-    let method: Option<&IotaVerificationMethod> = self.0.resolve_method(&method_query, method_scope);
-    Ok(method.cloned().map(WasmIotaVerificationMethod))
+    let guard = self.0.try_read()?;
+    let method: Option<&VerificationMethod> = guard.resolve_method(&method_query, method_scope);
+    Ok(method.cloned().map(WasmVerificationMethod))
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -261,11 +330,12 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = attachMethodRelationship)]
   pub fn attach_method_relationship(
     &mut self,
-    didUrl: &WasmIotaDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
+      .try_write()?
       .attach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
   }
@@ -275,100 +345,49 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = detachMethodRelationship)]
   pub fn detach_method_relationship(
     &mut self,
-    didUrl: &WasmIotaDIDUrl,
+    didUrl: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
   ) -> Result<bool> {
     self
       .0
+      .try_write()?
       .detach_method_relationship(&didUrl.0, relationship.into())
       .wasm_result()
-  }
-
-  // ===========================================================================
-  // Signatures
-  // ===========================================================================
-
-  /// Creates a signature for the given `Credential` with the specified DID Document
-  /// Verification Method.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signCredential)]
-  pub fn sign_credential(
-    &self,
-    credential: &WasmCredential,
-    privateKey: Vec<u8>,
-    methodQuery: &UIotaDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<WasmCredential> {
-    let mut data: Credential = credential.0.clone();
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
-
-    self
-      .0
-      .sign_data(&mut data, &private_key, &method_query, options)
-      .wasm_result()?;
-    Ok(WasmCredential::from(data))
-  }
-
-  /// Creates a signature for the given `Presentation` with the specified DID Document
-  /// Verification Method.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signPresentation)]
-  pub fn sign_presentation(
-    &self,
-    presentation: &WasmPresentation,
-    privateKey: Vec<u8>,
-    methodQuery: &UIotaDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<WasmPresentation> {
-    let mut data: Presentation = presentation.0.clone();
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
-
-    self
-      .0
-      .sign_data(&mut data, &private_key, &method_query, options)
-      .wasm_result()?;
-    Ok(WasmPresentation::from(data))
-  }
-
-  /// Creates a signature for the given `data` with the specified DID Document
-  /// Verification Method.
-  ///
-  /// NOTE: use `signSelf` or `signDocument` for DID Documents.
-  #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(
-    &self,
-    data: &JsValue,
-    privateKey: Vec<u8>,
-    methodQuery: &UIotaDIDUrlQuery,
-    options: &WasmProofOptions,
-  ) -> Result<JsValue> {
-    let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let private_key: PrivateKey = privateKey.into();
-    let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: ProofOptions = options.0.clone();
-
-    self
-      .0
-      .sign_data(&mut data, &private_key, &method_query, options)
-      .wasm_result()?;
-
-    JsValue::from_serde(&data).wasm_result()
   }
 
   // ===========================================================================
   // Verification
   // ===========================================================================
 
-  /// Verifies the authenticity of `data` using the target verification method.
-  #[wasm_bindgen(js_name = verifyData)]
-  pub fn verify_data(&self, data: &JsValue, options: &WasmVerifierOptions) -> Result<bool> {
-    let data: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.0.verify_data(&data, &options.0).is_ok())
+  /// Decodes and verifies the provided JWS according to the passed `options` and `signatureVerifier`.
+  ///  If no `signatureVerifier` argument is provided a default verifier will be used that is (only) capable of
+  /// verifying EdDSA signatures.
+  ///
+  /// Regardless of which options are passed the following conditions must be met in order for a verification attempt to
+  /// take place.
+  /// - The JWS must be encoded according to the JWS compact serialization.
+  /// - The `kid` value in the protected header must be an identifier of a verification method in this DID document.
+  #[wasm_bindgen(js_name = verifyJws)]
+  #[allow(non_snake_case)]
+  pub fn verify_jws(
+    &self,
+    jws: &WasmJws,
+    options: &WasmJwsVerificationOptions,
+    signatureVerifier: IJwsVerifier,
+    detachedPayload: Option<String>,
+  ) -> Result<WasmDecodedJws> {
+    let jws_verifier = WasmJwsVerifier::new(signatureVerifier);
+    self
+      .0
+      .try_read()?
+      .verify_jws(
+        &jws.0,
+        detachedPayload.as_deref().map(|detached| detached.as_bytes()),
+        &jws_verifier,
+        &options.0,
+      )
+      .map(WasmDecodedJws::from)
+      .wasm_result()
   }
 
   // ===========================================================================
@@ -379,7 +398,7 @@ impl WasmIotaDocument {
   /// with the default {@link StateMetadataEncoding}.
   #[wasm_bindgen]
   pub fn pack(&self) -> Result<Vec<u8>> {
-    self.0.clone().pack().wasm_result()
+    self.0.try_read()?.clone().pack().wasm_result()
   }
 
   /// Serializes the document for inclusion in an Alias Output's state metadata.
@@ -387,6 +406,7 @@ impl WasmIotaDocument {
   pub fn pack_with_encoding(&self, encoding: WasmStateMetadataEncoding) -> Result<Vec<u8>> {
     self
       .0
+      .try_read()?
       .clone()
       .pack_with_encoding(StateMetadataEncoding::from(encoding))
       .wasm_result()
@@ -406,18 +426,17 @@ impl WasmIotaDocument {
   #[wasm_bindgen(js_name = unpackFromOutput)]
   pub fn unpack_from_output(
     did: &WasmIotaDID,
-    aliasOutput: IAliasOutput,
+    aliasOutput: WasmAliasOutput,
     allowEmpty: bool,
-    tokenSupply: u64,
   ) -> Result<WasmIotaDocument> {
     let alias_dto: AliasOutputDto = aliasOutput.into_serde().wasm_result()?;
-    let alias_output: AliasOutput = AliasOutput::try_from_dto(&alias_dto, tokenSupply)
+    let alias_output: AliasOutput = AliasOutput::try_from_dto(alias_dto)
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
       })
       .wasm_result()?;
     IotaDocument::unpack_from_output(&did.0, &alias_output, allowEmpty)
-      .map(WasmIotaDocument)
+      .map(WasmIotaDocument::from)
       .wasm_result()
   }
 
@@ -425,36 +444,19 @@ impl WasmIotaDocument {
   /// outputs, if any.
   ///
   /// Errors if any Alias Output does not contain a valid or empty DID Document.
-  ///
-  /// `protocolResponseJson` can be obtained from a `Client`.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = unpackFromBlock)]
-  pub fn unpack_from_block(
-    network: String,
-    block: &IBlock,
-    protocol_parameters: &INodeInfoProtocol,
-  ) -> Result<ArrayIotaDocument> {
+  pub fn unpack_from_block(network: String, block: &WasmBlock) -> Result<ArrayIotaDocument> {
     let network_name: NetworkName = NetworkName::try_from(network).wasm_result()?;
-    let block_dto: iota_types::block::BlockDto = block
+    let block_dto: identity_iota::iota::block::BlockDto = block
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {}", err))
+        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to deserialize BlockDto: {err}"))
       })
       .wasm_result()?;
 
-    let protocol_parameters_dto: ProtocolParametersDto = protocol_parameters
-      .into_serde()
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {}", err)))
-      .wasm_result()?;
-
-    let protocol_parameters: ProtocolParameters = ProtocolParameters::try_from(protocol_parameters_dto)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocolParameters: {}", err)))
-      .wasm_result()?;
-
-    let block: iota_types::block::Block = iota_types::block::Block::try_from_dto(&block_dto, &protocol_parameters)
-      .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {}", err))
-      })
+    let block: identity_iota::iota::block::Block = identity_iota::iota::block::Block::try_from_dto(block_dto)
+      .map_err(|err| identity_iota::iota::Error::JsError(format!("unpackFromBlock failed to convert BlockDto: {err}")))
       .wasm_result()?;
 
     Ok(
@@ -477,60 +479,61 @@ impl WasmIotaDocument {
   /// NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
   /// `metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
   #[wasm_bindgen]
-  pub fn metadata(&self) -> WasmIotaDocumentMetadata {
-    WasmIotaDocumentMetadata::from(self.0.metadata.clone())
+  pub fn metadata(&self) -> Result<WasmIotaDocumentMetadata> {
+    Ok(WasmIotaDocumentMetadata::from(self.0.try_read()?.metadata.clone()))
   }
 
   /// Returns a copy of the timestamp of when the DID document was created.
   #[wasm_bindgen(js_name = metadataCreated)]
-  pub fn metadata_created(&self) -> Option<WasmTimestamp> {
-    self.0.metadata.created.map(WasmTimestamp::from)
+  pub fn metadata_created(&self) -> Result<Option<WasmTimestamp>> {
+    Ok(self.0.try_read()?.metadata.created.map(WasmTimestamp::from))
   }
 
   /// Sets the timestamp of when the DID document was created.
   #[wasm_bindgen(js_name = setMetadataCreated)]
   pub fn set_metadata_created(&mut self, timestamp: OptionTimestamp) -> Result<()> {
     let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
-    self.0.metadata.created = timestamp;
+    self.0.try_write()?.metadata.created = timestamp;
     Ok(())
   }
 
   /// Returns a copy of the timestamp of the last DID document update.
   #[wasm_bindgen(js_name = metadataUpdated)]
-  pub fn metadata_updated(&self) -> Option<WasmTimestamp> {
-    self.0.metadata.updated.map(WasmTimestamp::from)
+  pub fn metadata_updated(&self) -> Result<Option<WasmTimestamp>> {
+    Ok(self.0.try_read()?.metadata.updated.map(WasmTimestamp::from))
   }
 
   /// Sets the timestamp of the last DID document update.
   #[wasm_bindgen(js_name = setMetadataUpdated)]
   pub fn set_metadata_updated(&mut self, timestamp: OptionTimestamp) -> Result<()> {
     let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
-    self.0.metadata.updated = timestamp;
+    self.0.try_write()?.metadata.updated = timestamp;
     Ok(())
   }
 
   /// Returns a copy of the deactivated status of the DID document.
   #[wasm_bindgen(js_name = metadataDeactivated)]
-  pub fn metadata_deactivated(&self) -> Option<bool> {
-    self.0.metadata.deactivated
+  pub fn metadata_deactivated(&self) -> Result<Option<bool>> {
+    Ok(self.0.try_read()?.metadata.deactivated)
   }
 
   /// Sets the deactivated status of the DID document.
   #[wasm_bindgen(js_name = setMetadataDeactivated)]
-  pub fn set_metadata_deactivated(&mut self, deactivated: Option<bool>) {
-    self.0.metadata.deactivated = deactivated;
+  pub fn set_metadata_deactivated(&mut self, deactivated: Option<bool>) -> Result<()> {
+    self.0.try_write()?.metadata.deactivated = deactivated;
+    Ok(())
   }
 
   /// Returns a copy of the Bech32-encoded state controller address, if present.
   #[wasm_bindgen(js_name = metadataStateControllerAddress)]
-  pub fn metadata_state_controller_address(&self) -> Option<String> {
-    self.0.metadata.state_controller_address.clone()
+  pub fn metadata_state_controller_address(&self) -> Result<Option<String>> {
+    Ok(self.0.try_read()?.metadata.state_controller_address.clone())
   }
 
   /// Returns a copy of the Bech32-encoded governor address, if present.
   #[wasm_bindgen(js_name = metadataGovernorAddress)]
-  pub fn metadata_governor_address(&self) -> Option<String> {
-    self.0.metadata.governor_address.clone()
+  pub fn metadata_governor_address(&self) -> Result<Option<String>> {
+    Ok(self.0.try_read()?.metadata.governor_address.clone())
   }
 
   /// Sets a custom property in the document metadata.
@@ -540,10 +543,10 @@ impl WasmIotaDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.metadata.properties.insert(key, value);
+        self.0.try_write()?.metadata.properties_mut().insert(key, value);
       }
       None => {
-        self.0.metadata.properties.remove(&key);
+        self.0.try_write()?.metadata.properties_mut().remove(&key);
       }
     }
     Ok(())
@@ -553,69 +556,309 @@ impl WasmIotaDocument {
   // Revocation
   // ===========================================================================
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, serviceQuery: &UIotaDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.revoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .try_write()?
+      .revoke_credentials(&query, indices.as_slice())
+      .wasm_result()
   }
 
-  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
+  /// If the document has a {@link RevocationBitmap} service identified by `serviceQuery`,
   /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(&mut self, serviceQuery: &UIotaDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn unrevoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.unrevoke_credentials(&query, indices.as_slice()).wasm_result()
+    self
+      .0
+      .try_write()?
+      .unrevoke_credentials(&query, indices.as_slice())
+      .wasm_result()
+  }
+
+  // ===========================================================================
+  // Cloning
+  // ===========================================================================
+
+  #[wasm_bindgen(js_name = clone)]
+  /// Returns a deep clone of the {@link IotaDocument}.
+  pub fn deep_clone(&self) -> Result<WasmIotaDocument> {
+    Ok(WasmIotaDocument(Rc::new(IotaDocumentLock::new(
+      self.0.try_read()?.clone(),
+    ))))
+  }
+
+  /// ### Warning
+  /// This is for internal use only. Do not rely on or call this method.
+  #[wasm_bindgen(js_name = _shallowCloneInternal)]
+  pub fn shallow_clone(&self) -> WasmIotaDocument {
+    WasmIotaDocument(self.0.clone())
+  }
+
+  /// ### Warning
+  /// This is for internal use only. Do not rely on or call this method.
+  #[wasm_bindgen(js_name = _strongCountInternal)]
+  pub fn strong_count(&self) -> usize {
+    Rc::strong_count(&self.0)
+  }
+
+  // ===========================================================================
+  // Serialization
+  // ===========================================================================
+
+  /// Serializes to a plain JS representation.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0.try_read()?.as_ref()).wasm_result()
+  }
+
+  /// Deserializes an instance from a plain JS representation.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmIotaDocument> {
+    json
+      .into_serde()
+      .map(|value| Self(Rc::new(IotaDocumentLock::new(value))))
+      .wasm_result()
+  }
+
+  // ===========================================================================
+  // "AsRef<CoreDocument>"
+  // ===========================================================================
+  /// Transforms the {@link IotaDocument} to its {@link CoreDocument} representation.
+  #[wasm_bindgen(js_name = toCoreDocument)]
+  pub fn as_core_document(&self) -> Result<WasmCoreDocument> {
+    Ok(WasmCoreDocument(Rc::new(CoreDocumentLock::new(
+      self.0.try_read()?.core_document().clone(),
+    ))))
+  }
+
+  // ===========================================================================
+  // Storage
+  // ===========================================================================
+
+  /// Generate new key material in the given `storage` and insert a new verification method with the corresponding
+  /// public key material into the DID document.
+  ///
+  /// - If no fragment is given the `kid` of the generated JWK is used, if it is set, otherwise an error is returned.
+  /// - The `keyType` must be compatible with the given `storage`. `Storage`s are expected to export key type constants
+  /// for that use case.
+  ///
+  /// The fragment of the generated method is returned.
+  #[wasm_bindgen(js_name = generateMethod)]
+  #[allow(non_snake_case)]
+  pub fn generate_method(
+    &self,
+    storage: &WasmStorage,
+    keyType: String,
+    alg: WasmJwsAlgorithm,
+    fragment: Option<String>,
+    scope: WasmMethodScope,
+  ) -> Result<PromiseString> {
+    let alg: JwsAlgorithm = alg.into_serde().wasm_result()?;
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let scope: MethodScope = scope.0;
+    let promise: Promise = future_to_promise(async move {
+      let method_fragment: String = document_lock_clone
+        .write()
+        .await
+        .generate_method(&storage_clone, KeyType::from(keyType), alg, fragment.as_deref(), scope)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(method_fragment))
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Remove the method identified by the given fragment from the document and delete the corresponding key material in
+  /// the given `storage`.
+  #[wasm_bindgen(js_name = purgeMethod)]
+  pub fn purge_method(&mut self, storage: &WasmStorage, id: &WasmDIDUrl) -> Result<PromiseVoid> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let id: DIDUrl = id.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .write()
+        .await
+        .purge_method(&storage_clone, &id)
+        .await
+        .wasm_result()
+        .map(|_| JsValue::UNDEFINED)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+  /// material in the verification method identified by the given `fragment.
+  ///
+  /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+  ///
+  /// @deprecated Use `createJws()` instead.
+  #[deprecated]
+  #[wasm_bindgen(js_name = createJwt)]
+  pub fn create_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseJws> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_jws(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(WasmJws::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Sign the `payload` according to `options` with the storage backed private key corresponding to the public key
+  /// material in the verification method identified by the given `fragment.
+  ///
+  /// Upon success a string representing a JWS encoded according to the Compact JWS Serialization format is returned.
+  /// See [RFC7515 section 3.1](https://www.rfc-editor.org/rfc/rfc7515#section-3.1).
+  #[wasm_bindgen(js_name = createJws)]
+  pub fn create_jws(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    payload: String,
+    options: &WasmJwsSignatureOptions,
+  ) -> Result<PromiseJws> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_jws(&storage_clone, &fragment, payload.as_bytes(), &options_clone)
+        .await
+        .wasm_result()
+        .map(WasmJws::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Produces a JWS where the payload is produced from the given `credential`
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+  ///
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  ///
+  /// The `custom_claims` can be used to set additional claims on the resulting JWT.
+  #[wasm_bindgen(js_name = createCredentialJwt)]
+  pub fn create_credential_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    credential: &WasmCredential,
+    options: &WasmJwsSignatureOptions,
+    custom_claims: Option<RecordStringAny>,
+  ) -> Result<PromiseJwt> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = options.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let credential_clone: Credential = credential.0.clone();
+    let custom: Option<Object> = custom_claims
+      .map(|claims| claims.into_serde().wasm_result())
+      .transpose()?;
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_credential_jwt(&credential_clone, &storage_clone, &fragment, &options_clone, custom)
+        .await
+        .wasm_result()
+        .map(WasmJwt::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
+  }
+
+  /// Produces a JWT where the payload is produced from the given presentation.
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+  ///
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  #[wasm_bindgen(js_name = createPresentationJwt)]
+  pub fn create_presentation_jwt(
+    &self,
+    storage: &WasmStorage,
+    fragment: String,
+    presentation: &WasmPresentation,
+    signature_options: &WasmJwsSignatureOptions,
+    presentation_options: &WasmJwtPresentationOptions,
+  ) -> Result<PromiseJwt> {
+    let storage_clone: Rc<WasmStorageInner> = storage.0.clone();
+    let options_clone: JwsSignatureOptions = signature_options.0.clone();
+    let document_lock_clone: Rc<IotaDocumentLock> = self.0.clone();
+    let presentation_clone: Presentation<UnknownCredential> = presentation.0.clone();
+    let presentation_options_clone: JwtPresentationOptions = presentation_options.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      document_lock_clone
+        .read()
+        .await
+        .create_presentation_jwt(
+          &presentation_clone,
+          &storage_clone,
+          &fragment,
+          &options_clone,
+          &presentation_options_clone,
+        )
+        .await
+        .wasm_result()
+        .map(WasmJwt::new)
+        .map(JsValue::from)
+    });
+    Ok(promise.unchecked_into())
   }
 }
-
-impl_wasm_json!(WasmIotaDocument, IotaDocument);
-impl_wasm_clone!(WasmIotaDocument, IotaDocument);
 
 impl From<IotaDocument> for WasmIotaDocument {
   fn from(document: IotaDocument) -> Self {
-    Self(document)
-  }
-}
-
-impl From<WasmIotaDocument> for IotaDocument {
-  fn from(wasm_document: WasmIotaDocument) -> Self {
-    wasm_document.0
+    Self(Rc::new(IotaDocumentLock::new(document)))
   }
 }
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "IotaDIDUrl | string")]
-  pub type UIotaDIDUrlQuery;
-
   #[wasm_bindgen(typescript_type = "IotaDID[]")]
   pub type ArrayIotaDID;
 
   #[wasm_bindgen(typescript_type = "IotaDocument[]")]
   pub type ArrayIotaDocument;
 
-  #[wasm_bindgen(typescript_type = "IotaService[]")]
-  pub type ArrayIotaService;
+  // External interface from `@iota/sdk-wasm`, must be deserialized via BlockDto.
+  #[wasm_bindgen(typescript_type = "Block")]
+  pub type WasmBlock;
 
-  #[wasm_bindgen(typescript_type = "IotaVerificationMethod[]")]
-  pub type ArrayIotaVerificationMethods;
-
-  // External interface from `@iota/types`, must be deserialized via BlockDto.
-  #[wasm_bindgen(typescript_type = "IBlock")]
-  pub type IBlock;
-
-  // External interface from `@iota/types`, must be deserialized via ProtocolParameters.
+  // External interface from `@iota/sdk-wasm`, must be deserialized via ProtocolParameters.
   #[wasm_bindgen(typescript_type = "INodeInfoProtocol")]
   pub type INodeInfoProtocol;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TYPESCRIPT_IMPORTS: &'static str = r#"import type { IBlock, INodeInfoProtocol } from '@iota/types';"#;
+const TYPESCRIPT_IMPORTS: &'static str = r#"import type { Block, INodeInfoProtocol } from '~sdk-wasm';"#;

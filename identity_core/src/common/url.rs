@@ -13,9 +13,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::common::KeyComparable;
-use crate::diff;
-use crate::diff::Diff;
-use crate::diff::DiffString;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -28,7 +25,7 @@ pub struct Url(::url::Url);
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
-    ::url::Url::parse(input.as_ref()).map_err(Into::into).map(Self)
+    ::url::Url::parse(input.as_ref()).map_err(Error::InvalidUrl).map(Self)
   }
 
   /// Consumes the [`Url`] and returns the value as a `String`.
@@ -38,7 +35,7 @@ impl Url {
 
   /// Parses the given input string as a [`Url`], with `self` as the base Url.
   pub fn join(&self, input: impl AsRef<str>) -> Result<Self> {
-    self.0.join(input.as_ref()).map_err(Into::into).map(Self)
+    self.0.join(input.as_ref()).map_err(Error::InvalidUrl).map(Self)
   }
 }
 
@@ -88,29 +85,6 @@ where
 {
   fn eq(&self, other: &T) -> bool {
     self.as_str() == other.as_ref()
-  }
-}
-
-impl Diff for Url {
-  type Type = DiffString;
-
-  fn diff(&self, other: &Self) -> diff::Result<Self::Type> {
-    self.to_string().diff(&other.to_string())
-  }
-
-  fn merge(&self, diff: Self::Type) -> diff::Result<Self> {
-    self
-      .to_string()
-      .merge(diff)
-      .and_then(|this| Self::parse(this).map_err(diff::Error::merge))
-  }
-
-  fn from_diff(diff: Self::Type) -> diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(this).map_err(diff::Error::convert))
-  }
-
-  fn into_diff(self) -> diff::Result<Self::Type> {
-    self.to_string().into_diff()
   }
 }
 

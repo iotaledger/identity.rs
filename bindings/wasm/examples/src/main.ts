@@ -13,8 +13,10 @@ import { didControlsDid } from "./1_advanced/0_did_controls_did";
 import { didIssuesNft } from "./1_advanced/1_did_issues_nft";
 import { nftOwnsDid } from "./1_advanced/2_nft_owns_did";
 import { didIssuesTokens } from "./1_advanced/3_did_issues_tokens";
-import { keyExchange } from "./1_advanced/4_key_exchange";
-import { customResolution } from "./1_advanced/5_custom_resolution";
+import { customResolution } from "./1_advanced/4_custom_resolution";
+import { domainLinkage } from "./1_advanced/5_domain_linkage";
+import { sdJwt } from "./1_advanced/6_sd_jwt";
+import { statusList2021 } from "./1_advanced/7_status_list_2021";
 
 async function main() {
     // Extract example name.
@@ -48,10 +50,14 @@ async function main() {
             return await nftOwnsDid();
         case "3_did_issues_tokens":
             return await didIssuesTokens();
-        case "4_key_exchange":
-            return await keyExchange();
-        case "5_custom_resolution":
+        case "4_custom_resolution":
             return await customResolution();
+        case "5_domain_linkage":
+            return await domainLinkage();
+        case "6_sd_jwt":
+            return await sdJwt();
+        case "7_status_list_2021":
+            return await statusList2021();
         default:
             throw "Unknown example name: '" + argument + "'";
     }

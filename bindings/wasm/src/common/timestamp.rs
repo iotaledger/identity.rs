@@ -18,20 +18,27 @@ extern "C" {
 pub struct WasmTimestamp(pub(crate) Timestamp);
 
 #[wasm_bindgen(js_class = Timestamp)]
+#[allow(clippy::new_without_default)]
 impl WasmTimestamp {
-  /// Parses a `Timestamp` from the provided input string.
+  /// Creates a new {@link Timestamp} with the current date and time.
+  #[wasm_bindgen(constructor)]
+  pub fn new() -> Self {
+    Self::now_utc()
+  }
+
+  /// Parses a {@link Timestamp} from the provided input string.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmTimestamp> {
     Ok(Self(Timestamp::parse(input).wasm_result()?))
   }
 
-  /// Creates a new `Timestamp` with the current date and time.
+  /// Creates a new {@link Timestamp} with the current date and time.
   #[wasm_bindgen(js_name = nowUTC)]
   pub fn now_utc() -> Self {
     Self(Timestamp::now_utc())
   }
 
-  /// Returns the `Timestamp` as an RFC 3339 `String`.
+  /// Returns the {@link Timestamp} as an RFC 3339 `String`.
   #[wasm_bindgen(js_name = toRFC3339)]
   #[allow(clippy::wrong_self_convention)]
   pub fn to_rfc3339(&self) -> String {
@@ -69,30 +76,30 @@ pub struct WasmDuration(pub(crate) Duration);
 
 #[wasm_bindgen(js_class = Duration)]
 impl WasmDuration {
-  /// Create a new `Duration` with the given number of seconds.
+  /// Create a new {@link Duration} with the given number of seconds.
   #[wasm_bindgen]
   pub fn seconds(seconds: u32) -> WasmDuration {
     Self(Duration::seconds(seconds))
   }
-  /// Create a new `Duration` with the given number of minutes.
+  /// Create a new {@link Duration} with the given number of minutes.
   #[wasm_bindgen]
   pub fn minutes(minutes: u32) -> WasmDuration {
     Self(Duration::minutes(minutes))
   }
 
-  /// Create a new `Duration` with the given number of hours.
+  /// Create a new {@link Duration} with the given number of hours.
   #[wasm_bindgen]
   pub fn hours(hours: u32) -> WasmDuration {
     Self(Duration::hours(hours))
   }
 
-  /// Create a new `Duration` with the given number of days.
+  /// Create a new {@link Duration} with the given number of days.
   #[wasm_bindgen]
   pub fn days(days: u32) -> WasmDuration {
     Self(Duration::days(days))
   }
 
-  /// Create a new `Duration` with the given number of weeks.
+  /// Create a new {@link Duration} with the given number of weeks.
   #[wasm_bindgen]
   pub fn weeks(weeks: u32) -> WasmDuration {
     Self(Duration::weeks(weeks))

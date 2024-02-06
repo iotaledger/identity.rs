@@ -1,9 +1,12 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use identity_core::convert::ToJson;
+use once_cell::sync::Lazy;
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Context;
@@ -12,12 +15,6 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::GetSignature;
-use identity_core::crypto::GetSignatureMut;
-use identity_core::crypto::Proof;
-use identity_core::crypto::SetSignature;
-use identity_did::verification::MethodUriType;
-use identity_did::verification::TryMethod;
 
 use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
@@ -30,9 +27,11 @@ use crate::credential::Subject;
 use crate::error::Error;
 use crate::error::Result;
 
-lazy_static! {
-  static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
-}
+use super::jwt_serialization::CredentialJwtClaims;
+use super::Proof;
+
+static BASE_CONTEXT: Lazy<Context> =
+  Lazy::new(|| Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap()));
 
 /// Represents a set of claims describing an entity.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -79,7 +78,7 @@ pub struct Credential<T = Object> {
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
-  /// Proof(s) used to verify a `Credential`
+  /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Proof>,
 }
@@ -119,7 +118,7 @@ impl<T> Credential<T> {
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,
-      proof: None,
+      proof: builder.proof,
     };
 
     this.check_structure()?;
@@ -155,14 +154,25 @@ impl<T> Credential<T> {
     Ok(())
   }
 
-  /// Returns a reference to the proof.
-  pub fn proof(&self) -> Option<&Proof> {
-    self.proof.as_ref()
+  /// Sets the proof property of the `Credential`.
+  ///
+  /// Note that this proof is not related to JWT.
+  pub fn set_proof(&mut self, proof: Option<Proof>) {
+    self.proof = proof;
   }
 
-  /// Returns a mutable reference to the proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Proof> {
-    self.proof.as_mut()
+  /// Serializes the [`Credential`] as a JWT claims set
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+  ///
+  /// The resulting string can be used as the payload of a JWS when issuing the credential.  
+  pub fn serialize_jwt(&self, custom_claims: Option<Object>) -> Result<String>
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+  {
+    let jwt_representation: CredentialJwtClaims<'_, T> = CredentialJwtClaims::new(self, custom_claims)?;
+    jwt_representation
+      .to_json()
+      .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
   }
 }
 
@@ -173,28 +183,6 @@ where
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
-}
-
-impl<T> GetSignature for Credential<T> {
-  fn signature(&self) -> Option<&Proof> {
-    self.proof.as_ref()
-  }
-}
-
-impl<T> GetSignatureMut for Credential<T> {
-  fn signature_mut(&mut self) -> Option<&mut Proof> {
-    self.proof.as_mut()
-  }
-}
-
-impl<T> SetSignature for Credential<T> {
-  fn set_signature(&mut self, value: Proof) {
-    self.proof.replace(value);
-  }
-}
-
-impl<T> TryMethod for Credential<T> {
-  const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
 #[cfg(test)]

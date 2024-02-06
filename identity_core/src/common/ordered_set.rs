@@ -13,9 +13,6 @@ use std::vec::IntoIter;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_diff::Diff;
-use identity_diff::DiffVec;
-
 use crate::common::KeyComparable;
 use crate::error::Error;
 use crate::error::Result;
@@ -255,7 +252,7 @@ where
   where
     I: IntoIterator<Item = T>,
   {
-    let iter: _ = iter.into_iter();
+    let iter = iter.into_iter();
     let size: usize = iter.size_hint().1.unwrap_or(0);
 
     let mut this: Self = Self::with_capacity(size);
@@ -285,33 +282,6 @@ where
     }
 
     Ok(this)
-  }
-}
-
-impl<T> Diff for OrderedSet<T>
-where
-  T: Diff + KeyComparable + Serialize + for<'de> Deserialize<'de>,
-{
-  type Type = DiffVec<T>;
-
-  fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
-    self.clone().into_vec().diff(&other.clone().into_vec())
-  }
-
-  fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
-    self
-      .clone()
-      .into_vec()
-      .merge(diff)
-      .and_then(|this| Self::try_from(this).map_err(identity_diff::Error::merge))
-  }
-
-  fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
-    Vec::from_diff(diff).and_then(|this| Self::try_from(this).map_err(identity_diff::Error::convert))
-  }
-
-  fn into_diff(self) -> identity_diff::Result<Self::Type> {
-    self.into_vec().into_diff()
   }
 }
 

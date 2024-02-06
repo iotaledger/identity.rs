@@ -17,6 +17,8 @@ use crate::credential::Status;
 use crate::credential::Subject;
 use crate::error::Result;
 
+use super::Proof;
+
 /// A `CredentialBuilder` is used to create a customized `Credential`.
 #[derive(Clone, Debug)]
 pub struct CredentialBuilder<T = Object> {
@@ -33,6 +35,7 @@ pub struct CredentialBuilder<T = Object> {
   pub(crate) terms_of_use: Vec<Policy>,
   pub(crate) evidence: Vec<Evidence>,
   pub(crate) non_transferable: Option<bool>,
+  pub(crate) proof: Option<Proof>,
   pub(crate) properties: T,
 }
 
@@ -53,6 +56,7 @@ impl<T> CredentialBuilder<T> {
       terms_of_use: Vec::new(),
       evidence: Vec::new(),
       non_transferable: None,
+      proof: None,
       properties,
     }
   }
@@ -117,8 +121,8 @@ impl<T> CredentialBuilder<T> {
 
   /// Adds a value to the `credentialStatus` set.
   #[must_use]
-  pub fn status(mut self, value: Status) -> Self {
-    self.status = Some(value);
+  pub fn status(mut self, value: impl Into<Status>) -> Self {
+    self.status = Some(value.into());
     self
   }
 
@@ -154,6 +158,13 @@ impl<T> CredentialBuilder<T> {
   #[must_use]
   pub fn non_transferable(mut self, value: bool) -> Self {
     self.non_transferable = Some(value);
+    self
+  }
+
+  /// Sets the value of the `proof` property.
+  #[must_use]
+  pub fn proof(mut self, value: Proof) -> Self {
+    self.proof = Some(value);
     self
   }
 
@@ -210,6 +221,7 @@ mod tests {
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;
+  use crate::credential::Proof;
   use crate::credential::Subject;
 
   fn subject() -> Subject {
@@ -230,6 +242,7 @@ mod tests {
 
   #[test]
   fn test_credential_builder_valid() {
+    let proof = Proof::new("test-type".to_owned(), Object::new());
     let credential: Credential = CredentialBuilder::default()
       .context(Url::parse("https://www.w3.org/2018/credentials/examples/v1").unwrap())
       .id(Url::parse("http://example.edu/credentials/3732").unwrap())
@@ -237,6 +250,7 @@ mod tests {
       .subject(subject())
       .issuer(issuer())
       .issuance_date(Timestamp::parse("2010-01-01T00:00:00Z").unwrap())
+      .proof(proof)
       .build()
       .unwrap();
 
@@ -265,6 +279,7 @@ mod tests {
       credential.credential_subject.get(0).unwrap().properties["degree"]["name"],
       "Bachelor of Science and Arts"
     );
+    assert_eq!(credential.proof.unwrap().type_, "test-type");
   }
 
   #[test]

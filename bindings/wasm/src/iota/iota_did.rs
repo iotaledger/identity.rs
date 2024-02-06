@@ -1,16 +1,17 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::did::DIDError;
+use identity_iota::did::Error as DIDError;
 use identity_iota::did::DID;
+use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::NetworkName;
-use iota_types::block::output::AliasId;
 use wasm_bindgen::prelude::*;
 
+use crate::did::WasmCoreDID;
+use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::iota::WasmIotaDIDUrl;
 
 /// A DID conforming to the IOTA DID method specification.
 ///
@@ -36,7 +37,7 @@ impl WasmIotaDID {
   // Constructors
   // ===========================================================================
 
-  /// Constructs a new `IotaDID` from a byte representation of the tag and the given
+  /// Constructs a new {@link IotaDID} from a byte representation of the tag and the given
   /// network name.
   ///
   /// See also {@link IotaDID.placeholder}.
@@ -50,7 +51,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::new(tag_bytes, &network_name)))
   }
 
-  /// Constructs a new `IotaDID` from a hex representation of an Alias Id and the given
+  /// Constructs a new {@link IotaDID} from a hex representation of an Alias Id and the given
   /// network name.
   #[wasm_bindgen(js_name = fromAliasId)]
   #[allow(non_snake_case)]
@@ -59,7 +60,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::from_alias_id(aliasId.as_ref(), &network_name)))
   }
 
-  /// Creates a new placeholder [`IotaDID`] with the given network name.
+  /// Creates a new placeholder {@link IotaDID} with the given network name.
   ///
   /// E.g. `did:iota:smr:0x0000000000000000000000000000000000000000000000000000000000000000`.
   #[wasm_bindgen]
@@ -68,7 +69,7 @@ impl WasmIotaDID {
     Ok(Self::from(IotaDID::placeholder(&network_name)))
   }
 
-  /// Parses a `IotaDID` from the input string.
+  /// Parses a {@link IotaDID} from the input string.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmIotaDID> {
     IotaDID::parse(input).map(Self).wasm_result()
@@ -78,16 +79,22 @@ impl WasmIotaDID {
   // Properties
   // ===========================================================================
 
-  /// Returns the Tangle network name of the `IotaDID`.
-  #[wasm_bindgen(js_name = networkStr)]
-  pub fn network_str(&self) -> String {
+  /// Returns the Tangle network name of the {@link IotaDID}.
+  #[wasm_bindgen]
+  pub fn network(&self) -> String {
     self.0.network_str().to_owned()
   }
 
-  /// Returns a copy of the unique tag of the `IotaDID`.
+  /// Returns a copy of the unique tag of the {@link IotaDID}.
   #[wasm_bindgen]
   pub fn tag(&self) -> String {
-    self.0.tag().to_owned()
+    self.0.tag_str().to_owned()
+  }
+
+  #[wasm_bindgen(js_name = toCoreDid)]
+  /// Returns the DID represented as a {@link CoreDID}.
+  pub fn as_core_did(&self) -> WasmCoreDID {
+    WasmCoreDID(self.0.as_ref().clone())
   }
 
   // ===========================================================================
@@ -134,16 +141,16 @@ impl WasmIotaDID {
     self.0.method_id().to_owned()
   }
 
-  /// Construct a new `DIDUrl` by joining with a relative DID Url string.
+  /// Construct a new {@link DIDUrl} by joining with a relative DID Url string.
   #[wasm_bindgen]
-  pub fn join(&self, segment: &str) -> Result<WasmIotaDIDUrl> {
-    self.0.clone().join(segment).wasm_result().map(WasmIotaDIDUrl)
+  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
+    self.0.clone().join(segment).wasm_result().map(WasmDIDUrl)
   }
 
-  /// Clones the `DID` into a `DIDUrl`.
+  /// Clones the `DID` into a {@link DIDUrl}.
   #[wasm_bindgen(js_name = toUrl)]
-  pub fn to_url(&self) -> WasmIotaDIDUrl {
-    WasmIotaDIDUrl::from(self.0.to_url())
+  pub fn to_url(&self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.to_url())
   }
 
   /// Returns the hex-encoded AliasId with a '0x' prefix, from the DID tag.
@@ -152,10 +159,10 @@ impl WasmIotaDID {
     AliasId::from(&self.0).to_string()
   }
 
-  /// Converts the `DID` into a `DIDUrl`, consuming it.
+  /// Converts the `DID` into a {@link DIDUrl}, consuming it.
   #[wasm_bindgen(js_name = intoUrl)]
-  pub fn into_url(self) -> WasmIotaDIDUrl {
-    WasmIotaDIDUrl::from(self.0.into_url())
+  pub fn into_url(self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.into_url())
   }
 
   /// Returns the `DID` as a string.

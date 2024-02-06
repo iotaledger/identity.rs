@@ -1,8 +1,7 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
-#![allow(deprecated)]
 #![doc = include_str!("./../README.md")]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
@@ -17,21 +16,14 @@
   // clippy::missing_errors_doc
 )]
 
-#[macro_use]
-extern crate serde;
+#[allow(clippy::module_inception)]
+mod did;
+mod did_url;
+mod error;
 
-#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-pub mod diff;
-
-pub mod did;
-pub mod document;
-pub mod error;
-#[cfg(feature = "revocation-bitmap")]
-pub mod revocation;
-pub mod service;
-pub mod utils;
-pub mod verifiable;
-pub mod verification;
-
-pub use self::error::Error;
-pub use self::error::Result;
+pub use crate::did_url::DIDUrl;
+pub use crate::did_url::RelativeDIDUrl;
+pub use ::did_url::DID as BaseDIDUrl;
+pub use did::CoreDID;
+pub use did::DID;
+pub use error::Error;

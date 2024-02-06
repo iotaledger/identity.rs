@@ -1,29 +1,28 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Bip39 } from "@iota/crypto.js";
 import {
     IotaDID,
     IotaDocument,
     IotaIdentityClient,
-    IotaVerificationMethod,
-    KeyPair,
-    KeyType,
+    JwkMemStore,
+    JwsAlgorithm,
+    KeyIdMemStore,
     MethodScope,
+    Storage,
 } from "@iota/identity-wasm/node";
-import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import {
-    AddressTypes,
-    ALIAS_ADDRESS_TYPE,
-    IAliasAddress,
-    IAliasOutput,
+    Address,
+    AliasAddress,
+    AliasOutput,
+    Client,
     IRent,
-    ISSUER_FEATURE_TYPE,
-    IStateControllerAddressUnlockCondition,
-    STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE,
-    TransactionHelper,
-} from "@iota/iota.js";
-import { Converter } from "@iota/util.js";
+    IssuerFeature,
+    MnemonicSecretManager,
+    StateControllerAddressUnlockCondition,
+    UnlockConditionType,
+    Utils,
+} from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, createDid } from "../util";
 
 /** Demonstrates how an identity can control another identity.
@@ -43,11 +42,16 @@ export async function didControlsDid() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Creates a new wallet and identity (see "0_create_did" example).
-    var { document } = await createDid(client, secretManager);
+    const storage: Storage = new Storage(new JwkMemStore(), new KeyIdMemStore());
+    let { document } = await createDid(
+        client,
+        secretManager,
+        storage,
+    );
     let companyDid = document.id();
 
     // Get the current byte costs.
@@ -60,15 +64,12 @@ export async function didControlsDid() {
     var subsidiaryDocument: IotaDocument = new IotaDocument(networkName);
 
     // Create the Alias Address of the company.
-    const companyAliasAddress: AddressTypes = {
-        aliasId: companyDid.toAliasId(),
-        type: ALIAS_ADDRESS_TYPE,
-    };
+    const companyAliasAddress: Address = new AliasAddress(companyDid.toAliasId());
 
     // Create a DID for the subsidiary that is controlled by the parent company's DID.
     // This means the subsidiary's Alias Output can only be updated or destroyed by
     // the state controller or governor of the company's Alias Output respectively.
-    var subsidiaryAlias: IAliasOutput = await didClient.newDidOutput(
+    var subsidiaryAlias: AliasOutput = await didClient.newDidOutput(
         companyAliasAddress,
         subsidiaryDocument,
         rentStructure,
@@ -77,18 +78,20 @@ export async function didControlsDid() {
     // Optionally, we can mark the company as the issuer of the subsidiary DID.
     // This allows to verify trust relationships between DIDs, as a resolver can
     // verify that the subsidiary DID was created by the parent company.
-    subsidiaryAlias = {
+    subsidiaryAlias = await client.buildAliasOutput({
         ...subsidiaryAlias,
-        immutableFeatures: [
-            {
-                type: ISSUER_FEATURE_TYPE,
-                address: companyAliasAddress,
-            },
-        ],
-    };
+        immutableFeatures: [new IssuerFeature(companyAliasAddress)],
+        aliasId: subsidiaryAlias.getAliasId(),
+        unlockConditions: subsidiaryAlias.getUnlockConditions(),
+    });
 
     // Adding the issuer feature means we have to recalculate the required storage deposit.
-    subsidiaryAlias.amount = TransactionHelper.getStorageDeposit(subsidiaryAlias, rentStructure).toString();
+    subsidiaryAlias = await client.buildAliasOutput({
+        ...subsidiaryAlias,
+        amount: Utils.computeStorageDeposit(subsidiaryAlias, rentStructure),
+        aliasId: subsidiaryAlias.getAliasId(),
+        unlockConditions: subsidiaryAlias.getUnlockConditions(),
+    });
 
     // Publish the subsidiary's DID.
     subsidiaryDocument = await didClient.publishDidOutput(secretManager, subsidiaryAlias);
@@ -99,19 +102,23 @@ export async function didControlsDid() {
 
     // Add a verification method to the subsidiary.
     // This only serves as an example for updating the subsidiary DID.
-    const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-    const method: IotaVerificationMethod = new IotaVerificationMethod(
-        subsidiaryDocument.id(),
-        KeyType.Ed25519,
-        keyPair.public(),
+    await subsidiaryDocument.generateMethod(
+        storage,
+        JwkMemStore.ed25519KeyType(),
+        JwsAlgorithm.EdDSA,
         "#key-2",
+        MethodScope.VerificationMethod(),
     );
-    subsidiaryDocument.insertMethod(method, MethodScope.VerificationMethod());
 
     // Update the subsidiary's Alias Output with the updated document
     // and increase the storage deposit.
-    const subsidiaryAliasUpdate: IAliasOutput = await didClient.updateDidOutput(subsidiaryDocument);
-    subsidiaryAliasUpdate.amount = TransactionHelper.getStorageDeposit(subsidiaryAliasUpdate, rentStructure).toString();
+    let subsidiaryAliasUpdate: AliasOutput = await didClient.updateDidOutput(subsidiaryDocument);
+    subsidiaryAliasUpdate = await client.buildAliasOutput({
+        ...subsidiaryAliasUpdate,
+        amount: Utils.computeStorageDeposit(subsidiaryAliasUpdate, rentStructure),
+        aliasId: subsidiaryAliasUpdate.getAliasId(),
+        unlockConditions: subsidiaryAliasUpdate.getUnlockConditions(),
+    });
 
     // Publish the updated subsidiary's DID.
     //
@@ -124,7 +131,7 @@ export async function didControlsDid() {
     // ===================================================================
 
     // Resolve the subsidiary's Alias Output.
-    const subsidiaryOutput: IAliasOutput = await didClient.resolveDidOutput(subsidiaryDocument.id());
+    const subsidiaryOutput: AliasOutput = await didClient.resolveDidOutput(subsidiaryDocument.id());
 
     // Extract the company's Alias Id from the state controller unlock condition.
     //
@@ -132,14 +139,14 @@ export async function didControlsDid() {
     // we could inspect the issuer feature. This feature needs to be set when creating the DID.
     //
     // Non-null assertion is safe to use since every Alias Output has a state controller unlock condition.
-    // Cast to IStateControllerAddressUnlockCondition is safe as we check the type in find.
-    const stateControllerUnlockCondition: IStateControllerAddressUnlockCondition = subsidiaryOutput.unlockConditions
+    // Cast to StateControllerAddressUnlockCondition is safe as we check the type in find.
+    const stateControllerUnlockCondition: StateControllerAddressUnlockCondition = subsidiaryOutput.getUnlockConditions()
         .find(
-            unlockCondition => unlockCondition.type == STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE,
-        )! as IStateControllerAddressUnlockCondition;
+            unlockCondition => unlockCondition.getType() == UnlockConditionType.StateControllerAddress,
+        )! as StateControllerAddressUnlockCondition;
 
     // Cast to IAliasAddress is safe because we set an Alias Address earlier.
-    const companyAliasId: string = (stateControllerUnlockCondition.address as IAliasAddress).aliasId;
+    const companyAliasId: string = (stateControllerUnlockCondition.getAddress() as AliasAddress).getAliasId();
 
     // Reconstruct the company's DID from the Alias Id and the network.
     companyDid = IotaDID.fromAliasId(companyAliasId, networkName);

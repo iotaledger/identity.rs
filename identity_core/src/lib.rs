@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
-#![allow(deprecated)]
 #![doc = include_str!("./../README.md")]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
@@ -20,15 +19,9 @@
 #[doc(inline)]
 pub use serde_json::json;
 
-#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-#[doc(inline)]
-pub use identity_diff as diff;
-
 pub mod common;
 pub mod convert;
-pub mod crypto;
 pub mod error;
-pub mod utils;
 
 pub use self::error::Error;
 pub use self::error::Result;

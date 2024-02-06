@@ -4,16 +4,23 @@ inputs:
   target:
     description: 'Additionally install specified target for this toolchain, ex. x86_64-apple-darwin'
     required: false
-  profile:
-    description: 'Execute rustup set profile {value} before installing the toolchain, ex. minimal'
+  toolchain:
+    description: 'Toolchain to install. Default: stable.'
     required: false
-    default: 'minimal'
+    default: stable
+  components:
+    description: 'Comma-separated string of additional components to install e.g. `clippy`, `rustfmt`'
+    required: false
   os:
     description: 'OS of the runner, used for cache key construction.'
     required: true
   job:
     description: 'Name of the job, used for cache key construction.'
     required: true
+  cargo-cache-enabled:
+    description: 'Cache cargo folder. Default: false.'
+    required: false
+    default: ''
   target-cache-enabled:
     description: 'Cache build artifacts from the target path. Default: false.'
     required: false
@@ -33,26 +40,43 @@ runs:
   using: "composite"
   steps:
 
-    - name: Get current date linux / macos
-      if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
-      shell: sh
+    - name: Get current date
+      shell: bash
       run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
-    - name: Get current date windows
-      if: inputs.os == 'windows-latest'
-      shell: pwsh
-      run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+    - name: Setup rust toolchain
+      shell: bash
+      run: |
 
-    - name: Install stable toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        profile: ${{ inputs.profile }}
-        target: ${{ inputs.target }}
+        if ! rustup self update; then
+            echo "rustup self update failed"
+        fi
+        
+        TARGET=${{ inputs.target }}
+        if [[ $TARGET != '' ]]; then
+          rustup target add $TARGET
+        fi
+
+        rustup update
+        
+        TOOLCHAIN=${{ inputs.toolchain }}
+        if [[ $TOOLCHAIN != 'stable' ]]; then
+           rustup toolchain install $TOOLCHAIN
+        fi
+
+        COMPONENTS=${{ inputs.components }}
+        if [[ $COMPONENTS != '' ]]; then
+          for i in ${COMPONENTS//,/ }
+          do
+            rustup component add $i $(if [ $TOOLCHAIN != '' ]; then echo --toolchain $TOOLCHAIN; fi)
+          done
+        fi
+        
+        rustup show
 
     - name: Cache cargo
       uses: actions/cache@v2.1.7
+      if: inputs.cargo-cache-enabled == 'true'
       with:
         # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
         path: |
@@ -72,9 +96,8 @@ runs:
     # Allows dependencies updated on crates.io between runs to trigger storing an updated cache,
     # which hashing Cargo.toml files alone does not.
     - name: Cargo update
-      uses: actions-rs/cargo@v1
-      with:
-        command: update
+      run: cargo update
+      shell: bash
 
     - name: Cache build target
       uses: actions/cache@v2.1.7

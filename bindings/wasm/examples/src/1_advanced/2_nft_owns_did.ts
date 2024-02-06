@@ -1,29 +1,30 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Bip39 } from "@iota/crypto.js";
 import { IotaDocument, IotaIdentityClient } from "@iota/identity-wasm/node";
-import { Client, MnemonicSecretManager } from "@iota/iota-client-wasm/node";
 import {
-    ADDRESS_UNLOCK_CONDITION_TYPE,
-    AddressTypes,
-    Bech32Helper,
-    IAliasOutput,
-    INftOutput,
-    IOutputResponse,
+    Address,
+    AddressType,
+    AddressUnlockCondition,
+    AliasOutput,
+    Client,
     IRent,
-    IStateControllerAddressUnlockCondition,
-    ITransactionPayload,
-    NFT_ADDRESS_TYPE,
-    NFT_OUTPUT_TYPE,
-    OutputTypes,
-    PayloadTypes,
-    STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE,
-    TRANSACTION_ESSENCE_TYPE,
-    TRANSACTION_PAYLOAD_TYPE,
-    TransactionHelper,
-} from "@iota/iota.js";
-import { Converter } from "@iota/util.js";
+    MnemonicSecretManager,
+    NftAddress,
+    NftOutput,
+    Output,
+    OutputResponse,
+    OutputType,
+    Payload,
+    PayloadType,
+    RegularTransactionEssence,
+    SecretManager,
+    StateControllerAddressUnlockCondition,
+    TransactionEssenceType,
+    TransactionPayload,
+    UnlockConditionType,
+    Utils,
+} from "@iota/sdk-wasm/node";
 import { API_ENDPOINT, ensureAddressHasFunds } from "../util";
 
 /** Demonstrates how an identity can be owned by NFTs,
@@ -45,7 +46,7 @@ export async function nftOwnsDid() {
 
     // Generate a random mnemonic for our wallet.
     const secretManager: MnemonicSecretManager = {
-        mnemonic: Bip39.randomMnemonic(),
+        mnemonic: Utils.generateMnemonic(),
     };
 
     // Get the current byte costs.
@@ -55,32 +56,35 @@ export async function nftOwnsDid() {
     const networkName: string = await didClient.getNetworkHrp();
 
     // Create a new address that will own the NFT.
-    const addressBech32 = (await client.generateAddresses(secretManager, {
+    const addressBech32 = (await new SecretManager(secretManager).generateEd25519Addresses({
         accountIndex: 0,
         range: {
             start: 0,
             end: 1,
         },
+        bech32Hrp: networkName,
     }))[0];
-    const address = Bech32Helper.addressFromBech32(addressBech32, networkName);
+    const address = Utils.parseBech32Address(addressBech32);
 
     // Get funds for testing from the faucet.
     await ensureAddressHasFunds(client, addressBech32);
 
     // Create the car NFT with an Ed25519 address as the unlock condition.
-    let carNft: INftOutput = await client.buildNftOutput({
+    let carNft: NftOutput = await client.buildNftOutput({
         nftId: "0x0000000000000000000000000000000000000000000000000000000000000000",
         unlockConditions: [
-            {
-                // The NFT will initially be owned by the Ed25519 address.
-                type: ADDRESS_UNLOCK_CONDITION_TYPE,
-                address,
-            },
+            // The NFT will initially be owned by the Ed25519 address.
+            new AddressUnlockCondition(address),
         ],
     });
 
     // Set the appropriate storage deposit.
-    carNft.amount = TransactionHelper.getStorageDeposit(carNft, rentStructure).toString();
+    carNft = await client.buildNftOutput({
+        ...carNft,
+        amount: Utils.computeStorageDeposit(carNft, rentStructure),
+        nftId: carNft.getNftId(),
+        unlockConditions: carNft.getUnlockConditions(),
+    });
 
     // Publish the NFT.
     const [blockId, block] = await client.buildAndPostBlock(secretManager, { outputs: [carNft] });
@@ -88,19 +92,16 @@ export async function nftOwnsDid() {
 
     // Extract the identifier of the NFT from the published block.
     // Non-null assertion is safe because we published a block with a payload.
-    var carNftId: string = nft_output_id(block.payload!);
+    var carNftId: string = computeNftOutputId(block.payload!);
 
     // Create the address of the NFT.
-    const nftAddress: AddressTypes = {
-        type: NFT_ADDRESS_TYPE,
-        nftId: carNftId,
-    };
+    const nftAddress: Address = new NftAddress(carNftId);
 
     // Construct a DID document for the car.
     var carDocument: IotaDocument = new IotaDocument(networkName);
 
     // Create a new DID for the car that is owned by the car NFT.
-    var carDidAliasOutput: IAliasOutput = await didClient.newDidOutput(nftAddress, carDocument, rentStructure);
+    var carDidAliasOutput: AliasOutput = await didClient.newDidOutput(nftAddress, carDocument, rentStructure);
 
     // Publish the car DID.
     carDocument = await didClient.publishDidOutput(secretManager, carDidAliasOutput);
@@ -113,23 +114,24 @@ export async function nftOwnsDid() {
     carDidAliasOutput = await didClient.resolveDidOutput(carDocument.id());
 
     // Extract the NFT Id from the state controller unlock condition.
-    const stateControllerUnlockCondition: IStateControllerAddressUnlockCondition = carDidAliasOutput.unlockConditions
+    const stateControllerUnlockCondition: StateControllerAddressUnlockCondition = carDidAliasOutput
+        .getUnlockConditions()
         .find(feature =>
-            feature.type === STATE_CONTROLLER_ADDRESS_UNLOCK_CONDITION_TYPE
-        ) as IStateControllerAddressUnlockCondition;
-    if (stateControllerUnlockCondition.address.type === NFT_ADDRESS_TYPE) {
-        carNftId = stateControllerUnlockCondition.address.nftId;
+            feature.getType() === UnlockConditionType.StateControllerAddress
+        ) as StateControllerAddressUnlockCondition;
+    if (stateControllerUnlockCondition.getAddress().getType() === AddressType.Nft) {
+        carNftId = (stateControllerUnlockCondition.getAddress() as NftAddress).getNftId();
     } else {
         throw new Error("expected nft address unlock condition");
     }
 
     // Fetch the NFT Output of the car.
     const nftOutputId: string = await client.nftOutputId(carNftId);
-    const outputResponse: IOutputResponse = await client.getOutput(nftOutputId);
-    const output: OutputTypes = outputResponse.output;
+    const outputResponse: OutputResponse = await client.getOutput(nftOutputId);
+    const output: Output = outputResponse.output;
 
-    if (output.type === NFT_OUTPUT_TYPE) {
-        carNft = output;
+    if (output.getType() === OutputType.Nft) {
+        carNft = output as NftOutput;
     } else {
         throw new Error("expected nft output type");
     }
@@ -138,17 +140,18 @@ export async function nftOwnsDid() {
     console.log("The car's NFT is:", JSON.stringify(carNft, null, 2));
 }
 
-function nft_output_id(payload: PayloadTypes): string {
-    if (payload.type === TRANSACTION_PAYLOAD_TYPE) {
-        const txPayload: ITransactionPayload = payload;
-        const txHash = Converter.bytesToHex(TransactionHelper.getTransactionPayloadHash(txPayload), true);
+function computeNftOutputId(payload: Payload): string {
+    if (payload.getType() === PayloadType.Transaction) {
+        const transactionPayload: TransactionPayload = payload as TransactionPayload;
+        const transactionId = Utils.transactionId(transactionPayload);
 
-        if (txPayload.essence.type === TRANSACTION_ESSENCE_TYPE) {
-            const outputs = txPayload.essence.outputs;
-            for (let index in txPayload.essence.outputs) {
-                if (outputs[index].type === NFT_OUTPUT_TYPE) {
-                    const outputId: string = TransactionHelper.outputIdFromTransactionData(txHash, parseInt(index));
-                    return TransactionHelper.resolveIdFromOutputId(outputId);
+        if (transactionPayload.essence.getType() === TransactionEssenceType.Regular) {
+            const regularTxPayload = transactionPayload.essence as RegularTransactionEssence;
+            const outputs = regularTxPayload.outputs;
+            for (const index in outputs) {
+                if (outputs[index].getType() === OutputType.Nft) {
+                    const outputId: string = Utils.computeOutputId(transactionId, parseInt(index));
+                    return Utils.computeNftId(outputId);
                 }
             }
             throw new Error("no NFT output in transaction essence");

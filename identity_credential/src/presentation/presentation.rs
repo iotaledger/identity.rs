@@ -1,9 +1,11 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use serde::de;
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Context;
@@ -11,23 +13,22 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::GetSignature;
-use identity_core::crypto::GetSignatureMut;
-use identity_core::crypto::Proof;
-use identity_core::crypto::SetSignature;
-use identity_did::verification::MethodUriType;
-use identity_did::verification::TryMethod;
+use identity_core::convert::ToJson;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
+use crate::credential::Proof;
 use crate::credential::RefreshService;
 use crate::error::Error;
 use crate::error::Result;
-use crate::presentation::PresentationBuilder;
 
-/// Represents a bundle of one or more [Credential]s.
+use super::jwt_serialization::PresentationJwtClaims;
+use super::JwtPresentationOptions;
+use super::PresentationBuilder;
+
+/// Represents a bundle of one or more [`Credential`]s.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub struct Presentation<T = Object, U = Object> {
+pub struct Presentation<CRED, T = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
   #[serde(rename = "@context")]
   pub context: OneOrMany<Context>,
@@ -38,11 +39,11 @@ pub struct Presentation<T = Object, U = Object> {
   #[serde(rename = "type")]
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
-  #[serde(default = "Default::default", rename = "verifiableCredential")]
-  pub verifiable_credential: OneOrMany<Credential<U>>,
+  #[rustfmt::skip]
+  #[serde(default = "Default::default", rename = "verifiableCredential", skip_serializing_if = "Vec::is_empty", deserialize_with = "deserialize_verifiable_credential", bound(deserialize = "CRED: serde::de::DeserializeOwned"))]
+  pub verifiable_credential: Vec<CRED>,
   /// The entity that generated the `Presentation`.
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub holder: Option<Url>,
+  pub holder: Url,
   /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   pub refresh_service: OneOrMany<RefreshService>,
@@ -52,15 +53,27 @@ pub struct Presentation<T = Object, U = Object> {
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
-  /// Proof(s) used to verify a `Presentation`
+  /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Proof>,
 }
 
-impl<T, U> Presentation<T, U> {
+/// Deserializes a `Vec<T>` while ensuring that it is not empty.
+fn deserialize_verifiable_credential<'de, T: Deserialize<'de>, D>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+  D: de::Deserializer<'de>,
+{
+  let verifiable_credentials = Vec::<T>::deserialize(deserializer)?;
+
+  (!verifiable_credentials.is_empty())
+    .then_some(verifiable_credentials)
+    .ok_or_else(|| de::Error::custom(Error::EmptyVerifiableCredentialArray))
+}
+
+impl<CRED, T> Presentation<CRED, T> {
   /// Returns the base JSON-LD context for `Presentation`s.
   pub fn base_context() -> &'static Context {
-    Credential::<U>::base_context()
+    Credential::<Object>::base_context()
   }
 
   /// Returns the base type for `Presentation`s.
@@ -71,30 +84,34 @@ impl<T, U> Presentation<T, U> {
   /// Creates a `PresentationBuilder` to configure a new Presentation.
   ///
   /// This is the same as [PresentationBuilder::new].
-  pub fn builder(properties: T) -> PresentationBuilder<T, U> {
-    PresentationBuilder::new(properties)
+  pub fn builder(holder: Url, properties: T) -> PresentationBuilder<CRED, T> {
+    PresentationBuilder::new(holder, properties)
   }
 
   /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
-  pub fn from_builder(builder: PresentationBuilder<T, U>) -> Result<Self> {
+  pub fn from_builder(builder: PresentationBuilder<CRED, T>) -> Result<Self> {
     let this: Self = Self {
       context: builder.context.into(),
       id: builder.id,
       types: builder.types.into(),
-      verifiable_credential: builder.credentials.into(),
+      verifiable_credential: builder.credentials,
       holder: builder.holder,
       refresh_service: builder.refresh_service.into(),
       terms_of_use: builder.terms_of_use.into(),
       properties: builder.properties,
       proof: None,
     };
-
     this.check_structure()?;
 
     Ok(this)
   }
 
   /// Validates the semantic structure of the `Presentation`.
+  ///
+  /// # Warning
+  ///
+  /// This does not check the semantic structure of the contained credentials. This needs to be done as part of
+  /// signature validation on the credentials as they are encoded as JWTs.
   pub fn check_structure(&self) -> Result<()> {
     // Ensure the base context is present and in the correct location
     match self.context.get(0) {
@@ -106,112 +123,128 @@ impl<T, U> Presentation<T, U> {
     if !self.types.iter().any(|type_| type_ == Self::base_type()) {
       return Err(Error::MissingBaseType);
     }
-
-    // Check all credentials.
-    for credential in self.verifiable_credential.iter() {
-      credential.check_structure()?;
-    }
-
     Ok(())
   }
 
-  /// Returns a reference to the `Presentation` proof.
-  pub fn proof(&self) -> Option<&Proof> {
-    self.proof.as_ref()
+  /// Serializes the [`Presentation`] as a JWT claims set
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+  ///
+  /// The resulting string can be used as the payload of a JWS when issuing the credential.  
+  pub fn serialize_jwt(&self, options: &JwtPresentationOptions) -> Result<String>
+  where
+    T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
+    CRED: ToOwned<Owned = CRED> + serde::Serialize + serde::de::DeserializeOwned + Clone,
+  {
+    let jwt_representation: PresentationJwtClaims<'_, CRED, T> = PresentationJwtClaims::new(self, options)?;
+    jwt_representation
+      .to_json()
+      .map_err(|err| Error::JwtClaimsSetSerializationError(err.into()))
   }
 
-  /// Returns a mutable reference to the `Presentation` proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Proof> {
-    self.proof.as_mut()
+  /// Sets the value of the proof property.
+  ///
+  /// Note that this proof is not related to JWT.
+  pub fn set_proof(&mut self, proof: Option<Proof>) {
+    self.proof = proof;
   }
 }
 
-impl<T, U> Display for Presentation<T, U>
+impl<T> Display for Presentation<T>
 where
   T: Serialize,
-  U: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }
 
-impl<T, U> GetSignature for Presentation<T, U> {
-  fn signature(&self) -> Option<&Proof> {
-    self.proof.as_ref()
-  }
-}
-
-impl<T, U> GetSignatureMut for Presentation<T, U> {
-  fn signature_mut(&mut self) -> Option<&mut Proof> {
-    self.proof.as_mut()
-  }
-}
-
-impl<T, U> SetSignature for Presentation<T, U> {
-  fn set_signature(&mut self, value: Proof) {
-    self.proof.replace(value);
-  }
-}
-
-impl<T> TryMethod for Presentation<T> {
-  const TYPE: MethodUriType = MethodUriType::Absolute;
-}
-
 #[cfg(test)]
 mod tests {
+  use serde_json::json;
+  use std::error::Error;
+
+  use identity_core::common::Object;
   use identity_core::convert::FromJson;
 
-  use crate::credential::Credential;
-  use crate::credential::Subject;
-
-  use super::Presentation;
-
-  const JSON: &str = include_str!("../../tests/fixtures/presentation-1.json");
+  use crate::presentation::Presentation;
 
   #[test]
-  fn test_from_json() {
-    let presentation: Presentation = Presentation::from_json(JSON).unwrap();
-    let credential: &Credential = presentation.verifiable_credential.get(0).unwrap();
-    let subject: &Subject = credential.credential_subject.get(0).unwrap();
-
-    assert_eq!(
-      presentation.context.as_slice(),
-      [
+  fn test_presentation_deserialization() {
+    // Example verifiable presentation taken from:
+    // https://www.w3.org/TR/vc-data-model/#example-a-simple-example-of-a-verifiable-presentation
+    // with some minor adjustments (adding the `holder` property and shortening the 'jws' values).
+    assert!(Presentation::<Object>::from_json_value(json!({
+      "@context": [
         "https://www.w3.org/2018/credentials/v1",
         "https://www.w3.org/2018/credentials/examples/v1"
-      ]
-    );
-    assert_eq!(
-      presentation.id.as_ref().unwrap(),
-      "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5"
-    );
-    assert_eq!(
-      presentation.types.as_slice(),
-      ["VerifiablePresentation", "CredentialManagerPresentation"]
-    );
-    assert_eq!(presentation.proof().unwrap().type_(), "RsaSignature2018");
-    assert_eq!(
-      credential.context.as_slice(),
-      [
+      ],
+      "holder": "did:test:abc1",
+      "type": "VerifiablePresentation",
+      "verifiableCredential": [{
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "http://example.edu/credentials/1872",
+        "type": ["VerifiableCredential", "AlumniCredential"],
+        "issuer": "https://example.edu/issuers/565049",
+        "issuanceDate": "2010-01-01T19:23:24Z",
+        "credentialSubject": {
+          "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+          "alumniOf": {
+            "id": "did:example:c276e12ec21ebfeb1f712ebc6f1",
+            "name": [{
+              "value": "Example University",
+              "lang": "en"
+            }, {
+              "value": "Exemple d'Université",
+              "lang": "fr"
+            }]
+          }
+        },
+        "proof": {
+          "type": "RsaSignature2018",
+          "created": "2017-06-18T21:19:10Z",
+          "proofPurpose": "assertionMethod",
+          "verificationMethod": "https://example.edu/issuers/565049#key-1",
+          "jws": "eyJhb...dBBPM"
+        }
+      }],
+    }))
+    .is_ok());
+  }
+
+  #[test]
+  fn test_presentation_deserialization_without_credentials() {
+    // Deserializing a Presentation without `verifiableCredential' property is allowed.
+    assert!(Presentation::<()>::from_json_value(json!({
+      "@context": [
         "https://www.w3.org/2018/credentials/v1",
         "https://www.w3.org/2018/credentials/examples/v1"
-      ]
-    );
-    assert_eq!(credential.id.as_ref().unwrap(), "http://example.edu/credentials/3732");
-    assert_eq!(
-      credential.types.as_slice(),
-      ["VerifiableCredential", "UniversityDegreeCredential"]
-    );
-    assert_eq!(credential.issuer.url(), "https://example.edu/issuers/14");
-    assert_eq!(credential.issuance_date, "2010-01-01T19:23:24Z".parse().unwrap());
-    assert_eq!(credential.proof().unwrap().type_(), "RsaSignature2018");
+      ],
+      "holder": "did:test:abc1",
+      "type": "VerifiablePresentation"
+    }))
+    .is_ok());
+  }
 
-    assert_eq!(subject.id.as_ref().unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
-    assert_eq!(subject.properties["degree"]["type"], "BachelorDegree");
+  #[test]
+  fn test_presentation_deserialization_with_empty_credential_array() {
     assert_eq!(
-      subject.properties["degree"]["name"],
-      "Bachelor of Science in Mechanical Engineering"
+      Presentation::<()>::from_json_value(json!({
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "holder": "did:test:abc1",
+        "type": "VerifiablePresentation",
+        "verifiableCredential": []
+      }))
+      .unwrap_err()
+      .source()
+      .unwrap()
+      .to_string(),
+      crate::error::Error::EmptyVerifiableCredentialArray.to_string()
     );
   }
 }

@@ -7,11 +7,15 @@ on:
   pull_request:
     branches:
       - main
-      - epic/*
+      - 'epic/**'
+      - 'support/**'
     paths:
       - '.github/workflows/format.yml'
       - '**.rs'
       - '**.toml'
+      - '**.ts'
+      - '**.js'
+      - '**.json'
 
 jobs:
   format:
@@ -20,57 +24,33 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # we use nightly to get access to advanced format capabilities
-      - name: Install rustfmt with nightly toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: './.github/actions/rust/rust-setup'
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
           components: rustfmt
 
       - name: Install cargo-license-template
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-license-template
+        run: cargo install cargo-license-template
 
       - name: Install dprint
         run: npm install -g dprint
         #run: cargo install dprint # installing from source is slow, ~5 minutes
 
       - name: core fmt check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo +nightly fmt --all -- --check
 
       - name: wasm fmt check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
+        run: cargo +nightly fmt --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
 
-      # Deactivated while the crate is broken, which is the case due to the removal of identity_account_storage.
-      # - name: stronghold-nodejs fmt check
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: fmt
-      #     args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all -- --check
-
-      - name: libjose fmt check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --manifest-path ./libjose/Cargo.toml --all -- --check
-
-      # Use `dprint` to check Cargo.toml formatting.
-      # To fix, run `dprint fmt` locally.
       - name: Cargo.toml fmt check
         run:
           dprint check
 
       - name: cargo-license-template check
-        run: cargo license-template --template .license_template --ignore .license_template_ignore --verbose
+        run: cargo +nightly license-template --template .license_template --ignore .license_template_ignore --verbose

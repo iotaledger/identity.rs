@@ -1,10 +1,19 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::credential::CompoundJwtPresentationValidationError;
 use identity_iota::resolver;
+use identity_iota::storage::key_id_storage::KeyIdStorageError;
+use identity_iota::storage::key_id_storage::KeyIdStorageErrorKind;
+use identity_iota::storage::key_id_storage::KeyIdStorageResult;
+use identity_iota::storage::key_storage::KeyStorageError;
+use identity_iota::storage::key_storage::KeyStorageErrorKind;
+use identity_iota::storage::key_storage::KeyStorageResult;
 use std::borrow::Cow;
+use std::fmt::Debug;
 use std::fmt::Display;
 use std::result::Result as StdResult;
+use tokio::sync::TryLockError;
 use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
@@ -18,7 +27,7 @@ pub fn wasm_error<'a, E>(error: E) -> JsValue
 where
   E: Into<WasmError<'a>>,
 {
-  let wasm_err: WasmError = error.into();
+  let wasm_err: WasmError<'_> = error.into();
   JsValue::from(wasm_err)
 }
 
@@ -78,7 +87,7 @@ macro_rules! impl_wasm_error_from {
   $(impl From<$t> for WasmError<'_> {
     fn from(error: $t) -> Self {
       Self {
-        message: Cow::Owned(error.to_string()),
+        message: Cow::Owned(ErrorMessage(&error).to_string()),
         name: Cow::Borrowed(error.into()),
       }
     }
@@ -90,9 +99,16 @@ impl_wasm_error_from!(
   identity_iota::core::Error,
   identity_iota::credential::Error,
   identity_iota::did::Error,
-  identity_iota::did::DIDError,
+  identity_iota::document::Error,
   identity_iota::iota::Error,
-  identity_iota::credential::ValidationError
+  identity_iota::credential::JwtValidationError,
+  identity_iota::credential::RevocationError,
+  identity_iota::verification::Error,
+  identity_iota::credential::DomainLinkageValidationError,
+  identity_iota::sd_jwt_payload::Error,
+  identity_iota::credential::KeyBindingJwtError,
+  identity_iota::credential::status_list_2021::StatusListError,
+  identity_iota::credential::status_list_2021::StatusList2021CredentialError
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -122,10 +138,10 @@ macro_rules! impl_wasm_error_from_with_struct_name {
 
 // the following function is inspired by https://www.lpalmieri.com/posts/error-handling-rust/#error-source
 fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-  write!(f, "{}. ", e)?;
+  write!(f, "{e}. ")?;
   let mut current = e.source();
   while let Some(cause) = current {
-    write!(f, "Caused by: {}. ", cause)?;
+    write!(f, "Caused by: {cause}. ")?;
     current = cause.source();
   }
   Ok(())
@@ -133,7 +149,7 @@ fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) 
 
 struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
-impl<'a> Display for ErrorMessage<'a, resolver::Error> {
+impl<'a, E: std::error::Error> Display for ErrorMessage<'a, E> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     error_chain_fmt(self.0, f)
   }
@@ -160,16 +176,7 @@ impl From<serde_json::Error> for WasmError<'_> {
 impl From<identity_iota::iota::block::Error> for WasmError<'_> {
   fn from(error: identity_iota::iota::block::Error) -> Self {
     Self {
-      name: Cow::Borrowed("iota_types::block::Error"),
-      message: Cow::Owned(error.to_string()),
-    }
-  }
-}
-
-impl From<iota_types::api::error::Error> for WasmError<'_> {
-  fn from(error: iota_types::api::error::Error) -> Self {
-    Self {
-      name: Cow::Borrowed("iota_types::api::Error"),
+      name: Cow::Borrowed("iota_sdk::types::block::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }
@@ -179,52 +186,103 @@ impl From<identity_iota::credential::CompoundCredentialValidationError> for Wasm
   fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundCredentialValidationError"),
-      message: Cow::Owned(error.to_string()),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
 
-impl From<identity_iota::credential::CompoundPresentationValidationError> for WasmError<'_> {
-  fn from(error: identity_iota::credential::CompoundPresentationValidationError) -> Self {
+impl From<identity_iota::core::SingleStructError<KeyStorageErrorKind>> for WasmError<'_> {
+  fn from(error: identity_iota::core::SingleStructError<KeyStorageErrorKind>) -> Self {
     Self {
-      name: Cow::Borrowed("CompoundPresentationValidationError"),
-      message: Cow::Owned(error.to_string()),
+      name: Cow::Borrowed("KeyStorageError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
     }
   }
 }
 
-// TODO: Remove or reuse depending on what we do with the account.
-// impl From<UpdateError> for WasmError<'_> {
-//   fn from(error: UpdateError) -> Self {
-//     Self {
-//       name: Cow::Borrowed("Update::Error"),
-//       message: Cow::Owned(error.to_string()),
-//     }
-//   }
-// }
+impl From<identity_iota::core::SingleStructError<KeyIdStorageErrorKind>> for WasmError<'_> {
+  fn from(error: identity_iota::core::SingleStructError<KeyIdStorageErrorKind>) -> Self {
+    Self {
+      name: Cow::Borrowed("KeyIdStorageError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::storage::key_id_storage::MethodDigestConstructionError> for WasmError<'_> {
+  fn from(error: identity_iota::storage::key_id_storage::MethodDigestConstructionError) -> Self {
+    Self {
+      name: Cow::Borrowed("MethodDigestConstructionError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::storage::storage::JwkStorageDocumentError> for WasmError<'_> {
+  fn from(error: identity_iota::storage::storage::JwkStorageDocumentError) -> Self {
+    Self {
+      name: Cow::Borrowed("JwkDocumentExtensionError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::verification::jws::SignatureVerificationError> for WasmError<'_> {
+  fn from(error: identity_iota::verification::jws::SignatureVerificationError) -> Self {
+    Self {
+      name: Cow::Borrowed("SignatureVerificationError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<identity_iota::verification::jose::error::Error> for WasmError<'_> {
+  fn from(error: identity_iota::verification::jose::error::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("JoseError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<CompoundJwtPresentationValidationError> for WasmError<'_> {
+  fn from(error: CompoundJwtPresentationValidationError) -> Self {
+    Self {
+      name: Cow::Borrowed("CompoundJwtPresentationValidationError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
+
+impl From<TryLockError> for WasmError<'_> {
+  fn from(error: TryLockError) -> Self {
+    Self {
+      name: Cow::Borrowed("TryLockError"),
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+    }
+  }
+}
 
 /// Convenience struct to convert Result<JsValue, JsValue> to errors in the Rust library.
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
-  // TODO: Remove or reuse depending on what we do with the account.
-  /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
-  // pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
-  //   self.stringify_error().map_err(AccountStorageError::JsError)
-  // }
+  /// Consumes the struct and returns a Result<_, KeyStorageError>, leaving an `Ok` value untouched.
+  pub fn to_key_storage_error(self) -> KeyStorageResult<JsValue> {
+    self
+      .stringify_error()
+      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_source(err))
+  }
+
+  pub fn to_key_id_storage_error(self) -> KeyIdStorageResult<JsValue> {
+    self
+      .stringify_error()
+      .map_err(|err| KeyIdStorageError::new(KeyIdStorageErrorKind::Unspecified).with_source(err))
+  }
 
   // Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
   pub(crate) fn stringify_error(self) -> StdResult<JsValue, String> {
-    self.0.map_err(|js_value| {
-      let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
-        Ok(js_err) => ToString::to_string(&js_err.to_string()),
-        Err(js_val) => {
-          // Fall back to debug formatting if this is not a proper JS Error instance.
-          format!("{js_val:?}")
-        }
-      };
-      error_string
-    })
+    stringify_js_error(self.0)
   }
 
   /// Consumes the struct and returns a Result<_, identity_iota::iota::Error>, leaving an `Ok` value untouched.
@@ -233,30 +291,41 @@ impl JsValueResult {
   }
 }
 
+/// Consumes the struct and returns a Result<_, String>, leaving an `Ok` value untouched.
+pub(crate) fn stringify_js_error<T>(result: Result<T>) -> StdResult<T, String> {
+  result.map_err(|js_value| {
+    let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
+      Ok(js_err) => ToString::to_string(&js_err.to_string()),
+      Err(js_val) => {
+        // Fall back to debug formatting if this is not a proper JS Error instance.
+        format!("{js_val:?}")
+      }
+    };
+    error_string
+  })
+}
 impl From<Result<JsValue>> for JsValueResult {
   fn from(result: Result<JsValue>) -> Self {
     JsValueResult(result)
   }
 }
 
-// TODO: Remove or reuse depending on what we do with the account..
-// impl From<JsValueResult> for AccountStorageResult<()> {
-//   fn from(result: JsValueResult) -> Self {
-//     result.to_account_error().and_then(|js_value| {
-//       js_value
-//         .into_serde()
-//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-//     })
-//   }
-// }
+impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyStorageResult<T> {
+  fn from(result: JsValueResult) -> Self {
+    result.to_key_storage_error().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| KeyStorageError::new(KeyStorageErrorKind::SerializationError).with_source(e))
+    })
+  }
+}
 
-// TODO: Remove or reuse depending on what we do with the account..
-// impl From<JsValueResult> for AccountStorageResult<bool> {
-//   fn from(result: JsValueResult) -> Self {
-//     result.to_account_error().and_then(|js_value| {
-//       js_value
-//         .into_serde()
-//         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
-//     })
-//   }
-// }
+impl<T: for<'a> serde::Deserialize<'a>> From<JsValueResult> for KeyIdStorageResult<T> {
+  fn from(result: JsValueResult) -> Self {
+    result.to_key_id_storage_error().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| KeyIdStorageError::new(KeyIdStorageErrorKind::SerializationError).with_source(e))
+    })
+  }
+}

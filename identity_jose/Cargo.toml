@@ -1,0 +1,31 @@
+[package]
+name = "identity_jose"
+version = "1.1.0-alpha.1"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords = ["iota", "identity", "jose", "jwk", "jws"]
+license.workspace = true
+readme = "./README.md"
+repository.workspace = true
+rust-version.workspace = true
+description = "A library for JOSE (JSON Object Signing and Encryption)"
+
+[dependencies]
+identity_core = { version = "=1.1.0-alpha.1", path = "../identity_core", default-features = false }
+iota-crypto = { version = "0.23", default-features = false, features = ["std", "sha"] }
+serde.workspace = true
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+subtle = { version = "2.5", default-features = false }
+thiserror.workspace = true
+zeroize = { version = "1.6", default-features = false, features = ["std", "zeroize_derive"] }
+
+[dev-dependencies]
+anyhow = "1"
+iota-crypto = { version = "0.23", features = ["ed25519", "random", "hmac"] }
+p256 = { version = "0.12.0", default-features = false, features = ["std", "ecdsa", "ecdsa-core"] }
+signature = { version = "2", default-features = false }
+
+[[example]]
+name = "jws_encoding_decoding"
+test = true

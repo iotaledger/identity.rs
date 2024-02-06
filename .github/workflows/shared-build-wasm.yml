@@ -11,6 +11,10 @@ on:
         required: false
         type: boolean
         default: true
+      ref:
+        description: "ref to checkout"
+        required: false
+        type: string
       output-artifact-name:
         description: "Name used for the output build artifact"
         required: true
@@ -34,24 +38,19 @@ jobs:
       RUSTC_WRAPPER: sccache
 
     steps:
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
       - name: Setup Rust and cache
         uses: './.github/actions/rust/rust-setup'
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
+          cargo-cache-enabled: true
           target-cache-enabled: true
           sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
           target-cache-path: bindings/wasm/target
-
-      - name: Install WASM toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          override: true
 
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
@@ -72,10 +71,6 @@ jobs:
 
       - name: Build WASM bindings
         run: npm run build
-
-      - name: Run unit tests
-        if: ${{ inputs.run-unit-tests }}
-        run: npm run test:unit
 
       - name: Run Node unit tests
         if: ${{ inputs.run-unit-tests }}

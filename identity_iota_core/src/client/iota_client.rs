@@ -1,10 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::block::output::dto::OutputDto;
-use iota_client::block::protocol::ProtocolParameters;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use std::ops::Deref;
+
+use iota_sdk::client::api::input_selection::Burn;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::types::block::protocol::ProtocolParameters;
 
 use crate::block::address::Address;
 use crate::block::output::unlock_condition::AddressUnlockCondition;
@@ -51,8 +53,6 @@ pub trait IotaClientExt: IotaIdentityClient {
   async fn delete_did_output(&self, secret_manager: &SecretManager, address: Address, did: &IotaDID) -> Result<()>;
 }
 
-/// An extension trait for [`Client`] that provides helper functions for publication
-/// and deletion of DID documents in Alias Outputs.
 #[cfg_attr(feature = "send-sync-client-ext", async_trait::async_trait)]
 #[cfg_attr(not(feature = "send-sync-client-ext"), async_trait::async_trait(?Send))]
 impl IotaClientExt for Client {
@@ -82,20 +82,19 @@ impl IotaClientExt for Client {
     let (output_id, alias_output) = self.get_alias_output(alias_id).await?;
 
     let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())
-      .map_err(Error::BasicOutputBuildError)?
       .with_native_tokens(alias_output.native_tokens().clone())
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
-      .finish_output(self.get_token_supply().await.map_err(Error::TokenSupplyError)?)
+      .finish_output(self.deref().get_token_supply().await.map_err(Error::TokenSupplyError)?)
       .map_err(Error::BasicOutputBuildError)?;
 
     let block: Block = self
-      .block()
+      .build_block()
       .with_secret_manager(secret_manager)
       .with_input(output_id.into())
       .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block input", Some(Box::new(err))))?
       .with_outputs(vec![basic_output])
       .map_err(|err| Error::DIDUpdateError("delete_did_output: invalid block output", Some(Box::new(err))))?
-      .with_burning_allowed(true)
+      .with_burn(Burn::new().add_alias(alias_id))
       .finish()
       .await
       .map_err(|err| Error::DIDUpdateError("delete_did_output: publish failed", Some(Box::new(err))))?;
@@ -118,6 +117,7 @@ impl IotaClientExt for Client {
 impl IotaIdentityClient for Client {
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters> {
     self
+      .deref()
       .get_protocol_parameters()
       .await
       .map_err(Error::ProtocolParametersError)
@@ -125,16 +125,11 @@ impl IotaIdentityClient for Client {
 
   async fn get_alias_output(&self, id: AliasId) -> Result<(OutputId, AliasOutput)> {
     let output_id: OutputId = self.alias_output_id(id).await.map_err(Error::DIDResolutionError)?;
-    let output_dto: OutputDto = self
+    let output: Output = self
       .get_output(&output_id)
       .await
-      .map(|response| response.output)
-      .map_err(Error::DIDResolutionError)?;
-    let output: Output = Output::try_from_dto(
-      &output_dto,
-      <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
-    )
-    .map_err(Error::OutputConversionError)?;
+      .map_err(Error::DIDResolutionError)?
+      .into_output();
 
     if let Output::Alias(alias_output) = output {
       Ok((output_id, alias_output))
@@ -150,9 +145,9 @@ async fn publish_output(
   client: &Client,
   secret_manager: &SecretManager,
   alias_output: AliasOutput,
-) -> iota_client::Result<Block> {
+) -> iota_sdk::client::error::Result<Block> {
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(secret_manager)
     .with_outputs(vec![alias_output.into()])?
     .finish()

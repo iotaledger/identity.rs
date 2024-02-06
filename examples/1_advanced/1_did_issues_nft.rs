@@ -1,35 +1,37 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use examples::create_did;
 use examples::random_stronghold_path;
+use examples::MemStorage;
 use examples::API_ENDPOINT;
-use identity_iota::crypto::KeyPair;
 use identity_iota::iota::block::output::feature::MetadataFeature;
 use identity_iota::iota::IotaDID;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
-use iota_client::block::address::Address;
-use iota_client::block::address::AliasAddress;
-use iota_client::block::output::dto::OutputDto;
-use iota_client::block::output::feature::IssuerFeature;
-use iota_client::block::output::unlock_condition::AddressUnlockCondition;
-use iota_client::block::output::AliasId;
-use iota_client::block::output::Feature;
-use iota_client::block::output::NftId;
-use iota_client::block::output::NftOutput;
-use iota_client::block::output::NftOutputBuilder;
-use iota_client::block::output::Output;
-use iota_client::block::output::OutputId;
-use iota_client::block::output::RentStructure;
-use iota_client::block::output::UnlockCondition;
-use iota_client::block::payload::transaction::TransactionEssence;
-use iota_client::block::payload::Payload;
-use iota_client::block::Block;
-use iota_client::secret::stronghold::StrongholdSecretManager;
-use iota_client::secret::SecretManager;
-use iota_client::Client;
+use identity_iota::storage::JwkMemStore;
+use identity_iota::storage::KeyIdMemstore;
+use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
+use iota_sdk::client::secret::SecretManager;
+use iota_sdk::client::Client;
+use iota_sdk::client::Password;
+use iota_sdk::types::block::address::Address;
+use iota_sdk::types::block::address::AliasAddress;
+use iota_sdk::types::block::output::feature::IssuerFeature;
+use iota_sdk::types::block::output::unlock_condition::AddressUnlockCondition;
+use iota_sdk::types::block::output::AliasId;
+use iota_sdk::types::block::output::Feature;
+use iota_sdk::types::block::output::NftId;
+use iota_sdk::types::block::output::NftOutput;
+use iota_sdk::types::block::output::NftOutputBuilder;
+use iota_sdk::types::block::output::Output;
+use iota_sdk::types::block::output::OutputId;
+use iota_sdk::types::block::output::RentStructure;
+use iota_sdk::types::block::output::UnlockCondition;
+use iota_sdk::types::block::payload::transaction::TransactionEssence;
+use iota_sdk::types::block::payload::Payload;
+use iota_sdk::types::block::Block;
 
 /// Demonstrates how an identity can issue and own NFTs,
 /// and how observers can verify the issuer of the NFT.
@@ -43,18 +45,22 @@ async fn main() -> anyhow::Result<()> {
   // ==============================================
 
   // Create a new client to interact with the IOTA ledger.
-  let client: Client = Client::builder().with_primary_node(API_ENDPOINT, None)?.finish()?;
+  let client: Client = Client::builder()
+    .with_primary_node(API_ENDPOINT, None)?
+    .finish()
+    .await?;
 
   // Create a new secret manager backed by a Stronghold.
   let mut secret_manager: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
-      .password("secure_password")
+      .password(Password::from("secure_password".to_owned()))
       .build(random_stronghold_path())?,
   );
 
   // Create a new DID for the manufacturer.
-  let (_, manufacturer_document, _): (Address, IotaDocument, KeyPair) =
-    create_did(&client, &mut secret_manager).await?;
+  let storage: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+  let (_, manufacturer_document, _): (Address, IotaDocument, String) =
+    create_did(&client, &mut secret_manager, &storage).await?;
   let manufacturer_did = manufacturer_document.id().clone();
 
   // Get the current byte cost.
@@ -62,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create a Digital Product Passport NFT issued by the manufacturer.
   let product_passport_nft: NftOutput =
-    NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())?
+    NftOutputBuilder::new_with_minimum_storage_deposit(rent_structure, NftId::null())
       // The NFT will initially be owned by the manufacturer.
       .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(Address::Alias(
         AliasAddress::new(AliasId::from(&manufacturer_did)),
@@ -75,11 +81,11 @@ async fn main() -> anyhow::Result<()> {
       .add_immutable_feature(Feature::Metadata(MetadataFeature::new(
         b"Digital Product Passport Metadata".to_vec(),
       )?))
-      .finish(client.get_token_supply().await?)?;
+      .finish()?;
 
   // Publish the NFT.
   let block: Block = client
-    .block()
+    .build_block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![product_passport_nft.into()])?
     .finish()
@@ -99,11 +105,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Fetch the NFT Output.
   let nft_output_id: OutputId = client.nft_output_id(nft_id).await?;
-  let output_dto: OutputDto = client
-    .get_output(&nft_output_id)
-    .await
-    .map(|response| response.output)?;
-  let output: Output = Output::try_from_dto(&output_dto, client.get_token_supply().await?)?;
+  let output: Output = client.get_output(&nft_output_id).await?.into_output();
 
   // Extract the issuer of the NFT.
   let nft_output: NftOutput = if let Output::Nft(nft_output) = output {

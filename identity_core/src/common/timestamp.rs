@@ -16,10 +16,6 @@ use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 use time::UtcOffset;
 
-use identity_diff::Diff;
-use identity_diff::DiffString;
-
-use crate::diff;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -36,7 +32,8 @@ impl Timestamp {
   /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
   pub fn parse(input: &str) -> Result<Self> {
     let offset_date_time = OffsetDateTime::parse(input, &Rfc3339)
-      .map_err(time::Error::from)?
+      .map_err(time::Error::from)
+      .map_err(Error::InvalidTimestamp)?
       .to_offset(UtcOffset::UTC);
     Ok(Timestamp(truncate_fractional_seconds(offset_date_time)))
   }
@@ -81,12 +78,17 @@ impl Timestamp {
   /// # Errors
   /// [`Error::InvalidTimestamp`] if `seconds` is outside of the interval [-62167219200,253402300799].
   pub fn from_unix(seconds: i64) -> Result<Self> {
-    let offset_date_time = OffsetDateTime::from_unix_timestamp(seconds).map_err(time::error::Error::from)?;
+    let offset_date_time = OffsetDateTime::from_unix_timestamp(seconds)
+      .map_err(time::error::Error::from)
+      .map_err(Error::InvalidTimestamp)?;
+
     // Reject years outside of the range 0000AD - 9999AD per Rfc3339
     // upfront to prevent conversion errors in to_rfc3339().
     // https://datatracker.ietf.org/doc/html/rfc3339#section-1
     if !(0..10_000).contains(&offset_date_time.year()) {
-      return Err(time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into());
+      return Err(Error::InvalidTimestamp(time::error::Error::Format(
+        time::error::Format::InvalidComponent("invalid year"),
+      )));
     }
     Ok(Self(offset_date_time))
   }
@@ -179,29 +181,6 @@ fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTi
   offset_date_time - time::Duration::nanoseconds(offset_date_time.nanosecond() as i64)
 }
 
-impl Diff for Timestamp {
-  type Type = DiffString;
-
-  fn diff(&self, other: &Self) -> diff::Result<Self::Type> {
-    self.to_string().diff(&other.to_string())
-  }
-
-  fn merge(&self, diff: Self::Type) -> diff::Result<Self> {
-    self
-      .to_string()
-      .merge(diff)
-      .and_then(|this| Self::parse(&this).map_err(diff::Error::merge))
-  }
-
-  fn from_diff(diff: Self::Type) -> diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(diff::Error::convert))
-  }
-
-  fn into_diff(self) -> diff::Result<Self::Type> {
-    self.to_string().into_diff()
-  }
-}
-
 /// A span of time.
 ///
 /// This type is typically used to increment or decrement a [`Timestamp`].
@@ -241,14 +220,10 @@ impl Duration {
 
 #[cfg(test)]
 mod tests {
-  use proptest::proptest;
-
-  use identity_diff::Diff;
-  use identity_diff::DiffString;
-
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
+  use proptest::proptest;
 
   use super::Duration;
 
@@ -393,27 +368,5 @@ mod tests {
     let time2: Timestamp = Timestamp::from_json_value(json).unwrap();
 
     assert_eq!(time1, time2);
-  }
-
-  #[test]
-  fn test_timestamp_diff() {
-    let time1: Timestamp = Timestamp::parse("2021-01-01T12:00:01Z").unwrap();
-    let time2: Timestamp = Timestamp::parse("2022-01-02T12:00:02Z").unwrap();
-
-    // Diff
-    let non_diff: DiffString = time1.diff(&time1).unwrap();
-    assert!(non_diff.0.is_none());
-    let diff12: DiffString = time1.diff(&time2).unwrap();
-    assert_eq!(String::from_diff(diff12.clone()).unwrap(), time2.to_string());
-    let diff21: DiffString = time2.diff(&time1).unwrap();
-    assert_eq!(String::from_diff(diff21.clone()).unwrap(), time1.to_string());
-
-    // Merge
-    assert_eq!(time1.merge(non_diff.clone()).unwrap(), time1);
-    assert_eq!(time2.merge(non_diff).unwrap(), time2);
-    assert_eq!(time1.merge(diff12.clone()).unwrap(), time2);
-    assert_eq!(time1.merge(diff21.clone()).unwrap(), time1);
-    assert_eq!(time2.merge(diff12).unwrap(), time2);
-    assert_eq!(time2.merge(diff21).unwrap(), time1);
   }
 }

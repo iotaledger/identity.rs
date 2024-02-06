@@ -1,9 +1,8 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::future::Future;
-use identity_credential::validator::ValidatorDocument;
-use identity_did::did::DID;
+use identity_did::DID;
 
 use crate::Error;
 use crate::ErrorCause;
@@ -16,25 +15,25 @@ use std::pin::Pin;
 /// support for both multi-threaded and single threaded use cases.
 pub trait Command<'a, T>: std::fmt::Debug + private::Sealed {
   type Output: Future<Output = T> + 'a;
+
   fn apply(&self, input: &'a str) -> Self::Output;
 }
 
 mod private {
   use super::SendSyncCommand;
   use super::SingleThreadedCommand;
-  use identity_credential::validator::ValidatorDocument;
   pub trait Sealed {}
-  impl<DOC: ValidatorDocument + 'static> Sealed for SendSyncCommand<DOC> {}
-  impl<DOC: ValidatorDocument + 'static> Sealed for SingleThreadedCommand<DOC> {}
+  impl<DOC: 'static> Sealed for SendSyncCommand<DOC> {}
+  impl<DOC: 'static> Sealed for SingleThreadedCommand<DOC> {}
 }
 
-impl<DOC: ValidatorDocument + 'static> std::fmt::Debug for SendSyncCommand<DOC> {
+impl<DOC: 'static> std::fmt::Debug for SendSyncCommand<DOC> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("<resolution_handler>")
   }
 }
 
-impl<DOC: ValidatorDocument + 'static> std::fmt::Debug for SingleThreadedCommand<DOC> {
+impl<DOC: 'static> std::fmt::Debug for SingleThreadedCommand<DOC> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("<resolution_handler>")
   }
@@ -45,18 +44,18 @@ type SendSyncCallback<DOC> =
   Box<dyn for<'r> Fn(&'r str) -> Pin<Box<dyn Future<Output = Result<DOC>> + 'r + Send>> + Send + Sync>;
 
 /// Wrapper around a thread safe callback.
-pub struct SendSyncCommand<DOC: ValidatorDocument + 'static> {
+pub struct SendSyncCommand<DOC: 'static> {
   fun: SendSyncCallback<DOC>,
 }
 
-impl<'a, DOC: ValidatorDocument + 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
+impl<'a, DOC: 'static> Command<'a, Result<DOC>> for SendSyncCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a + Send>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
 }
 
-impl<DOC: ValidatorDocument + 'static> SendSyncCommand<DOC> {
+impl<DOC: 'static> SendSyncCommand<DOC> {
   /// Converts a handler represented as a closure to a command.
   ///
   /// This is achieved by first producing a callback represented as a dynamic asynchronous function pointer
@@ -73,10 +72,11 @@ impl<DOC: ValidatorDocument + 'static> SendSyncCommand<DOC> {
     DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let fun: SendSyncCallback<DOC> = Box::new(move |input: &str| {
-      let handler_clone = handler.clone();
+      let handler_clone: F = handler.clone();
       let did_parse_attempt = D::try_from(input)
         .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
         .map_err(Error::new);
+
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
@@ -86,6 +86,7 @@ impl<DOC: ValidatorDocument + 'static> SendSyncCommand<DOC> {
           .map_err(Error::new)
       })
     });
+
     Self { fun }
   }
 }
@@ -102,14 +103,14 @@ pub(super) type SingleThreadedCallback<DOC> =
 pub struct SingleThreadedCommand<DOC> {
   fun: SingleThreadedCallback<DOC>,
 }
-impl<'a, DOC: ValidatorDocument + 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
+impl<'a, DOC: 'static> Command<'a, Result<DOC>> for SingleThreadedCommand<DOC> {
   type Output = Pin<Box<dyn Future<Output = Result<DOC>> + 'a>>;
   fn apply(&self, input: &'a str) -> Self::Output {
     (self.fun)(input)
   }
 }
 
-impl<DOC: ValidatorDocument + 'static> SingleThreadedCommand<DOC> {
+impl<DOC: 'static> SingleThreadedCommand<DOC> {
   /// Equivalent to [`SendSyncCommand::new`](SendSyncCommand::new()), but with less `Send` + `Sync` bounds.
   pub(super) fn new<D, F, Fut, DOCUMENT, E, DIDERR>(handler: F) -> Self
   where
@@ -121,10 +122,11 @@ impl<DOC: ValidatorDocument + 'static> SingleThreadedCommand<DOC> {
     DIDERR: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
   {
     let fun: SingleThreadedCallback<DOC> = Box::new(move |input: &str| {
-      let handler_clone = handler.clone();
+      let handler_clone: F = handler.clone();
       let did_parse_attempt = D::try_from(input)
         .map_err(|error| ErrorCause::DIDParsingError { source: error.into() })
         .map_err(Error::new);
+
       Box::pin(async move {
         let did: D = did_parse_attempt?;
         handler_clone(did)
@@ -134,6 +136,7 @@ impl<DOC: ValidatorDocument + 'static> SingleThreadedCommand<DOC> {
           .map_err(Error::new)
       })
     });
+
     Self { fun }
   }
 }

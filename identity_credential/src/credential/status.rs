@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::common::Url;
 
@@ -37,7 +40,7 @@ impl<T> Status<T> {
 mod tests {
   use identity_core::convert::FromJson;
 
-  use crate::credential::Status;
+  use super::*;
 
   const JSON: &str = include_str!("../../tests/fixtures/status-1.json");
 
@@ -45,6 +48,6 @@ mod tests {
   fn test_from_json() {
     let status: Status = Status::from_json(JSON).unwrap();
     assert_eq!(status.id.as_str(), "https://example.edu/status/24");
-    assert_eq!(status.type_, "CredentialStatusList2017".to_owned());
+    assert_eq!(status.type_, "CredentialStatusList2017");
   }
 }

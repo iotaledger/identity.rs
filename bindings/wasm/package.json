@@ -1,6 +1,6 @@
 {
   "name": "@iota/identity-wasm",
-  "version": "0.7.0-alpha.4",
+  "version": "1.0.0",
   "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
   "repository": {
     "type": "git",
@@ -11,20 +11,21 @@
   },
   "scripts": {
     "build:src": "cargo build --lib --release --target wasm32-unknown-unknown",
-    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ./build/node && tsc --project ./lib/tsconfig.json && node ./build/replace_paths node",
-    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir web && node ./build/web && tsc --project ./lib/tsconfig.web.json && node ./build/replace_paths web",
+    "bundle:nodejs": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target nodejs --out-dir node && node ./build/node && tsc --project ./lib/tsconfig.json && node ./build/replace_paths ./lib/tsconfig.json node",
+    "bundle:web": "wasm-bindgen target/wasm32-unknown-unknown/release/identity_wasm.wasm --typescript --weak-refs --target web --out-dir web && node ./build/web && tsc --project ./lib/tsconfig.web.json && node ./build/replace_paths ./lib/tsconfig.web.json web",
     "build:nodejs": "npm run build:src && npm run bundle:nodejs && wasm-opt -O node/identity_wasm_bg.wasm -o node/identity_wasm_bg.wasm",
     "build:web": "npm run build:src && npm run bundle:web && wasm-opt -O web/identity_wasm_bg.wasm -o web/identity_wasm_bg.wasm",
     "build:docs": "node ./build/docs",
+    "build:examples:web": "tsc --project ./examples/tsconfig.web.json && node ./build/replace_paths ./examples/tsconfig.web.json ./examples/dist resolve",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "example:node": "ts-node --project tsconfig.node.json -r tsconfig-paths/register ./examples/src/main.ts",
-    "test": "npm run test:unit && npm run test:unit:node && npm run test:examples",
-    "test:examples": "npm run test:node && npm run test:readme",
+    "test": "npm run test:unit:node && npm run test:examples",
+    "test:examples": "npm run test:readme && concurrently -g --timings \"npm run test:node\" \"npm run test:browser:parallel\"",
     "test:node": "ts-mocha -r tsconfig-paths/register -p tsconfig.node.json ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
-    "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/e2e -a '\"--quiet\"'",
+    "test:browser:parallel": "npm run build:examples:web && cypress-parallel -s test:browser -t 4 -d cypress/e2e -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
-    "test:unit": "wasm-pack test --release --node",
+    "test:readme:rust": "mocha ./tests/txm_readme_rust.js --retries 3 --timeout 360000 --exit",
     "test:unit:node": "ts-mocha -p tsconfig.node.json ./tests/*.ts --parallel --exit",
     "cypress": "cypress open",
     "fmt": "dprint fmt"
@@ -52,14 +53,12 @@
     "node/*"
   ],
   "devDependencies": {
-    "@iota/crypto.js": "^1.9.0-stardust.6",
-    "@iota/util.js": "^1.9.0-stardust.5",
     "@transmute/did-key-ed25519": "0.3.0-unstable.9",
     "@types/mocha": "^9.1.0",
     "big-integer": "^1.6.51",
-    "concurrently": "^7.0.0",
+    "concurrently": "^7.6.0",
     "copy-webpack-plugin": "^7.0.0",
-    "cypress": "^10.6.0",
+    "cypress": "^10.11.0",
     "cypress-parallel": "^0.9.1",
     "dprint": "^0.33.0",
     "fs-extra": "^10.1.0",
@@ -68,19 +67,17 @@
     "ts-mocha": "^9.0.2",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.1.0",
-    "txm": "^8.0.1",
+    "txm": "^8.1.0",
     "typescript": "^4.7.2",
-    "wasm-opt": "^1.3.0",
-    "wasm-pack": "0.10.1"
+    "wasm-opt": "^1.3.0"
   },
   "dependencies": {
-    "@iota/types": "^1.0.0-beta.11",
+    "@noble/ed25519": "^1.7.3",
     "@types/node-fetch": "^2.6.2",
     "node-fetch": "^2.6.7"
   },
   "peerDependencies": {
-    "@iota/iota.js": "^1.9.0-stardust.25",
-    "@iota/iota-client-wasm": "^0.5.0-alpha.6"
+    "@iota/sdk-wasm": "^1.0.4"
   },
   "engines": {
     "node": ">=16"

@@ -1,17 +1,21 @@
 [package]
 name = "examples"
-version = "0.7.0-alpha.4"
+version = "1.1.0-alpha.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
 
 [dependencies]
 anyhow = "1.0.62"
-identity_iota = { path = "../identity_iota" }
-iota-client = { version = "2.0.1-rc.4", default-features = false, features = ["tls", "stronghold"] }
+identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
+identity_iota = { path = "../identity_iota", default-features = false, features = ["memstore", "domain-linkage", "revocation-bitmap", "status-list-2021"] }
+identity_stronghold = { path = "../identity_stronghold", default-features = false }
+iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 primitive-types = "0.12.1"
 rand = "0.8.5"
-tokio = { version = "1.20.1", default-features = false, features = ["rt"] }
+sd-jwt-payload = { version = "0.2.0", default-features = false, features = ["sha"] }
+serde_json = { version = "1.0", default-features = false }
+tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
 [lib]
 path = "utils/utils.rs"
@@ -49,6 +53,10 @@ path = "0_basic/7_revoke_vc.rs"
 name = "7_revoke_vc"
 
 [[example]]
+path = "0_basic/8_stronghold.rs"
+name = "8_stronghold"
+
+[[example]]
 path = "1_advanced/0_did_controls_did.rs"
 name = "0_did_controls_did"
 
@@ -65,13 +73,21 @@ path = "1_advanced/3_did_issues_tokens.rs"
 name = "3_did_issues_tokens"
 
 [[example]]
-path = "1_advanced/4_key_exchange.rs"
-name = "4_key_exchange"
+path = "1_advanced/4_alias_output_history.rs"
+name = "4_alias_output_history"
 
 [[example]]
-path = "1_advanced/5_alias_output_history.rs"
-name = "5_alias_output_history"
+path = "1_advanced/5_custom_resolution.rs"
+name = "5_custom_resolution"
 
 [[example]]
-path = "1_advanced/6_custom_resolution.rs"
-name = "6_custom_resolution"
+path = "1_advanced/6_domain_linkage.rs"
+name = "6_domain_linkage"
+
+[[example]]
+path = "1_advanced/7_sd_jwt.rs"
+name = "7_sd_jwt"
+
+[[example]]
+path = "1_advanced/8_status_list_2021.rs"
+name = "8_status_list_2021"

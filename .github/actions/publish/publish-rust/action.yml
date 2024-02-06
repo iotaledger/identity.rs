@@ -13,22 +13,22 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Rust stable toolchain
-      uses: actions-rs/toolchain@v1
+    - name: Setup Rust
+      uses: './.github/actions/rust/rust-setup'
       with:
-        toolchain: stable
-        profile: minimal
-        override: true
+        os: ${{ runner.os }}
+        job: ${{ github.job }}
 
     - name: Install cargo-release
-      uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: --version ^0.21 cargo-release
+      shell: bash
+      run: cargo install --version =0.25 cargo-release
 
     - name: Publish library to crates.io
-      shell: sh
+      shell: bash
       run: |
         echo "dry-run: '${{ inputs.dry-run }}'"
         echo "version: '${{ inputs.version }}'"
-        cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --dependent-version error --verbose $(if [ "${{ inputs.dry-run }}" = "false" ]; then echo --execute --no-confirm; fi) ${{ inputs.version }}
+        cargo login ${{ inputs.crates-token }}
+        cargo release config
+        cargo release version --verbose --execute --no-confirm ${{ inputs.version }}
+        cargo release publish --verbose $(if [ "${{ inputs.dry-run }}" = "false" ]; then echo --execute --no-confirm; fi)

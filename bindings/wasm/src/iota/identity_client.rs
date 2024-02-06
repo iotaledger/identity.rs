@@ -8,10 +8,9 @@ use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasId;
 use identity_iota::iota::block::output::AliasOutput;
 use identity_iota::iota::block::output::OutputId;
+use identity_iota::iota::block::protocol::ProtocolParameters;
+use identity_iota::iota::block::TryFromDto;
 use identity_iota::iota::IotaIdentityClient;
-use identity_iota::iota::IotaIdentityClientExt;
-use iota_types::block::protocol::dto::ProtocolParametersDto;
-use iota_types::block::protocol::ProtocolParameters;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
@@ -44,32 +43,25 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let tuple: js_sys::Array = js_sys::Array::from(&result.to_iota_core_error()?);
 
-    let mut iter: js_sys::ArrayIter = tuple.iter();
+    let mut iter: js_sys::ArrayIter<'_> = tuple.iter();
 
     let output_id: OutputId = iter
       .next()
       .ok_or_else(|| identity_iota::iota::Error::JsError("get_alias_output expected a tuple of size 2".to_owned()))?
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize OutputId: {}", err))
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize OutputId: {err}"))
       })?;
     let alias_dto: AliasOutputDto = iter
       .next()
       .ok_or_else(|| identity_iota::iota::Error::JsError("get_alias_output expected a tuple of size 2".to_owned()))?
       .into_serde()
       .map_err(|err| {
-        identity_iota::iota::Error::JsError(format!(
-          "get_alias_output failed to deserialize AliasOutputDto: {}",
-          err
-        ))
+        identity_iota::iota::Error::JsError(format!("get_alias_output failed to deserialize AliasOutputDto: {err}"))
       })?;
 
-    let alias_output = AliasOutput::try_from_dto(
-      &alias_dto,
-      <Self as IotaIdentityClientExt>::get_token_supply(self).await?,
-    )
-    .map_err(|err| {
-      identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {}", err))
+    let alias_output = AliasOutput::try_from_dto(alias_dto).map_err(|err| {
+      identity_iota::iota::Error::JsError(format!("get_alias_output failed to convert AliasOutputDto: {err}"))
     })?;
     Ok((output_id, alias_output))
   }
@@ -77,24 +69,24 @@ impl IotaIdentityClient for WasmIotaIdentityClient {
   async fn get_protocol_parameters(&self) -> Result<ProtocolParameters, identity_iota::iota::Error> {
     let promise: Promise = Promise::resolve(&WasmIotaIdentityClient::get_protocol_parameters(self));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let protocol_parameters: ProtocolParametersDto = result.to_iota_core_error().and_then(|parameters| {
+    let protocol_parameters: ProtocolParameters = result.to_iota_core_error().and_then(|parameters| {
       parameters
         .into_serde()
-        .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {}", err)))
+        .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {err}")))
     })?;
-    ProtocolParameters::try_from(protocol_parameters)
-      .map_err(|err| identity_iota::iota::Error::JsError(format!("could not obtain protocol parameters: {}", err)))
+
+    Ok(protocol_parameters)
   }
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_IOTA_IDENTITY_CLIENT: &'static str = r#"
-import type { IAliasOutput, IRent } from '@iota/types';
+import type { AliasOutput } from '~sdk-wasm';
 /** Helper interface necessary for `IotaIdentityClientExt`. */
 interface IIotaIdentityClient {
 
   /** Resolve an Alias identifier, returning its latest `OutputId` and `AliasOutput`. */
-  getAliasOutput(aliasId: string): Promise<[string, IAliasOutput]>;
+  getAliasOutput(aliasId: string): Promise<[string, AliasOutput]>;
 
   /** Returns the protocol parameters. */
   getProtocolParameters(): Promise<INodeInfoProtocol>; 

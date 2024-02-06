@@ -13,14 +13,6 @@ pub enum WasmStateMetadataEncoding {
   Json = 0,
 }
 
-impl From<StateMetadataEncoding> for WasmStateMetadataEncoding {
-  fn from(encoding: StateMetadataEncoding) -> Self {
-    match encoding {
-      StateMetadataEncoding::Json => Self::Json,
-    }
-  }
-}
-
 impl From<WasmStateMetadataEncoding> for StateMetadataEncoding {
   fn from(encoding: WasmStateMetadataEncoding) -> Self {
     match encoding {

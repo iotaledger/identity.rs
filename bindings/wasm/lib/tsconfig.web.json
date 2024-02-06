@@ -3,8 +3,9 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "~identity_wasm": ["../web/identity_wasm"],
-      "~iota-client-wasm": ["../node_modules/@iota/iota-client-wasm/web", "@iota/iota-client-wasm/web"]
+      "~identity_wasm": ["../web/identity_wasm", "./identity_wasm.js"],
+      "~sdk-wasm": ["../node_modules/@iota/sdk-wasm/web", "@iota/sdk-wasm/web"],
+      "../lib": ["."]
     },
     "outDir": "../web",
     "declarationDir": "../web",

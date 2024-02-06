@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftung
+// Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::core::Object;
@@ -15,17 +15,42 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<boolean>")]
   pub type PromiseBool;
 
+  #[wasm_bindgen(typescript_type = "Promise<string>")]
+  pub type PromiseString;
+
+  #[wasm_bindgen(typescript_type = "Promise<string | null>")]
+  pub type PromiseOptionString;
+
+  #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
+  pub type PromiseUint8Array;
+
   #[wasm_bindgen(typescript_type = "Array<string>")]
   pub type ArrayString;
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
 
+  #[wasm_bindgen(typescript_type = "Record<string, any>")]
+  pub type RecordStringAny;
+
   #[wasm_bindgen(typescript_type = "number | number[]")]
   pub type UOneOrManyNumber;
 
   #[wasm_bindgen(typescript_type = "string | string[] | null")]
   pub type OptionOneOrManyString;
+
+  #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
+  pub type ArrayVerificationMethod;
+
+  #[wasm_bindgen(typescript_type = "Array<DIDUrl | VerificationMethod>")]
+  pub type ArrayCoreMethodRef;
+
+  #[wasm_bindgen(typescript_type = "DIDUrl | string")]
+  pub type UDIDUrlQuery;
+
+  #[wasm_bindgen(typescript_type = "Service[]")]
+  pub type ArrayService;
+
 }
 
 impl TryFrom<Object> for MapStringAny {

@@ -1,24 +1,33 @@
 [workspace]
 resolver = "2"
 members = [
-  "identity_agent",
-  # "identity_comm",
   "identity_core",
   "identity_credential",
   "identity_did",
-  "identity_diff",
+  "identity_document",
   "identity_iota",
+  "identity_storage",
   "identity_iota_core",
   "identity_resolver",
+  "identity_verification",
+  "identity_stronghold",
+  "identity_jose",
+  "identity_eddsa_verifier",
   "examples",
 ]
 
-exclude = [
-  "identity_iota_core_legacy",
-  "bindings/stronghold-nodejs",
-  "bindings/wasm",
-  "libjose",
-]
+exclude = ["bindings/wasm"]
 
-[profile.dev]
-split-debuginfo = "unpacked"
+[workspace.dependencies]
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+thiserror = { version = "1.0", default-features = false }
+strum = { version = "0.25", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1.0", default-features = false }
+
+[workspace.package]
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+license = "Apache-2.0"
+repository = "https://github.com/iotaledger/identity.rs"
+rust-version = "1.65"
