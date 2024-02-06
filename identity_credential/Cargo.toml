@@ -12,7 +12,6 @@ rust-version.workspace = true
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
-dataurl = { version = "0.1.2", default-features = false, optional = true }
 flate2 = { version = "1.0.28", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
 identity_core = { version = "=1.1.0-alpha.1", path = "../identity_core", default-features = false }
@@ -50,7 +49,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 default = ["revocation-bitmap", "validator", "credential", "presentation", "domain-linkage-fetch", "sd-jwt"]
 credential = []
 presentation = ["credential"]
-revocation-bitmap = ["dep:dataurl", "dep:flate2", "dep:roaring"]
+revocation-bitmap = ["dep:flate2", "dep:roaring"]
 status-list-2021 = ["revocation-bitmap", "dep:serde-aux"]
 validator = ["dep:itertools", "dep:serde_repr", "credential", "presentation"]
 domain-linkage = ["validator"]
