@@ -13,8 +13,8 @@
 ### Patch
 
 - Validate domain-linkage URL making sure they only include an origin [\#1267](https://github.com/iotaledger/identity.rs/pull/1267)
-- Credentials cannot be unrevoked with StatusList2021 [#1284](https://github.com/iotaledger/identity.rs/pull/1284)
-- Fix RevocationBitmap2022 encoding bug [#1292](https://github.com/iotaledger/identity.rs/pull/1292)
+- Credentials cannot be unrevoked with StatusList2021 [\#1284](https://github.com/iotaledger/identity.rs/pull/1284)
+- Fix RevocationBitmap2022 encoding bug [\#1292](https://github.com/iotaledger/identity.rs/pull/1292)
 
 ## [v1.0.0](https://github.com/iotaledger/identity.rs/tree/v1.0.0) (2023-11-02)
 
