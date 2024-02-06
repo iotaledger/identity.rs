@@ -23,7 +23,7 @@ itertools = { version = "0.11", default-features = false, features = ["use_std"]
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
 reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json", "stream"], optional = true }
 roaring = { version = "0.10", default-features = false, optional = true }
-sd-jwt-payload = { version = "0.1.2", default-features = false, features = ["sha"], optional = true }
+sd-jwt-payload = { version = "0.2.0", default-features = false, features = ["sha"], optional = true }
 serde.workspace = true
 serde-aux = { version = "4.3.1", default-features = false, optional = true }
 serde_json.workspace = true
