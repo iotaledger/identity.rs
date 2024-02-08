@@ -29,6 +29,7 @@ thiserror.workspace = true
 tokio = { version = "1.29.0", default-features = false, features = ["macros", "sync"], optional = true }
 json-proof-token.workspace = true
 zkryptium.workspace = true
+oqs.workspace = true
 
 
 [dev-dependencies]

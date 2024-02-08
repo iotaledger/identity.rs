@@ -21,6 +21,8 @@ use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
 use crate::jwu::encode_b64;
 
+use super::JwkParamsPQ;
+
 /// A SHA256 JSON Web Key Thumbprint.
 pub type JwkThumbprintSha256 = [u8; SHA256_LEN];
 
@@ -387,6 +389,10 @@ impl Jwk {
       JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
         format!(r#"{{"crv":"{crv}","kty":"{kty}","x":"{x}"}}"#)
       }
+      //TODO: PQ - thumbprint for PQ keys
+      JwkParams::MLDSA(JwkParamsPQ { public, .. }) => {
+        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
+      }
     }
   }
 
@@ -439,6 +445,7 @@ impl Jwk {
       JwkParams::Rsa(params) => params.is_private(),
       JwkParams::Oct(_) => true,
       JwkParams::Okp(params) => params.is_private(),
+      JwkParams::MLDSA(params) => params.is_private(), //TODO: PQ - is_private Jwk method
     }
   }
 

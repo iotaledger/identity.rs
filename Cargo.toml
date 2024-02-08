@@ -25,6 +25,8 @@ strum = { version = "0.25", default-features = false, features = ["std", "derive
 serde_json = { version = "1.0", default-features = false }
 json-proof-token = {git = "https://github.com/Cybersecurity-LINKS/json-proof-token.git"}
 zkryptium = { git = "https://github.com/Cybersecurity-LINKS/zkryptium.git", default-features = false, features = ["bbsplus"] }
+oqs = {version = "0.9.0", default-features = false, features = ["sigs", "std", "vendored"] }
+
 
 [workspace.package]
 authors = ["IOTA Stiftung"]

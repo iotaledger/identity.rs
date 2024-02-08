@@ -22,6 +22,12 @@ pub enum JwkType {
   /// Octet string key pairs.
   #[serde(rename = "OKP")]
   Okp,
+
+  //TODO: PQ - new JwkType
+  /// JSON Web Key Type for the ML-DSA Algorithm Family.
+  /// [More Info] (https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium-02#section-4)
+  #[serde(rename = "ML-DSA")]
+  MLDSA
 }
 
 impl JwkType {
@@ -32,6 +38,7 @@ impl JwkType {
       Self::Rsa => "RSA",
       Self::Oct => "oct",
       Self::Okp => "OKP",
+      Self::MLDSA => "ML-DSA"
     }
   }
 }

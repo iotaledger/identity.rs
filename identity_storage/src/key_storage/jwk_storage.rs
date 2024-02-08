@@ -8,9 +8,11 @@ use async_trait::async_trait;
 use identity_core::common::Timestamp;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
+use identity_verification::jws::JwsAlgorithmPQ;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
+use oqs::sig::Algorithm;
 use zkryptium::bbsplus::signature::BBSplusSignature;
 
 use super::jwk_gen_output::JwkGenOutput;
@@ -83,4 +85,13 @@ pub trait JwkStorageExt : JwkStorage {
 
   /// Update proof functionality for timeframe revocation mechanism
   async fn update_proof(&self, key_id: &KeyId, public_key: &Jwk, proof: &[u8; 112], old_start_validity_timeframe: String, new_start_validity_timeframe: String, old_end_validity_timeframe: String, new_end_validity_timeframe: String, index_start_validity_timeframe: usize, index_end_validity_timeframe: usize, n_messages: usize  ) -> KeyStorageResult<[u8; 112]>;
+}
+
+
+/// Extension to the JwkStorage to handle post-quantum keys
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+pub trait JwkStoragePQ : JwkStorage {
+  /// Generates a JWK representing a BBS+ signature 
+  async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithmPQ) -> KeyStorageResult<JwkGenOutput>;
 }

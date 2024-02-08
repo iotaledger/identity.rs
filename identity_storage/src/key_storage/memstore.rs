@@ -13,6 +13,9 @@ use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
+use identity_verification::jwk::JwkParams;
+use identity_verification::jwk::JwkParamsPQ;
+use identity_verification::jws::JwsAlgorithmPQ;
 use identity_verification::jwu;
 use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
@@ -22,6 +25,8 @@ use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwk::types::KeyPairSubtype;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 use jsonprooftoken::jwp::issued::JwpIssuedBuilder;
+use oqs::sig::Algorithm;
+use oqs::sig::Sig;
 use rand::distributions::DistString;
 use shared::Shared;
 use tokio::sync::RwLockReadGuard;
@@ -43,6 +48,7 @@ use super::KeyStorageResult;
 use super::KeyType;
 use crate::JwkStorageExt;
 use crate::key_storage::JwkStorage;
+use crate::JwkStoragePQ;
 
 /// The map from key ids to JWKs.
 type JwkKeyStore = HashMap<KeyId, Jwk>;
@@ -214,6 +220,11 @@ impl JwkMemStore {
   const BLS12381SHAKE256_KEY_TYPE_STR: &'static str = "Bls12381Shake256";
   /// The BLS12381-SHAKE256 key type
   pub const BLS12381SHAKE256_KEY_TYPE: KeyType = KeyType::from_static_str(Self::BLS12381SHAKE256_KEY_TYPE_STR);
+
+  const ML_DSA: &'static str = "ML-DSA";
+  /// ML-DSA algorithms key types;
+  pub const ML_DSA_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ML_DSA);
+
 }
 
 impl MemStoreKeyType {
@@ -484,6 +495,61 @@ impl JwkStorageExt for JwkMemStore {
 }
 
 
+fn check_pq_alg_compatibility(alg: JwsAlgorithmPQ) -> Algorithm{
+  match alg {
+    JwsAlgorithmPQ::ML_DSA_44 => Algorithm::Dilithium2,
+    JwsAlgorithmPQ::ML_DSA_65 => Algorithm::Dilithium3,
+    JwsAlgorithmPQ::ML_DSA_87 => Algorithm::Dilithium5,
+  }
+}
+
+//TODO: PQ - JwkStoragePQ
+/// JwkStoragePQ implementation for JwkMemStore
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+impl JwkStoragePQ for JwkMemStore {
+  async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithmPQ) -> KeyStorageResult<JwkGenOutput> {
+
+    //TODO: maybe handle key_type
+    let oqs_alg = check_pq_alg_compatibility(alg);
+    oqs::init(); //TODO: check what this function does
+
+    let scheme = Sig::new(oqs_alg).unwrap();
+    let (pk, sk) = scheme.keypair().unwrap();
+
+    let kid: KeyId = random_key_id();
+
+    let public = jwu::encode_b64(pk.into_vec());
+    let private = jwu::encode_b64(sk.into_vec());
+    let mut jwk_params = match alg {
+      JwsAlgorithmPQ::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
+      JwsAlgorithmPQ::ML_DSA_65 => JwkParams::new(JwkType::MLDSA),
+      JwsAlgorithmPQ::ML_DSA_87 => JwkParams::new(JwkType::MLDSA),
+    };
+
+    match jwk_params {
+      JwkParams::MLDSA(ref mut params) => {
+        params.public = public;
+        params.private = Some(private);
+      },
+      _ => return Err(
+        KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
+          .with_custom_message("Should NOT happen!"),
+      ),
+    }
+        
+    let mut jwk = Jwk::from_params(jwk_params);
+
+    jwk.set_alg(alg.name());
+    jwk.set_kid(jwk.thumbprint_sha256_b64());
+    let public_jwk: Jwk = jwk.to_public().expect("should only panic if kty == oct");
+
+    let mut jwk_store: RwLockWriteGuard<'_, JwkKeyStore> = self.jwk_store.write().await;
+    jwk_store.insert(kid.clone(), jwk);
+
+    Ok(JwkGenOutput::new(kid, public_jwk))
+  }
+}
 
 pub(crate) mod shared {
   use core::fmt::Debug;

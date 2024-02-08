@@ -10,6 +10,8 @@ use crate::jwk::EcxCurve;
 use crate::jwk::EdCurve;
 use crate::jwk::JwkType;
 
+use super::JwkParamsPQ;
+
 /// Algorithm-specific parameters for JSON Web Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6)
@@ -26,6 +28,10 @@ pub enum JwkParams {
   Oct(JwkParamsOct),
   /// Octet Key Pairs parameters.
   Okp(JwkParamsOkp),
+
+  //TODO: PQ - new JwkParams
+  /// ML-DSA parameters
+  MLDSA(JwkParamsPQ)
 }
 
 impl JwkParams {
@@ -36,6 +42,7 @@ impl JwkParams {
       JwkType::Rsa => Self::Rsa(JwkParamsRsa::new()),
       JwkType::Oct => Self::Oct(JwkParamsOct::new()),
       JwkType::Okp => Self::Okp(JwkParamsOkp::new()),
+      JwkType::MLDSA => Self::MLDSA(JwkParamsPQ::new()),
     }
   }
 
@@ -46,6 +53,7 @@ impl JwkParams {
       Self::Rsa(inner) => inner.kty(),
       Self::Oct(inner) => inner.kty(),
       Self::Okp(inner) => inner.kty(),
+      Self::MLDSA(_) => JwkType::MLDSA,
     }
   }
 
@@ -58,6 +66,7 @@ impl JwkParams {
       Self::Ec(inner) => Some(Self::Ec(inner.to_public())),
       Self::Rsa(inner) => Some(Self::Rsa(inner.to_public())),
       Self::Oct(_) => None,
+      Self::MLDSA(inner) => Some(Self::MLDSA(inner.to_public())),
     }
   }
 
@@ -68,6 +77,7 @@ impl JwkParams {
       Self::Ec(value) => value.is_public(),
       Self::Rsa(value) => value.is_public(),
       Self::Oct(value) => value.is_public(),
+      Self::MLDSA(value) => value.is_public(),
     }
   }
 }

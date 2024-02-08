@@ -196,11 +196,6 @@ async fn main() -> anyhow::Result<()> {
         FailFast::FirstError,
     );
 
-    if validation_result.as_ref().is_err_and(|e| matches!(e.validation_errors[0], JwtValidationError::Revoked)) {
-        //request update
-        todo!()
-    }
-
     let decoded_credential = validation_result.unwrap();
 
     // Holder checks if his credential has been revoked by the Issuer
@@ -208,7 +203,6 @@ async fn main() -> anyhow::Result<()> {
     assert!(revocation_result.is_ok());
 
 
-    
     let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
 
     let method_id = decoded_credential.decoded_jwp.get_issuer_protected_header().kid().unwrap();
@@ -281,8 +275,12 @@ async fn main() -> anyhow::Result<()> {
 
     // Holder sends its credential to Issuer asking for an update
 
+    println!("Sending credential (as JPT) to the Issuer for update: {}\n", credential_jpt.as_str());
+
+
     // Issuer checks the Credential integrity.
     // Issuer checks Credential's status. If validityTimeframe still valid does not perform the update
+
 
     let validation_result = JptCredentialValidator::validate::<_, Object>(
         &credential_jpt,
