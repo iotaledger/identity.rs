@@ -236,7 +236,7 @@ async fn main() -> anyhow::Result<()> {
 
 
     // Holder validate the credential and retrieve the JwpIssued, needed to construct the JwpPresented
-    // Checks also that the credentialStatus is correct, otherwise asks Issuer for an update
+    
     let validation_result = JptCredentialValidator::validate::<_, Object>(
         &credential_jpt,
         &issuer_document,
@@ -246,8 +246,26 @@ async fn main() -> anyhow::Result<()> {
 
     let decoded_credential = validation_result.unwrap();
 
-    // Holder checks if his credential has been revoked by the Issuer //TODO: create 3 utility functions that checks: timeframe, bitmap, timeframe + bitmap
-    let revocation_result = JptCredentialValidatorUtils::check_revocation_with_validity_timeframe_2024(&decoded_credential.credential, &issuer_document, StatusCheck::Strict);
+    // ===========================================================================
+    // Credential's Status check
+    // ===========================================================================
+
+    // Timeframe check
+    let timeframe_result = JptCredentialValidatorUtils::check_timeframes_with_validity_timeframe_2024(
+        &decoded_credential.credential,
+        None,
+        StatusCheck::Strict
+    );
+
+    assert!(timeframe_result.is_ok());
+
+    // Revocation check //TODO: create 3 utility functions that checks: timeframe, bitmap, timeframe + bitmap
+    let revocation_result = JptCredentialValidatorUtils::check_revocation_with_validity_timeframe_2024(
+        &decoded_credential.credential, 
+        &issuer_document, 
+        StatusCheck::Strict
+    );
+
     assert!(revocation_result.is_ok());
 
 
@@ -280,7 +298,6 @@ async fn main() -> anyhow::Result<()> {
         JptPresentationValidationOptions::default().nonce(challenge);
 
     // Verifier validate the Presented Credential and retrieve the JwpPresented
-    // Check validityTimeframe
     let decoded_presented_credential = JptPresentationValidator::validate::<_, Object>(
         &presentation_jpt,
         &issuer_document,
@@ -289,29 +306,38 @@ async fn main() -> anyhow::Result<()> {
     )
     .unwrap();
 
+    // Check validityTimeframe
+
+    let timeframe_result = JptPresentationValidatorUtils::check_timeframes_with_validity_timeframe_2024(
+        &decoded_presented_credential.credential, 
+        None, 
+        StatusCheck::Strict
+    );
+
+    assert!(timeframe_result.is_ok());
+
     // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
     println!("Presented Credential successfully validated: {:#}", decoded_presented_credential.credential);
 
 
     // ===========================================================================
-    // Step 2b: Waiting for the next validityTimeframe, will result in the Credential being revoked
+    // Step 2b: Waiting for the next validityTimeframe, will result in the Credential timeframe interval NOT valid
     // ===========================================================================
 
-    thread::sleep(SleepDuration::from_secs(61)); //Will result revoked with the granularity of 1 minute
+    thread::sleep(SleepDuration::from_secs(61));
 
-    let validation_result = JptPresentationValidator::validate::<_, Object>(
-        &presentation_jpt,
-        &issuer_document,
-        &presentation_validation_options, //TODO: Custom timeframe to check
-        FailFast::FirstError,
+    let timeframe_result = JptPresentationValidatorUtils::check_timeframes_with_validity_timeframe_2024(
+        &decoded_presented_credential.credential, 
+        None, 
+        StatusCheck::Strict
     );
 
     // We expect validation to no longer succeed because the credential was NOT updated.
     if matches!(
-        validation_result.unwrap_err().validation_errors[0],
-        JwtValidationError::Revoked // //TODO: OutsideTimeframe error
+        timeframe_result.unwrap_err(),
+        JwtValidationError::OutsideTimeframe
     ) {
-        println!("validityTimeframe NOT valid, Credential Revoked \n");
+        println!("Validity Timeframe interval NOT valid\n");
     }
 
 
@@ -393,48 +419,43 @@ async fn main() -> anyhow::Result<()> {
 
     let jpt_credentials: &Vec<Jpt> = &presentation.presentation.verifiable_credential;
 
-    for jpt_vc in jpt_credentials.iter() {
+    // Extract ZK Verifiable Credential in JPT format
+    let jpt_vc = jpt_credentials.get(0).unwrap();
 
-        // Issuer checks the Credential integrity.
-        // Issuer checks Credential's status. If validityTimeframe still valid does not perform the update
+    // Issuer checks the Credential integrity.
+    let mut verified_credential_result = JptCredentialValidator::validate::<_, Object>(
+        &jpt_vc,
+        &issuer_document,
+        &validation_options,
+        FailFast::FirstError,
+    ).unwrap();
 
-        //TODO:  Should albsolutely remove checks on timeframe from the validate and put it outside beacuse here must return the Ok result with the credential inside to use it for update
-        let verified_credential_result = JptCredentialValidator::validate::<_, Object>(
-            &jpt_vc,
-            &issuer_document,
-            &validation_options,
-            FailFast::FirstError,
-        );
+    // Issuer checks if the Credential has been revoked
+    let revocation_result = JptCredentialValidatorUtils::check_revocation_with_validity_timeframe_2024(
+        &verified_credential_result.credential, 
+        &issuer_document, 
+        StatusCheck::Strict);
 
-        assert!(verified_credential_result.as_ref().is_err_and(|e| matches!(e.validation_errors[0], JwtValidationError::Revoked)));
+    assert!(!revocation_result.is_err_and(|e| matches!(e, JwtValidationError::Revoked)));
 
 
-        // Issuer checks if the Credential has been revoked
+    // ===========================================================================
+    // 3.5: Issuer ready for Update.
+    // ===========================================================================
 
-        let revocation_result = JptCredentialValidatorUtils::check_revocation_with_validity_timeframe_2024(
-            &decoded_credential.credential, 
-            &issuer_document, 
-            StatusCheck::Strict);
-
-        assert!(!revocation_result.is_err_and(|e| matches!(e, JwtValidationError::Revoked)));
-
-    }
-    
-    // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
+    // Since no errors were thrown during the Verifiable Presentation validation and the verification of inner Credentials
     println!("Ready for Update - VP successfully validated: {:#?}", presentation.presentation);
 
 
     // Issuer updates the credential
-
     let new_credential_jpt = issuer_document
         .update(
             &storage_issuer, 
             &fragment_issuer,
-            Some(start_validity_timeframe),
+            None,
             duration, 
-            &mut decoded_credential.decoded_jwp.clone())
+            &mut verified_credential_result.decoded_jwp)
         .await?;
-
 
     // Issuer sends back the credential updated
 
@@ -447,15 +468,23 @@ async fn main() -> anyhow::Result<()> {
         &issuer_document,
         &JptCredentialValidationOptions::default(),
         FailFast::FirstError,
+    ).unwrap();
+
+    let timeframe_result = JptCredentialValidatorUtils::check_timeframes_with_validity_timeframe_2024(
+        &validation_result.credential, 
+        None, 
+        StatusCheck::Strict
     );
 
-    assert!(!validation_result.as_ref().is_err_and(|e| matches!(e.validation_errors[0], JwtValidationError::Revoked)));
+    assert!(!timeframe_result.as_ref().is_err_and(|e| matches!(e, JwtValidationError::OutsideTimeframe)));
     println!("Updated credential is VALID!");
 
 
     // ===========================================================================
     // Issuer decides to Revoke Holder's Credential
     // ===========================================================================
+
+    println!("Issuer decides to revoke the Credential");
 
 
     // Update the RevocationBitmap service in the issuer's DID Document.

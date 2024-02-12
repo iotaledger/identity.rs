@@ -210,18 +210,6 @@ impl From<RevocationTimeframeStatus> for Status {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VerifierRevocationTimeframeStatus(pub(crate) RevocationTimeframeStatus);
 
-impl VerifierRevocationTimeframeStatus {
-    /// Get startValidityTimeframe value
-    pub fn start_validity_timeframe(&self) -> Result<Timestamp> {
-      self.0.start_validity_timeframe()
-    }
-  
-    /// Get endValidityTimeframe value
-    pub fn end_validity_timeframe(&self) -> Result<Timestamp> {
-      self.0.end_validity_timeframe()
-    }
-}
-
 
 impl TryFrom<Status> for VerifierRevocationTimeframeStatus {
   type Error = Error;

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use crate::{credential::Credential, revocation::{RevocationDocumentExt, RevocationTimeframeStatus, VerifierRevocationTimeframeStatus}};
 
-use identity_core::{convert::{ToJson, FromJson}, common::Object};
+use identity_core::{common::{Object, Timestamp}, convert::{FromJson, ToJson}};
 use identity_did::DID;
 use jsonprooftoken::{jwp::issued::JwpIssuedDecoder, jpt::claims::JptClaims, encoding::SerializationType};
 
@@ -63,12 +63,48 @@ impl JptCredentialValidatorUtils {
     }
 
 
-  /// Checks whether the credential status has been revoked.
-  pub fn check_status<T>(
+  // /// Checks whether the credential status has been revoked.
+  // pub fn check_status<T>(
+  //   credential: &Credential<T>,
+  //   status_check: crate::validator::StatusCheck,
+  // ) -> ValidationUnitResult {
+
+
+  //   if status_check == crate::validator::StatusCheck::SkipAll {
+  //     return Ok(());
+  //   }
+
+  //   match &credential.credential_status {
+  //     None => Ok(()),
+  //     Some(status) => {
+  //       if status.type_ == RevocationTimeframeStatus::TYPE {
+  //         let status: RevocationTimeframeStatus = RevocationTimeframeStatus::try_from(status.clone())
+  //           .map_err(JwtValidationError::InvalidStatus)?;
+
+  //         Self::check_validity_timeframe(status, Some(Timestamp::now_utc()))
+
+  //       } else {
+  //         if status_check == crate::validator::StatusCheck::SkipUnsupported {
+  //           return Ok(());
+  //         }
+  //         return Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
+  //           "unsupported type '{}'",
+  //           status.type_
+  //         ))));
+  //       }
+        
+  //     }
+  //   }
+  // }
+
+
+
+  /// Check timeframe interval in credentialStatus with `RevocationTimeframeStatus`.
+  pub fn check_timeframes_with_validity_timeframe_2024<T>(
     credential: &Credential<T>,
+    validity_timeframe: Option<Timestamp>,
     status_check: crate::validator::StatusCheck,
   ) -> ValidationUnitResult {
-
 
     if status_check == crate::validator::StatusCheck::SkipAll {
       return Ok(());
@@ -81,7 +117,7 @@ impl JptCredentialValidatorUtils {
           let status: RevocationTimeframeStatus = RevocationTimeframeStatus::try_from(status.clone())
             .map_err(JwtValidationError::InvalidStatus)?;
 
-          Self::check_validity_timeframe_status(status)
+            Self::check_validity_timeframe(status, validity_timeframe)
 
         } else {
           if status_check == crate::validator::StatusCheck::SkipUnsupported {
@@ -95,25 +131,26 @@ impl JptCredentialValidatorUtils {
         
       }
     }
+    
   }
 
 
-  pub(crate) fn check_validity_timeframe_status(
+  pub(crate) fn check_validity_timeframe(
     status: RevocationTimeframeStatus,
+    validity_timeframe: Option<Timestamp>
   ) -> ValidationUnitResult {
-    use identity_core::common::Timestamp;
 
-    let now = Timestamp::now_utc();
+    let timeframe = validity_timeframe.unwrap_or(Timestamp::now_utc());
 
     let check = status.start_validity_timeframe().is_ok_and(|start| {
 
       status.end_validity_timeframe().is_ok_and(|end| {
-        now >= start && now <= end
+        timeframe >= start && timeframe <= end
       })
     });
 
     if !check {
-      Err(JwtValidationError::Revoked)
+      Err(JwtValidationError::OutsideTimeframe)
     } else {
       Ok(())
     }
@@ -178,4 +215,7 @@ impl JptCredentialValidatorUtils {
       Ok(())
     }
   }
+
+
+  
 }

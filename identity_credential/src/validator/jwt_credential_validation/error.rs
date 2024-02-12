@@ -102,8 +102,11 @@ pub enum JwtValidationError {
   #[error("credential has been revoked")]
   Revoked,
 
-
   //TODO: ZKP - new errors for jwp
+  /// Indicates that the credential's timeframe interval is not valid
+  #[error("timeframe interval not valid")]
+  OutsideTimeframe,
+
   /// Indicates that the JWP representation of an issued credential or presentation could not be decoded.
   #[error("could not decode jwp")]
   JwpDecodingError(#[source] jsonprooftoken::errors::CustomError),

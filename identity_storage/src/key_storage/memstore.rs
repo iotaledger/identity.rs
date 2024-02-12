@@ -479,7 +479,6 @@ impl JwkStorageExt for JwkMemStore {
       };
 
       Ok(new_proof)
-      // proof.update_signature(&self, sk: &BBSplusSecretKey, generators: &Generators, old_message: &BBSplusMessage, new_message: &BBSplusMessage, update_index: usize) -> Self {
   }
 }
 

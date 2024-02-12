@@ -103,15 +103,6 @@ impl JptCredentialValidator {
       .chain(structure_validation)
       .chain(subject_holder_validation);
 
-
-    //TODO: ZKP - check revocation when implemented
-
-    let validation_units_iter = {
-      let revocation_validation =
-        std::iter::once_with(|| JptCredentialValidatorUtils::check_status(credential, options.status));
-      validation_units_iter.chain(revocation_validation)
-    };
-
     let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
     let validation_errors: Vec<JwtValidationError> = match fail_fast {
       FailFast::FirstError => validation_units_error_iter.take(1).collect(),
