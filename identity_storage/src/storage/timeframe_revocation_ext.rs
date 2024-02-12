@@ -79,13 +79,19 @@ impl TimeframeRevocationExtension for CoreDocument {
         let index_end_validity_timeframe = claims.get_claim_index(format!("vc.credentialStatus.{}", RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY)).ok_or(Error::ProofUpdateError("'endValidityTimeframe' property NOT found".to_owned()))?;
 
 
-        let old_start_validity_timeframe = payloads.replace_payload_at_index(index_start_validity_timeframe, Value::String(new_start_validity_timeframe.clone()))
-        .map_err(|_| Error::ProofUpdateError("'startValidityTimeframe' value NOT found".to_owned()))?
-        .to_string();
-        let old_end_validity_timeframe = payloads.replace_payload_at_index(index_end_validity_timeframe, Value::String(new_end_validity_timeframe.clone()))
+        let old_start_validity_timeframe = payloads
+            .replace_payload_at_index(index_start_validity_timeframe, Value::String(new_start_validity_timeframe.clone()))
+            .and_then(|v| Ok(serde_json::from_value::<String>(v)))
+            .map_err(|_| Error::ProofUpdateError("'startValidityTimeframe' value NOT found".to_owned()))?
+            .map_err(|_| Error::ProofUpdateError("'startValidityTimeframe' value NOT a JSON String".to_owned()))?;
+
+
+        let old_end_validity_timeframe = payloads
+        .replace_payload_at_index(index_end_validity_timeframe, Value::String(new_end_validity_timeframe.clone()))
+        .and_then(|v| Ok(serde_json::from_value::<String>(v)))
         .map_err(|_| Error::ProofUpdateError("'endValidityTimeframe' value NOT found".to_owned()))?
-        .to_string();
-        
+        .map_err(|_| Error::ProofUpdateError("'endValidityTimeframe' value NOT a JSON String".to_owned()))?;
+
 
         let proof: [u8; 112] = proof.try_into().map_err(|_| Error::ProofUpdateError("Invalid bytes length of JWP proof".to_owned()))?;
 
@@ -107,6 +113,7 @@ impl TimeframeRevocationExtension for CoreDocument {
 
         credential_jwp.set_proof(&new_proof);
         credential_jwp.set_payloads(payloads);
+
         let jpt = credential_jwp.encode(SerializationType::COMPACT)
         .map_err(|e| Error::EncodingError(Box::new(e)))?;
 
