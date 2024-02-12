@@ -20,7 +20,8 @@ pub trait TimeframeRevocationExtension {
         &self,
         storage: &Storage<K, I>,
         fragment: &str,
-        granularity: Duration, 
+        start_validity: Option<Timestamp>,
+        duration: Duration, 
         credential_jwp: &mut JwpIssued, 
     ) -> StorageResult<Jpt>
     where
@@ -41,7 +42,8 @@ impl TimeframeRevocationExtension for CoreDocument {
         &self,
         storage: &Storage<K, I>,
         fragment: &str,
-        granularity: Duration, 
+        start_validity: Option<Timestamp>,
+        duration: Duration, 
         credential_jwp: &mut JwpIssued, 
     ) -> StorageResult<Jpt>
     where
@@ -64,8 +66,8 @@ impl TimeframeRevocationExtension for CoreDocument {
 
 
 
-        let new_start_validity_timeframe = Timestamp::now_utc();
-        let new_end_validity_timeframe = new_start_validity_timeframe.checked_add(granularity).ok_or(Error::ProofUpdateError("Invalid granularity".to_owned()))?;
+        let new_start_validity_timeframe = start_validity.unwrap_or(Timestamp::now_utc());
+        let new_end_validity_timeframe = new_start_validity_timeframe.checked_add(duration).ok_or(Error::ProofUpdateError("Invalid granularity".to_owned()))?;
         let new_start_validity_timeframe = new_start_validity_timeframe.to_rfc3339();
         let new_end_validity_timeframe = new_end_validity_timeframe.to_rfc3339();
         
@@ -130,7 +132,8 @@ mod iota_document {
             &self,
             storage: &Storage<K, I>,
             fragment: &str,
-            granularity: Duration, 
+            start_validity: Option<Timestamp>,
+            duration: Duration, 
             credential_jwp: &mut JwpIssued, 
         ) -> StorageResult<Jpt>
         where
@@ -139,7 +142,7 @@ mod iota_document {
         {
             self
             .core_document()
-            .update(storage, fragment, granularity, credential_jwp)
+            .update(storage, fragment, start_validity, duration, credential_jwp)
             .await
         }
 

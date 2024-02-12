@@ -39,6 +39,9 @@ impl SelectiveDisclosurePresentation {
 
         jwp_builder.set_undisclosed("vc.credentialStatus.revocationBitmapIndex").ok();
 
+        jwp_builder.set_undisclosed("vc.credentialSubject.id").ok();
+        jwp_builder.set_undisclosed("sub").ok();
+
         Self{jwp_builder}
     }
 

@@ -86,13 +86,22 @@ impl JptCredentialValidator {
     });
 
     
-
     let structure_validation = std::iter::once_with(|| JwtCredentialValidatorUtils::check_structure(credential));
 
+    let subject_holder_validation = std::iter::once_with(|| {
+      options
+        .subject_holder_relationship
+        .as_ref()
+        .map(|(holder, relationship)| {
+          JwtCredentialValidatorUtils::check_subject_holder_relationship(credential, holder, *relationship)
+        })
+        .unwrap_or(Ok(()))
+    });
 
     let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
-      .chain(structure_validation);
+      .chain(structure_validation)
+      .chain(subject_holder_validation);
 
 
     //TODO: ZKP - check revocation when implemented

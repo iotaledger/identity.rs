@@ -26,13 +26,13 @@ impl RevocationTimeframeStatus {
   pub const TYPE: &'static str = "RevocationTimeframe2024";
 
   /// Creates a new `RevocationTimeframeStatus`.
-  pub fn new(granularity: Duration, id: DIDUrl, index: u32) -> Result<Self> {
+  pub fn new(start_validity: Option<Timestamp>, duration: Duration, id: DIDUrl, index: u32) -> Result<Self> {
 
     let mut object = Object::new();
 
-    let start_validity_timeframe = Timestamp::now_utc();
+    let start_validity_timeframe = start_validity.unwrap_or(Timestamp::now_utc());
 
-    let end_validity_timeframe = start_validity_timeframe.checked_add(granularity)
+    let end_validity_timeframe = start_validity_timeframe.checked_add(duration)
       .ok_or(Error::InvalidStatus(
         "With that granularity, endValidityTimeFrame will turn out not to be in the valid range for RFC 3339".to_owned()
       ))?;
