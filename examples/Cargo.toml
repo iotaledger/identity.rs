@@ -17,6 +17,7 @@ sd-jwt-payload = { version = "0.1.2", default-features = false, features = ["sha
 serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 json-proof-token.workspace = true
+identity_pqc_verifier = { path = "../identity_pqc_verifier", default-features = true }
 
 [lib]
 path = "utils/utils.rs"

@@ -2,22 +2,36 @@
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use examples::MemStorage;
+use identity_iota::core::FromJson;
+use identity_iota::core::Object;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::FailFast;
+use identity_iota::credential::Jwt;
+use identity_iota::credential::JwtCredentialValidationOptions;
+use identity_iota::credential::JwtCredentialValidator;
+use identity_iota::credential::Subject;
+use identity_iota::did::DID;
 use identity_iota::iota::IotaClientExt;
 use identity_iota::iota::IotaDocument;
 use identity_iota::iota::IotaIdentityClientExt;
 use identity_iota::iota::NetworkName;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwsDocumentExtPQC;
+use identity_iota::storage::JwsSignatureOptions;
 use identity_iota::storage::KeyIdMemstore;
 use identity_iota::storage::KeyType;
-use identity_iota::verification::jws::JwsAlgorithmPQ;
+use identity_iota::verification::jws::JwsAlgorithm;
 use identity_iota::verification::MethodScope;
+use identity_pqc_verifier::PQCJwsVerifier;
 use iota_sdk::client::secret::stronghold::StrongholdSecretManager;
 use iota_sdk::client::secret::SecretManager;
 use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
+use serde_json::json;
 
 // The API endpoint of an IOTA node, e.g. Hornet.
 const API_ENDPOINT: &str = "http://localhost:14265";
@@ -30,7 +44,7 @@ const FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
 
 
 
-async fn create_did(client: &Client, secret_manager: &SecretManager, storage: &MemStorage, key_type: KeyType, alg: JwsAlgorithmPQ ) -> anyhow::Result<(Address, IotaDocument, String)> {
+async fn create_did(client: &Client, secret_manager: &SecretManager, storage: &MemStorage, key_type: KeyType, alg: JwsAlgorithm) -> anyhow::Result<(Address, IotaDocument, String)> {
 
   // Get an address with funds for testing.
   let address: Address = get_address_with_funds(&client, &secret_manager, FAUCET_ENDPOINT).await?;
@@ -81,11 +95,75 @@ async fn main() -> anyhow::Result<()> {
   .password(Password::from("secure_password_1".to_owned()))
   .build(random_stronghold_path())?);
 
-  
   let storage_issuer: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) = 
-  create_did(&client, &mut secret_manager_issuer, &storage_issuer, JwkMemStore::ML_DSA_KEY_TYPE, JwsAlgorithmPQ::ML_DSA_44).await?;
+  create_did(&client, &mut secret_manager_issuer, &storage_issuer, JwkMemStore::ML_DSA_KEY_TYPE, JwsAlgorithm::ML_DSA_87).await?;
+
+
+  let mut secret_manager_holder = SecretManager::Stronghold(StrongholdSecretManager::builder()
+  .password(Password::from("secure_password_2".to_owned()))
+  .build(random_stronghold_path())?);
+
+  
+  let storage_holder: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
+
+  let (_, holder_document, fragment_holder): (Address, IotaDocument, String) = 
+  create_did(&client, &mut secret_manager_holder, &storage_holder, JwkMemStore::ML_DSA_KEY_TYPE, JwsAlgorithm::ML_DSA_87).await?;
+
+
+  // ======================================================================================
+  // Step 2: Issuer creates and signs a Verifiable Credential with a Post-Quantum algorithm.
+  // ======================================================================================
+
+  // Create a credential subject indicating the degree earned by Alice.
+  let subject: Subject = Subject::from_json_value(json!({
+    "id": holder_document.id().as_str(),
+    "name": "Alice",
+    "degree": {
+      "type": "BachelorDegree",
+      "name": "Bachelor of Science and Arts",
+    },
+    "GPA": "4.0",
+  }))?;
+
+  // Build credential using subject above and issuer.
+  let credential: Credential = CredentialBuilder::default()
+    .id(Url::parse("https://example.edu/credentials/3732")?)
+    .issuer(Url::parse(issuer_document.id().as_str())?)
+    .type_("UniversityDegreeCredential")
+    .subject(subject)
+    .build()?;
+
+  let credential_jwt: Jwt = issuer_document
+    .create_credential_jwt_pqc(
+      &credential,
+      &storage_issuer,
+      &fragment_issuer,
+      &JwsSignatureOptions::default(),
+      None,
+    )
+    .await?;
+
+
+  // Before sending this credential to the holder the issuer wants to validate that some properties
+  // of the credential satisfy their expectations.
+
+  JwtCredentialValidator::with_signature_verifier(PQCJwsVerifier::default())
+  .validate::<_, Object>(
+    &credential_jwt,
+    &issuer_document,
+    &JwtCredentialValidationOptions::default(),
+    FailFast::FirstError,
+  )
+  .unwrap();
+
+  println!("VC successfully validated");
+
+  // ===========================================================================
+  // Step 3: Issuer sends the Verifiable Credential to the holder.
+  // ===========================================================================
+  println!("Sending credential (as JWT) to the holder: {}", credential_jwt.as_str());
 
   Ok(())
 }
