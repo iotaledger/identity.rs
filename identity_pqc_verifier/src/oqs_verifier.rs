@@ -1,9 +1,6 @@
 
 use std::ops::Deref;
-
-use identity_jose::jwk::EdCurve;
 use identity_jose::jwk::Jwk;
-use identity_jose::jwk::JwkParamsOkp;
 use identity_jose::jwk::JwkParamsPQ;
 use identity_jose::jws::SignatureVerificationError;
 use identity_jose::jws::SignatureVerificationErrorKind;
@@ -20,8 +17,6 @@ impl OQSVerifier {
 
   /// Verify a JWS signature secured with the on the [`Algorithm`] defined in liboqs.
   pub fn verify(input: VerificationInput, public_key: &Jwk, alg: Algorithm) -> Result<(), SignatureVerificationError> {
-
-    println!("ALG: {}", alg);
 
     // Obtain an ML-DSA-44 public key.
     let params: &JwkParamsPQ = public_key

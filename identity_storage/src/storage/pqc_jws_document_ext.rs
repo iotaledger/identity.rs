@@ -1,5 +1,6 @@
 use identity_core::common::Object;
 use identity_credential::credential::{Credential, Jws, Jwt};
+use identity_credential::presentation::{JwtPresentationOptions, Presentation};
 use identity_document::document::CoreDocument;
 use identity_verification::jws::{CharSet, CompactJwsEncoder, CompactJwsEncodingOptions, JwsHeader};
 use identity_verification::{jws::JwsAlgorithm, MethodScope};
@@ -46,7 +47,14 @@ pub trait JwsDocumentExtPQC {
     K: JwkStoragePQ,
     I: KeyIdStorage;
 
-  /// Produces a JWT with PQC
+  /// Produces a JWT using PQC algorithms where the payload is produced from the given `credential`
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+  ///
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  ///
+  /// The `custom_claims` can be used to set additional claims on the resulting JWT.
   async fn create_credential_jwt_pqc<K, I, T>(
     &self,
     credential: &Credential<T>,
@@ -59,6 +67,27 @@ pub trait JwsDocumentExtPQC {
     K: JwkStoragePQ,
     I: KeyIdStorage,
     T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync;
+
+
+  /// Produces a JWT using PQC algorithms where the payload is produced from the given `presentation`
+  /// in accordance with [VC Data Model v1.1](https://www.w3.org/TR/vc-data-model/#json-web-token).
+  ///
+  /// Unless the `kid` is explicitly set in the options, the `kid` in the protected header is the `id`
+  /// of the method identified by `fragment` and the JWS signature will be produced by the corresponding
+  /// private key backed by the `storage` in accordance with the passed `options`.
+  async fn create_presentation_jwt_pqc<K, I, CRED, T>(
+    &self,
+    presentation: &Presentation<CRED, T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    signature_options: &JwsSignatureOptions,
+    presentation_options: &JwtPresentationOptions,
+  ) -> StorageResult<Jwt>
+  where
+    K: JwkStoragePQ,
+    I: KeyIdStorage,
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync;
 
 }
 
@@ -225,6 +254,42 @@ impl JwsDocumentExtPQC for CoreDocument {
       .map(|jws| Jwt::new(jws.into()))
   }
 
+
+  async fn create_presentation_jwt_pqc<K, I, CRED, T>(
+    &self,
+    presentation: &Presentation<CRED, T>,
+    storage: &Storage<K, I>,
+    fragment: &str,
+    jws_options: &JwsSignatureOptions,
+    jwt_options: &JwtPresentationOptions,
+  ) -> StorageResult<Jwt>
+  where
+    K: JwkStoragePQ,
+    I: KeyIdStorage,
+    T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+    CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync,
+  {
+    if jws_options.detached_payload {
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use detached payload for presentation signing",
+      )));
+    }
+
+    if !jws_options.b64.unwrap_or(true) {
+      // JWTs should not have `b64` set per https://datatracker.ietf.org/doc/html/rfc7797#section-7.
+      return Err(Error::EncodingError(Box::<dyn std::error::Error + Send + Sync>::from(
+        "cannot use `b64 = false` with JWTs",
+      )));
+    }
+    let payload = presentation
+      .serialize_jwt(jwt_options)
+      .map_err(Error::ClaimsSerializationError)?;
+    self
+      .create_jws_pqc(storage, fragment, payload.as_bytes(), jws_options)
+      .await
+      .map(|jws| Jwt::new(jws.into()))
+  }
+
 }
 
 
@@ -295,5 +360,26 @@ use super::*;
         .await
     }
 
+
+    async fn create_presentation_jwt_pqc<K, I, CRED, T>(
+      &self,
+      presentation: &Presentation<CRED, T>,
+      storage: &Storage<K, I>,
+      fragment: &str,
+      jws_options: &JwsSignatureOptions,
+      jwt_options: &JwtPresentationOptions,
+    ) -> StorageResult<Jwt>
+    where
+      K: JwkStoragePQ,
+      I: KeyIdStorage,
+      T: ToOwned<Owned = T> + Serialize + DeserializeOwned + Sync,
+      CRED: ToOwned<Owned = CRED> + Serialize + DeserializeOwned + Clone + Sync,
+    {
+      self
+        .core_document()
+        .create_presentation_jwt_pqc(presentation, storage, fragment, jws_options, jwt_options)
+        .await
+
+    }
   }
 }
