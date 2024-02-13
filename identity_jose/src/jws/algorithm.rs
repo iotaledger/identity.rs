@@ -45,6 +45,20 @@ pub enum JwsAlgorithm {
   NONE,
   /// EdDSA signature algorithms
   EdDSA,
+
+  //TODO: PQC - new PQ JwsAlgorithms
+  /// JSON Web Signature Algorithm for ML-DSA-44
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "ML-DSA-44")]
+  ML_DSA_44,
+  /// JSON Web Signature Algorithm for ML-DSA-44
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "ML-DSA-65")]
+  ML_DSA_65,
+  /// JSON Web Signature Algorithm for ML-DSA-44
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "ML-DSA-87")]
+  ML_DSA_87
 }
 
 impl JwsAlgorithm {
@@ -65,6 +79,9 @@ impl JwsAlgorithm {
     Self::ES256K,
     Self::NONE,
     Self::EdDSA,
+    Self::ML_DSA_44,
+    Self::ML_DSA_65,
+    Self::ML_DSA_87,
   ];
 
   /// Returns the JWS algorithm as a `str` slice.
@@ -85,6 +102,9 @@ impl JwsAlgorithm {
       Self::ES256K => "ES256K",
       Self::NONE => "none",
       Self::EdDSA => "EdDSA",
+      Self::ML_DSA_44 => "ML-DSA-44",
+      Self::ML_DSA_65 => "ML-DSA-65",
+      Self::ML_DSA_87 => "ML-DSA-87",
     }
   }
 }
@@ -109,6 +129,9 @@ impl FromStr for JwsAlgorithm {
       "ES256K" => Ok(Self::ES256K),
       "none" => Ok(Self::NONE),
       "EdDSA" => Ok(Self::EdDSA),
+      "ML-DSA-44" => Ok(Self::ML_DSA_44),
+      "ML-DSA-65" => Ok(Self::ML_DSA_65),
+      "ML-DSA-87" => Ok(Self::ML_DSA_87),
       _ => Err(Error::JwsAlgorithmParsingError),
     }
   }

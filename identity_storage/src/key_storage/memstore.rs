@@ -15,7 +15,6 @@ use identity_verification::jose::jwk::JwkType;
 use identity_verification::jose::jws::JwsAlgorithm;
 use identity_verification::jwk::JwkParams;
 use identity_verification::jwk::JwkParamsPQ;
-use identity_verification::jws::JwsAlgorithmPQ;
 use identity_verification::jwu;
 use jsonprooftoken::encoding::SerializationType;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
@@ -495,11 +494,17 @@ impl JwkStorageExt for JwkMemStore {
 }
 
 
-fn check_pq_alg_compatibility(alg: JwsAlgorithmPQ) -> Algorithm{
+fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> {
   match alg {
-    JwsAlgorithmPQ::ML_DSA_44 => Algorithm::Dilithium2,
-    JwsAlgorithmPQ::ML_DSA_65 => Algorithm::Dilithium3,
-    JwsAlgorithmPQ::ML_DSA_87 => Algorithm::Dilithium5,
+    JwsAlgorithm::ML_DSA_44 => Ok(Algorithm::Dilithium2),
+    JwsAlgorithm::ML_DSA_65 => Ok(Algorithm::Dilithium3),
+    JwsAlgorithm::ML_DSA_87 => Ok(Algorithm::Dilithium5),
+    other => {
+      return Err(
+        KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+          .with_custom_message(format!("{other} is not supported")),
+      );
+    } 
   }
 }
 
@@ -508,23 +513,37 @@ fn check_pq_alg_compatibility(alg: JwsAlgorithmPQ) -> Algorithm{
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl JwkStoragePQ for JwkMemStore {
-  async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithmPQ) -> KeyStorageResult<JwkGenOutput> {
+  async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput> {
 
     //TODO: maybe handle key_type
-    let oqs_alg = check_pq_alg_compatibility(alg);
+    let oqs_alg = check_pq_alg_compatibility(alg)?;
     oqs::init(); //TODO: check what this function does
 
-    let scheme = Sig::new(oqs_alg).unwrap();
-    let (pk, sk) = scheme.keypair().unwrap();
+    let scheme = Sig::new(oqs_alg).map_err(|err| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+        .with_custom_message(format!("signature scheme init failed"))
+        .with_source(err)
+    })?;
+    let (pk, sk) = scheme.keypair().map_err(|err| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+        .with_custom_message(format!("keypair generation failed!"))
+        .with_source(err)
+    })?;
 
     let kid: KeyId = random_key_id();
 
     let public = jwu::encode_b64(pk.into_vec());
     let private = jwu::encode_b64(sk.into_vec());
     let mut jwk_params = match alg {
-      JwsAlgorithmPQ::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
-      JwsAlgorithmPQ::ML_DSA_65 => JwkParams::new(JwkType::MLDSA),
-      JwsAlgorithmPQ::ML_DSA_87 => JwkParams::new(JwkType::MLDSA),
+      JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
+      JwsAlgorithm::ML_DSA_65 => JwkParams::new(JwkType::MLDSA),
+      JwsAlgorithm::ML_DSA_87 => JwkParams::new(JwkType::MLDSA),
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+            .with_custom_message(format!("{other} is not supported")),
+        );
+      }
     };
 
     match jwk_params {
@@ -548,6 +567,88 @@ impl JwkStoragePQ for JwkMemStore {
     jwk_store.insert(kid.clone(), jwk);
 
     Ok(JwkGenOutput::new(kid, public_jwk))
+  }
+
+
+  async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>> {
+    let jwk_store: RwLockReadGuard<'_, JwkKeyStore> = self.jwk_store.read().await;
+
+    // Extract the required alg from the given public key
+    let alg = public_key
+      .alg()
+      .ok_or(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+      .and_then(|alg_str| {
+        JwsAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+      })?;
+
+    // Check that `kty` is `ML-DSA`.
+    match alg {
+      JwsAlgorithm::ML_DSA_44 | JwsAlgorithm::ML_DSA_65 | JwsAlgorithm::ML_DSA_87 => {
+        public_key.try_mldsa_params().map_err(|err| {
+          KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+            .with_custom_message(format!("expected a Jwk with ML-DSA params in order to sign with {alg}"))
+            .with_source(err)
+        })?
+      },
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+            .with_custom_message(format!("{other} is not supported")),
+        );
+      }
+    };
+
+    // Obtain the corresponding private key and sign `data`.
+    let jwk: &Jwk = jwk_store
+      .get(key_id)
+      .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
+
+    let params = jwk.try_mldsa_params().unwrap();
+
+    let sk = params
+    .private
+    .as_deref()
+    .map(jwu::decode_b64)
+    .ok_or_else(|| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified).with_custom_message("expected Jwk `pub` param to be present")
+    })?
+    .map_err(|err| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+        .with_custom_message("unable to decode `d` param")
+        .with_source(err)
+    })?;
+
+    oqs::init(); //TODO: check what this function does
+
+    let scheme = match alg {
+      JwsAlgorithm::ML_DSA_44 => Sig::new(Algorithm::Dilithium2),
+      JwsAlgorithm::ML_DSA_65 => Sig::new(Algorithm::Dilithium3),
+      JwsAlgorithm::ML_DSA_87 => Sig::new(Algorithm::Dilithium5),
+
+      other => {
+        return Err(
+          KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
+            .with_custom_message(format!("{other} is not supported")),
+        );
+      }
+    }.map_err(|err| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+        .with_custom_message(format!("signature scheme init failed"))
+        .with_source(err)
+    })?;
+
+    let secret_key = scheme.secret_key_from_bytes(&sk).ok_or(
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+          .with_custom_message(format!("expected key of length {}", SecretKey::LENGTH))
+    )?;
+
+    let signature = scheme.sign(&data, secret_key).map_err(|err| {
+      KeyStorageError::new(KeyStorageErrorKind::Unspecified)
+        .with_custom_message(format!("signature computation failed"))
+        .with_source(err)
+    })?;
+
+    Ok(signature.into_vec())
   }
 }
 

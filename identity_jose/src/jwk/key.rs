@@ -341,6 +341,22 @@ impl Jwk {
     }
   }
 
+  /// Returns the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA`.
+  pub fn try_mldsa_params(&self) -> Result<&JwkParamsPQ> {
+    match self.params() {
+      JwkParams::MLDSA(params) => Ok(params),
+      _ => Err(Error::KeyError("ML-DSA")),
+    }
+  }
+
+  /// Returns a mutable reference to the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA`.
+  pub fn try_mldsa_params_mut(&mut self) -> Result<&mut JwkParamsPQ> {
+    match self.params_mut() {
+      JwkParams::MLDSA(params) => Ok(params),
+      _ => Err(Error::KeyError("ML-DSA")),
+    }
+  }
+
   // ===========================================================================
   // Thumbprint
   // ===========================================================================

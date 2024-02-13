@@ -8,7 +8,6 @@ use async_trait::async_trait;
 use identity_core::common::Timestamp;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
-use identity_verification::jws::JwsAlgorithmPQ;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
 use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwp::header::IssuerProtectedHeader;
@@ -92,6 +91,9 @@ pub trait JwkStorageExt : JwkStorage {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait JwkStoragePQ : JwkStorage {
-  /// Generates a JWK representing a BBS+ signature 
-  async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithmPQ) -> KeyStorageResult<JwkGenOutput>;
+  /// Generates a JWK representing a PQ key 
+  async fn generate_pq_key(&self, key_type: KeyType, alg: JwsAlgorithm) -> KeyStorageResult<JwkGenOutput>;
+
+  /// Sign the provided `data` using a PQ algorithm
+  async fn pq_sign(&self, key_id: &KeyId, data: &[u8], public_key: &Jwk) -> KeyStorageResult<Vec<u8>>;
 }

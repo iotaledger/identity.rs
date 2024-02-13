@@ -16,7 +16,6 @@ mod encoding;
 mod format;
 mod header;
 mod recipient;
-mod pq_algorithm;
 
 pub use self::algorithm::*;
 pub use self::charset::*;
@@ -26,4 +25,3 @@ pub use self::encoding::*;
 pub use self::format::*;
 pub use self::header::*;
 pub use self::recipient::*;
-pub use self::pq_algorithm::*;
