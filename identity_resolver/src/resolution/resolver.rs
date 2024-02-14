@@ -291,7 +291,7 @@ mod iota_handler {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// // Assume `smr_client` and `iota_client` are instances IOTA clients `iota_sdk::client::Client`.
     /// attach_multiple_iota_handlers(vec![("smr", smr_client), ("iota", iota_client)]);
     /// ```
