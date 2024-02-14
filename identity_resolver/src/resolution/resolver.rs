@@ -249,6 +249,8 @@ impl<DOC: 'static> Resolver<DOC, SingleThreadedCommand<DOC>> {
 
 #[cfg(feature = "iota")]
 mod iota_handler {
+  use crate::ErrorCause;
+
   use super::Resolver;
   use identity_document::document::CoreDocument;
   use identity_iota_core::IotaClientExt;
@@ -273,6 +275,57 @@ mod iota_handler {
       let handler = move |did: IotaDID| {
         let future_client = arc_client.clone();
         async move { future_client.resolve_did(&did).await }
+      };
+
+      self.attach_handler(IotaDID::METHOD.to_owned(), handler);
+    }
+
+    /// Convenience method for attaching multiple handlers responsible for resolving IOTA DIDs
+    /// on multiple networks.
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `clients` - A vector of tuples where each tuple contains the name of the network name and its corresponding
+    ///   client.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Assume `smr_client` and `iota_client` are instances IOTA clients `iota_sdk::client::Client`.
+    /// attach_multiple_iota_handlers(vec![("smr", smr_client), ("iota", iota_client)]);
+    /// ```
+    ///
+    /// # See Also
+    /// - [`attach_handler`](Self::attach_handler).
+    ///
+    /// # Note
+    ///
+    /// Using `attach_iota_handler` or `attach_handler` for the IOTA method would override all
+    /// clients added in this method.
+    pub fn attach_multiple_iota_handlers<CLI>(&mut self, clients: Vec<(&'static str, CLI)>)
+    where
+      CLI: IotaClientExt + Send + Sync + 'static,
+    {
+      let arc_clients: Arc<Vec<(&str, CLI)>> = Arc::new(clients);
+
+      let handler = move |did: IotaDID| {
+        let future_client = arc_clients.clone();
+        async move {
+          let did_network = did.network_str();
+          let client: &CLI = future_client
+            .as_ref()
+            .iter()
+            .find(|(netowrk, _)| *netowrk == did_network)
+            .map(|(_, client)| client)
+            .ok_or(crate::Error::new(ErrorCause::UnsupportedNetowrk(
+              did_network.to_string(),
+            )))?;
+          client
+            .resolve_did(&did)
+            .await
+            .map_err(|err| crate::Error::new(ErrorCause::HandlerError { source: Box::new(err) }))
+        }
       };
 
       self.attach_handler(IotaDID::METHOD.to_owned(), handler);
