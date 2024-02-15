@@ -341,19 +341,21 @@ impl Jwk {
     }
   }
 
-  /// Returns the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA`.
-  pub fn try_mldsa_params(&self) -> Result<&JwkParamsPQ> {
+  /// Returns the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA` or `SLH-DSA`.
+  pub fn try_pq_params(&self) -> Result<&JwkParamsPQ> {
     match self.params() {
       JwkParams::MLDSA(params) => Ok(params),
-      _ => Err(Error::KeyError("ML-DSA")),
+      JwkParams::SLHDSA(params) => Ok(params),
+      _ => Err(Error::KeyError("PQ")),
     }
   }
 
-  /// Returns a mutable reference to the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA`.
-  pub fn try_mldsa_params_mut(&mut self) -> Result<&mut JwkParamsPQ> {
+  /// Returns a mutable reference to the [`JwkParamsPQ`] in this JWK if it is of type `ML-DSA` or `SLH-DSA`.
+  pub fn try_pq_params_mut(&mut self) -> Result<&mut JwkParamsPQ> {
     match self.params_mut() {
       JwkParams::MLDSA(params) => Ok(params),
-      _ => Err(Error::KeyError("ML-DSA")),
+      JwkParams::SLHDSA(params) => Ok(params),
+      _ => Err(Error::KeyError("PQ")),
     }
   }
 
@@ -409,6 +411,9 @@ impl Jwk {
       JwkParams::MLDSA(JwkParamsPQ { public, .. }) => {
         format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
       }
+      JwkParams::SLHDSA(JwkParamsPQ { public, .. }) => {
+        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
+      }
     }
   }
 
@@ -462,6 +467,7 @@ impl Jwk {
       JwkParams::Oct(_) => true,
       JwkParams::Okp(params) => params.is_private(),
       JwkParams::MLDSA(params) => params.is_private(), //TODO: PQ - is_private Jwk method
+      JwkParams::SLHDSA(params) => params.is_private(),
     }
   }
 

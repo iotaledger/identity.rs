@@ -25,9 +25,13 @@ pub enum JwkType {
 
   //TODO: PQ - new JwkType
   /// JSON Web Key Type for the ML-DSA Algorithm Family.
-  /// [More Info] (https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium-02#section-4)
+  /// [More Info] (https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-key-type)
   #[serde(rename = "ML-DSA")]
-  MLDSA
+  MLDSA,
+  /// JSON Web Key Type for the SLH-DSA Algorithm Family.
+  /// [More Info] (https://datatracker.ietf.org/doc/html/draft-ietf-cose-sphincs-plus#name-the-slh-dsa-key-type)
+  #[serde(rename = "SLH-DSA")]
+  SLHDSA,
 }
 
 impl JwkType {
@@ -38,7 +42,8 @@ impl JwkType {
       Self::Rsa => "RSA",
       Self::Oct => "oct",
       Self::Okp => "OKP",
-      Self::MLDSA => "ML-DSA"
+      Self::MLDSA => "ML-DSA",
+      Self::SLHDSA => "SLH-DSA",
     }
   }
 }

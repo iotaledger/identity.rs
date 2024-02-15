@@ -121,7 +121,7 @@ async fn main() -> anyhow::Result<()> {
   let storage_holder: MemStorage = MemStorage::new(JwkMemStore::new(), KeyIdMemstore::new());
 
   let (_, holder_document, fragment_holder): (Address, IotaDocument, String) = 
-  create_did(&client, &mut secret_manager_holder, &storage_holder, JwkMemStore::ML_DSA_KEY_TYPE, JwsAlgorithm::ML_DSA_44).await?;
+  create_did(&client, &mut secret_manager_holder, &storage_holder, JwkMemStore::SLH_DSA_KEY_TYPE, JwsAlgorithm::SLH_DSA_SHA2_128s).await?;
 
 
   // ======================================================================================
@@ -257,6 +257,8 @@ async fn main() -> anyhow::Result<()> {
     JwtCredentialValidator::with_signature_verifier(PQCJwsVerifier::default());
   let validation_options: JwtCredentialValidationOptions = JwtCredentialValidationOptions::default()
     .subject_holder_relationship(holder_did.to_url().into(), SubjectHolderRelationship::AlwaysSubject);
+
+  println!("--------------------------");
 
   for (index, jwt_vc) in jwt_credentials.iter().enumerate() {
     // SAFETY: Indexing should be fine since we extracted the DID from each credential and resolved it.

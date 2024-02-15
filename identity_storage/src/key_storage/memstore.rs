@@ -224,6 +224,10 @@ impl JwkMemStore {
   /// ML-DSA algorithms key types;
   pub const ML_DSA_KEY_TYPE: KeyType = KeyType::from_static_str(Self::ML_DSA);
 
+  const SLH_DSA: &'static str = "SLH-DSA";
+  /// SLH-DSA algorithms key types;
+  pub const SLH_DSA_KEY_TYPE: KeyType = KeyType::from_static_str(Self::SLH_DSA);
+
 }
 
 impl MemStoreKeyType {
@@ -499,6 +503,9 @@ fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> 
     JwsAlgorithm::ML_DSA_44 => Ok(Algorithm::Dilithium2),
     JwsAlgorithm::ML_DSA_65 => Ok(Algorithm::Dilithium3),
     JwsAlgorithm::ML_DSA_87 => Ok(Algorithm::Dilithium5),
+    JwsAlgorithm::SLH_DSA_SHA2_128s => Ok(Algorithm::SphincsSha2128sSimple),
+    JwsAlgorithm::SLH_DSA_SHAKE_128s => Ok(Algorithm::SphincsShake128sSimple),
+    JwsAlgorithm::SLH_DSA_SHA2_128f => Ok(Algorithm::SphincsSha2128fSimple),
     other => {
       return Err(
         KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
@@ -538,6 +545,9 @@ impl JwkStoragePQ for JwkMemStore {
       JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
       JwsAlgorithm::ML_DSA_65 => JwkParams::new(JwkType::MLDSA),
       JwsAlgorithm::ML_DSA_87 => JwkParams::new(JwkType::MLDSA),
+      JwsAlgorithm::SLH_DSA_SHA2_128s => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHAKE_128s => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHA2_128f => JwkParams::new(JwkType::SLHDSA),
       other => {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
@@ -550,7 +560,12 @@ impl JwkStoragePQ for JwkMemStore {
       JwkParams::MLDSA(ref mut params) => {
         params.public = public;
         params.private = Some(private);
-      },
+      }
+      JwkParams::SLHDSA(ref mut params) => {
+        params.public = public;
+        params.private = Some(private);
+      }
+      ,
       _ => return Err(
         KeyStorageError::new(KeyStorageErrorKind::UnsupportedKeyType)
           .with_custom_message("Should NOT happen!"),
@@ -581,10 +596,13 @@ impl JwkStoragePQ for JwkMemStore {
         JwsAlgorithm::from_str(alg_str).map_err(|_| KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
       })?;
 
-    // Check that `kty` is `ML-DSA`.
+    let oqs_alg = check_pq_alg_compatibility(alg)?;
+
+    // Check that `kty` is `ML-DSA`or `SLH-DSA`.
     match alg {
-      JwsAlgorithm::ML_DSA_44 | JwsAlgorithm::ML_DSA_65 | JwsAlgorithm::ML_DSA_87 => {
-        public_key.try_mldsa_params().map_err(|err| {
+      JwsAlgorithm::ML_DSA_44 | JwsAlgorithm::ML_DSA_65 | JwsAlgorithm::ML_DSA_87 |
+      JwsAlgorithm:: SLH_DSA_SHA2_128s | JwsAlgorithm::SLH_DSA_SHA2_128f | JwsAlgorithm::SLH_DSA_SHAKE_128s => {
+        public_key.try_pq_params().map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
             .with_custom_message(format!("expected a Jwk with ML-DSA params in order to sign with {alg}"))
             .with_source(err)
@@ -603,7 +621,7 @@ impl JwkStoragePQ for JwkMemStore {
       .get(key_id)
       .ok_or_else(|| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound))?;
 
-    let params = jwk.try_mldsa_params().unwrap();
+    let params = jwk.try_pq_params().unwrap();
 
     let sk = params
     .private
@@ -620,18 +638,7 @@ impl JwkStoragePQ for JwkMemStore {
 
     oqs::init(); //TODO: check what this function does
 
-    let scheme = match alg {
-      JwsAlgorithm::ML_DSA_44 => Sig::new(Algorithm::Dilithium2),
-      JwsAlgorithm::ML_DSA_65 => Sig::new(Algorithm::Dilithium3),
-      JwsAlgorithm::ML_DSA_87 => Sig::new(Algorithm::Dilithium5),
-
-      other => {
-        return Err(
-          KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
-            .with_custom_message(format!("{other} is not supported")),
-        );
-      }
-    }.map_err(|err| {
+    let scheme = Sig::new(oqs_alg).map_err(|err| {
       KeyStorageError::new(KeyStorageErrorKind::Unspecified)
         .with_custom_message(format!("signature scheme init failed"))
         .with_source(err)

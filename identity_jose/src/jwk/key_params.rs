@@ -31,7 +31,9 @@ pub enum JwkParams {
 
   //TODO: PQ - new JwkParams
   /// ML-DSA parameters
-  MLDSA(JwkParamsPQ)
+  MLDSA(JwkParamsPQ),
+  /// SLH-DSA parameters
+  SLHDSA(JwkParamsPQ)
 }
 
 impl JwkParams {
@@ -43,6 +45,7 @@ impl JwkParams {
       JwkType::Oct => Self::Oct(JwkParamsOct::new()),
       JwkType::Okp => Self::Okp(JwkParamsOkp::new()),
       JwkType::MLDSA => Self::MLDSA(JwkParamsPQ::new()),
+      JwkType::SLHDSA => Self::SLHDSA(JwkParamsPQ::new()),
     }
   }
 
@@ -54,6 +57,7 @@ impl JwkParams {
       Self::Oct(inner) => inner.kty(),
       Self::Okp(inner) => inner.kty(),
       Self::MLDSA(_) => JwkType::MLDSA,
+      Self::SLHDSA(_) => JwkType::SLHDSA,
     }
   }
 
@@ -67,6 +71,7 @@ impl JwkParams {
       Self::Rsa(inner) => Some(Self::Rsa(inner.to_public())),
       Self::Oct(_) => None,
       Self::MLDSA(inner) => Some(Self::MLDSA(inner.to_public())),
+      Self::SLHDSA(inner) => Some(Self::SLHDSA(inner.to_public())),
     }
   }
 
@@ -78,6 +83,7 @@ impl JwkParams {
       Self::Rsa(value) => value.is_public(),
       Self::Oct(value) => value.is_public(),
       Self::MLDSA(value) => value.is_public(),
+      Self::SLHDSA(value) => value.is_public(),
     }
   }
 }

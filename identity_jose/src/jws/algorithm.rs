@@ -58,7 +58,19 @@ pub enum JwsAlgorithm {
   /// JSON Web Signature Algorithm for ML-DSA-44
   /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
   #[serde(rename = "ML-DSA-87")]
-  ML_DSA_87
+  ML_DSA_87,
+  /// JSON Web Signature Algorithm for SLH-DSA-SHA2-128s
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "SLH-DSA-SHA2-128s")]
+  SLH_DSA_SHA2_128s,
+  /// JSON Web Signature Algorithm for SLH-DSA-SHAKE-128s
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "SLH-DSA-SHAKE-128s")]
+  SLH_DSA_SHAKE_128s,
+  /// JSON Web Signature Algorithm for ML-DSA-44
+  /// [More Info](https://datatracker.ietf.org/doc/html/draft-ietf-cose-dilithium#name-the-ml-dsa-algorithm-family)
+  #[serde(rename = "SLH-DSA-SHA2-128f")]
+  SLH_DSA_SHA2_128f,
 }
 
 impl JwsAlgorithm {
@@ -82,6 +94,9 @@ impl JwsAlgorithm {
     Self::ML_DSA_44,
     Self::ML_DSA_65,
     Self::ML_DSA_87,
+    Self::SLH_DSA_SHA2_128s,
+    Self::SLH_DSA_SHAKE_128s,
+    Self::SLH_DSA_SHA2_128f,
   ];
 
   /// Returns the JWS algorithm as a `str` slice.
@@ -105,6 +120,9 @@ impl JwsAlgorithm {
       Self::ML_DSA_44 => "ML-DSA-44",
       Self::ML_DSA_65 => "ML-DSA-65",
       Self::ML_DSA_87 => "ML-DSA-87",
+      Self::SLH_DSA_SHA2_128s => "SLH-DSA-SHA2-128s",
+      Self::SLH_DSA_SHAKE_128s => "SLH-DSA-SHAKE-128s",
+      Self::SLH_DSA_SHA2_128f => "SLH-DSA-SHA2-128f",
     }
   }
 }
@@ -132,6 +150,9 @@ impl FromStr for JwsAlgorithm {
       "ML-DSA-44" => Ok(Self::ML_DSA_44),
       "ML-DSA-65" => Ok(Self::ML_DSA_65),
       "ML-DSA-87" => Ok(Self::ML_DSA_87),
+      "SLH-DSA-SHA2-128s" => Ok(Self::SLH_DSA_SHA2_128s),
+      "SLH-DSA-SHAKE-128s" => Ok(Self::SLH_DSA_SHAKE_128s),
+      "SLH-DSA-SHA2-128f" => Ok(Self::SLH_DSA_SHA2_128f),
       _ => Err(Error::JwsAlgorithmParsingError),
     }
   }

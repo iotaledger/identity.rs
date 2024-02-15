@@ -8,7 +8,7 @@ use identity_jose::jws::VerificationInput;
 use oqs::sig::Algorithm;
 use oqs::sig::Sig;
 
-/// A verifier that can handle the [`JwsAlgorithm::ML_DSA_44`](identity_jose::jws::JwsAlgorithm::ML_DSA_44) algorithm.
+/// A verifier that can handle the [`Algorithm`] PQC algorithms.
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct OQSVerifier;
@@ -20,7 +20,7 @@ impl OQSVerifier {
 
     // Obtain an ML-DSA-44 public key.
     let params: &JwkParamsPQ = public_key
-      .try_mldsa_params()
+      .try_pq_params()
       .map_err(|_| SignatureVerificationErrorKind::UnsupportedKeyType)?;
 
 

@@ -16,7 +16,10 @@ identity_jose = { version = "=1.1.0-alpha.1", path = "../identity_jose", default
 oqs = {version = "0.9.0", default-features = false, features = ["sigs", "std", "vendored"] }
 
 [features]
-ml_dsa_44 = []
-ml_dsa_65 = []
-ml_dsa_87 = []
-default = ["ml_dsa_44", "ml_dsa_65", "ml_dsa_87"]
+ML_DSA_44 = []
+ML_DSA_65 = []
+ML_DSA_87 = []
+SLH_DSA_SHA2_128s = []
+SLH_DSA_SHA2_128f = []
+SLH_DSA_SHAKE_128s = []
+default = ["ML_DSA_44", "ML_DSA_65", "ML_DSA_87", "SLH_DSA_SHA2_128s", "SLH_DSA_SHA2_128f", "SLH_DSA_SHAKE_128s"]
