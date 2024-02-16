@@ -69,6 +69,6 @@ pub enum ErrorCause {
     method: String,
   },
   /// No client attached to the specific network.
-  #[error("none of the attached clients support the netowk {0}")]
-  UnsupportedNetowrk(String),
+  #[error("none of the attached clients support the network {0}")]
+  UnsupportedNetwork(String),
 }

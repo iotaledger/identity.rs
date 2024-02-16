@@ -286,7 +286,7 @@ mod iota_handler {
     ///
     /// # Arguments
     ///
-    /// * `clients` - A vector of tuples where each tuple contains the name of the network name and its corresponding
+    /// * `clients` - A collection of tuples where each tuple contains the name of the network name and its corresponding
     ///   client.
     ///
     /// # Examples
@@ -301,8 +301,11 @@ mod iota_handler {
     ///
     /// # Note
     ///
-    /// Using `attach_iota_handler` or `attach_handler` for the IOTA method would override all
+    /// - Using `attach_iota_handler` or `attach_handler` for the IOTA method would override all
     /// clients added in this method.
+    /// - This function does not validate the provided configuration. Ensure that the provided
+    /// network name corresponds with the client, possibly by using `client.network_name()`.
+    ///
     pub fn attach_multiple_iota_handlers<CLI>(&mut self, clients: Vec<(&'static str, CLI)>)
     where
       CLI: IotaClientExt + Send + Sync + 'static,
@@ -316,9 +319,9 @@ mod iota_handler {
           let client: &CLI = future_client
             .as_ref()
             .iter()
-            .find(|(netowrk, _)| *netowrk == did_network)
+            .find(|(network, _)| *network == did_network)
             .map(|(_, client)| client)
-            .ok_or(crate::Error::new(ErrorCause::UnsupportedNetowrk(
+            .ok_or(crate::Error::new(ErrorCause::UnsupportedNetwork(
               did_network.to_string(),
             )))?;
           client
