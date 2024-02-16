@@ -286,8 +286,8 @@ mod iota_handler {
     ///
     /// # Arguments
     ///
-    /// * `clients` - A collection of tuples where each tuple contains the name of the network name and its corresponding
-    ///   client.
+    /// * `clients` - A collection of tuples where each tuple contains the name of the network name and its
+    ///   corresponding client.
     ///
     /// # Examples
     ///
@@ -305,7 +305,6 @@ mod iota_handler {
     /// clients added in this method.
     /// - This function does not validate the provided configuration. Ensure that the provided
     /// network name corresponds with the client, possibly by using `client.network_name()`.
-    ///
     pub fn attach_multiple_iota_handlers<CLI>(&mut self, clients: Vec<(&'static str, CLI)>)
     where
       CLI: IotaClientExt + Send + Sync + 'static,
