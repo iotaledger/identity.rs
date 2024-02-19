@@ -1,6 +1,6 @@
 [package]
 name = "identity_credential"
-version = "1.1.0"
+version = "1.1.1"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage.workspace = true
@@ -14,10 +14,10 @@ description = "An implementation of the Verifiable Credentials standard."
 [dependencies]
 flate2 = { version = "1.0.28", default-features = false, features = ["rust_backend"], optional = true }
 futures = { version = "0.3", default-features = false, optional = true }
-identity_core = { version = "=1.1.0", path = "../identity_core", default-features = false }
-identity_did = { version = "=1.1.0", path = "../identity_did", default-features = false }
-identity_document = { version = "=1.1.0", path = "../identity_document", default-features = false }
-identity_verification = { version = "=1.1.0", path = "../identity_verification", default-features = false }
+identity_core = { version = "=1.1.1", path = "../identity_core", default-features = false }
+identity_did = { version = "=1.1.1", path = "../identity_did", default-features = false }
+identity_document = { version = "=1.1.1", path = "../identity_document", default-features = false }
+identity_verification = { version = "=1.1.1", path = "../identity_verification", default-features = false }
 indexmap = { version = "2.0", default-features = false, features = ["std", "serde"] }
 itertools = { version = "0.11", default-features = false, features = ["use_std"], optional = true }
 once_cell = { version = "1.18", default-features = false, features = ["std"] }
