@@ -3,20 +3,18 @@ use identity_core::common::Duration;
 use identity_core::common::{Object, Url, Timestamp};
 use identity_did::DIDUrl;
 use identity_core::common::Value;
-use serde::Deserialize;
-use serde::Serialize;
 use crate::credential::{try_index_to_u32, Status};
 use crate::error::Result;
 use crate::error::Error;
-
-//TODO: add documentation
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RevocationTimeframeStatus(Status);
 
 impl RevocationTimeframeStatus {
+  /// startValidityTimeframe property name.
   pub const START_TIMEFRAME_PROPERTY: &'static str = "startValidityTimeframe";
+  /// endValidityTimeframe property name.
   pub const END_TIMEFRAME_PROPERTY: &'static str = "endValidityTimeframe";
   const INDEX_PROPERTY: &'static str = "revocationBitmapIndex";
 

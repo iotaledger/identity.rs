@@ -2,20 +2,19 @@ use crate::{JwkStorageExt, KeyIdStorage, MethodDigest, Storage, StorageResult};
 use super::JwkStorageDocumentError as Error;
 use async_trait::async_trait;
 use identity_core::common::{Duration, Timestamp};
-use identity_credential::{credential::Jpt, revocation::{RevocationError, RevocationTimeframeStatus}};
+use identity_credential::{credential::Jpt, revocation::RevocationTimeframeStatus};
 use identity_document::document::CoreDocument;
 use identity_verification::{MethodData, VerificationMethod};
-use jsonprooftoken::{encoding::SerializationType, jpa::algs::ProofAlgorithm, jpt::{claims::JptClaims, payloads::{self, Payloads}}, jwp::issued::JwpIssued};
+use jsonprooftoken::{encoding::SerializationType, jpt::payloads::Payloads, jwp::issued::JwpIssued};
 use serde_json::Value;
-use zkryptium::bbsplus::signature::BBSplusSignature;
 
 
-//TODO: add documentation
-
+/// CoreDocument and IotaDocument extension to handle Credential' signature update for RevocationTimeframe2024
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait TimeframeRevocationExtension {
     
+    /// Update Credential' signature considering the Timeframe interval
     async fn update<K, I>(
         &self,
         storage: &Storage<K, I>,
