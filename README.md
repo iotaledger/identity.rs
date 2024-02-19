@@ -85,7 +85,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity_iota = {version = "1.1.0", features = ["memstore"]}
+identity_iota = { version = "1.1.0", features = ["memstore"] }
 iota-sdk = { version = "1.0.2", default-features = true, features = ["tls", "client", "stronghold"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.62"
