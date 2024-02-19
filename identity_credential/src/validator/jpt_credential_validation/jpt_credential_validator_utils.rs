@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::{credential::Credential, revocation::{RevocationDocumentExt, RevocationTimeframeStatus, VerifierRevocationTimeframeStatus}, validator::CompoundCredentialValidationError};
+use crate::{credential::Credential, revocation::{RevocationDocumentExt, RevocationTimeframeStatus}};
 
 use identity_core::{common::{Object, Timestamp}, convert::{FromJson, ToJson}};
 use identity_did::DID;
@@ -67,7 +67,6 @@ impl JptCredentialValidatorUtils {
         })
     }
 
-    //TODO: ZKP - revocation checks
 
   /// Check timeframe interval in credentialStatus with `RevocationTimeframeStatus`.
   pub fn check_timeframes_with_validity_timeframe_2024<T>(

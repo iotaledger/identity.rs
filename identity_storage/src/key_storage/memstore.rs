@@ -8,7 +8,6 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use crypto::signatures::ed25519::SecretKey;
-use identity_core::common::Timestamp;
 use identity_verification::jose::jwk::EdCurve;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jwk::JwkType;

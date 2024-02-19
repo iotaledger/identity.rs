@@ -11,9 +11,9 @@ use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwp::presented::JwpPresentedDecoder;
 
-use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{CompoundCredentialValidationError, FailFast, JptCredentialValidatorUtils, JwtCredentialValidatorUtils, JwtValidationError, SignerContext}};
+use crate::{credential::{Jpt, CredentialJwtClaims, Credential}, validator::{CompoundCredentialValidationError, FailFast, JwtCredentialValidatorUtils, JwtValidationError, SignerContext}};
 
-use super::{DecodedJptPresentation, JptPresentationValidationOptions, JptPresentationValidatorUtils};
+use super::{DecodedJptPresentation, JptPresentationValidationOptions};
 
 /// A type for decoding and validating Presented [`Credential`]s in JPT format.
 #[non_exhaustive]

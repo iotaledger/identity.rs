@@ -7,7 +7,6 @@ use identity_iota::core::Duration;
 use identity_iota::core::Timestamp;
 use identity_iota::credential::DecodedJwtPresentation;
 use identity_iota::credential::Jwt;
-use identity_iota::credential::JwtCredentialValidationOptions;
 use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::JwtPresentationValidationOptions;
 use identity_iota::credential::JwtPresentationValidator;
@@ -167,7 +166,7 @@ async fn main() -> anyhow::Result<()> {
     let (_, mut issuer_document, fragment_issuer): (Address, IotaDocument, String) = 
     create_did(&client, &mut secret_manager_issuer, &storage_issuer, JwkMemStore::BLS12381SHA256_KEY_TYPE, None, Some(ProofAlgorithm::BLS12381_SHA256)).await?;
 
-    let (_, mut holder_document, fragment_holder): (Address, IotaDocument, String) = 
+    let (_, holder_document, fragment_holder): (Address, IotaDocument, String) = 
     create_did(&client, &mut secret_manager_holder, &storage_holder, JwkMemStore::ED25519_KEY_TYPE, Some(JwsAlgorithm::EdDSA), None).await?;
 
     
@@ -284,8 +283,8 @@ async fn main() -> anyhow::Result<()> {
     let method_id = decoded_credential.decoded_jwp.get_issuer_protected_header().kid().unwrap();
 
     let mut selective_disclosure_presentation = SelectiveDisclosurePresentation::new(&decoded_credential.decoded_jwp);
-    selective_disclosure_presentation.undisclose_subject("mainCourses[1]").unwrap();
-    selective_disclosure_presentation.undisclose_subject("degree.name").unwrap();
+    selective_disclosure_presentation.conceal_in_subject("mainCourses[1]").unwrap();
+    selective_disclosure_presentation.conceal_in_subject("degree.name").unwrap();
 
 
     let presentation_jpt: Jpt = issuer_document

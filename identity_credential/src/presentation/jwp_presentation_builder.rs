@@ -4,8 +4,6 @@ use jsonprooftoken::jwp::header::PresentationProtectedHeader;
 use jsonprooftoken::jwp::issued::JwpIssued;
 use jsonprooftoken::jwp::presented::JwpPresentedBuilder;
 
-//TODO: ZKP - This could be subject to changes with the introduction of the revocation mechanism.
-
 /// Used to construct a JwpPresentedBuilder and handle the selective disclosure of attributes
 /// - @context MUST NOT be blinded
 /// - id MUST be blinded

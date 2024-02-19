@@ -3,8 +3,6 @@ use identity_core::common::Url;
 use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
-
-use crate::credential::Status;
 use crate::validator::SubjectHolderRelationship;
 
 /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.

@@ -9,9 +9,7 @@ use crate::credential::{try_index_to_u32, Status};
 use crate::error::Result;
 use crate::error::Error;
 
-
-//TODO: ZKP - RevocationTimeframeStatus
-
+//TODO: add documentation
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential]
 #[derive(Clone, Debug, PartialEq, Eq)]

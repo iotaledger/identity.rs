@@ -10,7 +10,7 @@ use serde_json::Value;
 use zkryptium::bbsplus::signature::BBSplusSignature;
 
 
-//TODO: TimeframeRevocationExtension
+//TODO: add documentation
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]

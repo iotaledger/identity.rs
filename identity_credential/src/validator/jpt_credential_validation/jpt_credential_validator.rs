@@ -18,8 +18,7 @@ use crate::validator::FailFast;
 use crate::validator::JptCredentialValidationOptions;
 use crate::validator::JwtCredentialValidatorUtils;
 use crate::validator::JwtValidationError;
-
-use super::{DecodedJptCredential, JptCredentialValidatorUtils};
+use super::DecodedJptCredential;
 
 /// A type for decoding and validating [`Credential`]s in JPT format.
 #[non_exhaustive]
