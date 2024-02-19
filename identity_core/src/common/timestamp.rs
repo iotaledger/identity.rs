@@ -112,6 +112,7 @@ impl Timestamp {
       .checked_sub(duration.0)
       .and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()).ok())
   }
+
 }
 
 impl Default for Timestamp {

@@ -1,4 +1,5 @@
-use crate::validator::JptCredentialValidationOptions;
+use identity_core::common::Timestamp;
+use identity_document::verifiable::JwpVerificationOptions;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -11,9 +12,10 @@ pub struct JptPresentationValidationOptions {
   #[serde(default)]
   pub nonce: Option<String>,
 
-  /// Options to declare validation criteria for [`Credential`](crate::credential::Credential)s.
-  #[serde(default)]
-  pub credential_validation_options: JptCredentialValidationOptions,
+    /// Options which affect the verification of the proof on the credential.
+    #[serde(default)]
+    pub verification_options: JwpVerificationOptions,
+
 }
 
 impl JptPresentationValidationOptions {
@@ -22,16 +24,17 @@ impl JptPresentationValidationOptions {
     Self::default()
   }
 
-  /// Set options which affect the verification of the signature on the presentation.
-  pub fn credential_validation_options(mut self, options: JptCredentialValidationOptions) -> Self {
-    self.credential_validation_options = options;
-    self
-  }
-
   /// Declare that the presentation is **not** considered valid if it expires before this [`Timestamp`].
   /// Uses the current datetime during validation if not set.
   pub fn nonce(mut self, nonce: impl Into<String>) -> Self {
     self.nonce = Some(nonce.into());
     self
   }
+
+  /// Set options which affect the verification of the JWP proof.
+  pub fn verification_options(mut self, options: JwpVerificationOptions) -> Self {
+    self.verification_options = options;
+    self
+  }
+
 }

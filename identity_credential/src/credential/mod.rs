@@ -24,6 +24,7 @@ mod schema;
 mod status;
 mod subject;
 
+
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
 pub use self::evidence::Evidence;
@@ -37,7 +38,7 @@ pub use self::policy::Policy;
 pub use self::proof::Proof;
 pub use self::refresh::RefreshService;
 #[cfg(feature = "revocation-bitmap")]
-pub use self::revocation_bitmap_status::RevocationBitmapStatus;
+pub use self::revocation_bitmap_status::{RevocationBitmapStatus, try_index_to_u32};
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;

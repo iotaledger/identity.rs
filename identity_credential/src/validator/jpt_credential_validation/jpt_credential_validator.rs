@@ -19,7 +19,7 @@ use crate::validator::JptCredentialValidationOptions;
 use crate::validator::JwtCredentialValidatorUtils;
 use crate::validator::JwtValidationError;
 
-use super::DecodedJptCredential;
+use super::{DecodedJptCredential, JptCredentialValidatorUtils};
 
 /// A type for decoding and validating [`Credential`]s in JPT format.
 #[non_exhaustive]
@@ -83,20 +83,23 @@ impl JptCredentialValidator {
       )
     });
 
+    
     let structure_validation = std::iter::once_with(|| JwtCredentialValidatorUtils::check_structure(credential));
+
+    let subject_holder_validation = std::iter::once_with(|| {
+      options
+        .subject_holder_relationship
+        .as_ref()
+        .map(|(holder, relationship)| {
+          JwtCredentialValidatorUtils::check_subject_holder_relationship(credential, holder, *relationship)
+        })
+        .unwrap_or(Ok(()))
+    });
 
     let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
-      .chain(structure_validation);
-
-    //TODO: ZKP - check revocation when implemented
-
-    // #[cfg(feature = "revocation-bitmap")]
-    // let validation_units_iter = {
-    //   let revocation_validation =
-    //     std::iter::once_with(|| JwtCredentialValidatorUtils::check_status(credential, issuers, options.status));
-    //   validation_units_iter.chain(revocation_validation)
-    // };
+      .chain(structure_validation)
+      .chain(subject_holder_validation);
 
     let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
     let validation_errors: Vec<JwtValidationError> = match fail_fast {

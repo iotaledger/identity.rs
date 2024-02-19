@@ -96,3 +96,7 @@ name = "8_status_list_2021"
 [[example]]
 path = "1_advanced/9_zkp.rs"
 name = "9_zkp"
+
+[[example]]
+path = "1_advanced/10_zkp_revocation.rs"
+name = "10_zkp_revocation"
