@@ -42,7 +42,7 @@ mod tests {
 
   use super::*;
 
-  const JSON: &str = include_str!("../../tests/fixtures/status-1.json");
+  const JSON: &str = include_str!("../../../tests/fixtures/status-1.json");
 
   #[test]
   fn test_from_json() {

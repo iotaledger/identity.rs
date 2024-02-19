@@ -51,9 +51,9 @@ mod tests {
 
   use crate::credential::Schema;
 
-  const JSON1: &str = include_str!("../../tests/fixtures/schema-1.json");
-  const JSON2: &str = include_str!("../../tests/fixtures/schema-2.json");
-  const JSON3: &str = include_str!("../../tests/fixtures/schema-3.json");
+  const JSON1: &str = include_str!("../../../tests/fixtures/schema-1.json");
+  const JSON2: &str = include_str!("../../../tests/fixtures/schema-2.json");
+  const JSON3: &str = include_str!("../../../tests/fixtures/schema-3.json");
 
   #[test]
   fn test_from_json() {

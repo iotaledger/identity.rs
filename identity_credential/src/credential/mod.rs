@@ -5,38 +5,33 @@
 
 #![allow(clippy::module_inception)]
 
-mod builder;
-mod credential;
-mod evidence;
-mod issuer;
+pub mod common;
 mod jws;
 mod jwt;
 mod jwt_serialization;
-mod linked_domain_service;
-mod policy;
-mod proof;
-mod refresh;
 #[cfg(feature = "revocation-bitmap")]
 mod revocation_bitmap_status;
-mod schema;
-mod status;
-mod subject;
+pub mod vc1_1;
+pub mod vc2_0;
+mod traits;
 
-pub use self::builder::CredentialBuilder;
-pub use self::credential::Credential;
-pub use self::evidence::Evidence;
-pub use self::issuer::Issuer;
+
 pub use self::jws::Jws;
 pub use self::jwt::Jwt;
-pub use self::linked_domain_service::LinkedDomainService;
-pub use self::policy::Policy;
-pub use self::proof::Proof;
-pub use self::refresh::RefreshService;
 #[cfg(feature = "revocation-bitmap")]
 pub use self::revocation_bitmap_status::RevocationBitmapStatus;
-pub use self::schema::Schema;
-pub use self::status::Status;
-pub use self::subject::Subject;
+pub use common::Evidence;
+pub use common::Issuer;
+pub use common::LinkedDomainService;
+pub use common::Policy;
+pub use common::Proof;
+pub use common::RefreshService;
+pub use common::Schema;
+pub use common::Subject;
+pub use vc1_1::Credential;
+pub use vc1_1::CredentialBuilder;
+pub use vc1_1::Status;
+pub use traits::*;
 
 #[cfg(feature = "validator")]
 pub(crate) use self::jwt_serialization::CredentialJwtClaims;

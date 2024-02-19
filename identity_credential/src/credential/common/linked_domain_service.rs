@@ -148,7 +148,7 @@ impl LinkedDomainService {
 
 #[cfg(test)]
 mod tests {
-  use crate::credential::linked_domain_service::LinkedDomainService;
+  use crate::credential::common::linked_domain_service::LinkedDomainService;
   use identity_core::common::Object;
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;

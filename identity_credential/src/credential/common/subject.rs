@@ -51,16 +51,16 @@ mod tests {
 
   use crate::credential::Subject;
 
-  const JSON1: &str = include_str!("../../tests/fixtures/subject-1.json");
-  const JSON2: &str = include_str!("../../tests/fixtures/subject-2.json");
-  const JSON3: &str = include_str!("../../tests/fixtures/subject-3.json");
-  const JSON4: &str = include_str!("../../tests/fixtures/subject-4.json");
-  const JSON5: &str = include_str!("../../tests/fixtures/subject-5.json");
-  const JSON6: &str = include_str!("../../tests/fixtures/subject-6.json");
-  const JSON7: &str = include_str!("../../tests/fixtures/subject-7.json");
-  const JSON8: &str = include_str!("../../tests/fixtures/subject-8.json");
-  const JSON9: &str = include_str!("../../tests/fixtures/subject-9.json");
-  const JSON10: &str = include_str!("../../tests/fixtures/subject-10.json");
+  const JSON1: &str = include_str!("../../../tests/fixtures/subject-1.json");
+  const JSON2: &str = include_str!("../../../tests/fixtures/subject-2.json");
+  const JSON3: &str = include_str!("../../../tests/fixtures/subject-3.json");
+  const JSON4: &str = include_str!("../../../tests/fixtures/subject-4.json");
+  const JSON5: &str = include_str!("../../../tests/fixtures/subject-5.json");
+  const JSON6: &str = include_str!("../../../tests/fixtures/subject-6.json");
+  const JSON7: &str = include_str!("../../../tests/fixtures/subject-7.json");
+  const JSON8: &str = include_str!("../../../tests/fixtures/subject-8.json");
+  const JSON9: &str = include_str!("../../../tests/fixtures/subject-9.json");
+  const JSON10: &str = include_str!("../../../tests/fixtures/subject-10.json");
 
   #[test]
   fn test_from_json() {

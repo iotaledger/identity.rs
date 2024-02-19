@@ -17,7 +17,7 @@ use crate::credential::Status;
 use crate::credential::Subject;
 use crate::error::Result;
 
-use super::Proof;
+use crate::credential::common::Proof;
 
 /// A `CredentialBuilder` is used to create a customized `Credential`.
 #[derive(Clone, Debug)]

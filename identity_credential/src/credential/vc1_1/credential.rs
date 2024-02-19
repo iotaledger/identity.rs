@@ -27,8 +27,8 @@ use crate::credential::Subject;
 use crate::error::Error;
 use crate::error::Result;
 
-use super::jwt_serialization::CredentialJwtClaims;
-use super::Proof;
+use crate::credential::common::Proof;
+use crate::credential::jwt_serialization::CredentialJwtClaims;
 
 static BASE_CONTEXT: Lazy<Context> =
   Lazy::new(|| Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap()));
@@ -191,18 +191,18 @@ mod tests {
 
   use crate::credential::Credential;
 
-  const JSON1: &str = include_str!("../../tests/fixtures/credential-1.json");
-  const JSON2: &str = include_str!("../../tests/fixtures/credential-2.json");
-  const JSON3: &str = include_str!("../../tests/fixtures/credential-3.json");
-  const JSON4: &str = include_str!("../../tests/fixtures/credential-4.json");
-  const JSON5: &str = include_str!("../../tests/fixtures/credential-5.json");
-  const JSON6: &str = include_str!("../../tests/fixtures/credential-6.json");
-  const JSON7: &str = include_str!("../../tests/fixtures/credential-7.json");
-  const JSON8: &str = include_str!("../../tests/fixtures/credential-8.json");
-  const JSON9: &str = include_str!("../../tests/fixtures/credential-9.json");
-  const JSON10: &str = include_str!("../../tests/fixtures/credential-10.json");
-  const JSON11: &str = include_str!("../../tests/fixtures/credential-11.json");
-  const JSON12: &str = include_str!("../../tests/fixtures/credential-12.json");
+  const JSON1: &str = include_str!("../../../tests/fixtures/credential-1.json");
+  const JSON2: &str = include_str!("../../../tests/fixtures/credential-2.json");
+  const JSON3: &str = include_str!("../../../tests/fixtures/credential-3.json");
+  const JSON4: &str = include_str!("../../../tests/fixtures/credential-4.json");
+  const JSON5: &str = include_str!("../../../tests/fixtures/credential-5.json");
+  const JSON6: &str = include_str!("../../../tests/fixtures/credential-6.json");
+  const JSON7: &str = include_str!("../../../tests/fixtures/credential-7.json");
+  const JSON8: &str = include_str!("../../../tests/fixtures/credential-8.json");
+  const JSON9: &str = include_str!("../../../tests/fixtures/credential-9.json");
+  const JSON10: &str = include_str!("../../../tests/fixtures/credential-10.json");
+  const JSON11: &str = include_str!("../../../tests/fixtures/credential-11.json");
+  const JSON12: &str = include_str!("../../../tests/fixtures/credential-12.json");
 
   #[test]
   fn test_from_json() {

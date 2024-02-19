@@ -77,8 +77,8 @@ mod tests {
 
   use crate::credential::Evidence;
 
-  const JSON1: &str = include_str!("../../tests/fixtures/evidence-1.json");
-  const JSON2: &str = include_str!("../../tests/fixtures/evidence-2.json");
+  const JSON1: &str = include_str!("../../../tests/fixtures/evidence-1.json");
+  const JSON2: &str = include_str!("../../../tests/fixtures/evidence-2.json");
 
   #[test]
   fn test_from_json() {

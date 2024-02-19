@@ -51,7 +51,7 @@ mod tests {
 
   use crate::credential::RefreshService;
 
-  const JSON: &str = include_str!("../../tests/fixtures/refresh-1.json");
+  const JSON: &str = include_str!("../../../tests/fixtures/refresh-1.json");
 
   #[test]
   fn test_from_json() {

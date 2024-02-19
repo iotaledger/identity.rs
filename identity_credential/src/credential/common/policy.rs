@@ -81,8 +81,8 @@ mod tests {
 
   use crate::credential::Policy;
 
-  const JSON1: &str = include_str!("../../tests/fixtures/policy-1.json");
-  const JSON2: &str = include_str!("../../tests/fixtures/policy-2.json");
+  const JSON1: &str = include_str!("../../../tests/fixtures/policy-1.json");
+  const JSON2: &str = include_str!("../../../tests/fixtures/policy-2.json");
 
   #[test]
   fn test_from_json() {
