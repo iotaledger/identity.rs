@@ -20,7 +20,7 @@ const CREDENTIAL_SUBJECT_TYPE: &str = "StatusList2021";
 
 /// [Error](std::error::Error) type that represents the possible errors that can be
 /// encountered when dealing with [`StatusList2021Credential`]s.
-#[derive(Clone, Debug, Error, strum::IntoStaticStr)]
+#[derive(Clone, Debug, Error, strum::IntoStaticStr, PartialEq, Eq)]
 pub enum StatusList2021CredentialError {
   /// The provided [`Credential`] has more than one `credentialSubject`.
   #[error("A StatusList2021Credential may only have one credentialSubject")]
@@ -34,9 +34,12 @@ pub enum StatusList2021CredentialError {
   /// Inner status list failures.
   #[error(transparent)]
   StatusListError(#[from] StatusListError),
-  /// Missing status list id
+  /// Missing status list id.
   #[error("Cannot set the status of a credential without a \"credentialSubject.id\".")]
   Unreferenceable,
+  /// Credentials cannot be unrevoked.
+  #[error("A previously revoked credential cannot be unrevoked.")]
+  UnreversibleRevocation,
 }
 
 use crate::credential::Credential;
@@ -117,6 +120,11 @@ impl StatusList2021Credential {
 
   /// Sets the credential status of a given [`Credential`],
   /// mapping it to the `index`-th entry of this [`StatusList2021Credential`].
+  ///
+  /// ## Note:
+  /// - A revoked credential cannot ever be unrevoked and will lead to a
+  /// [`StatusList2021CredentialError::UnreversibleRevocation`].
+  /// - Trying to set `revoked_or_suspended` to `false` for an already valid credential will have no impact.
   pub fn set_credential_status(
     &mut self,
     credential: &mut Credential,
@@ -138,6 +146,10 @@ impl StatusList2021Credential {
   /// Sets the `index`-th entry to `value`
   pub(crate) fn set_entry(&mut self, index: usize, value: bool) -> Result<(), StatusList2021CredentialError> {
     let mut status_list = self.status_list()?;
+    let entry_status = status_list.get(index)?;
+    if self.purpose() == StatusPurpose::Revocation && !value && entry_status {
+      return Err(StatusList2021CredentialError::UnreversibleRevocation);
+    }
     status_list.set(index, value)?;
     self.subject.encoded_list = status_list.into_encoded_str();
 
@@ -402,5 +414,36 @@ mod tests {
     let credential = serde_json::from_str::<StatusList2021Credential>(STATUS_LIST_2021_CREDENTIAL_SAMPLE)
       .expect("Failed to deserialize");
     assert_eq!(credential.purpose(), StatusPurpose::Revocation);
+  }
+  #[test]
+  fn revoked_credential_cannot_be_unrevoked() {
+    let url = Url::parse("http://example.com").unwrap();
+    let mut status_list_credential = StatusList2021CredentialBuilder::new(StatusList2021::default())
+      .issuer(Issuer::Url(url.clone()))
+      .purpose(StatusPurpose::Revocation)
+      .subject_id(url)
+      .build()
+      .unwrap();
+
+    assert!(status_list_credential.set_entry(420, false).is_ok());
+    status_list_credential.set_entry(420, true).unwrap();
+    assert_eq!(
+      status_list_credential.set_entry(420, false),
+      Err(StatusList2021CredentialError::UnreversibleRevocation)
+    );
+  }
+  #[test]
+  fn suspended_credential_can_be_unsuspended() {
+    let url = Url::parse("http://example.com").unwrap();
+    let mut status_list_credential = StatusList2021CredentialBuilder::new(StatusList2021::default())
+      .issuer(Issuer::Url(url.clone()))
+      .purpose(StatusPurpose::Suspension)
+      .subject_id(url)
+      .build()
+      .unwrap();
+
+    assert!(status_list_credential.set_entry(420, false).is_ok());
+    status_list_credential.set_entry(420, true).unwrap();
+    assert!(status_list_credential.set_entry(420, false).is_ok());
   }
 }

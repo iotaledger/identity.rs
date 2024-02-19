@@ -1,6 +1,6 @@
 [package]
 name = "examples"
-version = "1.1.0-alpha.1"
+version = "1.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 publish = false
@@ -14,7 +14,7 @@ iota-sdk = { version = "1.0", default-features = false, features = ["tls", "clie
 json-proof-token.workspace = true
 primitive-types = "0.12.1"
 rand = "0.8.5"
-sd-jwt-payload = { version = "0.1.2", default-features = false, features = ["sha"] }
+sd-jwt-payload = { version = "0.2.0", default-features = false, features = ["sha"] }
 serde_json = { version = "1.0", default-features = false }
 tokio = { version = "1.29", default-features = false, features = ["rt"] }
 
