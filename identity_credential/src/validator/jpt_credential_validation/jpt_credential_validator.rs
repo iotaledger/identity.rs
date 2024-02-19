@@ -9,6 +9,7 @@ use jsonprooftoken::jpt::claims::JptClaims;
 use jsonprooftoken::jwk::key::Jwk as JwkExt;
 use jsonprooftoken::jwp::issued::JwpIssuedDecoder;
 
+use super::DecodedJptCredential;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
 use crate::credential::Jpt;
@@ -18,7 +19,6 @@ use crate::validator::FailFast;
 use crate::validator::JptCredentialValidationOptions;
 use crate::validator::JwtCredentialValidatorUtils;
 use crate::validator::JwtValidationError;
-use super::DecodedJptCredential;
 
 /// A type for decoding and validating [`Credential`]s in JPT format.
 #[non_exhaustive]
@@ -53,19 +53,18 @@ impl JptCredentialValidator {
 
     let credential: &Credential<T> = &credential_token.credential;
 
-    Self::validate_credential::<CoreDocument, T>(credential, options, fail_fast)?;
+    Self::validate_credential::<T>(credential, options, fail_fast)?;
 
     Ok(credential_token)
   }
 
-  pub(crate) fn validate_credential<DOC, T>(
+  pub(crate) fn validate_credential<T>(
     credential: &Credential<T>,
     options: &JptCredentialValidationOptions,
     fail_fast: FailFast,
   ) -> Result<(), CompoundCredentialValidationError>
   where
     T: ToOwned<Owned = T> + serde::Serialize + serde::de::DeserializeOwned,
-    DOC: AsRef<CoreDocument>,
   {
     // Run all single concern Credential validations in turn and fail immediately if `fail_fast` is true.
     let expiry_date_validation = std::iter::once_with(|| {
@@ -82,7 +81,6 @@ impl JptCredentialValidator {
       )
     });
 
-    
     let structure_validation = std::iter::once_with(|| JwtCredentialValidatorUtils::check_structure(credential));
 
     let subject_holder_validation = std::iter::once_with(|| {

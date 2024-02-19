@@ -87,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
     .finish()
     .await?;
 
-  let mut secret_manager_issuer = SecretManager::Stronghold(
+  let secret_manager_issuer = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
       .password(Password::from("secure_password_1".to_owned()))
       .build(random_stronghold_path())?,
@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
 
   let (_, issuer_document, fragment_issuer): (Address, IotaDocument, String) = create_did(
     &client,
-    &mut secret_manager_issuer,
+    &secret_manager_issuer,
     &storage_issuer,
     JwkMemStore::BLS12381SHA256_KEY_TYPE,
     ProofAlgorithm::BLS12381_SHA256,

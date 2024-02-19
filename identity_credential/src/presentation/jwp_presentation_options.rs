@@ -3,8 +3,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 /// Options to be set in the JWT claims of a verifiable presentation.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct JwpPresentationOptions {
   /// Sets the audience for presentation (`aud` property in JWP Presentation Header).
   /// Default: `None`.
@@ -29,5 +28,3 @@ impl JwpPresentationOptions {
     self
   }
 }
-
-

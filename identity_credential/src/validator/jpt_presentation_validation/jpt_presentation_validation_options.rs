@@ -11,10 +11,9 @@ pub struct JptPresentationValidationOptions {
   #[serde(default)]
   pub nonce: Option<String>,
 
-    /// Options which affect the verification of the proof on the credential.
-    #[serde(default)]
-    pub verification_options: JwpVerificationOptions,
-
+  /// Options which affect the verification of the proof on the credential.
+  #[serde(default)]
+  pub verification_options: JwpVerificationOptions,
 }
 
 impl JptPresentationValidationOptions {
@@ -35,5 +34,4 @@ impl JptPresentationValidationOptions {
     self.verification_options = options;
     self
   }
-
 }

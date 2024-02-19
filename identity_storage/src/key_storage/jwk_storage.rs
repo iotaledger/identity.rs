@@ -4,6 +4,7 @@
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageError;
 use crate::key_storage::KeyType;
+use crate::ProofUpdateCtx;
 use async_trait::async_trait;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
@@ -74,8 +75,20 @@ pub trait JwkStorageExt: JwkStorage {
   async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
 
   /// Generate the JPT representing a JWP in the Issuer form
-  async fn generate_issuer_proof(&self, key_id: &KeyId, header: IssuerProtectedHeader, claims: JptClaims, public_key: &Jwk) -> KeyStorageResult<String>;
+  async fn generate_issuer_proof(
+    &self,
+    key_id: &KeyId,
+    header: IssuerProtectedHeader,
+    claims: JptClaims,
+    public_key: &Jwk,
+  ) -> KeyStorageResult<String>;
 
   /// Update proof functionality for timeframe revocation mechanism
-  async fn update_proof(&self, key_id: &KeyId, public_key: &Jwk, proof: &[u8; 112], old_start_validity_timeframe: String, new_start_validity_timeframe: String, old_end_validity_timeframe: String, new_end_validity_timeframe: String, index_start_validity_timeframe: usize, index_end_validity_timeframe: usize, n_messages: usize  ) -> KeyStorageResult<[u8; 112]>;
+  async fn update_proof(
+    &self,
+    key_id: &KeyId,
+    public_key: &Jwk,
+    proof: &[u8; 112],
+    ctx: ProofUpdateCtx,
+  ) -> KeyStorageResult<[u8; 112]>;
 }

@@ -361,6 +361,56 @@ where
   proof: Option<Cow<'credential, Proof>>,
 }
 
+impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
+where
+  T: ToOwned + Serialize,
+  <T as ToOwned>::Owned: DeserializeOwned,
+{
+  fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
+    let CredentialJwtClaims {
+      exp,
+      iss,
+      issuance_date,
+      jti,
+      sub,
+      vc,
+      custom,
+    } = item;
+
+    let mut claims = JptClaims::new();
+
+    if let Some(exp) = exp {
+      claims.set_exp(exp);
+    }
+
+    claims.set_iss(iss.url().to_string());
+
+    if let Some(iat) = issuance_date.iat {
+      claims.set_iat(iat);
+    }
+
+    if let Some(nbf) = issuance_date.nbf {
+      claims.set_nbf(nbf);
+    }
+
+    if let Some(jti) = jti {
+      claims.set_jti(jti.to_string());
+    }
+
+    if let Some(sub) = sub {
+      claims.set_sub(sub.to_string());
+    }
+
+    claims.set_claim(Some("vc"), vc, true);
+
+    if let Some(custom) = custom {
+      claims.set_claim(None, custom, true);
+    }
+
+    claims
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use identity_core::common::Object;
@@ -675,55 +725,5 @@ mod tests {
       credential_from_claims_result.unwrap_err(),
       Error::InconsistentCredentialJwtClaims("inconsistent credential expirationDate")
     ));
-  }
-}
-
-impl<'credential, T> From<CredentialJwtClaims<'credential, T>> for JptClaims
-where
-  T: ToOwned + Serialize,
-  <T as ToOwned>::Owned: DeserializeOwned,
-{
-  fn from(item: CredentialJwtClaims<'credential, T>) -> Self {
-    let CredentialJwtClaims {
-      exp,
-      iss,
-      issuance_date,
-      jti,
-      sub,
-      vc,
-      custom,
-    } = item;
-
-    let mut claims = JptClaims::new();
-
-    if let Some(exp) = exp {
-      claims.set_exp(exp);
-    }
-
-    claims.set_iss(iss.url().to_string());
-
-    if let Some(iat) = issuance_date.iat {
-      claims.set_iat(iat);
-    }
-
-    if let Some(nbf) = issuance_date.nbf {
-      claims.set_nbf(nbf);
-    }
-
-    if let Some(jti) = jti {
-      claims.set_jti(jti.to_string());
-    }
-
-    if let Some(sub) = sub {
-      claims.set_sub(sub.to_string());
-    }
-
-    claims.set_claim(Some("vc"), vc, true);
-
-    if let Some(custom) = custom {
-      claims.set_claim(None, custom, true);
-    }
-
-    claims
   }
 }

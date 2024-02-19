@@ -112,7 +112,7 @@ pub enum JwtValidationError {
   /// Indicates that the verfication of the JWP has failed
   #[error("could not verify jwp")]
   JwpProofVerificationError(#[source] jsonprooftoken::errors::CustomError),
-  
+
   /// Indicates that the credential has been suspended.
   #[error("credential has been suspended")]
   Suspended,

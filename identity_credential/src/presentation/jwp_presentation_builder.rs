@@ -27,23 +27,25 @@ impl SelectiveDisclosurePresentation {
   pub fn new(issued_jwp: &JwpIssued) -> Self {
     let mut jwp_builder = JwpPresentedBuilder::new(issued_jwp);
 
-        jwp_builder.set_undisclosed("jti").ok(); // contains the credential's id, provides linkability
-        
-        jwp_builder.set_undisclosed("issuanceDate").ok(); // Depending on the revocation method used it will be necessary or not
-        jwp_builder.set_undisclosed("nbf").ok();
+    jwp_builder.set_undisclosed("jti").ok(); // contains the credential's id, provides linkability
 
-        jwp_builder.set_undisclosed("expirationDate").ok(); // Depending on the revocation method used it will be necessary or not
-        jwp_builder.set_undisclosed("exp").ok();
+    jwp_builder.set_undisclosed("issuanceDate").ok(); // Depending on the revocation method used it will be necessary or not
+    jwp_builder.set_undisclosed("nbf").ok();
 
-        jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC
+    jwp_builder.set_undisclosed("expirationDate").ok(); // Depending on the revocation method used it will be necessary or not
+    jwp_builder.set_undisclosed("exp").ok();
 
-        jwp_builder.set_undisclosed("vc.credentialStatus.revocationBitmapIndex").ok();
+    jwp_builder.set_undisclosed("termsOfUse").ok(); // Provides linkability so, there is NO reason to use it in ZK VC
 
-        jwp_builder.set_undisclosed("vc.credentialSubject.id").ok();
-        jwp_builder.set_undisclosed("sub").ok();
+    jwp_builder
+      .set_undisclosed("vc.credentialStatus.revocationBitmapIndex")
+      .ok();
 
-        Self{jwp_builder}
-    }
+    jwp_builder.set_undisclosed("vc.credentialSubject.id").ok();
+    jwp_builder.set_undisclosed("sub").ok();
+
+    Self { jwp_builder }
+  }
 
   /// Selectively disclose "credentialSubject" attributes.
   /// # Example

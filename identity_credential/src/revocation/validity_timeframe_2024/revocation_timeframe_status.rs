@@ -1,11 +1,14 @@
-use std::str::FromStr;
-use identity_core::common::Duration;
-use identity_core::common::{Object, Url, Timestamp};
-use identity_did::DIDUrl;
-use identity_core::common::Value;
-use crate::credential::{try_index_to_u32, Status};
-use crate::error::Result;
+use crate::credential::try_index_to_u32;
+use crate::credential::Status;
 use crate::error::Error;
+use crate::error::Result;
+use identity_core::common::Duration;
+use identity_core::common::Object;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_core::common::Value;
+use identity_did::DIDUrl;
+use std::str::FromStr;
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -23,21 +26,28 @@ impl RevocationTimeframeStatus {
 
   /// Creates a new `RevocationTimeframeStatus`.
   pub fn new(start_validity: Option<Timestamp>, duration: Duration, id: DIDUrl, index: u32) -> Result<Self> {
-
     let mut object = Object::new();
 
     let start_validity_timeframe = start_validity.unwrap_or(Timestamp::now_utc());
 
-    let end_validity_timeframe = start_validity_timeframe.checked_add(duration)
+    let end_validity_timeframe = start_validity_timeframe
+      .checked_add(duration)
       .ok_or(Error::InvalidStatus(
-        "With that granularity, endValidityTimeFrame will turn out not to be in the valid range for RFC 3339".to_owned()
+        "With that granularity, endValidityTimeFrame will turn out not to be in the valid range for RFC 3339"
+          .to_owned(),
       ))?;
 
     // id.set_query(Some(&format!("index={index}")))
     // .expect("the string should be non-empty and a valid URL query");
 
-    object.insert(Self::START_TIMEFRAME_PROPERTY.to_owned(), Value::String(start_validity_timeframe.to_rfc3339()));
-    object.insert(Self::END_TIMEFRAME_PROPERTY.to_owned(), Value::String(end_validity_timeframe.to_rfc3339()));
+    object.insert(
+      Self::START_TIMEFRAME_PROPERTY.to_owned(),
+      Value::String(start_validity_timeframe.to_rfc3339()),
+    );
+    object.insert(
+      Self::END_TIMEFRAME_PROPERTY.to_owned(),
+      Value::String(end_validity_timeframe.to_rfc3339()),
+    );
     object.insert(Self::INDEX_PROPERTY.to_owned(), Value::String(index.to_string()));
 
     Ok(Self(Status::new_with_properties(
@@ -45,41 +55,31 @@ impl RevocationTimeframeStatus {
       Self::TYPE.to_owned(),
       object,
     )))
-
   }
-
 
   /// Get startValidityTimeframe value
   pub fn start_validity_timeframe(&self) -> Result<Timestamp> {
     if let Some(Value::String(timeframe)) = self.0.properties.get(Self::START_TIMEFRAME_PROPERTY) {
-
-      Timestamp::from_str(&timeframe).map_err(|_| Error::InvalidStatus(format!(
+      Timestamp::from_str(timeframe)
+        .map_err(|_| Error::InvalidStatus(format!("property '{}' is not a string", Self::START_TIMEFRAME_PROPERTY)))
+    } else {
+      Err(Error::InvalidStatus(format!(
         "property '{}' is not a string",
         Self::START_TIMEFRAME_PROPERTY
       )))
-    
-    } else {
-      return Err(Error::InvalidStatus(format!(
-        "property '{}' is not a string",
-        Self::START_TIMEFRAME_PROPERTY
-      )));
     }
   }
 
   /// Get endValidityTimeframe value
   pub fn end_validity_timeframe(&self) -> Result<Timestamp> {
     if let Some(Value::String(timeframe)) = self.0.properties.get(Self::END_TIMEFRAME_PROPERTY) {
-
-      Timestamp::from_str(&timeframe).map_err(|_| Error::InvalidStatus(format!(
+      Timestamp::from_str(timeframe)
+        .map_err(|_| Error::InvalidStatus(format!("property '{}' is not a string", Self::END_TIMEFRAME_PROPERTY)))
+    } else {
+      Err(Error::InvalidStatus(format!(
         "property '{}' is not a string",
         Self::END_TIMEFRAME_PROPERTY
       )))
-    
-    } else {
-      return Err(Error::InvalidStatus(format!(
-        "property '{}' is not a string",
-        Self::END_TIMEFRAME_PROPERTY
-      )));
     }
   }
 
@@ -89,7 +89,6 @@ impl RevocationTimeframeStatus {
     DIDUrl::parse(self.0.id.as_str())
       .map_err(|err| Error::InvalidStatus(format!("invalid DID Url '{}': {:?}", self.0.id, err)))
   }
-
 
   /// Returns the index of the credential in the issuer's revocation bitmap if it can be decoded.
   pub fn index(&self) -> Result<u32> {
@@ -102,9 +101,7 @@ impl RevocationTimeframeStatus {
       )))
     }
   }
-
 }
-
 
 impl TryFrom<Status> for RevocationTimeframeStatus {
   type Error = Error;
@@ -129,19 +126,18 @@ impl TryFrom<Status> for RevocationTimeframeStatus {
       };
 
     if let Value::String(timeframe) = start_revocation_timeframe {
-
-      Timestamp::from_str(&timeframe).map_err(|_| Self::Error::InvalidStatus(format!(
-        "property '{}' is not a valid Timestamp",
-        Self::START_TIMEFRAME_PROPERTY
-      )))?
-    
+      Timestamp::from_str(timeframe).map_err(|_| {
+        Self::Error::InvalidStatus(format!(
+          "property '{}' is not a valid Timestamp",
+          Self::START_TIMEFRAME_PROPERTY
+        ))
+      })?
     } else {
       return Err(Self::Error::InvalidStatus(format!(
         "property '{}' is not a string",
         Self::START_TIMEFRAME_PROPERTY
       )));
     };
-
 
     let end_revocation_timeframe: &Value =
       if let Some(end_revocation_timeframe) = status.properties.get(Self::END_TIMEFRAME_PROPERTY) {
@@ -154,19 +150,18 @@ impl TryFrom<Status> for RevocationTimeframeStatus {
       };
 
     if let Value::String(timeframe) = end_revocation_timeframe {
-
-      Timestamp::from_str(&timeframe).map_err(|_| Self::Error::InvalidStatus(format!(
-        "property '{}' is not a valid Timestamp",
-        Self::END_TIMEFRAME_PROPERTY
-      )))?
-    
+      Timestamp::from_str(timeframe).map_err(|_| {
+        Self::Error::InvalidStatus(format!(
+          "property '{}' is not a valid Timestamp",
+          Self::END_TIMEFRAME_PROPERTY
+        ))
+      })?
     } else {
       return Err(Self::Error::InvalidStatus(format!(
         "property '{}' is not a string",
         Self::END_TIMEFRAME_PROPERTY
       )));
     };
-
 
     let revocation_bitmap_index: &Value =
       if let Some(revocation_bitmap_index) = status.properties.get(Self::INDEX_PROPERTY) {
@@ -177,7 +172,6 @@ impl TryFrom<Status> for RevocationTimeframeStatus {
           Self::INDEX_PROPERTY
         )));
       };
-
 
     if let Value::String(index) = revocation_bitmap_index {
       try_index_to_u32(index, Self::INDEX_PROPERTY)?
@@ -192,20 +186,15 @@ impl TryFrom<Status> for RevocationTimeframeStatus {
   }
 }
 
-
 impl From<RevocationTimeframeStatus> for Status {
   fn from(status: RevocationTimeframeStatus) -> Self {
     status.0
   }
 }
 
-
-
-
-/// Verifier 
+/// Verifier
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VerifierRevocationTimeframeStatus(pub(crate) RevocationTimeframeStatus);
-
 
 impl TryFrom<Status> for VerifierRevocationTimeframeStatus {
   type Error = Error;
@@ -219,23 +208,25 @@ impl TryFrom<Status> for VerifierRevocationTimeframeStatus {
       )));
     }
 
-    let start_revocation_timeframe: &Value =
-      if let Some(start_revocation_timeframe) = status.properties.get(RevocationTimeframeStatus::START_TIMEFRAME_PROPERTY) {
-        start_revocation_timeframe
-      } else {
-        return Err(Self::Error::InvalidStatus(format!(
-          "missing required property '{}'",
-          RevocationTimeframeStatus::START_TIMEFRAME_PROPERTY
-        )));
-      };
+    let start_revocation_timeframe: &Value = if let Some(start_revocation_timeframe) = status
+      .properties
+      .get(RevocationTimeframeStatus::START_TIMEFRAME_PROPERTY)
+    {
+      start_revocation_timeframe
+    } else {
+      return Err(Self::Error::InvalidStatus(format!(
+        "missing required property '{}'",
+        RevocationTimeframeStatus::START_TIMEFRAME_PROPERTY
+      )));
+    };
 
     if let Value::String(timeframe) = start_revocation_timeframe {
-
-      Timestamp::from_str(&timeframe).map_err(|_| Self::Error::InvalidStatus(format!(
-        "property '{}' is not a valid Timestamp",
-        RevocationTimeframeStatus::START_TIMEFRAME_PROPERTY
-      )))?
-    
+      Timestamp::from_str(timeframe).map_err(|_| {
+        Self::Error::InvalidStatus(format!(
+          "property '{}' is not a valid Timestamp",
+          RevocationTimeframeStatus::START_TIMEFRAME_PROPERTY
+        ))
+      })?
     } else {
       return Err(Self::Error::InvalidStatus(format!(
         "property '{}' is not a string",
@@ -243,31 +234,30 @@ impl TryFrom<Status> for VerifierRevocationTimeframeStatus {
       )));
     };
 
-
-    let end_revocation_timeframe: &Value =
-      if let Some(end_revocation_timeframe) = status.properties.get(RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY) {
-        end_revocation_timeframe
-      } else {
-        return Err(Self::Error::InvalidStatus(format!(
-          "missing required property '{}'",
-          RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY
-        )));
-      };
+    let end_revocation_timeframe: &Value = if let Some(end_revocation_timeframe) =
+      status.properties.get(RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY)
+    {
+      end_revocation_timeframe
+    } else {
+      return Err(Self::Error::InvalidStatus(format!(
+        "missing required property '{}'",
+        RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY
+      )));
+    };
 
     if let Value::String(timeframe) = end_revocation_timeframe {
-
-      Timestamp::from_str(&timeframe).map_err(|_| Self::Error::InvalidStatus(format!(
-        "property '{}' is not a valid Timestamp",
-        RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY
-      )))?
-    
+      Timestamp::from_str(timeframe).map_err(|_| {
+        Self::Error::InvalidStatus(format!(
+          "property '{}' is not a valid Timestamp",
+          RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY
+        ))
+      })?
     } else {
       return Err(Self::Error::InvalidStatus(format!(
         "property '{}' is not a string",
         RevocationTimeframeStatus::END_TIMEFRAME_PROPERTY
       )));
     };
-
 
     let revocation_bitmap_index: &Value =
       if let Some(revocation_bitmap_index) = status.properties.get(RevocationTimeframeStatus::INDEX_PROPERTY) {
@@ -279,7 +269,6 @@ impl TryFrom<Status> for VerifierRevocationTimeframeStatus {
         )));
       };
 
-      
     if &Value::Null != revocation_bitmap_index {
       return Err(Error::InvalidStatus(format!(
         "property '{}' is not a Null",
@@ -291,9 +280,8 @@ impl TryFrom<Status> for VerifierRevocationTimeframeStatus {
   }
 }
 
-
 impl From<VerifierRevocationTimeframeStatus> for Status {
   fn from(status: VerifierRevocationTimeframeStatus) -> Self {
-    status.0.0
+    status.0 .0
   }
 }
