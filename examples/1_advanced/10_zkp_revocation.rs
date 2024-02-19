@@ -2,6 +2,8 @@ use std::thread;
 use examples::get_address_with_funds;
 use examples::random_stronghold_path;
 use examples::MemStorage;
+use examples::API_ENDPOINT;
+use examples::FAUCET_ENDPOINT;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::Duration;
 use identity_iota::core::Timestamp;
@@ -66,15 +68,6 @@ use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use iota_sdk::types::block::output::AliasOutput;
 use jsonprooftoken::jpa::algs::ProofAlgorithm;
-
-// The API endpoint of an IOTA node, e.g. Hornet.
-const API_ENDPOINT: &str = "http://localhost:14265";
-// The faucet endpoint allows requesting funds for testing purposes.
-const FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
-
-
-// const api_endpoint: &str = "https://api.testnet.shimmer.network";
-// const faucet_endpoint: &str = "https://faucet.testnet.shimmer.network/api/enqueue";
 
 
 async fn create_did(client: &Client, secret_manager: &SecretManager, storage: &MemStorage, key_type: KeyType, alg: Option<JwsAlgorithm>, proof_alg: Option<ProofAlgorithm> ) -> anyhow::Result<(Address, IotaDocument, String)> {

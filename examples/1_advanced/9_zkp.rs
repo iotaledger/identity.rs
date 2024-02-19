@@ -84,7 +84,6 @@ async fn main() -> anyhow::Result<()> {
   // Create a new client to interact with the IOTA ledger.
   let client: Client = Client::builder()
     .with_primary_node(API_ENDPOINT, None)?
-    .with_primary_node(API_ENDPOINT, None)?
     .finish()
     .await?;
 
