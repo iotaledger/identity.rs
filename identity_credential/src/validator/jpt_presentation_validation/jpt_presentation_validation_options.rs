@@ -13,12 +13,6 @@ pub struct JptPresentationValidationOptions {
     #[serde(default)]
     pub nonce: Option<String>,
 
-    /// Validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
-    ///
-    /// Default: [`StatusCheck::Strict`](crate::validator::StatusCheck::Strict).
-    #[serde(default)]
-    pub status: crate::validator::StatusCheck,
-
     /// Options which affect the verification of the proof on the credential.
     #[serde(default)]
     pub verification_options: JwpVerificationOptions,
@@ -35,13 +29,6 @@ impl JptPresentationValidationOptions {
   /// Uses the current datetime during validation if not set.
   pub fn nonce(mut self, nonce: impl Into<String>) -> Self {
     self.nonce = Some(nonce.into());
-    self
-  }
-
-
-  /// Sets the validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
-  pub fn status_check(mut self, status_check: crate::validator::StatusCheck) -> Self {
-    self.status = status_check;
     self
   }
 

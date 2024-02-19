@@ -46,7 +46,6 @@ impl JptPresentationValidator {
 
       Self::validate_presented_credential::<CoreDocument, T>(
         credential,
-        &options,
         fail_fast,
       )?;
 
@@ -56,7 +55,6 @@ impl JptPresentationValidator {
 
     pub(crate) fn validate_presented_credential<DOC, T>(
       credential: &Credential<T>,
-      options: &JptPresentationValidationOptions,
       fail_fast: FailFast,
     ) -> Result<(), CompoundCredentialValidationError>
     where

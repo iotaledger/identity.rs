@@ -193,7 +193,6 @@ async fn main() -> anyhow::Result<()> {
     let credential_index: u32 = 5;
 
     let start_validity_timeframe = Timestamp::now_utc();
-    //TODO: compute startValidityTimeframe and endValidityTimeframe outside and pass start as optional (inside the new function if is None compute now() as start)
     let status: Status = RevocationTimeframeStatus::new(Some(start_validity_timeframe), duration, service_url, credential_index)?.into();
 
 
@@ -259,10 +258,21 @@ async fn main() -> anyhow::Result<()> {
 
     assert!(timeframe_result.is_ok());
 
-    // Revocation check //TODO: create 3 utility functions that checks: timeframe, bitmap, timeframe + bitmap
     let revocation_result = JptCredentialValidatorUtils::check_revocation_with_validity_timeframe_2024(
         &decoded_credential.credential, 
         &issuer_document, 
+        StatusCheck::Strict
+    );
+
+    assert!(revocation_result.is_ok());
+
+
+    // Both checks
+
+    let revocation_result = JptCredentialValidatorUtils::check_timeframes_and_revocation_with_validity_timeframe_2024(
+        &decoded_credential.credential, 
+        &issuer_document,
+        None,
         StatusCheck::Strict
     );
 
