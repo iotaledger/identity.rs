@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.0.1](https://github.com/iotaledger/identity.rs/tree/v1.0.1) (2024-02-19)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v1.0.0...v1.0.1)
+
+### Patch
+
+- Fix compilation error caused by the roaring crate [\#1306](https://github.com/iotaledger/identity.rs/pull/1306)
+
 ## [1.0.0](https://github.com/iotaledger/identity.rs/tree/v1.0.0) (2023-11-02)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.3...v1.0.0)
