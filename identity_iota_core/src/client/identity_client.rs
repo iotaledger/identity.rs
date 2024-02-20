@@ -4,7 +4,6 @@
 #[cfg(feature = "test")]
 use iota_sdk::client::Client;
 
-use crate::block::protocol::ProtocolParameters;
 use crate::block::address::Address;
 use crate::block::output::feature::SenderFeature;
 use crate::block::output::unlock_condition::GovernorAddressUnlockCondition;
@@ -16,6 +15,7 @@ use crate::block::output::Feature;
 use crate::block::output::OutputId;
 use crate::block::output::RentStructure;
 use crate::block::output::UnlockCondition;
+use crate::block::protocol::ProtocolParameters;
 use crate::Error;
 use crate::IotaDID;
 use crate::IotaDocument;

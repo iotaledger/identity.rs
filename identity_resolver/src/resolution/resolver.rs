@@ -358,17 +358,14 @@ where
 
 #[cfg(test)]
 mod tests {
-  use identity_iota_core::block::address::Address;
   use identity_iota_core::block::output::AliasId;
   use identity_iota_core::block::output::AliasOutput;
   use identity_iota_core::block::output::OutputId;
   use identity_iota_core::block::protocol::ProtocolParameters;
-  use identity_iota_core::IotaClientExt;
   use identity_iota_core::IotaDID;
   use identity_iota_core::IotaDocument;
   use identity_iota_core::IotaIdentityClient;
   use identity_iota_core::IotaIdentityClientExt;
-  use iota_sdk::client::secret::SecretManager;
 
   use super::*;
 
