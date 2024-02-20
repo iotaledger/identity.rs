@@ -68,6 +68,7 @@ async fn key_exists() {
 // Tests the cases that require persisting to disk, generate, insert and delete.
 #[tokio::test]
 async fn write_to_disk() {
+  iota_stronghold::engine::snapshot::try_set_encrypt_work_factor(0).unwrap();
   const PASS: &str = "secure_password";
   let file: PathBuf = create_temp_file();
   let secret_manager = StrongholdSecretManager::builder()

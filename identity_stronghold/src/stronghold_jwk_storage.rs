@@ -66,6 +66,7 @@ impl StrongholdStorage {
     }
   }
 
+  /// Retrieve the public key corresponding to `key_id`.
   pub async fn get_public_key(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
     let stronghold = self.get_stronghold().await;
     let client = get_client(&stronghold)?;
