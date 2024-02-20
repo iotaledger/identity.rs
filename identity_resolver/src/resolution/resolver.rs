@@ -374,10 +374,10 @@ mod tests {
   #[async_trait::async_trait]
   impl IotaIdentityClient for DummyClient {
     async fn get_alias_output(&self, _id: AliasId) -> identity_iota_core::Result<(OutputId, AliasOutput)> {
-      todo!()
+      unreachable!()
     }
     async fn get_protocol_parameters(&self) -> identity_iota_core::Result<ProtocolParameters> {
-      todo!()
+      unreachable!()
     }
   }
 
