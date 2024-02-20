@@ -31,9 +31,9 @@ features = ["send-sync-client-ext", "iota-client"]
 optional = true
 
 [dev-dependencies]
-tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 identity_iota_core = { version = "=1.1.1", path = "../identity_iota_core", features = ["test"] }
 iota-sdk = { version = "1.0.2" }
+tokio = { version = "1.29.0", default-features = false, features = ["rt-multi-thread", "macros"] }
 
 [features]
 default = ["revocation-bitmap", "iota"]
