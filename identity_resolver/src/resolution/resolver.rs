@@ -304,24 +304,23 @@ mod iota_handler {
     /// clients added in this method.
     /// - This function does not validate the provided configuration. Ensure that the provided
     /// network name corresponds with the client, possibly by using `client.network_name()`.
-    pub fn attach_multiple_iota_handlers<CLI>(&mut self, clients: Vec<(&'static str, CLI)>)
+    pub fn attach_multiple_iota_handlers<CLI, I>(&mut self, clients: I)
     where
       CLI: IotaIdentityClientExt + Send + Sync + 'static,
+      I: IntoIterator<Item = (&'static str, CLI)>,
     {
-      let arc_clients: Arc<Vec<(&str, CLI)>> = Arc::new(clients);
+      let arc_clients = Arc::new(clients.into_iter().collect::<HashMap<&'static str, CLI>>());
 
       let handler = move |did: IotaDID| {
         let future_client = arc_clients.clone();
         async move {
           let did_network = did.network_str();
-          let client: &CLI = future_client
-            .as_ref()
-            .iter()
-            .find(|(network, _)| *network == did_network)
-            .map(|(_, client)| client)
-            .ok_or(crate::Error::new(ErrorCause::UnsupportedNetwork(
-              did_network.to_string(),
-            )))?;
+          let client: &CLI =
+            future_client
+              .get(did_network)
+              .ok_or(crate::Error::new(ErrorCause::UnsupportedNetwork(
+                did_network.to_string(),
+              )))?;
           client
             .resolve_did(&did)
             .await
@@ -394,25 +393,6 @@ mod tests {
           iota_sdk::client::error::Error::NoOutput(did.to_string()),
         ))
       }
-    }
-  }
-
-  #[async_trait::async_trait]
-  impl IotaClientExt for DummyClient {
-    async fn publish_did_output(
-      &self,
-      _secret_manager: &SecretManager,
-      _alias_output: AliasOutput,
-    ) -> identity_iota_core::Result<IotaDocument> {
-      todo!()
-    }
-    async fn delete_did_output(
-      &self,
-      _secret_manager: &SecretManager,
-      _address: Address,
-      _did: &IotaDID,
-    ) -> identity_iota_core::Result<()> {
-      todo!()
     }
   }
 
