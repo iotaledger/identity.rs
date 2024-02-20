@@ -1,6 +1,8 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_sdk::client::Client;
+
 use crate::block::protocol::ProtocolParameters;
 
 use crate::block::address::Address;
@@ -192,7 +194,10 @@ pub trait IotaIdentityClientExt: IotaIdentityClient {
   }
 }
 
+#[cfg(not(feature = "test"))]
 impl<T> IotaIdentityClientExt for T where T: IotaIdentityClient {}
+#[cfg(feature = "test")]
+impl IotaIdentityClientExt for Client {}
 
 pub(super) async fn validate_network<T>(client: &T, did: &IotaDID) -> Result<()>
 where

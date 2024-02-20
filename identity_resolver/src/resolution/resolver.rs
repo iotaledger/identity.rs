@@ -253,7 +253,6 @@ mod iota_handler {
 
   use super::Resolver;
   use identity_document::document::CoreDocument;
-  use identity_iota_core::IotaClientExt;
   use identity_iota_core::IotaDID;
   use identity_iota_core::IotaDocument;
   use identity_iota_core::IotaIdentityClientExt;
@@ -268,7 +267,7 @@ mod iota_handler {
     /// See also [`attach_handler`](Self::attach_handler).
     pub fn attach_iota_handler<CLI>(&mut self, client: CLI)
     where
-      CLI: IotaClientExt + Send + Sync + 'static,
+      CLI: IotaIdentityClientExt + Send + Sync + 'static,
     {
       let arc_client: Arc<CLI> = Arc::new(client);
 
@@ -307,7 +306,7 @@ mod iota_handler {
     /// network name corresponds with the client, possibly by using `client.network_name()`.
     pub fn attach_multiple_iota_handlers<CLI>(&mut self, clients: Vec<(&'static str, CLI)>)
     where
-      CLI: IotaClientExt + Send + Sync + 'static,
+      CLI: IotaIdentityClientExt + Send + Sync + 'static,
     {
       let arc_clients: Arc<Vec<(&str, CLI)>> = Arc::new(clients);
 
@@ -354,5 +353,87 @@ where
     f.debug_struct("Resolver")
       .field("command_map", &self.command_map)
       .finish()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_iota_core::block::address::Address;
+  use identity_iota_core::block::output::AliasId;
+  use identity_iota_core::block::output::AliasOutput;
+  use identity_iota_core::block::output::OutputId;
+  use identity_iota_core::block::protocol::ProtocolParameters;
+  use identity_iota_core::IotaClientExt;
+  use identity_iota_core::IotaDID;
+  use identity_iota_core::IotaDocument;
+  use identity_iota_core::IotaIdentityClient;
+  use identity_iota_core::IotaIdentityClientExt;
+  use iota_sdk::client::secret::SecretManager;
+
+  use super::*;
+
+  struct DummyClient(IotaDocument);
+
+  #[async_trait::async_trait]
+  impl IotaIdentityClient for DummyClient {
+    async fn get_alias_output(&self, _id: AliasId) -> identity_iota_core::Result<(OutputId, AliasOutput)> {
+      todo!()
+    }
+    async fn get_protocol_parameters(&self) -> identity_iota_core::Result<ProtocolParameters> {
+      todo!()
+    }
+  }
+
+  #[async_trait::async_trait]
+  impl IotaIdentityClientExt for DummyClient {
+    async fn resolve_did(&self, did: &IotaDID) -> identity_iota_core::Result<IotaDocument> {
+      if self.0.id().as_str() == did.as_str() {
+        Ok(self.0.clone())
+      } else {
+        Err(identity_iota_core::Error::DIDResolutionError(
+          iota_sdk::client::error::Error::NoOutput(did.to_string()),
+        ))
+      }
+    }
+  }
+
+  #[async_trait::async_trait]
+  impl IotaClientExt for DummyClient {
+    async fn publish_did_output(
+      &self,
+      _secret_manager: &SecretManager,
+      _alias_output: AliasOutput,
+    ) -> identity_iota_core::Result<IotaDocument> {
+      todo!()
+    }
+    async fn delete_did_output(
+      &self,
+      _secret_manager: &SecretManager,
+      _address: Address,
+      _did: &IotaDID,
+    ) -> identity_iota_core::Result<()> {
+      todo!()
+    }
+  }
+
+  #[tokio::test]
+  async fn test_multiple_handlers() {
+    let did1 =
+      IotaDID::parse("did:iota:smr:0x0101010101010101010101010101010101010101010101010101010101010101").unwrap();
+    let document = IotaDocument::new_with_id(did1.clone());
+    let dummy_smr_client = DummyClient(document);
+
+    let did2 = IotaDID::parse("did:iota:0x0101010101010101010101010101010101010101010101010101010101010101").unwrap();
+    let document = IotaDocument::new_with_id(did2.clone());
+    let dummy_iota_client = DummyClient(document);
+
+    let mut resolver = Resolver::<IotaDocument>::new();
+    resolver.attach_multiple_iota_handlers(vec![("iota", dummy_iota_client), ("smr", dummy_smr_client)]);
+
+    let doc = resolver.resolve(&did1).await.unwrap();
+    assert_eq!(doc.id(), &did1);
+
+    let doc = resolver.resolve(&did2).await.unwrap();
+    assert_eq!(doc.id(), &did2);
   }
 }
