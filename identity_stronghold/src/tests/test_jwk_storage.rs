@@ -23,6 +23,21 @@ async fn insert() {
 }
 
 #[tokio::test]
+async fn retrieve() {
+  let stronghold_secret_manager = create_stronghold_secret_manager();
+  let stronghold_storage = StrongholdStorage::new(stronghold_secret_manager);
+
+  let generate = stronghold_storage
+    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
+    .await
+    .unwrap();
+  let key_id = &generate.key_id;
+
+  let pub_key: Jwk = stronghold_storage.get_public_key(key_id).await.unwrap();
+  assert_eq!(generate.jwk, pub_key);
+}
+
+#[tokio::test]
 async fn incompatible_key_alg() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
   let stronghold_storage = StrongholdStorage::new(stronghold_secret_manager);
