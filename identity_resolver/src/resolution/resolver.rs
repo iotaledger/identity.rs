@@ -256,6 +256,7 @@ mod iota_handler {
   use identity_iota_core::IotaDID;
   use identity_iota_core::IotaDocument;
   use identity_iota_core::IotaIdentityClientExt;
+  use std::collections::HashMap;
   use std::sync::Arc;
 
   impl<DOC> Resolver<DOC>

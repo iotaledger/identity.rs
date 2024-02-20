@@ -1,10 +1,10 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "test")]
 use iota_sdk::client::Client;
 
 use crate::block::protocol::ProtocolParameters;
-
 use crate::block::address::Address;
 use crate::block::output::feature::SenderFeature;
 use crate::block::output::unlock_condition::GovernorAddressUnlockCondition;
