@@ -62,7 +62,7 @@ impl StrongholdStorage {
   pub(crate) async fn get_stronghold(&self) -> MutexGuard<'_, Stronghold> {
     match *self.0 {
       SecretManager::Stronghold(ref stronghold) => stronghold.inner().await,
-      _ => unreachable!("secret manager can be only constrcuted from stronghold"),
+      _ => unreachable!("secret manager can be only constructed from stronghold"),
     }
   }
 
