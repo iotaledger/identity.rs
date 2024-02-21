@@ -302,7 +302,7 @@ mod iota_handler {
     /// # Note
     ///
     /// - Using `attach_iota_handler` or `attach_handler` for the IOTA method would override all
-    /// clients added in this method.
+    /// previously added clients.
     /// - This function does not validate the provided configuration. Ensure that the provided
     /// network name corresponds with the client, possibly by using `client.network_name()`.
     pub fn attach_multiple_iota_handlers<CLI, I>(&mut self, clients: I)
