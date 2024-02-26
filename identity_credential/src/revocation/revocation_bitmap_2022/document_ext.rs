@@ -7,8 +7,8 @@ use identity_document::service::Service;
 use identity_document::utils::DIDUrlQuery;
 use identity_document::utils::Queryable;
 
-use super::RevocationError;
-use super::RevocationResult;
+use crate::revocation::RevocationError;
+use crate::revocation::RevocationResult;
 
 /// Extension trait providing convenience methods to update a `RevocationBitmap2022` service
 /// in a [`CoreDocument`](::identity_document::document::CoreDocument).   

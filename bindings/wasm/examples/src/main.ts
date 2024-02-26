@@ -16,6 +16,7 @@ import { didIssuesTokens } from "./1_advanced/3_did_issues_tokens";
 import { customResolution } from "./1_advanced/4_custom_resolution";
 import { domainLinkage } from "./1_advanced/5_domain_linkage";
 import { sdJwt } from "./1_advanced/6_sd_jwt";
+import { statusList2021 } from "./1_advanced/7_status_list_2021";
 
 async function main() {
     // Extract example name.
@@ -55,6 +56,8 @@ async function main() {
             return await domainLinkage();
         case "6_sd_jwt":
             return await sdJwt();
+        case "7_status_list_2021":
+            return await statusList2021();
         default:
             throw "Unknown example name: '" + argument + "'";
     }

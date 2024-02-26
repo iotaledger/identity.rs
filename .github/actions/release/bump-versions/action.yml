@@ -47,13 +47,6 @@ runs:
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y -a
 
-    - name: Replace identity_iota version in Wasm bindings
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      working-directory: bindings/wasm
-      run: |
-        cargo add identity_iota --path=../../identity_iota
-
     - name: Set up Node.js
       uses: actions/setup-node@v2
       if: ${{inputs.release-target == 'wasm'}}

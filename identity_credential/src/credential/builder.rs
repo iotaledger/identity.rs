@@ -121,8 +121,8 @@ impl<T> CredentialBuilder<T> {
 
   /// Adds a value to the `credentialStatus` set.
   #[must_use]
-  pub fn status(mut self, value: Status) -> Self {
-    self.status = Some(value);
+  pub fn status(mut self, value: impl Into<Status>) -> Self {
+    self.status = Some(value.into());
     self
   }
 

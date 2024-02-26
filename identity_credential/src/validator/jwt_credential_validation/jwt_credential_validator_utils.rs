@@ -1,4 +1,4 @@
-// Copyright 2020-2023 IOTA Stiftung
+// Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use std::str::FromStr;
 
@@ -15,6 +15,8 @@ use super::SignerContext;
 use crate::credential::Credential;
 use crate::credential::CredentialJwtClaims;
 use crate::credential::Jwt;
+#[cfg(feature = "status-list-2021")]
+use crate::revocation::status_list_2021::StatusList2021Credential;
 use crate::validator::SubjectHolderRelationship;
 
 /// Utility functions for verifying JWT credentials.
@@ -82,6 +84,46 @@ impl JwtCredentialValidatorUtils {
       .ok_or(JwtValidationError::SubjectHolderRelationship)
   }
 
+  /// Checks whether the status specified in `credentialStatus` has been set by the issuer.
+  ///
+  /// Only supports `StatusList2021`.
+  #[cfg(feature = "status-list-2021")]
+  pub fn check_status_with_status_list_2021<T>(
+    credential: &Credential<T>,
+    status_list_credential: &StatusList2021Credential,
+    status_check: crate::validator::StatusCheck,
+  ) -> ValidationUnitResult {
+    use crate::revocation::status_list_2021::CredentialStatus;
+    use crate::revocation::status_list_2021::StatusList2021Entry;
+
+    if status_check == crate::validator::StatusCheck::SkipAll {
+      return Ok(());
+    }
+
+    match &credential.credential_status {
+      None => Ok(()),
+      Some(status) => {
+        let status = StatusList2021Entry::try_from(status)
+          .map_err(|e| JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(e.to_string())))?;
+        if Some(status.status_list_credential()) == status_list_credential.id.as_ref()
+          && status.purpose() == status_list_credential.purpose()
+        {
+          let entry_status = status_list_credential
+            .entry(status.index())
+            .map_err(|e| JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(e.to_string())))?;
+          match entry_status {
+            CredentialStatus::Revoked => Err(JwtValidationError::Revoked),
+            CredentialStatus::Suspended => Err(JwtValidationError::Suspended),
+            CredentialStatus::Valid => Ok(()),
+          }
+        } else {
+          Err(JwtValidationError::InvalidStatus(crate::Error::InvalidStatus(
+            "The given statusListCredential doesn't match the credential's status".to_owned(),
+          )))
+        }
+      }
+    }
+  }
   /// Checks whether the credential status has been revoked.
   ///
   /// Only supports `RevocationBitmap2022`.
