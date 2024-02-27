@@ -768,7 +768,7 @@ mod tests {
 
     let document: IotaDocument = IotaDocument::unpack_from_output(&document_did, &alias_output, true).unwrap();
     let controllers: Vec<IotaDID> = document.controller().cloned().collect::<Vec<_>>();
-    assert_eq!(controllers.get(0).unwrap(), &alias_controller);
+    assert_eq!(controllers.first().unwrap(), &alias_controller);
     assert_eq!(controllers.len(), 1);
   }
 
@@ -797,7 +797,7 @@ mod tests {
 
     let document: IotaDocument = IotaDocument::unpack_from_output(&document_did, &alias_output, true).unwrap();
     let controllers: Vec<IotaDID> = document.controller().cloned().collect::<Vec<_>>();
-    assert_eq!(controllers.get(0).unwrap(), &alias_controller);
+    assert_eq!(controllers.first().unwrap(), &alias_controller);
     assert_eq!(controllers.len(), 1);
   }
 
@@ -830,7 +830,7 @@ mod tests {
 
     let document: IotaDocument = IotaDocument::unpack_from_output(&document_did, &alias_output, true).unwrap();
     let controllers: Vec<IotaDID> = document.controller().cloned().collect::<Vec<_>>();
-    assert_eq!(controllers.get(0).unwrap(), &external_controller_did);
+    assert_eq!(controllers.first().unwrap(), &external_controller_did);
     assert_eq!(controllers.get(1).unwrap(), &alias_controller);
     assert_eq!(controllers.len(), 2);
   }
