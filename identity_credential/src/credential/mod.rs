@@ -17,7 +17,7 @@ mod traits;
 
 
 pub use self::jws::Jws;
-pub use self::jwt::Jwt;
+pub use jwt::*;
 #[cfg(feature = "revocation-bitmap")]
 pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use common::Evidence;

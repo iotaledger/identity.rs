@@ -545,7 +545,7 @@ mod tests {
     secret_key: &SecretKey,
   ) -> Jwt {
     let payload: String = credential.serialize_jwt(None).unwrap();
-    Jwt::new(sign_bytes(document, fragment, payload.as_ref(), secret_key).into())
+    Jwt::parse(sign_bytes(document, fragment, payload.as_ref(), secret_key).into()).unwrap()
   }
 
   fn sign_bytes(document: &CoreDocument, fragment: &str, payload: &[u8], secret_key: &SecretKey) -> Jws {

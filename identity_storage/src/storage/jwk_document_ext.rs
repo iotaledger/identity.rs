@@ -463,7 +463,7 @@ impl JwkDocumentExt for CoreDocument {
     self
       .create_jws(storage, fragment, payload.as_bytes(), options)
       .await
-      .map(|jws| Jwt::new(jws.into()))
+      .map(|jws| Jwt::parse(jws.into()).unwrap())
   }
 
   async fn create_presentation_jwt<K, I, CRED, T>(
@@ -498,7 +498,7 @@ impl JwkDocumentExt for CoreDocument {
     self
       .create_jws(storage, fragment, payload.as_bytes(), jws_options)
       .await
-      .map(|jws| Jwt::new(jws.into()))
+      .map(|jws| Jwt::parse(jws.into()).unwrap())
   }
 }
 

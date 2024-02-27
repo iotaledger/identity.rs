@@ -5,6 +5,7 @@
 //! framework.
 
 mod error;
+mod traits;
 mod revocation_bitmap_2022;
 #[cfg(feature = "status-list-2021")]
 pub mod status_list_2021;
@@ -12,3 +13,4 @@ pub mod status_list_2021;
 pub use self::error::RevocationError;
 pub use self::error::RevocationResult;
 pub use revocation_bitmap_2022::*;
+pub use traits::*;

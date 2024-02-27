@@ -33,7 +33,8 @@ pub struct DecodedJws<'a> {
   pub claims: Cow<'a, [u8]>,
 }
 
-enum DecodedHeaders {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum DecodedHeaders {
   Protected(JwsHeader),
   Unprotected(JwsHeader),
   Both {
@@ -56,7 +57,7 @@ impl DecodedHeaders {
     }
   }
 
-  fn protected_header(&self) -> Option<&JwsHeader> {
+  pub fn protected_header(&self) -> Option<&JwsHeader> {
     match self {
       DecodedHeaders::Protected(ref header) => Some(header),
       DecodedHeaders::Both { ref protected, .. } => Some(protected),
@@ -64,7 +65,7 @@ impl DecodedHeaders {
     }
   }
 
-  fn unprotected_header(&self) -> Option<&JwsHeader> {
+  pub fn unprotected_header(&self) -> Option<&JwsHeader> {
     match self {
       DecodedHeaders::Unprotected(ref header) => Some(header),
       DecodedHeaders::Both { ref unprotected, .. } => Some(unprotected.as_ref()),
@@ -83,6 +84,14 @@ pub struct JwsValidationItem<'a> {
   claims: Cow<'a, [u8]>,
 }
 impl<'a> JwsValidationItem<'a> {
+  /// Returns all fields, consuming the structure
+  pub fn into_parts(self) -> (DecodedHeaders, Box<[u8]>, Box<[u8]>, Box<[u8]>) {
+    let claims = match self.claims {
+      Cow::Borrowed(c) => c.to_owned().into_boxed_slice(),
+      Cow::Owned(c) => c.into_boxed_slice(),
+    };
+    (self.headers, self.signing_input, self.decoded_signature, claims)
+  }
   /// Returns the decoded protected header if it exists.
   pub fn protected_header(&self) -> Option<&JwsHeader> {
     self.headers.protected_header()

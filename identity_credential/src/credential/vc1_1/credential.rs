@@ -17,6 +17,7 @@ use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 
 use crate::credential::CredentialBuilder;
+use crate::credential::CredentialT;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
 use crate::credential::Policy;
@@ -24,6 +25,7 @@ use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
+use crate::credential::VerifiableCredentialT;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -81,6 +83,35 @@ pub struct Credential<T = Object> {
   /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Proof>,
+}
+
+impl CredentialT for Credential {
+  type Claim = OneOrMany<Subject>;
+  type Issuer = Issuer;
+
+  fn id(&self) -> &Url {
+    self.id.as_ref().unwrap()
+  }
+  fn claim(&self) -> &Self::Claim {
+    &self.credential_subject
+  }
+  fn issuer(&self) -> &Self::Issuer {
+    &self.issuer
+  }
+  fn valid_from(&self) -> Timestamp {
+    self.issuance_date
+  }
+  fn valid_until(&self) -> Option<Timestamp> {
+    self.expiration_date
+  }
+}
+
+impl<'c> VerifiableCredentialT<'c> for Credential {
+  type Proof = Option<&'c Proof>;
+
+  fn proof(&'c self) -> Self::Proof {
+    self.proof.as_ref()
+  }
 }
 
 impl<T> Credential<T> {
