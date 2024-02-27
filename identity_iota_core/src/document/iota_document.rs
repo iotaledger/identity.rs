@@ -139,6 +139,11 @@ impl IotaDocument {
     core_did_controller_iter.map(IotaDID::from_inner_ref_unchecked)
   }
 
+  /// Returns a mutable reference to the document controller.
+  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<CoreDID>> {
+    self.document.controller_mut()
+  }
+
   /// Returns a reference to the `alsoKnownAs` set.
   pub fn also_known_as(&self) -> &OrderedSet<Url> {
     self.document.also_known_as()
@@ -442,7 +447,14 @@ mod client_document {
         _ => None,
       };
 
-      *self.core_document_mut().controller_mut() = controller_did.map(CoreDID::from).map(OneOrSet::new_one);
+      if let Some(controller_did) = controller_did {
+        match self.core_document_mut().controller_mut() {
+          Some(controllers) => {
+            controllers.append(CoreDID::from(controller_did));
+          }
+          None => *self.core_document_mut().controller_mut() = Some(OneOrSet::new_one(CoreDID::from(controller_did))),
+        }
+      }
 
       Ok(())
     }
@@ -732,6 +744,98 @@ mod tests {
   }
 
   #[test]
+  fn test_unpack_no_external_controller() {
+    let document_did: IotaDID = "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      .parse()
+      .unwrap();
+    let alias_controller: IotaDID = "did:iota:0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+      .parse()
+      .unwrap();
+
+    let mut original_doc: IotaDocument = IotaDocument::new_with_id(document_did.clone());
+    *original_doc.controller_mut() = None;
+
+    let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&document_did))
+      .with_state_metadata(original_doc.pack().unwrap())
+      .add_unlock_condition(UnlockCondition::StateControllerAddress(
+        StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&alias_controller)))),
+      ))
+      .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
+        Address::Alias(AliasAddress::new(AliasId::from(&alias_controller))),
+      )))
+      .finish()
+      .unwrap();
+
+    let document: IotaDocument = IotaDocument::unpack_from_output(&document_did, &alias_output, true).unwrap();
+    let controllers: Vec<IotaDID> = document.controller().cloned().collect::<Vec<_>>();
+    assert_eq!(controllers.get(0).unwrap(), &alias_controller);
+    assert_eq!(controllers.len(), 1);
+  }
+
+  #[test]
+  fn test_unpack_with_duplicate_controller() {
+    let document_did: IotaDID = "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      .parse()
+      .unwrap();
+    let alias_controller: IotaDID = "did:iota:0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+      .parse()
+      .unwrap();
+
+    let mut original_doc: IotaDocument = IotaDocument::new_with_id(document_did.clone());
+    *original_doc.controller_mut() = Some(OneOrSet::new_one(CoreDID::from(alias_controller.clone())));
+
+    let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&document_did))
+      .with_state_metadata(original_doc.pack().unwrap())
+      .add_unlock_condition(UnlockCondition::StateControllerAddress(
+        StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&alias_controller)))),
+      ))
+      .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
+        Address::Alias(AliasAddress::new(AliasId::from(&alias_controller))),
+      )))
+      .finish()
+      .unwrap();
+
+    let document: IotaDocument = IotaDocument::unpack_from_output(&document_did, &alias_output, true).unwrap();
+    let controllers: Vec<IotaDID> = document.controller().cloned().collect::<Vec<_>>();
+    assert_eq!(controllers.get(0).unwrap(), &alias_controller);
+    assert_eq!(controllers.len(), 1);
+  }
+
+  #[test]
+  fn test_unpack_with_external_controller() {
+    let document_did: IotaDID = "did:iota:0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      .parse()
+      .unwrap();
+    let alias_controller: IotaDID = "did:iota:0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+      .parse()
+      .unwrap();
+    let external_controller_did: IotaDID =
+      "did:iota:0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        .parse()
+        .unwrap();
+
+    let mut original_doc: IotaDocument = IotaDocument::new_with_id(document_did.clone());
+    *original_doc.controller_mut() = Some(OneOrSet::new_one(CoreDID::from(external_controller_did.clone())));
+
+    let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&document_did))
+      .with_state_metadata(original_doc.pack().unwrap())
+      .add_unlock_condition(UnlockCondition::StateControllerAddress(
+        StateControllerAddressUnlockCondition::new(Address::Alias(AliasAddress::new(AliasId::from(&alias_controller)))),
+      ))
+      .add_unlock_condition(UnlockCondition::GovernorAddress(GovernorAddressUnlockCondition::new(
+        Address::Alias(AliasAddress::new(AliasId::from(&alias_controller))),
+      )))
+      .finish()
+      .unwrap();
+
+    let document: IotaDocument = IotaDocument::unpack_from_output(&document_did, &alias_output, true).unwrap();
+    let controllers: Vec<IotaDID> = document.controller().cloned().collect::<Vec<_>>();
+    assert_eq!(controllers.get(0).unwrap(), &external_controller_did);
+    assert_eq!(controllers.get(1).unwrap(), &alias_controller);
+    assert_eq!(controllers.len(), 2);
+  }
+
+  #[test]
   fn test_unpack_empty() {
     let controller_did: IotaDID = valid_did();
 
@@ -765,7 +869,10 @@ mod tests {
     let packed: Vec<u8> = document.pack_with_encoding(StateMetadataEncoding::Json).unwrap();
     let state_metadata_document: StateMetadataDocument = StateMetadataDocument::unpack(&packed).unwrap();
     let unpacked_document: IotaDocument = state_metadata_document.into_iota_document(&did).unwrap();
-    assert!(unpacked_document.document.controller().is_none());
+    assert_eq!(
+      unpacked_document.document.controller().unwrap().get(0).unwrap().clone(),
+      CoreDID::from(controller_did)
+    );
     assert!(unpacked_document.metadata.state_controller_address.is_none());
     assert!(unpacked_document.metadata.governor_address.is_none());
   }
