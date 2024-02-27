@@ -27,7 +27,8 @@ impl MethodType {
   /// in the [`publicKeyJwk`](crate::MethodData::PublicKeyJwk) entry.
   pub const JSON_WEB_KEY: Self = Self(Cow::Borrowed(JSON_WEB_KEY_METHOD_TYPE));
   /// The `EcdsaSecp256k1RecoverySignature2020` method type.
-  pub const ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020: Self = Self(Cow::Borrowed(ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020_STR));
+  pub const ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020: Self =
+    Self(Cow::Borrowed(ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020_STR));
 }
 
 impl MethodType {
