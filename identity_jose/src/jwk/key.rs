@@ -346,6 +346,7 @@ impl Jwk {
     match self.params() {
       JwkParams::MLDSA(params) => Ok(params),
       JwkParams::SLHDSA(params) => Ok(params),
+      JwkParams::FALCON(params) => Ok(params),
       _ => Err(Error::KeyError("PQ")),
     }
   }
@@ -355,6 +356,7 @@ impl Jwk {
     match self.params_mut() {
       JwkParams::MLDSA(params) => Ok(params),
       JwkParams::SLHDSA(params) => Ok(params),
+      JwkParams::FALCON(params) => Ok(params),
       _ => Err(Error::KeyError("PQ")),
     }
   }
@@ -414,6 +416,9 @@ impl Jwk {
       JwkParams::SLHDSA(JwkParamsPQ { public, .. }) => {
         format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
       }
+      JwkParams::FALCON(JwkParamsPQ { public, .. }) => {
+        format!(r#"{{"kty":"{kty}","pub":"{public}"}}"#)
+      }
     }
   }
 
@@ -468,6 +473,7 @@ impl Jwk {
       JwkParams::Okp(params) => params.is_private(),
       JwkParams::MLDSA(params) => params.is_private(), //TODO: PQ - is_private Jwk method
       JwkParams::SLHDSA(params) => params.is_private(),
+      JwkParams::FALCON(params) => params.is_private(),
     }
   }
 

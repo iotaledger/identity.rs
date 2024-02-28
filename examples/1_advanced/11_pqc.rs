@@ -51,9 +51,9 @@ use iota_sdk::types::block::output::AliasOutput;
 use serde_json::json;
 
 // The API endpoint of an IOTA node, e.g. Hornet.
-const API_ENDPOINT: &str = "http://localhost:14265";
+const API_ENDPOINT: &str = "http://localhost";
 // The faucet endpoint allows requesting funds for testing purposes.
-const FAUCET_ENDPOINT: &str = "http://localhost:8091/api/enqueue";
+const FAUCET_ENDPOINT: &str = "http://localhost/faucet/api/enqueue";
 
 
 async fn create_did(client: &Client, secret_manager: &SecretManager, storage: &MemStorage, key_type: KeyType, alg: JwsAlgorithm) -> anyhow::Result<(Address, IotaDocument, String)> {

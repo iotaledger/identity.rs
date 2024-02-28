@@ -32,6 +32,8 @@ pub enum JwkType {
   /// [More Info] (https://datatracker.ietf.org/doc/html/draft-ietf-cose-sphincs-plus#name-the-slh-dsa-key-type)
   #[serde(rename = "SLH-DSA")]
   SLHDSA,
+
+  FALCON,
 }
 
 impl JwkType {
@@ -44,6 +46,7 @@ impl JwkType {
       Self::Okp => "OKP",
       Self::MLDSA => "ML-DSA",
       Self::SLHDSA => "SLH-DSA",
+      Self::FALCON => "FALCON",
     }
   }
 }

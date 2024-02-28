@@ -22,4 +22,38 @@ ML_DSA_87 = []
 SLH_DSA_SHA2_128s = []
 SLH_DSA_SHA2_128f = []
 SLH_DSA_SHAKE_128s = []
-default = ["ML_DSA_44", "ML_DSA_65", "ML_DSA_87", "SLH_DSA_SHA2_128s", "SLH_DSA_SHA2_128f", "SLH_DSA_SHAKE_128s"]
+
+SLH_DSA_SHAKE_128f = []
+SLH_DSA_SHA2_192s = []
+SLH_DSA_SHAKE_192s = []
+SLH_DSA_SHA2_192f = []
+SLH_DSA_SHAKE_192f = []
+SLH_DSA_SHA2_256s = []
+SLH_DSA_SHAKE_256s = []
+SLH_DSA_SHA2_256f = []
+SLH_DSA_SHAKE_256f = []
+
+FALCON512 = []
+FALCON1024 = []
+
+default = [
+    "ML_DSA_44", 
+    "ML_DSA_65", 
+    "ML_DSA_87", 
+    "SLH_DSA_SHA2_128s", 
+    "SLH_DSA_SHA2_128f", 
+    "SLH_DSA_SHAKE_128s",
+
+    "SLH_DSA_SHAKE_128f",
+    "SLH_DSA_SHA2_192s",
+    "SLH_DSA_SHAKE_192s",
+    "SLH_DSA_SHA2_192f",
+    "SLH_DSA_SHAKE_192f",
+    "SLH_DSA_SHA2_256s",
+    "SLH_DSA_SHAKE_256s",
+    "SLH_DSA_SHA2_256f",
+    "SLH_DSA_SHAKE_256f",
+
+    "FALCON512",
+    "FALCON1024",
+    ]

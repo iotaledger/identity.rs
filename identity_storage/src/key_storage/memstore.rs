@@ -506,6 +506,20 @@ fn check_pq_alg_compatibility(alg: JwsAlgorithm) -> KeyStorageResult<Algorithm> 
     JwsAlgorithm::SLH_DSA_SHA2_128s => Ok(Algorithm::SphincsSha2128sSimple),
     JwsAlgorithm::SLH_DSA_SHAKE_128s => Ok(Algorithm::SphincsShake128sSimple),
     JwsAlgorithm::SLH_DSA_SHA2_128f => Ok(Algorithm::SphincsSha2128fSimple),
+
+
+    JwsAlgorithm::SLH_DSA_SHAKE_128f => Ok(Algorithm::SphincsShake128fSimple),
+    JwsAlgorithm::SLH_DSA_SHA2_192s => Ok(Algorithm::SphincsSha2192sSimple),
+    JwsAlgorithm::SLH_DSA_SHAKE_192s => Ok(Algorithm::SphincsShake192sSimple),
+    JwsAlgorithm::SLH_DSA_SHA2_192f => Ok(Algorithm::SphincsSha2192fSimple),
+    JwsAlgorithm::SLH_DSA_SHAKE_192f => Ok(Algorithm::SphincsShake192fSimple),
+    JwsAlgorithm::SLH_DSA_SHA2_256s => Ok(Algorithm::SphincsSha2256sSimple),
+    JwsAlgorithm::SLH_DSA_SHAKE_256s => Ok(Algorithm::SphincsShake256sSimple),
+    JwsAlgorithm::SLH_DSA_SHA2_256f => Ok(Algorithm::SphincsSha2256fSimple),
+    JwsAlgorithm::SLH_DSA_SHAKE_256f => Ok(Algorithm::SphincsShake256fSimple),
+
+    JwsAlgorithm::FALCON512 => Ok(Algorithm::Falcon512),
+    JwsAlgorithm::FALCON1024 => Ok(Algorithm::Falcon1024),
     other => {
       return Err(
         KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
@@ -541,6 +555,8 @@ impl JwkStoragePQ for JwkMemStore {
 
     let public = jwu::encode_b64(pk.into_vec());
     let private = jwu::encode_b64(sk.into_vec());
+
+      
     let mut jwk_params = match alg {
       JwsAlgorithm::ML_DSA_44 => JwkParams::new(JwkType::MLDSA),
       JwsAlgorithm::ML_DSA_65 => JwkParams::new(JwkType::MLDSA),
@@ -548,6 +564,17 @@ impl JwkStoragePQ for JwkMemStore {
       JwsAlgorithm::SLH_DSA_SHA2_128s => JwkParams::new(JwkType::SLHDSA),
       JwsAlgorithm::SLH_DSA_SHAKE_128s => JwkParams::new(JwkType::SLHDSA),
       JwsAlgorithm::SLH_DSA_SHA2_128f => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHAKE_128f => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHA2_192s => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHAKE_192s => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHA2_192f => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHAKE_192f => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHA2_256s => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHAKE_256s => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHA2_256f => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::SLH_DSA_SHAKE_256f => JwkParams::new(JwkType::SLHDSA),
+      JwsAlgorithm::FALCON512 => JwkParams::new(JwkType::FALCON),
+      JwsAlgorithm::FALCON1024 => JwkParams::new(JwkType::FALCON),
       other => {
         return Err(
           KeyStorageError::new(KeyStorageErrorKind::UnsupportedSignatureAlgorithm)
@@ -598,10 +625,14 @@ impl JwkStoragePQ for JwkMemStore {
 
     let oqs_alg = check_pq_alg_compatibility(alg)?;
 
-    // Check that `kty` is `ML-DSA`or `SLH-DSA`.
+    // Check that `kty` is `ML-DSA`or `SLH-DSA` or `FALCON`.
     match alg {
-      JwsAlgorithm::ML_DSA_44 | JwsAlgorithm::ML_DSA_65 | JwsAlgorithm::ML_DSA_87 |
-      JwsAlgorithm:: SLH_DSA_SHA2_128s | JwsAlgorithm::SLH_DSA_SHA2_128f | JwsAlgorithm::SLH_DSA_SHAKE_128s => {
+      JwsAlgorithm::ML_DSA_44 | JwsAlgorithm::ML_DSA_65 | JwsAlgorithm::ML_DSA_87 
+      | JwsAlgorithm::SLH_DSA_SHA2_128s | JwsAlgorithm::SLH_DSA_SHAKE_128s | JwsAlgorithm::SLH_DSA_SHA2_128f 
+      | JwsAlgorithm::SLH_DSA_SHAKE_128f | JwsAlgorithm::SLH_DSA_SHA2_192s | JwsAlgorithm::SLH_DSA_SHAKE_192s 
+      | JwsAlgorithm::SLH_DSA_SHA2_192f | JwsAlgorithm::SLH_DSA_SHAKE_192f | JwsAlgorithm::SLH_DSA_SHA2_256s 
+      | JwsAlgorithm::SLH_DSA_SHAKE_256s | JwsAlgorithm::SLH_DSA_SHA2_256f | JwsAlgorithm::SLH_DSA_SHAKE_256f  
+      | JwsAlgorithm::FALCON512 | JwsAlgorithm::FALCON1024 => {
         public_key.try_pq_params().map_err(|err| {
           KeyStorageError::new(KeyStorageErrorKind::Unspecified)
             .with_custom_message(format!("expected a Jwk with ML-DSA params in order to sign with {alg}"))

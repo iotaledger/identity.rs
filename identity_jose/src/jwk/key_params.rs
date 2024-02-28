@@ -33,7 +33,9 @@ pub enum JwkParams {
   /// ML-DSA parameters
   MLDSA(JwkParamsPQ),
   /// SLH-DSA parameters
-  SLHDSA(JwkParamsPQ)
+  SLHDSA(JwkParamsPQ),
+  /// FALCON parameters
+  FALCON(JwkParamsPQ),
 }
 
 impl JwkParams {
@@ -46,6 +48,7 @@ impl JwkParams {
       JwkType::Okp => Self::Okp(JwkParamsOkp::new()),
       JwkType::MLDSA => Self::MLDSA(JwkParamsPQ::new()),
       JwkType::SLHDSA => Self::SLHDSA(JwkParamsPQ::new()),
+      JwkType::FALCON => Self::FALCON(JwkParamsPQ::new()),
     }
   }
 
@@ -58,6 +61,7 @@ impl JwkParams {
       Self::Okp(inner) => inner.kty(),
       Self::MLDSA(_) => JwkType::MLDSA,
       Self::SLHDSA(_) => JwkType::SLHDSA,
+      Self::FALCON(_) => JwkType::FALCON,
     }
   }
 
@@ -72,6 +76,7 @@ impl JwkParams {
       Self::Oct(_) => None,
       Self::MLDSA(inner) => Some(Self::MLDSA(inner.to_public())),
       Self::SLHDSA(inner) => Some(Self::SLHDSA(inner.to_public())),
+      Self::FALCON(inner) => Some(Self::FALCON(inner.to_public())),
     }
   }
 
@@ -84,6 +89,7 @@ impl JwkParams {
       Self::Oct(value) => value.is_public(),
       Self::MLDSA(value) => value.is_public(),
       Self::SLHDSA(value) => value.is_public(),
+      Self::FALCON(value) => value.is_public(),
     }
   }
 }
