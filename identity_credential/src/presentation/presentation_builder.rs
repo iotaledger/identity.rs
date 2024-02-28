@@ -158,11 +158,12 @@ mod tests {
 
     let credential_jwt = credential.serialize_jwt(None).unwrap();
 
-    let presentation: Presentation<String> = PresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
-      .type_("ExamplePresentation")
-      .credential(credential_jwt)
-      .build()
-      .unwrap();
+    let presentation: Presentation<String> =
+      PresentationBuilder::new(Url::parse("did:test:abc1").unwrap(), Object::new())
+        .type_("ExamplePresentation")
+        .credential(credential_jwt)
+        .build()
+        .unwrap();
 
     assert_eq!(presentation.context.len(), 1);
     assert_eq!(

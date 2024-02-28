@@ -14,9 +14,9 @@ pub trait StatusT {
 }
 
 pub trait StatusResolverT<S: StatusT> {
-    type Error;
+  type Error;
 
-    async fn state<'c, S1>(&self, status: &'c S1) -> Result<S::State, Self::Error>
-    where
-      S: TryFrom<&'c S1>;
+  async fn state<'c, S1>(&self, status: &'c S1) -> Result<S::State, Self::Error>
+  where
+    S: TryFrom<&'c S1>;
 }

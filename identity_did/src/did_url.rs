@@ -268,6 +268,15 @@ impl Hash for RelativeDIDUrl {
   }
 }
 
+impl TryFrom<Option<Url>> for DIDUrl {
+  type Error = Error;
+  fn try_from(value: Option<Url>) -> Result<Self, Self::Error> {
+    value
+      .ok_or(Error::Other("Missing URL"))
+      .and_then(|url| Self::parse(url.as_str()))
+  }
+}
+
 impl DIDUrl {
   /// Construct a new [`DIDUrl`] with optional [`RelativeDIDUrl`].
   pub fn new(did: CoreDID, url: Option<RelativeDIDUrl>) -> Self {

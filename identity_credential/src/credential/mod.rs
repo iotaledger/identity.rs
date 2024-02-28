@@ -11,13 +11,11 @@ mod jwt;
 mod jwt_serialization;
 #[cfg(feature = "revocation-bitmap")]
 mod revocation_bitmap_status;
+mod traits;
 pub mod vc1_1;
 pub mod vc2_0;
-mod traits;
-
 
 pub use self::jws::Jws;
-pub use jwt::*;
 #[cfg(feature = "revocation-bitmap")]
 pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use common::Evidence;
@@ -28,10 +26,11 @@ pub use common::Proof;
 pub use common::RefreshService;
 pub use common::Schema;
 pub use common::Subject;
+pub use jwt::*;
+pub use traits::*;
 pub use vc1_1::Credential;
 pub use vc1_1::CredentialBuilder;
 pub use vc1_1::Status;
-pub use traits::*;
 
 #[cfg(feature = "validator")]
 pub(crate) use self::jwt_serialization::CredentialJwtClaims;

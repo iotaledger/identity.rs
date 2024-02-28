@@ -1,4 +1,5 @@
-use identity_core::common::{Timestamp, Url};
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
 
 pub trait CredentialT {
   type Issuer;
@@ -24,8 +25,29 @@ pub trait VerifiableCredentialT<'c>: CredentialT {
 }
 
 pub trait ProofT {
+  type VerificationMethod;
+
   fn algorithm(&self) -> &str;
   fn signature(&self) -> &[u8];
   fn signing_input(&self) -> &[u8];
-  fn verification_method(&self) -> Option<Url>;
+  fn verification_method(&self) -> Self::VerificationMethod;
+}
+
+impl<'a, P> ProofT for &'a P
+where
+  P: ProofT,
+{
+  type VerificationMethod = P::VerificationMethod;
+  fn algorithm(&self) -> &str {
+    P::algorithm(self)
+  }
+  fn signature(&self) -> &[u8] {
+    P::signature(self)
+  }
+  fn signing_input(&self) -> &[u8] {
+    P::signature(self)
+  }
+  fn verification_method(&self) -> Self::VerificationMethod {
+    P::verification_method(self)
+  }
 }

@@ -41,22 +41,9 @@ pub struct DecodedJws {
   signature: Box<[u8]>,
 }
 
-impl<'a> ProofT for &'a DecodedJws {
-  fn algorithm(&self) -> &str {
-    DecodedJws::algorithm(self)
-  }
-  fn signature(&self) -> &[u8] {
-    DecodedJws::signature(self)
-  }
-  fn signing_input(&self) -> &[u8] {
-    DecodedJws::signing_input(self)
-  }
-  fn verification_method(&self) -> Option<Url> {
-    DecodedJws::verification_method(self)
-  }
-}
-
 impl ProofT for DecodedJws {
+  type VerificationMethod = Option<Url>;
+
   fn algorithm(&self) -> &str {
     self
       .headers
@@ -71,7 +58,7 @@ impl ProofT for DecodedJws {
   fn signing_input(&self) -> &[u8] {
     self.signing_input.as_ref()
   }
-  fn verification_method(&self) -> Option<Url> {
+  fn verification_method(&self) -> Self::VerificationMethod {
     self
       .headers
       .protected_header()
@@ -247,8 +234,5 @@ impl<'c> VerifiableCredentialT<'c> for JwtCredential {
 impl JwtCredential {
   pub fn parse(jwt: Jwt) -> Result<Self, JwtCredentialError> {
     Self::try_from(jwt)
-  }
-  pub fn try_into_credential<C: TryFrom<JwtCredentialClaims>>(self) -> Result<C, C::Error> {
-    C::try_from(self.parsed_claims)
   }
 }
