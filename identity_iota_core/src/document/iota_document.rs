@@ -123,9 +123,6 @@ impl IotaDocument {
   }
 
   /// Returns an iterator yielding the DID controllers.
-  ///
-  /// NOTE: controllers are determined by the `state_controller` unlock condition of the output
-  /// during resolution and are omitted when publishing.
   pub fn controller(&self) -> impl Iterator<Item = &IotaDID> + '_ {
     let core_did_controller_iter = self
       .document
@@ -134,14 +131,29 @@ impl IotaDocument {
       .into_iter()
       .flatten();
 
-    // CORRECTNESS: These casts are OK because the public API does not expose methods
-    // enabling unchecked mutation of the controllers.
+    // CORRECTNESS: These casts are OK because the public API only allows setting IotaDIDs.
     core_did_controller_iter.map(IotaDID::from_inner_ref_unchecked)
   }
 
-  /// Returns a mutable reference to the document controller.
-  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<CoreDID>> {
-    self.document.controller_mut()
+  /// Sets the value of the document controller.
+  ///
+  /// Note:
+  /// * Duplicates in `controller` will be ignored.
+  /// * Use an empty collection to clear all controllers.
+  pub fn set_controller<T>(&mut self, controller: T)
+  where
+    T: IntoIterator<Item = IotaDID>,
+  {
+    let controller_core_dids: Option<OneOrSet<CoreDID>> = {
+      let controller_set: OrderedSet<CoreDID> = controller.into_iter().map(|value| CoreDID::from(value)).collect();
+      if controller_set.is_empty() {
+        None
+      } else {
+        Some(OneOrSet::new_set(controller_set).expect("controller is checked to be not empty"))
+      }
+    };
+
+    *self.document.controller_mut() = controller_core_dids;
   }
 
   /// Returns a reference to the `alsoKnownAs` set.
@@ -753,7 +765,7 @@ mod tests {
       .unwrap();
 
     let mut original_doc: IotaDocument = IotaDocument::new_with_id(document_did.clone());
-    *original_doc.controller_mut() = None;
+    original_doc.set_controller([]);
 
     let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&document_did))
       .with_state_metadata(original_doc.pack().unwrap())
@@ -782,7 +794,7 @@ mod tests {
       .unwrap();
 
     let mut original_doc: IotaDocument = IotaDocument::new_with_id(document_did.clone());
-    *original_doc.controller_mut() = Some(OneOrSet::new_one(CoreDID::from(alias_controller.clone())));
+    original_doc.set_controller([alias_controller.clone()]);
 
     let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&document_did))
       .with_state_metadata(original_doc.pack().unwrap())
@@ -815,7 +827,7 @@ mod tests {
         .unwrap();
 
     let mut original_doc: IotaDocument = IotaDocument::new_with_id(document_did.clone());
-    *original_doc.controller_mut() = Some(OneOrSet::new_one(CoreDID::from(external_controller_did.clone())));
+    original_doc.set_controller([external_controller_did.clone()]);
 
     let alias_output: AliasOutput = AliasOutputBuilder::new_with_amount(1, AliasId::from(&document_did))
       .with_state_metadata(original_doc.pack().unwrap())
