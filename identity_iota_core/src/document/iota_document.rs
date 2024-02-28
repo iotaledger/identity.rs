@@ -145,7 +145,7 @@ impl IotaDocument {
     T: IntoIterator<Item = IotaDID>,
   {
     let controller_core_dids: Option<OneOrSet<CoreDID>> = {
-      let controller_set: OrderedSet<CoreDID> = controller.into_iter().map(|value| CoreDID::from(value)).collect();
+      let controller_set: OrderedSet<CoreDID> = controller.into_iter().map(CoreDID::from).collect();
       if controller_set.is_empty() {
         None
       } else {
