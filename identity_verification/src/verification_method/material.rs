@@ -21,6 +21,9 @@ pub enum MethodData {
   PublicKeyBase58(String),
   /// Verification Material in the JSON Web Key format.
   PublicKeyJwk(Jwk),
+  /// Verification Material in CAIP-10 format.
+  /// [CAIP-10](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md)
+  BlockchainAccountId(String),
 }
 
 impl MethodData {
@@ -45,7 +48,7 @@ impl MethodData {
   /// represented as a vector of bytes.
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
-      Self::PublicKeyJwk(_) => Err(Error::InvalidMethodDataTransformation(
+      Self::PublicKeyJwk(_) | Self::BlockchainAccountId(_) => Err(Error::InvalidMethodDataTransformation(
         "method data is not base encoded",
       )),
       Self::PublicKeyMultibase(input) => {
@@ -76,6 +79,7 @@ impl Debug for MethodData {
       Self::PublicKeyJwk(inner) => f.write_fmt(format_args!("PublicKeyJwk({inner:#?})")),
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({inner})")),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({inner})")),
+      Self::BlockchainAccountId(inner) => f.write_fmt(format_args!("BlockchainAccountId({inner})")),
     }
   }
 }
