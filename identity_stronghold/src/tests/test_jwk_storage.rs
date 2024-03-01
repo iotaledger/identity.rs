@@ -23,6 +23,21 @@ async fn insert() {
 }
 
 #[tokio::test]
+async fn retrieve() {
+  let stronghold_secret_manager = create_stronghold_secret_manager();
+  let stronghold_storage = StrongholdStorage::new(stronghold_secret_manager);
+
+  let generate = stronghold_storage
+    .generate(KeyType::new("Ed25519"), JwsAlgorithm::EdDSA)
+    .await
+    .unwrap();
+  let key_id = &generate.key_id;
+
+  let pub_key: Jwk = stronghold_storage.get_public_key(key_id).await.unwrap();
+  assert_eq!(generate.jwk, pub_key);
+}
+
+#[tokio::test]
 async fn incompatible_key_alg() {
   let stronghold_secret_manager = create_stronghold_secret_manager();
   let stronghold_storage = StrongholdStorage::new(stronghold_secret_manager);
@@ -53,6 +68,7 @@ async fn key_exists() {
 // Tests the cases that require persisting to disk, generate, insert and delete.
 #[tokio::test]
 async fn write_to_disk() {
+  iota_stronghold::engine::snapshot::try_set_encrypt_work_factor(0).unwrap();
   const PASS: &str = "secure_password";
   let file: PathBuf = create_temp_file();
   let secret_manager = StrongholdSecretManager::builder()
