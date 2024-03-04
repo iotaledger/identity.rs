@@ -4,9 +4,13 @@
 use crate::key_storage::KeyId;
 use crate::key_storage::KeyStorageError;
 use crate::key_storage::KeyType;
+use crate::ProofUpdateCtx;
 use async_trait::async_trait;
 use identity_verification::jose::jwk::Jwk;
 use identity_verification::jose::jws::JwsAlgorithm;
+use jsonprooftoken::jpa::algs::ProofAlgorithm;
+use jsonprooftoken::jpt::claims::JptClaims;
+use jsonprooftoken::jwp::header::IssuerProtectedHeader;
 
 use super::jwk_gen_output::JwkGenOutput;
 
@@ -61,4 +65,30 @@ pub trait JwkStorage: storage_sub_trait::StorageSendSyncMaybe {
 
   /// Returns `true` if the key with the given `key_id` exists in storage, `false` otherwise.
   async fn exists(&self, key_id: &KeyId) -> KeyStorageResult<bool>;
+}
+
+/// Extension to the JwkStorage to handle BBS+ keys
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
+pub trait JwkStorageExt: JwkStorage {
+  /// Generates a JWK representing a BBS+ signature
+  async fn generate_bbs_key(&self, key_type: KeyType, alg: ProofAlgorithm) -> KeyStorageResult<JwkGenOutput>;
+
+  /// Generate the JPT representing a JWP in the Issuer form
+  async fn generate_issuer_proof(
+    &self,
+    key_id: &KeyId,
+    header: IssuerProtectedHeader,
+    claims: JptClaims,
+    public_key: &Jwk,
+  ) -> KeyStorageResult<String>;
+
+  /// Update proof functionality for timeframe revocation mechanism
+  async fn update_proof(
+    &self,
+    key_id: &KeyId,
+    public_key: &Jwk,
+    proof: &[u8; 112],
+    ctx: ProofUpdateCtx,
+  ) -> KeyStorageResult<[u8; 112]>;
 }

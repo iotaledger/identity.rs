@@ -101,6 +101,18 @@ pub enum JwtValidationError {
   /// Indicates that the credential has been revoked.
   #[error("credential has been revoked")]
   Revoked,
+
+  /// Indicates that the credential's timeframe interval is not valid
+  #[error("timeframe interval not valid")]
+  OutsideTimeframe,
+
+  /// Indicates that the JWP representation of an issued credential or presentation could not be decoded.
+  #[error("could not decode jwp")]
+  JwpDecodingError(#[source] jsonprooftoken::errors::CustomError),
+  /// Indicates that the verfication of the JWP has failed
+  #[error("could not verify jwp")]
+  JwpProofVerificationError(#[source] jsonprooftoken::errors::CustomError),
+
   /// Indicates that the credential has been suspended.
   #[error("credential has been suspended")]
   Suspended,
