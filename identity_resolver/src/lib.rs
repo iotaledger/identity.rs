@@ -43,6 +43,12 @@ impl Deref for IotaResolver {
   }
 }
 
+impl IotaResolver {
+  pub const fn new(client: Client) -> Self {
+    Self(client)
+  }
+}
+
 impl ResolverT<MethodData> for IotaResolver {
   type Input = DIDUrl;
   type Error = IotaError;
@@ -55,7 +61,8 @@ impl ResolverT<MethodData> for IotaResolver {
       .resolve_method(input, None)
       .map(|method| method.data())
       .cloned()
-      .ok_or(todo!("an error for verification method not found"))?;
+      // TODO: use a better error
+      .ok_or(IotaError::InvalidNetworkName("invalid method data".to_owned()))?;
 
     Ok(key)
   }

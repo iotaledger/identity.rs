@@ -9,15 +9,14 @@
 //!
 //! cargo run --release --example 5_create_vc
 
+use anyhow::anyhow;
 use examples::create_did;
 use examples::MemStorage;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
-use identity_iota::core::Object;
-
-use identity_iota::credential::DecodedJwtCredential;
 use identity_iota::credential::Jwt;
-use identity_iota::credential::JwtCredentialValidationOptions;
-use identity_iota::credential::JwtCredentialValidator;
+use identity_iota::credential::JwtCredential;
+use identity_iota::credential::ValidableCredential;
+use identity_iota::resolver::IotaResolver;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwsSignatureOptions;
@@ -35,7 +34,6 @@ use identity_iota::core::FromJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-use identity_iota::credential::FailFast;
 use identity_iota::credential::Subject;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDocument;
@@ -97,24 +95,12 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  // Before sending this credential to the holder the issuer wants to validate that some properties
-  // of the credential satisfy their expectations.
-
-  // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
-  // that the issuance date is not in the future and that the expiration date is not in the past:
-  let decoded_credential: DecodedJwtCredential<Object> =
-    JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default())
-      .validate::<_, Object>(
-        &credential_jwt,
-        &issuer_document,
-        &JwtCredentialValidationOptions::default(),
-        FailFast::FirstError,
-      )
-      .unwrap();
+  let credential_jwt = JwtCredential::<Credential>::parse(credential_jwt)?;
+  credential_jwt.validate(&IotaResolver::new(client), &EdDSAJwsVerifier::default()).await.map_err(|_| anyhow!("oops"))?;
 
   println!("VC successfully validated");
 
-  println!("Credential JSON > {:#}", decoded_credential.credential);
+  println!("Credential JSON > {:#}", credential_jwt.as_ref());
 
   Ok(())
 }

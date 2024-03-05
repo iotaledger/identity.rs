@@ -268,12 +268,10 @@ impl Hash for RelativeDIDUrl {
   }
 }
 
-impl TryFrom<Option<Url>> for DIDUrl {
+impl TryFrom<Url> for DIDUrl {
   type Error = Error;
-  fn try_from(value: Option<Url>) -> Result<Self, Self::Error> {
-    value
-      .ok_or(Error::Other("Missing URL"))
-      .and_then(|url| Self::parse(url.as_str()))
+  fn try_from(url: Url) -> Result<Self, Self::Error> {
+      Self::parse(url.as_str())
   }
 }
 

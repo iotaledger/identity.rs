@@ -130,7 +130,7 @@ pub enum JwtCredentialError {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[repr(transparent)]
 #[serde(try_from = "i64", into = "i64")]
-struct UnixTimestampWrapper(Timestamp);
+pub(crate) struct UnixTimestampWrapper(Timestamp);
 
 impl Deref for UnixTimestampWrapper {
   type Target = Timestamp;
@@ -166,12 +166,14 @@ pub struct JwtCredentialClaims {
   /// Represents the issuer.
   pub iss: Issuer,
   /// Represents the issuanceDate encoded as a UNIX timestamp.
+  #[serde(flatten)]
   issuance_date: IssuanceDate,
   /// Represents the id property of the credential.
   pub jti: Url,
   /// Represents the subject's id.
   pub sub: Option<Url>,
   pub vc: Object,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub custom: Option<Object>,
 }
 
@@ -330,5 +332,11 @@ where
     verifier.verify(&self.decoded_jws, &key).map_err(|_| ())?;
 
     Ok(())
+  }
+}
+
+impl<C> AsRef<C> for JwtCredential<C> {
+  fn as_ref(&self) -> &C {
+    &self.credential 
   }
 }

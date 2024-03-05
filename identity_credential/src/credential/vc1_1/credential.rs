@@ -20,6 +20,7 @@ use crate::credential::CredentialBuilder;
 use crate::credential::CredentialT;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
+use crate::credential::JwtCredentialClaims;
 use crate::credential::Policy;
 use crate::credential::RefreshService;
 use crate::credential::Schema;
@@ -204,6 +205,45 @@ where
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
+  }
+}
+
+impl<'a> TryFrom<&'a JwtCredentialClaims> for Credential {
+  type Error = Error;
+  fn try_from(value: &'a JwtCredentialClaims) -> std::result::Result<Self, Self::Error> {
+    let JwtCredentialClaims {
+      exp,
+      iss,
+      jti,
+      sub,
+      vc,
+      custom,
+      ..
+    } = value;
+    let mut vc = vc.clone();
+    vc.insert("issuer".to_owned(), serde_json::Value::String(iss.url().to_string()));
+    vc.insert("id".to_owned(), serde_json::Value::String(jti.to_string()));
+    vc.insert(
+      "issuanceDate".to_owned(),
+      serde_json::Value::String(value.issuance_date().to_string()),
+    );
+    if let Some(exp) = exp.as_deref() {
+      vc.insert("expirationDate".to_owned(), serde_json::Value::String(exp.to_string()));
+    }
+    if let Some(sub) = sub {
+      vc.entry("credentialSubject".to_owned())
+        .or_insert(serde_json::json!({}))
+        .as_object_mut()
+        .unwrap()
+        .insert("id".to_owned(), serde_json::Value::String(sub.to_string()));
+    }
+    if let Some(custom) = custom {
+      for (key, value) in custom {
+        vc.insert(key.clone(), value.clone());
+      }
+    }
+    let vc = serde_json::to_value(vc).expect("out of memory");
+    serde_json::from_value(vc).map_err(|e| Error::JwtClaimsSetDeserializationError(Box::new(e)))
   }
 }
 
