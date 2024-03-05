@@ -11,6 +11,8 @@ mod jwt;
 mod jwt_serialization;
 #[cfg(feature = "revocation-bitmap")]
 mod revocation_bitmap_status;
+#[cfg(feature = "sd-jwt")]
+pub mod sd_jwt;
 mod traits;
 pub mod vc1_1;
 pub mod vc2_0;

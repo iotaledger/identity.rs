@@ -10,7 +10,6 @@ anyhow = "1.0.62"
 identity_eddsa_verifier = { path = "../identity_eddsa_verifier", default-features = false }
 identity_iota = { path = "../identity_iota", default-features = false, features = ["memstore", "domain-linkage", "revocation-bitmap", "status-list-2021"] }
 identity_stronghold = { path = "../identity_stronghold", default-features = false }
-identity_validator = { path = "../identity_validator" }
 iota-sdk = { version = "1.0", default-features = false, features = ["tls", "client", "stronghold"] }
 primitive-types = "0.12.1"
 rand = "0.8.5"

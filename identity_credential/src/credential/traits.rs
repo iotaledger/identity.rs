@@ -18,36 +18,8 @@ pub trait CredentialT {
   }
 }
 
-pub trait VerifiableCredentialT<'c>: CredentialT {
-  type Proof;
+type ValidationError = ();
 
-  fn proof(&'c self) -> Self::Proof;
-}
-
-pub trait ProofT {
-  type VerificationMethod;
-
-  fn algorithm(&self) -> &str;
-  fn signature(&self) -> &[u8];
-  fn signing_input(&self) -> &[u8];
-  fn verification_method(&self) -> Self::VerificationMethod;
-}
-
-impl<'a, P> ProofT for &'a P
-where
-  P: ProofT,
-{
-  type VerificationMethod = P::VerificationMethod;
-  fn algorithm(&self) -> &str {
-    P::algorithm(self)
-  }
-  fn signature(&self) -> &[u8] {
-    P::signature(self)
-  }
-  fn signing_input(&self) -> &[u8] {
-    P::signature(self)
-  }
-  fn verification_method(&self) -> Self::VerificationMethod {
-    P::verification_method(self)
-  }
+pub trait ValidableCredential<R, V, K>: CredentialT {
+  async fn validate(&self, resolver: &R, verifier: &V) -> Result<(), ValidationError>;
 }

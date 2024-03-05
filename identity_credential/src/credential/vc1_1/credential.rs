@@ -25,7 +25,6 @@ use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
-use crate::credential::VerifiableCredentialT;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -103,14 +102,6 @@ impl CredentialT for Credential {
   }
   fn valid_until(&self) -> Option<Timestamp> {
     self.expiration_date
-  }
-}
-
-impl<'c> VerifiableCredentialT<'c> for Credential {
-  type Proof = Option<&'c Proof>;
-
-  fn proof(&'c self) -> Self::Proof {
-    self.proof.as_ref()
   }
 }
 

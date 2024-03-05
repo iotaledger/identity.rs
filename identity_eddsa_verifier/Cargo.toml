@@ -13,6 +13,7 @@ description = "JWS EdDSA signature verification for IOTA Identity"
 
 [dependencies]
 identity_jose = { version = "=1.1.1", path = "../identity_jose", default-features = false }
+identity_verification = { version = "=1.1.1", path = "../identity_verification", default-features = false }
 iota-crypto = { version = "0.23", default-features = false, features = ["std"] }
 
 [features]

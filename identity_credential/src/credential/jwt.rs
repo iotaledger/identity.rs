@@ -6,6 +6,7 @@
 // Decoder gives us all we need. We need to unpack it into a JWS (alg, sig_input, sig_challenge) and claims.
 // The claims will be parsed into a JwtCredentialClaims.
 
+use std::fmt::Debug;
 use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -16,16 +17,20 @@ use identity_core::common::Url;
 use identity_jose::error::Error as JoseError;
 use identity_jose::jws::DecodedHeaders;
 use identity_jose::jws::Decoder as JwsDecoder;
+use identity_verification::ProofT;
+use identity_verification::VerifierT;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::DeserializeFromStr;
 use serde_with::SerializeDisplay;
 use thiserror::Error;
 
+use crate::revocation::StatusCredentialT;
+
 use super::CredentialT;
 use super::Issuer;
-use super::ProofT;
-use super::VerifiableCredentialT;
+use identity_core::ResolverT;
+use super::ValidableCredential;
 
 #[derive(Error, Debug)]
 pub enum JwtError {
@@ -39,6 +44,12 @@ pub struct DecodedJws {
   signing_input: Box<[u8]>,
   raw_claims: Box<[u8]>,
   signature: Box<[u8]>,
+}
+
+impl DecodedJws {
+  pub fn claims(&self) -> &[u8] {
+    &self.raw_claims
+  }
 }
 
 impl ProofT for DecodedJws {
@@ -69,8 +80,8 @@ impl ProofT for DecodedJws {
 
 #[derive(Debug, Clone, PartialEq, Eq, SerializeDisplay, DeserializeFromStr)]
 pub struct Jwt {
-  inner: String,
-  decoded_jws: DecodedJws,
+  pub(crate) inner: String,
+  pub(crate) decoded_jws: DecodedJws,
 }
 
 impl FromStr for Jwt {
@@ -112,6 +123,8 @@ impl Jwt {
 pub enum JwtCredentialError {
   #[error(transparent)]
   DeserializationError(#[from] serde_json::Error),
+  #[error("Failed to parse packed credential")]
+  CredentialUnpackingError,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -171,30 +184,89 @@ impl JwtCredentialClaims {
   }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(try_from = "Jwt", into = "Jwt")]
-pub struct JwtCredential {
-  inner: String,
-  parsed_claims: JwtCredentialClaims,
-  decoded_jws: DecodedJws,
+pub struct JwtCredential<C> {
+  pub(crate) inner: String,
+  pub(crate) credential: C,
+  pub(crate) parsed_claims: JwtCredentialClaims,
+  pub(crate) decoded_jws: DecodedJws,
 }
 
-impl TryFrom<Jwt> for JwtCredential {
+impl<C: Debug> Debug for JwtCredential<C> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("JwtCredential")
+      .field("inner", &self.inner.as_str())
+      .field("credential", &self.credential)
+      .field("parsed_claims", &self.parsed_claims)
+      .field("decoded_jws", &self.decoded_jws)
+      .finish()
+  }
+}
+
+impl<C: Clone> Clone for JwtCredential<C> {
+  fn clone(&self) -> Self {
+    let JwtCredential {
+      inner,
+      credential,
+      parsed_claims,
+      decoded_jws,
+    } = self;
+    Self {
+      inner: inner.clone(),
+      credential: credential.clone(),
+      parsed_claims: parsed_claims.clone(),
+      decoded_jws: decoded_jws.clone(),
+    }
+  }
+}
+
+impl<C> serde::Serialize for JwtCredential<C> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    self.inner.as_str().serialize(serializer)
+  }
+}
+
+impl<'de, C> serde::Deserialize<'de> for JwtCredential<C>
+where
+  C: for<'a> TryFrom<&'a JwtCredentialClaims>,
+{
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    use serde::de::Error;
+
+    let jwt = Jwt::deserialize(deserializer)?;
+    Self::try_from(jwt).map_err(|e| D::Error::custom(e))
+  }
+}
+
+impl<C> TryFrom<Jwt> for JwtCredential<C>
+where
+  C: for<'a> TryFrom<&'a JwtCredentialClaims>,
+{
   type Error = JwtCredentialError;
 
   fn try_from(jwt: Jwt) -> Result<Self, Self::Error> {
     let Jwt { inner, decoded_jws } = jwt;
     let parsed_claims = serde_json::from_slice(&decoded_jws.raw_claims)?;
+    let credential = C::try_from(&parsed_claims).map_err(|_| JwtCredentialError::CredentialUnpackingError)?;
     Ok(Self {
       inner,
       decoded_jws,
       parsed_claims,
+      credential,
     })
   }
 }
 
-impl From<JwtCredential> for Jwt {
-  fn from(value: JwtCredential) -> Self {
+impl<C> From<JwtCredential<C>> for Jwt
+where
+  C: Into<JwtCredentialClaims>,
+{
+  fn from(value: JwtCredential<C>) -> Self {
     Jwt {
       inner: value.inner,
       decoded_jws: value.decoded_jws,
@@ -202,7 +274,7 @@ impl From<JwtCredential> for Jwt {
   }
 }
 
-impl CredentialT for JwtCredential {
+impl<C> CredentialT for JwtCredential<C> {
   type Claim = JwtCredentialClaims;
   type Issuer = Issuer;
 
@@ -223,16 +295,40 @@ impl CredentialT for JwtCredential {
   }
 }
 
-impl<'c> VerifiableCredentialT<'c> for JwtCredential {
-  type Proof = &'c DecodedJws;
-
-  fn proof(&'c self) -> Self::Proof {
-    &self.decoded_jws
+impl<C> JwtCredential<C>
+where
+  C: for<'a> TryFrom<&'a JwtCredentialClaims>,
+{
+  pub fn parse(jwt: Jwt) -> Result<Self, JwtCredentialError> {
+    Self::try_from(jwt)
   }
 }
 
-impl JwtCredential {
-  pub fn parse(jwt: Jwt) -> Result<Self, JwtCredentialError> {
-    Self::try_from(jwt)
+impl<C: StatusCredentialT> StatusCredentialT for JwtCredential<C> {
+  type Status = C::Status;
+  fn status(&self) -> Option<&Self::Status> {
+    self.credential.status()
+  }
+}
+
+impl<R, V, C, K> ValidableCredential<R, V, K> for JwtCredential<C>
+where
+  R: ResolverT<K>,
+  R::Input: TryFrom<Url>,
+  V: VerifierT<K>,
+{
+  async fn validate(&self, resolver: &R, verifier: &V) -> Result<(), ()> {
+    if !self.check_validity_time_frame() {
+      todo!("expired credential err");
+    }
+    let kid = self
+      .decoded_jws
+      .verification_method()
+      .ok_or(())
+      .and_then(|kid| R::Input::try_from(kid).map_err(|_| ()))?;
+    let key = resolver.fetch(&kid).await.map_err(|_| ())?;
+    verifier.verify(&self.decoded_jws, &key).map_err(|_| ())?;
+
+    Ok(())
   }
 }
