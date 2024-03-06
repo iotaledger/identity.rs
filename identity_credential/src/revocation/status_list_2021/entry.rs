@@ -8,8 +8,10 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::credential::Status;
+use crate::revocation::StatusT;
 
 use super::credential::StatusPurpose;
+use super::CredentialStatus;
 
 const CREDENTIAL_STATUS_TYPE: &str = "StatusList2021Entry";
 
@@ -62,6 +64,13 @@ impl From<StatusList2021Entry> for Status {
   fn from(entry: StatusList2021Entry) -> Self {
     let json_status = serde_json::to_value(entry).unwrap(); // Safety: shouldn't go out of memory
     serde_json::from_value(json_status).unwrap() // Safety: `StatusList2021Entry` is a credential status
+  }
+}
+
+impl StatusT for StatusList2021Entry {
+  type State = CredentialStatus;
+  fn type_(&self) -> &str {
+    CREDENTIAL_STATUS_TYPE
   }
 }
 

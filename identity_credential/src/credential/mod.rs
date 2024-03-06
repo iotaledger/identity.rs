@@ -10,8 +10,6 @@ mod jws;
 mod jwt;
 mod jwt_serialization;
 mod any_credential;
-#[cfg(feature = "revocation-bitmap")]
-mod revocation_bitmap_status;
 #[cfg(feature = "sd-jwt")]
 pub mod sd_jwt;
 mod traits;
@@ -19,8 +17,6 @@ pub mod vc1_1;
 pub mod vc2_0;
 
 pub use self::jws::Jws;
-#[cfg(feature = "revocation-bitmap")]
-pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use common::Evidence;
 pub use common::Issuer;
 pub use common::LinkedDomainService;

@@ -13,19 +13,20 @@ pub trait StatusT {
   fn type_(&self) -> &str;
 }
 
-pub trait StatusResolverT<S: StatusT> {
+pub trait StatusResolverT {
   type Error;
+  type Status: StatusT;
 
-  async fn state<'c, S1>(&self, status: &'c S1) -> Result<S::State, Self::Error>
+  async fn state<'c, S>(&self, status: &'c S) -> Result<<Self::Status as StatusT>::State, Self::Error>
   where
-    S: TryFrom<&'c S1>;
+    Self::Status: TryFrom<&'c S>;
 }
 
 pub trait ValidableCredentialStatusExt<R, V, K>
 where
   Self: ValidableCredential<R, V, K> + StatusCredentialT,
 {
-  async fn validate_with_status<'c, S, SR, F>(
+  async fn validate_with_status<'c, SR, F>(
     &'c self,
     resolver: &R,
     verifier: &V,
@@ -33,9 +34,9 @@ where
     state_predicate: F,
   ) -> Result<(), ()>
   where
-    SR: StatusResolverT<S>,
-    S: StatusT + TryFrom<&'c Self::Status>,
-    F: FnOnce(&S::State) -> bool,
+    SR: StatusResolverT,
+    SR::Status: StatusT + TryFrom<&'c Self::Status>,
+    F: FnOnce(&<SR::Status as StatusT>::State) -> bool,
   {
     self.validate(resolver, verifier).await?;
     let Some(status) = self.status() else {

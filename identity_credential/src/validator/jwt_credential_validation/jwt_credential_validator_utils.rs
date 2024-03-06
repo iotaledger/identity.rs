@@ -153,9 +153,8 @@ impl JwtCredentialValidatorUtils {
             status.type_
           ))));
         }
-        let status: crate::credential::RevocationBitmapStatus =
-          crate::credential::RevocationBitmapStatus::try_from(status.clone())
-            .map_err(JwtValidationError::InvalidStatus)?;
+        let status = crate::revocation::RevocationBitmapStatus::try_from(status.clone())
+          .map_err(JwtValidationError::InvalidStatus)?;
 
         // Check the credential index against the issuer's DID Document.
         let issuer_did: CoreDID = Self::extract_issuer(credential)?;
@@ -173,7 +172,7 @@ impl JwtCredentialValidatorUtils {
   #[cfg(feature = "revocation-bitmap")]
   fn check_revocation_bitmap_status<DOC: AsRef<identity_document::document::CoreDocument> + ?Sized>(
     issuer: &DOC,
-    status: crate::credential::RevocationBitmapStatus,
+    status: crate::revocation::RevocationBitmapStatus,
   ) -> ValidationUnitResult {
     use crate::revocation::RevocationDocumentExt;
 
