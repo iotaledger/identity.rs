@@ -45,6 +45,18 @@ impl WasmMethodData {
     Ok(Self(MethodData::PublicKeyJwk(key.0.clone())))
   }
 
+  /// Creates a new {@link MethodData} variant in CAIP-10 format.
+  #[wasm_bindgen(js_name = newBlockchainAccountId)]
+  pub fn new_blockchain_account_id(data: String) -> Self {
+    Self(MethodData::new_blockchain_account_id(data))
+  }
+
+  /// Returns the wrapped blockchain account id if the format is `BlockchainAccountId`.
+  #[wasm_bindgen(js_name = tryBlockchainAccountId)]
+  pub fn try_blockchain_account_id(&self) -> Option<String> {
+    self.0.blockchain_account_id().map(|id| id.to_string())
+  }
+
   /// Returns a `Uint8Array` containing the decoded bytes of the {@link MethodData}.
   ///
   /// This is generally a public key identified by a {@link MethodData} value.
