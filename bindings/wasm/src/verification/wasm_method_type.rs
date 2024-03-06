@@ -27,6 +27,12 @@ impl WasmMethodType {
     WasmMethodType(MethodType::JSON_WEB_KEY)
   }
 
+  /// The `EcdsaSecp256k1RecoverySignature2020` method type.
+  #[wasm_bindgen(js_name = EcdsaSecp256k1RecoverySignature2020)]
+  pub fn ecdsa_secp256k1_recovery_signature_2020() -> WasmMethodType {
+    WasmMethodType(MethodType::ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020)
+  }
+
   /// Returns the {@link MethodType} as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]

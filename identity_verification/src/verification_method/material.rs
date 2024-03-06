@@ -39,6 +39,11 @@ impl MethodData {
     Self::PublicKeyMultibase(BaseEncoding::encode_multibase(&data, None))
   }
 
+  /// Verification Material in CAIP-10 format.
+  pub fn new_blockchain_account_id(data: String) -> Self {
+    Self::BlockchainAccountId(data)
+  }
+
   /// Returns a `Vec<u8>` containing the decoded bytes of the `MethodData`.
   ///
   /// This is generally a public key identified by a `MethodType` value.
@@ -70,6 +75,15 @@ impl MethodData {
   /// Fallible version of [`Self::public_key_jwk`](Self::public_key_jwk()).
   pub fn try_public_key_jwk(&self) -> Result<&Jwk> {
     self.public_key_jwk().ok_or(Error::NotPublicKeyJwk)
+  }
+
+  /// Returns the wrapped Blockchain Account Id if the format is [`MethodData::BlockchainAccountId`].
+  pub fn blockchain_account_id(&self) -> Option<&str> {
+    if let Self::BlockchainAccountId(id) = self {
+      Some(id)
+    } else {
+      None
+    }
   }
 }
 
