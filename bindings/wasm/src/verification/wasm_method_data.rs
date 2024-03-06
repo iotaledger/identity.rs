@@ -53,8 +53,16 @@ impl WasmMethodData {
 
   /// Returns the wrapped blockchain account id if the format is `BlockchainAccountId`.
   #[wasm_bindgen(js_name = tryBlockchainAccountId)]
-  pub fn try_blockchain_account_id(&self) -> Option<String> {
-    self.0.blockchain_account_id().map(|id| id.to_string())
+  pub fn try_blockchain_account_id(&self) -> Result<String> {
+    self
+      .0
+      .blockchain_account_id()
+      .map(|id| id.to_string())
+      .ok_or(WasmError::new(
+        Cow::Borrowed("MethodDataFormatError"),
+        Cow::Borrowed("method data format is not BlockchainAccountId"),
+      ))
+      .wasm_result()
   }
 
   /// Returns a `Uint8Array` containing the decoded bytes of the {@link MethodData}.
