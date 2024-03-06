@@ -3,22 +3,42 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
+use serde::Deserializer;
+use serde::de::Error as _;
 use serde::Serialize;
 
 use crate::credential::Evidence;
 use crate::credential::Issuer;
+use crate::credential::JwtCredentialClaims;
 use crate::credential::Policy;
 use crate::credential::Proof;
 use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
+use crate::Error;
+
+static BASE_CONTEXT: Lazy<Context> =
+  Lazy::new(|| Context::Url(Url::parse("https://www.w3.org/ns/credentials/v2").unwrap()));
+
+fn deserialize_vc2_0_context<'de, D>(deserializer: D) -> Result<OneOrMany<Context>, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let ctx = OneOrMany::<Context>::deserialize(deserializer)?;
+  if ctx.contains(&BASE_CONTEXT) {
+    Ok(ctx)
+  } else {
+    Err(D::Error::custom("Missing base context"))
+  }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
-  #[serde(rename = "@context")]
+  #[serde(rename = "@context", deserialize_with = "deserialize_vc2_0_context")]
   pub context: OneOrMany<Context>,
   /// A unique `URI` that may be used to identify the `Credential`.
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -62,4 +82,43 @@ pub struct Credential<T = Object> {
   /// Optional cryptographic proof, unrelated to JWT.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Proof>,
+}
+
+impl<'a> TryFrom<&'a JwtCredentialClaims> for Credential {
+  type Error = Error;
+  fn try_from(value: &'a JwtCredentialClaims) -> std::result::Result<Self, Self::Error> {
+    let JwtCredentialClaims {
+      exp,
+      iss,
+      jti,
+      sub,
+      vc,
+      custom,
+      ..
+    } = value;
+    let mut vc = vc.clone();
+    vc.insert("issuer".to_owned(), serde_json::Value::String(iss.url().to_string()));
+    vc.insert("id".to_owned(), serde_json::Value::String(jti.to_string()));
+    vc.insert(
+      "validFrom".to_owned(),
+      serde_json::Value::String(value.issuance_date().to_string()),
+    );
+    if let Some(exp) = exp.as_deref() {
+      vc.insert("validUntil".to_owned(), serde_json::Value::String(exp.to_string()));
+    }
+    if let Some(sub) = sub {
+      vc.entry("credentialSubject".to_owned())
+        .or_insert(serde_json::json!({}))
+        .as_object_mut()
+        .unwrap()
+        .insert("id".to_owned(), serde_json::Value::String(sub.to_string()));
+    }
+    if let Some(custom) = custom {
+      for (key, value) in custom {
+        vc.insert(key.clone(), value.clone());
+      }
+    }
+    let vc = serde_json::to_value(vc).expect("out of memory");
+    serde_json::from_value(vc).map_err(|e| Error::JwtClaimsSetDeserializationError(Box::new(e)))
+  }
 }

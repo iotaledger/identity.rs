@@ -97,6 +97,7 @@ async fn main() -> anyhow::Result<()> {
 
   let credential_jwt = JwtCredential::<Credential>::parse(credential_jwt)?;
   credential_jwt.validate(&IotaResolver::new(client), &EdDSAJwsVerifier::default()).await.map_err(|_| anyhow!("oops"))?;
+  println!("{}", serde_json::to_string(&credential_jwt).unwrap());
 
   println!("VC successfully validated");
 

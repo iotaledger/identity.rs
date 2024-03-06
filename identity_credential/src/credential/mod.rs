@@ -9,6 +9,7 @@ pub mod common;
 mod jws;
 mod jwt;
 mod jwt_serialization;
+mod any_credential;
 #[cfg(feature = "revocation-bitmap")]
 mod revocation_bitmap_status;
 #[cfg(feature = "sd-jwt")]
@@ -33,6 +34,7 @@ pub use traits::*;
 pub use vc1_1::Credential;
 pub use vc1_1::CredentialBuilder;
 pub use vc1_1::Status;
+pub use any_credential::*;
 
 #[cfg(feature = "validator")]
 pub(crate) use self::jwt_serialization::CredentialJwtClaims;

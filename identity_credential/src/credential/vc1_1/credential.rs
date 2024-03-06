@@ -3,11 +3,14 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
+use std::ops::Deref;
 
 use identity_core::convert::ToJson;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
+use serde::Deserializer;
 use serde::Serialize;
+use serde::de::Error as _;
 
 use identity_core::common::Context;
 use identity_core::common::Object;
@@ -35,11 +38,23 @@ use crate::credential::jwt_serialization::CredentialJwtClaims;
 static BASE_CONTEXT: Lazy<Context> =
   Lazy::new(|| Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap()));
 
+fn deserialize_vc1_1_context<'de, D>(deserializer: D) -> Result<OneOrMany<Context>, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let ctx = OneOrMany::<Context>::deserialize(deserializer)?;
+  if ctx.contains(&BASE_CONTEXT) {
+    Ok(ctx)
+  } else {
+    Err(D::Error::custom("Missing base context"))
+  }
+}
+
 /// Represents a set of claims describing an entity.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
-  #[serde(rename = "@context")]
+  #[serde(rename = "@context", deserialize_with = "deserialize_vc1_1_context")]
   pub context: OneOrMany<Context>,
   /// A unique `URI` that may be used to identify the `Credential`.
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -127,7 +142,7 @@ impl<T> Credential<T> {
   /// Returns a new `Credential` based on the `CredentialBuilder` configuration.
   pub fn from_builder(builder: CredentialBuilder<T>) -> Result<Self> {
     let this: Self = Self {
-      context: builder.context.into(),
+      context: OneOrMany::from(builder.context),
       id: builder.id,
       types: builder.types.into(),
       credential_subject: builder.subject.into(),
