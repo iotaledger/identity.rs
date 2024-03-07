@@ -1,34 +1,34 @@
 // Copyright 2020-2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::anyhow;
 use examples::create_did;
 use examples::random_stronghold_path;
 use examples::MemStorage;
 use examples::API_ENDPOINT;
 use identity_eddsa_verifier::EdDSAJwsVerifier;
 use identity_iota::core::FromJson;
-use identity_iota::core::Object;
+use identity_iota::core::ResolverT;
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
+use identity_iota::credential::status_list_2021::CredentialStatus;
 use identity_iota::credential::status_list_2021::StatusList2021;
 use identity_iota::credential::status_list_2021::StatusList2021Credential;
 use identity_iota::credential::status_list_2021::StatusList2021CredentialBuilder;
 use identity_iota::credential::status_list_2021::StatusList2021Entry;
+use identity_iota::credential::status_list_2021::StatusList2021Resolver;
 use identity_iota::credential::status_list_2021::StatusPurpose;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
-use identity_iota::credential::FailFast;
 use identity_iota::credential::Issuer;
 use identity_iota::credential::Jwt;
-use identity_iota::credential::JwtCredentialValidationOptions;
-use identity_iota::credential::JwtCredentialValidator;
-use identity_iota::credential::JwtCredentialValidatorUtils;
-use identity_iota::credential::JwtValidationError;
+use identity_iota::credential::JwtCredential;
 use identity_iota::credential::Status;
-use identity_iota::credential::StatusCheck;
 use identity_iota::credential::Subject;
+use identity_iota::credential::ValidableCredentialStatusExt;
 use identity_iota::did::DID;
 use identity_iota::iota::IotaDocument;
+use identity_iota::resolver::IotaResolver;
 use identity_iota::storage::JwkDocumentExt;
 use identity_iota::storage::JwkMemStore;
 use identity_iota::storage::JwsSignatureOptions;
@@ -39,6 +39,29 @@ use iota_sdk::client::Client;
 use iota_sdk::client::Password;
 use iota_sdk::types::block::address::Address;
 use serde_json::json;
+
+struct MockStatusListClient(StatusList2021Credential);
+
+impl MockStatusListClient {
+  pub fn new(status_list: StatusList2021Credential) -> Self {
+    Self(status_list)
+  }
+  pub async fn get(&self, url: &Url) -> Option<StatusList2021Credential> {
+    if self.0.id().is_some_and(|id| id == url) {
+      Some(self.0.clone())
+    } else {
+      None
+    }
+  }
+}
+
+impl ResolverT<StatusList2021Credential> for MockStatusListClient {
+  type Error = ();
+  type Input = Url;
+  async fn fetch(&self, input: &Self::Input) -> Result<StatusList2021Credential, Self::Error> {
+    self.get(input).await.ok_or(())
+  }
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -51,6 +74,9 @@ async fn main() -> anyhow::Result<()> {
     .with_primary_node(API_ENDPOINT, None)?
     .finish()
     .await?;
+
+  let iota_resolver = IotaResolver::new(client.clone());
+  let eddsa_verifier = EdDSAJwsVerifier::default();
 
   let mut secret_manager_issuer: SecretManager = SecretManager::Stronghold(
     StrongholdSecretManager::builder()
@@ -130,26 +156,15 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  let validator: JwtCredentialValidator<EdDSAJwsVerifier> =
-    JwtCredentialValidator::with_signature_verifier(EdDSAJwsVerifier::default());
+  let status_list_resolver = StatusList2021Resolver::new(MockStatusListClient::new(status_list_credential.clone()));
 
-  // The validator has no way of retriving the status list to check for the
-  // revocation of the credential. Let's skip that pass and perform the operation manually.
-  let mut validation_options = JwtCredentialValidationOptions::default();
-  validation_options.status = StatusCheck::SkipUnsupported;
-  // Validate the credential's signature using the issuer's DID Document.
-  validator.validate::<_, Object>(
-    &credential_jwt,
-    &issuer_document,
-    &validation_options,
-    FailFast::FirstError,
-  )?;
-  // Check manually for revocation
-  JwtCredentialValidatorUtils::check_status_with_status_list_2021(
-    &credential,
-    &status_list_credential,
-    StatusCheck::Strict,
-  )?;
+  let jwt_credential = JwtCredential::<Credential>::parse(credential_jwt)?;
+  jwt_credential
+    .validate_with_status(&iota_resolver, &eddsa_verifier, &status_list_resolver, |state| {
+      *state == CredentialStatus::Valid
+    })
+    .await
+    .map_err(|_| anyhow!("ooops"))?;
   println!("Credential is valid.");
 
   let status_list_credential_json = status_list_credential.to_json().unwrap();
@@ -169,19 +184,14 @@ async fn main() -> anyhow::Result<()> {
   status_list_credential.set_credential_status(&mut credential, credential_index, true)?;
 
   // validate the credential and check for revocation
-  validator.validate::<_, Object>(
-    &credential_jwt,
-    &issuer_document,
-    &validation_options,
-    FailFast::FirstError,
-  )?;
-  let revocation_result = JwtCredentialValidatorUtils::check_status_with_status_list_2021(
-    &credential,
-    &status_list_credential,
-    StatusCheck::Strict,
-  );
+  let status_list_resolver = StatusList2021Resolver::new(MockStatusListClient::new(status_list_credential));
 
-  assert!(revocation_result.is_err_and(|e| matches!(e, JwtValidationError::Revoked)));
+  jwt_credential
+    .validate_with_status(&iota_resolver, &eddsa_verifier, &status_list_resolver, |state| {
+      *state == CredentialStatus::Valid
+    })
+    .await
+    .unwrap_err();
   println!("The credential has been successfully revoked.");
 
   Ok(())

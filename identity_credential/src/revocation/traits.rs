@@ -45,7 +45,7 @@ where
     let credential_state = status_resolver.state(status).await.map_err(|_| ())?;
 
     if !state_predicate(&credential_state) {
-      todo!("Non-valid state!")
+      Err(()) // TODO: return non-valid state
     } else {
       Ok(())
     }

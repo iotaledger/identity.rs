@@ -7,10 +7,10 @@ use std::ops::Deref;
 
 use identity_core::convert::ToJson;
 use once_cell::sync::Lazy;
+use serde::de::Error as _;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
-use serde::de::Error as _;
 
 use identity_core::common::Context;
 use identity_core::common::Object;
@@ -34,6 +34,7 @@ use crate::error::Result;
 
 use crate::credential::common::Proof;
 use crate::credential::jwt_serialization::CredentialJwtClaims;
+use crate::revocation::StatusCredentialT;
 
 static BASE_CONTEXT: Lazy<Context> =
   Lazy::new(|| Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap()));
@@ -262,6 +263,13 @@ impl<'a> TryFrom<&'a JwtCredentialClaims> for Credential {
     }
     let vc = serde_json::to_value(vc).expect("out of memory");
     serde_json::from_value(vc).map_err(|e| Error::JwtClaimsSetDeserializationError(Box::new(e)))
+  }
+}
+
+impl StatusCredentialT for Credential {
+  type Status = Status;
+  fn status(&self) -> Option<&Self::Status> {
+    self.credential_status.as_ref()
   }
 }
 

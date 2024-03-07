@@ -30,5 +30,5 @@ pub trait ResolverT<T> {
   type Error;
   type Input;
 
-  async fn fetch(&self, input: &Self::Input) -> Result<T, Self::Error>;
+  async fn fetch(&self, input: &Self::Input) -> std::result::Result<T, Self::Error>;
 }
