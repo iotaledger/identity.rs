@@ -1,11 +1,11 @@
 use identity_core::common::Timestamp;
-use identity_core::common::Url;
 
 pub trait CredentialT {
   type Issuer;
   type Claim;
+  type Id;
 
-  fn id(&self) -> &Url;
+  fn id(&self) -> &Self::Id;
   fn issuer(&self) -> &Self::Issuer;
   fn claim(&self) -> &Self::Claim;
   fn valid_from(&self) -> Timestamp;

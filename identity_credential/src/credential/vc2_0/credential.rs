@@ -98,7 +98,9 @@ impl<'a> TryFrom<&'a JwtCredentialClaims> for Credential {
     } = value;
     let mut vc = vc.clone();
     vc.insert("issuer".to_owned(), serde_json::Value::String(iss.url().to_string()));
-    vc.insert("id".to_owned(), serde_json::Value::String(jti.to_string()));
+    if let Some(jti) = jti {
+      vc.insert("id".to_owned(), serde_json::Value::String(jti.to_string()));
+    }
     vc.insert(
       "validFrom".to_owned(),
       serde_json::Value::String(value.issuance_date().to_string()),

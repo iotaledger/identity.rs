@@ -6,7 +6,7 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_credential::credential::Jwt;
-use identity_credential::credential::RevocationBitmapStatus;
+use identity_credential::revocation::RevocationBitmapStatus;
 use identity_credential::credential::Status;
 use identity_credential::revocation::RevocationBitmap;
 use identity_credential::revocation::RevocationDocumentExt;

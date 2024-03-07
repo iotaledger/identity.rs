@@ -118,8 +118,9 @@ where
 impl<C> CredentialT for SdJwtCredential<C> {
   type Claim = JwtCredentialClaims;
   type Issuer = Issuer;
+  type Id = Option<Url>;
 
-  fn id(&self) -> &Url {
+  fn id(&self) -> &Self::Id {
     self.jwt_credential.id()
   }
   fn issuer(&self) -> &Self::Issuer {

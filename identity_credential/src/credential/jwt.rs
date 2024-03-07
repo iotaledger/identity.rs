@@ -169,7 +169,7 @@ pub struct JwtCredentialClaims {
   #[serde(flatten)]
   issuance_date: IssuanceDate,
   /// Represents the id property of the credential.
-  pub jti: Url,
+  pub jti: Option<Url>,
   /// Represents the subject's id.
   pub sub: Option<Url>,
   pub vc: Object,
@@ -279,8 +279,9 @@ where
 impl<C> CredentialT for JwtCredential<C> {
   type Claim = JwtCredentialClaims;
   type Issuer = Issuer;
+  type Id = Option<Url>;
 
-  fn id(&self) -> &Url {
+  fn id(&self) -> &Self::Id {
     &self.parsed_claims.jti
   }
   fn issuer(&self) -> &Self::Issuer {

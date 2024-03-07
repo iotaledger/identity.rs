@@ -103,9 +103,10 @@ pub struct Credential<T = Object> {
 impl CredentialT for Credential {
   type Claim = OneOrMany<Subject>;
   type Issuer = Issuer;
+  type Id = Option<Url>;
 
-  fn id(&self) -> &Url {
-    self.id.as_ref().unwrap()
+  fn id(&self) -> &Self::Id {
+    &self.id
   }
   fn claim(&self) -> &Self::Claim {
     &self.credential_subject
@@ -237,11 +238,13 @@ impl<'a> TryFrom<&'a JwtCredentialClaims> for Credential {
     } = value;
     let mut vc = vc.clone();
     vc.insert("issuer".to_owned(), serde_json::Value::String(iss.url().to_string()));
-    vc.insert("id".to_owned(), serde_json::Value::String(jti.to_string()));
     vc.insert(
       "issuanceDate".to_owned(),
       serde_json::Value::String(value.issuance_date().to_string()),
     );
+    if let Some(jti) = jti {
+      vc.insert("id".to_owned(), serde_json::Value::String(jti.to_string()));
+    }
     if let Some(exp) = exp.as_deref() {
       vc.insert("expirationDate".to_owned(), serde_json::Value::String(exp.to_string()));
     }
