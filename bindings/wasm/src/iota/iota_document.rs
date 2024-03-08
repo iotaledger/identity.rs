@@ -5,12 +5,14 @@ use std::rc::Rc;
 
 use identity_iota::core::Object;
 use identity_iota::core::OneOrMany;
+
 use identity_iota::core::OrderedSet;
 use identity_iota::core::Timestamp;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::JwtPresentationOptions;
 use identity_iota::credential::Presentation;
+
 use identity_iota::did::DIDUrl;
 use identity_iota::iota::block::output::dto::AliasOutputDto;
 use identity_iota::iota::block::output::AliasOutput;
@@ -48,6 +50,7 @@ use crate::credential::WasmJws;
 use crate::credential::WasmJwt;
 use crate::credential::WasmPresentation;
 use crate::did::CoreDocumentLock;
+
 use crate::did::PromiseJws;
 use crate::did::PromiseJwt;
 use crate::did::WasmCoreDocument;
@@ -154,6 +157,20 @@ impl WasmIotaDocument {
         .collect::<js_sys::Array>()
         .unchecked_into::<ArrayIotaDID>(),
     )
+  }
+
+  /// Sets the controllers of the document.
+  ///
+  /// Note: Duplicates will be ignored.
+  /// Use `null` to remove all controllers.
+  #[wasm_bindgen(js_name = setController)]
+  pub fn set_controller(&mut self, controller: &OptionArrayIotaDID) -> Result<()> {
+    let controller: Option<Vec<IotaDID>> = controller.into_serde().wasm_result()?;
+    match controller {
+      Some(controller) => self.0.try_write()?.set_controller(controller),
+      None => self.0.try_write()?.set_controller([]),
+    };
+    Ok(())
   }
 
   /// Returns a copy of the document's `alsoKnownAs` set.
@@ -845,6 +862,9 @@ impl From<IotaDocument> for WasmIotaDocument {
 
 #[wasm_bindgen]
 extern "C" {
+  #[wasm_bindgen(typescript_type = "IotaDID[] | null")]
+  pub type OptionArrayIotaDID;
+
   #[wasm_bindgen(typescript_type = "IotaDID[]")]
   pub type ArrayIotaDID;
 
