@@ -12,7 +12,6 @@ use crate::error::Result;
 const ED25519_VERIFICATION_KEY_2018_STR: &str = "Ed25519VerificationKey2018";
 const X25519_KEY_AGREEMENT_KEY_2019_STR: &str = "X25519KeyAgreementKey2019";
 const JSON_WEB_KEY_METHOD_TYPE: &str = "JsonWebKey";
-const ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020_STR: &str = "EcdsaSecp256k1RecoverySignature2020";
 
 /// verification method types.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -26,9 +25,10 @@ impl MethodType {
   /// A verification method for use with JWT verification as prescribed by the [`Jwk`](::identity_jose::jwk::Jwk)
   /// in the [`publicKeyJwk`](crate::MethodData::PublicKeyJwk) entry.
   pub const JSON_WEB_KEY: Self = Self(Cow::Borrowed(JSON_WEB_KEY_METHOD_TYPE));
-  /// The `EcdsaSecp256k1RecoverySignature2020` method type.
-  pub const ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020: Self =
-    Self(Cow::Borrowed(ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020_STR));
+  /// Construct a custom method type.
+  pub fn custom(type_: impl AsRef<str>) -> Self {
+    Self(Cow::Owned(type_.as_ref().to_owned()))
+  }
 }
 
 impl MethodType {
@@ -58,7 +58,6 @@ impl FromStr for MethodType {
       ED25519_VERIFICATION_KEY_2018_STR => Ok(Self::ED25519_VERIFICATION_KEY_2018),
       X25519_KEY_AGREEMENT_KEY_2019_STR => Ok(Self::X25519_KEY_AGREEMENT_KEY_2019),
       JSON_WEB_KEY_METHOD_TYPE => Ok(Self::JSON_WEB_KEY),
-      ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020_STR => Ok(Self::ECDSA_SECP256K1_RECOVERY_SIGNATURE_2020),
       _ => Ok(Self(Cow::Owned(string.to_owned()))),
     }
   }
