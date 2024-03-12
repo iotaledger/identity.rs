@@ -1,6 +1,7 @@
 // Copyright 2020-2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::verification::CustomMethodData;
 use identity_iota::verification::MethodData;
 use wasm_bindgen::prelude::*;
 
@@ -46,21 +47,22 @@ impl WasmMethodData {
   }
 
   /// Creates a new {@link MethodData} variant in CAIP-10 format.
-  #[wasm_bindgen(js_name = newBlockchainAccountId)]
-  pub fn new_blockchain_account_id(data: String) -> Self {
-    Self(MethodData::new_blockchain_account_id(data))
+  #[wasm_bindgen(js_name = newCustom)]
+  pub fn new_custom(name: String, data: JsValue) -> Result<WasmMethodData> {
+    let data = data.into_serde::<serde_json::Value>().wasm_result()?;
+    Ok(Self(MethodData::Custom(CustomMethodData { name, data })))
   }
 
-  /// Returns the wrapped blockchain account id if the format is `BlockchainAccountId`.
-  #[wasm_bindgen(js_name = tryBlockchainAccountId)]
-  pub fn try_blockchain_account_id(&self) -> Result<String> {
+  /// Returns the wrapped custom method data format is `Custom`.
+  #[wasm_bindgen(js_name = tryCustom)]
+  pub fn try_custom(&self) -> Result<WasmCustomMethodData> {
     self
       .0
-      .blockchain_account_id()
-      .map(|id| id.to_string())
+      .custom()
+      .map(|custom| custom.clone().into())
       .ok_or(WasmError::new(
         Cow::Borrowed("MethodDataFormatError"),
-        Cow::Borrowed("method data format is not BlockchainAccountId"),
+        Cow::Borrowed("method data format is not Custom"),
       ))
       .wasm_result()
   }
@@ -96,5 +98,30 @@ impl From<WasmMethodData> for MethodData {
 impl From<MethodData> for WasmMethodData {
   fn from(data: MethodData) -> Self {
     WasmMethodData(data)
+  }
+}
+
+/// A custom verification method data format.
+#[wasm_bindgen(js_name = CustomMethodData, inspectable)]
+pub struct WasmCustomMethodData(pub(crate) CustomMethodData);
+
+#[wasm_bindgen(js_class = CustomMethodData)]
+impl WasmCustomMethodData {
+  #[wasm_bindgen(constructor)]
+  pub fn new(name: String, data: JsValue) -> Result<WasmCustomMethodData> {
+    let data = data.into_serde::<serde_json::Value>().wasm_result()?;
+    Ok(Self(CustomMethodData { name, data }))
+  }
+}
+
+impl From<CustomMethodData> for WasmCustomMethodData {
+  fn from(value: CustomMethodData) -> Self {
+    Self(value)
+  }
+}
+
+impl From<WasmCustomMethodData> for CustomMethodData {
+  fn from(value: WasmCustomMethodData) -> Self {
+    value.0
   }
 }

@@ -27,9 +27,6 @@ pub enum MethodData {
   PublicKeyBase58(String),
   /// Verification Material in the JSON Web Key format.
   PublicKeyJwk(Jwk),
-  /// Verification Material in CAIP-10 format.
-  /// [CAIP-10](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md)
-  BlockchainAccountId(String),
   /// Arbitrary verification material.
   #[serde(untagged)]
   Custom(CustomMethodData),
@@ -48,9 +45,9 @@ impl MethodData {
     Self::PublicKeyMultibase(BaseEncoding::encode_multibase(&data, None))
   }
 
-  /// Verification Material in CAIP-10 format.
-  pub fn new_blockchain_account_id(data: String) -> Self {
-    Self::BlockchainAccountId(data)
+  /// Creates a new `MethodData` variant from custom data.
+  pub fn new_custom(data: impl Into<CustomMethodData>) -> Self {
+    Self::Custom(data.into())
   }
 
   /// Returns a `Vec<u8>` containing the decoded bytes of the `MethodData`.
@@ -62,14 +59,13 @@ impl MethodData {
   /// represented as a vector of bytes.
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
-      Self::PublicKeyJwk(_) | Self::BlockchainAccountId(_) => Err(Error::InvalidMethodDataTransformation(
+      Self::PublicKeyJwk(_) | Self::Custom(_) => Err(Error::InvalidMethodDataTransformation(
         "method data is not base encoded",
       )),
       Self::PublicKeyMultibase(input) => {
         BaseEncoding::decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase)
       }
       Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
-      _ => unreachable!(),
     }
   }
 
@@ -87,10 +83,10 @@ impl MethodData {
     self.public_key_jwk().ok_or(Error::NotPublicKeyJwk)
   }
 
-  /// Returns the wrapped Blockchain Account Id if the format is [`MethodData::BlockchainAccountId`].
-  pub fn blockchain_account_id(&self) -> Option<&str> {
-    if let Self::BlockchainAccountId(id) = self {
-      Some(id)
+  /// Returns the custom method data, if any.
+  pub fn custom(&self) -> Option<&CustomMethodData> {
+    if let Self::Custom(method_data) = self {
+      Some(method_data)
     } else {
       None
     }
@@ -103,15 +99,17 @@ impl Debug for MethodData {
       Self::PublicKeyJwk(inner) => f.write_fmt(format_args!("PublicKeyJwk({inner:#?})")),
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({inner})")),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({inner})")),
-      Self::BlockchainAccountId(inner) => f.write_fmt(format_args!("BlockchainAccountId({inner})")),
       Self::Custom(CustomMethodData { name, data }) => f.write_fmt(format_args!("{name}({data})")),
     }
   }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// Custom verification method.
 pub struct CustomMethodData {
+  /// Verification method's name.
   pub name: String,
+  /// Verification method's data.
   pub data: Value,
 }
 

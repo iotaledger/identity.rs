@@ -11,6 +11,9 @@ if the object is being concurrently modified.</p>
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
+<dt><a href="#CustomMethodData">CustomMethodData</a></dt>
+<dd><p>A custom verification method data format.</p>
+</dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd><p>A method agnostic DID Url.</p>
 </dd>
@@ -187,6 +190,8 @@ working with storage backed DID documents.</p>
 ## Members
 
 <dl>
+<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
+<dd></dd>
 <dt><a href="#StatusCheck">StatusCheck</a></dt>
 <dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
 <a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
@@ -204,15 +209,6 @@ working with storage backed DID documents.</p>
 <dt><a href="#SkipAll">SkipAll</a></dt>
 <dd><p>Skip all status checks.</p>
 </dd>
-<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
-<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
-</dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
-<dt><a href="#CredentialStatus">CredentialStatus</a></dt>
-<dd></dd>
-<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
-<dd></dd>
 <dt><a href="#FailFast">FailFast</a></dt>
 <dd><p>Declares when validation should return if an error occurs.</p>
 </dd>
@@ -236,11 +232,21 @@ This variant is the default.</p>
 <dt><a href="#Any">Any</a></dt>
 <dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
 </dd>
+<dt><a href="#StatusPurpose">StatusPurpose</a></dt>
+<dd><p>Purpose of a <a href="#StatusList2021">StatusList2021</a>.</p>
+</dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#StateMetadataEncoding">StateMetadataEncoding</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
 <dt><a href="#encodeB64">encodeB64(data)</a> ⇒ <code>string</code></dt>
 <dd><p>Encode the given bytes in url-safe base64.</p>
 </dd>
@@ -254,9 +260,6 @@ This variant is the default.</p>
 <h1 id="warning">Warning</h1>
 <p>This function does not check whether <code>alg = EdDSA</code> in the protected header. Callers are expected to assert this
 prior to calling the function.</p>
-</dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -1137,6 +1140,21 @@ Deserializes an instance from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="CustomMethodData"></a>
+
+## CustomMethodData
+A custom verification method data format.
+
+**Kind**: global class  
+<a name="new_CustomMethodData_new"></a>
+
+### new CustomMethodData(name, data)
+
+| Param | Type |
+| --- | --- |
+| name | <code>string</code> | 
+| data | <code>any</code> | 
 
 <a name="DIDUrl"></a>
 
@@ -4343,7 +4361,7 @@ Supported verification method data formats.
 
 * [MethodData](#MethodData)
     * _instance_
-        * [.tryBlockchainAccountId()](#MethodData+tryBlockchainAccountId) ⇒ <code>string</code>
+        * [.tryCustom()](#MethodData+tryCustom) ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
         * [.tryDecode()](#MethodData+tryDecode) ⇒ <code>Uint8Array</code>
         * [.tryPublicKeyJwk()](#MethodData+tryPublicKeyJwk) ⇒ [<code>Jwk</code>](#Jwk)
         * [.toJSON()](#MethodData+toJSON) ⇒ <code>any</code>
@@ -4352,13 +4370,13 @@ Supported verification method data formats.
         * [.newBase58(data)](#MethodData.newBase58) ⇒ [<code>MethodData</code>](#MethodData)
         * [.newMultibase(data)](#MethodData.newMultibase) ⇒ [<code>MethodData</code>](#MethodData)
         * [.newJwk(key)](#MethodData.newJwk) ⇒ [<code>MethodData</code>](#MethodData)
-        * [.newBlockchainAccountId(data)](#MethodData.newBlockchainAccountId) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.newCustom(name, data)](#MethodData.newCustom) ⇒ [<code>MethodData</code>](#MethodData)
         * [.fromJSON(json)](#MethodData.fromJSON) ⇒ [<code>MethodData</code>](#MethodData)
 
-<a name="MethodData+tryBlockchainAccountId"></a>
+<a name="MethodData+tryCustom"></a>
 
-### methodData.tryBlockchainAccountId() ⇒ <code>string</code>
-Returns the wrapped blockchain account id if the format is `BlockchainAccountId`.
+### methodData.tryCustom() ⇒ [<code>CustomMethodData</code>](#CustomMethodData)
+Returns the wrapped custom method data format is `Custom`.
 
 **Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+tryDecode"></a>
@@ -4427,16 +4445,17 @@ An error is thrown if the given `key` contains any private components.
 | --- | --- |
 | key | [<code>Jwk</code>](#Jwk) | 
 
-<a name="MethodData.newBlockchainAccountId"></a>
+<a name="MethodData.newCustom"></a>
 
-### MethodData.newBlockchainAccountId(data) ⇒ [<code>MethodData</code>](#MethodData)
+### MethodData.newCustom(name, data) ⇒ [<code>MethodData</code>](#MethodData)
 Creates a new [MethodData](#MethodData) variant in CAIP-10 format.
 
 **Kind**: static method of [<code>MethodData</code>](#MethodData)  
 
 | Param | Type |
 | --- | --- |
-| data | <code>string</code> | 
+| name | <code>string</code> | 
+| data | <code>any</code> | 
 
 <a name="MethodData.fromJSON"></a>
 
@@ -5032,11 +5051,9 @@ Representation of an SD-JWT of the format
         * [.jwt()](#SdJwt+jwt) ⇒ <code>string</code>
         * [.disclosures()](#SdJwt+disclosures) ⇒ <code>Array.&lt;string&gt;</code>
         * [.keyBindingJwt()](#SdJwt+keyBindingJwt) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.toJSON()](#SdJwt+toJSON) ⇒ <code>any</code>
         * [.clone()](#SdJwt+clone) ⇒ [<code>SdJwt</code>](#SdJwt)
     * _static_
         * [.parse(sd_jwt)](#SdJwt.parse) ⇒ [<code>SdJwt</code>](#SdJwt)
-        * [.fromJSON(json)](#SdJwt.fromJSON) ⇒ [<code>SdJwt</code>](#SdJwt)
 
 <a name="new_SdJwt_new"></a>
 
@@ -5080,12 +5097,6 @@ The disclosures part.
 The optional key binding JWT.
 
 **Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
-<a name="SdJwt+toJSON"></a>
-
-### sdJwt.toJSON() ⇒ <code>any</code>
-Serializes this to a JSON object.
-
-**Kind**: instance method of [<code>SdJwt</code>](#SdJwt)  
 <a name="SdJwt+clone"></a>
 
 ### sdJwt.clone() ⇒ [<code>SdJwt</code>](#SdJwt)
@@ -5105,17 +5116,6 @@ Returns `DeserializationError` if parsing fails.
 | Param | Type |
 | --- | --- |
 | sd_jwt | <code>string</code> | 
-
-<a name="SdJwt.fromJSON"></a>
-
-### SdJwt.fromJSON(json) ⇒ [<code>SdJwt</code>](#SdJwt)
-Deserializes an instance from a JSON object.
-
-**Kind**: static method of [<code>SdJwt</code>](#SdJwt)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
 
 <a name="SdJwtCredentialValidator"></a>
 
@@ -6159,6 +6159,10 @@ Deserializes an instance from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
+**Kind**: global variable  
 <a name="StatusCheck"></a>
 
 ## StatusCheck
@@ -6189,24 +6193,6 @@ Validate the status if supported, skip any unsupported
 ## SkipAll
 Skip all status checks.
 
-**Kind**: global variable  
-<a name="StatusPurpose"></a>
-
-## StatusPurpose
-Purpose of a [StatusList2021](#StatusList2021).
-
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
-<a name="CredentialStatus"></a>
-
-## CredentialStatus
-**Kind**: global variable  
-<a name="StateMetadataEncoding"></a>
-
-## StateMetadataEncoding
 **Kind**: global variable  
 <a name="FailFast"></a>
 
@@ -6253,6 +6239,26 @@ The holder must match the subject only for credentials where the [`nonTransferab
 The holder is not required to have any kind of relationship to any credential subject.
 
 **Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
 <a name="encodeB64"></a>
 
 ## encodeB64(data) ⇒ <code>string</code>
@@ -6297,9 +6303,3 @@ prior to calling the function.
 | decodedSignature | <code>Uint8Array</code> | 
 | publicKey | [<code>Jwk</code>](#Jwk) | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
