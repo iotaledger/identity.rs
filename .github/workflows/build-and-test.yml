@@ -126,6 +126,8 @@ jobs:
       - name: Start iota sandbox
         if: matrix.os == 'ubuntu-latest'
         uses: 'iotaledger/iota-sandbox/.github/actions/setup@add-action'
+        with:
+          branch: add-action
 
       - name: Run tests
         run: cargo test --workspace --all-features --release
@@ -196,6 +198,8 @@ jobs:
 
       - name: Start iota sandbox
         uses: 'iotaledger/iota-sandbox/.github/actions/setup@add-action'
+        with:
+          branch: add-action
 
       - name: Run Wasm examples
         run: npm run test:examples
