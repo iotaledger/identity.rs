@@ -5,6 +5,12 @@ use crate::jose::jwk::Jwk;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use identity_core::convert::BaseEncoding;
+use serde::de::Visitor;
+use serde::ser::SerializeMap;
+use serde::Deserialize;
+use serde::Serialize;
+use serde::Serializer;
+use serde_json::Value;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -24,6 +30,9 @@ pub enum MethodData {
   /// Verification Material in CAIP-10 format.
   /// [CAIP-10](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md)
   BlockchainAccountId(String),
+  /// Arbitrary verification material.
+  #[serde(untagged)]
+  Custom(CustomMethodData),
 }
 
 impl MethodData {
@@ -60,6 +69,7 @@ impl MethodData {
         BaseEncoding::decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase)
       }
       Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
+      _ => unreachable!(),
     }
   }
 
@@ -94,6 +104,87 @@ impl Debug for MethodData {
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({inner})")),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({inner})")),
       Self::BlockchainAccountId(inner) => f.write_fmt(format_args!("BlockchainAccountId({inner})")),
+      Self::Custom(CustomMethodData { name, data }) => f.write_fmt(format_args!("{name}({data})")),
     }
+  }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CustomMethodData {
+  pub name: String,
+  pub data: Value,
+}
+
+impl Serialize for CustomMethodData {
+  fn serialize<S>(&self, serializer: S) -> std::prelude::v1::Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut map = serializer.serialize_map(Some(1))?;
+    map.serialize_entry(&self.name, &self.data)?;
+    map.end()
+  }
+}
+
+impl<'de> Deserialize<'de> for CustomMethodData {
+  fn deserialize<D>(deserializer: D) -> std::prelude::v1::Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    deserializer.deserialize_map(CustomMethodDataVisitor)
+  }
+}
+
+struct CustomMethodDataVisitor;
+
+impl<'de> Visitor<'de> for CustomMethodDataVisitor {
+  type Value = CustomMethodData;
+  fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    formatter.write_str("\"<any property name>\": <any json value>")
+  }
+  fn visit_map<A>(self, mut map: A) -> std::prelude::v1::Result<Self::Value, A::Error>
+  where
+    A: serde::de::MapAccess<'de>,
+  {
+    let Some((name, data)) = map.next_entry::<String, Value>()? else {
+      return Err(serde::de::Error::custom("empty custom method data"));
+    };
+
+    Ok(CustomMethodData { name, data })
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use serde_json::json;
+
+  #[test]
+  fn serialize_custom_method_data() {
+    let custom = MethodData::Custom(CustomMethodData {
+      name: "anArbitraryMethod".to_owned(),
+      data: json!({"a": 1, "b": 2}),
+    });
+    let target_str = json!({
+      "anArbitraryMethod": {"a": 1, "b": 2},
+    })
+    .to_string();
+    assert_eq!(serde_json::to_string(&custom).unwrap(), target_str);
+  }
+  #[test]
+  fn deserialize_custom_method_data() {
+    let inner_data = json!({
+        "firstCustomField": "a random string",
+        "secondCustomField": 420,
+    });
+    let json_method_data = json!({
+      "myCustomVerificationMethod": &inner_data,
+    });
+    let custom = serde_json::from_value::<MethodData>(json_method_data.clone()).unwrap();
+    let target_method_data = MethodData::Custom(CustomMethodData {
+      name: "myCustomVerificationMethod".to_owned(),
+      data: inner_data,
+    });
+    assert_eq!(custom, target_method_data);
   }
 }
