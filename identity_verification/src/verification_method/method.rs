@@ -28,8 +28,8 @@ use identity_did::DID;
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(from = "_VerificationMethod")]
 pub struct VerificationMethod {
-  #[serde(deserialize_with = "deserialize_id_with_fragment")]
   pub(crate) id: DIDUrl,
   pub(crate) controller: CoreDID,
   #[serde(rename = "type")]
@@ -243,5 +243,42 @@ impl KeyComparable for VerificationMethod {
   #[inline]
   fn key(&self) -> &Self::Key {
     self.id()
+  }
+}
+
+// Horrible workaround for a tracked serde issue https://github.com/serde-rs/serde/issues/2200
+#[derive(Deserialize)]
+struct _VerificationMethod {
+  #[serde(deserialize_with = "deserialize_id_with_fragment")]
+  pub(crate) id: DIDUrl,
+  pub(crate) controller: CoreDID,
+  #[serde(rename = "type")]
+  pub(crate) type_: MethodType,
+  #[serde(flatten)]
+  pub(crate) data: MethodData,
+  #[serde(flatten)]
+  pub(crate) properties: Object,
+}
+
+impl From<_VerificationMethod> for VerificationMethod {
+  fn from(value: _VerificationMethod) -> Self {
+    let _VerificationMethod {
+      id,
+      controller,
+      type_,
+      data,
+      mut properties,
+    } = value;
+    let data_json = serde_json::to_value(&data).unwrap();
+    let data_type = data_json.as_object().unwrap().into_iter().next().unwrap().0;
+    properties.remove(data_type);
+
+    VerificationMethod {
+      id,
+      controller,
+      type_,
+      data,
+      properties,
+    }
   }
 }

@@ -144,11 +144,15 @@ impl<'de> Visitor<'de> for CustomMethodDataVisitor {
   where
     A: serde::de::MapAccess<'de>,
   {
-    let Some((name, data)) = map.next_entry::<String, Value>()? else {
-      return Err(serde::de::Error::custom("empty custom method data"));
+    let mut custom_method_data = CustomMethodData {
+      name: String::default(),
+      data: Value::Null,
     };
+    while let Some((name, data)) = map.next_entry::<String, Value>()? {
+      custom_method_data = CustomMethodData { name, data };
+    }
 
-    Ok(CustomMethodData { name, data })
+    Ok(custom_method_data)
   }
 }
 
