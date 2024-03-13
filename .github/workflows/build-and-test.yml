@@ -128,6 +128,8 @@ jobs:
         uses: 'iotaledger/iota-sandbox/.github/actions/setup@add-action'
         with:
           branch: add-action
+        env:
+          COMPOSE_PROFILES: 'inx-faucet.inx-indexer'
 
       - name: Run tests
         run: cargo test --workspace --all-features --release
@@ -200,6 +202,8 @@ jobs:
         uses: 'iotaledger/iota-sandbox/.github/actions/setup@add-action'
         with:
           branch: add-action
+        env:
+          COMPOSE_PROFILES: 'inx-faucet.inx-indexer'
 
       - name: Run Wasm examples
         run: npm run test:examples
