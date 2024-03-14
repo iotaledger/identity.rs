@@ -125,3 +125,6 @@ impl From<WasmCustomMethodData> for CustomMethodData {
     value.0
   }
 }
+
+impl_wasm_clone!(WasmCustomMethodData, CustomMethodData);
+impl_wasm_json!(WasmCustomMethodData, CustomMethodData);

@@ -246,7 +246,9 @@ impl KeyComparable for VerificationMethod {
   }
 }
 
-// Horrible workaround for a tracked serde issue https://github.com/serde-rs/serde/issues/2200
+// Horrible workaround for a tracked serde issue https://github.com/serde-rs/serde/issues/2200. Serde doesn't "consume"
+// the input when deserializing flattened enums (MethodData in this case) cousing duplication of data (in this case 
+// it ends up in the properties object). This workaround simply remove the duplication.
 #[derive(Deserialize)]
 struct _VerificationMethod {
   #[serde(deserialize_with = "deserialize_id_with_fragment")]
