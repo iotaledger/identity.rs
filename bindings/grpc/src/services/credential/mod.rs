@@ -1,6 +1,6 @@
 pub mod jwt;
-pub mod validation;
 pub mod revocation;
+pub mod validation;
 
 use identity_stronghold::StrongholdStorage;
 use iota_sdk::client::Client;

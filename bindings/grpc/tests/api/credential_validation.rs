@@ -1,3 +1,5 @@
+use _credentials::vc_validation_client::VcValidationClient;
+use _credentials::VcValidationRequest;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
@@ -8,8 +10,6 @@ use identity_storage::JwkDocumentExt;
 use identity_storage::JwsSignatureOptions;
 use identity_stronghold::StrongholdStorage;
 use serde_json::json;
-use _credentials::vc_validation_client::VcValidationClient;
-use _credentials::VcValidationRequest;
 
 use crate::helpers::make_stronghold;
 use crate::helpers::Entity;
@@ -63,11 +63,11 @@ async fn credential_validation() -> anyhow::Result<()> {
     .into();
 
   let mut grpc_client = VcValidationClient::connect(server.endpoint()).await?;
-  let decoded_cred = grpc_client.validate(VcValidationRequest {
-    credential_jwt
-  }).await?
-  .into_inner()
-  .credential_json;
+  let decoded_cred = grpc_client
+    .validate(VcValidationRequest { credential_jwt })
+    .await?
+    .into_inner()
+    .credential_json;
 
   let decoded_cred = serde_json::from_str::<Credential>(&decoded_cred)?;
   assert_eq!(decoded_cred, credential);
