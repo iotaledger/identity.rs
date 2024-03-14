@@ -46,7 +46,7 @@ impl WasmMethodData {
     Ok(Self(MethodData::PublicKeyJwk(key.0.clone())))
   }
 
-  /// Creates a new {@link MethodData} variant in CAIP-10 format.
+  /// Creates a new custom {@link MethodData}.
   #[wasm_bindgen(js_name = newCustom)]
   pub fn new_custom(name: String, data: JsValue) -> Result<WasmMethodData> {
     let data = data.into_serde::<serde_json::Value>().wasm_result()?;
