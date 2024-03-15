@@ -1,0 +1,16 @@
+syntax = "proto3";
+package document;
+
+message CreateDIDRequest {
+    string bech32_address = 1;
+}
+
+message CreateDIDResponse {
+    string document_json = 1;
+    string fragment = 2;
+    string did = 3;
+}
+
+service DocumentService {
+    rpc create(CreateDIDRequest) returns (CreateDIDResponse);
+}

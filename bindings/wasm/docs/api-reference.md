@@ -1967,6 +1967,7 @@ if the object is being concurrently modified.
     * _instance_
         * [.id()](#IotaDocument+id) ⇒ [<code>IotaDID</code>](#IotaDID)
         * [.controller()](#IotaDocument+controller) ⇒ [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID)
+        * [.setController(controller)](#IotaDocument+setController)
         * [.alsoKnownAs()](#IotaDocument+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setAlsoKnownAs(urls)](#IotaDocument+setAlsoKnownAs)
         * [.properties()](#IotaDocument+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
@@ -2039,6 +2040,20 @@ NOTE: controllers are determined by the `state_controller` unlock condition of t
 during resolution and are omitted when publishing.
 
 **Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+<a name="IotaDocument+setController"></a>
+
+### iotaDocument.setController(controller)
+Sets the controllers of the document.
+
+Note: Duplicates will be ignored.
+Use `null` to remove all controllers.
+
+**Kind**: instance method of [<code>IotaDocument</code>](#IotaDocument)  
+
+| Param | Type |
+| --- | --- |
+| controller | [<code>Array.&lt;IotaDID&gt;</code>](#IotaDID) \| <code>null</code> | 
+
 <a name="IotaDocument+alsoKnownAs"></a>
 
 ### iotaDocument.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
@@ -4328,6 +4343,7 @@ Supported verification method data formats.
 
 * [MethodData](#MethodData)
     * _instance_
+        * [.tryBlockchainAccountId()](#MethodData+tryBlockchainAccountId) ⇒ <code>string</code>
         * [.tryDecode()](#MethodData+tryDecode) ⇒ <code>Uint8Array</code>
         * [.tryPublicKeyJwk()](#MethodData+tryPublicKeyJwk) ⇒ [<code>Jwk</code>](#Jwk)
         * [.toJSON()](#MethodData+toJSON) ⇒ <code>any</code>
@@ -4336,8 +4352,15 @@ Supported verification method data formats.
         * [.newBase58(data)](#MethodData.newBase58) ⇒ [<code>MethodData</code>](#MethodData)
         * [.newMultibase(data)](#MethodData.newMultibase) ⇒ [<code>MethodData</code>](#MethodData)
         * [.newJwk(key)](#MethodData.newJwk) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.newBlockchainAccountId(data)](#MethodData.newBlockchainAccountId) ⇒ [<code>MethodData</code>](#MethodData)
         * [.fromJSON(json)](#MethodData.fromJSON) ⇒ [<code>MethodData</code>](#MethodData)
 
+<a name="MethodData+tryBlockchainAccountId"></a>
+
+### methodData.tryBlockchainAccountId() ⇒ <code>string</code>
+Returns the wrapped blockchain account id if the format is `BlockchainAccountId`.
+
+**Kind**: instance method of [<code>MethodData</code>](#MethodData)  
 <a name="MethodData+tryDecode"></a>
 
 ### methodData.tryDecode() ⇒ <code>Uint8Array</code>
@@ -4403,6 +4426,17 @@ An error is thrown if the given `key` contains any private components.
 | Param | Type |
 | --- | --- |
 | key | [<code>Jwk</code>](#Jwk) | 
+
+<a name="MethodData.newBlockchainAccountId"></a>
+
+### MethodData.newBlockchainAccountId(data) ⇒ [<code>MethodData</code>](#MethodData)
+Creates a new [MethodData](#MethodData) variant in CAIP-10 format.
+
+**Kind**: static method of [<code>MethodData</code>](#MethodData)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>string</code> | 
 
 <a name="MethodData.fromJSON"></a>
 
@@ -4555,6 +4589,7 @@ Supported verification method types.
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
         * [.JsonWebKey()](#MethodType.JsonWebKey) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.EcdsaSecp256k1RecoverySignature2020()](#MethodType.EcdsaSecp256k1RecoverySignature2020) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
 <a name="MethodType+toString"></a>
@@ -4588,6 +4623,12 @@ Deep clones the object.
 ### MethodType.JsonWebKey() ⇒ [<code>MethodType</code>](#MethodType)
 A verification method for use with JWT verification as prescribed by the [Jwk](#Jwk)
 in the `publicKeyJwk` entry.
+
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.EcdsaSecp256k1RecoverySignature2020"></a>
+
+### MethodType.EcdsaSecp256k1RecoverySignature2020() ⇒ [<code>MethodType</code>](#MethodType)
+The `EcdsaSecp256k1RecoverySignature2020` method type.
 
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.fromJSON"></a>
@@ -5952,6 +5993,7 @@ A DID Document Verification Method.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
+    * [new VerificationMethod(id, controller, type_, data)](#new_VerificationMethod_new)
     * _instance_
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.setId(id)](#VerificationMethod+setId)
@@ -5968,6 +6010,19 @@ A DID Document Verification Method.
     * _static_
         * [.newFromJwk(did, key, [fragment])](#VerificationMethod.newFromJwk) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(json)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+
+<a name="new_VerificationMethod_new"></a>
+
+### new VerificationMethod(id, controller, type_, data)
+Create a custom [VerificationMethod](#VerificationMethod).
+
+
+| Param | Type |
+| --- | --- |
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+| controller | [<code>CoreDID</code>](#CoreDID) | 
+| type_ | [<code>MethodType</code>](#MethodType) | 
+| data | [<code>MethodData</code>](#MethodData) | 
 
 <a name="VerificationMethod+id"></a>
 
@@ -6116,6 +6171,42 @@ Deserializes an instance from a JSON object.
 
 ## CredentialStatus
 **Kind**: global variable  
+<a name="StatusPurpose"></a>
+
+## StatusPurpose
+Purpose of a [StatusList2021](#StatusList2021).
+
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="CredentialStatus"></a>
+
+## CredentialStatus
+**Kind**: global variable  
+<a name="StateMetadataEncoding"></a>
+
+## StateMetadataEncoding
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -6143,22 +6234,21 @@ The holder must match the subject only for credentials where the [`nonTransferab
 The holder is not required to have any kind of relationship to any credential subject.
 
 **Kind**: global variable  
-<a name="FailFast"></a>
+<a name="encodeB64"></a>
 
-## FailFast
-Declares when validation should return if an error occurs.
+## encodeB64(data) ⇒ <code>string</code>
+Encode the given bytes in url-safe base64.
 
-**Kind**: global variable  
-<a name="AllErrors"></a>
+**Kind**: global function  
 
-## AllErrors
-Return all errors that occur during validation.
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
 
-**Kind**: global variable  
-<a name="FirstError"></a>
+<a name="decodeB64"></a>
 
-## FirstError
-Return after the first error occurs.
+## decodeB64(data) ⇒ <code>Uint8Array</code>
+Decode the given url-safe base64-encoded slice into its raw bytes.
 
 **Kind**: global variable  
 <a name="StatusPurpose"></a>

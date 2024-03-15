@@ -17,20 +17,20 @@ name = "identity-grpc"
 path = "src/main.rs"
 
 [dependencies]
-tonic = "0.10"
-prost = "0.12"
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 anyhow = "1.0.75"
 futures = { version = "0.3" }
-tokio-stream = { version = "0.1.14", features = ["net"] }
-identity_iota = { path = "../../identity_iota", features = ["resolver", "sd-jwt", "domain-linkage", "domain-linkage-fetch"] }
 identity_eddsa_verifier = { path = "../../identity_eddsa_verifier" }
+identity_iota = { path = "../../identity_iota", features = ["resolver", "sd-jwt", "domain-linkage", "domain-linkage-fetch"] }
 identity_stronghold = { path = "../../identity_stronghold", features = ["send-sync-storage"] }
 iota-sdk = { version = "1.1.2", features = ["stronghold"] }
-serde_json = { version = "1.0.108", features = ["alloc"] }
-thiserror = "1.0.50"
+prost = "0.12"
 rand = "0.8.5"
 serde = { version = "1.0.193", features = ["derive", "alloc"] }
+serde_json = { version = "1.0.108", features = ["alloc"] }
+thiserror = "1.0.50"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tokio-stream = { version = "0.1.14", features = ["net"] }
+tonic = "0.10"
 tracing = { version = "0.1.40", features = ["async-await"] }
 tracing-subscriber = "0.3.18"
 url = { version = "2.5", default-features = false }

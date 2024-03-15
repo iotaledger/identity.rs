@@ -21,6 +21,9 @@ pub enum MethodData {
   PublicKeyBase58(String),
   /// Verification Material in the JSON Web Key format.
   PublicKeyJwk(Jwk),
+  /// Verification Material in CAIP-10 format.
+  /// [CAIP-10](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md)
+  BlockchainAccountId(String),
 }
 
 impl MethodData {
@@ -36,6 +39,11 @@ impl MethodData {
     Self::PublicKeyMultibase(BaseEncoding::encode_multibase(&data, None))
   }
 
+  /// Verification Material in CAIP-10 format.
+  pub fn new_blockchain_account_id(data: String) -> Self {
+    Self::BlockchainAccountId(data)
+  }
+
   /// Returns a `Vec<u8>` containing the decoded bytes of the `MethodData`.
   ///
   /// This is generally a public key identified by a `MethodType` value.
@@ -45,7 +53,7 @@ impl MethodData {
   /// represented as a vector of bytes.
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
-      Self::PublicKeyJwk(_) => Err(Error::InvalidMethodDataTransformation(
+      Self::PublicKeyJwk(_) | Self::BlockchainAccountId(_) => Err(Error::InvalidMethodDataTransformation(
         "method data is not base encoded",
       )),
       Self::PublicKeyMultibase(input) => {
@@ -68,6 +76,15 @@ impl MethodData {
   pub fn try_public_key_jwk(&self) -> Result<&Jwk> {
     self.public_key_jwk().ok_or(Error::NotPublicKeyJwk)
   }
+
+  /// Returns the wrapped Blockchain Account Id if the format is [`MethodData::BlockchainAccountId`].
+  pub fn blockchain_account_id(&self) -> Option<&str> {
+    if let Self::BlockchainAccountId(id) = self {
+      Some(id)
+    } else {
+      None
+    }
+  }
 }
 
 impl Debug for MethodData {
@@ -76,6 +93,7 @@ impl Debug for MethodData {
       Self::PublicKeyJwk(inner) => f.write_fmt(format_args!("PublicKeyJwk({inner:#?})")),
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({inner})")),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({inner})")),
+      Self::BlockchainAccountId(inner) => f.write_fmt(format_args!("BlockchainAccountId({inner})")),
     }
   }
 }

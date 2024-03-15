@@ -62,8 +62,39 @@ impl StrongholdStorage {
   pub(crate) async fn get_stronghold(&self) -> MutexGuard<'_, Stronghold> {
     match *self.0 {
       SecretManager::Stronghold(ref stronghold) => stronghold.inner().await,
-      _ => unreachable!("secret manager can be only constrcuted from stronghold"),
+      _ => unreachable!("secret manager can be only constructed from stronghold"),
     }
+  }
+
+  /// Retrieve the public key corresponding to `key_id`.
+  pub async fn get_public_key(&self, key_id: &KeyId) -> KeyStorageResult<Jwk> {
+    let stronghold = self.get_stronghold().await;
+    let client = get_client(&stronghold)?;
+
+    let location = Location::generic(
+      IDENTITY_VAULT_PATH.as_bytes().to_vec(),
+      key_id.to_string().as_bytes().to_vec(),
+    );
+
+    let public_key_procedure = iota_stronghold::procedures::PublicKey {
+      ty: ProceduresKeyType::Ed25519,
+      private_key: location,
+    };
+
+    let procedure_result = client
+      .execute_procedure(StrongholdProcedure::PublicKey(public_key_procedure))
+      .map_err(|err| KeyStorageError::new(KeyStorageErrorKind::KeyNotFound).with_source(err))?;
+
+    let public_key: Vec<u8> = procedure_result.into();
+
+    let mut params = JwkParamsOkp::new();
+    params.x = jwu::encode_b64(public_key);
+    params.crv = EdCurve::Ed25519.name().to_owned();
+    let mut jwk: Jwk = Jwk::from_params(params);
+    jwk.set_alg(JwsAlgorithm::EdDSA.name());
+    jwk.set_kid(jwk.thumbprint_sha256_b64());
+
+    Ok(jwk)
   }
 }
 
