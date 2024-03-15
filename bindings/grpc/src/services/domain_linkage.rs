@@ -88,16 +88,10 @@ impl DomainValidationConfig {
 
 /// Builds a validation status for a failed validation from an `Error`.
 fn get_validation_failed_status(message: &str, err: &impl Error) -> LinkedDidValidationStatus {
-  let source_suffix = err
-    .source()
-    .map(|err| format!("; {}", &err.to_string()))
-    .unwrap_or_default();
-  let inner_error_message = format!("{}{}", &err.to_string(), source_suffix);
-
   LinkedDidValidationStatus {
     valid: false,
     document: None,
-    error: Some(format!("{}; {}", message, inner_error_message)),
+    error: Some(format!("{}; {}", message, &err.to_string())),
   }
 }
 

@@ -159,7 +159,7 @@ async fn can_validate_did() -> anyhow::Result<()> {
             LinkedDidValidationStatus {
                 valid: false,
                 document: None,
-                error: Some("could not get domain linkage config; domain linkage error; error sending request for url (https://bar.example.com/.well-known/did-configuration.json): error trying to connect: dns error: failed to lookup address information: nodename nor servname provided, or not known".to_string()),
+                error: Some("could not get domain linkage config; domain linkage error: error sending request for url (https://bar.example.com/.well-known/did-configuration.json): error trying to connect: dns error: failed to lookup address information: nodename nor servname provided, or not known".to_string()),
             }
           ],
         }
