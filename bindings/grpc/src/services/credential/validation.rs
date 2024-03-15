@@ -64,7 +64,10 @@ impl VcValidation for VcValidator {
     err,
 )]
   async fn validate(&self, req: Request<VcValidationRequest>) -> Result<Response<VcValidationResponse>, Status> {
-    let VcValidationRequest { credential_jwt } = req.into_inner();
+    let VcValidationRequest {
+      credential_jwt,
+      status_list_credential_json,
+    } = req.into_inner();
     let jwt = Jwt::new(credential_jwt);
     let issuer_did = JwtCredentialValidatorUtils::extract_issuer_from_jwt::<IotaDID>(&jwt)
       .map_err(VcValidationError::JwtValidationError)?;

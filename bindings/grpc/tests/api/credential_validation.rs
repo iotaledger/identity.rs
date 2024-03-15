@@ -64,7 +64,10 @@ async fn credential_validation() -> anyhow::Result<()> {
 
   let mut grpc_client = VcValidationClient::connect(server.endpoint()).await?;
   let decoded_cred = grpc_client
-    .validate(VcValidationRequest { credential_jwt })
+    .validate(VcValidationRequest {
+      credential_jwt,
+      status_list_credential_json: None,
+    })
     .await?
     .into_inner()
     .credential_json;
